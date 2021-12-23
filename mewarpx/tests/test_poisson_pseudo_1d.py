@@ -1,5 +1,6 @@
 """Test pseudo 1D diode run with the superLU solver."""
 import os
+
 import numpy as np
 
 from mewarpx.utils_store import util as mwxutil
@@ -11,9 +12,9 @@ def test_superLU_solver():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
@@ -37,7 +38,6 @@ def test_superLU_solver():
     NX = 16
     NZ = 128
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
         DIRECT_SOLVER=DIRECT_SOLVER,
         V_ANODE_EXPRESSION=f"{VOLTAGE}*sin(2*pi*{FREQ:.5e}*t)",
         D_CA=D_CA,
@@ -49,8 +49,6 @@ def test_superLU_solver():
         SEED_NPPC=16*32,
         NX=NX,
         NZ=NZ,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
         DT=DT,
         TOTAL_TIMESTEPS=50,
         DIAG_STEPS=DIAG_STEPS,

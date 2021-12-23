@@ -4,11 +4,12 @@ from builtins import next
 import csv
 import os
 
-# 3rd-party library imports
-
 # Local imports
 import mewarpx
 from mewarpx.utils_store import util
+
+# 3rd-party library imports
+
 
 
 def test_version():

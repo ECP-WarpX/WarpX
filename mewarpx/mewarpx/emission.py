@@ -1,25 +1,23 @@
 """
 Module for various types of particle emission in WarpX.
 """
+import collections
 # import collections
 import logging
 import warnings
 
-import numba
-import numpy as np
-import collections
-
-import skimage.measure
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
+import numba
+import numpy as np
+from pywarpx import _libwarpx, callbacks, picmi
+import skimage.measure
 
-from pywarpx import callbacks, _libwarpx, picmi
-
-import mewarpx.utils_store.util as mwxutil
-from mewarpx.mwxrun import mwxrun
-import mewarpx.utils_store.mwxconstants as constants
-from mewarpx.utils_store import appendablearray, parallel_util
 from mewarpx.mespecies import Species
+from mewarpx.mwxrun import mwxrun
+from mewarpx.utils_store import appendablearray, parallel_util
+import mewarpx.utils_store.mwxconstants as constants
+import mewarpx.utils_store.util as mwxutil
 
 # Get module-level logger
 logger = logging.getLogger(__name__)
@@ -1080,15 +1078,10 @@ class ZPlaneEmitter(Emitter):
 
         Arguments:
             conductor (:class:`mewarpx.assemblies.Assembly`): Conductor object,
-                used to obtain work function. Can later grab other variables
-                from this conductor.
+                used to obtain work function and z coordinate/direction.
             T (float): Temperature in Kelvin for the emitter; determines
                 velocities. If not specified the temperature of the conductor
                 will be used.
-            z (float): Position of the emitter along the z axis. If None, grab
-                zcent from the conductor.
-            zsign (float): -1 for the cathode, +1 for the anode, or None to
-                grab automatically from the conductor.
             xmin (float): Minimum position of the rectangular emitter along x.
                 Default mwxrun.xmin.
             xmax (float): Maximum position of the rectangular emitter along x.
@@ -1158,6 +1151,104 @@ class ZPlaneEmitter(Emitter):
         x, y, z = mwxutil.get_positions(
             npart, xmin=self.bounds[0], xmax=self.bounds[1],
             ymin=self.bounds[2], ymax=self.bounds[3], z=self.z,
+            rseed=rseedx)
+
+        # Flip z velocities for anode emission. This appears to be faster than
+        # an if statement for 10000 or fewer particles.
+        vz = -self.zsign * vz
+
+        if rseed is not None:
+            np.random.set_state(nprstate)
+
+        return x, y, z, vx, vy, vz
+
+    def get_normals(self, x, y, z):
+        """Calculate local surface normal at specified coordinates.
+
+        Arguments:
+            x (np.ndarray): x-coordinates of emitted particles (in meters).
+            y (np.ndarray): y-coordinates of emitted particles (in meters).
+            z (np.ndarray): z-coordinates of emitted particles (in meters).
+
+        Returns:
+            normals (np.ndarray): nx3 array containing the outward surface
+                normal vector at each particle location.
+        """
+        normals = np.zeros((len(x), 3))
+        normals[:, 2] = -self.zsign
+        return normals
+
+
+class ZDiscEmitter(Emitter):
+
+    """This injects over an x-y disc rather than a rectangle."""
+    geoms = ['RZ']
+
+    def __init__(self, conductor, T, inner_emission_radius=None,
+                 outer_emission_radius=None, transverse_fac=1.0, **kwargs):
+        """Initialize an emitter for a disc (circular) cathode.
+
+        Arguments:
+            conductor (:class:`mewarpx.assemblies.Assembly`): Conductor object,
+                used to obtain work function and z coordinate/direction.
+            T (float): Temperature in Kelvin for the emitter; determines
+                velocities.
+            inner_emission_radius (float): Inner radius of the disc (in meters)
+                for particles to be emitted from. Default mwxrun.rmin.
+            outer_emission_radius (float): Outer radius of the disc (in meters)
+                for particles to be emitted from. Default mwxrun.rmax.
+            transverse_fac (float): Scale the transverse energy distribution by
+                this factor. Default 1. See
+                :func:`mewarpx.utils_store.util.get_velocities` for details.
+            kwargs (dict): Any other keyword arguments supported by the parent
+                Emitter constructor (such as "emission_type").
+
+        Notes:
+            The center of the disc is always x = y = 0 at present.
+        """
+        # Default initialization
+        super(ZDiscEmitter, self).__init__(T=T, conductor=conductor, **kwargs)
+
+        self.z = conductor.z
+        self.zsign = conductor.zsign
+        self.transverse_fac = transverse_fac
+
+        # Save input parameters
+        if inner_emission_radius is None:
+            inner_emission_radius = mwxrun.rmin
+        self.inner_emission_radius = inner_emission_radius
+        if outer_emission_radius is None:
+            outer_emission_radius = mwxrun.rmax
+        self.outer_emission_radius = outer_emission_radius
+
+        self.area = (np.pi
+            * (self.outer_emission_radius**2 - self.inner_emission_radius**2))
+
+        # Compute cell count
+        self.cell_count = (
+            (self.outer_emission_radius - self.inner_emission_radius)
+            / mwxrun.dr
+        )
+
+    def _get_xv_coords(self, npart, m, rseed):
+        """Get particle coordinates given particle number.
+        See :func:`mewarpx.emission.BaseEmitter.get_newparticles` for details.
+        """
+        if rseed is not None:
+            nprstate = np.random.get_state()
+            np.random.seed(rseed)
+            rseedv = np.random.randint(1000000000)
+            rseedx = np.random.randint(1000000000)
+        else:
+            rseedv = None
+            rseedx = None
+
+        vx, vy, vz = mwxutil.get_velocities(
+            npart, self.T, m=m, transverse_fac=self.transverse_fac,
+            emission_type=self.emission_type, rseed=rseedv)
+        x, y, z = mwxutil.get_positions_RZ(
+            npart, rmin=self.inner_emission_radius,
+            rmax=self.outer_emission_radius, z=self.z,
             rseed=rseedx)
 
         # Flip z velocities for anode emission. This appears to be faster than
@@ -1461,21 +1552,82 @@ class VolumeEmitter(BaseEmitter):
     """Parent class for volumetric particle injection coordinates.
 
         - ``volume`` gives the spatial volume in m^3
-        - ``_get_xv_coords()`` implements the subclass-specific particle
+        - ``_get_x_coords()`` implements the subclass-specific particle
           injection logic
     """
 
     volume = 0
+    geoms = ['Z', 'XZ', 'RZ', 'XYZ']
 
-    def __init__(self, T):
-        """Default initialization for all Emitter objects.
+    def __init__(self, T, xmin=None, xmax=None, ymin=None, ymax=None,
+                 zmin=None, zmax=None, rmin=None, rmax=None):
+        """Initialize emitter boundaries. A rectangular or cylindrical emitter
+        volume is supported. If x & y boundaries are specified the r boundaries
+        will be ignored and vice versa. If both x & y and r boundaries are
+        specified an AttributeError will be raised. If no boundaries are given
+        the simulation geometry and boundaries will be used.
 
         Arguments:
             T (float): Emitter temperature in Kelvin. Determines particle
                 velocity distribution.
+            x/y/z/rmin (float): Lower boundary of the volume.
+            x/y/z/rmax (float): Upper boundary of the volume.
         """
         super(VolumeEmitter, self).__init__()
         self.T = T
+
+        # determine default prism type from simulation geometry
+        self.rectangular = mwxrun.geom_str != 'RZ'
+
+        # check if a different volume was specified
+        r_bounds_given = (rmin is not None or rmax is not None)
+        xy_bounds_given = (
+            xmin is not None or xmax is not None or ymin is not None or
+            ymax is not None
+        )
+
+        if r_bounds_given and xy_bounds_given:
+            raise AttributeError(
+                "Both rectangular and cylindrical boundaries specified for a "
+                "VolumeEmitter"
+            )
+        if r_bounds_given:
+            self.rectangular = False
+        if xy_bounds_given:
+            self.rectangular = True
+
+        self.bounds = np.zeros((3, 2))
+        if self.rectangular:
+            for ii, (lim, defaultlim) in enumerate(
+                zip([xmin, xmax, ymin, ymax, zmin, zmax],
+                    [mwxrun.xmin, mwxrun.xmax, mwxrun.ymin,
+                     mwxrun.ymax, mwxrun.zmin, mwxrun.zmax])
+            ):
+                if lim is None:
+                    lim = defaultlim
+                self.bounds[ii // 2, ii % 2] = lim
+
+            self.volume = np.prod(self.bounds[:, 1] - self.bounds[:, 0])
+
+        # handle cylindrical case
+        else:
+            for ii, (lim, defaultlim) in enumerate(
+                zip([rmin, rmax, 0, 2.0*np.pi, zmin, zmax],
+                    [mwxrun.rmin, mwxrun.rmax, 0, 2.0*np.pi,
+                     mwxrun.zmin, mwxrun.zmax])
+            ):
+                if lim is None:
+                    lim = defaultlim
+                self.bounds[ii // 2, ii % 2] = lim
+
+            self.volume = (
+                np.pi * (self.bounds[0, 1]**2 - self.bounds[0, 0]**2)
+                * (self.bounds[2, 1] - self.bounds[2, 0])
+            )
+
+        # Note the negation here will catch nans, checking <= 0 won't.
+        if not (self.volume > 0):
+            raise RuntimeError("Invalid warpX geometry limits.")
 
     def getvoltage(self):
         """Ideally this is probably the local potential, but default to 0."""
@@ -1484,40 +1636,6 @@ class VolumeEmitter(BaseEmitter):
     def getvoltage_e(self):
         """Ideally this is probably the local potential, but default to 0."""
         return self.getvoltage()
-
-
-class CartesianVolumeEmitter(VolumeEmitter):
-
-    """VolumeEmitter with bounds specified by x/y/z rectangular prism.
-
-    A template ``_get_xv_coords()`` is also provided but can be overridden if
-    needed. It calls ``_get_x_coords()``.
-    """
-
-    # RZ support should probably take into account the R wall, so we don't list
-    # it as supported.
-    geoms = ['Z', 'XZ', 'XYZ']
-
-    def __init__(self, T, xmin=None, xmax=None, ymin=None, ymax=None,
-                 zmin=None, zmax=None):
-        """Initialize emitter boundaries."""
-        super(CartesianVolumeEmitter, self).__init__(T=T)
-
-        self.bounds = np.zeros((3, 2))
-        for ii, (lim, defaultlim) in enumerate(
-            zip([xmin, xmax, ymin, ymax, zmin, zmax],
-                [mwxrun.xmin, mwxrun.xmax, mwxrun.ymin,
-                 mwxrun.ymax, mwxrun.zmin, mwxrun.zmax])
-        ):
-            if lim is None:
-                lim = defaultlim
-            self.bounds[ii // 2, ii % 2] = lim
-
-        self.volume = np.prod(self.bounds[:, 1] - self.bounds[:, 0])
-
-        # Note the negation here will catch nans, checking <= 0 won't.
-        if not (self.volume > 0):
-            raise RuntimeError("Invalid warpX geometry limits.")
 
     def _get_xv_coords(self, npart, m, rseed):
         """Get velocities and call specialized function for position."""
@@ -1543,9 +1661,9 @@ class CartesianVolumeEmitter(VolumeEmitter):
         )
 
 
-class UniformDistributionVolumeEmitter(CartesianVolumeEmitter):
+class UniformDistributionVolumeEmitter(VolumeEmitter):
 
-    """Inject particles uniformly throughout the simulation at a specified
+    """Inject particles uniformly throughout a given volume at a specified
     temperature.
     """
 
@@ -1554,15 +1672,30 @@ class UniformDistributionVolumeEmitter(CartesianVolumeEmitter):
 
         rseed, if used, is handled by the parent function.
         """
-        xyz_pos = [
-            np.random.uniform(self.bounds[ii, 0], self.bounds[ii, 1],
-                              npart)
-            for ii in range(3)
-        ]
+        if self.rectangular:
+            xyz_pos = [
+                np.random.uniform(self.bounds[ii, 0], self.bounds[ii, 1],
+                                  npart)
+                for ii in range(3)
+            ]
+
+        # handle cylindrical case
+        else:
+            r = np.sqrt(np.random.uniform(
+                self.bounds[0, 1]**2, self.bounds[0, 0]**2, npart
+            ))
+            theta = np.random.uniform(self.bounds[1, 0], self.bounds[1, 1],
+                                      npart)
+            xyz_pos = [
+                r * np.cos(theta), r * np.sin(theta),
+                np.random.uniform(self.bounds[2, 0], self.bounds[2, 1],
+                                  npart)
+            ]
+
         return np.array(xyz_pos).T
 
 
-class ZSinDistributionVolumeEmitter(CartesianVolumeEmitter):
+class ZSinDistributionVolumeEmitter(VolumeEmitter):
 
     """Vary density in z as a half-period sin wave."""
 
@@ -1571,8 +1704,22 @@ class ZSinDistributionVolumeEmitter(CartesianVolumeEmitter):
 
         rseed, if used, is handled by the parent function.
         """
-        xpos = np.random.uniform(self.bounds[0, 0], self.bounds[0, 1], npart)
-        ypos = np.random.uniform(self.bounds[1, 0], self.bounds[1, 1], npart)
+        if self.rectangular:
+            xpos = np.random.uniform(self.bounds[0, 0], self.bounds[0, 1],
+                                     npart)
+            ypos = np.random.uniform(self.bounds[1, 0], self.bounds[1, 1],
+                                     npart)
+
+        # handle cylindrical case
+        else:
+            r = np.sqrt(np.random.uniform(
+                self.bounds[0, 1]**2, self.bounds[0, 0]**2, npart
+            ))
+            theta = np.random.uniform(self.bounds[1, 0], self.bounds[1, 1],
+                                      npart)
+            xpos = r * np.cos(theta)
+            ypos = r * np.sin(theta)
+
         z_random_draw = np.random.random(npart)
         zpos = (
             np.arccos(1 - 2.0*z_random_draw) / np.pi

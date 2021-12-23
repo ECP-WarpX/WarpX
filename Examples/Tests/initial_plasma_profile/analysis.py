@@ -8,7 +8,9 @@
 
 import os
 import sys
+
 import yt
+
 yt.funcs.mylog.setLevel(50)
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')

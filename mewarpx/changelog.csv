@@ -1,10 +1,37 @@
 Version, Physics version, Date,        List of changes
-2.1.12, 2, In progress, "
+3.0.0, 2, In progress, "
+
+**Features**:
+
+- Added 1D and RZ simulation capabilities.
+- :class:`mewarpx.emission.UniformDistributionVolumeEmitter` and
+  :class:`mewarpx.emission.ZSinDistributionVolumeEmitter` were extended to allow
+  seeding in either a rectangular or cylindrical volume.
+- Added :class:`mewarpx.emission.ZDiscEmitter` to inject from a circular
+  electrode.
+- Added :func:`mewarpx.utils_store.util.get_positions_RZ` to randomly sample
+  positions in `RZ`.
+
+**API Changes**:
+
+- :func:`mewarpx.mwxrun.MEWarpXRun.init_grid` now takes arrays of simulation
+  bounds and cell numbers.
+- :class:`mewarpx.setups_store.diode_setup.DiodeRun_V1` no longer requires
+  parameters ``dim`` and ``rz``, instead these are collected from the ``mwxrun``
+  object.
+
+**Other changes**:
+
+- circleCI and docker builds now compile for 1D, 2D and RZ simulations.
+- Added a 1D example file for the Turner benchmarks.
+- Merge ``upstream/development`` (git hash ``f73b3cd``) into memaster.
+"
+2.1.12, 2, 12/22/2021, "
 
 **Features**:
 
 - Added ability to write to a `results.txt` file that is created when a
-  simulation successfully terminates
+  simulation successfully terminates.
 "
 2.0.12, 2, 12/21/2021, "
 

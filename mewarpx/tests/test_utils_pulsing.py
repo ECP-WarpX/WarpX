@@ -1,9 +1,11 @@
 """Test utility to create voltage pulses."""
 import os
+
 import numpy as np
 from pywarpx import picmi
 
 from mewarpx.utils_store import util as mwxutil
+
 
 def test_utils_pulsing_expr():
 
@@ -24,10 +26,10 @@ def test_utils_pulsing_sim():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
+    from mewarpx import assemblies, mespecies
     from mewarpx.mwxrun import mwxrun
     from mewarpx.poisson_pseudo_1d import PoissonSolverPseudo1D
-    from mewarpx import assemblies, mespecies
-    from mewarpx.utils_store import testing_util, pulsing
+    from mewarpx.utils_store import pulsing, testing_util
 
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
@@ -56,7 +58,7 @@ def test_utils_pulsing_sim():
     # grid, solver and timesteps
     #####################################
 
-    mwxrun.init_grid(xmin, xmax, zmin, zmax, nx, nz)
+    mwxrun.init_grid([xmin, zmin], [xmax, zmax], [nx, nz])
 
     solver = PoissonSolverPseudo1D(grid=mwxrun.grid)
 

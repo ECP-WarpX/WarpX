@@ -19,11 +19,11 @@ COMP version:  9.3.0
 C++ compiler:  /usr/bin/c++
 C++ flags:     -I/home/kzhu/Documents/repos/warpx/Source -O3 -DNDEBUG
 
-Fortran comp:  
-Fortran flags: 
+Fortran comp:
+Fortran flags:
 
-Link flags:    
-Libraries:     
+Link flags:
+Libraries:
 
 WarpX  git describe: 21.12-221-g6e70533eb7cc-dirty
 AMReX  git describe: 21.12-7-g60fe729fe2ba
@@ -34,7 +34,7 @@ AMReX  git describe: 21.12-7-g60fe729fe2ba
 ==============================================================================
  level: 0
    number of boxes = 16
-   maximum zones   = 64 64 
+   maximum zones   = 64 64
 
  Boundary conditions
    -x: interior

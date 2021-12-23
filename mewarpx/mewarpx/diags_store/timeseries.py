@@ -2,8 +2,8 @@ from builtins import object
 import collections
 import math
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy import ndimage
 
 

@@ -3,7 +3,6 @@ a set of user defined criteria
 """
 import logging
 import os
-import sys
 
 from mewarpx.diags_store.diag_base import WarpXDiagnostic
 from mewarpx.mwxrun import mwxrun
@@ -83,7 +82,8 @@ class SimControl:
         return True
 
     def check_criteria(self):
-        """Return True if all installed criteria are True, else False."""
+        """Return True if all installed criteria are True, else False.
+        Simulation should terminate if False."""
         all_good = True
         terminate_statement = 'SimControl: Termination from criteria: '
         for i, criteria in enumerate(self.crit_list):

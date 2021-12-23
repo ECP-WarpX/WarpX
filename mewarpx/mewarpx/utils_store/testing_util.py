@@ -2,15 +2,16 @@
 Utility functions for pytest in mewarpx. Make sure to import after
 init_libwarpx is run!
 """
+import logging
 import os
 import random
-import logging
-import pandas
-import numpy as np
 
-from mewarpx.utils_store import util as mwxutil
-from mewarpx.mwxrun import mwxrun
 from mpi4py import MPI
+import numpy as np
+import pandas
+
+from mewarpx.mwxrun import mwxrun
+from mewarpx.utils_store import util as mwxutil
 
 logger = logging.getLogger(__name__)
 

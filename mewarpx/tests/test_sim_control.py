@@ -1,7 +1,9 @@
-import numpy as np
 import os
 
+import numpy as np
+
 from mewarpx.utils_store import util as mwxutil
+
 
 def test_write_results():
     dim = 2
@@ -10,10 +12,10 @@ def test_write_results():
 
     mwxutil.init_libwarpx(ndim=dim, rz=use_rz)
 
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.diags_store.diag_base import WarpXDiagnostic
-    from mewarpx.setups_store import diode_setup
     from mewarpx import sim_control
+    from mewarpx.diags_store.diag_base import WarpXDiagnostic
+    from mewarpx.mwxrun import mwxrun
+    from mewarpx.setups_store import diode_setup
     from mewarpx.utils_store import testing_util
 
 
@@ -35,8 +37,6 @@ def test_write_results():
     DT = 1.0 / (400 * FREQ)
 
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
-        rz=use_rz,
         V_ANODE_CATHODE=VOLTAGE,
         V_ANODE_EXPRESSION="%.1f*sin(2*pi*%.5e*t)" % (VOLTAGE, FREQ),
         D_CA=D_CA,
@@ -48,8 +48,6 @@ def test_write_results():
         SEED_NPPC=10,
         NX=NX,
         NZ=NZ,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
         DT=DT,
         TOTAL_TIMESTEPS=STEPS,
     )

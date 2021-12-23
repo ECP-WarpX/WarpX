@@ -4,6 +4,7 @@ plots from the post processed yt data from the picmi.ParticleDiagnostics
 """
 
 import os
+
 import numpy as np
 import pytest
 
@@ -17,9 +18,9 @@ def test_particle_diag():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
 
     test_name = "particle_diag_test_with_post_processing"
 
@@ -50,7 +51,6 @@ def test_particle_diag():
     DIAG_PLOT_DATA_LIST = ["particle_position_x", "particle_momentum_x"]
 
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
         V_ANODE_CATHODE=VOLTAGE,
@@ -60,7 +60,6 @@ def test_particle_diag():
         NPPC=50,
         NX=NX,
         NZ=NZ,
-        PERIOD=D_CA * NX / NZ,
         DT=DT,
         TOTAL_TIMESTEPS=max_steps,
         DIAG_STEPS=diag_steps,

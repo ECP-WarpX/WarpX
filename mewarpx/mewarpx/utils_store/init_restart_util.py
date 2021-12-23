@@ -1,9 +1,9 @@
 """
 Utility functions to start a run from a checkpoint or restart.
 """
+import logging
 import os
 import shutil
-import logging
 
 logger = logging.getLogger(__name__)
 

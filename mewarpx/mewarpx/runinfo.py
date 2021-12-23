@@ -6,19 +6,18 @@ a later time.
 import collections
 import copy
 import datetime
+from functools import reduce
 import logging
 import os
 import platform
 import subprocess
 
 import dill
-import mewarpx
 import numpy as np
 
-import mewarpx.utils_store.util as mwxutil
-
+import mewarpx
 from mewarpx.mwxrun import mwxrun
-from functools import reduce
+import mewarpx.utils_store.util as mwxutil
 
 logger = logging.getLogger(__name__)
 

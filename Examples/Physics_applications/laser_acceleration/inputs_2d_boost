@@ -7,7 +7,7 @@ amr.n_cell =  128 1024
 amr.max_grid_size = 64
 amr.blocking_factor = 32
 amr.max_level = 0
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 2
 # physical domain
 geometry.prob_lo     = -128.e-6   -40.e-6
 geometry.prob_hi     =  128.e-6     0.96e-6

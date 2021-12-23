@@ -23,14 +23,16 @@
 # tolerance: 0.001
 # Possible running time: ~ 30.0 s
 
-import sys
-import yt
-import math
-import numpy
-import os
 import glob
+import math
+import os
 import re
+import sys
+
+import numpy
 import post_processing_utils
+import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

@@ -1,7 +1,8 @@
-import os
-import pytest
 import logging
+import os
+
 import numpy as np
+import pytest
 
 from mewarpx.utils_store import util as mwxutil
 
@@ -26,7 +27,6 @@ def get_run():
 
     # Initialize and import only when we know dimension
     run = diode_setup.DiodeRun_V1(
-        dim=2,
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
         V_ANODE_CATHODE=VOLTAGE,
@@ -34,8 +34,6 @@ def get_run():
         NPPC=4,
         NX=NX,
         NZ=NZ,
-        # This gives equal spacing in x & z
-        PERIOD=D_CA * NX / NZ,
         DT=DT,
         TOTAL_TIMESTEPS=MAX_STEPS,
         DIAG_STEPS=DIAG_STEPS,
@@ -63,8 +61,8 @@ def get_run():
 def test_create_checkpoints():
 
     mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.mwxrun import mwxrun
     from mewarpx.diags_store.checkpoint_diagnostic import CheckPointDiagnostic
+    from mewarpx.mwxrun import mwxrun
     from mewarpx.utils_store import testing_util
 
     testing_util.initialize_testingdir("test_create_checkpoints")
@@ -96,8 +94,8 @@ def test_create_checkpoints():
 def test_create_checkpoints_with_fluxdiag():
 
     mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.mwxrun import mwxrun
     from mewarpx.diags_store.checkpoint_diagnostic import CheckPointDiagnostic
+    from mewarpx.mwxrun import mwxrun
     from mewarpx.utils_store import testing_util
 
     testing_util.initialize_testingdir("test_create_checkpoints_with_fluxdiag")
@@ -244,8 +242,8 @@ def test_extra_steps_after_restart():
 def test_checkpoints_fluxdiag():
 
     mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.mwxrun import mwxrun
     from mewarpx.diags_store.flux_diagnostic import FluxDiagFromFile
+    from mewarpx.mwxrun import mwxrun
     from mewarpx.utils_store import testing_util
 
     testing_util.initialize_testingdir("test_checkpoints_fluxdiag")

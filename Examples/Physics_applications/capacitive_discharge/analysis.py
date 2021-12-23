@@ -8,6 +8,7 @@
 # rather than the iterative approach from the MLMG solver.
 
 import sys
+
 sys.path.append('../../../../warpx/Regression/Checksum/')
 
 import checksumAPI

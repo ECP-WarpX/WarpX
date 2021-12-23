@@ -3,6 +3,7 @@
 import numpy as np
 import yt
 
+
 def check_restart(filename, tolerance = 1e-12):
     """
     Compare output data generated from initial run with output data generated after restart.

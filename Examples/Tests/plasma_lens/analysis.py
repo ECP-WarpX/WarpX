@@ -15,11 +15,13 @@ The final positions are compared to the analytic solutions.
 The motion is slow enough that relativistic effects are ignored.
 """
 
-import sys
 import os
-import yt
+import sys
+
 import numpy as np
-from scipy.constants import e, m_e, c
+from scipy.constants import c, e, m_e
+import yt
+
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI

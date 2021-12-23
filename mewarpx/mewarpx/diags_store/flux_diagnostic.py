@@ -1,20 +1,19 @@
 import collections
 import copy
-import os
+import glob
 import logging
+import os
 
 import dill
 import matplotlib.pyplot as plt
 import numba
 import numpy as np
 import pandas
-import glob
+from pywarpx import callbacks, libwarpx
 
+from mewarpx.diags_store import diag_base, timeseries
 from mewarpx.mwxrun import mwxrun
 import mewarpx.utils_store.util as mwxutil
-from mewarpx.diags_store import diag_base, timeseries
-
-from pywarpx import callbacks, libwarpx
 
 logger = logging.getLogger(__name__)
 

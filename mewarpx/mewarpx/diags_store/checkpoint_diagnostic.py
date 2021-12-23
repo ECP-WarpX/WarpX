@@ -1,14 +1,13 @@
 """Class for installing a checkpoint diagnostic"""
-import shutil
+import logging
 import os
-
-from mewarpx.mwxrun import mwxrun
-from mewarpx.diags_store.diag_base import WarpXDiagnostic
-from mewarpx.utils_store import init_restart_util
+import shutil
 
 from pywarpx import callbacks, picmi
 
-import logging
+from mewarpx.diags_store.diag_base import WarpXDiagnostic
+from mewarpx.mwxrun import mwxrun
+from mewarpx.utils_store import init_restart_util
 
 logger = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ import sys
 
 from mewarpx.utils_store import mwxlogging
 
-from ._version import __version__, __version_info__, __physics_version__
+from ._version import __physics_version__, __version__, __version_info__
 
 __author__ = 'Modern Electron <peter.scherpelz@modernelectron.com>'
 __all__ = []

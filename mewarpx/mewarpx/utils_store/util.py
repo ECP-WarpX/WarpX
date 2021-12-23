@@ -1,15 +1,14 @@
 """
 Utility functions for mewarpx.
 """
+import collections
 import errno
 import inspect
+import logging
 import os
 import warnings
-import collections
-import logging
 
 import numpy as np
-
 from pywarpx import geometry
 
 import mewarpx
@@ -84,9 +83,10 @@ def init_libwarpx(ndim, rz):
         ndim (int): Number of dimensions. Ignored for RZ.
         rz (bool): True for RZ simulations, else False.
     """
-    geometry.coord_sys = 1 if rz else 0
+    geometry.dims = 'RZ' if rz else str(ndim)
     geometry.prob_lo = [0]*ndim
     import pywarpx._libwarpx
+
     # This just quiets linters like pyflakes by using the otherwise-unused
     # variable
     assert pywarpx._libwarpx
@@ -210,8 +210,49 @@ def get_positions(num_samples, xmin, xmax, ymin=0, ymax=0, z=0,
         np.random.seed(rseed)
 
     # Random x and y positions
-    x = xmin + (xmax - xmin) * np.random.rand(num_samples)
-    y = ymin + (ymax - ymin) * np.random.rand(num_samples)
+    x = np.random.uniform(xmin, xmax, num_samples)
+    y = np.random.uniform(ymin, ymax, num_samples)
+    z = np.ones_like(x) * z
+
+    if rseed is not None:
+        np.random.set_state(nprstate)
+
+    return x, y, z
+
+
+def get_positions_RZ(num_samples, rmin, rmax, theta_min=0, theta_max=(2*np.pi),
+                     z=0, rseed=None):
+    """Provide random samples of [x, y, z] for electrons in simulation.
+    Positions are uniformly distributed in r. In z, positions are
+    placed at the emitter.
+
+    Arguments:
+        num_samples (int): Number of particles to generate positions for
+        rmin (float): Min position in r (meters)
+        rmax (float): Max position in r (meters)
+        theta_min (float): Min angle (radians)
+        theta_max (float): Max angle (radians)
+        z (float): Position of the emitter on the z-axis (meters)
+        rseed (positive int): If specified, seed the random number generator.
+            Used for testing. The random number generator is set back at the
+            end of the function.
+
+    Returns:
+        positions (np.ndarray): Array of shape (num_samples, 3) with positions.
+    """
+    if rseed is not None:
+        nprstate = np.random.get_state()
+        np.random.seed(rseed)
+
+    # Random r and theta positions
+    r = np.sqrt(np.random.uniform(rmin**2, rmax**2, num_samples))
+    theta = np.random.uniform(theta_min, theta_max, num_samples)
+
+    # Transform to x and y
+    x = r * np.cos(theta)
+    y = r * np.sin(theta)
+
+    # Fixed z
     z = np.ones_like(x) * z
 
     if rseed is not None:

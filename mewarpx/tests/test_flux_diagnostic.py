@@ -1,8 +1,9 @@
+import logging
 import os
+import re
+
 import numpy as np
 import pandas
-import re
-import logging
 
 from mewarpx.utils_store import util as mwxutil
 
@@ -13,8 +14,8 @@ def test_timeseries():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.utils_store import testing_util
     from mewarpx.diags_store import timeseries
+    from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
@@ -50,10 +51,11 @@ def test_injector_flux_diagnostic():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.mwxrun import mwxrun
     import dill
+
+    from mewarpx.mwxrun import mwxrun
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
@@ -95,7 +97,6 @@ def test_injector_flux_diagnostic():
         NX=NX,
         NZ=NZ,
         DIRECT_SOLVER=DIRECT_SOLVER,
-        PERIOD=D_CA * NX / NZ,
         DT=DT,
         TOTAL_TIMESTEPS=max_steps,
         DIAG_STEPS=diag_steps,
@@ -150,10 +151,10 @@ def test_flux_diag_accuracy(caplog):
     caplog.set_level(logging.INFO)
     name = "FluxDiagRun"
     mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.mwxrun import mwxrun
     from mewarpx.diags_store import flux_diagnostic
+    from mewarpx.mwxrun import mwxrun
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
 
     testing_util.initialize_testingdir(name)
 
@@ -184,7 +185,6 @@ def test_flux_diag_accuracy(caplog):
 
     # Run with relatively large bias to have stronger signals.
     run = diode_setup.DiodeRun_V1(
-        dim=2,
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
         V_ANODE_CATHODE=4.,
@@ -195,7 +195,6 @@ def test_flux_diag_accuracy(caplog):
         NX=NX,
         NZ=NZ,
         DIRECT_SOLVER=DIRECT_SOLVER,
-        PERIOD=D_CA * NX / NZ,
         DT=DT,
         TOTAL_TIMESTEPS=max_steps,
         DIAG_STEPS=diag_steps,

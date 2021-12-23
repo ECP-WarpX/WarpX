@@ -1,6 +1,7 @@
 """Test functionality in mewarpx.emission.py"""
 import collections
 import os
+
 from matplotlib.pyplot import plot
 import numpy as np
 import pandas
@@ -15,10 +16,9 @@ def test_thermionic_emission():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
-
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
     import mewarpx.utils_store.mwxconstants as constants
 
     # Include a random run number to allow parallel runs to not collide.  Using
@@ -34,15 +34,10 @@ def test_thermionic_emission():
     DIAG_INTERVAL = 5e-10 # s
     DT = 0.5e-12 # s
 
-    P_INERT = 1 # torr
-    T_INERT = 300 # K
-
     D_CA = 5e-4 # m
     VOLTAGE = 25 # V
     CATHODE_TEMP = 1100 + 273.15 # K
     CATHODE_PHI = 2.1 # work function in eV
-    NX = 8
-    NZ = 128
 
     DIRECT_SOLVER = True
 
@@ -55,13 +50,10 @@ def test_thermionic_emission():
         CATHODE_PHI=CATHODE_PHI,
         V_ANODE_CATHODE=VOLTAGE,
         D_CA=D_CA,
-        P_INERT=P_INERT,
-        T_INERT=T_INERT,
         NPPC=50,
-        NX=NX,
-        NZ=NZ,
+        NX=8,
+        NZ=128,
         DIRECT_SOLVER=DIRECT_SOLVER,
-        PERIOD=D_CA * NX / NZ,
         DT=DT,
         TOTAL_TIMESTEPS=max_steps,
         DIAG_STEPS=diag_steps,
@@ -77,12 +69,11 @@ def test_thermionic_emission():
     mwxrun.simulation.step(max_steps)
 
     net_rho_grid = mwxrun.get_gathered_rho_grid(include_ghosts=False)[:, :, 0]
+    # np.save('thermionic_emission.npy', net_rho_grid)
     ref_path = os.path.join(testing_util.test_dir,
                             "thermionic_emission",
                             "thermionic_emission.npy")
-
-    # slice the reference data to just get the non ghost cells
-    ref_rho_grid = np.load(ref_path)[2:11, 2:131]
+    ref_rho_grid = np.load(ref_path)
 
     assert np.allclose(net_rho_grid, ref_rho_grid, rtol=1e-4)
 
@@ -93,10 +84,9 @@ def test_thermionic_emission_with_Schottky():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
     from mewarpx.mwxrun import mwxrun
-
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
     import mewarpx.utils_store.mwxconstants as constants
 
     # Include a random run number to allow parallel runs to not collide.  Using
@@ -112,15 +102,10 @@ def test_thermionic_emission_with_Schottky():
     DIAG_INTERVAL = 5e-10 # s
     DT = 0.5e-12 # s
 
-    P_INERT = 1 # torr
-    T_INERT = 300 # K
-
     D_CA = 5e-4 # m
     VOLTAGE = 25 # V
     CATHODE_TEMP = 1100 + 273.15 # K
     CATHODE_PHI = 2.1 # work function in eV
-    NX = 8
-    NZ = 128
 
     DIRECT_SOLVER = True
 
@@ -128,19 +113,15 @@ def test_thermionic_emission_with_Schottky():
     diag_steps = int(DIAG_INTERVAL / DT)
 
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
         USE_SCHOTTKY=True,
         V_ANODE_CATHODE=VOLTAGE,
         D_CA=D_CA,
-        P_INERT=P_INERT,
-        T_INERT=T_INERT,
         NPPC=50,
-        NX=NX,
-        NZ=NZ,
+        NX=8,
+        NZ=128,
         DIRECT_SOLVER=DIRECT_SOLVER,
-        PERIOD=D_CA * NX / NZ,
         DT=DT,
         TOTAL_TIMESTEPS=max_steps,
         DIAG_STEPS=diag_steps,
@@ -165,14 +146,81 @@ def test_thermionic_emission_with_Schottky():
     assert np.allclose(net_rho_grid, ref_rho_grid, rtol=5e-4)
 
 
+def test_thermionic_emission_disc_rz():
+    name = "thermionicEmissionDiscRZ"
+    dim = 2
+
+    # Initialize and import only when we know dimension
+    mwxutil.init_libwarpx(ndim=dim, rz=True)
+    from mewarpx.mwxrun import mwxrun
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
+    import mewarpx.utils_store.mwxconstants as constants
+
+    # Include a random run number to allow parallel runs to not collide.  Using
+    # python randint prevents collisions due to numpy rseed below
+    testing_util.initialize_testingdir(name)
+
+    # Initialize each run with consistent, randomly-chosen, rseed, Use a random
+    # seed instead for initial dataframe generation.
+    # np.random.seed()
+    np.random.seed(47239475)
+
+    TOTAL_TIME = 1e-10 # s
+    DIAG_INTERVAL = 5e-10 # s
+    DT = 0.5e-12 # s
+
+    D_CA = 5e-4 # m
+    VOLTAGE = 25 # V
+    CATHODE_TEMP = 1100 + 273.15 # K
+    CATHODE_PHI = 2.1 # work function in eV
+
+    DIRECT_SOLVER = False
+
+    max_steps = int(TOTAL_TIME / DT)
+    diag_steps = int(DIAG_INTERVAL / DT)
+
+    run = diode_setup.DiodeRun_V1(
+        CATHODE_TEMP=CATHODE_TEMP,
+        CATHODE_PHI=CATHODE_PHI,
+        V_ANODE_CATHODE=VOLTAGE,
+        D_CA=D_CA,
+        NPPC=50,
+        NX=8,
+        NZ=128,
+        DIRECT_SOLVER=DIRECT_SOLVER,
+        DT=DT,
+        TOTAL_TIMESTEPS=max_steps,
+        DIAG_STEPS=diag_steps,
+        DIAG_INTERVAL=DIAG_INTERVAL
+    )
+    # Only the functions we change from defaults are listed here
+    run.setup_run(
+        init_conductors=True,
+        init_scraper=False,
+        init_warpx=True
+    )
+
+    mwxrun.simulation.step(max_steps)
+
+    net_rho_grid = mwxrun.get_gathered_rho_grid(include_ghosts=False)[:, :, 0]
+    # np.save("thermionic_emission_disc_rz.npy", net_rho_grid)
+    ref_path = os.path.join(testing_util.test_dir,
+                            "thermionic_emission",
+                            "thermionic_emission_disc_rz.npy")
+    ref_rho_grid = np.load(ref_path)
+
+    assert np.allclose(net_rho_grid, ref_rho_grid)
+
+
 def test_circle_emitter():
     name = "circleEmitter"
     mwxutil.init_libwarpx(ndim=2, rz=False)
     from pywarpx import picmi
-    from mewarpx import assemblies, emission, mespecies
-    from mewarpx.utils_store import testing_util
 
+    from mewarpx import assemblies, emission, mespecies
     from mewarpx.mwxrun import mwxrun
+    from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
@@ -192,7 +240,10 @@ def test_circle_emitter():
         WF=1.2, name='circle'
     )
 
-    mwxrun.init_grid(0, 0.6, 0, 1, 20, 20, min_tiles=4)
+    mwxrun.init_grid(
+        lower_bound=[0, 0], upper_bound=[0.6, 1], number_of_cells=[20, 20],
+        min_tiles=4
+    )
     solver = picmi.ElectrostaticSolver(
         grid=mwxrun.grid, method='Multigrid', required_precision=1e-6
     )
@@ -244,10 +295,10 @@ def test_rectangle_emitter():
     name = "rectangleEmitter"
     mwxutil.init_libwarpx(ndim=2, rz=False)
     from pywarpx import picmi
-    from mewarpx import assemblies, emission, mespecies
-    from mewarpx.utils_store import testing_util
 
+    from mewarpx import assemblies, emission, mespecies
     from mewarpx.mwxrun import mwxrun
+    from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
@@ -271,7 +322,10 @@ def test_rectangle_emitter():
         center_x=0.2, center_z=0.4, length_x=0.2, length_z =0.4, V=0,
         T=T_rectangle, WF=1.2, name="rectangle")
 
-    mwxrun.init_grid(0, 0.6, 0, 1, 20, 20, min_tiles=4)
+    mwxrun.init_grid(
+        lower_bound=[0, 0], upper_bound=[0.6, 1], number_of_cells=[20, 20],
+        min_tiles=4
+    )
     solver = picmi.ElectrostaticSolver(
         grid=mwxrun.grid, method='Multigrid', required_precision=1e-6
     )
@@ -322,12 +376,12 @@ def test_rectangle_emitter():
 def test_plasma_injector():
     name = "plasmainjector"
     mwxutil.init_libwarpx(ndim=2, rz=False)
-    from pywarpx import picmi, _libwarpx
-    from mewarpx import assemblies, emission
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
+    from pywarpx import _libwarpx, picmi
 
+    from mewarpx import assemblies, emission
     from mewarpx.mwxrun import mwxrun
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
@@ -338,7 +392,7 @@ def test_plasma_injector():
     np.random.seed(11874889)
 
     run = diode_setup.DiodeRun_V1(
-        dim=2, PERIOD=0.8e-06*256, D_CA=0.8e-06*256, DT=1e-12,
+        PERIOD=0.8e-06*256, D_CA=0.8e-06*256, DT=1e-12,
         TOTAL_TIMESTEPS=3
     )
 
@@ -448,11 +502,11 @@ def test_plasma_injector_fixedT2():
     name = "plasmainjector_fixedT2"
     mwxutil.init_libwarpx(ndim=2, rz=False)
     from pywarpx import _libwarpx
-    from mewarpx import emission
-    from mewarpx.utils_store import testing_util
-    from mewarpx.setups_store import diode_setup
 
+    from mewarpx import emission
     from mewarpx.mwxrun import mwxrun
+    from mewarpx.setups_store import diode_setup
+    from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
@@ -463,7 +517,7 @@ def test_plasma_injector_fixedT2():
     np.random.seed(11874889)
 
     run = diode_setup.DiodeRun_V1(
-        dim=2, PERIOD=0.8e-06*256, D_CA=0.8e-06*256, DT=1e-12,
+        PERIOD=0.8e-06*256, D_CA=0.8e-06*256, DT=1e-12,
         TOTAL_TIMESTEPS=3
     )
 

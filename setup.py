@@ -1,14 +1,14 @@
-import os
-import re
-import sys
-import platform
-import shutil
-import subprocess
-
-from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext
 from distutils.command.build import build
 from distutils.version import LooseVersion
+import os
+import platform
+import re
+import shutil
+import subprocess
+import sys
+
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
 
 
 class CopyPreBuild(build):
@@ -76,6 +76,11 @@ class CMakeBuild(build_ext):
 
         r_dim = re.search(r'warpx_(1|2|3|rz)(?:d*)', ext.name)
         dims = r_dim.group(1).upper()
+
+        if dims == 'RZ':
+            WARPX_EB = 'OFF'
+        else:
+            WARPX_EB = 'ON'
 
         cmake_args = [
             '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' +
@@ -184,7 +189,7 @@ env = os.environ.copy()
 WARPX_COMPUTE = env.pop('WARPX_COMPUTE', 'OMP')
 WARPX_MPI = env.pop('WARPX_MPI', 'OFF')
 WARPX_EB = env.pop('WARPX_EB', 'OFF')
-WARPX_OPENPMD = env.pop('WARPX_OPENPMD', 'OFF')
+WARPX_OPENPMD = env.pop('WARPX_OPENPMD', 'ON')
 WARPX_PRECISION = env.pop('WARPX_PRECISION', 'DOUBLE')
 WARPX_PSATD = env.pop('WARPX_PSATD', 'OFF')
 WARPX_QED = env.pop('WARPX_QED', 'ON')
