@@ -20,10 +20,12 @@ case rigid injection is OFF (i.e., the beam starts expanding from -5 microns),
 in which case a warning is raised.
 '''
 
-import sys
-import yt
-import numpy as np
 import os
+import sys
+
+import numpy as np
+import yt
+
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI

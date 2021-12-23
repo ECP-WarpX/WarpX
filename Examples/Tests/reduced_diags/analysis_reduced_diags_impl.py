@@ -11,13 +11,16 @@
 # Various particle and field quantities are written to file using the reduced diagnostics
 # and compared with the corresponding quantities computed from the data in the plotfiles.
 
-import sys
-import yt
-import numpy as np
 import os
-from scipy.constants import c, m_e, m_p
-from scipy.constants import mu_0 as mu0
+import sys
+
+import numpy as np
+from scipy.constants import c
 from scipy.constants import epsilon_0 as eps0
+from scipy.constants import m_e, m_p
+from scipy.constants import mu_0 as mu0
+import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

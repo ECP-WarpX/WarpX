@@ -7,12 +7,16 @@
 # License: BSD-3-Clause-LBNL
 
 import sys
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-import numpy as np
 import os
+
+import numpy as np
 import yt
+
 yt.funcs.mylog.setLevel(50)
 import re
+
 import checksumAPI
 from scipy.constants import c
 

@@ -71,7 +71,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_OPENPMD=ON -DWarpX_MPI_THREAD_MULTIPLE=OFF
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_MPI_THREAD_MULTIPLE=OFF
    cmake --build build -j 16
 
 The other :ref:`general compile-time options <install-developers>` apply as usual.

@@ -18,10 +18,12 @@ checks that, after the laser went through the plasma, ~32% of Nitrogen
 ions are N5+, in agreement with theory from Chen's article.
 """
 
-import sys
-import yt
-import numpy as np
 import os
+import sys
+
+import numpy as np
+import yt
+
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI

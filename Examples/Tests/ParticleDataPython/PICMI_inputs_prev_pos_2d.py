@@ -3,7 +3,6 @@
 # --- Input file to test the saving of old particle positions
 
 import numpy as np
-import pywarpx
 from pywarpx import picmi
 
 constants = picmi.constants
@@ -110,10 +109,10 @@ sim.step(max_steps - 1)
 # exist
 ##########################
 
-assert (pywarpx.get_particle_comp_index('electrons', 'prev_x') > 0)
-assert (pywarpx.get_particle_comp_index('electrons', 'prev_z') > 0)
+assert (sim.extension.get_particle_comp_index('electrons', 'prev_x') > 0)
+assert (sim.extension.get_particle_comp_index('electrons', 'prev_z') > 0)
 
-prev_z_vals = pywarpx.get_particle_arrays(
+prev_z_vals = sim.extension.get_particle_arrays(
     'electrons', 'prev_z', 0
 )
 for z_vals in prev_z_vals:

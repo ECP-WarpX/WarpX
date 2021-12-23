@@ -13,10 +13,10 @@
 
 # Possible running time: ~ 19 s
 
-import numpy as np
-
-import yt
 import glob
+
+import numpy as np
+import yt
 
 files = sorted(glob.glob('dirichletbc_plt*'))[1:]
 if len(files) == 0:

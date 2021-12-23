@@ -700,23 +700,9 @@ public:
                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
                      amrex::Real const required_precision=amrex::Real(1.e-11),
-                     amrex::Real const absolute_tolerance=amrex::Real(0.0),
+                     amrex::Real absolute_tolerance=amrex::Real(0.0),
                      const int max_iters=200,
                      const int verbosity=2) const;
-    void computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                       std::array<amrex::Real, 3> const beta,
-                       amrex::Real const required_precision,
-                       amrex::Real absolute_tolerance,
-                       int const max_iters,
-                       int const verbosity) const;
-    void computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                       std::array<amrex::Real, 3> const beta,
-                       amrex::Real const required_precision,
-                       amrex::Real absolute_tolerance,
-                       int const max_iters,
-                       int const verbosity) const;
 
     void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    amrex::Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_lo,
@@ -1132,6 +1118,7 @@ private:
     int pml_has_particles = 0;
     int do_pml_j_damping = 0;
     int do_pml_in_domain = 0;
+    static int do_similar_dm_pml;
     bool do_pml_dive_cleaning; // default set in WarpX.cpp
     bool do_pml_divb_cleaning; // default set in WarpX.cpp
     amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
