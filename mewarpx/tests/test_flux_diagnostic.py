@@ -107,7 +107,7 @@ def test_injector_flux_diagnostic():
     # Only the functions we change from defaults are listed here
     run.setup_run(
         init_conductors=True,
-        init_scraper=False,
+        init_scraper=True,
         init_runinfo=True,
         init_fluxdiag=True,
         init_warpx=True

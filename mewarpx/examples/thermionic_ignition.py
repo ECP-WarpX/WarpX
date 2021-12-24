@@ -117,17 +117,17 @@ injector = emission.ThermionicInjector(emitter=emitter, species=electrons,
                                        T=CATHODE_TEMP, WF=CATHODE_PHI,
                                        A=CATHODE_A)
 
-#################################
-# simulation setup
-################################
-
-mwxrun.init_run()
-
 ####################################
 # Add ME diagnostic
 ###################################
 
 diag_base.TextDiag(diag_steps=diag_steps, preset_string='perfdebug')
+
+#################################
+# simulation setup
+################################
+
+mwxrun.init_run()
 
 ##################################
 # Simulation run

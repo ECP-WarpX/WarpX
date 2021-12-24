@@ -111,10 +111,9 @@ def test_create_checkpoints_with_fluxdiag():
         DIAG_STEPS, CHECKPOINT_NAME, clear_old_checkpoints=True
     )
 
-    mwxrun.init_run(restart=False)
-
     run.init_runinfo()
     run.init_fluxdiag()
+    mwxrun.init_run(restart=False)
 
     checkpoint.flux_diag = run.fluxdiag
 
@@ -255,13 +254,13 @@ def test_checkpoints_fluxdiag():
 
     run.init_injectors()
 
+    run.init_runinfo()
+    run.init_fluxdiag()
+
     mwxrun.init_run(
         restart=True,
         checkpoint_dir=os.path.join(testing_util.test_dir, "checkpoint"),
     )
-
-    run.init_runinfo()
-    run.init_fluxdiag()
 
     # Run the main WarpX loop
     mwxrun.simulation.step()
@@ -276,6 +275,12 @@ def test_checkpoints_fluxdiag():
     # compare injected flux from the restarted history with the original history
     flux_key = ('inject', 'cathode', 'electrons')
     for key in ['J', 'P', 'n']:
+        # if key == 'J':
+        #     continue
         old = original_flux.fullhist_dict[flux_key].get_timeseries_by_key(key)
         new = run.fluxdiag.fullhist_dict[flux_key].get_timeseries_by_key(key)
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        print(f"The key is {key}")
+        print(f"old: \n {old}")
+        print(f"new: \n {new}")
         assert np.allclose(old, new)

@@ -55,6 +55,7 @@ class MEWarpXRun(object):
         self.simulation = picmi.Simulation(verbose=0)
         # make a shorthand for simulation.extension since we use it a lot
         self.sim_ext = self.simulation.extension
+        # this will be the first after init function to be called
         callbacks.installafterinit(self._after_init)
         # grab the simulation geometry from simulation.extension
         self._set_geom_props()
@@ -549,8 +550,10 @@ mwxrun = MEWarpXRun()
 
 @atexit.register
 def exit_handler():
-    atexit.unregister(self.sim_ext.finalize)
-    self.sim_ext.finalize()
+    # unregister finalize here and call it directly so that the
+    # profileparser will have access to the TinyProfiler data
+    atexit.unregister(mwxrun.sim_ext.finalize)
+    mwxrun.sim_ext.finalize()
 
     if os.path.isfile("stdout.out") and mwxrun.me == 0:
         profileparser.main("stdout.out")

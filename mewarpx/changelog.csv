@@ -1,9 +1,18 @@
 Version, Physics version, Date,        List of changes
-3.0.1, 2, In progress, "
+4.0.0, 2, In progress, "
+
+**API Changes**:
+
+- All diagnostics now have to be installed before
+  :func:`mewarpx.mwxrun.MEWarpXRun.init_run` is called.
 
 **Other changes**:
 
 - Merge ``upstream/development`` (git hash ``3f6192c``) into memaster.
+- A sanity check,
+  :func:`mewarpx.diags_store.flux_diagnostic.FluxDiagnostic.check_scraping`,
+  was added to ensure that particles scraped on boundaries will be recorded in
+  the particle boundary buffer.
 "
 3.0.0, 2, 12/23/2021, "
 

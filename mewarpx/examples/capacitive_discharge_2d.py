@@ -132,12 +132,6 @@ class CapacitiveDischargeExample(object):
         )
 
         #######################################################################
-        # Initialize run and print diagnostic info                            #
-        #######################################################################
-
-        mwxrun.init_run()
-
-        #######################################################################
         # Add diagnostics                                                     #
         #######################################################################
 
@@ -152,6 +146,12 @@ class CapacitiveDischargeExample(object):
 
         # array to save ion density
         self.rho_array = np.zeros(self.NZ + 1)
+
+        #######################################################################
+        # Initialize run and print diagnostic info                            #
+        #######################################################################
+
+        mwxrun.init_run()
 
     def _get_rho_ions(self):
         rho_data = mwxrun.get_gathered_rho_grid('he_ions', False)

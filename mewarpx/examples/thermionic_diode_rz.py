@@ -61,9 +61,9 @@ def run_simulation(V_bias, steps, save_current):
     # Initialize WarpX and fluxdiags
     #################################
 
-    run.init_warpx()
     run.init_runinfo()
     run.init_fluxdiag()
+    run.init_warpx()
 
     #################################
     # Simulation run

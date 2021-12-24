@@ -668,12 +668,35 @@ class FluxDiagnostic(FluxDiagBase):
             **kwargs
         )
 
+        self.check_scraping()
+
         # if this run is from a restart, try to load flux data up to the
         # current point
-        if mwxrun.restart:
-            self._load_checkpoint_flux()
+        # mwxrun.restart isn't set until mwxrun.init_run is called, so the
+        # lambda function is needed here
+        callbacks.installafterinit(
+            lambda _=None: self._load_checkpoint_flux() if mwxrun.restart else None
+        )
 
         callbacks.installafterstep(self._flux_ana)
+
+    def check_scraping(self):
+        """Checks that particles scraping at the appropriate boundaries is
+        turned on when flux diagnostics are on."""
+        for surf_name, surface in self.surface_dict.items():
+            if isinstance(surface, list):
+                if len(surface) > 1:
+                    raise NotImplementedError("Distinct surfaces not supported")
+                surface = surface[0]
+            scrape_flag = (
+                f"save_particles_at_{surface.scraper_label.replace('_', '')}"
+            )
+            for sp in mwxrun.simulation.species:
+                if not getattr(sp, scrape_flag):
+                    logger.warn(
+                        f"{surface.scraper_label} scraping is turned off "
+                        f"for {sp.name} but {surf_name} requires it."
+                    )
 
     def _flux_ana(self):
         """Perform the calculation and processing of current data from the

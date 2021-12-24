@@ -67,11 +67,12 @@ class WarpXDiagnostic(object):
             raise ValueError("manual_timesteps and extended_interval_level "
                              "cannot be used together; one must be None.")
 
-        # handle creating the folder to save diagnostics
         if mwxrun.initialized:
-            self._create_diag_folder()
-        else:
-            callbacks.installafterinit(self._create_diag_folder)
+            raise RuntimeError("You must install all diagnostics before "
+                               "initializing warpx")
+
+        # handle creating the folder to save diagnostics
+        callbacks.installafterinit(self._create_diag_folder)
 
     def _create_diag_folder(self):
         """Helper function to create folder in which to save diagnostics. Child
@@ -142,9 +143,8 @@ class TextDiag(WarpXDiagnostic):
     """Output diagnostics every certain number of steps.
 
     Contains:
-        text_diag (function): Function to do the write-out, already inserted in
-        warp.installafterstep(). Use only if needed for a future reference in
-        script.
+        text_diag (function): Function to do the write-out. Use only if needed
+        for a future reference in script.
     """
 
     def __init__(self, diag_steps, preset_string='default',
@@ -183,12 +183,6 @@ class TextDiag(WarpXDiagnostic):
             kwargs: See :class:`mewarpx.mewarpx.diags_store.diag_base.WarpXDiagnostic`
                 for more timing options.
         """
-        # In warp we used a specific walltime counter it had
-        # (warp.top.steptime). Not sure what issues we'll hit just using time
-        # here.
-        self.prev_time = time.time()
-        self.start_time = self.prev_time
-        self.prev_step = mwxrun.get_it()
         self.defaults_dict = {
             'default': "Step #{step:6d}; {nplive:8d} particles",
             'perfdebug': ("Step #{step:6d}; {nplive:8d} particles "
@@ -211,8 +205,19 @@ class TextDiag(WarpXDiagnostic):
 
         super(TextDiag, self).__init__(diag_steps=diag_steps, **kwargs)
 
+        callbacks.installafterinit(self.init_timers_and_counters)
+
         if install:
             callbacks.installafterstep(self.text_diag)
+
+    def init_timers_and_counters(self):
+        """Start timers."""
+        # In warp we used a specific walltime counter it had
+        # (warp.top.steptime). Not sure what issues we'll hit just using time
+        # here.
+        self.prev_time = time.time()
+        self.start_time = self.prev_time
+        self.prev_step = mwxrun.get_it()
 
         self.particle_steps_total = 0
         self.previous_particle_steps_total = 0

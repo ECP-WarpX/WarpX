@@ -260,12 +260,12 @@ class DiodeRun_V1(object):
             self.init_particle_diag()
         if init_injectors:
             self.init_injectors()
-        if init_warpx:
-            self.init_warpx()
         if init_runinfo:
             self.init_runinfo()
         if init_fluxdiag:
             self.init_fluxdiag()
+        if init_warpx:
+            self.init_warpx()
 
     def init_base(self):
         logger.info("### Init Diode Base Setup ###")
@@ -564,7 +564,6 @@ class DiodeRun_V1(object):
                 "ANODE_PHI": self.ANODE_PHI
             },
         )
-        self.runinfo.save()
 
     def init_fluxdiag(self):
         logger.info("### Init Diode FluxDiag ###")

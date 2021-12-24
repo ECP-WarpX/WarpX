@@ -14,6 +14,7 @@ import subprocess
 
 import dill
 import numpy as np
+from pywarpx import callbacks
 
 import mewarpx
 from mewarpx.mwxrun import mwxrun
@@ -187,10 +188,13 @@ class RunInfo(SimInfo):
         self._reserved_names = (["cathode_all", "anode_all",
                                  "aside", "aside_nodiel"] +
                                 [x + "_all" for x in self.component_list])
-        self._check_voltages_wfs(check_names=True)
+        callbacks.installafterinit(self._runinfo_after_init)
 
-        # Split out saving other stuff into functions
+    def _runinfo_after_init(self):
+        """Functions to run after warpx_init is called"""
+        self._check_voltages_wfs()
         self._save_sim_info()
+        self.save()
 
     def init_species(self, species_list):
         """Handle creation and checking of species-related data."""
@@ -253,31 +257,25 @@ class RunInfo(SimInfo):
                 user_var_dict[key] = copy.deepcopy(local_vars[key])
         return user_var_dict
 
-    def _check_voltages_wfs(self, check_names=False):
+    def _check_voltages_wfs(self):
         """Check that for each electrode, all voltages/WFs/names are present.
 
         Allows no WF present for dielectric and focus grids only. V and WF must
         be equal for all cathode shapes.
-
-        Arguments:
-            check_names (bool): If True, make sure names are not in
-                ``_reserved_names``, and update ``_reserved_names`` accordingly.
         """
         for component in self.surface_dict:
             for shape in self.surface_dict[component]:
                 if shape.name == '':
                     raise ValueError(f'No name assigned for shape {shape}')
-                if check_names:
-                    if shape.name in self._reserved_names:
-                        raise ValueError(
-                            f'Repeated or reserved name {shape.name} '
-                            f'used for shape {shape}'
-                        )
-                    self._reserved_names.append(shape.name)
-                if shape.WF == 0.0:
-                    raise ValueError(f'Work function for shape {shape.name}'
-                                     f'; assign WF to this shape.'
+                if shape.name in self._reserved_names:
+                    raise ValueError(
+                        f'Repeated or reserved name {shape.name} '
+                        f'used for shape {shape}'
                     )
+                self._reserved_names.append(shape.name)
+                if shape.WF == 0.0:
+                    raise ValueError(f'Work function for shape {shape.name} is '
+                                     f'0 eV; assign WF to this shape.')
                 if mwxrun.me == 0:
                     voltage = shape.getvoltage()
                     logger.info(
