@@ -64,6 +64,8 @@
 #include <vector>
 #include <sstream>
 
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+
 using namespace amrex;
 
 void
@@ -580,24 +582,42 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Ezfield_parser->compile<3>(),
                                                  m_edge_lengths[lev],
                                                  lev);
-       if (lev > 0) {
-          InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
-                                                    Efield_aux[lev][1].get(),
-                                                    Efield_aux[lev][2].get(),
-                                                    Exfield_parser->compile<3>(),
-                                                    Eyfield_parser->compile<3>(),
-                                                    Ezfield_parser->compile<3>(),
-                                                    m_edge_lengths[lev],
-                                                    lev);
 
-          InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
-                                                    Efield_cp[lev][1].get(),
-                                                    Efield_cp[lev][2].get(),
-                                                    Exfield_parser->compile<3>(),
-                                                    Eyfield_parser->compile<3>(),
-                                                    Ezfield_parser->compile<3>(),
-                                                    m_edge_lengths[lev],
-                                                    lev);
+#ifdef AMREX_USE_EB
+       //We initialize ECTRhofield consistently with the Efield
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+            m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_fp[lev], m_edge_lengths[lev],
+                                                m_face_areas[lev], ECTRhofield[lev], lev);
+
+        }
+#endif
+
+       if (lev > 0) {
+            InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
+                                                      Efield_aux[lev][1].get(),
+                                                      Efield_aux[lev][2].get(),
+                                                      Exfield_parser->compile<3>(),
+                                                      Eyfield_parser->compile<3>(),
+                                                      Ezfield_parser->compile<3>(),
+                                                      m_edge_lengths[lev],
+                                                      lev);
+
+            InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
+                                                      Efield_cp[lev][1].get(),
+                                                      Efield_cp[lev][2].get(),
+                                                      Exfield_parser->compile<3>(),
+                                                      Eyfield_parser->compile<3>(),
+                                                      Ezfield_parser->compile<3>(),
+                                                      m_edge_lengths[lev],
+                                                      lev);
+#ifdef AMREX_USE_EB
+           if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+               //We initialize ECTRhofield consistently with the Efield
+               m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
+                                                   m_face_areas[lev], ECTRhofield[lev], lev);
+
+           }
+#endif
        }
     }
 
