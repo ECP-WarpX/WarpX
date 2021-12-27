@@ -63,6 +63,7 @@ void FiniteDifferenceSolver::EvolveECTRho (
 #endif
 }
 
+#ifndef WARPX_DIM_RZ
 void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
@@ -154,3 +155,4 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     amrex::ignore_unused(Efield, edge_lengths, face_areas, ECTRhofield, lev);
 #endif
 }
+#endif
