@@ -55,7 +55,7 @@ def test_embedded_cylinder():
     )
 
     # Install the embedded boundary
-    cylinder = assemblies.Cylinder(
+    cylinder = assemblies.InfCylinderY(
         center_x=0.0, center_z=0.5, radius=0.1,
         V=-2.0, T=300, WF=4.7, name="Cylinder"
     )
@@ -203,11 +203,11 @@ def test_two_embedded_cylinders():
     )
 
     # Install the embedded boundaries
-    cylinder1 = assemblies.Cylinder(
+    cylinder1 = assemblies.InfCylinderY(
         center_x=-0.25, center_z=0.5, radius=0.1,
         V=-2.0, T=300, WF=4.7, name="Cylinder1"
     )
-    cylinder2 = assemblies.Cylinder(
+    cylinder2 = assemblies.InfCylinderY(
         center_x=0.25, center_z=0.5, radius=0.1,
         V=5.0, T=300, WF=4.7, name="Cylinder2"
     )
@@ -285,11 +285,11 @@ def test_two_embedded_cylinders_scraping():
     )
 
     # Install the embedded boundaries
-    cylinder1 = assemblies.Cylinder(
+    cylinder1 = assemblies.InfCylinderY(
         center_x=-0.25*D_CA, center_z=0.5*D_CA, radius=0.1*D_CA,
         V=-0.5, T=300, WF=4.7, name="Cylinder1"
     )
-    cylinder2 = assemblies.Cylinder(
+    cylinder2 = assemblies.InfCylinderY(
         center_x=0.25*D_CA, center_z=0.5*D_CA, radius=0.1*D_CA,
         V=0.2, T=300, WF=4.7, name="Cylinder2"
     )
@@ -343,3 +343,39 @@ def test_two_embedded_cylinders_scraping():
         'two_embedded_cylinders_rho.npy'
     ))
     assert np.allclose(rho, ref_rho)
+
+
+def test_infinite_cylinder_z():
+    name = "infinite_cylinder_z_scraping"
+    dim = 2
+
+    # Initialize and import only when we know dimension
+    mwxutil.init_libwarpx(ndim=dim, rz=True)
+
+    # Initialize and import only when we know dimension
+    from mewarpx.utils_store import testing_util
+
+    # Include a random run number to allow parallel runs to not collide. Using
+    # python randint prevents collisions due to numpy rseed below
+    testing_util.initialize_testingdir(name)
+
+    # Initialize each run with consistent, randomly-chosen, rseed.
+    np.random.seed(42147820)
+
+    import sys
+    sys.path.append(testing_util.example_dir)
+
+    from thermionic_diode_rz_cylinder import CylinderVacuumTEC
+
+    run = CylinderVacuumTEC(
+        V_ANODE_CATHODE=5.0, TOTAL_TIMESTEPS=1000, SAVE=True, USE_EB=True,
+        DIAG_STEPS=500
+    )
+    run.NR = 256
+
+    run.setup_run()
+    run.run_sim()
+
+    key = ('scrape', 'anode', 'electrons')
+    J_diode = run.fluxdiag.ts_dict[key].get_averagevalue_by_key('J')
+    assert np.isclose(J_diode, 1.5154551964454426)

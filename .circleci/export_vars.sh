@@ -8,3 +8,5 @@ export WARPX_QED=OFF
 export WARPX_EB=ON
 export CC=$(which clang)
 export CXX=$(which clang++)
+
+export SETUPTOOLS_USE_DISTUTILS=stdlib

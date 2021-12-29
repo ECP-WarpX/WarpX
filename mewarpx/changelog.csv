@@ -1,5 +1,34 @@
 Version, Physics version, Date,        List of changes
-4.0.0, 2, In progress, "
+5.0.0, 2, In progress, "
+
+**API Changes**:
+
+- The infinite cylinder directed along the y-axis assembly has been renamed to
+  ``InfCylinderY`` to distinguish it from the infinite cylinder directed along
+  the z-axis.
+
+**Features**:
+
+- A new assembly, :class:`mewarpx.assemblies.CylinderZ`, was added to
+  simulate a cylinder in RZ geometry.
+- A new emitter, :class:`mewarpx.emission.ZCylinderEmitter`, was added to
+  simulate emission from the walls of a cylinder.
+- A new emitter, :class:`mewarpx.emission.XPlaneEmitter`, was added to
+  simulate emission from a yz plane.
+
+**Other changes**:
+
+- Merge ``upstream/development`` (git hash ``5f8f8c8``) into memaster.
+- The electrostatic solver was updated to allow a Dirichlet BC at ``rmin`` for
+  RZ simulations if ``rmin != 0``.
+
+**Bugfixes**:
+
+- The default boundary condition at ``rmax`` for RZ simulations was set to be
+  Neumann, but the actual BC was hard coded to be Dirichlet with 0 V potential.
+  This has now been fixed.
+"
+4.0.0, 2, 12/23/2021, "
 
 **API Changes**:
 

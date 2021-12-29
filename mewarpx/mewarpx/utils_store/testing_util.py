@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 test_dir = os.path.join(mwxutil.mewarpx_dir, "../tests/test_files")
 temp_dir = os.path.join(mwxutil.mewarpx_dir, "../tests/temp_files")
 
+example_dir = os.path.join(mwxutil.mewarpx_dir, "../examples")
+
 
 def change_testing_dirs(new_temp_dir=None, new_test_dir=None):
     global test_dir
