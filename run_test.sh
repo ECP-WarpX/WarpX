@@ -68,17 +68,14 @@ python3 -m pip install --upgrade pip setuptools wheel
 export SETUPTOOLS_USE_DISTUTILS="stdlib"
 python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
 
-# Clone PICSAR, AMReX and warpx-data
+# Clone AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
 cd amrex && git checkout --detach 85284ea15a3c5ca7d6d8e3f1045ac1e5a48c6a19 && cd -
-# Use QED brach for QED tests
-git clone https://github.com/ECP-WarpX/picsar.git
-cd picsar && git checkout --detach 7b5449f92a4b30a095cc4a67f0a8b1fc69680e15 && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 
 # Clone the AMReX regression test utility
-git clone https://github.com/ECP-WarpX/regression_testing.git
+git clone https://github.com/AMReX-Codes/regression_testing.git
 
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks
