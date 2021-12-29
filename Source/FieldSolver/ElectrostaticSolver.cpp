@@ -666,12 +666,20 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
 #ifdef WARPX_DIM_RZ
     WarpX& warpx = WarpX::GetInstance();
     auto geom = warpx.Geom(0);
-    if (geom.ProbLo() == 0){
+    if (geom.ProbLo(0) == 0){
         lobc[0] = LinOpBCType::Neumann;
-        hibc[0] = LinOpBCType::Dirichlet;
         dirichlet_flag[0] = false;
-        dirichlet_flag[1] = true;
         dim_start = 1;
+
+        // handle the r_max boundary explicity
+        if (WarpX::field_boundary_hi[0] == FieldBoundaryType::PEC) {
+            hibc[0] = LinOpBCType::Dirichlet;
+            dirichlet_flag[1] = true;
+        }
+        else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::None) {
+            hibc[0] = LinOpBCType::Neumann;
+            dirichlet_flag[1] = false;
+        }
     }
 #endif
     for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
