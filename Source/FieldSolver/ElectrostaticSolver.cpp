@@ -243,12 +243,11 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
     phi_bc_values_lo[WARPX_ZINDEX] = field_boundary_handler.potential_zlo(gett_new(0));
     phi_bc_values_hi[WARPX_ZINDEX] = field_boundary_handler.potential_zhi(gett_new(0));
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#ifndef WARPX_DIM_1D_Z
     phi_bc_values_lo[0] = field_boundary_handler.potential_xlo(gett_new(0));
     phi_bc_values_hi[0] = field_boundary_handler.potential_xhi(gett_new(0));
-#elif defined(WARPX_DIM_3D)
-    phi_bc_values_lo[0] = field_boundary_handler.potential_xlo(gett_new(0));
-    phi_bc_values_hi[0] = field_boundary_handler.potential_xhi(gett_new(0));
+#endif
+#if defined(WARPX_DIM_3D)
     phi_bc_values_lo[1] = field_boundary_handler.potential_ylo(gett_new(0));
     phi_bc_values_hi[1] = field_boundary_handler.potential_yhi(gett_new(0));
 #endif
@@ -663,14 +662,17 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 
 void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
 {
+    int dim_start = 0;
 #ifdef WARPX_DIM_RZ
-    lobc[0] = LinOpBCType::Neumann;
-    hibc[0] = LinOpBCType::Dirichlet;
-    dirichlet_flag[0] = false;
-    dirichlet_flag[1] = false;
-    int dim_start=1;
-#else
-    int dim_start=0;
+    WarpX& warpx = WarpX::GetInstance();
+    auto geom = warpx.Geom(0);
+    if (geom.ProbLo() == 0){
+        lobc[0] = LinOpBCType::Neumann;
+        hibc[0] = LinOpBCType::Dirichlet;
+        dirichlet_flag[0] = false;
+        dirichlet_flag[1] = true;
+        dim_start = 1;
+    }
 #endif
     for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
         if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic

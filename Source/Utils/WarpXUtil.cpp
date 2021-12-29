@@ -698,11 +698,6 @@ void ReadBCParams ()
             }
         }
     }
-#ifdef WARPX_DIM_RZ
-    // Ensure code aborts if PEC is specified at r=0 for RZ
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
-        "Error : Field boundary at r=0 must be ``none``. \n");
-#endif
 
     // Appending periodicity information to input so that it can be used by amrex
     // to set parameters necessary to define geometry and perform communication
