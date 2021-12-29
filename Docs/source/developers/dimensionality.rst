@@ -19,6 +19,10 @@ Dimensions  CMake Option
 
 See :ref:`building from source <install-developers>` for further details.
 
+.. note::
+
+   Even if WarpX is build in another dimensionality, AMReX is always built with dimensionality of ``3``.
+
 Defines
 -------
 
@@ -32,7 +36,7 @@ Macro               3D3V         2D3V         1D3V         RZ
 ``WARPX_DIM_1D_Z``  *undefined*  *undefined*  **defined**  *undefined*
 ``WARPX_DIM_XZ``    *undefined*  **defined**  *undefined*  *undefined*
 ``WARPX_DIM_RZ``    *undefined*  *undefined*  *undefined*  **defined**
-``WARPX_ZINDEX``    ``2``        ``1``        ``0``        ``1``
+``WARPX_ZINDEX``    ``2``        ``2``        ``2``        ``2``
 ==================  ===========  ===========  ===========  ===========
 
 At the same time, the following conventions will apply:
@@ -42,8 +46,8 @@ At the same time, the following conventions will apply:
 --------------------  -----------  -----------  -----------  -----------
 *Fields*
 ------------------------------------------------------------------------
-AMReX Box dimensions  ``3``         ``2``       ``1``        ``2``
-WarpX axis labels     ``x, y, z``   ``x, z``    ``z``        ``x, z``
+AMReX Box dimensions  ``3``        ``3``        ``3``        ``3``
+WarpX axis labels     ``x, y, z``  ``x, y, z``  ``x, y, z``  ``x, y, z``
 --------------------  -----------  -----------  -----------  -----------
 *Particles*
 ------------------------------------------------------------------------
@@ -59,3 +63,5 @@ Conventions
 
 In 2D3V, we assume that the position of a particle in ``y`` is equal to ``0``.
 In 1D3V, we assume that the position of a particle in ``x`` and ``y`` is equal to ``0``.
+
+In 1D3V, 2D3V and RZ, the cell spacing (``dx``) of "unused" dimensions is set to ``1.0``.
