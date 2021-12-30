@@ -86,7 +86,7 @@ class CallbackFunctions(object):
         self.lcallonce = lcallonce
 
     def __call__(self,*args,**kw):
-        "Call all of the functions in the list"
+        """Call all of the functions in the list"""
         tt = self.callfuncsinlist(*args,**kw)
         self.time = self.time + tt
         if self.lcallonce: self.funcs = []
@@ -103,19 +103,19 @@ class CallbackFunctions(object):
         return self.hasfuncsinstalled()
 
     def __len__(self):
-        "Returns number of functions installed"
+        """Returns number of functions installed"""
         return len(self.funcs)
 
     def hasfuncsinstalled(self):
-        "Checks if there are any functions installed"
+        """Checks if there are any functions installed"""
         return len(self.funcs) > 0
 
     def _getmethodobject(self,func):
-        "For call backs that are methods, returns the method's instance"
+        """For call backs that are methods, returns the method's instance"""
         return func[0]
 
     def callbackfunclist(self):
-        "Generator returning callable functions from the list"
+        """Generator returning callable functions from the list"""
         funclistcopy = copy.copy(self.funcs)
         for f in funclistcopy:
             if isinstance(f,list):
@@ -151,7 +151,7 @@ class CallbackFunctions(object):
             yield result
 
     def installfuncinlist(self,f):
-        "Check if the specified function is installed"
+        """Check if the specified function is installed"""
         if len(self.funcs) == 0:
             # If this is the first function installed, set the callback in the C++
             # to call this class instance.
@@ -182,7 +182,7 @@ class CallbackFunctions(object):
             self.funcs.append(f)
 
     def uninstallfuncinlist(self,f):
-        "Uninstall the specified function"
+        """Uninstall the specified function"""
         # --- An element by element search is needed
         # --- f can be a function or method object, or a name (string).
         # --- Note that method objects can not be removed by name.
@@ -210,14 +210,14 @@ class CallbackFunctions(object):
 
         # check that a function was removed
         if len(self.funcs) == len(funclistcopy):
-            raise Exception('Warning: no such function had been installed')
+            raise Exception(f'Warning: no function, {f}, had been installed')
 
         # if there are no functions left, remove the C callback
         if not self.hasfuncsinstalled():
             self.clearlist()
 
     def isinstalledfuncinlist(self,f):
-        "Checks if the specified function is installed"
+        """Checks if the specified function is installed"""
         # --- An element by element search is needed
         funclistcopy = copy.copy(self.funcs)
         for func in funclistcopy:
@@ -233,7 +233,7 @@ class CallbackFunctions(object):
         return 0
 
     def callfuncsinlist(self,*args,**kw):
-        "Call the functions in the list"
+        """Call the functions in the list"""
         bb = time.time()
         for f in self.callbackfunclist():
             #barrier()
