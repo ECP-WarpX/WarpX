@@ -47,6 +47,14 @@ class Assembly(object):
         self.WF = WF
         self.name = name
 
+    def check_geom(self):
+        """Throw an error if the simulation geometry is unsupported by the
+        Assembly.
+        """
+        if mwxrun.geom_str not in self.geoms:
+            raise ValueError(
+                f"{geom} geometry not supported by this Assembly")
+
     def getvoltage(self):
         """Allows for time-dependent implementations to override this."""
         return mwxrun.eval_expression_t(self.V)
@@ -147,6 +155,8 @@ class Assembly(object):
             buffer_count = mwxrun.sim_ext.get_particle_boundary_buffer_size(
                 species.name, self.scraper_label
             )
+            # logger.info(f"{self.name} scraped {buffer_count} {species.name}")
+
             if buffer_count > 0:
                 # get the timesteps at which particles were scraped
                 comp_steps = mwxrun.sim_ext.get_particle_boundary_buffer(
@@ -173,6 +183,10 @@ class Assembly(object):
                         xpos = [struct['x'] for struct in structs]
                         ypos = [struct['y'] for struct in structs]
                         zpos = [struct['z'] for struct in structs]
+                    elif mwxrun.geom_str == 'RZ':
+                        xpos = [struct['x'] for struct in structs]
+                        ypos = [np.zeros(len(struct['y'])) for struct in structs]
+                        zpos = [struct['y'] for struct in structs]
                     else:
                         raise NotImplementedError(
                             f"Scraping not implemented for {mwxrun.geom_str}."
@@ -247,6 +261,7 @@ class Assembly(object):
 class ZPlane(Assembly):
 
     """A semi-infinite plane."""
+    geoms = ['RZ', 'X', 'XZ', 'XYZ']
 
     def __init__(self, z, zsign, V, T, WF, name):
         """Basic initialization.
@@ -266,35 +281,36 @@ class ZPlane(Assembly):
 
         self.zsign = int(round(zsign))
         if self.zsign not in [-1, 1]:
-            raise ValueError(f"self.zsign = {self.zsign} is not either -1 or 1.")
+            raise ValueError(f"self.zsign = {self.zsign} is not -1 or 1.")
 
 
 class Cathode(ZPlane):
     """A basic wrapper to define a semi-infinite plane for the cathode."""
 
     def __init__(self, V, T, WF):
-        self.scraper_label = 'z_lo'
         super(Cathode, self).__init__(
             z=0, zsign=-1, V=V, T=T, WF=WF, name="Cathode"
         )
         # set solver boundary potential
         mwxrun.grid.potential_zmin = self.V
-
+        # set label to correctly grab scraped particles from the buffer
+        self.scraper_label = 'z_lo'
 
 class Anode(ZPlane):
     """A basic wrapper to define a semi-infinite plane for the anode."""
 
     def __init__(self, z, V, T, WF):
-        self.scraper_label = 'z_hi'
         super(Anode, self).__init__(
             z=z, zsign=1, V=V, T=T, WF=WF, name="Anode"
         )
         # set solver boundary potential
         mwxrun.grid.potential_zmax = self.V
+        # set label to correctly grab scraped particles from the buffer
+        self.scraper_label = 'z_hi'
 
-
-class Cylinder(Assembly):
+class InfCylinderY(Assembly):
     """An infinitely long Cylinder pointing in the y-direction."""
+    geoms = ['XZ', 'XYZ']
 
     def __init__(self, center_x, center_z, radius, V, T, WF, name,
                  install_in_simulation=True):
@@ -313,7 +329,7 @@ class Cylinder(Assembly):
             install_in_simulation (bool): If True and the Assembly is an
                 embedded boundary it will be included in the WarpX simulation
         """
-        super(Cylinder, self).__init__(V=V, T=T, WF=WF, name=name)
+        super(InfCylinderY, self).__init__(V=V, T=T, WF=WF, name=name)
         self.center_x = center_x
         self.center_z = center_z
         self.radius = radius
@@ -335,9 +351,9 @@ class Cylinder(Assembly):
             X (np.ndarray): array of x coordinates of flattened grid.
             Y (np.ndarray): array of y coordinates of flattened grid.
             Z (np.ndarray): array of z coordinates of flattened grid.
-            aura (float): extra space around the conductor that is considered inside. Useful
-                for small, thin conductors that don't overlap any grid points. In
-                units of meters.
+            aura (float): extra space around the conductor that is considered
+                inside. Useful for small, thin conductors that don't overlap any
+                grid points. In units of meters.
 
         Returns:
             result (np.ndarray): array of flattened grid where all tiles
@@ -371,8 +387,151 @@ class Cylinder(Assembly):
         return nhat
 
 
+class CylinderZ(Assembly):
+    """A Cylinder pointing in the z-direction with center along the x and y
+    origin line (to support RZ)."""
+    geoms = ['RZ']
+
+    def __init__(self, V, T, WF, name, r_outer, r_inner=0.0, zmin=None,
+                 zmax=None):
+        """Basic initialization.
+
+        Arguments:
+            V (float): Voltage (V)
+            T (float): Temperature (K)
+            WF (float): Work function (eV)
+            name (str): Assembly name
+            r_outer (float): The outer radius of the cylinder (m)
+            r_inner (float): The inner radius of the cylinder (m)
+            zmin (float): Lower z limit of the cylinder (m). Defaults to
+                mwxrun.zmin.
+            zmax (float): Upper z limit of the cylinder (m). Defaults to
+                mwxrun.zmax.
+        """
+        super(CylinderZ, self).__init__(V=V, T=T, WF=WF, name=name)
+        self.r_inner = r_inner
+        self.r_outer = r_outer
+        self.r_center = (self.r_inner + self.r_outer) / 2.0
+
+        self.zmin = zmin
+        if self.zmin is None:
+            self.zmin = mwxrun.zmin
+        self.zmax = zmax
+        if self.zmax is None:
+            self.zmax = mwxrun.zmax
+
+        # check if z-limits span the full simulation domain
+        # if np.close(self.zmax, mwxrun.zmax) and np.close(self.zmin, mwxrun.zmin):
+        infinite_cyl = np.allclose(
+            [self.zmax - mwxrun.zmax, self.zmin - mwxrun.zmin], 0.)
+
+        self.center_x = 0.0
+        self.center_y = 0.0
+
+        # sanity check
+        if self.r_outer == 0:
+            raise AttributeError('Cannot have a cylinder with 0 outer radius.')
+
+        # check if the cylinder forms the simulation boundary
+        if np.isclose(self.r_inner, mwxrun.rmax):
+            if not infinite_cyl:
+                raise AttributeError(
+                    "CylinderZ on the simulation boundary must span the full "
+                    "z domain."
+                )
+            # set solver boundary potential
+            mwxrun.grid.potential_xmax = self.V
+            # set label to correctly grab scraped particles from the buffer
+            self.scraper_label = 'x_hi'
+        elif np.isclose(self.r_outer, mwxrun.rmin):
+            if not infinite_cyl:
+                raise AttributeError(
+                    "CylinderZ on the simulation boundary must span the full "
+                    "z domain."
+                )
+            # set solver boundary potential
+            mwxrun.grid.potential_xmin = self.V
+            # set label to correctly grab scraped particles from the buffer
+            self.scraper_label = 'x_lo'
+        else:
+            # handle the EB case
+            # a negative value of the implicit function means outside of object
+            if infinite_cyl:
+                # no z dependence since the cylinder is infinitely long
+                self.implicit_function = (
+                    f"-(abs(x-{self.r_center})-{self.r_outer - self.r_center})"
+                )
+            else:
+                self.implicit_function = (
+                    f"if(z>{self.zmin} and z<{self.zmax}, "
+                    f"-(abs(x-{self.r_center})-{self.r_outer - self.r_center}),"
+                    "-1.0)"
+                )
+            # set label to correctly grab scraped particles from the buffer
+            self.scraper_label = 'eb'
+            # install the EB in the simulation
+            self._install_in_simulation()
+
+    def isinside(self, X, Y, Z, aura=0):
+        """
+        Calculates which grid tiles are within the cylinder.
+
+        Arguments:
+            X (np.ndarray): array of x coordinates of flattened grid.
+            Y (np.ndarray): array of y coordinates of flattened grid.
+            Z (np.ndarray): array of z coordinates of flattened grid.
+            aura (float): extra space around the conductor that is considered
+                inside. Useful for small, thin conductors that don't overlap any
+                grid points. In units of meters.
+
+        Returns:
+            result (np.ndarray): array of flattened grid where all tiles
+                inside the cylinder are 1, and other tiles are 0.
+        """
+        dist_to_center = np.sqrt(
+            (X - self.center_x)**2 + (Y - self.center_y)**2
+        )
+        dr = self.r_outer + aura - self.r_center
+        result = np.where(abs(dist_to_center - self.r_center) <= dr, 1, 0)
+
+        return result
+
+    def calculatenormal(self, px, py, pz):
+        """
+        Calculates Normal of particle inside/outside of conductor to nearest
+        surface of conductor
+
+        Arguments:
+            px (np.ndarray): x-coordinate of particle in meters.
+            py (np.ndarray): y-coordinate of particle in meters.
+            pz (np.ndarray): z-coordinate of particle in meters.
+
+        Returns:
+            nhat (np.ndarray): Normal of particles of conductor to nearest
+                surface of conductor.
+        """
+        # distance from center of cylinder
+        dist = np.sqrt((px - self.center_x)**2 + (py - self.center_y)**2)
+        nhat = np.zeros([3, len(px)])
+        nhat[0, :] = (px - self.center_x) / dist
+        nhat[2, :] = (pz - self.center_z) / dist
+
+        # Flip the normal vector for points inside the cylinder inner wall,
+        # or inside the cylinder assembly but closer to the outer wall than the inner.
+        idx = np.where(
+            np.logical_or(
+                (dist < self.r_inner),
+                ((dist > self.r_center) & (dist < self.router))
+            )
+        )
+        nhat[:,idx] *= -1
+
+        return nhat
+
+
 class Rectangle(Assembly):
-    """A rectangle that sits on the xz plane"""
+    """A rectangular prism infinite in y."""
+    geoms = ['XZ', 'XYZ']
 
     def __init__(self, center_x, center_z, length_x, length_z, V, T, WF, name,
                  install_in_simulation=True):
@@ -403,11 +562,13 @@ class Rectangle(Assembly):
         self.zmax = float(center_z + length_z/2)
 
         self.scaled_h = (
-            2.0 * max(self.length_x, self.length_z) / min(self.length_x, self.length_z)
+            2.0 * max(self.length_x, self.length_z)
+            / min(self.length_x, self.length_z)
         )
 
-        # the regions change depending on whether x or z is longer, so we need to adjust
-        # the preset normals for these regions depending on the x and z lengths
+        # the regions change depending on whether x or z is longer, so we need
+        # to adjust the preset normals for these regions depending on the x and
+        # z lengths
         if self.length_x <= self.length_z:
             self.region_normals = np.array([
                 (0, -1), (1, 0), (0, 1), (-1, 0)
@@ -431,14 +592,19 @@ class Rectangle(Assembly):
     def calculatenormal(self, px, py, pz):
         """
         Calculates Normal of particle inside/outside of conductor to nearest
-        surface of conductor. Nearest surface of conductor is determined by the region
-        of the transformed rectangle that the transformed particle belongs to.
+        surface of conductor. Nearest surface of conductor is determined by the
+        region of the transformed rectangle that the transformed particle
+        belongs to.
 
         The 4 regions in order from 0 - 3 are:
-            0: bottom portion of transformed rectangle and below transformed rectangle (-y)
-            1: right portion of transformed rectangle and to the right of transformed rectangle (+x)
-            2: top portion of transformed rectangle and above transformed rectangle (+y)
-            3: left portion of transformed rectangle and to the left of transformed rectangle (-x)
+            0: bottom portion of transformed rectangle and below transformed
+               rectangle (-y)
+            1: right portion of transformed rectangle and to the right of
+               transformed rectangle (+x)
+            2: top portion of transformed rectangle and above transformed
+               rectangle (+y)
+            3: left portion of transformed rectangle and to the left of
+               transformed rectangle (-x)
 
         Arguments:
             px (np.ndarray): x-coordinate of particle in meters.
@@ -516,7 +682,10 @@ class Rectangle(Assembly):
         # c0 and c2 are True iff a particle is in region 0 or 2, respectively
         # not_c1 indicates a particle may be in regions 0, 2, or 3.
         c0 = np.array(points[:, 1] < -abs(points[:, 0]), dtype=int)
-        c2 = np.array(points[:, 1] - self.scaled_h + 2.0 > abs(points[:, 0]), dtype=int)
+        c2 = (
+            np.array(points[:, 1] - self.scaled_h + 2.0
+            > abs(points[:, 0]), dtype=int)
+        )
         not_c1 = np.array(points[:, 0] <= 0, dtype=int)
         # the booleans below form bit values to build up the index of the
         # region in which a given position lies.
@@ -536,17 +705,19 @@ class Rectangle(Assembly):
             X (np.ndarray): array of x coordinates of flattened grid.
             Y (np.ndarray): array of y coordinates of flattened grid.
             Z (np.ndarray): array of z coordinates of flattened grid.
-            aura (float): extra space around the conductor that is considered inside. Useful
-                for small, thin conductors that don't overlap any grid points. In
-                units of meters.
+            aura (float): extra space around the conductor that is considered
+                inside. Useful for small, thin conductors that don't overlap any
+                grid points. In units of meters.
 
         Returns:
             result (np.ndarray): array of flattened grid where all tiles
                 inside the rectangle are 1, and other tiles are 0.
         """
 
-        X_in_bounds = np.where(np.maximum(X-self.xmax-aura, self.xmin-aura-X) <= 0, 1, 0)
-        Z_in_bounds = np.where(np.maximum(Z-self.zmax-aura, self.zmin-aura-Z) <= 0, 1, 0)
+        X_in_bounds = np.where(
+            np.maximum(X-self.xmax-aura, self.xmin-aura-X) <= 0, 1, 0)
+        Z_in_bounds = np.where(
+            np.maximum(Z-self.zmax-aura, self.zmin-aura-Z) <= 0, 1, 0)
         result = np.where(X_in_bounds + Z_in_bounds > 1, 1, 0)
 
         return result

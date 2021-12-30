@@ -1134,6 +1134,7 @@ class ZPlaneEmitter(Emitter):
 
     def _get_xv_coords(self, npart, m, rseed):
         """Get particle coordinates given particle number.
+
         See :func:`mewarpx.emission.BaseEmitter.get_newparticles` for details.
         """
         if rseed is not None:
@@ -1179,12 +1180,148 @@ class ZPlaneEmitter(Emitter):
         return normals
 
 
+class XPlaneEmitter(Emitter):
+    """Injection for a planar cathode emitting from the simulation side."""
+
+    geoms = ['XZ', 'XYZ']
+
+    def __init__(self, conductor, T=None, x=None, ymin=None, ymax=None,
+                 zmin=None, zmax=None, transverse_fac=1.0, xdir=1, **kwargs):
+        """Initialize an emitter for a planar cathode.
+
+        Arguments:
+            conductor (:class:`mewarpx.assemblies.Assembly`): Conductor object,
+                used to obtain work function and z coordinate/direction.
+            T (float): Temperature in Kelvin for the emitter; determines
+                velocities. If not specified the temperature of the conductor
+                will be used.
+            x (float): Position of the emitter along the x axis. Default
+                conductor.x if it exists otherwise conductor.xmin/max depending
+                on xdir. If none of those attributes exist an error will be
+                raised if x is not specified.
+            ymin (float): Minimum position of the rectangular emitter along y.
+                Default conductor.ymin if it exists otherwise mwxrun.ymin.
+            ymax (float): Maximum position of the rectangular emitter along y.
+                Default conductor.ymax if it exists otherwise mwxrun.ymax.
+            zmin (float): Minimum position of the rectangular emitter along z.
+                Default conductor.zmin if it exists otherwise mwxrun.zmin.
+            zmax (float): Maximum position of the rectangular emitter along z.
+                Default conductor.zmax if it exists otherwise mwxrun.zmax.
+            transverse_fac (float): Scale the transverse energy distribution by
+                this factor. Default 1. See
+                :func:`mewarpx.utils_store.util.get_velocities` for details.
+            xdir (int): 1 to emit in +x, -1 to emit in -x.
+            kwargs (dict): Any other keyword arguments supported by the parent
+                Emitter constructor (such as "emission_type").
+        """
+        # Default initialization
+        super(XPlaneEmitter, self).__init__(T=T, conductor=conductor, **kwargs)
+
+        self.transverse_fac = transverse_fac
+        self.xdir = int(round(xdir))
+        if self.xdir not in [-1, 1]:
+            raise ValueError("xdir must be +1 or -1 for x-plane emitters.")
+
+        self.x = x
+        if self.x is None:
+            try:
+                self.x = conductor.x
+            except AttributeError:
+                try:
+                    if self.xdir == 1:
+                        attr = 'xmax'
+                    else:
+                        attr = 'xmin'
+                    self.x = getattr(conductor, attr)
+                except AttributeError:
+                    raise AttributeError(
+                        'x must be specified for x-plane emitter if the '
+                        f'attached conductor does not specify x or {attr}'
+                    )
+
+        # Determine bounds
+        # Will be 4 element array [ymin, ymax, zmin, zmax]
+        self.bounds = []
+        for boundstr in ['ymin', 'ymax', 'zmin', 'zmax']:
+            bound = locals()[boundstr]
+            if bound is None:
+                bound = (
+                    getattr(mwxrun, boundstr) if not hasattr(conductor, boundstr) else
+                    getattr(conductor, boundstr)
+                )
+            self.bounds.append(bound)
+
+        # Compute area
+        y_range = self.bounds[1] - self.bounds[0]
+        z_range = self.bounds[3] - self.bounds[2]
+        if self.solver_geom == 'XZ':
+            print("y span is 1m for purposes of charge injection")
+            y_range = 1.
+        self.area = y_range * z_range
+
+        # Compute cell count
+        if self.solver_geom == 'XZ':
+            self.cell_count = self.area / mwxrun.dz
+        else:
+            self.cell_count = self.area / (mwxrun.dz * mwxrun.dy)
+
+    def _get_xv_coords(self, npart, m, rseed):
+        """Get particle coordinates given particle number.
+
+        See :func:`mewarpx.emission.BaseEmitter.get_newparticles` for details.
+        """
+        if rseed is not None:
+            nprstate = np.random.get_state()
+            np.random.seed(rseed)
+            rseedv = np.random.randint(1000000000)
+            rseedx = np.random.randint(1000000000)
+        else:
+            rseedv = None
+            rseedx = None
+
+        # in sampling the positions and the velocities the x and z coordinates
+        # are swapped so that the same functions as for the ZPlaneEmitter can
+        # be used
+        vz, vy, vx = mwxutil.get_velocities(
+            npart, self.T, m=m, transverse_fac=self.transverse_fac,
+            emission_type=self.emission_type, rseed=rseedv)
+        z, y, x = mwxutil.get_positions(
+            npart, xmin=self.bounds[2], xmax=self.bounds[3],
+            ymin=self.bounds[0], ymax=self.bounds[1], z=self.x,
+            rseed=rseedx)
+
+        # Flip x velocities if needed. This appears to be faster than
+        # an if statement for 10000 or fewer particles.
+        vx = self.xdir * vx
+
+        if rseed is not None:
+            np.random.set_state(nprstate)
+
+        return x, y, z, vx, vy, vz
+
+    def get_normals(self, x, y, z):
+        """Calculate local surface normal at specified coordinates.
+
+        Arguments:
+            x (np.ndarray): x-coordinates of emitted particles (in meters).
+            y (np.ndarray): y-coordinates of emitted particles (in meters).
+            z (np.ndarray): z-coordinates of emitted particles (in meters).
+
+        Returns:
+            normals (np.ndarray): nx3 array containing the outward surface
+                normal vector at each particle location.
+        """
+        normals = np.zeros((len(x), 3))
+        normals[:, 0] = self.xdir
+        return normals
+
+
 class ZDiscEmitter(Emitter):
 
     """This injects over an x-y disc rather than a rectangle."""
     geoms = ['RZ']
 
-    def __init__(self, conductor, T, inner_emission_radius=None,
+    def __init__(self, conductor, T=None, inner_emission_radius=None,
                  outer_emission_radius=None, transverse_fac=1.0, **kwargs):
         """Initialize an emitter for a disc (circular) cathode.
 
@@ -1192,7 +1329,8 @@ class ZDiscEmitter(Emitter):
             conductor (:class:`mewarpx.assemblies.Assembly`): Conductor object,
                 used to obtain work function and z coordinate/direction.
             T (float): Temperature in Kelvin for the emitter; determines
-                velocities.
+                velocities. If not specified the temperature of the conductor
+                will be used.
             inner_emission_radius (float): Inner radius of the disc (in meters)
                 for particles to be emitted from. Default mwxrun.rmin.
             outer_emission_radius (float): Outer radius of the disc (in meters)
@@ -1232,6 +1370,7 @@ class ZDiscEmitter(Emitter):
 
     def _get_xv_coords(self, npart, m, rseed):
         """Get particle coordinates given particle number.
+
         See :func:`mewarpx.emission.BaseEmitter.get_newparticles` for details.
         """
         if rseed is not None:
@@ -1274,6 +1413,139 @@ class ZDiscEmitter(Emitter):
         """
         normals = np.zeros((len(x), 3))
         normals[:, 2] = -self.zsign
+        return normals
+
+
+class ZCylinderEmitter(Emitter):
+
+    """This injects over the side faces of a cylinder oriented along z."""
+    geoms = ['RZ', 'XYZ']
+
+    def __init__(self, conductor, T=None, zmin=None, zmax=None, rdir=1,
+                 transverse_fac=1.0, **kwargs):
+        """Initialize a 3D cylindrical emitter oriented along the z-axis.
+
+        Arguments:
+            conductor (:class:`mewarpx.assemblies.Assembly`): Conductor object,
+                used to obtain work function, coordinates and possibly
+                temperature.
+            T (float): Temperature in Kelvin for the emitter; determines
+                velocities. If not specified the temperature of the conductor
+                will be used.
+            zmin (float): Lower z-coordinate for emitting surface. Default
+                conductor.zmin if it exists otherwise mwxrun.zmin.
+            zmax (float): Upper z-coordinate for emitting surface. Default
+                conductor.zmax if it exists otherwise mwxrun.zmax.
+            rdir (float): 1 for emitting outward of the cylinder (will use
+                r_outer attribute of the conductor for the emitting surface),
+                -1 for emitting inward towards r = 0 (will use r_inner attribute
+                of the conductor for the emitting surface). Default 1.
+            transverse_fac (float): Scale the transverse energy distribution by
+                this factor. Default 1. See
+                :func:`mewarpx.utils_store.util.get_velocities` for details.
+            kwargs (dict): Any other keyword arguments supported by the parent
+                Emitter constructor (such as "emission_type").
+
+        Notes:
+            The center of the cylinder is always x = y = 0 at present.
+        """
+        # Default initialization
+        super(ZCylinderEmitter, self).__init__(T=T, conductor=conductor,
+                                               **kwargs)
+
+        self.zmin = zmin
+        if self.zmin is None:
+            if hasattr(conductor, 'zmin'):
+                self.zmin = conductor.zmin
+            else:
+                self.zmin = mwxrun.zmin
+        self.zmax = zmax
+        if self.zmax is None:
+            if hasattr(conductor, 'zmax'):
+                self.zmax = conductor.zmax
+            else:
+                self.zmax = mwxrun.zmax
+
+        self.rdir = int(round(rdir))
+        if self.rdir not in [-1, 1]:
+            raise ValueError("rdir must be +1 or -1 for z-cylinder emitters.")
+        if self.rdir == 1:
+            self.r = conductor.r_outer + 1e-10
+        else:
+            self.r = conductor.r_inner - 1e-10
+        self.transverse_fac = transverse_fac
+
+        # sanity check
+        if self.r <= 0:
+            raise AttributeError("Cannot emit from a cylinder with 0 radius.")
+
+        self.area = 2.0 * np.pi * self.r * (self.zmax - self.zmin)
+
+        # Compute cell count
+        if mwxrun.geom_str == 'RZ':
+            self.cell_count = (self.zmax - self.zmin) / mwxrun.dz
+        elif mwxrun.geom_str == 'XYZ':
+            self.cell_count = (
+                self.area
+                / min(mwxrun.dx * mwxrun.dy, mwxrun.dx * mwxrun.dz,
+                      mwxrun.dy * mwxrun.dz)
+            )
+
+    def _get_xv_coords(self, npart, m, rseed):
+        """Get particle coordinates given particle number.
+
+        See :func:`mewarpx.emission.BaseEmitter.get_newparticles` for details.
+        """
+        if rseed is not None:
+            nprstate = np.random.get_state()
+            np.random.seed(rseed)
+            # rseedv is passed to get velocities. The basic rseed here is used
+            # for positions, below.
+            rseedv = np.random.randint(1000000000)
+        else:
+            rseedv = None
+
+        theta = np.random.uniform(0.0, 2.0*np.pi, npart)
+        cos_theta = np.cos(theta)
+        sin_theta = np.sin(theta)
+
+        x = self.r * cos_theta
+        y = self.r * sin_theta
+        z = np.random.uniform(self.zmin, self.zmax, npart)
+
+        vz, v_trans, v_long = mwxutil.get_velocities(
+            npart, self.T, m=m, transverse_fac=self.transverse_fac,
+            emission_type=self.emission_type, rseed=rseedv)
+
+        # Flip the longitudinal velocity if needed. This appears to be faster
+        # than an if statement for 10000 or fewer particles.
+        v_long = self.rdir * v_long
+
+        vx = cos_theta * v_long - sin_theta * v_trans
+        vy = sin_theta * v_long + cos_theta * v_trans
+
+        if rseed is not None:
+            np.random.set_state(nprstate)
+
+        return x, y, z, vx, vy, vz
+
+    def get_normals(self, x, y, z):
+        """Calculate local surface normal at specified coordinates.
+
+        Arguments:
+            x (np.ndarray): x-coordinates of emitted particles (in meters).
+            y (np.ndarray): y-coordinates of emitted particles (in meters).
+            z (np.ndarray): z-coordinates of emitted particles (in meters).
+
+        Returns:
+            normals (np.ndarray): nx3 array containing the outward surface
+                normal vector at each particle location.
+        """
+        normals = np.zeros((len(x), 3))
+        # The normal is r-hat
+        r = np.sqrt(x**2 + y**2)
+        normals[:, 0] = x / r
+        normals[:, 1] = y / r
         return normals
 
 
@@ -1381,6 +1653,7 @@ class ArbitraryEmitter2D(Emitter):
 
     def _get_xv_coords(self, npart, m, rseed):
         """Get particle coordinates given particle number.
+
         See :func:`mewarpx.emitter.get_newparticles` for details.
         """
         if rseed is not None:
