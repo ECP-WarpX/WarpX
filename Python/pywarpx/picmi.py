@@ -410,8 +410,8 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         self.blocking_factor_x = kw.pop('warpx_blocking_factor_x', None)
         self.blocking_factor_y = kw.pop('warpx_blocking_factor_y', None)
 
-        self.potential_xmin = None
-        self.potential_xmax = None
+        self.potential_xmin = kw.pop('warpx_potential_lo_r', None)
+        self.potential_xmax = kw.pop('warpx_potential_hi_r', None)
         self.potential_ymin = None
         self.potential_ymax = None
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
