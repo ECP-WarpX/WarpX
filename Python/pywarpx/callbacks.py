@@ -92,13 +92,14 @@ class CallbackFunctions(object):
         if self.lcallonce: self.funcs = []
 
     def clearlist(self):
+        """Unregister/clear out all registered C callbacks"""
         self.funcs = []
         libwarpx.libwarpx_so.warpx_clear_callback_py(
             ctypes.c_char_p(self.name.encode('utf-8'))
         )
 
     def __bool__(self):
-        "Returns True if functions are installed, otherwise False"
+        """Returns True if functions are installed, otherwise False"""
         return self.hasfuncsinstalled()
 
     def __len__(self):
@@ -211,7 +212,7 @@ class CallbackFunctions(object):
         if len(self.funcs) == len(funclistcopy):
             raise Exception('Warning: no such function had been installed')
 
-        # if there are no functions left, remove the C++ callback
+        # if there are no functions left, remove the C callback
         if not self.hasfuncsinstalled():
             self.clearlist()
 
