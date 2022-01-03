@@ -117,6 +117,7 @@ public:
          int do_moving_window, int pml_has_particles, int do_pml_in_domain,
          const bool J_linear_in_time,
          const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
+         int max_guard_EB,
          const amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
          const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
 
@@ -128,6 +129,8 @@ public:
     std::array<amrex::MultiFab*,3> GetE_cp ();
     std::array<amrex::MultiFab*,3> GetB_cp ();
     std::array<amrex::MultiFab*,3> Getj_cp ();
+    std::array<amrex::MultiFab*,3> Get_edge_lengths ();
+    std::array<amrex::MultiFab*,3> Get_face_areas ();
 
     // Used when WarpX::do_pml_dive_cleaning = true
     amrex::MultiFab* GetF_fp ();
@@ -200,6 +203,9 @@ private:
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_B_fp;
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_j_fp;
 
+    std::array<std::unique_ptr<amrex::MultiFab>,3> pml_edge_lengths;
+    std::array<std::unique_ptr<amrex::MultiFab>,3> pml_face_areas;
+
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_E_cp;
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_B_cp;
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_j_cp;
@@ -218,6 +224,18 @@ private:
 #ifdef WARPX_USE_PSATD
     std::unique_ptr<SpectralSolver> spectral_solver_fp;
     std::unique_ptr<SpectralSolver> spectral_solver_cp;
+#endif
+
+    // Factory for field data
+    std::unique_ptr<amrex::FabFactory<amrex::FArrayBox> > pml_field_factory;
+
+    amrex::FabFactory<amrex::FArrayBox> const& fieldFactory () const noexcept {
+        return *pml_field_factory;
+    }
+#ifdef AMREX_USE_EB
+    amrex::EBFArrayBoxFactory const& fieldEBFactory () const noexcept {
+        return static_cast<amrex::EBFArrayBoxFactory const&>(*pml_field_factory);
+    }
 #endif
 
     static amrex::BoxArray MakeBoxArray (const amrex::Geometry& geom,

@@ -630,6 +630,11 @@ WarpX::ReadParameters ()
 
         do_electrostatic = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
 
+#if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_electrostatic!=ElectrostaticSolverAlgo::None,
+        "Currently, the embedded boundary in RZ only works for electrostatic solvers.");
+#endif
+
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
             // Note that with the relativistic version, these parameters would be
             // input for each species.
