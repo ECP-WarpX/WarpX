@@ -595,6 +595,9 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                  const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                  std::array<amrex::Real, 3> const beta ) const
 {
+    // return early if beta is 0 since there will be no B-field
+    if ((beta[0] == 0._rt) && (beta[1] == 0._rt) && (beta[2] == 0._rt)) return;
+
     for (int lev = 0; lev <= max_level; lev++) {
 
         const Real* dx = Geom(lev).CellSize();
