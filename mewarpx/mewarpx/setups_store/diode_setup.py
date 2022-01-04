@@ -572,7 +572,7 @@ class DiodeRun_V1(object):
             runinfo=self.runinfo,
             check_charge_conservation=self.CHECK_CHARGE_CONSERVATION,
             overwrite=False,
-            save_csv=True
+            save_csv=False
         )
 
     def init_field_diag(self):

@@ -53,6 +53,7 @@ def test_injector_flux_diagnostic():
     mwxutil.init_libwarpx(ndim=dim, rz=False)
     import dill
 
+    from mewarpx.diags_store import flux_diagnostic
     from mewarpx.mwxrun import mwxrun
     from mewarpx.setups_store import diode_setup
     from mewarpx.utils_store import testing_util
@@ -109,9 +110,18 @@ def test_injector_flux_diagnostic():
         init_conductors=True,
         init_scraper=True,
         init_runinfo=True,
-        init_fluxdiag=True,
-        init_warpx=True
+        init_fluxdiag=False,
+        init_warpx=False
     )
+
+    run.fluxdiag = flux_diagnostic.FluxDiagnostic(
+            diag_steps=run.DIAG_STEPS,
+            runinfo=run.runinfo,
+            check_charge_conservation=run.CHECK_CHARGE_CONSERVATION,
+            overwrite=False,
+            save_csv=True
+        )
+    run.init_warpx()
 
     mwxrun.simulation.step(max_steps)
 
@@ -203,10 +213,16 @@ def test_flux_diag_accuracy(caplog):
     )
 
     run.setup_run(
-        init_runinfo=True,
-        init_fluxdiag=True,
-        init_warpx=True
+        init_runinfo=True
     )
+    run.fluxdiag = flux_diagnostic.FluxDiagnostic(
+            diag_steps=run.DIAG_STEPS,
+            runinfo=run.runinfo,
+            check_charge_conservation=run.CHECK_CHARGE_CONSERVATION,
+            overwrite=False,
+            save_csv=True
+        )
+    run.init_warpx()
 
     mwxrun.simulation.step(max_steps)
 

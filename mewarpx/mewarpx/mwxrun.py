@@ -64,11 +64,11 @@ class MEWarpXRun(object):
         """Function to set up the simulation grid.
 
         Arguments:
-            lower_bound (array): Minimum coordinates for all direction; length
-                of array has to equal number of dimensions.
-            upper_bound (array): Maximum coordinates for all direction; length
-                of array has to equal number of dimensions.
-            cell_nums (array): Number of grid cells in each direction.
+            lower_bound (list): Minimum coordinates for all direction; length
+                of list has to equal number of dimensions.
+            upper_bound (list): Maximum coordinates for all direction; length
+                of list has to equal number of dimensions.
+            cell_nums (list): Number of grid cells in each direction.
             kwargs (dict): Dictionary containing extra arguments. These can
                 include:
                 - boundary condition settings in the form
