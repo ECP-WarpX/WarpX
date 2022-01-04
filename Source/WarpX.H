@@ -704,9 +704,7 @@ public:
                      const int max_iters=200,
                      const int verbosity=2) const;
 
-    void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                   amrex::Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_lo,
-                   amrex::Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_hi ) const;
+    void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi ) const;
 
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
