@@ -158,8 +158,19 @@ Setting up the field mesh
 
     Note: in development; currently allowed value: ``2 2 2``.
 
-* ``geometry.coord_sys`` (`integer`) optional (default `0`)
-    Coordinate system used by the simulation. 0 for Cartesian, 1 for cylindrical.
+* ``geometry.dims`` (`string`)
+    The dimensions of the simulation geometry.
+    Supported values are ``1``, ``2``, ``3``, ``RZ``.
+    For ``3``, a cartesian geometry of ``x``, ``y``, ``z`` is modeled.
+    For ``2``, the axes are ``x`` and ``z`` and all physics in ``y`` is assumed to be translation symmetric.
+    For ``1``, the only axis is ``z`` and the dimensions ``x`` and ``y`` are translation symmetric.
+    For ``RZ``, we apply an azimuthal mode decomposition, with ``warpx.n_rz_azimuthal_modes`` providing further control.
+
+    Note that this value has to match the :ref:`WarpX_DIMS <building-cmake-options>` compile-time option.
+    If you installed WarpX from a :ref:`package manager <install-users>`, then pick the right executable by name.
+
+* ``geometry.n_rz_azimuthal_modes`` (`integer`; 1 by default)
+    When using the RZ version, this is the number of azimuthal modes.
 
 * ``geometry.prob_lo`` and ``geometry.prob_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters)
     The extent of the full simulation box. This box is rectangular, and thus its
@@ -232,9 +243,6 @@ Setting up the field mesh
     in the list will gather their fields from the main grid
     (i.e. the coarsest level), even if they are inside a refinement patch.
 
-* ``warpx.n_rz_azimuthal_modes`` (`integer`; 1 by default)
-    When using the RZ version, this is the number of azimuthal modes.
-
 .. _running-cpp-parameters-bc:
 
 Domain Boundary Conditions
@@ -277,6 +285,10 @@ Additional PML parameters
 * ``warpx.pml_ncell`` (`int`; default: 10)
     The depth of the PML, in number of cells.
 
+* ``do_similar_dm_pml`` (`int`; default: 1)
+    Whether or not to use an amrex::DistributionMapping for the PML grids that is `similar` to the mother grids, meaning that the
+    mapping will be computed to minimize the communication costs between the PML and the mother grids.
+
 * ``warpx.pml_delta`` (`int`; default: 10)
     The characteristic depth, in number of cells, over which
     the absorption coefficients of the PML increases.
@@ -318,7 +330,9 @@ Embedded Boundary Conditions
 * ``warpx.eb_potential(x,y,z,t)`` (`string`)
     Only used when ``warpx.do_electrostatic=labframe``. Gives the value of
     the electric potential at the surface of the embedded boundary,
-    as a function of  `x`, `y`, `z` and time.
+    as a function of  `x`, `y`, `z` and time. This function is also evaluated
+    inside the embedded boundary. For this reason, it is important to define
+    this function in such a way that it is constant inside the embedded boundary.
 
 .. _running-cpp-parameters-parallelization:
 
@@ -842,7 +856,9 @@ Particle initialization
     species that impact the embedded boundary.
     The scraped particle buffer can be used to track particle fluxes out of the
     simulation but is currently only accessible via the Python interface. The
-    ``pywarpx._libwarpx`` function ``get_particle_boundary_buffer()`` can be
+    function ``get_particle_boundary_buffer``, found in the
+    ``picmi.Simulation`` class as
+    ``sim.extension.get_particle_boundary_buffer()``, can be
     used to access the scraped particle buffer. An entry is included for every
     particle in the buffer of the timestep at which the particle was scraped.
     This can be accessed by passing the argument ``comp_name="step_scraped"`` to
@@ -860,7 +876,7 @@ Particle initialization
     boosted frame, whether or not to plot back-transformed diagnostics for
     this species.
 
-* ``warpx.serialize_ics`` (`0 or 1`)
+* ``warpx.serialize_ics`` (`0` or `1`) optional (default `0`)
     Serialize the initial conditions for reproducible testing.
     Mainly whether or not to use OpenMP threading for particle initialization.
 
@@ -1176,6 +1192,9 @@ Laser initialization
     ``mirror_z_width < dz/cell_size``, the upper bound of the mirror is increased
     so that it contains at least ``mirror_z_npoints``.
 
+External fields
+---------------
+
 * ``warpx.B_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
     magnetic field. The "default" style initializes the
@@ -1232,70 +1251,58 @@ Laser initialization
     the field solver. In particular, do not use any other boundary condition
     than periodic.
 
-* ``particles.B_ext_particle_init_style`` (string) optional (default is "default")
-    This parameter determines the type of initialization for the external
-    magnetic field that is applied directly to the particles at every timestep.
-    The "default" style sets the external B-field (Bx,By,Bz) to (0.0,0.0,0.0).
-    The string can be set to "constant" if a constant external B-field is applied
-    every timestep. If this parameter is set to "constant", then an additional
-    parameter, namely, ``particles.B_external_particle`` must be specified in
-    the input file.
-    To parse a mathematical function for the external B-field, use the option
-    ``parse_B_ext_particle_function``. This option requires additional parameters
-    in the input file, namely,
-    ``particles.Bx_external_particle_function(x,y,z,t)``,
-    ``particles.By_external_particle_function(x,y,z,t)``,
-    ``particles.Bz_external_particle_function(x,y,z,t)`` to apply the external B-field
-    on the particles. Constants required in the mathematical expression can be set
-    using ``my_constants``. For a two-dimensional simulation, it is assumed that
-    the first and second dimensions are `x` and `z`, respectively, and the
-    value of the `By` component is set to zero.
-    Note that the current implementation of the parser for B-field on particles
-    is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
-    To apply a series of plasma lenses, use the option ``repeated_plasma_lens``. This
-    option requires the following parameters, in the lab frame,
-    ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
-    ``repeated_plasma_lens_starts``, the start of each lens relative to the period, an array of floats,
-    ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
-    ``repeated_plasma_lens_strengths_B``, the focusing strength of each lens, an array of floats.
-    The applied field is uniform longitudinally (along z) with a hard edge,
-    where residence corrections are used for more accurate field calculation.
-    The field is of the form :math:`B_x = \mathrm{strength} \cdot y` and :math:`B_y = -\mathrm{strength} \cdot x`, :math`:B_z = 0`.
+* ``particles.E_ext_particle_init_style`` & ``particles.B_ext_particle_init_style`` (string) optional (default "none")
+    These parameters determine the type of the external electric and
+    magnetic fields respectively that are applied directly to the particles at every timestep.
+    The field values are specified in the lab frame.
+    With the default ``none`` style, no field is applied.
+    Possible values are ``constant``, ``parse_E_ext_particle_function`` or ``parse_B_ext_particle_function``, or
+    ``repeated_plasma_lens``.
 
-* ``particles.E_ext_particle_init_style`` (string) optional (default is "default")
-    This parameter determines the type of initialization for the external
-    electric field that is applied directly to the particles at every timestep.
-    The "default" style set the external E-field (Ex,Ey,Ez) to (0.0,0.0,0.0).
-    The string can be set to "constant" if a constant external E-field is to be
-    used in the simulation at every timestep. If this parameter is set to "constant",
-    then an additional parameter, namely, ``particles.E_external_particle`` must be
-    specified in the input file.
-    To parse a mathematical function for the external E-field, use the option
-    ``parse_E_ext_particle_function``. This option requires additional
-    parameters in the input file, namely,
-    ``particles.Ex_external_particle_function(x,y,z,t)``,
-    ``particles.Ey_external_particle_function(x,y,z,t)``,
-    ``particles.Ez_external_particle_function(x,y,z,t)`` to apply the external E-field
-    on the particles. Constants required in the mathematical expression can be set
-    using ``my_constants``. For a two-dimensional simulation, similar to the B-field,
-    it is assumed that the first and second dimensions are `x` and `z`, respectively,
-    and the value of the `Ey` component is set to zero.
-    Note that the current implementation of the parser for E-field on particles
-    is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
-    To apply a series of plasma lenses, use the option ``repeated_plasma_lens``. This
-    option requires the following parameters, in the lab frame,
-    ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
-    ``repeated_plasma_lens_starts``, the start of each lens relative to the period, an array of floats,
-    ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
-    ``repeated_plasma_lens_strengths_E``, the focusing strength of each lens, an array of floats.
-    The applied field is uniform longitudinally (along z) with a hard edge,
-    where residence corrections are used for more accurate field calculation.
-    The field is of the form :math:`E_x = \mathrm{strength} \cdot x` and :math:`E_y = \mathrm{strength} \cdot y`, :math:`Ez = 0`.
+    * ``constant``: a constant field is applied, given by the input parameters
+      ``particles.E_external_particle`` or ``particles.B_external_particle``, which are lists of the field components.
 
-* ``particles.E_external_particle`` & ``particles.B_external_particle`` (list of `float`) optional (default `0. 0. 0.`)
-    Two separate parameters which add an externally applied uniform E-field or
-    B-field to each particle which is then added to the field values gathered
-    from the grid in the PIC cycle.
+    * ``parse_E_ext_particle_function`` or ``parse_B_ext_particle_function``: the field is specified as an analytic
+      expression that is a function of space (x,y,z) and time (t), relative to the lab frame.
+      The E-field is specified by the input parameters:
+
+        * ``particles.Ex_external_particle_function(x,y,z,t)``
+
+        * ``particles.Ey_external_particle_function(x,y,z,t)``
+
+        * ``particles.Ez_external_particle_function(x,y,z,t)``
+
+      The B-field is specified by the input parameters:
+
+        * ``particles.Bx_external_particle_function(x,y,z,t)``
+
+        * ``particles.By_external_particle_function(x,y,z,t)``
+
+        * ``particles.Bz_external_particle_function(x,y,z,t)``
+
+      Note that the position is defined in Cartesian coordinates, as a function of (x,y,z), even for RZ.
+
+    * ``repeated_plasma_lens``: apply a series of plasma lenses. The properties of the lenses are defined in the
+      lab frame by the input parameters:
+
+        * ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
+
+        * ``repeated_plasma_lens_starts``, the start of each lens relative to the period, an array of floats,
+
+        * ``repeated_plasma_lens_lengths``, the length of each lens, an array of floats,
+
+        * ``repeated_plasma_lens_strengths_E``, the electric focusing strength of each lens, an array of floats, when
+          ``particles.E_ext_particle_init_style`` is set to ``repeated_plasma_lens``.
+
+        * ``repeated_plasma_lens_strengths_B``, the magnetic focusing strength of each lens, an array of floats, when
+          ``particles.B_ext_particle_init_style`` is set to ``repeated_plasma_lens``.
+
+      The applied field is uniform longitudinally (along z) with a hard edge,
+      where residence corrections are used for more accurate field calculation. On the time step when a particle enters
+      or leaves each lens, the field applied is scaled by the fraction of the time step spent within the lens.
+      The fields are of the form :math:`E_x = \mathrm{strength} \cdot x`, :math:`E_y = \mathrm{strength} \cdot y`,
+      and :math:`E_z = 0`, and
+      :math:`B_x = \mathrm{strength} \cdot y`, :math:`B_y = -\mathrm{strength} \cdot x`, and :math:`B_z = 0`.
 
 .. _running-cpp-parameters-collision:
 
@@ -1304,6 +1311,8 @@ Collision initialization
 
 WarpX provides a relativistic elastic Monte Carlo binary collision model,
 following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
+since the current implementation of the collision module assumes axisymmetry.
 A non-relativistic Monte Carlo treatment for particles colliding
 with a neutral, uniform background gas is also available. The implementation follows the so-called
 null collision strategy discussed for example in `Birdsall (IEEE Transactions on
@@ -1712,8 +1721,8 @@ Numerics and algorithms
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
      Note that this option will only have an effect if the ``warpx.use_Hybrid_QED`` flag is also triggered.
 
-* ``warpx.do_device_synchronize`` (`int`) optional (default `1`)
-    When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
+* ``warpx.do_device_synchronize`` (`bool`) optional (default `1`)
+    When running in an accelerated platform, whether to call a ``amrex::Gpu::synchronize()`` around profiling regions.
     This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
 
 * ``warpx.sort_intervals`` (`string`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)

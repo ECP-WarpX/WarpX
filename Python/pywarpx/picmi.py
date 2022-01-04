@@ -8,12 +8,13 @@
 
 """Classes following the PICMI standard
 """
-import re
 import os
-import picmistandard
+import re
+
 import numpy as np
-import pywarpx
 import periodictable
+import picmistandard
+import pywarpx
 
 codename = 'warpx'
 picmistandard.register_codename(codename)
@@ -409,8 +410,8 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         self.blocking_factor_x = kw.pop('warpx_blocking_factor_x', None)
         self.blocking_factor_y = kw.pop('warpx_blocking_factor_y', None)
 
-        self.potential_xmin = None
-        self.potential_xmax = None
+        self.potential_xmin = kw.pop('warpx_potential_lo_r', None)
+        self.potential_xmax = kw.pop('warpx_potential_hi_r', None)
         self.potential_ymin = None
         self.potential_ymax = None
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
@@ -432,7 +433,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         assert self.bc_rmin != 'periodic' and self.bc_rmax != 'periodic', Exception('Radial boundaries can not be periodic')
 
         # Geometry
-        pywarpx.geometry.coord_sys = 1  # RZ
+        pywarpx.geometry.dims = 'RZ'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
         pywarpx.warpx.n_rz_azimuthal_modes = self.n_azimuthal_modes
@@ -463,6 +464,57 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
             pywarpx.amr.max_level = 0
 
 
+class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
+    def init(self, kw):
+        self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
+        self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
+        self.blocking_factor = kw.pop('warpx_blocking_factor', None)
+        self.blocking_factor_x = kw.pop('warpx_blocking_factor_x', None)
+
+        self.potential_xmin = None
+        self.potential_xmax = None
+        self.potential_ymin = None
+        self.potential_ymax = None
+        self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
+        self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
+
+    def initialize_inputs(self):
+        pywarpx.amr.n_cell = self.number_of_cells
+
+        # Maximum allowable size of each subdomain in the problem domain;
+        #    this is used to decompose the domain for parallel calculations.
+        pywarpx.amr.max_grid_size = self.max_grid_size
+        pywarpx.amr.max_grid_size_x = self.max_grid_size_x
+        pywarpx.amr.blocking_factor = self.blocking_factor
+        pywarpx.amr.blocking_factor_x = self.blocking_factor_x
+
+        # Geometry
+        pywarpx.geometry.dims = '1'
+        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
+        pywarpx.geometry.prob_hi = self.upper_bound
+
+        # Boundary conditions
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin]]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax]]
+        pywarpx.boundary.particle_lo = [self.bc_xmin_particles]
+        pywarpx.boundary.particle_hi = [self.bc_xmax_particles]
+
+        if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
+            pywarpx.warpx.do_moving_window = 1
+            if self.moving_window_velocity[2] != 0.:
+                pywarpx.warpx.moving_window_dir = 'z'
+                pywarpx.warpx.moving_window_v = self.moving_window_velocity[2]/constants.c  # in units of the speed of light
+
+        if self.refined_regions:
+            assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
+            assert self.refined_regions[0][0] == 1, Exception('The one refined region can only be level 1')
+            pywarpx.amr.max_level = 1
+            pywarpx.warpx.fine_tag_lo = self.refined_regions[0][1]
+            pywarpx.warpx.fine_tag_hi = self.refined_regions[0][2]
+            # The refinement_factor is ignored (assumed to be [2,2])
+        else:
+            pywarpx.amr.max_level = 0
+
 class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -492,7 +544,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
 
         # Geometry
-        pywarpx.geometry.coord_sys = 0  # Cartesian
+        pywarpx.geometry.dims = '2'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
@@ -555,7 +607,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         pywarpx.amr.blocking_factor_z = self.blocking_factor_z
 
         # Geometry
-        pywarpx.geometry.coord_sys = 0  # Cartesian
+        pywarpx.geometry.dims = '3'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
 
@@ -603,6 +655,10 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
 
+        self.do_pml_in_domain = kw.pop('warpx_do_pml_in_domain', None)
+        self.pml_has_particles = kw.pop('warpx_pml_has_particles', None)
+        self.do_pml_j_damping = kw.pop('warpx_do_pml_j_damping', None)
+
     def initialize_inputs(self):
 
         self.grid.initialize_inputs()
@@ -647,6 +703,10 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         pywarpx.warpx.do_pml_dive_cleaning = self.pml_divE_cleaning
         pywarpx.warpx.do_pml_divb_cleaning = self.pml_divB_cleaning
+
+        pywarpx.warpx.do_pml_in_domain = self.do_pml_in_domain
+        pywarpx.warpx.pml_has_particles = self.pml_has_particles
+        pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     def init(self, kw):
@@ -864,6 +924,12 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
 
 
 class Simulation(picmistandard.PICMI_Simulation):
+
+    # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
+    # Simulation objects. In the future, LibWarpX objects may actually be owned
+    # by Simulation objects to permit multiple WarpX runs simultaneously.
+    extension = pywarpx.libwarpx
+
     def init(self, kw):
 
         self.current_deposition_algo = kw.pop('warpx_current_deposition_algo', None)

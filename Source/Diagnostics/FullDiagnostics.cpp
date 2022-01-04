@@ -484,19 +484,19 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
     const amrex::Real* current_lo = m_geom_output[0][0].ProbLo();
     const amrex::Real* current_hi = m_geom_output[0][0].ProbHi();
 
-#if (AMREX_SPACEDIM == 3 )
+#if defined(WARPX_DIM_3D)
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         new_lo[idim] = current_lo[idim] + warpx.m_galilean_shift[idim];
         new_hi[idim] = current_hi[idim] + warpx.m_galilean_shift[idim];
     }
-#elif (AMREX_SPACEDIM == 2 )
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     {
         new_lo[0] = current_lo[0] + warpx.m_galilean_shift[0];
         new_hi[0] = current_hi[0] + warpx.m_galilean_shift[0];
         new_lo[1] = current_lo[1] + warpx.m_galilean_shift[2];
         new_hi[1] = current_hi[1] + warpx.m_galilean_shift[2];
     }
-#elif (AMREX_SPACEDIM == 1 )
+#elif defined(WARPX_DIM_1D_Z)
     {
         new_lo[0] = current_lo[0] + warpx.m_galilean_shift[2];
         new_hi[0] = current_hi[0] + warpx.m_galilean_shift[2];

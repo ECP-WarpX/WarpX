@@ -1,5 +1,5 @@
 # Maximum number of time steps
-max_step = 97
+max_step = 84
 
 # number of grid points
 amr.n_cell =  16 16 16
@@ -7,7 +7,7 @@ amr.n_cell =  16 16 16
 amr.max_level = 0
 
 # Geometry
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 3
 geometry.prob_lo     = -1.0  -1.0   0.0   # physical domain
 geometry.prob_hi     =  1.0   1.0   2.0
 
@@ -16,13 +16,10 @@ boundary.field_hi = pec pec pec
 boundary.particle_lo = absorbing absorbing absorbing
 boundary.particle_hi = absorbing absorbing absorbing
 
-warpx.const_dt = 1.e-7
-warpx.do_electrostatic = labframe
-
 # Algorithms
 algo.particle_shape = 1
 
-my_constants.vel_z = 0.2e6
+my_constants.vel_z = 0.5*clight
 
 # particles
 particles.species_names = electrons
@@ -43,11 +40,11 @@ particles.B_ext_particle_init_style = repeated_plasma_lens
 particles.repeated_plasma_lens_period = 0.5
 particles.repeated_plasma_lens_starts = 0.1 0.11 0.12 0.13
 particles.repeated_plasma_lens_lengths = 0.1 0.11 0.12 0.13
-particles.repeated_plasma_lens_strengths_E = 0.06 0.08 0.06 0.02
-particles.repeated_plasma_lens_strengths_B = 0.08/vel_z 0.04/vel_z 0.06/vel_z 0.04/vel_z
+particles.repeated_plasma_lens_strengths_E = 600000. 800000. 600000. 200000.
+particles.repeated_plasma_lens_strengths_B = 0.0 0.0 0.0 0.0
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 97
+diag1.intervals = 84
 diag1.diag_type = Full
 diag1.electrons.variables = ux uy uz

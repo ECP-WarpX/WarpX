@@ -1,11 +1,11 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 1000
-amr.n_cell =  64  64  512
+max_step = 100           # for production, run for longer time, e.g. max_step = 1000
+amr.n_cell = 32 32 256   # for production, run with finer mesh, e.g. amr.n_cell = 64 64 512
 amr.max_grid_size = 64   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 32 # minimum size of each AMReX box, used to decompose the domain
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 3
 geometry.prob_lo     = -30.e-6   -30.e-6   -56.e-6    # physical domain
 geometry.prob_hi     =  30.e-6    30.e-6    12.e-6
 amr.max_level = 0 # Maximum level in hierarchy (1 might be unstable, >1 is not supported)
@@ -28,6 +28,8 @@ warpx.cfl = 1. # if 1., the time step is set to its CFL limit
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z # Only z is supported for the moment
 warpx.moving_window_v = 1.0 # units of speed of light
+warpx.do_dynamic_scheduling = 0 # for production, set this to 1 (default)
+warpx.serialize_ics = 1         # for production, set this to 0 (default)
 
 # Order of particle shape factors
 algo.particle_shape = 3
@@ -45,7 +47,7 @@ electrons.xmin = -20.e-6
 electrons.xmax =  20.e-6
 electrons.ymin = -20.e-6
 electrons.ymax =  20.e-6
-electrons.zmin =  10.e-6
+electrons.zmin =  0
 electrons.profile = constant
 electrons.density = 2.e23  # number of electrons per m^3
 electrons.momentum_distribution_type = "at_rest"
@@ -68,6 +70,6 @@ laser1.wavelength = 0.8e-6               # The wavelength of the laser (in m)
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 1000
+diag1.intervals = 100
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho

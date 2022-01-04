@@ -41,7 +41,7 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    # required dependencies
    module load cmake/3.20.2
    module load gcc/9.3.0
-   module load cuda/11.0.3
+   module load cuda/11.3.1
 
    # optional: faster re-builds
    module load ccache
@@ -145,7 +145,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
+   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
    cmake --build build -j 6
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
@@ -159,7 +159,7 @@ We only prefix it to request a node for the compilation (``runNode``), so we can
    cd $HOME/src/warpx
 
    # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
-   runNode WARPX_MPI=ON WARPX_COMPUTE=CUDA WARPX_PSATD=ON WARPX_OPENPMD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall -v .
+   runNode WARPX_MPI=ON WARPX_COMPUTE=CUDA WARPX_PSATD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall -v .
 
 
 .. _running-cpp-summit:

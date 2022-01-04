@@ -7,8 +7,8 @@
 #ifndef WARPX_PARTICLES_COLLISION_BINARYCOLLISION_H_
 #define WARPX_PARTICLES_COLLISION_BINARYCOLLISION_H_
 
-#include "Particles/Collision/BinaryCollision/NuclearFusionFunc.H"
-#include "Particles/Collision/BinaryCollision/PairWiseCoulombCollisionFunc.H"
+#include "Particles/Collision/BinaryCollision/Coulomb/PairWiseCoulombCollisionFunc.H"
+#include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
 #include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
 #include "Particles/Collision/BinaryCollision/ShuffleFisherYates.H"
 #include "Particles/Collision/CollisionBase.H"
@@ -268,7 +268,7 @@ public:
             int const nz = hi.y-lo.y+1;
             auto dr = geom.CellSize(0);
             auto dz = geom.CellSize(1);
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
@@ -419,7 +419,7 @@ public:
             int nz = hi.y-lo.y+1;
             auto dr = geom.CellSize(0);
             auto dz = geom.CellSize(1);
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 

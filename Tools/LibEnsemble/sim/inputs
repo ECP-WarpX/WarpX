@@ -15,7 +15,7 @@ amr.n_cell = 32 2048 # 64 3072
 amr.max_grid_size = 4096
 amr.blocking_factor = 16
 
-geometry.coord_sys   = 0
+geometry.dims = 2
 geometry.is_periodic = 0 0
 # physical domain when running in the lab frame
 geometry.prob_lo = -0.00024190484157981564 -0.00016126989438654374

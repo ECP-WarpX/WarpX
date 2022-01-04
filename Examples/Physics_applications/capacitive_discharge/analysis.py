@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2021 Modern Electron
 
@@ -8,6 +8,7 @@
 # rather than the iterative approach from the MLMG solver.
 
 import sys
+
 sys.path.append('../../../../warpx/Regression/Checksum/')
 
 import checksumAPI

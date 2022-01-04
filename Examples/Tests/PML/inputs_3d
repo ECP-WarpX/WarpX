@@ -5,7 +5,7 @@ amr.n_cell = 64 64 64
 amr.max_level = 0
 
 # Domain and boundary conditions
-geometry.coord_sys = 0
+geometry.dims = 3
 geometry.prob_lo = -1.5e-05 -1.5e-05 -1.5e-05
 geometry.prob_hi =  1.5e-05  1.5e-05  1.5e-05
 
@@ -16,7 +16,8 @@ boundary.field_hi = pml pml pml
 # Numerical parameters
 warpx.cfl = 1.0
 warpx.do_nodal = 0
-warpx.do_dive_cleaning = 0
+warpx.do_dive_cleaning = 1
+warpx.do_divb_cleaning = 1
 warpx.do_pml_dive_cleaning = 1
 warpx.do_pml_divb_cleaning = 1
 warpx.use_filter = 1
@@ -30,6 +31,7 @@ algo.maxwell_solver = psatd
 psatd.nox = 8
 psatd.noy = 8
 psatd.noz = 8
+psatd.update_with_rho = 1
 
 # Lasers
 lasers.names = laser1 laser2 laser3

@@ -134,6 +134,7 @@ public:
     *
     * @param[in] ptd particle tile data
     * @param[in] i particle index
+    * @param[in] engine the random number state and factory
     * @return true if a collision occurs, false otherwise
     */
     template <typename PData>
@@ -195,6 +196,9 @@ public:
     *
     * @param[in] energy_cost energy cost of ionization
     * @param[in] mass1 mass of the colliding species
+    * @param[in] standard deviation of ion velocity distribution for each velocity
+                 direction; for a Maxwellian distribution it should equal sqrt(kB*T/m)
+    *                        a Maxwellian distribution it should equal sqrt(kB*T/m)
     */
     ImpactIonizationTransformFunc(
         amrex::Real energy_cost, amrex::Real mass1, amrex::Real ion_vel_std

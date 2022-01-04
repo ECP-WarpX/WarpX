@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019-2021 Jean-Luc Vay, Maxence Thevenet, Remi Lehe, Prabhat Kumar
 #
@@ -6,21 +6,24 @@
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
-
-
+#
 # This is a script that analyses the simulation results from
 # the script `inputs.multi.rt`. This simulates a 1D periodic plasma wave.
 # The electric field in the simulation is given (in theory) by:
 # $$ E_z = \epsilon \,\frac{m_e c^2 k_z}{q_e}\sin(k_z z)\sin( \omega_p t)$$
-import sys
 import re
+import sys
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import yt
+
 yt.funcs.mylog.setLevel(50)
 import numpy as np
-from scipy.constants import e, m_e, epsilon_0, c
+from scipy.constants import c, e, epsilon_0, m_e
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

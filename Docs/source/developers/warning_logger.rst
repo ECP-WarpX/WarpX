@@ -40,7 +40,7 @@ On the contrary, if warning messages are raised, the list should look as follows
    ********************************************************************************
 
 Here, ``GLOBAL`` indicates that warning messages are gathered across all the MPI ranks (specifically
-after the ``FIRSR STEP``).
+after the ``FIRST STEP``).
 
 Each entry of warning list respects the following format:
 
@@ -137,7 +137,7 @@ For instance, the following inputfile
    amr.max_grid_size = 64
    amr.blocking_factor = 32
    amr.max_level = 0
-   geometry.coord_sys   = 0                  # 0: Cartesian
+   geometry.dims = 2
    geometry.prob_lo     = -20.e-6   -20.e-6    # physical domain
    geometry.prob_hi     =  20.e-6    20.e-6
 

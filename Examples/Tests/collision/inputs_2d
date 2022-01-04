@@ -6,9 +6,9 @@ amr.n_cell = 8 8
 amr.max_grid_size = 8
 amr.blocking_factor = 8
 amr.max_level = 0
-geometry.coord_sys   = 0
-geometry.prob_lo     = 0.    0.
-geometry.prob_hi     = 4.154046151855669e2  4.154046151855669e2
+geometry.dims = 2
+geometry.prob_lo = 0.    0.
+geometry.prob_hi = 4.154046151855669e2  4.154046151855669e2
 
 #################################
 ###### Boundary Condition #######

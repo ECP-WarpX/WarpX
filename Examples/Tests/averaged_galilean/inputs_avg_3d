@@ -1,7 +1,7 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 400
+max_step = 160
 
 amr.n_cell = 32 32 32
 amr.max_grid_size = 32
@@ -10,9 +10,9 @@ amr.max_level = 0
 psatd.v_galilean = 0. 0. 0.99498743710662
 psatd.do_time_averaging  = 1
 
-geometry.coord_sys   = 0
-geometry.prob_lo     = -9.67 -9.67 -19.34
-geometry.prob_hi     = 9.67 9.67 19.34
+geometry.dims = 3
+geometry.prob_lo = -5. -5. -15.
+geometry.prob_hi = 5. 5. 15.
 
 #################################
 ###### Boundary Condition #######
@@ -29,7 +29,7 @@ algo.maxwell_solver = psatd
 algo.current_deposition = direct
 algo.particle_pusher = vay
 
-warpx.cfl = 2.
+warpx.cfl = 3.
 
 # Order of particle shape factors
 algo.particle_shape = 3
@@ -54,12 +54,12 @@ electrons.profile = constant
 electrons.density = 282197938148984.7
 electrons.momentum_distribution_type = "gaussian"
 electrons.uz_m = 9.9498743710661994
-electrons.xmin = -9.67
-electrons.xmax = 9.67
-electrons.ymin = -9.67
-electrons.ymax = 9.67
-electrons.zmin =    -19.34
-electrons.zmax =   19.34
+electrons.xmin = -5.
+electrons.xmax = 5.
+electrons.ymin = -5.
+electrons.ymax = 5.
+electrons.zmin = -15.
+electrons.zmax = 15.
 electrons.ux_th = 0.0001
 electrons.uy_th = 0.0001
 electrons.uz_th = 0.0001
@@ -72,17 +72,17 @@ ions.profile = constant
 ions.density =  282197938148984.7
 ions.momentum_distribution_type = "gaussian"
 ions.uz_m = 9.9498743710661994
-ions.xmin = -9.67
-ions.xmax = 9.67
-ions.ymin = -9.67
-ions.ymax = 9.67
-ions.zmin =  -19.34
-ions.zmax = 19.34
+ions.xmin = -5.
+ions.xmax = 5.
+ions.ymin = -5.
+ions.ymax = 5.
+ions.zmin = -15.
+ions.zmax = 15.
 ions.ux_th = 0.0001
 ions.uy_th = 0.0001
 ions.uz_th = 0.0001
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 400
+diag1.intervals = 160
 diag1.diag_type = Full

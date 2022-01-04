@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019
 #
@@ -7,11 +7,16 @@
 # License: BSD-3-Clause-LBNL
 
 import sys
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import os
+
 import numpy as np
 import yt
+
 yt.funcs.mylog.setLevel(50)
 import re
+
 import checksumAPI
 from scipy.constants import c
 
@@ -42,7 +47,7 @@ tolerance = 1e-1
 
 assert(rel_error < tolerance)
 
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 
 if re.search('single_precision', fn):
     checksumAPI.evaluate_checksum(test_name, fn, rtol=1.e-3)

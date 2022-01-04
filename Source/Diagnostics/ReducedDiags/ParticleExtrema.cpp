@@ -384,8 +384,7 @@ void ParticleExtrema::ComputeDiags (int step)
         // compute chimin and chimax
         Real chimin_f = 0.0_rt;
         Real chimax_f = 0.0_rt;
-        GetExternalEField get_externalE;
-        GetExternalBField get_externalB;
+        GetExternalEBField get_externalEB;
 
         if (myspc.DoQED())
         {
@@ -429,8 +428,7 @@ void ParticleExtrema::ComputeDiags (int step)
                     amrex::ParticleReal* const AMREX_RESTRICT uz = pti.GetAttribs()[PIdx::uz].dataPtr();
                     // declare external fields
                     const int offset = 0;
-                    const auto getExternalE = GetExternalEField(pti, offset);
-                    const auto getExternalB = GetExternalBField(pti, offset);
+                    const auto getExternalEB = GetExternalEBField(pti, offset);
 
                     // define variables in preparation for field gathering
                     amrex::Box box = pti.tilebox();
@@ -463,8 +461,7 @@ void ParticleExtrema::ComputeDiags (int step)
                         GetPosition(i, xp, yp, zp);
                         ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
                         ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
-                        getExternalE(i, ex, ey, ez);
-                        getExternalB(i, bx, by, bz);
+                        getExternalEB(i, ex, ey, ez, bx, by, bz);
 
                         // gather E and B
                         doGatherShapeN(xp, yp, zp,

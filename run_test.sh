@@ -29,17 +29,25 @@ set -eu -o pipefail
 tests_arg=$*
 tests_run=${tests_arg:+--tests=${tests_arg}}
 
+# environment options
+WARPX_CI_TMP=${WARPX_CI_TMP:-""}
+
 # Remove contents and link to a previous test directory (intentionally two arguments)
 rm -rf test_dir/* test_dir
 # Create a temporary test directory
-tmp_dir=$(mktemp --help >/dev/null 2>&1 && mktemp -d -t ci-XXXXXXXXXX || mktemp -d "${TMPDIR:-/tmp}"/ci-XXXXXXXXXX)
-if [ $? -ne 0 ]; then
-    echo "Cannot create temporary directory"
-    exit 1
+if [ -z "${WARPX_CI_TMP}" ]; then
+    tmp_dir=$(mktemp --help >/dev/null 2>&1 && mktemp -d -t ci-XXXXXXXXXX || mktemp -d "${TMPDIR:-/tmp}"/ci-XXXXXXXXXX)
+    if [ $? -ne 0 ]; then
+        echo "Cannot create temporary directory"
+        exit 1
+    fi
+else
+    tmp_dir=${WARPX_CI_TMP}
 fi
 
 # Copy WarpX into current test directory
-mkdir ${tmp_dir}/warpx
+rm -rf ${tmp_dir}/warpx
+mkdir -p ${tmp_dir}/warpx
 cp -r ./* ${tmp_dir}/warpx
 
 # Link the test directory
@@ -49,23 +57,31 @@ ln -s ${tmp_dir} test_dir
 cd test_dir
 echo "cd $PWD"
 
-# Clone PICSAR, AMReX and warpx-data
+# Prepare a virtual environment
+rm -rf py-venv
+python3 -m venv py-venv
+source py-venv/bin/activate
+python3 -m pip install --upgrade pip setuptools wheel
+# setuptools/mp4py work-around, see
+#   https://github.com/mpi4py/mpi4py/pull/159
+#   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
+export SETUPTOOLS_USE_DISTUTILS="stdlib"
+python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
+
+# Clone AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout --detach 88b868099018c191e7d3ea424d3e3420b826dd69 && cd -
-# Use QED brach for QED tests
-git clone https://github.com/ECP-WarpX/picsar.git
-cd picsar && git checkout --detach 8ff12fbf118b9aba7cfe602cb1a5e6da32bf7eef && cd -
+cd amrex && git checkout --detach 22.01 && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 
 # Clone the AMReX regression test utility
-git clone https://github.com/ECP-WarpX/regression_testing.git
+git clone https://github.com/AMReX-Codes/regression_testing.git
 
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks
 cd warpx/Regression
 echo "cd $PWD"
-python prepare_file_ci.py
+python3 prepare_file_ci.py
 cp ci-tests.ini ../../rt-WarpX
 cp -r Checksum ../../regression_testing/
 
@@ -74,8 +90,13 @@ cd ../../regression_testing/
 echo "cd $PWD"
 # run only tests specified in variable tests_arg (single test or multiple tests)
 if [[ ! -z "${tests_arg}" ]]; then
-  python regtest.py ../rt-WarpX/ci-tests.ini --no_update all "${tests_run}"
+  python3 regtest.py ../rt-WarpX/ci-tests.ini --no_update all "${tests_run}"
 # run all tests (variables tests_arg and tests_run are empty)
 else
-  python regtest.py ../rt-WarpX/ci-tests.ini --no_update all
+  python3 regtest.py ../rt-WarpX/ci-tests.ini --no_update all
 fi
+
+# clean up python virtual environment
+cd ../
+echo "cd $PWD"
+deactivate
