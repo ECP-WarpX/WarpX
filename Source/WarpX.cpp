@@ -630,6 +630,11 @@ WarpX::ReadParameters ()
 
         do_electrostatic = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
 
+#if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_electrostatic!=ElectrostaticSolverAlgo::None,
+        "Currently, the embedded boundary in RZ only works for electrostatic solvers.");
+#endif
+
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
             // Note that with the relativistic version, these parameters would be
             // input for each species.
@@ -885,6 +890,13 @@ WarpX::ReadParameters ()
 #ifdef WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
             "The problem must not be periodic in the radial direction");
+
+        // Ensure code aborts if PEC is specified at r=0 for RZ
+        if (Geom(0).ProbLo(0) == 0){
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
+                "Error : Field boundary at r=0 must be ``none``. \n");
+        }
 
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
             // Force do_nodal=true (that is, not staggered) and

@@ -218,7 +218,7 @@ def launch_analysis(executable):
 
 
 def main() :
-    executables = glob.glob("main2d*")
+    executables = glob.glob("*.ex")
     if len(executables) == 1 :
         launch_analysis(executables[0])
     else :

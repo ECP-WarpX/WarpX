@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.18.0)
-project(WarpX VERSION 21.12)
+project(WarpX VERSION 22.01)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -389,6 +389,25 @@ endif()
 #        ${WarpX_BINARY_DIR}/WarpXConfigVersion.cmake
 #    DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
 #)
+
+
+# CI Helper ###################################################################
+#
+
+# calling `python -m pip wheel .` and install re-using the build directory
+# note: this is mainly for our CI Python regression scripts, users and package
+#       managers should just use `python -m pip wheel .` and `... install *whl`
+#       directly
+set(PYINSTALLOPTIONS "" CACHE STRING "Additional parameters to pass to `pip install`")
+add_custom_target(install_pip
+    ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY} python3 -m pip wheel -v --use-feature=in-tree-build ${WarpX_SOURCE_DIR}
+    COMMAND
+        python3 -m pip install --force-reinstall -v ${PYINSTALLOPTIONS} ${CMAKE_BINARY_DIR}/*whl
+    WORKING_DIRECTORY
+        ${CMAKE_BINARY_DIR}
+    DEPENDS
+        shared
+)
 
 
 # Tests #######################################################################
