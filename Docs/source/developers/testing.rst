@@ -89,11 +89,12 @@ There are three steps to follow to add a new automated test (illustrated here fo
    runtime_params = warpx.do_dynamic_scheduling=0 algo.maxwell_solver=yee
    dim = 2
    addToCompileString =
+   cmakeSetupOpts = -DWarpX_DIMS=2
    restartTest = 0
    useMPI = 1
    numprocs = 2
    useOMP = 1
-   numthreads = 2
+   numthreads = 1
    compileTest = 0
    doVis = 0
    analysisRoutine = Examples/Tests/PML/analysis_pml_yee.py
@@ -104,8 +105,14 @@ If you re-use an existing input file, you can add arguments to ``runtime_params`
 
    If you added ``analysisRoutine = Examples/analysis_default_regression.py``, then run the new test case locally and add the :ref:`checksum <developers-checksum>` file for the expected output.
 
+.. note::
+
+   We run those tests on our continuous integration services, which at the moment only have 2 virtual CPU cores.
+   Thus, make sure that the product of ``numprocs`` and ``numthreads`` for a test is ``<=2``.
+
+
 Useful tool for plotfile comparison: ``fcompare``
---------------------------------------------------
+-------------------------------------------------
 
 AMReX provides ``fcompare``, an executable that takes two ``plotfiles`` as input and returns the absolute and relative difference for each field between these two plotfiles. For some changes in the code, it is very convenient to run the same input file with an old and your current version, and ``fcompare`` the plotfiles at the same iteration. To use it:
 

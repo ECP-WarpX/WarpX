@@ -32,13 +32,18 @@ Laser-driven electron acceleration
 
 AMReX ``inputs``:
 
+* :download:`1D case <../../../Examples/Physics_applications/laser_acceleration/inputs_1d>`
 * :download:`2D case <../../../Examples/Physics_applications/laser_acceleration/inputs_2d>`
 * :download:`2D case in boosted frame <../../../Examples/Physics_applications/laser_acceleration/inputs_2d_boost>`
 * :download:`3D case <../../../Examples/Physics_applications/laser_acceleration/inputs_3d>`
+* :download:`RZ case <../../../Examples/Physics_applications/laser_acceleration/inputs_rz>`
 
-PICMI files:
+PICMI (Python) scripts:
 
-* :download:`Without mesh refinement<../../../Examples/Physics_applications/laser_acceleration/PICMI_inputs_laser_acceleration.py>`
+* :download:`1D case <../../../Examples/Physics_applications/laser_acceleration/PICMI_inputs_1d.py>`
+* :download:`2D case with mesh refinement <../../../Examples/Physics_applications/laser_acceleration/PICMI_inputs_2d.py>`
+* :download:`3D case <../../../Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py>`
+* :download:`RZ case <../../../Examples/Physics_applications/laser_acceleration/PICMI_inputs_rz.py>`
 
 Plasma mirror
 -------------
@@ -84,7 +89,7 @@ The Monte-Carlo collision (MCC) model can be used to simulate capacitive dischar
 Test cases
 ----------
 
-PICMI test cases included that can be used as a reference:
+PICMI (Python) test cases included that can be used as a reference:
 
 * :download:`Gaussian beam <../../../Examples//Modules/gaussian_beam/PICMI_inputs_gaussian_beam.py>`
 * :download:`Langmuir plasma wave test in 3d <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir_rt.py>`
