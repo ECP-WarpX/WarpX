@@ -393,7 +393,7 @@ def test_zcylinder_emitter():
 
     T_cylinder = 2173.15 # K
     cylinder = assemblies.CylinderZ(
-        r_outer=0.7, r_inner=0.6, V=0, T=T_cylinder, WF=1.2, name="rectangle")
+        r_outer=0.7, r_inner=0.6, V=0, T=T_cylinder, WF=1.2, name="cylinder")
 
     #################################
     # physics components

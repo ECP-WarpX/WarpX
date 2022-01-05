@@ -10,7 +10,7 @@ from mewarpx.diags_store import diag_base
 from mewarpx.diags_store.field_diagnostic import FieldDiagnostic
 from mewarpx.mcc_wrapper import MCC
 from mewarpx.mwxrun import mwxrun
-from mewarpx.poisson_pseudo_1d import PoissonSolverPseudo1D
+from mewarpx.poisson_solvers import PoissonSolverPseudo1D
 import mewarpx.utils_store.mwxconstants as constants
 
 ####################################

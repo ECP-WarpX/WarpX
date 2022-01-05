@@ -1,5 +1,21 @@
 Version, Physics version, Date,        List of changes
-5.0.0, 2, In progress, "
+6.0.0, 2, In progress, "
+
+**API Changes**:
+
+- Renamed :module:`mewarpx.poisson_pseudo_1d` to
+  :module:`mewarpx.poisson_solvers`.
+
+**Features**:
+
+- Added Langevin model for electron-ion Coulomb scattering in
+  :class:`mewarpx.coulomb_scattering.LangevinElectronIonScattering`
+- Added :func:`mewarpx.utils_store.util.interpolate_from_grid` to interpolate
+  grid quantities to specified coordinates.
+- Added :class:`mewarpx.poisson_solvers.DummyPoissonSolver`, to be used in
+  cases where the field solve should be effectively dissabled.
+"
+5.0.0, 2, 12/29/2021, "
 
 **API Changes**:
 

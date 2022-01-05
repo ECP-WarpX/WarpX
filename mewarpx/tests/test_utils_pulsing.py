@@ -28,7 +28,7 @@ def test_utils_pulsing_sim():
     mwxutil.init_libwarpx(ndim=dim, rz=False)
     from mewarpx import assemblies, mespecies
     from mewarpx.mwxrun import mwxrun
-    from mewarpx.poisson_pseudo_1d import PoissonSolverPseudo1D
+    from mewarpx.poisson_solvers import PoissonSolverPseudo1D
     from mewarpx.utils_store import pulsing, testing_util
 
     # Include a random run number to allow parallel runs to not collide. Using

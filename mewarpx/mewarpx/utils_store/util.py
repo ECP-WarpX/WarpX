@@ -370,3 +370,82 @@ def plasma_Debye_length(T, n):
     return np.sqrt(
         constants.epsilon_0 * constants.kb_J * T / (n * constants.e**2)
     )
+
+
+def get_vel_vector(v_mag):
+    """Function that returns a random velocity vector given a magnitude.
+    The random point on a unit sphere is found according to
+    https://math.stackexchange.com/questions/44689/how-to-find-a-random-
+    axis-or-unit-vector-in-3d.
+    """
+    theta = np.random.rand(*v_mag.shape) * 2.0 * np.pi
+    z = 2.0 * np.random.rand(*v_mag.shape) - 1.0
+    vel_vectors = np.zeros(v_mag.shape + (3,))
+    vel_vectors[..., 0] = np.sqrt(1.0 - z**2) * np.cos(theta)
+    vel_vectors[..., 1] = np.sqrt(1.0 - z**2) * np.sin(theta)
+    vel_vectors[..., 2] = z
+    vel_vectors = v_mag[..., None] * vel_vectors
+
+    # assert(np.allclose(v_mag, np.sqrt(np.sum(vel_vectors**2, axis=1))))
+
+    return vel_vectors
+
+
+def interpolate_from_grid(coords, grid):
+    """Function to interpolate from grid quantities to given coordinates.
+
+    Arguments:
+        coords (np.array): Numpy array of coordinates of points where the grid
+            values should be interpolated, with shape (dim, n) where dim is the
+            simulation dimension and n the number of points to interpolate.
+        grid (np.array): Numpy array holding the grid point values (on nodes of
+            the grid).
+
+    Returns:
+        fpos (np.array): Numpy array of length n holding the interpolated values
+            for each coordinate given.
+    """
+    mwxrun = mewarpx.mwxrun.mwxrun
+
+    # sanity checks
+    if coords.shape[0] != mwxrun.dim:
+        raise AttributeError(
+            f"There were {coords.shape[0]} coordinate values given but the  "
+            f"simulation has {mwxrun.dim} dimensions."
+        )
+
+    n = coords.shape[1]
+    lower_node = np.zeros(coords.shape).astype(int)
+    weights = np.zeros(coords.shape)
+
+    # Build up coordinate (indexes, spacing, and bounds)
+    # all supported dimensions have a z coordinate
+    coord_specs = [(mwxrun.coord_map['z'], mwxrun.dz, mwxrun.zmin)]
+
+    if mwxrun.dim > 1:
+        if mwxrun.geom_str == 'RZ':
+            coord_specs.append((mwxrun.coord_map['r'], mwxrun.dr, mwxrun.rmin))
+        else:
+            coord_specs.append((mwxrun.coord_map['x'], mwxrun.dx, mwxrun.xmin))
+    if mwxrun.dim == 3:
+        coord_specs.append((mwxrun.coord_map['y'], mwxrun.dy, mwxrun.ymin))
+
+    # Iterate over all dimensions
+    for idx, dx, xmin in coord_specs:
+        x_grid = (coords[idx] - xmin) / dx
+        lower_node[idx] = np.floor(x_grid).astype(int)
+        weights[idx] = 1.0 - (x_grid - lower_node[idx])
+
+
+    fpos = np.zeros(n)
+    if mwxrun.dim == 1:
+        fpos += grid[lower_node[0]] * weights[0]
+        fpos += grid[lower_node[0] + 1] * (1.0 - weights[0])
+    elif mwxrun.dim == 2:
+        fpos += grid[lower_node[0], lower_node[1]] * weights[0] * weights[1]
+        fpos += grid[lower_node[0] + 1,lower_node[1]] * (1.0 - weights[0]) * weights[1]
+        fpos += grid[lower_node[0], lower_node[1] + 1] * weights[0] * (1.0 - weights[1])
+        fpos += grid[lower_node[0] + 1, lower_node[1] + 1] * (1.0 - weights[0]) * (1.0 - weights[1])
+    elif mwxrun.dim == 3:
+        raise NotImplementedError("XYZ interpolation not implemented yet.")
+    return fpos

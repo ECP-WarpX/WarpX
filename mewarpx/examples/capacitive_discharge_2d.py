@@ -13,7 +13,7 @@ import sys
 import numpy as np
 from pywarpx import callbacks, picmi
 
-from mewarpx import emission, mcc_wrapper, mespecies, poisson_pseudo_1d
+from mewarpx import emission, mcc_wrapper, mespecies, poisson_solvers
 from mewarpx.diags_store import diag_base
 from mewarpx.diags_store.field_diagnostic import FieldDiagnostic
 from mewarpx.mwxrun import mwxrun
@@ -94,7 +94,7 @@ class CapacitiveDischargeExample(object):
         # self.solver = picmi.ElectrostaticSolver(
         #    grid=mwxrun.grid, method='Multigrid', required_precision=1e-12
         # )
-        self.solver = poisson_pseudo_1d.PoissonSolverPseudo1D(grid=mwxrun.grid)
+        self.solver = poisson_solvers.PoissonSolverPseudo1D(grid=mwxrun.grid)
         mwxrun.simulation.solver = self.solver
 
         #######################################################################

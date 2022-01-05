@@ -6,7 +6,7 @@ import logging
 from pywarpx import picmi
 
 from mewarpx import (assemblies, emission, mcc_wrapper, mespecies,
-                     poisson_pseudo_1d, runinfo)
+                     poisson_solvers, runinfo)
 from mewarpx.diags_store import (field_diagnostic, flux_diagnostic,
                                  particle_diagnostic)
 from mewarpx.mwxrun import mwxrun
@@ -418,7 +418,7 @@ class DiodeRun_V1(object):
                 if self.rz:
                     raise NotImplementedError(
                         "Direct RZ solving is not yet implemented in mewarpx")
-                self.solver = poisson_pseudo_1d.PoissonSolverPseudo1D(
+                self.solver = poisson_solvers.PoissonSolverPseudo1D(
                     grid=mwxrun.grid
                 )
         else:

@@ -169,3 +169,25 @@ class PoissonSolverPseudo1D(ElectrostaticSolver):
         # the electrostatic solver in WarpX keeps the ghost cell values as 0
         self.phi[:self.nxguardphi,:] = 0
         self.phi[-self.nxguardphi:,:] = 0
+
+
+class DummyPoissonSolver(ElectrostaticSolver):
+
+    def __init__(self, grid, **kwargs):
+        """Dummy solver to allow us to effectively turn off the field solve
+        step.
+
+        Arguments:
+            grid (picmi.Cartesian1DGrid, picmi.Cartesian2DGrid or
+                picmi.CylindricalGrid): Instance of the grid on which the
+                dummy solver will be installed.
+        """
+        super(DummyPoissonSolver, self).__init__(
+            grid=grid, method=kwargs.pop('method', 'Multigrid'),
+            required_precision=1, **kwargs
+        )
+
+        callbacks.installpoissonsolver(self._run_solve)
+
+    def _run_solve(self):
+        pass
