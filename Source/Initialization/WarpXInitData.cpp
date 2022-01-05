@@ -684,7 +684,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #endif
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::ignore_unused(ly, Sx, Sy);
+        amrex::ignore_unused(ly, Sx, Sz);
 #elif defined(WARPX_DIM_1D_Z)
         amrex::ignore_unused(lx, ly, lz, Sx, Sy, Sz);
 #endif
