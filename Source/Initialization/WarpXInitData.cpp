@@ -679,14 +679,15 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
        amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
        amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
-#else
-       amrex::ignore_unused(edge_lengths, face_areas, field);
-#endif
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         amrex::ignore_unused(ly, Sx, Sz);
 #elif defined(WARPX_DIM_1D_Z)
         amrex::ignore_unused(lx, ly, lz, Sx, Sy, Sz);
+#endif
+        
+#else
+       amrex::ignore_unused(edge_lengths, face_areas, field);
 #endif
 
         amrex::ParallelFor (tbx, tby, tbz,
