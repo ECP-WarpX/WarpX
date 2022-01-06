@@ -29,6 +29,9 @@ else
     echo TIMEOUT set to "$TIMEOUT"
 fi
 
+# If the EFS chdir or the aws cp fails, we want the job to terminate, not run
+# locally without our knowing it.
+set -e
 # Use EFS directory as working directory.
 echo Make directory ${DIRNAME} in EFS and cd there
 mkdir -p /efs/WarpX_simulation_runs/${DIRNAME}
@@ -38,6 +41,10 @@ cd /efs/WarpX_simulation_runs/${DIRNAME}
 aws s3 cp --recursive s3://${BUCKET}/${DIRNAME} ./ --exclude "*" \
     --include "run*" --include "std*"
 ls
+
+# If something in the main job fails, we do want the final S3 file moves to
+# occur, so we don't exit on errors immediately
+set +e
 
 # Move diagnostic files that are done
 function checkptmove {
