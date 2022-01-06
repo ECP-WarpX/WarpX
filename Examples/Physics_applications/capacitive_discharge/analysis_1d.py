@@ -5,4 +5,4 @@
 import numpy as np
 
 density_data = np.load( 'avg_ion_density.npy' )
-assert np.isclose(np.mean(density_data), 253022848415031.72)
+assert np.isclose(np.mean(density_data), 2.53023e14)

@@ -5,143 +5,12 @@
 # --- Turner et al. (2013) - https://doi.org/10.1063/1.4775084
 
 import argparse
+import numpy as np
 import sys
 
-import numpy as np
 from pywarpx import callbacks, picmi, fields
-from scipy.sparse import csc_matrix, linalg
 
 constants = picmi.constants
-
-
-# A direct Poisson equation solver is used here since it is generally faster
-# than the default MLMG solver in WarpX for low cell count 1D problems.
-class PoissonSolver1D(picmi.ElectrostaticSolver):
-
-    def __init__(self, grid, **kwargs):
-        """Direct solver for the Poisson equation using superLU. This solver is
-        useful for 1D cases.
-
-        Arguments:
-            grid (picmi.Cartesian1DGrid): Instance of the grid on which the
-            solver will be installed.
-        """
-        # Sanity check that this solver is appropriate to use
-        if not isinstance(grid, picmi.Cartesian1DGrid):
-            raise RuntimeError('Direct solver can only be used on a 1D grid.')
-
-        super(PoissonSolver1D, self).__init__(
-            grid=grid, method=kwargs.pop('method', 'Multigrid'),
-            required_precision=1, **kwargs
-        )
-        self.rho_wrapper = None
-        self.phi_wrapper = None
-
-    def initialize_inputs(self):
-        """Grab geometrical quantities from the grid.
-        """
-        # grab the boundary potentials from the grid object
-        self.right_voltage = self.grid.potential_zmax
-
-        # set WarpX boundary potentials to None since we will handle it
-        # ourselves in this solver
-        self.grid.potential_xmin = None
-        self.grid.potential_xmax = None
-        self.grid.potential_ymin = None
-        self.grid.potential_ymax = None
-        self.grid.potential_zmin = None
-        self.grid.potential_zmax = None
-
-        super(PoissonSolver1D, self).initialize_inputs()
-
-        self.nz = self.grid.nx
-        self.dz = (self.grid.xmax - self.grid.xmin) / self.nz
-
-        self.nxguardphi = 1
-        self.nzguardphi = 1
-
-        self.phi = np.zeros(self.nz + 1 + 2*self.nzguardphi)
-
-        self.decompose_matrix()
-
-        callbacks.installpoissonsolver(self._run_solve)
-
-    def decompose_matrix(self):
-        """Function to build the superLU object used to solve the linear
-        system."""
-        self.nsolve = self.nz + 1
-
-        # Set up the tridiagonal computation matrix in order to solve A*phi =
-        # rho for phi.
-        self.A_ldiag = np.ones(self.nsolve-1) / self.dz**2
-        self.A_mdiag = -2.*np.ones(self.nsolve) / self.dz**2
-        self.A_udiag = np.ones(self.nsolve-1) / self.dz**2
-
-        self.A_mdiag[0] = 1.
-        self.A_udiag[0] = 0.0
-
-        self.A_mdiag[-1] = 1.
-        self.A_ldiag[-1] = 0.0
-
-        # Set up the computation matrix in order to solve A*phi = rho
-        A = np.zeros((self.nsolve, self.nsolve))
-
-        for ii in range(self.nsolve):
-            for jj in range(self.nsolve):
-                if ii == jj:
-                    A[ii, jj] = -2.0
-                elif ii == jj - 1 or ii == jj + 1:
-                    A[ii, jj] = 1.0
-
-        A[0, 1] = 0.0
-        A[-1, -2] = 0.0
-        A[0, 0] = 1.0
-        A[-1, -1] = 1.0
-
-        A = csc_matrix(A, dtype=np.float32)
-        self.lu = linalg.splu(A)
-
-    def _run_solve(self):
-        """Function run on every step to perform the required steps to solve
-        Poisson's equation."""
-
-        # get rho from WarpX
-        if self.rho_wrapper is None:
-            self.rho_wrapper = fields.RhoFPWrapper(0, False)
-        self.rho_data = self.rho_wrapper[Ellipsis][:,0]
-
-        # run superLU solver to get phi
-        self.solve()
-
-        # write phi to WarpX
-        if self.phi_wrapper is None:
-            self.phi_wrapper = fields.PhiFPWrapper(0, True)
-        self.phi_wrapper[Ellipsis] = self.phi
-
-    def solve(self):
-        """The solution step. Includes getting the boundary potentials and
-        calculating phi from rho."""
-
-        left_voltage = 0.0
-        right_voltage = eval(
-            self.right_voltage,
-            {'t':self.sim.extension.gett_new(0), 'sin':np.sin, 'pi':np.pi}
-        )
-
-        # Construct b vector
-        rho = -self.rho_data / constants.ep0
-        b = np.zeros(rho.shape[0], dtype=np.float32)
-        b[:] = rho * self.dz**2
-
-        b[0] = left_voltage
-        b[-1] = right_voltage
-
-        phi = self.lu.solve(b)
-
-        self.phi[self.nzguardphi:-self.nzguardphi] = phi
-
-        self.phi[:self.nzguardphi] = left_voltage
-        self.phi[-self.nzguardphi:] = right_voltage
 
 
 class CapacitiveDischargeExample(object):
@@ -175,8 +44,9 @@ class CapacitiveDischargeExample(object):
     # Time (in seconds) between diagnostic evaluations
     diag_interval = 32 / freq
 
-    def setup_run(self, n=0, test=False):
-        """Setup run for the specific case (n) desired."""
+    def __init__(self, n=0, test=False):
+        """Get input parameters for the specific case (n) desired."""
+        self.test = test
 
         # Case specific input parameters
         self.voltage = f"{self.voltage[n]}*sin(2*pi*{self.freq:.5e}*t)"
@@ -191,9 +61,17 @@ class CapacitiveDischargeExample(object):
         self.max_steps = int(self.total_time[n] / self.dt)
         self.diag_steps = int(self.diag_interval / self.dt)
 
-        if test:
+        if self.test:
             self.max_steps = 20
             self.diag_steps = 5
+
+        self.rho_wrapper = None
+        self.ion_density_array = np.zeros(self.nz + 1)
+
+        self.setup_run()
+
+    def setup_run(self):
+        """Setup simulation components."""
 
         #######################################################################
         # Set geometry and boundary conditions                                #
@@ -215,11 +93,10 @@ class CapacitiveDischargeExample(object):
         # Field solver                                                        #
         #######################################################################
 
-        # self.solver = picmi.ElectrostaticSolver(
-        #    grid=self.grid, method='Multigrid', required_precision=1e-12,
-        #    warpx_self_fields_verbosity=0
-        # )
-        self.solver = PoissonSolver1D(grid=self.grid)
+        self.solver = picmi.ElectrostaticSolver(
+            grid=self.grid, method='Multigrid', required_precision=1e-12,
+            warpx_self_fields_verbosity=0
+        )
 
         #######################################################################
         # Particle types setup                                                #
@@ -300,7 +177,7 @@ class CapacitiveDischargeExample(object):
             max_steps=self.max_steps,
             warpx_collisions=[mcc_electrons, mcc_ions],
             warpx_load_balance_intervals=self.max_steps//5000,
-            verbose=test
+            verbose=self.test
         )
 
         self.sim.add_species(
@@ -316,10 +193,6 @@ class CapacitiveDischargeExample(object):
             )
         )
 
-        # pass the simulation object to the Poisson solver so that the time
-        # dependent boundary potentials can be calculated
-        self.solver.sim = self.sim
-
         #######################################################################
         # Add diagnostics for the CI test to be happy                         #
         #######################################################################
@@ -334,16 +207,13 @@ class CapacitiveDischargeExample(object):
         )
         self.sim.add_diagnostic(field_diag)
 
-        #######################################################################
-        # Declare array to save ion density                                       #
-        #######################################################################
-
-        self.ion_density_array = np.zeros(self.nz + 1)
-
     def _get_rho_ions(self):
         # deposit the ion density in rho_fp
         self.sim.extension.depositChargeDensity('he_ions', 0)
-        rho_data = self.solver.rho_wrapper[Ellipsis][:,0]
+
+        if self.rho_wrapper is None:
+            self.rho_wrapper = fields.RhoFPWrapper(0, False)
+        rho_data = self.rho_wrapper[Ellipsis][:,0]
         self.ion_density_array += rho_data / constants.q_e / self.diag_steps
 
     def run_sim(self):
@@ -374,6 +244,5 @@ sys.argv = sys.argv[:1]+left
 if args.n < 1 or args.n > 4:
     raise AttributeError('Test number must be an integer from 1 to 4.')
 
-run = CapacitiveDischargeExample()
-run.setup_run(n=args.n-1, test=args.test)
+run = CapacitiveDischargeExample(n=args.n-1, test=args.test)
 run.run_sim()
