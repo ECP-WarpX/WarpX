@@ -660,7 +660,14 @@ namespace
         const auto & mypc = warpx.GetPartContainer();
         const std::string species_name(char_species_name);
         auto & myspc = mypc.GetParticleContainerFromName(species_name);
-        auto rho_fp = warpx.get_pointer_rho_fp(lev);
+        auto * rho_fp = warpx.get_pointer_rho_fp(lev);
+
+        if (rho_fp == nullptr) {
+            warpx.RecordWarning(
+                "WarpXWrappers", "rho_fp is not allocated", WarnPriority::low
+            );
+            return;
+        }
 
         // reset rho before depositing
         rho_fp->setVal(0.);

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
 # --- Copyright 2021 Modern Electron
-# --- Monte-Carlo Collision script based on Turner et al. (2013)
-# --- https://doi.org/10.1063/1.4775084
+# --- Monte-Carlo Collision script to reproduce the benchmark tests from
+# --- Turner et al. (2013) - https://doi.org/10.1063/1.4775084
 
 import argparse
 import sys
@@ -144,68 +144,70 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
 
 
 class CapacitiveDischargeExample(object):
+    '''The following runs a simulation of a parallel plate capacitor seeded
+    with a plasma in the spacing between the plates. A time varying voltage is
+    applied across the capacitor. The groups of 4 values below correspond to
+    the 4 cases simulated by Turner et al. (2013) in their benchmarks of
+    PIC-MCC codes.
+    '''
 
-    #######################################################################
-    # Begin global user parameters                                        #
-    #######################################################################
+    gap = 0.067 # m
 
-    D_CA = 0.067 # m
+    freq = 13.56e6 # Hz
+    voltage = [450.0, 200.0, 150.0, 120.0] # V
 
-    FREQ = 13.56e6 # Hz
-    VOLTAGE = [450.0, 200.0, 150.0, 120.0] # V
+    gas_density = [9.64e20, 32.1e20, 96.4e20, 321e20] # m^-3
+    gas_temp = 300.0 # K
+    m_ion = 6.67e-27 # kg
 
-    N_INERT = [9.64e20, 32.1e20, 96.4e20, 321e20] # m^-3
-    T_INERT = 300.0 # K
-    M_ION = 6.67e-27 # kg
+    plasma_density = [2.56e14, 5.12e14, 5.12e14, 3.84e14] # m^-3
+    elec_temp = 30000.0 # K
 
-    PLASMA_DENSITY = [2.56e14, 5.12e14, 5.12e14, 3.84e14] # m^-3
-    T_ELEC = 30000.0 # K
+    seed_nppc = 16 * np.array([32, 16, 8, 4])
 
-    SEED_NPPC = 16 * np.array([32, 16, 8, 4])
+    nz = [128, 256, 512, 512]
 
-    NZ = [128, 256, 512, 512]
-
-    DT = 1.0 / (np.array([400, 800, 1600, 3200]) * FREQ)
+    dt = 1.0 / (np.array([400, 800, 1600, 3200]) * freq)
 
     # Total simulation time in seconds
-    TOTAL_TIME = np.array([1280, 5120, 5120, 15360]) / FREQ
+    total_time = np.array([1280, 5120, 5120, 15360]) / freq
     # Time (in seconds) between diagnostic evaluations
-    DIAG_INTERVAL = 32 / FREQ
+    diag_interval = 32 / freq
 
     def setup_run(self, n=0, test=False):
         """Setup run for the specific case (n) desired."""
 
         # Case specific input parameters
-        self.VOLTAGE = f"{self.VOLTAGE[n]}*sin(2*pi*{self.FREQ:.5e}*t)"
+        self.voltage = f"{self.voltage[n]}*sin(2*pi*{self.freq:.5e}*t)"
 
-        self.N_INERT = self.N_INERT[n]
-        self.PLASMA_DENSITY = self.PLASMA_DENSITY[n]
-        self.SEED_NPPC = self.SEED_NPPC[n]
+        self.gas_density = self.gas_density[n]
+        self.plasma_density = self.plasma_density[n]
+        self.seed_nppc = self.seed_nppc[n]
 
-        self.NZ = self.NZ[n]
+        self.nz = self.nz[n]
 
-        self.DT = self.DT[n]
-        self.MAX_STEPS = int(self.TOTAL_TIME[n] / self.DT)
-        self.DIAG_STEPS = int(self.DIAG_INTERVAL / self.DT)
+        self.dt = self.dt[n]
+        self.max_steps = int(self.total_time[n] / self.dt)
+        self.diag_steps = int(self.diag_interval / self.dt)
 
         if test:
-            self.MAX_STEPS = 20
-            self.DIAG_STEPS = 5
+            self.max_steps = 20
+            self.diag_steps = 5
 
         #######################################################################
         # Set geometry and boundary conditions                                #
         #######################################################################
 
         self.grid = picmi.Cartesian1DGrid(
-            number_of_cells=[self.NZ],
+            number_of_cells=[self.nz],
             warpx_max_grid_size=128,
             lower_bound=[0],
-            upper_bound=[self.D_CA],
+            upper_bound=[self.gap],
             lower_boundary_conditions=['dirichlet'],
             upper_boundary_conditions=['dirichlet'],
             lower_boundary_conditions_particles=['absorbing'],
             upper_boundary_conditions_particles=['absorbing'],
-            warpx_potential_hi_z=self.VOLTAGE,
+            warpx_potential_hi_z=self.voltage,
         )
 
         #######################################################################
@@ -225,16 +227,16 @@ class CapacitiveDischargeExample(object):
         self.electrons = picmi.Species(
             particle_type='electron', name='electrons',
             initial_distribution=picmi.UniformDistribution(
-                density=self.PLASMA_DENSITY,
-                rms_velocity=[np.sqrt(constants.kb * self.T_ELEC / constants.m_e)]*3,
+                density=self.plasma_density,
+                rms_velocity=[np.sqrt(constants.kb * self.elec_temp / constants.m_e)]*3,
             )
         )
         self.ions = picmi.Species(
             particle_type='He', name='he_ions',
-            charge='q_e', mass=self.M_ION,
+            charge='q_e', mass=self.m_ion,
             initial_distribution=picmi.UniformDistribution(
-                density=self.PLASMA_DENSITY,
-                rms_velocity=[np.sqrt(constants.kb * self.T_INERT / self.M_ION)]*3,
+                density=self.plasma_density,
+                rms_velocity=[np.sqrt(constants.kb * self.gas_temp / self.m_ion)]*3,
             )
         )
 
@@ -246,8 +248,8 @@ class CapacitiveDischargeExample(object):
         mcc_electrons = picmi.MCCCollisions(
             name='coll_elec',
             species=self.electrons,
-            background_density=self.N_INERT,
-            background_temperature=self.T_INERT,
+            background_density=self.gas_density,
+            background_temperature=self.gas_temp,
             background_mass=self.ions.mass,
             scattering_processes={
                 'elastic' : {
@@ -272,8 +274,8 @@ class CapacitiveDischargeExample(object):
         mcc_ions = picmi.MCCCollisions(
             name='coll_ion',
             species=self.ions,
-            background_density=self.N_INERT,
-            background_temperature=self.T_INERT,
+            background_density=self.gas_density,
+            background_temperature=self.gas_temp,
             scattering_processes={
                 'elastic' : {
                     'cross_section' : cross_sec_direc+'ion_scattering.dat'
@@ -293,23 +295,23 @@ class CapacitiveDischargeExample(object):
 
         self.sim = picmi.Simulation(
             solver=self.solver,
-            time_step_size=self.DT,
-            max_steps=self.MAX_STEPS,
+            time_step_size=self.dt,
+            max_steps=self.max_steps,
             warpx_collisions=[mcc_electrons, mcc_ions],
-            warpx_load_balance_intervals=self.MAX_STEPS//5000,
+            warpx_load_balance_intervals=self.max_steps//5000,
             verbose=test
         )
 
         self.sim.add_species(
             self.electrons,
             layout = picmi.GriddedLayout(
-                n_macroparticle_per_cell=[self.SEED_NPPC], grid=self.grid
+                n_macroparticle_per_cell=[self.seed_nppc], grid=self.grid
             )
         )
         self.sim.add_species(
             self.ions,
             layout = picmi.GriddedLayout(
-                n_macroparticle_per_cell=[self.SEED_NPPC], grid=self.grid
+                n_macroparticle_per_cell=[self.seed_nppc], grid=self.grid
             )
         )
 
@@ -335,19 +337,19 @@ class CapacitiveDischargeExample(object):
         # Declare array to save ion density                                       #
         #######################################################################
 
-        self.ion_density_array = np.zeros(self.NZ + 1)
+        self.ion_density_array = np.zeros(self.nz + 1)
 
     def _get_rho_ions(self):
         # deposit the ion density in rho_fp
         self.sim.extension.depositChargeDensity('he_ions', 0)
         rho_data = self.solver.rho_wrapper[Ellipsis][:,0]
-        self.ion_density_array += rho_data / constants.q_e / self.DIAG_STEPS
+        self.ion_density_array += rho_data / constants.q_e / self.diag_steps
 
     def run_sim(self):
 
-        self.sim.step(self.MAX_STEPS - self.DIAG_STEPS)
+        self.sim.step(self.max_steps - self.diag_steps)
         callbacks.installafterstep(self._get_rho_ions)
-        self.sim.step(self.DIAG_STEPS)
+        self.sim.step(self.diag_steps)
 
         if self.sim.extension.getMyProc() == 0:
             np.save('avg_ion_density.npy', self.ion_density_array)
@@ -370,8 +372,7 @@ sys.argv = sys.argv[:1]+left
 
 if args.n < 1 or args.n > 4:
     raise AttributeError('Test number must be an integer from 1 to 4.')
-CASE_NUM = args.n - 1
 
 run = CapacitiveDischargeExample()
-run.setup_run(n=CASE_NUM, test=args.test)
+run.setup_run(n=args.n-1, test=args.test)
 run.run_sim()
