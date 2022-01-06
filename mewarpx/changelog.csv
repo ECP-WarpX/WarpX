@@ -1,5 +1,22 @@
 Version, Physics version, Date,        List of changes
-6.0.0, 2, In progress, "
+6.0.1, 2, In progress, "
+
+**Other changes**:
+
+- Added a CI test of a vacuum thermionic diode.
+- Changed the formatting of logging messages.
+- Added quotation marks around implicit functions.
+- Merge ``upstream/development`` (git hash ``518f18c``) into memaster.
+
+**Bugfixes**:
+
+- Now only use the root proc to delete old diags.
+- A typo in
+  :func:`mewarpx.diags_store.flux_diagnostic.FluxDiagnostic.update_ts_dict()`
+  was fixed that prevented a list of injectors or conductors to be passed for a
+  single object (composite cathodes for example).
+"
+6.0.0, 2, 1/5/2022, "
 
 **API Changes**:
 

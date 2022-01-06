@@ -112,7 +112,7 @@ jobs:
             . venv/bin/activate
             cd mewarpx/examples
             export OMP_NUM_THREADS=1
-            for f in *.py; do python $f --steps 5; done
+            for f in *.py; do python $f --steps 5 > stdout.out; done
 
       # Install minerva & mwxp and run mwxp tests (minimal output)
       - run:

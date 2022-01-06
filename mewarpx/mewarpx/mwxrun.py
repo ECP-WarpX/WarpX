@@ -204,11 +204,6 @@ class MEWarpXRun(object):
                     )
                 )
 
-            # at this point we are committed to either restarting or starting
-            # fresh; if this is a fresh start we can delete diags if present
-            if not self.restart and os.path.exists("diags"):
-                shutil.rmtree("diags")
-
             self.simulation.initialize_inputs()
             self.simulation.initialize_warpx()
 
@@ -250,6 +245,11 @@ class MEWarpXRun(object):
         self.phi_wrapper_ghosts = fields.PhiFPWrapper(self.lev, True)
         self.rho_wrapper_no_ghosts = fields.RhoFPWrapper(self.lev, False)
         self.phi_wrapper_no_ghosts = fields.PhiFPWrapper(self.lev, False)
+
+        # at this point we are committed to either restarting or starting
+        # fresh; if this is a fresh start we can delete diags if present
+        if not self.restart and os.path.exists("diags") and self.me == 0:
+            shutil.rmtree("diags")
 
         self.initialized = True
 

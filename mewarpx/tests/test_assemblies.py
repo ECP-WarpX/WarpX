@@ -351,8 +351,6 @@ def test_infinite_cylinder_z():
 
     # Initialize and import only when we know dimension
     mwxutil.init_libwarpx(ndim=dim, rz=True)
-
-    # Initialize and import only when we know dimension
     from mewarpx.utils_store import testing_util
 
     # Include a random run number to allow parallel runs to not collide. Using

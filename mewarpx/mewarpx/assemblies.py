@@ -80,21 +80,21 @@ class Assembly(object):
 
             # wrap the current EB potential in an if statement with the
             # new implicit function
+            old_str = mwxrun.simulation.embedded_boundary.potential.strip('"')
             mwxrun.simulation.embedded_boundary.potential = (
-                f"if({self.implicit_function}>0,{self.V},"
-                f"{mwxrun.simulation.embedded_boundary.potential})"
+                f'"if({self.implicit_function}>0,{self.V},{old_str})"'
             )
 
             # add a nested max() statement with the current implicit function
             # to add the new embedded boundary
+            old_str = mwxrun.simulation.embedded_boundary.implicit_function.strip('"')
             mwxrun.simulation.embedded_boundary.implicit_function = (
-                f"max({mwxrun.simulation.embedded_boundary.implicit_function},"
-                f"{self.implicit_function})"
+                f'"max({old_str},{self.implicit_function})"'
             )
         else:
             mwxrun.simulation.embedded_boundary = picmi.EmbeddedBoundary(
-                implicit_function=self.implicit_function,
-                potential=self.V
+                implicit_function=f'"{self.implicit_function}"',
+                potential=f'"{self.V}"'
             )
 
     def init_scrapedparticles(self, fieldlist):
@@ -582,7 +582,8 @@ class Rectangle(Assembly):
 
         # Negative means outside of object
         self.implicit_function = (
-            f"-max(max(x-({self.xmax}),({self.xmin})-x),max(z-({self.zmax}),({self.zmin})-z))"
+            f"-max(max(x-({self.xmax}),({self.xmin})-x),"
+            f"max(z-({self.zmax}),({self.zmin})-z))"
         )
         self.scraper_label = 'eb'
 

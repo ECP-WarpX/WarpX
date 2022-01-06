@@ -83,7 +83,7 @@ def test_create_checkpoints():
 
     checkpoint_names = [
         f"{CHECKPOINT_NAME}{i:05}"
-        for i in range(0, MAX_STEPS + 1, DIAG_STEPS)
+        for i in range(DIAG_STEPS, MAX_STEPS + 1, DIAG_STEPS)
     ]
 
     for name in checkpoint_names:

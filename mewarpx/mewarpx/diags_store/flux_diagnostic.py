@@ -693,7 +693,7 @@ class FluxDiagnostic(FluxDiagBase):
             )
             for sp in mwxrun.simulation.species:
                 if not getattr(sp, scrape_flag):
-                    logger.warn(
+                    logger.warning(
                         f"{surface.scraper_label} scraping is turned off "
                         f"for {sp.name} but {surf_name} requires it."
                     )
@@ -759,9 +759,9 @@ class FluxDiagnostic(FluxDiagBase):
 
                         sp_name = mwxrun.simulation.species[sp].name
                         if (keytype, key, sp_name) in self.ts_dict:
-                            self.ts_dict[(keytype, key, sp)] = (
+                            self.ts_dict[(keytype, key, sp_name)] = (
                                 timeseries.concat_crop_timeseries(
-                                    [self.ts_dict[(keytype, key, sp)], ts]
+                                    [self.ts_dict[(keytype, key, sp_name)], ts]
                                 )
                             )
                         else:
