@@ -437,7 +437,7 @@ jobs:
 #- job: macOS_pip_pypi_old
 #  displayName: macOS pip from PyPI (old)
 #  pool:
-#    vmImage: macOS-10.14
+#    vmImage: macOS-10.15
 #  steps:
 #  - script: |
 #      python3 -m pip install -U pip --user
@@ -449,7 +449,7 @@ jobs:
 #- job: macOS_pip_pypi_nobin
 #  displayName: macOS pip from PyPI w/o binary
 #  pool:
-#    vmImage: macOS-10.14
+#    vmImage: macOS-10.15
 #  steps:
 #  - script: |
 #      python3 -m pip install -U pip setuptools wheel cmake --user
@@ -549,7 +549,7 @@ jobs:
 - job: macOS_conda
   displayName: macOS conda
   pool:
-    vmImage: macOS-10.14
+    vmImage: macOS-10.15
   steps:
   - bash: |
       echo "##vso[task.prependpath]$CONDA/bin"
@@ -610,7 +610,7 @@ jobs:
 - job: macOS_mamba
   displayName: macOS mamba
   pool:
-    vmImage: macOS-10.14
+    vmImage: macOS-10.15
   steps:
   - bash: |
       echo "##vso[task.prependpath]$CONDA/bin"
@@ -730,7 +730,7 @@ jobs:
 #- job: macOS_brew
 #  displayName: macOS homebrew
 #  pool:
-#    vmImage: macOS-10.14
+#    vmImage: macOS-10.15
 #  steps:
 #  - script: |
 #      rm -rf /usr/local/bin/2to3
@@ -751,7 +751,7 @@ jobs:
 #- job: win_pip_pypi
 #  displayName: Windows pip from PyPI
 #  pool:
-#    vmImage: vs2017-win2016
+#    vmImage: windows-2019
 #  steps:
 #  - task: UsePythonVersion@0
 #    inputs:
@@ -768,7 +768,7 @@ jobs:
 #- job: win_pip_pypi_nobin
 #  displayName: Windows pip from PyPI w/o binary
 #  pool:
-#    vmImage: vs2017-win2016
+#    vmImage: windows-2019
 #  steps:
 #  - task: UsePythonVersion@0
 #    inputs:
@@ -785,9 +785,7 @@ jobs:
 - job: win_pip_dev
   displayName: Windows pip from dev
   pool:
-#   vmImage: windows-latest
-#   vmImage: vs2017-win2016
-   vmImage: windows-2019
+    vmImage: windows-latest
   steps:
   - task: UsePythonVersion@0
     inputs:
@@ -808,7 +806,7 @@ jobs:
 - job: win_conda
   displayName: Windows conda
   pool:
-    vmImage: vs2017-win2016
+    vmImage: windows-2019
   steps:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda command to PATH
@@ -838,7 +836,7 @@ jobs:
 - job: win_mamba
   displayName: Windows mamba
   pool:
-    vmImage: vs2017-win2016
+    vmImage: windows-2019
   steps:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda command to PATH
