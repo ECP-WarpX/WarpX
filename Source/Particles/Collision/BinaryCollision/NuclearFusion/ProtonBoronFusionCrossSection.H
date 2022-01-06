@@ -71,7 +71,7 @@ amrex::ParticleReal ProtonBoronFusionCrossSectionNevins (const amrex::ParticleRe
         constexpr auto D2 = -20.3_prt;
         constexpr auto D5 = -1.58_prt;
         const amrex::ParticleReal E_norm = (E_keV-400._prt) * 1.e-2_prt;
-        astrophysical_factor = D0 + D1*E_norm + D2*E_norm*E_norm + D5*std::pow(E_norm,5);
+        astrophysical_factor = D0 + D1*E_norm + D2*E_norm*E_norm + D5*std::pow(E_norm,5._prt);
     }
     else
     {

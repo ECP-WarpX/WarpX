@@ -109,7 +109,7 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
     ParmParse pp_warpx("warpx");
     queryWithParser(pp_warpx, "gamma_boost", gamma_boost);
     if( gamma_boost > 1. ) {
-        beta_boost = std::sqrt(1._rt-1._rt/pow(gamma_boost,2));
+        beta_boost = std::sqrt(1._rt-1._rt/std::pow(gamma_boost,2._rt));
         std::string s;
         pp_warpx.get("boost_direction", s);
         if (s == "x" || s == "X") {
