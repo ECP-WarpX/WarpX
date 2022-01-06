@@ -9,12 +9,13 @@ import sys
 
 import numpy as np
 from pywarpx import callbacks, picmi, fields
-from scipy.sparse import csc_matrix
-from scipy.sparse import linalg as sla
+from scipy.sparse import csc_matrix, linalg
 
 constants = picmi.constants
 
 
+# A direct Poisson equation solver is used here since it is generally faster
+# than the default MLMG solver in WarpX for low cell count 1D problems.
 class PoissonSolver1D(picmi.ElectrostaticSolver):
 
     def __init__(self, grid, **kwargs):
@@ -98,7 +99,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         A[-1, -1] = 1.0
 
         A = csc_matrix(A, dtype=np.float32)
-        self.lu = sla.splu(A)
+        self.lu = linalg.splu(A)
 
     def _run_solve(self):
         """Function run on every step to perform the required steps to solve
