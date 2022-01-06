@@ -143,6 +143,7 @@ amrex::Array1D<int, 0, 2>
 WarpX::CountExtFaces() {
     amrex::Array1D<int, 0, 2> sums{0, 0, 0};
 #ifdef AMREX_USE_EB
+#ifndef WARPX_DIM_RZ
 
 #ifdef WARPX_DIM_XZ
     // In 2D we change the extrema of the for loop so that we only have the case idim=1
@@ -168,6 +169,7 @@ WarpX::CountExtFaces() {
     }
 
     amrex::ParallelDescriptor::ReduceIntSum(&(sums(0)), AMREX_SPACEDIM);
+#endif
 #endif
     return sums;
 }
@@ -371,6 +373,7 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
 void
 WarpX::ComputeOneWayExtensions() {
 #ifdef AMREX_USE_EB
+#ifndef WARPX_DIM_RZ
     auto const eb_fact = fieldEBFactory(maxLevel());
 
     auto const &cell_size = CellSize(maxLevel());
@@ -486,12 +489,14 @@ WarpX::ComputeOneWayExtensions() {
     }
 
 #endif
+#endif
 }
 
 
 void
 WarpX::ComputeEightWaysExtensions() {
 #ifdef AMREX_USE_EB
+#ifndef WARPX_DIM_RZ
     auto const &cell_size = CellSize(maxLevel());
 
     const amrex::Real dx = cell_size[0];
@@ -641,6 +646,7 @@ WarpX::ComputeEightWaysExtensions() {
             }, amrex::Scan::Type::exclusive);
         }
     }
+#endif
 #endif
 }
 

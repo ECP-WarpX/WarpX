@@ -6,9 +6,9 @@
 # --- used for the field solve step.
 
 import numpy as np
-from scipy.sparse import csc_matrix, linalg as sla
-import pywarpx
-from pywarpx import picmi, callbacks, fields
+from pywarpx import callbacks, fields, picmi
+from scipy.sparse import csc_matrix
+from scipy.sparse import linalg as sla
 
 constants = picmi.constants
 
@@ -176,7 +176,7 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
         calculating phi from rho."""
         right_voltage = eval(
             self.right_voltage,
-            {'t':pywarpx.gett_new(0), 'sin':np.sin, 'pi':np.pi}
+            {'t':sim.extension.gett_new(0), 'sin':np.sin, 'pi':np.pi}
         )
         left_voltage = 0.0
 

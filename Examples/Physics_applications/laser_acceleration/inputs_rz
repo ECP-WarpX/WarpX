@@ -1,11 +1,11 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 1000
+max_step = 10
 amr.n_cell =  64  512
 amr.max_grid_size = 64   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 32 # minimum size of each AMReX box, used to decompose the domain
-geometry.coord_sys   = 1                  # 0: Cartesian
+geometry.dims = RZ
 geometry.prob_lo     =   0.   -56.e-6    # physical domain
 geometry.prob_hi     =  30.e-6    12.e-6
 amr.max_level = 0 # Maximum level in hierarchy (1 might be unstable, >1 is not supported)
@@ -82,7 +82,9 @@ laser1.wavelength = 0.8e-6               # The wavelength of the laser (in m)
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 200
+diag1.intervals = 10
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
 diag1.dump_rz_modes = 1
+diag1.electrons.variables = w ux uy uz
+diag1.beam.variables = w ux uy uz

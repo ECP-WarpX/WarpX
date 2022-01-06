@@ -1,16 +1,16 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 1000
+max_step = 200 # for production, run for longer time, e.g. max_step = 1000
 amr.n_cell =  64  512
 amr.max_grid_size = 64   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 32 # minimum size of each AMReX box, used to decompose the domain
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 2
 geometry.prob_lo     = -30.e-6   -56.e-6    # physical domain
 geometry.prob_hi     =  30.e-6    12.e-6
-amr.max_level = 0 # Maximum level in hierarchy (1 might be unstable, >1 is not supported)
-# warpx.fine_tag_lo = -5.e-6   -35.e-6
-# warpx.fine_tag_hi =  5.e-6   -25.e-6
+amr.max_level = 1 # Maximum level in hierarchy (1 might be unstable, >1 is not supported)
+warpx.fine_tag_lo = -5.e-6   -35.e-6
+warpx.fine_tag_hi =  5.e-6   -25.e-6
 
 #################################
 ####### Boundary condition ######
@@ -28,6 +28,7 @@ warpx.cfl = 1. # if 1., the time step is set to its CFL limit
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z # Only z is supported for the moment
 warpx.moving_window_v = 1.0 # units of speed of light
+warpx.serialize_ics = 1 # for production, set this to 0 (default)
 
 # Order of particle shape factors
 algo.particle_shape = 3
