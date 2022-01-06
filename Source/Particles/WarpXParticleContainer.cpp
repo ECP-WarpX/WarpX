@@ -968,7 +968,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = static_cast<amrex::Real>(amrex::second());
+            Real wt = amrex::second();
 
             //
             // Particle Push
@@ -996,7 +996,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
             if (costs && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = static_cast<amrex::Real>(amrex::second()) - wt;
+                wt = amrex::second() - wt;
                 amrex::HostDevice::Atomic::Add( &(*costs)[pti.index()], wt);
             }
         }

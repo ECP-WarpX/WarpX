@@ -149,7 +149,7 @@ SpectralFieldData::SpectralFieldData( const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = static_cast<amrex::Real>(amrex::second());
+        Real wt = amrex::second();
 
         // Note: the size of the real-space box and spectral-space box
         // differ when using real-to-complex FFT. When initializing
@@ -169,7 +169,7 @@ SpectralFieldData::SpectralFieldData( const int lev,
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = static_cast<amrex::Real>(amrex::second()) - wt;
+            wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -217,7 +217,7 @@ SpectralFieldData::ForwardTransform (const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = static_cast<amrex::Real>(amrex::second());
+        Real wt = amrex::second();
 
         // Copy the real-space field `mf` to the temporary field `tmpRealField`
         // This ensures that all fields have the same number of points
@@ -284,7 +284,7 @@ SpectralFieldData::ForwardTransform (const int lev,
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = static_cast<amrex::Real>(amrex::second()) - wt;
+            wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -341,7 +341,7 @@ SpectralFieldData::BackwardTransform (const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = static_cast<amrex::Real>(amrex::second());
+        Real wt = amrex::second();
 
         // Copy the spectral-space field `tmpSpectralField` to the appropriate
         // field (specified by the input argument field_index)
@@ -444,7 +444,7 @@ SpectralFieldData::BackwardTransform (const int lev,
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = static_cast<amrex::Real>(amrex::second()) - wt;
+            wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }

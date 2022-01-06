@@ -887,7 +887,7 @@ MultiParticleContainer::doFieldIonization (int lev,
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = static_cast<amrex::Real>(amrex::second());
+            Real wt = amrex::second();
 
             auto& src_tile = pc_source ->ParticlesAt(lev, pti);
             auto& dst_tile = pc_product->ParticlesAt(lev, pti);
@@ -905,7 +905,7 @@ MultiParticleContainer::doFieldIonization (int lev,
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = static_cast<amrex::Real>(amrex::second()) - wt;
+                wt = amrex::second() - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
@@ -1502,7 +1502,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = static_cast<amrex::Real>(amrex::second());
+            Real wt = amrex::second();
 
             auto Transform = PairGenerationTransformFunc(pair_gen_functor,
                                                          pti, lev, Ex.nGrowVect(),
@@ -1527,7 +1527,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = static_cast<amrex::Real>(amrex::second()) - wt;
+                wt = amrex::second() - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
@@ -1578,7 +1578,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = static_cast<amrex::Real>(amrex::second());
+            Real wt = amrex::second();
 
             auto Transform = PhotonEmissionTransformFunc(
                   m_shr_p_qs_engine->build_optical_depth_functor(),
@@ -1607,7 +1607,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = static_cast<amrex::Real>(amrex::second()) - wt;
+                wt = amrex::second() - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }

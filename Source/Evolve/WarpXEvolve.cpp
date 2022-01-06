@@ -69,13 +69,13 @@ WarpX::Evolve (int numsteps)
 
     bool early_params_checked = false; // check typos in inputs after step 1
 
-    static amrex::Real evolve_time = 0;
+    static Real evolve_time = 0;
 
     const int step_begin = istep[0];
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
         WARPX_PROFILE("WarpX::Evolve::step");
-        Real evolve_time_beg_step = static_cast<amrex::Real>(amrex::second());
+        Real evolve_time_beg_step = amrex::second();
 
         multi_diags->NewIteration();
 
@@ -347,7 +347,7 @@ WarpX::Evolve (int numsteps)
         }
 
         // create ending time stamp for calculating elapsed time each iteration
-        Real evolve_time_end_step = static_cast<amrex::Real>(amrex::second());
+        Real evolve_time_end_step = amrex::second();
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
         if (verbose) {

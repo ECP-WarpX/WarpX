@@ -120,7 +120,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = static_cast<amrex::Real>(amrex::second());
+        Real wt = amrex::second();
 
         // Extract field data for this grid/tile
         Array4<Real> const& Ex = Efield[0]->array(mfi);
@@ -219,7 +219,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = static_cast<amrex::Real>(amrex::second()) - wt;
+            wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -247,7 +247,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = static_cast<amrex::Real>(amrex::second());
+        Real wt = amrex::second();
 
         // Extract field data for this grid/tile
         Array4<Real> const& Er = Efield[0]->array(mfi);
@@ -421,7 +421,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = static_cast<amrex::Real>(amrex::second()) - wt;
+            wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     } // end of loop over grid/tiles

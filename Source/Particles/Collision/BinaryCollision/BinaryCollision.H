@@ -176,7 +176,7 @@ public:
                 {
                     amrex::Gpu::synchronize();
                 }
-                double wt = static_cast<amrex::Real>(amrex::second());
+                amrex::Real wt = amrex::second();
 
                 doCollisionsWithinTile( lev, mfi, species1, species2, product_species_vector,
                                          copy_species1_data, copy_species2_data);
@@ -184,8 +184,8 @@ public:
                 if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
                 {
                     amrex::Gpu::synchronize();
-                    wt = static_cast<amrex::Real>(amrex::second()) - wt;
-                    amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], static_cast<amrex::Real>(wt));
+                    wt = amrex::second() - wt;
+                    amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
                 }
             }
         }

@@ -42,9 +42,9 @@
 class Timer
 {
 public:
-  Timer (const char* tag) {m_Tag = tag; m_Start = static_cast<amrex::Real>(amrex::second());}
+  Timer (const char* tag) {m_Tag = tag; m_Start = amrex::second();}
   ~Timer () {
-      m_End = static_cast<amrex::Real>(amrex::second());
+      m_End = amrex::second();
       amrex::ParallelDescriptor::ReduceRealMax(m_End, amrex::ParallelDescriptor::IOProcessorNumber());
       amrex::Print()<<m_Tag<<" took:"<<m_End - m_Start<<" seconds\n";
   }

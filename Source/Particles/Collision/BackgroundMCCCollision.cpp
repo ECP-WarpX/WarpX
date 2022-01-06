@@ -221,14 +221,14 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
             {
                 amrex::Gpu::synchronize();
             }
-            amrex::Real wt = static_cast<amrex::Real>(amrex::second());
+            amrex::Real wt = amrex::second();
 
             doBackgroundCollisionsWithinTile(pti);
 
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = static_cast<amrex::Real>(amrex::second()) - wt;
+                wt = amrex::second() - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
@@ -392,7 +392,7 @@ void BackgroundMCCCollision::doBackgroundIonization
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = static_cast<amrex::Real>(amrex::second());
+        amrex::Real wt = amrex::second();
 
         auto& elec_tile = species1.ParticlesAt(lev, pti);
         auto& ion_tile = species2.ParticlesAt(lev, pti);
@@ -415,7 +415,7 @@ void BackgroundMCCCollision::doBackgroundIonization
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = static_cast<amrex::Real>(amrex::second()) - wt;
+            wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
         }
     }
