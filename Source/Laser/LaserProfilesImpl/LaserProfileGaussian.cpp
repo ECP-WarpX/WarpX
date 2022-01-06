@@ -67,7 +67,7 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
 
     // Get angle between p_X and stc_direction
     // in 2d, stcs are in the simulation plane
-#if AMREX_SPACEDIM == 3
+#if defined(WARPX_DIM_3D)
     auto arg = m_params.stc_direction[0]*m_common_params.p_X[0] +
         m_params.stc_direction[1]*m_common_params.p_X[1] +
         m_params.stc_direction[2]*m_common_params.p_X[2];
@@ -126,9 +126,9 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     // Because diffract_factor is a complex, the code below takes into
     // account the impact of the dimensionality on both the Gouy phase
     // and the amplitude of the laser
-#if ((AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ))
+#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
     prefactor = prefactor / diffract_factor;
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     prefactor = prefactor / amrex::sqrt(diffract_factor);
 #endif
 

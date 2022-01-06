@@ -7,7 +7,7 @@ amr.max_level = 0
 warpx.numprocs = 1 2
 
 # Geometry
-geometry.coord_sys = 1
+geometry.dims = RZ
 geometry.prob_lo =   0    -220e-6
 geometry.prob_hi = 200e-6   10e-6
 boundary.field_lo = none damped

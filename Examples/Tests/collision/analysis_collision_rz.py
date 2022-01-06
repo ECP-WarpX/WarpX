@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019-2021 Yinjian Zhao
 #
@@ -16,11 +16,13 @@
 # tolerance: 1.0e-30
 # Possible running time: ~ 1.0 s
 
+from glob import glob
 import os
 import sys
-import yt
+
 import numpy as np
-from glob import glob
+import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

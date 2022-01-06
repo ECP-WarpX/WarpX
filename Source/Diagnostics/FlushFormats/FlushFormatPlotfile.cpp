@@ -194,10 +194,10 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
             jobInfoFile << "   -y: " << "interior" << "\n";
             jobInfoFile << "   +y: " << "interior" << "\n";
         }
-        if (AMREX_SPACEDIM == 3) {
+#if defined(WARPX_DIM_3D)
             jobInfoFile << "   -z: " << "interior" << "\n";
             jobInfoFile << "   +z: " << "interior" << "\n";
-        }
+#endif
 
         jobInfoFile << "\n\n";
 

@@ -1,6 +1,8 @@
-import numpy as np
+#!/usr/bin/env python3
+
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
+import numpy as np
 from pywarpx import picmi
 
 # Number of time steps
@@ -169,6 +171,7 @@ sim.initialize_warpx()
 
 # Get fields data using Python wrappers
 import pywarpx.fields as pwxf
+
 Ex = pwxf.ExFPWrapper(include_ghosts = include_ghosts)
 Ey = pwxf.EyFPWrapper(include_ghosts = include_ghosts)
 Ez = pwxf.EzFPWrapper(include_ghosts = include_ghosts)
@@ -248,7 +251,7 @@ def check_values(benchmark, data, rtol, atol):
     passed = np.allclose(benchmark, np.sum(np.abs(data[:,:])), rtol = rtol, atol = atol)
     assert(passed)
 
-rtol = 1e-09
+rtol = 2e-09
 atol = 1e-12
 
 # E
