@@ -833,11 +833,6 @@ private:
     // Singleton is used when the code is run from python
     static WarpX* m_instance;
 
-    /**
-     * \brief Function to look for and execute Python callbacks
-     */
-    void ExecutePythonCallback ( std::string name );
-
     ///
     /// Advance the simulation by numsteps steps, electromagnetic case.
     ///

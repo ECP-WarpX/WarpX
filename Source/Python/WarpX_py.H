@@ -9,6 +9,7 @@
 #define WARPX_PY_H_
 
 #include "WarpXWrappers.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <map>
 #include <string>
@@ -23,5 +24,10 @@
  * afterrestart, particleinjection and appliedfields.
 */
 extern std::map< std::string, WARPX_CALLBACK_PY_FUNC_0 > warpx_callback_py_map;
+
+/**
+ * \brief Function to look for and execute Python callbacks
+ */
+void ExecutePythonCallback ( std::string name );
 
 #endif

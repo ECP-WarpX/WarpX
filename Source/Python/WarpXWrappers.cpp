@@ -164,14 +164,8 @@ namespace
     {
         WarpX& warpx = WarpX::GetInstance();
         warpx.InitData();
-        if ( warpx_callback_py_map.count("afterinit") == 1u ) {
-            WARPX_PROFILE("warpx_py_afterinit");
-            warpx_callback_py_map["afterinit"]();
-        }
-        if ( warpx_callback_py_map.count("particleloader") == 1u ) {
-            WARPX_PROFILE("warpx_py_particleloader");
-            warpx_callback_py_map["particleloader"]();
-        }
+        ExecutePythonCallback("afterinit");
+        ExecutePythonCallback("particleloader");
     }
 
     void warpx_finalize ()

@@ -982,13 +982,3 @@ WarpX::VayDeposition ()
     "WarpX::CurrentCorrection: requires WarpX build with spectral solver support.");
 #endif
 }
-
-// Execute Python callbacks of the type given by the input string
-void
-WarpX::ExecutePythonCallback ( std::string name)
-{
-    if (warpx_callback_py_map.count(name) == 1u) {
-        WARPX_PROFILE("warpx_py_"+name);
-        warpx_callback_py_map[name]();
-    }
-}
