@@ -5,6 +5,7 @@
 #
 # License: BSD-3-Clause-LBNL
 
+import os
 import sys
 import yt
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -693,7 +694,7 @@ def main():
     rho_end = field_data_end["rho"].to_ndarray()
     check_charge_conservation(rho_start, rho_end)
 
-    test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
+    test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename_end)
 
 if __name__ == "__main__":
