@@ -274,15 +274,15 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             {
                 fields(i,j,k,Idx.Ex) = T2 * C * Ex_old
                                        + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
-                                       + X4 * Jx + I * T2 * X3 * rho_old * kx - I * X2 * rho_new * kx;
+                                       + X4 * Jx - I * (X2 * rho_new - T2 * X3 * rho_old) * kx;
 
                 fields(i,j,k,Idx.Ey) = T2 * C * Ey_old
                                        + I * c2 * T2 * S_ck * (kz * Bx_old - kx * Bz_old)
-                                       + X4 * Jy + I * T2 * X3 * rho_old * ky - I * X2 * rho_new * ky;
+                                       + X4 * Jy - I * (X2 * rho_new - T2 * X3 * rho_old) * ky;
 
                 fields(i,j,k,Idx.Ez) = T2 * C * Ez_old
                                        + I * c2 * T2 * S_ck * (kx * By_old - ky * Bx_old)
-                                       + X4 * Jz + I * T2 * X3 * rho_old * kz - I * X2 * rho_new * kz;
+                                       + X4 * Jz - I * (X2 * rho_new - T2 * X3 * rho_old) * kz;
             }
 
             // Update equations for E in the formulation without rho
