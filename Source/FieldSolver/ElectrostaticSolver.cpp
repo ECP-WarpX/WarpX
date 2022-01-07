@@ -15,6 +15,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Parallelization/WarpXCommUtil.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -327,8 +328,60 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
     mlmg.setAlwaysUseBNorm(always_use_bnorm);
-    mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho),
-                required_precision, absolute_tolerance );
+    //mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho),
+    //            required_precision, absolute_tolerance );
+
+    for (int lev=0; lev<=finest_level; lev++) {
+        // Solve Poisson equation at lev
+        mlmg.solve( {phi[lev].get()}, {rho[lev].get()},
+                    required_precision, absolute_tolerance );
+
+        // Interpolation from phi[lev] to phi[lev+1]
+        // (This provides both the boundary conditions and initial guess for phi[lev+1])
+        if (lev < finest_level) {
+
+            // Allocate phi_cp for lev+1
+            // Similar to https://github.com/AMReX-Codes/amrex/blob/development/Src/LinearSolvers/MLMG/AMReX_MLMG.cpp#L576
+            // https://github.com/AMReX-Codes/amrex/blob/development/Src/LinearSolvers/MLMG/AMReX_MLMG.cpp#L587
+
+            MultiFab& phi_cp = *phi[lev+1];
+            BoxArray ba = phi_cp.boxArray();
+            const IntVect& refratio = refRatio(lev-1);
+            ba.coarsen(refratio);
+            const int ncomp = linop.getNComp();
+            int ng_dst = 1;
+            MultiFab cfine(ba, phi_cp.DistributionMap(), ncomp, ng_dst);
+
+            // Copy from phi[lev] to phi_cp (in parallel)
+            // (Similar to https://github.com/ECP-WarpX/WarpX/blob/eeab8143e983df862b1f4646ea1baf6e6c85e33f/Source/Parallelization/WarpXComm.cpp#L306)
+            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
+            const amrex::Periodicity& crse_period = Geom(lev).periodicity();
+            const IntVect& ng = phi[lev]->nGrowVect();
+            WarpXCommUtil::ParallelCopy(phi_cp, *phi[lev], 0, 0, 1, ng_src, ng, crse_period);
+
+            // Local interpolation from phi_cp to phi[lev+1]
+            // (Call mf_nodebilin_interp (from AMReX_MFInterp_C.H) in MFIter loop)
+            // (similar to https://github.com/ECP-WarpX/WarpX/blob/eeab8143e983df862b1f4646ea1baf6e6c85e33f/Source/Parallelization/WarpXComm.cpp#L329)
+            // but calling `mf_nodebilin_interp` instead of warpx_interp
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+            MultiFab dphi(phi_cp.boxArray(), phi_cp.DistributionMap(), phi_cp.nComp(), ng);
+            for (MFIter mfi(*phi[lev]); mfi.isValid(); ++mfi)
+            {
+                Array4<Real> const& phi_aux = phi[lev]->array(mfi);
+                Array4<Real const> const& phi_fp = phi[lev]->const_array(mfi);
+                //Array4<Real const> const& phi_c = dphi.const_array(mfi);
+
+                //amrex::ParallelFor(Box(phi_aux),
+                //[=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                //{
+                //    warpx_interp(j, k, l, phi_aux, phi_fp, phi_c, phi_stag, refratio);
+                //});
+            }
+
+        }
+    }
 
 #ifdef AMREX_USE_EB
     // use amrex to directly calculate the electric field since with EB's the
