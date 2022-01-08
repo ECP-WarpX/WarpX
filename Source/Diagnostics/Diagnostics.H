@@ -4,11 +4,15 @@
 #include "ParticleDiag/ParticleDiag.H"
 
 #include "ComputeDiagFunctors/ComputeDiagFunctor_fwd.H"
+#include "ComputeDiagFunctors/ComputeParticleDiagFunctor.H"
 #include "FlushFormats/FlushFormat_fwd.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Particles/PinnedMemoryParticleContainer.H"
 
 #include <AMReX_IntVect.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+#include <AMReX_AmrParticles.H>
 
 #include <AMReX_BaseFwd.H>
 
@@ -58,6 +62,8 @@ public:
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
     virtual void InitializeFieldFunctors (int lev) = 0;
+    /** Initialize functors that store pointers to the species data requested by the user. */
+    virtual void InitializeParticleFunctors () {}
     /** whether to compute and pack data in output buffers at this time step
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
@@ -92,17 +98,27 @@ protected:
      * \param[in] i_buffer index of buffer for which the output MultiFab is defined.
      * \param[in] lev level on which the output MultiFab is defined
      */
-    virtual void InitializeFieldBufferData (int i_buffer, int lev) = 0;
+    virtual void InitializeBufferData (int i_buffer, int lev) = 0;
     /** Initialize member variables and arrays specific to the diagnostics in the
      *  derived classes.(FullDiagnostics, BTDiagnostics)
      */
     virtual void DerivedInitData () {}
     /** This function initialized particle buffers (not implemented in diagnostics, yet) */
     virtual void InitializeParticleBuffer () = 0;
+    /** This function prepares buffer data as required for fields and particles. For back-transformed diagnostics,
+     *  this function prepares the z coordinate in the boosted-frame and lab-frame.
+     */
+    virtual void PrepareBufferData () {}
+    /** This function updates buffer data and computes the number of buffers filled in the output multifab as well
+     *  as identifies if the last buffer has been filled as needed to close the output files.
+     */
+    virtual void UpdateBufferData () {}
     /** Prepare data (either fill-boundary or cell-centered data for
         back-transform diagnostics) to be processed for diagnostics.
      */
     virtual void PrepareFieldDataForOutput () {}
+    /** The Particle Geometry, BoxArray, and RealBox are set for the lab-frame output */
+    virtual void PrepareParticleDataForOutput () {}
     /** Update the physical extent of the diagnostic domain for moving window and
      *  galilean shift simulations
      *
@@ -154,8 +170,10 @@ protected:
     std::vector< std::string > m_output_species_names;
     /** Names of all species in the simulation */
     std::vector< std::string > m_all_species_names;
-    /** Each element of this vector handles output for 1 species */
-    amrex::Vector< ParticleDiag > m_output_species;
+    /** The first vector is for total number of snapshots. (=1 for FullDiagnostics)
+        The second vector handles output for 1 species
+      */
+    amrex::Vector< amrex::Vector< ParticleDiag> > m_output_species;
     /** Vector of (pointers to) functors to compute output fields, per level,
      * per component. This allows for simple operations (averaging to
      * cell-center for standard EB fields) as well as more involved operations
@@ -173,8 +191,22 @@ protected:
     int m_num_buffers;
     /** Array of species indices that dump rho per species */
     amrex::Vector<int> m_rho_per_species_index;
-    /** Temporarily clear species output for BTD until particle buffer is added */
-    virtual void TMP_ClearSpeciesDataForBTD() {}
+    /** Vector of particle buffer vectors for each snapshot */
+    amrex::Vector< amrex::Vector<std::unique_ptr<PinnedMemoryParticleContainer> > > m_particles_buffer;
+    /** Vector of pointers to functors to compute particle output per species*/
+    amrex::Vector< std::unique_ptr<ComputeParticleDiagFunctor> > m_all_particle_functors;
+
+    /** Vector of total number of particles previously flushed, per species, per snapshot.
+     *  The first vector is for total number of snapshots and second vector loops
+     *  over the total number of species selected for diagnostics.
+     */
+    amrex::Vector< amrex::Vector <int> > m_totalParticles_flushed_already;
+    /** Vector of total number of particles in the buffer, per species, per snapshot.
+     *  The first vector is for total number of snapshots and second vector loops
+     *  over the total number of species selected for diagnostics.
+     */
+    amrex::Vector< amrex::Vector <int> > m_totalParticles_in_buffer;
+
 };
 
 #endif // WARPX_DIAGNOSTICS_H_
