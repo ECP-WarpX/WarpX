@@ -387,7 +387,8 @@ class ThermionicInjector(Injector):
         logger.info(
             f"Setting up thermionic paticle injection. Area {area:.3g} m^2, "
             f"dt {dt:.3e} s, J {mwxutil.J_RD(self.T, self.WF, self.A):.3g} "
-            "A/m^2."
+            "A/m^2. Schottky enchancement is "
+            f"{'on' if self.use_Schottky else 'off'}."
         )
         logger.info(
             "Emission current corresponds to injection of "

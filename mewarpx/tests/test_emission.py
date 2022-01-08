@@ -146,6 +146,39 @@ def test_thermionic_emission_with_Schottky():
     assert np.allclose(net_rho_grid, ref_rho_grid, rtol=5e-4)
 
 
+def test_vacuum_thermionic_diode():
+    name = "vacuum_thermionic_diode"
+    dim = 2
+
+    # Initialize and import only when we know dimension
+    mwxutil.init_libwarpx(ndim=dim, rz=False)
+    from mewarpx.utils_store import testing_util
+
+    # Include a random run number to allow parallel runs to not collide. Using
+    # python randint prevents collisions due to numpy rseed below
+    testing_util.initialize_testingdir(name)
+
+    # Initialize each run with consistent, randomly-chosen, rseed.
+    np.random.seed(12178517)
+
+    import sys
+    sys.path.append(testing_util.example_dir)
+
+    from thermionic_diode import PlanarVacuumTEC
+
+    run = PlanarVacuumTEC(
+        V_ANODE_CATHODE=12.5, TOTAL_TIMESTEPS=1000, SAVE=False, DIAG_STEPS=500,
+        USE_SCHOTTKY=True,
+    )
+    run.NPPC = 2
+    run.setup_run()
+    run.run_sim()
+
+    key = ('scrape', 'anode', 'electrons')
+    J_diode = run.run.fluxdiag.ts_dict[key].get_averagevalue_by_key('J')
+    assert np.isclose(J_diode, 2.3287, atol=1e-4)
+
+
 def test_thermionic_emission_disc_rz():
     name = "thermionicEmissionDiscRZ"
     dim = 2

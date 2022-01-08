@@ -8,11 +8,19 @@ comm = MPI.COMM_WORLD
 class MEHandler(logging.StreamHandler):
     def __init__(self, stream):
         logging.StreamHandler.__init__(self, stream=stream)
-        self.formatter = logging.Formatter("%(name)s - %(levelname)s: %(message)s\n")
+        self.info_formatter = logging.Formatter(
+            "%(message)s\n"
+        )
+        self.non_info_formatter = logging.Formatter(
+            "%(levelname)s [%(name)s:%(lineno)s]: %(message)s\n"
+        )
 
     def emit(self, record):
         stream = self.stream
-        stream.write(self.formatter.format(record))
+        if record.levelname == 'INFO':
+            stream.write(self.info_formatter.format(record))
+        else:
+            stream.write(self.non_info_formatter.format(record))
 
 
 class MEFilter(logging.Filter):
