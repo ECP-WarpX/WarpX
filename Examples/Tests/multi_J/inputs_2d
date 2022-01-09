@@ -39,7 +39,6 @@ warpx.moving_window_v = 1.
 
 # Spectral solver
 psatd.do_time_averaging = 1
-psatd.J_linear_in_time = 1
 psatd.update_with_rho = 1
 
 # Multi-J scheme
