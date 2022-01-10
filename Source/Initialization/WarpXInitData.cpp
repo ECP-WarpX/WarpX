@@ -243,8 +243,11 @@ WarpX::InitPML ()
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
                              do_moving_window, pml_has_particles, do_pml_in_domain,
-                             J_linear_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                             do_multi_J,
+                             do_pml_dive_cleaning, do_pml_divb_cleaning,
+                             guard_cells.ng_FieldSolver.max(),
                              do_pml_Lo_corrected, do_pml_Hi);
+
         for (int lev = 1; lev <= finest_level; ++lev)
         {
             amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
@@ -271,7 +274,8 @@ WarpX::InitPML ()
                                    pml_ncell, pml_delta, refRatio(lev-1),
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
-                                   J_linear_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   do_multi_J, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   guard_cells.ng_FieldSolver.max(),
                                    do_pml_Lo_MR, do_pml_Hi_MR);
         }
     }
@@ -881,10 +885,12 @@ void WarpX::InitializeEBGridData (int lev)
             WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
             WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
 
-            ComputeEdgeLengths();
-            ComputeFaceAreas();
-            ScaleEdges();
-            ScaleAreas();
+            auto const eb_fact = fieldEBFactory(lev);
+
+            ComputeEdgeLengths(m_edge_lengths[lev], eb_fact);
+            ComputeFaceAreas(m_face_areas[lev], eb_fact);
+            ScaleEdges(m_edge_lengths[lev], CellSize(lev));
+            ScaleAreas(m_face_areas[lev], CellSize(lev));
 
             if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
                 MarkCells();

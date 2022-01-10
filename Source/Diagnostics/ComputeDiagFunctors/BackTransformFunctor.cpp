@@ -1,3 +1,9 @@
+/* Copyright 2021 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include "BackTransformFunctor.H"
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
@@ -44,13 +50,18 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         amrex::Real gamma_boost = warpx.gamma_boost;
         int moving_window_dir = warpx.moving_window_dir;
         amrex::Real beta_boost = std::sqrt( 1._rt - 1._rt/( gamma_boost * gamma_boost) );
-        bool interpolate = true;
+        const bool interpolate = true;
         std::unique_ptr< amrex::MultiFab > slice = nullptr;
         int scomp = 0;
         // Generate slice of the cell-centered multifab containing boosted-frame field-data
         // at current z-boost location for the ith buffer
-        slice =  amrex::get_slice_data (moving_window_dir, m_current_z_boost[i_buffer],
-                     *m_mf_src, geom, scomp, m_mf_src->nComp(), interpolate);
+        slice = amrex::get_slice_data(moving_window_dir,
+                                     m_current_z_boost[i_buffer],
+                                     *m_mf_src,
+                                     geom,
+                                     scomp,
+                                     m_mf_src->nComp(),
+                                     interpolate);
         // Perform in-place Lorentz-transform of all the fields stored in the slice.
         LorentzTransformZ( *slice, gamma_boost, beta_boost);
 

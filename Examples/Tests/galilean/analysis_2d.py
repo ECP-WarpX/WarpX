@@ -14,12 +14,14 @@ It compares the energy of the electric field with precalculated reference energy
          * if averaged Galilean PSATD is used ('psatd.do_time_averaging == 1) :
            NCI is suppressed => simulation is stable.
 """
-import sys
-import re
-import yt ; yt.funcs.mylog.setLevel(0)
-import numpy as np
 import os
+import re
+import sys
+
+import numpy as np
 import scipy.constants as scc
+
+import yt ; yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

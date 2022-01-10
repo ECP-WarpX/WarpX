@@ -236,12 +236,9 @@ WarpX::PSATDForwardTransformJ ()
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
-    const int idx_jx = (WarpX::J_linear_in_time) ? static_cast<int>(Idx.Jx_new)
-                                                 : static_cast<int>(Idx.Jx);
-    const int idx_jy = (WarpX::J_linear_in_time) ? static_cast<int>(Idx.Jy_new)
-                                                 : static_cast<int>(Idx.Jy);
-    const int idx_jz = (WarpX::J_linear_in_time) ? static_cast<int>(Idx.Jz_new)
-                                                 : static_cast<int>(Idx.Jz);
+    const int idx_jx = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
+    const int idx_jy = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
+    const int idx_jz = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -484,10 +481,10 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveBPML(
-                pml[lev]->GetB_fp(), pml[lev]->GetE_fp(), a_dt, WarpX::do_dive_cleaning);
+                pml[lev]->GetB_fp(), pml[lev]->GetE_fp(), pml[lev]->Get_face_areas(), a_dt, WarpX::do_dive_cleaning);
         } else {
             m_fdtd_solver_cp[lev]->EvolveBPML(
-                pml[lev]->GetB_cp(), pml[lev]->GetE_cp(), a_dt, WarpX::do_dive_cleaning);
+                pml[lev]->GetB_cp(), pml[lev]->GetE_cp(), pml[lev]->Get_face_areas(), a_dt, WarpX::do_dive_cleaning);
         }
     }
 
@@ -536,13 +533,15 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveEPML(
                 pml[lev]->GetE_fp(), pml[lev]->GetB_fp(),
-                pml[lev]->Getj_fp(), pml[lev]->GetF_fp(),
+                pml[lev]->Getj_fp(), pml[lev]->Get_edge_lengths(),
+                pml[lev]->GetF_fp(),
                 pml[lev]->GetMultiSigmaBox_fp(),
                 a_dt, pml_has_particles );
         } else {
             m_fdtd_solver_cp[lev]->EvolveEPML(
                 pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
-                pml[lev]->Getj_cp(), pml[lev]->GetF_cp(),
+                pml[lev]->Getj_cp(), pml[lev]->Get_edge_lengths(),
+                pml[lev]->GetF_cp(),
                 pml[lev]->GetMultiSigmaBox_cp(),
                 a_dt, pml_has_particles );
         }
@@ -679,13 +678,15 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveEPML(
                 pml[lev]->GetE_fp(), pml[lev]->GetB_fp(),
-                pml[lev]->Getj_fp(), pml[lev]->GetF_fp(),
+                pml[lev]->Getj_fp(), pml[lev]->Get_edge_lengths(),
+                pml[lev]->GetF_fp(),
                 pml[lev]->GetMultiSigmaBox_fp(),
                 a_dt, pml_has_particles );
         } else {
             m_fdtd_solver_cp[lev]->EvolveEPML(
                 pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
-                pml[lev]->Getj_cp(), pml[lev]->GetF_cp(),
+                pml[lev]->Getj_cp(), pml[lev]->Get_edge_lengths(),
+                pml[lev]->GetF_cp(),
                 pml[lev]->GetMultiSigmaBox_cp(),
                 a_dt, pml_has_particles );
         }

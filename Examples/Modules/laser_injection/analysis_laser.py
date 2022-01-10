@@ -8,12 +8,15 @@
 # License: BSD-3-Clause-LBNL
 
 
+import os
 import sys
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-import os
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

@@ -184,7 +184,6 @@ int WarpX::self_fields_verbosity = 2;
 int WarpX::do_subcycling = 0;
 int WarpX::do_multi_J = 0;
 int WarpX::do_multi_J_n_depositions;
-int WarpX::J_linear_in_time = 0;
 bool WarpX::safe_guard_cells = 0;
 
 IntVect WarpX::filter_npass_each_dir(1);
@@ -193,6 +192,8 @@ int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
 int WarpX::do_nodal = false;
+
+int WarpX::do_similar_dm_pml = 1;
 
 #ifdef AMREX_USE_GPU
 bool WarpX::do_device_synchronize = true;
@@ -465,6 +466,9 @@ WarpX::PrintGlobalWarnings(const std::string& when)
 void
 WarpX::ReadParameters ()
 {
+    // Ensure that geometry.dims is set properly.
+    CheckDims();
+
     {
         ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
         queryWithParser(pp, "max_step", max_step);
@@ -626,6 +630,11 @@ WarpX::ReadParameters ()
 
         do_electrostatic = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
 
+#if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_electrostatic!=ElectrostaticSolverAlgo::None,
+        "Currently, the embedded boundary in RZ only works for electrostatic solvers.");
+#endif
+
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
             // Note that with the relativistic version, these parameters would be
             // input for each species.
@@ -746,6 +755,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("pml_has_particles", pml_has_particles);
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
+        pp_warpx.query("do_similar_dm_pml", do_similar_dm_pml);
 
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
         // false for FDTD solver, true for PSATD solver.
@@ -881,6 +891,13 @@ WarpX::ReadParameters ()
 #ifdef WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
             "The problem must not be periodic in the radial direction");
+
+        // Ensure code aborts if PEC is specified at r=0 for RZ
+        if (Geom(0).ProbLo(0) == 0){
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
+                "Error : Field boundary at r=0 must be ``none``. \n");
+        }
 
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
             // Force do_nodal=true (that is, not staggered) and
@@ -1072,7 +1089,6 @@ WarpX::ReadParameters ()
 
         pp_psatd.query("current_correction", current_correction);
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
-        pp_psatd.query("J_linear_in_time", J_linear_in_time);
 
         if (!fft_periodic_single_box && current_correction)
             amrex::Abort(
@@ -1184,12 +1200,9 @@ WarpX::ReadParameters ()
             {
                 amrex::Abort("Multi-J algorithm not implemented with Galilean PSATD");
             }
-        }
 
-        if (J_linear_in_time)
-        {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
-                "psatd.update_with_rho must be set to 1 when psatd.J_linear_in_time = 1");
+                "psatd.update_with_rho must be set to 1 when warpx.do_multi_J = 1");
         }
 
         for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
@@ -1367,6 +1380,13 @@ WarpX::BackwardCompatibility ()
     if (pp_lasers.query("nlasers", nlasers)){
         this->RecordWarning("Laser",
             "lasers.nlasers is ignored. Just use lasers.names please.",
+            WarnPriority::low);
+    }
+    ParmParse pp_geometry("geometry");
+    std::string coord_sys;
+    if (pp_geometry.query("coord_sys", coord_sys)){
+        this->RecordWarning("Geometry",
+            "geometry.coord_sys is ignored. Please use the new geometry.dims parameter.",
             WarnPriority::low);
     }
 }
@@ -1993,7 +2013,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   solver_dt,
                                                   update_with_rho,
                                                   fft_do_time_averaging,
-                                                  J_linear_in_time,
+                                                  do_multi_J,
                                                   do_dive_cleaning,
                                                   do_divb_cleaning);
     spectral_solver[lev] = std::move(pss);
@@ -2049,7 +2069,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 fft_periodic_single_box,
                                                 update_with_rho,
                                                 fft_do_time_averaging,
-                                                J_linear_in_time,
+                                                do_multi_J,
                                                 do_dive_cleaning,
                                                 do_divb_cleaning);
     spectral_solver[lev] = std::move(pss);

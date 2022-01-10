@@ -352,8 +352,8 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     // Jx, Jy and Jz have the same number of guard cells, hence it is sufficient to check for Jx
     const amrex::IntVect range = jx->nGrowVect() - shape_extent;
 #endif
-
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    amrex::ignore_unused(range); // for release builds
+    AMREX_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, range) == 0,
         "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for current deposition");
 

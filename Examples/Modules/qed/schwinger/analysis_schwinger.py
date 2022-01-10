@@ -11,11 +11,13 @@
 ## The pair production rate is calculated using the formula described in
 ## Bulanov, S. S., et al. Physical review letters 104.22 (2010): 220404.
 
-import yt
-import numpy as np
 import os
-import sys
 import re
+import sys
+
+import numpy as np
+import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

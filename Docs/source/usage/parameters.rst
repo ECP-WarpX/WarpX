@@ -158,8 +158,19 @@ Setting up the field mesh
 
     Note: in development; currently allowed value: ``2 2 2``.
 
-* ``geometry.coord_sys`` (`integer`) optional (default `0`)
-    Coordinate system used by the simulation. 0 for Cartesian, 1 for cylindrical.
+* ``geometry.dims`` (`string`)
+    The dimensions of the simulation geometry.
+    Supported values are ``1``, ``2``, ``3``, ``RZ``.
+    For ``3``, a cartesian geometry of ``x``, ``y``, ``z`` is modeled.
+    For ``2``, the axes are ``x`` and ``z`` and all physics in ``y`` is assumed to be translation symmetric.
+    For ``1``, the only axis is ``z`` and the dimensions ``x`` and ``y`` are translation symmetric.
+    For ``RZ``, we apply an azimuthal mode decomposition, with ``warpx.n_rz_azimuthal_modes`` providing further control.
+
+    Note that this value has to match the :ref:`WarpX_DIMS <building-cmake-options>` compile-time option.
+    If you installed WarpX from a :ref:`package manager <install-users>`, then pick the right executable by name.
+
+* ``geometry.n_rz_azimuthal_modes`` (`integer`; 1 by default)
+    When using the RZ version, this is the number of azimuthal modes.
 
 * ``geometry.prob_lo`` and ``geometry.prob_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters)
     The extent of the full simulation box. This box is rectangular, and thus its
@@ -232,9 +243,6 @@ Setting up the field mesh
     in the list will gather their fields from the main grid
     (i.e. the coarsest level), even if they are inside a refinement patch.
 
-* ``warpx.n_rz_azimuthal_modes`` (`integer`; 1 by default)
-    When using the RZ version, this is the number of azimuthal modes.
-
 .. _running-cpp-parameters-bc:
 
 Domain Boundary Conditions
@@ -276,6 +284,10 @@ Additional PML parameters
 
 * ``warpx.pml_ncell`` (`int`; default: 10)
     The depth of the PML, in number of cells.
+
+* ``do_similar_dm_pml`` (`int`; default: 1)
+    Whether or not to use an amrex::DistributionMapping for the PML grids that is `similar` to the mother grids, meaning that the
+    mapping will be computed to minimize the communication costs between the PML and the mother grids.
 
 * ``warpx.pml_delta`` (`int`; default: 10)
     The characteristic depth, in number of cells, over which
@@ -844,7 +856,9 @@ Particle initialization
     species that impact the embedded boundary.
     The scraped particle buffer can be used to track particle fluxes out of the
     simulation but is currently only accessible via the Python interface. The
-    ``pywarpx`` function ``get_particle_boundary_buffer()`` can be
+    function ``get_particle_boundary_buffer``, found in the
+    ``picmi.Simulation`` class as
+    ``sim.extension.get_particle_boundary_buffer()``, can be
     used to access the scraped particle buffer. An entry is included for every
     particle in the buffer of the timestep at which the particle was scraped.
     This can be accessed by passing the argument ``comp_name="step_scraped"`` to
@@ -862,7 +876,7 @@ Particle initialization
     boosted frame, whether or not to plot back-transformed diagnostics for
     this species.
 
-* ``warpx.serialize_ics`` (`0 or 1`)
+* ``warpx.serialize_ics`` (`0` or `1`) optional (default `0`)
     Serialize the initial conditions for reproducible testing.
     Mainly whether or not to use OpenMP threading for particle initialization.
 
@@ -1549,7 +1563,7 @@ Numerics and algorithms
     https://ieeexplore.ieee.org/document/8659392.
 
 * ``warpx.do_multi_J`` (`0` or `1`; default: `0`)
-    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``warpx.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
+    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``warpx.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. When ``warpx.do_multi_J = 1``, we perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step, instead of using one single current deposited at half time. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
 
 * ``warpx.do_multi_J_n_depositions`` (integer)
     Number of sub-steps to use with the multi-J algorithm, when ``warpx.do_multi_J = 1``.
@@ -1683,9 +1697,6 @@ Numerics and algorithms
 * ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
     Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
 
-* ``psatd.J_linear_in_time`` (`0` or `1`; default: `0`)
-    Whether to perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step (``psatd.J_linear_in_time = 1``), instead of using one single current deposited at half time (``psatd.J_linear_in_time = 0``), for the field update in Fourier space. Currently requires ``psatd.update_with_rho = 1``, ``warpx.do_dive_cleaning = 1``, and ``warpx.do_divb_cleaning = 1``.
-
 * ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
     synchronization of sources (`rho` and `J`) and fields (`E` and `B`) on grid nodes at box
@@ -1768,8 +1779,8 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     If this is `1`, the last timestep is dumped regardless of ``<diag_name>.period``.
 
 * ``<diag_name>.diag_type`` (`string`)
-    Type of diagnostics. So far, only ``Full`` is supported.
-    example: ``diag1.diag_type = Full``.
+    Type of diagnostics. ``Full`` and ``BackTransformed``
+    example: ``diag1.diag_type = Full`` or ``diag1.diag_type = BackTransformed``
 
 * ``<diag_name>.format`` (`string` optional, default ``plotfile``)
     Flush format. Possible values are:
@@ -1800,6 +1811,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     ``bp`` is the `ADIOS I/O library <https://csmd.ornl.gov/adios>`_, ``h5`` is the `HDF5 format <https://www.hdfgroup.org/solutions/hdf5/>`_, and ``json`` is a `simple text format <https://en.wikipedia.org/wiki/JSON>`_.
     ``json`` only works with serial/single-rank jobs.
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
+    Note that when using ``BackTransformed`` diagnostic type, the openpmd format supports only ``h5`` backend for both species and fields, while ``bp`` backend can be used for visualizing fields, but not particles. The code will abort if ``bp`` is selected for particle output.
 
 * ``<diag_name>.openpmd_encoding`` (optional, ``v`` (variable based), ``f`` (file based) or ``g`` (group based) ) only read if ``<diag_name>.format = openpmd``.
      openPMD `file output encoding <https://openpmd-api.readthedocs.io/en/0.14.0/usage/concepts.html#iteration-and-series>`__.
@@ -1916,8 +1928,43 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 .. _running-cpp-parameters-diagnostics-btd:
 
-Back-Transformed Diagnostics
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+BackTransformed Diagnostics (with support for Plotfile/openPMD output)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Additional options for this diagnostic include:
+
+* ``<diag_name>.num_snapshots_lab`` (`integer`)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
+    The number of lab-frame snapshots that will be written.
+
+* ``<diag_name>.dt_snapshots_lab`` (`float`, in seconds)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
+    The time interval inbetween the lab-frame snapshots (where this
+    time interval is expressed in the laboratory frame).
+
+* ``<diag_name>.dz_snapshots_lab`` (`float`, in meters)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
+    Distance between the lab-frame snapshots (expressed in the laboratory
+    frame). ``dt_snapshots_lab`` is then computed by
+    ``dt_snapshots_lab = dz_snapshots_lab/c``. Either `dt_snapshots_lab`
+    or `dz_snapshot_lab` is required.
+
+* ``<diag_name>.buffer_size`` (`integer`)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
+    The default size of the back transformed diagnostic buffers used to generate lab-frame
+    data is 256. That is, when the multifab with lab-frame data has 256 z-slices,
+    the data will be flushed out. However, if many lab-frame snapshots are required for
+    diagnostics and visualization, the GPU may run out of memory with many large boxes with
+    a size of 256 in the z-direction. This input parameter can then be used to set a
+    smaller buffer-size, preferably multiples of 8, such that, a large number of
+    lab-frame snapshot data can be generated without running out of gpu memory.
+    The downside to using a small buffer size, is that the I/O time may increase due
+    to frequent flushes of the lab-frame data. The other option is to keep the default
+    value for buffer size and use slices to reduce the memory footprint and maintain
+    optimum I/O performance.
+
+Back-Transformed Diagnostics (legacy output)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame, and
 

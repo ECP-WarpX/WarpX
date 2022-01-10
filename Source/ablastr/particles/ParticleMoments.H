@@ -47,13 +47,12 @@ namespace particles {
         >(
             pc,
             [=] AMREX_GPU_DEVICE(PType const & p) noexcept
-            -> amrex::GpuTuple<amrex::ParticleReal, amrex::ParticleReal, amrex::ParticleReal,
-                             amrex::ParticleReal, amrex::ParticleReal, amrex::ParticleReal>
             {
                 amrex::ParticleReal const x = p.pos(0);
                 amrex::ParticleReal const y = p.pos(1);
                 amrex::ParticleReal const z = p.pos(2);
-                return {x, y, z, x, y, z};
+
+                return amrex::makeTuple(x, y, z, x, y, z);
             },
             reduce_ops
         );
@@ -105,17 +104,13 @@ namespace particles {
         >(
             pc,
             [=] AMREX_GPU_DEVICE(const PType& p) noexcept
-            -> amrex::GpuTuple<
-                amrex::ParticleReal, amrex::ParticleReal, amrex::ParticleReal,
-                amrex::ParticleReal, amrex::ParticleReal, amrex::ParticleReal,
-                amrex::ParticleReal>
             {
                 amrex::ParticleReal const x = p.pos(0);
                 amrex::ParticleReal const y = p.pos(1);
                 amrex::ParticleReal const z = p.pos(2);
                 amrex::ParticleReal const w = p.rdata(T_RealSoAWeight);
 
-                return {x, x*x, y, y*y, z, z*z, w};
+                return amrex::makeTuple(x, x*x, y, y*y, z, z*z, w);
             },
             reduce_ops
         );

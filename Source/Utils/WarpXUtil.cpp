@@ -53,6 +53,9 @@ void PreparseAMReXInputIntArray(amrex::ParmParse& a_pp, char const * const input
 
 void ParseGeometryInput()
 {
+    // Ensure that geometry.dims is set properly.
+    CheckDims();
+
     // Parse prob_lo and hi, evaluating any expressions since geometry does not
     // parse its input
     ParmParse pp_geometry("geometry");
@@ -516,25 +519,37 @@ void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std
     }
 }
 
-/**
- * \brief Ensures that the blocks are setup correctly for the RZ spectral solver
- * When using the RZ spectral solver, the Hankel transform cannot be
- * divided among multiple blocks. Each block must extend over the
- * entire radial extent.
- * The grid can be divided up along z, but the number of blocks
- * must be >= the number of processors.
- */
+void CheckDims ()
+{
+    // Ensure that geometry.dims is set properly.
+#if defined(WARPX_DIM_3D)
+    std::string const dims_compiled = "3";
+#elif defined(WARPX_DIM_XZ)
+    std::string const dims_compiled = "2";
+#elif defined(WARPX_DIM_1D_Z)
+    std::string const dims_compiled = "1";
+#elif defined(WARPX_DIM_RZ)
+    std::string const dims_compiled = "RZ";
+#endif
+    ParmParse pp_geometry("geometry");
+    std::string dims;
+    pp_geometry.get("dims", dims);
+    std::string dims_error = "ERROR: The selected WarpX executable was built as '";
+    dims_error.append(dims_compiled).append("'-dimensional, but the ");
+    dims_error.append("inputs file declares 'geometry.dims = ").append(dims).append("'.\n");
+    dims_error.append("Please re-compile with a different WarpX_DIMS option or select the right executable name.");
+    WarpXUtilMsg::AlwaysAssert(dims == dims_compiled, dims_error);
+}
+
 void CheckGriddingForRZSpectral ()
 {
-#ifndef WARPX_DIM_RZ
-    amrex::Abort("CheckGriddingForRZSpectral: WarpX was not built with RZ geometry.");
-#else
+#ifdef WARPX_DIM_RZ
+    // Ensure that geometry.dims is set properly.
+    CheckDims();
 
-    // Ensure that geometry.coord_sys is set properly.
-    ParmParse pp_geometry("geometry");
+    // Ensure that AMReX geometry.coord_sys is set properly
     int coord_sys = 1;
-    pp_geometry.query("coord_sys", coord_sys);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(coord_sys == 1, "geometry.coord_sys needs to be 1 when using cylindrical geometry");
+    ParmParse pp_geometry("geometry");
     pp_geometry.add("coord_sys", coord_sys);
 
     ParmParse pp_algo("algo");
@@ -683,11 +698,6 @@ void ReadBCParams ()
             }
         }
     }
-#ifdef WARPX_DIM_RZ
-    // Ensure code aborts if PEC is specified at r=0 for RZ
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
-        "Error : Field boundary at r=0 must be ``none``. \n");
-#endif
 
     // Appending periodicity information to input so that it can be used by amrex
     // to set parameters necessary to define geometry and perform communication

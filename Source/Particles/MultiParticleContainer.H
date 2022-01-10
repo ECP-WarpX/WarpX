@@ -246,6 +246,17 @@ public:
     int nSpeciesBackTransformedDiagnostics() const {return nspecies_back_transformed_diagnostics;}
     int mapSpeciesBackTransformedDiagnostics(int i) const {return map_species_back_transformed_diagnostics[i];}
     int doBackTransformedDiagnostics() const {return do_back_transformed_diagnostics;}
+    /** Whether back-transformed diagnostics need to be performed for any plasma species.
+     *
+     * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
+     */
+    void SetDoBackTransformedParticles (const bool do_back_transformed_particles);
+    /** Whether back-transformed diagnostics is set for species with species_name.
+     *
+     * \param[in] species_name The species for which back-transformed particles is set.
+     * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
+     */
+    void SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles);
 
     int nSpeciesDepositOnMainGrid () const {
         bool const onMainGrid = true;
@@ -495,6 +506,7 @@ private:
     // MultiParticleContainer for 0<i<nspecies_back_transformed_diagnostics
     std::vector<int> map_species_back_transformed_diagnostics;
     int do_back_transformed_diagnostics = 0;
+    bool m_do_back_transformed_particles = false;
 
     void MFItInfoCheckTiling(const WarpXParticleContainer& /*pc_src*/) const noexcept
     {

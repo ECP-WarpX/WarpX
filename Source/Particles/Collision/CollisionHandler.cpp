@@ -7,10 +7,10 @@
 #include "CollisionHandler.H"
 
 #include "BackgroundMCCCollision.H"
+#include "Particles/Collision/BinaryCollision/Coulomb/PairWiseCoulombCollisionFunc.H"
 #include "Particles/Collision/BinaryCollision/BinaryCollision.H"
-#include "Particles/Collision/BinaryCollision/NuclearFusionFunc.H"
+#include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
 #include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
-#include "Particles/Collision/BinaryCollision/PairWiseCoulombCollisionFunc.H"
 
 #include <AMReX_ParmParse.H>
 

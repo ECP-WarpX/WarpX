@@ -9,11 +9,13 @@
 ## In this test, we check that leveling thinning works as expected on two simple cases. Each case
 ## corresponds to a different particle species.
 
-import yt
-import numpy as np
 import os
 import sys
+
+import numpy as np
 from scipy.special import erf
+import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
