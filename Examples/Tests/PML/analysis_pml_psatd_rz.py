@@ -15,10 +15,12 @@ moving radially that launches a pulse. This scripts runs until
 most of the pulse escapes the radial boundary. If the PML fails,
 the pulse will remain with in the domain.
 """
-import sys
 import os
+import sys
+
 import numpy as np
 import yt
+
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
