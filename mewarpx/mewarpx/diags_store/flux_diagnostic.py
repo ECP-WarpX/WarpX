@@ -317,16 +317,21 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
         """
         self.species_list = [spec.name for spec in mwxrun.simulation.species]
 
-    def save(self):
+    def save(self, filepath=None):
         """Save only the critical variables to a pickle file. Since this can be
         done often, a specific function is used to minimize file size.
-        """
-        if self.overwrite:
-            filename = "fluxdata.dpkl"
-        else:
-            filename = f"fluxdata_{mwxrun.get_it():010d}.dpkl"
 
-        filepath = os.path.join(self.write_dir, filename)
+        Arguments:
+            filepath (str): If None, this is generated internally. Otherwise
+                save the pickle file to this path.
+        """
+        if filepath is None:
+            if self.overwrite:
+                filename = "fluxdata.dpkl"
+            else:
+                filename = f"fluxdata_{mwxrun.get_it():010d}.dpkl"
+            filepath = os.path.join(self.write_dir, filename)
+
         dict_to_save = {
             'write_dir': self.write_dir,
             'format_str': self.format_str,
@@ -365,10 +370,13 @@ class FluxDiagBase(diag_base.WarpXDiagnostic):
                 for component, componentstr in self.component_dict.items():
                     for species_name in self.species_list:
                         prefixstr = " ".join(
-                            [componentstr, species_name.title(), flags['description']]
+                            [componentstr, species_name.title(),
+                             flags['description']]
                         )
-                        emit_ts = tsdict.get(('inject', component, species_name), None)
-                        collect_ts = tsdict.get(('scrape', component, species_name), None)
+                        emit_ts = tsdict.get(
+                            ('inject', component, species_name), None)
+                        collect_ts = tsdict.get(
+                            ('scrape', component, species_name), None)
                         suffixstr = flags['units']
                         net_only = (flags['by_component'] == 'net')
                         resultstr += self.print_fluxset(
@@ -675,7 +683,8 @@ class FluxDiagnostic(FluxDiagBase):
         # mwxrun.restart isn't set until mwxrun.init_run is called, so the
         # lambda function is needed here
         callbacks.installafterinit(
-            lambda _=None: self._load_checkpoint_flux() if mwxrun.restart else None
+            lambda _=None:
+            self._load_checkpoint_flux() if mwxrun.restart else None
         )
 
         callbacks.installafterstep(self._flux_ana)
@@ -754,7 +763,7 @@ class FluxDiagnostic(FluxDiagBase):
                             df=subdf,
                             area=self.runinfo.area,
                             step_begin=self.last_run_step + 1,
-                            step_end=mwxrun.get_it()+ 1
+                            step_end=mwxrun.get_it() + 1
                         )
 
                         sp_name = mwxrun.simulation.species[sp].name
@@ -839,7 +848,7 @@ class FluxDiagnostic(FluxDiagBase):
 
         # get the flux diag file for the current step
         flux_diag_file = os.path.join(
-            mwxrun.checkpoint_dir, mwxrun.checkpoint, f"fluxdata.ckpt"
+            mwxrun.checkpoint_dir, mwxrun.checkpoint, "fluxdata.ckpt"
         )
         # throw an error if flux diag file does not exist
         if not os.path.isfile(flux_diag_file):
@@ -933,7 +942,7 @@ class FluxCalcDataframe(timeseries.Timeseries):
             if key not in special_keys:
                 extra_keys.append(key)
                 extra_arrays.append(np.array(df[key]))
-        num_extra_arrays=len(extra_arrays)
+        num_extra_arrays = len(extra_arrays)
 
         # this is necessary or else numba doesn't play nice
         if num_extra_arrays == 0:
@@ -953,19 +962,20 @@ class FluxCalcDataframe(timeseries.Timeseries):
             num_extra_arrays=num_extra_arrays
         )
 
-        array_dict={
+        array_dict = {
             'n': timeseries_array[:, 0],
             'J': timeseries_array[:, 1],
             'dQ': timeseries_array[:, 2],
             'P': timeseries_array[:, 3],
         }
         for ii, key in enumerate(extra_keys):
-            array_dict[key] = timeseries_array[:,4+ii]
+            array_dict[key] = timeseries_array[:, 4+ii]
 
         super(FluxCalcDataframe, self).__init__(
             step_begin=step_begin, step_end=step_end, dt=dt,
             array_dict=array_dict
         )
+
 
 class FluxDiagFromFile(FluxDiagBase):
 
@@ -1013,9 +1023,11 @@ class FluxDiagFromFile(FluxDiagBase):
             self.glob_command(os.path.join(basedir, self.fluxdatafileformat))
         )
         if len(flux_files) == 0:
-            raise IOError('No fluxdata files found in base directory: %s'
-                          % (direc_base))
+            raise IOError(
+                f'No fluxdata files found in base directory: {basedir}'
+            )
         return flux_files[-1]
+
 
 # ### Numba functions for FluxCalcDataframe ###
 @numba.jit(nopython=True)

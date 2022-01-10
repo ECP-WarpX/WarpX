@@ -1,7 +1,6 @@
 """Class for installing a checkpoint diagnostic"""
 import logging
 import os
-import shutil
 
 from pywarpx import callbacks, picmi
 
@@ -73,31 +72,19 @@ class CheckPointDiagnostic(WarpXDiagnostic):
         if not self.check_timestep() or mwxrun.me != 0 or mwxrun.get_it() == 1:
             return
 
-        # Copy flux diagnostics, if present, to load when restarting.
+        # Save a copy of flux diagnostics, if present, to load when restarting.
         if (
             self.flux_diag is not None
             and self.flux_diag.last_run_step == mwxrun.get_it() - 1
         ):
-            if self.flux_diag.overwrite:
-                filename = "fluxdata.dpkl"
-            else:
-                filename = f"fluxdata_{self.flux_diag.last_run_step:010d}.dpkl"
-            fluxdiag_file = os.path.join(
-                self.DIAG_DIR, self.flux_diag.FLUX_DIAG_DIR, filename
-            )
-            # throw an error if flux diag file does not exist
-            if not os.path.isfile(fluxdiag_file):
-                raise RuntimeError(
-                    f"{fluxdiag_file} not found but is needed for checkpoint."
-                )
-            # we use the unorthodox file extension .ckpt (for checkpoint) so
+            # We use the unorthodox file extension .ckpt (for checkpoint) so
             # that we can continue to blindly move all .dpkl files from EFS
             # to S3 when running on AWS
             dst = os.path.join(
                 self.write_dir, f"{self.name}{(mwxrun.get_it() - 1):05d}",
                 "fluxdata.ckpt"
             )
-            shutil.copy(fluxdiag_file, dst)
+            self.flux_diag.save(filepath=dst)
         else:
             logger.warning(
                 "Flux diagnostic data will not be saved with checkpoint and "
