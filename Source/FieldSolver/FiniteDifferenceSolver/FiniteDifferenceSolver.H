@@ -123,6 +123,32 @@ class FiniteDifferenceSolver
                      std::array< amrex::MultiFab*, 3 > const Efield,
                      amrex::Real const dt );
 
+        /**
+          * \brief Macroscopic E-update in the pml region for non-vacuum medium using the user-selected
+          * finite-difference algorithm and macroscopic sigma-method defined in
+          * WarpXAlgorithmSelection.H
+          *
+          * \param[out] Efield                vector of electric field MultiFabs updated at a given level
+          * \param[in] Bfield                 vector of magnetic field MultiFabs at a given level
+          * \param[in] Jfield                 vector of current density MultiFabs at a given level
+          * \param[in] sigba                  PML factors used to damp current in the pml-region
+          * \param[in] dt                     timestep of the simulation
+          * \param[in] pml_has_particles      whether particle current-deposition and damping is on in the pml
+          * \param[in] macroscopic_properties contains user-defined properties of the medium.
+          * \param[in] eps_mf                 permittivity multifab in the pml region at a given level
+          * \param[in] mu_mf                  permeability multifab in the pml region at a given level
+          * \param[in] sigma_mf               conductivity multifab in the pml region at a given level
+          */
+       void MacroscopicEvolveEPML ( std::array< amrex::MultiFab*, 3 > Efield,
+                      std::array< amrex::MultiFab*, 3 > const Bfield,
+                      std::array< amrex::MultiFab*, 3 > const Jfield,
+                      MultiSigmaBox const& sigba,
+                      amrex::Real const dt, bool pml_has_particles,
+                      std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
+                      amrex::MultiFab* const eps_mf,
+                      amrex::MultiFab* const mu_mf,
+                      amrex::MultiFab* const sigma_mf);
+       
     private:
 
         int m_fdtd_algo;
@@ -239,6 +265,18 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
             amrex::Real const dt,
             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
+
+        template< typename T_Algo, typename T_MacroAlgo>
+        void MacroscopicEvolveEPMLCartesian (
+            std::array< amrex::MultiFab*, 3> Efield,
+            std::array< amrex::MultiFab*, 3> Bfield,
+            std::array< amrex::MultiFab*, 3> Jfield,
+            MultiSigmaBox const& sigba,
+            amrex::Real const dt, bool pml_has_particles,
+            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties,
+            amrex::MultiFab* const eps_mf,
+            amrex::MultiFab* const mu_mf,
+            amrex::MultiFab* const sigma_mf);
 
         template< typename T_Algo >
         void EvolveBPMLCartesian (

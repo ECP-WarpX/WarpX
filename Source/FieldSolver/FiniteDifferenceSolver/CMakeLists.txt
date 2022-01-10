@@ -10,6 +10,7 @@ target_sources(WarpX
     EvolveG.cpp
     FiniteDifferenceSolver.cpp
     MacroscopicEvolveE.cpp
+    MacroscopicEvolveEPML.cpp
     ApplySilverMuellerBoundary.cpp
 )
 

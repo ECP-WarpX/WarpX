@@ -66,27 +66,18 @@ public:
      /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
      amrex::GpuArray<int, 3> macro_cr_ratio;
 
-private:
-
-     /** Conductivity, sigma, of the medium */
-     amrex::Real m_sigma = 0.0;
-     /** Permittivity, epsilon, of the medium */
-     amrex::Real m_epsilon = PhysConst::ep0;
-     /** Permeability, mu, of the medium */
-     amrex::Real m_mu = PhysConst::mu0;
-     /** Multifab for m_sigma */
-     std::unique_ptr<amrex::MultiFab> m_sigma_mf;
-     /** Multifab for m_epsilon */
-     std::unique_ptr<amrex::MultiFab> m_eps_mf;
-     /** Multifab for m_mu */
-     std::unique_ptr<amrex::MultiFab> m_mu_mf;
-
      /** Stores initialization type for conductivity : constant or parser */
      std::string m_sigma_s = "constant";
      /** Stores initialization type for permittivity : constant or parser */
      std::string m_epsilon_s = "constant";
      /** Stores initialization type for permeability : constant or parser */
      std::string m_mu_s = "constant";
+     /** Conductivity, sigma, of the medium */
+     amrex::Real m_sigma = 0.0;
+     /** Permittivity, epsilon, of the medium */
+     amrex::Real m_epsilon = PhysConst::ep0;
+     /** Permeability, mu, of the medium */
+     amrex::Real m_mu = PhysConst::mu0;
 
      /** string for storing parser function */
      std::string m_str_sigma_function;
@@ -96,6 +87,16 @@ private:
      std::unique_ptr<amrex::Parser> m_sigma_parser;
      std::unique_ptr<amrex::Parser> m_epsilon_parser;
      std::unique_ptr<amrex::Parser> m_mu_parser;
+
+private:
+
+     /** Multifab for m_sigma */
+     std::unique_ptr<amrex::MultiFab> m_sigma_mf;
+     /** Multifab for m_epsilon */
+     std::unique_ptr<amrex::MultiFab> m_eps_mf;
+     /** Multifab for m_mu */
+     std::unique_ptr<amrex::MultiFab> m_mu_mf;
+
 
 };
 

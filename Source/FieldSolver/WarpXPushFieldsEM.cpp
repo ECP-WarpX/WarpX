@@ -676,19 +676,19 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     }
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
-            m_fdtd_solver_fp[lev]->EvolveEPML(
+            m_fdtd_solver_fp[lev]->MacroscopicEvolveEPML(
                 pml[lev]->GetE_fp(), pml[lev]->GetB_fp(),
-                pml[lev]->Getj_fp(), pml[lev]->Get_edge_lengths(),
-                pml[lev]->GetF_fp(),
-                pml[lev]->GetMultiSigmaBox_fp(),
-                a_dt, pml_has_particles );
+                pml[lev]->Getj_fp(), pml[lev]->GetMultiSigmaBox_fp(),
+                a_dt, pml_has_particles, m_macroscopic_properties,
+                pml[lev]->Geteps_fp(), pml[lev]->Getmu_fp(),
+                pml[lev]->Getsigma_fp());
         } else {
-            m_fdtd_solver_cp[lev]->EvolveEPML(
+            m_fdtd_solver_fp[lev]->MacroscopicEvolveEPML(
                 pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
-                pml[lev]->Getj_cp(), pml[lev]->Get_edge_lengths(),
-                pml[lev]->GetF_cp(),
-                pml[lev]->GetMultiSigmaBox_cp(),
-                a_dt, pml_has_particles );
+                pml[lev]->Getj_cp(), pml[lev]->GetMultiSigmaBox_cp(),
+                a_dt, pml_has_particles, m_macroscopic_properties,
+                pml[lev]->Geteps_cp(), pml[lev]->Getmu_cp(),
+                pml[lev]->Getsigma_cp());
         }
     }
 
