@@ -148,7 +148,7 @@ class FiniteDifferenceSolver
                       amrex::MultiFab* const eps_mf,
                       amrex::MultiFab* const mu_mf,
                       amrex::MultiFab* const sigma_mf);
-       
+
     private:
 
         int m_fdtd_algo;

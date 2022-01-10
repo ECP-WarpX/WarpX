@@ -47,7 +47,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveEPML (
             MacroscopicEvolveEPMLCartesian <CartesianYeeAlgorithm, LaxWendroffAlgo>
                 (Efield, Bfield, Jfield, sigba, dt, pml_has_particles,
                  macroscopic_properties, eps_mf, mu_mf, sigma_mf);
-        
+
         } else if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
             MacroscopicEvolveEPMLCartesian <CartesianYeeAlgorithm, BackwardEulerAlgo>
                 (Efield, Bfield, Jfield, sigba, dt, pml_has_particles,
