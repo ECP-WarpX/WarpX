@@ -530,9 +530,8 @@ void FieldProbe::ComputeDiags (int step)
         if (m_intervals.contains(step+1))
         {
             // returns total number of mpi notes into mpisize
-            int mpisize;
-            MPI_Comm_size(amrex::ParallelDescriptor::Communicator(), &mpisize);
-
+            int mpisize = ParallelDescriptor::NProcs();
+            std::cout<<"Size is "<<mpisize<<'\n';
             // allocates data space for length_array. Will contain size of m_data from each processor
             amrex::Vector<int> length_vector;
             amrex::Vector<int> localsize;
