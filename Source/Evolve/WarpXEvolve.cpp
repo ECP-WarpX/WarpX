@@ -509,7 +509,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             mypc->DepositCharge(rho_fp, -dt[0]);
             // Filter, exchange boundary, and interpolate across levels
             SyncRho();
-            // Forward FFT of rho_new
+            // Forward FFT of rho
             PSATDForwardTransformRho(0, 1);
         }
 
@@ -546,17 +546,27 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Forward FFT of J
             PSATDForwardTransformJ();
 
-            // Deposit new rho
+            // Deposit mid rho and new rho
             if (WarpX::update_with_rho)
             {
                 // Move rho deposited previously, from new to old
                 PSATDMoveRhoNewToRhoOld();
 
+                // Deposit rho at relative half time
+                mypc->DepositCharge(rho_fp, t_depose - 0.5 * sub_dt);
+                // Filter, exchange boundary, and interpolate across levels
+                SyncRho();
+                // Forward FFT of rho
+                PSATDForwardTransformRho(0, 1);
+
+                // Move rho deposited previously, from new to mid
+                PSATDMoveRhoNewToRhoMid();
+
                 // Deposit rho at relative time t_depose
                 mypc->DepositCharge(rho_fp, t_depose);
                 // Filter, exchange boundary, and interpolate across levels
                 SyncRho();
-                // Forward FFT of rho_new
+                // Forward FFT of rho
                 PSATDForwardTransformRho(0, 1);
             }
 

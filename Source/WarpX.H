@@ -1457,6 +1457,11 @@ private:
     void PSATDMoveRhoNewToRhoOld ();
 
     /**
+     * \brief Copy rho_new to rho_mid in spectral space
+     */
+    void PSATDMoveRhoNewToRhoMid ();
+
+    /**
      * \brief Copy J_new to J_old in spectral space (when J is linear in time)
      */
     void PSATDMoveJNewToJOld ();

@@ -70,6 +70,7 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
 
         if (do_multi_J)
         {
+            rho_mid = c++;
             Jx_new = c++;
             Jy_new = c++;
             Jz_new = c++;
