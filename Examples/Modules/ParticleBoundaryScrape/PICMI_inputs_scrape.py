@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # --- Input file to test the particle scraper and the Python wrappers
 # --- to access the buffer of scraped particles.
 
@@ -112,28 +114,27 @@ sim.step(max_steps)
 # buffer functions as intended
 ################################################
 
-from pywarpx import _libwarpx
 from mpi4py import MPI as mpi
 
-my_id = _libwarpx.libwarpx.warpx_getMyProc()
+my_id = sim.extension.getMyProc()
 
-n = _libwarpx.get_particle_boundary_buffer_size("electrons", 'eb')
+n = sim.extension.get_particle_boundary_buffer_size("electrons", 'eb')
 print(f"Number of electrons in buffer (proc #{my_id}): {n}")
 assert n == 612
 
-scraped_steps = _libwarpx.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0)
+scraped_steps = sim.extension.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0)
 for arr in scraped_steps:
     assert all(arr > 40)
 
-weights = _libwarpx.get_particle_boundary_buffer("electrons", 'eb', 'w', 0)
+weights = sim.extension.get_particle_boundary_buffer("electrons", 'eb', 'w', 0)
 n = sum(len(arr) for arr in weights)
 print(f"Number of electrons in this proc's buffer (proc #{my_id}): {n}")
 n_sum =  mpi.COMM_WORLD.allreduce(n, op=mpi.SUM)
 assert n_sum == 612
 
 # clear the particle buffer
-_libwarpx.libwarpx.warpx_clearParticleBoundaryBuffer()
+sim.extension.clearParticleBoundaryBuffer()
 # confirm that the buffer was cleared
-n = _libwarpx.get_particle_boundary_buffer_size("electrons", 'eb')
+n = sim.extension.get_particle_boundary_buffer_size("electrons", 'eb')
 print(f"Number of electrons in buffer (proc #{my_id}): {n}")
 assert n == 0

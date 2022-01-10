@@ -87,6 +87,11 @@ WarpX::DampPML_Cartesian (const int lev, PatchType patch_type)
         const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp()
                                                             : pml[lev]->GetMultiSigmaBox_cp();
 
+#ifdef AMREX_USE_EB
+        const auto& pml_edge_lenghts = pml[lev]->Get_edge_lengths();
+        const auto& pml_face_areas = pml[lev]->Get_face_areas();
+#endif
+
         const amrex::IntVect Ex_stag = pml_E[0]->ixType().toIntVect();
         const amrex::IntVect Ey_stag = pml_E[1]->ixType().toIntVect();
         const amrex::IntVect Ez_stag = pml_E[2]->ixType().toIntVect();
@@ -123,6 +128,16 @@ WarpX::DampPML_Cartesian (const int lev, PatchType patch_type)
             auto const& pml_Bxfab = pml_B[0]->array(mfi);
             auto const& pml_Byfab = pml_B[1]->array(mfi);
             auto const& pml_Bzfab = pml_B[2]->array(mfi);
+
+#ifdef AMREX_USE_EB
+            auto const& pml_lxfab = pml_edge_lenghts[0]->array(mfi);
+            auto const& pml_lyfab = pml_edge_lenghts[1]->array(mfi);
+            auto const& pml_lzfab = pml_edge_lenghts[2]->array(mfi);
+            auto const& pml_Sxfab = pml_face_areas[0]->array(mfi);
+            auto const& pml_Syfab = pml_face_areas[1]->array(mfi);
+            auto const& pml_Szfab = pml_face_areas[2]->array(mfi);
+#endif
+
             amrex::Real const * AMREX_RESTRICT sigma_fac_x = sigba[mfi].sigma_fac[0].data();
 #if defined(WARPX_DIM_3D)
             amrex::Real const * AMREX_RESTRICT sigma_fac_y = sigba[mfi].sigma_fac[1].data();
@@ -150,16 +165,25 @@ WarpX::DampPML_Cartesian (const int lev, PatchType patch_type)
 
             amrex::ParallelFor(tex, tey, tez,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+                if(pml_lxfab(i, j, k) <= 0) return;
+#endif
                 warpx_damp_pml_ex(i, j, k, pml_Exfab, Ex_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
                                   sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
                                   dive_cleaning);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+                if(pml_lyfab(i, j, k) <= 0) return;
+#endif
                 warpx_damp_pml_ey(i, j, k, pml_Eyfab, Ey_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
                                   sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
                                   dive_cleaning);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+                if(pml_lzfab(i, j, k) <= 0) return;
+#endif
                 warpx_damp_pml_ez(i, j, k, pml_Ezfab, Ez_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
                                   sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
                                   dive_cleaning);
@@ -167,16 +191,25 @@ WarpX::DampPML_Cartesian (const int lev, PatchType patch_type)
 
             amrex::ParallelFor(tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+                if(pml_Sxfab(i, j, k) <= 0) return;
+#endif
                 warpx_damp_pml_bx(i, j, k, pml_Bxfab, Bx_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
                                   sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
                                   divb_cleaning);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+                if(pml_Syfab(i, j, k) <= 0) return;
+#endif
                 warpx_damp_pml_by(i, j, k, pml_Byfab, By_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
                                   sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
                                   divb_cleaning);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+                if(pml_Szfab(i, j, k) <= 0) return;
+#endif
                 warpx_damp_pml_bz(i, j, k, pml_Bzfab, Bz_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
                                   sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
                                   divb_cleaning);
@@ -261,6 +294,15 @@ WarpX::DampJPML (int lev, PatchType patch_type)
             const Real* sigma_cumsum_fac_j_z = sigba[mfi].sigma_cumsum_fac[1].data();
             const Real* sigma_star_cumsum_fac_j_z = sigba[mfi].sigma_star_cumsum_fac[1].data();
 #endif
+
+#ifdef AMREX_USE_EB
+            const auto& pml_edge_lenghts = pml[lev]->Get_edge_lengths();
+
+            auto const& pml_lxfab = pml_edge_lenghts[0]->array(mfi);
+            auto const& pml_lyfab = pml_edge_lenghts[1]->array(mfi);
+            auto const& pml_lzfab = pml_edge_lenghts[2]->array(mfi);
+#endif
+
             const Box& tjx  = mfi.tilebox( pml_j[0]->ixType().toIntVect() );
             const Box& tjy  = mfi.tilebox( pml_j[1]->ixType().toIntVect() );
             const Box& tjz  = mfi.tilebox( pml_j[2]->ixType().toIntVect() );
@@ -285,16 +327,28 @@ WarpX::DampJPML (int lev, PatchType patch_type)
 
             amrex::ParallelFor( tjx, tjy, tjz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+                    if(pml_lxfab(i, j, k) <= 0) return;
+#endif
+
                     damp_jx_pml(i, j, k, pml_jxfab, sigma_star_cumsum_fac_j_x,
                                 sigma_cumsum_fac_j_y, sigma_cumsum_fac_j_z,
                                 xs_lo,y_lo, z_lo);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+                    if(pml_lyfab(i, j, k) <= 0) return;
+#endif
+
                     damp_jy_pml(i, j, k, pml_jyfab, sigma_cumsum_fac_j_x,
                                 sigma_star_cumsum_fac_j_y, sigma_cumsum_fac_j_z,
                                 x_lo,ys_lo, z_lo);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+#ifdef AMREX_USE_EB
+                    if(pml_lzfab(i, j, k)<=0) return;
+#endif
+
                     damp_jz_pml(i, j, k, pml_jzfab, sigma_cumsum_fac_j_x,
                                 sigma_cumsum_fac_j_y, sigma_star_cumsum_fac_j_z,
                                 x_lo,y_lo, zs_lo);

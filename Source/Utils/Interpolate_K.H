@@ -24,10 +24,10 @@ void interp (int j, int k, int l,
     Real const owy = 1.0_rt-wy;
 #endif
 
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
     fine(j,k,l) = owx * crse(jg  ,0,0)
         +          wx * crse(jg+1,0,0);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     fine(j,k,l) = owx * owy * crse(jg  ,kg  ,0)
         +         owx *  wy * crse(jg  ,kg+1,0)
         +          wx * owy * crse(jg+1,kg  ,0)

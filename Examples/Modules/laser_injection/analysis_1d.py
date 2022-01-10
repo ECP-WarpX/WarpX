@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2021 Prabhat Kumar, Remi Lehe
 #
@@ -12,13 +12,16 @@
 # the simulation and it compares it with theory. It also checks that the
 # central frequency of the Fourier transform is the expected one.
 
-import yt
 import sys
+
 import matplotlib
+import yt
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import hilbert
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

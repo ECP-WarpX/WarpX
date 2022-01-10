@@ -66,10 +66,6 @@
 #include <string>
 #include <vector>
 
-#if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
-static_assert(false, "Embedded boundaries are not supported in RZ mode.");
-#endif
-
 enum struct PatchType : int
 {
     fine,
@@ -275,9 +271,8 @@ public:
     static int do_subcycling;
     static int do_multi_J;
     static int do_multi_J_n_depositions;
-    static int J_linear_in_time;
 
-    static int do_device_synchronize;
+    static bool do_device_synchronize;
     static bool safe_guard_cells;
 
     // buffers
@@ -321,6 +316,9 @@ public:
     amrex::MultiFab * get_pointer_rho_cp  (int lev) const { return rho_cp[lev].get(); }
     amrex::MultiFab * get_pointer_F_cp  (int lev) const { return F_cp[lev].get(); }
     amrex::MultiFab * get_pointer_G_cp  (int lev) const { return G_cp[lev].get(); }
+
+    amrex::MultiFab * get_pointer_edge_lengths  (int lev, int direction) const { return m_edge_lengths[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_face_areas  (int lev, int direction) const { return m_face_areas[lev][direction].get(); }
 
     const amrex::MultiFab& getcurrent (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
@@ -484,10 +482,19 @@ public:
      * Applies a damping factor in the guards cells that extend
      * beyond the extent of the domain, reducing fluctuations that
      * can appear in parallel simulations. This will be called
-     * when FieldBoundaryType is set to damped.
+     * when FieldBoundaryType is set to damped. Vector version.
      */
     void DampFieldsInGuards (std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                              std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
+
+    /**
+     * \brief Private function for spectral solver
+     * Applies a damping factor in the guards cells that extend
+     * beyond the extent of the domain, reducing fluctuations that
+     * can appear in parallel simulations. This will be called
+     * when FieldBoundaryType is set to damped. Scalar version.
+     */
+    void DampFieldsInGuards (std::unique_ptr<amrex::MultiFab>& mf);
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -700,23 +707,9 @@ public:
                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
                      amrex::Real const required_precision=amrex::Real(1.e-11),
-                     amrex::Real const absolute_tolerance=amrex::Real(0.0),
+                     amrex::Real absolute_tolerance=amrex::Real(0.0),
                      const int max_iters=200,
                      const int verbosity=2) const;
-    void computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                       std::array<amrex::Real, 3> const beta,
-                       amrex::Real const required_precision,
-                       amrex::Real absolute_tolerance,
-                       int const max_iters,
-                       int const verbosity) const;
-    void computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                       std::array<amrex::Real, 3> const beta,
-                       amrex::Real const required_precision,
-                       amrex::Real absolute_tolerance,
-                       int const max_iters,
-                       int const verbosity) const;
 
     void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    amrex::Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_lo,
@@ -1132,6 +1125,7 @@ private:
     int pml_has_particles = 0;
     int do_pml_j_damping = 0;
     int do_pml_in_domain = 0;
+    static int do_similar_dm_pml;
     bool do_pml_dive_cleaning; // default set in WarpX.cpp
     bool do_pml_divb_cleaning; // default set in WarpX.cpp
     amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
@@ -1269,20 +1263,26 @@ public:
     */
 
 public:
-    void ComputeEdgeLengths ();
+#ifdef AMREX_USE_EB
+    static void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                                    const amrex::EBFArrayBoxFactory& eb_fact);
     /**
     * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
     *        An edge of area 0 is fully covered.
     */
-    void ComputeFaceAreas ();
+    static void ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                                  const amrex::EBFArrayBoxFactory& eb_fact);
+
     /**
     * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
     */
-    void ScaleEdges ();
+    static void ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                            const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Scale the edges areas by the mesh width to obtain the real areas.
     */
-    void ScaleAreas ();
+    static void ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                            const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Initialize information for cell extensions.
     *        The flags convention for m_flag_info_face is as follows
@@ -1295,6 +1295,7 @@ public:
     /**
     * \brief Compute the level set function used for particle-boundary interaction.
     */
+#endif
     void ComputeDistanceToEB ();
     /**
     * \brief Auxiliary function to count the amount of faces which still need to be extended

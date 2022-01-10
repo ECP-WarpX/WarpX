@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019-2020 Yinjian Zhao
 #
@@ -23,12 +23,16 @@
 # tolerance: 0.001
 # Possible running time: ~ 30.0 s
 
-import sys
-import yt
+import glob
 import math
+import os
+import re
+import sys
+
 import numpy
-from glob import glob
 import post_processing_utils
+import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -51,8 +55,14 @@ a =  0.041817463099883
 b = -0.083851393560288
 
 last_fn = sys.argv[1]
-if (last_fn[-1] == "/"): last_fn = last_fn[:-1]
-fn_list = glob(last_fn[:-5] + "?????")
+# Remove trailing '/' from file name, if necessary
+last_fn.rstrip('/')
+# Find last iteration in file name, such as 'test_name_plt000001' (last_it = '000001')
+last_it = re.search('\d+$', last_fn).group()
+# Find output prefix in file name, such as 'test_name_plt000001' (prefix = 'test_name_plt')
+prefix = last_fn[:-len(last_it)]
+# Collect all output files in fn_list (names match pattern prefix + arbitrary number)
+fn_list = glob.glob(prefix + '*[0-9]')
 
 error = 0.0
 nt = 0
@@ -84,20 +94,20 @@ assert(error < tolerance)
 dim = "2d"
 species_name = "electron"
 
-parser_filter_fn = "diags/diag_parser_filter00150"
+parser_filter_fn = "diags/diag_parser_filter" + last_it
 parser_filter_expression = "(x>200) * (z<200) * (px-3*pz>0)"
 post_processing_utils.check_particle_filter(last_fn, parser_filter_fn, parser_filter_expression,
                                             dim, species_name)
 
-uniform_filter_fn = "diags/diag_uniform_filter00150"
+uniform_filter_fn = "diags/diag_uniform_filter" + last_it
 uniform_filter_expression = "ids%6 == 0"
 post_processing_utils.check_particle_filter(last_fn, uniform_filter_fn, uniform_filter_expression,
                                             dim, species_name)
 
-random_filter_fn = "diags/diag_random_filter00150"
+random_filter_fn = "diags/diag_random_filter" + last_it
 random_fraction = 0.77
 post_processing_utils.check_random_filter(last_fn, random_filter_fn, random_fraction,
                                           dim, species_name)
 
-test_name = last_fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn, do_particles=False)

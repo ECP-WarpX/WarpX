@@ -38,9 +38,10 @@ public:
     FlushFormatSensei(const FlushFormatSensei &) = delete;
     void operator=(const FlushFormatSensei &) = delete;
 
-    /** \breif Construct.
-     * \parm[in] amr_mesh an AmrMesh instance
-     * \parm[in] diag_name ParmParse scope string.
+    /** Construct.
+     *
+     * \param[in] amr_mesh an AmrMesh instance
+     * \param[in] diag_name ParmParse scope string.
      */
     FlushFormatSensei (amrex::AmrMesh *amr_mesh, std::string diag_name);
 
@@ -56,7 +57,8 @@ public:
         bool plot_raw_fields_guards,
         bool isBTD = false, int snapshotID = -1,
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
-        bool isLastBTDFlush = false) const override;
+        bool isLastBTDFlush = false,
+        const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const override;
 
     /** \brief Do in-situ visualization for particle data.
      * \param[in] particle_diags Each element of this vector handles output of 1 species.

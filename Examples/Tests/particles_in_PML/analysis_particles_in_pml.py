@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019-2020 Luca Fedeli, Maxence Thevenet, Remi Lehe
 #
@@ -17,8 +17,11 @@ is close to 0 once the particles have left. With regular
 PML, this test fails, since the particles leave a spurious
 charge, with associated fields, behind them.
 """
+import os
 import sys
+
 import yt
+
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -53,5 +56,5 @@ else:
 print("tolerance_abs: " + str(tolerance_abs))
 assert max_Efield < tolerance_abs
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

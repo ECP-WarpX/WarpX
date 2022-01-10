@@ -34,7 +34,7 @@ void UpdatePosition(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::Parti
 #else
     amrex::ignore_unused(x);
 #endif
-#if (AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ) // RZ pushes particles in 3D
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) // RZ pushes particles in 3D
     y += uy * inv_gamma * dt;
 #else
     amrex::ignore_unused(y);

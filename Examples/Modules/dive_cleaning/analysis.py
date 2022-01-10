@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019-2020 Axel Huebl, Remi Lehe
 #
@@ -15,13 +15,16 @@ This script verifies that the field at the end of the simulation corresponds
 to the theoretical field of a Gaussian beam.
 """
 import sys
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import yt
 import numpy as np
 import scipy.constants as scc
 from scipy.special import gammainc
+import yt
+
 yt.funcs.mylog.setLevel(0)
 
 # Parameters from the Simulation

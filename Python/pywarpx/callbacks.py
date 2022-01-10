@@ -53,14 +53,16 @@ installafterstep(myplots)
 """
 from __future__ import generators
 
-import types
 import copy
-import time
 import ctypes
 import sys
+import time
+import types
+
 import numpy
 
 from ._libwarpx import libwarpx
+
 
 class CallbackFunctions(object):
     """
@@ -146,6 +148,14 @@ class CallbackFunctions(object):
 
     def installfuncinlist(self,f):
         "Check if the specified function is installed"
+        if len(self.funcs) == 0:
+            # If this is the first function installed, set the callback in the C++
+            # to call this class instance.
+            # Note that the _c_func must be saved.
+            _CALLBACK_FUNC_0 = ctypes.CFUNCTYPE(None)
+            self._c_func = _CALLBACK_FUNC_0(self)
+            callback_setter = getattr(libwarpx.libwarpx_so, f'warpx_set_callback_py_{self.name}')
+            callback_setter(self._c_func)
         if isinstance(f,types.MethodType):
             # --- If the function is a method of a class instance, then save a full
             # --- reference to that instance and the method name.
@@ -241,34 +251,6 @@ _afterrestart = CallbackFunctions('afterrestart',lcallonce=1)
 _particleinjection = CallbackFunctions('particleinjection')
 _appliedfields = CallbackFunctions('appliedfields')
 
-# --- Create the objects that can be called from C.
-# --- Note that each of the CFUNCTYPE instances need to be saved
-_CALLBACK_FUNC_0 = ctypes.CFUNCTYPE(None)
-_c_afterinit = _CALLBACK_FUNC_0(_afterinit)
-libwarpx.warpx_set_callback_py_afterinit(_c_afterinit)
-_c_beforeEsolve = _CALLBACK_FUNC_0(_beforeEsolve)
-libwarpx.warpx_set_callback_py_beforeEsolve(_c_beforeEsolve)
-_c_poissonsolver = _CALLBACK_FUNC_0(_poissonsolver)
-_c_afterEsolve = _CALLBACK_FUNC_0(_afterEsolve)
-libwarpx.warpx_set_callback_py_afterEsolve(_c_afterEsolve)
-_c_beforedeposition = _CALLBACK_FUNC_0(_beforedeposition)
-libwarpx.warpx_set_callback_py_beforedeposition(_c_beforedeposition)
-_c_afterdeposition = _CALLBACK_FUNC_0(_afterdeposition)
-libwarpx.warpx_set_callback_py_afterdeposition(_c_afterdeposition)
-_c_particlescraper = _CALLBACK_FUNC_0(_particlescraper)
-libwarpx.warpx_set_callback_py_particlescraper(_c_particlescraper)
-_c_particleloader = _CALLBACK_FUNC_0(_particleloader)
-libwarpx.warpx_set_callback_py_particleloader(_c_particleloader)
-_c_beforestep = _CALLBACK_FUNC_0(_beforestep)
-libwarpx.warpx_set_callback_py_beforestep(_c_beforestep)
-_c_afterstep = _CALLBACK_FUNC_0(_afterstep)
-libwarpx.warpx_set_callback_py_afterstep(_c_afterstep)
-_c_afterrestart = _CALLBACK_FUNC_0(_afterrestart)
-libwarpx.warpx_set_callback_py_afterrestart(_c_afterrestart)
-_c_particleinjection = _CALLBACK_FUNC_0(_particleinjection)
-libwarpx.warpx_set_callback_py_particleinjection(_c_particleinjection)
-_c_appliedfields = _CALLBACK_FUNC_0(_appliedfields)
-libwarpx.warpx_set_callback_py_appliedfields(_c_appliedfields)
 
 #=============================================================================
 def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
@@ -299,7 +281,7 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
                 vmin = numpy.min(vlist)
                 vmax = numpy.max(vlist)
                 ff.write('  %10.4f  %10.4f'%(vmin,vmax))
-            it = libwarpx.warpx_getistep(0)
+            it = libwarpx.libwarpx_so.warpx_getistep(0)
             if it > 0:
                 ff.write('   %10.4f'%(vsum/npes/(it)))
             ff.write('\n')
@@ -345,7 +327,6 @@ def installpoissonsolver(f):
     cannot be uninstalled with the uninstallfuncinlist functionality at present."""
     if _poissonsolver.hasfuncsinstalled():
         raise RuntimeError('Only one field solver can be installed.')
-    libwarpx.warpx_set_callback_py_poissonsolver(_c_poissonsolver)
     _poissonsolver.installfuncinlist(f)
 def isinstalledpoissonsolver(f):
     """Checks if the function is called for a field solve"""

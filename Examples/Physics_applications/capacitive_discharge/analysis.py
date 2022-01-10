@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2021 Modern Electron
 
@@ -8,11 +8,12 @@
 # rather than the iterative approach from the MLMG solver.
 
 import sys
+
 sys.path.append('../../../../warpx/Regression/Checksum/')
 
 import checksumAPI
 
 my_check = checksumAPI.evaluate_checksum(
     'background_mcc', 'Python_background_mcc_plt00050',
-    do_particles=True, rtol=2.5e-3
+    do_particles=True, rtol=3.7e-3
 )

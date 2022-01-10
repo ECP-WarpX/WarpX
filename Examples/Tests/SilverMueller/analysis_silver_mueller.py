@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2021
 #
@@ -11,9 +11,12 @@ A laser pulse is emitted and propagates towards the boundaries ; the
 test check that the reflected field at the boundary is negligible.
 """
 
+import os
 import sys
-import yt ; yt.funcs.mylog.setLevel(0)
+
 import numpy as np
+
+import yt ; yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -31,5 +34,5 @@ assert np.all( abs(Ex) < max_reflection_amplitude )
 assert np.all( abs(Ey) < max_reflection_amplitude )
 assert np.all( abs(Ez) < max_reflection_amplitude )
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
