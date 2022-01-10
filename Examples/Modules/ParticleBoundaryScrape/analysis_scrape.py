@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-import yt
 from pathlib import Path
+
+import yt
 
 # This test shoots a beam of electrons at cubic embedded boundary geometry
 # At time step 40, none of the particles have hit the boundary yet. At time

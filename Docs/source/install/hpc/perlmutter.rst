@@ -102,7 +102,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
+   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
    cmake --build build -j 32
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.

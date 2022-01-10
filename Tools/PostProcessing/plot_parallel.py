@@ -4,15 +4,17 @@
 #
 # License: BSD-3-Clause-LBNL
 
-import os
-import glob
-import matplotlib
-import sys
 import argparse
+import glob
+import os
+import sys
+
+import matplotlib
 import yt
+
 yt.funcs.mylog.setLevel(50)
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 '''
 This script loops over all WarpX plotfiles in a directory and, for each

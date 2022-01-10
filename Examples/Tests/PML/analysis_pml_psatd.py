@@ -7,11 +7,13 @@
 #
 # License: BSD-3-Clause-LBNL
 
-import sys
-import yt ; yt.funcs.mylog.setLevel(0)
-import numpy as np
 import os
+import sys
+
+import numpy as np
 import scipy.constants as scc
+
+import yt ; yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -67,6 +69,7 @@ assert(reflectivity < reflectivity_max)
 # Check restart data v. original data
 sys.path.insert(0, '../../../../warpx/Examples/')
 from analysis_default_restart import check_restart
+
 check_restart(filename)
 
 test_name = os.path.split(os.getcwd())[1]

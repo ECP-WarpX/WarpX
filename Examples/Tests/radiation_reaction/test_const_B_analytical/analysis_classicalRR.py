@@ -30,10 +30,12 @@
 # 3) H. Spohn, Dynamics of charged particles and their radiation field
 #   (Cambridge University Press, Cambridge, 2004)
 
-import numpy as np
 import os
 import sys
+
+import numpy as np
 import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -163,7 +165,7 @@ def generate():
         f.write("amr.max_level = 0\n")
         f.write("amr.blocking_factor = 32\n")
         f.write("amr.max_grid_size = 64\n")
-        f.write("geometry.coord_sys   = 0\n")
+        f.write("geometry.dims = 3\n")
         f.write("boundary.field_lo = periodic periodic periodic\n")
         f.write("boundary.field_hi = periodic periodic periodic\n")
         f.write("geometry.prob_lo = {} {} {}\n".format(-sim_size, -sim_size, -sim_size))

@@ -11,10 +11,12 @@ A laser pulse is emitted and propagates towards the boundaries ; the
 test check that the reflected field at the boundary is negligible.
 """
 
-import sys
-import yt ; yt.funcs.mylog.setLevel(0)
-import numpy as np
 import os
+import sys
+
+import numpy as np
+
+import yt ; yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
