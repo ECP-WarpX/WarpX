@@ -140,6 +140,14 @@ public:
     amrex::MultiFab* GetG_fp ();
     amrex::MultiFab* GetG_cp ();
 
+    // When macroscopic solver is used with pml boundaries
+    amrex::MultiFab* Geteps_fp();
+    amrex::MultiFab* Geteps_cp();
+    amrex::MultiFab* Getmu_fp();
+    amrex::MultiFab* Getmu_cp();
+    amrex::MultiFab* Getsigma_fp();
+    amrex::MultiFab* Getsigma_cp();
+
     const MultiSigmaBox& GetMultiSigmaBox_fp () const
         { return *sigba_fp; }
 
@@ -220,6 +228,14 @@ private:
 
     std::unique_ptr<MultiSigmaBox> sigba_fp;
     std::unique_ptr<MultiSigmaBox> sigba_cp;
+
+    // macroscopic properties in PML, permittivity (epsilon), permeability (mu), conductivity (sigma)
+    std::unique_ptr<amrex::MultiFab> pml_eps_fp;
+    std::unique_ptr<amrex::MultiFab> pml_mu_fp;
+    std::unique_ptr<amrex::MultiFab> pml_sigma_fp;
+    std::unique_ptr<amrex::MultiFab> pml_eps_cp;
+    std::unique_ptr<amrex::MultiFab> pml_mu_cp;
+    std::unique_ptr<amrex::MultiFab> pml_sigma_cp;
 
 #ifdef WARPX_USE_PSATD
     std::unique_ptr<SpectralSolver> spectral_solver_fp;

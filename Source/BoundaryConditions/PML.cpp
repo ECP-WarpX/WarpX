@@ -18,6 +18,7 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 #include "Parallelization/WarpXCommUtil.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -660,6 +661,38 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         pml_G_fp->setVal(0.0);
     }
 
+    if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+        // Number of guard cells is same as that required for E-field in pml and all macroscopic
+        // parameters are cell-centered.
+        pml_eps_fp = std::make_unique<amrex::MultiFab> (ba, dm, 1, nge);
+        pml_mu_fp = std::make_unique<amrex::MultiFab> (ba, dm, 1, nge);
+        pml_sigma_fp = std::make_unique<amrex::MultiFab> (ba, dm, 1, nge);
+
+        auto& warpx = WarpX::GetInstance();
+        auto& macroscopic_properties = warpx.m_macroscopic_properties;
+
+        if (macroscopic_properties->m_sigma_s == "constant") {
+            pml_sigma_fp->setVal(macroscopic_properties->m_sigma);
+        } else if (macroscopic_properties->m_sigma_s == "parse_sigma_function") {
+            macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_sigma_fp.get(),
+                macroscopic_properties->m_sigma_parser->compile<3>(), lev);
+        }
+
+        if (macroscopic_properties->m_epsilon_s == "constant") {
+            pml_eps_fp->setVal(macroscopic_properties->m_epsilon);
+        } else if (macroscopic_properties->m_epsilon_s == "parse_epsilon_function") {
+            macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_eps_fp.get(),
+                macroscopic_properties->m_epsilon_parser->compile<3>(), lev);
+        }
+
+        if (macroscopic_properties->m_mu_s == "constant") {
+            pml_mu_fp->setVal(macroscopic_properties->m_mu);
+        } else if (macroscopic_properties->m_mu_s == "parse_mu_function") {
+            macroscopic_properties->InitializeMacroMultiFabUsingParser(pml_mu_fp.get(),
+                macroscopic_properties->m_mu_parser->compile<3>(), lev);
+        }
+    }
+
     if (do_pml_in_domain){
         sigba_fp = std::make_unique<MultiSigmaBox>(ba, dm, grid_ba_reduced, geom->CellSize(), ncell, delta);
     }
@@ -973,6 +1006,43 @@ PML::GetG_cp ()
 {
     return pml_G_cp.get();
 }
+
+amrex::MultiFab*
+PML::Geteps_fp()
+{
+    return pml_eps_fp.get();
+}
+
+amrex::MultiFab*
+PML::Getmu_fp()
+{
+    return pml_mu_fp.get();
+}
+
+amrex::MultiFab*
+PML::Getsigma_fp()
+{
+    return pml_sigma_fp.get();
+}
+
+amrex::MultiFab*
+PML::Geteps_cp()
+{
+    return pml_eps_cp.get();
+}
+
+amrex::MultiFab*
+PML::Getmu_cp()
+{
+    return pml_mu_cp.get();
+}
+
+amrex::MultiFab*
+PML::Getsigma_cp()
+{
+    return pml_sigma_cp.get();
+}
+
 
 void
 PML::ExchangeB (const std::array<amrex::MultiFab*,3>& B_fp,
