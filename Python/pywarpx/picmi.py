@@ -444,14 +444,14 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.boundary.particle_lo = [self.bc_rmin_particles, self.bc_zmin_particles]
         pywarpx.boundary.particle_hi = [self.bc_rmax_particles, self.bc_zmax_particles]
 
-        if self.moving_window_zvelocity is not None:
-            if np.isscalar(self.moving_window_zvelocity):
-                if self.moving_window_zvelocity !=0:
-                    pywarpx.warpx.do_moving_window = 1
-                    pywarpx.warpx.moving_window_dir = 'z'
-                    pywarpx.warpx.moving_window_v = self.moving_window_zvelocity/constants.c  # in units of the speed of light
-            else:
-                raise Exception('RZ PICMI moving_window_velocity (only available in z direction) should be a scalar')
+        if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
+            pywarpx.warpx.do_moving_window = 1
+            if self.moving_window_velocity[0] != 0.:
+                pywarpx.warpx.moving_window_dir = 'r'
+                pywarpx.warpx.moving_window_v = self.moving_window_velocity[0]/constants.c  # in units of the speed of light
+            if self.moving_window_velocity[1] != 0.:
+                pywarpx.warpx.moving_window_dir = 'z'
+                pywarpx.warpx.moving_window_v = self.moving_window_velocity[1]/constants.c  # in units of the speed of light
 
         if self.refined_regions:
             assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
