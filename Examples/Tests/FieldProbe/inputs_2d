@@ -81,4 +81,3 @@ FP_line.z1_probe = 1.7e-6
 FP_line.resolution = 201
 
 authors = "Tiberius Rheaume <tiberiusrheaume@lbl.gov>, Axel Huebl <axelhuebl@lbl.gov>"
-
