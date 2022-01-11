@@ -20,6 +20,8 @@ which can be solved analytically.
 import numpy as np
 import pandas as pd
 
+filename = "diags/reducedfiles/FP_line.txt"
+
 # Open data file
 df = pd.read_csv(filename, sep=' ')
 df = df.sort_values(by=['[2]part_x_lev0-(m)'])
