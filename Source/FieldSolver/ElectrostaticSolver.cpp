@@ -348,7 +348,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
             const IntVect& refratio = refRatio(lev);
             ba.coarsen(refratio);
             const int ncomp = linop.getNComp();
-            MultiFab cfine(ba, phi[lev+1]->DistributionMap(), ncomp, 1);
+            MultiFab phi_cp(ba, phi[lev+1]->DistributionMap(), ncomp, 1);
 
             // Copy from phi[lev] to phi_cp (in parallel)
             // (Similar to https://github.com/ECP-WarpX/WarpX/blob/eeab8143e983df862b1f4646ea1baf6e6c85e33f/Source/Parallelization/WarpXComm.cpp#L306)
@@ -364,7 +364,8 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #endif
             for (MFIter mfi(*phi[lev]); mfi.isValid(); ++mfi)
             {
-                Array4<Real const> const& phi_fp = phi[lev]->const_array(mfi);
+                Array4<Real const> const& phi_fp_arr = phi[lev]->array(mfi);
+                Array4<Real const> const& phi_cp_arr = phi_cp->array(mfi);                
 
                 amrex::ParallelFor(Box(phi_aux),
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
