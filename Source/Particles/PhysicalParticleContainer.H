@@ -388,6 +388,17 @@ protected:
     // A smart pointer to an instance of a Breit Wheeler engine [photons only!]
     std::shared_ptr<BreitWheelerEngine> m_shr_p_bw_engine;
 #endif
+    /* Vector of user-defined integer attributes for species, species_name */
+    std::vector<std::string> m_user_int_attribs;
+    /* Vector of user-defined real attributes for species, species_name */
+    std::vector<std::string> m_user_real_attribs;
+    /* Vector of user-defined parser for initializing user-defined integer attributes */
+    std::vector< std::unique_ptr<amrex::Parser> > m_user_int_attrib_parser;
+    /* Vector of user-defined parser for initializing user-defined real attributes */
+    std::vector< std::unique_ptr<amrex::Parser> > m_user_real_attrib_parser;
+    
+    std::vector< amrex::ParserExecutor<3> > m_user_int_attrib_parserexec;
+    std::vector< amrex::ParserExecutor<3> > m_user_real_attrib_parserexec;
 
 };
 

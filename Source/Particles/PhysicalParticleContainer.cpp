@@ -82,7 +82,7 @@
 #include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
-
+#include <AMReX_Parser.H>
 
 #ifdef AMREX_USE_OMP
 #   include <omp.h>
@@ -286,6 +286,32 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
             m_qed_quantum_sync_phot_product_name);
     }
 #endif
+
+    // User-defined integer attributes
+    pp_species_name.queryarr("addIntegerAttributes", m_user_int_attribs);
+    int n_user_int_attribs = m_user_int_attribs.size();
+    std::vector< std::string > str_int_attrib_function;
+    str_int_attrib_function.resize(n_user_int_attribs);
+    m_user_int_attrib_parser.resize(n_user_int_attribs);
+    for (int i = 0; i < n_user_int_attribs; ++i) {
+        Store_parserString(pp_species_name, m_user_int_attribs[i]+"(x,y,z)", str_int_attrib_function[i]);
+        m_user_int_attrib_parser[i] = std::make_unique<amrex::Parser>(
+                                            makeParser(str_int_attrib_function[i],{"x","y","z"}));
+        AddIntComp(m_user_int_attribs[i]);
+    }
+
+    // User-defined real attributes
+    pp_species_name.queryarr("addRealAttributes", m_user_real_attribs);
+    int n_user_real_attribs = m_user_real_attribs.size();
+    std::vector< std::string > str_real_attrib_function;
+    str_real_attrib_function.resize(n_user_real_attribs);
+    m_user_real_attrib_parser.resize(n_user_real_attribs);
+    for (int i = 0; i < n_user_real_attribs; ++i) {
+        Store_parserString(pp_species_name, m_user_real_attribs[i]+"(x,y,z)", str_real_attrib_function[i]);
+        m_user_real_attrib_parser[i] = std::make_unique<amrex::Parser>(
+                                            makeParser(str_real_attrib_function[i],{"x","y","z"}));
+        AddRealComp(m_user_real_attribs[i]);
+    }
 
     // If old particle positions should be saved add the needed components
     pp_species_name.query("save_previous_position", m_save_previous_position);
@@ -903,6 +929,26 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         for (int ia = 0; ia < PIdx::nattribs; ++ia) {
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
+        // user-defined integer and real attributes
+        const int n_user_int_attribs = m_user_int_attribs.size();
+        const int n_user_real_attribs = m_user_real_attribs.size();
+        amrex::Gpu::DeviceVector<int*> pa_user_int(n_user_int_attribs);
+        amrex::Gpu::DeviceVector<ParticleReal*> pa_user_real(n_user_real_attribs);
+        std::vector< amrex::ParserExecutor<3> > user_int_attrib_parserexec(n_user_int_attribs);
+        std::vector< amrex::ParserExecutor<3> > user_real_attrib_parserexec(n_user_real_attribs);
+//        user_int_attrib_parserexec.resize(n_user_int_attribs);
+//        user_real_attrib_parserexec.resize(n_user_real_attribs);
+        for (int ia = 0; ia < n_user_int_attribs; ++ia) {
+            pa_user_int[ia] = soa.GetIntData(particle_icomps[m_user_int_attribs[ia]]).data() + old_size;
+            user_int_attrib_parserexec[ia] = m_user_int_attrib_parser[ia]->compile<3>();
+        }
+        for (int ia = 0; ia < n_user_real_attribs; ++ia) {
+            pa_user_real[ia] = soa.GetRealData(particle_comps[m_user_real_attribs[ia]]).data() + old_size;
+            user_real_attrib_parserexec[ia] = m_user_real_attrib_parser[ia]->compile<3>();
+        }
+        int** pa_user_int_data = pa_user_int.dataPtr();
+        ParticleReal** pa_user_real_data = pa_user_real.dataPtr();
+
 
         int* pi = nullptr;
         if (do_field_ionization) {
@@ -1114,6 +1160,22 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     p_optical_depth_BW[ip] = breit_wheeler_get_opt(engine);
                 }
 #endif
+                // Initialize user-defined integers with user-defined parser
+                for (int ia = 0; ia < n_user_int_attribs; ++ia) {
+#if defined(WARPX_DIM_3D)
+                    pa_user_int_data[ia][ip] = user_int_attrib_parserexec[ia](pos.x, pos.y, pos.z);
+#elif defined (WARPX_DIM_XZ)
+                    pa_user_int_data[ia][ip] = user_int_attrib_parserexec[ia](pos.x, 0.0_rt, pos.z);
+#endif
+                }
+                // Initialize user-defined integers with real-defined parser
+                for (int ia = 0; ia < n_user_real_attribs; ++ia) {
+#if defined(WARPX_DIM_3D)
+                    pa_user_real_data[ia][ip] = user_real_attrib_parserexec[ia](pos.x, pos.y, pos.z);
+#elif defined (WARPX_DIM_XZ)
+                    pa_user_real_data[ia][ip] = user_real_attrib_parserexec[ia](pos.x, 0.0_rt, pos.z);
+#endif
+                }
 
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
