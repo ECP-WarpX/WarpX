@@ -365,7 +365,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
             for (MFIter mfi(*phi[lev]); mfi.isValid(); ++mfi)
             {
                 Array4<Real const> const& phi_fp_arr = phi[lev]->array(mfi);
-                Array4<Real const> const& phi_cp_arr = phi_cp->array(mfi);                
+                Array4<Real const> const& phi_cp_arr = phi_cp->array(mfi);
 
                 amrex::ParallelFor(Box(phi_aux),
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
