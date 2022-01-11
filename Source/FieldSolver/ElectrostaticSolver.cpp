@@ -344,20 +344,16 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
             // Similar to https://github.com/AMReX-Codes/amrex/blob/development/Src/LinearSolvers/MLMG/AMReX_MLMG.cpp#L576
             // https://github.com/AMReX-Codes/amrex/blob/development/Src/LinearSolvers/MLMG/AMReX_MLMG.cpp#L587
 
-            MultiFab& phi_cp = *phi[lev+1];
-            BoxArray ba = phi_cp.boxArray();
-            const IntVect& refratio = refRatio(lev-1);
+            BoxArray ba = phi[lev+1]->boxArray();
+            const IntVect& refratio = refRatio(lev);
             ba.coarsen(refratio);
             const int ncomp = linop.getNComp();
-            int ng_dst = 1;
-            MultiFab cfine(ba, phi_cp.DistributionMap(), ncomp, ng_dst);
+            MultiFab cfine(ba, phi[lev+1]->DistributionMap(), ncomp, 1);
 
             // Copy from phi[lev] to phi_cp (in parallel)
             // (Similar to https://github.com/ECP-WarpX/WarpX/blob/eeab8143e983df862b1f4646ea1baf6e6c85e33f/Source/Parallelization/WarpXComm.cpp#L306)
-            const amrex::IntVect& ng_src = guard_cells.ng_FieldGather;
             const amrex::Periodicity& crse_period = Geom(lev).periodicity();
-            const IntVect& ng = phi[lev]->nGrowVect();
-            WarpXCommUtil::ParallelCopy(phi_cp, *phi[lev], 0, 0, 1, ng_src, ng, crse_period);
+            WarpXCommUtil::ParallelCopy(phi_cp, *phi[lev], 0, 0, 1, 1, 1, crse_period);
 
             // Local interpolation from phi_cp to phi[lev+1]
             // (Call mf_nodebilin_interp (from AMReX_MFInterp_C.H) in MFIter loop)
@@ -366,18 +362,15 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-            MultiFab dphi(phi_cp.boxArray(), phi_cp.DistributionMap(), phi_cp.nComp(), ng);
             for (MFIter mfi(*phi[lev]); mfi.isValid(); ++mfi)
             {
-                Array4<Real> const& phi_aux = phi[lev]->array(mfi);
                 Array4<Real const> const& phi_fp = phi[lev]->const_array(mfi);
-                //Array4<Real const> const& phi_c = dphi.const_array(mfi);
 
-                //amrex::ParallelFor(Box(phi_aux),
-                //[=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                //{
-                //    warpx_interp(j, k, l, phi_aux, phi_fp, phi_c, phi_stag, refratio);
-                //});
+                amrex::ParallelFor(Box(phi_aux),
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+                {
+                    mf_nodebilin_interp(i, j, k, 0, phi_fp_arr, 0, phi_cp_arr, 0, refratio);
+                });
             }
 
         }
