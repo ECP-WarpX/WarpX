@@ -397,9 +397,6 @@ protected:
     /* Vector of user-defined parser for initializing user-defined real attributes */
     std::vector< std::unique_ptr<amrex::Parser> > m_user_real_attrib_parser;
 
-    std::vector< amrex::ParserExecutor<3> > m_user_int_attrib_parserexec;
-    std::vector< amrex::ParserExecutor<3> > m_user_real_attrib_parserexec;
-
 };
 
 #endif

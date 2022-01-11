@@ -936,8 +936,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         amrex::Gpu::DeviceVector<ParticleReal*> pa_user_real(n_user_real_attribs);
         std::vector< amrex::ParserExecutor<3> > user_int_attrib_parserexec(n_user_int_attribs);
         std::vector< amrex::ParserExecutor<3> > user_real_attrib_parserexec(n_user_real_attribs);
-//        user_int_attrib_parserexec.resize(n_user_int_attribs);
-//        user_real_attrib_parserexec.resize(n_user_real_attribs);
         for (int ia = 0; ia < n_user_int_attribs; ++ia) {
             pa_user_int[ia] = soa.GetIntData(particle_icomps[m_user_int_attribs[ia]]).data() + old_size;
             user_int_attrib_parserexec[ia] = m_user_int_attrib_parser[ia]->compile<3>();
