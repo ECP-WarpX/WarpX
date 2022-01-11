@@ -7,10 +7,10 @@
 #include "CollisionHandler.H"
 
 #include "BackgroundMCCCollision.H"
+#include "Particles/Collision/BinaryCollision/Coulomb/PairWiseCoulombCollisionFunc.H"
 #include "Particles/Collision/BinaryCollision/BinaryCollision.H"
-#include "Particles/Collision/BinaryCollision/NuclearFusionFunc.H"
+#include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
 #include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
-#include "Particles/Collision/BinaryCollision/PairWiseCoulombCollisionFunc.H"
 
 #include <AMReX_ParmParse.H>
 
@@ -29,6 +29,9 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
     allcollisions.resize(ncollisions);
     for (int i = 0; i < static_cast<int>(ncollisions); ++i) {
         amrex::ParmParse pp_collision_name(collision_names[i]);
+
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1,
+        "RZ mode `warpx.n_rz_azimuthal_modes` must be 1 when using the binary collision module.");
 
         // For legacy, pairwisecoulomb is the default
         std::string type = "pairwisecoulomb";

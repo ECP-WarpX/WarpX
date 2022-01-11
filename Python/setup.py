@@ -24,7 +24,7 @@ argparser.add_argument('--with-lib-dir', type=str, default=None, help='Install w
 args, unknown = argparser.parse_known_args()
 sys.argv = [sys.argv[0]] + unknown
 
-allowed_dims = ["2d", "3d", "rz"]
+allowed_dims = ["1d", "2d", "3d", "rz"]
 
 # Allow to control options via environment vars.
 # Work-around for https://github.com/pypa/setuptools/issues/1712
@@ -54,12 +54,12 @@ else:
     package_data = {}
 
 setup(name = 'pywarpx',
-      version = '21.11',
+      version = '22.01',
       packages = ['pywarpx'],
       package_dir = {'pywarpx': 'pywarpx'},
       description = """Wrapper of WarpX""",
       package_data = package_data,
-      install_requires = ['numpy', 'picmistandard==0.0.16', 'periodictable'],
+      install_requires = ['numpy', 'picmistandard==0.0.18', 'periodictable'],
       python_requires = '>=3.6',
       zip_safe=False
 )

@@ -1,0 +1,5 @@
+#CEXE_sources += ParticleBoundaries.cpp
+
+include $(WARPX_HOME)/Source/ablastr/particles/Make.package
+
+VPATH_LOCATIONS   += $(WARPX_HOME)/Source/ablastr

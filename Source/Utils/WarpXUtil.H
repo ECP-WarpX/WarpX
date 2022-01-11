@@ -35,10 +35,20 @@ void ConvertLabParamsToBoost();
  */
 void ReadBCParams ();
 
-/**
- * \brief Ensures that the blocks are setup correctly for the RZ spectral solver
+/** Check the warpx.dims matches the binary name
  */
-void CheckGriddingForRZSpectral();
+void CheckDims ();
+
+/** Check the warpx.dims matches the binary name & set up RZ gridding
+ *
+ * Ensures that the blocks are setup correctly for the RZ spectral solver
+ * When using the RZ spectral solver, the Hankel transform cannot be
+ * divided among multiple blocks. Each block must extend over the
+ * entire radial extent.
+ * The grid can be divided up along z, but the number of blocks
+ * must be >= the number of processors.
+ */
+void CheckGriddingForRZSpectral ();
 
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin,
                amrex::Real zmax);
@@ -184,7 +194,7 @@ void getCellCoordinates (int i, int j, int k,
 {
     using namespace amrex::literals;
     x = domain_lo[0] + i*dx[0] + (1._rt - mf_type[0]) * dx[0]*0.5;
-#if (AMREX_SPACEDIM==2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::ignore_unused(j);
     y = 0._rt;
     z = domain_lo[1] + k*dx[1] + (1._rt - mf_type[1]) * dx[1]*0.5;

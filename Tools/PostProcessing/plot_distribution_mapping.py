@@ -1,7 +1,7 @@
 # Standard imports
-import os
 from collections import defaultdict
 from itertools import product
+import os
 
 # High-performance math
 import numpy as np

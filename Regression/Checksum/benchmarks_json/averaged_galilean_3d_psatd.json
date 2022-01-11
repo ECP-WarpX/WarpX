@@ -2,34 +2,34 @@
   "electrons": {
     "particle_cpu": 0.0,
     "particle_id": 536887296.0,
-    "particle_momentum_x": 3.235370594842269e-20,
-    "particle_momentum_y": 3.116556644010673e-20,
-    "particle_momentum_z": 8.904212408978889e-17,
-    "particle_position_x": 158433.3678817281,
-    "particle_position_y": 158432.165536343,
-    "particle_position_z": 15724303.92031937,
-    "particle_weight": 4.082754265421834e+18
+    "particle_momentum_x": 7.266679876000112e-22,
+    "particle_momentum_y": 7.383489173934850e-22,
+    "particle_momentum_z": 8.903836199717060e-17,
+    "particle_position_x": 8.192002938829830e+04,
+    "particle_position_y": 8.191963682799038e+04,
+    "particle_position_z": 4.859842246411671e+06,
+    "particle_weight": 8.465938144469544e+17
   },
   "ions": {
     "particle_cpu": 0.0,
     "particle_id": 1610629120.0,
-    "particle_momentum_x": 1.314439943956008e-18,
-    "particle_momentum_y": 1.311628100016085e-18,
-    "particle_momentum_z": 1.6348803463772493e-13,
-    "particle_position_x": 158433.36794743972,
-    "particle_position_y": 158432.1305546865,
-    "particle_position_z": 15724303.986768533,
-    "particle_weight": 4.082754265421834e+18
+    "particle_momentum_x": 1.313784732445962e-18,
+    "particle_momentum_y": 1.311039706805427e-18,
+    "particle_momentum_z": 1.634880384573924e-13,
+    "particle_position_x": 8.192002728584511e+04,
+    "particle_position_y": 8.191964341175802e+04,
+    "particle_position_z": 4.859842246204210e+06,
+    "particle_weight": 8.465938144469544e+17
   },
   "lev=0": {
-    "Bx": 0.06085014302192544,
-    "By": 0.0629280293306694,
-    "Bz": 0.5674918973594997,
-    "Ex": 183829738.031337,
-    "Ey": 176127082.12742153,
-    "Ez": 1031944.8742862595,
-    "jx": 72051.25977794768,
-    "jy": 69843.47286996675,
-    "jz": 21538.61066907263
+    "Bx": 2.144547734312894e-03,
+    "By": 2.140165710633042e-03,
+    "Bz": 1.338918864467607e-03,
+    "Ex": 7.033871490128702e+05,
+    "Ey": 7.314614886312798e+05,
+    "Ez": 5.899611395558689e+04,
+    "jx": 5.206443497993416e+02,
+    "jy": 5.356834701823582e+02,
+    "jz": 1.271341804930311e+04
   }
 }

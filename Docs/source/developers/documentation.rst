@@ -55,7 +55,7 @@ First, change into ``Docs/`` and install the Python requirements:
 .. code-block:: sh
 
     cd Docs/
-    pip install -r requirements.txt
+    python3 -m pip install -r requirements.txt
 
 You will also need Doxygen (macOS: ``brew install doxygen``; Ubuntu: ``sudo apt install doxygen``).
 

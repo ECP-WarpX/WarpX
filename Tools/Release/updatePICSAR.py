@@ -11,16 +11,9 @@
 import datetime
 from pathlib import Path
 import re
-import requests
 import sys
-try:
-    from configupdater import ConfigUpdater
-except ImportError:
-    print("Warning: Cannot update .ini files without 'configupdater'")
-    print("Consider running 'python -m pip install configupdater'")
-    ConfigUpdater = None
-    sys.exit(1)
 
+import requests
 
 # Maintainer Inputs ###########################################################
 
@@ -101,37 +94,6 @@ if not REPLY in ["Y", "y"]:
 
 
 # Updates #####################################################################
-
-# run_test.sh (used also for Azure Pipelines)
-run_test_path = str(REPO_DIR.joinpath("run_test.sh"))
-with open(run_test_path, encoding='utf-8') as f:
-    run_test_content = f.read()
-    #   branch/commit/tag (git fetcher) version
-    #     cd picsar && git checkout COMMIT_TAG_OR_BRANCH && cd -
-    run_test_content = re.sub(
-        r'(.*cd\s+picsar.+git checkout\s+--detach\s+)(.+)(\s+&&\s.*)',
-        r'\g<1>{}\g<3>'.format(PICSAR_new_branch),
-        run_test_content, flags = re.MULTILINE)
-
-with open(run_test_path, "w", encoding='utf-8') as f:
-    f.write(run_test_content)
-
-if ConfigUpdater is not None:
-    # WarpX-tests.ini
-    tests_ini_path = str(REPO_DIR.joinpath("Regression/WarpX-tests.ini"))
-    cp = ConfigUpdater()
-    cp.optionxform = str
-    cp.read(tests_ini_path)
-    cp['extra-PICSAR']['branch'].value = PICSAR_new_branch
-    cp.update_file()
-
-    # WarpX-GPU-tests.ini
-    tests_gpu_ini_path = str(REPO_DIR.joinpath("Regression/WarpX-GPU-tests.ini"))
-    cp = ConfigUpdater()
-    cp.optionxform = str
-    cp.read(tests_gpu_ini_path)
-    cp['extra-PICSAR']['branch'].value = PICSAR_new_branch
-    cp.update_file()
 
 # WarpX references to PICSAR: cmake/dependencies/PICSAR.cmake
 with open(PICSAR_cmake_path, encoding='utf-8') as f:

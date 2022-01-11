@@ -13,7 +13,9 @@ the NIST website) and extracts ionization levels into C++ file
 IonizationEnergiesTable.H, which contains tables + metadata.
 '''
 
-import re, os
+import os
+import re
+
 import numpy as np
 
 filename = os.path.join( '.', 'atomic_data.txt' )

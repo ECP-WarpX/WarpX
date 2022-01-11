@@ -276,20 +276,22 @@ void BeamRelevant::ComputeDiags (int step)
                 const ParticleReal p_uz = p.rdata(PIdx::uz);
                 const ParticleReal p_us = p_ux*p_ux + p_uy*p_uy + p_uz*p_uz;
                 const ParticleReal p_gm = std::sqrt(1.0_rt+p_us*inv_c2);
-                const ParticleReal p_pos0 = p.pos(0);
                 const ParticleReal p_w = p.rdata(PIdx::w);
 
 #if (defined WARPX_DIM_1D_Z)
                 const ParticleReal p_x = 0.0;
                 const ParticleReal p_y = 0.0;
 #elif (defined WARPX_DIM_RZ)
+                const ParticleReal p_pos0 = p.pos(0);
                 const ParticleReal p_theta = p.rdata(PIdx::theta);
                 const ParticleReal p_x = p_pos0*std::cos(p_theta);
                 const ParticleReal p_y = p_pos0*std::sin(p_theta);
 #elif (defined WARPX_DIM_XZ)
+                const ParticleReal p_pos0 = p.pos(0);
                 const ParticleReal p_x = p_pos0;
                 const ParticleReal p_y = 0.0;
 #else
+                const ParticleReal p_pos0 = p.pos(0);
                 const ParticleReal p_pos1 = p.pos(1);
                 const ParticleReal p_x = p_pos0;
                 const ParticleReal p_y = p_pos1;

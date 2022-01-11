@@ -39,16 +39,16 @@ We use the following modules and environments on the system (``$HOME/perlmutter_
    export proj=<yourProject>  # LBNL/AMP: m3906_g
 
    # required dependencies
-   module load cmake/git-20210830  # 3.22-dev
+   module load cmake/3.22.0
    module swap PrgEnv-nvidia PrgEnv-gnu
-   module swap gcc gcc/9.3.0
-   module load cuda
+   module load cudatoolkit
 
    # optional: just an additional text editor
    # module load nano  # TODO: request from support
 
    # optional: for openPMD support
    module load cray-hdf5-parallel/1.12.0.7
+   export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
    export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/adios2-2.7.1:$CMAKE_PREFIX_PATH
 
    # optional: Python, ...
@@ -83,9 +83,17 @@ And since Perlmutter does not yet provide a module for it, install ADIOS2:
 
 .. code-block:: bash
 
+   # c-blosc (I/O compression)
+   git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
+   rm -rf src/c-blosc-pm-build
+   cmake -S src/c-blosc -B src/c-blosc-pm-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/c-blosc-1.21.1
+   cmake --build src/c-blosc-pm-build --target install --parallel 32
+
+   # ADIOS2
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
-   cmake -S src/adios2 -B src/adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/adios2-2.7.1
-   cmake --build src/adios2-build --target install -j 32
+   rm -rf src/adios2-pm-build
+   cmake -S src/adios2 -B src/adios2-pm-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/adios2-2.7.1
+   cmake --build src/adios2-pm-build --target install -j 32
 
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
 
@@ -94,7 +102,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
+   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
    cmake --build build -j 32
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.

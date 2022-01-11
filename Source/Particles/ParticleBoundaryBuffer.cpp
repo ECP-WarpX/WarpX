@@ -69,10 +69,10 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
     for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
     {
         amrex::ParmParse pp_species(getSpeciesNames()[ispecies]);
-#if AMREX_SPACEDIM == 1
+#if defined(WARPX_DIM_1D_Z)
         pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[0][ispecies]);
         pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[1][ispecies]);
-#elif AMREX_SPACEDIM == 2
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         pp_species.query("save_particles_at_xlo", m_do_boundary_buffer[0][ispecies]);
         pp_species.query("save_particles_at_xhi", m_do_boundary_buffer[1][ispecies]);
         pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[2][ispecies]);
@@ -232,7 +232,8 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 int timestep = warpx_instance.getistep(0);
                 using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
                 auto count = amrex::filterAndTransformParticles(ptile_buffer, ptile,
-                    [=] AMREX_GPU_HOST_DEVICE (const SrcData& /*src*/, const int ip) noexcept
+                    [=] AMREX_GPU_HOST_DEVICE (const SrcData& /*src*/, const int ip)
+                    /* NVCC 11.3.109 chokes in C++17 on this: noexcept */
                     {
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
