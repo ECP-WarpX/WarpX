@@ -42,11 +42,13 @@ struct Sigma : amrex::Gpu::DeviceVector<amrex::Real>
 struct SigmaBox
 {
     SigmaBox (const amrex::Box& box, const amrex::BoxArray& grids,
-              const amrex::Real* dx, int ncell, int delta, const amrex::Box& regdomain);
+              const amrex::Real* dx, const amrex::IntVect& ncell, const amrex::IntVect& delta,
+              const amrex::Box& regdomain);
 
-    void define_single (const amrex::Box& regdomain, int ncell,
+    void define_single (const amrex::Box& regdomain, const amrex::IntVect& ncell,
                         const amrex::Array<amrex::Real,AMREX_SPACEDIM>& fac);
-    void define_multiple (const amrex::Box& box, const amrex::BoxArray& grids, int ncell,
+    void define_multiple (const amrex::Box& box, const amrex::BoxArray& grids,
+                          const amrex::IntVect& ncell,
                           const amrex::Array<amrex::Real,AMREX_SPACEDIM>& fac);
 
     void ComputePMLFactorsB (const amrex::Real* dx, amrex::Real dt);
@@ -69,7 +71,8 @@ class SigmaBoxFactory
     : public amrex::FabFactory<SigmaBox>
 {
 public:
-    SigmaBoxFactory (const amrex::BoxArray& grid_ba, const amrex::Real* dx, int ncell, int delta,
+    SigmaBoxFactory (const amrex::BoxArray& grid_ba, const amrex::Real* dx,
+                     const amrex::IntVect& ncell, const amrex::IntVect& delta,
                      const amrex::Box& regular_domain)
         : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta), m_regdomain(regular_domain) {}
     virtual ~SigmaBoxFactory () = default;
@@ -93,8 +96,8 @@ public:
 private:
     const amrex::BoxArray& m_grids;
     const amrex::Real* m_dx;
-    int m_ncell;
-    int m_delta;
+    amrex::IntVect m_ncell;
+    amrex::IntVect m_delta;
     amrex::Box m_regdomain;
 };
 
@@ -103,7 +106,8 @@ class MultiSigmaBox
 {
 public:
     MultiSigmaBox(const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                  const amrex::BoxArray& grid_ba, const amrex::Real* dx, int ncell, int delta,
+                  const amrex::BoxArray& grid_ba, const amrex::Real* dx,
+                  const amrex::IntVect& ncell, const amrex::IntVect& delta,
                   const amrex::Box& regular_domain);
     void ComputePMLFactorsB (const amrex::Real* dx, amrex::Real dt);
     void ComputePMLFactorsE (const amrex::Real* dx, amrex::Real dt);
@@ -250,20 +254,23 @@ private:
                                          const amrex::Box& regular_domain,
                                          const amrex::Geometry& geom,
                                          const amrex::BoxArray& grid_ba,
-                                         int ncell, int do_pml_in_domain,
-                                         const amrex::IntVect do_pml_Lo,
-                                         const amrex::IntVect do_pml_Hi);
+                                         const amrex::IntVect& ncell,
+                                         int do_pml_in_domain,
+                                         const amrex::IntVect& do_pml_Lo,
+                                         const amrex::IntVect& do_pml_Hi);
 
     static amrex::BoxArray MakeBoxArray_single (const amrex::Box& regular_domain,
                                                 const amrex::BoxArray& grid_ba,
-                                                int ncell, const amrex::IntVect do_pml_Lo,
-                                                const amrex::IntVect do_pml_Hi);
+                                                const amrex::IntVect& ncell,
+                                                const amrex::IntVect& do_pml_Lo,
+                                                const amrex::IntVect& do_pml_Hi);
 
     static amrex::BoxArray MakeBoxArray_multiple (const amrex::Geometry& geom,
                                                   const amrex::BoxArray& grid_ba,
-                                                  int ncell, int do_pml_in_domain,
-                                                  const amrex::IntVect do_pml_Lo,
-                                                  const amrex::IntVect do_pml_Hi);
+                                                  const amrex::IntVect& ncell,
+                                                  int do_pml_in_domain,
+                                                  const amrex::IntVect& do_pml_Lo,
+                                                  const amrex::IntVect& do_pml_Hi);
 
     static void CopyToPML (amrex::MultiFab& pml, amrex::MultiFab& reg, const amrex::Geometry& geom);
 };
