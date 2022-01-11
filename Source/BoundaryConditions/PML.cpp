@@ -780,7 +780,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         const BoxArray grid_cba_reduced = (do_pml_in_domain) ?
             BoxArray(grid_cba.boxList().intersect(cdomain)) : grid_cba;
 
-        AMREX_ALWAYS_ASSERT(ref_ratio == ref_ratio[0]);
+// This needs to be fixed.        AMREX_ALWAYS_ASSERT(ref_ratio == ref_ratio[0]);
         const int cncells = ncell/ref_ratio[0];
         const int cdelta = delta/ref_ratio[0];
 
