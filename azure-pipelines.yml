@@ -784,6 +784,7 @@ jobs:
 
 - job: win_pip_dev
   displayName: Windows pip from dev
+  timeoutInMinutes: 120
   pool:
     vmImage: windows-latest
   steps:
@@ -872,4 +873,3 @@ jobs:
 #
 # - open example data sets
 # - compile downstream examples clang -x cuda
-
