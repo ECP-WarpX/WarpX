@@ -74,11 +74,7 @@ If you also want to run runtime tests and added Python (``spack add python`` and
 
 .. code-block:: bash
 
-<<<<<<< HEAD
-   python -m pip install matplotlib==3.2.2 yt scipy pandas numpy openpmd-api
-=======
-   python3 -m pip install matplotlib yt scipy numpy openpmd-api virtualenv
->>>>>>> development
+   python3 -m pip install matplotlib yt scipy pandas numpy openpmd-api virtualenv
 
 If you want to run the ``./run_test.sh`` :ref:`test script <developers-testing>`, which uses our legacy GNUmake build system, you need to set the following environment hints after ``spack env activate warpx-dev`` for dependent software:
 
