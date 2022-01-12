@@ -39,6 +39,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_Vector.H>
+#include <AMReX_MFInterp_C.H>
 
 #include <array>
 #include <memory>
@@ -352,8 +353,9 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 
             // Copy from phi[lev] to phi_cp (in parallel)
             // (Similar to https://github.com/ECP-WarpX/WarpX/blob/eeab8143e983df862b1f4646ea1baf6e6c85e33f/Source/Parallelization/WarpXComm.cpp#L306)
+            const amrex::IntVect& ng = IntVect::TheUnitVector();
             const amrex::Periodicity& crse_period = Geom(lev).periodicity();
-            WarpXCommUtil::ParallelCopy(phi_cp, *phi[lev], 0, 0, 1, 1, 1, crse_period);
+            WarpXCommUtil::ParallelCopy(phi_cp, *phi[lev], 0, 0, 1, ng, ng, crse_period);
 
             // Local interpolation from phi_cp to phi[lev+1]
             // (Call mf_nodebilin_interp (from AMReX_MFInterp_C.H) in MFIter loop)
@@ -364,10 +366,10 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #endif
             for (MFIter mfi(*phi[lev]); mfi.isValid(); ++mfi)
             {
-                Array4<Real const> const& phi_fp_arr = phi[lev]->array(mfi);
-                Array4<Real const> const& phi_cp_arr = phi_cp->array(mfi);
+                Array4<Real> const& phi_fp_arr = phi[lev+1]->array(mfi);
+                Array4<Real> const& phi_cp_arr = phi_cp.array(mfi);
 
-                amrex::ParallelFor(Box(phi_aux),
+                amrex::ParallelFor(Box(phi[lev]->array(mfi)),
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
                 {
                     mf_nodebilin_interp(i, j, k, 0, phi_fp_arr, 0, phi_cp_arr, 0, refratio);
