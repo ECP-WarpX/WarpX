@@ -137,8 +137,8 @@ namespace
 }
 
 
-SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int ncell, int delta,
-                    const amrex::Box& regdomain)
+SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, const IntVect& ncell,
+                    const IntVect& delta, const amrex::Box& regdomain)
 {
     BL_ASSERT(box.cellCentered());
 
@@ -177,7 +177,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
 
     Array<Real,AMREX_SPACEDIM> fac;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        fac[idim] = 4.0_rt*PhysConst::c/(dx[idim]*static_cast<Real>(delta*delta));
+        fac[idim] = 4.0_rt*PhysConst::c/(dx[idim]*static_cast<Real>(delta[idim]*delta[idim]));
     }
 
     if (regdomain.ok()) { // The union of the regular grids is a single box
@@ -187,7 +187,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
     }
 }
 
-void SigmaBox::define_single (const Box& regdomain, int ncell,
+void SigmaBox::define_single (const Box& regdomain, const IntVect& ncell,
                               const Array<Real,AMREX_SPACEDIM>& fac)
 {
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -197,7 +197,7 @@ void SigmaBox::define_single (const Box& regdomain, int ncell,
         const int dhi = regdomain.bigEnd(idim);
 
         // Lo
-        int olo = std::max(slo, dlo-ncell);
+        int olo = std::max(slo, dlo-ncell[idim]);
         int ohi = std::min(shi, dlo-1);
         if (ohi >= olo) {
             FillLo(sigma[idim], sigma_cumsum[idim],
@@ -218,7 +218,7 @@ void SigmaBox::define_single (const Box& regdomain, int ncell,
 
         // Hi
         olo = std::max(slo, dhi+1);
-        ohi = std::min(shi, dhi+ncell);
+        ohi = std::min(shi, dhi+ncell[idim]);
         if (ohi >= olo) {
             FillHi(sigma[idim], sigma_cumsum[idim],
                    sigma_star[idim], sigma_star_cumsum[idim],
@@ -229,7 +229,7 @@ void SigmaBox::define_single (const Box& regdomain, int ncell,
     amrex::Gpu::streamSynchronize();
 }
 
-void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, int ncell,
+void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const IntVect& ncell,
                                 const Array<Real,AMREX_SPACEDIM>& fac)
 {
     const std::vector<std::pair<int,Box> >& isects = grids.intersections(box, false, ncell);
@@ -248,32 +248,32 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, int ncell
         {
             const Box& grid_box = grids[kv.first];
 
-            if (amrex::grow(grid_box, idim, ncell).intersects(box))
+            if (amrex::grow(grid_box, idim, ncell[idim]).intersects(box))
             {
                 direct_faces.push_back(kv.first);
             }
 #if (AMREX_SPACEDIM >= 2)
-            else if (amrex::grow(grid_box, jdim, ncell).intersects(box))
+            else if (amrex::grow(grid_box, jdim, ncell[jdim]).intersects(box))
             {
                 side_faces.push_back(kv.first);
             }
 #if defined(WARPX_DIM_3D)
-            else if (amrex::grow(grid_box, kdim, ncell).intersects(box))
+            else if (amrex::grow(grid_box, kdim, ncell[kdim]).intersects(box))
             {
                 side_faces.push_back(kv.first);
             }
-            else if (amrex::grow(amrex::grow(grid_box,idim,ncell),
-                                 jdim,ncell).intersects(box))
+            else if (amrex::grow(amrex::grow(grid_box,idim,ncell[idim]),
+                                 jdim,ncell[jdim]).intersects(box))
             {
                 direct_side_edges.push_back(kv.first);
             }
-            else if (amrex::grow(amrex::grow(grid_box,idim,ncell),
-                                 kdim,ncell).intersects(box))
+            else if (amrex::grow(amrex::grow(grid_box,idim,ncell[idim]),
+                                 kdim,ncell[kdim]).intersects(box))
             {
                 direct_side_edges.push_back(kv.first);
             }
-            else if (amrex::grow(amrex::grow(grid_box,jdim,ncell),
-                                 kdim,ncell).intersects(box))
+            else if (amrex::grow(amrex::grow(grid_box,jdim,ncell[jdim]),
+                                 kdim,ncell[kdim]).intersects(box))
             {
                 side_side_edges.push_back(kv.first);
             }
@@ -290,10 +290,10 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, int ncell
         {
             const Box& grid_box = grids[gid];
 
-            Box lobox = amrex::adjCellLo(grid_box, idim, ncell);
-            lobox.grow(jdim,ncell);
+            Box lobox = amrex::adjCellLo(grid_box, idim, ncell[idim]);
+            lobox.grow(jdim,ncell[jdim]);
 #if defined(WARPX_DIM_3D)
-            lobox.grow(kdim,ncell);
+            lobox.grow(kdim,ncell[kdim]);
 #endif
             Box looverlap = lobox & box;
             if (looverlap.ok()) {
@@ -303,10 +303,10 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, int ncell
                        grid_box.smallEnd(idim), fac[idim]);
             }
 
-            Box hibox = amrex::adjCellHi(grid_box, idim, ncell);
-            hibox.grow(jdim,ncell);
+            Box hibox = amrex::adjCellHi(grid_box, idim, ncell[idim]);
+            hibox.grow(jdim,ncell[jdim]);
 #if defined(WARPX_DIM_3D)
-            hibox.grow(kdim,ncell);
+            hibox.grow(kdim,ncell[kdim]);
 #endif
             Box hioverlap = hibox & box;
             if (hioverlap.ok()) {
@@ -326,7 +326,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, int ncell
         for (auto gid : side_side_edges)
         {
             const Box& grid_box = grids[gid];
-            const Box& overlap = amrex::grow(amrex::grow(grid_box,jdim,ncell),kdim,ncell) & box;
+            const Box& overlap = amrex::grow(amrex::grow(grid_box,jdim,ncell[jdim]),kdim,ncell[kdim]) & box;
             if (overlap.ok()) {
                 FillZero(sigma[idim], sigma_cumsum[idim],
                          sigma_star[idim], sigma_star_cumsum[idim],
@@ -341,8 +341,8 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, int ncell
         {
             const Box& grid_box = grids[gid];
 
-            Box lobox = amrex::adjCellLo(grid_box, idim, ncell);
-            Box looverlap = lobox.grow(jdim,ncell).grow(kdim,ncell) & box;
+            Box lobox = amrex::adjCellLo(grid_box, idim, ncell[idim]);
+            Box looverlap = lobox.grow(jdim,ncell[jdim]).grow(kdim,ncell[kdim]) & box;
             if (looverlap.ok()) {
                 FillLo(sigma[idim], sigma_cumsum[idim],
                        sigma_star[idim],  sigma_star_cumsum[idim],
@@ -350,8 +350,8 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, int ncell
                        grid_box.smallEnd(idim), fac[idim]);
             }
 
-            Box hibox = amrex::adjCellHi(grid_box, idim, ncell);
-            Box hioverlap = hibox.grow(jdim,ncell).grow(kdim,ncell) & box;
+            Box hibox = amrex::adjCellHi(grid_box, idim, ncell[idim]);
+            Box hioverlap = hibox.grow(jdim,ncell[jdim]).grow(kdim,ncell[kdim]) & box;
             if (hioverlap.ok()) {
                 FillHi(sigma[idim], sigma_cumsum[idim],
                        sigma_star[idim], sigma_star_cumsum[idim],
@@ -370,9 +370,9 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, int ncell
         {
             const Box& grid_box = grids[gid];
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            const Box& overlap = amrex::grow(grid_box,jdim,ncell) & box;
+            const Box& overlap = amrex::grow(grid_box,jdim,ncell[jdim]) & box;
 #else
-            const Box& overlap = amrex::grow(amrex::grow(grid_box,jdim,ncell),kdim,ncell) & box;
+            const Box& overlap = amrex::grow(amrex::grow(grid_box,jdim,ncell[jdim]),kdim,ncell[kdim]) & box;
 #endif
             if (overlap.ok()) {
                 FillZero(sigma[idim], sigma_cumsum[idim],
@@ -388,7 +388,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, int ncell
         {
             const Box& grid_box = grids[gid];
 
-            const Box& lobox = amrex::adjCellLo(grid_box, idim, ncell);
+            const Box& lobox = amrex::adjCellLo(grid_box, idim, ncell[idim]);
             Box looverlap = lobox & box;
             if (looverlap.ok()) {
                 FillLo(sigma[idim], sigma_cumsum[idim],
@@ -397,7 +397,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, int ncell
                        grid_box.smallEnd(idim), fac[idim]);
             }
 
-            const Box& hibox = amrex::adjCellHi(grid_box, idim, ncell);
+            const Box& hibox = amrex::adjCellHi(grid_box, idim, ncell[idim]);
             Box hioverlap = hibox & box;
             if (hioverlap.ok()) {
                 FillHi(sigma[idim], sigma_cumsum[idim],
@@ -489,7 +489,8 @@ SigmaBox::ComputePMLFactorsE (const Real* a_dx, Real dt)
 }
 
 MultiSigmaBox::MultiSigmaBox (const BoxArray& ba, const DistributionMapping& dm,
-                              const BoxArray& grid_ba, const Real* dx, int ncell, int delta,
+                              const BoxArray& grid_ba, const Real* dx,
+                              const IntVect& ncell, const IntVect& delta,
                               const amrex::Box& regular_domain)
     : FabArray<SigmaBox>(ba,dm,1,0,MFInfo(),
                          SigmaBoxFactory(grid_ba,dx,ncell,delta, regular_domain))
@@ -564,8 +565,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         BoxArray(grid_ba.boxList().intersect(domain0)) : grid_ba;
 
     bool is_single_box_domain = domain0.numPts() == grid_ba_reduced.numPts();
-    const BoxArray& ba = MakeBoxArray(is_single_box_domain, domain0, *geom, grid_ba_reduced, ncell,
-                                      do_pml_in_domain, do_pml_Lo, do_pml_Hi);
+    const BoxArray& ba = MakeBoxArray(is_single_box_domain, domain0, *geom, grid_ba_reduced,
+                                      IntVect(ncell), do_pml_in_domain, do_pml_Lo, do_pml_Hi);
 
     if (ba.empty()) {
         m_ok = false;
@@ -722,7 +723,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     Box single_domain_box = is_single_box_domain ? domain0 : Box();
     // Empty box (i.e., Box()) means it's not a single box domain.
     sigba_fp = std::make_unique<MultiSigmaBox>(ba, dm, grid_ba_reduced, geom->CellSize(),
-                                               ncell, delta, single_domain_box);
+                                               IntVect(ncell), IntVect(delta), single_domain_box);
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
@@ -780,9 +781,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         const BoxArray grid_cba_reduced = (do_pml_in_domain) ?
             BoxArray(grid_cba.boxList().intersect(cdomain)) : grid_cba;
 
-// This needs to be fixed.        AMREX_ALWAYS_ASSERT(ref_ratio == ref_ratio[0]);
-        const int cncells = ncell/ref_ratio[0];
-        const int cdelta = delta/ref_ratio[0];
+        const IntVect cncells = IntVect(ncell)/ref_ratio;
+        const IntVect cdelta = IntVect(delta)/ref_ratio;
 
         // Assuming that refinement ratio is equal in all dimensions
         const BoxArray& cba = MakeBoxArray(is_single_box_domain, cdomain, *cgeom, grid_cba_reduced,
@@ -876,8 +876,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 BoxArray
 PML::MakeBoxArray (bool is_single_box_domain, const amrex::Box& regular_domain,
                    const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
-                   int ncell, int do_pml_in_domain,
-                   const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
+                   const amrex::IntVect& ncell, int do_pml_in_domain,
+                   const amrex::IntVect& do_pml_Lo, const amrex::IntVect& do_pml_Hi)
 {
     if (is_single_box_domain) {
         return MakeBoxArray_single(regular_domain, grid_ba, ncell, do_pml_Lo, do_pml_Hi);
@@ -888,7 +888,8 @@ PML::MakeBoxArray (bool is_single_box_domain, const amrex::Box& regular_domain,
 
 BoxArray
 PML::MakeBoxArray_single (const amrex::Box& regular_domain, const amrex::BoxArray& grid_ba,
-                          int ncell, const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
+                          const amrex::IntVect& ncell, const amrex::IntVect& do_pml_Lo,
+                          const amrex::IntVect& do_pml_Hi)
 {
     BoxList bl;
     for (int i = 0, N = grid_ba.size(); i < N; ++i) {
@@ -906,15 +907,15 @@ PML::MakeBoxArray_single (const amrex::Box& regular_domain, const amrex::BoxArra
                 pml_bndry = b.bigEnd(idim) == regular_domain.bigEnd(idim);
             }
             if (pml_bndry) {
-                Box bbox = amrex::adjCell(b, ori, ncell);
+                Box bbox = amrex::adjCell(b, ori, ncell[idim]);
                 for (int jdim = 0; jdim < idim; ++jdim) {
                     if (do_pml_Lo[jdim] &&
                         bbox.smallEnd(jdim) == regular_domain.smallEnd(jdim)) {
-                        bbox.growLo(jdim, ncell);
+                        bbox.growLo(jdim, ncell[jdim]);
                     }
                     if (do_pml_Hi[jdim] &&
                         bbox.bigEnd(jdim) == regular_domain.bigEnd(jdim)) {
-                        bbox.growHi(jdim, ncell);
+                        bbox.growHi(jdim, ncell[jdim]);
                     }
                 }
                 bl.push_back(bbox);
@@ -927,16 +928,16 @@ PML::MakeBoxArray_single (const amrex::Box& regular_domain, const amrex::BoxArra
 
 BoxArray
 PML::MakeBoxArray_multiple (const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
-                            int ncell, int do_pml_in_domain,
-                            const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
+                            const amrex::IntVect& ncell, int do_pml_in_domain,
+                            const amrex::IntVect& do_pml_Lo, const amrex::IntVect& do_pml_Hi)
 {
     Box domain = geom.Domain();
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         if (do_pml_Lo[idim]){
-            domain.growLo(idim, ncell);
+            domain.growLo(idim, ncell[idim]);
         }
         if (do_pml_Hi[idim]){
-            domain.growHi(idim, ncell);
+            domain.growHi(idim, ncell[idim]);
         }
     }
     BoxList bl;
@@ -952,7 +953,7 @@ PML::MakeBoxArray_multiple (const amrex::Geometry& geom, const amrex::BoxArray& 
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                 if (do_pml_Lo[idim] || do_pml_Hi[idim]) {
                     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                        grid_bx.length(idim) > ncell,
+                        grid_bx.length(idim) > ncell[idim],
                         "Consider using larger amr.blocking_factor with PMLs");
                 }
             }
