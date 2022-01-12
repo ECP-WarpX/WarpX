@@ -837,6 +837,12 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
                                               WarpX::n_rz_azimuthal_modes, cost,
                                               WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
         }
+#ifndef AMREX_USE_GPU
+        // CPU, tiling: atomicAdd local_rho into rho
+        WARPX_PROFILE_VAR_START(blp_accumulate);
+        (*rho)[pti].atomicAdd(local_rho[thread_num], tb, tb, 0, icomp*nc, nc);
+        WARPX_PROFILE_VAR_STOP(blp_accumulate);
+#endif
     } else {
         if (!do_not_deposit) {
             WarpX& warpx = WarpX::GetInstance();
