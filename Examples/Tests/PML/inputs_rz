@@ -6,7 +6,6 @@ amr.n_cell = 32 128
 amr.max_level = 0
 
 geometry.dims = RZ
-geometry.coord_sys   = 1  # 1: Cylindrical
 geometry.prob_lo     =    0.     -100.e-6
 geometry.prob_hi     =  50.e-6   +100.e-6
 
