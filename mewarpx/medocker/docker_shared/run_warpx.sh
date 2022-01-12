@@ -14,10 +14,6 @@ DIRNAME=${1%/}
 BUCKET=$2
 SCRIPTNAME='run_script.sh'
 
-# MVFILES can be an environment variable set to True to move files as
-# generated.
-echo "Move diagnostic files as generated:" $MVFILES
-
 # TIMEOUT can be an environment variable. If no output to stdout has been made
 # in the previous TIMEOUT seconds, this script terminates.
 # TIMEOUT defaults to 3h = 10800 s
@@ -69,29 +65,24 @@ function checkptmove {
     fi
 }
 
-# Every 5 minutes, move (to keep space free, if $MVFILES is True) or sync
-# per-timestep diagnostic files as they are done being written. Always sync
-# other files (which may still be opened!)
+# Information on what to move, what to copy, what to ignore
+function filesync {
+    find . -name "*.h5" | while read file; do checkptmove "$file"; done
+    find . -name "*.npy" | while read file; do checkptmove "$file"; done
+    find . -name "*.png" | while read file; do checkptmove "$file"; done
+    find . -name "*.txt" | while read file; do checkptmove "$file"; done
+    find . -name "*.json" | while read file; do checkptmove "$file"; done
+    find . -name "*.dpkl" | while read file; do checkptmove "$file"; done
+    aws s3 sync ./ s3://${BUCKET}/${DIRNAME} --exclude "*" --include "std*"
+}
+
+# Every 5 minutes, move per-timestep diagnostic files as they are done being
+# written. Sync output files that are still being written to.
 function checkpoint {
 while true
 do
     sleep 300
-    if [[ "$MVFILES" == "True" ]]
-    then
-        find . -name "*.h5" | while read file; do checkptmove "$file"; done
-        find . -name "*.npy" | while read file; do checkptmove "$file"; done
-        find . -name "*.png" | while read file; do checkptmove "$file"; done
-        find . -name "*.txt" | while read file; do checkptmove "$file"; done
-        find . -name "*.json" | while read file; do checkptmove "$file"; done
-        find . -name "*.dpkl" | while read file; do checkptmove "$file"; done
-        aws s3 sync ./ s3://${BUCKET}/${DIRNAME} --exclude "*" --include "std*"
-    else
-        for d in ./diags_* ; do
-            aws s3 sync $d s3://${BUCKET}/${DIRNAME}/diags/
-        done
-        aws s3 sync ./diags/ s3://${BUCKET}/${DIRNAME}/diags/
-        aws s3 sync ./ s3://${BUCKET}/${DIRNAME} --exclude "*" --include "std*" --include "*.json"
-    fi
+    filesync
 
     # In addition, check if no output to stdout has been made for last TIMEOUT
     # seconds, if so terminate this run.
@@ -127,11 +118,8 @@ EXITFLAG=$?
 kill $CHECKID &> /dev/null
 kill $MAINID &> /dev/null
 
-for d in ./diags_* ; do
-    aws s3 mv --recursive $d s3://${BUCKET}/${DIRNAME}/diags/
-done
-aws s3 mv --recursive ./diags/ s3://${BUCKET}/${DIRNAME}/diags/
-aws s3 mv --recursive ./ s3://${BUCKET}/${DIRNAME} --exclude "*" --include "std*" --include "*.json"
+# One last file movement at the end of the run
+filesync
 
 echo Exit with status $EXITFLAG
 exit $EXITFLAG
