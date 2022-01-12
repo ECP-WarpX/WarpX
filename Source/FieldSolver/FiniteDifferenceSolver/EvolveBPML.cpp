@@ -118,9 +118,6 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
         amrex::ParallelFor(tbx, tby, tbz,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                if(Sx(i, j, k) <= 0) return;
-#endif
 
                 amrex::Real UpwardDz_Ey_yy = 0._rt;
                 amrex::Real UpwardDy_Ez_zz = 0._rt;
@@ -142,9 +139,6 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                if(Sy(i, j, k) <= 0) return;
-#endif
 
                 amrex::Real UpwardDx_Ez_zz = 0._rt;
                 amrex::Real UpwardDz_Ex_xx = 0._rt;
@@ -166,9 +160,6 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                if(Sz(i, j, k) <= 0) return;
-#endif
 
                 amrex::Real UpwardDy_Ex_xx = 0._rt;
                 amrex::Real UpwardDx_Ey_yy = 0._rt;

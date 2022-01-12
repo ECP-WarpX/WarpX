@@ -148,25 +148,19 @@ WarpX::DampPML (int lev, PatchType patch_type)
 
             amrex::ParallelFor(tex, tey, tez,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#ifdef AMREX_USE_EB
-                if(pml_lxfab(i, j, k) <= 0) return;
-#endif
+
                 warpx_damp_pml_ex(i, j, k, pml_Exfab, Ex_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
                                   sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
                                   dive_cleaning);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#ifdef AMREX_USE_EB
-                if(pml_lyfab(i, j, k) <= 0) return;
-#endif
+
                 warpx_damp_pml_ey(i, j, k, pml_Eyfab, Ey_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
                                   sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
                                   dive_cleaning);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#ifdef AMREX_USE_EB
-                if(pml_lzfab(i, j, k) <= 0) return;
-#endif
+
                 warpx_damp_pml_ez(i, j, k, pml_Ezfab, Ez_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
                                   sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
                                   dive_cleaning);
@@ -174,25 +168,19 @@ WarpX::DampPML (int lev, PatchType patch_type)
 
             amrex::ParallelFor(tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#ifdef AMREX_USE_EB
-                if(pml_Sxfab(i, j, k) <= 0) return;
-#endif
+
                 warpx_damp_pml_bx(i, j, k, pml_Bxfab, Bx_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
                                   sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
                                   divb_cleaning);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#ifdef AMREX_USE_EB
-                if(pml_Syfab(i, j, k) <= 0) return;
-#endif
+
                 warpx_damp_pml_by(i, j, k, pml_Byfab, By_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
                                   sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
                                   divb_cleaning);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-#ifdef AMREX_USE_EB
-                if(pml_Szfab(i, j, k) <= 0) return;
-#endif
+
                 warpx_damp_pml_bz(i, j, k, pml_Bzfab, Bz_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
                                   sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo,
                                   divb_cleaning);
