@@ -62,7 +62,6 @@ diag1.intervals = 100
 diag1.diag_type = Full
 #diag1.format = openpmd
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz
-diag1.write_species = 0
 
 #################################
 ## Reduced Diagnostics
