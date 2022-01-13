@@ -107,7 +107,6 @@ class FiniteDifferenceSolver
 
         void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
-                      std::array< amrex::MultiFab*, 3 > const face_areas,
                       amrex::Real const dt,
                       const bool dive_cleaning);
 

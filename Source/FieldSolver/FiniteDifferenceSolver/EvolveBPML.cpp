@@ -42,7 +42,6 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveBPML (
     std::array< amrex::MultiFab*, 3 > Bfield,
     std::array< amrex::MultiFab*, 3 > const Efield,
-    std::array< amrex::MultiFab*, 3 > const face_areas,
     amrex::Real const dt,
     const bool dive_cleaning) {
 
@@ -54,15 +53,15 @@ void FiniteDifferenceSolver::EvolveBPML (
 #else
     if (m_do_nodal) {
 
-        EvolveBPMLCartesian <CartesianNodalAlgorithm> (Bfield, Efield, face_areas, dt, dive_cleaning);
+        EvolveBPMLCartesian <CartesianNodalAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee || m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
-        EvolveBPMLCartesian <CartesianYeeAlgorithm> (Bfield, Efield, face_areas, dt, dive_cleaning);
+        EvolveBPMLCartesian <CartesianYeeAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveBPMLCartesian <CartesianCKCAlgorithm> (Bfield, Efield, face_areas, dt, dive_cleaning);
+        EvolveBPMLCartesian <CartesianCKCAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 
     } else {
         amrex::Abort("EvolveBPML: Unknown algorithm");
