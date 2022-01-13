@@ -740,3 +740,15 @@ namespace WarpXUtilStr
     }
 
 }
+
+namespace WarpXUtilLoadBalance
+{
+    bool doCosts (const amrex::LayoutData<amrex::Real>* costs, const amrex::BoxArray ba,
+                  const amrex::DistributionMapping& dm)
+    {
+        bool consistent = costs && (dm == costs->DistributionMap()) &&
+            (ba.CellEqual(costs->boxArray())) &&
+            (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers);
+        return consistent;
+    }
+}
