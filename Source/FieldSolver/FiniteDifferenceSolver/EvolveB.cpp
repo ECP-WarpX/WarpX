@@ -105,10 +105,6 @@ void FiniteDifferenceSolver::EvolveBCartesian (
     std::unique_ptr<amrex::MultiFab> const& Gfield,
     int lev, amrex::Real const dt ) {
 
-#ifndef AMREX_USE_EB
-    amrex::ignore_unused(face_areas);
-#endif
-
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     // Loop through the grids, and over the tiles within each grid
