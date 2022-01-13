@@ -681,12 +681,6 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
     pml_edge_lengths[2] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
-    pml_face_areas[0] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getBfield_fp(0,0).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
-    pml_face_areas[1] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getBfield_fp(0,1).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
-    pml_face_areas[2] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
         WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
@@ -695,10 +689,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         auto const eb_fact = fieldEBFactory();
 
         WarpX::ComputeEdgeLengths(pml_edge_lengths, eb_fact);
-        WarpX::ComputeFaceAreas(pml_face_areas, eb_fact);
         std::array<amrex::Real,3> cellsize = {AMREX_D_DECL(geom->CellSize()[0],geom->CellSize()[1],geom->CellSize()[2])};
         WarpX::ScaleEdges(pml_edge_lengths, cellsize);
-        WarpX::ScaleAreas(pml_face_areas, cellsize);
 
     }
 #endif
@@ -1056,11 +1048,6 @@ PML::Get_edge_lengths()
     return {pml_edge_lengths[0].get(), pml_edge_lengths[1].get(), pml_edge_lengths[2].get()};
 }
 
-std::array<MultiFab*,3>
-PML::Get_face_areas()
-{
-    return {pml_face_areas[0].get(), pml_face_areas[1].get(), pml_face_areas[2].get()};
-}
 
 MultiFab*
 PML::GetF_fp ()

@@ -481,10 +481,10 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveBPML(
-                pml[lev]->GetB_fp(), pml[lev]->GetE_fp(), pml[lev]->Get_face_areas(), a_dt, WarpX::do_dive_cleaning);
+                pml[lev]->GetB_fp(), pml[lev]->GetE_fp(), a_dt, WarpX::do_dive_cleaning);
         } else {
             m_fdtd_solver_cp[lev]->EvolveBPML(
-                pml[lev]->GetB_cp(), pml[lev]->GetE_cp(), pml[lev]->Get_face_areas(), a_dt, WarpX::do_dive_cleaning);
+                pml[lev]->GetB_cp(), pml[lev]->GetE_cp(), a_dt, WarpX::do_dive_cleaning);
         }
     }
 
