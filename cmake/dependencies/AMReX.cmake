@@ -75,14 +75,12 @@ macro(find_amrex)
         set(AMReX_PROBINIT OFF CACHE INTERNAL "")
         set(AMReX_TINY_PROFILE ON CACHE BOOL "")
 
-        if(WarpX_COMPUTE STREQUAL CUDA)
-            if(WarpX_ASCENT OR WarpX_SENSEI)
-                set(AMReX_GPU_RDC ON CACHE BOOL "")
-            else()
-                # we don't need RDC and disabling it simplifies the build
-                # complexity and potentially improves code optimization
-                set(AMReX_GPU_RDC OFF CACHE BOOL "")
-            endif()
+        if(WarpX_ASCENT OR WarpX_SENSEI)
+            set(AMReX_GPU_RDC ON CACHE BOOL "")
+        else()
+            # we don't need RDC and disabling it simplifies the build
+            # complexity and potentially improves code optimization
+            set(AMReX_GPU_RDC OFF CACHE BOOL "")
         endif()
 
         # shared libs, i.e. for Python bindings, need relocatable code
