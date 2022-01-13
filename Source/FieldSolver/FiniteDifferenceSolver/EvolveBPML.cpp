@@ -177,10 +177,6 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
 
     }
 
-#ifndef AMREX_USE_EB
-    amrex::ignore_unused(face_areas);
-#endif
-
 }
 
 #endif // corresponds to ifndef WARPX_DIM_RZ
