@@ -68,17 +68,21 @@ void FiniteDifferenceSolver::EvolveB (
         ignore_unused(Gfield, face_areas);
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
 #else
+    if(m_do_nodal or m_fdtd_algo != MaxwellSolverAlgo::ECT){
+        amrex::ignore_unused(face_areas);
+    }
+
     if (m_do_nodal) {
 
-        EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, Gfield, face_areas, lev, dt );
+        EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, face_areas, lev, dt );
+        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, Gfield, face_areas, lev, dt );
+        EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 #ifdef AMREX_USE_EB
     } else if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
@@ -99,7 +103,6 @@ void FiniteDifferenceSolver::EvolveBCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::unique_ptr<amrex::MultiFab> const& Gfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     int lev, amrex::Real const dt ) {
 
 #ifndef AMREX_USE_EB
@@ -126,12 +129,6 @@ void FiniteDifferenceSolver::EvolveBCartesian (
         Array4<Real> const& Ex = Efield[0]->array(mfi);
         Array4<Real> const& Ey = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
-
-#ifdef AMREX_USE_EB
-        amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
-        amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
-        amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
-#endif
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();

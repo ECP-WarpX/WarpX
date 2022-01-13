@@ -77,7 +77,6 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBPMLCartesian (
     std::array< amrex::MultiFab*, 3 > Bfield,
     std::array< amrex::MultiFab*, 3 > const Efield,
-    std::array< amrex::MultiFab*, 3 > const face_areas,
     amrex::Real const dt,
     const bool dive_cleaning) {
 
@@ -94,12 +93,6 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
         Array4<Real> const& Ex = Efield[0]->array(mfi);
         Array4<Real> const& Ey = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
-
-#ifdef AMREX_USE_EB
-        Array4<Real> const& Sx = face_areas[0]->array(mfi);
-        Array4<Real> const& Sy = face_areas[1]->array(mfi);
-        Array4<Real> const& Sz = face_areas[2]->array(mfi);
-#endif
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();

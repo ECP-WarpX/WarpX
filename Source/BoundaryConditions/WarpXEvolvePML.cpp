@@ -70,11 +70,6 @@ WarpX::DampPML (int lev, PatchType patch_type)
         const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp()
                                                             : pml[lev]->GetMultiSigmaBox_cp();
 
-#ifdef AMREX_USE_EB
-        const auto& pml_edge_lenghts = pml[lev]->Get_edge_lengths();
-        const auto& pml_face_areas = pml[lev]->Get_face_areas();
-#endif
-
         const amrex::IntVect Ex_stag = pml_E[0]->ixType().toIntVect();
         const amrex::IntVect Ey_stag = pml_E[1]->ixType().toIntVect();
         const amrex::IntVect Ez_stag = pml_E[2]->ixType().toIntVect();
@@ -111,15 +106,6 @@ WarpX::DampPML (int lev, PatchType patch_type)
             auto const& pml_Bxfab = pml_B[0]->array(mfi);
             auto const& pml_Byfab = pml_B[1]->array(mfi);
             auto const& pml_Bzfab = pml_B[2]->array(mfi);
-
-#ifdef AMREX_USE_EB
-            auto const& pml_lxfab = pml_edge_lenghts[0]->array(mfi);
-            auto const& pml_lyfab = pml_edge_lenghts[1]->array(mfi);
-            auto const& pml_lzfab = pml_edge_lenghts[2]->array(mfi);
-            auto const& pml_Sxfab = pml_face_areas[0]->array(mfi);
-            auto const& pml_Syfab = pml_face_areas[1]->array(mfi);
-            auto const& pml_Szfab = pml_face_areas[2]->array(mfi);
-#endif
 
             amrex::Real const * AMREX_RESTRICT sigma_fac_x = sigba[mfi].sigma_fac[0].data();
 #if defined(WARPX_DIM_3D)

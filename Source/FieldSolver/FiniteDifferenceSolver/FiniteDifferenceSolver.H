@@ -184,7 +184,6 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
             std::unique_ptr<amrex::MultiFab> const& Gfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
             int lev, amrex::Real const dt );
 
         template< typename T_Algo >
@@ -244,7 +243,6 @@ class FiniteDifferenceSolver
         void EvolveBPMLCartesian (
             std::array< amrex::MultiFab*, 3 > Bfield,
             std::array< amrex::MultiFab*, 3 > const Efield,
-            std::array< amrex::MultiFab*, 3 > const face_areas,
             amrex::Real const dt,
             const bool dive_cleaning);
 
