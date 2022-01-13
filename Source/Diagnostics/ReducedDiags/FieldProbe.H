@@ -22,14 +22,11 @@
 /**
  * This enumeration is used for assigning structural geometry levels (point vs line vs plane)
  */
-struct DetectorGeometry
+enum struct DetectorGeometry
 {
-    enum
-    {
-        Point =0,
-        Line,
-        Plane
-    };
+    Point = 0,
+    Line,
+    Plane
 };
 
 /**
@@ -80,10 +77,10 @@ private:
     long m_valid_particles {0};
 
     //! determines geometry of detector point distribution
-    int m_probe_geometry = DetectorGeometry::Point;
+    DetectorGeometry m_probe_geometry = DetectorGeometry::Point;
 
     //! determines number of particles places for non-point geometries
-    int m_resolution;
+    int m_resolution = 0;
 
     //! Empty vector for to which data is pushed
     amrex::Vector<amrex::Real> m_data;
@@ -94,8 +91,10 @@ private:
     //! this is the particle container in which probe particles are stored
     FieldProbeParticleContainer m_probe;
 
-    //! if  true, integrate values over time instead of probing instantaneous values
+    //! if true, integrate values over time instead of probing instantaneous values
     bool m_field_probe_integrate = false;
+
+    //! particle shape used for field gather
     int interp_order = 1;
 
     //! Judges whether to gather raw fields or interpolated data

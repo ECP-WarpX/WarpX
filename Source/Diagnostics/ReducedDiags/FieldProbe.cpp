@@ -31,12 +31,14 @@
 #include <AMReX_Vector.H>
 
 #include <cmath>
+#include <cstddef>
+#include <cstdlib>
+#include <iostream>
 #include <ostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <iostream>
-#include <cstdlib>
+
 using namespace amrex;
 
 // constructor
@@ -217,7 +219,6 @@ void FieldProbe::InitData ()
         amrex::Vector<amrex::ParticleReal> zpos;
         if (ParallelDescriptor::IOProcessor())
         {
-
             xpos.reserve(m_resolution);
             ypos.reserve(m_resolution);
             zpos.reserve(m_resolution);
@@ -243,10 +244,11 @@ void FieldProbe::InitData ()
         amrex::Vector<amrex::ParticleReal> zpos;
         if (ParallelDescriptor::IOProcessor())
         {
+            std::size_t const res2 = std::size_t(m_resolution) * std::size_t(m_resolution);
+            xpos.reserve(res2);
+            ypos.reserve(res2);
+            zpos.reserve(res2);
 
-            xpos.reserve(m_resolution * m_resolution);
-            ypos.reserve(m_resolution * m_resolution);
-            zpos.reserve(m_resolution * m_resolution);
             // create vector orthonormal to input vectors
             amrex::Real orthotarget[3]{
                 target_normal_y * target_up_z - target_normal_z * target_up_y,
