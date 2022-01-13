@@ -4,6 +4,7 @@
 #include "ParticleDiag_fwd.H"
 
 #include "Particles/WarpXParticleContainer_fwd.H"
+#include "Particles/PinnedMemoryParticleContainer.H"
 
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
@@ -16,8 +17,9 @@
 class ParticleDiag
 {
 public:
-    ParticleDiag(std::string diag_name, std::string name, WarpXParticleContainer* pc);
+    ParticleDiag(std::string diag_name, std::string name, WarpXParticleContainer* pc, PinnedMemoryParticleContainer *pinned_pc = nullptr);
     WarpXParticleContainer* getParticleContainer() const { return m_pc; }
+    PinnedMemoryParticleContainer* getPinnedParticleContainer() const { return m_pinned_pc; }
     std::string getSpeciesName() const { return m_name; }
     amrex::Vector<int> plot_flags;
 
@@ -36,6 +38,7 @@ private:
     std::string m_name;
     amrex::Vector< std::string > variables;
     WarpXParticleContainer* m_pc;
+    PinnedMemoryParticleContainer* m_pinned_pc;
 };
 
 #endif // WARPX_PARTICLEDIAG_H_
