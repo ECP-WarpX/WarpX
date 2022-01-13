@@ -29,7 +29,7 @@ grid = picmi.Cartesian1DGrid(
     upper_boundary_conditions = ['dirichlet'],
     lower_boundary_conditions_particles = ['absorbing'],
     upper_boundary_conditions_particles = ['absorbing'],
-    moving_window_velocity = [0., 0., c],
+    moving_window_velocity = [c],
     warpx_max_grid_size = max_grid_size,
     warpx_blocking_factor = blocking_factor)
 

@@ -256,7 +256,7 @@ atol = 1e-12
 
 # E
 check_values(1013263608.6369569, Ex[:,:], rtol, atol)
-check_values(717278253.4505507 , Ey[:,:], rtol, atol)
+check_values(717278256.7957529 , Ey[:,:], rtol, atol)
 check_values(717866566.5718911 , Ez[:,:], rtol, atol)
 # B
 check_values(3.0214509313437636, Bx[:,:], rtol, atol)
@@ -267,22 +267,22 @@ check_values(3.0188584528062377, F[:,:], rtol, atol)
 check_values(1013672631.8764204, G[:,:], rtol, atol)
 # E in PML
 check_values(364287936.1526477 , Expml[:,:,0], rtol, atol)
-check_values(183582351.3212558 , Expml[:,:,1], rtol, atol)
+check_values(183582352.20753333, Expml[:,:,1], rtol, atol)
 check_values(190065766.41491824, Expml[:,:,2], rtol, atol)
-check_values(440581905.9336025 , Eypml[:,:,0], rtol, atol)
-check_values(178117293.6629357 , Eypml[:,:,1], rtol, atol)
+check_values(440581907.0828975 , Eypml[:,:,0], rtol, atol)
+check_values(178117294.05871135, Eypml[:,:,1], rtol, atol)
 check_values(0.0               , Eypml[:,:,2], rtol, atol)
 check_values(430277101.26568377, Ezpml[:,:,0], rtol, atol)
 check_values(0.0               , Ezpml[:,:,1], rtol, atol)
 check_values(190919663.2167449 , Ezpml[:,:,2], rtol, atol)
 # B in PML
 check_values(1.0565189315366146 , Bxpml[:,:,0], rtol, atol)
-check_values(0.4618191395098556 , Bxpml[:,:,1], rtol, atol)
-check_values(0.6849858273929585 , Bxpml[:,:,2], rtol, atol)
+check_values(0.46181913800643065, Bxpml[:,:,1], rtol, atol)
+check_values(0.6849858305343736 , Bxpml[:,:,2], rtol, atol)
 check_values(1.7228584190213505 , Bypml[:,:,0], rtol, atol)
-check_values(0.47697331996765685, Bypml[:,:,1], rtol, atol)
+check_values(0.47697332248020935, Bypml[:,:,1], rtol, atol)
 check_values(0.0                , Bypml[:,:,2], rtol, atol)
-check_values(1.5183380774611628 , Bzpml[:,:,0], rtol, atol)
+check_values(1.518338068658267  , Bzpml[:,:,0], rtol, atol)
 check_values(0.0                , Bzpml[:,:,1], rtol, atol)
 check_values(0.6849858291863835 , Bzpml[:,:,2], rtol, atol)
 # F and G in PML
