@@ -62,7 +62,7 @@ We use the following modules and environments on the system (``$HOME/perlmutter_
    # GPU-aware MPI
    export MPICH_GPU_SUPPORT_ENABLED=1
 
-   #Necessary to use CUDA-Aware MPI and run a job
+   # necessary to use CUDA-Aware MPI and run a job
    export CRAY_ACCEL_TARGET=nvidia80
 
    # optimize CUDA compilation for A100
