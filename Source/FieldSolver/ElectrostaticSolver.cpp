@@ -364,12 +364,13 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-            for (MFIter mfi(*phi[lev]); mfi.isValid(); ++mfi)
+            for (MFIter mfi(*phi[lev+1],TilingIfNotGPU()); mfi.isValid(); ++mfi)
             {
                 Array4<Real> const& phi_fp_arr = phi[lev+1]->array(mfi);
                 Array4<Real> const& phi_cp_arr = phi_cp.array(mfi);
 
-                amrex::ParallelFor(Box(phi[lev]->array(mfi)),
+                Box const& b = mfi.tilebox(phi[lev+1]->ixType().toIntVect());
+                amrex::ParallelFor( b,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
                 {
                     mf_nodebilin_interp(i, j, k, 0, phi_fp_arr, 0, phi_cp_arr, 0, refratio);
