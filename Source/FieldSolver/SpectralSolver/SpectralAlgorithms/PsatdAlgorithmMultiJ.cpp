@@ -62,17 +62,17 @@ PsatdAlgorithmMultiJ::PsatdAlgorithmMultiJ(
     // Always allocate these coefficients
     C_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     S_ck_coef = SpectralRealCoefficients(ba, dm, 1, 0);
-    X1_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
-    X2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
-    X3_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
+    X1_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    X2_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    X3_coef = SpectralRealCoefficients(ba, dm, 1, 0);
 
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 
     // Allocate these coefficients only with time averaging
     if (time_averaging)
     {
-        X5_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
-        X6_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
+        X5_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+        X6_coef = SpectralRealCoefficients(ba, dm, 1, 0);
         InitializeSpectralCoefficientsAveraging(spectral_kspace, dm, dt);
     }
 }
@@ -99,12 +99,12 @@ PsatdAlgorithmMultiJ::pushSpectralFields (SpectralFieldData& f) const
         // These coefficients are always allocated
         amrex::Array4<const amrex::Real> C_arr = C_coef[mfi].array();
         amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
-        amrex::Array4<const Complex> X1_arr = X1_coef[mfi].array();
-        amrex::Array4<const Complex> X2_arr = X2_coef[mfi].array();
-        amrex::Array4<const Complex> X3_arr = X3_coef[mfi].array();
+        amrex::Array4<const amrex::Real> X1_arr = X1_coef[mfi].array();
+        amrex::Array4<const amrex::Real> X2_arr = X2_coef[mfi].array();
+        amrex::Array4<const amrex::Real> X3_arr = X3_coef[mfi].array();
 
-        Array4<const Complex> X5_arr;
-        Array4<const Complex> X6_arr;
+        amrex::Array4<const amrex::Real> X5_arr;
+        amrex::Array4<const amrex::Real> X6_arr;
         if (time_averaging)
         {
             X5_arr = X5_coef[mfi].array();
@@ -169,10 +169,10 @@ PsatdAlgorithmMultiJ::pushSpectralFields (SpectralFieldData& f) const
             // These coefficients are initialized in the function InitializeSpectralCoefficients
             const amrex::Real C = C_arr(i,j,k);
             const amrex::Real S_ck = S_ck_arr(i,j,k);
-            const Complex X1 = X1_arr(i,j,k);
-            const Complex X2 = X2_arr(i,j,k);
-            const Complex X3 = X3_arr(i,j,k);
-            const Complex X4 = - S_ck / PhysConst::ep0;
+            const amrex::Real X1 = X1_arr(i,j,k);
+            const amrex::Real X2 = X2_arr(i,j,k);
+            const amrex::Real X3 = X3_arr(i,j,k);
+            const amrex::Real X4 = - S_ck / PhysConst::ep0;
 
             // Update equations for E in the formulation with rho
 
@@ -229,8 +229,8 @@ PsatdAlgorithmMultiJ::pushSpectralFields (SpectralFieldData& f) const
 
             if (time_averaging)
             {
-                const Complex X5 = X5_arr(i,j,k);
-                const Complex X6 = X6_arr(i,j,k);
+                const amrex::Real X5 = X5_arr(i,j,k);
+                const amrex::Real X6 = X6_arr(i,j,k);
 
                 // TODO: Here the code is *accumulating* the average,
                 // because it is meant to be used with sub-cycling
@@ -300,9 +300,9 @@ void PsatdAlgorithmMultiJ::InitializeSpectralCoefficients (
         // Coefficients always allocated
         amrex::Array4<amrex::Real> C = C_coef[mfi].array();
         amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
-        amrex::Array4<Complex> X1 = X1_coef[mfi].array();
-        amrex::Array4<Complex> X2 = X2_coef[mfi].array();
-        amrex::Array4<Complex> X3 = X3_coef[mfi].array();
+        amrex::Array4<amrex::Real> X1 = X1_coef[mfi].array();
+        amrex::Array4<amrex::Real> X2 = X2_coef[mfi].array();
+        amrex::Array4<amrex::Real> X3 = X3_coef[mfi].array();
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -393,8 +393,8 @@ void PsatdAlgorithmMultiJ::InitializeSpectralCoefficientsAveraging (
         Array4<Real const> C = C_coef[mfi].array();
         Array4<Real const> S_ck = S_ck_coef[mfi].array();
 
-        Array4<Complex> X5 = X5_coef[mfi].array();
-        Array4<Complex> X6 = X6_coef[mfi].array();
+        Array4<amrex::Real> X5 = X5_coef[mfi].array();
+        Array4<amrex::Real> X6 = X6_coef[mfi].array();
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
