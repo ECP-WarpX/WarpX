@@ -1,13 +1,13 @@
-max_step = 200
+max_step = 100
 
 # Cell size and mesh refinement
-amr.n_cell = 64 64 64
+amr.n_cell = 32 32 32
 amr.max_level = 0
 
 # Domain and boundary conditions
 geometry.dims = 3
-geometry.prob_lo = -1.5e-05 -1.5e-05 -1.5e-05
-geometry.prob_hi =  1.5e-05  1.5e-05  1.5e-05
+geometry.prob_lo = -7.5e-06 -7.5e-06 -7.5e-06
+geometry.prob_hi =  7.5e-06  7.5e-06  7.5e-06
 
 # Boundary condition
 boundary.field_lo = pml pml pml
@@ -40,9 +40,9 @@ laser1.profile = Gaussian
 laser2.profile = Gaussian
 laser3.profile = Gaussian
 #
-laser1.wavelength = 2e-06
-laser2.wavelength = 2e-06
-laser3.wavelength = 2e-06
+laser1.wavelength = 1e-06
+laser2.wavelength = 1e-06
+laser3.wavelength = 1e-06
 #
 laser1.e_max = 10
 laser2.e_max = 10
@@ -52,9 +52,9 @@ laser1.polarization = 0 -1 1
 laser2.polarization = 1 0 -1
 laser3.polarization = -1 1 0
 #
-laser1.profile_waist = 4e-06
-laser2.profile_waist = 4e-06
-laser3.profile_waist = 4e-06
+laser1.profile_waist = 2e-06
+laser2.profile_waist = 2e-06
+laser3.profile_waist = 2e-06
 #
 laser1.profile_duration = 7.5e-15
 laser2.profile_duration = 7.5e-15
@@ -72,9 +72,9 @@ laser1.direction = 1 0 0
 laser2.direction = 0 1 0
 laser3.direction = 0 0 1
 #
-laser1.profile_focal_distance = 1e-06
-laser2.profile_focal_distance = 1e-06
-laser3.profile_focal_distance = 1e-06
+laser1.profile_focal_distance = 5e-07
+laser2.profile_focal_distance = 5e-07
+laser3.profile_focal_distance = 5e-07
 #
 laser1.profile_t_peak = 1.5e-14
 laser2.profile_t_peak = 1.5e-14
@@ -84,5 +84,5 @@ laser3.profile_t_peak = 1.5e-14
 diagnostics.diags_names = diag1
 diag1.diag_type = Full
 diag1.format = plotfile
-diag1.intervals = 200
+diag1.intervals = 100
 diag1.fields_to_plot = Bx By Bz Ex Ey Ez rho
