@@ -17,6 +17,17 @@
 
 #include <unordered_map>
 #include <string>
+#include <vector>
+
+/**
+ * This enumeration is used for assigning structural geometry levels (point vs line vs plane)
+ */
+enum struct DetectorGeometry
+{
+    Point = 0,
+    Line,
+    Plane
+};
 
 /**
  *  This class mainly contains a function that computes the value of each component
@@ -52,18 +63,41 @@ public:
      * Define constants used throughout FieldProbe
      */
 
-    //! noutputs is 7 (Ex, Ey, Ez, Bx, By, Bz, S)
-    static constexpr int noutputs = FieldProbePIdx::nattribs;
+    //! noutputs is 10 (x, y, z, Ex, Ey, Ez, Bx, By, Bz, S)
+    static constexpr int noutputs = FieldProbePIdx::nattribs + 3;
 
 private:
     amrex::Real x_probe, y_probe, z_probe;
+    amrex::Real x1_probe, y1_probe, z1_probe;
+    amrex::Real target_normal_x, target_normal_y, target_normal_z;
+    amrex::Real target_up_x, target_up_y, target_up_z;
+    amrex::Real detector_radius;
+
+    //! counts number of particles for all MPI ranks
+    long m_valid_particles {0};
+
+    //! determines geometry of detector point distribution
+    DetectorGeometry m_probe_geometry = DetectorGeometry::Point;
+
+    //! determines number of particles places for non-point geometries
+    int m_resolution = 0;
+
+    //! Empty vector for to which data is pushed
+    amrex::Vector<amrex::Real> m_data;
+
+    //! Empty array to be used by IOProcessor node to store and output data
+    amrex::Vector<amrex::Real> m_data_out;
 
     //! this is the particle container in which probe particles are stored
     FieldProbeParticleContainer m_probe;
 
-    //! if  true, integrate values over time instead of probing instantaneous values
+    //! if true, integrate values over time instead of probing instantaneous values
     bool m_field_probe_integrate = false;
+
+    //! particle shape used for field gather
     int interp_order = 1;
+
+    //! Judges whether to gather raw fields or interpolated data
     bool raw_fields = false;
 
     /**
