@@ -385,7 +385,7 @@ parseStringtoReal(std::string str)
 int
 parseStringtoInt(std::string str, std::string name)
 {
-    amrex::Real rval = static_cast<amrex::Real>(parseStringtoReal(str));
+    auto const rval = static_cast<amrex::Real>(parseStringtoReal(str));
     int ival = safeCastToInt(std::round(rval), name);
     return ival;
 }
