@@ -175,7 +175,6 @@ PsatdAlgorithmMultiJ::pushSpectralFields (SpectralFieldData& f) const
             const Complex X4 = - S_ck / PhysConst::ep0;
 
             // Update equations for E in the formulation with rho
-            // T2 = 1 always with standard PSATD (zero Galilean velocity)
 
             fields(i,j,k,Idx.Ex) = C * Ex_old
                 + I * c2 * S_ck * (ky * Bz_old - kz * By_old)
@@ -190,7 +189,6 @@ PsatdAlgorithmMultiJ::pushSpectralFields (SpectralFieldData& f) const
                 + X4 * Jz - I * (X2 * rho_new - X3 * rho_old) * kz - X1 * (Jz_new - Jz) / dt;
 
             // Update equations for B
-            // T2 = 1 always with standard PSATD (zero Galilean velocity)
 
             fields(i,j,k,Idx.Bx) = C * Bx_old
                 - I * S_ck * (ky * Ez_old - kz * Ey_old) + I * X1 * (ky * Jz - kz * Jy)

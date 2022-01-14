@@ -131,12 +131,7 @@ class PsatdAlgorithmMultiJ : public SpectralBaseAlgorithm
 
         // These real and complex coefficients are always allocated
         SpectralRealCoefficients C_coef, S_ck_coef;
-        SpectralComplexCoefficients T2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
-
-        SpectralComplexCoefficients X5_coef, X6_coef;
-
-        // These real and complex coefficients are allocated only with averaged Galilean PSATD
-        SpectralComplexCoefficients Psi1_coef, Psi2_coef, Y1_coef, Y2_coef, Y3_coef, Y4_coef;
+        SpectralComplexCoefficients X1_coef, X2_coef, X3_coef, X4_coef, X5_coef, X6_coef;
 
         SpectralFieldIndex m_spectral_index;
 
