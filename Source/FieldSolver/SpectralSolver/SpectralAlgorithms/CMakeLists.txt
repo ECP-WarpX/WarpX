@@ -1,6 +1,7 @@
 target_sources(WarpX
   PRIVATE
     PsatdAlgorithm.cpp
+    PsatdAlgorithmMultiJ.cpp
     PMLPsatdAlgorithm.cpp
     SpectralBaseAlgorithm.cpp
     ComovingPsatdAlgorithm.cpp
