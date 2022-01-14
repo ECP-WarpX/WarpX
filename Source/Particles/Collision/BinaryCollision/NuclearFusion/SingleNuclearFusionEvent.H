@@ -95,7 +95,8 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
     const amrex::ParticleReal p2y = u2y * m2;
     const amrex::ParticleReal p2z = u2z * m2;
     // Square norm of the total (sum between the two particles) momenta in the lab frame
-    const amrex::ParticleReal p_total_sq =  std::pow(p1x+p2x, 2._prt) +
+    auto constexpr pow2 = [](double const x) { return x*x; };
+    const amrex::ParticleReal p_total_sq = pow2(p1x + p2x) +
                                            pow2(p1y+p2y) +
                                            pow2(p1z+p2z);
 
