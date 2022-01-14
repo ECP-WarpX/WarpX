@@ -37,7 +37,7 @@ svals = S.to_numpy()
 I_0 = np.max(S)
 def I_envelope (x, lam = 0.2e-6, a = 0.3e-6, D = 1.7e-6):
     arg = np.pi * a / lam * np.sin(np.arctan(x / D))
-    return np.sinc( arg )**2
+    return np.sinc( arg / np.pi )**2
 
 # Count non-outlyer values away from simulation boundaries
 counter = np.arange(60, 140, 2)
