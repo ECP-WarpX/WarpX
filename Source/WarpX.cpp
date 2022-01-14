@@ -1019,7 +1019,9 @@ WarpX::ReadParameters ()
                 queryWithParser(pp_interpolation, "current_centering_noz", current_centering_noz);
             }
 
-            if (maxLevel() > 0)
+            // Finite-order centering is not implemented with mesh refinement
+            // (note that when WarpX::do_nodal = 1 finite-order centering is not used anyways)
+            if (maxLevel() > 0 && WarpX::do_nodal == 0)
             {
                 AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                     field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
