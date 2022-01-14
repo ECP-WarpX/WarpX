@@ -2132,30 +2132,26 @@ Reduced Diagnostics
 
     * ``FieldProbe``
         This type computes the value of each component of the electric and magnetic fields
-        and of the Poynting vector (a measure of electromagnetic flux) at a point in the domain.
-        The point where the fields are measured is specified through the input parameters
-        ``<reduced_diags_name>.x_probe``, ``<reduced_diags_name>.y_probe`` and
-        ``<reduced_diags_name>.z_probe``.
+        and of the Poynting vector (a measure of electromagnetic flux) at points in the domain.
 
-        FieldProbe can instead probe a 1 dimensional line of points to create a line detector.
-        To utilize the line detector, specify ``<reduced_diags_name>.probe_geometry=1``. Initial
-        input paramaters x_probe, y_probe, and z_probe designate one end of the line detector,
-        while the far end is specified via ``<reduced_diags_name>.x1_probe``,
-        ``<reduced_diags_name>.y1_probe``, ``<reduced_diags_name>.z1_probe``. Additionally,
-        ``<reduced_diags_name>.resolution`` must be defined to give the number of detector
-        points along the line (equally spaced) to probe.
+        Multiple geometries for point probes can be specified via ``<reduced_diags_name>.probe_geometry = ...``:
 
-        FieldProbe can instead prove a 2 dimensional plane of points to create a square plane detector.
-        To utilize the plane detector, specify ``<reduced_diags_name>.probe_geometry=2``. Initial
-        input parameters x_probe, y_probe, and z_probe designate the center of the detector. The
-        detector plane is normal to a vector specified by ``<reduced_diags_name>.target_normal_x``,
-        ``<reduced_diags_name>.target_normal_y``, and ``<reduced_diags_name>.target_normal_z``. The
-        top of the plane is perpendicular to an "up" vector denoted by
-        ``<reduced_diags_name>.target_up_x``, ``<reduced_diags_name>.target_up_y``, and
-        ``<reduced_diags_name>.target_up_z``. The detector has a square radius to be determined by
-        ``<reduced_diags_name>.detector_radius``. Similarly to the line detector, the plane detector
-        requires a resolution ``<reduced_diags_name>.resolution`` which denotes the number of
-        detector particles along each side of the square detector.
+        * ``Point`` (default): a single point
+        * ``Line``: a line of points with equal spacing
+        * ``Plane``: a plane of points with equal spacing
+
+        **Point**: The point where the fields are measured is specified through the input parameters ``<reduced_diags_name>.x_probe``, ``<reduced_diags_name>.y_probe`` and ``<reduced_diags_name>.z_probe``.
+
+        **Line**: probe a 1 dimensional line of points to create a line detector.
+        Initial input parameters ``x_probe``, ``y_probe``, and ``z_probe`` designate one end of the line detector, while the far end is specified via ``<reduced_diags_name>.x1_probe``, ``<reduced_diags_name>.y1_probe``, ``<reduced_diags_name>.z1_probe``.
+        Additionally, ``<reduced_diags_name>.resolution`` must be defined to give the number of detector points along the line (equally spaced) to probe.
+
+        **Plane**: probe a 2 dimensional plane of points to create a square plane detector.
+        Initial input parameters ``x_probe``, ``y_probe``, and ``z_probe`` designate the center of the detector.
+        The detector plane is normal to a vector specified by ``<reduced_diags_name>.target_normal_x``, ``<reduced_diags_name>.target_normal_y``, and ``<reduced_diags_name>.target_normal_z``.
+        The top of the plane is perpendicular to an "up" vector denoted by ``<reduced_diags_name>.target_up_x``, ``<reduced_diags_name>.target_up_y``, and ``<reduced_diags_name>.target_up_z``.
+        The detector has a square radius to be determined by ``<reduced_diags_name>.detector_radius``.
+        Similarly to the line detector, the plane detector requires a resolution ``<reduced_diags_name>.resolution``, which denotes the number of detector particles along each side of the square detector.
 
         The output columns are
         the value of the :math:`E_x` field,

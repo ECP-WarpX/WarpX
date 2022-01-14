@@ -76,15 +76,19 @@ FieldProbe::FieldProbe (std::string rd_name)
      *     Define whether ot not to integrate fields
      */
     amrex::ParmParse pp_rd_name(rd_name);
-    pp_rd_name.query("probe_geometry", m_probe_geometry);
-    if (m_probe_geometry == DetectorGeometry::Point)
+    std::string m_probe_geometry_str = "Point";
+    pp_rd_name.query("probe_geometry", m_probe_geometry_str);
+
+    if (m_probe_geometry_str == "Point")
     {
+        m_probe_geometry = DetectorGeometry::Point;
         getWithParser(pp_rd_name, "x_probe", x_probe);
         getWithParser(pp_rd_name, "y_probe", y_probe);
         getWithParser(pp_rd_name, "z_probe", z_probe);
     }
-    else if (m_probe_geometry == DetectorGeometry::Line)
+    else if (m_probe_geometry_str == "Line")
     {
+        m_probe_geometry = DetectorGeometry::Line;
         getWithParser(pp_rd_name, "x_probe", x_probe);
         getWithParser(pp_rd_name, "y_probe", y_probe);
         getWithParser(pp_rd_name, "z_probe", z_probe);
@@ -93,8 +97,9 @@ FieldProbe::FieldProbe (std::string rd_name)
         getWithParser(pp_rd_name, "z1_probe", z1_probe);
         getWithParser(pp_rd_name, "resolution", m_resolution);
     }
-    else if (m_probe_geometry == DetectorGeometry::Plane)
+    else if (m_probe_geometry_str == "Plane")
     {
+        m_probe_geometry = DetectorGeometry::Plane;
         getWithParser(pp_rd_name, "x_probe", x_probe);
         getWithParser(pp_rd_name, "y_probe", y_probe);
         getWithParser(pp_rd_name, "z_probe", z_probe);
@@ -109,7 +114,10 @@ FieldProbe::FieldProbe (std::string rd_name)
     }
     else
     {
-    amrex::Abort("ERROR: Invalid probe geometry. Valid geometries are point (0) and line (1).");
+        std::string err_str = "ERROR: Invalid probe geometry '";
+        err_str.append(m_probe_geometry_str);
+        err_str.append("'. Valid geometries are Point, Line or Plane.");
+        amrex::Abort(err_str);
     }
     pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
