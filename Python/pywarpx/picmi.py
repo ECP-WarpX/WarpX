@@ -419,7 +419,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
         # Geometry
         # Set these as soon as the information is available
-        # (since these are needed to determine which shard object is loaded)
+        # (since these are needed to determine which shared object to load)
         pywarpx.geometry.dims = 'RZ'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
@@ -483,7 +483,7 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
 
         # Geometry
         # Set these as soon as the information is available
-        # (since these are needed to determine which shard object is loaded)
+        # (since these are needed to determine which shared object to load)
         pywarpx.geometry.dims = '1'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
@@ -538,7 +538,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
 
         # Geometry
         # Set these as soon as the information is available
-        # (since these are needed to determine which shard object is loaded)
+        # (since these are needed to determine which shared object to load)
         pywarpx.geometry.dims = '2'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
@@ -601,7 +601,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
 
         # Geometry
         # Set these as soon as the information is available
-        # (since these are needed to determine which shard object is loaded)
+        # (since these are needed to determine which shared object to load)
         pywarpx.geometry.dims = '3'
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
