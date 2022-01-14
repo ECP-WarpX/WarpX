@@ -168,8 +168,6 @@ FieldProbe::FieldProbe (std::string rd_name)
             }
             for (int lev = 0; lev < nLevel; ++lev)
             {
-//                ofs << m_sep;
-//                ofs << "[" << c++ << "]part_id" + std::to_string(lev);
                 ofs << m_sep;
                 ofs << "[" << c++ << "]part_x_lev" + std::to_string(lev) + "-(m)";
                 ofs << m_sep;
@@ -189,7 +187,7 @@ FieldProbe::FieldProbe (std::string rd_name)
                 ofs << m_sep;
                 ofs << "[" << c++ << "]part_Bz_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Bz];
                 ofs << m_sep;
-                ofs << "[" << c++ << "]part_S_lev" + std::to_string(lev) + u_map[FieldProbePIdx::S]; //update all units if integrating (might be energy / m^2)
+                ofs << "[" << c++ << "]part_S_lev" + std::to_string(lev) + u_map[FieldProbePIdx::S];
             }
             ofs << std::endl;
 
@@ -204,7 +202,7 @@ void FieldProbe::InitData ()
     if (m_probe_geometry == DetectorGeometry::Point)
     {
 
-        //create 1D vector for X, Y, and Z of particles
+        // create 1D vector for X, Y, and Z of particles
         amrex::Vector<amrex::ParticleReal> xpos;
         amrex::Vector<amrex::ParticleReal> ypos;
         amrex::Vector<amrex::ParticleReal> zpos;
@@ -541,7 +539,7 @@ void FieldProbe::ComputeDiags (int step)
         {
             // returns total number of mpi notes into mpisize
             int mpisize = ParallelDescriptor::NProcs();
-            std::cout<<"Size is "<<mpisize<<'\n';
+
             // allocates data space for length_array. Will contain size of m_data from each processor
             amrex::Vector<int> length_vector;
             amrex::Vector<int> localsize;
@@ -574,7 +572,7 @@ void FieldProbe::ComputeDiags (int step)
                 m_valid_particles = total_data_size / noutputs;
                 m_data_out.resize(total_data_size, 0);
             }
-// risize receive buffer (resize, initialize 0)
+            // resize receive buffer (resize, initialize 0)
             // gather m_data of varied lengths from all processors. Prints to m_data_out
             amrex::ParallelDescriptor::Gatherv(m_data.data(), localsize[0],
                                                m_data_out.data(), length_vector, displs_vector,
@@ -591,16 +589,13 @@ void FieldProbe::WriteToFile (int step) const
     {
         // open file
         std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
-               std::ofstream::out | std::ofstream::app};
-
-        // set precision
-        //ofs << std::fixed << std::setprecision(14) << std::scientific;
+                          std::ofstream::out | std::ofstream::app};
 
         // loop over num valid particles and write
-        for (int i = 0; (i < m_valid_particles); i++)
+        for (int i = 0; i < m_valid_particles; i++)
         {
             ofs << std::fixed << std::defaultfloat;
-            ofs << step+1;
+            ofs << step + 1;
             ofs << m_sep;
             ofs << std::fixed << std::setprecision(14) << std::scientific;
             // write time
@@ -608,8 +603,8 @@ void FieldProbe::WriteToFile (int step) const
 
             for (int k = 0; k < noutputs; k++)
             {
-            ofs << m_sep;
-            ofs << m_data_out[i * noutputs + k];
+                ofs << m_sep;
+                ofs << m_data_out[i * noutputs + k];
             }
             ofs << std::endl;
         } // end loop over data size
