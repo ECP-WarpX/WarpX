@@ -76,6 +76,7 @@ jobs:
       set -eu -o pipefail
       cat /proc/cpuinfo | grep "model name" | sort -u
       df -h
+      sudo apt update
       sudo apt install -y ccache curl gcc gfortran git g++ ninja-build \
         openmpi-bin libopenmpi-dev \
         libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev pkg-config make \
