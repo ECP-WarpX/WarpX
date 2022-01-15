@@ -312,12 +312,10 @@ class LibWarpX():
         '''
         if self.geometry_dim == '3d':
             dimensions = {'x' : 0, 'y' : 1, 'z' : 2}
-        elif self.geometry_dim == '2d':
+        elif self.geometry_dim == '2d' or self.geometry_dim == 'rz':
             dimensions = {'x' : 0, 'z' : 1}
         elif self.geometry_dim == '1d':
             dimensions = {'z' : 0}
-        elif self.geometry_dim == 'rz':
-            dimensions = {'r': 0, 'z': 1}
         else:
             raise RuntimeError(f"Unknown simulation geometry: {self.geometry_dim}")
 
@@ -334,7 +332,7 @@ class LibWarpX():
         else:
             if self.geometry_dim == '3d':
                 boundary_num = 6
-            elif self.geometry_dim == '2d':
+            elif self.geometry_dim == '2d' or self.geometry_dim == 'rz':
                 boundary_num = 4
             elif self.geometry_dim == '1d':
                 boundary_num = 2

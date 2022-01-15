@@ -1,3 +1,9 @@
+/* Copyright 2021 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_BTDIAGNOSTICS_H_
 #define WARPX_BTDIAGNOSTICS_H_
 
@@ -69,7 +75,13 @@ private:
      * This is currently an empty function:
      * The particle containers required for this must be added to populate this function.
      */
-    void InitializeParticleBuffer () override {}
+    void InitializeParticleBuffer () override;
+    /** This function prepares the current z coordinate in the boosted-frame and lab-frame as required by
+        the particle and fields.
+     */
+    void PrepareBufferData () override;
+    /** This function increments the buffer counter and identifies if the snapshot is fully populated */
+    void UpdateBufferData () override;
     /** The cell-centered data for all fields, namely,
      *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho is computed and stored in
      *  the multi-level cell-centered multifab, m_mf_cc. This MultiFab extends
@@ -78,6 +90,8 @@ private:
      *  is sliced, back-transformed, and stored in the output multifab, m_mf_output.
      */
     void PrepareFieldDataForOutput () override;
+    /** The Particle Geometry, BoxArray, and RealBox are set for the lab-frame output */
+    void PrepareParticleDataForOutput() override;
 
     /** whether z-slice that corresponds to the buffer, i_buffer, is within the
      *  boosted-domain and lab-frame domains at level, lev.
@@ -92,9 +106,9 @@ private:
     /** Initialize buffer domain, buffer box and lab-frame parameters such as
      *  m_t_lab, and z-positions for the i^th snapshot, i_buffer, and level, lev.
      * \param[in] i_buffer i^th snapshot or buffer
-     * \param[in] lev mesh-refinement level for which the field buffer data is initialized.
+     * \param[in] lev mesh-refinement level for which the field and/or particle buffer data is initialized.
      */
-    void InitializeFieldBufferData ( int i_buffer , int lev) override;
+    void InitializeBufferData ( int i_buffer , int lev) override;
     /** Whether to compute back-tranformed values for field-data.
      *  default value is true.
      */
@@ -158,6 +172,9 @@ private:
     /** Vector of boosted-frame z co-ordinate corresponding to each back-transformed
         snapshot at the current timestep */
     amrex::Vector<amrex::Real> m_current_z_boost;
+    /** Vector of previous boosted-frame z co-ordinate corresponding to each
+        back-transformed snapshot*/
+    amrex::Vector<amrex::Real> m_old_z_boost;
     /** Geometry that defines the domain attributes corresponding to the
      *  full snapshot in the back-transformed lab-frame.
      *  Specifically, the user-defined physical co-ordinates for the diagnostics
@@ -299,9 +316,6 @@ private:
                                                           "Bx", "By", "Bz",
                                                           "jx", "jy", "jz", "rho"};
 
-    /** Temporarily clear species output for BTD until particle buffer is added */
-    void TMP_ClearSpeciesDataForBTD() override;
-
     /** Merge the lab-frame buffer multifabs so it can be visualized as
      *  a single plotfile
      */
@@ -317,6 +331,28 @@ private:
     void InterleaveFabArrayHeader( std::string Buffer_FabHeaderFilename,
                                    std::string snapshot_FabHeaderFilename,
                                    std::string newsnapshot_FabFilename);
-};
+    /** Interleave lab-frame metadata of the species header file in the buffers to
+     *  be consistent with the merged plotfile lab-frame data
+     */
+    void InterleaveSpeciesHeader(std::string buffer_species_Header_path,
+                                 std::string snapshot_species_Header_path,
+                                 std::string species_name, const int new_data_index);
 
+    /** Interleave lab-frame metadata of the particle header file in the buffers to
+     *  be consistent with the merged plotfile lab-frame data
+     */
+    void InterleaveParticleDataHeader( std::string buffer_ParticleHdrFilename,
+                                       std::string snapshot_ParticleHdrFilename);
+    /** Initialize particle functors for each species to compute the back-transformed
+        lab-frame data. */
+    void InitializeParticleFunctors () override;
+
+    /** Update total number of particles flushed for all species for ith snapshot */
+    void UpdateTotalParticlesFlushed(int i_buffer);
+    /** Reset total number of particles in the particle buffer to 0 for ith snapshot */
+    void ResetTotalParticlesInBuffer(int i_buffer);
+    /** Clear particle data stored in the particle buffer */
+    void ClearParticleBuffer(int i_buffer);
+
+};
 #endif // WARPX_BTDIAGNOSTICS_H_

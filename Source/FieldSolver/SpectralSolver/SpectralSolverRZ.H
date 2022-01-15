@@ -36,7 +36,7 @@ class SpectralSolverRZ
                           amrex::RealVect const dx, amrex::Real const dt,
                           bool const update_with_rho,
                           const bool fft_do_time_averaging,
-                          const bool J_linear_in_time,
+                          const bool do_multi_J,
                           const bool dive_cleaning,
                           const bool divb_cleaning);
 

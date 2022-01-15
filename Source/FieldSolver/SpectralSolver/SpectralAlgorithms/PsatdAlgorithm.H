@@ -43,8 +43,9 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in] dt time step of the simulation
          * \param[in] update_with_rho whether the update equation for E uses rho or not
          * \param[in] time_averaging whether to use time averaging for large time steps
-         * \param[in] J_linear_in_time whether to use two currents computed at the beginning and the end
-         *            of the time interval (instead of using one current computed at half time)
+         * \param[in] do_multi_J whether the multi-J algorithm is used (hence two currents
+         *                       computed at the beginning and the end of the time interval
+         *                       instead of one current computed at half time)
          * \param[in] dive_cleaning Update F as part of the field update, so that errors in divE=rho propagate away at the speed of light
          * \param[in] divb_cleaning Update G as part of the field update, so that errors in divB=0 propagate away at the speed of light
          */
@@ -61,7 +62,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const amrex::Real dt,
             const bool update_with_rho,
             const bool time_averaging,
-            const bool J_linear_in_time,
+            const bool do_multi_J,
             const bool dive_cleaning,
             const bool divb_cleaning);
 
@@ -171,7 +172,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         amrex::Real m_dt;
         bool m_update_with_rho;
         bool m_time_averaging;
-        bool m_J_linear_in_time;
+        bool m_do_multi_J;
         bool m_dive_cleaning;
         bool m_divb_cleaning;
         bool m_is_galilean;

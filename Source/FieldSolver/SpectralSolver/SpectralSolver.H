@@ -59,9 +59,9 @@ class SpectralSolver
          *                                (no domain decomposition)
          * \param[in] update_with_rho whether rho is used in the field update equations
          * \param[in] fft_do_time_averaging whether the time averaging algorithm is used
-         * \param[in] J_linear_in_time whether to use two currents computed at the beginning and
-         *                             the end of the time interval (instead of using one current
-         *                             computed at half time)
+         * \param[in] do_multi_J whether the multi-J algorithm is used (hence two currents
+         *                       computed at the beginning and the end of the time interval
+         *                       instead of one current computed at half time)
          * \param[in] dive_cleaning whether to use div(E) cleaning to account for errors in
          *                          Gauss law (new field F in the update equations)
          * \param[in] divb_cleaning whether to use div(B) cleaning to account for errors in
@@ -81,7 +81,7 @@ class SpectralSolver
                         const bool periodic_single_box,
                         const bool update_with_rho,
                         const bool fft_do_time_averaging,
-                        const bool J_linear_in_time,
+                        const bool do_multi_J,
                         const bool dive_cleaning,
                         const bool divb_cleaning);
 
