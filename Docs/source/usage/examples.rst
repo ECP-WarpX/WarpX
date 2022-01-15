@@ -75,11 +75,12 @@ The Monte-Carlo collision (MCC) model can be used to simulate electron and ion c
    :alt: MCC benchmark against Turner et. al. (2013).
    :width: 80%
 
-An input file to reproduce the benchmark calculations is linked below. To run a given case, N, execute:
+An input file to reproduce the benchmark calculations is linked below.
+To run a given case ``-n``, from 1 to 4, execute:
 
    .. code-block:: bash
 
-      python3 PICMI_inputs_1d.py -n N
+      python3 PICMI_inputs_1d.py -n 1
 
 Once the simulation completes an output file ``avg_ion_density.npy`` will be created which can be compared to the literature results as in the plot above. Running case 1 on 4 processors takes roughly 20 minutes to complete.
 

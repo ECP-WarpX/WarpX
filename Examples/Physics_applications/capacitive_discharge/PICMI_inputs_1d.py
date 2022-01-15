@@ -231,7 +231,7 @@ class CapacitiveDischargeExample(object):
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '-t', '--test', help='toggle whether this script is run as a test',
+    '-t', '--test', help='toggle whether this script is run as a short CI test',
     action='store_true',
 )
 parser.add_argument(
