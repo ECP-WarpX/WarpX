@@ -131,16 +131,9 @@ class PsatdAlgorithmMultiJ : public SpectralBaseAlgorithm
 
         // These real and complex coefficients are always allocated
         SpectralRealCoefficients C_coef, S_ck_coef;
-        SpectralRealCoefficients X1_coef, X2_coef, X3_coef, X4_coef, X5_coef, X6_coef;
+        SpectralRealCoefficients X1_coef, X2_coef, X3_coef, X5_coef, X6_coef;
 
         SpectralFieldIndex m_spectral_index;
-
-        // Centered modified finite-order k vectors
-        KVectorComponent modified_kx_vec_centered;
-#if defined(WARPX_DIM_3D)
-        KVectorComponent modified_ky_vec_centered;
-#endif
-        KVectorComponent modified_kz_vec_centered;
 
         // Other member variables
         amrex::Real m_dt;

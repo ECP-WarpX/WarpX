@@ -24,11 +24,11 @@
 
 #if WARPX_USE_PSATD
 
-using namespace amrex;
+using namespace amrex::literals;
 
 PsatdAlgorithmMultiJ::PsatdAlgorithmMultiJ(
     const SpectralKSpace& spectral_kspace,
-    const DistributionMapping& dm,
+    const amrex::DistributionMapping& dm,
     const SpectralFieldIndex& spectral_index,
     const int norder_x,
     const int norder_y,
@@ -42,16 +42,6 @@ PsatdAlgorithmMultiJ::PsatdAlgorithmMultiJ(
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
     m_spectral_index(spectral_index),
-    // Initialize the centered finite-order modified k vectors:
-    // these are computed always with the assumption of centered grids
-    // (argument nodal = true), for both nodal and staggered simulations
-    modified_kx_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_x, true)),
-#if defined(WARPX_DIM_3D)
-    modified_ky_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_y, true)),
-    modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_z, true)),
-#else
-    modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, true)),
-#endif
     m_dt(dt),
     m_time_averaging(time_averaging),
     m_dive_cleaning(dive_cleaning),
@@ -119,7 +109,7 @@ PsatdAlgorithmMultiJ::pushSpectralFields (SpectralFieldData& f) const
         const amrex::Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
 
         // Loop over indices within one box
-        ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Record old values of the fields to be updated
             const Complex Ex_old = fields(i,j,k,Idx.Ex);
@@ -139,17 +129,9 @@ PsatdAlgorithmMultiJ::pushSpectralFields (SpectralFieldData& f) const
             const Complex rho_old = fields(i,j,k,Idx.rho_old);
             const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
-            Complex F_old;
-            if (dive_cleaning)
-            {
-                F_old = fields(i,j,k,Idx.F);
-            }
-
-            Complex G_old;
-            if (divb_cleaning)
-            {
-                G_old = fields(i,j,k,Idx.G);
-            }
+            Complex F_old, G_old;
+            if (dive_cleaning) F_old = fields(i,j,k,Idx.F);
+            if (divb_cleaning) G_old = fields(i,j,k,Idx.G);
 
             // k vector values
             const amrex::Real kx = modified_kx_arr[i];
@@ -161,9 +143,9 @@ PsatdAlgorithmMultiJ::pushSpectralFields (SpectralFieldData& f) const
             const     amrex::Real kz = modified_kz_arr[j];
 #endif
             // Physical constants and imaginary unit
-            constexpr Real c2 = PhysConst::c * PhysConst::c;
-            constexpr Real ep0 = PhysConst::ep0;
-            constexpr Real inv_ep0 = 1._rt / PhysConst::ep0;
+            constexpr amrex::Real c2 = PhysConst::c * PhysConst::c;
+            constexpr amrex::Real ep0 = PhysConst::ep0;
+            constexpr amrex::Real inv_ep0 = 1._rt / PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
             // These coefficients are initialized in the function InitializeSpectralCoefficients
@@ -305,7 +287,7 @@ void PsatdAlgorithmMultiJ::InitializeSpectralCoefficients (
         amrex::Array4<amrex::Real> X3 = X3_coef[mfi].array();
 
         // Loop over indices within one box
-        ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Calculate norm of k vector
             const amrex::Real knorm_s = std::sqrt(
@@ -376,31 +358,31 @@ void PsatdAlgorithmMultiJ::InitializeSpectralCoefficientsAveraging (
     const amrex::DistributionMapping& dm,
     const amrex::Real dt)
 {
-    const BoxArray& ba = spectral_kspace.spectralspace_ba;
+    const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
     // Loop over boxes and allocate the corresponding coefficients for each box
-    for (MFIter mfi(ba, dm); mfi.isValid(); ++mfi)
+    for (amrex::MFIter mfi(ba, dm); mfi.isValid(); ++mfi)
     {
-        const Box& bx = ba[mfi];
+        const amrex::Box& bx = ba[mfi];
 
         // Extract pointers for the k vectors
-        const Real* kx_s = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* kx_s = modified_kx_vec[mfi].dataPtr();
 #if defined(WARPX_DIM_3D)
-        const Real* ky_s = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* ky_s = modified_ky_vec[mfi].dataPtr();
 #endif
-        const Real* kz_s = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* kz_s = modified_kz_vec[mfi].dataPtr();
 
-        Array4<Real const> C = C_coef[mfi].array();
-        Array4<Real const> S_ck = S_ck_coef[mfi].array();
+        amrex::Array4<amrex::Real const> C = C_coef[mfi].array();
+        amrex::Array4<amrex::Real const> S_ck = S_ck_coef[mfi].array();
 
-        Array4<amrex::Real> X5 = X5_coef[mfi].array();
-        Array4<amrex::Real> X6 = X6_coef[mfi].array();
+        amrex::Array4<amrex::Real> X5 = X5_coef[mfi].array();
+        amrex::Array4<amrex::Real> X6 = X6_coef[mfi].array();
 
         // Loop over indices within one box
-        ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Calculate norm of k vector
-            const Real knorm_s = std::sqrt(
+            const amrex::Real knorm_s = std::sqrt(
                 std::pow(kx_s[i], 2) +
 #if defined(WARPX_DIM_3D)
                 std::pow(ky_s[j], 2) + std::pow(kz_s[k], 2));
@@ -408,16 +390,16 @@ void PsatdAlgorithmMultiJ::InitializeSpectralCoefficientsAveraging (
                 std::pow(kz_s[j], 2));
 #endif
             // Physical constants and imaginary unit
-            constexpr Real c = PhysConst::c;
-            constexpr Real c2 = c*c;
-            constexpr Real ep0 = PhysConst::ep0;
+            constexpr amrex::Real c = PhysConst::c;
+            constexpr amrex::Real c2 = c*c;
+            constexpr amrex::Real ep0 = PhysConst::ep0;
 
             // Auxiliary coefficients
-            const Real dt3 = dt * dt * dt;
+            const amrex::Real dt3 = dt * dt * dt;
 
-            const Real om_s  = c * knorm_s;
-            const Real om2_s = om_s * om_s;
-            const Real om4_s = om2_s * om2_s;
+            const amrex::Real om_s  = c * knorm_s;
+            const amrex::Real om2_s = om_s * om_s;
+            const amrex::Real om4_s = om2_s * om2_s;
 
             if (om_s != 0.)
             {
