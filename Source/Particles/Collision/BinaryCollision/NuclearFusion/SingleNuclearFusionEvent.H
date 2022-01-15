@@ -8,8 +8,9 @@
 #ifndef SINGLE_NUCLEAR_FUSION_EVENT_H_
 #define SINGLE_NUCLEAR_FUSION_EVENT_H_
 
-#include "BinaryCollisionUtils.H"
 #include "ProtonBoronFusionCrossSection.H"
+
+#include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_Algorithm.H>

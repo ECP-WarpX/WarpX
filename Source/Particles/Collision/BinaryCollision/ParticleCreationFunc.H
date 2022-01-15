@@ -9,8 +9,8 @@
 #define PARTICLE_CREATION_FUNC_H_
 
 #include "BinaryCollisionUtils.H"
-#include "ProtonBoronFusionInitializeMomentum.H"
 
+#include "Particles/Collision/BinaryCollision/NuclearFusion/ProtonBoronFusionInitializeMomentum.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"

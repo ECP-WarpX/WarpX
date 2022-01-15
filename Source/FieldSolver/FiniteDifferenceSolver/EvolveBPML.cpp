@@ -42,27 +42,26 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveBPML (
     std::array< amrex::MultiFab*, 3 > Bfield,
     std::array< amrex::MultiFab*, 3 > const Efield,
-    std::array< amrex::MultiFab*, 3 > const face_areas,
     amrex::Real const dt,
     const bool dive_cleaning) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(Bfield, Efield, dt, dive_cleaning, face_areas);
+    amrex::ignore_unused(Bfield, Efield, dt, dive_cleaning);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
     if (m_do_nodal) {
 
-        EvolveBPMLCartesian <CartesianNodalAlgorithm> (Bfield, Efield, face_areas, dt, dive_cleaning);
+        EvolveBPMLCartesian <CartesianNodalAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee || m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
-        EvolveBPMLCartesian <CartesianYeeAlgorithm> (Bfield, Efield, face_areas, dt, dive_cleaning);
+        EvolveBPMLCartesian <CartesianYeeAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveBPMLCartesian <CartesianCKCAlgorithm> (Bfield, Efield, face_areas, dt, dive_cleaning);
+        EvolveBPMLCartesian <CartesianCKCAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 
     } else {
         amrex::Abort("EvolveBPML: Unknown algorithm");
@@ -77,7 +76,6 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBPMLCartesian (
     std::array< amrex::MultiFab*, 3 > Bfield,
     std::array< amrex::MultiFab*, 3 > const Efield,
-    std::array< amrex::MultiFab*, 3 > const face_areas,
     amrex::Real const dt,
     const bool dive_cleaning) {
 
@@ -94,12 +92,6 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
         Array4<Real> const& Ex = Efield[0]->array(mfi);
         Array4<Real> const& Ey = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
-
-#ifdef AMREX_USE_EB
-        Array4<Real> const& Sx = face_areas[0]->array(mfi);
-        Array4<Real> const& Sy = face_areas[1]->array(mfi);
-        Array4<Real> const& Sz = face_areas[2]->array(mfi);
-#endif
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
@@ -118,9 +110,6 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
         amrex::ParallelFor(tbx, tby, tbz,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                if(Sx(i, j, k) <= 0) return;
-#endif
 
                 amrex::Real UpwardDz_Ey_yy = 0._rt;
                 amrex::Real UpwardDy_Ez_zz = 0._rt;
@@ -142,9 +131,6 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                if(Sy(i, j, k) <= 0) return;
-#endif
 
                 amrex::Real UpwardDx_Ez_zz = 0._rt;
                 amrex::Real UpwardDz_Ex_xx = 0._rt;
@@ -166,9 +152,6 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                if(Sz(i, j, k) <= 0) return;
-#endif
 
                 amrex::Real UpwardDy_Ex_xx = 0._rt;
                 amrex::Real UpwardDx_Ey_yy = 0._rt;
@@ -192,10 +175,6 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
         );
 
     }
-
-#ifndef AMREX_USE_EB
-    amrex::ignore_unused(face_areas);
-#endif
 
 }
 

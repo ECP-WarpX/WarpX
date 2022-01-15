@@ -82,6 +82,26 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     operator_type, operator_parameters,
     warpx.getPMLdirections()
   );
+
+  // Temporarily adding Abort for adios filetype if species is selected for BTD output
+  bool species_output = true;
+  int write_species = 1;
+  std::vector< std::string > output_species_names;
+  bool species_specified = pp_diag_name.queryarr("species", output_species_names);
+  if (species_specified == true and output_species_names.size() > 0) {
+      species_output = true;
+  } else {
+      // By default species output is computed for all diagnostics, if write_species is not set to 0
+      species_output = true;
+  }
+  // Check user-defined option to turn off species output
+  pp_diag_name.query("write_species", write_species);
+  if (write_species == 0) species_output = false;
+  if (diag_type_str == "BackTransformed" and species_output == true) {
+      if (m_OpenPMDPlotWriter->OpenPMDFileType() == "bp") {
+          amrex::Abort(" Currently BackTransformed diagnostics type does not support species output for ADIOS backend. Please select h5 as openpmd backend");
+      }
+  }
 }
 
 void
@@ -94,7 +114,7 @@ FlushFormatOpenPMD::WriteToFile (
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,
     bool isBTD, int snapshotID, const amrex::Geometry& full_BTD_snapshot,
-    bool isLastBTDFlush) const
+    bool isLastBTDFlush, const amrex::Vector<int>& totalParticlesFlushedAlready) const
 {
     WARPX_PROFILE("FlushFormatOpenPMD::WriteToFile()");
 
@@ -117,7 +137,7 @@ FlushFormatOpenPMD::WriteToFile (
         varnames, mf, geom, output_iteration, time, isBTD, full_BTD_snapshot);
 
     // particles: all (reside only on locally finest level)
-    m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags, isBTD);
+    m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags, isBTD, totalParticlesFlushedAlready);
 
     // signal that no further updates will be written to this iteration
     m_OpenPMDPlotWriter->CloseStep(isBTD, isLastBTDFlush);
