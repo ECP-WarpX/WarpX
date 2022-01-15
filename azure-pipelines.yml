@@ -95,6 +95,7 @@ jobs:
 
 - job: linux_pip_dev_openmpi
   displayName: Ubuntu pip from dev w/ OpenMPI
+  timeoutInMinutes: 90
   pool:
     vmImage: ubuntu-latest
   steps:
