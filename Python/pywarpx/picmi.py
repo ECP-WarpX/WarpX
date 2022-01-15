@@ -417,6 +417,13 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
 
+        # Geometry
+        # Set these as soon as the information is available
+        # (since these are needed to determine which shared object to load)
+        pywarpx.geometry.dims = 'RZ'
+        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
+        pywarpx.geometry.prob_hi = self.upper_bound
+
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -432,10 +439,6 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         assert self.lower_bound[0] >= 0., Exception('Lower radial boundary must be >= 0.')
         assert self.bc_rmin != 'periodic' and self.bc_rmax != 'periodic', Exception('Radial boundaries can not be periodic')
 
-        # Geometry
-        pywarpx.geometry.dims = 'RZ'
-        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
-        pywarpx.geometry.prob_hi = self.upper_bound
         pywarpx.warpx.n_rz_azimuthal_modes = self.n_azimuthal_modes
 
         # Boundary conditions
@@ -478,6 +481,13 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
 
+        # Geometry
+        # Set these as soon as the information is available
+        # (since these are needed to determine which shared object to load)
+        pywarpx.geometry.dims = '1'
+        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
+        pywarpx.geometry.prob_hi = self.upper_bound
+
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -487,11 +497,6 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         pywarpx.amr.max_grid_size_x = self.max_grid_size_x
         pywarpx.amr.blocking_factor = self.blocking_factor
         pywarpx.amr.blocking_factor_x = self.blocking_factor_x
-
-        # Geometry
-        pywarpx.geometry.dims = '1'
-        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
-        pywarpx.geometry.prob_hi = self.upper_bound
 
         # Boundary conditions
         pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin]]
@@ -531,6 +536,13 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
 
+        # Geometry
+        # Set these as soon as the information is available
+        # (since these are needed to determine which shared object to load)
+        pywarpx.geometry.dims = '2'
+        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
+        pywarpx.geometry.prob_hi = self.upper_bound
+
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -542,11 +554,6 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         pywarpx.amr.blocking_factor = self.blocking_factor
         pywarpx.amr.blocking_factor_x = self.blocking_factor_x
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
-
-        # Geometry
-        pywarpx.geometry.dims = '2'
-        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
-        pywarpx.geometry.prob_hi = self.upper_bound
 
         # Boundary conditions
         pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin, self.bc_ymin]]
@@ -592,6 +599,13 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
 
+        # Geometry
+        # Set these as soon as the information is available
+        # (since these are needed to determine which shared object to load)
+        pywarpx.geometry.dims = '3'
+        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
+        pywarpx.geometry.prob_hi = self.upper_bound
+
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -605,11 +619,6 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         pywarpx.amr.blocking_factor_x = self.blocking_factor_x
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
         pywarpx.amr.blocking_factor_z = self.blocking_factor_z
-
-        # Geometry
-        pywarpx.geometry.dims = '3'
-        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
-        pywarpx.geometry.prob_hi = self.upper_bound
 
         # Boundary conditions
         pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin, self.bc_ymin, self.bc_zmin]]
