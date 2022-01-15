@@ -120,6 +120,14 @@ extern "C" {
 
     void warpx_clearParticleBoundaryBuffer ();
 
+    /**
+     * \brief This function is used to deposit a given species' charge density
+     * in the rho_fp multifab which can then be accessed from python via
+     * pywarpx.fields.RhoFPWrapper()
+     *
+     * @param[in] species_name specifying the name of the species to deposit
+     * @param[in] lev mesh refinement level
+     */
     void warpx_depositChargeDensity (const char* species_name, int lev);
 
   void warpx_ComputeDt ();
