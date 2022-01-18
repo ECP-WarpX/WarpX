@@ -83,3 +83,7 @@ diag1.diag_type = Full
 openpmd.intervals = 40
 openpmd.diag_type = Full
 openpmd.format = openpmd
+
+# These options are mainly intended for debug purposes
+warpx.abort_on_warning_threshold = "low"
+warpx.always_warn_immediately = 1

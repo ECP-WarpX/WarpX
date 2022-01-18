@@ -90,3 +90,7 @@ diag_random_filter.intervals = 150:150:
 diag_random_filter.diag_type = Full
 diag_random_filter.species = electron
 diag_random_filter.electron.random_fraction = 0.77
+
+# These options are mainly intended for debug purposes
+warpx.abort_on_warning_threshold = "low"
+warpx.always_warn_immediately = 1

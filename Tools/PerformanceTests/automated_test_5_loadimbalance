@@ -57,3 +57,7 @@ ions.uz_th  = 0.01
 ions.ux_m  = 0.
 ions.uy_m  = 0.
 ions.uz_m  = 0.
+
+# These options are mainly intended for debug purposes
+warpx.abort_on_warning_threshold = "low"
+warpx.always_warn_immediately = 1

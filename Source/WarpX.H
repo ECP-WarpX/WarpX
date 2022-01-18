@@ -62,6 +62,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -1005,6 +1006,8 @@ private:
     std::unique_ptr<Utils::WarnManager> m_p_warn_manager;
     // Flag to control if WarpX has to emit a warning message as soon as a warning is recorded
     bool m_always_warn_immediately = false;
+    // Threshold to abort immediately on a warning message
+    std::optional<WarnPriority> m_abort_on_warning_threshold = std::nullopt;
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?

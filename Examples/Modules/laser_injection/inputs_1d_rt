@@ -64,3 +64,7 @@ warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0 # in units of the speed of light
 warpx.start_moving_window_step = 20
 warpx.end_moving_window_step = 200
+
+# These options are mainly intended for debug purposes
+warpx.abort_on_warning_threshold = "low"
+warpx.always_warn_immediately = 1

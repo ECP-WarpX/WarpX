@@ -44,3 +44,7 @@ electrons.profile = constant
 electrons.density = 1.e23  # number of electrons per m^3
 electrons.momentum_distribution_type = "constant"
 electrons.uz = 2000. # uth the std of the (unitless) momentum
+
+# These options are mainly intended for debug purposes
+warpx.abort_on_warning_threshold = "low"
+warpx.always_warn_immediately = 1

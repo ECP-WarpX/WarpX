@@ -51,3 +51,7 @@ diag1.fields_to_plot = Bx By Bz Ex Ey Ez jx jy jz rho
 chk.intervals = 6
 chk.diag_type = Full
 chk.format = checkpoint
+
+# These options are mainly intended for debug purposes
+warpx.abort_on_warning_threshold = "low"
+warpx.always_warn_immediately = 1

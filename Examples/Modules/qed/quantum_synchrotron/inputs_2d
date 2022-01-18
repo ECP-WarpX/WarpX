@@ -215,3 +215,7 @@ diag1.qsp_1.variables = ux uy uz w
 diag1.qsp_2.variables = ux uy uz w
 diag1.qsp_3.variables = ux uy uz w
 diag1.qsp_4.variables = ux uy uz w
+
+# These options are mainly intended for debug purposes
+warpx.abort_on_warning_threshold = "low"
+warpx.always_warn_immediately = 1
