@@ -117,10 +117,13 @@ WarpX::PrintMainPICparameters ()
     amrex::ParmParse pp_geometry("geometry");
     std::string dim;
     pp_geometry.query( "dims", dim );
-    amrex::Print()<< "Geometry DIM:         | " << dim <<" (n_rz_azimuthal_modes=" <<WarpX::n_rz_azimuthal_modes<<");\n";
+    amrex::Print()<< "Geometry DIM:         | " << dim <<";\n";
 
+    #ifdef WARPX_DIM_RZ
+      amrex::Print()<< "                      | (n_rz_azimuthal_modes=" <<WarpX::n_rz_azimuthal_modes<<");\n";
+    #endif // WARPX_USE_RZ
     //Print solver's operation mode (e.g., EM or electrostatic)
-    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame){
+    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
       amrex::Print()<< "Solver operation mode:| ES (do_electrostatic = labframe);\n";
     }
     else if (do_electrostatic == ElectrostaticSolverAlgo::Relativistic){
@@ -129,31 +132,15 @@ WarpX::PrintMainPICparameters ()
     else{
       amrex::Print()<< "Solver operation mode:| EM\n";
     }
-
     if (em_solver_medium == MediumForEM::Vacuum ){
-      amrex::Print()<< "                      | -em_solver_medium = vacuum"<<";\n";
+      amrex::Print()<< "                      | - em_solver_medium = vacuum"<<";\n";
     }
     else if (em_solver_medium == MediumForEM::Macroscopic ){
-      amrex::Print()<< "                      | -em_solver_medium = macroscopic;\n";
+      amrex::Print()<< "                      | - em_solver_medium = macroscopic;\n";
     }
     amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n";
-
-    // Print solver's type
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
-      amrex::Print()<<"Maxwell Solver:       | psatd" << " (update_with_rho="<<WarpX::update_with_rho<<");\n";
-        if ((m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)) {
-          amrex::Print()<<"                      |  - Galilean (v_galilean = ("<<m_v_galilean[0]<<","<<m_v_galilean[1]<<","<<m_v_galilean[2]<<""<<"))\n";
-      }
-
-      if (do_multi_J == 1){
-        amrex::Print()<<"                      |  - multi-J deposition (do_multi_J_n_depositions="  <<WarpX::do_multi_J_n_depositions<<");\n";
-
-      }
-      if (fft_do_time_averaging == 1){
-        amrex::Print()<<"                      |  - time-averaged; " <<"\n";
-      }
-    }
-    else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee){
+    // Print solver's type: Yee, CKC, ECT
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee){
       amrex::Print()<<"Maxwell Solver:       | yee;\n";
 
       if ( (em_solver_medium == MediumForEM::Macroscopic) && (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff)){
@@ -166,12 +153,40 @@ WarpX::PrintMainPICparameters ()
     else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC){
       amrex::Print()<<"Maxwell Solver:       | ckc" <<"\n";
     }
-    else{
+    else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
       amrex::Print()<<"Maxwell Solver:       | ect" <<"\n";
     }
-    if (do_nodal==1){
-      amrex::Print()<<"                      |  - nodal; " <<"\n";
+    #ifdef WARPX_USE_PSATD
+    // Print PSATD solver's configuration
+      else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
+        amrex::Print()<<"Maxwell Solver:       | psatd" << " (update_with_rho="<<WarpX::update_with_rho<<");\n";
+        if ((m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)) {
+          amrex::Print()<<"                      |  - Galilean (v_galilean = ("<<m_v_galilean[0]<<","<<m_v_galilean[1]<<","<<m_v_galilean[2]<<""<<"));\n";
+      }
+
+        if (do_multi_J == 1){
+          amrex::Print()<<"                      |  - multi-J deposition (do_multi_J_n_depositions="  <<WarpX::do_multi_J_n_depositions<<");\n";
+      }
+        if (fft_do_time_averaging == 1){
+          amrex::Print()<<"                      |  - time-averaged; " <<"\n";
+      }
     }
+    #endif // WARPX_USE_PSATD
+
+    if (do_nodal==1){
+      amrex::Print()<<"                      |  - nodal;" <<"\n";
+    }
+    #ifdef WARPX_USE_PSATD
+      else if ( (do_nodal==0) && (field_gathering_algo == GatheringAlgo::EnergyConserving) ){
+        amrex::Print()<<"                      |  - staggered; " <<"\n";
+    }
+    else if ( (do_nodal==0) && (field_gathering_algo == GatheringAlgo::MomentumConserving) ){
+      amrex::Print()<<"                      |  - hybrid (field_centering_nox="<<WarpX::field_centering_nox <<");\n";
+    }
+    if (WarpX::use_hybrid_QED == true){
+      amrex::Print()<<"                      |  - use_hybrid_QED = true" <<"\n";
+    }
+    #endif // WARPX_USE_PSATD
 
     // Print solver's order
     if ((nox_fft==-1) or (noy_fft==-1) or (noz_fft==-1)) {
@@ -180,8 +195,7 @@ WarpX::PrintMainPICparameters ()
     else{
       amrex::Print()<< "Solver order:         | nox="<<nox_fft<<"; noy="<<noy_fft <<"; noz="<<noz_fft<<";\n";
     }
-
-    amrex::Print()<<"----------------------------------------------------------------------------"<<"\n"; //oshapoval
+    amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n"; //oshapoval
 
     // Print type of current deposition
     if (current_deposition_algo == CurrentDepositionAlgo::Direct){
@@ -220,13 +234,13 @@ WarpX::PrintMainPICparameters ()
 
     // Print particle's shape factors
     amrex::Print()<<"Particle Shape Factor:| " << WarpX::nox <<"\n";
-    amrex::Print()<<"----------------------------------------------------------------------------"<<"\n"; //oshapoval
+    amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n"; //oshapoval
     //Print main boosted frame algorithm's parameters
     if (WarpX::gamma_boost!=1){
     amrex::Print()<<"Boosted Frame:        |      ON  "<<"\n";
     amrex::Print()<<"                      |  - gamma_boost= "<<WarpX::gamma_boost<<";\n";
     amrex::Print()<<"                      |  - boost_direction= ("<<WarpX::boost_direction[0]<<","<<WarpX::boost_direction[1]<<","<<WarpX::boost_direction[2]<<")\n";
-    amrex::Print()<<"----------------------------------------------------------------------------"<<"\n"; //oshapoval
+    amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n"; //oshapoval
     }
 }
 
