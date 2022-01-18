@@ -38,7 +38,7 @@ else:
     _path_libc = _find_library('c')
 _libc = ctypes.CDLL(_path_libc)
 _LP_c_int = ctypes.POINTER(ctypes.c_int)
-_LP_c_char = ctypes.POINTER(ctypes.c_char)
+_LP_c_char = ctypes.c_char_p
 
 
 class LibWarpX():
@@ -397,10 +397,15 @@ class LibWarpX():
     def amrex_init(self, argv, mpi_comm=None):
         # --- Construct the ctype list of strings to pass in
         argc = len(argv)
+
+        # note: +1 since there is an extra char-string array element,
+        #       that ANSII C requires to be a simple NULL entry
+        #       https://stackoverflow.com/a/39096006/2719194
         argvC = (_LP_c_char * (argc+1))()
         for i, arg in enumerate(argv):
             enc_arg = arg.encode('utf-8')
-            argvC[i] = ctypes.create_string_buffer(enc_arg)
+            argvC[i] = _LP_c_char(enc_arg)
+        argvC[argc] = _LP_c_char(b"\0")  # +1 element must be NULL
 
         if mpi_comm is None or MPI is None:
             self.libwarpx_so.amrex_init(argc, argvC)
