@@ -106,6 +106,131 @@ WarpX::PostProcessBaseGrids (BoxArray& ba0) const
 }
 
 void
+WarpX::PrintMainPICparameters ()
+{
+    amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n"; //oshapoval
+    amrex::Print()<<"------------------------- MAIN EM PIC PARAMETERS ------------------------------"<<"\n"; //oshapoval
+    amrex::Print()<<"-------------- (for more details refer to output.txt file) --------------------"<<"\n"; //oshapoval
+    amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n"; //oshapoval
+
+    // Print geometry dimensionality
+    amrex::ParmParse pp_geometry("geometry");
+    std::string dim;
+    pp_geometry.query( "dims", dim );
+    amrex::Print()<< "Geometry DIM:         | " << dim <<" (n_rz_azimuthal_modes=" <<WarpX::n_rz_azimuthal_modes<<");\n";
+
+    //Print solver's operation mode (e.g., EM or electrostatic)
+    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame){
+      amrex::Print()<< "Solver operation mode:| ES (do_electrostatic = labframe);\n";
+    }
+    else if (do_electrostatic == ElectrostaticSolverAlgo::Relativistic){
+      amrex::Print()<< "Solver operation mode:| ES (do_electrostatic = relativistic);\n";
+    }
+    else{
+      amrex::Print()<< "Solver operation mode:| EM\n";
+    }
+
+    if (em_solver_medium == MediumForEM::Vacuum ){
+      amrex::Print()<< "                      | -em_solver_medium = vacuum"<<";\n";
+    }
+    else if (em_solver_medium == MediumForEM::Macroscopic ){
+      amrex::Print()<< "                      | -em_solver_medium = macroscopic;\n";
+    }
+    amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n";
+
+    // Print solver's type
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
+      amrex::Print()<<"Maxwell Solver:       | psatd" << " (update_with_rho="<<WarpX::update_with_rho<<");\n";
+        if ((m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)) {
+          amrex::Print()<<"                      |  - Galilean (v_galilean = ("<<m_v_galilean[0]<<","<<m_v_galilean[1]<<","<<m_v_galilean[2]<<""<<"))\n";
+      }
+
+      if (do_multi_J == 1){
+        amrex::Print()<<"                      |  - multi-J deposition (do_multi_J_n_depositions="  <<WarpX::do_multi_J_n_depositions<<");\n";
+
+      }
+      if (fft_do_time_averaging == 1){
+        amrex::Print()<<"                      |  - time-averaged; " <<"\n";
+      }
+    }
+    else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee){
+      amrex::Print()<<"Maxwell Solver:       | yee;\n";
+
+      if ( (em_solver_medium == MediumForEM::Macroscopic) && (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff)){
+        amrex::Print()<< "Macroscopic algorithm:| LaxWendroff algorithm;\n";
+        }
+      else if ((em_solver_medium == MediumForEM::Macroscopic) && (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler)){
+        amrex::Print()<< "Macroscopic algorithm:| BackwardEuler algorithm;\n";
+        }
+      }
+    else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC){
+      amrex::Print()<<"Maxwell Solver:       | ckc" <<"\n";
+    }
+    else{
+      amrex::Print()<<"Maxwell Solver:       | ect" <<"\n";
+    }
+    if (do_nodal==1){
+      amrex::Print()<<"                      |  - nodal; " <<"\n";
+    }
+
+    // Print solver's order
+    if ((nox_fft==-1) or (noy_fft==-1) or (noz_fft==-1)) {
+      amrex::Print()<< "Solver order:         | nox="<<nox_fft<<"; noy="<<noy_fft <<"; noz="<<noz_fft<<" ('-1' corresponds to infinite order); \n";
+    }
+    else{
+      amrex::Print()<< "Solver order:         | nox="<<nox_fft<<"; noy="<<noy_fft <<"; noz="<<noz_fft<<";\n";
+    }
+
+    amrex::Print()<<"----------------------------------------------------------------------------"<<"\n"; //oshapoval
+
+    // Print type of current deposition
+    if (current_deposition_algo == CurrentDepositionAlgo::Direct){
+      amrex::Print()<<"Current Deposition:   | direct" <<"\n";
+    }
+    else if (current_deposition_algo == CurrentDepositionAlgo::Vay){
+      amrex::Print()<<"Current Deposition:   | vay" <<"\n";
+    }
+    else if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov){
+      amrex::Print()<<"Current Deposition:   | esirkepov" <<"\n";
+    }
+    // Print type of particle pusher
+    if (particle_pusher_algo == ParticlePusherAlgo::Vay){
+      amrex::Print()<<"Particle Pusher:      | vay" <<"\n";
+    }
+    else if (particle_pusher_algo == ParticlePusherAlgo::Vay){
+      amrex::Print()<<"Particle Pusher:      | HigueraCary" <<"\n";
+    }
+    else if (particle_pusher_algo == ParticlePusherAlgo::Boris){
+      amrex::Print()<<"Particle Pusher:      | boris" <<"\n";
+    }
+    // Print type of charge deposition
+    if (charge_deposition_algo == ChargeDepositionAlgo::Standard){
+      amrex::Print()<<"Charge Deposition:    | standard" <<"\n";
+    }
+    else{
+      amrex::Print()<<"Charge Deposition:    | standard" <<"\n";
+    }
+    // Print field gathering algorithm
+    if (field_gathering_algo == GatheringAlgo::MomentumConserving){
+      amrex::Print()<<"Field Gathering:      | momentum-conserving" <<"\n";
+    }
+    else{
+      amrex::Print()<<"Field Gathering:      | energy-conserving" <<"\n";
+    }
+
+    // Print particle's shape factors
+    amrex::Print()<<"Particle Shape Factor:| " << WarpX::nox <<"\n";
+    amrex::Print()<<"----------------------------------------------------------------------------"<<"\n"; //oshapoval
+    //Print main boosted frame algorithm's parameters
+    if (WarpX::gamma_boost!=1){
+    amrex::Print()<<"Boosted Frame:        |      ON  "<<"\n";
+    amrex::Print()<<"                      |  - gamma_boost= "<<WarpX::gamma_boost<<";\n";
+    amrex::Print()<<"                      |  - boost_direction= ("<<WarpX::boost_direction[0]<<","<<WarpX::boost_direction[1]<<","<<WarpX::boost_direction[2]<<")\n";
+    amrex::Print()<<"----------------------------------------------------------------------------"<<"\n"; //oshapoval
+    }
+}
+
+void
 WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
@@ -117,12 +242,14 @@ WarpX::InitData ()
     if (restart_chkfile.empty())
     {
         ComputeDt();
+        WarpX::PrintMainPICparameters();
         WarpX::PrintDtDxDyDz();
         InitFromScratch();
     }
     else
     {
         InitFromCheckpoint();
+        WarpX::PrintMainPICparameters();
         WarpX::PrintDtDxDyDz();
         PostRestart();
     }
