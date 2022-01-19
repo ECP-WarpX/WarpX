@@ -33,48 +33,8 @@ Use the following commands to download the WarpX source code and switch to the c
 
 We use the following modules and environments on the system (``$HOME/perlmutter_warpx.profile``).
 
-.. code-block:: bash
-
-   # please set your project account
-   export proj=<yourProject>  # LBNL/AMP: m3906_g
-
-   # required dependencies
-   module load cmake/3.22.0
-   module swap PrgEnv-nvidia PrgEnv-gnu
-   module load cudatoolkit
-
-   # optional: just an additional text editor
-   # module load nano  # TODO: request from support
-
-   # optional: for openPMD support
-   module load cray-hdf5-parallel/1.12.0.7
-   export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/adios2-2.7.1:$CMAKE_PREFIX_PATH
-
-   # optional: Python, ...
-   # TODO
-
-   # optional: an alias to request an interactive node for two hours
-   function getNode() {
-       salloc -N 1 --ntasks-per-node=4 -t 2:00:00 -C gpu -c 32 -G 4 -A $proj
-   }
-
-   # GPU-aware MPI
-   export MPICH_GPU_SUPPORT_ENABLED=1
-
-   # necessary to use CUDA-Aware MPI and run a job
-   export CRAY_ACCEL_TARGET=nvidia80
-
-   # optimize CUDA compilation for A100
-   export AMREX_CUDA_ARCH=8.0
-
-   # compiler environment hints
-   export CC=$(which gcc)
-   export CXX=$(which g++)
-   export FC=$(which gfortran)
-   export CUDACXX=$(which nvcc)
-   export CUDAHOSTCXX=$(which g++)
-
+.. literalinclude:: ../../../../Tools/machines/perlmutter-nersc/perlmutter_warpx.profile.example
+   :language: bash
 
 We recommend to store the above lines in a file, such as ``$HOME/perlmutter_warpx.profile``, and load it into your shell after a login:
 
@@ -126,14 +86,14 @@ Replace descriptions between chevrons ``<>`` by relevant values, for instance ``
 Note that we run one MPI rank per GPU.
 
 
-.. literalinclude:: ../../../../Tools/BatchScripts/batch_perlmutter.sh
+.. literalinclude:: ../../../../Tools/machines/perlmutter-nersc/perlmutter.sbatch
    :language: bash
 
-To run a simulation, copy the lines above to a file ``batch_perlmutter.sh`` and run
+To run a simulation, copy the lines above to a file ``perlmutter.sbatch`` and run
 
 .. code-block:: bash
 
-   sbatch batch_perlmutter.sh
+   sbatch perlmutter.sbatch
 
 to submit the job.
 
