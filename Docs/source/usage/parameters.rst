@@ -276,8 +276,8 @@ Domain Boundary Conditions
     * ``Reflecting``: Particles leaving the boundary are reflected from the boundary back into the domain.
       When ``boundary.reflect_all_velocities`` is false, the sign of only the normal velocity is changed, otherwise the sign of all velocities are changed.
 
-    * ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
-      For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
+* ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
+    For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
 
 
 Additional PML parameters
