@@ -195,7 +195,7 @@ if(WarpX_APP)
     target_sources(app PRIVATE Source/main.cpp)
 endif()
 
-#add_subdirectory(Source/ablastr)
+add_subdirectory(Source/ablastr)
 add_subdirectory(Source/BoundaryConditions)
 add_subdirectory(Source/Diagnostics)
 add_subdirectory(Source/EmbeddedBoundary)
@@ -315,6 +315,19 @@ endif()
 if(WIN32)
     target_compile_definitions(ablastr PUBLIC _USE_MATH_DEFINES)
 endif()
+
+# additional defines for version outputs
+#   CMake
+target_compile_definitions(ablastr PUBLIC CMAKE_VERSION=${CMAKE_VERSION})
+target_compile_definitions(ablastr PUBLIC CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+
+#   OS & Host Architecture
+target_compile_definitions(ablastr PUBLIC CMAKE_SYSTEM=${CMAKE_SYSTEM})
+target_compile_definitions(ablastr PUBLIC CMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR})
+
+#   Compiler
+target_compile_definitions(ablastr PUBLIC CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID})
+target_compile_definitions(ablastr PUBLIC CMAKE_CXX_COMPILER_VERSION=${CMAKE_CXX_COMPILER_VERSION})
 
 
 # Warnings ####################################################################
