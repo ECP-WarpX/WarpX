@@ -40,7 +40,7 @@ namespace {
         // "false" in AMReX, to "false" if compiling for GPU execution and "true"
         // if compiling for CPU.
         {
-            ParmParse pp_particles("particles");
+            amrex::ParmParse pp_particles("particles");
 #ifdef AMREX_USE_GPU
             bool do_tiling = false; // By default, tiling is off on GPU
 #else
