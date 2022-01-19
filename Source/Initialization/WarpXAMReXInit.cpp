@@ -22,8 +22,7 @@ namespace {
 
         // https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters
         bool abort_on_out_of_gpu_memory = true; // AMReX' default: false
-        pp_amrex.query("abort_on_out_of_gpu_memory", abort_on_out_of_gpu_memory);
-        pp_amrex.add("abort_on_out_of_gpu_memory", abort_on_out_of_gpu_memory);
+        pp_amrex.queryAdd("abort_on_out_of_gpu_memory", abort_on_out_of_gpu_memory);
 
         // Work-around:
         // If warpx.numprocs is used for the domain decomposition, we will not use blocking factor
@@ -47,7 +46,7 @@ namespace {
 #else
             bool do_tiling = true;
 #endif
-            pp_particles.add("do_tiling", do_tiling);
+            pp_particles.queryAdd("do_tiling", do_tiling);
         }
     }
 }
