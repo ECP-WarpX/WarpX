@@ -33,6 +33,7 @@ We use the following modules and environments on the system (``$HOME/warpx_gcc10
 
 .. literalinclude:: ../../../../Tools/machines/ookami-sbu/ookami_warpx.profile.example
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/ookami-sbu/ookami_warpx.profile.example``.
 
 We recommend to store the above lines in a file, such as ``$HOME/warpx_gcc10.profile``, and load it into your shell after a login:
 

@@ -34,6 +34,7 @@ We use the following modules and environments on the system (``$HOME/knl_warpx.p
 
 .. literalinclude:: ../../../../Tools/machines/cori-nersc/knl_warpx.profile.example
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/knl_warpx.profile.example``.
 
 And install ADIOS2, BLAS++ and LAPACK++:
 
@@ -86,6 +87,7 @@ We use the following modules and environments on the system (``$HOME/haswell_war
 
 .. literalinclude:: ../../../../Tools/machines/cori-nersc/haswell_warpx.profile.example
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/haswell_warpx.profile.example``.
 
 And install ADIOS2, BLAS++ and LAPACK++:
 
@@ -136,9 +138,11 @@ GPU (V100)
 
 Cori provides a partition with `18 nodes that include V100 (16 GB) GPUs <https://docs-dev.nersc.gov/cgpu/>`__.
 We use the following modules and environments on the system (``$HOME/gpu_warpx.profile``).
+You can copy this file from ``Tools/machines/cori-nersc/gpu_warpx.profile.example``:
 
 .. literalinclude:: ../../../../Tools/machines/cori-nersc/gpu_warpx.profile.example
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/gpu_warpx.profile.example``.
 
 And install ADIOS2:
 
@@ -238,6 +242,7 @@ For PICMI Python runs, the ``<path/to/executable>`` has to read ``python3`` and 
 
 .. literalinclude:: ../../../../Tools/machines/cori-nersc/cori_knl.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/cori_knl.sbatch``.
 
 To run a simulation, copy the lines above to a file ``cori_knl.sbatch`` and run
 
@@ -270,6 +275,7 @@ Do not forget to first ``source $HOME/haswell_warpx.profile`` if you have not do
 
 .. literalinclude:: ../../../../Tools/machines/cori-nersc/cori_haswell.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/cori_haswell.sbatch``.
 
 To run a simulation, copy the lines above to a file ``cori_haswell.sbatch`` and
 run
@@ -299,6 +305,7 @@ A multi-node batch script template can be found below:
 
 .. literalinclude:: ../../../../Tools/machines/cori-nersc/cori_gpu.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/cori_gpu.sbatch``.
 
 
 .. _post-processing-cori:

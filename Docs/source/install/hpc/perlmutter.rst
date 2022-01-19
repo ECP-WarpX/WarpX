@@ -35,6 +35,7 @@ We use the following modules and environments on the system (``$HOME/perlmutter_
 
 .. literalinclude:: ../../../../Tools/machines/perlmutter-nersc/perlmutter_warpx.profile.example
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/perlmutter-nersc/perlmutter_warpx.profile.example``.
 
 We recommend to store the above lines in a file, such as ``$HOME/perlmutter_warpx.profile``, and load it into your shell after a login:
 
@@ -88,6 +89,7 @@ Note that we run one MPI rank per GPU.
 
 .. literalinclude:: ../../../../Tools/machines/perlmutter-nersc/perlmutter.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/perlmutter-nersc/perlmutter.sbatch``.
 
 To run a simulation, copy the lines above to a file ``perlmutter.sbatch`` and run
 

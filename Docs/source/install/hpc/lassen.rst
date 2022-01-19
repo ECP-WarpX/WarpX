@@ -29,6 +29,7 @@ We use the following modules and environments on the system (``$HOME/lassen_warp
 
 .. literalinclude:: ../../../../Tools/machines/lassen-llnl/lassen_warpx.profile.example
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/lassen-llnl/lassen_warpx.profile.example``.
 
 We recommend to store the above lines in a file, such as ``$HOME/lassen_warpx.profile``, and load it into your shell after a login:
 
@@ -66,6 +67,7 @@ Note that the only option so far is to run with one MPI rank per GPU.
 
 .. literalinclude:: ../../../../Tools/machines/lassen-llnl/lassen.bsub
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/lassen-llnl/lassen.bsub``.
 
 To run a simulation, copy the lines above to a file ``lassen.bsub`` and run
 

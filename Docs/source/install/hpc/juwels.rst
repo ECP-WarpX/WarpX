@@ -33,6 +33,7 @@ We use the following modules and environments on the system.
 
 .. literalinclude:: ../../../../Tools/machines/juwels-jsc/juwels_warpx.profile.example
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/juwels-jsc/juwels_warpx.profile.example``.
 
 Note that for now WarpX must rely on OpenMPI instead of the recommended MPI implementation on this platform MVAPICH2.
 
@@ -78,6 +79,7 @@ An example submission script reads
 
 .. literalinclude:: ../../../../Tools/machines/juwels-jsc/juwels.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/juwels-jsc/juwels.sbatch``.
 
 Queue: batch (2 x Intel Xeon Platinum 8168 CPUs, 24 Cores + 24 Hyperthreads/CPU)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -32,6 +32,7 @@ We use the following modules and environments on the system (``$HOME/summit_warp
 
 .. literalinclude:: ../../../../Tools/machines/summit-olcf/summit_warpx.profile.example
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/summit-olcf/summit_warpx.profile.example``.
 
 
 We recommend to store the above lines in a file, such as ``$HOME/summit_warpx.profile``, and load it into your shell after a login:
@@ -105,6 +106,7 @@ Note that WarpX runs with one MPI rank per GPU and there are 6 GPUs per node:
 
 .. literalinclude:: ../../../../Tools/machines/summit-olcf/summit_v100.bsub
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/summit-olcf/summit_v100.bsub``.
 
 To run a simulation, copy the lines above to a file ``summit_v100.bsub`` and
 run
@@ -140,6 +142,7 @@ ignored).
 
 .. literalinclude:: ../../../../Tools/machines/summit-olcf/summit_power9.bsub
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/summit-olcf/summit_power9.bsub``.
 
 For a 3D simulation with a few (1-4) particles per cell using FDTD Maxwell
 solver on Summit for a well load-balanced problem, the following set of

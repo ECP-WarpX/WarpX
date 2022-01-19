@@ -31,7 +31,7 @@ We use the following modules and environments on the system (``$HOME/spock_warpx
 
 .. literalinclude:: ../../../../Tools/machines/spock-olcf/spock_warpx.profile.example
    :language: bash
-
+   :caption: You can copy this file from ``Tools/machines/spock-olcf/spock_warpx.profile.example``.
 
 We recommend to store the above lines in a file, such as ``$HOME/spock_warpx.profile``, and load it into your shell after a login:
 
@@ -73,6 +73,7 @@ Or in non-interactive runs started with ``sbatch``:
 
 .. literalinclude:: ../../../../Tools/machines/spock-olcf/spock_mi100.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/spock-olcf/spock_mi100.sbatch``.
 
 We can currently use up to ``4`` nodes with ``4`` GPUs each (maximum: ``-N 4 -n 16``).
 

@@ -29,6 +29,7 @@ We use the following modules and environments on the system (``$HOME/quartz_warp
 
 .. literalinclude:: ../../../../Tools/machines/quartz-llnl/quartz_warpx.profile.example
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/quartz-llnl/quartz_warpx.profile.example``.
 
 We recommend to store the above lines in a file, such as ``$HOME/quartz_warpx.profile``, and load it into your shell after a login:
 
@@ -63,6 +64,7 @@ Replace descriptions between chevrons ``<>`` by relevant values, for instance ``
 
 .. literalinclude:: ../../../../Tools/machines/quartz-llnl/quartz.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/quartz-llnl/quartz.sbatch``.
 
 To run a simulation, copy the lines above to a file ``quartz.sbatch`` and run
 
