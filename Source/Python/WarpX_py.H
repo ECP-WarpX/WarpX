@@ -26,6 +26,11 @@
 extern std::map< std::string, WARPX_CALLBACK_PY_FUNC_0 > warpx_callback_py_map;
 
 /**
+ * \brief Function to check if the given name is a key in warpx_callback_py_map
+ */
+bool IsPythonCallBackInstalled ( std::string name );
+
+/**
  * \brief Function to look for and execute Python callbacks
  */
 void ExecutePythonCallback ( std::string name );

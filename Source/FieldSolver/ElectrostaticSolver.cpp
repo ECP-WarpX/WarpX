@@ -171,15 +171,8 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     // Todo: use simpler finite difference form with beta=0
     std::array<Real, 3> beta = {0._rt};
 
-    // Check if an external Poisson solver is installed
-    auto callback_iter = warpx_callback_py_map.find("poissonsolver");
-    bool external_solver = callback_iter != warpx_callback_py_map.end();
-
     // Compute the potential phi, by solving the Poisson equation
-    if ( external_solver ) {
-        WARPX_PROFILE("warpx_py_poissonsolver");
-        callback_iter->second();
-    }
+    if ( IsPythonCallBackInstalled("poissonsolver") ) ExecutePythonCallback("poissonsolver");
     else computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
                      self_fields_absolute_tolerance, self_fields_max_iters,
                      self_fields_verbosity );
@@ -189,7 +182,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 #ifndef AMREX_USE_EB
     computeE( Efield_fp, phi_fp, beta );
 #else
-    if ( external_solver ) computeE( Efield_fp, phi_fp, beta );
+    if ( IsPythonCallBackInstalled("poissonsolver") ) computeE( Efield_fp, phi_fp, beta );
 #endif
 
     // Compute the magnetic field
