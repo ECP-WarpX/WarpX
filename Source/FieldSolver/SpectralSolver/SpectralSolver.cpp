@@ -30,7 +30,7 @@ SpectralSolver::SpectralSolver(
                 const bool pml, const bool periodic_single_box,
                 const bool update_with_rho,
                 const bool fft_do_time_averaging,
-                const bool J_linear_in_time,
+                const bool do_multi_J,
                 const bool dive_cleaning,
                 const bool divb_cleaning)
 {
@@ -42,7 +42,7 @@ SpectralSolver::SpectralSolver(
     const SpectralKSpace k_space= SpectralKSpace(realspace_ba, dm, dx);
 
     m_spectral_index = SpectralFieldIndex(update_with_rho, fft_do_time_averaging,
-                                          J_linear_in_time, dive_cleaning, divb_cleaning, pml);
+                                          do_multi_J, dive_cleaning, divb_cleaning, pml);
 
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
@@ -63,7 +63,7 @@ SpectralSolver::SpectralSolver(
         else {
             algorithm = std::make_unique<PsatdAlgorithm>(
                 k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards,
-                v_galilean, dt, update_with_rho, fft_do_time_averaging, J_linear_in_time,
+                v_galilean, dt, update_with_rho, fft_do_time_averaging, do_multi_J,
                 dive_cleaning, divb_cleaning);
         }
     }

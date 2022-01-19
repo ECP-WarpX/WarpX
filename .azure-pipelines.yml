@@ -43,7 +43,7 @@ jobs:
         WARPX_CI_EB: 'TRUE'
 
   # default: 60; maximum: 360
-  timeoutInMinutes: 90
+  timeoutInMinutes: 120
 
   steps:
   # set up caches:
@@ -76,10 +76,11 @@ jobs:
       set -eu -o pipefail
       cat /proc/cpuinfo | grep "model name" | sort -u
       df -h
+      sudo apt update
       sudo apt install -y ccache curl gcc gfortran git g++ ninja-build \
         openmpi-bin libopenmpi-dev \
         libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev pkg-config make \
-        python3 python3-pip python3-venv python3-setuptools libblas-dev liblapack-dev
+        python3 python3-pandas python3-pip python3-venv python3-setuptools libblas-dev liblapack-dev
       ccache --set-config=max_size=10.0G
       python3 -m pip install --upgrade pip
       python3 -m pip install --upgrade setuptools

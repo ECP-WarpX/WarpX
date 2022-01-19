@@ -1563,7 +1563,7 @@ Numerics and algorithms
     https://ieeexplore.ieee.org/document/8659392.
 
 * ``warpx.do_multi_J`` (`0` or `1`; default: `0`)
-    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``warpx.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
+    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``warpx.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. When ``warpx.do_multi_J = 1``, we perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step, instead of using one single current deposited at half time. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
 
 * ``warpx.do_multi_J_n_depositions`` (integer)
     Number of sub-steps to use with the multi-J algorithm, when ``warpx.do_multi_J = 1``.
@@ -1696,9 +1696,6 @@ Numerics and algorithms
 
 * ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
     Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
-
-* ``psatd.J_linear_in_time`` (`0` or `1`; default: `0`)
-    Whether to perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step (``psatd.J_linear_in_time = 1``), instead of using one single current deposited at half time (``psatd.J_linear_in_time = 0``), for the field update in Fourier space. Currently requires ``psatd.update_with_rho = 1``, ``warpx.do_dive_cleaning = 1``, and ``warpx.do_divb_cleaning = 1``.
 
 * ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
@@ -2135,10 +2132,26 @@ Reduced Diagnostics
 
     * ``FieldProbe``
         This type computes the value of each component of the electric and magnetic fields
-        and of the Poynting vector (a measure of electromagnetic flux) at a point in the domain.
-        The point where the fields are measured is specified through the input parameters
-        ``<reduced_diags_name>.x_probe``, ``<reduced_diags_name>.y_probe`` and
-        ``<reduced_diags_name>.z_probe``.
+        and of the Poynting vector (a measure of electromagnetic flux) at points in the domain.
+
+        Multiple geometries for point probes can be specified via ``<reduced_diags_name>.probe_geometry = ...``:
+
+        * ``Point`` (default): a single point
+        * ``Line``: a line of points with equal spacing
+        * ``Plane``: a plane of points with equal spacing
+
+        **Point**: The point where the fields are measured is specified through the input parameters ``<reduced_diags_name>.x_probe``, ``<reduced_diags_name>.y_probe`` and ``<reduced_diags_name>.z_probe``.
+
+        **Line**: probe a 1 dimensional line of points to create a line detector.
+        Initial input parameters ``x_probe``, ``y_probe``, and ``z_probe`` designate one end of the line detector, while the far end is specified via ``<reduced_diags_name>.x1_probe``, ``<reduced_diags_name>.y1_probe``, ``<reduced_diags_name>.z1_probe``.
+        Additionally, ``<reduced_diags_name>.resolution`` must be defined to give the number of detector points along the line (equally spaced) to probe.
+
+        **Plane**: probe a 2 dimensional plane of points to create a square plane detector.
+        Initial input parameters ``x_probe``, ``y_probe``, and ``z_probe`` designate the center of the detector.
+        The detector plane is normal to a vector specified by ``<reduced_diags_name>.target_normal_x``, ``<reduced_diags_name>.target_normal_y``, and ``<reduced_diags_name>.target_normal_z``.
+        The top of the plane is perpendicular to an "up" vector denoted by ``<reduced_diags_name>.target_up_x``, ``<reduced_diags_name>.target_up_y``, and ``<reduced_diags_name>.target_up_z``.
+        The detector has a square radius to be determined by ``<reduced_diags_name>.detector_radius``.
+        Similarly to the line detector, the plane detector requires a resolution ``<reduced_diags_name>.resolution``, which denotes the number of detector particles along each side of the square detector.
 
         The output columns are
         the value of the :math:`E_x` field,
@@ -2159,7 +2172,6 @@ Reduced Diagnostics
         otherwise it is set to ``1``.
         Integrated electric and magnetic field components can instead be obtained by specifying
         ``<reduced_diags_name>.integrate == true``.
-
 
     * ``RhoMaximum``
         This type computes the maximum and minimum values of the total charge density as well as

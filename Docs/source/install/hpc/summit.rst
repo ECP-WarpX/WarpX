@@ -130,6 +130,7 @@ Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` 
    python3 -m pip install --upgrade wheel
    python3 -m pip install --upgrade cython
    python3 -m pip install --upgrade numpy
+   python3 -m pip install --upgrade pandas
    python3 -m pip install --upgrade scipy
    python3 -m pip install --upgrade mpi4py --no-binary mpi4py
    python3 -m pip install --upgrade openpmd-api
@@ -159,7 +160,7 @@ We only prefix it to request a node for the compilation (``runNode``), so we can
    cd $HOME/src/warpx
 
    # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
-   runNode WARPX_MPI=ON WARPX_COMPUTE=CUDA WARPX_PSATD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall -v .
+   runNode WARPX_MPI=ON WARPX_COMPUTE=CUDA WARPX_PSATD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall --no-deps -v .
 
 
 .. _running-cpp-summit:
