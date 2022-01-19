@@ -5,8 +5,8 @@ Perlmutter (NERSC)
 
 .. warning::
 
-   Perlmutter is still in acceptance testing.
-   This page documents our internal testing workflow only.
+   Perlmutter is still in acceptance testing and environments change often.
+   Please reach visit this page often for updates and reach out to us if something needs an update.
 
 The `Perlmutter cluster <https://docs.nersc.gov/systems/perlmutter/>`_ is located at NERSC.
 
