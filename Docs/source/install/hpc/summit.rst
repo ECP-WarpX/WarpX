@@ -127,7 +127,7 @@ regime), the following set of parameters provided good performance:
 * **Two `128x128x128` grids per GPU**, or **one `128x128x256` grid per GPU**.
 
 A batch script with more options regarding profiling on Summit can be found at
-:download:`Summit batch script <../../../../Tools/BatchScripts/script_profiling_summit.sh>`
+:download:`Summit batch script <../../../../Tools/machines/summit-olcf/summit_profiling.bsub>`
 
 .. _running-cpp-summit-Power9-CPUs:
 
