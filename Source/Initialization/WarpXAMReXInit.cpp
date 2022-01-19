@@ -16,7 +16,7 @@ namespace {
      * This overwrites defaults in amrex::ParmParse for inputs.
      */
     void
-    overwrite_amrex_parser_defaults()
+    overwrite_amrex_parser_defaults ()
     {
         amrex::ParmParse pp_amrex("amrex");
 
@@ -53,7 +53,7 @@ namespace {
 }
 
 amrex::AMReX*
-warpx_amrex_init(int& argc, char**& argv, bool const build_parm_parse, MPI_Comm const mpi_comm)
+warpx_amrex_init (int& argc, char**& argv, bool const build_parm_parse, MPI_Comm const mpi_comm)
 {
     return amrex::Initialize(
         argc,
