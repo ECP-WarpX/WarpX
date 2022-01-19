@@ -36,6 +36,19 @@ namespace {
             amrex::ParmParse pp_amr("amr");
             pp_amr.add("blocking_factor", 1);
         }
+
+        // Here we override the default tiling option for particles, which is always
+        // "false" in AMReX, to "false" if compiling for GPU execution and "true"
+        // if compiling for CPU.
+        {
+            ParmParse pp_particles("particles");
+#ifdef AMREX_USE_GPU
+            bool do_tiling = false; // By default, tiling is off on GPU
+#else
+            bool do_tiling = true;
+#endif
+            pp_particles.add("do_tiling", do_tiling);
+        }
     }
 }
 
