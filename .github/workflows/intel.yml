@@ -23,9 +23,9 @@ jobs:
         .github/workflows/dependencies/icc.sh
     - name: build WarpX
       run: |
-        set +e
+        set +eu
         source /opt/intel/oneapi/setvars.sh
-        set -e
+        set -eu
         export CXX=$(which icpc)
         export CC=$(which icc)
 
@@ -93,7 +93,7 @@ jobs:
         source /opt/intel/oneapi/setvars.sh
         set -e
         export OMP_NUM_THREADS=2
-        Examples/Physics_applications/laser_acceleration/PICMI_inputs_laser_acceleration.py
+        Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
 
   build_dpcc:
     name: oneAPI DPC++ SP

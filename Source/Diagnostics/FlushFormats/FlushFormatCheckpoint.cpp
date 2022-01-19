@@ -33,7 +33,7 @@ FlushFormatCheckpoint::WriteToFile (
         bool /*plot_raw_fields_guards*/,
         bool /*isBTD*/, int /*snapshotID*/,
         const amrex::Geometry& /*full_BTD_snapshot*/,
-        bool /*isLastBTDFlush*/) const
+        bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
 {
     WARPX_PROFILE("FlushFormatCheckpoint::WriteToFile()");
 

@@ -158,10 +158,12 @@ namespace
         // Open the output.
         hid_t file = H5Fopen(file_path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
         // Create a 3D, nx x ny x nz dataspace.
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         hsize_t dims[3] = {nx, ny, nz};
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         hsize_t dims[3] = {nx, nz};
+#else
+        hsize_t dims[3] = {nz};
 #endif
         hid_t grid_space = H5Screate_simple(AMREX_SPACEDIM, dims, NULL);
 
@@ -416,17 +418,21 @@ namespace
         // Iterate over Fabs, select matching hyperslab and write.
         hid_t status;
         // slab lo index and shape.
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         hsize_t slab_offsets[3], slab_dims[3];
         int shift[3];
         shift[0] = lo_x;
         shift[1] = lo_y;
         shift[2] = lo_z;
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         hsize_t slab_offsets[2], slab_dims[2];
         int shift[2];
         shift[0] = lo_x;
         shift[1] = lo_z;
+#else
+        hsize_t slab_offsets[1], slab_dims[1];
+        int shift[1];
+        shift[0] = lo_z;
 #endif
         hid_t slab_dataspace;
 
@@ -584,13 +590,19 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
     m_dz_lab_ = PhysConst::c * m_dt_boost_ * m_inv_beta_boost_ * m_inv_gamma_boost_;
     m_inv_dz_lab_ = 1.0_rt / m_dz_lab_;
     int Nz_lab = static_cast<unsigned>((zmax_lab - zmin_lab) * m_inv_dz_lab_);
+#if (AMREX_SPACEDIM >= 2)
     int Nx_lab = geom.Domain().length(0);
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
     int Ny_lab = geom.Domain().length(1);
     IntVect prob_ncells_lab = {Nx_lab, Ny_lab, Nz_lab};
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // Ny_lab = 1;
     IntVect prob_ncells_lab = {Nx_lab, Nz_lab};
+#else
+    // Nx_lab = 1;
+    // Ny_lab = 1;
+    IntVect prob_ncells_lab(Nz_lab);
 #endif
     writeMetaData();
 
@@ -627,8 +639,8 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
         RealBox prob_domain_lab = geom.ProbDomain();
         // Replace z bounds by lab-frame coordinates
         // x and y bounds are the same for back-transformed lab frame and boosted frame
-        prob_domain_lab.setLo(AMREX_SPACEDIM-1, zmin_lab + v_window_lab * t_lab);
-        prob_domain_lab.setHi(AMREX_SPACEDIM-1, zmax_lab + v_window_lab * t_lab);
+        prob_domain_lab.setLo(WARPX_ZINDEX, zmin_lab + v_window_lab * t_lab);
+        prob_domain_lab.setHi(WARPX_ZINDEX, zmax_lab + v_window_lab * t_lab);
         Box diag_box = geom.Domain();
         m_LabFrameDiags_[i] = std::make_unique<LabFrameSnapShot>(t_lab, t_boost,
                                 m_inv_gamma_boost_, m_inv_beta_boost_, m_dz_lab_,
@@ -640,7 +652,6 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
 
     for (int i = 0; i < N_slice_snapshots; ++i) {
 
-        IntVect slice_ncells_lab ;
 
         // To construct LabFrameSlice(), the location of lo() and hi() of the
         // reduced diag is computed using the user-defined values of the
@@ -651,12 +662,13 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
         const amrex::Real* current_slice_lo = slice_realbox.lo();
         const amrex::Real* current_slice_hi = slice_realbox.hi();
 
-        const amrex::Real zmin_slice_lab = current_slice_lo[AMREX_SPACEDIM-1] /
+        const amrex::Real zmin_slice_lab = current_slice_lo[WARPX_ZINDEX] /
                                           ( (1._rt+m_beta_boost_)*m_gamma_boost_);
-        const amrex::Real zmax_slice_lab = current_slice_hi[AMREX_SPACEDIM-1] /
+        const amrex::Real zmax_slice_lab = current_slice_hi[WARPX_ZINDEX] /
                                           ( (1._rt+m_beta_boost_)*m_gamma_boost_);
         auto Nz_slice_lab = static_cast<int>(
             (zmax_slice_lab - zmin_slice_lab) * m_inv_dz_lab_);
+#if (AMREX_SPACEDIM >= 2)
         auto Nx_slice_lab = static_cast<int>(
             (current_slice_hi[0] - current_slice_lo[0] ) /
             geom.CellSize(0));
@@ -664,7 +676,8 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
         // if the x-dimension is reduced, increase total_cells by 1
         // to be consistent with the number of cells created for the output.
         if (Nx_lab != Nx_slice_lab) Nx_slice_lab++;
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
         auto Ny_slice_lab = static_cast<int>(
             (current_slice_hi[1] - current_slice_lo[1]) /
             geom.CellSize(1));
@@ -672,9 +685,11 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
         // if the y-dimension is reduced, increase total_cells by 1
         // to be consistent with the number of cells created for the output.
         if (Ny_lab != Ny_slice_lab) Ny_slice_lab++;
-        slice_ncells_lab = {Nx_slice_lab, Ny_slice_lab, Nz_slice_lab};
+        amrex::IntVect slice_ncells_lab = {Nx_slice_lab, Ny_slice_lab, Nz_slice_lab};
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        amrex::IntVect slice_ncells_lab = {Nx_slice_lab, Nz_slice_lab};
 #else
-        slice_ncells_lab = {Nx_slice_lab, Nz_slice_lab};
+        amrex::IntVect slice_ncells_lab(Nz_slice_lab);
 #endif
 
         IntVect slice_lo(AMREX_D_DECL(0,0,0));
@@ -699,14 +714,14 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
         Real t_slice_lab = i * m_dt_slice_snapshots_lab_ ;
         RealBox prob_domain_lab = geom.ProbDomain();
         // replace z bounds by lab-frame coordinates
-        prob_domain_lab.setLo(AMREX_SPACEDIM-1, zmin_lab + v_window_lab * t_slice_lab);
-        prob_domain_lab.setHi(AMREX_SPACEDIM-1, zmax_lab + v_window_lab * t_slice_lab);
+        prob_domain_lab.setLo(WARPX_ZINDEX, zmin_lab + v_window_lab * t_slice_lab);
+        prob_domain_lab.setHi(WARPX_ZINDEX, zmax_lab + v_window_lab * t_slice_lab);
         RealBox slice_dom_lab = slice_realbox;
         // replace z bounds of slice in lab-frame coordinates
         // note : x and y bounds are the same for lab and boosted frames
         // initial lab slice extent //
-        slice_dom_lab.setLo(AMREX_SPACEDIM-1, zmin_slice_lab + v_window_lab * t_slice_lab );
-        slice_dom_lab.setHi(AMREX_SPACEDIM-1, zmax_slice_lab +
+        slice_dom_lab.setLo(WARPX_ZINDEX, zmin_slice_lab + v_window_lab * t_slice_lab );
+        slice_dom_lab.setHi(WARPX_ZINDEX, zmax_slice_lab +
                                          v_window_lab * t_slice_lab );
 
         // construct labframeslice
@@ -736,7 +751,7 @@ void BackTransformedDiagnostic::Flush (const Geometry& /*geom*/)
     // Loop over BFD snapshots
     for (auto& lf_diags : m_LabFrameDiags_) {
 
-        Real zmin_lab = lf_diags->m_prob_domain_lab_.lo(AMREX_SPACEDIM-1);
+        Real zmin_lab = lf_diags->m_prob_domain_lab_.lo(WARPX_ZINDEX);
         auto i_lab = static_cast<unsigned>(
             (lf_diags->m_current_z_lab - zmin_lab) / m_dz_lab_);
 
@@ -839,8 +854,8 @@ writeLabFrameData (const MultiFab* cell_centered_data,
                                               m_inv_gamma_boost_,
                                               m_inv_beta_boost_);
 
-        Real diag_zmin_lab = lf_diags->m_diag_domain_lab_.lo(AMREX_SPACEDIM-1);
-        Real diag_zmax_lab = lf_diags->m_diag_domain_lab_.hi(AMREX_SPACEDIM-1);
+        Real diag_zmin_lab = lf_diags->m_diag_domain_lab_.lo(WARPX_ZINDEX);
+        Real diag_zmax_lab = lf_diags->m_diag_domain_lab_.hi(WARPX_ZINDEX);
 
         if ( ( lf_diags->m_current_z_boost < zlo_boost) or
              ( lf_diags->m_current_z_boost > zhi_boost) or
@@ -850,7 +865,7 @@ writeLabFrameData (const MultiFab* cell_centered_data,
         // Get z index of data_buffer_ (i.e. in the lab frame) where
         // simulation domain (t', [zmin',zmax']), back-transformed to lab
         // frame, intersects with snapshot.
-        Real dom_zmin_lab = lf_diags->m_prob_domain_lab_.lo(AMREX_SPACEDIM-1);
+        Real dom_zmin_lab = lf_diags->m_prob_domain_lab_.lo(WARPX_ZINDEX);
         auto i_lab = static_cast<unsigned>(
             ( lf_diags->m_current_z_lab - dom_zmin_lab) / m_dz_lab_);
         // If buffer of snapshot i is empty...
@@ -1213,13 +1228,17 @@ createLabFrameDirectories() {
             const auto lo = lbound(m_buff_box_);
             for (int comp = 0; comp < m_ncomp_to_dump_; ++comp) {
                 output_create_field(m_file_name, m_mesh_field_names_[comp],
+#if ( AMREX_SPACEDIM >= 2 )
                                     m_prob_ncells_lab_[0],
-#if ( AMREX_SPACEDIM == 3 )
+#else
+                                    1,
+#endif
+#if defined(WARPX_DIM_3D)
                                     m_prob_ncells_lab_[1],
 #else
                                     1,
 #endif
-                                    m_prob_ncells_lab_[AMREX_SPACEDIM-1]+1);
+                                    m_prob_ncells_lab_[WARPX_ZINDEX]+1);
             }
         }
     }
@@ -1296,23 +1315,23 @@ writeLabFrameHeader() {
         HeaderFile << m_t_lab << "\n";
         // Write domain number of cells
         HeaderFile << m_prob_ncells_lab_[0] << ' '
-#if ( AMREX_SPACEDIM==3 )
+#if defined(WARPX_DIM_3D)
                    << m_prob_ncells_lab_[1] << ' '
 #endif
-                   << m_prob_ncells_lab_[AMREX_SPACEDIM-1] <<'\n';
+                   << m_prob_ncells_lab_[WARPX_ZINDEX] <<'\n';
         // Write domain physical boundaries
         // domain lower bound
         HeaderFile << m_diag_domain_lab_.lo(0) << ' '
-#if ( AMREX_SPACEDIM==3 )
+#if defined(WARPX_DIM_3D)
                    << m_diag_domain_lab_.lo(1) << ' '
 #endif
-                   << m_diag_domain_lab_.lo(AMREX_SPACEDIM-1) <<'\n';
+                   << m_diag_domain_lab_.lo(WARPX_ZINDEX) <<'\n';
         // domain higher bound
         HeaderFile << m_diag_domain_lab_.hi(0) << ' '
-#if ( AMREX_SPACEDIM==3 )
+#if defined(WARPX_DIM_3D)
                    << m_diag_domain_lab_.hi(1) << ' '
 #endif
-                   << m_diag_domain_lab_.hi(AMREX_SPACEDIM-1) <<'\n';
+                   << m_diag_domain_lab_.hi(WARPX_ZINDEX) <<'\n';
         // List of fields dumped to file
         for (int i=0; i<m_ncomp_to_dump_; i++)
         {
@@ -1385,10 +1404,12 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
              [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
              {
                  const int icomp = field_map_ptr[n];
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                  buf_arr(i,j,k_lab,n) = tmp_arr(i,j,k,icomp);
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                  buf_arr(i,k_lab,k,n) = tmp_arr(i,j,k,icomp);
+#else
+                 buf_arr(k_lab,j,k,n) = tmp_arr(i,j,k,icomp);
 #endif
              }
          );
@@ -1422,10 +1443,12 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
            [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
            {
               const int icomp = field_map_ptr[n];
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
               buf_arr(i,j,k_lab,n) = tmp_arr(i,j,k,icomp);
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
               buf_arr(i,k_lab,k,n) = tmp_arr(i,j,k,icomp);
+#else
+              buf_arr(k_lab,j,k,n) = tmp_arr(i,j,k,icomp);
 #endif
            });
     }
@@ -1531,9 +1554,11 @@ AddPartDataToParticleBuffer(
         int* const AMREX_RESTRICT IndexLocation = IndexForPartCopy.dataPtr();
 
         // Compute extent of the reduced domain +/- user-defined physical width
+#if (AMREX_SPACEDIM >= 2)
         Real const xmin = m_diag_domain_lab_.lo(0)-m_particle_slice_dx_lab_;
         Real const xmax = m_diag_domain_lab_.hi(0)+m_particle_slice_dx_lab_;
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
         Real const ymin = m_diag_domain_lab_.lo(1)-m_particle_slice_dx_lab_;
         Real const ymax = m_diag_domain_lab_.hi(1)+m_particle_slice_dx_lab_;
 #endif
@@ -1544,9 +1569,12 @@ AddPartDataToParticleBuffer(
         [=] AMREX_GPU_DEVICE(int i)
         {
             Flag[i] = 0;
+#if (AMREX_SPACEDIM >= 2)
             if ( x_temp[i] >= (xmin) &&
-                 x_temp[i] <= (xmax) ) {
-#if (AMREX_SPACEDIM == 3)
+                 x_temp[i] <= (xmax) )
+#endif
+            {
+#if defined(WARPX_DIM_3D)
                if (y_temp[i] >= (ymin) &&
                    y_temp[i] <= (ymax) )
 #endif

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019-2020 Yinjian Zhao
 #
@@ -16,11 +16,14 @@
 # 7 denotes maxwell-boltzmann distribution w/ spatially-varying velocity
 # The distribution is obtained through reduced diagnostic ParticleHistogram.
 
+import os
+import sys
+
 import numpy as np
+from read_raw_data import read_reduced_diags, read_reduced_diags_histogram
 import scipy.constants as scc
 import scipy.special as scs
-from read_raw_data import read_reduced_diags_histogram, read_reduced_diags
-import sys
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -257,5 +260,5 @@ print('Maxwell-Boltzmann parser velocity difference:', f7_error)
 
 assert(f7_error < tolerance)
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

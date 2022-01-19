@@ -8,6 +8,7 @@ import re
 
 from .Bucket import Bucket
 
+
 class Constants(Bucket):
     """
     The purpose of this class is to be hold user defined constants

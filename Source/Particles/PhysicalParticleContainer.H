@@ -101,6 +101,7 @@ public:
      * \param t current physical time
      * \param dt time step by which particles are advanced
      * \param a_dt_type type of time step (used for sub-cycling)
+     * \param skip_deposition Skip the charge and current deposition.
      *
      * Evolve iterates over particle iterator (each box) and performs filtering,
      * field gather, particle push and current deposition for all particles
@@ -199,10 +200,9 @@ public:
     /**
      * Create new macroparticles for this species, with a fixed
      * number of particles per cell in a plane.
-     * @param[in] lev the index of the refinement level
      * @param[in] dt time step size, used to partially advance the particles
     */
-    void AddPlasmaFlux (int lev, amrex::Real dt);
+    void AddPlasmaFlux (amrex::Real dt);
 
     void MapParticletoBoostedFrame (amrex::Real& x, amrex::Real& y, amrex::Real& z,
                                     amrex::Real& ux, amrex::Real& uy, amrex::Real& uz);
@@ -303,7 +303,6 @@ public:
     * \brief This function determines if resampling should be done for the current species, and
     * if so, performs the resampling.
     *
-    * @param[in] resampler the Resampling object used for resampling.
     * @param[in] timestep the current timestep.
     */
     void resample (const int timestep) override final;

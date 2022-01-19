@@ -41,26 +41,38 @@ CoarsenIO::Loop ( MultiFab& mf_dst,
     GpuArray<int,3> cr; // coarsening ratio
 
     sf[0] = stag_src[0];
+#if   defined(WARPX_DIM_1D_Z)
+    sf[1] = 0;
+#else
     sf[1] = stag_src[1];
-#if   (AMREX_SPACEDIM == 2)
+#endif
+#if   (AMREX_SPACEDIM <= 2)
     sf[2] = 0;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     sf[2] = stag_src[2];
 #endif
 
     sc[0] = stag_dst[0];
+#if   defined(WARPX_DIM_1D_Z)
+    sc[1] = 0;
+#else
     sc[1] = stag_dst[1];
-#if   (AMREX_SPACEDIM == 2)
+#endif
+#if   (AMREX_SPACEDIM <= 2)
     sc[2] = 0;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     sc[2] = stag_dst[2];
 #endif
 
     cr[0] = crse_ratio[0];
+#if   defined(WARPX_DIM_1D_Z)
+    cr[1] = 1;
+#else
     cr[1] = crse_ratio[1];
-#if   (AMREX_SPACEDIM == 2)
+#endif
+#if   (AMREX_SPACEDIM <= 2)
     cr[2] = 1;
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     cr[2] = crse_ratio[2];
 #endif
 

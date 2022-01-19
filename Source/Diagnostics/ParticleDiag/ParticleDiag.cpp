@@ -12,8 +12,8 @@
 
 using namespace amrex;
 
-ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticleContainer* pc)
-    : m_diag_name(diag_name), m_name(name), m_pc(pc)
+ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticleContainer* pc, PinnedMemoryParticleContainer* pinned_pc)
+    : m_diag_name(diag_name), m_name(name), m_pc(pc), m_pinned_pc(pinned_pc)
 {
     ParmParse pp_diag_name_species_name(diag_name + "." + name);
     if (!pp_diag_name_species_name.queryarr("variables", variables)){

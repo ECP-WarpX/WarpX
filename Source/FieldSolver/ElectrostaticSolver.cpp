@@ -103,8 +103,8 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     for (int lev = 0; lev <= max_level; lev++) {
         BoxArray nba = boxArray(lev);
         nba.surroundingNodes();
-        rho[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, ng);
-        phi[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, 1);
+        rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
+        phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
         phi[lev]->setVal(0.);
     }
 
@@ -172,7 +172,10 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     std::array<Real, 3> beta = {0._rt};
 
     // Compute the potential phi, by solving the Poisson equation
-    if (warpx_py_poissonsolver) warpx_py_poissonsolver();
+    if (warpx_py_poissonsolver) {
+        WARPX_PROFILE("warpx_py_poissonsolver");
+        warpx_py_poissonsolver();
+    }
     else computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
                      self_fields_absolute_tolerance, self_fields_max_iters,
                      self_fields_verbosity );
@@ -193,35 +196,6 @@ WarpX::AddSpaceChargeFieldLabFrame ()
    a source, assuming that the source moves at a constant speed \f$\vec{\beta}\f$.
    This uses the amrex solver.
 
-   \param[in] rho The charge density a given species
-   \param[out] phi The potential to be computed by this function
-   \param[in] beta Represents the velocity of the source of `phi`
-*/
-void
-WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                   amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                   std::array<Real, 3> const beta,
-                   Real const required_precision,
-                   Real const absolute_tolerance,
-                   int const max_iters,
-                   int const verbosity) const
-{
-#ifdef WARPX_DIM_RZ
-    computePhiRZ( rho, phi, beta, required_precision, absolute_tolerance,
-                  max_iters, verbosity );
-#else
-    computePhiCartesian( rho, phi, beta, required_precision, absolute_tolerance,
-                         max_iters, verbosity );
-#endif
-
-}
-
-#ifdef WARPX_DIM_RZ
-/* Compute the potential `phi` in cylindrical geometry by solving the Poisson equation
-   with `rho` as a source, assuming that the source moves at a constant
-   speed \f$\vec{\beta}\f$.
-   This uses the amrex solver.
-
    More specifically, this solves the equation
    \f[
        \vec{\nabla}^2 r \phi - (\vec{\beta}\cdot\vec{\nabla})^2 r \phi = -\frac{r \rho}{\epsilon_0}
@@ -230,9 +204,13 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
    \param[in] rho The charge density a given species
    \param[out] phi The potential to be computed by this function
    \param[in] beta Represents the velocity of the source of `phi`
+   \param[in] required_precision The relative convergence threshold for the MLMG solver
+   \param[in] absolute_tolerance The absolute convergence threshold for the MLMG solver
+   \param[in] max_iters The maximum number of iterations allowed for the MLMG solver
+   \param[in] verbosity The verbosity setting for the MLMG solver
 */
 void
-WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<Real, 3> const beta,
                    Real const required_precision,
@@ -240,6 +218,7 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
                    int const max_iters,
                    int const verbosity) const
 {
+#ifdef WARPX_DIM_RZ
     // Create a new geometry with the z coordinate scaled by gamma
     amrex::Real const gamma = std::sqrt(1._rt/(1._rt - beta[2]*beta[2]));
 
@@ -257,73 +236,25 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         amrex::RealBox rb = RealBox(scaled_lo, scaled_hi);
         geom_scaled[lev].define(geom_lev.Domain(), &rb);
     }
+#endif
 
-    // Setup the sigma = radius
-    // sigma must be cell centered
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> > sigma(max_level+1);
-    for (int lev = 0; lev <= max_level; ++lev) {
-        const amrex::Real * problo = geom_scaled[lev].ProbLo();
-        const amrex::Real * dx = geom_scaled[lev].CellSize();
-        const amrex::Real rmin = problo[0];
-        const amrex::Real dr = dx[0];
-
-        amrex::BoxArray nba = boxArray(lev);
-        nba.enclosedCells(); // Get cell centered array (correct?)
-        sigma[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, 0);
-        for ( MFIter mfi(*sigma[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
-        {
-            const amrex::Box& tbx = mfi.tilebox();
-            const amrex::Dim3 lo = amrex::lbound(tbx);
-            const int irmin = lo.x;
-            Array4<amrex::Real> const& sigma_arr = sigma[lev]->array(mfi);
-            amrex::ParallelFor( tbx,
-                [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/) {
-                    sigma_arr(i,j,0) = rmin + (i - irmin + 0.5_rt)*dr;
-                }
-            );
-        }
-
-        // Also, multiply rho by radius (rho is node centered)
-        // Note that this multiplication is not undone since rho is
-        // a temporary array.
-        for ( MFIter mfi(*rho[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
-        {
-            const amrex::Box& tbx = mfi.tilebox();
-            const amrex::Dim3 lo = amrex::lbound(tbx);
-            const int irmin = lo.x;
-            int const ncomp = rho[lev]->nComp(); // This should be 1!
-            Array4<Real> const& rho_arr = rho[lev]->array(mfi);
-            amrex::ParallelFor(tbx, ncomp,
-            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/, int icomp)
-            {
-                amrex::Real r = rmin + (i - irmin)*dr;
-                if (r == 0.) {
-                    // dr/3 is used to be consistent with the finite volume formulism
-                    // that is used to solve Poisson's equation
-                    rho_arr(i,j,0,icomp) *= dr/3._rt;
-                } else {
-                    rho_arr(i,j,0,icomp) *= r;
-                }
-            });
-        }
-    }
-
-    // get the potential at the current time
+    // get the boundary potentials at the current time
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
-    phi_bc_values_lo[1] = field_boundary_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[1] = field_boundary_handler.potential_zhi(gett_new(0));
+    phi_bc_values_lo[WARPX_ZINDEX] = field_boundary_handler.potential_zlo(gett_new(0));
+    phi_bc_values_hi[WARPX_ZINDEX] = field_boundary_handler.potential_zhi(gett_new(0));
+#ifndef WARPX_DIM_1D_Z
+    phi_bc_values_lo[0] = field_boundary_handler.potential_xlo(gett_new(0));
+    phi_bc_values_hi[0] = field_boundary_handler.potential_xhi(gett_new(0));
+#endif
+#if defined(WARPX_DIM_3D)
+    phi_bc_values_lo[1] = field_boundary_handler.potential_ylo(gett_new(0));
+    phi_bc_values_hi[1] = field_boundary_handler.potential_yhi(gett_new(0));
+#endif
 
-    // set the boundary potential values if needed
     setPhiBC(phi, phi_bc_values_lo, phi_bc_values_hi);
 
-    // Define the linear operator (Poisson operator)
-    MLNodeLaplacian linop( geom_scaled, boxArray(), dmap );
-
-    for (int lev = 0; lev <= max_level; ++lev) {
-        linop.setSigma( lev, *sigma[lev] );
-    }
-
+    // scale rho appropriately; also determine if rho is zero everywhere
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev < rho.size(); lev++){
         rho[lev]->mult(-1._rt/PhysConst::ep0);
@@ -339,87 +270,44 @@ WarpX::computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho
         );
     }
 
-    // Solve the Poisson equation
-    linop.setDomainBC( field_boundary_handler.lobc, field_boundary_handler.hibc );
-    MLMG mlmg(linop);
-    mlmg.setVerbose(verbosity);
-    mlmg.setMaxIter(max_iters);
-    mlmg.setAlwaysUseBNorm(always_use_bnorm);
-    mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho),
-                required_precision, absolute_tolerance );
-}
-
-#else
-
-/* Compute the potential `phi` in Cartesian geometry by solving the Poisson equation
-   with `rho` as a source, assuming that the source moves at a constant
-   speed \f$\vec{\beta}\f$.
-   This uses the amrex solver.
-
-   More specifically, this solves the equation
-   \f[
-       \vec{\nabla}^2\phi - (\vec{\beta}\cdot\vec{\nabla})^2\phi = -\frac{\rho}{\epsilon_0}
-   \f]
-
-   \param[in] rho The charge density a given species
-   \param[out] phi The potential to be computed by this function
-   \param[in] beta Represents the velocity of the source of `phi`
-*/
-void
-WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                            amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                            std::array<Real, 3> const beta,
-                            Real const required_precision,
-                            Real absolute_tolerance,
-                            int const max_iters,
-                            int const verbosity) const
-{
-    // get the potential at the current time
-    amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
-    amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
-    phi_bc_values_lo[0] = field_boundary_handler.potential_xlo(gett_new(0));
-    phi_bc_values_hi[0] = field_boundary_handler.potential_xhi(gett_new(0));
-#if (AMREX_SPACEDIM==2)
-    phi_bc_values_lo[1] = field_boundary_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[1] = field_boundary_handler.potential_zhi(gett_new(0));
-#elif (AMREX_SPACEDIM==3)
-    phi_bc_values_lo[1] = field_boundary_handler.potential_ylo(gett_new(0));
-    phi_bc_values_hi[1] = field_boundary_handler.potential_yhi(gett_new(0));
-    phi_bc_values_lo[2] = field_boundary_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[2] = field_boundary_handler.potential_zhi(gett_new(0));
-#endif
-
-    setPhiBC(phi, phi_bc_values_lo, phi_bc_values_hi);
+    LPInfo info;
 
 #ifndef AMREX_USE_EB
-    // Define the linear operator (Poisson operator)
-    MLNodeTensorLaplacian linop( Geom(), boxArray(), DistributionMap() );
-
-    // Set the value of beta
-    amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
-#   if (AMREX_SPACEDIM==2)
-        {{ beta[0], beta[2] }};  // beta_x and beta_z
+#   ifdef WARPX_DIM_RZ
+        // Define the linear operator (Poisson operator)
+        MLEBNodeFDLaplacian linop( geom_scaled, boxArray(), DistributionMap(), info );
 #   else
-        {{ beta[0], beta[1], beta[2] }};
+        // Define the linear operator (Poisson operator)
+        MLNodeTensorLaplacian linop( Geom(), boxArray(), DistributionMap() );
+
+        // Set the value of beta
+        amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
+#       if defined(WARPX_DIM_1D_Z)
+            {{ beta[2] }};  // beta_x and beta_z
+#       elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            {{ beta[0], beta[2] }};  // beta_x and beta_z
+#       else
+            {{ beta[0], beta[1], beta[2] }};
+#       endif
+        linop.setBeta( beta_solver );
+        ignore_unused(info);
 #   endif
-    linop.setBeta( beta_solver );
-
 #else
-
     // With embedded boundary: extract EB info
-    LPInfo info;
     Vector<EBFArrayBoxFactory const*> eb_factory;
     eb_factory.resize(max_level+1);
     for (int lev = 0; lev <= max_level; ++lev) {
-      eb_factory[lev] = &WarpX::fieldEBFactory(lev);
+        eb_factory[lev] = &WarpX::fieldEBFactory(lev);
     }
-    MLEBNodeFDLaplacian linop( Geom(), boxArray(), dmap, info, eb_factory);
+    MLEBNodeFDLaplacian linop( Geom(), boxArray(), DistributionMap(), info, eb_factory);
 
-    // Note: this assumes that the beam is propagating along
-    // one of the axes of the grid, i.e. that only *one* of the Cartesian
-    // components of `beta` is non-negligible.
-    linop.setSigma({AMREX_D_DECL(
-        1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
+#   ifndef WARPX_DIM_RZ
+        // Note: this assumes that the beam is propagating along
+        // one of the axes of the grid, i.e. that only *one* of the Cartesian
+        // components of `beta` is non-negligible.
+        linop.setSigma({AMREX_D_DECL(
+            1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
+#   endif
 
     // if the EB potential only depends on time, the potential can be passed
     // as a float instead of a callable
@@ -427,26 +315,14 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
         linop.setEBDirichlet(field_boundary_handler.potential_eb_t(gett_new(0)));
     }
     else linop.setEBDirichlet(field_boundary_handler.getPhiEB(gett_new(0)));
+
 #endif
 
     // Solve the Poisson equation
     linop.setDomainBC( field_boundary_handler.lobc, field_boundary_handler.hibc );
-
-    amrex::Real max_norm_b = 0.0;
-    for (int lev=0; lev < rho.size(); lev++){
-        rho[lev]->mult(-1._rt/PhysConst::ep0);
-        max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
-    }
-    amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
-
-    bool always_use_bnorm = (max_norm_b > 0);
-    if (!always_use_bnorm) {
-        if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
-        WarpX::GetInstance().RecordWarning(
-            "ElectrostaticSolver", "Max norm of rho is 0", WarnPriority::low
-        );
-    }
-
+#ifdef WARPX_DIM_RZ
+    linop.setRZ(true);
+#endif
     MLMG mlmg(linop);
     mlmg.setVerbose(verbosity);
     mlmg.setMaxIter(max_iters);
@@ -460,13 +336,19 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
     {
         for (int lev = 0; lev <= max_level; ++lev) {
-#if (AMREX_SPACEDIM==2)
+#if defined(WARPX_DIM_1D_Z)
+            mlmg.getGradSolution(
+                {amrex::Array<amrex::MultiFab*,1>{
+                    get_pointer_Efield_fp(lev, 2)
+                    }}
+            );
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             mlmg.getGradSolution(
                 {amrex::Array<amrex::MultiFab*,2>{
                     get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 2)
                     }}
             );
-#elif (AMREX_SPACEDIM==3)
+#elif defined(WARPX_DIM_3D)
             mlmg.getGradSolution(
                 {amrex::Array<amrex::MultiFab*,3>{
                     get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 1),
@@ -481,7 +363,7 @@ WarpX::computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab>
     }
 #endif
 }
-#endif
+
 
 /* \brief Set Dirichlet boundary conditions for the electrostatic solver.
 
@@ -575,22 +457,29 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
+#if defined(WARPX_DIM_3D)
             const Real inv_dx = 1._rt/dx[0];
-#if (AMREX_SPACEDIM == 3)
             const Real inv_dy = 1._rt/dx[1];
             const Real inv_dz = 1._rt/dx[2];
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            const Real inv_dx = 1._rt/dx[0];
             const Real inv_dz = 1._rt/dx[1];
+#else
+            const Real inv_dz = 1._rt/dx[0];
 #endif
+#if (AMREX_SPACEDIM >= 2)
             const Box& tbx  = mfi.tilebox( E[lev][0]->ixType().toIntVect() );
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
             const Box& tby  = mfi.tilebox( E[lev][1]->ixType().toIntVect() );
 #endif
             const Box& tbz  = mfi.tilebox( E[lev][2]->ixType().toIntVect() );
 
             const auto& phi_arr = phi[lev]->array(mfi);
+#if (AMREX_SPACEDIM >= 2)
             const auto& Ex_arr = (*E[lev][0])[mfi].array();
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
             const auto& Ey_arr = (*E[lev][1])[mfi].array();
 #endif
             const auto& Ez_arr = (*E[lev][2])[mfi].array();
@@ -601,7 +490,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 
             // Calculate the electric field
             // Use discretized derivative that matches the staggering of the grid.
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             amrex::ParallelFor( tbx, tby, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ex_arr(i,j,k) +=
@@ -628,7 +517,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                         +(beta_y*beta_z-1)*inv_dz*( phi_arr(i,j,k+1)-phi_arr(i,j,k) );
                 }
             );
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             amrex::ParallelFor( tbx, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ex_arr(i,j,k) +=
@@ -643,6 +532,14 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                         +(beta_y*beta_z-1)*inv_dz*( phi_arr(i,j+1,k)-phi_arr(i,j,k) );
                 }
             );
+#else
+            amrex::ParallelFor( tbz,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    Ez_arr(i,j,k) +=
+                        +(beta_y*beta_z-1)*inv_dz*( phi_arr(i+1,j,k)-phi_arr(i,j,k) );
+                }
+            );
+            ignore_unused(beta_x);
 #endif
         }
     }
@@ -677,12 +574,15 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
+#if defined(WARPX_DIM_3D)
             const Real inv_dx = 1._rt/dx[0];
-#if (AMREX_SPACEDIM == 3)
             const Real inv_dy = 1._rt/dx[1];
             const Real inv_dz = 1._rt/dx[2];
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            const Real inv_dx = 1._rt/dx[0];
             const Real inv_dz = 1._rt/dx[1];
+#else
+            const Real inv_dz = 1._rt/dx[0];
 #endif
             const Box& tbx  = mfi.tilebox( B[lev][0]->ixType().toIntVect() );
             const Box& tby  = mfi.tilebox( B[lev][1]->ixType().toIntVect() );
@@ -701,7 +601,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 
             // Calculate the magnetic field
             // Use discretized derivative that matches the staggering of the grid.
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             amrex::ParallelFor( tbx, tby, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Bx_arr(i,j,k) += inv_c * (
@@ -725,7 +625,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                                           + phi_arr(i+1,j+1,k)-phi_arr(i,j+1,k)));
                 }
             );
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             amrex::ParallelFor( tbx, tby, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Bx_arr(i,j,k) += inv_c * (
@@ -743,6 +643,18 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                         +beta_y*inv_dx*( phi_arr(i+1,j,k)-phi_arr(i,j,k) ));
                 }
             );
+#else
+            amrex::ParallelFor( tbx, tby,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    Bx_arr(i,j,k) += inv_c * (
+                        -beta_y*inv_dz*( phi_arr(i+1,j,k)-phi_arr(i,j,k) ));
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    By_arr(i,j,k) += inv_c * (
+                        +beta_x*inv_dz*(phi_arr(i+1,j,k)-phi_arr(i,j,k)));
+                }
+            );
+            ignore_unused(beta_z,tbz,Bz_arr);
 #endif
         }
     }
@@ -750,14 +662,25 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 
 void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
 {
+    int dim_start = 0;
 #ifdef WARPX_DIM_RZ
-    lobc[0] = LinOpBCType::Neumann;
-    hibc[0] = LinOpBCType::Dirichlet;
-    dirichlet_flag[0] = false;
-    dirichlet_flag[1] = false;
-    int dim_start=1;
-#else
-    int dim_start=0;
+    WarpX& warpx = WarpX::GetInstance();
+    auto geom = warpx.Geom(0);
+    if (geom.ProbLo(0) == 0){
+        lobc[0] = LinOpBCType::Neumann;
+        dirichlet_flag[0] = false;
+        dim_start = 1;
+
+        // handle the r_max boundary explicity
+        if (WarpX::field_boundary_hi[0] == FieldBoundaryType::PEC) {
+            hibc[0] = LinOpBCType::Dirichlet;
+            dirichlet_flag[1] = true;
+        }
+        else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::None) {
+            hibc[0] = LinOpBCType::Neumann;
+            dirichlet_flag[1] = false;
+        }
+    }
 #endif
     for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
         if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic

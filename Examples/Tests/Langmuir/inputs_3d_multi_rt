@@ -25,7 +25,7 @@ amr.max_grid_size = nx nx nx
 amr.max_level = 0
 
 # Geometry
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 3
 geometry.prob_lo     = -lx/2.   -lx/2.   -lx/2.    # physical domain
 geometry.prob_hi     =  lx/2.    lx/2.    lx/2.
 

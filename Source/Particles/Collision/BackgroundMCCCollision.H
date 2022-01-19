@@ -46,12 +46,14 @@ public:
     /** Perform MCC ionization interactions
      *
      * @param[in] lev the mesh-refinement level
+     * @param[in,out] cost pointer to (load balancing) cost corresponding to box where present particles are ionized.
      * @param[in,out] species1,species2 reference to species container used to inject
      * new particles
      *
      */
     void doBackgroundIonization (
                                  int lev,
+                                 amrex::LayoutData<amrex::Real>* cost,
                                  WarpXParticleContainer& species1,
                                  WarpXParticleContainer& species2
                                  );

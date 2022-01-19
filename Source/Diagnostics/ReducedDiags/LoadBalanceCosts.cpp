@@ -107,7 +107,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
 #else
             m_data[shift_m_data + mfi.index()*m_nDataFields + 4] = 0.;
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             m_data[shift_m_data + mfi.index()*m_nDataFields + 5] = tbx.loVect()[2];
 #else
             m_data[shift_m_data + mfi.index()*m_nDataFields + 5] = 0.;
@@ -296,6 +296,8 @@ void LoadBalanceCosts::WriteToFile (int step) const
         // open the data-containing file
         std::string fileDataName = m_path + m_rd_name + "." + m_extension;
         std::ifstream ifs(fileDataName, std::ifstream::in);
+        if(!ifs) Abort("Failed to load balance file");
+        ifs.exceptions(std::ios_base::badbit); // | std::ios_base::failbit
 
         // Fill in the tmp costs file with data, padded with NaNs
         for (std::string lineIn; std::getline(ifs, lineIn);)

@@ -27,7 +27,13 @@ void warpx_damp_pml_ex (int i, int j, int k, Array4<Real> const& Ex,
                         int xlo, int ylo, int zlo,
                         const bool dive_cleaning)
 {
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(i, j, k, Ex, Ex_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+           sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, xlo, ylo, zlo, dive_cleaning);
+    amrex::Abort("PML not implemented in Cartesian 1D geometry");
+#endif
+
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
@@ -52,7 +58,7 @@ void warpx_damp_pml_ex (int i, int j, int k, Array4<Real> const& Ex,
         Ex(i,j,k,PMLComp::xz) *= sigma_fac_z[j-zlo];
     }
 
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
 
     // sx = 0 means that Ex is staggered in x, while sx = 1 means that Ex is nodal in x (same for y, z)
     const int sx = Ex_stag[0];
@@ -98,7 +104,13 @@ void warpx_damp_pml_ey (int i, int j, int k, Array4<Real> const& Ey,
                         int xlo, int ylo, int zlo,
                         const bool dive_cleaning)
 {
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(i, j, k, Ey, Ey_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+           sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, xlo, ylo, zlo, dive_cleaning);
+    amrex::Abort("PML not implemented in Cartesian 1D geometry");
+#endif
+
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo, dive_cleaning);
 
@@ -120,7 +132,7 @@ void warpx_damp_pml_ey (int i, int j, int k, Array4<Real> const& Ey,
         Ey(i,j,k,PMLComp::yz) *= sigma_fac_z[j-zlo];
     }
 
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
 
     // sx = 0 means that Ey is staggered in x, while sx = 1 means that Ey is nodal in x (same for y, z)
     const int sx = Ey_stag[0];
@@ -166,7 +178,13 @@ void warpx_damp_pml_ez (int i, int j, int k, Array4<Real> const& Ez,
                         int xlo, int ylo, int zlo,
                         const bool dive_cleaning)
 {
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(i, j, k, Ez, Ez_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+           sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, xlo, ylo, zlo, dive_cleaning);
+    amrex::Abort("PML not implemented in Cartesian 1D geometry");
+#endif
+
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
@@ -191,7 +209,7 @@ void warpx_damp_pml_ez (int i, int j, int k, Array4<Real> const& Ez,
         }
     }
 
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
 
     // sx = 0 means that Ez is staggered in x, while sx = 1 means that Ez is nodal in x (same for y, z)
     const int sx = Ez_stag[0];
@@ -237,7 +255,13 @@ void warpx_damp_pml_bx (int i, int j, int k, Array4<Real> const& Bx,
                         int xlo, int ylo, int zlo,
                         const bool divb_cleaning)
 {
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(i, j, k, Bx, Bx_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+           sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, xlo, ylo, zlo, divb_cleaning);
+    amrex::Abort("PML not implemented in Cartesian 1D geometry");
+#endif
+
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
    amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
@@ -262,7 +286,7 @@ void warpx_damp_pml_bx (int i, int j, int k, Array4<Real> const& Bx,
        Bx(i,j,k,PMLComp::xz) *= sigma_fac_z[j-zlo];
    }
 
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
 
     // sx = 0 means that Bx is staggered in x, while sx = 1 means that Bx is nodal in x (same for y, z)
     const int sx = Bx_stag[0];
@@ -308,7 +332,13 @@ void warpx_damp_pml_by (int i, int j, int k, Array4<Real> const& By,
                         int xlo, int ylo, int zlo,
                         const bool divb_cleaning)
 {
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(i, j, k, By, By_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+           sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, xlo, ylo, zlo, divb_cleaning);
+    amrex::Abort("PML not implemented in Cartesian 1D geometry");
+#endif
+
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo, divb_cleaning);
 
@@ -330,7 +360,7 @@ void warpx_damp_pml_by (int i, int j, int k, Array4<Real> const& By,
        By(i,j,k,PMLComp::yz) *= sigma_fac_z[j-zlo];
    }
 
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
 
     // sx = 0 means that By is staggered in x, while sx = 1 means that By is nodal in x (same for y, z)
     const int sx = By_stag[0];
@@ -376,7 +406,13 @@ void warpx_damp_pml_bz (int i, int j, int k, Array4<Real> const& Bz,
                         int xlo, int ylo, int zlo,
                         const bool divb_cleaning)
 {
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(i, j, k, Bz, Bz_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+           sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, xlo, ylo, zlo, divb_cleaning);
+    amrex::Abort("PML not implemented in Cartesian 1D geometry");
+#endif
+
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
    amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
@@ -401,7 +437,7 @@ void warpx_damp_pml_bz (int i, int j, int k, Array4<Real> const& Bz,
         }
     }
 
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
 
     // sx = 0 means that Bz is staggered in x, while sx = 1 means that Bz is nodal in x (same for y, z)
     const int sx = Bz_stag[0];
@@ -446,7 +482,13 @@ void warpx_damp_pml_scalar (int i, int j, int k, Array4<Real> const& arr,
                             const Real* const sigma_star_fac_z,
                             int xlo, int ylo, int zlo)
 {
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(i, j, k, arr, arr_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+           sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, xlo, ylo, zlo);
+    amrex::Abort("PML not implemented in Cartesian 1D geometry");
+#endif
+
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
    amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
@@ -468,7 +510,7 @@ void warpx_damp_pml_scalar (int i, int j, int k, Array4<Real> const& arr,
        arr(i,j,k,PMLComp::z) *= sigma_fac_z[j-zlo];
    }
 
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
 
     // sx = 0 means that arr is staggered in x, while sx = 1 means that arr is nodal in x (same for y, z)
     const int sx = arr_stag[0];

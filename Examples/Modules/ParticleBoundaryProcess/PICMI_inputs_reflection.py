@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # --- Input file to test particle reflection off an absorbing boundary
 
 from pywarpx import picmi
@@ -112,22 +114,20 @@ sim.step(max_steps)
 # buffer functions as intended
 ################################################
 
-from pywarpx import _libwarpx
-
-n = _libwarpx.get_particle_boundary_buffer_size("electrons", 'z_hi')
+n = sim.extension.get_particle_boundary_buffer_size("electrons", 'z_hi')
 print("Number of electrons in upper buffer:", n)
 assert n == 63
 
-n = _libwarpx.get_particle_boundary_buffer_size("electrons", 'z_lo')
+n = sim.extension.get_particle_boundary_buffer_size("electrons", 'z_lo')
 print("Number of electrons in lower buffer:", n)
 assert n == 67
 
-scraped_steps = _libwarpx.get_particle_boundary_buffer("electrons", 'z_hi', 'step_scraped', 0)
+scraped_steps = sim.extension.get_particle_boundary_buffer("electrons", 'z_hi', 'step_scraped', 0)
 for arr in scraped_steps:
     # print(arr)
     assert all(arr == 4)
 
-scraped_steps = _libwarpx.get_particle_boundary_buffer("electrons", 'z_lo', 'step_scraped', 0)
+scraped_steps = sim.extension.get_particle_boundary_buffer("electrons", 'z_lo', 'step_scraped', 0)
 for arr in scraped_steps:
     # print(arr)
     assert all(arr == 8)

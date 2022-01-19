@@ -39,7 +39,7 @@ struct CopyParticleAttribs
     /** \brief Construct a new functor
      *
      * \param a_pti iterator to the tile containing the macroparticles
-     * \param a_tmp holder for the temporary particle data
+     * \param tmp_particle_data holder for the temporary particle data
      * \param a_offset offset to apply when reading / writing particle data
      *        This is needed because when we use field gather buffers we don't
      *        always start at the particle with index 0.

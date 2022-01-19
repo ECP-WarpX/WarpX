@@ -27,22 +27,27 @@ NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdto
     m_coeff_set = coeff_set;
     m_cdtodz = cdtodz;
     m_nodal_gather = nodal_gather;
+
     // NCI Godfrey filter has fixed size, and is applied along z only.
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     stencil_length_each_dir = {1,1,5};
     slen = {1,1,5};
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     stencil_length_each_dir = {1,5};
     slen = {1,5,1};
+#else
+    amrex::ignore_unused(coeff_set, cdtodz, nodal_gather);
+    amrex::Abort("NCIGodfreyFilter not implemented in 1D!");
 #endif
 }
 
 void NCIGodfreyFilter::ComputeStencils(){
 
+#if (AMREX_SPACEDIM >= 2)
     using namespace warpx::nci_godfrey;
 
     // Sanity checks: filter length shoulz be 5 in z
-#if  (AMREX_SPACEDIM == 3)
+#if  defined(WARPX_DIM_3D)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         slen.z==5,"ERROR: NCI filter requires 5 points in z");
 #else
@@ -102,7 +107,7 @@ void NCIGodfreyFilter::ComputeStencils(){
     // so only 1 coeff, equal to 1)
     Vector<Real> h_stencil_x(1);
     h_stencil_x[0] = 1._rt;
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     Vector<Real> h_stencil_y(1);
     h_stencil_y[0] = 1._rt;
 #endif
@@ -110,22 +115,25 @@ void NCIGodfreyFilter::ComputeStencils(){
     // Due to the way Filter::DoFilter() is written,
     // coefficient 0 has to be /2
     h_stencil_x[0] /= 2._rt;
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     h_stencil_y[0] /= 2._rt;
 #endif
     h_stencil_z[0] /= 2._rt;
 
     stencil_x.resize(h_stencil_x.size());
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     stencil_y.resize(h_stencil_y.size());
 #endif
     stencil_z.resize(h_stencil_z.size());
 
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_x.begin(),h_stencil_x.end(),stencil_x.begin());
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_y.begin(),h_stencil_y.end(),stencil_y.begin());
 #endif
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_z.begin(),h_stencil_z.end(),stencil_z.begin());
 
     Gpu::synchronize();
+#else
+    amrex::Abort("NCIGodfreyFilter not implemented in 1D!");
+#endif
 }

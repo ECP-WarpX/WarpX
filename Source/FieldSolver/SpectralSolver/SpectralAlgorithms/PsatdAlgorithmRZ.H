@@ -23,7 +23,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
                          bool const nodal, amrex::Real const dt_step,
                          bool const update_with_rho,
                          const bool time_averaging,
-                         const bool J_linear_in_time,
+                         const bool do_multi_J,
                          const bool dive_cleaning,
                          const bool divb_cleaning);
         // Redefine functions from base class
@@ -38,6 +38,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          * base class \c SpectralBaseAlgorithmRZ and cannot be overridden by further
          * derived classes.
          *
+         * \param[in]     lev        The mesh-refinement level
          * \param[in,out] field_data All fields in Fourier space
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
@@ -55,6 +56,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          * base class \c SpectralBaseAlgorithmRZ and cannot be overridden by further
          * derived classes.
          *
+         * \param[in]     lev        The mesh-refinement level
          * \param[in,out] field_data All fields in Fourier space
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
@@ -72,7 +74,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         amrex::Real m_dt;
         bool m_update_with_rho;
         bool m_time_averaging;
-        bool m_J_linear_in_time;
+        bool m_do_multi_J;
         bool m_dive_cleaning;
         bool m_divb_cleaning;
         SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;

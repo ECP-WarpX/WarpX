@@ -34,7 +34,7 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
 
    # required dependencies
    module load cmake/3.20.2
-   module load intel/19.1.2
+   module load intel/2021.4
    module load mvapich2/2.3
 
    # optional: for PSATD support
@@ -81,7 +81,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_OPENPMD=ON
+   cmake -S . -B build
    cmake --build build -j 6
 
 This will build an executable in ``build/bin/``.

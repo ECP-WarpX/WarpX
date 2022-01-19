@@ -276,12 +276,15 @@ using namespace amrex;
      *        The guard cell values are set equal and opposite to the valid cell
      *        field value at the respective mirror locations.
      *
-     * \param[in,out] Efield     Boundary values of tangential Efield are set to zero.
-     * \param[in]     lev        level of the Multifab
-     * \param[in]     patch_type coarse or fine
+     * \param[in,out] Efield          Boundary values of tangential Efield are set to zero
+     * \param[in]     lev             level of the Multifab
+     * \param[in]     patch_type      coarse or fine
+     * \param[in]     split_pml_field whether pml the multifab is the regular Efield or
+     *                                split pml field
      */
-    void ApplyPECtoEfield ( std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-                            const int lev, PatchType patch_type);
+    void ApplyPECtoEfield ( std::array<amrex::MultiFab*, 3> Efield,
+                            const int lev, PatchType patch_type,
+                            const bool split_pml_field = false);
     /**
      * \brief Sets the normal component of the magnetic field at the PEC boundary to zero.
      *        The guard cell values are set equal and opposite to the valid cell
@@ -291,7 +294,7 @@ using namespace amrex;
      * \param[in]     lev        level of the Multifab
      * \param[in]     patch_type coarse or fine
      */
-    void ApplyPECtoBfield ( std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
+    void ApplyPECtoBfield ( std::array<amrex::MultiFab*, 3> Bfield,
                             const int lev, PatchType patch_type);
 }
 

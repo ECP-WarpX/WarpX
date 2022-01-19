@@ -13,3 +13,5 @@ This section collects typical user workflows and best practices for WarpX.
    workflows/debugging
    workflows/libensemble
    workflows/plot_distribution_mapping
+   workflows/psatd_stencil
+   workflows/archiving

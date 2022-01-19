@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2021 Modern Electron
 #
@@ -7,12 +7,8 @@
 # This script just checks that the PICMI file executed successfully.
 # If it did there will be a plotfile for the final step.
 
-import yt
+import sys
 
-plotfile = 'Python_particle_attr_access_plt_000010'
-ds = yt.load( plotfile )  # noqa
+step = int(sys.argv[1][-5:])
 
-plotfile = 'Python_particle_attr_access_plt_100010'
-ds = yt.load( plotfile )  # noqa
-
-assert True
+assert step == 10

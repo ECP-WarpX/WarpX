@@ -12,6 +12,7 @@
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXUtil.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 #include "WarpXWrappers.H"
 #include "WarpX_py.H"
@@ -100,9 +101,6 @@ namespace
     }
 }
 
-extern "C"
-{
-
     int warpx_Real_size()
     {
         return (int)sizeof(amrex::Real);
@@ -166,8 +164,14 @@ extern "C"
     {
         WarpX& warpx = WarpX::GetInstance();
         warpx.InitData();
-        if (warpx_py_afterinit) warpx_py_afterinit();
-        if (warpx_py_particleloader) warpx_py_particleloader();
+        if (warpx_py_afterinit) {
+            WARPX_PROFILE("warpx_py_afterinit");
+            warpx_py_afterinit();
+        }
+        if (warpx_py_particleloader) {
+            WARPX_PROFILE("warpx_py_particleloader");
+            warpx_py_particleloader();
+        }
     }
 
     void warpx_finalize ()
@@ -260,7 +264,7 @@ extern "C"
 
     void warpx_CheckGriddingForRZSpectral()
     {
-      CheckGriddingForRZSpectral();
+        CheckGriddingForRZSpectral();
     }
 
     amrex::Real warpx_getProbLo(int dir)
@@ -319,6 +323,9 @@ extern "C"
     WARPX_GET_FIELD(warpx_getBfieldCP, WarpX::GetInstance().get_pointer_Bfield_cp)
     WARPX_GET_FIELD(warpx_getBfieldFP, WarpX::GetInstance().get_pointer_Bfield_fp)
 
+    WARPX_GET_FIELD(warpx_getEdgeLengths, WarpX::GetInstance().get_pointer_edge_lengths)
+    WARPX_GET_FIELD(warpx_getFaceAreas, WarpX::GetInstance().get_pointer_face_areas)
+
     WARPX_GET_FIELD(warpx_getCurrentDensity, WarpX::GetInstance().get_pointer_current_fp)
     WARPX_GET_FIELD(warpx_getCurrentDensityCP, WarpX::GetInstance().get_pointer_current_cp)
     WARPX_GET_FIELD(warpx_getCurrentDensityFP, WarpX::GetInstance().get_pointer_current_fp)
@@ -335,6 +342,9 @@ extern "C"
     WARPX_GET_LOVECTS(warpx_getCurrentDensityCPLoVects, WarpX::GetInstance().get_pointer_current_cp)
     WARPX_GET_LOVECTS(warpx_getCurrentDensityFPLoVects, WarpX::GetInstance().get_pointer_current_fp)
 
+    WARPX_GET_LOVECTS(warpx_getEdgeLengthsLoVects, WarpX::GetInstance().get_pointer_edge_lengths)
+    WARPX_GET_LOVECTS(warpx_getFaceAreasLoVects, WarpX::GetInstance().get_pointer_face_areas)
+
     int* warpx_getEx_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_Efield_aux(0,0) );}
     int* warpx_getEy_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_Efield_aux(0,1) );}
     int* warpx_getEz_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_Efield_aux(0,2) );}
@@ -348,6 +358,12 @@ extern "C"
     int* warpx_getPhi_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_phi_fp(0) );}
     int* warpx_getF_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_F_fp(0) );}
     int* warpx_getG_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_G_fp(0) );}
+    int* warpx_get_edge_lengths_x_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_edge_lengths(0, 0) );}
+    int* warpx_get_edge_lengths_y_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_edge_lengths(0, 1) );}
+    int* warpx_get_edge_lengths_z_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_edge_lengths(0, 2) );}
+    int* warpx_get_face_areas_x_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_face_areas(0, 0) );}
+    int* warpx_get_face_areas_y_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_face_areas(0, 1) );}
+    int* warpx_get_face_areas_z_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_face_areas(0, 2) );}
 
 #define WARPX_GET_SCALAR(SCALAR, GETTER) \
     amrex::Real** SCALAR(int lev, \
@@ -454,14 +470,14 @@ extern "C"
     WARPX_GET_LOVECTS_PML_SCALAR(warpx_getGfieldCPLoVects_PML, GetG_cp)
     WARPX_GET_LOVECTS_PML_SCALAR(warpx_getGfieldFPLoVects_PML, GetG_fp)
 
-    int* warpx_getF_pml_nodal_flag()
+    int* warpx_getF_pml_nodal_flag ()
     {
         auto * pml = WarpX::GetInstance().GetPML(0);
         if (!pml) return nullptr;
         return getFieldNodalFlagData(pml->GetF_fp());
     }
 
-    int* warpx_getG_pml_nodal_flag()
+    int* warpx_getG_pml_nodal_flag ()
     {
         auto * pml = WarpX::GetInstance().GetPML(0);
         if (!pml) return nullptr;
@@ -721,5 +737,3 @@ extern "C"
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         mypc.Redistribute();
     }
-
-}

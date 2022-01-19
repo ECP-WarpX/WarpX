@@ -36,7 +36,7 @@ class SpectralSolverRZ
                           amrex::RealVect const dx, amrex::Real const dt,
                           bool const update_with_rho,
                           const bool fft_do_time_averaging,
-                          const bool J_linear_in_time,
+                          const bool do_multi_J,
                           const bool dive_cleaning,
                           const bool divb_cleaning);
 
@@ -98,6 +98,7 @@ class SpectralSolverRZ
          * by its derived classes (e.g. PsatdAlgorithmRZ), from
          * objects of class SpectralSolverRZ through the private unique pointer \c algorithm
          *
+         * \param[in]     lev     The mesh refinement level
          * \param[in,out] current two-dimensional array of unique pointers to MultiFab
          *                        storing the three components of the current density
          * \param[in]     rho     unique pointer to MultiFab storing the charge density
@@ -111,6 +112,7 @@ class SpectralSolverRZ
          * derived classes, from objects of class SpectralSolverRZ through the private
          * unique pointer \c algorithm.
          *
+         * \param[in]     lev     The mesh refinement level
          * \param[in,out] current Array of unique pointers to \c MultiFab storing
          * the three components of the current density
          */

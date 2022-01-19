@@ -1,7 +1,9 @@
-from pywarpx import picmi
+#!/usr/bin/env python3
+
 #from warp import picmi
 import argparse
 
+from pywarpx import picmi
 
 parser = argparse.ArgumentParser(description="Gaussian beam PICMI example")
 
