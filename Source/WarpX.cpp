@@ -523,7 +523,7 @@ WarpX::ReadParameters ()
                 m_abort_on_warning_threshold = WarnPriority::low;
             else {
                 const auto t_str = str_abort_on_warning_threshold +
-                    "is not a valid option for warpx.abort_on_warning_threshold";
+                    "is not a valid option for warpx.abort_on_warning_threshold (use: low, medium or high)";
                 Abort(t_str.c_str());
             }
         }
