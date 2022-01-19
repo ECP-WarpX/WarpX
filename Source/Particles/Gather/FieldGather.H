@@ -360,7 +360,6 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // Gather field on particle Exp from field on grid ex_arr
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<=depos_order; iy++){
-            #pragma omp simd reduction (+:Exp)
             for (int ix=0; ix<= depos_order - galerkin_interpolation; ix++){
                 Exp += sx_ex[ix]*sy_ex[iy]*sz_ex[iz]*
                     ex_arr(lo.x+j_ex+ix, lo.y+k_ex+iy, lo.z+l_ex+iz);
@@ -370,7 +369,6 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // Gather field on particle Eyp from field on grid ey_arr
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<= depos_order - galerkin_interpolation; iy++){
-            #pragma omp simd reduction (+:Eyp)
             for (int ix=0; ix<=depos_order; ix++){
                 Eyp += sx_ey[ix]*sy_ey[iy]*sz_ey[iz]*
                     ey_arr(lo.x+j_ey+ix, lo.y+k_ey+iy, lo.z+l_ey+iz);
@@ -380,7 +378,6 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // Gather field on particle Ezp from field on grid ez_arr
     for (int iz=0; iz<= depos_order - galerkin_interpolation; iz++){
         for (int iy=0; iy<=depos_order; iy++){
-            #pragma omp simd reduction (+:Ezp)
             for (int ix=0; ix<=depos_order; ix++){
                 Ezp += sx_ez[ix]*sy_ez[iy]*sz_ez[iz]*
                     ez_arr(lo.x+j_ez+ix, lo.y+k_ez+iy, lo.z+l_ez+iz);
@@ -390,7 +387,6 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // Gather field on particle Bzp from field on grid bz_arr
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<= depos_order - galerkin_interpolation; iy++){
-            #pragma omp simd reduction (+:Bzp)
             for (int ix=0; ix<= depos_order - galerkin_interpolation; ix++){
                 Bzp += sx_bz[ix]*sy_bz[iy]*sz_bz[iz]*
                     bz_arr(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz);
@@ -400,7 +396,6 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // Gather field on particle Byp from field on grid by_arr
     for (int iz=0; iz<= depos_order - galerkin_interpolation; iz++){
         for (int iy=0; iy<=depos_order; iy++){
-            #pragma omp simd reduction (+:Byp)
             for (int ix=0; ix<= depos_order - galerkin_interpolation; ix++){
                 Byp += sx_by[ix]*sy_by[iy]*sz_by[iz]*
                     by_arr(lo.x+j_by+ix, lo.y+k_by+iy, lo.z+l_by+iz);
@@ -410,7 +405,6 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // Gather field on particle Bxp from field on grid bx_arr
     for (int iz=0; iz<= depos_order - galerkin_interpolation; iz++){
         for (int iy=0; iy<= depos_order - galerkin_interpolation; iy++){
-            #pragma omp simd reduction (+:Bxp)
             for (int ix=0; ix<=depos_order; ix++){
                 Bxp += sx_bx[ix]*sy_bx[iy]*sz_bx[iz]*
                     bx_arr(lo.x+j_bx+ix, lo.y+k_bx+iy, lo.z+l_bx+iz);
