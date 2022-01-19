@@ -5,10 +5,10 @@
 # --- Turner et al. (2013) - https://doi.org/10.1063/1.4775084
 
 import argparse
-import numpy as np
 import sys
 
-from pywarpx import callbacks, picmi, fields
+import numpy as np
+from pywarpx import callbacks, fields, picmi
 
 constants = picmi.constants
 
