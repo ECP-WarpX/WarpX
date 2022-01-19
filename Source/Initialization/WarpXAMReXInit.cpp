@@ -13,7 +13,7 @@
 namespace {
     /** Overwrite defaults in AMReX Inputs
      *
-     * This overwrites defaults in amrex::ParamParse for inputs.
+     * This overwrites defaults in amrex::ParmParse for inputs.
      */
     void
     overwrite_amrex_parser_defaults()
