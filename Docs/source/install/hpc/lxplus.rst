@@ -28,7 +28,7 @@ GCC
 ^^^
 The pre-installed GNU compiler is outdated so we need a more recent compiler. Here we use the gcc 9.2.0 from the LCG project, but other options are possible.
 
-We activate it by doing 
+We activate it by doing
 
 .. code-block:: bash
 
@@ -46,13 +46,13 @@ We download and activate Spack in ``$WORK``:
     git clone -c feature.manyFiles=true https://github.com/spack/spack.git
     source spack/share/spack/setup-env.sh
 
-When installing packages Spack will try to set permissions in a way which is forbidden on the LXPLUS file system (AFS), but we can avoid this by modifying the ``spack/etc/spack/defaults/config.yaml``. Inside this file we need to change the line 
+When installing packages Spack will try to set permissions in a way which is forbidden on the LXPLUS file system (AFS), but we can avoid this by modifying the ``spack/etc/spack/defaults/config.yaml``. Inside this file we need to change the line
 
 .. code-block:: bash
 
     allow_sgid: true
 
-to 
+to
 
 .. code-block:: bash
 
@@ -82,7 +82,7 @@ With the following commands we install the dependencies for WarpX:
     spack install mpi ^ncurses+symlinks %gcc@9.2.0
     spack install openpmd-api ^ncurses+symlinks %gcc@9.2.0
     spack install pkgconfig %gcc@9.2.0
-    
+
 If we are planning on running WarpX on GPUs we also need to install Cuda:
 
 .. code-block:: bash
@@ -102,14 +102,14 @@ And if we installed Cuda:
 .. code-block:: bash
 
     spack load cuda
-   
+
 Building WarpX
 ^^^^^^^^^^^^^^
 
 We download WarpX in ``$WORK``:
 
 .. code-block:: bash
-    
+
     cd $WORK
     git clone https://github.com/ECP-WarpX/WarpX.git
     cd WarpX
@@ -117,14 +117,14 @@ We download WarpX in ``$WORK``:
 Then we build WarpX:
 
 .. code-block:: bash
-    
+
     cmake -S . -B build
     cmake --build build
 
 Or if we need to compile with cuda:
 
 .. code-block:: bash
-    
+
     cmake -S . -B build -DWarpX_COMPUTE=CUDA -DAMReX_CUDA_ARCH='7.0;7.5'
     cmake --build build
 
