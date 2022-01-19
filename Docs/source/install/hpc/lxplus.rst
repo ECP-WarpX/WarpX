@@ -8,17 +8,17 @@ The LXPLUS cluster is located at CERN.
 * `Lxplus documentation <https://lxplusdoc.web.cern.ch>`__
 * Batch system: `HTCondor <https://batchdocs.web.cern.ch/index.html>`__
 * Filesystem locations:
-    * User folder: `/afs/cern.ch/user/<a>/<account>` (10GByte)
-    * Work folder: `/afs/cern.ch/work/<a>/<account>` (100GByte)
-    * Eos storage: `/eos/home-<a>/<account>` (1T)
+    * User folder: ``/afs/cern.ch/user/<a>/<account>`` (10GByte)
+    * Work folder: ``/afs/cern.ch/work/<a>/<account>`` (100GByte)
+    * Eos storage: ``/eos/home-<a>/<account>`` (1T)
 
 Through LXPLUS we have access to CPU and GPU nodes (the latter equipped with NVIDIA A100 or T4 GPUs).
 
 Installation
 ------------
-Only very little software is pre-installed on Lxplus so we show how to install from scratch all the dependencies using Spack.
+Only very little software is pre-installed on Lxplus so we show how to install from scratch all the dependencies using `Spack <https://spack.io>`__.
 
-For size reasons it is not advisable to install WarpX in the $HOME directory, while it should be installed in the "work directory". For this purpose we set an environment variable with the path to the "work directory"
+For size reasons it is not advisable to install WarpX in the ``$HOME`` directory, while it should be installed in the "work directory". For this purpose we set an environment variable with the path to the "work directory"
 
 .. code-block:: bash
 
@@ -46,17 +46,11 @@ We download and activate Spack in ``$WORK``:
     git clone -c feature.manyFiles=true https://github.com/spack/spack.git
     source spack/share/spack/setup-env.sh
 
-When installing packages Spack will try to set permissions in a way which is forbidden on the LXPLUS file system (AFS), but we can avoid this by modifying the ``spack/etc/spack/defaults/config.yaml``. Inside this file we need to change the line
+When installing packages Spack will try to set permissions in a way which is forbidden on the LXPLUS file system (AFS), but we can avoid this setting the Spack option:
 
 .. code-block:: bash
 
-    allow_sgid: true
-
-to
-
-.. code-block:: bash
-
-    allow_sgid: false
+    spack config add "config:allow_sgid:false"
 
 Now we add our gcc 9.2.0 compiler to spack:
 
@@ -106,7 +100,8 @@ And if we installed Cuda:
 Building WarpX
 ^^^^^^^^^^^^^^
 
-We download WarpX in ``$WORK``:
+We prepare and load the Spack software environment as above.
+Then we download WarpX in ``$WORK``:
 
 .. code-block:: bash
 
@@ -121,7 +116,7 @@ Then we build WarpX:
     cmake -S . -B build
     cmake --build build
 
-Or if we need to compile with cuda:
+Or if we need to compile with CUDA:
 
 .. code-block:: bash
 
@@ -133,7 +128,7 @@ Python Bindings
 
 Here we assume that a Python interpreter has been set up (e.g. with Spack or a Miniconda).
 
-Then we compile WarpX as in the previous section (with or without Cuda) adding ``-DWarpX_LIB=ON`` and then we install it into our Python:
+Then we compile WarpX as in the previous section (with or without CUDA) adding ``-DWarpX_LIB=ON`` and then we install it into our Python:
 
 .. code-block:: bash
 
