@@ -24,6 +24,13 @@ For size reasons it is not advisable to install WarpX in the ``$HOME`` directory
 
     export WORK=/afs/cern.ch/work/<a>/<account>/
 
+We clone WarpX in ``$WORK``:
+
+.. code-block:: bash
+
+    cd $WORK
+    git clone https://github.com/ECP-WarpX/WarpX.git
+
 GCC
 ^^^
 The pre-installed GNU compiler is outdated so we need a more recent compiler. Here we use the gcc 9.2.0 from the LCG project, but other options are possible.
@@ -46,7 +53,7 @@ We download and activate Spack in ``$WORK``:
     git clone -c feature.manyFiles=true https://github.com/spack/spack.git
     source spack/share/spack/setup-env.sh
 
-When installing packages Spack will try to set permissions in a way which is forbidden on the LXPLUS file system (AFS), but we can avoid this setting the Spack option:
+When installing packages Spack will try to set permissions in a way which is forbidden on the LXPLUS file system (AFS), but we can avoid this by setting the Spack option:
 
 .. code-block:: bash
 
@@ -61,54 +68,51 @@ Now we add our gcc 9.2.0 compiler to spack:
 Installing the Dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-With the following commands we install the dependencies for WarpX:
+To install the depndencies we create an anonymous environment.
+First of all we copy the envornmnet file in a local folder with the desired name of the environment (e.g. ``warpx-lxplus``):
 
 .. code-block:: bash
 
-    spack install ncurses+symlinks %gcc@9.2.0
-    spack install adios2 ^ncurses+symlinks %gcc@9.2.0
-    spack install blaspp ^ncurses+symlinks %gcc@9.2.0
-    spack install cmake ^ncurses+symlinks %gcc@9.2.0
-    spack install ccache ^ncurses+symlinks %gcc@9.2.0
-    spack install fftw ^ncurses+symlinks %gcc@9.2.0
-    spack install hdf5 ^ncurses+symlinks %gcc@9.2.0
-    spack install lapackpp ^ncurses+symlinks %gcc@9.2.0
-    spack install mpi ^ncurses+symlinks %gcc@9.2.0
-    spack install openpmd-api ^ncurses+symlinks %gcc@9.2.0
-    spack install pkgconfig %gcc@9.2.0
+    cd $WORK
+    mkdir warpx-lxplus
+    cp $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml $WORK/warpx-lxplus/.
 
-If we are planning on running WarpX on GPUs we also need to install Cuda:
+Then we activate the environment:
 
 .. code-block:: bash
 
-    spack install cuda ^ncurses+symlinks %gcc@9.2.0
+    spack env activate -d warpx-lxplus
 
-Now we load the installed modules:
-
-.. code-block:: bash
-
-    spack load cmake
-    spack load openmpi
-    spack load ccache
-
-And if we installed Cuda:
+If we are planning on running with GPU support then we must set the environment variable ``SPACK_STACK_USE_CUDA``
 
 .. code-block:: bash
 
-    spack load cuda
+    export SPACK_STACK_USE_CUDA=1
+
+and if we want to use the python interface we must set the environment variable ``SPACK_STACK_USE_PYTHON``
+
+.. code-block:: bash
+
+    export SPACK_STACK_USE_PYTHON=1
+
+Then we can install the required packages:
+
+.. code-block:: bash
+
+    spack install
+
+The environment ``warpx-lxplus`` must be reactivated everytime that we log in so it could be a good idea to add the following lines to the ``.bashrc``:
+
+.. code-block:: bash
+
+    cd $WORK
+    spack env activate -d warpx-lxplus
+    cd $HOME    
 
 Building WarpX
 ^^^^^^^^^^^^^^
 
 We prepare and load the Spack software environment as above.
-Then we download WarpX in ``$WORK``:
-
-.. code-block:: bash
-
-    cd $WORK
-    git clone https://github.com/ECP-WarpX/WarpX.git
-    cd WarpX
-
 Then we build WarpX:
 
 .. code-block:: bash
@@ -126,7 +130,7 @@ Or if we need to compile with CUDA:
 Python Bindings
 ^^^^^^^^^^^^^^^
 
-Here we assume that a Python interpreter has been set up (e.g. with Spack).
+Here we assume that a Python interpreter has been set up as explained previously.
 
 Then we compile WarpX as in the previous section (with or without CUDA) adding ``-DWarpX_LIB=ON`` and then we install it into our Python:
 
