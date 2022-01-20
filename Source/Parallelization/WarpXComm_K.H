@@ -654,14 +654,8 @@ void warpx_interp (const int j,
     // Avoid compiler warnings
 #if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(nox, noy, stencil_coeffs_x, stencil_coeffs_y);
-#endif
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::ignore_unused(noy, stencil_coeffs_y);
-#endif
-
-    // Avoid compiler warnings
-#ifndef WARPX_USE_PSATD
-    amrex::ignore_unused(stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 #endif
 
     // If dst_nodal = true , we are centering from a staggered grid to a nodal grid
@@ -691,7 +685,7 @@ void warpx_interp (const int j,
 
 #if   defined(WARPX_DIM_1D_Z)
     const int noj = noz;
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const int noj = nox;
     const int nok = noz;
 #elif defined(WARPX_DIM_3D)
@@ -705,7 +699,7 @@ void warpx_interp (const int j,
 #if   defined(WARPX_DIM_1D_Z)
     constexpr amrex::Real wk = 1.0_rt;
     constexpr amrex::Real wl = 1.0_rt;
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const amrex::Real wk = (interp_k) ? 0.5_rt : 1.0_rt;
     constexpr amrex::Real wl = 1.0_rt;
 #elif defined(WARPX_DIM_3D)
@@ -718,7 +712,7 @@ void warpx_interp (const int j,
     const int jmax = (interp_j) ? j + noj/2 + shift - 1 : j;
 
     // Min and max for interpolation loop along k
-#if   defined(WARPX_DIM_1D_Z)
+#if defined(WARPX_DIM_1D_Z)
     // k = 0 always
     const int kmin = k;
     const int kmax = k;
@@ -728,7 +722,7 @@ void warpx_interp (const int j,
 #endif
 
     // Min and max for interpolation loop along l
-#if   (AMREX_SPACEDIM <= 2)
+#if (AMREX_SPACEDIM <= 2)
     // l = 0 always
     const int lmin = l;
     const int lmax = l;
