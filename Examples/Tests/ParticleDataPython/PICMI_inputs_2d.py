@@ -36,7 +36,6 @@ xmax = 0.03
 ymin = 0
 ymax = 0.03
 
-
 ##########################
 # numerics components
 ##########################
@@ -105,6 +104,9 @@ sim.initialize_warpx()
 # python particle data access
 ##########################
 
+# set numpy random seed so that the particle properties generated
+# below will be reproducible from run to run
+np.random.seed(30025025)
 
 sim.extension.add_real_comp('electrons', 'newPid')
 
