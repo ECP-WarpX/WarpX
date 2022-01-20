@@ -8,9 +8,9 @@
 #ifndef NUCLEAR_FUSION_FUNC_H_
 #define NUCLEAR_FUSION_FUNC_H_
 
-#include "BinaryCollisionUtils.H"
 #include "SingleNuclearFusionEvent.H"
 
+#include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -56,6 +56,10 @@ public:
                        const bool isSameSpecies) : m_isSameSpecies(isSameSpecies)
     {
         using namespace amrex::literals;
+
+#ifdef AMREX_SINGLE_PRECISION_PARTICLES
+        amrex::Abort("Nuclear fusion module does not currently work with single precision");
+#endif
 
         m_fusion_type = BinaryCollisionUtils::get_nuclear_fusion_type(collision_name, mypc);
 
@@ -106,16 +110,16 @@ public:
      *
      * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
      * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
-     * @param[in] I1 and I2 are the index arrays. They determine all elements that will be used.
-     * @param[in] soa_1 and soa_2 contain the struct of array data of the two species
-     * @param[in] m1 and m2 are masses.
+     * @param[in] I1,I2 index arrays. They determine all elements that will be used.
+     * @param[in] soa_1,soa_2 contain the struct of array data of the two species
+     * @param[in] m1,m2 are masses.
      * @param[in] dt is the time step length between two collision calls.
      * @param[in] dV is the volume of the corresponding cell.
      * @param[in] cell_start_pair is the start index of the pairs in that cell.
      * @param[out] p_mask is a mask that will be set to true if a fusion event occurs for a given
      * pair. It is only needed here to store information that will be used later on when actually
      * creating the product particles.
-     * @param[out] p_pair_indices_1 and p_pair_indices_2 are arrays that store the indices of the
+     * @param[out] p_pair_indices_1,p_pair_indices_2 arrays that store the indices of the
      * particles of a given pair. They are only needed here to store information that will be used
      * later on when actually creating the product particles.
      * @param[out] p_pair_reaction_weight stores the weight of the product particles. It is only

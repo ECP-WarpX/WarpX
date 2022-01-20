@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019 Jean-Luc Vay, Maxence Thevenet, Remi Lehe
 #
@@ -6,23 +6,28 @@
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
-
-
+#
 # This is a script that analyses the simulation results from
 # the script `inputs.multi.rt`. This simulates a 3D periodic plasma wave.
 # The electric field in the simulation is given (in theory) by:
 # $$ E_x = \epsilon \,\frac{m_e c^2 k_x}{q_e}\sin(k_x x)\cos(k_y y)\cos(k_z z)\sin( \omega_p t)$$
 # $$ E_y = \epsilon \,\frac{m_e c^2 k_y}{q_e}\cos(k_x x)\sin(k_y y)\cos(k_z z)\sin( \omega_p t)$$
 # $$ E_z = \epsilon \,\frac{m_e c^2 k_z}{q_e}\cos(k_x x)\cos(k_y y)\sin(k_z z)\sin( \omega_p t)$$
-import sys
 import re
+import sys
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import yt
+
 yt.funcs.mylog.setLevel(50)
+import os
+
 import numpy as np
-from scipy.constants import e, m_e, epsilon_0, c
+from scipy.constants import c, e, epsilon_0, m_e
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -34,6 +39,9 @@ current_correction = True if re.search( 'current_correction', fn ) else False
 
 # Parse test name and check if Vay current deposition (algo.current_deposition=vay) is used
 vay_deposition = True if re.search( 'Vay_deposition', fn ) else False
+
+# Parse test name and check if div(E)/div(B) cleaning (warpx.do_div<e,b>_cleaning=1) is used
+div_cleaning = True if re.search('div_cleaning', fn) else False
 
 # Parameters (these parameters must match the parameters in `inputs.multi.rt`)
 epsilon = 0.01
@@ -142,7 +150,33 @@ if current_correction or vay_deposition:
     print("tolerance = {}".format(tolerance))
     assert( error_rel < tolerance )
 
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+if div_cleaning:
+    ds_old = yt.load('Langmuir_multi_psatd_div_cleaning_plt00038')
+    ds_mid = yt.load('Langmuir_multi_psatd_div_cleaning_plt00039')
+    ds_new = yt.load(fn) # this is the last plotfile
+
+    ad_old = ds_old.covering_grid(level = 0, left_edge = ds_old.domain_left_edge, dims = ds_old.domain_dimensions)
+    ad_mid = ds_mid.covering_grid(level = 0, left_edge = ds_mid.domain_left_edge, dims = ds_mid.domain_dimensions)
+    ad_new = ds_new.covering_grid(level = 0, left_edge = ds_new.domain_left_edge, dims = ds_new.domain_dimensions)
+
+    rho   = ad_mid['rho'].v.squeeze()
+    divE  = ad_mid['divE'].v.squeeze()
+    F_old = ad_old['F'].v.squeeze()
+    F_new = ad_new['F'].v.squeeze()
+
+    # Check max norm of error on dF/dt = div(E) - rho/epsilon_0
+    # (the time interval between the old and new data is 2*dt)
+    dt = 1.203645751e-15
+    x = F_new - F_old
+    y = (divE - rho/epsilon_0) * 2 * dt
+    error_rel = np.amax(np.abs(x - y)) / np.amax(np.abs(y))
+    tolerance = 1e-2
+    print("Check div(E) cleaning:")
+    print("error_rel = {}".format(error_rel))
+    print("tolerance = {}".format(tolerance))
+    assert(error_rel < tolerance)
+
+test_name = os.path.split(os.getcwd())[1]
 
 if re.search( 'single_precision', fn ):
     checksumAPI.evaluate_checksum(test_name, fn, rtol=1.e-3)

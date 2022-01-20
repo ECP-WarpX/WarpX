@@ -55,11 +55,11 @@ int main(int argc, char* argv[])
     CheckGriddingForRZSpectral();
 #endif
 
-    WARPX_PROFILE_VAR("main()", pmain);
-
-    const auto strt_total = static_cast<Real>(amrex::second());
-
     {
+        WARPX_PROFILE_VAR("main()", pmain);
+
+        const auto strt_total = static_cast<Real>(amrex::second());
+
         WarpX warpx;
 
         warpx.InitData();
@@ -73,9 +73,9 @@ int main(int argc, char* argv[])
             ParallelDescriptor::ReduceRealMax(end_total, ParallelDescriptor::IOProcessorNumber());
             Print() << "Total Time                     : " << end_total << '\n';
         }
-    }
 
-    WARPX_PROFILE_VAR_STOP(pmain);
+        WARPX_PROFILE_VAR_STOP(pmain);
+    }
 
 #if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
     rocfft_cleanup();

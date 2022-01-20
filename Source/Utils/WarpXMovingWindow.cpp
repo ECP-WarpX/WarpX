@@ -48,7 +48,7 @@
 using namespace amrex;
 
 void
-WarpX::UpdatePlasmaInjectionPosition (Real a_dt)
+WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
 {
     int dir = moving_window_dir;
     // Continuously inject plasma in new cells (by default only on level 0)
@@ -56,13 +56,19 @@ WarpX::UpdatePlasmaInjectionPosition (Real a_dt)
         // In boosted-frame simulations, the plasma has moved since the last
         // call to this function, and injection position needs to be updated
         current_injection_position -= WarpX::beta_boost *
-#if ( AMREX_SPACEDIM == 3 )
+#if defined(WARPX_DIM_3D)
             WarpX::boost_direction[dir] * PhysConst::c * a_dt;
-#elif ( AMREX_SPACEDIM == 2 )
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             // In 2D, dir=0 corresponds to x and dir=1 corresponds to z
             // This needs to be converted in order to index `boost_direction`
             // which has 3 components, for both 2D and 3D simulations.
             WarpX::boost_direction[2*dir] * PhysConst::c * a_dt;
+#elif defined(WARPX_DIM_1D_Z)
+            // In 1D, dir=0 corresponds to z
+            // This needs to be converted in order to index `boost_direction`
+            // which has 3 components, for 1D, 2D, and 3D simulations.
+            WarpX::boost_direction[2] * PhysConst::c * a_dt;
+            amrex::ignore_unused(dir);
 #endif
     }
 }
@@ -94,11 +100,11 @@ WarpX::MoveWindow (const int step, bool move_j)
     }
 
     // compute the number of cells to shift on the base level
-    Real new_lo[AMREX_SPACEDIM];
-    Real new_hi[AMREX_SPACEDIM];
-    const Real* current_lo = geom[0].ProbLo();
-    const Real* current_hi = geom[0].ProbHi();
-    const Real* cdx = geom[0].CellSize();
+    amrex::Real new_lo[AMREX_SPACEDIM];
+    amrex::Real new_hi[AMREX_SPACEDIM];
+    const amrex::Real* current_lo = geom[0].ProbLo();
+    const amrex::Real* current_hi = geom[0].ProbHi();
+    const amrex::Real* cdx = geom[0].CellSize();
     int num_shift_base = static_cast<int>((moving_window_x - current_lo[dir]) / cdx[dir]);
 
     if (num_shift_base == 0) return 0;
@@ -112,16 +118,16 @@ WarpX::MoveWindow (const int step, bool move_j)
     new_lo[dir] = current_lo[dir] + num_shift_base * cdx[dir];
     new_hi[dir] = current_hi[dir] + num_shift_base * cdx[dir];
 
-    ResetProbDomain(RealBox(new_lo, new_hi));
+    ResetProbDomain(amrex::RealBox(new_lo, new_hi));
 
     // Moving slice coordinates - lo and hi - with moving window //
     // slice box is modified only if slice diagnostics is initialized in input //
     if ( slice_plot_int > 0 )
     {
-       Real new_slice_lo[AMREX_SPACEDIM];
-       Real new_slice_hi[AMREX_SPACEDIM];
-       const Real* current_slice_lo = slice_realbox.lo();
-       const Real* current_slice_hi = slice_realbox.hi();
+       amrex::Real new_slice_lo[AMREX_SPACEDIM];
+       amrex::Real new_slice_hi[AMREX_SPACEDIM];
+       const amrex::Real* current_slice_lo = slice_realbox.lo();
+       const amrex::Real* current_slice_hi = slice_realbox.hi();
        for ( int i = 0; i < AMREX_SPACEDIM; i++) {
            new_slice_lo[i] = current_slice_lo[i];
            new_slice_hi[i] = current_slice_hi[i];
@@ -148,8 +154,8 @@ WarpX::MoveWindow (const int step, bool move_j)
         // Shift each component of vector fields (E, B, j)
         for (int dim = 0; dim < 3; ++dim) {
             // Fine grid
-            ParserExecutor<3> Bfield_parser;
-            ParserExecutor<3> Efield_parser;
+            amrex::ParserExecutor<3> Bfield_parser;
+            amrex::ParserExecutor<3> Efield_parser;
             bool use_Bparser = false;
             bool use_Eparser = false;
             if (B_ext_grid_s == "parse_b_ext_grid_function") {
@@ -174,8 +180,8 @@ WarpX::MoveWindow (const int step, bool move_j)
                 shiftMF(*current_fp[lev][dim], geom[lev], num_shift, dir);
             }
             if (do_pml && pml[lev]->ok()) {
-                const std::array<MultiFab*, 3>& pml_B = pml[lev]->GetB_fp();
-                const std::array<MultiFab*, 3>& pml_E = pml[lev]->GetE_fp();
+                const std::array<amrex::MultiFab*, 3>& pml_B = pml[lev]->GetB_fp();
+                const std::array<amrex::MultiFab*, 3>& pml_E = pml[lev]->GetE_fp();
                 shiftMF(*pml_B[dim], geom[lev], num_shift, dir);
                 shiftMF(*pml_E[dim], geom[lev], num_shift, dir);
             }
@@ -194,8 +200,8 @@ WarpX::MoveWindow (const int step, bool move_j)
                     shiftMF(*current_cp[lev][dim], geom[lev-1], num_shift_crse, dir);
                 }
                 if (do_pml && pml[lev]->ok()) {
-                    const std::array<MultiFab*, 3>& pml_B = pml[lev]->GetB_cp();
-                    const std::array<MultiFab*, 3>& pml_E = pml[lev]->GetE_cp();
+                    const std::array<amrex::MultiFab*, 3>& pml_B = pml[lev]->GetB_cp();
+                    const std::array<amrex::MultiFab*, 3>& pml_E = pml[lev]->GetE_cp();
                     shiftMF(*pml_B[dim], geom[lev-1], num_shift_crse, dir);
                     shiftMF(*pml_E[dim], geom[lev-1], num_shift_crse, dir);
                 }
@@ -207,14 +213,14 @@ WarpX::MoveWindow (const int step, bool move_j)
             // Fine grid
             shiftMF(*F_fp[lev], geom[lev], num_shift, dir);
             if (do_pml && pml[lev]->ok()) {
-                MultiFab* pml_F = pml[lev]->GetF_fp();
+                amrex::MultiFab* pml_F = pml[lev]->GetF_fp();
                 shiftMF(*pml_F, geom[lev], num_shift, dir);
             }
             if (lev > 0) {
                 // Coarse grid
                 shiftMF(*F_cp[lev], geom[lev-1], num_shift_crse, dir);
                 if (do_pml && pml[lev]->ok()) {
-                    MultiFab* pml_F = pml[lev]->GetF_cp();
+                    amrex::MultiFab* pml_F = pml[lev]->GetF_cp();
                     shiftMF(*pml_F, geom[lev-1], num_shift_crse, dir);
                 }
                 shiftMF(*rho_cp[lev], geom[lev-1], num_shift_crse, dir);
@@ -242,16 +248,16 @@ WarpX::MoveWindow (const int step, bool move_j)
         // particleBox encloses the cells where we generate particles
         // (only injects particles in an integer number of cells,
         // for correct particle spacing)
-        RealBox particleBox = geom[lev].ProbDomain();
-        Real new_injection_position;
+        amrex::RealBox particleBox = geom[lev].ProbDomain();
+        amrex::Real new_injection_position;
         if (moving_window_v >= 0){
             // Forward-moving window
-            Real dx = geom[lev].CellSize(dir);
+            amrex::Real dx = geom[lev].CellSize(dir);
             new_injection_position = current_injection_position +
                 std::floor( (geom[lev].ProbHi(dir) - current_injection_position)/dx ) * dx;
         } else {
             // Backward-moving window
-            Real dx = geom[lev].CellSize(dir);
+            amrex::Real dx = geom[lev].CellSize(dir);
             new_injection_position = current_injection_position -
                 std::floor( (current_injection_position - geom[lev].ProbLo(dir))/dx) * dx;
         }
@@ -276,26 +282,26 @@ WarpX::MoveWindow (const int step, bool move_j)
 }
 
 void
-WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
+WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom, int num_shift, int dir,
                 amrex::Real external_field, bool useparser,
-                ParserExecutor<3> const& field_parser)
+                amrex::ParserExecutor<3> const& field_parser)
 {
     WARPX_PROFILE("WarpX::shiftMF()");
-    const BoxArray& ba = mf.boxArray();
-    const DistributionMapping& dm = mf.DistributionMap();
+    const amrex::BoxArray& ba = mf.boxArray();
+    const amrex::DistributionMapping& dm = mf.DistributionMap();
     const int nc = mf.nComp();
-    const IntVect& ng = mf.nGrowVect();
+    const amrex::IntVect& ng = mf.nGrowVect();
 
     AMREX_ALWAYS_ASSERT(ng[dir] >= num_shift);
 
-    MultiFab tmpmf(ba, dm, nc, ng);
-    MultiFab::Copy(tmpmf, mf, 0, 0, nc, ng);
+    amrex::MultiFab tmpmf(ba, dm, nc, ng);
+    amrex::MultiFab::Copy(tmpmf, mf, 0, 0, nc, ng);
 
     if ( WarpX::safe_guard_cells ) {
         // Fill guard cells.
         WarpXCommUtil::FillBoundary(tmpmf, geom.periodicity());
     } else {
-        IntVect ng_mw = IntVect::TheUnitVector();
+        amrex::IntVect ng_mw = amrex::IntVect::TheUnitVector();
         // Enough guard cells in the MW direction
         ng_mw[dir] = num_shift;
         // Make sure we don't exceed number of guard cells allocated
@@ -305,9 +311,9 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
     }
 
     // Make a box that covers the region that the window moved into
-    const IndexType& typ = ba.ixType();
-    const Box& domainBox = geom.Domain();
-    Box adjBox;
+    const amrex::IndexType& typ = ba.ixType();
+    const amrex::Box& domainBox = geom.Domain();
+    amrex::Box adjBox;
     if (num_shift > 0) {
         adjBox = adjCellHi(domainBox, dir, ng[dir]);
     } else {
@@ -328,11 +334,11 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
         }
     }
 
-    IntVect shiftiv(0);
+    amrex::IntVect shiftiv(0);
     shiftiv[dir] = num_shift;
-    Dim3 shift = shiftiv.dim3();
+    amrex::Dim3 shift = shiftiv.dim3();
 
-    const RealBox& real_box = geom.ProbDomain();
+    const amrex::RealBox& real_box = geom.ProbDomain();
     const auto dx = geom.CellSizeArray();
 
 #ifdef AMREX_USE_OMP
@@ -340,12 +346,12 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
 #endif
 
 
-    for (MFIter mfi(tmpmf); mfi.isValid(); ++mfi )
+    for (amrex::MFIter mfi(tmpmf); mfi.isValid(); ++mfi )
     {
         auto const& dstfab = mf.array(mfi);
         auto const& srcfab = tmpmf.array(mfi);
 
-        const Box& outbox = mfi.fabbox() & adjBox;
+        const amrex::Box& outbox = mfi.fabbox() & adjBox;
 
         if (outbox.ok()) {
             if (useparser == false) {
@@ -356,7 +362,7 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
             } else if (useparser == true) {
                 // index type of the src mf
                 auto const& mf_IndexType = (tmpmf).ixType();
-                IntVect mf_type(AMREX_D_DECL(0,0,0));
+                amrex::IntVect mf_type(AMREX_D_DECL(0,0,0));
                 for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                     mf_type[idim] = mf_IndexType.nodeCentered(idim);
                 }
@@ -365,17 +371,24 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
                       [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) noexcept
                 {
                       // Compute x,y,z co-ordinates based on index type of mf
-                      Real fac_x = (1.0 - mf_type[0]) * dx[0]*0.5;
-                      Real x = i*dx[0] + real_box.lo(0) + fac_x;
-#if (AMREX_SPACEDIM==2)
-                      Real y = 0.0;
-                      Real fac_z = (1.0 - mf_type[1]) * dx[1]*0.5;
-                      Real z = j*dx[1] + real_box.lo(1) + fac_z;
+#if defined(WARPX_DIM_1D_Z)
+                      amrex::Real x = 0.0;
+                      amrex::Real y = 0.0;
+                      amrex::Real fac_z = (1.0 - mf_type[0]) * dx[0]*0.5;
+                      amrex::Real z = i*dx[0] + real_box.lo(0) + fac_z;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                      amrex::Real fac_x = (1.0 - mf_type[0]) * dx[0]*0.5;
+                      amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
+                      amrex::Real y = 0.0;
+                      amrex::Real fac_z = (1.0 - mf_type[1]) * dx[1]*0.5;
+                      amrex::Real z = j*dx[1] + real_box.lo(1) + fac_z;
 #else
-                      Real fac_y = (1.0 - mf_type[1]) * dx[1]*0.5;
-                      Real y = j*dx[1] + real_box.lo(1) + fac_y;
-                      Real fac_z = (1.0 - mf_type[2]) * dx[2]*0.5;
-                      Real z = k*dx[2] + real_box.lo(2) + fac_z;
+                      amrex::Real fac_x = (1.0 - mf_type[0]) * dx[0]*0.5;
+                      amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
+                      amrex::Real fac_y = (1.0 - mf_type[1]) * dx[1]*0.5;
+                      amrex::Real y = j*dx[1] + real_box.lo(1) + fac_y;
+                      amrex::Real fac_z = (1.0 - mf_type[2]) * dx[2]*0.5;
+                      amrex::Real z = k*dx[2] + real_box.lo(2) + fac_z;
 #endif
                       srcfab(i,j,k,n) = field_parser(x,y,z);
                 });
@@ -383,7 +396,7 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
 
         }
 
-        Box dstBox = mf[mfi].box();
+        amrex::Box dstBox = mf[mfi].box();
         if (num_shift > 0) {
             dstBox.growHi(dir, -num_shift);
         } else {
@@ -399,50 +412,60 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
 void
 WarpX::ShiftGalileanBoundary ()
 {
-    Real cur_time = t_new[0];
-    Real new_lo[AMREX_SPACEDIM];
-    Real new_hi[AMREX_SPACEDIM];
-    const Real* current_lo = geom[0].ProbLo();
-    const Real* current_hi = geom[0].ProbHi();
+    amrex::Real cur_time = t_new[0];
+    amrex::Real new_lo[AMREX_SPACEDIM];
+    amrex::Real new_hi[AMREX_SPACEDIM];
+    const amrex::Real* current_lo = geom[0].ProbLo();
+    const amrex::Real* current_hi = geom[0].ProbHi();
 
-    Real time_shift = (cur_time - time_of_last_gal_shift);
+    amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         m_galilean_shift = {
-            m_v_galilean[0]* time_shift,
+            m_v_galilean[0]*time_shift,
             m_v_galilean[1]*time_shift,
             m_v_galilean[2]*time_shift };
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         m_galilean_shift = {
-            m_v_galilean[0]* time_shift,
+            m_v_galilean[0]*time_shift,
+            std::numeric_limits<amrex::Real>::quiet_NaN(),
+            m_v_galilean[2]*time_shift };
+#elif defined(WARPX_DIM_1D_Z)
+        m_galilean_shift = {
+            std::numeric_limits<Real>::quiet_NaN(),
             std::numeric_limits<Real>::quiet_NaN(),
             m_v_galilean[2]*time_shift };
 #endif
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         for (int i=0; i<AMREX_SPACEDIM; i++) {
             new_lo[i] = current_lo[i] + m_galilean_shift[i];
             new_hi[i] = current_hi[i] + m_galilean_shift[i];
         }
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     {
         new_lo[0] = current_lo[0] + m_galilean_shift[0];
         new_hi[0] = current_hi[0] + m_galilean_shift[0];
         new_lo[1] = current_lo[1] + m_galilean_shift[2];
         new_hi[1] = current_hi[1] + m_galilean_shift[2];
-      }
-    #endif
+    }
+#elif defined(WARPX_DIM_1D_Z)
+    {
+        new_lo[0] = current_lo[0] + m_galilean_shift[2];
+        new_hi[0] = current_hi[0] + m_galilean_shift[2];
+    }
+#endif
     time_of_last_gal_shift = cur_time;
 
-    ResetProbDomain(RealBox(new_lo, new_hi));
+    ResetProbDomain(amrex::RealBox(new_lo, new_hi));
 }
 
 void
-WarpX::ResetProbDomain (const RealBox& rb)
+WarpX::ResetProbDomain (const amrex::RealBox& rb)
 {
-    Geometry::ResetDefaultProbDomain(rb);
+    amrex::Geometry::ResetDefaultProbDomain(rb);
     for (int lev = 0; lev <= max_level; ++lev) {
-        Geometry g = Geom(lev);
+        amrex::Geometry g = Geom(lev);
         g.ProbDomain(rb);
         SetGeometry(lev, g);
     }

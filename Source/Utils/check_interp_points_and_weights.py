@@ -24,8 +24,10 @@
 # data. C++ implementation in Source/Utils/CoarsenMR.H/.cpp and Source/Utils/CoarsenIO.H/.cpp
 #-------------------------------------------------------------------------------
 
-import numpy as np
 import sys
+
+import numpy as np
+
 
 # Fine grid limits (without ghost cells)
 def fine_grid_limits( sf ):

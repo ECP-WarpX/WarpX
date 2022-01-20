@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019 Maxence Thevenet
 #
@@ -7,10 +7,13 @@
 # License: BSD-3-Clause-LBNL
 
 
+import os
 import sys
-import yt ; yt.funcs.mylog.setLevel(0)
+
 import numpy as np
 from scipy import signal
+
+import yt ; yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -58,5 +61,5 @@ print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

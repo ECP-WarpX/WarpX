@@ -18,7 +18,7 @@ warpx.fine_tag_lo = -0.8  -0.8
 warpx.fine_tag_hi =  0.8   0.8
 
 # Geometry
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 2
 geometry.prob_lo     = -2.0  -2.0         # physical domain
 geometry.prob_hi     =  2.0   2.0
 

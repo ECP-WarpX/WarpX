@@ -1,19 +1,20 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 1000
-amr.n_cell =  64  512
+max_step = 100
+amr.n_cell =  256
 amr.max_grid_size = 64   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 32 # minimum size of each AMReX box, used to decompose the domain
-geometry.coord_sys   = 1                  # 0: Cartesian
-geometry.prob_lo     =   0.   -56.e-6    # physical domain
-geometry.prob_hi     =  30.e-6    12.e-6
+geometry.dims = 1
+geometry.prob_lo     =  -56.e-6    # physical domain
+geometry.prob_hi     =   12.e-6
 amr.max_level = 0 # Maximum level in hierarchy (1 might be unstable, >1 is not supported)
 
-warpx.n_rz_azimuthal_modes = 2
-
-boundary.field_lo = none pec
-boundary.field_hi = pec pec
+#################################
+####### Boundary condition ######
+#################################
+boundary.field_lo = pec
+boundary.field_hi = pec
 
 #################################
 ############ NUMERICS ###########
@@ -21,10 +22,12 @@ boundary.field_hi = pec pec
 warpx.verbose = 1
 warpx.do_dive_cleaning = 0
 warpx.use_filter = 1
-warpx.cfl = 1. # if 1., the time step is set to its CFL limit
+warpx.cfl = 0.9 # if 1., the time step is set to its CFL limit
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z # Only z is supported for the moment
 warpx.moving_window_v = 1.0 # units of speed of light
+warpx.do_dynamic_scheduling = 0
+warpx.serialize_ics = 1
 
 # Order of particle shape factors
 algo.particle_shape = 3
@@ -32,38 +35,16 @@ algo.particle_shape = 3
 #################################
 ############ PLASMA #############
 #################################
-particles.species_names = electrons beam
+particles.species_names = electrons
 
-electrons.charge = -q_e
-electrons.mass = m_e
+electrons.species_type = electron
 electrons.injection_style = "NUniformPerCell"
-electrons.num_particles_per_cell_each_dim = 1 4 1
-electrons.xmin = -20.e-6
-electrons.xmax =  20.e-6
+electrons.num_particles_per_cell_each_dim = 10
 electrons.zmin =  10.e-6
 electrons.profile = constant
 electrons.density = 2.e23  # number of electrons per m^3
 electrons.momentum_distribution_type = "at_rest"
 electrons.do_continuous_injection = 1
-
-beam.charge = -q_e
-beam.mass = m_e
-beam.injection_style = "gaussian_beam"
-beam.x_rms = .5e-6
-beam.y_rms = .5e-6
-beam.z_rms = .5e-6
-beam.x_m = 0.
-beam.y_m = 0.
-beam.z_m = -28.e-6
-beam.npart = 100
-beam.q_tot = -1.e-12
-beam.momentum_distribution_type = "gaussian"
-beam.ux_m = 0.0
-beam.uy_m = 0.0
-beam.uz_m = 500.
-beam.ux_th = 2.
-beam.uy_th = 2.
-beam.uz_th = 50.
 
 #################################
 ############ PLASMA #############
@@ -82,7 +63,6 @@ laser1.wavelength = 0.8e-6               # The wavelength of the laser (in m)
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 200
+diag1.intervals = 100
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-diag1.dump_rz_modes = 1

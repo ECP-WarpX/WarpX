@@ -38,7 +38,9 @@ WarpX::ComputeDt ()
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
         // Computation of dt for spectral algorithm
         // (determined by the minimum cell size in all directions)
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_1D_Z)
+        deltat = cfl * dx[0] / PhysConst::c;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         deltat = cfl * std::min(dx[0], dx[1]) / PhysConst::c;
 #else
         deltat = cfl * std::min(dx[0], std::min(dx[1], dx[2])) / PhysConst::c;
@@ -84,10 +86,13 @@ WarpX::PrintDtDxDyDz ()
     for (int lev=0; lev <= max_level; lev++) {
         const amrex::Real* dx_lev = geom[lev].CellSize();
         amrex::Print() << "Level " << lev << ": dt = " << dt[lev]
+#if defined(WARPX_DIM_1D_Z)
+                       << " ; dz = " << dx_lev[0] << '\n';
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                        << " ; dx = " << dx_lev[0]
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                        << " ; dz = " << dx_lev[1] << '\n';
-#elif (defined WARPX_DIM_3D)
+#elif defined(WARPX_DIM_3D)
+                       << " ; dx = " << dx_lev[0]
                        << " ; dy = " << dx_lev[1]
                        << " ; dz = " << dx_lev[2] << '\n';
 #endif

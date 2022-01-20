@@ -1,5 +1,5 @@
 amrex.v=1
-max_step = 500
+max_step = 250
 amr.n_cell = 64 256
 
 amr.max_grid_size = 4096
@@ -11,9 +11,8 @@ amr.max_level = 1
 warpx.fine_tag_lo = -2.e-6   -15.e-6
 warpx.fine_tag_hi =  2.e-6    -7.e-6
 
-
 # Geometry
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 2
 geometry.prob_lo     = -30.e-6   -20.e-6      # physical domain
 geometry.prob_hi     =  30.e-6     0.e-6
 
@@ -108,5 +107,5 @@ warpx.moving_window_v = 1. # in units of the speed of light
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 200
+diag1.intervals = 250
 diag1.diag_type = Full

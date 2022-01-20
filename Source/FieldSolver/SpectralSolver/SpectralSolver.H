@@ -47,6 +47,7 @@ class SpectralSolver
          * \param[in] norder_y spectral order along y
          * \param[in] norder_z spectral order along z
          * \param[in] nodal whether the spectral solver is applied to a nodal or staggered grid
+         * \param[in] fill_guards Update the guard cells (in addition to the valid cells) when pushing the fields in time
          * \param[in] v_galilean three-dimensional vector containing the components of the Galilean
          *                       velocity for the standard or averaged Galilean PSATD solvers
          * \param[in] v_comoving three-dimensional vector containing the components of the comoving
@@ -58,9 +59,9 @@ class SpectralSolver
          *                                (no domain decomposition)
          * \param[in] update_with_rho whether rho is used in the field update equations
          * \param[in] fft_do_time_averaging whether the time averaging algorithm is used
-         * \param[in] J_linear_in_time whether to use two currents computed at the beginning and
-         *                             the end of the time interval (instead of using one current
-         *                             computed at half time)
+         * \param[in] do_multi_J whether the multi-J algorithm is used (hence two currents
+         *                       computed at the beginning and the end of the time interval
+         *                       instead of one current computed at half time)
          * \param[in] dive_cleaning whether to use div(E) cleaning to account for errors in
          *                          Gauss law (new field F in the update equations)
          * \param[in] divb_cleaning whether to use div(B) cleaning to account for errors in
@@ -80,7 +81,7 @@ class SpectralSolver
                         const bool periodic_single_box,
                         const bool update_with_rho,
                         const bool fft_do_time_averaging,
-                        const bool J_linear_in_time,
+                        const bool do_multi_J,
                         const bool dive_cleaning,
                         const bool divb_cleaning);
 
@@ -123,6 +124,7 @@ class SpectralSolver
          * by its derived classes (e.g. PsatdAlgorithm, GalileanAlgorithm), from
          * objects of class SpectralSolver through the private unique pointer \c algorithm
          *
+         * \param[in]     lev     The mesh refinement level
          * \param[in,out] current three-dimensional array of unique pointers to MultiFab
          *                        storing the three components of the current density
          * \param[in]     rho     unique pointer to MultiFab storing the charge density
@@ -139,6 +141,7 @@ class SpectralSolver
          * derived classes, from objects of class SpectralSolver through the private
          * unique pointer \c algorithm.
          *
+         * \param[in]     lev     The mesh refinement level
          * \param[in,out] current Array of unique pointers to \c MultiFab storing
          *                        the three components of the current density
          */

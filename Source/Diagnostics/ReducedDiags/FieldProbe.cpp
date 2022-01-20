@@ -31,9 +31,13 @@
 #include <AMReX_Vector.H>
 
 #include <cmath>
+#include <cstddef>
+#include <cstdlib>
+#include <iostream>
 #include <ostream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 using namespace amrex;
 
@@ -72,18 +76,55 @@ FieldProbe::FieldProbe (std::string rd_name)
      *     Define whether ot not to integrate fields
      */
     amrex::ParmParse pp_rd_name(rd_name);
-    getWithParser(pp_rd_name, "x_probe", x_probe);
-    getWithParser(pp_rd_name, "y_probe", y_probe);
-    getWithParser(pp_rd_name, "z_probe", z_probe);
+    std::string m_probe_geometry_str = "Point";
+    pp_rd_name.query("probe_geometry", m_probe_geometry_str);
+
+    if (m_probe_geometry_str == "Point")
+    {
+        m_probe_geometry = DetectorGeometry::Point;
+        getWithParser(pp_rd_name, "x_probe", x_probe);
+        getWithParser(pp_rd_name, "y_probe", y_probe);
+        getWithParser(pp_rd_name, "z_probe", z_probe);
+    }
+    else if (m_probe_geometry_str == "Line")
+    {
+        m_probe_geometry = DetectorGeometry::Line;
+        getWithParser(pp_rd_name, "x_probe", x_probe);
+        getWithParser(pp_rd_name, "y_probe", y_probe);
+        getWithParser(pp_rd_name, "z_probe", z_probe);
+        getWithParser(pp_rd_name, "x1_probe", x1_probe);
+        getWithParser(pp_rd_name, "y1_probe", y1_probe);
+        getWithParser(pp_rd_name, "z1_probe", z1_probe);
+        getWithParser(pp_rd_name, "resolution", m_resolution);
+    }
+    else if (m_probe_geometry_str == "Plane")
+    {
+        m_probe_geometry = DetectorGeometry::Plane;
+        getWithParser(pp_rd_name, "x_probe", x_probe);
+        getWithParser(pp_rd_name, "y_probe", y_probe);
+        getWithParser(pp_rd_name, "z_probe", z_probe);
+        getWithParser(pp_rd_name, "target_normal_x", target_normal_x);
+        getWithParser(pp_rd_name, "target_normal_y", target_normal_y);
+        getWithParser(pp_rd_name, "target_normal_z", target_normal_z);
+        getWithParser(pp_rd_name, "target_up_x", target_up_x);
+        getWithParser(pp_rd_name, "target_up_y", target_up_y);
+        getWithParser(pp_rd_name, "target_up_z", target_up_z);
+        getWithParser(pp_rd_name, "detector_radius", detector_radius);
+        getWithParser(pp_rd_name, "resolution", m_resolution);
+    }
+    else
+    {
+        std::string err_str = "ERROR: Invalid probe geometry '";
+        err_str.append(m_probe_geometry_str);
+        err_str.append("'. Valid geometries are Point, Line or Plane.");
+        amrex::Abort(err_str);
+    }
     pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
     pp_rd_name.query("interp_order", interp_order);
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
                                      "Field probe interp_order should be less than or equal to algo.particle_shape");
-    // resize data array
-    m_data.resize(noutputs, 0.0_rt);
-
     if (ParallelDescriptor::IOProcessor())
     {
         if ( m_IsNotRestart )
@@ -93,7 +134,6 @@ FieldProbe::FieldProbe (std::string rd_name)
 
             // write header row
             int c = 0;
-            ofs << "#";
             ofs << "[" << c++ << "]step()";
             ofs << m_sep;
             ofs << "[" << c++ << "]time(s)";
@@ -104,44 +144,50 @@ FieldProbe::FieldProbe (std::string rd_name)
             {
                 u_map =
                 {
-                    {FieldProbePIdx::Ex , " (V*s/m) "},
-                    {FieldProbePIdx::Ey , " (V*s/m) "},
-                    {FieldProbePIdx::Ez , " (V*s/m) "},
-                    {FieldProbePIdx::Bx , " (T*s) "},
-                    {FieldProbePIdx::By , " (T*s) "},
-                    {FieldProbePIdx::Bz , " (T*s) "},
-                    {FieldProbePIdx::S , " (W*s/m^2) "}
+                    {FieldProbePIdx::Ex , "-(V*s/m)"},
+                    {FieldProbePIdx::Ey , "-(V*s/m)"},
+                    {FieldProbePIdx::Ez , "-(V*s/m)"},
+                    {FieldProbePIdx::Bx , "-(T*s)"},
+                    {FieldProbePIdx::By , "-(T*s)"},
+                    {FieldProbePIdx::Bz , "-(T*s)"},
+                    {FieldProbePIdx::S , "-(W*s/m^2)"}
                 };
             }
             else
             {
                 u_map =
                 {
-                    {FieldProbePIdx::Ex , " (V/m) "},
-                    {FieldProbePIdx::Ey , " (V/m) "},
-                    {FieldProbePIdx::Ez , " (V/m) "},
-                    {FieldProbePIdx::Bx , " (T) "},
-                    {FieldProbePIdx::By , " (T) "},
-                    {FieldProbePIdx::Bz , " (T) "},
-                    {FieldProbePIdx::S , " (W/m^2) "}
+                    {FieldProbePIdx::Ex , "-(V/m)"},
+                    {FieldProbePIdx::Ey , "-(V/m)"},
+                    {FieldProbePIdx::Ez , "-(V/m)"},
+                    {FieldProbePIdx::Bx , "-(T)"},
+                    {FieldProbePIdx::By , "-(T)"},
+                    {FieldProbePIdx::Bz , "-(T)"},
+                    {FieldProbePIdx::S , "-(W/m^2)"}
                 };
             }
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" << c++ << "]probe_Ex_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Ex];
+                ofs << "[" << c++ << "]part_x_lev" + std::to_string(lev) + "-(m)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]probe_Ey_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Ey];
+                ofs << "[" << c++ << "]part_y_lev" + std::to_string(lev) + "-(m)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]probe_Ez_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Ez];
+                ofs << "[" << c++ << "]part_z_lev" + std::to_string(lev) + "-(m)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]probe_Bx_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Bx];
+                ofs << "[" << c++ << "]part_Ex_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Ex];
                 ofs << m_sep;
-                ofs << "[" << c++ << "]probe_By_lev" + std::to_string(lev) + u_map[FieldProbePIdx::By];
+                ofs << "[" << c++ << "]part_Ey_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Ey];
                 ofs << m_sep;
-                ofs << "[" << c++ << "]probe_Bz_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Bz];
+                ofs << "[" << c++ << "]part_Ez_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Ez];
                 ofs << m_sep;
-                ofs << "[" << c++ << "]probe_S_lev" + std::to_string(lev) + u_map[FieldProbePIdx::S]; //update all units if integrating (might be energy / m^2)
+                ofs << "[" << c++ << "]part_Bx_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Bx];
+                ofs << m_sep;
+                ofs << "[" << c++ << "]part_By_lev" + std::to_string(lev) + u_map[FieldProbePIdx::By];
+                ofs << m_sep;
+                ofs << "[" << c++ << "]part_Bz_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Bz];
+                ofs << m_sep;
+                ofs << "[" << c++ << "]part_S_lev" + std::to_string(lev) + u_map[FieldProbePIdx::S];
             }
             ofs << std::endl;
 
@@ -153,24 +199,111 @@ FieldProbe::FieldProbe (std::string rd_name)
 
 void FieldProbe::InitData ()
 {
-    //create 1D array for X, Y, and Z of particles
-    amrex::Vector<amrex::ParticleReal> xpos;
-    amrex::Vector<amrex::ParticleReal> ypos;
-    amrex::Vector<amrex::ParticleReal> zpos;
-
-    // for now, only one MPI rank adds a probe particle
-    if (ParallelDescriptor::IOProcessor())
+    if (m_probe_geometry == DetectorGeometry::Point)
     {
-        xpos.push_back(x_probe);
-        ypos.push_back(y_probe);
-        zpos.push_back(z_probe);
-    }
 
-    // add np particles on lev 0 to m_probe
-    m_probe.AddNParticles(0, xpos, ypos, zpos);
+        // create 1D vector for X, Y, and Z of particles
+        amrex::Vector<amrex::ParticleReal> xpos;
+        amrex::Vector<amrex::ParticleReal> ypos;
+        amrex::Vector<amrex::ParticleReal> zpos;
+
+        // for now, only one MPI rank adds a probe particle
+        if (ParallelDescriptor::IOProcessor())
+        {
+            xpos.push_back(x_probe);
+            ypos.push_back(y_probe);
+            zpos.push_back(z_probe);
+        }
+
+        // add particles on lev 0 to m_probe
+        m_probe.AddNParticles(0, xpos, ypos, zpos);
+    }
+    else if (m_probe_geometry == DetectorGeometry::Line)
+    {
+        amrex::Vector<amrex::ParticleReal> xpos;
+        amrex::Vector<amrex::ParticleReal> ypos;
+        amrex::Vector<amrex::ParticleReal> zpos;
+        if (ParallelDescriptor::IOProcessor())
+        {
+            xpos.reserve(m_resolution);
+            ypos.reserve(m_resolution);
+            zpos.reserve(m_resolution);
+
+            // Final - initial / steps. Array contains dx, dy, dz
+            amrex::Real DetLineStepSize[3]{
+                    (x1_probe - x_probe) / (m_resolution - 1),
+                    (y1_probe - y_probe) / (m_resolution - 1),
+                    (z1_probe - z_probe) / (m_resolution - 1)};
+            for ( int step = 0; step < m_resolution; step++)
+            {
+                xpos.push_back(x_probe + (DetLineStepSize[0] * step));
+                ypos.push_back(y_probe + (DetLineStepSize[1] * step));
+                zpos.push_back(z_probe + (DetLineStepSize[2] * step));
+            }
+        }
+        m_probe.AddNParticles(0, xpos, ypos, zpos);
+    }
+    else if (m_probe_geometry == DetectorGeometry::Plane)
+    {
+        amrex::Vector<amrex::ParticleReal> xpos;
+        amrex::Vector<amrex::ParticleReal> ypos;
+        amrex::Vector<amrex::ParticleReal> zpos;
+        if (ParallelDescriptor::IOProcessor())
+        {
+            std::size_t const res2 = std::size_t(m_resolution) * std::size_t(m_resolution);
+            xpos.reserve(res2);
+            ypos.reserve(res2);
+            zpos.reserve(res2);
+
+            // create vector orthonormal to input vectors
+            amrex::Real orthotarget[3]{
+                target_normal_y * target_up_z - target_normal_z * target_up_y,
+                target_normal_z * target_up_x - target_normal_x * target_up_z,
+                target_normal_x * target_up_y - target_normal_y * target_up_x};
+            // find upper left and lower right bounds of detector
+            amrex::Real direction[3]{
+                orthotarget[0] - target_up_x,
+                orthotarget[1] - target_up_y,
+                orthotarget[2] - target_up_z};
+            amrex::Real upperleft[3]{
+                x_probe - (direction[0] * detector_radius),
+                y_probe - (direction[1] * detector_radius),
+                z_probe - (direction[2] * detector_radius)};
+            amrex::Real lowerright[3]{
+                x_probe + (direction[0] * detector_radius),
+                y_probe + (direction[1] * detector_radius),
+                z_probe + (direction[2] * detector_radius)};
+            // create array containing point-to-point step size
+            amrex::Real DetPlaneStepSize[3]{
+                (lowerright[0] - upperleft[0]) / (m_resolution - 1),
+                (lowerright[1] - upperleft[1]) / (m_resolution - 1),
+                (lowerright[2] - upperleft[2]) / (m_resolution - 1)};
+            amrex::Real temp_pos[3]{};
+            // Target point on top of plane (arbitrarily top of plane perpendicular to yz)
+            // For each point along top of plane, fill in YZ's beneath, then push back
+            for ( int step = 0; step < m_resolution; step++)
+            {
+                temp_pos[0] = upperleft[0] + (DetPlaneStepSize[0] * step);
+                for ( int yzstep = 0; yzstep < m_resolution; yzstep++)
+                {
+                    temp_pos[1] = upperleft[1] + (DetPlaneStepSize[1] * yzstep);
+                    temp_pos[2] = upperleft[2] + (DetPlaneStepSize[2] * yzstep);
+                    xpos.push_back(temp_pos[0]);
+                    ypos.push_back(temp_pos[1]);
+                    zpos.push_back(temp_pos[2]);
+                }
+            }
+        }
+        m_probe.AddNParticles(0, xpos, ypos, zpos);
+    }
+    else
+    {
+    amrex::Abort("ERROR: Invalid probe geometry. Valid geometries are point (0) and line (1).");
+    }
 }
 
-void FieldProbe::LoadBalance() {
+void FieldProbe::LoadBalance ()
+{
     m_probe.Redistribute();
 }
 
@@ -189,7 +322,9 @@ bool FieldProbe::ProbeInDomain () const
      * value in a position array will be the y value, but in the case of 2D, prob_lo[1]
      * and prob_hi[1] refer to z. This is a result of warpx.Geom(lev).
      */
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_1D_Z)
+    return z_probe >= prob_lo[1] && z_probe < prob_hi[1];
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     return x_probe >= prob_lo[0] && x_probe < prob_hi[0] &&
            z_probe >= prob_lo[1] && z_probe < prob_hi[1];
 #else
@@ -237,24 +372,40 @@ void FieldProbe::ComputeDiags (int step)
         amrex::IndexType const Bytype = By.ixType();
         amrex::IndexType const Bztype = Bz.ixType();
 
-        //defined for use in determining which CPU contains the particles
-        int probe_proc = -1;
-
         // loop over each particle
         // TODO: add OMP parallel as in PhysicalParticleContainer::Evolve
+        long numparticles = 0; // particles on this MPI rank
         using MyParIter = FieldProbeParticleContainer::iterator;
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
+            // count particle on MPI rank
+            numparticles += pti.numParticles();
+        }
+
+        if (m_intervals.contains(step+1))
+        {
+            // reset m_data vector to clear pushed values. Reserves data
+            m_data.clear();
+            m_data.shrink_to_fit();
+            m_data.reserve(numparticles * noutputs);
+        }
+
+        for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
+        {
             const auto getPosition = GetParticlePosition(pti);
+            auto const np = pti.numParticles();
 
             if( ProbeInDomain() )
             {
                 const auto cell_size = gm.CellSizeArray();
                 const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_1D_Z)
+                const int j_probe = 0;
+                const int k_probe = 0;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 const int j_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]));
                 const int k_probe = 0;
-#elif(AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
                 const int j_probe = static_cast<int>(amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]));
                 const int k_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]));
 #endif
@@ -290,7 +441,6 @@ void FieldProbe::ComputeDiags (int step)
                 const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
                 const Dim3 lo = lbound(box);
 
-                // Interpolating to the probe positions for each particle
                 // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
                 const int temp_modes = WarpX::n_rz_azimuthal_modes;
                 const int temp_interp_order = interp_order;
@@ -298,7 +448,7 @@ void FieldProbe::ComputeDiags (int step)
                 const bool temp_field_probe_integrate = m_field_probe_integrate;
                 amrex::Real const dt = WarpX::GetInstance().getdt(lev);
 
-                long const np = pti.numParticles();
+                // Interpolating to the probe positions for each particle
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
                     amrex::ParticleReal xp, yp, zp;
@@ -349,7 +499,6 @@ void FieldProbe::ComputeDiags (int step)
                     }
                     else
                     {
-                        // Either save the interpolated fields or the raw fields depending on the raw_fields flag
                         part_Ex[ip] = Exp; //remember to add lorentz transform
                         part_Ey[ip] = Eyp; //remember to add lorentz transform
                         part_Ez[ip] = Ezp; //remember to add lorentz transform
@@ -359,63 +508,107 @@ void FieldProbe::ComputeDiags (int step)
                         part_S[ip] = S; //remember to add lorentz transform
                     }
                 });// ParallelFor Close
-
                 // this check is here because for m_field_probe_integrate == True, we always compute
                 // but we only write when we truly are in an output interval step
-                if (m_intervals.contains(step+1)) {
-                    for (int ip = 0; ip < np; ip++) {
-                        // Fill output array
-                        m_data[ip * noutputs + FieldProbePIdx::Ex] = part_Ex[ip];
-                        m_data[ip * noutputs + FieldProbePIdx::Ey] = part_Ey[ip];
-                        m_data[ip * noutputs + FieldProbePIdx::Ez] = part_Ez[ip];
-                        m_data[ip * noutputs + FieldProbePIdx::Bx] = part_Bx[ip];
-                        m_data[ip * noutputs + FieldProbePIdx::By] = part_By[ip];
-                        m_data[ip * noutputs + FieldProbePIdx::Bz] = part_Bz[ip];
-                        m_data[ip * noutputs + FieldProbePIdx::S] = part_S[ip];
+                if (m_intervals.contains(step+1))
+                {
+                    for (auto ip=0; ip < np; ip++)
+                    {
+                        amrex::ParticleReal xp, yp, zp;
+                        getPosition(ip, xp, yp, zp);
+
+                        // push to output vector
+                        m_data.push_back(xp);
+                        m_data.push_back(yp);
+                        m_data.push_back(zp);
+                        m_data.push_back(part_Ex[ip]);
+                        m_data.push_back(part_Ey[ip]);
+                        m_data.push_back(part_Ez[ip]);
+                        m_data.push_back(part_Bx[ip]);
+                        m_data.push_back(part_By[ip]);
+                        m_data.push_back(part_Bz[ip]);
+                        m_data.push_back(part_S[ip]);
                     }
-                    /* m_data now contains up-to-date values for:
-                     *  [Ex, Ey, Ez, Bx, By, Bz, and S] */
+                /* m_data now contains up-to-date values for:
+                 *  [x, y, z, Ex, Ey, Ez, Bx, By, Bz, and S] */
                 }
-
-                // do we have the one and only probe particle on our MPI rank?
-                if (np > 0)
-                    probe_proc = amrex::ParallelDescriptor::MyProc();
             }
-
         } // end particle iterator loop
-
-        // make sure data is in m_data
         Gpu::synchronize();
+        if (m_intervals.contains(step+1))
+        {
+            // returns total number of mpi notes into mpisize
+            int mpisize = ParallelDescriptor::NProcs();
 
-        // this check is here because for m_field_probe_integrate == True, we always compute
-        // but we only write when we truly are in an output interval step
-        if (m_intervals.contains(step+1)) {
-            /*
-             * All the processors have probe_proc = -1 except the one that contains the point, which
-             * has probe_proc equal to a number >=0. Therefore, ReduceIntMax communicates to all the
-             * processors the rank of the processor which contains the point
-             */
-            amrex::ParallelDescriptor::ReduceIntMax(probe_proc);
+            // allocates data space for length_array. Will contain size of m_data from each processor
+            amrex::Vector<int> length_vector;
+            amrex::Vector<int> localsize;
 
-            if (probe_proc != amrex::ParallelDescriptor::IOProcessorNumber() and probe_proc != -1) {
-                if (amrex::ParallelDescriptor::MyProc() == probe_proc) {
-                    amrex::ParallelDescriptor::Send(m_data.data(), noutputs,
-                                                    amrex::ParallelDescriptor::IOProcessorNumber(),
-                                                    0);
-                }
-                if (amrex::ParallelDescriptor::MyProc()
-                    == amrex::ParallelDescriptor::IOProcessorNumber()) {
-                    amrex::ParallelDescriptor::Recv(m_data.data(), noutputs, probe_proc, 0);
-                }
+            if (amrex::ParallelDescriptor::IOProcessor()) {
+                length_vector.resize(mpisize, 0);
             }
-        } // send to IO Processor
+            localsize.resize(1,0);
+            localsize[0] = m_data.size();
+
+            // gather size of m_data from each processor
+            amrex::ParallelDescriptor::Gather(localsize.data(), 1,
+                                              length_vector.data(), 1,
+                                              amrex::ParallelDescriptor::IOProcessorNumber());
+
+            // IO processor sums values from length_array to get size of total output array.
+            /* displs records the size of each m_data as well as previous displs. This array
+             * tells Gatherv where in the m_data_out array allocation to write incomming data. */
+            long total_data_size = 0;
+            amrex::Vector<int> displs_vector;
+            if (amrex::ParallelDescriptor::IOProcessor()) {
+                displs_vector.resize(mpisize, 0);
+                displs_vector[0] = 0;
+                total_data_size += length_vector[0];
+                for (int i=1; i<mpisize; i++) {
+                    displs_vector[i] = (displs_vector[i-1] + length_vector[i-1]);
+                    total_data_size += length_vector[i];
+                }
+                // valid particles are counted (for all MPI ranks) to inform output processes as to size of output
+                m_valid_particles = total_data_size / noutputs;
+                m_data_out.resize(total_data_size, 0);
+            }
+            // resize receive buffer (resize, initialize 0)
+            // gather m_data of varied lengths from all processors. Prints to m_data_out
+            amrex::ParallelDescriptor::Gatherv(m_data.data(), localsize[0],
+                                               m_data_out.data(), length_vector, displs_vector,
+                                               amrex::ParallelDescriptor::IOProcessorNumber());
+        }
     }// end loop over refinement levels
+    // make sure data is in m_data on the IOProcessor
+    // TODO: In the future, we want to use a parallel I/O method instead (plotfiles or openPMD)
 } // end void FieldProbe::ComputeDiags
 
 void FieldProbe::WriteToFile (int step) const
 {
     if (ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())
     {
-        ReducedDiags::WriteToFile (step);
+        // open file
+        std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
+                          std::ofstream::out | std::ofstream::app};
+
+        // loop over num valid particles and write
+        for (int i = 0; i < m_valid_particles; i++)
+        {
+            ofs << std::fixed << std::defaultfloat;
+            ofs << step + 1;
+            ofs << m_sep;
+            ofs << std::fixed << std::setprecision(14) << std::scientific;
+            // write time
+            ofs << WarpX::GetInstance().gett_new(0);
+
+            for (int k = 0; k < noutputs; k++)
+            {
+                ofs << m_sep;
+                ofs << m_data_out[i * noutputs + k];
+            }
+            ofs << std::endl;
+        } // end loop over data size
+    // close file
+    ofs.close();
     }
 }

@@ -1,3 +1,9 @@
+/* Copyright 2021 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_BACKTRANSFORMFUNCTOR_H_
 #define WARPX_BACKTRANSFORMFUNCTOR_H_
 
@@ -64,6 +70,7 @@ public:
      * \param[in] z_slice_in_domain if the z-slice at current_z_boost is within
      *            the boosted-frame and lab-frame domain.
      *            The fields are sliced and back-transformed only if this value is true.
+     * \param[in] current_z_boost   current z coordinate in the boosted-frame
      * \param[in] buffer_box        Box with index-space in lab-frame for the ith buffer
      * \param[in] k_index_zlab      k-index in the lab-frame corresponding to the
      *            current z co-ordinate in the lab-frame for the ith buffer.

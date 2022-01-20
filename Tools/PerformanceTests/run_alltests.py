@@ -5,10 +5,14 @@
 #
 # License: BSD-3-Clause-LBNL
 
-import os, sys, shutil
-import argparse, re, time
-from functions_perftest import *
+import argparse
 import datetime
+import os
+import re
+import shutil
+import time
+
+from functions_perftest import *
 
 # This script runs automated performance tests for WarpX.
 # It runs tests in list test_list defined below, and write

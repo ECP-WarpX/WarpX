@@ -1,3 +1,31 @@
+# Set C++17 for the whole build if not otherwise requested
+#
+# This is the easiest way to push up a C++17 requirement for AMReX, PICSAR and
+# openPMD-api until they increase their requirement.
+#
+macro(set_cxx17_superbuild)
+    if(NOT DEFINED CMAKE_CXX_STANDARD)
+        set(CMAKE_CXX_STANDARD 17)
+    endif()
+    if(NOT DEFINED CMAKE_CXX_EXTENSIONS)
+        set(CMAKE_CXX_EXTENSIONS OFF)
+    endif()
+    if(NOT DEFINED CMAKE_CXX_STANDARD_REQUIRED)
+        set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    endif()
+
+    if(NOT DEFINED CMAKE_CUDA_STANDARD)
+        set(CMAKE_CUDA_STANDARD 17)
+    endif()
+    if(NOT DEFINED CMAKE_CUDA_EXTENSIONS)
+        set(CMAKE_CUDA_EXTENSIONS OFF)
+    endif()
+    if(NOT DEFINED CMAKE_CUDA_STANDARD_REQUIRED)
+        set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    endif()
+endmacro()
+
+
 # find the CCache tool and use it if found
 #
 macro(set_ccache)
@@ -130,7 +158,7 @@ endfunction()
 # Take an <imported_target> and expose it as INTERFACE target with
 # WarpX::thirdparty::<propagated_name> naming and SYSTEM includes.
 #
-function(make_third_party_includes_system imported_target propagated_name)
+function(warpx_make_third_party_includes_system imported_target propagated_name)
     add_library(WarpX::thirdparty::${propagated_name} INTERFACE IMPORTED)
     target_link_libraries(WarpX::thirdparty::${propagated_name} INTERFACE ${imported_target})
 
@@ -160,12 +188,10 @@ function(set_warpx_binary_name)
     endif()
     foreach(tgt IN LISTS _ALL_TARGETS)
         set_target_properties(${tgt} PROPERTIES OUTPUT_NAME "warpx")
-        if(WarpX_DIMS STREQUAL 3)
-            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".3d")
-        elseif(WarpX_DIMS STREQUAL 2)
-            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".2d")
-        elseif(WarpX_DIMS STREQUAL RZ)
+        if(WarpX_DIMS STREQUAL RZ)
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".RZ")
+        else()
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".${WarpX_DIMS}d")
         endif()
 
         if(WarpX_MPI)
@@ -226,12 +252,10 @@ function(set_warpx_binary_name)
     endif()
     if(WarpX_LIB)
         # alias to the latest build; this is the one expected by Python bindings
-        if(WarpX_DIMS STREQUAL 3)
-            set(lib_suffix "3d")
-        elseif(WarpX_DIMS STREQUAL 2)
-            set(lib_suffix "2d")
-        elseif(WarpX_DIMS STREQUAL RZ)
+        if(WarpX_DIMS STREQUAL RZ)
             set(lib_suffix "rz")
+        else()
+            set(lib_suffix "${WarpX_DIMS}d")
         endif()
         if(WIN32)
             set(mod_ext "dll")

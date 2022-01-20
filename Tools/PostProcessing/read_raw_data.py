@@ -5,10 +5,11 @@
 #
 # License: BSD-3-Clause-LBNL
 
+from collections import namedtuple
 from glob import glob
 import os
+
 import numpy as np
-from collections import namedtuple
 
 HeaderInfo = namedtuple('HeaderInfo', ['version', 'how', 'ncomp', 'nghost'])
 

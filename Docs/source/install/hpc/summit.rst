@@ -41,7 +41,7 @@ We use the following modules and environments on the system (``$HOME/warpx.profi
    # required dependencies
    module load cmake/3.20.2
    module load gcc/9.3.0
-   module load cuda/11.0.3
+   module load cuda/11.3.1
 
    # optional: faster re-builds
    module load ccache
@@ -130,6 +130,7 @@ Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` 
    python3 -m pip install --upgrade wheel
    python3 -m pip install --upgrade cython
    python3 -m pip install --upgrade numpy
+   python3 -m pip install --upgrade pandas
    python3 -m pip install --upgrade scipy
    python3 -m pip install --upgrade mpi4py --no-binary mpi4py
    python3 -m pip install --upgrade openpmd-api
@@ -145,7 +146,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
+   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
    cmake --build build -j 6
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
@@ -159,7 +160,7 @@ We only prefix it to request a node for the compilation (``runNode``), so we can
    cd $HOME/src/warpx
 
    # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
-   runNode WARPX_MPI=ON WARPX_COMPUTE=CUDA WARPX_PSATD=ON WARPX_OPENPMD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall -v .
+   runNode WARPX_MPI=ON WARPX_COMPUTE=CUDA WARPX_PSATD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall --no-deps -v .
 
 
 .. _running-cpp-summit:
@@ -233,6 +234,52 @@ parameters provided good performance:
 
 * **Sixteen `64x64x64` grids per MPI rank** (with default tiling in WarpX, this
   results in ~49 tiles per OpenMP thread)
+
+.. _building-summit-io-performance:
+
+I/O Performance Tuning
+----------------------
+
+.. _building-summit-large-blocks:
+
+GPFS Large Block I/O
+^^^^^^^^^^^^^^^^^^^^
+
+Setting ``IBM_largeblock_io`` to ``true`` disables data shipping, saving overhead when writing/reading large contiguous I/O chunks.
+
+.. code-block:: bash
+
+   export IBM_largeblock_io=true
+
+.. _building-summit-romio-hints:
+
+ROMIO MPI-IO Hints
+^^^^^^^^^^^^^^^^^^
+
+You might notice some parallel HDF5 performance improvements on Summit by setting the appropriate ROMIO hints for MPI-IO operations.
+
+.. code-block:: bash
+
+   export OMPI_MCA_io=romio321
+   export ROMIO_HINTS=./romio-hints
+
+You can generate the ``romio-hints`` by issuing the following command. Remember to change the number of ``cb_nodes`` to match the number of compute nodes you are using (example here: ``64``).
+
+.. code-block:: bash
+
+   cat > romio-hints << EOL
+   romio_cb_write enable
+   romio_ds_write enable
+   cb_buffer_size 16777216
+   cb_nodes 64
+   EOL
+
+The ``romio-hints`` file contains pairs of key-value hints to enable and tune collective
+buffering of MPI-IO operations. As Summit's Alpine file system uses a 16MB block size,
+you should set the collective buffer size to 16GB and tune the number of aggregators
+(``cb_nodes``) to the number of compute nodes you are using, i.e., one aggregator per node.
+
+Further details are available at `Summit's documentation page <https://docs.olcf.ornl.gov/systems/summit_user_guide.html#slow-performance-using-parallel-hdf5-resolved-march-12-2019>`__.
 
 .. _building-summit-issues:
 

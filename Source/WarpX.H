@@ -65,10 +65,6 @@
 #include <string>
 #include <vector>
 
-#if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
-static_assert(false, "Embedded boundaries are not supported in RZ mode.");
-#endif
-
 enum struct PatchType : int
 {
     fine,
@@ -274,9 +270,8 @@ public:
     static int do_subcycling;
     static int do_multi_J;
     static int do_multi_J_n_depositions;
-    static int J_linear_in_time;
 
-    static int do_device_synchronize;
+    static bool do_device_synchronize;
     static bool safe_guard_cells;
 
     // buffers
@@ -320,6 +315,9 @@ public:
     amrex::MultiFab * get_pointer_rho_cp  (int lev) const { return rho_cp[lev].get(); }
     amrex::MultiFab * get_pointer_F_cp  (int lev) const { return F_cp[lev].get(); }
     amrex::MultiFab * get_pointer_G_cp  (int lev) const { return G_cp[lev].get(); }
+
+    amrex::MultiFab * get_pointer_edge_lengths  (int lev, int direction) const { return m_edge_lengths[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_face_areas  (int lev, int direction) const { return m_face_areas[lev][direction].get(); }
 
     const amrex::MultiFab& getcurrent (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
@@ -379,11 +377,11 @@ public:
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_exeybz;
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_bxbyez;
 
-    amrex::Real time_of_last_gal_shift  = 0;
-    amrex::Vector<amrex::Real> m_v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
+    amrex::Real time_of_last_gal_shift = 0;
+    amrex::Vector<amrex::Real> m_v_galilean = amrex::Vector<amrex::Real>(3, amrex::Real(0.));
     amrex::Array<amrex::Real,3> m_galilean_shift = {{0}};
 
-    amrex::Vector<amrex::Real> m_v_comoving{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
+    amrex::Vector<amrex::Real> m_v_comoving = amrex::Vector<amrex::Real>(3, amrex::Real(0.));
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
@@ -480,10 +478,19 @@ public:
      * Applies a damping factor in the guards cells that extend
      * beyond the extent of the domain, reducing fluctuations that
      * can appear in parallel simulations. This will be called
-     * when FieldBoundaryType is set to damped.
+     * when FieldBoundaryType is set to damped. Vector version.
      */
     void DampFieldsInGuards (std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                              std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
+
+    /**
+     * \brief Private function for spectral solver
+     * Applies a damping factor in the guards cells that extend
+     * beyond the extent of the domain, reducing fluctuations that
+     * can appear in parallel simulations. This will be called
+     * when FieldBoundaryType is set to damped. Scalar version.
+     */
+    void DampFieldsInGuards (std::unique_ptr<amrex::MultiFab>& mf);
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -673,6 +680,7 @@ public:
     const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
     const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
     const amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
+    const amrex::IntVect get_ng_fieldgather () const {return guard_cells.ng_FieldGather;}
 
     /** Coarsest-level Domain Decomposition
      *
@@ -691,23 +699,9 @@ public:
                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
                      amrex::Real const required_precision=amrex::Real(1.e-11),
-                     amrex::Real const absolute_tolerance=amrex::Real(0.0),
+                     amrex::Real absolute_tolerance=amrex::Real(0.0),
                      const int max_iters=200,
                      const int verbosity=2) const;
-    void computePhiRZ (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                       std::array<amrex::Real, 3> const beta,
-                       amrex::Real const required_precision,
-                       amrex::Real absolute_tolerance,
-                       int const max_iters,
-                       int const verbosity) const;
-    void computePhiCartesian (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                       std::array<amrex::Real, 3> const beta,
-                       amrex::Real const required_precision,
-                       amrex::Real absolute_tolerance,
-                       int const max_iters,
-                       int const verbosity) const;
 
     void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    amrex::Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_lo,
@@ -744,6 +738,16 @@ public:
          amrex::ParserExecutor<3> const& yfield_parser,
          amrex::ParserExecutor<3> const& zfield_parser,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& geom_data, const int lev);
+
+    /**
+     * \brief
+     * This function initializes and calculates grid quantities used along with
+     * EBs such as edge lengths, face areas, distance to EB, etc. It also
+     * appropriately communicates EB data to guard cells.
+     *
+     * \param[in] lev, level of the Multifabs that is initialized
+     */
+    void InitializeEBGridData(int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`
@@ -1043,17 +1047,46 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
-    //EB grid info
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Venl;
+    //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
+    //! EB: Areas of the mesh faces
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
+
+    /** EB: for every mesh face flag_info_face contains a:
+     *           * 0 if the face needs to be extended
+     *          * 1 if the face is large enough to lend area to other faces
+     *          * 2 if the face is actually intruded by other face
+     * It is initialized in WarpX::MarkCells
+     * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_info_face;
+    /** EB: for every mesh face face flag_ext_face contains a:
+     *          * 1 if the face needs to be extended
+     *          * 0 otherwise
+     * It is initialized in WarpX::MarkCells and then modified in WarpX::ComputeOneWayExtensions
+     * and in WarpX::ComputeEightWaysExtensions
+     * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>, 3 > > m_flag_ext_face;
+    /** EB: m_area_mod contains the modified areas of the mesh faces, i.e. if a face is enlarged it
+     * contains the area of the enlarged face
+     * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_area_mod;
+    /** EB: m_borrowing contains the info about the enlarged cells, i.e. for every enlarged cell it
+     * contains the info of which neighbors are being intruded (and the amount of borrowed area).
+     * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 > > m_borrowing;
 
-    //This is just needed for the ECT solver
+    /** ECTRhofield is needed only by the ect
+     * solver and it contains the electromotive force density for every mesh face.
+     * The name ECTRhofield has been used to comply with the notation of the paper
+     * https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4463918 (page 9, equation 4
+     * and below).
+     * Although it's called rho it has nothing to do with the charge density!
+     * This is only used for the ECT solver.*/
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > ECTRhofield;
+    /** Venl contains the electromotive force for every mesh face, i.e. every entry is
+     * the corresponding entry in ECTRhofield multiplied by the total area (possibly with enlargement)
+     * This is only used for the ECT solver.*/
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Venl;
 
     //EB level set
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_distance_to_eb;
@@ -1092,6 +1125,7 @@ private:
     int pml_has_particles = 0;
     int do_pml_j_damping = 0;
     int do_pml_in_domain = 0;
+    static int do_similar_dm_pml;
     bool do_pml_dive_cleaning; // default set in WarpX.cpp
     bool do_pml_divb_cleaning; // default set in WarpX.cpp
     amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
@@ -1226,20 +1260,26 @@ public:
     */
 
 public:
-    void ComputeEdgeLengths ();
+#ifdef AMREX_USE_EB
+    static void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                                    const amrex::EBFArrayBoxFactory& eb_fact);
     /**
     * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
     *        An edge of area 0 is fully covered.
     */
-    void ComputeFaceAreas ();
+    static void ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                                  const amrex::EBFArrayBoxFactory& eb_fact);
+
     /**
     * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
     */
-    void ScaleEdges ();
+    static void ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                            const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Scale the edges areas by the mesh width to obtain the real areas.
     */
-    void ScaleAreas ();
+    static void ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                            const std::array<amrex::Real,3>& cell_size);
     /**
     * \brief Initialize information for cell extensions.
     *        The flags convention for m_flag_info_face is as follows
@@ -1252,6 +1292,7 @@ public:
     /**
     * \brief Compute the level set function used for particle-boundary interaction.
     */
+#endif
     void ComputeDistanceToEB ();
     /**
     * \brief Auxiliary function to count the amount of faces which still need to be extended
@@ -1278,7 +1319,6 @@ public:
     * \brief Do the eight-ways extension
     */
     void ComputeEightWaysExtensions();
-
 
 private:
     void ScrapeParticles ();

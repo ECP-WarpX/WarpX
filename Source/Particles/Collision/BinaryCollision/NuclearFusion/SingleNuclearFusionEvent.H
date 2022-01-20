@@ -8,8 +8,9 @@
 #ifndef SINGLE_NUCLEAR_FUSION_EVENT_H_
 #define SINGLE_NUCLEAR_FUSION_EVENT_H_
 
-#include "BinaryCollisionUtils.H"
 #include "ProtonBoronFusionCrossSection.H"
+
+#include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_Algorithm.H>
@@ -92,9 +93,9 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
     const amrex::ParticleReal p2y = u2y * m2;
     const amrex::ParticleReal p2z = u2z * m2;
     // Square norm of the total (sum between the two particles) momenta in the lab frame
-    const amrex::ParticleReal p_total_sq = std::pow(p1x+p2x, 2) +
-                                     std::pow(p1y+p2y, 2) +
-                                     std::pow(p1z+p2z, 2);
+    const amrex::ParticleReal p_total_sq =  std::pow(p1x+p2x, 2) +
+                                            std::pow(p1y+p2y, 2) +
+                                            std::pow(p1z+p2z, 2);
 
     // Total energy in the lab frame
     const amrex::ParticleReal E_lab = (m1 * g1 + m2 * g2) * c_sq;

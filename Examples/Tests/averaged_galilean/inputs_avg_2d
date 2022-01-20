@@ -11,9 +11,9 @@ psatd.v_galilean = 0 0 -0.99498743710662
 
 psatd.do_time_averaging  = 1
 
-geometry.coord_sys   = 0
-geometry.prob_lo     = -12.3776 -49.5104
-geometry.prob_hi     = 12.3776 49.5104
+geometry.dims = 2
+geometry.prob_lo = -12.3776 -49.5104
+geometry.prob_hi = 12.3776 49.5104
 
 #################################
 ###### Boundary Condition #######

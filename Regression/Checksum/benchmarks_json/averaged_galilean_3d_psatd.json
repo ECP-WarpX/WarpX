@@ -1,35 +1,35 @@
 {
   "electrons": {
-    "particle_cpu": 0.0,
-    "particle_id": 536887296.0,
-    "particle_momentum_x": 3.235370594842269e-20,
-    "particle_momentum_y": 3.116556644010673e-20,
-    "particle_momentum_z": 8.904212408978889e-17,
-    "particle_position_x": 158433.3678817281,
-    "particle_position_y": 158432.165536343,
-    "particle_position_z": 15724303.92031937,
-    "particle_weight": 4.082754265421834e+18
+    "particle_cpu": 16384.0,
+    "particle_id": 268451840.0,
+    "particle_momentum_x": 7.68203189224468e-22,
+    "particle_momentum_y": 7.790694236545759e-22,
+    "particle_momentum_z": 8.903825726864705e-17,
+    "particle_position_x": 81920.22060630744,
+    "particle_position_y": 81919.5862141829,
+    "particle_position_z": 4859842.2500584535,
+    "particle_weight": 8.465938144469544e+17
   },
   "ions": {
-    "particle_cpu": 0.0,
-    "particle_id": 1610629120.0,
-    "particle_momentum_x": 1.314439943956008e-18,
-    "particle_momentum_y": 1.311628100016085e-18,
-    "particle_momentum_z": 1.6348803463772493e-13,
-    "particle_position_x": 158433.36794743972,
-    "particle_position_y": 158432.1305546865,
-    "particle_position_z": 15724303.986768533,
-    "particle_weight": 4.082754265421834e+18
+    "particle_cpu": 16384.0,
+    "particle_id": 805322752.0,
+    "particle_momentum_x": 1.315100711300618e-18,
+    "particle_momentum_y": 1.3043486939872222e-18,
+    "particle_momentum_z": 1.6348805701080172e-13,
+    "particle_position_x": 81920.24863538152,
+    "particle_position_y": 81919.60417276036,
+    "particle_position_z": 4859842.251721316,
+    "particle_weight": 8.465938144469544e+17
   },
   "lev=0": {
-    "Bx": 0.06085014302192544,
-    "By": 0.0629280293306694,
-    "Bz": 0.5674918973594997,
-    "Ex": 183829738.031337,
-    "Ey": 176127082.12742153,
-    "Ez": 1031944.8742862595,
-    "jx": 72051.25977794768,
-    "jy": 69843.47286996675,
-    "jz": 21538.61066907263
+    "Bx": 0.003065529663856482,
+    "By": 0.003128474422296177,
+    "Bz": 0.0020318868508058304,
+    "Ex": 1015051.2393758895,
+    "Ey": 962257.7318234849,
+    "Ez": 85850.49908322783,
+    "jx": 868.49711435885,
+    "jy": 934.4643389319831,
+    "jz": 13927.302944911089
   }
 }
