@@ -126,7 +126,7 @@ Or if we need to compile with CUDA:
 Python Bindings
 ^^^^^^^^^^^^^^^
 
-Here we assume that a Python interpreter has been set up (e.g. with Spack or a Miniconda).
+Here we assume that a Python interpreter has been set up (e.g. with Spack).
 
 Then we compile WarpX as in the previous section (with or without CUDA) adding ``-DWarpX_LIB=ON`` and then we install it into our Python:
 
