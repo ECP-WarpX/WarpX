@@ -33,7 +33,7 @@ We use the following modules and environments on the system (``$HOME/crusher_war
 
 .. literalinclude:: ../../../../Tools/machines/crusher-olcf/crusher_warpx.profile.example
    :language: bash
-
+   :caption: You can copy this file from ``Tools/machines/crusher-olcf/crusher_warpx.profile.example``.
 
 We recommend to store the above lines in a file, such as ``$HOME/crusher_warpx.profile``, and load it into your shell after a login:
 
@@ -75,6 +75,7 @@ Or in non-interactive runs:
 
 .. literalinclude:: ../../../../Tools/machines/crusher-olcf/submit.sh
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/crusher-olcf/submit.sh``.
 
 
 .. _post-processing-crusher:
