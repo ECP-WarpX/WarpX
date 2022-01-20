@@ -27,7 +27,7 @@ spack:
 
   packages:
     all:
-      target: [x86_64]
+      target: [broadwell]
       compiler: [gcc@9.2.0]
   compilers:
   - compiler:
