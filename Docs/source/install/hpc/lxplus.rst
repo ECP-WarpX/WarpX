@@ -107,7 +107,7 @@ The environment ``warpx-lxplus`` must be reactivated everytime that we log in so
 
     cd $WORK
     spack env activate -d warpx-lxplus
-    cd $HOME    
+    cd $HOME
 
 Building WarpX
 ^^^^^^^^^^^^^^
