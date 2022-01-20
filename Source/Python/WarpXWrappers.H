@@ -48,19 +48,9 @@ extern "C" {
 
     typedef void(*WARPX_CALLBACK_PY_FUNC_0)();
 
-    void warpx_set_callback_py_afterinit (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_beforeEsolve (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_poissonsolver (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_afterEsolve (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_beforedeposition (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_afterdeposition (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_particlescraper (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_particleloader (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_beforestep (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_afterstep (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_afterrestart (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_particleinjection (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_appliedfields (WARPX_CALLBACK_PY_FUNC_0);
+    void warpx_set_callback_py (const char* char_callback_name,
+                                WARPX_CALLBACK_PY_FUNC_0 callback);
+    void warpx_clear_callback_py (const char* char_callback_name);
 
     void warpx_evolve (int numsteps);  // -1 means the inputs parameter will be used.
 
