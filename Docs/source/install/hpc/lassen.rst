@@ -25,50 +25,11 @@ Use the following commands to download the WarpX source code and switch to the c
 
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
 
-We use the following modules and environments on the system (``$HOME/warpx.profile``).
+We use the following modules and environments on the system (``$HOME/lassen_warpx.profile``).
 
-.. code-block:: bash
-
-   # please set your project account
-   export proj=<yourProject>
-
-   # required dependencies
-   module load cmake/3.20.2
-   module load gcc/8.3.1
-   module load cuda/11.2.0
-
-   # optional: for PSATD support
-   module load fftw/3.3.8
-
-   # optional: for QED lookup table generation support
-   module load boost/1.70.0
-
-   # optional: for openPMD support
-   # TODO ADIOS2
-   module load hdf5-parallel/1.10.4
-
-   # optional: for PSATD in RZ geometry support
-   # TODO: blaspp lapackpp
-
-   # optional: for Python bindings
-   module load python/3.8.2
-
-   # optional: an alias to request an interactive node for two hours
-   alias getNode="bsub -G $proj -W 2:00 -nnodes 1 -Is /bin/bash"
-
-   # fix system defaults: do not escape $ with a \ on tab completion
-   shopt -s direxpand
-
-   # optimize CUDA compilation for V100
-   export AMREX_CUDA_ARCH=7.0
-
-   # compiler environment hints
-   export CC=$(which gcc)
-   export CXX=$(which g++)
-   export FC=$(which gfortran)
-   export CUDACXX=$(which nvcc)
-   export CUDAHOSTCXX=$(which g++)
-
+.. literalinclude:: ../../../../Tools/machines/lassen-llnl/lassen_warpx.profile.example
+   :language: bash
+   :caption: You can copy this file from ``Tools/machines/lassen-llnl/lassen_warpx.profile.example``.
 
 We recommend to store the above lines in a file, such as ``$HOME/lassen_warpx.profile``, and load it into your shell after a login:
 
@@ -104,14 +65,15 @@ The batch script below can be used to run a WarpX simulation on 2 nodes on the s
 Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<input file>`` could be ``plasma_mirror_inputs``.
 Note that the only option so far is to run with one MPI rank per GPU.
 
-.. literalinclude:: ../../../../Tools/BatchScripts/batch_lassen.sh
+.. literalinclude:: ../../../../Tools/machines/lassen-llnl/lassen.bsub
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/lassen-llnl/lassen.bsub``.
 
-To run a simulation, copy the lines above to a file ``batch_lassen.sh`` and run
+To run a simulation, copy the lines above to a file ``lassen.bsub`` and run
 
 .. code-block:: bash
 
-   bsub batch_lassen.sh
+   bsub lassen.bsub
 
 to submit the job.
 

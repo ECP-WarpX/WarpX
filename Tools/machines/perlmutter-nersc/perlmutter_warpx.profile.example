@@ -1,0 +1,39 @@
+# please set your project account
+#export proj=<yourProject>  # LBNL/AMP: m3906_g
+
+# required dependencies
+module load cmake/3.22.0
+module swap PrgEnv-nvidia PrgEnv-gnu
+module load cudatoolkit
+
+# optional: just an additional text editor
+# module load nano  # TODO: request from support
+
+# optional: for openPMD support
+module load cray-hdf5-parallel/1.12.0.7
+export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/adios2-2.7.1:$CMAKE_PREFIX_PATH
+
+# optional: Python, ...
+# TODO
+
+# optional: an alias to request an interactive node for two hours
+function getNode() {
+    salloc -N 1 --ntasks-per-node=4 -t 2:00:00 -C gpu -c 32 -G 4 -A $proj
+}
+
+# GPU-aware MPI
+export MPICH_GPU_SUPPORT_ENABLED=1
+
+# necessary to use CUDA-Aware MPI and run a job
+export CRAY_ACCEL_TARGET=nvidia80
+
+# optimize CUDA compilation for A100
+export AMREX_CUDA_ARCH=8.0
+
+# compiler environment hints
+export CC=$(which gcc)
+export CXX=$(which g++)
+export FC=$(which gfortran)
+export CUDACXX=$(which nvcc)
+export CUDAHOSTCXX=$(which g++)

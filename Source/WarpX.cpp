@@ -857,14 +857,13 @@ WarpX::ReadParameters ()
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         queryWithParser(pp_warpx, "n_rz_azimuthal_modes", n_rz_azimuthal_modes);
 
-        // If true, the current is deposited on a nodal grid and then interpolated onto a Yee grid
-        pp_warpx.query("do_current_centering", do_current_centering);
-
-        // If do_nodal = 1, Maxwell's equations are solved on a nodal grid and
-        // the current should not be centered
-        if (do_nodal)
+        // If true, the current is deposited on a nodal grid and centered onto a staggered grid.
+        // Setting warpx.do_current_centering = 1 makes sense only if warpx.do_nodal = 0. Instead,
+        // if warpx.do_nodal = 1, Maxwell's equations are solved on a nodal grid and the current
+        // should not be centered onto a staggered grid.
+        if (WarpX::do_nodal == 0)
         {
-            do_current_centering = false;
+            pp_warpx.query("do_current_centering", do_current_centering);
         }
 
         if ((maxLevel() > 0) && do_current_centering)
@@ -1006,9 +1005,14 @@ WarpX::ReadParameters ()
 
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 
-            // For momentum-conserving field gathering, read from input the order of
-            // interpolation from the staggered positions to the grid nodes
-            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving) {
+            // Read order of finite-order centering of fields (staggered to nodal).
+            // Read this only if warpx.do_nodal = 0. Instead, if warpx.do_nodal = 1,
+            // Maxwell's equations are solved on a nodal grid and the electromagnetic
+            // forces are gathered from a nodal grid, hence the fields do not need to
+            // be centered onto a nodal grid.
+            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
+                WarpX::do_nodal == 0)
+            {
                 queryWithParser(pp_interpolation, "field_centering_nox", field_centering_nox);
                 queryWithParser(pp_interpolation, "field_centering_noy", field_centering_noy);
                 queryWithParser(pp_interpolation, "field_centering_noz", field_centering_noz);
@@ -1021,14 +1025,17 @@ WarpX::ReadParameters ()
                 queryWithParser(pp_interpolation, "current_centering_noz", current_centering_noz);
             }
 
-            if (maxLevel() > 0)
+            // Finite-order centering is not implemented with mesh refinement
+            // (note that when WarpX::do_nodal = 1 finite-order centering is not used anyways)
+            if (maxLevel() > 0 && WarpX::do_nodal == 0)
             {
                 AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                     field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
                     "High-order centering of fields (order > 2) is not implemented with mesh refinement");
             }
 
-            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving)
+            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
+                WarpX::do_nodal == 0)
             {
                 AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
                                               device_field_centering_stencil_coeffs_y,

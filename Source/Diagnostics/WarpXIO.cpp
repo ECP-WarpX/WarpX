@@ -334,6 +334,8 @@ WarpX::InitFromCheckpoint ()
         }
     }
 
+    InitializeEBGridData(maxLevel());
+
     // Initialize particles
     mypc->AllocData();
     mypc->Restart(restart_chkfile);

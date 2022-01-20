@@ -8,8 +8,11 @@
 #ifndef WARPX_UTILS_H_
 #define WARPX_UTILS_H_
 
+#include <AMReX_BoxArray.H>
+#include <AMReX_DistributionMapping.H>
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_LayoutData.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
@@ -395,6 +398,20 @@ namespace WarpXUtilStr
         return cont;
     }
 
+}
+
+namespace WarpXUtilLoadBalance
+{
+    /** \brief We only want to update the cost data if the grids we are working on
+     *  are the main grids, i.e. not the PML grids. This function returns whether
+     *   this is the case or not.
+     * @param[in] cost pointer to the cost data
+     * @param[in] ba the grids to check
+     * @param[in] dm the dmap to check
+     * @return consistent whether the grids are consistent or not.
+     */
+    bool doCosts (const amrex::LayoutData<amrex::Real>* cost, const amrex::BoxArray ba,
+                  const amrex::DistributionMapping& dm);
 }
 
 #endif //WARPX_UTILS_H_

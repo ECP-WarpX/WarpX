@@ -75,14 +75,12 @@ macro(find_amrex)
         set(AMReX_PROBINIT OFF CACHE INTERNAL "")
         set(AMReX_TINY_PROFILE ON CACHE BOOL "")
 
-        if(WarpX_COMPUTE STREQUAL CUDA)
-            if(WarpX_ASCENT OR WarpX_SENSEI)
-                set(AMReX_GPU_RDC ON CACHE BOOL "")
-            else()
-                # we don't need RDC and disabling it simplifies the build
-                # complexity and potentially improves code optimization
-                set(AMReX_GPU_RDC OFF CACHE BOOL "")
-            endif()
+        if(WarpX_ASCENT OR WarpX_SENSEI)
+            set(AMReX_GPU_RDC ON CACHE BOOL "")
+        else()
+            # we don't need RDC and disabling it simplifies the build
+            # complexity and potentially improves code optimization
+            set(AMReX_GPU_RDC OFF CACHE BOOL "")
         endif()
 
         # shared libs, i.e. for Python bindings, need relocatable code
@@ -239,7 +237,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "22.01"
+set(WarpX_amrex_branch "812836f08a758ef6f65caf7eea477bfc6423e72b"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 
