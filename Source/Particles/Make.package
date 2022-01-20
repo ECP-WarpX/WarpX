@@ -9,6 +9,7 @@ CEXE_sources += ParticleBoundaries.cpp
 
 include $(WARPX_HOME)/Source/Particles/Algorithms/Make.package
 include $(WARPX_HOME)/Source/Particles/Pusher/Make.package
+include $(WARPX_HOME)/Source/Particles/PushPX/Make.package
 include $(WARPX_HOME)/Source/Particles/Deposition/Make.package
 include $(WARPX_HOME)/Source/Particles/Gather/Make.package
 include $(WARPX_HOME)/Source/Particles/Sorting/Make.package

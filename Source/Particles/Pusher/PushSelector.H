@@ -40,10 +40,15 @@
  * \param t_chi_max                 Cutoff chi for QSR
  * \param dt                        Time step size
  */
+template <
+    long ParticlePusherAlgo,
+    bool DoCrr
+#ifdef WARPX_QED
+    , bool DoSync>
+#endif
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void doParticlePush(const GetParticlePosition& GetPosition,
                     const SetParticlePosition& SetPosition,
-                    const CopyParticleAttribs& copyAttribs,
                     const long i,
                     amrex::ParticleReal& ux,
                     amrex::ParticleReal& uy,
@@ -57,19 +62,14 @@ void doParticlePush(const GetParticlePosition& GetPosition,
                     const int ion_lev,
                     const amrex::Real m,
                     const amrex::Real q,
-                    const int pusher_algo,
-                    const int do_crr,
-                    const int do_copy,
 #ifdef WARPX_QED
-                    const int do_sync,
                     const amrex::Real t_chi_max,
 #endif
                     const amrex::Real dt)
 {
-    if (do_copy) copyAttribs(i);
-    if (do_crr) {
+    if constexpr (DoCrr) {
 #ifdef WARPX_QED
-        if (do_sync) {
+        if constexpr (DoSync) {
             auto chi = QedUtils::chi_ele_pos(m*ux, m*uy, m*uz,
                                             Ex, Ey, Ez,
                                             Bx, By, Bz);
@@ -107,7 +107,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
         UpdatePosition(x, y, z, ux, uy, uz, dt );
         SetPosition(i, x, y, z);
 #endif
-    } else if (pusher_algo == ParticlePusherAlgo::Boris) {
+    } else if constexpr (ParticlePusherAlgo == ParticlePusherAlgo::Boris) {
         amrex::Real qp = q;
         if (ion_lev) { qp *= ion_lev; }
         UpdateMomentumBoris( ux, uy, uz,
@@ -117,7 +117,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
         GetPosition(i, x, y, z);
         UpdatePosition(x, y, z, ux, uy, uz, dt );
         SetPosition(i, x, y, z);
-    } else if (pusher_algo == ParticlePusherAlgo::Vay) {
+    } else if constexpr  (ParticlePusherAlgo == ParticlePusherAlgo::Vay) {
         amrex::Real qp = q;
         if (ion_lev){ qp *= ion_lev; }
         UpdateMomentumVay( ux, uy, uz,
@@ -127,7 +127,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
         GetPosition(i, x, y, z);
         UpdatePosition(x, y, z, ux, uy, uz, dt );
         SetPosition(i, x, y, z);
-    } else if (pusher_algo == ParticlePusherAlgo::HigueraCary) {
+    } else if constexpr  (ParticlePusherAlgo == ParticlePusherAlgo::HigueraCary) {
         amrex::Real qp = q;
         if (ion_lev){ qp *= ion_lev; }
         UpdateMomentumHigueraCary( ux, uy, uz,

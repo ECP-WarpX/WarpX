@@ -24,6 +24,7 @@
 #include "Particles/Pusher/CopyParticleAttribs.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/PushSelector.H"
+#include "Particles/PushPX/PushPX.H"
 #include "Particles/Pusher/UpdateMomentumBoris.H"
 #include "Particles/Pusher/UpdateMomentumBorisWithRadiationReaction.H"
 #include "Particles/Pusher/UpdateMomentumHigueraCary.H"
@@ -2464,11 +2465,6 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     // Add guard cells to the box.
     box.grow(ngE);
 
-    const auto getPosition = GetParticlePosition(pti, offset);
-          auto setPosition = SetParticlePosition(pti, offset);
-
-    const auto getExternalEB = GetExternalEBField(pti, offset);
-
     // Lower corner of tile box physical domain (take into account Galilean shift)
     Real cur_time = WarpX::GetInstance().gett_new(lev);
     const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
@@ -2479,35 +2475,9 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         m_v_galilean[2]*time_shift };
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, gather_lev);
 
-    const Dim3 lo = lbound(box);
-
-    bool galerkin_interpolation = WarpX::galerkin_interpolation;
-    int nox = WarpX::nox;
-    int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
-
     amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
     amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
-    amrex::Array4<const amrex::Real> const& ex_arr = exfab->array();
-    amrex::Array4<const amrex::Real> const& ey_arr = eyfab->array();
-    amrex::Array4<const amrex::Real> const& ez_arr = ezfab->array();
-    amrex::Array4<const amrex::Real> const& bx_arr = bxfab->array();
-    amrex::Array4<const amrex::Real> const& by_arr = byfab->array();
-    amrex::Array4<const amrex::Real> const& bz_arr = bzfab->array();
-
-    amrex::IndexType const ex_type = exfab->box().ixType();
-    amrex::IndexType const ey_type = eyfab->box().ixType();
-    amrex::IndexType const ez_type = ezfab->box().ixType();
-    amrex::IndexType const bx_type = bxfab->box().ixType();
-    amrex::IndexType const by_type = byfab->box().ixType();
-    amrex::IndexType const bz_type = bzfab->box().ixType();
-
-    auto& attribs = pti.GetAttribs();
-    ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr() + offset;
-    ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr() + offset;
-    ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr() + offset;
-
-    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
     int do_copy = ( (WarpX::do_back_transformed_diagnostics
                      && do_back_transformed_diagnostics
                      && a_dt_type!=DtType::SecondHalf)
@@ -2518,97 +2488,73 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
     }
 
-    const bool save_previous_position = m_save_previous_position;
-    ParticleReal* x_old = nullptr;
-    ParticleReal* y_old = nullptr;
-    ParticleReal* z_old = nullptr;
-    if (save_previous_position) {
+    const auto getPosition = GetParticlePosition(pti, offset);
+
+    amrex::ParticleReal* x_old = nullptr;
+    amrex::ParticleReal* y_old = nullptr;
+    amrex::ParticleReal* z_old = nullptr;
+    if (m_save_previous_position) {
 #if (AMREX_SPACEDIM >= 2)
         x_old = pti.GetAttribs(particle_comps["prev_x"]).dataPtr();
 #else
-    amrex::ignore_unused(x_old);
+        ignore_unused(x_old);
 #endif
 #if defined(WARPX_DIM_3D)
         y_old = pti.GetAttribs(particle_comps["prev_y"]).dataPtr();
 #else
-    amrex::ignore_unused(y_old);
+        ignore_unused(y_old);
 #endif
         z_old = pti.GetAttribs(particle_comps["prev_z"]).dataPtr();
-    }
 
-    // Loop over the particles and update their momentum
-    const amrex::Real q = this->charge;
-    const amrex::Real m = this-> mass;
-
-    const auto pusher_algo = WarpX::particle_pusher_algo;
-    const auto do_crr = do_classical_radiation_reaction;
-#ifdef WARPX_QED
-    const auto do_sync = m_do_qed_quantum_sync;
-    amrex::Real t_chi_max = 0.0;
-    if (do_sync) t_chi_max = m_shr_p_qs_engine->get_minimum_chi_part();
-
-    QuantumSynchrotronEvolveOpticalDepth evolve_opt;
-    amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR = nullptr;
-    const bool local_has_quantum_sync = has_quantum_sync();
-    if (local_has_quantum_sync) {
-        evolve_opt = m_shr_p_qs_engine->build_evolve_functor();
-        p_optical_depth_QSR = pti.GetAttribs(particle_comps["opticalDepthQSR"]).dataPtr();
-    }
-#endif
-
-    const auto t_do_not_gather = do_not_gather;
-
-    amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
-    {
-        amrex::ParticleReal xp, yp, zp;
-        getPosition(ip, xp, yp, zp);
-
-        if (save_previous_position) {
+        ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip){
+            ParticleReal xp, yp, zp;
+            getPosition(ip, xp, yp, zp);
 #if (AMREX_SPACEDIM >= 2)
             x_old[ip] = xp;
 #endif
 #if defined(WARPX_DIM_3D)
             y_old[ip] = yp;
 #endif
-            z_old[ip] = zp;
-        }
+            z_old[ip] = zp;});
 
-        amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
-        amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
+    }
 
-        if(!t_do_not_gather){
-            // first gather E and B to the particle positions
-            doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                           ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                           ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                           dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                           nox, galerkin_interpolation);
-        }
-        // Externally applied E and B-field in Cartesian co-ordinates
-        getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
-
-        scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
-
-        doParticlePush(getPosition, setPosition, copyAttribs, ip,
-                       ux[ip], uy[ip], uz[ip],
-                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                       ion_lev ? ion_lev[ip] : 0,
-                       m, q, pusher_algo, do_crr, do_copy,
-#ifdef WARPX_QED
-                       do_sync,
-                       t_chi_max,
-#endif
-                       dt);
+    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
+    if (do_copy){
+        ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip){
+            copyAttribs(ip);
+        });
+    }
 
 #ifdef WARPX_QED
-        if (local_has_quantum_sync) {
-            evolve_opt(ux[ip], uy[ip], uz[ip],
-                       Exp, Eyp, Ezp,Bxp, Byp, Bzp,
-                       dt, p_optical_depth_QSR[ip]);
-        }
+    amrex::Real chi_max = 0.0;
+    QuantumSynchrotronEvolveOpticalDepth evolve_opt;
+    amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR = nullptr;
+    if (m_do_qed_quantum_sync){
+        chi_max = m_shr_p_qs_engine->get_minimum_chi_part();
+        evolve_opt = m_shr_p_qs_engine->build_evolve_functor();
+        p_optical_depth_QSR = pti.GetAttribs(particle_comps["opticalDepthQSR"]).dataPtr();
+    }
 #endif
 
-    });
+
+
+    doPushPX(
+        dt,
+        WarpX::particle_pusher_algo,
+        pti, offset, np_to_push,
+        this->charge, this-> mass, ion_lev,
+        getPosition,
+        exfab, eyfab, ezfab, bxfab, byfab, bzfab,
+        scaleFields,
+        dx_arr, xyzmin_arr, lbound(box), WarpX::n_rz_azimuthal_modes,
+        WarpX::nox, WarpX::galerkin_interpolation, do_not_gather,
+        do_classical_radiation_reaction
+#ifdef WARPX_QED
+        , m_do_qed_quantum_sync, evolve_opt, p_optical_depth_QSR, chi_max
+#endif
+        );
+
 }
 
 void
