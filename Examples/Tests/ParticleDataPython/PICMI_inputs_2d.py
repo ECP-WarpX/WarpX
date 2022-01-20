@@ -115,9 +115,9 @@ my_id = sim.extension.getMyProc()
 def add_particles():
 
     nps = 10 * (my_id + 1)
-    x = np.random.rand(nps) * 0.03
+    x = np.linspace(0.005, 0.025, nps)
     y = np.zeros(nps)
-    z = np.random.random(nps) * 0.03
+    z = np.linspace(0.005, 0.025, nps)
     ux = np.random.normal(loc=0, scale=1e3, size=nps)
     uy = np.random.normal(loc=0, scale=1e3, size=nps)
     uz = np.random.normal(loc=0, scale=1e3, size=nps)
