@@ -68,26 +68,26 @@ Now we add our gcc 9.2.0 compiler to spack:
 Installing the Dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To install the depndencies we create an anonymous environment.
-First of all we copy the envornmnet file in a local folder with the desired name of the environment (e.g. ``warpx-lxplus``):
+To install the dependencies we create a virtual environment, which we call ``warpx-lxplus``:
 
 .. code-block:: bash
 
-    cd $WORK
-    mkdir warpx-lxplus
-    cp $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml $WORK/warpx-lxplus/.
+    spack env create warpx-lxplus $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml
+    spack env activate warpx-lxplus
+    spack install
 
-Then we activate the environment:
+After the installation is done once, all we need to do in future sessions is just ``activate`` the environment again:
 
 .. code-block:: bash
 
-    spack env activate -d warpx-lxplus
+    spack env activate warpx-lxplus
 
 If we are planning on running with GPU support then we must set the environment variable ``SPACK_STACK_USE_CUDA``
 
 .. code-block:: bash
 
-    export SPACK_STACK_USE_CUDA=1
+    SPACK_STACK_USE_CUDA=1 spack env create warpx-lxplus-cuda $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml
+    spack env activate warpx-lxplus-cuda
 
 and if we want to use the python interface we must set the environment variable ``SPACK_STACK_USE_PYTHON``
 
@@ -101,7 +101,7 @@ Then we can install the required packages:
 
     spack install
 
-The environment ``warpx-lxplus`` must be reactivated everytime that we log in so it could be a good idea to add the following lines to the ``.bashrc``:
+The environment ``warpx-lxplus`` (or ``-cuda`` or ``-cuda-py``) must be reactivated everytime that we log in so it could be a good idea to add the following lines to the ``.bashrc``:
 
 .. code-block:: bash
 
@@ -118,14 +118,14 @@ Then we build WarpX:
 .. code-block:: bash
 
     cmake -S . -B build
-    cmake --build build
+    cmake --build build -j 6
 
 Or if we need to compile with CUDA:
 
 .. code-block:: bash
 
     cmake -S . -B build -DWarpX_COMPUTE=CUDA -DAMReX_CUDA_ARCH='7.0;7.5'
-    cmake --build build
+    cmake --build build -j 6
 
 Python Bindings
 ^^^^^^^^^^^^^^^
