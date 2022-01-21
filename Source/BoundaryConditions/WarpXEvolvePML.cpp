@@ -8,6 +8,9 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#   include "BoundaryConditions/PML_RZ.H"
+#endif
 #include "PML_current.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX_PML_kernels.H"
@@ -45,19 +48,33 @@ WarpX::DampPML ()
 }
 
 void
-WarpX::DampPML (int lev)
+WarpX::DampPML (const int lev)
 {
     DampPML(lev, PatchType::fine);
     if (lev > 0) DampPML(lev, PatchType::coarse);
 }
 
 void
-WarpX::DampPML (int lev, PatchType patch_type)
+WarpX::DampPML (const int lev, PatchType patch_type)
 {
     if (!do_pml) return;
 
     WARPX_PROFILE("WarpX::DampPML()");
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    if (pml_rz[lev]) {
+        pml_rz[lev]->ApplyDamping(Efield_fp[lev][1].get(), Efield_fp[lev][2].get(),
+                                  Bfield_fp[lev][1].get(), Bfield_fp[lev][2].get(),
+                                  dt[lev]);
+    }
+#endif
+    if (pml[lev]) {
+        DampPML_Cartesian (lev, patch_type);
+    }
+}
 
+void
+WarpX::DampPML_Cartesian (const int lev, PatchType patch_type)
+{
     const bool dive_cleaning = WarpX::do_pml_dive_cleaning;
     const bool divb_cleaning = WarpX::do_pml_divb_cleaning;
 
@@ -219,6 +236,7 @@ WarpX::DampJPML (int lev, PatchType patch_type)
 {
     if (!do_pml) return;
     if (!do_pml_j_damping) return;
+    if (!pml[lev]) return;
 
     WARPX_PROFILE("WarpX::DampJPML()");
 
@@ -323,7 +341,7 @@ WarpX::CopyJPML ()
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (pml[lev]->ok()){
+        if (pml[lev] && pml[lev]->ok()){
             pml[lev]->CopyJtoPMLs({ current_fp[lev][0].get(),
                                   current_fp[lev][1].get(),
                                   current_fp[lev][2].get() },
