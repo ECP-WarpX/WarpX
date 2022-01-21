@@ -38,7 +38,8 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
                                         const bool do_multi_J,
                                         const bool dive_cleaning,
                                         const bool divb_cleaning,
-                                        const bool pml)
+                                        const bool pml,
+                                        const bool pml_rz)
 {
     // TODO Use these to allocate rho_old, rho_new, F, and G only when needed
     amrex::ignore_unused(update_with_rho);
@@ -73,6 +74,13 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
             Jy_new = c++;
             Jz_new = c++;
         }
+
+        if (pml_rz)
+        {
+            Er_pml = c++; Et_pml = c++;
+            Br_pml = c++; Bt_pml = c++;
+        }
+
     }
     else // PML
     {

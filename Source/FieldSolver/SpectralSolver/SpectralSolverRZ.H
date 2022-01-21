@@ -34,6 +34,7 @@ class SpectralSolverRZ
                           int const norder_z, bool const nodal,
                           const amrex::Vector<amrex::Real>& v_galilean,
                           amrex::RealVect const dx, amrex::Real const dt,
+                          bool const with_pml,
                           bool const update_with_rho,
                           const bool fft_do_time_averaging,
                           const bool do_multi_J,
@@ -63,7 +64,7 @@ class SpectralSolverRZ
                                 amrex::MultiFab& field_mf2, int const field_index2);
 
         /* \brief Update the fields in spectral space, over one timestep */
-        void pushSpectralFields ();
+        void pushSpectralFields (const bool doing_pml=false);
 
         /* \brief Initialize K space filtering arrays */
         void InitFilter (amrex::IntVect const & filter_npass_each_dir,
@@ -160,6 +161,7 @@ class SpectralSolverRZ
         SpectralFieldDataRZ field_data; // Store field in spectral space
                                         // and perform the Fourier transforms
         std::unique_ptr<SpectralBaseAlgorithmRZ> algorithm;
+        std::unique_ptr<SpectralBaseAlgorithmRZ> PML_algorithm;
         // Defines field update equation in spectral space,
         // and the associated coefficients.
         // SpectralBaseAlgorithmRZ is a base class ; this pointer is meant
