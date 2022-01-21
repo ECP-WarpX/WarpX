@@ -33,7 +33,7 @@ We clone WarpX in ``$WORK``:
 
 GCC
 ^^^
-The pre-installed GNU compiler is outdated so we need a more recent compiler. Here we use the gcc 9.2.0 from the LCG project, but other options are possible.
+The pre-installed GNU compiler is outdated so we need a more recent compiler. Here we use the gcc 11.2.0 from the LCG project, but other options are possible.
 
 We activate it by doing
 
@@ -59,11 +59,11 @@ When installing packages Spack will try to set permissions in a way which is for
 
     spack config add "config:allow_sgid:false"
 
-Now we add our gcc 9.2.0 compiler to spack:
+Now we add our gcc 11.2.0 compiler to spack:
 
 .. code-block:: bash
 
-    spack compiler find /cvmfs/sft.cern.ch/lcg/releases/gcc/9.2.0-afc57/x86_64-centos7/bin/
+    spack compiler find /cvmfs/sft.cern.ch/lcg/releases/gcc/11.2.0-ad950/x86_64-centos7/bin
 
 Installing the Dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
