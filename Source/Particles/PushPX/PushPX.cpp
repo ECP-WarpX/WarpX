@@ -98,6 +98,10 @@ void doPushPX(
                        Exp, Eyp, Ezp,Bxp, Byp, Bzp,
                        dt, p_optical_depth_QSR[ip]);
         }
+        else{
+          ignore_unused(evolve_opt);
+        }
+
 #endif
 
     });
