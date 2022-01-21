@@ -274,65 +274,64 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 
     LPInfo info;
 
+    for (int lev=0; lev<=finest_level; lev++) {
+
 #ifndef AMREX_USE_EB
-#   ifdef WARPX_DIM_RZ
+#ifdef WARPX_DIM_RZ
         // Define the linear operator (Poisson operator)
-        MLEBNodeFDLaplacian linop( geom_scaled, boxArray(), DistributionMap(), info );
-#   else
+        MLEBNodeFDLaplacian linop( geom_scaled(lev), boxArray(lev), DistributionMap(lev), info );
+#else
         // Define the linear operator (Poisson operator)
-        MLNodeTensorLaplacian linop( Geom(), boxArray(), DistributionMap() );
+        MLNodeTensorLaplacian linop( Geom(lev), boxArray(lev), DistributionMap(lev) );
 
         // Set the value of beta
         amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
-#       if defined(WARPX_DIM_1D_Z)
+#if defined(WARPX_DIM_1D_Z)
             {{ beta[2] }};  // beta_x and beta_z
-#       elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             {{ beta[0], beta[2] }};  // beta_x and beta_z
-#       else
+#else
             {{ beta[0], beta[1], beta[2] }};
-#       endif
+#endif
         linop.setBeta( beta_solver );
         ignore_unused(info);
-#   endif
+#endif
 #else
-    // With embedded boundary: extract EB info
-    Vector<EBFArrayBoxFactory const*> eb_factory;
-    eb_factory.resize(max_level+1);
-    for (int lev = 0; lev <= max_level; ++lev) {
-        eb_factory[lev] = &WarpX::fieldEBFactory(lev);
-    }
-    MLEBNodeFDLaplacian linop( Geom(), boxArray(), DistributionMap(), info, eb_factory);
+        // With embedded boundary: extract EB info
+        //Vector<EBFArrayBoxFactory const*> eb_factory;
+        //eb_factory.resize(1);
+        //for (int lev = 0; lev <= max_level; ++lev) {
+            //eb_factory[0] = &WarpX::fieldEBFactory(lev);
+        //}
+        MLEBNodeFDLaplacian linop( Geom(lev), boxArray(lev), DistributionMap(lev), info, &WarpX::fieldEBFactory(lev));
 
-#   ifndef WARPX_DIM_RZ
-        // Note: this assumes that the beam is propagating along
-        // one of the axes of the grid, i.e. that only *one* of the Cartesian
-        // components of `beta` is non-negligible.
-        linop.setSigma({AMREX_D_DECL(
-            1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
-#   endif
+#       ifndef WARPX_DIM_RZ
+            // Note: this assumes that the beam is propagating along
+            // one of the axes of the grid, i.e. that only *one* of the Cartesian
+            // components of `beta` is non-negligible.
+            linop.setSigma({AMREX_D_DECL(
+                1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
+#       endif
 
-    // if the EB potential only depends on time, the potential can be passed
-    // as a float instead of a callable
-    if (field_boundary_handler.phi_EB_only_t) {
-        linop.setEBDirichlet(field_boundary_handler.potential_eb_t(gett_new(0)));
-    }
-    else linop.setEBDirichlet(field_boundary_handler.getPhiEB(gett_new(0)));
+        // if the EB potential only depends on time, the potential can be passed
+        // as a float instead of a callable
+        if (field_boundary_handler.phi_EB_only_t) {
+            linop.setEBDirichlet(field_boundary_handler.potential_eb_t(gett_new(0)));
+        }
+        else linop.setEBDirichlet(field_boundary_handler.getPhiEB(gett_new(0)));
 
 #endif
 
-    // Solve the Poisson equation
-    linop.setDomainBC( field_boundary_handler.lobc, field_boundary_handler.hibc );
+        // Solve the Poisson equation
+        linop.setDomainBC( field_boundary_handler.lobc, field_boundary_handler.hibc );
 #ifdef WARPX_DIM_RZ
-    linop.setRZ(true);
+        linop.setRZ(true);
 #endif
-    MLMG mlmg(linop);
-    mlmg.setVerbose(verbosity);
-    mlmg.setMaxIter(max_iters);
-    mlmg.setAlwaysUseBNorm(always_use_bnorm);
-    //mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho),
-    //            required_precision, absolute_tolerance );
+        MLMG mlmg(linop);
+        mlmg.setVerbose(verbosity);
+        mlmg.setMaxIter(max_iters);
+        mlmg.setAlwaysUseBNorm(always_use_bnorm);
 
-    for (int lev=0; lev<=finest_level; lev++) {
         // Solve Poisson equation at lev
         mlmg.solve( {phi[lev].get()}, {rho[lev].get()},
                     required_precision, absolute_tolerance );
