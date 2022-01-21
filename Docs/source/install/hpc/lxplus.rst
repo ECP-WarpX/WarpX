@@ -29,7 +29,7 @@ We clone WarpX in ``$WORK``:
 .. code-block:: bash
 
     cd $WORK
-    git clone https://github.com/ECP-WarpX/WarpX.git
+    git clone https://github.com/ECP-WarpX/WarpX.git warpx
 
 GCC
 ^^^
@@ -101,7 +101,7 @@ The environment ``warpx-lxplus`` (or ``-cuda`` or ``-cuda-py``) must be reactiva
 
 .. code-block:: bash
 
-    cd $WORK
+    source $WORK/spack/share/spack/setup-env.sh
     spack env activate -d warpx-lxplus
     cd $HOME
 
