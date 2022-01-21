@@ -4,7 +4,7 @@ spack:
   - cuda: []
   - cuda: [cuda ^ncurses+symlinks, blaspp +cuda ^ncurses+symlinks]
     when: env.get("SPACK_STACK_USE_CUDA", "") == "1"
-  
+
 # basic Python dependencies for WarpX Python PICMI bindings
   - python: []
   - python: [python ^ncurses+symlinks, py-pip ^ncurses+symlinks, py-mpi4py ^ncurses+symlinks, py-numpy ^ncurses+symlinks,
