@@ -39,7 +39,7 @@ We activate it by doing
 
 .. code-block:: bash
 
-    source /cvmfs/sft.cern.ch/lcg/releases/gcc/9.2.0/x86_64-centos7/setup.sh
+    source /cvmfs/sft.cern.ch/lcg/releases/gcc/11.2.0-ad950/x86_64-centos7/setup.sh
 
 In order to avoid using different compilers this line could be added directly into the ``$HOME/.bashrc`` file.
 
