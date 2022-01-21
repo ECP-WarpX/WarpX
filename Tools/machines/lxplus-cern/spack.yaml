@@ -1,6 +1,7 @@
 spack:
-  # CUDA
+  # variations of this environment can be controlled via environment variables during `spack env create`
   definitions:
+  # CUDA
   - cuda: []
   - cuda: [cuda, blaspp +cuda]
     when: env.get("SPACK_STACK_USE_CUDA", "") == "1"
