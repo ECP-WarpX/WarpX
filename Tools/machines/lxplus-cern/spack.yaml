@@ -26,36 +26,27 @@ spack:
 
   packages:
     all:
-      target: [broadwell]
-      compiler: [gcc@9.2.0]
+      target: [x86_64]
+      compiler: [gcc@11.2.0]
       variants: ~fortran
       providers:
         mpi: [openmpi]
-    cmake:
-      externals:
-      - spec: "cmake"
-        prefix: /cvmfs/sft.cern.ch/lcg/releases/CMake/3.20.0-790a8/x86_64-centos7-gcc11-opt/
-      buildable: False
     openmpi:
       externals:
       - spec: "openmpi"
         prefix: /cvmfs/sft.cern.ch/lcg/releases/openmpi/3.1.0-37032/x86_64-centos7-gcc11-opt/
       buildable: False
-    cuda:
-      externals:
-      - spec: "cuda"
-        prefix: /cvmfs/sft.cern.ch/lcg/releases/cuda/11.4-166ec/x86_64-centos7-gcc11-opt/
-      buildable: False
+
   compilers:
   - compiler:
       environment: {}
       extra_rpaths: []
-      spec: gcc@9.2.0
+      spec: gcc@11.2.0
       paths:
-        cc: /cvmfs/sft.cern.ch/lcg/releases/gcc/11.1.0-e80bf/x86_64-centos7/bin/gcc
-        cxx: /cvmfs/sft.cern.ch/lcg/releases/gcc/11.1.0-e80bf/x86_64-centos7/bin/g++
-        f77: /cvmfs/sft.cern.ch/lcg/releases/gcc/11.1.0-e80bf/x86_64-centos7/bin/gfortran
-        fc: /cvmfs/sft.cern.ch/lcg/releases/gcc/11.1.0-e80bf/x86_64-centos7/bin/gfortran
+        cc: /cvmfs/sft.cern.ch/lcg/releases/gcc/11.2.0-ad950/x86_64-centos7/bin/gcc
+        cxx: /cvmfs/sft.cern.ch/lcg/releases/gcc/11.2.0-ad950/x86_64-centos7/bin/g++
+        f77: /cvmfs/sft.cern.ch/lcg/releases/gcc/11.2.0-ad950/x86_64-centos7/bin/gfortran
+        fc: /cvmfs/sft.cern.ch/lcg/releases/gcc/11.2.0-ad950/x86_64-centos7/bin/gfortran
       flags: {}
       operating_system: centos7
       target: x86_64
