@@ -2,25 +2,25 @@ spack:
 # CUDA
   definitions:
   - cuda: []
-  - cuda: [cuda ^ncurses+symlinks, blaspp +cuda ^ncurses+symlinks]
+  - cuda: [cuda, blaspp +cuda]
     when: env.get("SPACK_STACK_USE_CUDA", "") == "1"
 
 # basic Python dependencies for WarpX Python PICMI bindings
   - python: []
-  - python: [python ^ncurses+symlinks, py-pip ^ncurses+symlinks, py-mpi4py ^ncurses+symlinks, py-numpy ^ncurses+symlinks,
-      py-periodictable ^ncurses+symlinks, py-picmistandard ^ncurses+symlinks]
+  - python: [python, py-pip, py-mpi4py, py-numpy,
+      py-periodictable, py-picmistandard]
     when: env.get("SPACK_STACK_USE_PYTHON", "") == "1"
   specs:
   - ncurses+symlinks
-  - adios2 ^ncurses+symlinks
-  - blaspp ^ncurses+symlinks
-  - ccache ^ncurses+symlinks
-  - cmake ^ncurses+symlinks
-  - fftw ^ncurses+symlinks
-  - hdf5 ^ncurses+symlinks
-  - lapackpp ^ncurses+symlinks
-  - mpi ^ncurses+symlinks
-  - openpmd-api ^ncurses+symlinks
+  - adios2
+  - blaspp
+  - ccache
+  - cmake
+  - fftw
+  - hdf5
+  - lapackpp
+  - mpi
+  - openpmd-api
   - pkgconfig
   - $cuda
   - $python
@@ -29,6 +29,14 @@ spack:
     all:
       target: [broadwell]
       compiler: [gcc@9.2.0]
+      variants: ~fortran
+      providers:
+        mpi: [openmpi]
+    openmpi:
+      externals:
+      - spec: "openmpi"
+        prefix: /cvmfs/sft.cern.ch/lcg/releases/openmpi/lives-here/maybe/edit-me
+      buildable: False
   compilers:
   - compiler:
       environment: {}
@@ -44,4 +52,4 @@ spack:
       target: x86_64
       modules: []
   config:
-    build_jobs: 2
+    build_jobs: 6
