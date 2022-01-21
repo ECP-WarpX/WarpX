@@ -32,6 +32,11 @@ spack:
       variants: ~fortran
       providers:
         mpi: [openmpi]
+    openmpi:
+      externals:
+      - spec: "openmpi"
+        prefix: /cvmfs/sft.cern.ch/lcg/releases/openmpi/lives-here/maybe/edit-me
+      buildable: False
   compilers:
   - compiler:
       environment: {}
