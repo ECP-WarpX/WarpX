@@ -35,26 +35,26 @@ void doPushPX(
     const GetExternalEBField& getExternalEB,
     SetParticlePosition & setPosition,
     ScaleFields& scaleFields,
-    Array4<const Real> const& ex_arr,
-    Array4<const Real> const& ey_arr,
-    Array4<const Real> const& ez_arr,
-    Array4<const Real> const& bx_arr,
-    Array4<const Real> const& by_arr,
-    Array4<const Real> const& bz_arr,
-    IndexType const ex_type,
-    IndexType const ey_type,
-    IndexType const ez_type,
-    IndexType const bx_type,
-    IndexType const by_type,
-    IndexType const bz_type,
-    GpuArray<Real, 3> dx_arr,
-    GpuArray<Real, 3> xyzmin_arr,
-    const Dim3 lo,
-    const int n_rz_azimuthal_modes
+    [[maybe_unused]] Array4<const Real> const& ex_arr,
+    [[maybe_unused]] Array4<const Real> const& ey_arr,
+    [[maybe_unused]] Array4<const Real> const& ez_arr,
+    [[maybe_unused]] Array4<const Real> const& bx_arr,
+    [[maybe_unused]] Array4<const Real> const& by_arr,
+    [[maybe_unused]] Array4<const Real> const& bz_arr,
+    [[maybe_unused]] IndexType const ex_type,
+    [[maybe_unused]] IndexType const ey_type,
+    [[maybe_unused]] IndexType const ez_type,
+    [[maybe_unused]] IndexType const bx_type,
+    [[maybe_unused]] IndexType const by_type,
+    [[maybe_unused]] IndexType const bz_type,
+    [[maybe_unused]] GpuArray<Real, 3> dx_arr,
+    [[maybe_unused]] GpuArray<Real, 3> xyzmin_arr,
+    [[maybe_unused]] const Dim3 lo,
+    [[maybe_unused]] const int n_rz_azimuthal_modes
 #ifdef WARPX_QED
-    , QuantumSynchrotronEvolveOpticalDepth& evolve_opt,
-    amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR,
-    const amrex::Real chi_max
+    , [[maybe_unused]] QuantumSynchrotronEvolveOpticalDepth& evolve_opt,
+    [[maybe_unused]] amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR,
+    [[maybe_unused]] const amrex::Real chi_max
 #endif
     )
 {
@@ -98,10 +98,6 @@ void doPushPX(
                        Exp, Eyp, Ezp,Bxp, Byp, Bzp,
                        dt, p_optical_depth_QSR[ip]);
         }
-        else{
-          ignore_unused(evolve_opt);
-        }
-
 #endif
 
     });
