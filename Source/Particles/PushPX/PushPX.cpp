@@ -231,7 +231,7 @@ void doPushPX(
     const Real q,
     const Real m,
     int* AMREX_RESTRICT ion_lev,
-    GetParticlePosition& getPosition,
+    const GetParticlePosition& getPosition,
     FArrayBox const* exfab,
     FArrayBox const* eyfab,
     FArrayBox const* ezfab,
@@ -239,20 +239,20 @@ void doPushPX(
     FArrayBox const* byfab,
     FArrayBox const* bzfab,
     ScaleFields scaleFields,
-    GpuArray<Real, 3> dx_arr,
-    GpuArray<Real, 3> xyzmin_arr,
+    GpuArray<amrex::Real, 3> dx_arr,
+    GpuArray<amrex::Real, 3> xyzmin_arr,
     const Dim3 lo,
     const int n_rz_azimuthal_modes,
     const int nox,
     const bool galerkin_interpolation,
     const bool do_not_gather,
     const bool do_classical_radiation_reaction
-    #ifdef WARPX_QED
+#ifdef WARPX_QED
         , bool do_sync,
         QuantumSynchrotronEvolveOpticalDepth& evolve_opt,
-        ParticleReal* AMREX_RESTRICT p_optical_depth_QSR,
-        const Real chi_max
-    #endif
+        amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR,
+        const amrex::Real chi_max
+#endif
     )
 {
 
