@@ -89,11 +89,13 @@ If we are planning on running with GPU support then we must set the environment 
     SPACK_STACK_USE_CUDA=1 spack env create warpx-lxplus-cuda $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml
     spack env activate warpx-lxplus-cuda
 
-and if we want to use the python interface we must set the environment variable ``SPACK_STACK_USE_PYTHON``
+and if we want to use the python interface we must set the environment variable ``SPACK_STACK_USE_PYTHON``.
+So if we want both CUDA-acceleration and build a Python interface, the environment setup would look like this:
 
 .. code-block:: bash
 
-    export SPACK_STACK_USE_PYTHON=1
+    SPACK_STACK_USE_PYTHON=1 SPACK_STACK_USE_CUDA=1 SPACK_STACK_USE_CUDA=1 spack env create warpx-lxplus-cuda-py $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml
+    spack env activate warpx-lxplus-cuda-py
 
 Then we can install the required packages:
 

@@ -1,11 +1,11 @@
 spack:
-# CUDA
+  # CUDA
   definitions:
   - cuda: []
   - cuda: [cuda, blaspp +cuda]
     when: env.get("SPACK_STACK_USE_CUDA", "") == "1"
 
-# basic Python dependencies for WarpX Python PICMI bindings
+  # basic Python dependencies for WarpX Python PICMI bindings
   - python: []
   - python: [python, py-pip]
     when: env.get("SPACK_STACK_USE_PYTHON", "") == "1"
