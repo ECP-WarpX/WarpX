@@ -131,14 +131,7 @@ WarpXParticleContainer::ReadParameters ()
     if (!initialized)
     {
         ParmParse pp_particles("particles");
-
-#ifdef AMREX_USE_GPU
-        do_tiling = false; // By default, tiling is off on GPU
-#else
-        do_tiling = true;
-#endif
         pp_particles.query("do_tiling", do_tiling);
-
         initialized = true;
     }
 }

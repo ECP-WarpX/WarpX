@@ -46,28 +46,6 @@
 using namespace amrex;
 
 void
-WarpX::DepositChargeDensity (WarpXParticleContainer& species, const bool local,
-                             const bool reset)
-{
-    // deposit charge density on the grid and write to rho_fp. If reset is true
-    // the values in rho_fp will be overwritten, if false the charge density
-    // from the current species will be added to rho_fp.
-    species.DepositCharge(rho_fp, local, reset, false, false);
-}
-
-void
-WarpX::ChargeDensityGridProcessing ()
-{
-    WARPX_PROFILE("WarpX::ChargeDensityGridProcessing");
-#ifdef WARPX_DIM_RZ
-    for (int lev = 0; lev <= max_level; lev++) {
-        ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
-    }
-#endif
-    SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
-}
-
-void
 WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
     WARPX_PROFILE("WarpX::ComputeSpaceChargeField");
@@ -194,10 +172,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     std::array<Real, 3> beta = {0._rt};
 
     // Compute the potential phi, by solving the Poisson equation
-    if (warpx_py_poissonsolver) {
-        WARPX_PROFILE("warpx_py_poissonsolver");
-        warpx_py_poissonsolver();
-    }
+    if ( IsPythonCallBackInstalled("poissonsolver") ) ExecutePythonCallback("poissonsolver");
     else computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
                      self_fields_absolute_tolerance, self_fields_max_iters,
                      self_fields_verbosity );
@@ -207,7 +182,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 #ifndef AMREX_USE_EB
     computeE( Efield_fp, phi_fp, beta );
 #else
-    if (warpx_py_poissonsolver) computeE( Efield_fp, phi_fp, beta );
+    if ( IsPythonCallBackInstalled("poissonsolver") ) computeE( Efield_fp, phi_fp, beta );
 #endif
 
     // Compute the magnetic field

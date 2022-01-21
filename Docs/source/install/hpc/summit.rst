@@ -28,93 +28,18 @@ Use the following commands to download the WarpX source code and switch to the c
 
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
 
-We use the following modules and environments on the system (``$HOME/warpx.profile``).
+We use the following modules and environments on the system (``$HOME/summit_warpx.profile``).
+
+.. literalinclude:: ../../../../Tools/machines/summit-olcf/summit_warpx.profile.example
+   :language: bash
+   :caption: You can copy this file from ``Tools/machines/summit-olcf/summit_warpx.profile.example``.
+
+
+We recommend to store the above lines in a file, such as ``$HOME/summit_warpx.profile``, and load it into your shell after a login:
 
 .. code-block:: bash
 
-   # please set your project account
-   export proj=<yourProject>
-
-   # optional: just an additional text editor
-   module load nano
-
-   # required dependencies
-   module load cmake/3.20.2
-   module load gcc/9.3.0
-   module load cuda/11.3.1
-
-   # optional: faster re-builds
-   module load ccache
-
-   # optional: for PSATD in RZ geometry support
-   module load blaspp/2021.04.01
-   module load lapackpp/2021.04.00
-
-   # optional: for PSATD support (CPU only)
-   #module load fftw/3.3.9
-
-   # optional: for QED lookup table generation support
-   module load boost/1.76.0
-
-   # optional: for openPMD support
-   module load adios2/2.7.1
-   module load hdf5/1.10.7
-
-   # optional: for openPMD support (GNUmake only)
-   #module load ums
-   #module load ums-aph114
-   #module load openpmd-api/0.14.2
-
-   # often unstable at runtime with dependencies
-   module unload darshan-runtime
-
-   # optional: Ascent in situ support
-   #   note: build WarpX with CMake
-   export Ascent_DIR=/gpfs/alpine/csc340/world-shared/software/ascent/2021_09_01_gcc_9_3_0_warpx/summit/cuda/gnu/ascent-install
-
-   # optional: for Python bindings or libEnsemble
-   module load python/3.8.10
-   module load freetype/2.10.4     # matplotlib
-
-   # dependencies for numpy, blaspp & lapackpp
-   module load openblas/0.3.5-omp
-   export BLAS=${OLCF_OPENBLAS_ROOT}/lib/libopenblas.so
-   export LAPACK=${OLCF_OPENBLAS_ROOT}/lib/libopenblas.so
-
-   if [ -d "$HOME/sw/venvs/warpx" ]
-   then
-     source $HOME/sw/venvs/warpx/bin/activate
-   fi
-
-   # an alias to request an interactive batch node for two hours
-   #   for paralle execution, start on the batch node: jsrun <command>
-   alias getNode="bsub -q debug -P $proj -W 2:00 -nnodes 1 -Is /bin/bash"
-   # an alias to run a command on a batch node for up to 30min
-   #   usage: nrun <command>
-   alias runNode="bsub -q debug -P $proj -W 0:30 -nnodes 1 -I"
-
-   # fix system defaults: do not escape $ with a \ on tab completion
-   shopt -s direxpand
-
-   # make output group-readable by default
-   umask 0027
-
-   # optimize CUDA compilation for V100
-   export AMREX_CUDA_ARCH=7.0
-
-   # compiler environment hints
-   export CC=$(which gcc)
-   export CXX=$(which g++)
-   export FC=$(which gfortran)
-   export CUDACXX=$(which nvcc)
-   export CUDAHOSTCXX=$(which g++)
-
-
-We recommend to store the above lines in a file, such as ``$HOME/warpx.profile``, and load it into your shell after a login:
-
-.. code-block:: bash
-
-   source $HOME/warpx.profile
+   source $HOME/summit_warpx.profile
 
 Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` or dynamic ensemble optimizations (:ref:`libEnsemble <libensemble>`):
 
@@ -130,6 +55,7 @@ Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` 
    python3 -m pip install --upgrade wheel
    python3 -m pip install --upgrade cython
    python3 -m pip install --upgrade numpy
+   python3 -m pip install --upgrade pandas
    python3 -m pip install --upgrade scipy
    python3 -m pip install --upgrade mpi4py --no-binary mpi4py
    python3 -m pip install --upgrade openpmd-api
@@ -159,7 +85,7 @@ We only prefix it to request a node for the compilation (``runNode``), so we can
    cd $HOME/src/warpx
 
    # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
-   runNode WARPX_MPI=ON WARPX_COMPUTE=CUDA WARPX_PSATD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall -v .
+   runNode WARPX_MPI=ON WARPX_COMPUTE=CUDA WARPX_PSATD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall --no-deps -v .
 
 
 .. _running-cpp-summit:
@@ -175,17 +101,18 @@ V100 GPUs (16GB)
 The batch script below can be used to run a WarpX simulation on 2 nodes on
 the supercomputer Summit at OLCF. Replace descriptions between chevrons ``<>``
 by relevant values, for instance ``<input file>`` could be
-``plasma_mirror_inputs``. Note that the only option so far is to run with one
-MPI rank per GPU.
+``plasma_mirror_inputs``.
+Note that WarpX runs with one MPI rank per GPU and there are 6 GPUs per node:
 
-.. literalinclude:: ../../../../Tools/BatchScripts/batch_summit.sh
+.. literalinclude:: ../../../../Tools/machines/summit-olcf/summit_v100.bsub
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/summit-olcf/summit_v100.bsub``.
 
-To run a simulation, copy the lines above to a file ``batch_summit.sh`` and
+To run a simulation, copy the lines above to a file ``summit_v100.bsub`` and
 run
 ::
 
-  bsub batch_summit.sh
+  bsub summit_v100.bsub
 
 to submit the job.
 
@@ -202,7 +129,7 @@ regime), the following set of parameters provided good performance:
 * **Two `128x128x128` grids per GPU**, or **one `128x128x256` grid per GPU**.
 
 A batch script with more options regarding profiling on Summit can be found at
-:download:`Summit batch script <../../../../Tools/BatchScripts/script_profiling_summit.sh>`
+:download:`Summit batch script <../../../../Tools/machines/summit-olcf/summit_profiling.bsub>`
 
 .. _running-cpp-summit-Power9-CPUs:
 
@@ -213,8 +140,9 @@ Similar to above, the batch script below can be used to run a WarpX simulation o
 1 node on the supercomputer Summit at OLCF, on Power9 CPUs (i.e., the GPUs are
 ignored).
 
-.. literalinclude:: ../../../../Tools/BatchScripts/batch_summit_power9.sh
+.. literalinclude:: ../../../../Tools/machines/summit-olcf/summit_power9.bsub
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/summit-olcf/summit_power9.bsub``.
 
 For a 3D simulation with a few (1-4) particles per cell using FDTD Maxwell
 solver on Summit for a well load-balanced problem, the following set of
