@@ -303,15 +303,15 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         //for (int lev = 0; lev <= max_level; ++lev) {
             //eb_factory[0] = &WarpX::fieldEBFactory(lev);
         //}
-        MLEBNodeFDLaplacian linop( Geom(lev), boxArray(lev), DistributionMap(lev), info, &WarpX::fieldEBFactory(lev));
+        MLEBNodeFDLaplacian linop( {Geom(lev)}, {boxArray(lev)}, {DistributionMap(lev)}, info, {&WarpX::fieldEBFactory(lev)});
 
-#       ifndef WARPX_DIM_RZ
+#ifndef WARPX_DIM_RZ
             // Note: this assumes that the beam is propagating along
             // one of the axes of the grid, i.e. that only *one* of the Cartesian
             // components of `beta` is non-negligible.
             linop.setSigma({AMREX_D_DECL(
                 1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
-#       endif
+#endif
 
         // if the EB potential only depends on time, the potential can be passed
         // as a float instead of a callable
@@ -377,14 +377,12 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
             }
 
         }
-    }
 
 #ifdef AMREX_USE_EB
-    // use amrex to directly calculate the electric field since with EB's the
-    // simple finite difference scheme in WarpX::computeE sometimes fails
-    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
-    {
-        for (int lev = 0; lev <= max_level; ++lev) {
+        // use amrex to directly calculate the electric field since with EB's the
+        // simple finite difference scheme in WarpX::computeE sometimes fails
+        if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
+        {
 #if defined(WARPX_DIM_1D_Z)
             mlmg.getGradSolution(
                 {amrex::Array<amrex::MultiFab*,1>{
@@ -409,8 +407,10 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
             get_pointer_Efield_fp(lev, 0)->mult(-1._rt);
             get_pointer_Efield_fp(lev, 2)->mult(-1._rt);
         }
-    }
 #endif
+
+    }
+
 }
 
 
