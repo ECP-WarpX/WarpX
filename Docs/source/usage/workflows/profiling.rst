@@ -31,5 +31,6 @@ Each set of two timers show the exclusive, top, and inclusive, bottom, informati
 
 For more detailed information please visit the `AMReX profiling documentation <https://amrex-codes.github.io/amrex/docs_html/AMReX_Profiling_Tools_Chapter.html>`__.
 
-.. note:
+.. note::
+
    When creating performance-related issues on the WarpX GitHub repo, please include Tiny Profiler tables (besides the usual issue description, input file and submission script), or (even better) the whole standard output.

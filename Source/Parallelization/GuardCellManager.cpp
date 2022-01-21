@@ -49,6 +49,9 @@ guardCellManager::Init (
     const int do_electrostatic,
     const int do_multi_J,
     const bool fft_do_time_averaging,
+    const bool do_pml,
+    const int do_pml_in_domain,
+    const int pml_ncell,
     const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
     // When using subcycling, the particles on the fine level perform two pushes
@@ -200,6 +203,16 @@ guardCellManager::Init (
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
 #elif defined(WARPX_DIM_1D_Z)
         IntVect ngFFT = IntVect(ngFFt_z);
+#endif
+
+#ifdef WARPX_DIM_RZ
+        if (do_pml) {
+            if (!do_pml_in_domain) {
+                ngFFT[0] = std::max(ngFFT[0], pml_ncell);
+            }
+        }
+#else
+       amrex::ignore_unused(do_pml, do_pml_in_domain, pml_ncell);
 #endif
 
         // All boxes should have the same number of guard cells, to avoid temporary parallel copies:

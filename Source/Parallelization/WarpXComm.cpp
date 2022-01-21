@@ -9,6 +9,9 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#   include "BoundaryConditions/PML_RZ.H"
+#endif
 #include "Filter/BilinearFilter.H"
 #include "Utils/CoarsenMR.H"
 #include "Utils/IntervalsParser.H"
@@ -562,13 +565,23 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
 
     // Exchange data between valid domain and PML
     // Fill guard cells in PML
-    if (do_pml && pml[lev]->ok())
+    if (do_pml)
     {
-        std::array<amrex::MultiFab*,3> mf_pml =
-            (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
+        if (pml[lev] && pml[lev]->ok())
+        {
+            std::array<amrex::MultiFab*,3> mf_pml =
+                (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
 
-        pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
-        pml[lev]->FillBoundaryE(patch_type);
+            pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
+            pml[lev]->FillBoundaryE(patch_type);
+        }
+
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+        if (pml_rz[lev])
+        {
+            pml_rz[lev]->FillBoundaryE(patch_type);
+        }
+#endif
     }
 
     // Fill guard cells in valid domain
@@ -609,13 +622,23 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
 
     // Exchange data between valid domain and PML
     // Fill guard cells in PML
-    if (do_pml && pml[lev]->ok())
+    if (do_pml)
     {
-        std::array<amrex::MultiFab*,3> mf_pml =
-            (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
+        if (pml[lev] && pml[lev]->ok())
+        {
+            std::array<amrex::MultiFab*,3> mf_pml =
+                (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
 
-        pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
-        pml[lev]->FillBoundaryB(patch_type);
+            pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
+            pml[lev]->FillBoundaryB(patch_type);
+        }
+
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+        if (pml_rz[lev])
+        {
+            pml_rz[lev]->FillBoundaryB(patch_type);
+        }
+#endif
     }
 
     // Fill guard cells in valid domain
@@ -747,7 +770,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine)
     {
-        if (do_pml && pml[lev]->ok())
+        if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (F_fp[lev]) pml[lev]->ExchangeF(patch_type, F_fp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryF(patch_type);
@@ -762,7 +785,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
     }
     else if (patch_type == PatchType::coarse)
     {
-        if (do_pml && pml[lev]->ok())
+        if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (F_cp[lev]) pml[lev]->ExchangeF(patch_type, F_cp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryF(patch_type);
@@ -791,7 +814,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine)
     {
-        if (do_pml && pml[lev]->ok())
+        if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (G_fp[lev]) pml[lev]->ExchangeG(patch_type, G_fp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryG(patch_type);
@@ -806,7 +829,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
     }
     else if (patch_type == PatchType::coarse)
     {
-        if (do_pml && pml[lev]->ok())
+        if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (G_cp[lev]) pml[lev]->ExchangeG(patch_type, G_cp[lev].get(), do_pml_in_domain);
             pml[lev]->FillBoundaryG(patch_type);
@@ -1254,7 +1277,7 @@ void WarpX::NodalSyncPML (int lev)
 
 void WarpX::NodalSyncPML (int lev, PatchType patch_type)
 {
-    if (pml[lev]->ok())
+    if (pml[lev] && pml[lev]->ok())
     {
         const std::array<amrex::MultiFab*,3>& pml_E = (patch_type == PatchType::fine) ?
                                                       pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
@@ -1278,6 +1301,24 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
             WarpXCommUtil::OverrideSync(*pml_G, period);
         }
     }
+
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    if (pml_rz[lev])
+    {
+        // This is not actually needed with RZ PSATD since the
+        // arrays are always cell centered. Keep for now since
+        // it may be useful if the PML is used with FDTD
+        const std::array<amrex::MultiFab*,2> pml_rz_E = pml_rz[lev]->GetE_fp();
+        const std::array<amrex::MultiFab*,2> pml_rz_B = pml_rz[lev]->GetB_fp();
+
+        // Always synchronize nodal points
+        const amrex::Periodicity& period = Geom(lev).periodicity();
+        pml_rz_E[0]->OverrideSync(period);
+        pml_rz_E[1]->OverrideSync(period);
+        pml_rz_B[0]->OverrideSync(period);
+        pml_rz_B[1]->OverrideSync(period);
+    }
+#endif
 }
 
 void WarpX::NodalSync (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_fp,
