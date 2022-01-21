@@ -57,3 +57,5 @@ spack:
       modules: []
   config:
     build_jobs: 6
+    # Spack defaults will try to set permissions in a way which is forbidden on the LXPLUS file system (AFS)
+    allow_sgid: false

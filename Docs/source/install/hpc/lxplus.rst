@@ -53,12 +53,6 @@ We download and activate Spack in ``$WORK``:
     git clone -c feature.manyFiles=true https://github.com/spack/spack.git
     source spack/share/spack/setup-env.sh
 
-When installing packages Spack will try to set permissions in a way which is forbidden on the LXPLUS file system (AFS), but we can avoid this by setting the Spack option:
-
-.. code-block:: bash
-
-    spack config add "config:allow_sgid:false"
-
 Now we add our gcc 11.2.0 compiler to spack:
 
 .. code-block:: bash
