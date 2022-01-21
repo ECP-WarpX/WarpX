@@ -26,6 +26,9 @@ spack:
 
   packages:
     all:
+      # since lxplus has multiple CPU micro-architectures, we do not tune for a specific one
+      # in the future, if highest on-CPU performance is needed, we should not limit this to generic x86_64,
+      # otherwise the compiler will not use recent vector operations, among other recent CPU hardware features.
       target: [x86_64]
       compiler: [gcc@11.2.0]
       variants: ~fortran
