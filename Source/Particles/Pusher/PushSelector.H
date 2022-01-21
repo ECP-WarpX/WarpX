@@ -63,7 +63,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
                     const amrex::Real m,
                     const amrex::Real q,
 #ifdef WARPX_QED
-                    const amrex::Real t_chi_max,
+                    [[maybe_unused]] const amrex::Real t_chi_max,
 #endif
                     const amrex::Real dt)
 {
