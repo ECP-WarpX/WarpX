@@ -1,5 +1,8 @@
-#include "PushPX.H"
+#include "PushPXQED.H"
 
+#include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
+#include "Particles/ElementaryProcess/QEDPhotonEmission.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/PushSelector.H"
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/ScaleFields.H"
@@ -17,7 +20,7 @@ template <
     bool DoCrr,
     long ParticlePusherAlgo
 >
-void doPushPX(
+void doPushPXQEDSync(
     const Real dt,
     const int np_to_push,
     ParticleReal* const AMREX_RESTRICT ux,
@@ -45,7 +48,10 @@ void doPushPX(
     [[maybe_unused]] GpuArray<Real, 3> dx_arr,
     [[maybe_unused]] GpuArray<Real, 3> xyzmin_arr,
     [[maybe_unused]] const Dim3 lo,
-    [[maybe_unused]] const int n_rz_azimuthal_modes)
+    [[maybe_unused]] const int n_rz_azimuthal_modes,
+    [[maybe_unused]] QuantumSynchrotronEvolveOpticalDepth& evolve_opt,
+    [[maybe_unused]] amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR,
+    [[maybe_unused]] const amrex::Real chi_max)
 {
     ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
     {
@@ -70,20 +76,18 @@ void doPushPX(
 
         doParticlePush<
             ParticlePusherAlgo,
-            DoCrr
-#ifdef WARPX_QED
-            , false
-#endif
-            >(
+            DoCrr, true>(
                 getPosition, setPosition, ip,
                 ux[ip], uy[ip], uz[ip],
                 Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                 ion_lev ? ion_lev[ip] : 0,
                 m, q,
-#ifdef WARPX_QED
-                0.0_rt,
-#endif
+                chi_max,
                 dt);
+
+        evolve_opt(ux[ip], uy[ip], uz[ip],
+                Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                dt, p_optical_depth_QSR[ip]);
 
     });
 }
@@ -95,22 +99,22 @@ template <
     bool DoCrr,
     typename ...Params
 >
-void doPushPX(const long pusher_algo, Params&&... params)
+void doPushPXQEDSync(const long pusher_algo, Params&&... params)
 {
     if (pusher_algo == 0)
-        doPushPX<GalerkinInterpolation,
+        doPushPXQEDSync<GalerkinInterpolation,
             DoNotGather,
             NOX,
             DoCrr,
             0>(std::forward<Params>(params)...);
     else if (pusher_algo == 1)
-        doPushPX<GalerkinInterpolation,
+        doPushPXQEDSync<GalerkinInterpolation,
             DoNotGather,
             NOX,
             DoCrr,
             1>(std::forward<Params>(params)...);
     else if (pusher_algo == 2)
-        doPushPX<GalerkinInterpolation,
+        doPushPXQEDSync<GalerkinInterpolation,
             DoNotGather,
             NOX,
             DoCrr,
@@ -123,15 +127,15 @@ template <
     int NOX,
     typename ...Params
 >
-void doPushPX(const bool do_crr, Params&&... params)
+void doPushPXQEDSync(const bool do_crr, Params&&... params)
 {
     if (do_crr)
-        doPushPX<GalerkinInterpolation,
+        doPushPXQEDSync<GalerkinInterpolation,
             DoNotGather,
             NOX,
             true>(std::forward<Params>(params)...);
     else
-        doPushPX<GalerkinInterpolation,
+        doPushPXQEDSync<GalerkinInterpolation,
             DoNotGather,
             NOX,
             false>(std::forward<Params>(params)...);
@@ -142,18 +146,18 @@ template <
     bool DoNotGather,
     typename ...Params
 >
-void doPushPX(const int nox, Params&&... params)
+void doPushPXQEDSync(const int nox, Params&&... params)
 {
     if (nox == 1)
-        doPushPX<GalerkinInterpolation,
+        doPushPXQEDSync<GalerkinInterpolation,
             DoNotGather,
             1>(std::forward<Params>(params)...);
     else if (nox == 2)
-        doPushPX<GalerkinInterpolation,
+        doPushPXQEDSync<GalerkinInterpolation,
             DoNotGather,
             2>(std::forward<Params>(params)...);
     else if (nox == 3)
-        doPushPX<GalerkinInterpolation,
+        doPushPXQEDSync<GalerkinInterpolation,
             DoNotGather,
             3>(std::forward<Params>(params)...);
 }
@@ -164,17 +168,17 @@ template <
     bool GalerkinInterpolation,
     typename ...Params
 >
-void doPushPX(const bool do_not_gather, Params&&... params)
+void doPushPXQEDSync(const bool do_not_gather, Params&&... params)
 {
     if (do_not_gather)
-        doPushPX<GalerkinInterpolation,
+        doPushPXQEDSync<GalerkinInterpolation,
             true>(std::forward<Params>(params)...);
     else
-        doPushPX<GalerkinInterpolation,
+        doPushPXQEDSync<GalerkinInterpolation,
             false>(std::forward<Params>(params)...);
 }
 
-void doPushPX(
+void doPushPXQEDSync(
     const Real dt,
     const long particle_pusher_algo,
     WarpXParIter& pti,
@@ -198,7 +202,10 @@ void doPushPX(
     const int nox,
     const bool galerkin_interpolation,
     const bool do_not_gather,
-    const bool do_classical_radiation_reaction)
+    const bool do_classical_radiation_reaction,
+    QuantumSynchrotronEvolveOpticalDepth& evolve_opt,
+    amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR,
+    const amrex::Real chi_max)
 {
 
     if (nox < 1 || nox > 3) Abort("ERR!");
@@ -228,7 +235,7 @@ void doPushPX(
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr() + offset;
 
     if(galerkin_interpolation)
-        doPushPX<true>(
+        doPushPXQEDSync<true>(
             do_not_gather,
             nox,
             do_classical_radiation_reaction,
@@ -244,10 +251,12 @@ void doPushPX(
             scaleFields,
             ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
             ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-            dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes
-        );
+            dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+            evolve_opt,
+            p_optical_depth_QSR,
+            chi_max);
     else
-        doPushPX<false>(
+        doPushPXQEDSync<false>(
             do_not_gather,
             nox,
             do_classical_radiation_reaction,
@@ -263,6 +272,9 @@ void doPushPX(
             scaleFields,
             ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
             ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-            dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes
+            dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+            evolve_opt,
+            p_optical_depth_QSR,
+            chi_max
         );
 }

@@ -25,6 +25,9 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/PushSelector.H"
 #include "Particles/PushPX/PushPX.H"
+#ifdef WARPX_QED
+    #include "Particles/PushPX/PushPXQED.H"
+#endif
 #include "Particles/Pusher/UpdateMomentumBoris.H"
 #include "Particles/Pusher/UpdateMomentumBorisWithRadiationReaction.H"
 #include "Particles/Pusher/UpdateMomentumHigueraCary.H"
@@ -2534,11 +2537,36 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         chi_max = m_shr_p_qs_engine->get_minimum_chi_part();
         evolve_opt = m_shr_p_qs_engine->build_evolve_functor();
         p_optical_depth_QSR = pti.GetAttribs(particle_comps["opticalDepthQSR"]).dataPtr();
+
+        doPushPXQEDSync(
+            dt,
+            WarpX::particle_pusher_algo,
+            pti, offset, np_to_push,
+            this->charge, this-> mass, ion_lev,
+            getPosition,
+            exfab, eyfab, ezfab, bxfab, byfab, bzfab,
+            scaleFields,
+            dx_arr, xyzmin_arr, lbound(box), WarpX::n_rz_azimuthal_modes,
+            WarpX::nox, WarpX::galerkin_interpolation, do_not_gather,
+            do_classical_radiation_reaction,
+            evolve_opt, p_optical_depth_QSR, chi_max);
     }
-#endif
+    else {
 
+        doPushPX(
+            dt,
+            WarpX::particle_pusher_algo,
+            pti, offset, np_to_push,
+            this->charge, this-> mass, ion_lev,
+            getPosition,
+            exfab, eyfab, ezfab, bxfab, byfab, bzfab,
+            scaleFields,
+            dx_arr, xyzmin_arr, lbound(box), WarpX::n_rz_azimuthal_modes,
+            WarpX::nox, WarpX::galerkin_interpolation, do_not_gather,
+            do_classical_radiation_reaction);
+    }
 
-
+#else
     doPushPX(
         dt,
         WarpX::particle_pusher_algo,
@@ -2549,11 +2577,12 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         scaleFields,
         dx_arr, xyzmin_arr, lbound(box), WarpX::n_rz_azimuthal_modes,
         WarpX::nox, WarpX::galerkin_interpolation, do_not_gather,
-        do_classical_radiation_reaction
-#ifdef WARPX_QED
-        , m_do_qed_quantum_sync, evolve_opt, p_optical_depth_QSR, chi_max
+        do_classical_radiation_reaction);
 #endif
-        );
+
+
+
+
 
 }
 

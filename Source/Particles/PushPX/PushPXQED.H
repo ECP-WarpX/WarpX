@@ -2,12 +2,13 @@
 
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Gather/ScaleFields.H"
+#include "Particles/ElementaryProcess/QEDPhotonEmission.H"
 
 #include <AMReX_BaseFwd.H>
 
 #include <AMReX_REAL.H>
 
-void doPushPX(
+void doPushPXQEDSync(
     const amrex::Real dt,
     const long particle_pusher_algo,
     WarpXParIter& pti,
@@ -31,4 +32,7 @@ void doPushPX(
     const int nox,
     const bool galerkin_interpolation,
     const bool do_not_gather,
-    const bool do_classical_radiation_reaction);
+    const bool do_classical_radiation_reaction,
+    QuantumSynchrotronEvolveOpticalDepth& evolve_opt,
+    amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR,
+    const amrex::Real chi_max);

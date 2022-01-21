@@ -8,6 +8,9 @@
 #define WARPX_PARTICLES_PUSHER_PUSHSELECTOR_H_
 
 // Import low-level single-particle kernels
+#ifdef WARPX_QED
+    #include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
+#endif
 #include "Particles/Pusher/UpdateMomentumBoris.H"
 #include "Particles/Pusher/UpdateMomentumBorisWithRadiationReaction.H"
 #include "Particles/Pusher/UpdateMomentumHigueraCary.H"
@@ -44,8 +47,9 @@ template <
     long ParticlePusherAlgo,
     bool DoCrr
 #ifdef WARPX_QED
-    , bool DoSync>
+    , bool DoSync
 #endif
+    >
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void doParticlePush(const GetParticlePosition& GetPosition,
                     const SetParticlePosition& SetPosition,
