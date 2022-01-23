@@ -2,6 +2,7 @@
 #export proj=<yourProject>
 
 # required dependencies
+module load cce
 module load cmake/3.21.3
 module load craype-accel-amd-gfx90a
 module load rocm/4.5.2
