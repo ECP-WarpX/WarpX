@@ -1427,13 +1427,6 @@ WarpX::BackwardCompatibility ()
             "lasers.nlasers is ignored. Just use lasers.names please.",
             WarnPriority::low);
     }
-    ParmParse pp_geometry("geometry");
-    std::string coord_sys;
-    if (pp_geometry.query("coord_sys", coord_sys)){
-        this->RecordWarning("Geometry",
-            "geometry.coord_sys is ignored. Please use the new geometry.dims parameter.",
-            WarnPriority::low);
-    }
 }
 
 // This is a virtual function.
