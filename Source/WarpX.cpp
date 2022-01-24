@@ -858,8 +858,12 @@ WarpX::ReadParameters ()
         // Use same shape factors in all directions, for gathering
         if (do_nodal) galerkin_interpolation = false;
 
+#ifdef WARPX_DIM_RZ
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         queryWithParser(pp_warpx, "n_rz_azimuthal_modes", n_rz_azimuthal_modes);
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( n_rz_azimuthal_modes > 0,
+            "The number of azimuthal modes (n_rz_azimuthal_modes) must be at least 1");
+#endif
 
         // If true, the current is deposited on a nodal grid and centered onto a staggered grid.
         // Setting warpx.do_current_centering = 1 makes sense only if warpx.do_nodal = 0. Instead,
