@@ -402,7 +402,7 @@ set(PYINSTALLOPTIONS "" CACHE STRING "Additional parameters to pass to `pip inst
 add_custom_target(install_pip
     ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY} python3 -m pip wheel -v --use-feature=in-tree-build ${WarpX_SOURCE_DIR}
     COMMAND
-        python3 -m pip install --force-reinstall -v ${PYINSTALLOPTIONS} ${CMAKE_BINARY_DIR}/*whl
+        python3 -m pip install --force-reinstall --no-deps -v ${PYINSTALLOPTIONS} ${CMAKE_BINARY_DIR}/*whl
     WORKING_DIRECTORY
         ${CMAKE_BINARY_DIR}
     DEPENDS

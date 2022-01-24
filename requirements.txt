@@ -12,3 +12,4 @@ picmistandard==0.0.19
 # openpmd-api
 # openpmd-viewer
 # matplotlib
+# pandas

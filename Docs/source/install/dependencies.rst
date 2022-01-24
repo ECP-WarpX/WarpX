@@ -6,7 +6,7 @@ Dependencies
 WarpX depends on the following popular third party software.
 Please see installation instructions below.
 
-- a mature `C++17 <https://en.wikipedia.org/wiki/C%2B%2B17>`__ compiler, e.g., GCC 7, Clang 6, NVCC 11.0, MSVC 19.15 or newer
+- a mature `C++17 <https://en.wikipedia.org/wiki/C%2B%2B17>`__ compiler, e.g., GCC 7, Clang 7, NVCC 11.0, MSVC 19.15 or newer
 - `CMake 3.18.0+ <https://cmake.org>`__
 - `Git 2.18+ <https://git-scm.com>`__
 - `AMReX <https://amrex-codes.github.io>`__: we automatically download and compile a copy of AMReX
@@ -74,7 +74,7 @@ If you also want to run runtime tests and added Python (``spack add python`` and
 
 .. code-block:: bash
 
-   python3 -m pip install matplotlib yt scipy numpy openpmd-api virtualenv
+   python3 -m pip install matplotlib yt scipy pandas numpy openpmd-api virtualenv
 
 If you want to run the ``./run_test.sh`` :ref:`test script <developers-testing>`, which uses our legacy GNUmake build system, you need to set the following environment hints after ``spack env activate warpx-dev`` for dependent software:
 
@@ -125,7 +125,7 @@ Without MPI:
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy scipy yt fftw matplotlib mamba ninja pip virtualenv
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw matplotlib mamba ninja pip virtualenv
    source activate warpx-dev
 
    # compile WarpX with -DWarpX_MPI=OFF
@@ -134,7 +134,7 @@ With MPI (only Linux/macOS):
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp "openpmd-api=*=mpi_openmpi*" python numpy scipy yt "fftw=*=mpi_openmpi*" matplotlib mamba ninja openmpi pip virtualenv
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp "openpmd-api=*=mpi_openmpi*" python numpy pandas scipy yt "fftw=*=mpi_openmpi*" matplotlib mamba ninja openmpi pip virtualenv
    source activate warpx-dev
 
 For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you also need to set:
@@ -152,7 +152,7 @@ Apt (Debian/Ubuntu)
 .. code-block:: bash
 
    sudo apt update
-   sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-pip python3-scipy python3-venv
+   sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-pandas python3-pip python3-scipy python3-venv
 
    # optional:
    # for CUDA, either install

@@ -329,7 +329,7 @@ def test_two_embedded_cylinders_scraping():
     cylinder2.record_scrapedparticles()
     cyl2_scraped = cylinder2.get_scrapedparticles()
 
-    assert np.allclose(cyl1_scraped['n'], np.array([3, 0]))
+    assert np.allclose(cyl1_scraped['n'], np.array([2, 0]))
     assert np.allclose(cyl2_scraped['n'], np.array([1, 2]))
 
     #######################################################################

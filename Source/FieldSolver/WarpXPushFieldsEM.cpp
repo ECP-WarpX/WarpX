@@ -15,6 +15,7 @@
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#       include "BoundaryConditions/PML_RZ.H"
 #   else
 #       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif
@@ -414,12 +415,18 @@ WarpX::PushPSATD ()
 
     PSATDForwardTransformEB();
     PSATDForwardTransformJ();
+
     // Do rho FFTs only if needed
     if (WarpX::update_with_rho || WarpX::current_correction || WarpX::do_dive_cleaning)
     {
         PSATDForwardTransformRho(0,0); // rho old
         PSATDForwardTransformRho(1,1); // rho new
     }
+
+#ifdef WARPX_DIM_RZ
+    if (pml_rz[0]) pml_rz[0]->PushPSATD(0);
+#endif
+
     if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
     if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
     PSATDPushSpectralFields();
@@ -431,7 +438,7 @@ WarpX::PushPSATD ()
     // Evolve the fields in the PML boxes
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (do_pml && pml[lev]->ok())
+        if (pml[lev] && pml[lev]->ok())
         {
             pml[lev]->PushPSATD(lev);
         }

@@ -462,9 +462,8 @@ class MEWarpXRun(object):
         """
 
         if species_name is not None:
-            self.sim_ext.libwarpx_so.warpx_depositRhoSpecies(
-                ctypes.c_char_p(species_name.encode('utf-8'))
-            )
+            self.sim_ext.depositChargeDensity(species_name, self.lev)
+
         if include_ghosts:
             return self.rho_wrapper_ghosts[Ellipsis]
         else:
