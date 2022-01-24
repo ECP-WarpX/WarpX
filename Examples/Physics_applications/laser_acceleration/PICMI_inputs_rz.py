@@ -131,7 +131,7 @@ sim = picmi.Simulation(
     max_steps = max_steps,
     verbose = 1,
     particle_shape = 'cubic',
-    warpx_use_filter = 1)
+    warpx_use_filter = 0)
 
 # Add plasma electrons
 sim.add_species(
