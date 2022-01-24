@@ -262,7 +262,6 @@ WarpX::Evolve (int numsteps)
 
         // interact the particles with EB walls (if present)
 #ifdef AMREX_USE_EB
-        AMREX_ALWAYS_ASSERT(maxLevel() == 0);
         mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
 #endif
 
