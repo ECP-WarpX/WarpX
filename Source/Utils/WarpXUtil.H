@@ -412,6 +412,18 @@ namespace WarpXUtilLoadBalance
      */
     bool doCosts (const amrex::LayoutData<amrex::Real>* cost, const amrex::BoxArray ba,
                   const amrex::DistributionMapping& dm);
+
+    template <typename MultiFabType> void
+    RemakeMultiFab (std::unique_ptr<MultiFabType>& mf,
+                    const amrex::DistributionMapping& dm,
+                    const bool redistribute)
+    {
+        if (mf == nullptr) return;
+        const amrex::IntVect& ng = mf->nGrowVect();
+        auto pmf = std::make_unique<MultiFabType>(mf->boxArray(), dm, mf->nComp(), ng);
+        if (redistribute) pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng);
+        mf = std::move(pmf);
+    }
 }
 
 #endif //WARPX_UTILS_H_

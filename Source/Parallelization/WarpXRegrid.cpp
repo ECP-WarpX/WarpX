@@ -8,6 +8,7 @@
  */
 #include "WarpX.H"
 
+#include "BoundaryConditions/PML.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Particles/MultiParticleContainer.H"
@@ -15,6 +16,7 @@
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
 
 #include <AMReX.H>
 #include <AMReX_BLassert.H>
@@ -121,6 +123,10 @@ WarpX::LoadBalance ()
 
             RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
 
+            pml[lev]->LoadBalance(lev, boxArray(lev), newdm,
+                                  refRatio(lev-1), nox_fft, noy_fft, noz_fft, do_nodal,
+                                  do_moving_window, guard_cells.ng_FieldSolver.max());
+
             // Record the load balance efficiency
             setLoadBalanceEfficiency(lev, proposedEfficiency);
         }
@@ -144,20 +150,10 @@ WarpX::LoadBalance ()
 }
 
 
-template <typename MultiFabType> void
-RemakeMultiFab (std::unique_ptr<MultiFabType>& mf, const DistributionMapping& dm,
-                const bool redistribute)
-{
-    if (mf == nullptr) return;
-    const IntVect& ng = mf->nGrowVect();
-    auto pmf = std::make_unique<MultiFabType>(mf->boxArray(), dm, mf->nComp(), ng);
-    if (redistribute) pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng);
-    mf = std::move(pmf);
-}
-
 void
 WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const DistributionMapping& dm)
 {
+    using namespace WarpXUtilLoadBalance;
     if (ba == boxArray(lev))
     {
         if (ParallelDescriptor::NProcs() == 1) return;
