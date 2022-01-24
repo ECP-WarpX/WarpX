@@ -8,7 +8,7 @@ spack:
 
   # basic Python dependencies for WarpX Python PICMI bindings
   - python: []
-  - python: [python, py-pip]
+  - python: [python, py-pip, openpmd-api +python]
     when: env.get("SPACK_STACK_USE_PYTHON", "") == "1"
   specs:
   - ncurses+symlinks
