@@ -4,8 +4,7 @@
 max_step = 300
 
 amr.n_cell = 32 32 32
-amr.max_grid_size = 32
-amr.blocking_factor = 32
+warpx.numprocs = 1 1 2
 amr.max_level = 0
 psatd.v_galilean = 0. 0. 0.99498743710662
 
@@ -39,9 +38,9 @@ particles.species_names = electrons ions
 warpx.do_nodal = 1
 warpx.use_filter = 1
 
-psatd.nox = 16
-psatd.noy = 16
-psatd.noz = 16
+psatd.nox = 8
+psatd.noy = 8
+psatd.noz = 8
 
 electrons.charge = -q_e
 electrons.mass = m_e

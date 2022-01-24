@@ -7,16 +7,18 @@
  */
 #include "WarpX_py.H"
 
-WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterinit = nullptr;
-WARPX_CALLBACK_PY_FUNC_0 warpx_py_beforeEsolve = nullptr;
-WARPX_CALLBACK_PY_FUNC_0 warpx_py_poissonsolver = nullptr;
-WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterEsolve = nullptr;
-WARPX_CALLBACK_PY_FUNC_0 warpx_py_beforedeposition = nullptr;
-WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterdeposition = nullptr;
-WARPX_CALLBACK_PY_FUNC_0 warpx_py_particlescraper = nullptr;
-WARPX_CALLBACK_PY_FUNC_0 warpx_py_particleloader = nullptr;
-WARPX_CALLBACK_PY_FUNC_0 warpx_py_beforestep = nullptr;
-WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterstep = nullptr;
-WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterrestart = nullptr;
-WARPX_CALLBACK_PY_FUNC_0 warpx_py_particleinjection = nullptr;
-WARPX_CALLBACK_PY_FUNC_0 warpx_py_appliedfields = nullptr;
+std::map< std::string, WARPX_CALLBACK_PY_FUNC_0 > warpx_callback_py_map;
+
+bool IsPythonCallBackInstalled ( std::string name )
+{
+    return (warpx_callback_py_map.count(name) == 1u);
+}
+
+// Execute Python callbacks of the type given by the input string
+void ExecutePythonCallback ( std::string name )
+{
+    if ( IsPythonCallBackInstalled(name) ) {
+        WARPX_PROFILE("warpx_py_"+name);
+        warpx_callback_py_map[name]();
+    }
+}

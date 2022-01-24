@@ -38,7 +38,7 @@ else:
     _path_libc = _find_library('c')
 _libc = ctypes.CDLL(_path_libc)
 _LP_c_int = ctypes.POINTER(ctypes.c_int)
-_LP_c_char = ctypes.POINTER(ctypes.c_char)
+_LP_c_char = ctypes.c_char_p
 
 
 class LibWarpX():
@@ -397,10 +397,15 @@ class LibWarpX():
     def amrex_init(self, argv, mpi_comm=None):
         # --- Construct the ctype list of strings to pass in
         argc = len(argv)
+
+        # note: +1 since there is an extra char-string array element,
+        #       that ANSII C requires to be a simple NULL entry
+        #       https://stackoverflow.com/a/39096006/2719194
         argvC = (_LP_c_char * (argc+1))()
         for i, arg in enumerate(argv):
             enc_arg = arg.encode('utf-8')
-            argvC[i] = ctypes.create_string_buffer(enc_arg)
+            argvC[i] = _LP_c_char(enc_arg)
+        argvC[argc] = _LP_c_char(b"\0")  # +1 element must be NULL
 
         if mpi_comm is None or MPI is None:
             self.libwarpx_so.amrex_init(argc, argvC)
@@ -1042,6 +1047,23 @@ class LibWarpX():
 
         '''
         self.libwarpx_so.warpx_clearParticleBoundaryBuffer()
+
+    def depositChargeDensity(self, species_name, level):
+        '''
+
+        Deposit the specified species' charge density in rho_fp in order to
+        access that data via pywarpx.fields.RhoFPWrapper()
+
+        Parameters
+        ----------
+
+            species_name   : the species name that will be deposited.
+            level          : Which AMR level to retrieve scraped particle data from.
+
+        '''
+        self.libwarpx_so.warpx_depositChargeDensity(
+            ctypes.c_char_p(species_name.encode('utf-8')), level
+        )
 
     def _get_mesh_field_list(self, warpx_func, level, direction, include_ghosts):
         """

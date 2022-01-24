@@ -1605,7 +1605,8 @@ PhysicalParticleContainer::Evolve (int lev,
 
     bool has_buffer = cEx || cjx;
 
-    if (WarpX::do_back_transformed_diagnostics && do_back_transformed_diagnostics)
+    if ( (WarpX::do_back_transformed_diagnostics && do_back_transformed_diagnostics) ||
+         (m_do_back_transformed_particles) )
     {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
@@ -2287,6 +2288,8 @@ PhysicalParticleContainer::GetParticleSlice (
                   uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr();
 
                 const long np = pti.numParticles();
+                amrex::Print() << " np old BTD " << np << "\n";
+                amrex::Print() << " tmp particle size : " << tmp_particle_data.size() << "\n";
 
                 Real uzfrm = -WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
                 Real inv_c2 = 1.0/PhysConst::c/PhysConst::c;
@@ -2505,9 +2508,10 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr() + offset;
 
     auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
-    int do_copy = (WarpX::do_back_transformed_diagnostics &&
-                          do_back_transformed_diagnostics &&
-                   (a_dt_type!=DtType::SecondHalf));
+    int do_copy = ( (WarpX::do_back_transformed_diagnostics
+                     && do_back_transformed_diagnostics
+                     && a_dt_type!=DtType::SecondHalf)
+                  || (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf)) );
 
     int* AMREX_RESTRICT ion_lev = nullptr;
     if (do_field_ionization) {

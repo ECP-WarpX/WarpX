@@ -69,10 +69,18 @@ MultiDiagnostics::ReadParameters ()
 }
 
 void
-MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush)
+MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush, bool BackTransform)
 {
+    int i = 0;
     for (auto& diag : alldiags){
-        diag->FilterComputePackFlush (step, force_flush);
+        if (BackTransform == true) {
+            if (diags_types[i] == DiagTypes::BackTransformed)
+                diag->FilterComputePackFlush (step, force_flush);
+        } else {
+            if (diags_types[i] != DiagTypes::BackTransformed)
+                diag->FilterComputePackFlush (step, force_flush);
+        }
+        ++i;
     }
 }
 

@@ -48,19 +48,9 @@ extern "C" {
 
     typedef void(*WARPX_CALLBACK_PY_FUNC_0)();
 
-    void warpx_set_callback_py_afterinit (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_beforeEsolve (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_poissonsolver (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_afterEsolve (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_beforedeposition (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_afterdeposition (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_particlescraper (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_particleloader (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_beforestep (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_afterstep (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_afterrestart (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_particleinjection (WARPX_CALLBACK_PY_FUNC_0);
-    void warpx_set_callback_py_appliedfields (WARPX_CALLBACK_PY_FUNC_0);
+    void warpx_set_callback_py (const char* char_callback_name,
+                                WARPX_CALLBACK_PY_FUNC_0 callback);
+    void warpx_clear_callback_py (const char* char_callback_name);
 
     void warpx_evolve (int numsteps);  // -1 means the inputs parameter will be used.
 
@@ -119,6 +109,16 @@ extern "C" {
             int* num_tiles, int** particles_per_tile);
 
     void warpx_clearParticleBoundaryBuffer ();
+
+    /**
+     * \brief This function is used to deposit a given species' charge density
+     * in the rho_fp multifab which can then be accessed from python via
+     * pywarpx.fields.RhoFPWrapper()
+     *
+     * @param[in] species_name specifying the name of the species to deposit
+     * @param[in] lev mesh refinement level
+     */
+    void warpx_depositChargeDensity (const char* species_name, int lev);
 
   void warpx_ComputeDt ();
   void warpx_MoveWindow (int step, bool move_j);

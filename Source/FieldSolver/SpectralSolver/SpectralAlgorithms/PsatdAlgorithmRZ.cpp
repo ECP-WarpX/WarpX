@@ -22,7 +22,7 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                     bool const nodal, amrex::Real const dt,
                                     bool const update_with_rho,
                                     const bool time_averaging,
-                                    const bool J_linear_in_time,
+                                    const bool do_multi_J,
                                     const bool dive_cleaning,
                                     const bool divb_cleaning)
      // Initialize members of base class
@@ -31,7 +31,7 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
        m_dt(dt),
        m_update_with_rho(update_with_rho),
        m_time_averaging(time_averaging),
-       m_J_linear_in_time(J_linear_in_time),
+       m_do_multi_J(do_multi_J),
        m_dive_cleaning(dive_cleaning),
        m_divb_cleaning(divb_cleaning)
 {
@@ -46,25 +46,25 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
 
     coefficients_initialized = false;
 
-    if (time_averaging && J_linear_in_time)
+    if (time_averaging && do_multi_J)
     {
         X5_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
         X6_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
     }
 
-    if (time_averaging && !J_linear_in_time)
+    if (time_averaging && !do_multi_J)
     {
-        amrex::Abort("RZ PSATD: psatd.do_time_averaging = 1 implemented only with psatd.J_linear_in_time = 1");
+        amrex::Abort("RZ PSATD: psatd.do_time_averaging = 1 implemented only with warpx.do_multi_J = 1");
     }
 
-    if (dive_cleaning && !J_linear_in_time)
+    if (dive_cleaning && !do_multi_J)
     {
-        amrex::Abort("RZ PSATD: warpx.do_dive_cleaning = 1 implemented only with psatd.J_linear_in_time = 1");
+        amrex::Abort("RZ PSATD: warpx.do_dive_cleaning = 1 implemented only with warpx.do_multi_J = 1");
     }
 
-    if (divb_cleaning && !J_linear_in_time)
+    if (divb_cleaning && !do_multi_J)
     {
-        amrex::Abort("RZ PSATD: warpx.do_divb_cleaning = 1 implemented only with psatd.J_linear_in_time = 1");
+        amrex::Abort("RZ PSATD: warpx.do_divb_cleaning = 1 implemented only with warpx.do_multi_J = 1");
     }
 }
 
@@ -76,7 +76,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 
     const bool update_with_rho = m_update_with_rho;
     const bool time_averaging = m_time_averaging;
-    const bool J_linear_in_time = m_J_linear_in_time;
+    const bool do_multi_J = m_do_multi_J;
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
@@ -105,7 +105,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 
         amrex::Array4<const amrex::Real> X5_arr;
         amrex::Array4<const amrex::Real> X6_arr;
-        if (time_averaging && J_linear_in_time)
+        if (time_averaging && do_multi_J)
         {
             X5_arr = X5_coef[mfi].array();
             X6_arr = X6_coef[mfi].array();
@@ -231,7 +231,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
                 G_old = fields(i,j,k,G_m);
             }
 
-            if (J_linear_in_time)
+            if (do_multi_J)
             {
                 const int Jp_m_new = Idx.Jx_new + Idx.n_fields*mode;
                 const int Jm_m_new = Idx.Jy_new + Idx.n_fields*mode;
@@ -328,7 +328,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
 {
     const bool time_averaging = m_time_averaging;
-    const bool J_linear_in_time = m_J_linear_in_time;
+    const bool do_multi_J = m_do_multi_J;
 
     // Fill them with the right values:
     // Loop over boxes and allocate the corresponding coefficients
@@ -349,7 +349,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 
         amrex::Array4<amrex::Real> X5;
         amrex::Array4<amrex::Real> X6;
-        if (time_averaging && J_linear_in_time)
+        if (time_averaging && do_multi_J)
         {
             X5 = X5_coef[mfi].array();
             X6 = X6_coef[mfi].array();
@@ -388,7 +388,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
                 X3(i,j,k,mode) = - c*c * dt*dt / (3._rt*ep0);
             }
 
-            if (time_averaging && J_linear_in_time)
+            if (time_averaging && do_multi_J)
             {
                 constexpr amrex::Real c2 = PhysConst::c;
                 const amrex::Real dt3 = dt * dt * dt;

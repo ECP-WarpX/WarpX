@@ -39,24 +39,27 @@ class SpectralFieldIndex
          * Set integer indices to access data in spectral space
          * and total number of fields to be stored.
          *
-         * \param[in] update_with_rho   whether rho is used in the field update equations
-         * \param[in] time_averaging    whether the time averaging algorithm is used
-         * \param[in] J_linear_in_time  whether to use two currents computed at the beginning and
-         *                              the end of the time interval (instead of using one current
-         *                              computed at half time)
-         * \param[in] dive_cleaning     whether to use div(E) cleaning to account for errors in
-         *                              Gauss law (new field F in the update equations)
-         * \param[in] divb_cleaning     whether to use div(B) cleaning to account for errors in
-         *                              div(B) = 0 law (new field G in the update equations)
-         * \param[in] pml               whether the indices are used to access spectral data
-         *                              for the PML spectral solver
+         * \param[in] update_with_rho whether rho is used in the field update equations
+         * \param[in] time_averaging  whether the time averaging algorithm is used
+         * \param[in] do_multi_J      whether the multi-J algorithm is used (hence two currents
+         *                            computed at the beginning and the end of the time interval
+         *                            instead of one current computed at half time)
+         * \param[in] dive_cleaning   whether to use div(E) cleaning to account for errors in
+         *                            Gauss law (new field F in the update equations)
+         * \param[in] divb_cleaning   whether to use div(B) cleaning to account for errors in
+         *                            div(B) = 0 law (new field G in the update equations)
+         * \param[in] pml             whether the indices are used to access spectral data
+         *                            for the PML spectral solver
+         * \param[in] pml_rz          whether the indices are used to access spectral data
+         *                            for the RZ PML spectral solver
          */
         SpectralFieldIndex (const bool update_with_rho,
                             const bool time_averaging,
-                            const bool J_linear_in_time,
+                            const bool do_multi_J,
                             const bool dive_cleaning,
                             const bool divb_cleaning,
-                            const bool pml);
+                            const bool pml,
+                            const bool pml_rz = false);
 
         /**
          * \brief Default constructor
@@ -86,7 +89,7 @@ class SpectralFieldIndex
     int Ex_avg = -1, Ey_avg = -1, Ez_avg = -1;
     int Bx_avg = -1, By_avg = -1, Bz_avg = -1;
 
-    // J linear in time
+    // Multi-J, div(E) and div(B) cleaning
     int Jx_new = -1, Jy_new = -1, Jz_new = -1;
     int F = -1, G = -1;
 
@@ -97,6 +100,9 @@ class SpectralFieldIndex
     // PML with div(E) and/or div(B) cleaning
     int Exx = -1, Eyy = -1, Ezz = -1, Bxx = -1, Byy = -1, Bzz = -1;
     int Fx  = -1, Fy  = -1, Fz  = -1, Gx  = -1, Gy  = -1, Gz  = -1;
+
+    // PML RZ
+    int Er_pml = -1, Et_pml = -1, Br_pml = -1, Bt_pml = -1;
 };
 
 /** \brief Class that stores the fields in spectral space, and performs the
