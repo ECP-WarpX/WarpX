@@ -636,6 +636,7 @@ namespace
 #ifdef WARPX_DIM_RZ
         warpx.ApplyInverseVolumeScalingToChargeDensity(rho_fp, lev);
 #endif
+        warpx.SyncRho();
     }
 
     void warpx_ComputeDt () {
