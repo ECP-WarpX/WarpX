@@ -616,6 +616,15 @@ namespace
         auto & myspc = mypc.GetParticleContainerFromName(species_name);
         auto * rho_fp = warpx.get_pointer_rho_fp(lev);
 
+        if (warpx.maxLevel() > 0) {
+            warpx.RecordWarning(
+                "WarpXWrappers",
+                "warpx_depositChargeDensity only available if max_level == 0",
+                WarnPriority::low
+            );
+            return;
+        }
+
         if (rho_fp == nullptr) {
             warpx.RecordWarning(
                 "WarpXWrappers", "rho_fp is not allocated", WarnPriority::low
@@ -635,6 +644,7 @@ namespace
 #ifdef WARPX_DIM_RZ
         warpx.ApplyInverseVolumeScalingToChargeDensity(rho_fp, lev);
 #endif
+        warpx.SyncRho();
     }
 
     void warpx_ComputeDt () {
