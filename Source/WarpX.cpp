@@ -693,9 +693,7 @@ WarpX::ReadParameters ()
             // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
             if (use_filter)
             {
-                this->RecordWarning("Filter",
-                    "Filter currently not working with FDTD solver in RZ geometry."
-                    "We recommend setting warpx.use_filter = 0 in the input file.");
+                amrex::Abort("Filter currently not working with FDTD solver in RZ geometry");
             }
         }
 #endif
