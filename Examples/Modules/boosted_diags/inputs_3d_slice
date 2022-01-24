@@ -12,7 +12,7 @@ my_constants.xmax = +128.e-6
 my_constants.ymax = +128.e-6
 my_constants.zmax = 0.96e-6
 
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 3
 geometry.prob_lo     = xmin ymin zmin
 geometry.prob_hi     = xmax ymax zmax
 
@@ -124,6 +124,7 @@ btd_openpmd.dz_snapshots_lab = 0.001
 btd_openpmd.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
 btd_openpmd.format = openpmd
 btd_openpmd.buffer_size = 32
+btd_openpmd.openpmd_backend = h5
 
 btd_pltfile.diag_type = BackTransformed
 btd_pltfile.do_back_transformed_fields = 1

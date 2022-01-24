@@ -8,7 +8,7 @@ amr.n_cell = 8 8 8
 amr.max_level = 0
 
 # Geometry
-geometry.coord_sys   = 0 # Cartesian
+geometry.dims = 3
 geometry.prob_lo = -2.077023075927835e+07 -2.077023075927835e+07 -2.077023075927835e+07
 geometry.prob_hi =  2.077023075927835e+07  2.077023075927835e+07  2.077023075927835e+07
 

@@ -34,9 +34,10 @@ class SpectralSolverRZ
                           int const norder_z, bool const nodal,
                           const amrex::Vector<amrex::Real>& v_galilean,
                           amrex::RealVect const dx, amrex::Real const dt,
+                          bool const with_pml,
                           bool const update_with_rho,
                           const bool fft_do_time_averaging,
-                          const bool J_linear_in_time,
+                          const bool do_multi_J,
                           const bool dive_cleaning,
                           const bool divb_cleaning);
 
@@ -63,7 +64,7 @@ class SpectralSolverRZ
                                 amrex::MultiFab& field_mf2, int const field_index2);
 
         /* \brief Update the fields in spectral space, over one timestep */
-        void pushSpectralFields ();
+        void pushSpectralFields (const bool doing_pml=false);
 
         /* \brief Initialize K space filtering arrays */
         void InitFilter (amrex::IntVect const & filter_npass_each_dir,
@@ -98,6 +99,7 @@ class SpectralSolverRZ
          * by its derived classes (e.g. PsatdAlgorithmRZ), from
          * objects of class SpectralSolverRZ through the private unique pointer \c algorithm
          *
+         * \param[in]     lev     The mesh refinement level
          * \param[in,out] current two-dimensional array of unique pointers to MultiFab
          *                        storing the three components of the current density
          * \param[in]     rho     unique pointer to MultiFab storing the charge density
@@ -111,6 +113,7 @@ class SpectralSolverRZ
          * derived classes, from objects of class SpectralSolverRZ through the private
          * unique pointer \c algorithm.
          *
+         * \param[in]     lev     The mesh refinement level
          * \param[in,out] current Array of unique pointers to \c MultiFab storing
          * the three components of the current density
          */
@@ -158,6 +161,7 @@ class SpectralSolverRZ
         SpectralFieldDataRZ field_data; // Store field in spectral space
                                         // and perform the Fourier transforms
         std::unique_ptr<SpectralBaseAlgorithmRZ> algorithm;
+        std::unique_ptr<SpectralBaseAlgorithmRZ> PML_algorithm;
         // Defines field update equation in spectral space,
         // and the associated coefficients.
         // SpectralBaseAlgorithmRZ is a base class ; this pointer is meant

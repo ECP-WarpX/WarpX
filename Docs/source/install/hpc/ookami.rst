@@ -31,36 +31,9 @@ Use the following commands to download the WarpX source code and switch to the c
 
 We use the following modules and environments on the system (``$HOME/warpx_gcc10.profile``).
 
-.. code-block:: bash
-
-   # please set your project account (not relevant yet)
-   #export proj=<yourProject>
-
-   # required dependencies
-   module load cmake/3.19.0
-   module load gcc/10.3.0
-   module load openmpi/gcc10/4.1.0
-
-   # optional: faster builds (not available yet)
-   #module load ccache
-   #module load ninja
-
-   # optional: for PSATD support (not available yet)
-   #module load fftw
-
-   # optional: for QED lookup table generation support (not available yet)
-   #module load boost
-
-   # optional: for openPMD support
-   #module load adios2  # not available yet
-   #module load hdf5    # only serial
-
-   # compiler environment hints
-   export CC=$(which gcc)
-   export CXX=$(which g++)
-   export FC=$(which gfortran)
-   export CXXFLAGS="-mcpu=a64fx"
-
+.. literalinclude:: ../../../../Tools/machines/ookami-sbu/ookami_warpx.profile.example
+   :language: bash
+   :caption: You can copy this file from ``Tools/machines/ookami-sbu/ookami_warpx.profile.example``.
 
 We recommend to store the above lines in a file, such as ``$HOME/warpx_gcc10.profile``, and load it into your shell after a login:
 
@@ -76,11 +49,11 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON
+   cmake -S . -B build -DWarpX_COMPUTE=OMP
    cmake --build build -j 10
 
    # or (currently better performance)
-   cmake -S . -B build -DWarpX_COMPUTE=NOACC -DWarpX_OPENPMD=ON
+   cmake -S . -B build -DWarpX_COMPUTE=NOACC
    cmake --build build -j 10
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
@@ -126,3 +99,5 @@ We compiled with the Fujitsu Compiler (Clang) with the following build string:
       -DAMReX_MPI_THREAD_MULTIPLE=FALSE             \
       -DWarpX_COMPUTE=OMP
    cmake --build build -j 10
+
+Note that the best performance for A64FX is currently achieved with the GCC or ARM compilers.

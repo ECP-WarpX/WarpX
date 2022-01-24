@@ -1,14 +1,14 @@
-import os
-import re
-import sys
-import platform
-import shutil
-import subprocess
-
-from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext
 from distutils.command.build import build
 from distutils.version import LooseVersion
+import os
+import platform
+import re
+import shutil
+import subprocess
+import sys
+
+from setuptools import Extension, setup
+from setuptools.command.build_ext import build_ext
 
 
 class CopyPreBuild(build):
@@ -184,7 +184,7 @@ env = os.environ.copy()
 WARPX_COMPUTE = env.pop('WARPX_COMPUTE', 'OMP')
 WARPX_MPI = env.pop('WARPX_MPI', 'OFF')
 WARPX_EB = env.pop('WARPX_EB', 'OFF')
-WARPX_OPENPMD = env.pop('WARPX_OPENPMD', 'OFF')
+WARPX_OPENPMD = env.pop('WARPX_OPENPMD', 'ON')
 WARPX_PRECISION = env.pop('WARPX_PRECISION', 'DOUBLE')
 WARPX_PSATD = env.pop('WARPX_PSATD', 'OFF')
 WARPX_QED = env.pop('WARPX_QED', 'ON')
@@ -253,7 +253,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '21.12',
+    version = '22.01',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',

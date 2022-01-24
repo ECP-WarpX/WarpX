@@ -28,6 +28,7 @@ HPC Systems
    hpc/perlmutter
    hpc/summit
    hpc/spock
+   hpc/crusher
    hpc/juwels
    hpc/lassen
    hpc/quartz

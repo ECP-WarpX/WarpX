@@ -62,19 +62,20 @@ rm -rf py-venv
 python3 -m venv py-venv
 source py-venv/bin/activate
 python3 -m pip install --upgrade pip setuptools wheel
+# setuptools/mp4py work-around, see
+#   https://github.com/mpi4py/mpi4py/pull/159
+#   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
+export SETUPTOOLS_USE_DISTUTILS="stdlib"
 python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
 
-# Clone PICSAR, AMReX and warpx-data
+# Clone AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout --detach 9373709e34b23add981551d5446bc4810fd3b688 && cd -
-# Use QED brach for QED tests
-git clone https://github.com/ECP-WarpX/picsar.git
-cd picsar && git checkout --detach 7b5449f92a4b30a095cc4a67f0a8b1fc69680e15 && cd -
+cd amrex && git checkout --detach e3b1468b8f16d11eebf4b10cca32829c78fb5d35 && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 
 # Clone the AMReX regression test utility
-git clone https://github.com/ECP-WarpX/regression_testing.git
+git clone https://github.com/AMReX-Codes/regression_testing.git
 
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks

@@ -9,7 +9,7 @@
  */
 #include "WarpXParticleContainer.H"
 
-#include "ABLASTR/DepositCharge.H"
+#include "ablastr/particles/DepositCharge.H"
 #include "Deposition/ChargeDeposition.H"
 #include "Deposition/CurrentDeposition.H"
 #include "Pusher/GetAndSetPosition.H"
@@ -131,14 +131,7 @@ WarpXParticleContainer::ReadParameters ()
     if (!initialized)
     {
         ParmParse pp_particles("particles");
-
-#ifdef AMREX_USE_GPU
-        do_tiling = false; // By default, tiling is off on GPU
-#else
-        do_tiling = true;
-#endif
         pp_particles.query("do_tiling", do_tiling);
-
         initialized = true;
     }
 }
@@ -352,8 +345,8 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     // Jx, Jy and Jz have the same number of guard cells, hence it is sufficient to check for Jx
     const amrex::IntVect range = jx->nGrowVect() - shape_extent;
 #endif
-
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    amrex::ignore_unused(range); // for release builds
+    AMREX_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, range) == 0,
         "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for current deposition");
 
@@ -653,7 +646,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
         amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
 
-        ablastr::DepositCharge<WarpXParticleContainer>
+        ablastr::particles::deposit_charge<WarpXParticleContainer>
             (pti, wp, ion_lev, rho, icomp, nc, offset, np_to_depose,
              local_rho[thread_num], lev, depos_lev, this->charge,
              WarpX::nox, WarpX::noy, WarpX::noz, ng_rho, dx, xyzmin, ref_ratio,

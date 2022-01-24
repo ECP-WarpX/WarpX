@@ -21,6 +21,7 @@
 #   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#       include "BoundaryConditions/PML_RZ.H"
 #   else
 #       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif // RZ ifdef
@@ -190,7 +191,6 @@ int WarpX::self_fields_verbosity = 2;
 int WarpX::do_subcycling = 0;
 int WarpX::do_multi_J = 0;
 int WarpX::do_multi_J_n_depositions;
-int WarpX::J_linear_in_time = 0;
 bool WarpX::safe_guard_cells = 0;
 
 IntVect WarpX::filter_npass_each_dir(1);
@@ -199,6 +199,8 @@ int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
 int WarpX::do_nodal = false;
+
+int WarpX::do_similar_dm_pml = 1;
 
 #ifdef AMREX_USE_GPU
 bool WarpX::do_device_synchronize = true;
@@ -326,6 +328,9 @@ WarpX::WarpX ()
     charge_buf.resize(nlevs_max);
 
     pml.resize(nlevs_max);
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    pml_rz.resize(nlevs_max);
+#endif
     costs.resize(nlevs_max);
     load_balance_efficiency.resize(nlevs_max);
 
@@ -471,6 +476,9 @@ WarpX::PrintGlobalWarnings(const std::string& when)
 void
 WarpX::ReadParameters ()
 {
+    // Ensure that geometry.dims is set properly.
+    CheckDims();
+
     {
         ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
         queryWithParser(pp, "max_step", max_step);
@@ -569,7 +577,7 @@ WarpX::ReadParameters ()
             if (s == "x" || s == "X") {
                 moving_window_dir = 0;
             }
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             else if (s == "y" || s == "Y") {
                 moving_window_dir = 1;
             }
@@ -632,6 +640,11 @@ WarpX::ReadParameters ()
 
         do_electrostatic = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
 
+#if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_electrostatic!=ElectrostaticSolverAlgo::None,
+        "Currently, the embedded boundary in RZ only works for electrostatic solvers.");
+#endif
+
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
             // Note that with the relativistic version, these parameters would be
             // input for each species.
@@ -669,7 +682,7 @@ WarpX::ReadParameters ()
 #if (AMREX_SPACEDIM >= 2)
         filter_npass_each_dir[1] = parse_filter_npass_each_dir[1];
 #endif
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         filter_npass_each_dir[2] = parse_filter_npass_each_dir[2];
 #endif
 
@@ -751,6 +764,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("pml_has_particles", pml_has_particles);
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
+        pp_warpx.query("do_similar_dm_pml", do_similar_dm_pml);
 
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
         // false for FDTD solver, true for PSATD solver.
@@ -804,8 +818,10 @@ WarpX::ReadParameters ()
         }
 
 #ifdef WARPX_DIM_RZ
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false,
-            "PML are not implemented in RZ geometry; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false || maxwell_solver_id == MaxwellSolverAlgo::PSATD,
+            "PML are not implemented in RZ geometry with FDTD; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( field_boundary_lo[1] != FieldBoundaryType::PML && field_boundary_hi[1] != FieldBoundaryType::PML,
+            "PML are not implemented in RZ geometry along z; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
 #endif
 
         if ( (do_pml_j_damping==1)&&(do_pml_in_domain==0) ){
@@ -849,19 +865,22 @@ WarpX::ReadParameters ()
         // Use same shape factors in all directions, for gathering
         if (do_nodal) galerkin_interpolation = false;
 
+#ifdef WARPX_DIM_RZ
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         queryWithParser(pp_warpx, "n_rz_azimuthal_modes", n_rz_azimuthal_modes);
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( n_rz_azimuthal_modes > 0,
+            "The number of azimuthal modes (n_rz_azimuthal_modes) must be at least 1");
+#endif
 
         pp_warpx.query("field_gathering_centering", field_gathering_centering);
 
-        // If true, the current is deposited on a nodal grid and then interpolated onto a Yee grid
-        pp_warpx.query("do_current_centering", do_current_centering);
-
-        // If do_nodal = 1, Maxwell's equations are solved on a nodal grid and
-        // the current should not be centered
-        if (do_nodal)
+        // If true, the current is deposited on a nodal grid and centered onto a staggered grid.
+        // Setting warpx.do_current_centering = 1 makes sense only if warpx.do_nodal = 0. Instead,
+        // if warpx.do_nodal = 1, Maxwell's equations are solved on a nodal grid and the current
+        // should not be centered onto a staggered grid.
+        if (WarpX::do_nodal == 0)
         {
-            do_current_centering = false;
+            pp_warpx.query("do_current_centering", do_current_centering);
         }
 
         if ((maxLevel() > 0) && do_current_centering)
@@ -888,6 +907,13 @@ WarpX::ReadParameters ()
 #ifdef WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
             "The problem must not be periodic in the radial direction");
+
+        // Ensure code aborts if PEC is specified at r=0 for RZ
+        if (Geom(0).ProbLo(0) == 0){
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
+                "Error : Field boundary at r=0 must be ``none``. \n");
+        }
 
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
             // Force do_nodal=true (that is, not staggered) and
@@ -1001,9 +1027,14 @@ WarpX::ReadParameters ()
 
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 
-            // For momentum-conserving field gathering, read from input the order of
-            // interpolation from the staggered positions to the grid nodes
-            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving) {
+            // Read order of finite-order centering of fields (staggered to nodal).
+            // Read this only if warpx.do_nodal = 0. Instead, if warpx.do_nodal = 1,
+            // Maxwell's equations are solved on a nodal grid and the electromagnetic
+            // forces are gathered from a nodal grid, hence the fields do not need to
+            // be centered onto a nodal grid.
+            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
+                WarpX::do_nodal == 0)
+            {
                 queryWithParser(pp_interpolation, "field_centering_nox", field_centering_nox);
                 queryWithParser(pp_interpolation, "field_centering_noy", field_centering_noy);
                 queryWithParser(pp_interpolation, "field_centering_noz", field_centering_noz);
@@ -1024,14 +1055,17 @@ WarpX::ReadParameters ()
                 queryWithParser(pp_interpolation, "charge_centering_noz", charge_centering_noz);
             }
 
-            if (maxLevel() > 0)
+            // Finite-order centering is not implemented with mesh refinement
+            // (note that when WarpX::do_nodal = 1 finite-order centering is not used anyways)
+            if (maxLevel() > 0 && WarpX::do_nodal == 0)
             {
                 AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                     field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
                     "High-order centering of fields (order > 2) is not implemented with mesh refinement");
             }
 
-            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving)
+            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
+                WarpX::do_nodal == 0)
             {
                 AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
                                               device_field_centering_stencil_coeffs_y,
@@ -1092,7 +1126,6 @@ WarpX::ReadParameters ()
 
         pp_psatd.query("current_correction", current_correction);
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
-        pp_psatd.query("J_linear_in_time", J_linear_in_time);
 
         if (!fft_periodic_single_box && current_correction)
             amrex::Abort(
@@ -1204,12 +1237,9 @@ WarpX::ReadParameters ()
             {
                 amrex::Abort("Multi-J algorithm not implemented with Galilean PSATD");
             }
-        }
 
-        if (J_linear_in_time)
-        {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
-                "psatd.update_with_rho must be set to 1 when psatd.J_linear_in_time = 1");
+                "psatd.update_with_rho must be set to 1 when warpx.do_multi_J = 1");
         }
 
         for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
@@ -1456,11 +1486,11 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 {
     bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 
-#if   (AMREX_SPACEDIM == 1)
+#if   defined(WARPX_DIM_1D_Z)
     amrex::RealVect dx(WarpX::CellSize(lev)[2]);
-#elif   (AMREX_SPACEDIM == 2)
+#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[2]};
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[1], WarpX::CellSize(lev)[2]};
 #endif
 
@@ -1483,6 +1513,9 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::do_electrostatic,
         WarpX::do_multi_J,
         WarpX::fft_do_time_averaging,
+        WarpX::isAnyBoundaryPML(),
+        WarpX::do_pml_in_domain,
+        WarpX::pml_ncell,
         this->refRatio());
 
 
@@ -1530,7 +1563,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     amrex::IntVect F_nodal_flag, G_nodal_flag;
 
     // Set nodal flags
-#if   (AMREX_SPACEDIM == 1)
+#if   defined(WARPX_DIM_1D_Z)
     // AMReX convention: x = missing dimension, y = missing dimension, z = only dimension
     Ex_nodal_flag = IntVect(1);
     Ey_nodal_flag = IntVect(1);
@@ -1541,7 +1574,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     jx_nodal_flag = IntVect(1);
     jy_nodal_flag = IntVect(1);
     jz_nodal_flag = IntVect(0);
-#elif   (AMREX_SPACEDIM == 2)
+#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // AMReX convention: x = first dimension, y = missing dimension, z = second dimension
     Ex_nodal_flag = IntVect(0,1);
     Ey_nodal_flag = IntVect(1,1);
@@ -1552,7 +1585,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     jx_nodal_flag = IntVect(0,1);
     jy_nodal_flag = IntVect(1,1);
     jz_nodal_flag = IntVect(1,0);
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     Ex_nodal_flag = IntVect(0,1,1);
     Ey_nodal_flag = IntVect(1,0,1);
     Ez_nodal_flag = IntVect(1,1,0);
@@ -1761,6 +1794,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if ( fft_periodic_single_box == false ) {
             realspace_ba.grow(1, ngE[1]); // add guard cells only in z
         }
+        if (field_boundary_hi[0] == FieldBoundaryType::PML && !do_pml_in_domain) {
+            // Extend region that is solved for to include the guard cells
+            // which is where the PML boundary is applied.
+            realspace_ba.growHi(0, pml_ncell);
+        }
         AllocLevelSpectralSolverRZ(spectral_solver_fp,
                                    lev,
                                    realspace_ba,
@@ -1901,6 +1939,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             // Define spectral solver
 #ifdef WARPX_DIM_RZ
             c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+            if (field_boundary_hi[0] == FieldBoundaryType::PML && !do_pml_in_domain) {
+                // Extend region that is solved for to include the guard cells
+                // which is where the PML boundary is applied.
+                c_realspace_ba.growHi(0, pml_ncell);
+            }
             AllocLevelSpectralSolverRZ(spectral_solver_cp,
                                        lev,
                                        c_realspace_ba,
@@ -2011,9 +2054,10 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   m_v_galilean,
                                                   dx_vect,
                                                   solver_dt,
+                                                  isAnyBoundaryPML(),
                                                   update_with_rho,
                                                   fft_do_time_averaging,
-                                                  J_linear_in_time,
+                                                  do_multi_J,
                                                   do_dive_cleaning,
                                                   do_divb_cleaning);
     spectral_solver[lev] = std::move(pss);
@@ -2042,11 +2086,11 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                       const std::array<Real,3>& dx,
                                       const bool pml_flag)
 {
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     RealVect dx_vect(dx[0], dx[1], dx[2]);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     RealVect dx_vect(dx[0], dx[2]);
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
     RealVect dx_vect(dx[2]);
 #endif
 
@@ -2069,7 +2113,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 fft_periodic_single_box,
                                                 update_with_rho,
                                                 fft_do_time_averaging,
-                                                J_linear_in_time,
+                                                do_multi_J,
                                                 do_dive_cleaning,
                                                 do_divb_cleaning);
     spectral_solver[lev] = std::move(pss);
@@ -2082,9 +2126,9 @@ WarpX::CellSize (int lev)
 {
     const amrex::Geometry& gm = GetInstance().Geom(lev);
     const Real* dx = gm.CellSize();
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     return { dx[0], dx[1], dx[2] };
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     return { dx[0], 1.0, dx[1] };
 #else
     return { 1.0, 1.0, dx[0] };
@@ -2106,13 +2150,13 @@ WarpX::LowerCorner(const Box& bx, std::array<amrex::Real,3> galilean_shift, int 
 
     const Real* xyzmin = grid_box.lo();
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     return { xyzmin[0] + galilean_shift[0], xyzmin[1] + galilean_shift[1], xyzmin[2] + galilean_shift[2] };
 
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     return { xyzmin[0] + galilean_shift[0], std::numeric_limits<Real>::lowest(), xyzmin[1] + galilean_shift[2] };
 
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
     return { std::numeric_limits<Real>::lowest(), std::numeric_limits<Real>::lowest(), xyzmin[0] + galilean_shift[2] };
 #endif
 }
@@ -2122,11 +2166,11 @@ WarpX::UpperCorner(const Box& bx, int lev)
 {
     const RealBox grid_box = getRealBox( bx, lev );
     const Real* xyzmax = grid_box.hi();
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     return { xyzmax[0], xyzmax[1], xyzmax[2] };
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     return { xyzmax[0], std::numeric_limits<Real>::max(), xyzmax[1] };
-#elif (AMREX_SPACEDIM == 1)
+#elif defined(WARPX_DIM_1D_Z)
     return { std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), xyzmax[0] };
 #endif
 }
@@ -2236,6 +2280,19 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
     }
 }
 
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+PML_RZ*
+WarpX::GetPML_RZ (int lev)
+{
+    if (pml_rz[lev]) {
+        // This should check if pml was initialized
+        return pml_rz[lev].get();
+    } else {
+        return nullptr;
+    }
+}
+#endif
+
 PML*
 WarpX::GetPML (int lev)
 {
@@ -2327,7 +2384,7 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
     const amrex::Dim3 hi = amrex::ubound( tbx );
     Array4<int> msk = buffer_mask.array();
     Array4<int const> gmsk = guard_mask.array();
-#if (AMREX_SPACEDIM == 1)
+#if defined(WARPX_DIM_1D_Z)
     int k = lo.z;
     int j = lo.y;
     for (int i = lo.x; i <= hi.x; ++i) {
@@ -2339,7 +2396,7 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
         if ( setnull ) msk(i,j,k) = 0;
         else           msk(i,j,k) = 1;
     }
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     int k = lo.z;
     for     (int j = lo.y; j <= hi.y; ++j) {
         for (int i = lo.x; i <= hi.x; ++i) {
@@ -2354,7 +2411,7 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
             else           msk(i,j,k) = 1;
         }
     }
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
     for         (int k = lo.z; k <= hi.z; ++k) {
         for     (int j = lo.y; j <= hi.y; ++j) {
             for (int i = lo.x; i <= hi.x; ++i) {

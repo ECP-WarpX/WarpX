@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2021 Roelof Groenewald
 
@@ -13,10 +13,10 @@
 
 # Possible running time: ~ 19 s
 
-import numpy as np
-
-import yt
 import glob
+
+import numpy as np
+import yt
 
 files = sorted(glob.glob('dirichletbc_plt*'))[1:]
 if len(files) == 0:
@@ -30,7 +30,7 @@ potentials_hi = np.zeros(len(files))
 for ii, file in enumerate(files):
     ds = yt.load( file )
     times[ii] = (
-        ds.current_time.item() - float(ds.parameters.get('warpx.const_dt'))
+        ds.current_time.item()
     )
     data = ds.covering_grid(
         level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions

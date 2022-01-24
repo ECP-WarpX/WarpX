@@ -85,6 +85,17 @@ public:
     * lookup tables. Therefore, it should be rather lightweight to copy.
     *
     * @param[in] generate_functor functor to be called to determine the properties of the generated pairs
+    * @param[in] a_pti particle iterator to iterate over photons undergoing QED pair generation process
+    * @param[in] lev   the mesh-refinement level
+    * @param[in] ngE   number of guard cells allocated for the E and B MultiFabs
+    * @param[in] exfab constant reference to the FArrayBox of the x component of the electric field
+    * @param[in] eyfab constant reference to the FArrayBox of the y component of the electric field
+    * @param[in] ezfab constant reference to the FArrayBox of the z component of the electric field
+    * @param[in] bxfab constant reference to the FArrayBox of the x component of the magnetic field
+    * @param[in] byfab constant reference to the FArrayBox of the y component of the magnetic field
+    * @param[in] bzfab constant reference to the FArrayBox of the z component of the magnetic field
+    * @param[in] v_galilean vector components of the Galilean velocity (used with the Galilean PSATD solver)
+    * @param[in] a_offset offset to apply to the particle indices
     */
     PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor,
                                 const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,

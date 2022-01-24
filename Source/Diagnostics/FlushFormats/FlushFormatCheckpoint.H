@@ -26,7 +26,8 @@ class FlushFormatCheckpoint final : public FlushFormatPlotfile
         bool plot_raw_fields_guards,
         bool isBTD = false, int snapshotID = -1,
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
-        bool isLastBTDFlush = false) const override final;
+        bool isLastBTDFlush = false,
+        const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const override final;
 
     void CheckpointParticles (const std::string& dir,
                               const amrex::Vector<ParticleDiag>& particle_diags) const;

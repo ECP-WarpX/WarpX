@@ -164,14 +164,8 @@ namespace
     {
         WarpX& warpx = WarpX::GetInstance();
         warpx.InitData();
-        if (warpx_py_afterinit) {
-            WARPX_PROFILE("warpx_py_afterinit");
-            warpx_py_afterinit();
-        }
-        if (warpx_py_particleloader) {
-            WARPX_PROFILE("warpx_py_particleloader");
-            warpx_py_particleloader();
-        }
+        ExecutePythonCallback("afterinit");
+        ExecutePythonCallback("particleloader");
     }
 
     void warpx_finalize ()
@@ -179,57 +173,17 @@ namespace
         WarpX::ResetInstance();
     }
 
-    void warpx_set_callback_py_afterinit (WARPX_CALLBACK_PY_FUNC_0 callback)
+    void warpx_set_callback_py (
+        const char* char_callback_name, WARPX_CALLBACK_PY_FUNC_0 callback)
     {
-        warpx_py_afterinit = callback;
+        const std::string callback_name(char_callback_name);
+        warpx_callback_py_map[callback_name] = callback;
     }
-    void warpx_set_callback_py_beforeEsolve (WARPX_CALLBACK_PY_FUNC_0 callback)
+
+    void warpx_clear_callback_py (const char* char_callback_name)
     {
-        warpx_py_beforeEsolve = callback;
-    }
-    void warpx_set_callback_py_poissonsolver (WARPX_CALLBACK_PY_FUNC_0 callback)
-    {
-        warpx_py_poissonsolver = callback;
-    }
-    void warpx_set_callback_py_afterEsolve (WARPX_CALLBACK_PY_FUNC_0 callback)
-    {
-        warpx_py_afterEsolve = callback;
-    }
-    void warpx_set_callback_py_beforedeposition (WARPX_CALLBACK_PY_FUNC_0 callback)
-    {
-        warpx_py_beforedeposition = callback;
-    }
-    void warpx_set_callback_py_afterdeposition (WARPX_CALLBACK_PY_FUNC_0 callback)
-    {
-        warpx_py_afterdeposition = callback;
-    }
-    void warpx_set_callback_py_particlescraper (WARPX_CALLBACK_PY_FUNC_0 callback)
-    {
-        warpx_py_particlescraper = callback;
-    }
-    void warpx_set_callback_py_particleloader (WARPX_CALLBACK_PY_FUNC_0 callback)
-    {
-        warpx_py_particleloader = callback;
-    }
-    void warpx_set_callback_py_beforestep (WARPX_CALLBACK_PY_FUNC_0 callback)
-    {
-        warpx_py_beforestep = callback;
-    }
-    void warpx_set_callback_py_afterstep (WARPX_CALLBACK_PY_FUNC_0 callback)
-    {
-        warpx_py_afterstep = callback;
-    }
-    void warpx_set_callback_py_afterrestart (WARPX_CALLBACK_PY_FUNC_0 callback)
-    {
-        warpx_py_afterrestart = callback;
-    }
-    void warpx_set_callback_py_particleinjection (WARPX_CALLBACK_PY_FUNC_0 callback)
-    {
-        warpx_py_particleinjection = callback;
-    }
-    void warpx_set_callback_py_appliedfields (WARPX_CALLBACK_PY_FUNC_0 callback)
-    {
-        warpx_py_appliedfields = callback;
+        const std::string callback_name(char_callback_name);
+        warpx_callback_py_map.erase(callback_name);
     }
 
     void warpx_evolve (int numsteps)
@@ -264,7 +218,7 @@ namespace
 
     void warpx_CheckGriddingForRZSpectral()
     {
-      CheckGriddingForRZSpectral();
+        CheckGriddingForRZSpectral();
     }
 
     amrex::Real warpx_getProbLo(int dir)
@@ -650,6 +604,37 @@ namespace
     void warpx_clearParticleBoundaryBuffer () {
         auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
         particle_buffers.clearParticles();
+    }
+
+    void warpx_depositChargeDensity (const char* char_species_name, int lev) {
+        // this function is used to deposit a given species' charge density
+        // in the rho_fp multifab which can then be accessed from python via
+        // pywarpx.fields.RhoFPWrapper()
+        WarpX& warpx = WarpX::GetInstance();
+        const auto & mypc = warpx.GetPartContainer();
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
+        auto * rho_fp = warpx.get_pointer_rho_fp(lev);
+
+        if (rho_fp == nullptr) {
+            warpx.RecordWarning(
+                "WarpXWrappers", "rho_fp is not allocated", WarnPriority::low
+            );
+            return;
+        }
+
+        // reset rho before depositing
+        rho_fp->setVal(0.);
+
+        for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
+        {
+            const long np = pti.numParticles();
+            auto& wp = pti.GetAttribs(PIdx::w);
+            myspc.DepositCharge(pti, wp, nullptr, rho_fp, 0, 0, np, 0, lev, lev);
+        }
+#ifdef WARPX_DIM_RZ
+        warpx.ApplyInverseVolumeScalingToChargeDensity(rho_fp, lev);
+#endif
     }
 
     void warpx_ComputeDt () {
