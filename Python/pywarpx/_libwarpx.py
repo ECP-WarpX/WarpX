@@ -1064,8 +1064,7 @@ class LibWarpX():
 
         '''
         if clear_rho:
-            rho_fp_wrapper = pywarpx.fields.RhoFPWrapper(level, True)
-            rho_fp_wrapper[...] = 0.0
+            pywarpx.fields.RhoFPWrapper(level, True)[...] = 0.0
         self.libwarpx_so.warpx_depositChargeDensity(
             ctypes.c_char_p(species_name.encode('utf-8')), level
         )

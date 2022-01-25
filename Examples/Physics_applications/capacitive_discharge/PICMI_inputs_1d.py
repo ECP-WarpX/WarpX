@@ -208,13 +208,10 @@ class CapacitiveDischargeExample(object):
         self.sim.add_diagnostic(field_diag)
 
     def _get_rho_ions(self):
-        if self.rho_wrapper is None:
-            self.rho_wrapper = fields.RhoFPWrapper(0, False)
-
         # deposit the ion density in rho_fp
         self.sim.extension.depositChargeDensity('he_ions', 0)
 
-        rho_data = self.rho_wrapper[...][:,0]
+        rho_data = fields.RhoFPWrapper(0, False)[...][:,0]
         self.ion_density_array += rho_data / constants.q_e / self.diag_steps
 
     def run_sim(self):
