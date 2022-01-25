@@ -1048,6 +1048,23 @@ class LibWarpX():
         '''
         self.libwarpx_so.warpx_clearParticleBoundaryBuffer()
 
+    def depositChargeDensity(self, species_name, level):
+        '''
+
+        Deposit the specified species' charge density in rho_fp in order to
+        access that data via pywarpx.fields.RhoFPWrapper()
+
+        Parameters
+        ----------
+
+            species_name   : the species name that will be deposited.
+            level          : Which AMR level to retrieve scraped particle data from.
+
+        '''
+        self.libwarpx_so.warpx_depositChargeDensity(
+            ctypes.c_char_p(species_name.encode('utf-8')), level
+        )
+
     def _get_mesh_field_list(self, warpx_func, level, direction, include_ghosts):
         """
         Generic routine to fetch the list of field data arrays.
