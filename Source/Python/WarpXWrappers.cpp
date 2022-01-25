@@ -606,6 +606,18 @@ namespace
         particle_buffers.clearParticles();
     }
 
+    void warpx_clearChargeDensity (int lev) {
+        WarpX& warpx = WarpX::GetInstance();
+        auto * rho_fp = warpx.get_pointer_rho_fp(lev);
+        if (rho_fp == nullptr) {
+            warpx.RecordWarning(
+                "WarpXWrappers", "rho_fp is not allocated", WarnPriority::low
+            );
+            return;
+        }
+        rho_fp->setVal(0.);
+    }
+
     void warpx_depositChargeDensity (const char* char_species_name, int lev) {
         // this function is used to deposit a given species' charge density
         // in the rho_fp multifab which can then be accessed from python via
@@ -616,24 +628,12 @@ namespace
         auto & myspc = mypc.GetParticleContainerFromName(species_name);
         auto * rho_fp = warpx.get_pointer_rho_fp(lev);
 
-        if (warpx.maxLevel() > 0) {
-            warpx.RecordWarning(
-                "WarpXWrappers",
-                "warpx_depositChargeDensity only available if max_level == 0",
-                WarnPriority::low
-            );
-            return;
-        }
-
         if (rho_fp == nullptr) {
             warpx.RecordWarning(
                 "WarpXWrappers", "rho_fp is not allocated", WarnPriority::low
             );
             return;
         }
-
-        // reset rho before depositing
-        rho_fp->setVal(0.);
 
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
         {
@@ -644,7 +644,6 @@ namespace
 #ifdef WARPX_DIM_RZ
         warpx.ApplyInverseVolumeScalingToChargeDensity(rho_fp, lev);
 #endif
-        warpx.SyncRho();
     }
 
     void warpx_ComputeDt () {
@@ -671,6 +670,10 @@ namespace
     void warpx_FillBoundaryB () {
         WarpX& warpx = WarpX::GetInstance();
         warpx.FillBoundaryB (warpx.getngE());
+    }
+    void warpx_SyncRho () {
+        WarpX& warpx = WarpX::GetInstance();
+        warpx.SyncRho ();
     }
     void warpx_SyncCurrent () {
         WarpX& warpx = WarpX::GetInstance();
