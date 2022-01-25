@@ -127,6 +127,7 @@ extern "C" {
   void warpx_EvolveB (amrex::Real dt, DtType a_dt_type);
   void warpx_FillBoundaryE ();
   void warpx_FillBoundaryB ();
+  void warpx_SyncRho ();
   void warpx_SyncCurrent ();
   void warpx_UpdateAuxilaryData ();
   void warpx_PushParticlesandDepose (amrex::Real cur_time);
