@@ -1483,8 +1483,18 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 } else {
                     theta = 2._rt*MathConst::pi*r.y;
                 }
-                pos.x = xb*std::cos(theta);
-                pos.y = xb*std::sin(theta);
+                Real const cos_theta = std::cos(theta);
+                Real const sin_theta = std::sin(theta);
+                // Rotate the position
+                pos.x = xb*cos_theta;
+                pos.y = xb*sin_theta;
+                // Rotate the position
+                {
+                    Real ur = u.x;
+                    Real ut = u.y;
+                    u.x = cos_theta*ur - sin_theta*ut;
+                    u.y = sin_theta*ur + cos_theta*ut;
+                }
 #endif
 
                 // Lab-frame simulation
