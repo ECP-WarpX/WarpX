@@ -105,7 +105,7 @@ struct InjectorMomentumGaussianFlux
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real /*z*/,
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
                  amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex::literals;
@@ -114,26 +114,10 @@ struct InjectorMomentumGaussianFlux
         amrex::Real ur = std::sqrt(2._rt*std::log(1._rt/urand));
         if (m_flux_direction < 0) ur = -ur;
 
-#if (defined WARPX_DIM_RZ)
-        amrex::Real const u_r = (m_flux_normal_axis == 0 ? m_ux_th*ur : amrex::RandomNormal(m_ux_m, m_ux_th, engine));
-        amrex::Real const u_t = (m_flux_normal_axis == 1 ? m_uy_th*ur : amrex::RandomNormal(m_uy_m, m_uy_th, engine));
-        amrex::Real const r = std::sqrt( x*x + y*y );
-        amrex::Real ux, uy;
-        if (r > 0){
-          amrex::Real const inv_r = 1./r;
-          ux = (x*inv_r)*u_r - (y*inv_r)*u_t;
-          uy = (y*inv_r)*u_r + (x*inv_r)*u_t;
-        } else {
-          ux = u_r;
-          uy = u_t;
-        }
-#else
-        amrex::ignore_unused( x, y );
+        // Note that in 2D, with m_flux_normal_axis == 1, uy is out of the plane and so Gaussian and uz is v*Gaussian
         amrex::Real const ux = (m_flux_normal_axis == 0 ? m_ux_th*ur : amrex::RandomNormal(m_ux_m, m_ux_th, engine));
         amrex::Real const uy = (m_flux_normal_axis == 1 ? m_uy_th*ur : amrex::RandomNormal(m_uy_m, m_uy_th, engine));
-#endif        
         amrex::Real const uz = (m_flux_normal_axis == 2 ? m_uz_th*ur : amrex::RandomNormal(m_uz_m, m_uz_th, engine));
-
         return amrex::XDim3{ux, uy, uz};
     }
 
