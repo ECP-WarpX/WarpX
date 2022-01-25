@@ -111,15 +111,6 @@ extern "C" {
     void warpx_clearParticleBoundaryBuffer ();
 
     /**
-     * \brief This function sets the given level of the multifab, rho_fp, to
-     * all zeros. This is used to reset the multifab before depositing into it
-     * using warpx_depositChargeDensity()
-     *
-     * @param[in] lev mesh refinement level
-     */
-    void warpx_clearChargeDensity (int lev);
-
-    /**
      * \brief This function is used to deposit a given species' charge density
      * in the rho_fp multifab which can then be accessed from python via
      * pywarpx.fields.RhoFPWrapper()

@@ -1048,17 +1048,6 @@ class LibWarpX():
         '''
         self.libwarpx_so.warpx_clearParticleBoundaryBuffer()
 
-    def clearChargeDensity(self, level):
-        '''
-
-        Clear the rho_fp multifab at the given level.
-
-        Parameters
-        ----------
-            level          : Which AMR level to clear.
-        '''
-        self.libwarpx_so.warpx_clearChargeDensity(level)
-
     def depositChargeDensity(self, species_name, level):
         '''
 

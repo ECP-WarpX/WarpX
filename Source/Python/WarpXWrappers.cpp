@@ -606,18 +606,6 @@ namespace
         particle_buffers.clearParticles();
     }
 
-    void warpx_clearChargeDensity (int lev) {
-        WarpX& warpx = WarpX::GetInstance();
-        auto * rho_fp = warpx.get_pointer_rho_fp(lev);
-        if (rho_fp == nullptr) {
-            warpx.RecordWarning(
-                "WarpXWrappers", "rho_fp is not allocated", WarnPriority::low
-            );
-            return;
-        }
-        rho_fp->setVal(0.);
-    }
-
     void warpx_depositChargeDensity (const char* char_species_name, int lev) {
         // this function is used to deposit a given species' charge density
         // in the rho_fp multifab which can then be accessed from python via
