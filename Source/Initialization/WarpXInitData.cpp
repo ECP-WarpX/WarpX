@@ -847,6 +847,47 @@ void WarpX::CheckGuardCells()
                 CheckGuardCells(*F_cp[lev]);
             }
         }
+
+        // MultiFabs in PML region
+        if (do_pml)
+        {
+            for (int dim = 0; dim < 3; ++dim)
+            {
+                CheckGuardCells(*(pml[lev]->GetE_fp())[dim]);
+                CheckGuardCells(*(pml[lev]->GetB_fp())[dim]);
+                CheckGuardCells(*(pml[lev]->Getj_fp())[dim]);
+            }
+
+            if (pml[lev]->GetF_fp())
+            {
+                CheckGuardCells(*(pml[lev]->GetF_fp()));
+            }
+
+            if (pml[lev]->GetG_fp())
+            {
+                CheckGuardCells(*(pml[lev]->GetG_fp()));
+            }
+
+            if (lev > 0)
+            {
+                for (int dim = 0; dim < 3; ++dim)
+                {
+                    CheckGuardCells(*(pml[lev]->GetE_cp())[dim]);
+                    CheckGuardCells(*(pml[lev]->GetB_cp())[dim]);
+                    CheckGuardCells(*(pml[lev]->Getj_cp())[dim]);
+                }
+
+                if (pml[lev]->GetF_cp())
+                {
+                    CheckGuardCells(*(pml[lev]->GetF_cp()));
+                }
+
+                if (pml[lev]->GetG_cp())
+                {
+                    CheckGuardCells(*(pml[lev]->GetG_cp()));
+                }
+            }
+        }
     }
 }
 
