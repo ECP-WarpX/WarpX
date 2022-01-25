@@ -516,6 +516,14 @@ namespace
         mypc.defineAllParticleTiles();
     }
 
+    amrex::Real warpx_sumParticleCharge(const char* char_species_name, const bool local)
+    {
+        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
+        return myspc.sumParticleCharge(local);
+    }
+
     int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary)
     {
         const std::string name(species_name);
