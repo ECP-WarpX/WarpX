@@ -800,93 +800,51 @@ void WarpX::CheckGuardCells()
     {
         for (int dim = 0; dim < 3; ++dim)
         {
-            CheckGuardCells(*Efield_fp[lev][dim]);
-            CheckGuardCells(*Bfield_fp[lev][dim]);
-            CheckGuardCells(*current_fp[lev][dim]);
+            if (Efield_fp[lev][dim]) CheckGuardCells(*(Efield_fp[lev][dim]));
+            if (Efield_cp[lev][dim]) CheckGuardCells(*(Efield_cp[lev][dim]));
 
-            if (WarpX::fft_do_time_averaging)
-            {
-                CheckGuardCells(*Efield_avg_fp[lev][dim]);
-                CheckGuardCells(*Bfield_avg_fp[lev][dim]);
-            }
+            if (Bfield_fp[lev][dim]) CheckGuardCells(*(Bfield_fp[lev][dim]));
+            if (Bfield_cp[lev][dim]) CheckGuardCells(*(Bfield_cp[lev][dim]));
+
+            if (current_fp[lev][dim]) CheckGuardCells(*(current_fp[lev][dim]));
+            if (current_cp[lev][dim]) CheckGuardCells(*(current_cp[lev][dim]));
+
+            if (Efield_avg_fp[lev][dim]) CheckGuardCells(*(Efield_avg_fp[lev][dim]));
+            if (Efield_avg_cp[lev][dim]) CheckGuardCells(*(Efield_avg_cp[lev][dim]));
+
+            if (Bfield_avg_fp[lev][dim]) CheckGuardCells(*(Bfield_avg_fp[lev][dim]));
+            if (Bfield_avg_cp[lev][dim]) CheckGuardCells(*(Bfield_avg_cp[lev][dim]));
         }
 
-        if (rho_fp[lev])
-        {
-            CheckGuardCells(*rho_fp[lev]);
-        }
+        if (rho_fp[lev]) CheckGuardCells(*(rho_fp[lev]));
+        if (rho_cp[lev]) CheckGuardCells(*(rho_cp[lev]));
 
-        if (F_fp[lev])
-        {
-            CheckGuardCells(*F_fp[lev]);
-        }
+        if (F_fp[lev]) CheckGuardCells(*(F_fp[lev]));
+        if (F_cp[lev]) CheckGuardCells(*(F_cp[lev]));
 
-        // MultiFabs on coarse patch
-        if (lev > 0)
-        {
-            for (int dim = 0; dim < 3; ++dim)
-            {
-                CheckGuardCells(*Efield_cp[lev][dim]);
-                CheckGuardCells(*Bfield_cp[lev][dim]);
-                CheckGuardCells(*current_cp[lev][dim]);
-
-                if (WarpX::fft_do_time_averaging)
-                {
-                    CheckGuardCells(*Efield_avg_cp[lev][dim]);
-                    CheckGuardCells(*Bfield_avg_cp[lev][dim]);
-                }
-            }
-
-            if (rho_cp[lev])
-            {
-                CheckGuardCells(*rho_cp[lev]);
-            }
-
-            if (F_cp[lev])
-            {
-                CheckGuardCells(*F_cp[lev]);
-            }
-        }
+        if (G_fp[lev]) CheckGuardCells(*(G_fp[lev]));
+        if (G_cp[lev]) CheckGuardCells(*(G_cp[lev]));
 
         // MultiFabs in PML region
         if (do_pml)
         {
             for (int dim = 0; dim < 3; ++dim)
             {
-                CheckGuardCells(*(pml[lev]->GetE_fp())[dim]);
-                CheckGuardCells(*(pml[lev]->GetB_fp())[dim]);
-                CheckGuardCells(*(pml[lev]->Getj_fp())[dim]);
+                if (pml[lev]->GetE_fp()[dim]) CheckGuardCells(*(pml[lev]->GetE_fp()[dim]));
+                if (pml[lev]->GetE_cp()[dim]) CheckGuardCells(*(pml[lev]->GetE_cp()[dim]));
+
+                if (pml[lev]->GetB_fp()[dim]) CheckGuardCells(*(pml[lev]->GetB_fp()[dim]));
+                if (pml[lev]->GetB_cp()[dim]) CheckGuardCells(*(pml[lev]->GetB_cp()[dim]));
+
+                if (pml[lev]->Getj_fp()[dim]) CheckGuardCells(*(pml[lev]->Getj_fp()[dim]));
+                if (pml[lev]->Getj_cp()[dim]) CheckGuardCells(*(pml[lev]->Getj_cp()[dim]));
             }
 
-            if (pml[lev]->GetF_fp())
-            {
-                CheckGuardCells(*(pml[lev]->GetF_fp()));
-            }
+            if (pml[lev]->GetF_fp()) CheckGuardCells(*(pml[lev]->GetF_fp()));
+            if (pml[lev]->GetF_cp()) CheckGuardCells(*(pml[lev]->GetF_cp()));
 
-            if (pml[lev]->GetG_fp())
-            {
-                CheckGuardCells(*(pml[lev]->GetG_fp()));
-            }
-
-            if (lev > 0)
-            {
-                for (int dim = 0; dim < 3; ++dim)
-                {
-                    CheckGuardCells(*(pml[lev]->GetE_cp())[dim]);
-                    CheckGuardCells(*(pml[lev]->GetB_cp())[dim]);
-                    CheckGuardCells(*(pml[lev]->Getj_cp())[dim]);
-                }
-
-                if (pml[lev]->GetF_cp())
-                {
-                    CheckGuardCells(*(pml[lev]->GetF_cp()));
-                }
-
-                if (pml[lev]->GetG_cp())
-                {
-                    CheckGuardCells(*(pml[lev]->GetG_cp()));
-                }
-            }
+            if (pml[lev]->GetG_fp()) CheckGuardCells(*(pml[lev]->GetG_fp()));
+            if (pml[lev]->GetG_cp()) CheckGuardCells(*(pml[lev]->GetG_cp()));
         }
     }
 }
