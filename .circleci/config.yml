@@ -127,6 +127,20 @@ jobs:
             export OMP_NUM_THREADS=1
             pytest -q --tb=no
 
+      # Run the mwxp benchmarks
+      - run:
+          name: run mwxp benchmarks
+          command: |
+            . venv/bin/activate
+            cd ../mwxp/examples/benchmarks
+            export OMPI_MCA_btl_vader_single_copy_mechanism=none
+            for f in *.yaml; do template_rungen -e $f; done
+            for dir in ci_test*; do
+              cd $dir
+              /bin/bash run_script.sh > /dev/null 2>&1
+              cd ..
+            done
+
       - store_test_results:
           path: mewarpx/test-reports
 
