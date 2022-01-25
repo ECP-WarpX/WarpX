@@ -54,7 +54,7 @@ If your project uses the specific algorithms, please consider citing the respect
   **A Hybrid Nodal-Staggered Pseudo-Spectral Electromagnetic Particle-In-Cell Method with Finite-Order Centering**. under review, 2022.
   https://arxiv.org/abs/2106.12919
 
-- Olga Shapoval O, Lehe R, Thevenet M, Zoni E, Zhao Y, Vay J-L.
+- Shapoval O, Lehe R, Thevenet M, Zoni E, Zhao Y, Vay J-L.
   **Overcoming timestep limitations in boosted-frame Particle-In-Cell simulations of plasma-based acceleration**.
   *Phys. Rev. E* Nov 2021, 104:055311.
   https://doi.org/10.1103/PhysRevE.104.055311
