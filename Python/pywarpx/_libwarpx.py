@@ -15,8 +15,7 @@ import sys
 
 import numpy as np
 from numpy.ctypeslib import ndpointer as _ndpointer
-
-from .Geometry import geometry
+import pywarpx
 
 try:
     # --- If mpi4py is going to be used, this needs to be imported
@@ -88,8 +87,8 @@ class LibWarpX():
         # --- Use geometry to determine whether to import the 1D, 2D, 3D or RZ version.
         # --- The geometry must be setup before the lib warpx shared object can be loaded.
         try:
-            _prob_lo = geometry.prob_lo
-            _dims = geometry.dims
+            _prob_lo = pywarpx.geometry.prob_lo
+            _dims = pywarpx.geometry.dims
         except AttributeError:
             raise Exception('The shared object could not be loaded. The geometry must be setup before the WarpX shared object can be accessesd. The geometry determines which version of the shared object to load.')
 
@@ -1048,7 +1047,7 @@ class LibWarpX():
         '''
         self.libwarpx_so.warpx_clearParticleBoundaryBuffer()
 
-    def depositChargeDensity(self, species_name, level, sync_rho=True):
+    def depositChargeDensity(self, species_name, level, clear_rho=True, sync_rho=True):
         '''
 
         Deposit the specified species' charge density in rho_fp in order to
@@ -1059,10 +1058,14 @@ class LibWarpX():
 
             species_name   : the species name that will be deposited.
             level          : Which AMR level to retrieve scraped particle data from.
-            sync_rho       : If True perform MPI exchange and properly set boundary
+            clear_rho      : If True, zero out rho_fp before deposition.
+            sync_rho       : If True, perform MPI exchange and properly set boundary
                              cells for rho_fp.
 
         '''
+        if clear_rho:
+            rho_fp_wrapper = pywarpx.fields.RhoFPWrapper(level, True)
+            rho_fp_wrapper[...] = 0.0
         self.libwarpx_so.warpx_depositChargeDensity(
             ctypes.c_char_p(species_name.encode('utf-8')), level
         )

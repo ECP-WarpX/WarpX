@@ -211,8 +211,6 @@ class CapacitiveDischargeExample(object):
         if self.rho_wrapper is None:
             self.rho_wrapper = fields.RhoFPWrapper(0, False)
 
-        # clear rho_fp
-        self.rho_wrapper[...] = 0.0
         # deposit the ion density in rho_fp
         self.sim.extension.depositChargeDensity('he_ions', 0)
 
