@@ -40,6 +40,10 @@ warpx.moving_window_v = 1.
 # Spectral solver
 psatd.do_time_averaging = 0
 psatd.update_with_rho = 1
+psatd.nox = 8
+psatd.noz = 8
+psatd.nx_guard = 8
+psatd.nz_guard = 8
 
 # Multi-J scheme
 warpx.do_multi_J = 1
