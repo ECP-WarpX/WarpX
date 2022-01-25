@@ -131,7 +131,7 @@ struct InjectorMomentumGaussianFlux
         amrex::ignore_unused( x, y );
         amrex::Real const ux = (m_flux_normal_axis == 0 ? m_ux_th*ur : amrex::RandomNormal(m_ux_m, m_ux_th, engine));
         amrex::Real const uy = (m_flux_normal_axis == 1 ? m_uy_th*ur : amrex::RandomNormal(m_uy_m, m_uy_th, engine));
-#endif        
+#endif
         amrex::Real const uz = (m_flux_normal_axis == 2 ? m_uz_th*ur : amrex::RandomNormal(m_uz_m, m_uz_th, engine));
 
         return amrex::XDim3{ux, uy, uz};
