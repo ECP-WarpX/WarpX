@@ -35,7 +35,7 @@ Please add the following sentence to your publications, it helps contributors ke
 Latest WarpX reference
 **********************
 
-If your project even leads to a scientific publication, please consider citing the paper below.
+If your project leads to a scientific publication, please consider citing the paper below.
 
 - Myers A, Almgren A, Amorim LD, Bell J, Fedeli L, Ge L, Gott K, Grote DP, Hogan M, Huebl A, Jambunathan R, Lehe R, Ng C, Rowan M, Shapoval O, Thevenet M, Vay JL, Vincenti H, Yang E, Zaim N, Zhang W, Zhao Y, Zoni E.
   **Porting WarpX to GPU-accelerated platforms**. *Parallel Computing*. 2021 Sep, 108:102833.
