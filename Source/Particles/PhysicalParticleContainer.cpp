@@ -1181,9 +1181,13 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     const auto problo = geom.ProbLoArray();
 
     Real scale_fac = 0._rt;
-    if (dx[plasma_injector->flux_normal_axis]*num_ppc_real != 0._rt) {
-        scale_fac = AMREX_D_TERM(dx[0], *dx[1], *dx[2])/dx[plasma_injector->flux_normal_axis]/num_ppc_real;
-    }
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    scale_fac = dx[0]*dx[1]/num_ppc_real;
+    if (plasma_injector->flux_normal_axis == 0) scale_fac /= dx[0];
+    if (plasma_injector->flux_normal_axis == 2) scale_fac /= dx[1];
+#else
+    scale_fac = dx[0]*dx[1]*dx[2]/dx[plasma_injector->flux_normal_axis]/num_ppc_real;
+#endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
 
@@ -1247,7 +1251,12 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         bool no_overlap = false;
 
         for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
+            // Needs to be checked
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            if (2*dir == plasma_injector->flux_normal_axis) {
+#else
             if (dir == plasma_injector->flux_normal_axis) {
+#endif
                 if (plasma_injector->flux_direction > 0) {
                     if (plasma_injector->surface_flux_pos <  tile_realbox.lo(dir) ||
                         plasma_injector->surface_flux_pos >= tile_realbox.hi(dir)) {
