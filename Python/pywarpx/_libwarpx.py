@@ -1048,7 +1048,7 @@ class LibWarpX():
         '''
         self.libwarpx_so.warpx_clearParticleBoundaryBuffer()
 
-    def depositChargeDensity(self, species_name, level):
+    def depositChargeDensity(self, species_name, level, sync_rho=True):
         '''
 
         Deposit the specified species' charge density in rho_fp in order to
@@ -1059,11 +1059,15 @@ class LibWarpX():
 
             species_name   : the species name that will be deposited.
             level          : Which AMR level to retrieve scraped particle data from.
+            sync_rho       : If True perform MPI exchange and properly set boundary
+                             cells for rho_fp.
 
         '''
         self.libwarpx_so.warpx_depositChargeDensity(
             ctypes.c_char_p(species_name.encode('utf-8')), level
         )
+        if sync_rho:
+            self.libwarpx_so.warpx_SyncRho()
 
     def _get_mesh_field_list(self, warpx_func, level, direction, include_ghosts):
         """
