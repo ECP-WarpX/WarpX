@@ -11,7 +11,6 @@ spack:
   - python: [python, py-pip, openpmd-api +python]
     when: env.get("SPACK_STACK_USE_PYTHON", "") == "1"
   specs:
-  - ncurses+symlinks
   - adios2
   - blaspp
   - ccache
@@ -35,6 +34,9 @@ spack:
       variants: ~fortran
       providers:
         mpi: [openmpi]
+    ncurses:
+      # This is needed for any build of ncurses on lxplus, due to its AFS filesystem
+      variants: +symlinks
     openmpi:
       version: [3.1.0]
       externals:
