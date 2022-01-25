@@ -212,13 +212,13 @@ class CapacitiveDischargeExample(object):
             self.rho_wrapper = fields.RhoFPWrapper(0, False)
 
         # clear rho_fp
-        self.rho_wrapper[Ellipsis] = 0.0
+        self.rho_wrapper[...] = 0.0
         # deposit the ion density in rho_fp
         self.sim.extension.depositChargeDensity('he_ions', 0)
         # apply filter, perform MPI exchange and properly set boundary cells
         self.sim.extension.libwarpx_so.warpx_SyncRho()
 
-        rho_data = self.rho_wrapper[Ellipsis][:,0]
+        rho_data = self.rho_wrapper[...][:,0]
         self.ion_density_array += rho_data / constants.q_e / self.diag_steps
 
     def run_sim(self):

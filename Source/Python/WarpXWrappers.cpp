@@ -661,7 +661,7 @@ namespace
     }
     void warpx_SyncRho () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.SyncRho ();
+        warpx.SyncRho();
     }
     void warpx_SyncCurrent () {
         WarpX& warpx = WarpX::GetInstance();
