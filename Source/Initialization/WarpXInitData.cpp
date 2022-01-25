@@ -206,7 +206,7 @@ WarpX::PrintMainPICparameters ()
       }
     if ((m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)) {
       amrex::Print()<<"                      | - Galilean \n"<<
-      "                      |  - v_galilean = ("<<m_v_galilean[0]<<","<<m_v_galilean[1]<<","<<m_v_galilean[2]<<")\n";
+      "                      |  - v_galilean=("<<m_v_galilean[0]<<","<<m_v_galilean[1]<<","<<m_v_galilean[2]<<")\n";
       }
     if (WarpX::update_with_rho==1) {
       amrex::Print()<<"                      | - update with rho\n";
@@ -254,17 +254,16 @@ WarpX::PrintMainPICparameters ()
       amrex::Print()<< "                      | ('-1' corresponds to infinite order); \n";
     }
     // Print guard cells number
-    amrex::Print()<< "Guard cells:          | - psatd.nx_guard="<<nox<<"\n";
-    amrex::Print()<< "                      | - psatd.ny_guard="<<noy<<"\n";
-    amrex::Print()<< "                      | - psatd.nz_guard="<<noz<<"\n";
-    amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n";
+    amrex::Print()<< "Guard cells :         | - ng_alloc_EB="<<guard_cells.ng_alloc_EB<<"\n";
+    amrex::Print()<< "                      | - ng_depos_J="<<guard_cells.ng_depos_J<<"\n";
+    amrex::Print()<< "                      | - ng_depos_rho="<<guard_cells.ng_depos_rho<<"\n";
     #endif // WARPX_USE_PSATD
     amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n";
     //Print main boosted frame algorithm's parameters
     if (WarpX::gamma_boost!=1){
     amrex::Print()<<"Boosted Frame:        |    ON  "<<"\n";
-    amrex::Print()<<"                      |  - gamma_boost= "<<WarpX::gamma_boost<<"\n";
-    amrex::Print()<<"                      |  - boost_direction= ("<<WarpX::boost_direction[0]<<","<<WarpX::boost_direction[1]<<","<<WarpX::boost_direction[2]<<")\n";
+    amrex::Print()<<"                      |  - gamma_boost="<<WarpX::gamma_boost<<"\n";
+    amrex::Print()<<"                      |  - boost_direction=("<<WarpX::boost_direction[0]<<","<<WarpX::boost_direction[1]<<","<<WarpX::boost_direction[2]<<")\n";
     amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n";
     }
 }
@@ -281,14 +280,12 @@ WarpX::InitData ()
     if (restart_chkfile.empty())
     {
         ComputeDt();
-        WarpX::PrintMainPICparameters();
         WarpX::PrintDtDxDyDz();
         InitFromScratch();
     }
     else
     {
         InitFromCheckpoint();
-        WarpX::PrintMainPICparameters();
         WarpX::PrintDtDxDyDz();
         PostRestart();
     }
@@ -321,6 +318,8 @@ WarpX::InitData ()
     // Check that the number of guard cells is smaller than the number of valid cells for all MultiFabs
     // (example: a box with 16 valid cells and 32 guard cells in z will not be considered valid)
     CheckGuardCells();
+
+    PrintMainPICparameters();
 
     if (restart_chkfile.empty())
     {
