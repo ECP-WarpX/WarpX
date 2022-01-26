@@ -846,7 +846,8 @@ void WarpX::CheckGuardCells()
 
             if (pml[lev]->GetG_fp()) CheckGuardCells(*(pml[lev]->GetG_fp()));
             if (pml[lev]->GetG_cp()) CheckGuardCells(*(pml[lev]->GetG_cp()));
-#else // RZ
+#endif
+#if defined(WARPX_DIM_RZ) && defined(WARPX_USE_PSATD) // RZ
             for (int dim = 0; dim < 2; ++dim)
             {
                 if (pml_rz[lev]->GetE_fp()[dim]) CheckGuardCells(*(pml_rz[lev]->GetE_fp()[dim]));
