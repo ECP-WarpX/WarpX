@@ -3,23 +3,24 @@ spack:
   definitions:
   # CUDA
   - cuda: []
-  - cuda: [cuda, blaspp +cuda]
+  - cuda: [cuda, blaspp +cuda, lapackpp ^blaspp +cuda]
     when: env.get("SPACK_STACK_USE_CUDA", "") == "1"
+  - cuda: [cuda, blaspp, lapackpp]
+    when: env.get("SPACK_STACK_USE_CUDA", "") != "1"
 
   # basic Python dependencies for WarpX Python PICMI bindings
   - python: []
   - python: [python, py-pip, openpmd-api +python]
     when: env.get("SPACK_STACK_USE_PYTHON", "") == "1"
+  - python: [openpmd-api]
+    when: env.get("SPACK_STACK_USE_PYTHON", "") != "1"
   specs:
   - adios2
-  - blaspp
   - ccache
   - cmake
   - fftw
   - hdf5
-  - lapackpp
   - mpi
-  - openpmd-api
   - pkgconfig
   - $cuda
   - $python
