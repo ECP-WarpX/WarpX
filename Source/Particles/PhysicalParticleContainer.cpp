@@ -1534,13 +1534,15 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Real weight = dens * scale_fac / (AMREX_D_TERM(fac, *fac, *fac));
                 Real weight = dens * scale_fac * dt;
 #ifdef WARPX_DIM_RZ
-                if (radially_weighted) {
-                    weight *= 2._rt*MathConst::pi*xb;
-                } else {
-                    // This is not correct since it might shift the particle
-                    // out of the local grid
-                    pos.x = std::sqrt(xb*rmax);
-                    weight *= dx[0];
+                if (plasma_injector->flux_normal_axis != 1) {
+                    if (radially_weighted) {
+                         weight *= 2._rt*MathConst::pi*xb;
+                    } else {
+                         // This is not correct since it might shift the particle
+                         // out of the local grid
+                         pos.x = std::sqrt(xb*rmax);
+                         weight *= dx[0];
+                    }
                 }
 #endif
                 pa[PIdx::w ][ip] = weight;
