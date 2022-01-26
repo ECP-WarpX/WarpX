@@ -224,6 +224,7 @@ class LibWarpX():
         self.libwarpx_so.warpx_getFaceAreas.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getFaceAreasLoVects.restype = _LP_c_int
 
+        self.libwarpx_so.warpx_sumParticleCharge.restype = c_real
         self.libwarpx_so.warpx_getParticleBoundaryBufferSize.restype = ctypes.c_int
         self.libwarpx_so.warpx_getParticleBoundaryBufferStructs.restype = _LP_LP_c_particlereal
         self.libwarpx_so.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
@@ -908,6 +909,22 @@ class LibWarpX():
         self.libwarpx_so.warpx_addRealComp(
             ctypes.c_char_p(species_name.encode('utf-8')),
             ctypes.c_char_p(pid_name.encode('utf-8')), comm
+        )
+
+    def get_species_charge_sum(self, species_name, local=False):
+        '''
+
+        Returns the total charge in the simulation due to the given species.
+
+        Parameters
+        ----------
+
+            species_name   : the species name for which charge will be summed
+            local          : If True return total charge per processor
+
+        '''
+        return self.libwarpx_so.warpx_sumParticleCharge(
+            ctypes.c_char_p(species_name.encode('utf-8')), local
         )
 
     def get_particle_boundary_buffer_size(self, species_name, boundary):
