@@ -885,9 +885,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
 void PML::LoadBalance (const int lev,
                        const BoxArray& grid_ba, const DistributionMapping& grid_dm,
-                       amrex::IntVect ref_ratio,
+                       amrex::IntVect ref_ratio, Real dt,
                        int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
-                       int do_moving_window, int max_guard_EB)
+                       int do_moving_window, const bool do_multi_J, int max_guard_EB)
 {
     using namespace WarpXUtilLoadBalance;
     if (!WarpX::do_similar_dm_pml) { return; }
@@ -920,11 +920,11 @@ void PML::LoadBalance (const int lev,
     RemakeMultiFab(pml_j_fp[2], dm, false);
 
 #ifdef AMREX_USE_EB
-    pml_edge_lengths[0] = std::make_unique<MultiFab>(amrex::convert( ba,
+    pml_edge_lengths[0] = std::make_unique<MultiFab>(amrex::convert( m_ba,
         WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
-    pml_edge_lengths[1] = std::make_unique<MultiFab>(amrex::convert( ba,
+    pml_edge_lengths[1] = std::make_unique<MultiFab>(amrex::convert( m_ba,
         WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
-    pml_edge_lengths[2] = std::make_unique<MultiFab>(amrex::convert( ba,
+    pml_edge_lengths[2] = std::make_unique<MultiFab>(amrex::convert( m_ba,
         WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, WarpX::ncomps, max_guard_EB );
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
@@ -934,7 +934,7 @@ void PML::LoadBalance (const int lev,
         auto const eb_fact = fieldEBFactory();
 
         WarpX::ComputeEdgeLengths(pml_edge_lengths, eb_fact);
-        std::array<amrex::Real,3> cellsize = {AMREX_D_DECL(geom->CellSize()[0],geom->CellSize()[1],geom->CellSize()[2])};
+        std::array<amrex::Real,3> cellsize = {AMREX_D_DECL(m_geom->CellSize()[0],m_geom->CellSize()[1],m_geom->CellSize()[2])};
         WarpX::ScaleEdges(pml_edge_lengths, cellsize);
     }
 #endif
@@ -950,39 +950,32 @@ void PML::LoadBalance (const int lev,
     sigba_fp = std::make_unique<MultiSigmaBox>(m_ba, dm, grid_ba_reduced, m_geom->CellSize(),
                                                IntVect(m_ncell), IntVect(m_delta), single_domain_box);
 
-#ifdef WARPX_USE_PSATD
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        if (spectral_solver_fp != nullptr) {
-            // Get the cell-centered box
-            BoxArray realspace_ba = ba;   // Copy box
-            realspace_ba.enclosedCells(); // Make it cell-centered
-            auto ngE = getngE();
-            auto dx = CellSize(lev);
-
-#   ifdef WARPX_DIM_RZ
-            if ( fft_periodic_single_box == false ) {
-                realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-            }
-            AllocLevelSpectralSolverRZ(spectral_solver_fp,
-                                       lev,
-                                       realspace_ba,
-                                       dm,
-                                       dx);
-#   else
-            if ( fft_periodic_single_box == false ) {
-                realspace_ba.grow(ngE);   // add guard cells
-            }
-            bool const pml_flag_false = false;
-            AllocLevelSpectralSolver(spectral_solver_fp,
-                                     lev,
-                                     realspace_ba,
-                                     dm,
-                                     dx,
-                                     pml_flag_false);
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+#ifndef WARPX_USE_PSATD
+        amrex::ignore_unused(lev, dt, do_multi_J);
+#   if(AMREX_SPACEDIM!=3)
+        amrex::ignore_unused(noy_fft);
 #   endif
-        }
-    }
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                                         "PML: PSATD solver selected but not built.");
+#else
+        // Flags passed to the spectral solver constructor
+        const bool in_pml = true;
+        const bool periodic_single_box = false;
+        const bool update_with_rho = false;
+        const bool fft_do_time_averaging = false;
+        const RealVect dx{AMREX_D_DECL(m_geom->CellSize(0), m_geom->CellSize(1), m_geom->CellSize(2))};
+        // Get the cell-centered box, with guard cells
+        BoxArray realspace_ba = m_ba; // Copy box
+        amrex::Vector<amrex::Real> const v_galilean_zero = {0., 0., 0.};
+        amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
+        realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
+        spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
+            nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+            v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
+            fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif
+    }
 
     if (m_cgeom)
     {
@@ -1044,40 +1037,30 @@ void PML::LoadBalance (const int lev,
                                                    m_cgeom->CellSize(),
                                                    cncells, cdelta, single_domain_box);
 
-#ifdef WARPX_USE_PSATD
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
         {
-            if (spectral_solver_cp != nullptr) {
-                BoxArray cba = ba;
-                cba.coarsen(refRatio(lev-1));
-                std::array<Real,3> cdx = CellSize(lev-1);
-
-                // Get the cell-centered box
-                BoxArray c_realspace_ba = cba;  // Copy box
-                c_realspace_ba.enclosedCells(); // Make it cell-centered
-
-                auto ngE = getngE();
-
-#   ifdef WARPX_DIM_RZ
-                c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-                AllocLevelSpectralSolverRZ(spectral_solver_cp,
-                                           lev,
-                                           c_realspace_ba,
-                                           dm,
-                                           cdx);
-#   else
-                c_realspace_ba.grow(ngE);
-                bool const pml_flag_false = false;
-                AllocLevelSpectralSolver(spectral_solver_cp,
-                                         lev,
-                                         c_realspace_ba,
-                                         dm,
-                                         cdx,
-                                         pml_flag_false);
-#   endif
-            }
-        }
+#ifndef WARPX_USE_PSATD
+            amrex::ignore_unused(dt);
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                                             "PML: PSATD solver selected but not built.");
+#else
+            // Flags passed to the spectral solver constructor
+            const bool in_pml = true;
+            const bool periodic_single_box = false;
+            const bool update_with_rho = false;
+            const bool fft_do_time_averaging = false;
+            const RealVect cdx{AMREX_D_DECL(m_cgeom->CellSize(0), m_cgeom->CellSize(1), m_cgeom->CellSize(2))};
+            // Get the cell-centered box, with guard cells
+            BoxArray realspace_cba = m_cba; // Copy box
+            amrex::Vector<amrex::Real> const v_galilean_zero = {0., 0., 0.};
+            amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
+            realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
+            spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
+                nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+                v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
+                fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif
+        }
     }
 }
 

@@ -123,9 +123,10 @@ WarpX::LoadBalance ()
 
             RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
 
-            pml[lev]->LoadBalance(lev, boxArray(lev), newdm,
-                                  refRatio(lev-1), nox_fft, noy_fft, noz_fft, do_nodal,
-                                  do_moving_window, guard_cells.ng_FieldSolver.max());
+            pml[lev]->LoadBalance(lev, boxArray(lev), newdm, refRatio(lev-1), dt[lev],
+                                  nox_fft, noy_fft, noz_fft, do_nodal,
+                                  do_moving_window, do_multi_J,
+                                  guard_cells.ng_FieldSolver.max());
 
             // Record the load balance efficiency
             setLoadBalanceEfficiency(lev, proposedEfficiency);

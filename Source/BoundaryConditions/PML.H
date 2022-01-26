@@ -205,9 +205,9 @@ public:
     void LoadBalance (const int lev,
                       const amrex::BoxArray& grid_ba,
                       const amrex::DistributionMapping& grid_dm,
-                      amrex::IntVect ref_ratio,
+                      amrex::IntVect ref_ratio, amrex::Real dt,
                       int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
-                      int do_moving_window, int max_guard_EB);
+                      int do_moving_window, bool do_multi_J, int max_guard_EB);
 
 private:
     bool m_ok;
