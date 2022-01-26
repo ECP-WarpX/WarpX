@@ -250,9 +250,9 @@ class CallbackFunctions(object):
 
 # --- Now create the actual instances.
 _afterinit = CallbackFunctions('afterinit')
-_beforeEsolve = CallbackFunctions('beforeEsolve')
 _beforecollisions = CallbackFunctions('beforecollisions')
 _aftercollisions = CallbackFunctions('aftercollisions')
+_beforeEsolve = CallbackFunctions('beforeEsolve')
 _poissonsolver = CallbackFunctions('poissonsolver')
 _afterEsolve = CallbackFunctions('afterEsolve')
 _beforedeposition = CallbackFunctions('beforedeposition')
