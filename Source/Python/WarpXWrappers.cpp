@@ -623,9 +623,6 @@ namespace
             return;
         }
 
-        // reset rho before depositing
-        rho_fp->setVal(0.);
-
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
         {
             const long np = pti.numParticles();
@@ -661,6 +658,10 @@ namespace
     void warpx_FillBoundaryB () {
         WarpX& warpx = WarpX::GetInstance();
         warpx.FillBoundaryB (warpx.getngE());
+    }
+    void warpx_SyncRho () {
+        WarpX& warpx = WarpX::GetInstance();
+        warpx.SyncRho();
     }
     void warpx_SyncCurrent () {
         WarpX& warpx = WarpX::GetInstance();
