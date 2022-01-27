@@ -214,6 +214,15 @@ Diagnostics::InitData ()
         InitializeParticleFunctors();
     }
 
+    if (write_species == 0) {
+        if (m_format == "checkpoint"){
+            amrex::Abort("For checkpoint format, write_species flag must be 1.");
+        }
+        // if user-defined value for write_species == 0, then clear species vector
+        m_output_species.clear();
+        m_output_species_names.clear();
+    }
+
     amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
     if ( queryArrWithParser(pp_diag_name, "diag_lo", dummy_val, 0, AMREX_SPACEDIM) ||
          queryArrWithParser(pp_diag_name, "diag_hi", dummy_val, 0, AMREX_SPACEDIM) ) {
@@ -234,14 +243,6 @@ Diagnostics::InitData ()
         amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
     }
 
-    if (write_species == 0) {
-        if (m_format == "checkpoint"){
-            amrex::Abort("For checkpoint format, write_species flag must be 1.");
-        }
-        // if user-defined value for write_species == 0, then clear species vector
-        m_output_species.clear();
-        m_output_species_names.clear();
-    }
 }
 
 
