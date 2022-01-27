@@ -58,6 +58,16 @@ class Species(picmi.Species):
         # add a callback to initialize the extra PIDs after sim init
         callbacks.installafterinit(self.init_pid_dict)
 
+    def get_particle_count(self):
+        """Function to get the total number of macroparticles of this species
+        currently in the simulation."""
+        return mwxrun.sim_ext.get_particle_count(self.name)
+
+    def get_total_weight(self):
+        """Function to get the total weight of particles of this species
+        currently in the simulation."""
+        return mwxrun.sim_ext.get_species_charge_sum(self.name) / self.sq
+
     def init_pid_dict(self):
         """Function to build a list of all the extra particle attributes
         (and weight). This has to happen after warpx has been initialized

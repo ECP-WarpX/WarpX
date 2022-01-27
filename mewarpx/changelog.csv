@@ -1,11 +1,16 @@
 Version, Physics version, Date,        List of changes
-6.0.4, 2, In progress, "
+6.1.0, 2, 1/26/2022, "
+
+**Features**:
+
+- Allow tracking of charge injected through impact ionization in the MCC
+  routine.
 
 **Other changes**:
 
 - Merge ``upstream/development`` (git hash ``d839c70``) into memaster.
 "
-6.0.3, 2, 1/21/2021, "
+6.0.3, 2, 1/21/2022, "
 
 **Other changes**:
 

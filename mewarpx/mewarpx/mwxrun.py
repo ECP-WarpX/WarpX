@@ -436,7 +436,7 @@ class MEWarpXRun(object):
         """
         npart = 0
         for spec in self.simulation.species:
-            npart += self.sim_ext.get_particle_count(spec.name)
+            npart += spec.get_particle_count()
 
         return npart
 
@@ -448,7 +448,7 @@ class MEWarpXRun(object):
         for spec in self.simulation.species:
             if spec.name is None:
                 raise ValueError("Unnamed species are not supported.")
-            npart_dict[spec.name] = self.sim_ext.get_particle_count(spec.name)
+            npart_dict[spec.name] = spec.get_particle_count()
 
         return npart_dict
 
