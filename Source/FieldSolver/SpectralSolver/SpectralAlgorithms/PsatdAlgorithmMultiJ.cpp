@@ -120,9 +120,9 @@ PsatdAlgorithmMultiJ::pushSpectralFields (SpectralFieldData& f) const
             const Complex Bz_old = fields(i,j,k,Idx.Bz);
 
             // Shortcuts for the values of J and rho
-            const Complex Jx = fields(i,j,k,Idx.Jx);
-            const Complex Jy = fields(i,j,k,Idx.Jy);
-            const Complex Jz = fields(i,j,k,Idx.Jz);
+            const Complex Jx_old = fields(i,j,k,Idx.Jx);
+            const Complex Jy_old = fields(i,j,k,Idx.Jy);
+            const Complex Jz_old = fields(i,j,k,Idx.Jz);
             const Complex Jx_new = fields(i,j,k,Idx.Jx_new);
             const Complex Jy_new = fields(i,j,k,Idx.Jy_new);
             const Complex Jz_new = fields(i,j,k,Idx.Jz_new);
@@ -160,35 +160,35 @@ PsatdAlgorithmMultiJ::pushSpectralFields (SpectralFieldData& f) const
 
             fields(i,j,k,Idx.Ex) = C * Ex_old
                 + I * c2 * S_ck * (ky * Bz_old - kz * By_old)
-                + X4 * Jx - I * (X2 * rho_new - X3 * rho_old) * kx - X1 * (Jx_new - Jx) / dt;
+                + X4 * Jx_old - I * (X2 * rho_new - X3 * rho_old) * kx - X1 * (Jx_new - Jx_old) / dt;
 
             fields(i,j,k,Idx.Ey) = C * Ey_old
                 + I * c2 * S_ck * (kz * Bx_old - kx * Bz_old)
-                + X4 * Jy - I * (X2 * rho_new - X3 * rho_old) * ky - X1 * (Jy_new - Jy) / dt;
+                + X4 * Jy_old - I * (X2 * rho_new - X3 * rho_old) * ky - X1 * (Jy_new - Jy_old) / dt;
 
             fields(i,j,k,Idx.Ez) = C * Ez_old
                 + I * c2 * S_ck * (kx * By_old - ky * Bx_old)
-                + X4 * Jz - I * (X2 * rho_new - X3 * rho_old) * kz - X1 * (Jz_new - Jz) / dt;
+                + X4 * Jz_old - I * (X2 * rho_new - X3 * rho_old) * kz - X1 * (Jz_new - Jz_old) / dt;
 
             // Update equations for B
 
             fields(i,j,k,Idx.Bx) = C * Bx_old
-                - I * S_ck * (ky * Ez_old - kz * Ey_old) + I * X1 * (ky * Jz - kz * Jy)
-                + I * X2/c2 * (ky * (Jz_new - Jz) - kz * (Jy_new - Jy));
+                - I * S_ck * (ky * Ez_old - kz * Ey_old) + I * X1 * (ky * Jz_old - kz * Jy_old)
+                + I * X2/c2 * (ky * (Jz_new - Jz_old) - kz * (Jy_new - Jy_old));
 
             fields(i,j,k,Idx.By) = C * By_old
-                - I * S_ck * (kz * Ex_old - kx * Ez_old) + I * X1 * (kz * Jx - kx * Jz)
-                + I * X2/c2 * (kz * (Jx_new - Jx) - kx * (Jz_new - Jz));
+                - I * S_ck * (kz * Ex_old - kx * Ez_old) + I * X1 * (kz * Jx_old - kx * Jz_old)
+                + I * X2/c2 * (kz * (Jx_new - Jx_old) - kx * (Jz_new - Jz_old));
 
             fields(i,j,k,Idx.Bz) = C * Bz_old
-                - I * S_ck * (kx * Ey_old - ky * Ex_old) + I * X1 * (kx * Jy - ky * Jx)
-                + I * X2/c2 * (kx * (Jy_new - Jy) - ky * (Jx_new - Jx));
+                - I * S_ck * (kx * Ey_old - ky * Ex_old) + I * X1 * (kx * Jy_old - ky * Jx_old)
+                + I * X2/c2 * (kx * (Jy_new - Jy_old) - ky * (Jx_new - Jx_old));
 
             if (dive_cleaning)
             {
                 const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
-                const Complex k_dot_J  = kx * Jx + ky * Jy + kz * Jz;
-                const Complex k_dot_dJ = kx * (Jx_new - Jx) + ky * (Jy_new - Jy) + kz * (Jz_new - Jz);
+                const Complex k_dot_J  = kx * Jx_old + ky * Jy_old + kz * Jz_old;
+                const Complex k_dot_dJ = kx * (Jx_new - Jx_old) + ky * (Jy_new - Jy_old) + kz * (Jz_new - Jz_old);
 
                 fields(i,j,k,Idx.Ex) += I * c2 * S_ck * F_old * kx;
                 fields(i,j,k,Idx.Ey) += I * c2 * S_ck * F_old * ky;
@@ -220,27 +220,27 @@ PsatdAlgorithmMultiJ::pushSpectralFields (SpectralFieldData& f) const
 
                 fields(i,j,k,Idx.Ex_avg) += S_ck * Ex_old
                     + I * c2 * ep0 * X1 * (ky * Bz_old - kz * By_old)
-                    + I * X5 * rho_old * kx + I * X6 * rho_new * kx + X3/c2 * Jx - X2/c2 * Jx_new;
+                    + I * X5 * rho_old * kx + I * X6 * rho_new * kx + X3/c2 * Jx_old - X2/c2 * Jx_new;
 
                 fields(i,j,k,Idx.Ey_avg) += S_ck * Ey_old
                     + I * c2 * ep0 * X1 * (kz * Bx_old - kx * Bz_old)
-                    + I * X5 * rho_old * ky + I * X6 * rho_new * ky + X3/c2 * Jy - X2/c2 * Jy_new;
+                    + I * X5 * rho_old * ky + I * X6 * rho_new * ky + X3/c2 * Jy_old - X2/c2 * Jy_new;
 
                 fields(i,j,k,Idx.Ez_avg) += S_ck * Ez_old
                     + I * c2 * ep0 * X1 * (kx * By_old - ky * Bx_old)
-                    + I * X5 * rho_old * kz + I * X6 * rho_new * kz + X3/c2 * Jz - X2/c2 * Jz_new;
+                    + I * X5 * rho_old * kz + I * X6 * rho_new * kz + X3/c2 * Jz_old - X2/c2 * Jz_new;
 
                 fields(i,j,k,Idx.Bx_avg) += S_ck * Bx_old
                     - I * ep0 * X1 * (ky * Ez_old - kz * Ey_old)
-                    - I * X5/c2 * (ky * Jz - kz * Jy) - I * X6/c2 * (ky * Jz_new - kz * Jy_new);
+                    - I * X5/c2 * (ky * Jz_old - kz * Jy_old) - I * X6/c2 * (ky * Jz_new - kz * Jy_new);
 
                 fields(i,j,k,Idx.By_avg) += S_ck * By_old
                     - I * ep0 * X1 * (kz * Ex_old - kx * Ez_old)
-                    - I * X5/c2 * (kz * Jx - kx * Jz) - I * X6/c2 * (kz * Jx_new - kx * Jz_new);
+                    - I * X5/c2 * (kz * Jx_old - kx * Jz_old) - I * X6/c2 * (kz * Jx_new - kx * Jz_new);
 
                 fields(i,j,k,Idx.Bz_avg) += S_ck * Bz_old
                     - I * ep0 * X1 * (kx * Ey_old - ky * Ex_old)
-                    - I * X5/c2 * (kx * Jy - ky * Jx) - I * X6/c2 * (kx * Jy_new - ky * Jx_new);
+                    - I * X5/c2 * (kx * Jy_old - ky * Jx_old) - I * X6/c2 * (kx * Jy_new - ky * Jx_new);
 
                 if (dive_cleaning)
                 {

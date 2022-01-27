@@ -22,8 +22,10 @@
 
 #if WARPX_USE_PSATD
 /*
- * \brief Class that updates the field in spectral space according to the multi-J algorithm
- *        and stores the coefficients of the corresponding update equation.
+ * \brief Class that updates the fields in spectral space according to the multi-J algorithm
+ *        and stores the coefficients of the corresponding update equations. J is assumed to be
+ *        linear in time and two currents, deposited at the beginning and the end of the time step,
+ *        are used for the PSATD update equations, instead of only one current deposited at half time.
  */
 class PsatdAlgorithmMultiJ : public SpectralBaseAlgorithm
 {
