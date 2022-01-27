@@ -208,10 +208,10 @@ class DiodeRun_V1(object):
         init_conductors=True,
         init_scraper=True,
         init_injectors=True,
+        init_inert_gas=False,
         init_neutral_plasma=False,
         init_mcc=False,
         init_reflection=False,
-        init_inert_gas=False,
         init_merging=False,
         init_traceparticles=False,
         init_runinfo=False,
@@ -232,18 +232,18 @@ class DiodeRun_V1(object):
             self.init_base()
         if init_electrons:
             self.init_electrons()
-        if init_inert_gas:
+        if init_inert_gas or init_neutral_plasma or init_mcc:
             self.init_inert_gas()
+        if init_neutral_plasma:
+            self.init_neutral_plasma()
+        if init_mcc:
+            self.init_MCC()
         if init_solver:
             self.init_solver()
         if init_conductors:
             self.init_conductors()
         if init_scraper:
             self.init_scraper()
-        if init_neutral_plasma:
-            self.init_neutral_plasma()
-        if init_mcc:
-            self.init_MCC()
         if init_reflection:
             self.init_reflection()
         if init_merging:
@@ -515,7 +515,7 @@ class DiodeRun_V1(object):
         if not hasattr(self, "exclude_collisions"):
             self.exclude_collisions = None
 
-        mcc_wrapper.MCC(
+        self.mcc = mcc_wrapper.MCC(
             electron_species=self.electrons,
             ion_species=self.ions,
             T_INERT=self.T_INERT,
@@ -545,6 +545,8 @@ class DiodeRun_V1(object):
         runvars.update(self.__dict__)
 
         injector_dict = {'cathode': self.injector}
+        if hasattr(self, 'mcc'):
+            injector_dict['mcc'] = self.mcc
         surface_dict = {
             'cathode': self.cathode,
             'anode': self.anode

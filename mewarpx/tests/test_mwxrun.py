@@ -67,7 +67,6 @@ def test_capacitive_discharge_multigrid(caplog, name):
     run.setup_run(
         init_conductors=False,
         init_injectors=False,
-        init_inert_gas=True,
         init_neutral_plasma=True,
         init_mcc=True,
         init_field_diag=True,

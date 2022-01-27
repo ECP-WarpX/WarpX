@@ -48,9 +48,7 @@ def get_run():
     run.setup_run(
         init_conductors=True,
         init_injectors=False,
-        init_inert_gas=True,
         init_neutral_plasma=True,
-        init_mcc=False,
         init_field_diag=True,
         init_simcontrol=False,
         init_warpx=False

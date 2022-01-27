@@ -56,7 +56,6 @@ def test_write_results():
         init_conductors=False,
         init_scraper=False,
         init_injectors=False,
-        init_inert_gas=True,
         init_neutral_plasma=True,
         init_simcontrol=True,
         init_warpx=True,

@@ -1,14 +1,15 @@
 import glob
 import os
 
-from pywarpx import picmi
+from pywarpx import callbacks, picmi
 
+from mewarpx.emission import Injector
 # For use later to sync with diode test template and access sim object in mwxrun
 from mewarpx.mwxrun import mwxrun
 from mewarpx.utils_store import util as mwxutil
 
 
-class MCC():
+class MCC(Injector):
 
     """Wrapper used to initialize Monte Carlo collision parameters"""
 
@@ -35,16 +36,16 @@ class MCC():
                 instructed to save pid's for number of MCC events.
             **kwargs that can be included:
             exclude_collisions (list): A list of collision types to exclude.
-            sec_elec_species (picmi.Species): The electron species that is
-                produced from ionization events. If not specified
-                `electron_species` will be used as the secondary species as
-                well.
         """
         self.electron_species = electron_species
         self.ion_species = ion_species
         self.T_INERT = T_INERT
         self.N_INERT = N_INERT
         self.P_INERT = P_INERT
+
+        self.name = kwargs.get(
+            'name', f"mcc_{self.electron_species.name}_{self.ion_species.name}"
+        )
 
         self.exclude_collisions = kwargs.get("exclude_collisions", None)
         if self.exclude_collisions is None:
@@ -64,7 +65,6 @@ class MCC():
                 mwxutil.ideal_gas_density(self.P_INERT, self.T_INERT)
             )
 
-        sec_elec_species = kwargs.get("sec_elec_species", None)
         self.scraper = scraper
 
         # Use environment variable if possible, otherwise look one
@@ -128,8 +128,6 @@ class MCC():
                 # specify species for ionization
                 if coll_key == "ionization":
                     scatter_dict["species"] = self.ion_species
-                    if sec_elec_species is not None:
-                        scatter_dict["sec_elec_species"] = sec_elec_species
                 elec_scattering_processes[coll_type] = scatter_dict
 
             # if ion process
@@ -179,3 +177,40 @@ class MCC():
         # add E_total PID to both species
         self.electron_species.add_pid("E_total")
         self.ion_species.add_pid("E_total")
+
+        callbacks.installbeforecollisions(self._get_particle_data_before)
+        callbacks.installaftercollisions(self._get_particle_data_after)
+
+    def _get_particle_data_before(self):
+        """Function to collect particle data before collisions happen but only
+        if that data will be used, otherwise don't waste the time."""
+        if self.injector_diag is None:
+            return
+
+        self.prior_weight = self.ion_species.get_total_weight()
+        self.prior_count = self.ion_species.get_particle_count()
+
+    def _get_particle_data_after(self):
+        """Function to collect particle data after collisions happen."""
+        if self.injector_diag is None:
+            return
+
+        injected_weight = (
+            self.ion_species.get_total_weight() - self.prior_weight
+        )
+        injected_count = (
+            self.ion_species.get_particle_count() - self.prior_count
+        )
+
+        self.record_injectedparticles(
+            species=self.electron_species,
+            w=injected_weight,
+            E_total=0.0,
+            n=injected_count
+        )
+        self.record_injectedparticles(
+            species=self.ion_species,
+            w=injected_weight,
+            E_total=0.0,
+            n=injected_count
+        )

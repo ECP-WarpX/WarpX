@@ -172,6 +172,7 @@ Setting up the field mesh
 
 * ``geometry.n_rz_azimuthal_modes`` (`integer`; 1 by default)
     When using the RZ version, this is the number of azimuthal modes.
+    The default is ``1``, which corresponds to a perfectly axisymmetric simulation.
 
 * ``geometry.prob_lo`` and ``geometry.prob_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters)
     The extent of the full simulation box. This box is rectangular, and thus its

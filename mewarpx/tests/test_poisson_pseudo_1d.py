@@ -59,7 +59,6 @@ def test_superLU_solver():
         init_conductors=True,
         init_scraper=False,
         init_injectors=False,
-        init_inert_gas=True,
         init_mcc=True,
         init_neutral_plasma=True,
         init_field_diag=False,

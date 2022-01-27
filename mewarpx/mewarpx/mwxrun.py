@@ -241,10 +241,14 @@ class MEWarpXRun(object):
         # pitfalls or how to handle it more generally yet.
         self.lev = self.sim_ext.libwarpx_so.warpx_finestLevel()
 
-        self.rho_wrapper_ghosts = fields.RhoFPWrapper(self.lev, True)
-        self.phi_wrapper_ghosts = fields.PhiFPWrapper(self.lev, True)
-        self.rho_wrapper_no_ghosts = fields.RhoFPWrapper(self.lev, False)
-        self.phi_wrapper_no_ghosts = fields.PhiFPWrapper(self.lev, False)
+        self.rho_wrappers = [
+            fields.RhoFPWrapper(self.lev, False),
+            fields.RhoFPWrapper(self.lev, True)
+        ]
+        self.phi_wrappers = [
+            fields.PhiFPWrapper(self.lev, False),
+            fields.PhiFPWrapper(self.lev, True)
+        ]
 
         # at this point we are committed to either restarting or starting
         # fresh; if this is a fresh start we can delete diags if present
@@ -432,7 +436,7 @@ class MEWarpXRun(object):
         """
         npart = 0
         for spec in self.simulation.species:
-            npart += self.sim_ext.get_particle_count(spec.name)
+            npart += spec.get_particle_count()
 
         return npart
 
@@ -444,7 +448,7 @@ class MEWarpXRun(object):
         for spec in self.simulation.species:
             if spec.name is None:
                 raise ValueError("Unnamed species are not supported.")
-            npart_dict[spec.name] = self.sim_ext.get_particle_count(spec.name)
+            npart_dict[spec.name] = spec.get_particle_count()
 
         return npart_dict
 
@@ -462,12 +466,12 @@ class MEWarpXRun(object):
         """
 
         if species_name is not None:
-            self.sim_ext.depositChargeDensity(species_name, self.lev)
+            # clear rho_fp before depositing
+            self.rho_wrappers[1][Ellipsis] = 0.0
+            self.sim_ext.depositChargeDensity(
+                species_name, self.lev, clear_rho=False)
 
-        if include_ghosts:
-            return self.rho_wrapper_ghosts[Ellipsis]
-        else:
-            return self.rho_wrapper_no_ghosts[Ellipsis]
+        return self.rho_wrappers[int(include_ghosts)][Ellipsis]
 
     def get_gathered_phi_grid(self, include_ghosts=False):
         """Get the full phi on the grid.
@@ -478,10 +482,7 @@ class MEWarpXRun(object):
         Returns:
             A numpy array with phi on the full domain.
         """
-        if include_ghosts:
-            return self.phi_wrapper_ghosts[Ellipsis]
-        else:
-            return self.phi_wrapper_no_ghosts[Ellipsis]
+        return self.phi_wrappers[int(include_ghosts)][Ellipsis]
 
     def set_phi_grid(self, phi_data):
         """Sets phi on the grid to input phi data.
@@ -489,7 +490,7 @@ class MEWarpXRun(object):
         Arguments:
             phi_data (numpy array): Phi values on the grid.
         """
-        self.phi_wrapper_ghosts[Ellipsis] = phi_data
+        self.phi_wrappers[1][Ellipsis] = phi_data
 
     def eval_expression_t(self, expr, t=None):
         """Function to evaluate an expression that depends on time, at the

@@ -82,7 +82,6 @@ def test_field_diag(plot_on_diag_steps):
         init_conductors=False,
         init_scraper=False,
         init_injectors=False,
-        init_inert_gas=True,
         init_neutral_plasma=True,
         init_field_diag=True,
         init_warpx=True,
