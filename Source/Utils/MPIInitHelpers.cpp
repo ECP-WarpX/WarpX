@@ -41,9 +41,9 @@ namespace utils
     std::pair< int, int >
     warpx_mpi_init (int argc, char* argv[])
     {
-#ifdef AMREX_USE_MPI
         int thread_required = warpx_mpi_thread_required();
         int thread_provided = -1;
+#ifdef AMREX_USE_MPI
         MPI_Init_thread(&argc, &argv, thread_required, &thread_provided);
 #else
         amrex::ignore_unused(argc, argv);
