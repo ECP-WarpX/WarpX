@@ -298,7 +298,7 @@ void FieldProbe::InitData ()
     }
     else
     {
-    amrex::Abort("ERROR: Invalid probe geometry. Valid geometries are point (0) and line (1).");
+    amrex::Abort("ERROR: Invalid probe geometry. Valid geometries are Point, Line, and Plane.");
     }
 }
 
