@@ -76,22 +76,46 @@ void warpx_interp (int j, int k, int l,
 {
     using namespace amrex;
 
-    // NOTE Indices (j,k,l) in the following refer to (x,z,-) in 2D and (x,y,z) in 3D
+    // NOTE Indices (j,k,l) in the following refer to:
+    // - (z,-,-) in 1D
+    // - (x,z,-) in 2D
+    // - (r,z,-) in RZ
+    // - (x,y,z) in 3D
 
     // Refinement ratio
     const int rj = rr[0];
+#if defined(WARPX_DIM_1D_Z)
+    constexpr int rk = 1;
+    constexpr int rl = 1;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    const     int rk = rr[1];
+    constexpr int rl = 1;
+#else
     const int rk = rr[1];
-    const int rl = (AMREX_SPACEDIM == 2) ? 1 : rr[2];
+    const int rl = rr[2];
+#endif
 
     // Staggering of fine array (0: cell-centered; 1: nodal)
     const int sj_fp = arr_fine_stag[0];
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    const     int sk_fp = arr_fine_stag[1];
+#elif defined(WARPX_DIM_3D)
     const int sk_fp = arr_fine_stag[1];
-    const int sl_fp = (AMREX_SPACEDIM == 2) ? 0 : arr_fine_stag[2];
+    const int sl_fp = arr_fine_stag[2];
+#endif
 
     // Staggering of coarse array (0: cell-centered; 1: nodal)
     const int sj_cp = arr_coarse_stag[0];
+#if defined(WARPX_DIM_1D_Z)
+    constexpr int sk_cp = 0;
+    constexpr int sl_cp = 0;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    const     int sk_cp = arr_coarse_stag[1];
+    constexpr int sl_cp = 0;
+#else
     const int sk_cp = arr_coarse_stag[1];
-    const int sl_cp = (AMREX_SPACEDIM == 2) ? 0 : arr_coarse_stag[2];
+    const int sl_cp = arr_coarse_stag[2];
+#endif
 
     // Number of points used for interpolation from coarse grid to fine grid
     int nj;
@@ -113,16 +137,30 @@ void warpx_interp (int j, int k, int l,
     // 1) Interpolation from coarse nodal to fine nodal
 
     nj = 2;
+#if defined(WARPX_DIM_1D_Z)
+    nk = 1;
+    nl = 1;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     nk = 2;
-    nl = (AMREX_SPACEDIM == 2) ? 1 : 2;
+    nl = 1;
+#else
+    nk = 2;
+    nl = 2;
+#endif
 
+    wj = 1.0_rt;
+    wk = 1.0_rt;
+    wl = 1.0_rt;
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
                 wj = (rj - amrex::Math::abs(j - (jc + jj) * rj)) / static_cast<amrex::Real>(rj);
+#if (AMREX_SPACEDIM >= 2)
                 wk = (rk - amrex::Math::abs(k - (kc + kk) * rk)) / static_cast<amrex::Real>(rk);
-                wl = (AMREX_SPACEDIM == 2) ? 1.0_rt : (rl - amrex::Math::abs(l - (lc + ll) * rl))
-                                                      / static_cast<amrex::Real>(rl);
+#endif
+#if (AMREX_SPACEDIM == 3)
+                wl = (rl - amrex::Math::abs(l - (lc + ll) * rl)) / static_cast<amrex::Real>(rl);
+#endif
                 tmp += wj * wk * wl * arr_tmp(jc+jj,kc+kk,lc+ll);
             }
         }
@@ -131,8 +169,16 @@ void warpx_interp (int j, int k, int l,
     // 2) Interpolation from coarse staggered to fine nodal
 
     nj = 2;
+#if defined(WARPX_DIM_1D_Z)
+    nk = 1;
+    nl = 1;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     nk = 2;
-    nl = (AMREX_SPACEDIM == 2) ? 1 : 2;
+    nl = 1;
+#else
+    nk = 2;
+    nl = 2;
+#endif
 
     const int jn = (sj_cp == 1) ? j : j - rj / 2;
     const int kn = (sk_cp == 1) ? k : k - rk / 2;
@@ -142,13 +188,19 @@ void warpx_interp (int j, int k, int l,
     kc = amrex::coarsen(kn, rk);
     lc = amrex::coarsen(ln, rl);
 
+    wj = 1.0_rt;
+    wk = 1.0_rt;
+    wl = 1.0_rt;
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
                 wj = (rj - amrex::Math::abs(jn - (jc + jj) * rj)) / static_cast<amrex::Real>(rj);
+#if (AMREX_SPACEDIM >= 2)
                 wk = (rk - amrex::Math::abs(kn - (kc + kk) * rk)) / static_cast<amrex::Real>(rk);
-                wl = (AMREX_SPACEDIM == 2) ? 1.0_rt : (rl - amrex::Math::abs(ln - (lc + ll) * rl))
-                                                      / static_cast<amrex::Real>(rl);
+#endif
+#if (AMREX_SPACEDIM == 3)
+                wl = (rl - amrex::Math::abs(ln - (lc + ll) * rl)) / static_cast<amrex::Real>(rl);
+#endif
                 coarse += wj * wk * wl * arr_coarse(jc+jj,kc+kk,lc+ll);
             }
         }
@@ -157,12 +209,28 @@ void warpx_interp (int j, int k, int l,
     // 3) Interpolation from fine staggered to fine nodal
 
     nj = (sj_fp == 0) ? 2 : 1;
+#if defined(WARPX_DIM_1D_Z)
+    nk = 1;
+    nl = 1;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     nk = (sk_fp == 0) ? 2 : 1;
-    nl = (sl_fp == 0 && AMREX_SPACEDIM == 3) ? 2 : 1;
+    nl = 1;
+#else
+    nk = (sk_fp == 0) ? 2 : 1;
+    nl = (sl_fp == 0) ? 2 : 1;
+#endif
 
     const int jm = (sj_fp == 0) ? j-1 : j;
+#if defined(WARPX_DIM_1D_Z)
+    const int km = k;
+    const int lm = l;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const int km = (sk_fp == 0) ? k-1 : k;
-    const int lm = (sl_fp == 0 && AMREX_SPACEDIM == 3) ? l-1 : l;
+    const int lm = l;
+#else
+    const int km = (sk_fp == 0) ? k-1 : k;
+    const int lm = (sl_fp == 0) ? l-1 : l;
+#endif
 
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
