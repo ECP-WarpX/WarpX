@@ -108,118 +108,128 @@ WarpX::PostProcessBaseGrids (BoxArray& ba0) const
 void
 WarpX::PrintMainPICparameters ()
 {
-    amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n";
-    amrex::Print()<<"--------------------------- MAIN EM PIC PARAMETERS ----------------------------"<<"\n";
-    amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n";
+    amrex::Print() << "-------------------------------------------------------------------------------\n";
+    amrex::Print() << "--------------------------- MAIN EM PIC PARAMETERS ----------------------------\n";
+    amrex::Print() << "-------------------------------------------------------------------------------\n";
 
     // Print geometry dimensionality
     amrex::ParmParse pp_geometry("geometry");
-    std::string dim;
-    pp_geometry.query( "dims", dim );
-    if (dim=="2") {
-      amrex::Print()<< "Geometry:             | 2 (XZ)\n";
+    std::string dims;
+    pp_geometry.query( "dims", dims );
+    if (dims=="1") {
+      amrex::Print() << "Geometry:             | 1 (Z)" << "\n";
     }
-    else {
-      amrex::Print()<< "Geometry:             |" <<dim<<"\n";
+    else if (dims=="2") {
+      amrex::Print() << "Geometry:             | 2 (XZ)" << "\n";
+    }
+    else if (dims=="3") {
+      amrex::Print() << "Geometry:             | 3 (XYZ)" << "\n";
+    }
+    else if (dims=="RZ") {
+      amrex::Print() << "Geometry:             | 2 (RZ)" << "\n";
     }
 
     #ifdef WARPX_DIM_RZ
-      amrex::Print()<< "                      | - n_rz_azimuthal_modes=" <<WarpX::n_rz_azimuthal_modes<<"\n";
+      amrex::Print() << "                      | - n_rz_azimuthal_modes = " <<
+                     WarpX::n_rz_azimuthal_modes << "\n";
     #endif // WARPX_USE_RZ
     //Print solver's operation mode (e.g., EM or electrostatic)
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
-      amrex::Print()<< "Operation mode:       | Electrostatic\n";
-      amrex::Print()<< "                      | - labframe\n";
+      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+      amrex::Print() << "                      | - laboratory frame" << "\n";
     }
     else if (do_electrostatic == ElectrostaticSolverAlgo::Relativistic){
-      amrex::Print()<< "Operation mode:       | Electrostatic \n";
-      amrex::Print()<< "                      | - relativistic\n";
+      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+      amrex::Print() << "                      | - relativistic" << "\n";
     }
     else{
-      amrex::Print()<< "Operation mode:       | Electromagnetic\n";
+      amrex::Print() << "Operation mode:       | Electromagnetic" << "\n";
     }
     if (em_solver_medium == MediumForEM::Vacuum ){
-      amrex::Print()<< "                      | - vacuum"<<"\n";
+      amrex::Print() << "                      | - vacuum" << "\n";
     }
     else if (em_solver_medium == MediumForEM::Macroscopic ){
-      amrex::Print()<< "                      | - macroscopic\n";
+      amrex::Print() << "                      | - macroscopic" << "\n";
     }
-    if ( (em_solver_medium == MediumForEM::Macroscopic) && (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff)){
-      amrex::Print()<< "                      |  - LaxWendroff algorithm\n";
+    if ( (em_solver_medium == MediumForEM::Macroscopic) &&
+       (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff)){
+      amrex::Print() << "                      |  - Lax-Wendroff algorithm\n";
       }
-    else if ((em_solver_medium == MediumForEM::Macroscopic) && (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler)){
-      amrex::Print()<< "                      |  - BackwardEuler algorithm\n";
+    else if ((em_solver_medium == MediumForEM::Macroscopic) &&
+            (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler)){
+      amrex::Print() << "                      |  - Backward Euler algorithm\n";
       }
-
-    amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n";
+    amrex::Print() << "-------------------------------------------------------------------------------\n";
     // Print type of current deposition
     if (current_deposition_algo == CurrentDepositionAlgo::Direct){
-      amrex::Print()<<"Current Deposition:   | direct" <<"\n";
+      amrex::Print() << "Current Deposition:   | direct \n";
     }
     else if (current_deposition_algo == CurrentDepositionAlgo::Vay){
-      amrex::Print()<<"Current Deposition:   | vay" <<"\n";
+      amrex::Print() << "Current Deposition:   | Vay \n";
     }
     else if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov){
-      amrex::Print()<<"Current Deposition:   | esirkepov" <<"\n";
+      amrex::Print() << "Current Deposition:   | Esirkepov \n";
     }
     // Print type of particle pusher
     if (particle_pusher_algo == ParticlePusherAlgo::Vay){
-      amrex::Print()<<"Particle Pusher:      | vay" <<"\n";
+      amrex::Print() << "Particle Pusher:      | Vay \n";
     }
     else if (particle_pusher_algo == ParticlePusherAlgo::Vay){
-      amrex::Print()<<"Particle Pusher:      | HigueraCary" <<"\n";
+      amrex::Print() << "Particle Pusher:      | Higuera-Cary \n";
     }
     else if (particle_pusher_algo == ParticlePusherAlgo::Boris){
-      amrex::Print()<<"Particle Pusher:      | boris" <<"\n";
+      amrex::Print() << "Particle Pusher:      | Boris \n";
     }
     // Print type of charge deposition
     if (charge_deposition_algo == ChargeDepositionAlgo::Standard){
-      amrex::Print()<<"Charge Deposition:    | standard" <<"\n";
+      amrex::Print() << "Charge Deposition:    | standard \n";
     }
     else{
-      amrex::Print()<<"Charge Deposition:    | standard" <<"\n";
+      amrex::Print() << "Charge Deposition:    | standard \n";
     }
     // Print field gathering algorithm
     if (field_gathering_algo == GatheringAlgo::MomentumConserving){
-      amrex::Print()<<"Field Gathering:      | momentum-conserving" <<"\n";
+      amrex::Print() << "Field Gathering:      | momentum-conserving \n";
     }
     else{
-      amrex::Print()<<"Field Gathering:      | energy-conserving" <<"\n";
+      amrex::Print() << "Field Gathering:      | energy-conserving \n";
     }
     // Print particle's shape factors
-    amrex::Print()<<"Particle Shape Factor:| " << WarpX::nox <<"\n";
-    amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n";
+    amrex::Print() << "Particle Shape Factor:| " << WarpX::nox << "\n";
+    amrex::Print() << "-------------------------------------------------------------------------------\n";
     // Print solver's type: Yee, CKC, ECT
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee){
-      amrex::Print()<<"Maxwell Solver:       | yee\n";
+      amrex::Print() << "Maxwell Solver:       | yee \n";
       }
     else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC){
-      amrex::Print()<<"Maxwell Solver:        | ckc" <<"\n";
+      amrex::Print() << "Maxwell Solver:        | ckc \n";
     }
     else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
-      amrex::Print()<<"Maxwell Solver:        | ect" <<"\n";
+      amrex::Print() << "Maxwell Solver:        | ect \n";
     }
   #ifdef WARPX_USE_PSATD
     // Print PSATD solver's configuration
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
-      amrex::Print()<<"Maxwell Solver:       | psatd\n";
+      amrex::Print() << "Maxwell Solver:       | psatd \n";
       }
     if ((m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)) {
-      amrex::Print()<<"                      | - Galilean \n"<<
-      "                      |  - v_galilean=("<<m_v_galilean[0]<<","<<m_v_galilean[1]<<","<<m_v_galilean[2]<<")\n";
+      amrex::Print() << "                      | - Galilean \n" <<
+      "                      |  - v_galilean = (" << m_v_galilean[0] << "," <<
+                              m_v_galilean[1] << "," << m_v_galilean[2] << ")\n";
       }
     if (WarpX::update_with_rho==1) {
-      amrex::Print()<<"                      | - update with rho\n";
+      amrex::Print() << "                      | - update with rho \n";
       }
     if (WarpX::do_dive_cleaning==1) {
-      amrex::Print()<<"                      | - div(E) cleaning\n";
+      amrex::Print() << "                      | - div(E) cleaning \n";
       }
     if (WarpX::do_divb_cleaning==1) {
-      amrex::Print()<<"                      | - div(B) cleaning\n";
+      amrex::Print() << "                      | - div(B) cleaning \n";
       }
     if (do_multi_J == 1){
-        amrex::Print()<<"                      | - multi-J deposition\n";
-        amrex::Print()<<"                      |   - J-deposition number="<<WarpX::do_multi_J_n_depositions<<"\n";
+        amrex::Print() << "                      | - multi-J deposition\n";
+        amrex::Print() << "                      |   - number of J depositions = "
+                                        << WarpX::do_multi_J_n_depositions << "\n";
     }
     if (fft_do_time_averaging == 1){
       amrex::Print()<<"                      | - time-averaged \n";
@@ -227,44 +237,48 @@ WarpX::PrintMainPICparameters ()
   #endif // WARPX_USE_PSATD
 
   if (do_nodal==1){
-    amrex::Print()<<"                      | - nodal mode" <<"\n";
+    amrex::Print() << "                      | - nodal mode \n";
   }
   #ifdef WARPX_USE_PSATD
     if ( (do_nodal==0) && (field_gathering_algo == GatheringAlgo::EnergyConserving) ){
-      amrex::Print()<<"                      | - staggered mode " <<"\n";
+      amrex::Print()<<"                      | - staggered mode " << "\n";
     }
     else if ( (do_nodal==0) && (field_gathering_algo == GatheringAlgo::MomentumConserving) ){
-      amrex::Print()<<"                      | - hybrid mode\n";
-      amrex::Print()<<"                      |   - field_centering_nox="<<WarpX::field_centering_nox<<"\n";
-      amrex::Print()<<"                      |   - field_centering_noy="<<WarpX::field_centering_noy<<"\n";
-      amrex::Print()<<"                      |   - field_centering_noy="<<WarpX::field_centering_noz<<"\n";
-      amrex::Print()<<"                      |   - current_centering_nox="<<WarpX::current_centering_nox<<"\n";
-      amrex::Print()<<"                      |   - current_centering_noy="<<WarpX::current_centering_noy<<"\n";
-      amrex::Print()<<"                      |   - current_centering_noy="<<WarpX::current_centering_noz<<"\n";
+      amrex::Print() << "                      | - hybrid mode\n";
+      amrex::Print() << "                      |   - field_centering_nox = " << WarpX::field_centering_nox << "\n";
+      amrex::Print() << "                      |   - field_centering_noy = " << WarpX::field_centering_noy << "\n";
+      amrex::Print() << "                      |   - field_centering_noy = " << WarpX::field_centering_noz << "\n";
+      amrex::Print() << "                      |   - current_centering_nox = " << WarpX::current_centering_nox << "\n";
+      amrex::Print() << "                      |   - current_centering_noy = " << WarpX::current_centering_noy << "\n";
+      amrex::Print() << "                      |   - current_centering_noy = " << WarpX::current_centering_noz << "\n";
     }
     if (WarpX::use_hybrid_QED == true){
-      amrex::Print()<<"                      | - use_hybrid_QED = true" <<"\n";
+      amrex::Print() << "                      | - use_hybrid_QED = true \n";
     }
 
     // Print solver's order
-    amrex::Print()<< "Spectral order:       | - psatd.nox="<<nox_fft<<"\n";
-    amrex::Print()<< "                      | - psatd.noy="<<noy_fft<<"\n";
-    amrex::Print()<< "                      | - psatd.noz="<<noz_fft<<"\n";
-    if ((nox_fft==-1) or (noy_fft==-1) or (noz_fft==-1)) {
-      amrex::Print()<< "                      | ('-1' corresponds to infinite order); \n";
-    }
+    std::string psatd_nox_fft, psatd_noy_fft, psatd_noz_fft;;
+    psatd_nox_fft = (nox_fft == -1) ? "inf" : std::to_string(nox_fft);
+    psatd_noy_fft = (noy_fft == -1) ? "inf" : std::to_string(noy_fft);
+    psatd_noz_fft = (noz_fft == -1) ? "inf" : std::to_string(noz_fft);
+
+    amrex::Print() << "Spectral order:       | - psatd.nox = " << psatd_nox_fft << "\n";
+    amrex::Print() << "                      | - psatd.noy = " << psatd_noy_fft << "\n";
+    amrex::Print() << "                      | - psatd.noz = " << psatd_noz_fft << "\n";
+
     // Print guard cells number
-    amrex::Print()<< "Guard cells :         | - ng_alloc_EB="<<guard_cells.ng_alloc_EB<<"\n";
-    amrex::Print()<< "                      | - ng_depos_J="<<guard_cells.ng_depos_J<<"\n";
-    amrex::Print()<< "                      | - ng_depos_rho="<<guard_cells.ng_depos_rho<<"\n";
+    amrex::Print() << "Guard cells :         | - ng_alloc_EB = " << guard_cells.ng_alloc_EB << "\n";
+    amrex::Print() << "                      | - ng_depos_J = " << guard_cells.ng_depos_J << "\n";
+    amrex::Print() << "                      | - ng_depos_rho = " << guard_cells.ng_depos_rho << "\n";
     #endif // WARPX_USE_PSATD
-    amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n";
+    amrex::Print() << "-------------------------------------------------------------------------------" << "\n";
     //Print main boosted frame algorithm's parameters
     if (WarpX::gamma_boost!=1){
-    amrex::Print()<<"Boosted Frame:        |    ON  "<<"\n";
-    amrex::Print()<<"                      |  - gamma_boost="<<WarpX::gamma_boost<<"\n";
-    amrex::Print()<<"                      |  - boost_direction=("<<WarpX::boost_direction[0]<<","<<WarpX::boost_direction[1]<<","<<WarpX::boost_direction[2]<<")\n";
-    amrex::Print()<<"-------------------------------------------------------------------------------"<<"\n";
+    amrex::Print() << "Boosted Frame:        |    ON  \n";
+    amrex::Print() << "                      |  - gamma_boost = " << WarpX::gamma_boost << "\n";
+    amrex::Print() << "                      |  - boost_direction = (" << WarpX::boost_direction[0] <<
+                             "," << WarpX::boost_direction[1] << "," << WarpX::boost_direction[2] << ")\n";
+    amrex::Print() << "------------------------------------------------------------------------------- \n";
     }
 }
 
@@ -1027,6 +1041,7 @@ void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
                << ",\nplease reduce the number of guard cells"
                << " or increase the grid size by changing domain decomposition";
             amrex::Abort(ss.str());
+
         }
     }
 }
