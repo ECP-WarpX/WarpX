@@ -20,10 +20,6 @@ private:
     bool m_plot_raw_fields = false;
     /** Whether to plot guard cells of raw fields */
     bool m_plot_raw_fields_guards = false;
-    /** Whether to plot charge density rho in raw fields */
-    bool m_plot_raw_rho = false;
-    /** Whether to plot F (charge conservation error) in raw fields */
-    bool m_plot_raw_F = false;
     /** Flush m_mf_output and particles to file for the i^th buffer */
     void Flush (int i_buffer) override;
     /** Flush raw data */
@@ -37,6 +33,7 @@ private:
     bool DoComputeAndPack (int step, bool force_flush=false) override;
     /** whether to flush at this time step
      * \param[in] step current time step
+     * \param[in] i_buffer index of a back-transformed snapshot
      * \param[in] force_flush if true, return true for any step
      * \return bool, whether to flush
      */
@@ -57,9 +54,10 @@ private:
       * lo and hi and coarsening ratio. This MultiFab may have a different BoxArray and
       * DistributionMap than field MultiFabs in the simulation.
       *
+      * \param[in] i_buffer index of a back-transformed snapshot
       * \param[in] lev level on which source multifabs are defined
       */
-    void InitializeFieldBufferData ( int i_buffer, int lev ) override;
+    void InitializeBufferData ( int i_buffer, int lev ) override;
     /** Initialize functors that store pointers to the fields requested by the user.
       * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
       */
@@ -67,6 +65,8 @@ private:
     void InitializeParticleBuffer () override;
     /** Prepare field data to be used for diagnostics */
     void PrepareFieldDataForOutput () override;
+    /** Prepare particle data to be used for diagnostics. */
+    void PrepareParticleDataForOutput() override {}
     /** Update the physical extent of the diagnostic domain for moving window and
      *  galilean shift simulations
      *

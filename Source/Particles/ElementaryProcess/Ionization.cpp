@@ -24,7 +24,7 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
                                             amrex::FArrayBox const& bxfab,
                                             amrex::FArrayBox const& byfab,
                                             amrex::FArrayBox const& bzfab,
-                                            amrex::Array<amrex::Real,3> v_galilean,
+                                            amrex::Vector<amrex::Real> v_galilean,
                                             const amrex::Real* const AMREX_RESTRICT a_ionization_energies,
                                             const amrex::Real* const AMREX_RESTRICT a_adk_prefactor,
                                             const amrex::Real* const AMREX_RESTRICT a_adk_exp_prefactor,
@@ -41,8 +41,7 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
     m_atomic_number = a_atomic_number;
 
     m_get_position  = GetParticlePosition(a_pti, a_offset);
-    m_get_externalE = GetExternalEField  (a_pti, a_offset);
-    m_get_externalB = GetExternalBField  (a_pti, a_offset);
+    m_get_externalEB = GetExternalEBField(a_pti, a_offset);
 
     m_ex_arr = exfab.array();
     m_ey_arr = eyfab.array();

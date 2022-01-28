@@ -281,8 +281,8 @@ public:
 
     bool do_splitting = false;
     bool initialize_self_fields = false;
-    amrex::Real self_fields_required_precision =
-        amrex::Real(1.e-11);
+    amrex::Real self_fields_required_precision = amrex::Real(1.e-11);
+    amrex::Real self_fields_absolute_tolerance = amrex::Real(0.0);
     int self_fields_max_iters = 200;
     int self_fields_verbosity = 2;
 
@@ -294,19 +294,36 @@ public:
 
     void AddRealComp (const std::string& name, bool comm=true)
     {
-        particle_comps[name] = NumRealComps();
-        particle_runtime_comps[name] = NumRealComps() - PIdx::nattribs;
-        AddRealComp(comm);
+        auto search = particle_comps.find(name);
+        if (search == particle_comps.end()) {
+            particle_comps[name] = NumRealComps();
+            particle_runtime_comps[name] = NumRealComps() - PIdx::nattribs;
+            AddRealComp(comm);
+        } else {
+            amrex::Print() << name << " already exists in particle_comps, not adding. \n";
+        }
     }
 
     void AddIntComp (const std::string& name, bool comm=true)
     {
-        particle_icomps[name] = NumIntComps();
-        particle_runtime_icomps[name] = NumIntComps() - 0;
-        AddIntComp(comm);
+        auto search = particle_icomps.find(name);
+        if (search == particle_icomps.end()) {
+            particle_icomps[name] = NumIntComps();
+            particle_runtime_icomps[name] = NumIntComps() - 0;
+            AddIntComp(comm);
+        } else {
+            amrex::Print() << name << " already exists in particle_icomps, not adding. \n";
+        }
     }
 
     int doBackTransformedDiagnostics () const { return do_back_transformed_diagnostics; }
+    /** Whether back-transformed diagnostics need to be performed for a particular species.
+     *
+     * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
+     */
+    void SetDoBackTransformedParticles(const bool do_back_transformed_particles) {
+        m_do_back_transformed_particles = do_back_transformed_particles;
+    }
 
     std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
     std::map<std::string, int> getParticleiComps () const noexcept { return particle_icomps;}
@@ -343,7 +360,7 @@ public:
     */
     std::string getSpeciesTypeName () const {return species::get_name(physical_species);}
 
-    amrex::Array<amrex::Real,3> get_v_galilean () {return m_v_galilean;}
+    amrex::Vector<amrex::Real> get_v_galilean () {return m_v_galilean;}
 
     /**
      * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer only.
@@ -362,7 +379,7 @@ public:
      void defineAllParticleTiles () noexcept;
 
 protected:
-    amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
+    amrex::Vector<amrex::Real> m_v_galilean = amrex::Vector<amrex::Real>(3, amrex::Real(0.));
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
     std::map<std::string, int> particle_runtime_comps;
@@ -407,6 +424,8 @@ protected:
     int do_resampling = 0;
 
     int do_back_transformed_diagnostics = 1;
+    /** Whether back-transformed diagnostics is turned on for the corresponding species.*/
+    bool m_do_back_transformed_particles = false;
 
 #ifdef WARPX_QED
     //Species can receive a shared pointer to a QED engine (species for
@@ -435,6 +454,7 @@ public:
                                        TmpIdx::nattribs>;
     using TmpParticles = amrex::Vector<std::map<PairIndex, TmpParticleTile> >;
 
+    TmpParticles getTmpParticleData () const noexcept {return tmp_particle_data;}
 protected:
     TmpParticles tmp_particle_data;
 

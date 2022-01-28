@@ -3,7 +3,7 @@ amr.n_cell = 32 32 32
 amr.max_grid_size = 128
 amr.max_level = 0
 
-geometry.coord_sys   = 0
+geometry.dims = 3
 geometry.prob_lo     = -0.8 -0.8 -0.8
 geometry.prob_hi     =  0.8  0.8  0.8
 warpx.cfl = 1

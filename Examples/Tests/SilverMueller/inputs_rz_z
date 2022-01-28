@@ -12,7 +12,7 @@ amr.max_grid_size = 128
 amr.max_level = 0
 
 # Geometry
-geometry.coord_sys   = 1
+geometry.dims = RZ
 geometry.prob_lo     =  0.e-6 -20.e-6
 geometry.prob_hi     =  40.e-6  20.e-6
 

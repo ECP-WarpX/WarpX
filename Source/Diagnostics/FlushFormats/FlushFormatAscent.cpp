@@ -16,8 +16,9 @@ FlushFormatAscent::WriteToFile (
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, int /*file_min_digits*/, bool plot_raw_fields,
-    bool plot_raw_fields_guards, bool /*plot_raw_rho*/, bool plot_raw_F,
-    bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/, bool /*isLastBTDFlush*/) const
+    bool plot_raw_fields_guards,
+    bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
+    bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
 {
 #ifdef AMREX_USE_ASCENT
     WARPX_PROFILE("FlushFormatAscent::WriteToFile()");
@@ -59,8 +60,7 @@ FlushFormatAscent::WriteToFile (
     amrex::ignore_unused(varnames, mf, geom, iteration, time,
         particle_diags, nlev);
 #endif // AMREX_USE_ASCENT
-    amrex::ignore_unused(prefix, plot_raw_fields, plot_raw_fields_guards,
-        plot_raw_F);
+    amrex::ignore_unused(prefix, plot_raw_fields, plot_raw_fields_guards);
 }
 
 #ifdef AMREX_USE_ASCENT

@@ -1,6 +1,7 @@
 #include "Diagnostics.H"
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FlushFormats/FlushFormatAscent.H"
@@ -11,6 +12,7 @@
 #include "FlushFormats/FlushFormatPlotfile.H"
 #include "FlushFormats/FlushFormatSensei.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
@@ -48,7 +50,7 @@ Diagnostics::BaseReadParameters ()
     amrex::ParmParse pp_diag_name(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
-    pp_diag_name.query("file_min_digits", m_file_min_digits);
+    queryWithParser(pp_diag_name, "file_min_digits", m_file_min_digits);
     pp_diag_name.query("format", m_format);
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
@@ -106,10 +108,12 @@ Diagnostics::BaseReadParameters ()
     }
     // For a moving window simulation, the user-defined m_lo and m_hi must be converted.
     if (warpx.do_moving_window) {
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     amrex::Vector<int> dim_map {0, 1, 2};
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::Vector<int> dim_map {0, 2};
+#else
+    amrex::Vector<int> dim_map {2};
 #endif
        if (warpx.boost_direction[ dim_map[warpx.moving_window_dir] ] == 1) {
            // Convert user-defined lo and hi for diagnostics to account for boosted-frame
@@ -124,7 +128,7 @@ Diagnostics::BaseReadParameters ()
     // Initialize cr_ratio with default value of 1 for each dimension.
     amrex::Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
     // Read user-defined coarsening ratio for the output MultiFab.
-    bool cr_specified = pp_diag_name.queryarr("coarsening_ratio", cr_ratio);
+    bool cr_specified = queryArrWithParser(pp_diag_name, "coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM);
     if (cr_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
            m_crse_ratio[idim] = cr_ratio[idim];
@@ -194,33 +198,42 @@ Diagnostics::InitData ()
         for (int lev = 0; lev < nmax_lev; ++lev) {
             // allocate and initialize m_all_field_functors depending on diag type
             InitializeFieldFunctors(lev);
-            // Initialize field buffer data, m_mf_output
-            InitializeFieldBufferData(i_buffer, lev);
+            // Initialize buffer data required for particle and/or fields
+            InitializeBufferData(i_buffer, lev);
         }
     }
-    // When particle buffers, m_particle_boundary_buffer are included,
-    // they will be initialized here
-    InitializeParticleBuffer();
 
     amrex::ParmParse pp_diag_name(m_diag_name);
+    // default for writing species output is 1
+    int write_species = 1;
+    pp_diag_name.query("write_species", write_species);
+    if (write_species == 1) {
+        // When particle buffers, m_particle_boundary_buffer are included,
+        // they will be initialized here
+        InitializeParticleBuffer();
+        InitializeParticleFunctors();
+    }
+
     amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
     if ( queryArrWithParser(pp_diag_name, "diag_lo", dummy_val, 0, AMREX_SPACEDIM) ||
          queryArrWithParser(pp_diag_name, "diag_hi", dummy_val, 0, AMREX_SPACEDIM) ) {
         // set geometry filter for particle-diags to true when the diagnostic domain-extent
-        // is specified by the user
-        for (int i = 0; i < m_output_species.size(); ++i) {
-            m_output_species[i].m_do_geom_filter = true;
+        // is specified by the user.
+        // Note that the filter is set for every ith snapshot, and the number of snapshots
+        // for full diagnostics is 1, while for BTD it is user-defined.
+        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
+            for (int i = 0; i < m_output_species.size(); ++i) {
+                m_output_species[i_buffer][i].m_do_geom_filter = true;
+            }
+            // Disabling particle-io for reduced domain diagnostics by reducing
+            // the particle-diag vector to zero.
+            // This is a temporary fix until particle_buffer is supported in diagnostics.
+            m_output_species[i_buffer].clear();
         }
-        // Disabling particle-io for reduced domain diagnostics by reducing
-        // the particle-diag vector to zero.
-        // This is a temporary fix until particle_buffer is supported in diagnostics.
         m_output_species.clear();
         amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
     }
 
-    // default for writing species output is 1
-    int write_species = 1;
-    pp_diag_name.query("write_species", write_species);
     if (write_species == 0) {
         if (m_format == "checkpoint"){
             amrex::Abort("For checkpoint format, write_species flag must be 1.");
@@ -229,8 +242,6 @@ Diagnostics::InitData ()
         m_output_species.clear();
         m_output_species_names.clear();
     }
-    // temporarily clear out species output sincce particle buffers are not supported.
-    TMP_ClearSpeciesDataForBTD();
 }
 
 
@@ -291,13 +302,19 @@ Diagnostics::InitBaseData ()
     for (int i = 0; i < m_num_buffers; ++i) {
         m_geom_output[i].resize( nmax_lev );
     }
+
 }
 
 void
 Diagnostics::ComputeAndPack ()
 {
+    PrepareBufferData();
     // prepare the field-data necessary to compute output data
     PrepareFieldDataForOutput();
+    // Prepare the particle data necessary to compute output data
+    // Field-data is called first for BTD, since the z-slice location is used to prepare particle data
+    // to determine if the transform is to be done this step.
+    PrepareParticleDataForOutput();
 
     auto & warpx = WarpX::GetInstance();
 
@@ -305,7 +322,7 @@ Diagnostics::ComputeAndPack ()
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for(int lev=0; lev<nlev_output; lev++){
             int icomp_dst = 0;
-            for (int icomp=0, n=m_all_field_functors[0].size(); icomp<n; icomp++){
+            for (int icomp=0, n=m_all_field_functors[lev].size(); icomp<n; icomp++){
                 // Call all functors in m_all_field_functors[lev]. Each of them computes
                 // a diagnostics and writes in one or more components of the output
                 // multifab m_mf_output[lev].
@@ -318,10 +335,16 @@ Diagnostics::ComputeAndPack ()
 
             // needed for contour plots of rho, i.e. ascent/sensei
             if (m_format == "sensei" || m_format == "ascent") {
-                m_mf_output[i_buffer][lev].FillBoundary(warpx.Geom(lev).periodicity());
+                WarpXCommUtil::FillBoundary(m_mf_output[i_buffer][lev], warpx.Geom(lev).periodicity());
             }
         }
+        // Call Particle functor
+        for (int isp = 0; isp < m_all_particle_functors.size(); ++isp) {
+            m_all_particle_functors[isp]->operator()(*m_particles_buffer[i_buffer][isp], m_totalParticles_in_buffer[i_buffer][isp], i_buffer);
+        }
     }
+
+    UpdateBufferData();
 }
 
 
@@ -329,17 +352,16 @@ void
 Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
     WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
-
     MovingWindowAndGalileanDomainShift (step);
 
     if ( DoComputeAndPack (step, force_flush) ) {
         ComputeAndPack();
-
-        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-            if ( !DoDump (step, i_buffer, force_flush) ) continue;
-            Flush(i_buffer);
-        }
-
     }
+
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        if ( !DoDump (step, i_buffer, force_flush) ) continue;
+        Flush(i_buffer);
+    }
+
 
 }

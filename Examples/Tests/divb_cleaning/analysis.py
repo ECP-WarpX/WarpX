@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019
 #
@@ -7,12 +7,18 @@
 # License: BSD-3-Clause-LBNL
 
 import sys
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import os
+
 import numpy as np
 import yt
+
 yt.funcs.mylog.setLevel(50)
 import re
+
 import checksumAPI
+from scipy.constants import c
 
 # Name of the last plotfile
 fn = sys.argv[1]
@@ -30,18 +36,18 @@ G_old = ad_old['boxlib', 'G'].v.squeeze()
 G_new = ad_new['boxlib', 'G'].v.squeeze()
 divB  = ad_mid['boxlib', 'divB'].v.squeeze()
 
-# Check max norm of error on div(B) = dG/dt
+# Check max norm of error on c2 * div(B) = dG/dt
 # (the time interval between old and new is 2*dt)
 dt = 1.504557189e-15
 x = G_new - G_old
-y = divB * 2 * dt
+y = divB * 2 * dt * c**2
 
 rel_error = np.amax(abs(x - y)) / np.amax(abs(y))
 tolerance = 1e-1
 
 assert(rel_error < tolerance)
 
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 
 if re.search('single_precision', fn):
     checksumAPI.evaluate_checksum(test_name, fn, rtol=1.e-3)

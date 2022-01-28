@@ -36,6 +36,7 @@ public:
     void gatherParticles (MultiParticleContainer& mypc,
                           const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
 
+    void redistribute ();
     void clearParticles ();
 
     void printNumParticles () const;

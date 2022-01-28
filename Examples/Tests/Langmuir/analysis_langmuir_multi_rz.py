@@ -1,12 +1,11 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019 David Grote, Maxence Thevenet
 #
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
-
-
+#
 # This is a script that analyses the simulation results from
 # the script `inputs.multi.rz.rt`. This simulates a RZ periodic plasma wave.
 # The electric field in the simulation is given (in theory) by:
@@ -14,23 +13,29 @@
 # $$ E_z = -\partial_z \phi = - \epsilon \,\frac{mc^2}{e} k_0 \exp\left(-\frac{r^2}{w_0^2}\right) \cos(k_0 z) \sin(\omega_p t)
 # Unrelated to the Langmuir waves, we also test the plotfile particle filter function in this
 # analysis script.
-import sys
+import os
 import re
+import sys
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import yt
+
 yt.funcs.mylog.setLevel(50)
+
 import numpy as np
-from scipy.constants import e, m_e, epsilon_0, c
 import post_processing_utils
+from scipy.constants import c, e, epsilon_0, m_e
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 # this will be the name of the plot file
 fn = sys.argv[1]
 
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 
 # Parse test name and check if current correction (psatd.current_correction) is applied
 current_correction = True if re.search('current_correction', fn) else False
@@ -84,13 +89,13 @@ zz = zmin + (coords[1] + 0.5)*dz
 
 # Check the validity of the fields
 overall_max_error = 0
-Er_sim = data['Ex'].to_ndarray()[:,:,0]
+Er_sim = data[('mesh','Ex')].to_ndarray()[:,:,0]
 Er_th = Er(zz, rr, epsilon, k0, w0, wp, t0)
 max_error = abs(Er_sim-Er_th).max()/abs(Er_th).max()
 print('Er: Max error: %.2e' %(max_error))
 overall_max_error = max( overall_max_error, max_error )
 
-Ez_sim = data['Ez'].to_ndarray()[:,:,0]
+Ez_sim = data[('mesh','Ez')].to_ndarray()[:,:,0]
 Ez_th = Ez(zz, rr, epsilon, k0, w0, wp, t0)
 max_error = abs(Ez_sim-Ez_th).max()/abs(Ez_th).max()
 print('Ez: Max error: %.2e' %(max_error))
@@ -119,8 +124,8 @@ assert( error_rel < tolerance_rel )
 
 # Check charge conservation (relative L-infinity norm of error) with current correction
 if current_correction:
-    divE = data['divE'].to_ndarray()
-    rho  = data['rho' ].to_ndarray() / epsilon_0
+    divE = data[('boxlib','divE')].to_ndarray()
+    rho  = data[('boxlib','rho')].to_ndarray() / epsilon_0
     error_rel = np.amax(np.abs(divE - rho)) / max(np.amax(divE), np.amax(rho))
     tolerance = 1.e-9
     print("Check charge conservation:")

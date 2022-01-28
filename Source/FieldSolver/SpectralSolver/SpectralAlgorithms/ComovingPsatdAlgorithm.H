@@ -34,7 +34,7 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
                                 const int norder_z,
                                 const bool nodal,
                                 const amrex::IntVect& fill_guards,
-                                const amrex::Array<amrex::Real,3>& v_comoving,
+                                const amrex::Vector<amrex::Real>& v_comoving,
                                 const amrex::Real dt,
                                 const bool update_with_rho);
 
@@ -55,6 +55,7 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
          * base class \c SpectralBaseAlgorithm and cannot be overridden by further
          * derived classes.
          *
+         * \param[in]     lev        The mesh-refinement level
          * \param[in,out] field_data All fields in Fourier space
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
@@ -71,6 +72,7 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
          * base class \c SpectralBaseAlgorithm and cannot be overridden by further
          * derived classes.
          *
+         * \param[in]     lev        The mesh-refinement level
          * \param[in,out] field_data All fields in Fourier space
          * \param[in,out] current    Array of unique pointers to \c MultiFab storing
          *                           the three components of the current density
@@ -89,13 +91,13 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
 
         // k vectors
         KVectorComponent kx_vec;
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
         KVectorComponent ky_vec;
 #endif
         KVectorComponent kz_vec;
 
         // Additional member variables
-        amrex::Array<amrex::Real,3> m_v_comoving;
+        amrex::Vector<amrex::Real> m_v_comoving;
         amrex::Real m_dt;
 };
 

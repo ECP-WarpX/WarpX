@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019 Jean-Luc Vay, Maxence Thevenet, Remi Lehe
 # Weiqun Zhang
@@ -8,11 +8,13 @@
 # License: BSD-3-Clause-LBNL
 
 
-import sys
-import yt
 import re
+import sys
+
 import numpy as np
 import scipy.constants as scc
+import yt
+
 yt.funcs.mylog.setLevel(0)
 
 fn = sys.argv[1]

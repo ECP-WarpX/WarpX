@@ -46,6 +46,7 @@ void FiniteDifferenceSolver::EvolveEPML (
     std::array< amrex::MultiFab*, 3 > Efield,
     std::array< amrex::MultiFab*, 3 > const Bfield,
     std::array< amrex::MultiFab*, 3 > const Jfield,
+    std::array< amrex::MultiFab*, 3 > const edge_lengths,
     amrex::MultiFab* const Ffield,
     MultiSigmaBox const& sigba,
     amrex::Real const dt, bool pml_has_particles ) {
@@ -53,23 +54,23 @@ void FiniteDifferenceSolver::EvolveEPML (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles);
+    amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles, edge_lengths);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
     if (m_do_nodal) {
 
         EvolveEPMLCartesian <CartesianNodalAlgorithm> (
-            Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles );
+            Efield, Bfield, Jfield, edge_lengths, Ffield, sigba, dt, pml_has_particles );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee || m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         EvolveEPMLCartesian <CartesianYeeAlgorithm> (
-            Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles );
+            Efield, Bfield, Jfield,  edge_lengths, Ffield, sigba, dt, pml_has_particles );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
         EvolveEPMLCartesian <CartesianCKCAlgorithm> (
-            Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles );
+            Efield, Bfield, Jfield,  edge_lengths, Ffield, sigba, dt, pml_has_particles );
 
     } else {
         amrex::Abort("EvolveEPML: Unknown algorithm");
@@ -85,6 +86,7 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
     std::array< amrex::MultiFab*, 3 > Efield,
     std::array< amrex::MultiFab*, 3 > const Bfield,
     std::array< amrex::MultiFab*, 3 > const Jfield,
+    std::array< amrex::MultiFab*, 3 > const edge_lengths,
     amrex::MultiFab* const Ffield,
     MultiSigmaBox const& sigba,
     amrex::Real const dt, bool pml_has_particles ) {
@@ -105,6 +107,12 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
         Array4<Real> const& By = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
 
+#ifdef AMREX_USE_EB
+        Array4<Real> const& lx = edge_lengths[0]->array(mfi);
+        Array4<Real> const& ly = edge_lengths[1]->array(mfi);
+        Array4<Real> const& lz = edge_lengths[2]->array(mfi);
+#endif
+
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
         int const n_coefs_x = m_stencil_coefs_x.size();
@@ -122,6 +130,10 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
         amrex::ParallelFor(tex, tey, tez,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                if(lx(i, j, k) <= 0) return;
+#endif
+
                 Ex(i, j, k, PMLComp::xz) -= c2 * dt * (
                     T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, PMLComp::yx)
                   + T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, PMLComp::yz) );
@@ -131,6 +143,10 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                if(ly(i, j, k)<=0) return;
+#endif
+
                 Ey(i, j, k, PMLComp::yx) -= c2 * dt * (
                     T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, PMLComp::zx)
                   + T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, PMLComp::zy) );
@@ -140,6 +156,10 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                if(lz(i, j, k) <= 0) return;
+#endif
+
                 Ez(i, j, k, PMLComp::zy) -= c2 * dt * (
                     T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k, PMLComp::xy)
                   + T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k, PMLComp::xz) );
@@ -192,7 +212,7 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
             const Real* sigmaj_y = sigba[mfi].sigma[1].data();
             const Real* sigmaj_z = sigba[mfi].sigma[2].data();
             int const x_lo = sigba[mfi].sigma[0].lo();
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
             int const y_lo = sigba[mfi].sigma[1].lo();
             int const z_lo = sigba[mfi].sigma[2].lo();
 #else
@@ -218,6 +238,10 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
         }
 
     }
+
+#ifndef AMREX_USE_EB
+    amrex::ignore_unused(edge_lengths);
+#endif
 
 }
 

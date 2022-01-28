@@ -78,7 +78,7 @@ PMLPsatdAlgorithm::pushSpectralFields(SpectralFieldData& f) const {
 
         // Extract pointers for the k vectors
         const Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
         const Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
 #endif
         const Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
@@ -155,7 +155,7 @@ PMLPsatdAlgorithm::pushSpectralFields(SpectralFieldData& f) const {
 
             // k vector values, and coefficients
             const Real kx = modified_kx_arr[i];
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
             const Real ky = modified_ky_arr[j];
             const Real kz = modified_kz_arr[k];
 #else
@@ -362,7 +362,7 @@ void PMLPsatdAlgorithm::InitializeSpectralCoefficients (
 
         // Extract pointers for the k vectors
         const Real* modified_kx = modified_kx_vec[mfi].dataPtr();
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
         const Real* modified_ky = modified_ky_vec[mfi].dataPtr();
 #endif
         const Real* modified_kz = modified_kz_vec[mfi].dataPtr();
@@ -376,7 +376,7 @@ void PMLPsatdAlgorithm::InitializeSpectralCoefficients (
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             const Real kx = modified_kx[i];
-#if (AMREX_SPACEDIM==3)
+#if defined(WARPX_DIM_3D)
             const Real ky = modified_ky[j];
             const Real kz = modified_kz[k];
 #else

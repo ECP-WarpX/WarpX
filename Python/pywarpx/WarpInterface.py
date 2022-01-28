@@ -14,9 +14,10 @@
 # The class WarpX_EM3D inherits from Warp's EM3D class. It primarily provides
 # access to the field plotting routines.
 
-import warp
-from . import fields
 from pywarpx import PGroup
+import warp
+
+from . import fields
 
 # The particle weight is always the first pid
 warp.top.wpid = 1

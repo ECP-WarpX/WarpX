@@ -26,8 +26,8 @@
  * sphere collision occurs. The resulting particle velocities are transformed
  * back to the lab frame and the input particle's velocity is updated.
  *
- * @param[in/out] ux, uy, uz colliding particle's velocity
- * @param[in] uCOM_x, uCOM_y, uCOM_z velocity of the center of momentum frame.
+ * @param[in,out] ux,uy,uz colliding particle's velocity
+ * @param[in] uCOM_x,uCOM_y,uCOM_z velocity of the center of momentum frame.
  * @param[in] engine random number generator.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -54,13 +54,14 @@ void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
 }
 
 
-/** \brief Function to perform back scattering of a particle in the lab
- * frame. The particle velocity is transformed to the COM frame where it is
+/** Function to perform back scattering of a particle in the lab frame.
+ *
+ * The particle velocity is transformed to the COM frame where it is
  * reversed. The resulting particle velocities are then transformed back to the
  * lab frame and the input particle's velocity is updated.
  *
- * @param[in/out] ux, uy, uz colliding particle's velocity
- * @param[in] uCOM_x, uCOM_y, uCOM_z velocity of the center of momentum frame.
+ * @param[in,out] ux,uy,uz colliding particle's velocity
+ * @param[in] uCOM_x,uCOM_y,uCOM_z velocity of the center of momentum frame.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void BackScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
@@ -77,11 +78,10 @@ void BackScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
 }
 
 
-/** \brief Function to perform charge exchange of an ion with a neutral
- * particle.
+/** Function to perform charge exchange of an ion with a neutral particle.
  *
- * @param[in/out] ux, uy, uz colliding particle's velocity
- * @param[in] ua_x, ua_y, ua_z velocity of the neutral particle.
+ * @param[in,out] ux,uy,uz colliding particle's velocity
+ * @param[in] ua_x,ua_y,ua_z velocity of the neutral particle.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void ChargeExchange ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
@@ -134,6 +134,7 @@ public:
     *
     * @param[in] ptd particle tile data
     * @param[in] i particle index
+    * @param[in] engine the random number state and factory
     * @return true if a collision occurs, false otherwise
     */
     template <typename PData>
@@ -195,6 +196,8 @@ public:
     *
     * @param[in] energy_cost energy cost of ionization
     * @param[in] mass1 mass of the colliding species
+    * @param[in] standard deviation of ion velocity distribution for each velocity
+                 direction; for a Maxwellian distribution it should equal sqrt(kB*T/m)
     */
     ImpactIonizationTransformFunc(
         amrex::Real energy_cost, amrex::Real mass1, amrex::Real ion_vel_std

@@ -8,8 +8,12 @@
 #ifndef WARPX_UTILS_H_
 #define WARPX_UTILS_H_
 
+#include <AMReX_BoxArray.H>
+#include <AMReX_DistributionMapping.H>
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
@@ -34,10 +38,20 @@ void ConvertLabParamsToBoost();
  */
 void ReadBCParams ();
 
-/**
- * \brief Ensures that the blocks are setup correctly for the RZ spectral solver
+/** Check the warpx.dims matches the binary name
  */
-void CheckGriddingForRZSpectral();
+void CheckDims ();
+
+/** Check the warpx.dims matches the binary name & set up RZ gridding
+ *
+ * Ensures that the blocks are setup correctly for the RZ spectral solver
+ * When using the RZ spectral solver, the Hankel transform cannot be
+ * divided among multiple blocks. Each block must extend over the
+ * entire radial extent.
+ * The grid can be divided up along z, but the number of blocks
+ * must be >= the number of processors.
+ */
+void CheckGriddingForRZSpectral ();
 
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin,
                amrex::Real zmax);
@@ -46,8 +60,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin,
  * \brief Parse a string (typically a mathematical expression) from the
  * input file and store it into a variable.
  *
- * \param ParmParse pp used to read the query_string pp.<function>=string
- * \param parmparse_string String used to initialize ParmParse
+ * \param pp used to read the query_string `pp.<function>=string`
  * \param query_string ParmParse.query will look for this string
  * \param stored_string variable in which the string to parse is stored
  */
@@ -161,6 +174,39 @@ T trilinear_interp(T x0, T x1,T y0, T y1, T z0, T z1,
     return linear_interp(z0, z1, fxy0, fxy1, z);
 }
 
+/** \brief Compute physical coordinates (x,y,z) that correspond to a given (i,j,k) and
+ *  the corresponding staggering, mf_type.
+ *
+ * \param[in] i    index along x
+ * \param[in] j    index along y
+ * \param[in] k    index along z
+ * \param[in] mf_type GpuArray containing the staggering type to convert (i,j,k) to (x,y,z)
+ * \param[in] domain_lo Physical coordinates of the lowest corner of the simulation domain
+ * \param[in] dx   Cell size of the simulation domain
+ *
+ * \param[out] x   physical coordinate along x
+ * \param[out] y   physical coordinate along y
+ * \param[out] z   physical coordinate along z
+ */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void getCellCoordinates (int i, int j, int k,
+                         amrex::GpuArray<int, 3> const mf_type,
+                         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const domain_lo,
+                         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const dx,
+                         amrex::Real &x, amrex::Real &y, amrex::Real &z)
+{
+    using namespace amrex::literals;
+    x = domain_lo[0] + i*dx[0] + (1._rt - mf_type[0]) * dx[0]*0.5;
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    amrex::ignore_unused(j);
+    y = 0._rt;
+    z = domain_lo[1] + k*dx[1] + (1._rt - mf_type[1]) * dx[1]*0.5;
+#else
+    y = domain_lo[1] + j*dx[1] + (1._rt - mf_type[1]) * dx[1]*0.5;
+    z = domain_lo[2] + k*dx[2] + (1._rt - mf_type[2]) * dx[2]*0.5;
+#endif
+}
+
 }
 
 /**
@@ -190,7 +236,7 @@ amrex::Parser makeParser (std::string const& parse_function, amrex::Vector<std::
  * \param str The string to be parsed
  * \return representation as real
  */
-amrex::Real parseStringtoReal(std::string str);
+double parseStringtoReal(std::string str);
 
 /** Parse a string and return an int
  *
@@ -213,8 +259,7 @@ amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
     }
 }
 
-/**
- * \brief Similar to amrex::ParmParse::query, but also supports math expressions for the value.
+/** Similar to amrex::ParmParse::query, but also supports math expressions for the value.
  *
  * amrex::ParmParse::query reads a name and a value from the input file. This function does the
  * same, and applies the amrex::Parser to the value, so the user has the choice to specify a value or
@@ -224,18 +269,34 @@ amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
  * \param[in] a_pp amrex::ParmParse object
  * \param[in] str name of the parameter to read
  * \param[out] val where the value queried and parsed is stored, either a scalar or vector
- * \param[in] start_ix start index in the list of inputs values (optional with arrays)
- * \param[in] num_val number of input values to use (optional with arrays)
  */
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
+
+/** Similar to amrex::ParmParse::query, but also supports math expressions for the value.
+ *
+ * amrex::ParmParse::query reads a name and a value from the input file. This function does the
+ * same, and applies the amrex::Parser to the value, so the user has the choice to specify a value or
+ * a math expression (including user-defined constants).
+ * Works for amrex::Real numbers and integers.
+ *
+ * \param[in] a_pp amrex::ParmParse object
+ * \param[in] str name of the parameter to read
+ * \param[out] val where the value queried and parsed is stored, either a scalar or vector
+ * \param[in] start_ix start index in the list of inputs values (optional with arrays, default is
+ * amrex::ParmParse::FIRST for starting with the first input value)
+ * \param[in] num_val number of input values to use (optional with arrays, default is
+ * amrex::ParmParse::LAST for reading until the last input value)
+ */
 int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
-                        const int start_ix, const int num_val);
+                        const int start_ix = amrex::ParmParse::FIRST,
+                        const int num_val = amrex::ParmParse::LAST);
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val);
 int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
-                        const int start_ix, const int num_val);
+                        const int start_ix = amrex::ParmParse::FIRST,
+                        const int num_val = amrex::ParmParse::LAST);
 
-/**
- * \brief Similar to amrex::ParmParse::get, but also supports math expressions for the value.
+/** Similar to amrex::ParmParse::get, but also supports math expressions for the value.
  *
  * amrex::ParmParse::get reads a name and a value from the input file. This function does the
  * same, and applies the Parser to the value, so the user has the choice to specify a value or
@@ -245,17 +306,32 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
  * \param[in] a_pp amrex::ParmParse object
  * \param[in] str name of the parameter to read
  * \param[out] val where the value queried and parsed is stored
- * \param[in] start_ix start index in the list of inputs values (optional with arrays)
- * \param[in] num_val number of input values to use (optional with arrays)
  */
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
-void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val);
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
+
+/** Similar to amrex::ParmParse::get, but also supports math expressions for the value.
+ *
+ * amrex::ParmParse::get reads a name and a value from the input file. This function does the
+ * same, and applies the Parser to the value, so the user has the choice to specify a value or
+ * a math expression (including user-defined constants).
+ * Works for amrex::Real numbers and integers.
+ *
+ * \param[in] a_pp amrex::ParmParse object
+ * \param[in] str name of the parameter to read
+ * \param[out] val where the value queried and parsed is stored
+ * \param[in] start_ix start index in the list of inputs values (optional with arrays, default is
+ * amrex::ParmParse::FIRST for starting with the first input value)
+ * \param[in] num_val number of input values to use (optional with arrays, default is
+ * amrex::ParmParse::LAST for reading until the last input value)
+ */
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
-                       const int start_ix, const int num_val);
+                       const int start_ix = amrex::ParmParse::FIRST,
+                       const int num_val = amrex::ParmParse::LAST);
 void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val);
-void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val);
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
-                       const int start_ix, const int num_val);
+                       const int start_ix = amrex::ParmParse::FIRST,
+                       const int num_val = amrex::ParmParse::LAST);
 
 namespace WarpXUtilMsg{
 
@@ -322,6 +398,20 @@ namespace WarpXUtilStr
         return cont;
     }
 
+}
+
+namespace WarpXUtilLoadBalance
+{
+    /** \brief We only want to update the cost data if the grids we are working on
+     *  are the main grids, i.e. not the PML grids. This function returns whether
+     *   this is the case or not.
+     * @param[in] cost pointer to the cost data
+     * @param[in] ba the grids to check
+     * @param[in] dm the dmap to check
+     * @return consistent whether the grids are consistent or not.
+     */
+    bool doCosts (const amrex::LayoutData<amrex::Real>* cost, const amrex::BoxArray ba,
+                  const amrex::DistributionMapping& dm);
 }
 
 #endif //WARPX_UTILS_H_

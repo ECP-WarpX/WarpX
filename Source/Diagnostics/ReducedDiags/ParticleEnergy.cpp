@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Yinjian Zhao
+/* Copyright 2019-2021 Luca Fedeli, Yinjian Zhao
  *
  * This file is part of WarpX.
  *
@@ -8,11 +8,11 @@
 #include "ParticleEnergy.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Particles/Algorithms/KineticEnergy.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/IntervalsParser.H"
-#include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
 #include <AMReX_GpuQualifiers.H>
@@ -100,10 +100,6 @@ void ParticleEnergy::ComputeDiags (int step)
     // Get number of species
     const int nSpecies = mypc.nSpecies();
 
-    // Some useful constants
-    amrex::Real c2 = PhysConst::c * PhysConst::c;
-    amrex::Real c4 = c2 * c2;
-
     // Some useful offsets to fill m_data below
     int offset_total_species, offset_mean_species, offset_mean_all;
 
@@ -117,7 +113,6 @@ void ParticleEnergy::ComputeDiags (int step)
 
         // Get mass (used only for particles other than photons, see below)
         amrex::Real m = myspc.getMass();
-        amrex::Real m2 = m * m;
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
@@ -130,9 +125,6 @@ void ParticleEnergy::ComputeDiags (int step)
         amrex::ReduceOps<ReduceOpSum, ReduceOpSum> reduce_ops;
         if(myspc.AmIA<PhysicalSpecies::photon>())
         {
-            // Photons have zero mass, but ux, uy and uz are calculated assuming a mass equal to the
-            // electron mass. Hence, photons need a special treatment to calculate the total energy.
-            constexpr auto me_c = PhysConst::m_e * PhysConst::c;
             auto r = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
                 myspc,
                 [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real>
@@ -141,8 +133,7 @@ void ParticleEnergy::ComputeDiags (int step)
                     const amrex::Real ux = p.rdata(PIdx::ux);
                     const amrex::Real uy = p.rdata(PIdx::uy);
                     const amrex::Real uz = p.rdata(PIdx::uz);
-                    const amrex::Real us = ux*ux + uy*uy + uz*uz;
-                    return {w*me_c*std::sqrt(us), w};
+                    return {w*Algorithms::KineticEnergyPhotons(ux,uy,uz),w};
                 },
                 reduce_ops);
 
@@ -159,8 +150,8 @@ void ParticleEnergy::ComputeDiags (int step)
                     const amrex::Real ux = p.rdata(PIdx::ux);
                     const amrex::Real uy = p.rdata(PIdx::uy);
                     const amrex::Real uz = p.rdata(PIdx::uz);
-                    const amrex::Real us = ux*ux + uy*uy + uz*uz;
-                    return {w*(std::sqrt(us*m2*c2 + m2*c4) - m*c2), w};
+
+                    return {w*Algorithms::KineticEnergy(ux,uy,uz,m), w};
                 },
                 reduce_ops);
 

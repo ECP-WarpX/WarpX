@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # --- Simple example of Langmuir oscillations in a uniform plasma
 # --- in two dimensions
 
@@ -98,4 +100,3 @@ sim.write_input_file(file_name = 'inputs2d_from_PICMI')
 
 # Alternatively, sim.step will run WarpX, controlling it from Python
 sim.step()
-

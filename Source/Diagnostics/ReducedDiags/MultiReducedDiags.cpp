@@ -9,6 +9,7 @@
 #include "BeamRelevant.H"
 #include "FieldEnergy.H"
 #include "FieldMaximum.H"
+#include "FieldProbe.H"
 #include "FieldMomentum.H"
 #include "FieldReduction.H"
 #include "LoadBalanceCosts.H"
@@ -20,6 +21,7 @@
 #include "ParticleNumber.H"
 #include "RhoMaximum.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -51,6 +53,7 @@ MultiReducedDiags::MultiReducedDiags ()
             {"FieldEnergy",           [](CS s){return std::make_unique<FieldEnergy>(s);}},
             {"FieldMomentum",         [](CS s){return std::make_unique<FieldMomentum>(s);}},
             {"FieldMaximum",          [](CS s){return std::make_unique<FieldMaximum>(s);}},
+            {"FieldProbe",            [](CS s){return std::make_unique<FieldProbe>(s);}},
             {"FieldReduction",        [](CS s){return std::make_unique<FieldReduction>(s);}},
             {"RhoMaximum",            [](CS s){return std::make_unique<RhoMaximum>(s);}},
             {"BeamRelevant",          [](CS s){return std::make_unique<BeamRelevant>(s);}},
@@ -78,9 +81,28 @@ MultiReducedDiags::MultiReducedDiags ()
 }
 // end constructor
 
+void MultiReducedDiags::InitData ()
+{
+    // loop over all reduced diags
+    for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
+    {
+        m_multi_rd[i_rd] -> InitData();
+    }
+}
+
+void MultiReducedDiags::LoadBalance () {
+    // loop over all reduced diags
+    for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
+    {
+        m_multi_rd[i_rd] -> LoadBalance();
+    }
+}
+
 // call functions to compute diags
 void MultiReducedDiags::ComputeDiags (int step)
 {
+    WARPX_PROFILE("MultiReducedDiags::ComputeDiags()");
+
     // loop over all reduced diags
     for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
     {

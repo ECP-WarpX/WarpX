@@ -25,29 +25,29 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 1,
                                      "Background MCC must have exactly one species.");
 
-    amrex::ParmParse pp(collision_name);
+    amrex::ParmParse pp_collision_name(collision_name);
 
-    pp.query("background_density", m_background_density);
-    pp.query("background_temperature", m_background_temperature);
+    queryWithParser(pp_collision_name, "background_density", m_background_density);
+    queryWithParser(pp_collision_name, "background_temperature", m_background_temperature);
 
     // if the neutral mass is specified use it, but if ionization is
     // included the mass of the secondary species of that interaction
     // will be used. If no neutral mass is specified and ionization is not
     // included the mass of the colliding species will be used
     m_background_mass = -1;
-    pp.query("background_mass", m_background_mass);
+    queryWithParser(pp_collision_name, "background_mass", m_background_mass);
 
     // query for a list of collision processes
     // these could be elastic, excitation, charge_exchange, back, etc.
     amrex::Vector<std::string> scattering_process_names;
-    pp.queryarr("scattering_processes", scattering_process_names);
+    pp_collision_name.queryarr("scattering_processes", scattering_process_names);
 
     // create a vector of MCCProcess objects from each scattering
     // process name
     for (auto scattering_process : scattering_process_names) {
         std::string kw_cross_section = scattering_process + "_cross_section";
         std::string cross_section_file;
-        pp.query(kw_cross_section.c_str(), cross_section_file);
+        pp_collision_name.query(kw_cross_section.c_str(), cross_section_file);
 
         amrex::Real energy = 0.0;
         // if the scattering process is excitation or ionization get the
@@ -55,7 +55,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
         if (scattering_process.find("excitation") != std::string::npos ||
             scattering_process.find("ionization") != std::string::npos) {
             std::string kw_energy = scattering_process + "_energy";
-            pp.get(kw_energy.c_str(), energy);
+            getWithParser(pp_collision_name, kw_energy.c_str(), energy);
         }
 
         MCCProcess process(scattering_process, cross_section_file, energy);
@@ -74,7 +74,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             ionization_flag = true;
 
             std::string secondary_species;
-            pp.get("ionization_species", secondary_species);
+            pp_collision_name.get("ionization_species", secondary_species);
             m_species_names.push_back(secondary_species);
 
             m_ionization_processes.push_back(std::move(process));
@@ -209,28 +209,38 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
     auto const flvl = species1.finestLevel();
     for (int lev = 0; lev <= flvl; ++lev) {
 
+        auto cost = WarpX::getCosts(lev);
+
         // firstly loop over particles box by box and do all particle conserving
         // scattering
 #ifdef _OPENMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti) {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
+            amrex::Real wt = amrex::second();
+
             doBackgroundCollisionsWithinTile(pti);
+
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+            }
         }
 
         // secondly perform ionization through the SmartCopyFactory if needed
         if (ionization_flag) {
-            doBackgroundIonization(lev, species1, species2);
+            doBackgroundIonization(lev, cost, species1, species2);
         }
     }
 }
 
 
-/** Perform all particle conserving MCC collisions within a tile
- *
- * @param pti particle iterator
- *
- */
 void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 ( WarpXParIter& pti )
 {
@@ -352,16 +362,9 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 }
 
 
-/** Perform MCC ionization interactions
- *
- * @param pti particle iterator
- * @param species1/2 reference to species container used to inject new
- particles from ionization events
- *
- */
 void BackgroundMCCCollision::doBackgroundIonization
-( int lev, WarpXParticleContainer& species1,
-  WarpXParticleContainer& species2)
+( int lev, amrex::LayoutData<amrex::Real>* cost,
+  WarpXParticleContainer& species1, WarpXParticleContainer& species2)
 {
     WARPX_PROFILE("BackgroundMCCCollision::doBackgroundIonization()");
 
@@ -384,6 +387,13 @@ void BackgroundMCCCollision::doBackgroundIonization
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (WarpXParIter pti(species1, lev); pti.isValid(); ++pti) {
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        amrex::Real wt = amrex::second();
+
         auto& elec_tile = species1.ParticlesAt(lev, pti);
         auto& ion_tile = species2.ParticlesAt(lev, pti);
 
@@ -401,5 +411,12 @@ void BackgroundMCCCollision::doBackgroundIonization
 
         setNewParticleIDs(elec_tile, np_elec, num_added);
         setNewParticleIDs(ion_tile, np_ion, num_added);
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+        }
     }
 }

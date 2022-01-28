@@ -68,17 +68,21 @@ void FiniteDifferenceSolver::EvolveB (
         ignore_unused(Gfield, face_areas);
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
 #else
+    if(m_do_nodal or m_fdtd_algo != MaxwellSolverAlgo::ECT){
+        amrex::ignore_unused(face_areas);
+    }
+
     if (m_do_nodal) {
 
-        EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, Gfield, face_areas, lev, dt );
+        EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, face_areas, lev, dt );
+        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, Gfield, face_areas, lev, dt );
+        EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 #ifdef AMREX_USE_EB
     } else if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
@@ -99,16 +103,9 @@ void FiniteDifferenceSolver::EvolveBCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::unique_ptr<amrex::MultiFab> const& Gfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     int lev, amrex::Real const dt ) {
 
-#ifndef AMREX_USE_EB
-    amrex::ignore_unused(face_areas);
-#endif
-
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-
-    Real constexpr c2 = PhysConst::c * PhysConst::c;
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
@@ -129,12 +126,6 @@ void FiniteDifferenceSolver::EvolveBCartesian (
         Array4<Real> const& Ey = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
 
-#ifdef AMREX_USE_EB
-        amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
-        amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
-        amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
-#endif
-
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
         int const n_coefs_x = m_stencil_coefs_x.size();
@@ -152,30 +143,24 @@ void FiniteDifferenceSolver::EvolveBCartesian (
         amrex::ParallelFor(tbx, tby, tbz,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                // Skip field push if this cell is fully covered by embedded boundaries
-                if (Sx(i, j, k) <= 0) return;
-#endif
+
                 Bx(i, j, k) += dt * T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
                              - dt * T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k);
+
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                // Skip field push if this cell is fully covered by embedded boundaries
-                if (Sy(i, j, k) <= 0) return;
-#endif
+
                 By(i, j, k) += dt * T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
                              - dt * T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k);
+
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                // Skip field push if this cell is fully covered by embedded boundaries
-                if (Sz(i, j, k) <= 0) return;
-#endif
+
                 Bz(i, j, k) += dt * T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
                              - dt * T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k);
+
             }
         );
 
@@ -190,15 +175,15 @@ void FiniteDifferenceSolver::EvolveBCartesian (
 
                 [=] AMREX_GPU_DEVICE (int i, int j, int k)
                 {
-                    Bx(i,j,k) += c2 * dt * T_Algo::DownwardDx(G, coefs_x, n_coefs_x, i, j, k);
+                    Bx(i,j,k) += dt * T_Algo::DownwardDx(G, coefs_x, n_coefs_x, i, j, k);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k)
                 {
-                    By(i,j,k) += c2 * dt * T_Algo::DownwardDy(G, coefs_y, n_coefs_y, i, j, k);
+                    By(i,j,k) += dt * T_Algo::DownwardDy(G, coefs_y, n_coefs_y, i, j, k);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k)
                 {
-                    Bz(i,j,k) += c2 * dt * T_Algo::DownwardDz(G, coefs_z, n_coefs_z, i, j, k);
+                    Bz(i,j,k) += dt * T_Algo::DownwardDz(G, coefs_z, n_coefs_z, i, j, k);
                 }
             );
         }
@@ -218,6 +203,11 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield, const int lev ) {
 #ifdef AMREX_USE_EB
+
+#if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
+    amrex::Abort("EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+#endif
+
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     // Loop through the grids, and over the tiles within each grid
@@ -254,25 +244,33 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (Sx(i, j, k) <= 0) return;
 
+#ifndef WARPX_DIM_XZ
                 Rhox(i, j, k) = (Ey(i, j, k) * ly(i, j, k) - Ey(i, j, k + 1) * ly(i, j, k + 1) +
                     Ez(i, j + 1, k) * lz(i, j + 1, k) - Ez(i, j, k) * lz(i, j, k)) / Sx(i, j, k);
-
+#endif
             },
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (Sy(i, j, k) <= 0) return;
 
+#ifdef WARPX_DIM_XZ
+                Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
+                    Ex(i, j + 1, k) * lx(i, j + 1, k) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
+#elif defined(WARPX_DIM_3D)
                 Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
                     Ex(i, j, k + 1) * lx(i, j, k + 1) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
-
+#else
+                amrex::Abort("EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+#endif
             },
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (Sz(i, j, k) <= 0) return;
 
+#ifndef WARPX_DIM_XZ
                 Rhoz(i, j, k) =  (Ex(i, j, k) * lx(i, j, k) - Ex(i, j + 1, k) * lx(i, j + 1, k) +
                     Ey(i + 1, j, k) * ly(i + 1, j, k) - Ey(i, j, k) * ly(i, j, k)) / Sz(i, j, k);
-
+#endif
             }
         );
 
@@ -282,6 +280,9 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
             wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
+#ifdef WARPX_DIM_XZ
+        amrex::ignore_unused(Ey, Rhox, Rhoz, ly);
+#endif
     }
 #else
     amrex::ignore_unused(Efield, edge_lengths, face_areas, ECTRhofield, lev);
@@ -298,6 +299,11 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
     const int lev, amrex::Real const dt ) {
 #ifdef AMREX_USE_EB
+
+#if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
+    amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+#endif
+
     amrex::LayoutData<amrex::Real> *cost = WarpX::getCosts(lev);
 
     Venl[0]->setVal(0.);
@@ -357,9 +363,17 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                         jp = j + vec(0);
                         kp = k + vec(1);
                     }else if(idim == 1){
+#ifdef WARPX_DIM_XZ
+                        ip = i + vec(0);
+                        jp = j + vec(1);
+                        kp = k;
+#elif defined(WARPX_DIM_3D)
                         ip = i + vec(0);
                         jp = j;
                         kp = k + vec(1);
+#else
+                        amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+#endif
                     }else{
                         ip = i + vec(0);
                         jp = j + vec(1);
@@ -381,9 +395,17 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                         jp = j + vec(0);
                         kp = k + vec(1);
                     }else if(idim == 1){
+#ifdef WARPX_DIM_XZ
+                        ip = i + vec(0);
+                        jp = j + vec(1);
+                        kp = k;
+#elif defined(WARPX_DIM_3D)
                         ip = i + vec(0);
                         jp = j;
                         kp = k + vec(1);
+#else
+                        amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+#endif
                     }else{
                         ip = i + vec(0);
                         jp = j + vec(1);
