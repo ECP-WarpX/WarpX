@@ -117,16 +117,16 @@ WarpX::PrintMainPICparameters ()
     std::string dims;
     pp_geometry.query( "dims", dims );
     if (dims=="1") {
-      amrex::Print() << "Geometry:             | 1 (Z)" << "\n";
+      amrex::Print() << "Geometry:             | 1D (Z)" << "\n";
     }
     else if (dims=="2") {
-      amrex::Print() << "Geometry:             | 2 (XZ)" << "\n";
+      amrex::Print() << "Geometry:             | 2D (XZ)" << "\n";
     }
     else if (dims=="3") {
-      amrex::Print() << "Geometry:             | 3 (XYZ)" << "\n";
+      amrex::Print() << "Geometry:             | 3D (XYZ)" << "\n";
     }
     else if (dims=="RZ") {
-      amrex::Print() << "Geometry:             | 2 (RZ)" << "\n";
+      amrex::Print() << "Geometry:             | 2D (RZ)" << "\n";
     }
 
     #ifdef WARPX_DIM_RZ
