@@ -22,6 +22,7 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Parallelization/WarpXCommUtil.H"
+#include "Utils/MPIInitHelpers.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -112,6 +113,8 @@ void
 WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
+    utils::warpx_check_mpi_thread_level();
+
     Print() << "WarpX (" << WarpX::Version() << ")\n";
 #ifdef WARPX_QED
     Print() << "PICSAR (" << WarpX::PicsarVersion() << ")\n";

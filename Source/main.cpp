@@ -36,11 +36,9 @@ int main(int argc, char* argv[])
 {
     using namespace amrex;
 
-    auto mpi_thread_levels = utils::warpx_mpi_init(argc, argv);
+    utils::warpx_mpi_init(argc, argv);
 
     warpx_amrex_init(argc, argv);
-
-    utils::warpx_check_mpi_thread_level(mpi_thread_levels);
 
 #if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
     rocfft_setup();

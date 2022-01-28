@@ -22,11 +22,10 @@
 
 namespace utils
 {
-    std::pair< int, int >
-    warpx_mpi_init (int argc, char* argv[])
+    int
+    warpx_mpi_thread_required ()
     {
         int thread_required = -1;
-        int thread_provided = -1;
 #ifdef AMREX_USE_MPI
         thread_required = MPI_THREAD_SINGLE;  // equiv. to MPI_Init
 #   ifdef AMREX_USE_OMP
@@ -35,6 +34,16 @@ namespace utils
 #   ifdef AMREX_MPI_THREAD_MULTIPLE  // i.e. for async_io
         thread_required = MPI_THREAD_MULTIPLE;
 #   endif
+#endif
+        return thread_required;
+    }
+
+    std::pair< int, int >
+    warpx_mpi_init (int argc, char* argv[])
+    {
+        int thread_required = warpx_mpi_thread_required();
+        int thread_provided = -1;
+#ifdef AMREX_USE_MPI
         MPI_Init_thread(&argc, &argv, thread_required, &thread_provided);
 #else
         amrex::ignore_unused(argc, argv);
@@ -43,11 +52,12 @@ namespace utils
     }
 
     void
-    warpx_check_mpi_thread_level (std::pair< int, int > const mpi_thread_levels)
+    warpx_check_mpi_thread_level ()
     {
 #ifdef AMREX_USE_MPI
-        auto const thread_required = mpi_thread_levels.first;
-        auto const thread_provided = mpi_thread_levels.second;
+        int thread_required = warpx_mpi_thread_required();
+        int thread_provided = -1;
+        MPI_Query_thread(&thread_provided);
         auto mtn = amrex::ParallelDescriptor::mpi_level_to_string;
 
         std::stringstream ss;
@@ -65,8 +75,6 @@ namespace utils
                            << "communication performance.";
             WarpX::GetInstance().RecordWarning("MPI", ss.str());
         }
-#else
-        amrex::ignore_unused(mpi_thread_levels);
 #endif
     }
 
