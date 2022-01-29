@@ -114,7 +114,9 @@ struct InjectorMomentumGaussianFlux
         amrex::Real ur = std::sqrt(2._rt*std::log(1._rt/urand));
         if (m_flux_direction < 0) ur = -ur;
 
-        // Note that in 2D, with m_flux_normal_axis == 1, uy is out of the plane and so Gaussian and uz is v*Gaussian
+        // Note: Here, in RZ geometry, the variables `ux` and `uy` actually
+        // correspond to the radial and azimuthal component of the momentum
+        // (and e.g.`m_flux_normal_axis==1` corresponds to v*Gaussian along theta)
         amrex::Real const ux = (m_flux_normal_axis == 0 ? m_ux_th*ur : amrex::RandomNormal(m_ux_m, m_ux_th, engine));
         amrex::Real const uy = (m_flux_normal_axis == 1 ? m_uy_th*ur : amrex::RandomNormal(m_uy_m, m_uy_th, engine));
         amrex::Real const uz = (m_flux_normal_axis == 2 ? m_uz_th*ur : amrex::RandomNormal(m_uz_m, m_uz_th, engine));
