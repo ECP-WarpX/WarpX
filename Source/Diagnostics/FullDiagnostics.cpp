@@ -477,7 +477,7 @@ FullDiagnostics::PrepareFieldDataForOutput ()
     // The level is set to 0, because the whole physical domain of the simulation is used
     // to set the domain dimensions for the output particle container.
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        for (int i = 0; i < m_output_species[i_buffer].size(); ++i) {
+        for (int i = 0; i < m_output_species.at(i_buffer).size(); ++i) {
             m_output_species[i_buffer][i].m_diag_domain = m_geom_output[i_buffer][0].ProbDomain();
         }
     }
