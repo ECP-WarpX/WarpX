@@ -2288,8 +2288,6 @@ PhysicalParticleContainer::GetParticleSlice (
                   uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr();
 
                 const long np = pti.numParticles();
-                amrex::Print() << " np old BTD " << np << "\n";
-                amrex::Print() << " tmp particle size : " << tmp_particle_data.size() << "\n";
 
                 Real uzfrm = -WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
                 Real inv_c2 = 1.0/PhysConst::c/PhysConst::c;
