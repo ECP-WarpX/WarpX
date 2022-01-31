@@ -214,14 +214,6 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 Array4<Real const> const& bz_c = Btmp[2]->const_array(mfi);
 
                 const Box& bx = mfi.growntilebox();
-std::cout << "lev: " << lev << std::endl;
-std::cout << "bx: " << bx << std::endl;
-std::cout << "(*Bfield_aux[lev][0])[mfi].box(): " << (*Bfield_aux[lev][0])[mfi].box() << std::endl;
-std::cout << "(*Bfield_fp[lev][0])[mfi].box(): " << (*Bfield_fp[lev][0])[mfi].box() << std::endl;
-std::cout << "(*Bfield_cp[lev][0])[mfi].box(): " << (*Bfield_cp[lev][0])[mfi].box() << std::endl;
-std::cout << "Bfield_aux[lev][0]->nGrowVect(): " << Bfield_aux[lev][0]->nGrowVect() << std::endl;
-std::cout << "Bfield_fp[lev][0]->nGrowVect(): " << Bfield_fp[lev][0]->nGrowVect() << std::endl;
-std::cout << "Bfield_cp[lev][0]->nGrowVect(): " << Bfield_cp[lev][0]->nGrowVect() << std::endl;
                 amrex::ParallelFor(bx,
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {

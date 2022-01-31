@@ -634,13 +634,6 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
             const Box& tby  = mfi.tilebox( B[lev][1]->ixType().toIntVect() );
             const Box& tbz  = mfi.tilebox( B[lev][2]->ixType().toIntVect() );
 
-std::cout << "lev: " << lev << std::endl;
-std::cout << "tbx: " << tbx << std::endl;
-std::cout << "tby: " << tby << std::endl;
-std::cout << "tbz: " << tbz << std::endl;
-std::cout << "mfi.tilebox(): " << mfi.tilebox() << std::endl;
-std::cout << "phi[lev]->nGrow(): " << phi[lev]->nGrow() << std::endl;
-
             const auto& phi_arr = phi[lev]->array(mfi);
             const auto& Bx_arr = (*B[lev][0])[mfi].array();
             const auto& By_arr = (*B[lev][1])[mfi].array();
