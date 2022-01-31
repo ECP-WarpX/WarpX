@@ -21,6 +21,7 @@
 #   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#       include "BoundaryConditions/PML_RZ.H"
 #   else
 #       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif // RZ ifdef
@@ -321,6 +322,9 @@ WarpX::WarpX ()
     charge_buf.resize(nlevs_max);
 
     pml.resize(nlevs_max);
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    pml_rz.resize(nlevs_max);
+#endif
     costs.resize(nlevs_max);
     load_balance_efficiency.resize(nlevs_max);
 
@@ -690,9 +694,7 @@ WarpX::ReadParameters ()
             // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
             if (use_filter)
             {
-                this->RecordWarning("Filter",
-                    "Filter currently not working with FDTD solver in RZ geometry."
-                    "We recommend setting warpx.use_filter = 0 in the input file.");
+                amrex::Abort("Filter currently not working with FDTD solver in RZ geometry");
             }
         }
 #endif
@@ -809,8 +811,10 @@ WarpX::ReadParameters ()
         }
 
 #ifdef WARPX_DIM_RZ
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false,
-            "PML are not implemented in RZ geometry; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false || maxwell_solver_id == MaxwellSolverAlgo::PSATD,
+            "PML are not implemented in RZ geometry with FDTD; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( field_boundary_lo[1] != FieldBoundaryType::PML && field_boundary_hi[1] != FieldBoundaryType::PML,
+            "PML are not implemented in RZ geometry along z; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
 #endif
 
         if ( (do_pml_j_damping==1)&&(do_pml_in_domain==0) ){
@@ -854,8 +858,12 @@ WarpX::ReadParameters ()
         // Use same shape factors in all directions, for gathering
         if (do_nodal) galerkin_interpolation = false;
 
+#ifdef WARPX_DIM_RZ
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         queryWithParser(pp_warpx, "n_rz_azimuthal_modes", n_rz_azimuthal_modes);
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( n_rz_azimuthal_modes > 0,
+            "The number of azimuthal modes (n_rz_azimuthal_modes) must be at least 1");
+#endif
 
         // If true, the current is deposited on a nodal grid and centered onto a staggered grid.
         // Setting warpx.do_current_centering = 1 makes sense only if warpx.do_nodal = 0. Instead,
@@ -1389,13 +1397,6 @@ WarpX::BackwardCompatibility ()
             "lasers.nlasers is ignored. Just use lasers.names please.",
             WarnPriority::low);
     }
-    ParmParse pp_geometry("geometry");
-    std::string coord_sys;
-    if (pp_geometry.query("coord_sys", coord_sys)){
-        this->RecordWarning("Geometry",
-            "geometry.coord_sys is ignored. Please use the new geometry.dims parameter.",
-            WarnPriority::low);
-    }
 }
 
 // This is a virtual function.
@@ -1490,6 +1491,9 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::do_electrostatic,
         WarpX::do_multi_J,
         WarpX::fft_do_time_averaging,
+        WarpX::isAnyBoundaryPML(),
+        WarpX::do_pml_in_domain,
+        WarpX::pml_ncell,
         this->refRatio());
 
 
@@ -1768,6 +1772,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if ( fft_periodic_single_box == false ) {
             realspace_ba.grow(1, ngE[1]); // add guard cells only in z
         }
+        if (field_boundary_hi[0] == FieldBoundaryType::PML && !do_pml_in_domain) {
+            // Extend region that is solved for to include the guard cells
+            // which is where the PML boundary is applied.
+            realspace_ba.growHi(0, pml_ncell);
+        }
         AllocLevelSpectralSolverRZ(spectral_solver_fp,
                                    lev,
                                    realspace_ba,
@@ -1908,6 +1917,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             // Define spectral solver
 #ifdef WARPX_DIM_RZ
             c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+            if (field_boundary_hi[0] == FieldBoundaryType::PML && !do_pml_in_domain) {
+                // Extend region that is solved for to include the guard cells
+                // which is where the PML boundary is applied.
+                c_realspace_ba.growHi(0, pml_ncell);
+            }
             AllocLevelSpectralSolverRZ(spectral_solver_cp,
                                        lev,
                                        c_realspace_ba,
@@ -2018,6 +2032,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   m_v_galilean,
                                                   dx_vect,
                                                   solver_dt,
+                                                  isAnyBoundaryPML(),
                                                   update_with_rho,
                                                   fft_do_time_averaging,
                                                   do_multi_J,
@@ -2242,6 +2257,19 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
         m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
     }
 }
+
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+PML_RZ*
+WarpX::GetPML_RZ (int lev)
+{
+    if (pml_rz[lev]) {
+        // This should check if pml was initialized
+        return pml_rz[lev].get();
+    } else {
+        return nullptr;
+    }
+}
+#endif
 
 PML*
 WarpX::GetPML (int lev)

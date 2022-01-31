@@ -25,7 +25,7 @@ namespace particles {
      * \tparam T_PC a type of amrex::ParticleContainer
      *
      * \param pc the particle container to operate on
-     * \returns x_min, x_max, y_min, y_max, z_min, z_max
+     * \returns x_min, y_min, z_min, x_max, y_max, z_max
      */
     template< typename T_PC >
     static
