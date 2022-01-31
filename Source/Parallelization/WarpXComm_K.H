@@ -76,6 +76,21 @@ void warpx_interp (int j, int k, int l,
 {
     using namespace amrex;
 
+    // Pad input arrays with zeros beyond ghost cells
+    // for out-of-bound accesses due to large-stencil operations
+    const auto arr_fine_zeropad = [arr_fine] (const int jj, const int kk, const int ll) noexcept
+    {
+        return arr_fine.contains(jj,kk,ll) ? arr_fine(jj,kk,ll) : 0.0_rt;
+    };
+    const auto arr_coarse_zeropad = [arr_coarse] (const int jj, const int kk, const int ll) noexcept
+    {
+        return arr_coarse.contains(jj,kk,ll) ? arr_coarse(jj,kk,ll) : 0.0_rt;
+    };
+    const auto arr_tmp_zeropad = [arr_tmp] (const int jj, const int kk, const int ll) noexcept
+    {
+        return arr_tmp.contains(jj,kk,ll) ? arr_tmp(jj,kk,ll) : 0.0_rt;
+    };
+
     // NOTE Indices (j,k,l) in the following refer to:
     // - (z,-,-) in 1D
     // - (x,z,-) in 2D
@@ -161,7 +176,7 @@ void warpx_interp (int j, int k, int l,
 #if (AMREX_SPACEDIM == 3)
                 wl = (rl - amrex::Math::abs(l - (lc + ll) * rl)) / static_cast<amrex::Real>(rl);
 #endif
-                tmp += wj * wk * wl * arr_tmp(jc+jj,kc+kk,lc+ll);
+                tmp += wj * wk * wl * arr_tmp_zeropad(jc+jj,kc+kk,lc+ll);
             }
         }
     }
@@ -201,7 +216,7 @@ void warpx_interp (int j, int k, int l,
 #if (AMREX_SPACEDIM == 3)
                 wl = (rl - amrex::Math::abs(ln - (lc + ll) * rl)) / static_cast<amrex::Real>(rl);
 #endif
-                coarse += wj * wk * wl * arr_coarse(jc+jj,kc+kk,lc+ll);
+                coarse += wj * wk * wl * arr_coarse_zeropad(jc+jj,kc+kk,lc+ll);
             }
         }
     }
@@ -238,7 +253,7 @@ void warpx_interp (int j, int k, int l,
                 wj = 1.0_rt / static_cast<amrex::Real>(nj);
                 wk = 1.0_rt / static_cast<amrex::Real>(nk);
                 wl = 1.0_rt / static_cast<amrex::Real>(nl);
-                fine += wj * wk * wl * arr_fine(jm+jj,km+kk,lm+ll);
+                fine += wj * wk * wl * arr_fine_zeropad(jm+jj,km+kk,lm+ll);
             }
         }
     }
