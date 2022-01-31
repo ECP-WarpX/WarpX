@@ -233,7 +233,7 @@ Diagnostics::InitData ()
             // for full diagnostics is 1, while for BTD it is user-defined.
             for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
                 for (int i = 0; i < m_output_species.at(i_buffer).size(); ++i) {
-                    m_output_species[i_buffer][i].m_do_geom_filter = true;
+                    m_output_species.at(i_buffer).at(i).m_do_geom_filter = true;
                 }
                 // Disabling particle-io for reduced domain diagnostics by reducing
                 // the particle-diag vector to zero.
