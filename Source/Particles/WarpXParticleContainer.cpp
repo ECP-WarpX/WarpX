@@ -592,6 +592,9 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
                                        const long offset, const long np_to_depose,
                                        int thread_num, int lev, int depos_lev)
 {
+    // If user decides not to deposit
+    if (do_not_deposit) return;
+
     if (WarpX::do_shared_mem_charge_deposition)
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
@@ -600,9 +603,6 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
         // If no particles, do not do anything
         if (np_to_depose == 0) return;
-
-        // If user decides not to deposit
-        if (do_not_deposit) return;
 
         // Number of guard cells for local deposition of rho
         WarpX& warpx = WarpX::GetInstance();
@@ -837,62 +837,60 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
     } else {
-        if (!do_not_deposit) {
-            WarpX& warpx = WarpX::GetInstance();
-            const amrex::IntVect& ng_rho = warpx.get_ng_depos_rho();
-            const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
-            amrex::IntVect ref_ratio;
-            if (lev == depos_lev) {
-                ref_ratio = IntVect(AMREX_D_DECL(1, 1, 1 ));
-            } else {
-                ref_ratio = WarpX::RefRatio(depos_lev);
-            }
-            const int nc = WarpX::ncomps;
-
-            // Get tile box where charge is deposited.
-            // The tile box is different when depositing in the buffers (depos_lev<lev)
-            // or when depositing inside the level (depos_lev=lev)
-            amrex::Box tilebox;
-            if (lev == depos_lev) {
-                tilebox = pti.tilebox();
-            } else {
-                tilebox = amrex::coarsen(pti.tilebox(), ref_ratio);
-            }
-            tilebox.grow(ng_rho);
-
-            // Lower corner of tile box physical domain
-            // Note that this includes guard cells since it is after tilebox.ngrow
-            // Take into account Galilean shift
-            const amrex::Real cur_time = warpx.gett_new(lev);
-            const amrex::Real dt = warpx.getdt(lev);
-            const amrex::Real time_of_last_gal_shift = warpx.time_of_last_gal_shift;
-            const amrex::Real time_shift_rho_old = (cur_time - time_of_last_gal_shift);
-            const amrex::Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
-            amrex::Array<amrex::Real,3> galilean_shift;
-            if (icomp==0){
-                galilean_shift = {
-                    m_v_galilean[0]*time_shift_rho_old,
-                    m_v_galilean[1]*time_shift_rho_old,
-                    m_v_galilean[2]*time_shift_rho_old };
-            } else{
-                galilean_shift = {
-                    m_v_galilean[0]*time_shift_rho_new,
-                    m_v_galilean[1]*time_shift_rho_new,
-                    m_v_galilean[2]*time_shift_rho_new };
-            }
-            const auto& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
-
-            // pointer to costs data
-            amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
-            amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
-
-            ablastr::particles::deposit_charge<WarpXParticleContainer>
-                (pti, wp, ion_lev, rho, icomp, nc, offset, np_to_depose,
-                 local_rho[thread_num], lev, depos_lev, this->charge,
-                 WarpX::nox, WarpX::noy, WarpX::noz, ng_rho, dx, xyzmin, ref_ratio,
-                 cost, WarpX::n_rz_azimuthal_modes, WarpX::load_balance_costs_update_algo,
-                 WarpX::do_device_synchronize);
+        WarpX& warpx = WarpX::GetInstance();
+        const amrex::IntVect& ng_rho = warpx.get_ng_depos_rho();
+        const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
+        amrex::IntVect ref_ratio;
+        if (lev == depos_lev) {
+            ref_ratio = IntVect(AMREX_D_DECL(1, 1, 1 ));
+        } else {
+            ref_ratio = WarpX::RefRatio(depos_lev);
         }
+        const int nc = WarpX::ncomps;
+
+        // Get tile box where charge is deposited.
+        // The tile box is different when depositing in the buffers (depos_lev<lev)
+        // or when depositing inside the level (depos_lev=lev)
+        amrex::Box tilebox;
+        if (lev == depos_lev) {
+            tilebox = pti.tilebox();
+        } else {
+            tilebox = amrex::coarsen(pti.tilebox(), ref_ratio);
+        }
+        tilebox.grow(ng_rho);
+
+        // Lower corner of tile box physical domain
+        // Note that this includes guard cells since it is after tilebox.ngrow
+        // Take into account Galilean shift
+        const amrex::Real cur_time = warpx.gett_new(lev);
+        const amrex::Real dt = warpx.getdt(lev);
+        const amrex::Real time_of_last_gal_shift = warpx.time_of_last_gal_shift;
+        const amrex::Real time_shift_rho_old = (cur_time - time_of_last_gal_shift);
+        const amrex::Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
+        amrex::Array<amrex::Real,3> galilean_shift;
+        if (icomp==0){
+            galilean_shift = {
+                              m_v_galilean[0]*time_shift_rho_old,
+                              m_v_galilean[1]*time_shift_rho_old,
+                              m_v_galilean[2]*time_shift_rho_old };
+        } else{
+            galilean_shift = {
+                              m_v_galilean[0]*time_shift_rho_new,
+                              m_v_galilean[1]*time_shift_rho_new,
+                              m_v_galilean[2]*time_shift_rho_new };
+        }
+        const auto& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
+
+        // pointer to costs data
+        amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
+        amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
+
+        ablastr::particles::deposit_charge<WarpXParticleContainer>
+            (pti, wp, ion_lev, rho, icomp, nc, offset, np_to_depose,
+             local_rho[thread_num], lev, depos_lev, this->charge,
+             WarpX::nox, WarpX::noy, WarpX::noz, ng_rho, dx, xyzmin, ref_ratio,
+             cost, WarpX::n_rz_azimuthal_modes, WarpX::load_balance_costs_update_algo,
+             WarpX::do_device_synchronize);
     }
 }
 
