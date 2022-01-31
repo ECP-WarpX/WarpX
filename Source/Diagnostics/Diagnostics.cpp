@@ -219,8 +219,9 @@ Diagnostics::InitData ()
             amrex::Abort("For checkpoint format, write_species flag must be 1.");
         }
         // if user-defined value for write_species == 0, then clear species vector
-        for (auto& v : m_output_species)
-            m_output_species.clear();
+        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
+            m_output_species.at(i_buffer).clear();
+        }
         m_output_species_names.clear();
     } else {
         amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
