@@ -223,7 +223,7 @@ Diagnostics::InitData ()
             m_output_species.at(i_buffer).clear();
         }
         m_output_species_names.clear();
-    } else { 
+    } else {
         amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
         if ( queryArrWithParser(pp_diag_name, "diag_lo", dummy_val, 0, AMREX_SPACEDIM) ||
              queryArrWithParser(pp_diag_name, "diag_hi", dummy_val, 0, AMREX_SPACEDIM) ) {
