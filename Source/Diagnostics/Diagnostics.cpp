@@ -219,9 +219,8 @@ Diagnostics::InitData ()
             amrex::Abort("For checkpoint format, write_species flag must be 1.");
         }
         // if user-defined value for write_species == 0, then clear species vector
-        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
-            m_output_species.at(i_buffer).clear();
-        }
+        for (auto& v : m_output_species)
+            m_output_species.clear();
         m_output_species_names.clear();
     } else {
         amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
@@ -232,9 +231,8 @@ Diagnostics::InitData ()
             // Note that the filter is set for every ith snapshot, and the number of snapshots
             // for full diagnostics is 1, while for BTD it is user-defined.
             for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
-                for (int i = 0; i < m_output_species.at(i_buffer).size(); ++i) {
-                    m_output_species.at(i_buffer).at(i).m_do_geom_filter = true;
-                }
+                for (auto& v : m_output_species.at(i_buffer))
+                    v.m_do_geom_filter = true;
                 // Disabling particle-io for reduced domain diagnostics by reducing
                 // the particle-diag vector to zero.
                 // This is a temporary fix until particle_buffer is supported in diagnostics.
