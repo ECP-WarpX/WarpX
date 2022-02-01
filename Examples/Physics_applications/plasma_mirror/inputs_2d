@@ -80,7 +80,3 @@ laser1.profile_focal_distance = 15.e-6  # Focal distance from the antenna (in me
 diagnostics.diags_names = diag1
 diag1.intervals = 10
 diag1.diag_type = Full
-
-# These options are mainly intended for debug purposes
-warpx.abort_on_warning_threshold = "low"
-warpx.always_warn_immediately = 1

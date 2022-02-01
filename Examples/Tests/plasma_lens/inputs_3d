@@ -48,7 +48,3 @@ diagnostics.diags_names = diag1
 diag1.intervals = 84
 diag1.diag_type = Full
 diag1.electrons.variables = ux uy uz
-
-# These options are mainly intended for debug purposes
-warpx.abort_on_warning_threshold = "low"
-warpx.always_warn_immediately = 1

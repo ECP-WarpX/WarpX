@@ -20,9 +20,3 @@ diagnostics.diags_names = diag1
 diag1.diag_type = Full
 diag1.intervals = ::4
 diag1.fields_to_plot = phi
-
-# These options are mainly intended for debug purposes
-# The threshold is set to "medium" because a " Max norm of rho is 0"
-# low priority warning is raised.
-warpx.abort_on_warning_threshold = "medium"
-warpx.always_warn_immediately = 1

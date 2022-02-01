@@ -74,7 +74,3 @@ btd_pltfile.buffer_size = 32
 warpx.do_back_transformed_diagnostics = 1
 warpx.num_snapshots_lab = 2
 warpx.dt_snapshots_lab = 1.8679589331096515e-13
-
-# These options are mainly intended for debug purposes
-warpx.abort_on_warning_threshold = "low"
-warpx.always_warn_immediately = 1

@@ -81,7 +81,3 @@ FP_line.z1_probe = 1.7e-6
 FP_line.resolution = 201
 
 authors = "Tiberius Rheaume <tiberiusrheaume@lbl.gov>, Axel Huebl <axelhuebl@lbl.gov>"
-
-# These options are mainly intended for debug purposes
-warpx.abort_on_warning_threshold = "low"
-warpx.always_warn_immediately = 1

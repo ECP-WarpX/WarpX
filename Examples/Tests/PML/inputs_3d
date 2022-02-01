@@ -86,7 +86,3 @@ diag1.diag_type = Full
 diag1.format = plotfile
 diag1.intervals = 100
 diag1.fields_to_plot = Bx By Bz Ex Ey Ez rho
-
-# These options are mainly intended for debug purposes
-warpx.abort_on_warning_threshold = "low"
-warpx.always_warn_immediately = 1

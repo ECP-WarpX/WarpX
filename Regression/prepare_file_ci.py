@@ -69,10 +69,14 @@ if ci_ccache:
     text = re.sub('addToCompileString =',
                   'addToCompileString = USE_CCACHE=TRUE ', text)
 
-# Add runtime options: crash for unused variables; trap NaNs, divisions by zero, and overflows
+# Add runtime options:
+# > crash for unused variables
+# > trap NaNs, divisions by zero, and overflows
+# > abort upon any warning message by default
 text = re.sub('runtime_params =',
-              'runtime_params = amrex.abort_on_unused_inputs=1 amrex.fpe_trap_invalid=1 ' +
-              'amrex.fpe_trap_zero=1 amrex.fpe_trap_overflow=1',
+              'runtime_params = amrex.abort_on_unused_inputs=1 '+
+              'amrex.fpe_trap_invalid=1 amrex.fpe_trap_zero=1 amrex.fpe_trap_overflow=1 '+
+              'warpx.always_warn_immediately=1 warpx.abort_on_warning_threshold=low',
               text)
 
 # Use less/more cores for compiling, e.g. public CI only provides 2 cores
