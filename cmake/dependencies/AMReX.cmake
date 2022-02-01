@@ -237,7 +237,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "3a2a74fc4b383fdda1d85abb7cd34fe8a6888362"
+set(WarpX_amrex_branch "89153db246e4193526210363bf5a0f1719ea40c3"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 
