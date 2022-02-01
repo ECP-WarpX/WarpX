@@ -57,6 +57,13 @@ Overall simulation parameters
     it is generated. It is mainly intended for debug purposes, in case a simulation
     crashes before a global warning report can be printed.
 
+* ``warpx.abort_on_warning_threshold`` (string: ``low``, ``medium`` or ``high``) optional
+    Optional threshold to abort as soon as a warning is raised.
+    If the threshold is set, warning messages with priority greater than or
+    equal to the threshold trigger an immediate abort.
+    It is mainly intended for debug purposes, and is best used with
+    ``warpx.always_warn_immediately=1``.
+
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
     If provided ``warpx.random_seed = random``, the random seed will be determined
     using `std::random_device` and `std::clock()`,

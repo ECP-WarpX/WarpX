@@ -9,6 +9,7 @@
 #include "SpectralAlgorithms/ComovingPsatdAlgorithm.H"
 #include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
 #include "SpectralAlgorithms/PsatdAlgorithm.H"
+#include "SpectralAlgorithms/PsatdAlgorithmMultiJ.H"
 #include "SpectralKSpace.H"
 #include "SpectralSolver.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -47,24 +48,36 @@ SpectralSolver::SpectralSolver(
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
 
-    if (pml) {
+    if (pml) // PSATD equations in the PML grids
+    {
         algorithm = std::make_unique<PMLPsatdAlgorithm>(
             k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
             fill_guards, dt, dive_cleaning, divb_cleaning);
     }
-    else {
+    else // PSATD equations in the regulard grids
+    {
         // Comoving PSATD algorithm
-        if (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.) {
+        if (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.)
+        {
             algorithm = std::make_unique<ComovingPsatdAlgorithm>(
                 k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
                 fill_guards, v_comoving, dt, update_with_rho);
         }
-        // PSATD algorithms: standard, Galilean, or averaged Galilean
-        else {
-            algorithm = std::make_unique<PsatdAlgorithm>(
-                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards,
-                v_galilean, dt, update_with_rho, fft_do_time_averaging, do_multi_J,
-                dive_cleaning, divb_cleaning);
+        else // PSATD algorithms: standard, Galilean, averaged Galilean, multi-J
+        {
+            if (do_multi_J)
+            {
+                algorithm = std::make_unique<PsatdAlgorithmMultiJ>(
+                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                    fill_guards, dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
+            }
+            else // standard, Galilean, averaged Galilean
+            {
+                algorithm = std::make_unique<PsatdAlgorithm>(
+                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                    fill_guards, v_galilean, dt, update_with_rho, fft_do_time_averaging,
+                    dive_cleaning, divb_cleaning);
+            }
         }
     }
 
