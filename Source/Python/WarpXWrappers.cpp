@@ -516,6 +516,14 @@ namespace
         mypc.defineAllParticleTiles();
     }
 
+    amrex::Real warpx_sumParticleCharge(const char* char_species_name, const bool local)
+    {
+        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const std::string species_name(char_species_name);
+        auto & myspc = mypc.GetParticleContainerFromName(species_name);
+        return myspc.sumParticleCharge(local);
+    }
+
     int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary)
     {
         const std::string name(species_name);
@@ -636,28 +644,28 @@ namespace
 
     void warpx_ComputeDt () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.ComputeDt ();
+        warpx.ComputeDt();
     }
     void warpx_MoveWindow (int step,bool move_j) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.MoveWindow (step, move_j);
+        warpx.MoveWindow(step, move_j);
     }
 
     void warpx_EvolveE (amrex::Real dt) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.EvolveE (dt);
+        warpx.EvolveE(dt);
     }
     void warpx_EvolveB (amrex::Real dt, DtType a_dt_type) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.EvolveB (dt, a_dt_type);
+        warpx.EvolveB(dt, a_dt_type);
     }
     void warpx_FillBoundaryE () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.FillBoundaryE (warpx.getngE());
+        warpx.FillBoundaryE(warpx.getngE());
     }
     void warpx_FillBoundaryB () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.FillBoundaryB (warpx.getngE());
+        warpx.FillBoundaryB(warpx.getngE());
     }
     void warpx_SyncRho () {
         WarpX& warpx = WarpX::GetInstance();
@@ -665,50 +673,50 @@ namespace
     }
     void warpx_SyncCurrent () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.SyncCurrent ();
+        warpx.SyncCurrent();
     }
     void warpx_UpdateAuxilaryData () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.UpdateAuxilaryData ();
+        warpx.UpdateAuxilaryData();
     }
     void warpx_PushParticlesandDepose (amrex::Real cur_time) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.PushParticlesandDepose (cur_time);
+        warpx.PushParticlesandDepose(cur_time);
     }
 
     int warpx_getistep (int lev) {
         WarpX& warpx = WarpX::GetInstance();
-        return warpx.getistep (lev);
+        return warpx.getistep(lev);
     }
     void warpx_setistep (int lev, int ii) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.setistep (lev, ii);
+        warpx.setistep(lev, ii);
     }
     amrex::Real warpx_gett_new (int lev) {
         WarpX& warpx = WarpX::GetInstance();
-        return warpx.gett_new (lev);
+        return warpx.gett_new(lev);
     }
     void warpx_sett_new (int lev, amrex::Real time) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.sett_new (lev, time);
+        warpx.sett_new(lev, time);
     }
     amrex::Real warpx_getdt (int lev) {
         WarpX& warpx = WarpX::GetInstance();
-        return warpx.getdt (lev);
+        return warpx.getdt(lev);
     }
 
     int warpx_maxStep () {
         WarpX& warpx = WarpX::GetInstance();
-        return warpx.maxStep ();
+        return warpx.maxStep();
     }
     amrex::Real warpx_stopTime () {
         WarpX& warpx = WarpX::GetInstance();
-        return warpx.stopTime ();
+        return warpx.stopTime();
     }
 
     int warpx_finestLevel () {
         WarpX& warpx = WarpX::GetInstance();
-        return warpx.finestLevel ();
+        return warpx.finestLevel();
     }
 
     int warpx_getMyProc () {
