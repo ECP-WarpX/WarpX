@@ -62,7 +62,6 @@ FullDiagnostics::InitializeParticleBuffer ()
         }
     }
     // Initialize one ParticleDiag per species requested
-    m_output_species.resize(m_num_buffers);
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for (auto const& species : m_output_species_names){
             const int idx = mpc.getSpeciesID(species);

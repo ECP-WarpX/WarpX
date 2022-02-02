@@ -232,8 +232,9 @@ Diagnostics::InitData ()
             // Note that the filter is set for every ith snapshot, and the number of snapshots
             // for full diagnostics is 1, while for BTD it is user-defined.
             for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
-                for (auto& v : m_output_species.at(i_buffer))
+                for (auto& v : m_output_species.at(i_buffer)) {
                     v.m_do_geom_filter = true;
+                }
                 // Disabling particle-io for reduced domain diagnostics by reducing
                 // the particle-diag vector to zero.
                 // This is a temporary fix until particle_buffer is supported in diagnostics.
@@ -303,6 +304,8 @@ Diagnostics::InitBaseData ()
         m_geom_output[i].resize( nmax_lev );
     }
 
+    // allocate vector of particle buffers
+    m_output_species.resize(m_num_buffers);
 }
 
 void
