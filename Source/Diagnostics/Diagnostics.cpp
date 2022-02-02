@@ -240,7 +240,10 @@ Diagnostics::InitData ()
                 // This is a temporary fix until particle_buffer is supported in diagnostics.
                 m_output_species.at(i_buffer).clear();
             }
-            amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
+            std::string warnMsg = "For full diagnostics on a reduced domain, particle I/O is not ";
+            warnMsg += "supported, yet! Therefore, particle I/O is disabled for this diagnostics: ";
+            warnMsg += m_diag_name;
+            WarpX::GetInstance().RecordWarning("Diagnostics", warnMsg);
         }
     }
 }
