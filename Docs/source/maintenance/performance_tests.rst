@@ -62,6 +62,7 @@ Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_te
    # Make sure all dependencies are installed and loaded
    cd $HOME
    module load python/3.8.10
+   module load freetype/2.10.4     # matplotlib
    module load openblas/0.3.5-omp
    export BLAS=$OLCF_OPENBLAS_ROOT/lib/libopenblas.so
    export LAPACK=$OLCF_OPENBLAS_ROOT/lib/libopenblas.so
@@ -69,15 +70,19 @@ Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_te
    python3 -m pip install --user virtualenv
    python3 -m venv $HOME/sw/venvs/warpx-perftest
    source $HOME/sw/venvs/warpx-perftest/bin/activate
-   python3 -m pip install --upgrade pip
-   python3 -m pip install --upgrade cython
-   python3 -m pip install --upgrade numpy
-   python3 -m pip install --upgrade markupsafe
-   python3 -m pip install --upgrade pandas
-   python3 -m pip install --upgrade matplotlib==3.2.2
-   python3 -m pip install --upgrade bokeh
-   python3 -m pip install --upgrade gitpython
-   python3 -m pip install --upgrade tables
+   # While setting up the performance tests for the first time,
+   # execute the lines above this comment and then the commented
+   # lines below this comment once, before submission.
+   # The commented lines take too long for the job script.
+   #python3 -m pip install --upgrade pip
+   #python3 -m pip install --upgrade cython
+   #python3 -m pip install --upgrade numpy
+   #python3 -m pip install --upgrade markupsafe
+   #python3 -m pip install --upgrade pandas
+   #python3 -m pip install --upgrade matplotlib==3.2.2  # does not try to build freetype itself
+   #python3 -m pip install --upgrade bokeh
+   #python3 -m pip install --upgrade gitpython
+   #python3 -m pip install --upgrade tables
 
    # Run the performance test suite
    cd $AUTOMATED_PERF_TESTS/warpx/Tools/PerformanceTests/

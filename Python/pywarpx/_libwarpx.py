@@ -224,6 +224,7 @@ class LibWarpX():
         self.libwarpx_so.warpx_getFaceAreas.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getFaceAreasLoVects.restype = _LP_c_int
 
+        self.libwarpx_so.warpx_sumParticleCharge.restype = c_real
         self.libwarpx_so.warpx_getParticleBoundaryBufferSize.restype = ctypes.c_int
         self.libwarpx_so.warpx_getParticleBoundaryBufferStructs.restype = _LP_LP_c_particlereal
         self.libwarpx_so.warpx_getParticleBoundaryBuffer.restype = _LP_LP_c_particlereal
@@ -590,11 +591,6 @@ class LibWarpX():
         for key, val in kwargs.items():
             assert np.size(val)==1 or len(val)==maxlen, f"Length of {key} doesn't match len of others"
 
-        # --- If the length of the input is zero, then quietly return
-        # --- This is not an error - it just means that no particles are to be injected.
-        if maxlen == 0:
-            return
-
         # --- Broadcast scalars into appropriate length arrays
         # --- If the parameter was not supplied, use the default value
         if lenx == 1:
@@ -910,6 +906,22 @@ class LibWarpX():
             ctypes.c_char_p(pid_name.encode('utf-8')), comm
         )
 
+    def get_species_charge_sum(self, species_name, local=False):
+        '''
+
+        Returns the total charge in the simulation due to the given species.
+
+        Parameters
+        ----------
+
+            species_name   : the species name for which charge will be summed
+            local          : If True return total charge per processor
+
+        '''
+        return self.libwarpx_so.warpx_sumParticleCharge(
+            ctypes.c_char_p(species_name.encode('utf-8')), local
+        )
+
     def get_particle_boundary_buffer_size(self, species_name, boundary):
         '''
 
@@ -1048,7 +1060,7 @@ class LibWarpX():
         '''
         self.libwarpx_so.warpx_clearParticleBoundaryBuffer()
 
-    def depositChargeDensity(self, species_name, level):
+    def depositChargeDensity(self, species_name, level, clear_rho=True, sync_rho=True):
         '''
 
         Deposit the specified species' charge density in rho_fp in order to
@@ -1059,11 +1071,19 @@ class LibWarpX():
 
             species_name   : the species name that will be deposited.
             level          : Which AMR level to retrieve scraped particle data from.
+            clear_rho      : If True, zero out rho_fp before deposition.
+            sync_rho       : If True, perform MPI exchange and properly set boundary
+                             cells for rho_fp.
 
         '''
+        if clear_rho:
+            from . import fields
+            fields.RhoFPWrapper(level, True)[...] = 0.0
         self.libwarpx_so.warpx_depositChargeDensity(
             ctypes.c_char_p(species_name.encode('utf-8')), level
         )
+        if sync_rho:
+            self.libwarpx_so.warpx_SyncRho()
 
     def _get_mesh_field_list(self, warpx_func, level, direction, include_ghosts):
         """

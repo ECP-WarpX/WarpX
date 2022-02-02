@@ -250,6 +250,8 @@ class CallbackFunctions(object):
 
 # --- Now create the actual instances.
 _afterinit = CallbackFunctions('afterinit')
+_beforecollisions = CallbackFunctions('beforecollisions')
+_aftercollisions = CallbackFunctions('aftercollisions')
 _beforeEsolve = CallbackFunctions('beforeEsolve')
 _poissonsolver = CallbackFunctions('poissonsolver')
 _afterEsolve = CallbackFunctions('afterEsolve')
@@ -312,6 +314,34 @@ def uninstallafterinit(f):
 def isinstalledafterinit(f):
     "Checks if the function is called after a init"
     return _afterinit.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def callfrombeforecollisions(f):
+    installbeforecollisions(f)
+    return f
+def installbeforecollisions(f):
+    "Adds a function to the list of functions called before collisions"
+    _beforecollisions.installfuncinlist(f)
+def uninstallbeforecollisions(f):
+    "Removes the function from the list of functions called before collisions"
+    _beforecollisions.uninstallfuncinlist(f)
+def isinstalledbeforecollisions(f):
+    "Checks if the function is called before collisions"
+    return _beforecollisions.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def callfromaftercollisions(f):
+    installaftercollisions(f)
+    return f
+def installaftercollisions(f):
+    "Adds a function to the list of functions called after collisions"
+    _aftercollisions.installfuncinlist(f)
+def uninstallaftercollisions(f):
+    "Removes the function from the list of functions called after collisions"
+    _aftercollisions.uninstallfuncinlist(f)
+def isinstalledaftercollisions(f):
+    "Checks if the function is called after collisions"
+    return _aftercollisions.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
 def callfrombeforeEsolve(f):

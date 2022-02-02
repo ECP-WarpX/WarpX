@@ -448,6 +448,22 @@ WarpX::RecordWarning(
     {
         m_p_warn_manager->record_warning(topic, text, msg_priority);
     }
+
+    if(m_abort_on_warning_threshold){
+
+        auto abort_priority = Utils::MsgLogger::Priority::high;
+        if(m_abort_on_warning_threshold == WarnPriority::low)
+            abort_priority = Utils::MsgLogger::Priority::low;
+        else if(m_abort_on_warning_threshold == WarnPriority::medium)
+            abort_priority = Utils::MsgLogger::Priority::medium;
+
+        if (msg_priority >= abort_priority){
+            const auto t_str = "A warning with priority '" +
+                Utils::MsgLogger::PriorityToString(msg_priority) +
+                "' has been raised.";
+            Abort(t_str.c_str());
+        }
+    }
 }
 
 void
@@ -496,7 +512,25 @@ WarpX::ReadParameters ()
         //"Synthetic" warning messages may be injected in the Warning Manager via
         // inputfile for debug&testing purposes.
         m_p_warn_manager->debug_read_warnings_from_input(pp_warpx);
+
+        // Set the flag to control if WarpX has to emit a warning message as soon as a warning is recorded
         pp_warpx.query("always_warn_immediately", m_always_warn_immediately);
+
+        // Set the WarnPriority threshold to decide if WarpX has to abort when a warning is recorded
+        if(std::string str_abort_on_warning_threshold = "";
+            pp_warpx.query("abort_on_warning_threshold", str_abort_on_warning_threshold)){
+            if (str_abort_on_warning_threshold == "high")
+                m_abort_on_warning_threshold = WarnPriority::high;
+            else if (str_abort_on_warning_threshold == "medium" )
+                m_abort_on_warning_threshold = WarnPriority::medium;
+            else if (str_abort_on_warning_threshold == "low")
+                m_abort_on_warning_threshold = WarnPriority::low;
+            else {
+                const auto t_str = str_abort_on_warning_threshold +
+                    "is not a valid option for warpx.abort_on_warning_threshold (use: low, medium or high)";
+                Abort(t_str.c_str());
+            }
+        }
 
         std::vector<int> numprocs_in;
         queryArrWithParser(pp_warpx, "numprocs", numprocs_in, 0, AMREX_SPACEDIM);
@@ -693,9 +727,7 @@ WarpX::ReadParameters ()
             // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
             if (use_filter)
             {
-                this->RecordWarning("Filter",
-                    "Filter currently not working with FDTD solver in RZ geometry."
-                    "We recommend setting warpx.use_filter = 0 in the input file.");
+                amrex::Abort("Filter currently not working with FDTD solver in RZ geometry");
             }
         }
 #endif
