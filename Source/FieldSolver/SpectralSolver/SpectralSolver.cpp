@@ -9,7 +9,7 @@
 #include "SpectralAlgorithms/PsatdAlgorithmComoving.H"
 #include "SpectralAlgorithms/PsatdAlgorithmPml.H"
 #include "SpectralAlgorithms/PsatdAlgorithm.H"
-#include "SpectralAlgorithms/PsatdAlgorithmJLinear.H"
+#include "SpectralAlgorithms/PsatdAlgorithmJLinearInTime.H"
 #include "SpectralKSpace.H"
 #include "SpectralSolver.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -67,7 +67,7 @@ SpectralSolver::SpectralSolver(
         {
             if (do_multi_J)
             {
-                algorithm = std::make_unique<PsatdAlgorithmJLinear>(
+                algorithm = std::make_unique<PsatdAlgorithmJLinearInTime>(
                     k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
                     fill_guards, dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
             }
