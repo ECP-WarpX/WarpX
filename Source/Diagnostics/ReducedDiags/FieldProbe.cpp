@@ -82,23 +82,39 @@ FieldProbe::FieldProbe (std::string rd_name)
     if (m_probe_geometry_str == "Point")
     {
         m_probe_geometry = DetectorGeometry::Point;
+        x_probe = 0._rt;
+        y_probe = 0._rt;
+#if !defined(WARPX_DIM_1D_Z)
         getWithParser(pp_rd_name, "x_probe", x_probe);
+#endif
+#if defined(WARPX_DIM_3D)
         getWithParser(pp_rd_name, "y_probe", y_probe);
+#endif
         getWithParser(pp_rd_name, "z_probe", z_probe);
     }
     else if (m_probe_geometry_str == "Line")
     {
+#if defined(WARPX_DIM_1D_Z)
+        amrex::Abort("ERROR: Line probe should be used in a 2D or 3D simulation only");
+#endif
         m_probe_geometry = DetectorGeometry::Line;
-        getWithParser(pp_rd_name, "x_probe", x_probe);
+        y_probe = 0._rt;
+        y1_probe = 0._rt;
+#if defined(WARPX_DIM_3D)
         getWithParser(pp_rd_name, "y_probe", y_probe);
-        getWithParser(pp_rd_name, "z_probe", z_probe);
-        getWithParser(pp_rd_name, "x1_probe", x1_probe);
         getWithParser(pp_rd_name, "y1_probe", y1_probe);
+#endif
+        getWithParser(pp_rd_name, "x_probe", x_probe);
+        getWithParser(pp_rd_name, "x1_probe", x1_probe);
+        getWithParser(pp_rd_name, "z_probe", z_probe);
         getWithParser(pp_rd_name, "z1_probe", z1_probe);
         getWithParser(pp_rd_name, "resolution", m_resolution);
     }
     else if (m_probe_geometry_str == "Plane")
     {
+#if !defined(WARPX_DIM_3D)
+        amrex::Abort("ERROR: Plane probe should be used in a 3D simulation only");
+#endif
         m_probe_geometry = DetectorGeometry::Plane;
         getWithParser(pp_rd_name, "x_probe", x_probe);
         getWithParser(pp_rd_name, "y_probe", y_probe);
