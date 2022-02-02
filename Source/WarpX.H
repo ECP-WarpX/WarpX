@@ -25,6 +25,7 @@
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
+#       include "BoundaryConditions/PML_RZ_fwd.H"
 #   else
 #       include "FieldSolver/SpectralSolver/SpectralSolver_fwd.H"
 #   endif
@@ -62,6 +63,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -344,6 +346,9 @@ public:
     const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) {return *Bfield_avg_cp[lev][direction];}
 
     bool DoPML () const {return do_pml;}
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    const PML_RZ* getPMLRZ() {return pml_rz[0].get();}
+#endif
 
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
@@ -480,7 +485,8 @@ public:
      * can appear in parallel simulations. This will be called
      * when FieldBoundaryType is set to damped. Vector version.
      */
-    void DampFieldsInGuards (std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+    void DampFieldsInGuards (const int lev,
+                             std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                              std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
 
     /**
@@ -490,7 +496,7 @@ public:
      * can appear in parallel simulations. This will be called
      * when FieldBoundaryType is set to damped. Scalar version.
      */
-    void DampFieldsInGuards (std::unique_ptr<amrex::MultiFab>& mf);
+    void DampFieldsInGuards (const int lev, std::unique_ptr<amrex::MultiFab>& mf);
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -506,8 +512,9 @@ public:
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
 
     void DampPML ();
-    void DampPML (int lev);
-    void DampPML (int lev, PatchType patch_type);
+    void DampPML (const int lev);
+    void DampPML (const int lev, PatchType patch_type);
+    void DampPML_Cartesian (const int lev, PatchType patch_type);
 
     void DampJPML ();
     void DampJPML (int lev);
@@ -532,6 +539,9 @@ public:
     void NodalSyncPML (int lev, PatchType patch_type);
 
     PML* GetPML (int lev);
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    PML_RZ* GetPML_RZ (int lev);
+#endif
 
     /** Run the ionization module on all species */
     void doFieldIonization ();
@@ -847,8 +857,8 @@ private:
     ///
     void EvolveEM(int numsteps);
 
-    void FillBoundaryB (int lev, PatchType patch_type, amrex::IntVect ng);
-    void FillBoundaryE (int lev, PatchType patch_type, amrex::IntVect ng);
+    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng);
+    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng);
     void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng);
 
@@ -1013,6 +1023,8 @@ private:
     std::unique_ptr<Utils::WarnManager> m_p_warn_manager;
     // Flag to control if WarpX has to emit a warning message as soon as a warning is recorded
     bool m_always_warn_immediately = false;
+    // Threshold to abort immediately on a warning message
+    std::optional<WarnPriority> m_abort_on_warning_threshold = std::nullopt;
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?
@@ -1131,6 +1143,9 @@ private:
     amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
     amrex::IntVect do_pml_Hi = amrex::IntVect::TheZeroVector();
     amrex::Vector<std::unique_ptr<PML> > pml;
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
+#endif
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
     amrex::Real current_injection_position = 0;

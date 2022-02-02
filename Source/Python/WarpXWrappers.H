@@ -94,6 +94,8 @@ extern "C" {
     void warpx_addRealComp(
         const char* char_species_name, const char* char_comp_name, bool comm);
 
+    amrex::Real warpx_sumParticleCharge(const char* char_species_name, const bool local);
+
     int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary);
 
     int** warpx_getParticleBoundaryBufferScrapedSteps(
@@ -110,6 +112,16 @@ extern "C" {
 
     void warpx_clearParticleBoundaryBuffer ();
 
+    /**
+     * \brief This function is used to deposit a given species' charge density
+     * in the rho_fp multifab which can then be accessed from python via
+     * pywarpx.fields.RhoFPWrapper()
+     *
+     * @param[in] species_name specifying the name of the species to deposit
+     * @param[in] lev mesh refinement level
+     */
+    void warpx_depositChargeDensity (const char* species_name, int lev);
+
   void warpx_ComputeDt ();
   void warpx_MoveWindow (int step, bool move_j);
 
@@ -117,6 +129,7 @@ extern "C" {
   void warpx_EvolveB (amrex::Real dt, DtType a_dt_type);
   void warpx_FillBoundaryE ();
   void warpx_FillBoundaryB ();
+  void warpx_SyncRho ();
   void warpx_SyncCurrent ();
   void warpx_UpdateAuxilaryData ();
   void warpx_PushParticlesandDepose (amrex::Real cur_time);

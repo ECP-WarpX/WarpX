@@ -118,6 +118,20 @@ with open(run_test_path, encoding='utf-8') as f:
 with open(run_test_path, "w", encoding='utf-8') as f:
     f.write(run_test_content)
 
+# CI: legacy build check in .github/workflows/cuda.yml
+ci_gnumake_path = str(REPO_DIR.joinpath(".github/workflows/cuda.yml"))
+with open(ci_gnumake_path, encoding='utf-8') as f:
+    ci_gnumake_content = f.read()
+    #   branch/commit/tag (git fetcher) version
+    #     cd amrex && git checkout COMMIT_TAG_OR_BRANCH && cd -
+    ci_gnumake_content = re.sub(
+        r'(.*cd\s+amrex.+git checkout\s+--detach\s+)(.+)(\s+&&\s.*)',
+        r'\g<1>{}\g<3>'.format(amrex_new_branch),
+        ci_gnumake_content, flags = re.MULTILINE)
+
+with open(ci_gnumake_path, "w", encoding='utf-8') as f:
+    f.write(ci_gnumake_content)
+
 if ConfigUpdater is not None:
     # WarpX-tests.ini
     tests_ini_path = str(REPO_DIR.joinpath("Regression/WarpX-tests.ini"))

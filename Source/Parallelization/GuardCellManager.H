@@ -44,6 +44,9 @@ public:
      * \param do_electrostatic Whether to run in electrostatic mode i.e. solving the Poisson equation instead of the Maxwell equations.
      * \param do_multi_J Whether to use the multi-J PSATD scheme
      * \param fft_do_time_averaging Whether to average the E and B field in time (with PSATD) before interpolating them onto the macro-particles
+     * \param do_pml whether pml is turned on (only used by RZ PSATD)
+     * \param do_pml_in_domain whether pml is done in the domain (only used by RZ PSATD)
+     * \param pml_ncell number of cells on the pml layer (only used by RZ PSATD)
      * \param ref_ratios mesh refinement ratios between mesh-refinement levels
      */
     void Init(
@@ -65,6 +68,9 @@ public:
         const int do_electrostatic,
         const int do_multi_J,
         const bool fft_do_time_averaging,
+        const bool do_pml,
+        const int do_pml_in_domain,
+        const int pml_ncell,
         const amrex::Vector<amrex::IntVect>& ref_ratios);
 
     // Guard cells allocated for MultiFabs E and B

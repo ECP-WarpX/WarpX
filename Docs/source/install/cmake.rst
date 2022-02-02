@@ -136,6 +136,8 @@ If you re-compile often, consider installing the `Ninja <https://github.com/ninj
 Pass ``-G Ninja`` to the CMake configuration call to speed up parallel compiles.
 
 
+.. _building-cmake-envvars:
+
 Configure your compiler
 -----------------------
 
@@ -153,6 +155,13 @@ If you also want to select a CUDA compiler:
 
    export CUDACXX=$(which nvcc)
    export CUDAHOSTCXX=$(which clang++)
+
+We also support adding `additional compiler flags via environment variables <https://cmake.org/cmake/help/latest/manual/cmake-language.7.html#cmake-language-environment-variables>`__ such as `CXXFLAGS <https://cmake.org/cmake/help/latest/envvar/CXXFLAGS.html>`__/`LDFLAGS <https://cmake.org/cmake/help/latest/envvar/LDFLAGS.html>`__:
+
+.. code-block:: bash
+
+   # example: treat all compiler warnings as errors
+   export CXXFLAGS="-Werror"
 
 .. note::
 

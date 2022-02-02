@@ -15,6 +15,7 @@
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#       include "BoundaryConditions/PML_RZ.H"
 #   else
 #       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif
@@ -133,7 +134,7 @@ WarpX::PSATDBackwardTransformEB ()
     // Damp the fields in the guard cells
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        DampFieldsInGuards(Efield_fp[lev], Bfield_fp[lev]);
+        DampFieldsInGuards(lev, Efield_fp[lev], Bfield_fp[lev]);
     }
 }
 
@@ -189,7 +190,7 @@ WarpX::PSATDBackwardTransformF ()
     // Damp the field in the guard cells
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        DampFieldsInGuards(F_fp[lev]);
+        DampFieldsInGuards(lev, F_fp[lev]);
     }
 }
 
@@ -227,7 +228,7 @@ WarpX::PSATDBackwardTransformG ()
     // Damp the field in the guard cells
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        DampFieldsInGuards(G_fp[lev]);
+        DampFieldsInGuards(lev, G_fp[lev]);
     }
 }
 
@@ -414,12 +415,18 @@ WarpX::PushPSATD ()
 
     PSATDForwardTransformEB();
     PSATDForwardTransformJ();
+
     // Do rho FFTs only if needed
     if (WarpX::update_with_rho || WarpX::current_correction || WarpX::do_dive_cleaning)
     {
         PSATDForwardTransformRho(0,0); // rho old
         PSATDForwardTransformRho(1,1); // rho new
     }
+
+#ifdef WARPX_DIM_RZ
+    if (pml_rz[0]) pml_rz[0]->PushPSATD(0);
+#endif
+
     if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
     if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
     PSATDPushSpectralFields();
@@ -431,7 +438,7 @@ WarpX::PushPSATD ()
     // Evolve the fields in the PML boxes
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (do_pml && pml[lev]->ok())
+        if (pml[lev] && pml[lev]->ok())
         {
             pml[lev]->PushPSATD(lev);
         }
@@ -696,7 +703,8 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
 }
 
 void
-WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+WarpX::DampFieldsInGuards(const int lev,
+                          std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                           std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield) {
 
     // Loop over dimensions
@@ -746,7 +754,7 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
                 const int tbz_bigEnd_d = tbz.bigEnd(dampdir);
 
                 // Box for the whole simulation domain
-                amrex::Box const& domain = Geom(0).Domain();
+                amrex::Box const& domain = Geom(lev).Domain();
                 int const nn_domain = domain.bigEnd(dampdir);
 
                 // Set the tileboxes so that they only cover the lower/upper half of the guard cells
@@ -793,7 +801,7 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
     }
 }
 
-void WarpX::DampFieldsInGuards(std::unique_ptr<amrex::MultiFab>& mf)
+void WarpX::DampFieldsInGuards(const int lev, std::unique_ptr<amrex::MultiFab>& mf)
 {
     // Loop over dimensions
     for (int dampdir = 0; dampdir < AMREX_SPACEDIM; dampdir++)
@@ -820,7 +828,7 @@ void WarpX::DampFieldsInGuards(std::unique_ptr<amrex::MultiFab>& mf)
                 const int tx_bigEnd_d = tx.bigEnd(dampdir);
 
                 // Box for the whole simulation domain
-                amrex::Box const& domain = Geom(0).Domain();
+                amrex::Box const& domain = Geom(lev).Domain();
                 int const nn_domain = domain.bigEnd(dampdir);
 
                 // Set the tilebox so that it only covers the lower/upper half of the guard cells

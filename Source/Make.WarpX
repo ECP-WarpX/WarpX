@@ -130,7 +130,9 @@ ifeq ($(USE_SINGLE_PRECISION_PARTICLES),TRUE)
   USERSuffix := $(USERSuffix).pSP
 endif
 
-include $(PICSAR_HOME)/src/Make.package
+ifeq ($(QED),TRUE)
+  include $(PICSAR_HOME)/src/Make.package
+endif
 
 WARPX_GIT_VERSION := $(shell cd $(WARPX_HOME); git describe --abbrev=12 --dirty --always --tags)
 PICSAR_GIT_VERSION := $(shell cd $(PICSAR_HOME); git describe --abbrev=12 --dirty --always --tags)
