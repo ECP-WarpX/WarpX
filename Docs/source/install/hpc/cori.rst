@@ -320,7 +320,7 @@ In this manual, we often use this ``conda create`` line over the officially docu
 
 .. code-block:: bash
 
-   conda create -n myenv -c conda-forge python mamba ipykernel ipympl matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram
+   conda create -n myenv -c conda-forge python mamba ipykernel ipympl==0.8.1 matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram
 
 We then follow the `Customizing Kernels with a Helper Shell Script <https://docs.nersc.gov/services/jupyter/#customizing-kernels-with-a-helper-shell-script>`__ section to finalize the setup of using this conda-environment as a custom Jupyter kernel.
 
@@ -328,3 +328,9 @@ When opening a Jupyter notebook, just select the name you picked for your custom
 
 Additional software can be installed later on, e.g., in a Jupyter cell using ``!mamba install -c conda-forge ...``.
 Software that is not available via conda can be installed via ``!python -m pip install ...``.
+
+.. warning::
+
+   Jan 6th, 2022 (NERSC-INC0179165 and `ipympl #416 <https://github.com/matplotlib/ipympl/issues/416>`__):
+   Above, we fixated the ``ipympl`` version to *not* take the latest release of `Matplotlib Jupyter Widgets <https://github.com/matplotlib/ipympl>`__.
+   This is an intentional work-around; the ``ipympl`` version needs to exactly fit the version pre-installed on the Jupyter base system.
