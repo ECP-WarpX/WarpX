@@ -10,7 +10,9 @@ Abbreviations
 -------------
 
 * **2FA:** `Two-factor-authentication <https://en.wikipedia.org/wiki/Multi-factor_authentication>`__
+* **ABLASTR:** Accelerated BLAST Recipes, the library inside WarpX to share functionality with other BLAST codes
 * **ALCF:** `Argonne Leadership Computing Facility <https://www.alcf.anl.gov/>`__, a supercomputing center located near Chicago, IL (USA)
+* **BLAST:** `Beam, Plasma & Accelerator Simulation Toolkit <https://blast.lbl.gov>`__
 * **AMR:** adaptive mesh-refinement
 * **BC:** boundary condition (of a simulation)
 * **BTD:** backtransformed diagnosics, a method to collect data for analysis from a *boosted frame* simulation
@@ -18,12 +20,14 @@ Abbreviations
 * **CI:** continuous integration, automated tests that we perform before a proposed code-change is accepted; see PR
 * **CPU:** `central processing unit <https://en.wikipedia.org/wiki/Central_processing_unit>`__, we usual mean a socket or generally the host-side of a computer (compared to the accelerator, e.g. GPU)
 * **DOE:** `The United States Department of Energy <https://en.wikipedia.org/wiki/United_States_Department_of_Energy>`__, the largest sponsor of national laboratory research in the United States of America
+* **ECP:** `Exascale Computing Project <https://www.exascaleproject.org>`__, a :ref:`U.S. DOE funding source <funding>` that supports WarpX development
 * **ECT:** `Enlarged Cell Technique <https://ieeexplore.ieee.org/document/4463918>`__, an electromagnetic solver with accurate resolution of perfectly conducting embedded boundaries
 * **EB:** embedded boundary, boundary conditions inside the simulation box, e.g. following material surfaces
 * **EM:** electromagnetic, e.g. EM PIC
 * **ES:** electrostatic, e.g. ES PIC
 * **FDTD:** `Finite-difference time-domain or Yee's method <https://en.wikipedia.org/wiki/Finite-difference_time-domain_method>`__, a class of grid-based finite-difference field solvers
 * **GPU:** originally graphics processing unit, now used for fast `general purpose computing (GPGPU) <https://en.wikipedia.org/wiki/Graphics_processing_unit#Stream_processing_and_general_purpose_GPUs_(GPGPU)>`__; also called (hardware) accelerator
+* **LDRD:** Laboratory Directed Research and Development, a :ref:`funding program in U.S. DOE laboratories <funding>` that kick-started ABLASTR development
 * **LPA:** laser-plasma acceleration, historically used for laser-electron acceleration
 * **LPI:** laser-plasma interaction
 * **LWFA:** laser-wakefield acceleration (of electrons/leptons)
