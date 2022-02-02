@@ -70,8 +70,10 @@ Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_te
    python3 -m pip install --user virtualenv
    python3 -m venv $HOME/sw/venvs/warpx-perftest
    source $HOME/sw/venvs/warpx-perftest/bin/activate
-   # Do the above and following steps once, before
-   # submission. They take to long to do every time.
+   # While setting up the performance tests for the first time,
+   # execute the lines above this comment and then the commented
+   # lines below this comment once, before submission.
+   # The commented lines take too long for the job script.
    #python3 -m pip install --upgrade pip
    #python3 -m pip install --upgrade cython
    #python3 -m pip install --upgrade numpy
