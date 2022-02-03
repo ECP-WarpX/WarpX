@@ -1,10 +1,6 @@
 import argparse
 import sys
 
-from mewarpx.utils_store import util as mwxutil
-
-mwxutil.init_libwarpx(ndim=2, rz=True)
-
 import numpy as np
 from pywarpx import picmi
 
@@ -71,6 +67,7 @@ class CylinderVacuumTEC(object):
             lower_bound=[self.rmin, self.zmin],
             upper_bound=[self.rmax, self.zmax],
             number_of_cells=[self.NR, self.NZ], # min_tiles=1,
+            use_rz=True,
             bc_fields_z_min='periodic', bc_fields_z_max='periodic',
             bc_particles_z_min='periodic', bc_particles_z_max='periodic',
             bc_fields_r_min='dirichlet', bc_fields_r_max='dirichlet',

@@ -3,19 +3,13 @@ import os
 
 import numpy as np
 
-from mewarpx.utils_store import util as mwxutil
+from mewarpx.mwxrun import mwxrun
+from mewarpx.setups_store import diode_setup
+from mewarpx.utils_store import testing_util
 
 
 def test_superLU_solver():
     name = "superLU_solver"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -38,6 +32,7 @@ def test_superLU_solver():
     NX = 16
     NZ = 128
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR='XZ',
         DIRECT_SOLVER=DIRECT_SOLVER,
         V_ANODE_EXPRESSION=f"{VOLTAGE}*sin(2*pi*{FREQ:.5e}*t)",
         D_CA=D_CA,

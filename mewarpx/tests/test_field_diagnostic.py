@@ -11,7 +11,9 @@ import numpy as np
 import pytest
 from pywarpx import picmi
 
-from mewarpx.utils_store import util as mwxutil
+from mewarpx.mwxrun import mwxrun
+from mewarpx.setups_store import diode_setup
+from mewarpx.utils_store import testing_util
 
 constants = picmi.constants
 
@@ -24,16 +26,8 @@ constants = picmi.constants
     False
 ])
 def test_field_diag(plot_on_diag_steps):
-    dim = 2
-    use_rz = False
     # We test either post processing or plotting on diag steps, not both.
     post_processing = not plot_on_diag_steps
-
-    mwxutil.init_libwarpx(ndim=dim, rz=use_rz)
-
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
 
     plot_diag_str = "_with_diag_plotting" if plot_on_diag_steps else ""
     post_proc_str = "_with_post_processing" if post_processing else ""
@@ -57,6 +51,7 @@ def test_field_diag(plot_on_diag_steps):
     DIAG_SPECIES_LIST = None
 
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR='XZ',
         V_ANODE_CATHODE=VOLTAGE,
         V_ANODE_EXPRESSION="%.1f*sin(2*pi*%.5e*t)" % (VOLTAGE, FREQ),
         D_CA=D_CA,

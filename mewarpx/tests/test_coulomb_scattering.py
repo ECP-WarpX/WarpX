@@ -1,23 +1,19 @@
 """Tests for functionality in coulomb_scattering.py"""
 import numpy as np
 import pytest
+from pywarpx import callbacks, picmi
 import yt
 
+from mewarpx import coulomb_scattering, diags, emission, mespecies
+from mewarpx.mwxrun import mwxrun
+from mewarpx.poisson_solvers import DummyPoissonSolver
+from mewarpx.utils_store import mwxconstants, testing_util
 from mewarpx.utils_store import util as mwxutil
 
 
 def test_coulomb_scattering():
 
     name = "coulomb_scattering_langevin"
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-
-    from pywarpx import callbacks, picmi
-
-    from mewarpx import coulomb_scattering, diags, emission, mespecies
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.poisson_solvers import DummyPoissonSolver
-    from mewarpx.utils_store import mwxconstants, testing_util, util
-
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)

@@ -4,14 +4,14 @@ import os
 import numpy as np
 from pywarpx import picmi
 
+from mewarpx import assemblies, mespecies
+from mewarpx.mwxrun import mwxrun
+from mewarpx.poisson_solvers import PoissonSolverPseudo1D
+from mewarpx.utils_store import pulsing, testing_util
 from mewarpx.utils_store import util as mwxutil
 
 
 def test_utils_pulsing_expr():
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.utils_store import pulsing
 
     pulse_expr = pulsing.linear_pulse_function(
         V_off=-1.0, V_on=7.5, pulse_period=20e-9, pulse_length=10e-9,
@@ -22,15 +22,6 @@ def test_utils_pulsing_expr():
 
 def test_utils_pulsing_sim():
     name = "pulsing_utility_test"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx import assemblies, mespecies
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.poisson_solvers import PoissonSolverPseudo1D
-    from mewarpx.utils_store import pulsing, testing_util
-
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)

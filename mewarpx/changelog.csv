@@ -1,4 +1,37 @@
 Version, Physics version, Date,        List of changes
+7.0.0, 2, In progress, "
+
+**API Changes**:
+
+- ``mewarpx.utils_store.util.init_libwarpx`` was removed since the simulation
+  geometry is now set when initializing the grid (from ``picmi``). To use a
+  cylindrical coordinate system ``use_rz=True` should be passed to
+  :func:`mewarpx.mwxrun.init_grid()`.
+- :class:`mewarpx.setups_store.diode_setup.DiodeRun_V1` now requires
+  ``GEOM_STR`` as argument which sets the coordinate system for the simulation.
+
+**Features**:
+
+- Improved logic was added to properly set the number of grids in the
+  simulation.
+- A new volumetric emitter,
+  :class:`mewarpx.emission.XGaussZSinDistributionVolumeEmitter`, was added to
+  seed a simulation with a neutral plasma with a density profile consisting of
+  a half-period sin wave in z and a truncated normal in x.
+
+**Other changes**:
+
+- Merge ``upstream/development`` (git hash ``6cf7d7b``) into memaster.
+
+**Bugfixes**:
+
+- :class:`mewarpx.emission.ArbitraryEmitter2D` can now handle injecting fewer
+  particles than the processor count per step.
+- Injected particle weight and number from MCC is now divided by the processor
+  count since this data is summed across processors in
+  :func:`mewarpx.emission.Injector.get_injectedparticles()`.
+
+"
 6.1.0, 2, 1/26/2022, "
 
 **Features**:

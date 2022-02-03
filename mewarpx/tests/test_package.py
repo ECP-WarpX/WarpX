@@ -11,7 +11,6 @@ from mewarpx.utils_store import util
 # 3rd-party library imports
 
 
-
 def test_version():
     with open(os.path.join(util.mewarpx_dir, '../changelog.csv'), 'r') as f:
         reader = csv.reader(f)

@@ -195,12 +195,15 @@ class MCC(Injector):
         if self.injector_diag is None:
             return
 
+        # the injected weight and count is divided by the processor count
+        # since ``emission.Injector.get_injectedparticles()`` performs a
+        # parallel sum over the injected particle data.
         injected_weight = (
             self.ion_species.get_total_weight() - self.prior_weight
-        )
+        ) / mwxrun.n_procs
         injected_count = (
             self.ion_species.get_particle_count() - self.prior_count
-        )
+        ) / mwxrun.n_procs
 
         self.record_injectedparticles(
             species=self.electron_species,

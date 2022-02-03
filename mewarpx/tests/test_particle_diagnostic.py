@@ -1,6 +1,6 @@
 """
-Test that verifies Particle Diagnostics is correctly outputting the correct
-plots from the post processed yt data from the picmi.ParticleDiagnostics
+Test that verifies Particle Diagnostics is outputting the correct
+plots from the post processed yt data from picmi.ParticleDiagnostics
 """
 
 import os
@@ -8,22 +8,15 @@ import os
 import numpy as np
 import pytest
 
-from mewarpx.utils_store import util as mwxutil
+from mewarpx.mwxrun import mwxrun
+from mewarpx.setups_store import diode_setup
+from mewarpx.utils_store import testing_util
 
 
 @pytest.mark.filterwarnings("ignore::ResourceWarning")
 @pytest.mark.filterwarnings("ignore::UserWarning")
 def test_particle_diag():
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-
     test_name = "particle_diag_test_with_post_processing"
-
     testing_util.initialize_testingdir(test_name)
 
     # Initialize each run with consistent, randomly-chosen, rseed, Use a random
@@ -51,6 +44,7 @@ def test_particle_diag():
     DIAG_PLOT_DATA_LIST = ["particle_position_x", "particle_momentum_x"]
 
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR='XZ',
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
         V_ANODE_CATHODE=VOLTAGE,

@@ -2,25 +2,15 @@ import os
 
 import numpy as np
 
-from mewarpx.utils_store import util as mwxutil
+from mewarpx import sim_control
+from mewarpx.diags_store.diag_base import WarpXDiagnostic
+from mewarpx.mwxrun import mwxrun
+from mewarpx.setups_store import diode_setup
+from mewarpx.utils_store import testing_util
 
 
 def test_write_results():
-    dim = 2
-    use_rz = False
-    # We test either post processing or plotting on diag steps, not both.
-
-    mwxutil.init_libwarpx(ndim=dim, rz=use_rz)
-
-    from mewarpx import sim_control
-    from mewarpx.diags_store.diag_base import WarpXDiagnostic
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-
-
     test_name = "write_results_test"
-
     testing_util.initialize_testingdir(test_name)
 
     # Initialize each run with consistent, randomly-chosen, rseed. Use a random
@@ -37,6 +27,7 @@ def test_write_results():
     DT = 1.0 / (400 * FREQ)
 
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR='XZ',
         V_ANODE_CATHODE=VOLTAGE,
         V_ANODE_EXPRESSION="%.1f*sin(2*pi*%.5e*t)" % (VOLTAGE, FREQ),
         D_CA=D_CA,

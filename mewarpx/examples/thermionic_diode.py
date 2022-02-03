@@ -3,10 +3,6 @@ import sys
 
 import numpy as np
 
-from mewarpx.utils_store import util as mwxutil
-
-mwxutil.init_libwarpx(ndim=2, rz=False)
-
 from mewarpx.mwxrun import mwxrun
 from mewarpx.setups_store import diode_setup
 
@@ -57,6 +53,7 @@ class PlanarVacuumTEC(object):
         ####################################
 
         self.run = diode_setup.DiodeRun_V1(
+            GEOM_STR='XZ',
             CATHODE_TEMP=self.CATHODE_TEMP,
             CATHODE_A=self.CATHODE_A,
             CATHODE_PHI=self.CATHODE_PHI,
