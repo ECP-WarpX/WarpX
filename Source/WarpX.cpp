@@ -2560,19 +2560,6 @@ WarpX::Version ()
         return version;
 }
 
-std::string
-WarpX::PicsarVersion ()
-{
-    std::string version;
-#ifdef PICSAR_GIT_VERSION
-    version = std::string(PICSAR_GIT_VERSION);
-#endif
-    if( version.empty() )
-        return std::string("Unknown");
-    else
-        return version;
-}
-
 bool
 WarpX::isAnyBoundaryPML()
 {

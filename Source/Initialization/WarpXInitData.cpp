@@ -27,6 +27,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
+#include "ablastr/version/VersionFormat.H"
 
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
@@ -116,9 +117,7 @@ WarpX::InitData ()
     utils::warpx_check_mpi_thread_level();
 
     Print() << "WarpX (" << WarpX::Version() << ")\n";
-#ifdef WARPX_QED
-    Print() << "PICSAR (" << WarpX::PicsarVersion() << ")\n";
-#endif
+    ablastr::version::printSoftwareVersions();
 
     if (restart_chkfile.empty())
     {
