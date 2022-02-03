@@ -61,8 +61,8 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     // Allocate these coefficients only with time averaging
     if (time_averaging)
     {
-        X5_coef = SpectralRealCoefficients(ba, dm, 1, 0);
-        X6_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+        X8_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+        X9_coef = SpectralRealCoefficients(ba, dm, 1, 0);
         InitializeSpectralCoefficientsAveraging(spectral_kspace, dm, dt);
     }
 }
@@ -93,12 +93,12 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
         amrex::Array4<const amrex::Real> X2_arr = X2_coef[mfi].array();
         amrex::Array4<const amrex::Real> X3_arr = X3_coef[mfi].array();
 
-        amrex::Array4<const amrex::Real> X5_arr;
-        amrex::Array4<const amrex::Real> X6_arr;
+        amrex::Array4<const amrex::Real> X8_arr;
+        amrex::Array4<const amrex::Real> X9_arr;
         if (time_averaging)
         {
-            X5_arr = X5_coef[mfi].array();
-            X6_arr = X6_coef[mfi].array();
+            X8_arr = X8_coef[mfi].array();
+            X9_arr = X9_coef[mfi].array();
         }
 
         // Extract pointers for the k vectors
@@ -128,6 +128,7 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex Jz_new = fields(i,j,k,Idx.Jz_new);
             const Complex rho_old = fields(i,j,k,Idx.rho_old);
             const Complex rho_new = fields(i,j,k,Idx.rho_new);
+            const Complex rho_mid = fields(i,j,k,Idx.rho_mid);
 
             Complex F_old, G_old;
             if (dive_cleaning) F_old = fields(i,j,k,Idx.F);
@@ -211,8 +212,8 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
 
             if (time_averaging)
             {
-                const amrex::Real X5 = X5_arr(i,j,k);
-                const amrex::Real X6 = X6_arr(i,j,k);
+                const amrex::Real X8 = X8_arr(i,j,k);
+                const amrex::Real X9 = X9_arr(i,j,k);
 
                 // TODO: Here the code is *accumulating* the average,
                 // because it is meant to be used with sub-cycling
@@ -220,27 +221,27 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
 
                 fields(i,j,k,Idx.Ex_avg) += S_ck * Ex_old
                     + I * c2 * ep0 * X1 * (ky * Bz_old - kz * By_old)
-                    + I * X5 * rho_old * kx + I * X6 * rho_new * kx + X3/c2 * Jx_old - X2/c2 * Jx_new;
+                    + I * X8 * rho_old * kx + I * X9 * rho_new * kx + X3/c2 * Jx_old - X2/c2 * Jx_new;
 
                 fields(i,j,k,Idx.Ey_avg) += S_ck * Ey_old
                     + I * c2 * ep0 * X1 * (kz * Bx_old - kx * Bz_old)
-                    + I * X5 * rho_old * ky + I * X6 * rho_new * ky + X3/c2 * Jy_old - X2/c2 * Jy_new;
+                    + I * X8 * rho_old * ky + I * X9 * rho_new * ky + X3/c2 * Jy_old - X2/c2 * Jy_new;
 
                 fields(i,j,k,Idx.Ez_avg) += S_ck * Ez_old
                     + I * c2 * ep0 * X1 * (kx * By_old - ky * Bx_old)
-                    + I * X5 * rho_old * kz + I * X6 * rho_new * kz + X3/c2 * Jz_old - X2/c2 * Jz_new;
+                    + I * X8 * rho_old * kz + I * X9 * rho_new * kz + X3/c2 * Jz_old - X2/c2 * Jz_new;
 
                 fields(i,j,k,Idx.Bx_avg) += S_ck * Bx_old
                     - I * ep0 * X1 * (ky * Ez_old - kz * Ey_old)
-                    - I * X5/c2 * (ky * Jz_old - kz * Jy_old) - I * X6/c2 * (ky * Jz_new - kz * Jy_new);
+                    - I * X8/c2 * (ky * Jz_old - kz * Jy_old) - I * X9/c2 * (ky * Jz_new - kz * Jy_new);
 
                 fields(i,j,k,Idx.By_avg) += S_ck * By_old
                     - I * ep0 * X1 * (kz * Ex_old - kx * Ez_old)
-                    - I * X5/c2 * (kz * Jx_old - kx * Jz_old) - I * X6/c2 * (kz * Jx_new - kx * Jz_new);
+                    - I * X8/c2 * (kz * Jx_old - kx * Jz_old) - I * X9/c2 * (kz * Jx_new - kx * Jz_new);
 
                 fields(i,j,k,Idx.Bz_avg) += S_ck * Bz_old
                     - I * ep0 * X1 * (kx * Ey_old - ky * Ex_old)
-                    - I * X5/c2 * (kx * Jy_old - ky * Jx_old) - I * X6/c2 * (kx * Jy_new - ky * Jx_new);
+                    - I * X8/c2 * (kx * Jy_old - ky * Jx_old) - I * X9/c2 * (kx * Jy_new - ky * Jx_new);
 
                 if (dive_cleaning)
                 {
@@ -375,8 +376,8 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficientsAveraging (
         amrex::Array4<amrex::Real const> C = C_coef[mfi].array();
         amrex::Array4<amrex::Real const> S_ck = S_ck_coef[mfi].array();
 
-        amrex::Array4<amrex::Real> X5 = X5_coef[mfi].array();
-        amrex::Array4<amrex::Real> X6 = X6_coef[mfi].array();
+        amrex::Array4<amrex::Real> X8 = X8_coef[mfi].array();
+        amrex::Array4<amrex::Real> X9 = X9_coef[mfi].array();
 
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -403,21 +404,21 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficientsAveraging (
 
             if (om_s != 0.)
             {
-                X5(i,j,k) = c2 / ep0 * (S_ck(i,j,k) / om2_s - (1._rt - C(i,j,k)) / (om4_s * dt)
+                X8(i,j,k) = c2 / ep0 * (S_ck(i,j,k) / om2_s - (1._rt - C(i,j,k)) / (om4_s * dt)
                                         - 0.5_rt * dt / om2_s);
             }
             else
             {
-                X5(i,j,k) = - c2 * dt3 / (8._rt * ep0);
+                X8(i,j,k) = - c2 * dt3 / (8._rt * ep0);
             }
 
             if (om_s != 0.)
             {
-                X6(i,j,k) = c2 / ep0 * ((1._rt - C(i,j,k)) / (om4_s * dt) - 0.5_rt * dt / om2_s);
+                X9(i,j,k) = c2 / ep0 * ((1._rt - C(i,j,k)) / (om4_s * dt) - 0.5_rt * dt / om2_s);
             }
             else
             {
-                X6(i,j,k) = - c2 * dt3 / (24._rt * ep0);
+                X9(i,j,k) = - c2 * dt3 / (24._rt * ep0);
             }
         });
     }
