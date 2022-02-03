@@ -322,6 +322,7 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
 
             const amrex::Real om_s = c * knorm_s;
             const amrex::Real om2_s = std::pow(om_s, 2);
+            const amrex::Real om4_s = std::pow(om_s, 4);
 
             // C
             C(i,j,k) = std::cos(om_s * dt);
@@ -369,31 +370,34 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
             // X5
             if (om_s != 0.)
             {
-                X5(i,j,k) = c2 * (dt * C(i,j,k) - S_ck(i,j,k)) / (ep0 * dt * om2_s);
+                X5(i,j,k) = c2 * (4._rt * (1._rt - C(i,j,k)) - 3._rt * om2_s * dt * S_ck(i,j,k)
+                                  + om2_s * dt2 * C(i,j,k)) / (ep0 * dt2 * om4_s);
             }
             else // om_s = 0
             {
-                X5(i,j,k) = - c2 * dt2 / (3._rt * ep0);
+                X5(i,j,k) = - c2 * dt2 / (6._rt * ep0);
             }
 
             // X6
             if (om_s != 0.)
             {
-                X6(i,j,k) = 0._rt;
+                X6(i,j,k) = c2 * (8._rt * (C(i,j,k) - 1._rt) + 4._rt * om2_s * dt * S_ck(i,j,k))
+                            / (ep0 * dt2 * om4_s);
             }
             else // om_s = 0
             {
-                X6(i,j,k) = 0._rt;
+                X6(i,j,k) = - c2 * dt2 / (3._rt * ep0);
             }
 
             // X7
             if (om_s != 0.)
             {
-                X7(i,j,k) = - c2 * (dt - S_ck(i,j,k)) / (ep0 * dt * om2_s);
+                X7(i,j,k) = c2 * (4._rt * (1._rt - C(i,j,k)) - om2_s * dt * S_ck(i,j,k)
+                                  - om2_s * dt2) / (ep0 * dt2 * om4_s);
             }
             else // om_s = 0
             {
-                X7(i,j,k) = - c2 * dt2 / (6._rt * ep0);
+                X7(i,j,k) = 0._rt;
             }
         });
     }
