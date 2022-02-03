@@ -1181,12 +1181,19 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     const auto problo = geom.ProbLoArray();
 
     Real scale_fac = 0._rt;
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    scale_fac = dx[0]*dx[1]/num_ppc_real;
-    if (plasma_injector->flux_normal_axis == 0) scale_fac /= dx[0];
-    if (plasma_injector->flux_normal_axis == 2) scale_fac /= dx[1];
-#else
+    // Scale particle weight by the area of the emitting surface, within one cell
+#if defined(WARPX_DIM_3D)
     scale_fac = dx[0]*dx[1]*dx[2]/dx[plasma_injector->flux_normal_axis]/num_ppc_real;
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    scale_fac = dx[0]*dx[1]/num_ppc_real;
+    // When emission is in the r direction, the emitting surface is a cylinder.
+    // The factor 2*pi*r is added later below.
+    if (plasma_injector->flux_normal_axis == 0) scale_fac /= dx[0];
+    // When emission is in the z direction, the emitting surface is an annulus
+    // The factor 2*pi*r is added later below.
+    if (plasma_injector->flux_normal_axis == 2) scale_fac /= dx[1];
+    // When emission is in the theta direction (flux_normal_axis == 1),
+    // the emitting surface is a rectangle, within the plane of the simulation
 #endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
@@ -1251,11 +1258,13 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         bool no_overlap = false;
 
         for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
-            // Needs to be checked
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            if (2*dir == plasma_injector->flux_normal_axis) {
-#else
+#if (defined(WARPX_DIM_3D))
             if (dir == plasma_injector->flux_normal_axis) {
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            if (2*dir == plasma_injector->flux_normal_axis) {
+            // The above formula captures the following cases:
+            // - flux_normal_axis=0 (emission along x/r) and dir=0
+            // - flux_normal_axis=2 (emission along z) and dir=1
 #endif
                 if (plasma_injector->flux_direction > 0) {
                     if (plasma_injector->surface_flux_pos <  tile_realbox.lo(dir) ||
