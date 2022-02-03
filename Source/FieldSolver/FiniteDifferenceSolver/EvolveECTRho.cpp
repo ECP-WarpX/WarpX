@@ -63,6 +63,7 @@ void FiniteDifferenceSolver::EvolveECTRho (
 #endif
 }
 
+// If we implement ECT in 1D we will need to take care of this #ifndef differently
 #ifndef WARPX_DIM_RZ
 void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
@@ -111,6 +112,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (Sx(i, j, k) <= 0) return;
 
+// If we implement ECT in 1D we will need to take care of this #ifndef differently
 #ifndef WARPX_DIM_XZ
                 Rhox(i, j, k) = (Ey(i, j, k) * ly(i, j, k) - Ey(i, j, k + 1) * ly(i, j, k + 1) +
                     Ez(i, j + 1, k) * lz(i, j + 1, k) - Ez(i, j, k) * lz(i, j, k)) / Sx(i, j, k);
@@ -134,6 +136,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (Sz(i, j, k) <= 0) return;
 
+// If we implement ECT in 1D we will need to take care of this #ifndef differently
 #ifndef WARPX_DIM_XZ
                 Rhoz(i, j, k) =  (Ex(i, j, k) * lx(i, j, k) - Ex(i, j + 1, k) * lx(i, j + 1, k) +
                     Ey(i + 1, j, k) * ly(i + 1, j, k) - Ey(i, j, k) * ly(i, j, k)) / Sz(i, j, k);
