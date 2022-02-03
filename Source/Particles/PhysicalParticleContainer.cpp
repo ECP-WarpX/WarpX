@@ -1265,6 +1265,8 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             // The above formula captures the following cases:
             // - flux_normal_axis=0 (emission along x/r) and dir=0
             // - flux_normal_axis=2 (emission along z) and dir=1
+#elif defined(WARPX_DIM_1D_Z)
+            if ( (dir==0) && (plasma_injector->flux_normal_axis==2) ) {
 #endif
                 if (plasma_injector->flux_direction > 0) {
                     if (plasma_injector->surface_flux_pos <  tile_realbox.lo(dir) ||
@@ -1497,7 +1499,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Rotate the position
                 pos.x = xb*cos_theta;
                 pos.y = xb*sin_theta;
-                // Rotate the position
+                // Rotate the momentum
                 {
                     Real ur = u.x;
                     Real ut = u.y;
@@ -1543,6 +1545,12 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Real weight = dens * scale_fac / (AMREX_D_TERM(fac, *fac, *fac));
                 Real weight = dens * scale_fac * dt;
 #ifdef WARPX_DIM_RZ
+                // The particle weight is proportional to the user-specified
+                // flux (denoted as `dens` here) and the emission surface within
+                // one cell (captured partially by `scale_fac`).
+                // For cylindrical emission (flux_normal_axis==0
+                // or flux_normal_axis==2), the emission surface depends on
+                // the radius ; thus, the calculation is finalized here
                 if (plasma_injector->flux_normal_axis != 1) {
                     if (radially_weighted) {
                          weight *= 2._rt*MathConst::pi*xb;
