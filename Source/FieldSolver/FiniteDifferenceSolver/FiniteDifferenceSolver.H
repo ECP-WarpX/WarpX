@@ -80,7 +80,7 @@ class FiniteDifferenceSolver
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
-                            int lev );
+                            const int lev );
 
         void ApplySilverMuellerBoundary(
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,

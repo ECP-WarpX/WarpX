@@ -50,7 +50,7 @@ void FiniteDifferenceSolver::EvolveECTRho (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
-    int lev) {
+    const int lev) {
 
 #if !defined(WARPX_DIM_RZ) and defined(AMREX_USE_EB)
     if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
@@ -81,19 +81,19 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(*ECTRhofield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+    for (amrex::MFIter mfi(*ECTRhofield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        amrex::Real wt = amrex::second();
 
         // Extract field data for this grid/tile
-        Array4<Real> const &Ex = Efield[0]->array(mfi);
-        Array4<Real> const &Ey = Efield[1]->array(mfi);
-        Array4<Real> const &Ez = Efield[2]->array(mfi);
-        Array4<Real> const &Rhox = ECTRhofield[0]->array(mfi);
-        Array4<Real> const &Rhoy = ECTRhofield[1]->array(mfi);
-        Array4<Real> const &Rhoz = ECTRhofield[2]->array(mfi);
+        amrex::Array4<amrex::Real> const &Ex = Efield[0]->array(mfi);
+        amrex::Array4<amrex::Real> const &Ey = Efield[1]->array(mfi);
+        amrex::Array4<amrex::Real> const &Ez = Efield[2]->array(mfi);
+        amrex::Array4<amrex::Real> const &Rhox = ECTRhofield[0]->array(mfi);
+        amrex::Array4<amrex::Real> const &Rhoy = ECTRhofield[1]->array(mfi);
+        amrex::Array4<amrex::Real> const &Rhoz = ECTRhofield[2]->array(mfi);
         amrex::Array4<amrex::Real> const &lx = edge_lengths[0]->array(mfi);
         amrex::Array4<amrex::Real> const &ly = edge_lengths[1]->array(mfi);
         amrex::Array4<amrex::Real> const &lz = edge_lengths[2]->array(mfi);
@@ -102,9 +102,9 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
         amrex::Array4<amrex::Real> const &Sz = face_areas[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        Box const &trhox = mfi.tilebox(ECTRhofield[0]->ixType().toIntVect());
-        Box const &trhoy = mfi.tilebox(ECTRhofield[1]->ixType().toIntVect());
-        Box const &trhoz = mfi.tilebox(ECTRhofield[2]->ixType().toIntVect());
+        amrex::Box const &trhox = mfi.tilebox(ECTRhofield[0]->ixType().toIntVect());
+        amrex::Box const &trhoy = mfi.tilebox(ECTRhofield[1]->ixType().toIntVect());
+        amrex::Box const &trhoz = mfi.tilebox(ECTRhofield[2]->ixType().toIntVect());
 
         amrex::ParallelFor(trhox, trhoy, trhoz,
 
