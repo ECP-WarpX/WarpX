@@ -1194,6 +1194,9 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     if (plasma_injector->flux_normal_axis == 2) scale_fac /= dx[1];
     // When emission is in the theta direction (flux_normal_axis == 1),
     // the emitting surface is a rectangle, within the plane of the simulation
+#elif defined(WARPX_DIM_1D_Z)
+    scale_fac = dx[0]/num_ppc_real;
+    if (plasma_injector->flux_normal_axis == 2) scale_fac /= dx[0];
 #endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
