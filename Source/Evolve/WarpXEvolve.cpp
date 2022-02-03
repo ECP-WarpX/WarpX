@@ -484,6 +484,10 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryB(guard_cells.ng_alloc_EB);
     } // !PSATD
 
+    if(istep[0]+1==end_fine_patch_step){
+        ClearLevel(finest_level);
+    }
+
     ExecutePythonCallback("afterEsolve");
 }
 
@@ -794,6 +798,11 @@ WarpX::OneStep_sub1 (Real curtime)
     }
     if ( safe_guard_cells )
         FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
+
+    if(istep[0]+1==end_fine_patch_step){
+        ClearLevel(finest_level);
+        do_subcycling = 0;
+    }
 }
 
 void

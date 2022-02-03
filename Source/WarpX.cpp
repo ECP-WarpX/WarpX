@@ -100,6 +100,8 @@ int WarpX::end_moving_window_step = -1;
 int WarpX::moving_window_dir = -1;
 Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
+int WarpX::end_fine_patch_step=-1;
+
 bool WarpX::fft_do_time_averaging = false;
 
 amrex::IntVect WarpX::fill_guards = amrex::IntVect(0);
@@ -624,6 +626,11 @@ WarpX::ReadParameters ()
 
             getWithParser(pp_warpx, "moving_window_v", moving_window_v);
             moving_window_v *= PhysConst::c;
+        }
+
+
+        if(max_level>0){
+            pp_warpx.query("end_fine_patch_step", end_fine_patch_step);
         }
 
         pp_warpx.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);

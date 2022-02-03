@@ -668,6 +668,9 @@ public:
     static amrex::Real moving_window_v;
     static bool fft_do_time_averaging;
 
+    //Parameters to remove the fine patch at a given time step
+    static int end_fine_patch_step;
+
     // slice generation //
     static int num_slice_snapshots_lab;
     static amrex::Real dt_slice_snapshots_lab;
