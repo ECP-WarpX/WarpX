@@ -1,4 +1,4 @@
-/* Copyright 2020 Remi Lehe
+/* Copyright 2020 Remi Lehe, Lorenzo Giacomel
  *
  * This file is part of WarpX.
  *
