@@ -117,9 +117,11 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
 
     private:
 
-        // These real and complex coefficients are always allocated
+        // Real coefficients for the update equations
+        // (X4 is computed on the fly, hence not declared here)
         SpectralRealCoefficients C_coef, S_ck_coef;
-        SpectralRealCoefficients X1_coef, X2_coef, X3_coef, X8_coef, X9_coef;
+        SpectralRealCoefficients X1_coef, X2_coef, X3_coef, X5_coef,
+                                 X6_coef, X7_coef, X8_coef, X9_coef;
 
         SpectralFieldIndex m_spectral_index;
 

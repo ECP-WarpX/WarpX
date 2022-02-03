@@ -55,6 +55,9 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     X1_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     X2_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     X3_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    X5_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    X6_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    X7_coef = SpectralRealCoefficients(ba, dm, 1, 0);
 
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 
@@ -92,6 +95,9 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
         amrex::Array4<const amrex::Real> X1_arr = X1_coef[mfi].array();
         amrex::Array4<const amrex::Real> X2_arr = X2_coef[mfi].array();
         amrex::Array4<const amrex::Real> X3_arr = X3_coef[mfi].array();
+        amrex::Array4<const amrex::Real> X5_arr = X5_coef[mfi].array();
+        amrex::Array4<const amrex::Real> X6_arr = X6_coef[mfi].array();
+        amrex::Array4<const amrex::Real> X7_arr = X7_coef[mfi].array();
 
         amrex::Array4<const amrex::Real> X8_arr;
         amrex::Array4<const amrex::Real> X9_arr;
@@ -156,20 +162,26 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
             const amrex::Real X2 = X2_arr(i,j,k);
             const amrex::Real X3 = X3_arr(i,j,k);
             const amrex::Real X4 = - S_ck / PhysConst::ep0;
+            const amrex::Real X5 = X5_arr(i,j,k);
+            const amrex::Real X6 = X6_arr(i,j,k);
+            const amrex::Real X7 = X7_arr(i,j,k);
 
             // Update equations for E in the formulation with rho
 
             fields(i,j,k,Idx.Ex) = C * Ex_old
                 + I * c2 * S_ck * (ky * Bz_old - kz * By_old)
-                + X4 * Jx_old - I * (X2 * rho_new - X3 * rho_old) * kx - X1 * (Jx_new - Jx_old) / dt;
+                + X4 * Jx_old - X1 * (Jx_new - Jx_old) / dt
+                + I * (X5 * rho_old + X6 * rho_mid + X7 * rho_new) * kx;
 
             fields(i,j,k,Idx.Ey) = C * Ey_old
                 + I * c2 * S_ck * (kz * Bx_old - kx * Bz_old)
-                + X4 * Jy_old - I * (X2 * rho_new - X3 * rho_old) * ky - X1 * (Jy_new - Jy_old) / dt;
+                + X4 * Jy_old - X1 * (Jy_new - Jy_old) / dt
+                + I * (X5 * rho_old + X6 * rho_mid + X7 * rho_new) * ky;
 
             fields(i,j,k,Idx.Ez) = C * Ez_old
                 + I * c2 * S_ck * (kx * By_old - ky * Bx_old)
-                + X4 * Jz_old - I * (X2 * rho_new - X3 * rho_old) * kz - X1 * (Jz_new - Jz_old) / dt;
+                + X4 * Jz_old - X1 * (Jz_new - Jz_old) / dt
+                + I * (X5 * rho_old + X6 * rho_mid + X7 * rho_new) * kz;
 
             // Update equations for B
 
@@ -286,6 +298,9 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
         amrex::Array4<amrex::Real> X1 = X1_coef[mfi].array();
         amrex::Array4<amrex::Real> X2 = X2_coef[mfi].array();
         amrex::Array4<amrex::Real> X3 = X3_coef[mfi].array();
+        amrex::Array4<amrex::Real> X5 = X5_coef[mfi].array();
+        amrex::Array4<amrex::Real> X6 = X6_coef[mfi].array();
+        amrex::Array4<amrex::Real> X7 = X7_coef[mfi].array();
 
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -321,7 +336,7 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
                 S_ck(i,j,k) = dt;
             }
 
-            // X1 (multiplies i*([k] \times J) in the update equation for update B)
+            // X1
             if (om_s != 0.)
             {
                 X1(i,j,k) = (1._rt - C(i,j,k)) / (ep0 * om2_s);
@@ -331,7 +346,7 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
                 X1(i,j,k) = 0.5_rt * dt2 / ep0;
             }
 
-            // X2 (multiplies rho_new in the update equation for E)
+            // X2
             if (om_s != 0.)
             {
                 X2(i,j,k) = c2 * (dt - S_ck(i,j,k)) / (ep0 * dt * om2_s);
@@ -341,7 +356,7 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
                 X2(i,j,k) = c2 * dt2 / (6._rt * ep0);
             }
 
-            // X3 (multiplies rho_old in the update equation for E)
+            // X3
             if (om_s != 0.)
             {
                 X3(i,j,k) = c2 * (dt * C(i,j,k) - S_ck(i,j,k)) / (ep0 * dt * om2_s);
@@ -349,6 +364,36 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
             else // om_s = 0
             {
                 X3(i,j,k) = - c2 * dt2 / (3._rt * ep0);
+            }
+
+            // X5
+            if (om_s != 0.)
+            {
+                X5(i,j,k) = c2 * (dt * C(i,j,k) - S_ck(i,j,k)) / (ep0 * dt * om2_s);
+            }
+            else // om_s = 0
+            {
+                X5(i,j,k) = - c2 * dt2 / (3._rt * ep0);
+            }
+
+            // X6
+            if (om_s != 0.)
+            {
+                X6(i,j,k) = 0._rt;
+            }
+            else // om_s = 0
+            {
+                X6(i,j,k) = 0._rt;
+            }
+
+            // X7
+            if (om_s != 0.)
+            {
+                X7(i,j,k) = - c2 * (dt - S_ck(i,j,k)) / (ep0 * dt * om2_s);
+            }
+            else // om_s = 0
+            {
+                X7(i,j,k) = - c2 * dt2 / (6._rt * ep0);
             }
         });
     }
