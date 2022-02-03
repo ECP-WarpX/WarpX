@@ -213,7 +213,7 @@ Developers could now change the WarpX source code and then call the build line a
 
 .. note::
 
-   These commands builds one ``-DWarpX_DIMS=...`` dimensionality (default: ``3``) at a time.
+   These commands build one ``-DWarpX_DIMS=...`` dimensionality (default: ``3``) at a time.
    If your ``build/lib*/`` directory contains previously built ``libwarpx*`` libraries, then ``--target pip_install`` picks them up as well.
    A new call to ``cmake --build build ...`` will only rebuild *one* dimensionality, as set via ``WarpX_DIMS``.
 
@@ -278,7 +278,7 @@ Environment Variable          Default & Values                             Descr
 ``PYWARPX_LIB_DIR``           *None*                                       If set, search for pre-built WarpX C++ libraries (see below)
 ============================= ============================================ ================================================================
 
-Note that we currently change the ``WARPX_MPI`` default intentionally to ``OFF``, to simplify a first install form source.
+Note that we currently change the ``WARPX_MPI`` default intentionally to ``OFF``, to simplify a first install from source.
 
 Some hints and workflows follow.
 Developers, that want to test a change of the source code but did not change the ``pywarpx`` version number, can force a reinstall via:
