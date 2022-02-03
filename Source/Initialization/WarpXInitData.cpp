@@ -613,7 +613,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #ifdef AMREX_USE_EB
            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
                // We initialize ECTRhofield consistently with the Efield
-               m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
+               m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
                                                    m_face_areas[lev], ECTRhofield[lev], lev);
 
            }
