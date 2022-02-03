@@ -138,7 +138,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec[0] == amrex::Real(0),
         "Laser propagation direction must be 0 along x in 1D");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec[1] == amrex::Real(0),
-        "Laser propagation direction must be 0 along y in 2D");
+        "Laser propagation direction must be 0 along y in 1D");
 #endif
 
     // Plane normal
