@@ -1,23 +1,16 @@
-"""Test the functionality in mewarpx/mepicmy.py"""
+"""Test the functionality in mewarpx/mespecies.py"""
 import logging
 
 import numpy as np
 
-from mewarpx.utils_store import util as mwxutil
+from mewarpx.mwxrun import mwxrun
+from mewarpx.setups_store import diode_setup
+from mewarpx.utils_store import testing_util
 
 
 def test_extra_pid(caplog):
     caplog.set_level(logging.INFO)
     name = "mespecies_extra_pid"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=False)
-
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -33,6 +26,7 @@ def test_extra_pid(caplog):
     NX = 16
     NZ = 128
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR='XZ',
         V_ANODE_CATHODE=450.0,
         D_CA=D_CA,
         NX=NX,

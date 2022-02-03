@@ -55,12 +55,9 @@ class MEWarpXRun(object):
         self.simulation = picmi.Simulation(verbose=0)
         # make a shorthand for simulation.extension since we use it a lot
         self.sim_ext = self.simulation.extension
-        # this will be the first after init function to be called
-        callbacks.installafterinit(self._after_init)
-        # grab the simulation geometry from simulation.extension
-        self._set_geom_props()
 
-    def init_grid(self, lower_bound, upper_bound, number_of_cells, **kwargs):
+    def init_grid(self, lower_bound, upper_bound, number_of_cells, use_rz=False,
+                  **kwargs):
         """Function to set up the simulation grid.
 
         Arguments:
@@ -68,22 +65,100 @@ class MEWarpXRun(object):
                 of list has to equal number of dimensions.
             upper_bound (list): Maximum coordinates for all direction; length
                 of list has to equal number of dimensions.
-            cell_nums (list): Number of grid cells in each direction.
+            number_of_cells (list): Number of grid cells in each direction.
+            use_rz (bool): If True, cylindrical coordinates will be used.
             kwargs (dict): Dictionary containing extra arguments. These can
                 include:
-                - boundary condition settings in the form
-                  ``bc_fields_x/y/z/r_min/max`` (can be 'periodic', 'dirichlet'
-                  or 'none') or ``bc_particles_x/y/z/r_min/max`` (can be
-                  'periodic', 'absorbing' or 'reflecting').
-                - the minimum number of tiles via ``min_tiles``.
+                - ``bc_fields_x/y/z/r_min/max``: field boundary condition
+                   settings (can be 'periodic', 'dirichlet' or 'none').
+                - ``bc_particles_x/y/z/r_min/max``: particle boundary
+                  condition settings (can be 'periodic', 'absorbing' or
+                  'reflecting').
+                - ``min_tiles``: the minimum number of tiles. See function
+                  ``_set_max_grid_size()`` below for details.
         """
+        self.dim = len(lower_bound)
+
         # sanity check inputs
-        assert len(lower_bound) == self.dim
         assert len(upper_bound) == self.dim
         assert len(number_of_cells) == self.dim
+        if use_rz and self.dim != 2:
+            raise RuntimeError(
+                f"Cannot use cylindrical coordinates in {self.dim} dimensions."
+            )
 
-        # Dictionary to first provide defaults, then overwrite with user
-        # settings
+        self._set_geom_str(use_rz)
+
+        boundary_conditions = self._get_default_boundary_conditions()
+
+        # update boundary conditions if provided
+        for key in [key for key in kwargs.keys() if key.startswith('bc')]:
+            kind, dim, side = key.split('_')[-3:]
+            boundary_conditions[kind][side][self.coord_map[dim]] = kwargs[key]
+
+        if self.geom_str == 'RZ':
+            grid = picmi.CylindricalGrid
+        elif self.geom_str == 'Z':
+            grid = picmi.Cartesian1DGrid
+        elif self.geom_str == 'XZ':
+            grid = picmi.Cartesian2DGrid
+        elif self.geom_str == 'XYZ':
+            grid = picmi.Cartesian3DGrid
+
+        self.grid = grid(
+            number_of_cells=number_of_cells,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            lower_boundary_conditions=boundary_conditions['fields']['min'],
+            upper_boundary_conditions=boundary_conditions['fields']['max'],
+            lower_boundary_conditions_particles=boundary_conditions['particles']['min'],
+            upper_boundary_conditions_particles=boundary_conditions['particles']['max'],
+        )
+
+        self._set_grid_params()
+        self._set_max_grid_size(kwargs.get('min_tiles', None))
+        self._print_grid_params()
+
+        # there are a number of initialization tasks that have to happen
+        # immediately after init so this function is installed as the
+        # first afterinit callback
+        if len(callbacks._afterinit) != 0:
+            raise RuntimeError(
+                "mwxrun._after_init must be the first afterinit callback to "
+                "execute, but one was already installed. Please ensure "
+                "init_grid is called before other items in the run script."
+            )
+        callbacks.installafterinit(self._after_init)
+
+    def _set_geom_str(self, use_rz):
+        """Function to set the geometry string and coordinate map
+        appropriately."""
+        self.coord_map = {}
+        if self.dim == 1:
+            self.geom_str = 'Z'
+            self.coord_map['z'] = 0
+        elif self.dim == 2:
+            if use_rz:
+                self.geom_str = 'RZ'
+                self.coord_map['r'] = 0
+                self.coord_map['z'] = 1
+            else:
+                self.geom_str = 'XZ'
+                self.coord_map['x'] = 0
+                self.coord_map['z'] = 1
+        elif self.dim == 3:
+            self.geom_str = 'XYZ'
+            self.coord_map['x'] = 0
+            self.coord_map['y'] = 1
+            self.coord_map['z'] = 2
+        else:
+            raise ValueError(
+                f"Invalid dimension: {self.dim}"
+            )
+
+    def _get_default_boundary_conditions(self):
+        """Function to return a dictionary with the default boundary condition
+        values for both fields and particles."""
         boundary_conditions = {'fields': {}, 'particles': {}}
 
         # Set default boundary conditions to be periodic in x and y except for
@@ -113,33 +188,143 @@ class MEWarpXRun(object):
         boundary_conditions['particles']['min'].append('absorbing')
         boundary_conditions['particles']['max'].append('absorbing')
 
-        # update boundary conditions if provided
-        for key in [key for key in kwargs.keys() if key.startswith('bc')]:
-            kind, dim, side = key.split('_')[-3:]
-            boundary_conditions[kind][side][self.coord_map[dim]] = kwargs[key]
+        return boundary_conditions
 
+    def _set_grid_params(self):
+        """Set xmin, xmax, ymin, ymax, zmin, zmax, rmin, rmax.
+        Also set nx, ny, nz and dx, dy, dz.
+
+        I'm not currently sure the best way to store and access these, so this
+        is subject to change, but gives a basic interface for now.
+
+        Note PICMI uses x/y for 2D, while WarpX uses x/z for 2D (yay!). We
+        stick with WarpX, because emission in +z makes more sense for
+        compatibility with RZ.
+        """
+        # Note similar information is stored by pywarpx.geometry.prob_lo,
+        # .prob_hi, and .coord_sys, and by pywarpx.amr.n_cell. Those are
+        # set by this solver grid in any case, and the present format matches
+        # our existing Python framework better.
+
+        if isinstance(self.grid, picmi.Cartesian1DGrid):
+            self.xmin = 0.0
+            self.xmax = 1.0
+            self.ymin = 0.0
+            self.ymax = 1.0
+            self.zmin = self.grid.xmin
+            self.zmax = self.grid.xmax
+            self.rmin = None
+            self.rmax = None
+
+            self.nx = 0
+            self.ny = 0
+            self.nz = self.grid.nx
+            self.nr = None
+
+            self.dx = None
+            self.dy = None
+            self.dz = (self.zmax - self.zmin) / self.nz
+            self.dr = None
+
+        elif isinstance(self.grid, picmi.Cartesian2DGrid):
+            self.xmin = self.grid.xmin
+            self.xmax = self.grid.xmax
+            self.ymin = 0.0
+            self.ymax = 1.0
+            self.zmin = self.grid.ymin
+            self.zmax = self.grid.ymax
+            self.rmin = None
+            self.rmax = None
+
+            self.nx = self.grid.nx
+            self.ny = 0
+            self.nz = self.grid.ny
+            self.nr = None
+
+            self.dx = (self.xmax - self.xmin) / self.nx
+            self.dy = None
+            self.dz = (self.zmax - self.zmin) / self.nz
+            self.dr = None
+
+        elif isinstance(self.grid, picmi.Cartesian3DGrid):
+            self.xmin = self.grid.xmin
+            self.xmax = self.grid.xmax
+            self.ymin = self.grid.ymin
+            self.ymax = self.grid.ymax
+            self.zmin = self.grid.zmin
+            self.zmax = self.grid.zmax
+            self.rmin = None
+            self.rmax = None
+
+            self.nx = self.grid.nx
+            self.ny = self.grid.ny
+            self.nz = self.grid.ny
+            self.nr = None
+
+            self.dx = (self.xmax - self.xmin) / self.nx
+            self.dy = (self.ymax - self.ymin) / self.ny
+            self.dz = (self.zmax - self.zmin) / self.nz
+            self.dr = None
+
+        elif isinstance(self.grid, picmi.CylindricalGrid):
+            self.xmin = self.ymin = self.rmin = self.grid.rmin
+            self.xmax = self.ymax = self.rmax = self.grid.rmax
+            self.zmin = self.grid.zmin
+            self.zmax = self.grid.zmax
+
+            self.nx = self.ny = self.nr = self.grid.nr
+            self.nz = self.grid.nz
+
+            self.dx = self.dy = self.dr = (self.rmax - self.rmin) / self.nr
+            self.dz = (self.zmax - self.zmin) / self.nz
+
+        else:
+            raise ValueError("Unrecognized type of pywarpx.picmi Grid.")
+
+    def _set_max_grid_size(self, min_tiles):
+        """Function to set the max_grid_size input parameter appropriately so
+        that the simulation will have at least ``min_tiles`` number of tiles.
+        """
+        if min_tiles is None:
+            return
+
+        # appropriately calculate the minimum number of tiles parameter given
+        # the simulation dimension
+        if self.dim == 1:
+            self.grid.max_grid_size = self.nz // min_tiles
+
+        elif self.dim == 2:
+            max_nx_nz = max(self.nx, self.nz)
+            if min_tiles <= max(self.nx/self.nz, self.nz/self.nx):
+                # All the tiles will be sliced in one dimension only
+                self.grid.max_grid_size = max_nx_nz // min_tiles
+            else:
+                # max_grid_size is the smallest factor of 2 that will give at
+                # least min_tiles total number of grids
+                max_length_per_tile = np.sqrt(self.nx*self.nz/min_tiles)
+                self.grid.max_grid_size = (
+                    max_nx_nz
+                    // int(2. * np.ceil(max_nx_nz / max_length_per_tile / 2.))
+                )
+
+        else:
+            raise NotImplementedError("3d simulations not implemented yet.")
+
+    def _print_grid_params(self):
+        """Function to print out the grid parameters."""
         if self.geom_str == 'RZ':
-            grid = picmi.CylindricalGrid
-        elif self.geom_str == 'Z':
-            grid = picmi.Cartesian1DGrid
-        elif self.geom_str == 'XZ':
-            grid = picmi.Cartesian2DGrid
-        elif self.geom_str == 'XYZ':
-            grid = picmi.Cartesian3DGrid
-
-        self.grid = grid(
-            number_of_cells=number_of_cells,
-            lower_bound=lower_bound,
-            upper_bound=upper_bound,
-            lower_boundary_conditions=boundary_conditions['fields']['min'],
-            upper_boundary_conditions=boundary_conditions['fields']['max'],
-            lower_boundary_conditions_particles=boundary_conditions['particles']['min'],
-            upper_boundary_conditions_particles=boundary_conditions['particles']['max'],
-            warpx_max_grid_size=max(number_of_cells)//kwargs.get('min_tiles', 1)
-        )
-
-        self._set_grid_params()
-        self._print_grid_params()
+            logger.info(
+                f"Creating RZ grid with nr={self.nr}, nz={self.nz} "
+                f"and r, z limits of [[{self.rmin:.4g}, {self.rmax:.4g}], "
+                f"[{self.zmin:.4g}, {self.zmax:.4g}]]"
+            )
+        else:
+            logger.info(
+                f"Creating {self.geom_str} grid with nx={self.nx}, "
+                f"ny={self.ny}, nz={self.nz} and x, y, z limits of "
+                f"[[{self.xmin:.4g}, {self.xmax:.4g}], [{self.ymin:.4g}, "
+                f"{self.ymax:.4g}], [{self.zmin:.4g}, {self.zmax:.4g}]]"
+            )
 
     def init_timestep(self, DT=None, CFL_factor=None, V_grid=5):
         """Calculate timestep size based on grid data and CFL parameter
@@ -256,144 +441,6 @@ class MEWarpXRun(object):
             shutil.rmtree("diags")
 
         self.initialized = True
-
-    def _set_geom_props(self):
-        """Set the geom_str variable corresponding to the geometry used.
-
-        Currently supports Z, XZ, RZ, and XYZ.
-        """
-        self.coord_map = {}
-        if self.sim_ext.geometry_dim == 'rz':
-            self.geom_str = 'RZ'
-            self.dim = 2
-            self.coord_map['r'] = 0
-            self.coord_map['z'] = 1
-        elif self.sim_ext.geometry_dim == '1d':
-            self.geom_str = 'Z'
-            self.dim = 1
-            self.coord_map['z'] = 0
-        elif self.sim_ext.geometry_dim == '2d':
-            self.geom_str = 'XZ'
-            self.dim = 2
-            self.coord_map['x'] = 0
-            self.coord_map['z'] = 1
-        elif self.sim_ext.geometry_dim == '3d':
-            self.geom_str = 'XYZ'
-            self.dim = 3
-            self.coord_map['x'] = 0
-            self.coord_map['y'] = 1
-            self.coord_map['z'] = 2
-        else:
-            raise ValueError(
-                f"Unrecognized geometry type: {self.sim_ext.geometry_dim}"
-            )
-
-    def _set_grid_params(self):
-        """Set xmin, xmax, ymin, ymax, zmin, zmax, rmin, rmax.
-        Also set nx, ny, nz and dx, dy, dz.
-
-        I'm not currently sure the best way to store and access these, so this
-        is subject to change, but gives a basic interface for now.
-
-        Note PICMI uses x/y for 2D, while WarpX uses x/z for 2D (yay!). We
-        stick with WarpX, because emission in +z makes more sense for
-        compatibility with RZ.
-        """
-        # Note similar information is stored by pywarpx.geometry.prob_lo,
-        # .prob_hi, and .coord_sys, and by pywarpx.amr.n_cell. Those are
-        # set by this solver grid in any case, and the present format matches
-        # our existing Python framework better.
-
-        if isinstance(self.grid, picmi.Cartesian1DGrid):
-            self.xmin = 0.0
-            self.xmax = 1.0
-            self.ymin = 0.0
-            self.ymax = 1.0
-            self.zmin = self.grid.xmin
-            self.zmax = self.grid.xmax
-            self.rmin = None
-            self.rmax = None
-
-            self.nx = 0
-            self.ny = 0
-            self.nz = self.grid.nx
-            self.nr = None
-
-            self.dx = None
-            self.dy = None
-            self.dz = (self.zmax - self.zmin) / self.nz
-            self.dr = None
-
-        elif isinstance(self.grid, picmi.Cartesian2DGrid):
-            self.xmin = self.grid.xmin
-            self.xmax = self.grid.xmax
-            self.ymin = 0.0
-            self.ymax = 1.0
-            self.zmin = self.grid.ymin
-            self.zmax = self.grid.ymax
-            self.rmin = None
-            self.rmax = None
-
-            self.nx = self.grid.nx
-            self.ny = 0
-            self.nz = self.grid.ny
-            self.nr = None
-
-            self.dx = (self.xmax - self.xmin) / self.nx
-            self.dy = None
-            self.dz = (self.zmax - self.zmin) / self.nz
-            self.dr = None
-
-        elif isinstance(self.grid, picmi.Cartesian3DGrid):
-            self.xmin = self.grid.xmin
-            self.xmax = self.grid.xmax
-            self.ymin = self.grid.ymin
-            self.ymax = self.grid.ymax
-            self.zmin = self.grid.zmin
-            self.zmax = self.grid.zmax
-            self.rmin = None
-            self.rmax = None
-
-            self.nx = self.grid.nx
-            self.ny = self.grid.ny
-            self.nz = self.grid.ny
-            self.nr = None
-
-            self.dx = (self.xmax - self.xmin) / self.nx
-            self.dy = (self.ymax - self.ymin) / self.ny
-            self.dz = (self.zmax - self.zmin) / self.nz
-            self.dr = None
-
-        elif isinstance(self.grid, picmi.CylindricalGrid):
-            self.xmin = self.ymin = self.rmin = self.grid.rmin
-            self.xmax = self.ymax = self.rmax = self.grid.rmax
-            self.zmin = self.grid.zmin
-            self.zmax = self.grid.zmax
-
-            self.nx = self.ny = self.nr = self.grid.nr
-            self.nz = self.grid.nz
-
-            self.dx = self.dy = self.dr = (self.rmax - self.rmin) / self.nr
-            self.dz = (self.zmax - self.zmin) / self.nz
-
-        else:
-            raise ValueError("Unrecognized type of pywarpx.picmi Grid.")
-
-    def _print_grid_params(self):
-        """Function to print out the grid parameters."""
-        if self.geom_str == 'RZ':
-            logger.info(
-                f"Creating grid with nr={self.nr}, nz={self.nz} "
-                f"and r, z limits of [[{self.rmin:.4g}, {self.rmax:.4g}], "
-                f"[{self.zmin:.4g}, {self.zmax:.4g}]]"
-            )
-        else:
-            logger.info(
-                f"Creating grid with nx={self.nx}, ny={self.ny}, nz={self.nz} "
-                f"and x, y, z limits of [[{self.xmin:.4g}, {self.xmax:.4g}], "
-                f"[{self.ymin:.4g}, {self.ymax:.4g}], [{self.zmin:.4g}, "
-                f"{self.zmax:.4g}]]"
-            )
 
     def step(self, sim_control, interval=None):
         self.step_interval = compute_step(self.simulation, interval)

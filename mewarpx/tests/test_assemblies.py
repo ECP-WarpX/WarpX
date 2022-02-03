@@ -6,20 +6,14 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-from mewarpx.utils_store import util as mwxutil
+from mewarpx import assemblies, emission
+from mewarpx.mwxrun import mwxrun
+from mewarpx.setups_store import diode_setup
+from mewarpx.utils_store import testing_util
 
 
 def test_embedded_cylinder():
     name = "Embedded_cylinder_solve"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx import assemblies
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -32,7 +26,7 @@ def test_embedded_cylinder():
     # Specific numbers match older run for consistency
     D_CA = 1  # m
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
+        GEOM_STR='XZ',
         #V_ANODE_CATHODE=VOLTAGE,
         D_CA=D_CA,
         NX=64,
@@ -86,15 +80,6 @@ def test_embedded_cylinder():
 
 def test_embedded_rectangle():
     name = "Embedded_rectangle_solve"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx import assemblies
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -107,6 +92,7 @@ def test_embedded_rectangle():
     # Specific numbers match older run for consistency
     D_CA = 1  # m
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR='XZ',
         D_CA=D_CA,
         NX=64,
         NZ=64,
@@ -160,15 +146,6 @@ def test_embedded_rectangle():
 
 def test_two_embedded_cylinders():
     name = "two_embedded_cylinders_solve"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx import assemblies
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -181,6 +158,7 @@ def test_two_embedded_cylinders():
     # Specific numbers match older run for consistency
     D_CA = 1  # m
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR='XZ',
         #V_ANODE_CATHODE=VOLTAGE,
         D_CA=D_CA,
         NX = 64,
@@ -239,15 +217,6 @@ def test_two_embedded_cylinders():
 
 def test_two_embedded_cylinders_scraping():
     name = "two_embedded_cylinders_scraping"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx import assemblies, emission
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -260,6 +229,7 @@ def test_two_embedded_cylinders_scraping():
     # Specific numbers match older run for consistency
     D_CA = 0.025  # m
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR='XZ',
         #V_ANODE_CATHODE=VOLTAGE,
         D_CA=D_CA,
         NX=64,
@@ -347,12 +317,6 @@ def test_two_embedded_cylinders_scraping():
 
 def test_infinite_cylinder_z():
     name = "infinite_cylinder_z_scraping"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=True)
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)

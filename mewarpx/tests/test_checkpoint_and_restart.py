@@ -4,7 +4,11 @@ import os
 import numpy as np
 import pytest
 
-from mewarpx.utils_store import util as mwxutil
+from mewarpx.diags_store.checkpoint_diagnostic import CheckPointDiagnostic
+from mewarpx.diags_store.flux_diagnostic import FluxDiagFromFile
+from mewarpx.mwxrun import mwxrun
+from mewarpx.setups_store import diode_setup
+from mewarpx.utils_store import testing_util
 
 VOLTAGE = 25 # V
 CATHODE_TEMP = 1100 + 273.15 # K
@@ -23,10 +27,10 @@ P_INERT = 10
 
 def get_run():
     """Utility function to get the same run setup for all tests below."""
-    from mewarpx.setups_store import diode_setup
 
     # Initialize and import only when we know dimension
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR='XZ',
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
         V_ANODE_CATHODE=VOLTAGE,
@@ -58,11 +62,6 @@ def get_run():
 
 def test_create_checkpoints():
 
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.diags_store.checkpoint_diagnostic import CheckPointDiagnostic
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.utils_store import testing_util
-
     testing_util.initialize_testingdir("test_create_checkpoints")
 
     # use a fixed random seed
@@ -90,11 +89,6 @@ def test_create_checkpoints():
 
 
 def test_create_checkpoints_with_fluxdiag():
-
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.diags_store.checkpoint_diagnostic import CheckPointDiagnostic
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.utils_store import testing_util
 
     testing_util.initialize_testingdir("test_create_checkpoints_with_fluxdiag")
 
@@ -139,10 +133,6 @@ def test_create_checkpoints_with_fluxdiag():
 def test_restart_from_checkpoint(caplog, force, files_exist):
 
     caplog.set_level(logging.WARNING)
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.utils_store import testing_util
-
     testing_util.initialize_testingdir(
         f"test_restart_from_checkpoint_{force}_{files_exist}"
     )
@@ -196,10 +186,6 @@ def test_restart_from_checkpoint(caplog, force, files_exist):
 
 def test_extra_steps_after_restart():
 
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.utils_store import testing_util
-
     testing_util.initialize_testingdir("test_extra_steps_after_restart")
 
     # use a fixed random seed
@@ -237,11 +223,6 @@ def test_extra_steps_after_restart():
 
 
 def test_checkpoints_fluxdiag():
-
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.diags_store.flux_diagnostic import FluxDiagFromFile
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.utils_store import testing_util
 
     testing_util.initialize_testingdir("test_checkpoints_fluxdiag")
 

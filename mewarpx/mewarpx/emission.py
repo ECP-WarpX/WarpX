@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numba
 import numpy as np
 from pywarpx import callbacks, picmi
+import scipy.stats
 import skimage.measure
 
 from mewarpx.mespecies import Species
@@ -112,7 +113,7 @@ class Injector(object):
         self._injectedparticles_data = appendablearray.AppendableArray(
             typecode='d', unitshape=[len(fieldlist)])
 
-    def record_injectedparticles(self, species, w, E_total=None,
+    def record_injectedparticles(self, species, w=0, E_total=None,
                                  n=None):
         """Handles transforming raw particle information to the information
         used to record particles as a function of time. Also handles parallel
@@ -121,7 +122,9 @@ class Injector(object):
         Note:
             Assumes the fixed form of fields given in Injector().  Doesn't
             check since this is called many times.
-            Since a parallelsum is performed, call this with only the species
+            Since a parallelsum is performed on ``_injectedparticles_data``
+            when calling ``get_injectedparticles``, this function has to be
+            called by all processors. Call this function with only the species
             argument if no particles are being added by this processor.
 
         Arguments:
@@ -138,7 +141,9 @@ class Injector(object):
             raise RuntimeError("Cannot pass array for w and specify n")
 
         if n is None and np.size(w) == 1:
-            raise RuntimeError("Cannot pass single value for w and not specify n")
+            raise RuntimeError(
+                "Cannot pass single value for w and not specify n"
+            )
 
         data = np.zeros(7)
 
@@ -1256,7 +1261,7 @@ class XPlaneEmitter(Emitter):
         y_range = self.bounds[1] - self.bounds[0]
         z_range = self.bounds[3] - self.bounds[2]
         if self.solver_geom == 'XZ':
-            print("y span is 1m for purposes of charge injection")
+            logger.info("y span is 1m for purposes of charge injection")
             y_range = 1.
         self.area = y_range * z_range
 
@@ -1690,7 +1695,7 @@ class ArbitraryEmitter2D(Emitter):
                       * self.dvec[self.contour_idx, :]))
 
         x = np.asarray(positions[:, 0], order="C")
-        y = np.asarray(0., order="C")
+        y = np.asarray([0.]*npart, order="C")
         z = np.asarray(positions[:, 1], order="C")
 
         if rseed is not None:
@@ -2000,4 +2005,47 @@ class ZSinDistributionVolumeEmitter(VolumeEmitter):
             * (self.bounds[2, 1] - self.bounds[2, 0])
             + self.bounds[2, 0]
         )
+        return np.array([xpos, ypos, zpos]).T
+
+
+class XGaussZSinDistributionVolumeEmitter(VolumeEmitter):
+
+    """Vary density in z as a half-period sin wave, and density in x as a
+    Gaussian."""
+
+    geoms = ['XZ']
+
+    def __init__(self, x_sigma, *args, **kwargs):
+        super(XGaussZSinDistributionVolumeEmitter, self).__init__(
+            *args, **kwargs)
+        if x_sigma <= 0:
+            raise ValueError(
+                f"x_sigma must be greater than 0, not {{x_sigma}}."
+            )
+
+        # Domain width in x
+        x_width = self.bounds[0, 1] - self.bounds[0, 0]
+        # The number of standard deviations to truncate at, half the domain
+        # away from the center of the simulation
+        trunc = (x_width/2.0) / x_sigma
+        mu = (self.bounds[0, 1] + self.bounds[0, 0])/2.0
+
+        self.truncnorm = scipy.stats.truncnorm(a=-trunc, b=trunc,
+                                               loc=mu, scale=x_sigma)
+
+    def _get_x_coords(self, npart):
+        """Get coordinates with sin distribution in z and Guassian in x.
+
+        rseed, if used, is handled by the parent function.
+        """
+        xpos = self.truncnorm.rvs(npart)
+        ypos = np.random.uniform(self.bounds[1, 0], self.bounds[1, 1], npart)
+
+        z_random_draw = np.random.random(npart)
+        zpos = (
+            np.arccos(1 - 2.0*z_random_draw) / np.pi
+            * (self.bounds[2, 1] - self.bounds[2, 0])
+            + self.bounds[2, 0]
+        )
+
         return np.array([xpos, ypos, zpos]).T

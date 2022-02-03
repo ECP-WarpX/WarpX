@@ -1,5 +1,6 @@
 CEXE_sources += SpectralBaseAlgorithm.cpp
 CEXE_sources += PsatdAlgorithm.cpp
+CEXE_sources += PsatdAlgorithmMultiJ.cpp
 CEXE_sources += PMLPsatdAlgorithm.cpp
 CEXE_sources += ComovingPsatdAlgorithm.cpp
 

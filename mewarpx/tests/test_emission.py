@@ -6,21 +6,17 @@ from matplotlib.pyplot import plot
 import numpy as np
 import pandas
 import pytest
+from pywarpx import picmi
 
-from mewarpx.utils_store import util as mwxutil
+from mewarpx import assemblies, emission, mespecies
+from mewarpx.mwxrun import mwxrun
+from mewarpx.setups_store import diode_setup
+from mewarpx.utils_store import testing_util
+import mewarpx.utils_store.mwxconstants as constants
 
 
 def test_thermionic_emission():
     name = "thermionicEmission"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-    import mewarpx.utils_store.mwxconstants as constants
-
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -45,7 +41,7 @@ def test_thermionic_emission():
     diag_steps = int(DIAG_INTERVAL / DT)
 
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
+        GEOM_STR='XZ',
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
         V_ANODE_CATHODE=VOLTAGE,
@@ -80,15 +76,6 @@ def test_thermionic_emission():
 
 def test_thermionic_emission_with_Schottky():
     name = "thermionicEmissionSchottky"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-    import mewarpx.utils_store.mwxconstants as constants
-
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -113,6 +100,7 @@ def test_thermionic_emission_with_Schottky():
     diag_steps = int(DIAG_INTERVAL / DT)
 
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR='XZ',
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
         USE_SCHOTTKY=True,
@@ -148,12 +136,6 @@ def test_thermionic_emission_with_Schottky():
 
 def test_vacuum_thermionic_diode():
     name = "vacuum_thermionic_diode"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -181,15 +163,6 @@ def test_vacuum_thermionic_diode():
 
 def test_thermionic_emission_disc_rz():
     name = "thermionicEmissionDiscRZ"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=True)
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-    import mewarpx.utils_store.mwxconstants as constants
-
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -214,6 +187,7 @@ def test_thermionic_emission_disc_rz():
     diag_steps = int(DIAG_INTERVAL / DT)
 
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR='RZ',
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
         V_ANODE_CATHODE=VOLTAGE,
@@ -248,13 +222,6 @@ def test_thermionic_emission_disc_rz():
 
 def test_circle_emitter():
     name = "circleEmitter"
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-    from pywarpx import picmi
-
-    from mewarpx import assemblies, emission, mespecies
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -264,21 +231,21 @@ def test_circle_emitter():
     np.random.seed(671237741)
 
     #####################################
-    # embedded boundary, grid, and solver
+    # grid, solver and embedded boundary
     #####################################
+
+    mwxrun.init_grid(
+        lower_bound=[0, 0], upper_bound=[0.6, 1], number_of_cells=[20, 20],
+        min_tiles=16
+    )
+    solver = picmi.ElectrostaticSolver(
+        grid=mwxrun.grid, method='Multigrid', required_precision=1e-6
+    )
 
     T_cylinder = 2173.15 # K
     cylinder = assemblies.InfCylinderY(
         center_x=0.2, center_z=0.4, radius=0.1, V=0, T=T_cylinder,
         WF=1.2, name='circle'
-    )
-
-    mwxrun.init_grid(
-        lower_bound=[0, 0], upper_bound=[0.6, 1], number_of_cells=[20, 20],
-        min_tiles=4
-    )
-    solver = picmi.ElectrostaticSolver(
-        grid=mwxrun.grid, method='Multigrid', required_precision=1e-6
     )
 
     #################################
@@ -326,13 +293,6 @@ def test_circle_emitter():
 
 def test_xplane_emitter():
     name = "xplaneEmitter"
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-    from pywarpx import picmi
-
-    from mewarpx import assemblies, emission, mespecies
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -342,22 +302,21 @@ def test_xplane_emitter():
     np.random.seed(277812124)
 
     #####################################
-    # embedded boundary, grid, and solver
+    # grid, solver and embedded boundary
     #####################################
-
-    T_rectangle = 2173.15 # K
-
-    rectangle = assemblies.Rectangle(
-        center_x=0.15, center_z=0.4, length_x=0.2, length_z=0.4, V=0,
-        T=T_rectangle, WF=1.2, name="rectangle")
 
     mwxrun.init_grid(
         lower_bound=[0, 0], upper_bound=[0.6, 1.0], number_of_cells=[20, 20],
-        min_tiles=4
+        min_tiles=16
     )
     solver = picmi.ElectrostaticSolver(
         grid=mwxrun.grid, method='Multigrid', required_precision=1e-6
     )
+
+    T_rectangle = 2173.15 # K
+    rectangle = assemblies.Rectangle(
+        center_x=0.15, center_z=0.4, length_x=0.2, length_z=0.4, V=0,
+        T=T_rectangle, WF=1.2, name="rectangle")
 
     #################################
     # physics components
@@ -397,13 +356,6 @@ def test_xplane_emitter():
 
 def test_zcylinder_emitter():
     name = "zcylinderEmitter"
-    mwxutil.init_libwarpx(ndim=2, rz=True)
-    from pywarpx import picmi
-
-    from mewarpx import assemblies, emission, mespecies
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -413,12 +365,12 @@ def test_zcylinder_emitter():
     np.random.seed(27781552)
 
     #####################################
-    # embedded boundary, grid, and solver
+    # grid, solver and embedded boundary
     #####################################
 
     mwxrun.init_grid(
         lower_bound=[0, 0], upper_bound=[0.6, 1.0], number_of_cells=[20, 20],
-        min_tiles=4
+        min_tiles=16, use_rz=True
     )
     solver = picmi.ElectrostaticSolver(
         grid=mwxrun.grid, method='Multigrid', required_precision=1e-6
@@ -468,13 +420,6 @@ def test_zcylinder_emitter():
 
 def test_rectangle_emitter():
     name = "rectangleEmitter"
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-    from pywarpx import picmi
-
-    from mewarpx import assemblies, emission, mespecies
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -484,21 +429,21 @@ def test_rectangle_emitter():
     np.random.seed(274737523)
 
     #####################################
-    # embedded boundary, grid, and solver
+    # grid, solver and embedded boundary
     #####################################
+
+    mwxrun.init_grid(
+        lower_bound=[0, 0], upper_bound=[0.6, 1], number_of_cells=[20, 20],
+        min_tiles=16
+    )
+    solver = picmi.ElectrostaticSolver(
+        grid=mwxrun.grid, method='Multigrid', required_precision=1e-6
+    )
 
     T_rectangle = 2173.15 # K
     rectangle = assemblies.Rectangle(
         center_x=0.2, center_z=0.4, length_x=0.2, length_z=0.4, V=0,
         T=T_rectangle, WF=1.2, name="rectangle")
-
-    mwxrun.init_grid(
-        lower_bound=[0, 0], upper_bound=[0.6, 1], number_of_cells=[20, 20],
-        min_tiles=4
-    )
-    solver = picmi.ElectrostaticSolver(
-        grid=mwxrun.grid, method='Multigrid', required_precision=1e-6
-    )
 
     #################################
     # physics components
@@ -545,14 +490,6 @@ def test_rectangle_emitter():
 
 def test_plasma_injector():
     name = "plasmainjector"
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-    from pywarpx import picmi
-
-    from mewarpx import assemblies, emission
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -562,7 +499,7 @@ def test_plasma_injector():
     np.random.seed(11874889)
 
     run = diode_setup.DiodeRun_V1(
-        PERIOD=0.8e-06*256, D_CA=0.8e-06*256, DT=1e-12,
+        GEOM_STR='XZ', PERIOD=0.8e-06*256, D_CA=0.8e-06*256, DT=1e-12,
         TOTAL_TIMESTEPS=3
     )
 
@@ -572,11 +509,14 @@ def test_plasma_injector():
         conductor=run.cathode, T=run.CATHODE_TEMP, ymin=0.0, ymax=0.0,
         transverse_fac=1.0,
     )
+    volemitter_uniform = emission.UniformDistributionVolumeEmitter(
+        T=1550, zmin=0, zmax=run.D_CA,
+    )
     volemitter = emission.ZSinDistributionVolumeEmitter(
         T=1550, zmin=0, zmax=run.D_CA,
     )
-    volemitter_uniform = emission.UniformDistributionVolumeEmitter(
-        T=1550, zmin=0, zmax=run.D_CA,
+    volemitter_gauss = emission.XGaussZSinDistributionVolumeEmitter(
+        T=1550, zmin=0, zmax=run.D_CA, x_sigma=100e-6
     )
 
     # Test under-specified error
@@ -612,7 +552,7 @@ def test_plasma_injector():
             ionization_frac=0.1, P_neutral=3, T_neutral=800,
         )
 
-    # Three real injectors
+    # Four real injectors
     # Volume emission with spec'd plasma_density
     emission.PlasmaInjector(
         emitter=volemitter, species1=run.electrons, species2=run.ions,
@@ -623,6 +563,11 @@ def test_plasma_injector():
         emitter=volemitter_uniform, species1=run.electrons, species2=run.ions,
         npart=5000, ionization_frac=0.001, P_neutral=3, T_neutral=800,
         injectoffset=2, name='ionization_frac_based',
+    )
+    # Guassian emitter
+    emission.PlasmaInjector(
+        emitter=volemitter_gauss, species1=run.electrons, species2=run.ions,
+        npart=2000, plasma_density=1e19,
     )
     # Surface emission
     with pytest.warns(UserWarning,
@@ -670,13 +615,6 @@ def test_plasma_injector():
 
 def test_plasma_injector_fixedT2():
     name = "plasmainjector_fixedT2"
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-
-    from mewarpx import emission
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -686,7 +624,7 @@ def test_plasma_injector_fixedT2():
     np.random.seed(11874889)
 
     run = diode_setup.DiodeRun_V1(
-        PERIOD=0.8e-06*256, D_CA=0.8e-06*256, DT=1e-12,
+        GEOM_STR='XZ', PERIOD=0.8e-06*256, D_CA=0.8e-06*256, DT=1e-12,
         TOTAL_TIMESTEPS=3
     )
 

@@ -2,21 +2,19 @@ import logging
 import os
 import re
 
+import dill
 import numpy as np
 import pandas
 
+from mewarpx.diags_store import flux_diagnostic, timeseries
+from mewarpx.mwxrun import mwxrun
+from mewarpx.setups_store import diode_setup
+from mewarpx.utils_store import testing_util
 from mewarpx.utils_store import util as mwxutil
 
 
 def test_timeseries():
     name = "timeseries"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=False)
-    from mewarpx.diags_store import timeseries
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -47,17 +45,6 @@ def test_timeseries():
 
 def test_injector_flux_diagnostic():
     name = "injectorfluxDiagnostic"
-    dim = 2
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=False)
-    import dill
-
-    from mewarpx.diags_store import flux_diagnostic
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -87,7 +74,7 @@ def test_injector_flux_diagnostic():
     diag_steps = int(DIAG_INTERVAL / DT)
 
     run = diode_setup.DiodeRun_V1(
-        dim=dim,
+        GEOM_STR='XZ',
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
         V_ANODE_CATHODE=VOLTAGE,
@@ -160,12 +147,6 @@ def test_injector_flux_diagnostic():
 def test_flux_diag_accuracy(caplog):
     caplog.set_level(logging.INFO)
     name = "FluxDiagRun"
-    mwxutil.init_libwarpx(ndim=2, rz=False)
-    from mewarpx.diags_store import flux_diagnostic
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-
     testing_util.initialize_testingdir(name)
 
     # Initialize each run with consistent, randomly-chosen, rseed. For initial
@@ -195,9 +176,10 @@ def test_flux_diag_accuracy(caplog):
 
     # Run with relatively large bias to have stronger signals.
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR='XZ',
         CATHODE_TEMP=CATHODE_TEMP,
         CATHODE_PHI=CATHODE_PHI,
-        V_ANODE_CATHODE=4.,
+        V_ANODE_CATHODE=20.,
         D_CA=D_CA,
         P_INERT=P_INERT,
         T_INERT=T_INERT,
@@ -213,6 +195,7 @@ def test_flux_diag_accuracy(caplog):
     )
 
     run.setup_run(
+        init_mcc=True,
         init_runinfo=True
     )
     run.fluxdiag = flux_diagnostic.FluxDiagnostic(
@@ -235,15 +218,18 @@ def test_flux_diag_accuracy(caplog):
     # Check expected print output
     # Match a pattern to allow for numbers to change
     pattern = (
-        r"""THIS DIAGNOSTIC PERIOD:
-Cathode Electrons Current Emitted: -4\.5\d* A/cm\^2
-Cathode Electrons Current Collected: 4\.[0123]\d* A/cm\^2
-Cathode Electrons Current Net: -0\.[234]\d* A/cm\^2
-Anode Electrons Current Collected: 0\.3\d* A/cm\^2
+        r"""Cathode Electrons Current Emitted: -4\.5\d* A/cm\^2
+Cathode Electrons Current Collected: 2\.[0-3]\d* A/cm\^2
+Cathode Electrons Current Net: -2\.[234]\d* A/cm\^2
+Cathode Ar_Ions Current Collected: 0 A/cm\^2
+Anode Electrons Current Collected: 2\.[123]\d* A/cm\^2
+Anode Ar_Ions Current Collected: 0 A/cm\^2
+mcc Electrons Current Emitted: -0\.0\d* A/cm\^2
+mcc Ar_Ions Current Emitted: 0\.0\d* A/cm\^2
 Total Current Emitted: -4\.5\d* A/cm\^2
-Total Current Collected: 4\.[456]\d* A/cm\^2
+Total Current Collected: 4\.[3-8]\d* A/cm\^2
 Total Current Net: -?0\.[01]\d* A/cm\^2
-Total Power Net: -[01]\.[019]\d* W/cm\^2 """
+Total Power Net: -4[0-7]\.\d* W/cm\^2 """
     ).replace("\n", " ")
 
     match = re.search(pattern, all_log_output.replace("\n", " "))
@@ -263,6 +249,7 @@ Total Power Net: -[01]\.[019]\d* W/cm\^2 """
         'diags/fluxes/fluxdata_0000000100.dpkl',
         'diags/fluxes/fluxdata_0000000200.dpkl',
         'diags/fluxes/fluxdata_0000000300.dpkl',
+        'diags/fluxes/mcc_electrons_ar_ions_injected.csv',
         'diags/fluxes/thermionic_injector_electrons_injected.csv',
     ]
 
@@ -298,6 +285,8 @@ Total Power Net: -[01]\.[019]\d* W/cm\^2 """
             ('scrape', 'cathode', 'electrons')].get_averagevalue_by_key(fluxtype)
         df['scrape_anode_' + fluxtype] = run.fluxdiag.fullhist_dict[
             ('scrape', 'anode', 'electrons')].get_averagevalue_by_key(fluxtype)
+        df['mcc_' + fluxtype] = run.fluxdiag.fullhist_dict[
+            ('inject', 'mcc', 'electrons')].get_averagevalue_by_key(fluxtype)
 
     assert testing_util.test_df_vs_ref(name, df)
 
@@ -322,17 +311,6 @@ Total Power Net: -[01]\.[019]\d* W/cm\^2 """
 
     reftext = fluxdiag_2.print_fluxes(fluxdiag_2.ts_dict)
     print(reftext)
-
-    pattern = (
-        r"""Cathode Electrons Current Emitted: -4\.5\d* A/cm\^2
-Cathode Electrons Current Collected: 4\.[0123]\d* A/cm\^2
-Cathode Electrons Current Net: -0\.[234]\d* A/cm\^2
-Anode Electrons Current Collected: 0\.3\d* A/cm\^2
-Total Current Emitted: -4\.5\d* A/cm\^2
-Total Current Collected: 4\.[456]\d* A/cm\^2
-Total Current Net: -?0\.[01]\d* A/cm\^2
-Total Power Net: -[01]\.[019]\d* W/cm\^2 """
-    ).replace("\n", " ")
 
     match = re.search(pattern, reftext.replace("\n", " "))
 

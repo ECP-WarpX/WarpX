@@ -11,7 +11,6 @@ from mewarpx.diags_store import (field_diagnostic, flux_diagnostic,
                                  particle_diagnostic)
 from mewarpx.mwxrun import mwxrun
 from mewarpx.sim_control import SimControl
-from mewarpx.utils_store import util as mwxutil
 
 logger = logging.getLogger(__name__)
 
@@ -169,16 +168,16 @@ class DiodeRun_V1(object):
     # steps between doing load-balancing. If <1 load balancing will not be done
     LOAD_BALANCE_INTERVALS = 0
 
-    def __init__(self, **kwargs):
+    def __init__(self, GEOM_STR, **kwargs):
+        # the geometry string must be passed in
+        self.geom_str = GEOM_STR
+        self.rz = (self.geom_str == 'RZ')
+
+        dim_map = {'Z': 1, 'XZ': 2, 'RZ': 2, 'XYZ': 3}
+        self.dim = dim_map[self.geom_str]
+
         for kw, value in kwargs.items():
             setattr(self, kw, value)
-
-        self.dim = mwxrun.dim
-        if self.dim not in [1, 2, 3]:
-            raise ValueError(f"Unavailable dimension {self.dim}")
-        self.rz = mwxrun.geom_str == 'RZ'
-        if self.dim != 2 and self.rz:
-            raise ValueError("dim=2 required for RZ")
 
         if self.dim == 2 and self.PERIOD is None:
             # This gives equal spacing in x & z
@@ -316,8 +315,6 @@ class DiodeRun_V1(object):
                 self.NY = int(round(self.PERIOD/self.RES_LENGTH))
 
         # create the grid
-        grid_kwargs = {"min_tiles": self.MIN_TILES}
-
         if self.dim == 1:
             lower_bound = [zmin]
             upper_bound = [zmax]
@@ -334,7 +331,8 @@ class DiodeRun_V1(object):
 
         mwxrun.init_grid(
             lower_bound=lower_bound, upper_bound=upper_bound,
-            number_of_cells=number_of_cells, **grid_kwargs
+            number_of_cells=number_of_cells, use_rz=self.rz,
+            min_tiles=self.MIN_TILES
         )
 
         self.DT = mwxrun.init_timestep(

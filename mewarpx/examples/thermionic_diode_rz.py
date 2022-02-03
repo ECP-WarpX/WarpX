@@ -3,10 +3,6 @@ import sys
 
 import numpy as np
 
-from mewarpx.utils_store import util as mwxutil
-
-mwxutil.init_libwarpx(ndim=2, rz=True)
-
 from mewarpx import emission
 from mewarpx.mwxrun import mwxrun
 from mewarpx.setups_store import diode_setup
@@ -21,6 +17,7 @@ def run_simulation(V_bias, steps, save_current):
     ####################################
 
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR='RZ',
         CATHODE_TEMP = 1100.0 + 273.15, # K
         CATHODE_A = 6e5, # A/m^2/K^2
         CATHODE_PHI = 2.11, # eV

@@ -5,31 +5,23 @@ import numpy as np
 import pytest
 import yt
 
-from mewarpx.utils_store import util as mwxutil
+from mewarpx.mwxrun import mwxrun
+from mewarpx.setups_store import diode_setup
+from mewarpx.utils_store import testing_util
 
 
 @pytest.mark.parametrize(
     ("name"),
     [
-        'Run2D_RZ',
-        'Run1D',
-        'Run2D',
+        'Run_RZ',
+        'Run_Z',
+        'Run_XZ',
         # 'Run3D'
     ]
 )
 @pytest.mark.filterwarnings("ignore::ResourceWarning")
 def test_capacitive_discharge_multigrid(caplog, name):
     caplog.set_level(logging.INFO)
-    basename = "Run"
-    use_rz = 'RZ' in name
-    dim = int(name.replace(basename, '')[0])
-
-    # Initialize and import only when we know dimension
-    mwxutil.init_libwarpx(ndim=dim, rz=use_rz)
-    from mewarpx.mwxrun import mwxrun
-    from mewarpx.setups_store import diode_setup
-    from mewarpx.utils_store import testing_util
-
     # Include a random run number to allow parallel runs to not collide. Using
     # python randint prevents collisions due to numpy rseed below
     testing_util.initialize_testingdir(name)
@@ -39,6 +31,8 @@ def test_capacitive_discharge_multigrid(caplog, name):
     # np.random.seed()
     np.random.seed(92160881)
 
+    GEOM_STR = name.split('_')[-1]
+
     # Specific numbers match older run for consistency
     FREQ = 13.56e6  # MHz
     DT = 1.0 / (400 * FREQ)
@@ -47,6 +41,7 @@ def test_capacitive_discharge_multigrid(caplog, name):
     VOLTAGE = 450.0
     D_CA = 0.067  # m
     run = diode_setup.DiodeRun_V1(
+        GEOM_STR=GEOM_STR,
         V_ANODE_CATHODE=VOLTAGE,
         V_ANODE_EXPRESSION="%.1f*sin(2*pi*%.5e*t)" % (VOLTAGE, FREQ),
         D_CA=D_CA,

@@ -3,10 +3,6 @@ Monte-Carlo Collision script based on Turner et al. (2013)
 https://doi.org/10.1063/1.4775084
 """
 
-from mewarpx.utils_store import util as mwxutil
-
-mwxutil.init_libwarpx(ndim=1, rz=False)
-
 import argparse
 from functools import partial
 import logging
