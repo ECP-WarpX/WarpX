@@ -561,9 +561,10 @@ struct InjectorMomentum
         }
     }
 
-private:
     enum struct Type { constant, custom, gaussian, gaussianflux, boltzmann, juttner, radial_expansion, parser};
     Type type;
+
+private:
 
     // An instance of union Object constructs and stores any one of
     // the objects declared (constant or custom or gaussian or

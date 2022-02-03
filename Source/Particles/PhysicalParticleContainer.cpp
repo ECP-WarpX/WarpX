@@ -1502,8 +1502,12 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Rotate the position
                 pos.x = xb*cos_theta;
                 pos.y = xb*sin_theta;
-                // Rotate the momentum
-                {
+                if (inj_mom->type == InjectorMomentum::Type::gaussianflux) {
+                    // Rotate the momentum
+                    // This because, when the flux direction is e.g. "r"
+                    // the `inj_mom` objects generates a v*Gaussian distribution
+                    // along the Cartesian "x" directionm by default. This
+                    // needs to be rotated along "r".
                     Real ur = u.x;
                     Real ut = u.y;
                     u.x = cos_theta*ur - sin_theta*ut;
