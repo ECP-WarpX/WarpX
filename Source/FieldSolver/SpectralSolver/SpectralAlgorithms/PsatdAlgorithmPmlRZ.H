@@ -4,19 +4,19 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PMLPSATD_ALGORITHM_RZ_H_
-#define WARPX_PMLPSATD_ALGORITHM_RZ_H_
+#ifndef WARPX_PSATD_ALGORITHM_PML_RZ_H_
+#define WARPX_PSATD_ALGORITHM_PML_RZ_H_
 
 #include "SpectralBaseAlgorithmRZ.H"
 
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
  */
-class PMLPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
+class PsatdAlgorithmPmlRZ : public SpectralBaseAlgorithmRZ
 {
 
     public:
-        PMLPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
+        PsatdAlgorithmPmlRZ (SpectralKSpaceRZ const & spectral_kspace,
                              amrex::DistributionMapping const & dm,
                              const SpectralFieldIndex& spectral_index,
                              int const n_rz_azimuthal_modes, int const norder_z,
@@ -69,4 +69,4 @@ class PMLPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         SpectralRealCoefficients C_coef, S_ck_coef;
 };
 
-#endif // WARPX_PMLPSATD_ALGORITHM_RZ_H_
+#endif // WARPX_PSATD_ALGORITHM_PML_RZ_H_

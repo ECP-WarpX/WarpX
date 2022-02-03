@@ -4,7 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "PMLPsatdAlgorithm.H"
+#include "PsatdAlgorithmPml.H"
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
@@ -29,7 +29,7 @@
 using namespace amrex;
 
 /* \brief Initialize coefficients for the update equation */
-PMLPsatdAlgorithm::PMLPsatdAlgorithm(const SpectralKSpace& spectral_kspace,
+PsatdAlgorithmPml::PsatdAlgorithmPml(const SpectralKSpace& spectral_kspace,
                                      const DistributionMapping& dm,
                                      const SpectralFieldIndex& spectral_index,
                                      const int norder_x, const int norder_y,
@@ -56,7 +56,7 @@ PMLPsatdAlgorithm::PMLPsatdAlgorithm(const SpectralKSpace& spectral_kspace,
 /* Advance the E and B field in spectral space (stored in `f`)
  * over one time step */
 void
-PMLPsatdAlgorithm::pushSpectralFields(SpectralFieldData& f) const {
+PsatdAlgorithmPml::pushSpectralFields(SpectralFieldData& f) const {
 
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
@@ -346,7 +346,7 @@ PMLPsatdAlgorithm::pushSpectralFields(SpectralFieldData& f) const {
     }
 }
 
-void PMLPsatdAlgorithm::InitializeSpectralCoefficients (
+void PsatdAlgorithmPml::InitializeSpectralCoefficients (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const amrex::Real dt)
@@ -402,7 +402,7 @@ void PMLPsatdAlgorithm::InitializeSpectralCoefficients (
 }
 
 void
-PMLPsatdAlgorithm::CurrentCorrection (const int /*lev*/,
+PsatdAlgorithmPml::CurrentCorrection (const int /*lev*/,
                                       SpectralFieldData& /*field_data*/,
                                       std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/,
                                       const std::unique_ptr<amrex::MultiFab>& /*rho*/)
@@ -411,7 +411,7 @@ PMLPsatdAlgorithm::CurrentCorrection (const int /*lev*/,
 }
 
 void
-PMLPsatdAlgorithm::VayDeposition (const int /*lev*/,
+PsatdAlgorithmPml::VayDeposition (const int /*lev*/,
                                   SpectralFieldData& /*field_data*/,
                                   std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {

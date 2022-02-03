@@ -1,5 +1,5 @@
-#ifndef WARPX_COMOVING_PSATD_ALGORITHM_H_
-#define WARPX_COMOVING_PSATD_ALGORITHM_H_
+#ifndef WARPX_PSATD_ALGORITHM_COMOVING_H_
+#define WARPX_PSATD_ALGORITHM_COMOVING_H_
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
@@ -19,14 +19,14 @@
 /* \brief Class that updates the field in spectral space and stores the coefficients
  * of the corresponding update equation, according to the comoving spectral scheme.
  */
-class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
+class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
 {
     public:
 
         /**
          * \brief Class constructor
          */
-        ComovingPsatdAlgorithm (const SpectralKSpace& spectral_kspace,
+        PsatdAlgorithmComoving (const SpectralKSpace& spectral_kspace,
                                 const amrex::DistributionMapping& dm,
                                 const SpectralFieldIndex& spectral_index,
                                 const int norder_x,
@@ -102,4 +102,4 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
 };
 
 #endif // WARPX_USE_PSATD
-#endif // WARPX_COMOVING_PSATD_ALGORITHM_H_
+#endif // WARPX_PSATD_ALGORITHM_COMOVING_H_
