@@ -209,8 +209,7 @@ MsgWithCounterAndRanks::deserialize (std::vector<char>::const_iterator&& it)
 Logger::Logger() :
     m_rank{amrex::ParallelDescriptor::MyProc()},
     m_num_procs{amrex::ParallelDescriptor::NProcs()},
-    m_io_rank{amrex::ParallelDescriptor::IOProcessorNumber()},
-    m_am_i_io{m_rank == m_io_rank}
+    m_io_rank{amrex::ParallelDescriptor::IOProcessorNumber()}
 {}
 
 void Logger::record_msg(Msg msg)
@@ -323,6 +322,7 @@ std::pair<int,int> Logger::find_gather_rank_and_its_msgs(int how_many_msgs) cons
     const auto num_msg =
         amrex::ParallelDescriptor::Gather(how_many_msgs, m_io_rank);
 
+    const auto m_am_i_io = (m_rank == m_io_rank);
     if (m_am_i_io){
         const auto it_max = std::max_element(num_msg.begin(), num_msg.end());
         max_items = *it_max;
