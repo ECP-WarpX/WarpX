@@ -288,7 +288,7 @@ int safeCastToInt(const amrex::Real x, const std::string& real_name) {
     std::string assert_msg;
     // (2.0*(numeric_limits<int>::max()/2+1)) converts numeric_limits<int>::max()+1 to a real ensuring accuracy to all digits
     // This accepts x = 2**31-1 but rejects 2**31.
-    if (x < (2.0*(std::numeric_limits<int>::max()/2+1))) {
+    if (x < (2.0*static_cast<double>(std::numeric_limits<int>::max()/2+1))) {
         if (std::ceil(x) >= std::numeric_limits<int>::min()) {
             result = static_cast<int>(x);
         } else {
