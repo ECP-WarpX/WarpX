@@ -12,7 +12,7 @@ The LXPLUS cluster is located at CERN.
     * Work folder: ``/afs/cern.ch/work/<a>/<account>`` (100GByte)
     * Eos storage: ``/eos/home-<a>/<account>`` (1T)
 
-Through LXPLUS we have access to CPU and GPU nodes (the latter equipped with NVIDIA A100 or T4 GPUs).
+Through LXPLUS we have access to CPU and GPU nodes (the latter equipped with NVIDIA V100).
 
 Installation
 ------------
@@ -80,7 +80,8 @@ If we are planning on running with GPU support then we must set the environment 
 
 .. code-block:: bash
 
-    SPACK_STACK_USE_CUDA=1 spack env create warpx-lxplus-cuda $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml
+    export SPACK_STACK_USE_CUDA=1
+    spack env create warpx-lxplus-cuda $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml
     spack env activate warpx-lxplus-cuda
 
 and if we want to use the python interface we must set the environment variable ``SPACK_STACK_USE_PYTHON``.
@@ -88,7 +89,9 @@ So if we want both CUDA-acceleration and build a Python interface, the environme
 
 .. code-block:: bash
 
-    SPACK_STACK_USE_PYTHON=1 SPACK_STACK_USE_CUDA=1 SPACK_STACK_USE_CUDA=1 spack env create warpx-lxplus-cuda-py $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml
+    export SPACK_STACK_USE_PYTHON=1
+    export SPACK_STACK_USE_CUDA = 1
+    spack env create warpx-lxplus-cuda-py $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml
     spack env activate warpx-lxplus-cuda-py
 
 Then we can install the required packages:
