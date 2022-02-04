@@ -18,7 +18,7 @@ using namespace Utils;
 using namespace Utils::MsgLogger;
 
 WarnManager::WarnManager():
-    m_rank{m_rank = amrex::ParallelDescriptor::MyProc()},
+    m_rank{amrex::ParallelDescriptor::MyProc()},
     m_p_logger{std::make_unique<Logger>()}
 {}
 
