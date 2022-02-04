@@ -38,12 +38,6 @@ spack:
     ncurses:
       # This is needed for any build of ncurses on lxplus, due to its AFS filesystem
       variants: +symlinks
-    openmpi:
-      version: [3.1.0]
-      externals:
-      - spec: "openmpi@3.1.0"
-        prefix: /cvmfs/sft.cern.ch/lcg/releases/openmpi/3.1.0-37032/x86_64-centos7-gcc11-opt/
-      buildable: False
 
   compilers:
   - compiler:
