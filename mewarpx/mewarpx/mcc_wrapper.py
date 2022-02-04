@@ -187,8 +187,8 @@ class MCC(Injector):
         if self.injector_diag is None:
             return
 
-        self.prior_weight = self.ion_species.get_total_weight()
-        self.prior_count = self.ion_species.get_particle_count()
+        self.prior_weight = self.ion_species.get_total_weight(local=True)
+        self.prior_count = self.ion_species.get_particle_count(local=True)
 
     def _get_particle_data_after(self):
         """Function to collect particle data after collisions happen."""
@@ -199,11 +199,11 @@ class MCC(Injector):
         # since ``emission.Injector.get_injectedparticles()`` performs a
         # parallel sum over the injected particle data.
         injected_weight = (
-            self.ion_species.get_total_weight() - self.prior_weight
-        ) / mwxrun.n_procs
+            self.ion_species.get_total_weight(local=True) - self.prior_weight
+        )
         injected_count = (
-            self.ion_species.get_particle_count() - self.prior_count
-        ) / mwxrun.n_procs
+            self.ion_species.get_particle_count(local=True) - self.prior_count
+        )
 
         self.record_injectedparticles(
             species=self.electron_species,

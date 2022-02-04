@@ -58,15 +58,17 @@ class Species(picmi.Species):
         # add a callback to initialize the extra PIDs after sim init
         callbacks.installafterinit(self.init_pid_dict)
 
-    def get_particle_count(self):
+    def get_particle_count(self, local=False):
         """Function to get the total number of macroparticles of this species
-        currently in the simulation."""
-        return mwxrun.sim_ext.get_particle_count(self.name)
+        currently in the simulation. If `local` is set to True the particle
+        count on this processor will be returned."""
+        return mwxrun.sim_ext.get_particle_count(self.name, local)
 
-    def get_total_weight(self):
+    def get_total_weight(self, local=False):
         """Function to get the total weight of particles of this species
-        currently in the simulation."""
-        return mwxrun.sim_ext.get_species_charge_sum(self.name) / self.sq
+        currently in the simulation. If `local` is set to True the particle
+        weight on this processor will be returned."""
+        return mwxrun.sim_ext.get_species_charge_sum(self.name, local) / self.sq
 
     def init_pid_dict(self):
         """Function to build a list of all the extra particle attributes

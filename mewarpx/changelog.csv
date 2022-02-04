@@ -1,5 +1,5 @@
 Version, Physics version, Date,        List of changes
-7.0.0, 2, In progress, "
+7.0.0, 2, 2/3/2022, "
 
 **API Changes**:
 
@@ -21,14 +21,14 @@ Version, Physics version, Date,        List of changes
 
 **Other changes**:
 
-- Merge ``upstream/development`` (git hash ``6cf7d7b``) into memaster.
+- Merge ``upstream/development`` (git hash ``9263e6a``) into memaster.
 
 **Bugfixes**:
 
 - :class:`mewarpx.emission.ArbitraryEmitter2D` can now handle injecting fewer
   particles than the processor count per step.
-- Injected particle weight and number from MCC is now divided by the processor
-  count since this data is summed across processors in
+- Injected particle weight and number from MCC is now collected per processor
+  since this data is summed across processors in
   :func:`mewarpx.emission.Injector.get_injectedparticles()`.
 
 "

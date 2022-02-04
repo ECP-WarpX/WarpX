@@ -27,6 +27,8 @@ __pycache__
 Python/build/
 Python/dist/
 Python/pywarpx.egg-info/
+_tmppythonbuild/
+pywarpx.egg-info/
 
 ##########
 # Sphinx #
