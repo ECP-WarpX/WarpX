@@ -280,10 +280,10 @@ namespace MsgLogger{
 
 #endif
 
-        int m_rank = 0         /*! MPI rank of the current process*/;
-        int m_num_procs = 0    /*! Number of MPI ranks*/;
-        int m_io_rank = 0      /*! Rank of the I/O process*/;
-        bool m_am_i_io = false /*! Flag to store if the process is responsible for I/O*/;
+        int m_rank = 0                          /*! MPI rank of the current process*/;
+        int m_num_procs = 0                     /*! Number of MPI ranks*/;
+        int m_io_rank = 0                       /*! Rank of the I/O process*/;
+        [[maybe_unused]] bool m_am_i_io = false /*! Flag to store if the process is responsible for I/O*/;
 
         std::map<Msg, std::int64_t> m_messages /*! This stores a map to associate warning messages with the corresponding counters*/;
     };
