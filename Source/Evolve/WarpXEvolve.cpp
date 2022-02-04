@@ -375,6 +375,15 @@ WarpX::OneStep_nosub (Real cur_time)
     // Deposit current j^{n+1/2}
     // Deposit charge density rho^{n}
 
+    if(istep[0]+1==end_fine_patch_step){
+        SyncCurrent();
+        SyncRho();
+        const int fine_lev = 1;
+        const int coarse_lev = 0;
+        regrid(coarse_lev, cur_time);
+        Print() << "Remove the patch" << '\n';
+    }
+
     ExecutePythonCallback("particlescraper");
     ExecutePythonCallback("beforedeposition");
 
@@ -382,9 +391,12 @@ WarpX::OneStep_nosub (Real cur_time)
 
     ExecutePythonCallback("afterdeposition");
 
+
+
     // Synchronize J and rho
     SyncCurrent();
     SyncRho();
+
 
     // Apply current correction in Fourier space: for periodic single-box global FFTs
     // without guard cells, apply this after calling SyncCurrent
@@ -484,9 +496,6 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryB(guard_cells.ng_alloc_EB);
     } // !PSATD
 
-    if(istep[0]+1==end_fine_patch_step){
-        ClearLevel(finest_level);
-    }
 
     ExecutePythonCallback("afterEsolve");
 }
@@ -668,6 +677,13 @@ WarpX::OneStep_sub1 (Real curtime)
     const int fine_lev = 1;
     const int coarse_lev = 0;
 
+    if(istep[0]+1==end_fine_patch_step){
+        SyncCurrent();
+        SyncRho();
+        regrid(coarse_lev, curtime);
+        Print() << "Remove the patch" << '\n';
+    }
+
     // i) Push particles and fields on the fine patch (first fine step)
     PushParticlesandDepose(fine_lev, curtime, DtType::FirstHalf);
     RestrictCurrentFromFineToCoarsePatch(fine_lev);
@@ -799,10 +815,6 @@ WarpX::OneStep_sub1 (Real curtime)
     if ( safe_guard_cells )
         FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 
-    if(istep[0]+1==end_fine_patch_step){
-        ClearLevel(finest_level);
-        do_subcycling = 0;
-    }
 }
 
 void

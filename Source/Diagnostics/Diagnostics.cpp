@@ -323,10 +323,9 @@ Diagnostics::ComputeAndPack ()
     PrepareParticleDataForOutput();
 
     auto & warpx = WarpX::GetInstance();
-
     // compute the necessary fields and store result in m_mf_output.
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        for(int lev=0; lev<nlev_output; lev++){
+        for(int lev=0; lev < warpx.finestLevel() + 1; lev++){
             int icomp_dst = 0;
             for (int icomp=0, n=m_all_field_functors[lev].size(); icomp<n; icomp++){
                 // Call all functors in m_all_field_functors[lev]. Each of them computes
