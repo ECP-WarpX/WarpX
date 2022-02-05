@@ -118,7 +118,7 @@ BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> const& mcc_processe
     using namespace amrex::literals;
     amrex::Real nu, nu_max = 0.0;
 
-    for (double E = 1e-4; E < 5000; E+=0.2) {
+    for (amrex::Real E = 1e-4_rt; E < 5000._rt; E+=0.2_rt) {
         amrex::Real sigma_E = 0.0;
 
         // loop through all collision pathways

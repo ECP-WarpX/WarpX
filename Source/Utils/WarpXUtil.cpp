@@ -109,7 +109,7 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
     ParmParse pp_warpx("warpx");
     queryWithParser(pp_warpx, "gamma_boost", gamma_boost);
     if( gamma_boost > 1. ) {
-        beta_boost = std::sqrt(1.-1./pow(gamma_boost,2));
+        beta_boost = std::sqrt(1._rt-1._rt/std::pow(gamma_boost,2._rt));
         std::string s;
         pp_warpx.get("boost_direction", s);
         if (s == "x" || s == "X") {
@@ -184,7 +184,7 @@ void ConvertLabParamsToBoost()
         if (boost_direction[dim_map[idim]]) {
             amrex::Real convert_factor;
             // Assume that the window travels with speed +c
-            convert_factor = 1./( gamma_boost * ( 1 - beta_boost ) );
+            convert_factor = 1._rt/( gamma_boost * ( 1 - beta_boost ) );
             prob_lo[idim] *= convert_factor;
             prob_hi[idim] *= convert_factor;
             if (max_level > 0){
@@ -221,11 +221,11 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
         const amrex::Box& bx = mfi.tilebox();
         // Get box lower and upper physical z bound, and dz
 #if defined(WARPX_DIM_3D)
-            amrex::Array<amrex::Real,3> galilean_shift = { 0., 0., 0., };
+            amrex::Array<amrex::Real,3> galilean_shift = { 0._rt, 0._rt, 0._rt, };
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            amrex::Array<amrex::Real,3> galilean_shift = { 0., std::numeric_limits<Real>::quiet_NaN(),  0., } ;
+            amrex::Array<amrex::Real,3> galilean_shift = { 0._rt, std::numeric_limits<amrex::Real>::quiet_NaN(),  0._rt, } ;
 #elif defined(WARPX_DIM_1D_Z)
-            amrex::Array<amrex::Real,3> galilean_shift = {std::numeric_limits<Real>::quiet_NaN(), std::numeric_limits<Real>::quiet_NaN(),  0., } ;
+            amrex::Array<amrex::Real,3> galilean_shift = {std::numeric_limits<amrex::Real>::quiet_NaN(), std::numeric_limits<amrex::Real>::quiet_NaN(),  0._rt, } ;
 #endif
         const amrex::Real zmin_box = WarpX::LowerCorner(bx, galilean_shift, lev)[2];
         const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev)[2];
@@ -385,7 +385,7 @@ parseStringtoReal(std::string str)
 int
 parseStringtoInt(std::string str, std::string name)
 {
-    amrex::Real rval = parseStringtoReal(str);
+    auto const rval = static_cast<amrex::Real>(parseStringtoReal(str));
     int ival = safeCastToInt(std::round(rval), name);
     return ival;
 }
@@ -459,7 +459,7 @@ queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::v
         int const n = static_cast<int>(tmp_str_arr.size());
         val.resize(n);
         for (int i=0 ; i < n ; i++) {
-            val[i] = parseStringtoReal(tmp_str_arr[i]);
+            val[i] = static_cast<amrex::Real>(parseStringtoReal(tmp_str_arr[i]));
         }
     }
     // return the same output as amrex::ParmParse::query
@@ -477,7 +477,7 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
     int const n = static_cast<int>(tmp_str_arr.size());
     val.resize(n);
     for (int i=0 ; i < n ; i++) {
-        val[i] = parseStringtoReal(tmp_str_arr[i]);
+        val[i] = static_cast<amrex::Real>(parseStringtoReal(tmp_str_arr[i]));
     }
 }
 
