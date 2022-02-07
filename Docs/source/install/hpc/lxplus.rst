@@ -37,18 +37,17 @@ The easiest way to install the dependencies is to use the pre-prepared ``warpx.p
 
 .. code-block:: bash
 
-    cd $WORK
-    cp warpx/WarpX/Tools/machines/lxplus-cern/lxplus_warpx.profile.example .
-    source lxplus_warpx.profile.example
+    cp $WORK/warpx/WarpX/Tools/machines/lxplus-cern/lxplus_warpx.profile.example $WORK/lxplus_warpx.profile
+    source $WORK/lxplus_warpx.profile
 
-When doing this one can directly skip to the **Bulding Warpx** section.
+When doing this one can directly skip to the :ref:`Building WarpX <building-lxplus-warpx>` section.
 
 To have the environment activated at every login it is then possible to add the following lines to the ``.bashrc``
 
 .. code-block:: bash
 
     export WORK=/afs/cern.ch/work/${USER:0:1}/$USER/
-    source $WORK/lxplus_warpx.profile.example
+    source $WORK/lxplus_warpx.profile
 
 GCC
 ^^^
@@ -108,6 +107,8 @@ be a good idea to add the following lines to the ``.bashrc``:
     spack env activate -d warpx-lxplus
     cd $HOME
 
+.. _building-lxplus-warpx:
+
 Building WarpX
 ^^^^^^^^^^^^^^
 
@@ -123,7 +124,7 @@ Or if we need to compile with CUDA:
 
 .. code-block:: bash
 
-    cmake -S . -B build -DWarpX_COMPUTE=CUDA -DAMReX_CUDA_ARCH='7.0;7.5'
+    cmake -S . -B build -DWarpX_COMPUTE=CUDA
     cmake --build build -j 6
 
 Python Bindings
@@ -131,9 +132,23 @@ Python Bindings
 
 Here we assume that a Python interpreter has been set up as explained previously.
 
+Now, ensure Python tooling is up-to-date:
+.. code-block:: bash
+
+   python3 -m pip install -U pip setuptools wheel
+
 Then we compile WarpX as in the previous section (with or without CUDA) adding ``-DWarpX_LIB=ON`` and then we install it into our Python:
 
 .. code-block:: bash
 
-    PYWARPX_LIB_DIR=$PWD/build/lib python3 -m pip wheel .
-    python3 -m pip install pywarpx-*whl
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_LIB=ON
+   cmake --build build --target pip_install -j 6
+
+This builds WarpX for 3D geometry.
+
+Alternatively, if you like to build WarpX for all geometries at once, use:
+
+.. code-block:: bash
+
+   BUILD_PARALLEL=6 python3 -m pip wheel .
+   python3 -m pip install pywarpx-*whl

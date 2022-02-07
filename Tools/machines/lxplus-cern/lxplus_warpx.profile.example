@@ -14,7 +14,7 @@ source /cvmfs/sft.cern.ch/lcg/releases/gcc/11.2.0-ad950/x86_64-centos7/setup.sh
 if [ ! -d "$WORK/spack" ]
 then
     git clone -c feature.manyFiles=true https://github.com/spack/spack.git $WORK/spack
-    source spack/share/spack/setup-env.sh
+    source $WORK/spack/share/spack/setup-env.sh
 
     # add the compiler to spack
     spack compiler find /cvmfs/sft.cern.ch/lcg/releases/gcc/11.2.0-ad950/x86_64-centos7/bin
@@ -27,7 +27,7 @@ then
     spack install
 else
     # activate the spack environment
-    source spack/share/spack/setup-env.sh
+    source $WORK/spack/share/spack/setup-env.sh
     spack env activate warpx-lxplus-cuda-py
 fi
 
