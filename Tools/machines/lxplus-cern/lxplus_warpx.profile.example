@@ -18,7 +18,7 @@ then
 
     # add the compiler to spack
     spack compiler find /cvmfs/sft.cern.ch/lcg/releases/gcc/11.2.0-ad950/x86_64-centos7/bin
-    
+
     # create and activate the spack environment
     export SPACK_STACK_USE_PYTHON=1
     export SPACK_STACK_USE_CUDA=1
