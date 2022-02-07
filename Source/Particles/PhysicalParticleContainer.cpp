@@ -1164,6 +1164,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     pa_user_int_data[ia][ip] = static_cast<int>(user_int_attrib_parserexec[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t));
 #elif defined (WARPX_DIM_XZ)
                     pa_user_int_data[ia][ip] = static_cast<int>(user_int_attrib_parserexec[ia](pos.x, 0.0_rt, pos.z, u.x, u.y, u.z, t));
+#else
+                    amrex::ignore_unused(pa_user_int_data);
 #endif
                 }
                 // Initialize user-defined real attributes with user-defined parser
@@ -1172,6 +1174,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     pa_user_real_data[ia][ip] = user_real_attrib_parserexec[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t);
 #elif defined (WARPX_DIM_XZ)
                     pa_user_real_data[ia][ip] = user_real_attrib_parserexec[ia](pos.x, 0.0_rt, pos.z, u.x, u.y, u.z, t);
+#else
+                    amrex::ignore_unused(pa_user_real_data);
 #endif
                 }
 
