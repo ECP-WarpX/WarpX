@@ -12,11 +12,11 @@ The LXPLUS cluster is located at CERN.
     * Work folder: ``/afs/cern.ch/work/<a>/<account>`` (100GByte)
     * Eos storage: ``/eos/home-<a>/<account>`` (1T)
 
-Through LXPLUS we have access to CPU and GPU nodes (the latter equipped with NVIDIA V100).
+Through LXPLUS we have access to CPU and GPU nodes (the latter equipped with NVIDIA V100 and T4 GPUs).
 
 Installation
 ------------
-Only very little software is pre-installed on Lxplus so we show how to install from scratch all the dependencies using `Spack <https://spack.io>`__.
+Only very little software is pre-installed on LXPLUS so we show how to install from scratch all the dependencies using `Spack <https://spack.io>`__.
 
 For size reasons it is not advisable to install WarpX in the ``$HOME`` directory, while it should be installed in the "work directory". For this purpose we set an environment variable with the path to the "work directory"
 
@@ -30,6 +30,23 @@ We clone WarpX in ``$WORK``:
 
     cd $WORK
     git clone https://github.com/ECP-WarpX/WarpX.git warpx
+
+Installation profile file
+-------------------------
+The easiest way to install the dependencies is to use the pre-prepared ``warpx.profile`` as follows:
+
+.. code-block:: bash
+
+    cd $WORK
+    cp warpx/WarpX/Tools/machines/lxplus-cern/lxplus_warpx.profile.example .
+    source lxplus_warpx.profile.example
+
+To have the environment activated at every login it is then possible to add the following lines to the ``.bashrc``
+
+.. code-block:: bash
+
+    export WORK=/afs/cern.ch/work/${USER:0:1}/$USER/
+    source $WORK/lxplus_warpx.profile.example
 
 GCC
 ^^^
@@ -70,37 +87,18 @@ To install the dependencies we create a virtual environment, which we call ``war
     spack env activate warpx-lxplus
     spack install
 
+If the GPU support or the Python bindings are not needed, it's possible to skip the installation by respectively setting
+the following environment variables export ``SPACK_STACK_USE_PYTHON=0`` and ``export SPACK_STACK_USE_CUDA = 0`` before
+running the previous commands.
+
 After the installation is done once, all we need to do in future sessions is just ``activate`` the environment again:
 
 .. code-block:: bash
 
     spack env activate warpx-lxplus
 
-If we are planning on running with GPU support then we must set the environment variable ``SPACK_STACK_USE_CUDA``
-
-.. code-block:: bash
-
-    export SPACK_STACK_USE_CUDA=1
-    spack env create warpx-lxplus-cuda $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml
-    spack env activate warpx-lxplus-cuda
-
-and if we want to use the python interface we must set the environment variable ``SPACK_STACK_USE_PYTHON``.
-So if we want both CUDA-acceleration and build a Python interface, the environment setup would look like this:
-
-.. code-block:: bash
-
-    export SPACK_STACK_USE_PYTHON=1
-    export SPACK_STACK_USE_CUDA = 1
-    spack env create warpx-lxplus-cuda-py $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml
-    spack env activate warpx-lxplus-cuda-py
-
-Then we can install the required packages:
-
-.. code-block:: bash
-
-    spack install
-
-The environment ``warpx-lxplus`` (or ``-cuda`` or ``-cuda-py``) must be reactivated everytime that we log in so it could be a good idea to add the following lines to the ``.bashrc``:
+The environment ``warpx-lxplus`` (or ``-cuda`` or ``-cuda-py``) must be reactivated everytime that we log in so it could
+be a good idea to add the following lines to the ``.bashrc``:
 
 .. code-block:: bash
 
