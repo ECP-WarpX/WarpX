@@ -1166,7 +1166,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     pa_user_int_data[ia][ip] = static_cast<int>(user_int_attrib_parserexec[ia](pos.x, 0.0_rt, pos.z, u.x, u.y, u.z, t));
 #endif
                 }
-                // Initialize user-defined integers with real-defined parser
+                // Initialize user-defined real attributes with user-defined parser
                 for (int ia = 0; ia < n_user_real_attribs; ++ia) {
 #if defined(WARPX_DIM_3D)
                     pa_user_real_data[ia][ip] = user_real_attrib_parserexec[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t);
