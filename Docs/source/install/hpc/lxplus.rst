@@ -22,7 +22,7 @@ For size reasons it is not advisable to install WarpX in the ``$HOME`` directory
 
 .. code-block:: bash
 
-    export WORK=/afs/cern.ch/work/<a>/<account>/
+    export WORK=/afs/cern.ch/work/${USER:0:1}/$USER/
 
 We clone WarpX in ``$WORK``:
 

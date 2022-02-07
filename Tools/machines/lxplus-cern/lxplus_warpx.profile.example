@@ -2,26 +2,34 @@
 export WORK=/afs/cern.ch/work/${USER:0:1}/$USER/
 
 # clone warpx
-cd $WORK
-git clone https://github.com/ECP-WarpX/WarpX.git warpx
+if [ ! -d "$WORK/warpx" ]
+then
+    git clone https://github.com/ECP-WarpX/WarpX.git $WORK/warpx
+fi
 
 # activate the compiler
 source /cvmfs/sft.cern.ch/lcg/releases/gcc/11.2.0-ad950/x86_64-centos7/setup.sh
 
 # download and activate spack
-cd $WORK
-git clone -c feature.manyFiles=true https://github.com/spack/spack.git
-source spack/share/spack/setup-env.sh
+if [ ! -d "$WORK/spack" ]
+then
+    git clone -c feature.manyFiles=true https://github.com/spack/spack.git $WORK/spack
+    source spack/share/spack/setup-env.sh
 
-# add the compiler to spack
-spack compiler find /cvmfs/sft.cern.ch/lcg/releases/gcc/11.2.0-ad950/x86_64-centos7/bin
-
-# create and activate the spack environment
-export SPACK_STACK_USE_PYTHON=1
-export SPACK_STACK_USE_CUDA=1
-spack env create warpx-lxplus-cuda-py $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml
-spack env activate warpx-lxplus-cuda-py
-spack install
+    # add the compiler to spack
+    spack compiler find /cvmfs/sft.cern.ch/lcg/releases/gcc/11.2.0-ad950/x86_64-centos7/bin
+    
+    # create and activate the spack environment
+    export SPACK_STACK_USE_PYTHON=1
+    export SPACK_STACK_USE_CUDA=1
+    spack env create warpx-lxplus-cuda-py $WORK/WarpX/Tools/machines/lxplus-cern/spack.yaml
+    spack env activate warpx-lxplus-cuda-py
+    spack install
+else
+    # activate the spack environment
+    source spack/share/spack/setup-env.sh
+    spack env activate warpx-lxplus-cuda-py
+fi
 
 export AMREX_CUDA_ARCH='7.0'
 
