@@ -857,6 +857,39 @@ Particle initialization
     If `1` is given, this species will not be pushed
     by any pusher during the simulation.
 
+* ``<species_name>.addIntegerAttributes`` (list of `string`)
+    User-defined integer particle attribute for species, ``species_name``.
+    These integer attributes will be initialized with user-defined functions
+    when the particles are generated.
+    If the user-defined integer attribute is ``<int_attrib_name>`` then the
+    following required parameter must be specified to initialize the attribute.
+    * ``<species_name>.<int_attrib_name>(x,y,z,ux,uy,uz,y)`` (`string`)
+    `t` represents the physical time in seconds during the simulation.
+    `x, y, z` represent particle positions in the unit of meter.
+    `ux, uy, uz` represent the particle velocities in the unit of
+    :math:`\gamma v/c`, where
+    :math:`\gamma` is the Lorentz factor,
+    :math:`v/c` is the particle velocity normalized by the speed of light.
+    E.g. If `electrons.addIntegerAttributes` = ``upstream``
+    and `electrons.upstream(x,y,z,ux,uy,uz,t)` = `(x>0.0)*1` is provided
+    then, an integer attribute `upstream` is added to all electron particles
+    and when these particles are generated, the particles with position less than 0
+    are assigned a value of 1.
+
+* ``<species_name>.addRealAttributes`` (list of `string`)
+    User-defined real particle attribute for species, ``species_name``.
+    These real attributes will be initialized with user-defined functions
+    when the particles are generated.
+    If the user-defined real attribute is ``<real_attrib_name>`` then the
+    following required parameter must be specified to initialize the attribute.
+    * ``<species_name>.<real_attrib_name>(x,y,z,ux,uy,uz,y)`` (`string`)
+    `t` represents the physical time in seconds during the simulation.
+    `x, y, z` represent particle positions in the unit of meter.
+    `ux, uy, uz` represent the particle velocities in the unit of
+    :math:`\gamma v/c`, where
+    :math:`\gamma` is the Lorentz factor,
+    :math:`v/c` is the particle velocity normalized by the speed of light.
+
 * ``<species>.save_particles_at_xlo/ylo/zlo``,  ``<species>.save_particles_at_xhi/yhi/zhi`` and ``<species>.save_particles_at_eb`` (`0` or `1` optional, default `0`)
     If `1` particles of this species will be copied to the scraped particle
     buffer for the specified boundary if they leave the simulation domain in
