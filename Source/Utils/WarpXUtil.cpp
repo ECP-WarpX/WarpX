@@ -717,21 +717,14 @@ namespace WarpXUtilStr
     bool is_in(const std::vector<std::string>& vect,
                const std::string& elem)
     {
-        bool value = false;
-        if (std::find(vect.begin(), vect.end(), elem) != vect.end()){
-            value = true;
-        }
-        return value;
+        return (std::find(vect.begin(), vect.end(), elem) != vect.end());
     }
 
     bool is_in(const std::vector<std::string>& vect,
                const std::vector<std::string>& elems)
     {
-        bool value = false;
-        for (const auto& elem : elems){
-            if (is_in(vect, elem)) value = true;
-        }
-        return value;
+        return std::any_of(elems.begin(), elems.end(),
+            [&](const auto elem){return is_in(vect, elem);});
     }
 
 }
