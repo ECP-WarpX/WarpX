@@ -33,8 +33,6 @@ namespace pxr_sr = picsar::multi_physics::utils::serialization;
 
 // Factory class =============================
 
-BreitWheelerEngine::BreitWheelerEngine (){}
-
 BreitWheelerGetOpticalDepth
 BreitWheelerEngine::build_optical_depth_functor () const
 {
