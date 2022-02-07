@@ -32,7 +32,7 @@ We clone WarpX in ``$WORK``:
     git clone https://github.com/ECP-WarpX/WarpX.git warpx
 
 Installation profile file
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 The easiest way to install the dependencies is to use the pre-prepared ``warpx.profile`` as follows:
 
 .. code-block:: bash
@@ -40,6 +40,8 @@ The easiest way to install the dependencies is to use the pre-prepared ``warpx.p
     cd $WORK
     cp warpx/WarpX/Tools/machines/lxplus-cern/lxplus_warpx.profile.example .
     source lxplus_warpx.profile.example
+
+When doing this one can directly skip to the **Bulding Warpx** section.
 
 To have the environment activated at every login it is then possible to add the following lines to the ``.bashrc``
 
