@@ -298,7 +298,7 @@ void FieldProbe::InitData ()
     }
     else
     {
-    amrex::Abort("ERROR: Invalid probe geometry. Valid geometries are point (0) and line (1).");
+    amrex::Abort("ERROR: Invalid probe geometry. Valid geometries are Point, Line, and Plane.");
     }
 }
 
@@ -454,8 +454,8 @@ void FieldProbe::ComputeDiags (int step)
                     amrex::ParticleReal xp, yp, zp;
                     getPosition(ip, xp, yp, zp);
 
-                    amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
-                    amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
+                    amrex::ParticleReal Exp = 0._prt, Eyp = 0._prt, Ezp = 0._prt;
+                    amrex::ParticleReal Bxp = 0._prt, Byp = 0._prt, Bzp = 0._prt;
 
                     // first gather E and B to the particle positions
                     if (temp_raw_fields)
@@ -480,7 +480,7 @@ void FieldProbe::ComputeDiags (int step)
                         Ezp * Bxp - Exp * Bzp,
                         Exp * Byp - Eyp * Bxp
                     };
-                    amrex::ParticleReal const S = (1._rt / PhysConst::mu0)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
+                    amrex::ParticleReal const S = (1._prt / PhysConst::mu0)  * std::sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
 
                     /*
                      * Determine whether or not to integrate field data.

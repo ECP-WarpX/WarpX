@@ -1,3 +1,5 @@
+.. _funding:
+
 Funding and Acknowledgements
 ============================
 
