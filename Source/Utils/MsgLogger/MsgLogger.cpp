@@ -621,7 +621,7 @@ std::vector<char> serialize_msgs(
     const auto how_many = static_cast<int> (msgs.size());
     put_in (how_many, serialized);
 
-    for (auto msg : msgs){
+    for (const auto& msg : msgs){
         put_in_vec(msg.serialize(), serialized);
     }
     return serialized;
