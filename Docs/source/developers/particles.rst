@@ -128,7 +128,7 @@ Attribute name      ``int``/``real``  Description                        Default
                                       user-defined parser function.
                                       See ``addIntegerAttributes`` and
                                       ``addRealAttributes`` for
-                                      user-facing documentation. 
+                                      user-facing documentation.
 ==================  ================  =================================  =============
 
 .. note::
