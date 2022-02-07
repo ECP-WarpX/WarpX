@@ -96,6 +96,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     getArrWithParser(pp_laser_name, "position", m_position);
     getArrWithParser(pp_laser_name, "direction", m_nvec);
     getArrWithParser(pp_laser_name, "polarization", m_p_X);
+    queryArrWithParser(pp_laser_name, "v_antenna", m_v_antenna);
 
     getWithParser(pp_laser_name, "wavelength", m_wavelength);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -141,7 +142,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         "Laser propagation direction must be 0 along y in 2D");
 #endif
 
-    // Plane normal
+    // Plane normal unit vector
     Real s = 1.0_rt / std::sqrt(m_nvec[0]*m_nvec[0] + m_nvec[1]*m_nvec[1] + m_nvec[2]*m_nvec[2]);
     m_nvec = { m_nvec[0]*s, m_nvec[1]*s, m_nvec[2]*s };
 
@@ -158,6 +159,9 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         m_position[0] += (Z0_boost-m_Z0_lab)*m_nvec[0];
         m_position[1] += (Z0_boost-m_Z0_lab)*m_nvec[1];
         m_position[2] += (Z0_boost-m_Z0_lab)*m_nvec[2];
+        AMREX_ALWAYS_ASSERT(m_v_antenna[0] == 0. && m_v_antenna[1] == 0.,
+                            "The antenna can only move in the z direction.");
+        m_v_antenna[2] = (m_v_antenna[2]-WarpX::beta_boost)/(1-WarpX::beta_boost*m_v_antenna[2]);
     }
 
     // The first polarization vector
@@ -590,9 +594,13 @@ LaserParticleContainer::Evolve (int lev,
 
             // Calculate the laser amplitude to be emitted,
             // at the position of the emission plane
+            if (WarpX::gamma_boost>1.){
+                AMREX_ALWAYS_ASSERT(m_v_antenna[0] == 0. && m_v_antenna[1] == 0.,
+                    "The antenna can only move in the z direction.");
+            }
             m_up_laser_profile->fill_amplitude(
                 np, plane_Xp.dataPtr(), plane_Yp.dataPtr(),
-                t_lab, amplitude_E.dataPtr());
+                t_lab*(1.+m_v_antenna[2]), amplitude_E.dataPtr());
 
             // Calculate the corresponding momentum and position for the particles
             update_laser_particle(pti, np, uxp.dataPtr(), uyp.dataPtr(),
@@ -710,7 +718,9 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
     // When running in the boosted-frame, the input parameters (and in particular
     // the amplitude of the field) are given in the lab-frame.
     // Therefore, the mobility needs to be modified by a factor WarpX::gamma_boost.
-    m_mobility = m_mobility/WarpX::gamma_boost;
+    // The antenna velocity also influences the mobility.
+    Real vel_dot = m_nvec[0]*m_v_antenna[0] + m_nvec[1]*m_v_antenna[1] + m_nvec[2]*m_v_antenna[2];
+    m_mobility = m_mobility/WarpX::gamma_boost * (1. - vel_dot);
 }
 
 void
@@ -809,6 +819,9 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
     Real tmp_mobility = m_mobility;
     Real gamma_boost = WarpX::gamma_boost;
     Real beta_boost = WarpX::beta_boost;
+    Real vx_antenna = m_v_antenna[0];
+    Real vy_antenna = m_v_antenna[1];
+    Real vz_antenna = m_v_antenna[2];
     amrex::ParallelFor(
         np,
         [=] AMREX_GPU_DEVICE (int i) {
@@ -839,12 +852,12 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
 #if !defined(WARPX_DIM_1D_Z)
-            x += vx * dt;
+            x += vx * dt + vx_antenna * PhysConst::c * dt;
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-            y += vy * dt;
+            y += vy * dt + vy_antenna * PhysConst::c * dt;
 #endif
-            z += vz * dt;
+            z += vz * dt + vz_antenna * PhysConst::c * dt;
             SetPosition(i, x, y, z);
         }
         );
