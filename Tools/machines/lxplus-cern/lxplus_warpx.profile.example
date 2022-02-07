@@ -31,7 +31,7 @@ else
     spack env activate warpx-lxplus-cuda-py
 fi
 
-export AMREX_CUDA_ARCH='7.0'
+export AMREX_CUDA_ARCH="7.0;7.5"
 
 # compiler environment hints
 export CC=$(which gcc)
