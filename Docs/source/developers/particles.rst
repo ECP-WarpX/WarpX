@@ -120,6 +120,16 @@ Attribute name      ``int``/``real``  Description                        Default
 ``prev_x/y/z``      ``real``          The coordinates of the particles
                                       at the previous timestep.
 ==================  ================  =================================  =============
+``user-defined``    ``int``/``real``  User-defined integer or real
+                                      attributes initialized when
+                                      particles are generated in
+                                      ``AddPlasma()``. The attribute
+                                      is initialized with a required
+                                      user-defined parser function.
+                                      See ``addIntegerAttributes`` and
+                                      ``addRealAttributes`` for
+                                      user-facing documentation. 
+==================  ================  =================================  =============
 
 .. note::
 
