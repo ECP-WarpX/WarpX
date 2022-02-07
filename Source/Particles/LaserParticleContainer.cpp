@@ -159,8 +159,8 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         m_position[0] += (Z0_boost-m_Z0_lab)*m_nvec[0];
         m_position[1] += (Z0_boost-m_Z0_lab)*m_nvec[1];
         m_position[2] += (Z0_boost-m_Z0_lab)*m_nvec[2];
-        AMREX_ALWAYS_ASSERT(m_v_antenna[0] == 0. && m_v_antenna[1] == 0.,
-                            "The antenna can only move in the z direction.");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_v_antenna[0] == 0. && m_v_antenna[1] == 0.,
+                                         "The antenna can only move in the z direction.");
         m_v_antenna[2] = (m_v_antenna[2]-WarpX::beta_boost)/(1-WarpX::beta_boost*m_v_antenna[2]);
     }
 
@@ -595,8 +595,8 @@ LaserParticleContainer::Evolve (int lev,
             // Calculate the laser amplitude to be emitted,
             // at the position of the emission plane
             if (WarpX::gamma_boost>1.){
-                AMREX_ALWAYS_ASSERT(m_v_antenna[0] == 0. && m_v_antenna[1] == 0.,
-                    "The antenna can only move in the z direction.");
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_v_antenna[0] == 0. && m_v_antenna[1] == 0.,
+                                                 "The antenna can only move in the z direction.");
             }
             m_up_laser_profile->fill_amplitude(
                 np, plane_Xp.dataPtr(), plane_Yp.dataPtr(),
