@@ -728,7 +728,7 @@ namespace WarpXUtilStr
                const std::vector<std::string>& elems)
     {
         bool value = false;
-        for (auto elem : elems){
+        for (const auto& elem : elems){
             if (is_in(vect, elem)) value = true;
         }
         return value;
