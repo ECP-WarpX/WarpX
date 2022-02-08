@@ -40,10 +40,20 @@ particles.species_names = electron
 
 electron.charge = -q_e
 electron.mass = m_e
-electron.injection_style = "SingleParticle"
-electron.single_particle_pos = 0.0  -1.7  0.0
-electron.single_particle_vel = 10.  0.0  0.0   # gamma*beta
-electron.single_particle_weight = 1.0
+electron.injection_style = NFluxPerCell
+electron.num_particles_per_cell = 1
+electron.surface_flux_pos = 0.
+electron.flux_normal_axis = t
+electron.flux_direction = +1
+electron.xmin = 1.5
+electron.xmax = 1.9
+electron.zmin = -1.0
+electron.zmax = 1.0
+electron.profile = constant
+electron.density = 1.
+electron.momentum_distribution_type = gaussianflux
+electron.uy_th = 0.
+electron.uy_m = 10.
 
 # Order of particle shape factors
 algo.particle_shape = 3
