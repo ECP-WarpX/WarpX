@@ -2290,7 +2290,7 @@ PhysicalParticleContainer::GetParticleSlice (
                 const long np = pti.numParticles();
 
                 Real uzfrm = -WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
-                Real inv_c2 = 1.0/PhysConst::c/PhysConst::c;
+                Real inv_c2 = 1.0_rt/PhysConst::c/PhysConst::c;
 
                 FlagForPartCopy.resize(np);
                 IndexForPartCopy.resize(np);
@@ -2349,7 +2349,7 @@ PhysicalParticleContainer::GetParticleSlice (
                     if (Flag[i] == 1)
                     {
                          // Lorentz Transform particles to lab-frame
-                         const Real gamma_new_p = std::sqrt(1.0 + inv_c2*
+                         const Real gamma_new_p = std::sqrt(1.0_rt + inv_c2*
                                                   (uxpnew[i]*uxpnew[i]
                                                  + uypnew[i]*uypnew[i]
                                                  + uzpnew[i]*uzpnew[i]));
@@ -2357,7 +2357,7 @@ PhysicalParticleContainer::GetParticleSlice (
                          const Real z_new_p = gammaboost*(zp_new + betaboost*Phys_c*t_boost);
                          const Real uz_new_p = gammaboost*uzpnew[i] - gamma_new_p*uzfrm;
 
-                         const Real gamma_old_p = std::sqrt(1.0 + inv_c2*
+                         const Real gamma_old_p = std::sqrt(1.0_rt + inv_c2*
                                                   (uxpold[i]*uxpold[i]
                                                  + uypold[i]*uypold[i]
                                                  + uzpold[i]*uzpold[i]));
@@ -2664,12 +2664,12 @@ PhysicalParticleContainer::InitIonizationModule ()
     amrex::ParallelFor(ion_atomic_number, [=] AMREX_GPU_DEVICE (int i) noexcept
     {
         Real n_eff = (i+1) * std::sqrt(UH/p_ionization_energies[i]);
-        Real C2 = std::pow(2,2*n_eff)/(n_eff*tgamma(n_eff+l_eff+1)*tgamma(n_eff-l_eff));
-        p_adk_power[i] = -(2*n_eff - 1);
+        Real C2 = std::pow(2._rt,2._rt*n_eff)/(n_eff*std::tgamma(n_eff+l_eff+1._rt)*std::tgamma(n_eff-l_eff));
+        p_adk_power[i] = -(2._rt*n_eff - 1._rt);
         Real Uion = p_ionization_energies[i];
-        p_adk_prefactor[i] = dt * wa * C2 * ( Uion/(2*UH) )
-            * std::pow(2*std::pow((Uion/UH),3./2)*Ea,2*n_eff - 1);
-        p_adk_exp_prefactor[i] = -2./3 * std::pow( Uion/UH,3./2) * Ea;
+        p_adk_prefactor[i] = dt * wa * C2 * ( Uion/(2._rt*UH) )
+            * std::pow(2._rt*std::pow((Uion/UH),3._rt/2._rt)*Ea,2._rt*n_eff - 1._rt);
+        p_adk_exp_prefactor[i] = -2._rt/3._rt * std::pow( Uion/UH,3._rt/2._rt) * Ea;
     });
 
     Gpu::synchronize();
