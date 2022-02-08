@@ -1183,7 +1183,7 @@ Laser initialization
     the number of spokes given by min_particles_per_mode*(warpx.n_rz_azimuthal_modes-1).
 
 * ``<laser_name>.v_antenna`` (list of `float`) optional (defaut `0. 0. 0.`)
-    Velocity of the moving antenna, in unit of speed of light. For now, can only be non-zero in the z direction.
+    Velocity of the moving antenna, in unit of speed of light. For now, an antenna can only move in ``z``.
     For an antenna moving at the speed of light in the z direction, use ``<laser_name>.v_antenna = 0. 0. 1.``.
 
 * ``warpx.num_mirrors`` (`int`) optional (default `0`)
