@@ -1,0 +1,62 @@
+# Maximum number of time steps
+max_step = 120
+
+# number of grid points
+amr.n_cell =  16  32
+
+# The lo and hi ends of grids are multipliers of blocking factor
+amr.blocking_factor = 16
+
+# Maximum allowable size of each subdomain in the problem domain;
+#    this is used to decompose the domain for parallel calculations.
+amr.max_grid_size = 16
+
+# Maximum level in hierarchy (for now must be 0, i.e., one level in total)
+amr.max_level = 0
+
+# Geometry
+geometry.dims = rz
+geometry.prob_lo     =  0.0  -2.0        # physical domain
+geometry.prob_hi     =  3.0   2.0
+
+# Boundary condition
+boundary.field_lo = none pec
+boundary.field_hi = pec pec
+
+particles.B_ext_particle_init_style = "constant"
+particles.B_external_particle = 0.  0.  1.e-2
+
+# Verbosity
+warpx.verbose = 1
+
+# Algorithms
+warpx.use_filter = 0
+
+# CFL
+warpx.cfl = 1.0
+
+# particles
+particles.species_names = electron positron
+
+electron.charge = -q_e
+electron.mass = m_e
+electron.injection_style = "SingleParticle"
+electron.single_particle_pos = 0.0  -1.7  0.0
+electron.single_particle_vel = -10.  0.0  0.0   # gamma*beta
+electron.single_particle_weight = 1.0
+
+# Order of particle shape factors
+algo.particle_shape = 3
+
+# Moving window
+warpx.do_moving_window = 0
+
+warpx.do_dive_cleaning = 1
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.intervals = 10
+diag1.write_particles = 1
+diag1.diag_type = Full
+diag1.fields_to_plot = Bz
+diag1.format = openpmd
