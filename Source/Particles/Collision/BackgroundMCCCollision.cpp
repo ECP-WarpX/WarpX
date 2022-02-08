@@ -44,7 +44,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 
     // create a vector of MCCProcess objects from each scattering
     // process name
-    for (auto scattering_process : scattering_process_names) {
+    for (const auto& scattering_process : scattering_process_names) {
         std::string kw_cross_section = scattering_process + "_cross_section";
         std::string cross_section_file;
         pp_collision_name.query(kw_cross_section.c_str(), cross_section_file);
@@ -118,7 +118,7 @@ BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> const& mcc_processe
     using namespace amrex::literals;
     amrex::Real nu, nu_max = 0.0;
 
-    for (double E = 1e-4; E < 5000; E+=0.2) {
+    for (amrex::Real E = 1e-4_rt; E < 5000._rt; E+=0.2_rt) {
         amrex::Real sigma_E = 0.0;
 
         // loop through all collision pathways
