@@ -1428,6 +1428,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
         bool loc_do_field_ionization = do_field_ionization;
         int loc_ionization_initial_level = ionization_initial_level;
+        int const loc_flux_normal_axis = plasma_injector->flux_normal_axis;
 
         // Loop over all new particles and inject them (creates too many
         // particles, in particular does not consider xmin, xmax etc.).
@@ -1558,7 +1559,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // For cylindrical emission (flux_normal_axis==0
                 // or flux_normal_axis==2), the emission surface depends on
                 // the radius ; thus, the calculation is finalized here
-                if (plasma_injector->flux_normal_axis != 1) {
+                if (loc_flux_normal_axis != 1) {
                     if (radially_weighted) {
                          weight *= 2._rt*MathConst::pi*xb;
                     } else {
