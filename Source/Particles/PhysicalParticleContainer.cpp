@@ -946,6 +946,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         }
         int** pa_user_int_data = pa_user_int.dataPtr();
         ParticleReal** pa_user_real_data = pa_user_real.dataPtr();
+        amrex::ParserExecutor<7> const* user_int_parserexec_data = user_int_attrib_parserexec.dataPtr();
+        amrex::ParserExecutor<7> const* user_real_parserexec_data = user_real_attrib_parserexec.dataPtr();
 
 
         int* pi = nullptr;
@@ -1161,9 +1163,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 // Initialize user-defined integers with user-defined parser
                 for (int ia = 0; ia < n_user_int_attribs; ++ia) {
 #if defined(WARPX_DIM_3D)
-                    pa_user_int_data[ia][ip] = static_cast<int>(user_int_attrib_parserexec[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t));
+                    pa_user_int_data[ia][ip] = static_cast<int>(user_int_parserexec_data[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t));
 #elif defined (WARPX_DIM_XZ)
-                    pa_user_int_data[ia][ip] = static_cast<int>(user_int_attrib_parserexec[ia](pos.x, 0.0_rt, pos.z, u.x, u.y, u.z, t));
+                    pa_user_int_data[ia][ip] = static_cast<int>(user_int_parserexec_data[ia](pos.x, 0.0_rt, pos.z, u.x, u.y, u.z, t));
 #else
                     amrex::ignore_unused(pa_user_int_data);
 #endif
@@ -1171,9 +1173,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 // Initialize user-defined real attributes with user-defined parser
                 for (int ia = 0; ia < n_user_real_attribs; ++ia) {
 #if defined(WARPX_DIM_3D)
-                    pa_user_real_data[ia][ip] = user_real_attrib_parserexec[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t);
+                    pa_user_real_data[ia][ip] = user_real_parserexec_data[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t);
 #elif defined (WARPX_DIM_XZ)
-                    pa_user_real_data[ia][ip] = user_real_attrib_parserexec[ia](pos.x, 0.0_rt, pos.z, u.x, u.y, u.z, t);
+                    pa_user_real_data[ia][ip] = user_real_parserexec_data[ia](pos.x, 0.0_rt, pos.z, u.x, u.y, u.z, t);
 #else
                     amrex::ignore_unused(pa_user_real_data);
 #endif
