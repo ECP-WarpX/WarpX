@@ -58,6 +58,7 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     X5_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     X6_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     X7_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    X8_coef = SpectralRealCoefficients(ba, dm, 1, 0);
 
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 
@@ -98,6 +99,9 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
         amrex::Array4<const amrex::Real> X5_arr = X5_coef[mfi].array();
         amrex::Array4<const amrex::Real> X6_arr = X6_coef[mfi].array();
         amrex::Array4<const amrex::Real> X7_arr = X7_coef[mfi].array();
+
+        amrex::Array4<const amrex::Real> X8_arr;
+        if (dive_cleaning) X8_arr = X8_coef[mfi].array();
 
         amrex::Array4<const amrex::Real> Y1_arr;
         amrex::Array4<const amrex::Real> Y2_arr;
@@ -199,6 +203,8 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
 
             if (dive_cleaning)
             {
+                const amrex::Real X8 = X8_arr(i,j,k);
+
                 const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
                 const Complex k_dot_J  = kx * Jx_old + ky * Jy_old + kz * Jz_old;
                 const Complex k_dot_dJ = kx * (Jx_new - Jx_old) + ky * (Jy_new - Jy_old) + kz * (Jz_new - Jz_old);
@@ -208,7 +214,8 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
                 fields(i,j,k,Idx.Ez) += I * c2 * S_ck * F_old * kz;
 
                 fields(i,j,k,Idx.F) = C * F_old + S_ck * (I * k_dot_E - rho_old * inv_ep0)
-                    - X1 * ((rho_new - rho_old) / dt + I * k_dot_J) - I * X2/c2 * k_dot_dJ;
+                    - X1 * ((rho_new - rho_old) / dt + I * k_dot_J) - I * X2/c2 * k_dot_dJ
+                    + X8 * (rho_old - 2._rt * rho_mid + rho_new);
             }
 
             if (divb_cleaning)
@@ -301,6 +308,7 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
         amrex::Array4<amrex::Real> X5 = X5_coef[mfi].array();
         amrex::Array4<amrex::Real> X6 = X6_coef[mfi].array();
         amrex::Array4<amrex::Real> X7 = X7_coef[mfi].array();
+        amrex::Array4<amrex::Real> X8 = X8_coef[mfi].array();
 
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -398,6 +406,17 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
             else // om_s = 0
             {
                 X7(i,j,k) = 0._rt;
+            }
+
+            // X8
+            if (om_s != 0.)
+            {
+                X8(i,j,k) = 2._rt * (2._rt * S_ck(i,j,k) - dt * (1._rt + C(i,j,k)))
+                            / (ep0 * dt2 * om2_s);
+            }
+            else // om_s = 0
+            {
+                X8(i,j,k) = dt / (3._rt * ep0);
             }
         });
     }
