@@ -65,8 +65,6 @@ warpx.do_dive_cleaning = 1
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 10
-diag1.write_particles = 1
+diag1.intervals = 1::10
 diag1.diag_type = Full
 diag1.fields_to_plot = Bz
-diag1.format = openpmd
