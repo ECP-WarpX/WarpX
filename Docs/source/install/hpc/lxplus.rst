@@ -133,6 +133,7 @@ Python Bindings
 Here we assume that a Python interpreter has been set up as explained previously.
 
 Now, ensure Python tooling is up-to-date:
+
 .. code-block:: bash
 
    python3 -m pip install -U pip setuptools wheel
