@@ -93,7 +93,7 @@ public:
 
     // DepositCharge should do nothing for photons
     virtual void DepositCharge (WarpXParIter& /*pti*/,
-                                RealVector& /*wp*/,
+                                RealVector const & /*wp*/,
                                 const int * const /*ion_lev*/,
                                 amrex::MultiFab* /*rho*/,
                                 int /*icomp*/,
