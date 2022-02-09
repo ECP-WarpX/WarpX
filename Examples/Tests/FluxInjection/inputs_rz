@@ -65,6 +65,6 @@ warpx.do_dive_cleaning = 1
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 1::10
+diag1.intervals = 1000
 diag1.diag_type = Full
 diag1.fields_to_plot = Bz

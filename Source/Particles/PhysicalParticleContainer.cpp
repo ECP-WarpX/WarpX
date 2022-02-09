@@ -948,6 +948,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         const auto poffset = offset.data();
 #ifdef WARPX_DIM_RZ
         const bool rz_random_theta = m_rz_random_theta;
+        int const loc_flux_normal_axis = plasma_injector->flux_normal_axis;
 #endif
         amrex::ParallelForRNG(overlap_box,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
@@ -1428,7 +1429,6 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
         bool loc_do_field_ionization = do_field_ionization;
         int loc_ionization_initial_level = ionization_initial_level;
-        int const loc_flux_normal_axis = plasma_injector->flux_normal_axis;
 
         // Loop over all new particles and inject them (creates too many
         // particles, in particular does not consider xmin, xmax etc.).
@@ -1503,7 +1503,8 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Rotate the position
                 pos.x = xb*cos_theta;
                 pos.y = xb*sin_theta;
-                if (inj_mom->type == InjectorMomentum::Type::gaussianflux) {
+                if ( (inj_mom->type == InjectorMomentum::Type::gaussianflux) &&
+                     (loc_flux_normal_axis != 2) ) {
                     // Rotate the momentum
                     // This because, when the flux direction is e.g. "r"
                     // the `inj_mom` objects generates a v*Gaussian distribution
