@@ -1,0 +1,16 @@
+{
+  "electron": {
+    "particle_cpu": 0.0,
+    "particle_id": 17809220.0,
+    "particle_momentum_x": 1.771047564726242e-42,
+    "particle_momentum_y": 1.8010429574237632e-42,
+    "particle_momentum_z": 4.5894275602576847e-41,
+    "particle_position_x": 7013.28660219901,
+    "particle_position_y": 2072.97851839119,
+    "particle_theta": 6506.69168348596,
+    "particle_weight": 3.248107653772486e-08
+  },
+  "lev=0": {
+    "Bz": 2.206631903949293e-47
+  }
+}
