@@ -44,7 +44,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 
     // create a vector of MCCProcess objects from each scattering
     // process name
-    for (auto scattering_process : scattering_process_names) {
+    for (const auto& scattering_process : scattering_process_names) {
         std::string kw_cross_section = scattering_process + "_cross_section";
         std::string cross_section_file;
         pp_collision_name.query(kw_cross_section.c_str(), cross_section_file);

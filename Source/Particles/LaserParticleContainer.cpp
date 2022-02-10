@@ -56,7 +56,7 @@
 #include <array>
 #include <cmath>
 #include <cstdlib>
-#include <ctype.h>
+#include <cctype>
 #include <functional>
 #include <limits>
 #include <map>

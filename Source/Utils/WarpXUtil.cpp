@@ -288,7 +288,9 @@ int safeCastToInt(const amrex::Real x, const std::string& real_name) {
     std::string assert_msg;
     // (2.0*(numeric_limits<int>::max()/2+1)) converts numeric_limits<int>::max()+1 to a real ensuring accuracy to all digits
     // This accepts x = 2**31-1 but rejects 2**31.
-    if (x < (2.0*(std::numeric_limits<int>::max()/2+1))) {
+    using namespace amrex::literals;
+    constexpr amrex::Real max_range = (2.0_rt*static_cast<amrex::Real>(std::numeric_limits<int>::max()/2+1));
+    if (x < max_range) {
         if (std::ceil(x) >= std::numeric_limits<int>::min()) {
             result = static_cast<int>(x);
         } else {
@@ -717,21 +719,14 @@ namespace WarpXUtilStr
     bool is_in(const std::vector<std::string>& vect,
                const std::string& elem)
     {
-        bool value = false;
-        if (std::find(vect.begin(), vect.end(), elem) != vect.end()){
-            value = true;
-        }
-        return value;
+        return (std::find(vect.begin(), vect.end(), elem) != vect.end());
     }
 
     bool is_in(const std::vector<std::string>& vect,
                const std::vector<std::string>& elems)
     {
-        bool value = false;
-        for (auto elem : elems){
-            if (is_in(vect, elem)) value = true;
-        }
-        return value;
+        return std::any_of(elems.begin(), elems.end(),
+            [&](const auto elem){return is_in(vect, elem);});
     }
 
 }

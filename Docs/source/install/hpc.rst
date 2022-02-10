@@ -34,6 +34,7 @@ HPC Systems
    hpc/quartz
    hpc/lawrencium
    hpc/ookami
+   hpc/lxplus
 
 .. tip::
 
