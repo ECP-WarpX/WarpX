@@ -586,7 +586,7 @@ WarpXParticleContainer::DepositCurrent (
  * \param depos_lev   : Level on which particles deposit (if buffers are used)
  */
 void
-WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
+WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                        const int * const ion_lev,
                                        amrex::MultiFab* rho, int icomp,
                                        const long offset, const long np_to_depose,
@@ -681,7 +681,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             const long np = pti.numParticles();
-            auto& wp = pti.GetAttribs(PIdx::w);
+            auto const & wp = pti.GetAttribs(PIdx::w);
 
             int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization)
