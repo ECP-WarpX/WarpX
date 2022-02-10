@@ -296,6 +296,7 @@ class Cathode(ZPlane):
         # set label to correctly grab scraped particles from the buffer
         self.scraper_label = 'z_lo'
 
+
 class Anode(ZPlane):
     """A basic wrapper to define a semi-infinite plane for the anode."""
 
@@ -307,6 +308,7 @@ class Anode(ZPlane):
         mwxrun.grid.potential_zmax = self.V
         # set label to correctly grab scraped particles from the buffer
         self.scraper_label = 'z_hi'
+
 
 class InfCylinderY(Assembly):
     """An infinitely long Cylinder pointing in the y-direction."""
@@ -474,26 +476,33 @@ class CylinderZ(Assembly):
 
     def isinside(self, X, Y, Z, aura=0):
         """
-        Calculates which grid tiles are within the cylinder.
+        Determines whether the given coordinates are inside the assembly.
 
         Arguments:
-            X (np.ndarray): array of x coordinates of flattened grid.
-            Y (np.ndarray): array of y coordinates of flattened grid.
-            Z (np.ndarray): array of z coordinates of flattened grid.
+            X (np.ndarray): array of x coordinates.
+            Y (np.ndarray): array of y coordinates.
+            Z (np.ndarray): array of z coordinates.
             aura (float): extra space around the conductor that is considered
                 inside. Useful for small, thin conductors that don't overlap any
                 grid points. In units of meters.
 
         Returns:
-            result (np.ndarray): array of flattened grid where all tiles
-                inside the cylinder are 1, and other tiles are 0.
+            result (np.ndarray): array of values corresponding to the input
+                coordinates where all points inside the assembly are 1, and
+                others are 0.
         """
-        dist_to_center = np.sqrt(
-            (X - self.center_x)**2 + (Y - self.center_y)**2
-        )
-        dr = self.r_outer + aura - self.r_center
-        result = np.where(abs(dist_to_center - self.r_center) <= dr, 1, 0)
+        dr = self.r_outer - self.r_inner + 2.0*aura
+        dz = self.zmax - self.zmin + 2.0*aura
 
+        # checks if (r_inner - aura <= R <= r_outer + aura) AND
+        # (zmin - aura <= Z <= z_max + aura), with R the distance to the
+        # cylinder axis
+        result = np.where(
+            (abs(np.sqrt((X - self.center_x)**2 + (Y - self.center_y)**2)
+            - (self.r_inner + self.r_outer) / 2.0) <= dr / 2.0)
+            & (abs(Z - (self.zmin + self.zmax) / 2.0) <= dz / 2.0),
+            1, 0
+        )
         return result
 
     def calculatenormal(self, px, py, pz):
