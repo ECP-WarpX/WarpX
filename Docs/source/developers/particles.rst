@@ -140,12 +140,14 @@ Please see the :ref:`input options <running-cpp-parameters-particle>` ``addInteg
 
 Commonly used runtime attributes are described in the table below and are all part of SoA particle storage:
 
-==================  ================  =================================  =============
+==================  ================  =================================  ==============
 Attribute name      ``int``/``real``  Description                        Default value
-==================  ================  =================================  =============
-``prev_x/y/z``      ``real``          The coordinates of the particles
+==================  ================  =================================  ==============
+``prev_x/y/z``      ``real``          The coordinates of the particles   *user-defined*
                                       at the previous timestep.
-==================  ================  =================================  =============
+``orig_x/y/z``      ``real``          The coordinates of the particles   *user-defined*
+                                      when they were created.
+==================  ================  =================================  ==============
 
 A Python example that adds runtime options can be found in :download:`Examples/Tests/ParticleDataPython <../../../Examples/Tests/ParticleDataPython/PICMI_inputs_prev_pos_2d.py>`
 
