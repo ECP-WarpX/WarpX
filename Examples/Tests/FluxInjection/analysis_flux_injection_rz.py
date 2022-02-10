@@ -25,9 +25,11 @@ This script tests that:
 - The total number of electrons corresponds to the expected flux.
 """
 import sys
-
+import os, re
 import numpy as np
 import yt
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 yt.funcs.mylog.setLevel(0)
 
