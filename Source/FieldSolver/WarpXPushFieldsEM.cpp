@@ -468,7 +468,8 @@ WarpX::PushPSATD ()
         PSATDForwardTransformRho(1,1); // rho new
     }
 
-    // Correct current in Fourier space so that the continuity equation is satisfied
+    // Correct the current in Fourier space so that the continuity equation is satisfied, and
+    // transform back to real space so that the current correction is reflected in the diagnostics
     if (WarpX::current_correction)
     {
         PSATDCurrentCorrection();
