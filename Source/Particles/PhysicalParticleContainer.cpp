@@ -2433,7 +2433,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                    amrex::FArrayBox const * bxfab,
                                    amrex::FArrayBox const * byfab,
                                    amrex::FArrayBox const * bzfab,
-                                   const amrex::IntVect ngE, const int /*e_is_nodal*/,
+                                   const amrex::IntVect ngEB, const int /*e_is_nodal*/,
                                    const long offset,
                                    const long np_to_push,
                                    int lev, int gather_lev,
@@ -2460,7 +2460,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     }
 
     // Add guard cells to the box.
-    box.grow(ngE);
+    box.grow(ngEB);
 
     const auto getPosition = GetParticlePosition(pti, offset);
           auto setPosition = SetParticlePosition(pti, offset);
@@ -2678,7 +2678,7 @@ PhysicalParticleContainer::InitIonizationModule ()
 IonizationFilterFunc
 PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                               int lev,
-                                              amrex::IntVect ngE,
+                                              amrex::IntVect ngEB,
                                               const amrex::FArrayBox& Ex,
                                               const amrex::FArrayBox& Ey,
                                               const amrex::FArrayBox& Ez,
@@ -2688,7 +2688,7 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
 {
     WARPX_PROFILE("PhysicalParticleContainer::getIonizationFunc()");
 
-    return IonizationFilterFunc(pti, lev, ngE, Ex, Ey, Ez, Bx, By, Bz,
+    return IonizationFilterFunc(pti, lev, ngEB, Ex, Ey, Ez, Bx, By, Bz,
                                 m_v_galilean,
                                 ionization_energies.dataPtr(),
                                 adk_prefactor.dataPtr(),

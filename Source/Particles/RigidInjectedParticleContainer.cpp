@@ -157,7 +157,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                         amrex::FArrayBox const * bxfab,
                                         amrex::FArrayBox const * byfab,
                                         amrex::FArrayBox const * bzfab,
-                                        const amrex::IntVect ngE, const int e_is_nodal,
+                                        const amrex::IntVect ngEB, const int e_is_nodal,
                                         const long offset,
                                         const long np_to_push,
                                         int lev, int gather_lev,
@@ -217,7 +217,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     const bool do_scale = not done_injecting_lev;
     const Real v_boost = WarpX::beta_boost*PhysConst::c;
     PhysicalParticleContainer::PushPX(pti, exfab, eyfab, ezfab, bxfab, byfab, bzfab,
-                                      ngE, e_is_nodal, offset, np_to_push, lev, gather_lev, dt,
+                                      ngEB, e_is_nodal, offset, np_to_push, lev, gather_lev, dt,
                                       ScaleFields(do_scale, dt, zinject_plane_lev_previous,
                                                   vzbeam_ave_boosted, v_boost),
                                       a_dt_type);
