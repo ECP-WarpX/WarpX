@@ -257,7 +257,7 @@ WarpX::Evolve (int numsteps)
         // We might need to move j because we are going to make a plotfile.
         int num_moved = MoveWindow(step+1, move_j);
 
-        mypc->ContinuousFluxInjection(dt[0]);
+        mypc->ContinuousFluxInjection(cur_time, dt[0]);
 
         mypc->ApplyBoundaryConditions();
 

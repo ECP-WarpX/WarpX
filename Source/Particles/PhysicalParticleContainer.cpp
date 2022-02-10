@@ -2466,10 +2466,14 @@ PhysicalParticleContainer::ContinuousInjection (const RealBox& injection_box)
 /* \brief Inject a flux of particles during the simulation
  */
 void
-PhysicalParticleContainer::ContinuousFluxInjection (amrex::Real dt)
+PhysicalParticleContainer::ContinuousFluxInjection (amrex::Real t, amrex::Real dt)
 {
-    if (plasma_injector->surface_flux) {
-        AddPlasmaFlux(dt);
+    if (plasma_injector->surface_flux){
+        if ((t < plasma_injector->flux_tmax) || (plasma_injector->flux_tmax<0)) {
+
+            AddPlasmaFlux(dt);
+
+        }
     }
 }
 
