@@ -268,6 +268,38 @@ WarpX::PSATDForwardTransformJ ()
 #endif
 }
 
+void WarpX::PSATDBackwardTransformJ ()
+{
+    SpectralFieldIndex Idx;
+    int idx_jx, idx_jy, idx_jz;
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        Idx = spectral_solver_fp[lev]->m_spectral_index;
+
+        idx_jx = static_cast<int>(Idx.Jx);
+        idx_jy = static_cast<int>(Idx.Jy);
+        idx_jz = static_cast<int>(Idx.Jz);
+
+        auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], current[lev], idx_jx, idx_jy, idx_jz);
+
+        if (spectral_solver_cp[lev])
+        {
+            Idx = spectral_solver_cp[lev]->m_spectral_index;
+
+            idx_jx = static_cast<int>(Idx.Jx);
+            idx_jy = static_cast<int>(Idx.Jy);
+            idx_jz = static_cast<int>(Idx.Jz);
+
+            // Current centering is not implemented with mesh refinement, so we do not yet need to
+            // distinguish between current_cp and current_cp_nodal, as for the fine patch currents
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], current_cp[lev], idx_jx, idx_jy, idx_jz);
+        }
+    }
+}
+
 void
 WarpX::PSATDForwardTransformRho (const int icomp, const int dcomp)
 {
@@ -301,6 +333,19 @@ WarpX::PSATDForwardTransformRho (const int icomp, const int dcomp)
         }
     }
 #endif
+}
+
+void WarpX::PSATDCurrentCorrection ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->CurrentCorrection();
+
+        if (spectral_solver_cp[lev])
+        {
+            spectral_solver_cp[lev]->CurrentCorrection();
+        }
+    }
 }
 
 void
@@ -421,6 +466,13 @@ WarpX::PushPSATD ()
     {
         PSATDForwardTransformRho(0,0); // rho old
         PSATDForwardTransformRho(1,1); // rho new
+    }
+
+    // Correct current in Fourier space so that the continuity equation is satisfied
+    if (WarpX::current_correction)
+    {
+        PSATDCurrentCorrection();
+        PSATDBackwardTransformJ();
     }
 
 #ifdef WARPX_DIM_RZ
