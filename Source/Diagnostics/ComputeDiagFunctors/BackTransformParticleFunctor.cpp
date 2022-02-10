@@ -82,7 +82,6 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &total
     // get particle slice
     const int nlevs = std::max(0, m_pc_src->finestLevel()+1);
     auto tmp_particle_data = m_pc_src->getTmpParticleData();
-    int total_particles_added = 0;
     for (int lev = 0; lev < nlevs; ++lev) {
         amrex::Real t_boost = warpx.gett_new(0);
         amrex::Real dt = warpx.getdt(0);
@@ -135,7 +134,7 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &total
                 auto& ptile_dst = pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
                 auto old_size = ptile_dst.numParticles();
                 ptile_dst.resize(old_size + total_partdiag_size);
-                auto count = amrex::filterParticles(ptile_dst, ptile_src, GetParticleFilter, 0, old_size, np);
+                amrex::filterParticles(ptile_dst, ptile_src, GetParticleFilter, 0, old_size, np);
                 auto dst_data = ptile_dst.getParticleTileData();
                 amrex::ParallelFor(np,
                 [=] AMREX_GPU_DEVICE(int i)
@@ -143,7 +142,6 @@ BackTransformParticleFunctor::operator () (ParticleContainer& pc_dst, int &total
                    if (Flag[i] == 1) GetParticleLorentzTransform(dst_data, src_data, i,
                                                                  old_size + IndexLocation[i]);
                 });
-                total_particles_added += count;
             }
         }
     }
