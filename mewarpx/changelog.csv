@@ -1,4 +1,16 @@
 Version, Physics version, Date,        List of changes
+7.0.1, 2, 2/8/2022, "
+
+**Other changes**:
+
+- Merge ``upstream/development`` (git hash ``d259e9c``) into memaster.
+
+**Bugfixes**:
+
+- Include check along z in ``isinside`` function of
+  :class:`mewarpx.assemblies.CylinderZ`.
+
+"
 7.0.0, 2, 2/3/2022, "
 
 **API Changes**:

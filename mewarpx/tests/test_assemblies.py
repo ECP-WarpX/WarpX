@@ -340,4 +340,4 @@ def test_infinite_cylinder_z():
 
     key = ('scrape', 'anode', 'electrons')
     J_diode = run.fluxdiag.ts_dict[key].get_averagevalue_by_key('J')
-    assert np.isclose(J_diode, 1.5154551964454426)
+    assert np.isclose(J_diode, 1.5039225852677167)

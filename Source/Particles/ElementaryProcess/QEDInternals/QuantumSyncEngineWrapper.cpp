@@ -33,8 +33,6 @@ namespace pxr_sr = picsar::multi_physics::utils::serialization;
 
 // Factory class =============================
 
-QuantumSynchrotronEngine::QuantumSynchrotronEngine (){}
-
 QuantumSynchrotronGetOpticalDepth
 QuantumSynchrotronEngine::build_optical_depth_functor ()
 {
