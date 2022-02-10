@@ -320,7 +320,7 @@ In this manual, we often use this ``conda create`` line over the officially docu
 
 .. code-block:: bash
 
-   conda create -n myenv -c conda-forge python mamba ipykernel ipympl==0.8.1 matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram
+   conda create -n myenv -c conda-forge python mamba ipykernel ipympl==0.8.6 matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram
 
 We then follow the `Customizing Kernels with a Helper Shell Script <https://docs.nersc.gov/services/jupyter/#customizing-kernels-with-a-helper-shell-script>`__ section to finalize the setup of using this conda-environment as a custom Jupyter kernel.
 
