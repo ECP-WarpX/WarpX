@@ -1162,10 +1162,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #endif
                 // Initialize user-defined integers with user-defined parser
                 for (int ia = 0; ia < n_user_int_attribs; ++ia) {
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
                     pa_user_int_data[ia][ip] = static_cast<int>(user_int_parserexec_data[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t));
 #elif defined (WARPX_DIM_XZ)
                     pa_user_int_data[ia][ip] = static_cast<int>(user_int_parserexec_data[ia](pos.x, 0.0_rt, pos.z, u.x, u.y, u.z, t));
+#elif defined (WARPX_DIM_1D_Z)
+                    pa_user_int_data[ia][ip] = static_cast<int>(user_int_parserexec_data[ia](0.0_rt, 0.0_rt, pos.z, u.x, u.y, u.z, t));
 #else
                     amrex::ignore_unused(pa_user_int_data);
                     amrex::ignore_unused(user_int_parserexec_data);
@@ -1173,10 +1175,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 }
                 // Initialize user-defined real attributes with user-defined parser
                 for (int ia = 0; ia < n_user_real_attribs; ++ia) {
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
                     pa_user_real_data[ia][ip] = user_real_parserexec_data[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t);
 #elif defined (WARPX_DIM_XZ)
                     pa_user_real_data[ia][ip] = user_real_parserexec_data[ia](pos.x, 0.0_rt, pos.z, u.x, u.y, u.z, t);
+#elif defined (WARPX_DIM_1D_Z)
+                    pa_user_real_data[ia][ip] = user_real_parserexec_data[ia](0.0_rt, 0.0_rt, pos.z, u.x, u.y, u.z, t);
 #else
                     amrex::ignore_unused(pa_user_real_data);
                     amrex::ignore_unused(user_real_parserexec_data);
