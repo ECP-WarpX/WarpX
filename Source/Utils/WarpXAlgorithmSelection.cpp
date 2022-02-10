@@ -15,7 +15,7 @@
 
 #include <algorithm>
 #include <cstring>
-#include <ctype.h>
+#include <cctype>
 #include <map>
 #include <utility>
 

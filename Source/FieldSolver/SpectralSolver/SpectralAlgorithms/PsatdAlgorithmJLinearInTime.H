@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PSATD_ALGORITHM_H_
-#define WARPX_PSATD_ALGORITHM_H_
+#ifndef WARPX_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_
+#define WARPX_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
@@ -21,15 +21,18 @@
 #include <memory>
 
 #if WARPX_USE_PSATD
-/* \brief Class that updates the field in spectral space
- * and stores the coefficients of the corresponding update equation.
+/*
+ * \brief Class that updates the fields in spectral space according to the multi-J algorithm
+ *        and stores the coefficients of the corresponding update equations. J is assumed to be
+ *        linear in time and two currents, deposited at the beginning and the end of the time step,
+ *        are used for the PSATD update equations, instead of only one current deposited at half time.
  */
-class PsatdAlgorithm : public SpectralBaseAlgorithm
+class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
 {
     public:
 
         /**
-         * \brief Constructor of the class PsatdAlgorithm
+         * \brief Constructor of the class PsatdAlgorithmJLinearInTime
          *
          * \param[in] spectral_kspace spectral space
          * \param[in] dm distribution mapping
@@ -39,14 +42,12 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in] norder_z order of the spectral solver along z
          * \param[in] nodal whether the E and B fields are defined on a fully nodal grid or a Yee grid
          * \param[in] fill_guards Update the guard cells (in addition to the valid cells) when pushing the fields in time
-         * \param[in] v_galilean Galilean velocity (three-dimensional array)
          * \param[in] dt time step of the simulation
-         * \param[in] update_with_rho whether the update equation for E uses rho or not
          * \param[in] time_averaging whether to use time averaging for large time steps
          * \param[in] dive_cleaning Update F as part of the field update, so that errors in divE=rho propagate away at the speed of light
          * \param[in] divb_cleaning Update G as part of the field update, so that errors in divB=0 propagate away at the speed of light
          */
-        PsatdAlgorithm (
+        PsatdAlgorithmJLinearInTime (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const SpectralFieldIndex& spectral_index,
@@ -55,15 +56,13 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const int norder_z,
             const bool nodal,
             const amrex::IntVect& fill_guards,
-            const amrex::Vector<amrex::Real>& v_galilean,
             const amrex::Real dt,
-            const bool update_with_rho,
             const bool time_averaging,
             const bool dive_cleaning,
             const bool divb_cleaning);
 
         /**
-         * \brief Updates the E and B fields in spectral space, according to the relevant PSATD equations
+         * \brief Updates the E and B fields in spectral space, according to the multi-J PSATD equations
          *
          * \param[in,out] f all the fields in spectral space
          */
@@ -82,8 +81,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const amrex::Real dt);
 
         /**
-         * \brief Initializes additional coefficients used in \c pushSpectralFields to update the E and B fields,
-         *        required only when using time averaging with large time steps
+         * \brief Initialize additional coefficients used in \c pushSpectralFields to update E,B,
+         *        required only when using time averaging with the assumption that J is linear in time
          *
          * \param[in] spectral_kspace spectral space
          * \param[in] dm distribution mapping
@@ -134,28 +133,15 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
 
         // These real and complex coefficients are always allocated
         SpectralRealCoefficients C_coef, S_ck_coef;
-        SpectralComplexCoefficients T2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
-
-        // These real and complex coefficients are allocated only with averaged Galilean PSATD
-        SpectralComplexCoefficients Psi1_coef, Psi2_coef, Y1_coef, Y2_coef, Y3_coef, Y4_coef;
+        SpectralRealCoefficients X1_coef, X2_coef, X3_coef, X5_coef, X6_coef;
 
         SpectralFieldIndex m_spectral_index;
 
-        // Centered modified finite-order k vectors
-        KVectorComponent modified_kx_vec_centered;
-#if defined(WARPX_DIM_3D)
-        KVectorComponent modified_ky_vec_centered;
-#endif
-        KVectorComponent modified_kz_vec_centered;
-
         // Other member variables
-        amrex::Vector<amrex::Real> m_v_galilean;
         amrex::Real m_dt;
-        bool m_update_with_rho;
         bool m_time_averaging;
         bool m_dive_cleaning;
         bool m_divb_cleaning;
-        bool m_is_galilean;
 };
 #endif // WARPX_USE_PSATD
-#endif // WARPX_PSATD_ALGORITHM_H_
+#endif // WARPX_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_

@@ -63,6 +63,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -490,7 +491,8 @@ public:
      * can appear in parallel simulations. This will be called
      * when FieldBoundaryType is set to damped. Vector version.
      */
-    void DampFieldsInGuards (std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+    void DampFieldsInGuards (const int lev,
+                             std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                              std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
 
     /**
@@ -500,7 +502,7 @@ public:
      * can appear in parallel simulations. This will be called
      * when FieldBoundaryType is set to damped. Scalar version.
      */
-    void DampFieldsInGuards (std::unique_ptr<amrex::MultiFab>& mf);
+    void DampFieldsInGuards (const int lev, std::unique_ptr<amrex::MultiFab>& mf);
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -851,8 +853,8 @@ private:
     ///
     void EvolveEM(int numsteps);
 
-    void FillBoundaryB (int lev, PatchType patch_type, amrex::IntVect ng);
-    void FillBoundaryE (int lev, PatchType patch_type, amrex::IntVect ng);
+    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng);
+    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng);
     void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng);
 
@@ -1019,6 +1021,8 @@ private:
     std::unique_ptr<Utils::WarnManager> m_p_warn_manager;
     // Flag to control if WarpX has to emit a warning message as soon as a warning is recorded
     bool m_always_warn_immediately = false;
+    // Threshold to abort immediately on a warning message
+    std::optional<WarnPriority> m_abort_on_warning_threshold = std::nullopt;
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?

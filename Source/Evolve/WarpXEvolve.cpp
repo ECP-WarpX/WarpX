@@ -105,7 +105,7 @@ WarpX::Evolve (int numsteps)
                     // instantaneous costs)
                     for (int i : cost->IndexArray())
                     {
-                        (*cost)[i] *= (1. - 2./load_balance_intervals.localPeriod(step+1));
+                        (*cost)[i] *= (1._rt - 2._rt/load_balance_intervals.localPeriod(step+1));
                     }
                 }
             }
@@ -156,7 +156,9 @@ WarpX::Evolve (int numsteps)
         // Run multi-physics modules:
         // ionization, Coulomb collisions, QED
         doFieldIonization();
+        ExecutePythonCallback("beforecollisions");
         mypc->doCollisions( cur_time );
+        ExecutePythonCallback("aftercollisions");
 #ifdef WARPX_QED
         doQEDEvents();
         mypc->doQEDSchwinger();

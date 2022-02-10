@@ -42,7 +42,8 @@ AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void ElasticCollisionPerez (
     T_index const I1s, T_index const I1e,
     T_index const I2s, T_index const I2e,
-    T_index *I1,       T_index *I2,
+    T_index const* AMREX_RESTRICT I1,
+    T_index const* AMREX_RESTRICT I2,
     SoaData_type soa_1, SoaData_type soa_2,
     T_R const  q1, T_R const  q2,
     T_R const  m1, T_R const  m2,

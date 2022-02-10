@@ -57,6 +57,31 @@ electrons = picmi.Species(
     name = 'electrons',
     initial_distribution = uniform_distribution)
 
+# Particles: beam electrons
+q_tot = 1e-12
+x_m = 0.
+y_m = 0.
+z_m = -28e-06
+x_rms = 0.5e-06
+y_rms = 0.5e-06
+z_rms = 0.5e-06
+ux_m = 0.
+uy_m = 0.
+uz_m = 500.
+ux_th = 2.
+uy_th = 2.
+uz_th = 50.
+gaussian_bunch_distribution = picmi.GaussianBunchDistribution(
+    n_physical_particles = q_tot / q_e,
+    rms_bunch_size = [x_rms, y_rms, z_rms],
+    rms_velocity = [c*ux_th, c*uy_th, c*uz_th],
+    centroid_position = [x_m, y_m, z_m],
+    centroid_velocity = [c*ux_m, c*uy_m, c*uz_m])
+beam = picmi.Species(
+    particle_type = 'electron',
+    name = 'beam',
+    initial_distribution = gaussian_bunch_distribution)
+
 # Laser
 e_max = 16e12
 position_z = 9e-06
@@ -107,6 +132,11 @@ sim = picmi.Simulation(
 sim.add_species(
     electrons,
     layout = picmi.GriddedLayout(grid = grid, n_macroparticle_per_cell = [1, 1, 1]))
+
+# Add beam electrons
+sim.add_species(
+    beam,
+    layout = picmi.PseudoRandomLayout(grid = grid, n_macroparticles = 100))
 
 # Add laser
 sim.add_laser(

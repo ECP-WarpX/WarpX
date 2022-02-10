@@ -107,11 +107,8 @@ void ReducedDiags::WriteToFile (int step) const
     ofs << WarpX::GetInstance().gett_new(0);
 
     // loop over data size and write
-    for (int i = 0; i < static_cast<int>(m_data.size()); ++i)
-    {
-        ofs << m_sep;
-        ofs << m_data[i];
-    }
+    for (const auto& item : m_data) ofs << m_sep << item;
+
     // end loop over data size
 
     // end line

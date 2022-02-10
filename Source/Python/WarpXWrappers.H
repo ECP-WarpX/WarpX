@@ -78,7 +78,7 @@ extern "C" {
 
     amrex::Real warpx_getCellSize(int dir, int lev);
 
-    long warpx_getNumParticles(const char* char_species_name);
+    long warpx_getNumParticles(const char* char_species_name, const bool local);
 
     amrex::ParticleReal** warpx_getParticleStructs(
         const char* char_species_name, int lev, int* num_tiles,
@@ -93,6 +93,8 @@ extern "C" {
 
     void warpx_addRealComp(
         const char* char_species_name, const char* char_comp_name, bool comm);
+
+    amrex::Real warpx_sumParticleCharge(const char* char_species_name, const bool local);
 
     int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary);
 
@@ -127,6 +129,7 @@ extern "C" {
   void warpx_EvolveB (amrex::Real dt, DtType a_dt_type);
   void warpx_FillBoundaryE ();
   void warpx_FillBoundaryB ();
+  void warpx_SyncRho ();
   void warpx_SyncCurrent ();
   void warpx_UpdateAuxilaryData ();
   void warpx_PushParticlesandDepose (amrex::Real cur_time);
