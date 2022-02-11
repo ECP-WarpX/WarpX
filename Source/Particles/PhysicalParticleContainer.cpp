@@ -2513,7 +2513,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     int* AMREX_RESTRICT ion_lev = nullptr;
     if (do_field_ionization) {
-        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr() + offset;
     }
 
     const bool save_previous_position = m_save_previous_position;
@@ -2522,16 +2522,16 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* z_old = nullptr;
     if (save_previous_position) {
 #if (AMREX_SPACEDIM >= 2)
-        x_old = pti.GetAttribs(particle_comps["prev_x"]).dataPtr();
+        x_old = pti.GetAttribs(particle_comps["prev_x"]).dataPtr() + offset;
 #else
     amrex::ignore_unused(x_old);
 #endif
 #if defined(WARPX_DIM_3D)
-        y_old = pti.GetAttribs(particle_comps["prev_y"]).dataPtr();
+        y_old = pti.GetAttribs(particle_comps["prev_y"]).dataPtr() + offset;
 #else
     amrex::ignore_unused(y_old);
 #endif
-        z_old = pti.GetAttribs(particle_comps["prev_z"]).dataPtr();
+        z_old = pti.GetAttribs(particle_comps["prev_z"]).dataPtr() + offset;
     }
 
     // Loop over the particles and update their momentum
@@ -2550,7 +2550,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const bool local_has_quantum_sync = has_quantum_sync();
     if (local_has_quantum_sync) {
         evolve_opt = m_shr_p_qs_engine->build_evolve_functor();
-        p_optical_depth_QSR = pti.GetAttribs(particle_comps["opticalDepthQSR"]).dataPtr();
+        p_optical_depth_QSR = pti.GetAttribs(particle_comps["opticalDepthQSR"]).dataPtr()  + offset;
     }
 #endif
 
