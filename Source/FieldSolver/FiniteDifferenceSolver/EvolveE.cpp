@@ -76,11 +76,7 @@ void FiniteDifferenceSolver::EvolveE (
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee || m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
-#ifdef AMREX_USE_EB
-        if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
-            EvolveRhoCartesianECT(Efield, edge_lengths, face_areas, ECTRhofield, lev);
-        }
-#endif
+
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
         EvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );

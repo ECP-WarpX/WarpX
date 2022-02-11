@@ -92,10 +92,10 @@ RigidInjectedParticleContainer::RemapParticles()
 
         // For now, start with the assumption that this will only happen
         // at the start of the simulation.
-        const Real t_lab = 0.;
+        const Real t_lab = 0._rt;
 
         const Real uz_boost = WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
-        const Real csqi = 1./(PhysConst::c*PhysConst::c);
+        const Real csqi = 1._rt/(PhysConst::c*PhysConst::c);
 
         vzbeam_ave_boosted = meanParticleVelocity(false)[2];
 
@@ -128,7 +128,7 @@ RigidInjectedParticleContainer::RemapParticles()
                         ParticleReal xp, yp, zp;
                         GetPosition(i, xp, yp, zp);
 
-                        const Real gammapr = std::sqrt(1. + (uxp[i]*uxp[i] + uyp[i]*uyp[i] + uzp[i]*uzp[i])*csqi);
+                        const Real gammapr = std::sqrt(1._rt + (uxp[i]*uxp[i] + uyp[i]*uyp[i] + uzp[i]*uzp[i])*csqi);
                         const Real vzpr = uzp[i]/gammapr;
 
                         // Back out the value of z_lab
@@ -157,7 +157,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                         amrex::FArrayBox const * bxfab,
                                         amrex::FArrayBox const * byfab,
                                         amrex::FArrayBox const * bzfab,
-                                        const amrex::IntVect ngE, const int e_is_nodal,
+                                        const amrex::IntVect ngEB, const int e_is_nodal,
                                         const long offset,
                                         const long np_to_push,
                                         int lev, int gather_lev,
@@ -217,7 +217,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     const bool do_scale = not done_injecting_lev;
     const Real v_boost = WarpX::beta_boost*PhysConst::c;
     PhysicalParticleContainer::PushPX(pti, exfab, eyfab, ezfab, bxfab, byfab, bzfab,
-                                      ngE, e_is_nodal, offset, np_to_push, lev, gather_lev, dt,
+                                      ngEB, e_is_nodal, offset, np_to_push, lev, gather_lev, dt,
                                       ScaleFields(do_scale, dt, zinject_plane_lev_previous,
                                                   vzbeam_ave_boosted, v_boost),
                                       a_dt_type);
@@ -236,7 +236,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
         const Real z_plane_lev = zinject_plane_lev;
         const Real vz_ave_boosted = vzbeam_ave_boosted;
         const bool rigid = rigid_advance;
-        const Real inv_csq = 1./(PhysConst::c*PhysConst::c);
+        const Real inv_csq = 1._rt/(PhysConst::c*PhysConst::c);
         amrex::ParallelFor( pti.numParticles(),
                             [=] AMREX_GPU_DEVICE (long i) {
                                 ParticleReal xp, yp, zp;
@@ -251,7 +251,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                         zp = z_save[i] + dt*vz_ave_boosted;
                                     }
                                     else {
-                                        const Real gi = 1./std::sqrt(1. + (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])*inv_csq);
+                                        const Real gi = 1._rt/std::sqrt(1._rt + (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])*inv_csq);
                                         zp = z_save[i] + dt*uz[i]*gi;
                                     }
                                     SetPosition(i, xp, yp, zp);

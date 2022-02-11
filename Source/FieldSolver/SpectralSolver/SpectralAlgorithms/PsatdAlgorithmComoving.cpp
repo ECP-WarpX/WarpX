@@ -1,4 +1,4 @@
-#include "ComovingPsatdAlgorithm.H"
+#include "PsatdAlgorithmComoving.H"
 
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpX_Complex.H"
@@ -20,7 +20,7 @@
 
 using namespace amrex;
 
-ComovingPsatdAlgorithm::ComovingPsatdAlgorithm (const SpectralKSpace& spectral_kspace,
+PsatdAlgorithmComoving::PsatdAlgorithmComoving (const SpectralKSpace& spectral_kspace,
                                                 const DistributionMapping& dm,
                                                 const SpectralFieldIndex& spectral_index,
                                                 const int norder_x, const int norder_y,
@@ -64,7 +64,7 @@ ComovingPsatdAlgorithm::ComovingPsatdAlgorithm (const SpectralKSpace& spectral_k
 }
 
 void
-ComovingPsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
+PsatdAlgorithmComoving::pushSpectralFields (SpectralFieldData& f) const
 {
     const SpectralFieldIndex& Idx = m_spectral_index;
 
@@ -155,7 +155,7 @@ ComovingPsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
     }
 }
 
-void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& spectral_kspace,
+void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpace& spectral_kspace,
                                                              const amrex::DistributionMapping& dm,
                                                              const amrex::Real dt)
 {
@@ -411,13 +411,13 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
 }
 
 void
-ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
+PsatdAlgorithmComoving::CurrentCorrection (const int lev,
                                            SpectralFieldData& field_data,
                                            std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                            const std::unique_ptr<amrex::MultiFab>& rho)
 {
     // Profiling
-    BL_PROFILE("ComovingAlgorithm::CurrentCorrection");
+    BL_PROFILE("PsatdAlgorithmComoving::CurrentCorrection");
 
     const SpectralFieldIndex& Idx = m_spectral_index;
 
@@ -516,7 +516,7 @@ ComovingPsatdAlgorithm::CurrentCorrection (const int lev,
 }
 
 void
-ComovingPsatdAlgorithm::VayDeposition (const int /*lev*/,
+PsatdAlgorithmComoving::VayDeposition (const int /*lev*/,
                                        SpectralFieldData& /*field_data*/,
                                        std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {

@@ -8,17 +8,31 @@ When adding a new feature, you want to make sure that (i) you did not break the 
 Continuous Integration in WarpX
 -------------------------------
 
-WarpX-tests.ini files
-^^^^^^^^^^^^^^^^^^^^^
+Configuration
+^^^^^^^^^^^^^
 
-.. note::
-   section empty!
+Our regression tests are using the suite published and documented at `AMReX-Codes/regression_testing <https://github.com/AMReX-Codes/regression_testing>`__.
 
-Local tests every night
-^^^^^^^^^^^^^^^^^^^^^^^
+Most of the configuration of our regression tests happens in ``Regression/Warpx-tests.ini``.
+We slightly modify this file in ``Regression/prepare_file_ci.py``.
 
-.. note::
-   section empty!
+For example, if you like to change the compiler to compilation to build on Nvidia GPUs, modify this block to add ``-DWarpX_COMPUTE=CUDA``:
+
+.. code-block:: toml
+
+   [source]
+   dir = /home/regtester/AMReX_RegTesting/warpx
+   branch = development
+   cmakeSetupOpts = -DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON -DWarpX_COMPUTE=CUDA
+
+We also support changing compilation options :ref:`via the usual build enviroment variables <building-cmake-envvars:>`__.
+For instance, compiling with ``clang++ -Werror`` would be:
+
+.. code-block:: sh
+
+   export CXX=$(which clang++)
+   export CXXFLAGS="-Werror"
+
 
 Run the test suite locally
 --------------------------

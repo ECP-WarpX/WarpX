@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PML_PSATD_ALGORITHM_H_
-#define WARPX_PML_PSATD_ALGORITHM_H_
+#ifndef WARPX_PSATD_ALGORITHM_PML_H_
+#define WARPX_PSATD_ALGORITHM_PML_H_
 
 #include "SpectralBaseAlgorithm.H"
 
@@ -24,18 +24,18 @@
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
  */
-class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
+class PsatdAlgorithmPml : public SpectralBaseAlgorithm
 {
     public:
-        PMLPsatdAlgorithm(const SpectralKSpace& spectral_kspace,
-                         const amrex::DistributionMapping& dm,
-                         const SpectralFieldIndex& spectral_index,
-                         const int norder_x, const int norder_y,
-                         const int norder_z, const bool nodal,
-                         const amrex::IntVect& fill_guards,
-                         const amrex::Real dt,
-                         const bool dive_cleaning,
-                         const bool divb_cleaning);
+        PsatdAlgorithmPml(const SpectralKSpace& spectral_kspace,
+                          const amrex::DistributionMapping& dm,
+                          const SpectralFieldIndex& spectral_index,
+                          const int norder_x, const int norder_y,
+                          const int norder_z, const bool nodal,
+                          const amrex::IntVect& fill_guards,
+                          const amrex::Real dt,
+                          const bool dive_cleaning,
+                          const bool divb_cleaning);
 
         void InitializeSpectralCoefficients(
             const SpectralKSpace& spectral_kspace,
@@ -88,4 +88,4 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
 };
 
 #endif // WARPX_USE_PSATD
-#endif // WARPX_PML_PSATD_ALGORITHM_H_
+#endif // WARPX_PSATD_ALGORITHM_PML_H_
