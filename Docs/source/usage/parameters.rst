@@ -863,7 +863,7 @@ Particle initialization
     when the particles are generated.
     If the user-defined integer attribute is ``<int_attrib_name>`` then the
     following required parameter must be specified to initialize the attribute.
-    * ``<species_name>.<int_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
+    * ``<species_name>.attribute.<int_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
     ``t`` represents the physical time in seconds during the simulation.
     ``x``, ``y``, ``z`` represent particle positions in the unit of meter.
     ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
@@ -882,7 +882,7 @@ Particle initialization
     when the particles are generated.
     If the user-defined real attribute is ``<real_attrib_name>`` then the
     following required parameter must be specified to initialize the attribute.
-    * ``<species_name>.<real_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
+    * ``<species_name>.attribute.<real_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
     ``t`` represents the physical time in seconds during the simulation.
     ``x`, ``y``, ``z` represent particle positions in the unit of meter.
     ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
