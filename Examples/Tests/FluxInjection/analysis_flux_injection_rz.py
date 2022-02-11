@@ -24,10 +24,13 @@ This script tests that:
   velocity was along the azimuthal direction.)
 - The total number of electrons corresponds to the expected flux.
 """
+import os
+import re
 import sys
-import os, re
+
 import numpy as np
 import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
