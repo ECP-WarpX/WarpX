@@ -294,10 +294,10 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     str_int_attrib_function.resize(n_user_int_attribs);
     m_user_int_attrib_parser.resize(n_user_int_attribs);
     for (int i = 0; i < n_user_int_attribs; ++i) {
-        Store_parserString(pp_species_name, "attribute."+m_user_int_attribs[i]+"(x,y,z,ux,uy,uz,t)", str_int_attrib_function[i]);
-        m_user_int_attrib_parser[i] = std::make_unique<amrex::Parser>(
-                                            makeParser(str_int_attrib_function[i],{"x","y","z","ux","uy","uz","t"}));
-        AddIntComp(m_user_int_attribs[i]);
+        Store_parserString(pp_species_name, "attribute."+m_user_int_attribs.at(i)+"(x,y,z,ux,uy,uz,t)", str_int_attrib_function.at(i));
+        m_user_int_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
+                                            makeParser(str_int_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
+        AddIntComp(m_user_int_attribs.at(i));
     }
 
     // User-defined real attributes
@@ -307,10 +307,10 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     str_real_attrib_function.resize(n_user_real_attribs);
     m_user_real_attrib_parser.resize(n_user_real_attribs);
     for (int i = 0; i < n_user_real_attribs; ++i) {
-        Store_parserString(pp_species_name, "attribute."+m_user_real_attribs[i]+"(x,y,z,ux,uy,uz,t)", str_real_attrib_function[i]);
-        m_user_real_attrib_parser[i] = std::make_unique<amrex::Parser>(
-                                            makeParser(str_real_attrib_function[i],{"x","y","z","ux","uy","uz","t"}));
-        AddRealComp(m_user_real_attribs[i]);
+        Store_parserString(pp_species_name, "attribute."+m_user_real_attribs.at(i)+"(x,y,z,ux,uy,uz,t)", str_real_attrib_function.at(i));
+        m_user_real_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
+                                            makeParser(str_real_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
+        AddRealComp(m_user_real_attribs.at(i));
     }
 
     // If old particle positions should be saved add the needed components
