@@ -206,12 +206,11 @@ MsgWithCounterAndRanks::deserialize (std::vector<char>::const_iterator&& it)
     return MsgWithCounterAndRanks::deserialize(it);
 }
 
-Logger::Logger(){
-    m_rank = amrex::ParallelDescriptor::MyProc();
-    m_num_procs = amrex::ParallelDescriptor::NProcs();
-    m_io_rank = amrex::ParallelDescriptor::IOProcessorNumber();
-    m_am_i_io = (m_rank == m_io_rank);
-}
+Logger::Logger() :
+    m_rank{amrex::ParallelDescriptor::MyProc()},
+    m_num_procs{amrex::ParallelDescriptor::NProcs()},
+    m_io_rank{amrex::ParallelDescriptor::IOProcessorNumber()}
+{}
 
 void Logger::record_msg(Msg msg)
 {
@@ -250,7 +249,7 @@ Logger::collective_gather_msgs_with_counter_and_ranks() const
 
     // Find out who is the "gather rank" and how many messages it has
     const auto my_msgs = get_msgs();
-    const auto how_many_msgs = my_msgs.size();
+    const auto how_many_msgs = static_cast<int>(my_msgs.size());
     const auto [gather_rank, gather_rank_how_many_msgs] =
         find_gather_rank_and_its_msgs(how_many_msgs);
 
@@ -323,13 +322,14 @@ std::pair<int,int> Logger::find_gather_rank_and_its_msgs(int how_many_msgs) cons
     const auto num_msg =
         amrex::ParallelDescriptor::Gather(how_many_msgs, m_io_rank);
 
+    const auto m_am_i_io = (m_rank == m_io_rank);
     if (m_am_i_io){
         const auto it_max = std::max_element(num_msg.begin(), num_msg.end());
         max_items = *it_max;
 
         //In case of an "ex aequo" the I/O rank should be the gather rank
         max_rank = (max_items == how_many_msgs) ?
-            m_io_rank : it_max - num_msg.begin();
+            m_io_rank : static_cast<int>(it_max - num_msg.begin());
     }
 
     auto package = std::array<int,2>{max_rank, max_items};
@@ -575,7 +575,7 @@ gather_all_data(
             static_cast<int>(package_for_gather_rank.size()), gather_rank);
         amrex::ParallelDescriptor::Gatherv(
             package_for_gather_rank.data(),
-            package_for_gather_rank.size(),
+            static_cast<int>(package_for_gather_rank.size()),
             all_data.data(),
             package_lengths,
             displacements,
@@ -621,7 +621,7 @@ std::vector<char> serialize_msgs(
     const auto how_many = static_cast<int> (msgs.size());
     put_in (how_many, serialized);
 
-    for (auto msg : msgs){
+    for (const auto& msg : msgs){
         put_in_vec(msg.serialize(), serialized);
     }
     return serialized;

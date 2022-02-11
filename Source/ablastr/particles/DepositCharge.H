@@ -57,7 +57,7 @@ namespace particles {
 template< typename T_PC >
 static void
 deposit_charge (typename T_PC::ParIterType& pti,
-                typename T_PC::RealVector& wp,
+                typename T_PC::RealVector const& wp,
                 const int * const ion_lev,
                 amrex::MultiFab* rho, const int icomp, const int nc,
                 const long offset, const long np_to_depose,

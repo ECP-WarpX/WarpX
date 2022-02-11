@@ -296,6 +296,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom, int num_shift,
                 amrex::Real external_field, bool useparser,
                 amrex::ParserExecutor<3> const& field_parser)
 {
+    using namespace amrex::literals;
     WARPX_PROFILE("WarpX::shiftMF()");
     const amrex::BoxArray& ba = mf.boxArray();
     const amrex::DistributionMapping& dm = mf.DistributionMap();
@@ -382,22 +383,22 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom, int num_shift,
                 {
                       // Compute x,y,z co-ordinates based on index type of mf
 #if defined(WARPX_DIM_1D_Z)
-                      amrex::Real x = 0.0;
-                      amrex::Real y = 0.0;
-                      amrex::Real fac_z = (1.0 - mf_type[0]) * dx[0]*0.5;
+                      amrex::Real x = 0.0_rt;
+                      amrex::Real y = 0.0_rt;
+                      amrex::Real fac_z = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
                       amrex::Real z = i*dx[0] + real_box.lo(0) + fac_z;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                      amrex::Real fac_x = (1.0 - mf_type[0]) * dx[0]*0.5;
+                      amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
                       amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
                       amrex::Real y = 0.0;
-                      amrex::Real fac_z = (1.0 - mf_type[1]) * dx[1]*0.5;
+                      amrex::Real fac_z = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
                       amrex::Real z = j*dx[1] + real_box.lo(1) + fac_z;
 #else
-                      amrex::Real fac_x = (1.0 - mf_type[0]) * dx[0]*0.5;
+                      amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
                       amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
-                      amrex::Real fac_y = (1.0 - mf_type[1]) * dx[1]*0.5;
+                      amrex::Real fac_y = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
                       amrex::Real y = j*dx[1] + real_box.lo(1) + fac_y;
-                      amrex::Real fac_z = (1.0 - mf_type[2]) * dx[2]*0.5;
+                      amrex::Real fac_z = (1.0_rt - mf_type[2]) * dx[2]*0.5_rt;
                       amrex::Real z = k*dx[2] + real_box.lo(2) + fac_z;
 #endif
                       srcfab(i,j,k,n) = field_parser(x,y,z);

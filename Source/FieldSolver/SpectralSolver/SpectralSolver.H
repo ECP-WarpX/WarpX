@@ -121,7 +121,7 @@ class SpectralSolver
         /**
          * \brief Public interface to call the virtual function \c CurrentCorrection,
          * defined in the base class SpectralBaseAlgorithm and possibly overridden
-         * by its derived classes (e.g. PsatdAlgorithm, GalileanAlgorithm), from
+         * by its derived classes (e.g. PsatdAlgorithm, PsatdAlgorithmComoving, etc.), from
          * objects of class SpectralSolver through the private unique pointer \c algorithm
          *
          * \param[in]     lev     The mesh refinement level

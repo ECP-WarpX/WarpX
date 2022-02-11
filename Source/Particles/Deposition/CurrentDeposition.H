@@ -915,10 +915,10 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 
                 // Re-casting sx_new and sz_new from double to amrex::Real so that
                 // Atomic::Add has consistent types in its argument
-                amrex::Real const sxn_szn = sx_new[i] * sz_new[k];
-                amrex::Real const sxo_szn = sx_old[i] * sz_new[k];
-                amrex::Real const sxn_szo = sx_new[i] * sz_old[k];
-                amrex::Real const sxo_szo = sx_old[i] * sz_old[k];
+                auto const sxn_szn = static_cast<amrex::Real>(sx_new[i] * sz_new[k]);
+                auto const sxo_szn = static_cast<amrex::Real>(sx_old[i] * sz_new[k]);
+                auto const sxn_szo = static_cast<amrex::Real>(sx_new[i] * sz_old[k]);
+                auto const sxo_szo = static_cast<amrex::Real>(sx_old[i] * sz_old[k]);
 
                 // Jx
                 amrex::Gpu::Atomic::AddNoRet(&jx_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
@@ -966,21 +966,21 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         for (int k=0; k<=depos_order; k++) {
             for (int j=0; j<=depos_order; j++) {
 
-                amrex::Real const syn_szn = sy_new[j] * sz_new[k];
-                amrex::Real const syo_szn = sy_old[j] * sz_new[k];
-                amrex::Real const syn_szo = sy_new[j] * sz_old[k];
-                amrex::Real const syo_szo = sy_old[j] * sz_old[k];
+                auto const syn_szn = static_cast<amrex::Real>(sy_new[j] * sz_new[k]);
+                auto const syo_szn = static_cast<amrex::Real>(sy_old[j] * sz_new[k]);
+                auto const syn_szo = static_cast<amrex::Real>(sy_new[j] * sz_old[k]);
+                auto const syo_szo = static_cast<amrex::Real>(sy_old[j] * sz_old[k]);
 
                 for (int i=0; i<=depos_order; i++) {
 
-                    amrex::Real const sxn_syn_szn = sx_new[i] * syn_szn;
-                    amrex::Real const sxo_syn_szn = sx_old[i] * syn_szn;
-                    amrex::Real const sxn_syo_szn = sx_new[i] * syo_szn;
-                    amrex::Real const sxo_syo_szn = sx_old[i] * syo_szn;
-                    amrex::Real const sxn_syn_szo = sx_new[i] * syn_szo;
-                    amrex::Real const sxo_syn_szo = sx_old[i] * syn_szo;
-                    amrex::Real const sxn_syo_szo = sx_new[i] * syo_szo;
-                    amrex::Real const sxo_syo_szo = sx_old[i] * syo_szo;
+                    auto const sxn_syn_szn = static_cast<amrex::Real>(sx_new[i]) * syn_szn;
+                    auto const sxo_syn_szn = static_cast<amrex::Real>(sx_old[i]) * syn_szn;
+                    auto const sxn_syo_szn = static_cast<amrex::Real>(sx_new[i]) * syo_szn;
+                    auto const sxo_syo_szn = static_cast<amrex::Real>(sx_old[i]) * syo_szn;
+                    auto const sxn_syn_szo = static_cast<amrex::Real>(sx_new[i]) * syn_szo;
+                    auto const sxo_syn_szo = static_cast<amrex::Real>(sx_old[i]) * syn_szo;
+                    auto const sxn_syo_szo = static_cast<amrex::Real>(sx_new[i]) * syo_szo;
+                    auto const sxo_syo_szo = static_cast<amrex::Real>(sx_old[i]) * syo_szo;
 
                     // Jx
                     amrex::Gpu::Atomic::AddNoRet(&jx_arr(lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k),
