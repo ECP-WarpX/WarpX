@@ -87,8 +87,8 @@ hydrogen.momentum_distribution_type = at_rest
 #hydrogen.zmax =  10.0e-6
 hydrogen.profile = parse_density_function
 hydrogen.addRealAttributes = orig_x orig_z
-hydrogen.orig_x(x,y,z,ux,uy,uz,t) = x
-hydrogen.orig_z(x,y,z,ux,uy,uz,t) = z
+hydrogen.attribute.orig_x(x,y,z,ux,uy,uz,t) = "x"
+hydrogen.attribute.orig_z(x,y,z,ux,uy,uz,t) = "z"
 
 electrons.species_type = electron
 electrons.injection_style = NUniformPerCell
