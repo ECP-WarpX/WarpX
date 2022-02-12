@@ -749,16 +749,17 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     const auto& dm = m_gdb->DistributionMap(lev);
     BoxArray nba = ba;
 
-    bool is_PSATD_RZ = false;
-#ifdef WARPX_DIM_RZ
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
-        is_PSATD_RZ = true;
-#endif
-    if( !is_PSATD_RZ )
+    WarpX& warpx = WarpX::GetInstance();
+
+    // Call surroundingNodes() only if the rho MultiFab is NOT fully cell-centered
+    // (the index type of rho does not change between fine and coarse patch,
+    // so checking only on rho_fp should be fine)
+    if (warpx.getrho_fp(lev).ixType().toIntVect() != amrex::IntVect::TheCellVector())
+    {
         nba.surroundingNodes();
+    }
 
     // Number of guard cells for local deposition of rho
-    WarpX& warpx = WarpX::GetInstance();
     const int ng_rho = warpx.get_ng_depos_rho().max();
 
     auto rho = std::make_unique<MultiFab>(nba,dm,WarpX::ncomps,ng_rho);

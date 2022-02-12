@@ -1613,17 +1613,17 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     // Overwrite nodal flags if necessary
     if (do_nodal) {
-        Ex_nodal_flag  = IntVect::TheNodeVector();
-        Ey_nodal_flag  = IntVect::TheNodeVector();
-        Ez_nodal_flag  = IntVect::TheNodeVector();
-        Bx_nodal_flag  = IntVect::TheNodeVector();
-        By_nodal_flag  = IntVect::TheNodeVector();
-        Bz_nodal_flag  = IntVect::TheNodeVector();
-        jx_nodal_flag  = IntVect::TheNodeVector();
-        jy_nodal_flag  = IntVect::TheNodeVector();
-        jz_nodal_flag  = IntVect::TheNodeVector();
-        rho_nodal_flag = IntVect::TheNodeVector();
-        G_nodal_flag = amrex::IntVect::TheNodeVector();
+        Ex_nodal_flag  = IntVect::TheCellVector();
+        Ey_nodal_flag  = IntVect::TheCellVector();
+        Ez_nodal_flag  = IntVect::TheCellVector();
+        Bx_nodal_flag  = IntVect::TheCellVector();
+        By_nodal_flag  = IntVect::TheCellVector();
+        Bz_nodal_flag  = IntVect::TheCellVector();
+        jx_nodal_flag  = IntVect::TheCellVector();
+        jy_nodal_flag  = IntVect::TheCellVector();
+        jz_nodal_flag  = IntVect::TheCellVector();
+        rho_nodal_flag = IntVect::TheCellVector();
+        G_nodal_flag = amrex::IntVect::TheCellVector();
     }
 #ifdef WARPX_DIM_RZ
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
