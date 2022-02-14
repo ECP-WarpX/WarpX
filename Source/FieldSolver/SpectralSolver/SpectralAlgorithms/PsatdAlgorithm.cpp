@@ -843,11 +843,24 @@ PsatdAlgorithm::VayDeposition (
     const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Forward Fourier transform of D (temporarily stored in current):
-    // D is nodal and does not match the staggering of J, therefore we pass the
-    // actual staggering of D (IntVect(1)) to the ForwardTransform function
-    field_data.ForwardTransform(lev, *current[0], Idx.Jx, 0, IntVect(1));
-    field_data.ForwardTransform(lev, *current[1], Idx.Jy, 0, IntVect(1));
-    field_data.ForwardTransform(lev, *current[2], Idx.Jz, 0, IntVect(1));
+    // D is nodal and does not match the staggering of J, therefore we pass the staggering of D
+    // to the ForwardTransform function (nodal, unless all quantities are fully cell-centered)
+
+    amrex::IntVect jx_nodal_flag =
+        ((*current[0]).ixType().toIntVect() == amrex::IntVect::TheCellVector()) ?
+        amrex::IntVect::TheCellVector() : amrex::IntVect::TheNodeVector();
+
+    amrex::IntVect jy_nodal_flag =
+        ((*current[1]).ixType().toIntVect() == amrex::IntVect::TheCellVector()) ?
+        amrex::IntVect::TheCellVector() : amrex::IntVect::TheNodeVector();
+
+    amrex::IntVect jz_nodal_flag =
+        ((*current[2]).ixType().toIntVect() == amrex::IntVect::TheCellVector()) ?
+        amrex::IntVect::TheCellVector() : amrex::IntVect::TheNodeVector();
+
+    field_data.ForwardTransform(lev, *current[0], Idx.Jx, 0, jx_nodal_flag);
+    field_data.ForwardTransform(lev, *current[1], Idx.Jy, 0, jy_nodal_flag);
+    field_data.ForwardTransform(lev, *current[2], Idx.Jz, 0, jz_nodal_flag);
 
     const amrex::IntVect& fill_guards = m_fill_guards;
 

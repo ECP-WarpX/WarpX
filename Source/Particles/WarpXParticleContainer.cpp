@@ -472,21 +472,27 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             doVayDepositionShapeN<1>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx, xyzmin, lo, q,
+                jx_fab, jy_fab, jz_fab,
+                jx->ixType().toIntVect(), jy->ixType().toIntVect(), jz->ixType().toIntVect(),
+                np_to_depose, dt, dx, xyzmin, lo, q,
                 WarpX::n_rz_azimuthal_modes, cost,
                 WarpX::load_balance_costs_update_algo);
         } else if (WarpX::nox == 2){
             doVayDepositionShapeN<2>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx, xyzmin, lo, q,
+                jx_fab, jy_fab, jz_fab,
+                jx->ixType().toIntVect(), jy->ixType().toIntVect(), jz->ixType().toIntVect(),
+                np_to_depose, dt, dx, xyzmin, lo, q,
                 WarpX::n_rz_azimuthal_modes, cost,
                 WarpX::load_balance_costs_update_algo);
         } else if (WarpX::nox == 3){
             doVayDepositionShapeN<3>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx, xyzmin, lo, q,
+                jx_fab, jy_fab, jz_fab,
+                jx->ixType().toIntVect(), jy->ixType().toIntVect(), jz->ixType().toIntVect(),
+                np_to_depose, dt, dx, xyzmin, lo, q,
                 WarpX::n_rz_azimuthal_modes, cost,
                 WarpX::load_balance_costs_update_algo);
         }
