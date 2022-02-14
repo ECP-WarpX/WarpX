@@ -754,7 +754,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     // Call surroundingNodes() only if the rho MultiFab is NOT fully cell-centered
     // (the index type of rho does not change between fine and coarse patch,
     // so checking only on rho_fp should be fine)
-    if (warpx.getrho_fp(lev).ixType().toIntVect() != amrex::IntVect::TheCellVector())
+    if (warpx.m_rho_nodal_flag != amrex::IntVect::TheCellVector())
     {
         nba.surroundingNodes();
     }

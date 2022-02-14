@@ -192,6 +192,7 @@ int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
 int WarpX::do_nodal = false;
+amrex::IntVect m_rho_nodal_flag;
 
 int WarpX::do_similar_dm_pml = 1;
 
@@ -1649,6 +1650,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     // Even components are the imaginary parts.
     ncomps = n_rz_azimuthal_modes*2 - 1;
 #endif
+
+    // Set global rho nodal flag to know about rho index type when rho MultiFab is not allocated
+    // (useful for rho and div(E) diagnostics)
+    m_rho_nodal_flag = rho_nodal_flag;
 
     // set human-readable tag for each MultiFab
     auto const tag = [lev]( std::string tagname ) {

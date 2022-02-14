@@ -32,7 +32,7 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_
     // (the index type of rho does not change between fine and coarse patch,
     // so checking only on rho_fp should be fine)
     amrex::IntVect cell_type =
-        (warpx.getrho_fp(m_lev).ixType().toIntVect() == amrex::IntVect::TheCellVector()) ?
+        (warpx.m_rho_nodal_flag == amrex::IntVect::TheCellVector()) ?
         amrex::IntVect::TheCellVector() : amrex::IntVect::TheNodeVector();
     const amrex::BoxArray& ba = amrex::convert(warpx.boxArray(m_lev), cell_type);
     amrex::MultiFab divE(ba, warpx.DistributionMap(m_lev), 2*warpx.n_rz_azimuthal_modes-1, ng );
