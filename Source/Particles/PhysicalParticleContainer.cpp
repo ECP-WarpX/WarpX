@@ -477,9 +477,9 @@ PhysicalParticleContainer::AddGaussianBeam (
             const Real z = amrex::RandomNormal(z_m, z_rms);
 #endif
             if (plasma_injector->insideBounds(x, y, z)  &&
-                std::abs( x - x_m ) < x_cut * x_rms     &&
-                std::abs( y - y_m ) < y_cut * y_rms     &&
-                std::abs( z - z_m ) < z_cut * z_rms   ) {
+                std::abs( x - x_m ) <= x_cut * x_rms     &&
+                std::abs( y - y_m ) <= y_cut * y_rms     &&
+                std::abs( z - z_m ) <= z_cut * z_rms   ) {
                 XDim3 u = plasma_injector->getMomentum(x, y, z);
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
