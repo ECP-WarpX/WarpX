@@ -698,7 +698,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
     if (m_dive_cleaning)
     {
-        const amrex::IntVect& F_nodal_flag = amrex::IntVect::TheNodeVector();
+        const amrex::IntVect& F_nodal_flag =
+            (do_nodal) ? amrex::IntVect::TheCellVector() : amrex::IntVect::TheNodeVector();
         pml_F_fp = std::make_unique<MultiFab>(amrex::convert(ba, F_nodal_flag), dm, 3, ngf);
         pml_F_fp->setVal(0.0);
     }
@@ -706,8 +707,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     if (m_divb_cleaning)
     {
         // TODO Shall we define a separate guard cells parameter ngG?
-        const amrex::IntVect& G_nodal_flag = (do_nodal) ? amrex::IntVect::TheNodeVector()
-                                                        : amrex::IntVect::TheCellVector();
+        const amrex::IntVect& G_nodal_flag = amrex::IntVect::TheCellVector();
         pml_G_fp = std::make_unique<MultiFab>(amrex::convert(ba, G_nodal_flag), dm, 3, ngf);
         pml_G_fp->setVal(0.0);
     }

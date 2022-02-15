@@ -1624,6 +1624,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jy_nodal_flag  = IntVect::TheCellVector();
         jz_nodal_flag  = IntVect::TheCellVector();
         rho_nodal_flag = IntVect::TheCellVector();
+        F_nodal_flag = amrex::IntVect::TheCellVector();
         G_nodal_flag = amrex::IntVect::TheCellVector();
     }
 #ifdef WARPX_DIM_RZ
