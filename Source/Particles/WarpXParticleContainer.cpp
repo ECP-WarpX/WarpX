@@ -416,7 +416,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     // Take into account Galilean shift
     Real cur_time = warpx.gett_new(lev);
     const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
-    Real time_shift = (cur_time + 0.5*dt - time_of_last_gal_shift);
+    Real time_shift = (cur_time + 0.5_rt*dt - time_of_last_gal_shift);
     amrex::Array<amrex::Real,3> galilean_shift = {
         m_v_galilean[0]* time_shift,
         m_v_galilean[1]*time_shift,
@@ -586,7 +586,7 @@ WarpXParticleContainer::DepositCurrent (
  * \param depos_lev   : Level on which particles deposit (if buffers are used)
  */
 void
-WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
+WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                        const int * const ion_lev,
                                        amrex::MultiFab* rho, int icomp,
                                        const long offset, const long np_to_depose,
@@ -681,7 +681,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             const long np = pti.numParticles();
-            auto& wp = pti.GetAttribs(PIdx::w);
+            auto const & wp = pti.GetAttribs(PIdx::w);
 
             int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization)
@@ -798,7 +798,7 @@ Real WarpXParticleContainer::sumParticleCharge(bool local) {
     amrex::Real total_charge = 0.0;
 
     const int nLevels = finestLevel();
-    for (int lev = 0; lev < nLevels; ++lev)
+    for (int lev = 0; lev <= nLevels; ++lev)
     {
 
 #ifdef AMREX_USE_OMP
@@ -820,13 +820,13 @@ Real WarpXParticleContainer::sumParticleCharge(bool local) {
 
 std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
 
-    amrex::Real vx_total = 0.0;
-    amrex::Real vy_total = 0.0;
-    amrex::Real vz_total = 0.0;
+    amrex::Real vx_total = 0.0_rt;
+    amrex::Real vy_total = 0.0_rt;
+    amrex::Real vz_total = 0.0_rt;
 
     amrex::Long np_total = 0;
 
-    amrex::Real inv_clight_sq = 1.0/PhysConst::c/PhysConst::c;
+    amrex::Real inv_clight_sq = 1.0_rt/PhysConst::c/PhysConst::c;
 
     const int nLevels = finestLevel();
 

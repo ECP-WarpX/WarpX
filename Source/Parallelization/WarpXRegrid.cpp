@@ -213,12 +213,12 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 // Get the cell-centered box
                 BoxArray realspace_ba = ba;   // Copy box
                 realspace_ba.enclosedCells(); // Make it cell-centered
-                auto ngE = getngE();
+                auto ngEB = getngEB();
                 auto dx = CellSize(lev);
 
 #   ifdef WARPX_DIM_RZ
                 if ( fft_periodic_single_box == false ) {
-                    realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+                    realspace_ba.grow(1, ngEB[1]); // add guard cells only in z
                 }
                 AllocLevelSpectralSolverRZ(spectral_solver_fp,
                                            lev,
@@ -227,7 +227,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                            dx);
 #   else
                 if ( fft_periodic_single_box == false ) {
-                    realspace_ba.grow(ngE);   // add guard cells
+                    realspace_ba.grow(ngEB);   // add guard cells
                 }
                 bool const pml_flag_false = false;
                 AllocLevelSpectralSolver(spectral_solver_fp,
@@ -278,17 +278,17 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                     BoxArray c_realspace_ba = cba;  // Copy box
                     c_realspace_ba.enclosedCells(); // Make it cell-centered
 
-                    auto ngE = getngE();
+                    auto ngEB = getngEB();
 
 #   ifdef WARPX_DIM_RZ
-                    c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+                    c_realspace_ba.grow(1, ngEB[1]); // add guard cells only in z
                     AllocLevelSpectralSolverRZ(spectral_solver_cp,
                                                lev,
                                                c_realspace_ba,
                                                dm,
                                                cdx);
 #   else
-                    c_realspace_ba.grow(ngE);
+                    c_realspace_ba.grow(ngEB);
                     bool const pml_flag_false = false;
                     AllocLevelSpectralSolver(spectral_solver_cp,
                                              lev,

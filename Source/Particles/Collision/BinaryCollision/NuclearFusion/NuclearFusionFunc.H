@@ -131,7 +131,8 @@ public:
     void operator() (
         index_type const I1s, index_type const I1e,
         index_type const I2s, index_type const I2e,
-        index_type* I1,       index_type* I2,
+        index_type const* AMREX_RESTRICT I1,
+        index_type const* AMREX_RESTRICT I2,
         SoaData_type soa_1, SoaData_type soa_2,
         GetParticlePosition /*get_position_1*/, GetParticlePosition /*get_position_2*/,
         amrex::ParticleReal const  /*q1*/, amrex::ParticleReal const  /*q2*/,

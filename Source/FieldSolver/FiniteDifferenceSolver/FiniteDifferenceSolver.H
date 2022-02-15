@@ -76,6 +76,12 @@ class FiniteDifferenceSolver
                       std::array<std::unique_ptr<amrex::MultiFab>,3> const& Bfield,
                       amrex::Real const dt);
 
+        void EvolveECTRho ( std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+                            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+                            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
+                            const int lev );
+
         void ApplySilverMuellerBoundary(
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,

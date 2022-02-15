@@ -82,7 +82,7 @@
 #include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
-
+#include <AMReX_Parser.H>
 
 #ifdef AMREX_USE_OMP
 #   include <omp.h>
@@ -287,6 +287,32 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     }
 #endif
 
+    // User-defined integer attributes
+    pp_species_name.queryarr("addIntegerAttributes", m_user_int_attribs);
+    int n_user_int_attribs = m_user_int_attribs.size();
+    std::vector< std::string > str_int_attrib_function;
+    str_int_attrib_function.resize(n_user_int_attribs);
+    m_user_int_attrib_parser.resize(n_user_int_attribs);
+    for (int i = 0; i < n_user_int_attribs; ++i) {
+        Store_parserString(pp_species_name, "attribute."+m_user_int_attribs.at(i)+"(x,y,z,ux,uy,uz,t)", str_int_attrib_function.at(i));
+        m_user_int_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
+                                            makeParser(str_int_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
+        AddIntComp(m_user_int_attribs.at(i));
+    }
+
+    // User-defined real attributes
+    pp_species_name.queryarr("addRealAttributes", m_user_real_attribs);
+    int n_user_real_attribs = m_user_real_attribs.size();
+    std::vector< std::string > str_real_attrib_function;
+    str_real_attrib_function.resize(n_user_real_attribs);
+    m_user_real_attrib_parser.resize(n_user_real_attribs);
+    for (int i = 0; i < n_user_real_attribs; ++i) {
+        Store_parserString(pp_species_name, "attribute."+m_user_real_attribs.at(i)+"(x,y,z,ux,uy,uz,t)", str_real_attrib_function.at(i));
+        m_user_real_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
+                                            makeParser(str_real_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
+        AddRealComp(m_user_real_attribs.at(i));
+    }
+
     // If old particle positions should be saved add the needed components
     pp_species_name.query("save_previous_position", m_save_previous_position);
     if (m_save_previous_position) {
@@ -451,9 +477,9 @@ PhysicalParticleContainer::AddGaussianBeam (
             const Real z = amrex::RandomNormal(z_m, z_rms);
 #endif
             if (plasma_injector->insideBounds(x, y, z)  &&
-                std::abs( x - x_m ) < x_cut * x_rms     &&
-                std::abs( y - y_m ) < y_cut * y_rms     &&
-                std::abs( z - z_m ) < z_cut * z_rms   ) {
+                std::abs( x - x_m ) <= x_cut * x_rms     &&
+                std::abs( y - y_m ) <= y_cut * y_rms     &&
+                std::abs( z - z_m ) <= z_cut * z_rms   ) {
                 XDim3 u = plasma_injector->getMomentum(x, y, z);
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
@@ -903,6 +929,26 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         for (int ia = 0; ia < PIdx::nattribs; ++ia) {
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
+        // user-defined integer and real attributes
+        const int n_user_int_attribs = m_user_int_attribs.size();
+        const int n_user_real_attribs = m_user_real_attribs.size();
+        amrex::Gpu::DeviceVector<int*> pa_user_int(n_user_int_attribs);
+        amrex::Gpu::DeviceVector<ParticleReal*> pa_user_real(n_user_real_attribs);
+        amrex::Gpu::DeviceVector< amrex::ParserExecutor<7> > user_int_attrib_parserexec(n_user_int_attribs);
+        amrex::Gpu::DeviceVector< amrex::ParserExecutor<7> > user_real_attrib_parserexec(n_user_real_attribs);
+        for (int ia = 0; ia < n_user_int_attribs; ++ia) {
+            pa_user_int[ia] = soa.GetIntData(particle_icomps[m_user_int_attribs[ia]]).data() + old_size;
+            user_int_attrib_parserexec[ia] = m_user_int_attrib_parser[ia]->compile<7>();
+        }
+        for (int ia = 0; ia < n_user_real_attribs; ++ia) {
+            pa_user_real[ia] = soa.GetRealData(particle_comps[m_user_real_attribs[ia]]).data() + old_size;
+            user_real_attrib_parserexec[ia] = m_user_real_attrib_parser[ia]->compile<7>();
+        }
+        int** pa_user_int_data = pa_user_int.dataPtr();
+        ParticleReal** pa_user_real_data = pa_user_real.dataPtr();
+        amrex::ParserExecutor<7> const* user_int_parserexec_data = user_int_attrib_parserexec.dataPtr();
+        amrex::ParserExecutor<7> const* user_real_parserexec_data = user_real_attrib_parserexec.dataPtr();
+
 
         int* pi = nullptr;
         if (do_field_ionization) {
@@ -1114,6 +1160,14 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     p_optical_depth_BW[ip] = breit_wheeler_get_opt(engine);
                 }
 #endif
+                // Initialize user-defined integers with user-defined parser
+                for (int ia = 0; ia < n_user_int_attribs; ++ia) {
+                    pa_user_int_data[ia][ip] = static_cast<int>(user_int_parserexec_data[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t));
+                }
+                // Initialize user-defined real attributes with user-defined parser
+                for (int ia = 0; ia < n_user_real_attribs; ++ia) {
+                    pa_user_real_data[ia][ip] = user_real_parserexec_data[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t);
+                }
 
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
@@ -2337,11 +2391,9 @@ PhysicalParticleContainer::GetParticleSlice (
                   uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr();
 
                 const long np = pti.numParticles();
-                amrex::Print() << " np old BTD " << np << "\n";
-                amrex::Print() << " tmp particle size : " << tmp_particle_data.size() << "\n";
 
                 Real uzfrm = -WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
-                Real inv_c2 = 1.0/PhysConst::c/PhysConst::c;
+                Real inv_c2 = 1.0_rt/PhysConst::c/PhysConst::c;
 
                 FlagForPartCopy.resize(np);
                 IndexForPartCopy.resize(np);
@@ -2400,7 +2452,7 @@ PhysicalParticleContainer::GetParticleSlice (
                     if (Flag[i] == 1)
                     {
                          // Lorentz Transform particles to lab-frame
-                         const Real gamma_new_p = std::sqrt(1.0 + inv_c2*
+                         const Real gamma_new_p = std::sqrt(1.0_rt + inv_c2*
                                                   (uxpnew[i]*uxpnew[i]
                                                  + uypnew[i]*uypnew[i]
                                                  + uzpnew[i]*uzpnew[i]));
@@ -2408,7 +2460,7 @@ PhysicalParticleContainer::GetParticleSlice (
                          const Real z_new_p = gammaboost*(zp_new + betaboost*Phys_c*t_boost);
                          const Real uz_new_p = gammaboost*uzpnew[i] - gamma_new_p*uzfrm;
 
-                         const Real gamma_old_p = std::sqrt(1.0 + inv_c2*
+                         const Real gamma_old_p = std::sqrt(1.0_rt + inv_c2*
                                                   (uxpold[i]*uxpold[i]
                                                  + uypold[i]*uypold[i]
                                                  + uzpold[i]*uzpold[i]));
@@ -2488,7 +2540,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                    amrex::FArrayBox const * bxfab,
                                    amrex::FArrayBox const * byfab,
                                    amrex::FArrayBox const * bzfab,
-                                   const amrex::IntVect ngE, const int /*e_is_nodal*/,
+                                   const amrex::IntVect ngEB, const int /*e_is_nodal*/,
                                    const long offset,
                                    const long np_to_push,
                                    int lev, int gather_lev,
@@ -2515,7 +2567,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     }
 
     // Add guard cells to the box.
-    box.grow(ngE);
+    box.grow(ngEB);
 
     const auto getPosition = GetParticlePosition(pti, offset);
           auto setPosition = SetParticlePosition(pti, offset);
@@ -2568,7 +2620,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     int* AMREX_RESTRICT ion_lev = nullptr;
     if (do_field_ionization) {
-        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr() + offset;
     }
 
     const bool save_previous_position = m_save_previous_position;
@@ -2577,16 +2629,16 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* z_old = nullptr;
     if (save_previous_position) {
 #if (AMREX_SPACEDIM >= 2)
-        x_old = pti.GetAttribs(particle_comps["prev_x"]).dataPtr();
+        x_old = pti.GetAttribs(particle_comps["prev_x"]).dataPtr() + offset;
 #else
     amrex::ignore_unused(x_old);
 #endif
 #if defined(WARPX_DIM_3D)
-        y_old = pti.GetAttribs(particle_comps["prev_y"]).dataPtr();
+        y_old = pti.GetAttribs(particle_comps["prev_y"]).dataPtr() + offset;
 #else
     amrex::ignore_unused(y_old);
 #endif
-        z_old = pti.GetAttribs(particle_comps["prev_z"]).dataPtr();
+        z_old = pti.GetAttribs(particle_comps["prev_z"]).dataPtr() + offset;
     }
 
     // Loop over the particles and update their momentum
@@ -2605,7 +2657,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const bool local_has_quantum_sync = has_quantum_sync();
     if (local_has_quantum_sync) {
         evolve_opt = m_shr_p_qs_engine->build_evolve_functor();
-        p_optical_depth_QSR = pti.GetAttribs(particle_comps["opticalDepthQSR"]).dataPtr();
+        p_optical_depth_QSR = pti.GetAttribs(particle_comps["opticalDepthQSR"]).dataPtr()  + offset;
     }
 #endif
 
@@ -2719,12 +2771,12 @@ PhysicalParticleContainer::InitIonizationModule ()
     amrex::ParallelFor(ion_atomic_number, [=] AMREX_GPU_DEVICE (int i) noexcept
     {
         Real n_eff = (i+1) * std::sqrt(UH/p_ionization_energies[i]);
-        Real C2 = std::pow(2,2*n_eff)/(n_eff*tgamma(n_eff+l_eff+1)*tgamma(n_eff-l_eff));
-        p_adk_power[i] = -(2*n_eff - 1);
+        Real C2 = std::pow(2._rt,2._rt*n_eff)/(n_eff*std::tgamma(n_eff+l_eff+1._rt)*std::tgamma(n_eff-l_eff));
+        p_adk_power[i] = -(2._rt*n_eff - 1._rt);
         Real Uion = p_ionization_energies[i];
-        p_adk_prefactor[i] = dt * wa * C2 * ( Uion/(2*UH) )
-            * std::pow(2*std::pow((Uion/UH),3./2)*Ea,2*n_eff - 1);
-        p_adk_exp_prefactor[i] = -2./3 * std::pow( Uion/UH,3./2) * Ea;
+        p_adk_prefactor[i] = dt * wa * C2 * ( Uion/(2._rt*UH) )
+            * std::pow(2._rt*std::pow((Uion/UH),3._rt/2._rt)*Ea,2._rt*n_eff - 1._rt);
+        p_adk_exp_prefactor[i] = -2._rt/3._rt * std::pow( Uion/UH,3._rt/2._rt) * Ea;
     });
 
     Gpu::synchronize();
@@ -2733,7 +2785,7 @@ PhysicalParticleContainer::InitIonizationModule ()
 IonizationFilterFunc
 PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                               int lev,
-                                              amrex::IntVect ngE,
+                                              amrex::IntVect ngEB,
                                               const amrex::FArrayBox& Ex,
                                               const amrex::FArrayBox& Ey,
                                               const amrex::FArrayBox& Ez,
@@ -2743,7 +2795,7 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
 {
     WARPX_PROFILE("PhysicalParticleContainer::getIonizationFunc()");
 
-    return IonizationFilterFunc(pti, lev, ngE, Ex, Ey, Ez, Bx, By, Bz,
+    return IonizationFilterFunc(pti, lev, ngEB, Ex, Ey, Ez, Bx, By, Bz,
                                 m_v_galilean,
                                 ionization_energies.dataPtr(),
                                 adk_prefactor.dataPtr(),

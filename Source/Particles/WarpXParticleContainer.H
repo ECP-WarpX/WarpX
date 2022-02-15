@@ -206,7 +206,7 @@ public:
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
     virtual void DepositCharge (WarpXParIter& pti,
-                               RealVector& wp,
+                               RealVector const & wp,
                                const int * const ion_lev,
                                amrex::MultiFab* rho,
                                int icomp,

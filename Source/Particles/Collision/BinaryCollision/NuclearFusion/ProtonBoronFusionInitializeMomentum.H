@@ -118,9 +118,10 @@ namespace {
         const amrex::ParticleReal p2y = u2y * m2;
         const amrex::ParticleReal p2z = u2z * m2;
         // Square norm of the total (sum between the two particles) momenta in the lab frame
-        const amrex::ParticleReal p_total_sq =  std::pow(p1x+p2x, 2) +
-                                                std::pow(p1y+p2y, 2) +
-                                                std::pow(p1z+p2z, 2);
+        auto constexpr pow2 = [](double const x) { return x*x; };
+        const amrex::ParticleReal p_total_sq =  pow2(p1x+p2x) +
+                                                pow2(p1y+p2y) +
+                                                pow2(p1z+p2z);
 
         // Total energy of proton+boron in the lab frame
         const amrex::ParticleReal E_lab = (m1 * g1 + m2 * g2) * c_sq;
@@ -135,14 +136,15 @@ namespace {
         // mass of the other elements is the atomic mass, that includes the electrons mass), it is
         // probably more robust to subtract the rest masses and to add the fusion energy to the
         // total kinetic energy.
-        const amrex::ParticleReal E_star_f_sq = std::pow(std::sqrt(E_star_sq)
-                                                         - E_rest_pb + E_rest_abe + E_fusion, 2);
+        const amrex::ParticleReal E_star_f_sq = pow2(std::sqrt(E_star_sq)
+                                                         - E_rest_pb + E_rest_abe + E_fusion);
 
         // Square of the norm of the momentum of Beryllium or alpha in the center of mass frame
         // Formula obtained by inverting E^2 = p^2*c^2 + m^2*c^4 in the COM frame for each particle
+        auto constexpr pow3 = [](double const x) { return x*x*x; };
         const amrex::ParticleReal p_star_f_sq =
             E_star_f_sq*0.25_prt*inv_csq - (ma_sq + mBe_sq)*c_sq*0.5_prt +
-            std::pow(c_sq, 3)*0.25_prt*std::pow(ma_sq - mBe_sq, 2)/E_star_f_sq;
+            pow3(c_sq)*0.25_prt * pow2(ma_sq - mBe_sq) / E_star_f_sq;
 
         // Compute momentum of first alpha in the center of mass frame, assuming isotropic
         // distribution
