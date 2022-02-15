@@ -269,6 +269,8 @@ Environment Variable          Default & Values                             Descr
 ``HDF5_USE_STATIC_LIBRARIES`` ON/**OFF**                                   Prefer static libraries for HDF5 dependency (openPMD)
 ``ADIOS_USE_STATIC_LIBS``     ON/**OFF**                                   Prefer static libraries for ADIOS1 dependency (openPMD)
 ``WARPX_AMREX_SRC``           *None*                                       Absolute path to AMReX source directory (preferred if set)
+``WARPX_AMREX_REPO``          *None (uses cmake default)*                  Repository URI to pull and build AMReX from
+``WARPX_AMREX_BRANCH``        *None (uses cmake default)*                  Repository branch for ``WARPX_AMREX_REPO``
 ``WARPX_AMREX_INTERNAL``      **ON**/OFF                                   Needs a pre-installed AMReX library if set to ``OFF``
 ``WARPX_OPENPMD_SRC``         *None*                                       Absolute path to openPMD-api source directory (preferred if set)
 ``WARPX_OPENPMD_INTERNAL``    **ON**/OFF                                   Needs a pre-installed openPMD-api library if set to ``OFF``
