@@ -123,7 +123,7 @@ MacroscopicProperties::InitData ()
     int lev = 0;
     amrex::BoxArray ba = warpx.boxArray(lev);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
-    const amrex::IntVect ng_EB_alloc = warpx.getngE();
+    const amrex::IntVect ng_EB_alloc = warpx.getngEB();
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
     m_sigma_mf = std::make_unique<amrex::MultiFab>(ba, dmap, 1, ng_EB_alloc);

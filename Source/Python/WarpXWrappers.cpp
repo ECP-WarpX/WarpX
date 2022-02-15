@@ -663,11 +663,11 @@ namespace
     }
     void warpx_FillBoundaryE () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.FillBoundaryE(warpx.getngE());
+        warpx.FillBoundaryE(warpx.getngEB());
     }
     void warpx_FillBoundaryB () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.FillBoundaryB(warpx.getngE());
+        warpx.FillBoundaryB(warpx.getngEB());
     }
     void warpx_SyncRho () {
         WarpX& warpx = WarpX::GetInstance();

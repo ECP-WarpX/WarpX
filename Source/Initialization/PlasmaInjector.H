@@ -107,6 +107,9 @@ public:
 
     bool surface_flux = false; // inject from a surface
     amrex::Real surface_flux_pos; // surface location
+    // Flux normal axis represents the direction in which to emit particles
+    // When compiled in Cartesian geometry, 0 = x, 1 = y, 2 = z
+    // When compiled in cylindrical geometry, 0 = radial, 1 = azimuthal, 2 = z
     int flux_normal_axis;
     int flux_direction; // -1 for left, +1 for right
 
