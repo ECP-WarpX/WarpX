@@ -194,9 +194,9 @@ FullDiagnostics::AddRZModesToDiags (int lev)
 
     // First index of m_all_field_functors[lev] where RZ modes are stored
     int icomp = m_all_field_functors[0].size();
-    const std::array<std::string, 3> coord {"r", "theta", "z"};
+    const std::array<std::string, 3> coord {"r", "t", "z"};
 
-    // Er, Etheta, Ez, Br, Btheta, Bz, jr, jtheta, jz
+    // Er, Etheta, Ez, Br, Btheta, Bz, jr, jt, jz
     // Each of them being a multi-component multifab
     int n_new_fields = 9;
     if (divE_requested) {
@@ -233,7 +233,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
             std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, dim), lev,
                               m_crse_ratio, false, ncomp_multimodefab);
         icomp += 1;
-        AddRZModesToOutputNames(std::string("J") + coord[dim],
+        AddRZModesToOutputNames(std::string("j") + coord[dim],
                                 warpx.get_pointer_current_fp(0, 0)->nComp());
     }
     // divE
