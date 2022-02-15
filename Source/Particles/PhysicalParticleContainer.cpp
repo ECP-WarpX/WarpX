@@ -1235,9 +1235,23 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     const auto problo = geom.ProbLoArray();
 
     Real scale_fac = 0._rt;
-    if (dx[plasma_injector->flux_normal_axis]*num_ppc_real != 0._rt) {
-        scale_fac = AMREX_D_TERM(dx[0], *dx[1], *dx[2])/dx[plasma_injector->flux_normal_axis]/num_ppc_real;
-    }
+    // Scale particle weight by the area of the emitting surface, within one cell
+#if defined(WARPX_DIM_3D)
+    scale_fac = dx[0]*dx[1]*dx[2]/dx[plasma_injector->flux_normal_axis]/num_ppc_real;
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    scale_fac = dx[0]*dx[1]/num_ppc_real;
+    // When emission is in the r direction, the emitting surface is a cylinder.
+    // The factor 2*pi*r is added later below.
+    if (plasma_injector->flux_normal_axis == 0) scale_fac /= dx[0];
+    // When emission is in the z direction, the emitting surface is an annulus
+    // The factor 2*pi*r is added later below.
+    if (plasma_injector->flux_normal_axis == 2) scale_fac /= dx[1];
+    // When emission is in the theta direction (flux_normal_axis == 1),
+    // the emitting surface is a rectangle, within the plane of the simulation
+#elif defined(WARPX_DIM_1D_Z)
+    scale_fac = dx[0]/num_ppc_real;
+    if (plasma_injector->flux_normal_axis == 2) scale_fac /= dx[0];
+#endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
 
@@ -1301,7 +1315,16 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         bool no_overlap = false;
 
         for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
+#if (defined(WARPX_DIM_3D))
             if (dir == plasma_injector->flux_normal_axis) {
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            if (2*dir == plasma_injector->flux_normal_axis) {
+            // The above formula captures the following cases:
+            // - flux_normal_axis=0 (emission along x/r) and dir=0
+            // - flux_normal_axis=2 (emission along z) and dir=1
+#elif defined(WARPX_DIM_1D_Z)
+            if ( (dir==0) && (plasma_injector->flux_normal_axis==2) ) {
+#endif
                 if (plasma_injector->flux_direction > 0) {
                     if (plasma_injector->surface_flux_pos <  tile_realbox.lo(dir) ||
                         plasma_injector->surface_flux_pos >= tile_realbox.hi(dir)) {
@@ -1459,6 +1482,9 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
         bool loc_do_field_ionization = do_field_ionization;
         int loc_ionization_initial_level = ionization_initial_level;
+#ifdef WARPX_DIM_RZ
+        int const loc_flux_normal_axis = plasma_injector->flux_normal_axis;
+#endif
 
         // Loop over all new particles and inject them (creates too many
         // particles, in particular does not consider xmin, xmax etc.).
@@ -1528,8 +1554,23 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 } else {
                     theta = 2._rt*MathConst::pi*r.y;
                 }
-                pos.x = xb*std::cos(theta);
-                pos.y = xb*std::sin(theta);
+                Real const cos_theta = std::cos(theta);
+                Real const sin_theta = std::sin(theta);
+                // Rotate the position
+                pos.x = xb*cos_theta;
+                pos.y = xb*sin_theta;
+                if ( (inj_mom->type == InjectorMomentum::Type::gaussianflux) &&
+                     (loc_flux_normal_axis != 2) ) {
+                    // Rotate the momentum
+                    // This because, when the flux direction is e.g. "r"
+                    // the `inj_mom` objects generates a v*Gaussian distribution
+                    // along the Cartesian "x" directionm by default. This
+                    // needs to be rotated along "r".
+                    Real ur = u.x;
+                    Real ut = u.y;
+                    u.x = cos_theta*ur - sin_theta*ut;
+                    u.y = sin_theta*ur + cos_theta*ut;
+                }
 #endif
 
                 // Lab-frame simulation
@@ -1569,13 +1610,21 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Real weight = dens * scale_fac / (AMREX_D_TERM(fac, *fac, *fac));
                 Real weight = dens * scale_fac * dt;
 #ifdef WARPX_DIM_RZ
-                if (radially_weighted) {
-                    weight *= 2._rt*MathConst::pi*xb;
-                } else {
-                    // This is not correct since it might shift the particle
-                    // out of the local grid
-                    pos.x = std::sqrt(xb*rmax);
-                    weight *= dx[0];
+                // The particle weight is proportional to the user-specified
+                // flux (denoted as `dens` here) and the emission surface within
+                // one cell (captured partially by `scale_fac`).
+                // For cylindrical emission (flux_normal_axis==0
+                // or flux_normal_axis==2), the emission surface depends on
+                // the radius ; thus, the calculation is finalized here
+                if (loc_flux_normal_axis != 1) {
+                    if (radially_weighted) {
+                         weight *= 2._rt*MathConst::pi*xb;
+                    } else {
+                         // This is not correct since it might shift the particle
+                         // out of the local grid
+                         pos.x = std::sqrt(xb*rmax);
+                         weight *= dx[0];
+                    }
                 }
 #endif
                 pa[PIdx::w ][ip] = weight;
