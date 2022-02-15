@@ -529,6 +529,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                         +(beta_z*beta_z-1)*inv_dz*( phi_arr(i,j+1,k)-phi_arr(i,j,k) );
                 }
             );
+            ignore_unused(beta_y);
 #else
             amrex::ParallelFor( tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
@@ -536,7 +537,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                         +(beta_z*beta_z-1)*inv_dz*( phi_arr(i+1,j,k)-phi_arr(i,j,k) );
                 }
             );
-            ignore_unused(beta_x);
+            ignore_unused(beta_x,beta_y);
 #endif
         }
     }
