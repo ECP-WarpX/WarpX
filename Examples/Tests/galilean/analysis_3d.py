@@ -40,16 +40,16 @@ Ez = all_data['boxlib', 'Ez'].squeeze().v
 
 if (averaged):
     # energyE_ref was calculated with Galilean PSATD method (v_galilean = (0,0,0.99498743710662))
-    energyE_ref = 6.816182771544472
+    energyE_ref = 27.45588930282001
     tolerance_rel = 1e-4
 elif (current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.)):
-    energyE_ref = 75333.81851879464
-    tolerance_rel = 5e-8;
+    energyE_ref = 2235349.515474858
+    tolerance_rel = 5e-9;
 else:
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
     energyE_ref = 8218.678808709019
-    tolerance_rel = 1e-6;
+    tolerance_rel = 5e-7;
 
 energyE = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
 
