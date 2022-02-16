@@ -245,8 +245,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         }
 #endif
         getWithParser(pp_species_name, "surface_flux_pos", surface_flux_pos);
-        getWithParser(pp_species_name, "flux_tmin", flux_tmin);
-        getWithParser(pp_species_name, "flux_tmax", flux_tmax);
+        queryWithParser(pp_species_name, "flux_tmin", flux_tmin);
+        queryWithParser(pp_species_name, "flux_tmax", flux_tmax);
         std::string flux_normal_axis_string;
         pp_species_name.get("flux_normal_axis", flux_normal_axis_string);
         flux_normal_axis = -1;

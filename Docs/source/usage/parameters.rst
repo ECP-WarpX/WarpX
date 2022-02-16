@@ -612,10 +612,9 @@ Particle initialization
       ``<species_name>.surface_flux_pos`` (`double`, location of the injection plane [meter])
       ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r` or `z` for RZ)
       ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
-      ``<species_name>.num_particles_per_cell`` (`double`). By default, the injection of particles
-      happens continuously throughout the whole simulation. However, if desired, the start and end
-      of the injection can be controlled with the optional parameters ``<species_name>.flux_tmin``
-      and ``<species_name>.flux_tmax``.
+      ``<species_name>.num_particles_per_cell`` (`double`)
+      ``<species_name>.flux_tmin`` (`double`, Optional time at which the flux will be turned on. Ignored when negative.)      
+      ``<species_name>.flux_tmax`` (`double`, Optional time at which the flux will be turned off. Ignored when negative.)
 
     * ``none``: Do not inject macro-particles (for example, in a simulation that starts with neutral, ionizable atoms, one may want to create the electrons species -- where ionized electrons can be stored later on -- without injecting electron macro-particles).
 
