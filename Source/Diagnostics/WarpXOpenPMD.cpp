@@ -1206,9 +1206,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 
 #ifdef AMREX_USE_GPU
                 if (fab.arena()->isManaged() || fab.arena()->isDevice()) {
-                    std::shared_ptr<amrex::Real> data_pinned(
-                        (amrex::Real*)amrex::The_Pinned_Arena()->alloc(local_box.numPts()*sizeof(amrex::Real)),
-                        amrex::DataDeleter{amrex::The_Pinned_Arena()});
+                    amrex::BaseFab<amrex::Real> foo(local_box, 1, amrex::The_Pinned_Arena());
+                    std::shared_ptr<amrex::Real> data_pinned(foo.release());
                     amrex::Gpu::dtoh_memcpy_async(data_pinned.get(), fab.dataPtr(icomp), local_box.numPts()*sizeof(amrex::Real));
                     // intentionally delayed until before we .flush(): amrex::Gpu::streamSynchronize();
                     mesh_comp.storeChunk(data_pinned, chunk_offset, chunk_size);
