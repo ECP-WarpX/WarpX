@@ -82,7 +82,7 @@
 #include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
-
+#include <AMReX_Parser.H>
 
 #ifdef AMREX_USE_OMP
 #   include <omp.h>
@@ -287,6 +287,32 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     }
 #endif
 
+    // User-defined integer attributes
+    pp_species_name.queryarr("addIntegerAttributes", m_user_int_attribs);
+    int n_user_int_attribs = m_user_int_attribs.size();
+    std::vector< std::string > str_int_attrib_function;
+    str_int_attrib_function.resize(n_user_int_attribs);
+    m_user_int_attrib_parser.resize(n_user_int_attribs);
+    for (int i = 0; i < n_user_int_attribs; ++i) {
+        Store_parserString(pp_species_name, "attribute."+m_user_int_attribs.at(i)+"(x,y,z,ux,uy,uz,t)", str_int_attrib_function.at(i));
+        m_user_int_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
+                                            makeParser(str_int_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
+        AddIntComp(m_user_int_attribs.at(i));
+    }
+
+    // User-defined real attributes
+    pp_species_name.queryarr("addRealAttributes", m_user_real_attribs);
+    int n_user_real_attribs = m_user_real_attribs.size();
+    std::vector< std::string > str_real_attrib_function;
+    str_real_attrib_function.resize(n_user_real_attribs);
+    m_user_real_attrib_parser.resize(n_user_real_attribs);
+    for (int i = 0; i < n_user_real_attribs; ++i) {
+        Store_parserString(pp_species_name, "attribute."+m_user_real_attribs.at(i)+"(x,y,z,ux,uy,uz,t)", str_real_attrib_function.at(i));
+        m_user_real_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
+                                            makeParser(str_real_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
+        AddRealComp(m_user_real_attribs.at(i));
+    }
+
     // If old particle positions should be saved add the needed components
     pp_species_name.query("save_previous_position", m_save_previous_position);
     if (m_save_previous_position) {
@@ -451,9 +477,9 @@ PhysicalParticleContainer::AddGaussianBeam (
             const Real z = amrex::RandomNormal(z_m, z_rms);
 #endif
             if (plasma_injector->insideBounds(x, y, z)  &&
-                std::abs( x - x_m ) < x_cut * x_rms     &&
-                std::abs( y - y_m ) < y_cut * y_rms     &&
-                std::abs( z - z_m ) < z_cut * z_rms   ) {
+                std::abs( x - x_m ) <= x_cut * x_rms     &&
+                std::abs( y - y_m ) <= y_cut * y_rms     &&
+                std::abs( z - z_m ) <= z_cut * z_rms   ) {
                 XDim3 u = plasma_injector->getMomentum(x, y, z);
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
@@ -903,6 +929,26 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         for (int ia = 0; ia < PIdx::nattribs; ++ia) {
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
+        // user-defined integer and real attributes
+        const int n_user_int_attribs = m_user_int_attribs.size();
+        const int n_user_real_attribs = m_user_real_attribs.size();
+        amrex::Gpu::DeviceVector<int*> pa_user_int(n_user_int_attribs);
+        amrex::Gpu::DeviceVector<ParticleReal*> pa_user_real(n_user_real_attribs);
+        amrex::Gpu::DeviceVector< amrex::ParserExecutor<7> > user_int_attrib_parserexec(n_user_int_attribs);
+        amrex::Gpu::DeviceVector< amrex::ParserExecutor<7> > user_real_attrib_parserexec(n_user_real_attribs);
+        for (int ia = 0; ia < n_user_int_attribs; ++ia) {
+            pa_user_int[ia] = soa.GetIntData(particle_icomps[m_user_int_attribs[ia]]).data() + old_size;
+            user_int_attrib_parserexec[ia] = m_user_int_attrib_parser[ia]->compile<7>();
+        }
+        for (int ia = 0; ia < n_user_real_attribs; ++ia) {
+            pa_user_real[ia] = soa.GetRealData(particle_comps[m_user_real_attribs[ia]]).data() + old_size;
+            user_real_attrib_parserexec[ia] = m_user_real_attrib_parser[ia]->compile<7>();
+        }
+        int** pa_user_int_data = pa_user_int.dataPtr();
+        ParticleReal** pa_user_real_data = pa_user_real.dataPtr();
+        amrex::ParserExecutor<7> const* user_int_parserexec_data = user_int_attrib_parserexec.dataPtr();
+        amrex::ParserExecutor<7> const* user_real_parserexec_data = user_real_attrib_parserexec.dataPtr();
+
 
         int* pi = nullptr;
         if (do_field_ionization) {
@@ -1114,6 +1160,14 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     p_optical_depth_BW[ip] = breit_wheeler_get_opt(engine);
                 }
 #endif
+                // Initialize user-defined integers with user-defined parser
+                for (int ia = 0; ia < n_user_int_attribs; ++ia) {
+                    pa_user_int_data[ia][ip] = static_cast<int>(user_int_parserexec_data[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t));
+                }
+                // Initialize user-defined real attributes with user-defined parser
+                for (int ia = 0; ia < n_user_real_attribs; ++ia) {
+                    pa_user_real_data[ia][ip] = user_real_parserexec_data[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t);
+                }
 
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
@@ -1181,9 +1235,23 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     const auto problo = geom.ProbLoArray();
 
     Real scale_fac = 0._rt;
-    if (dx[plasma_injector->flux_normal_axis]*num_ppc_real != 0._rt) {
-        scale_fac = AMREX_D_TERM(dx[0], *dx[1], *dx[2])/dx[plasma_injector->flux_normal_axis]/num_ppc_real;
-    }
+    // Scale particle weight by the area of the emitting surface, within one cell
+#if defined(WARPX_DIM_3D)
+    scale_fac = dx[0]*dx[1]*dx[2]/dx[plasma_injector->flux_normal_axis]/num_ppc_real;
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    scale_fac = dx[0]*dx[1]/num_ppc_real;
+    // When emission is in the r direction, the emitting surface is a cylinder.
+    // The factor 2*pi*r is added later below.
+    if (plasma_injector->flux_normal_axis == 0) scale_fac /= dx[0];
+    // When emission is in the z direction, the emitting surface is an annulus
+    // The factor 2*pi*r is added later below.
+    if (plasma_injector->flux_normal_axis == 2) scale_fac /= dx[1];
+    // When emission is in the theta direction (flux_normal_axis == 1),
+    // the emitting surface is a rectangle, within the plane of the simulation
+#elif defined(WARPX_DIM_1D_Z)
+    scale_fac = dx[0]/num_ppc_real;
+    if (plasma_injector->flux_normal_axis == 2) scale_fac /= dx[0];
+#endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
 
@@ -1247,7 +1315,16 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         bool no_overlap = false;
 
         for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
+#if (defined(WARPX_DIM_3D))
             if (dir == plasma_injector->flux_normal_axis) {
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            if (2*dir == plasma_injector->flux_normal_axis) {
+            // The above formula captures the following cases:
+            // - flux_normal_axis=0 (emission along x/r) and dir=0
+            // - flux_normal_axis=2 (emission along z) and dir=1
+#elif defined(WARPX_DIM_1D_Z)
+            if ( (dir==0) && (plasma_injector->flux_normal_axis==2) ) {
+#endif
                 if (plasma_injector->flux_direction > 0) {
                     if (plasma_injector->surface_flux_pos <  tile_realbox.lo(dir) ||
                         plasma_injector->surface_flux_pos >= tile_realbox.hi(dir)) {
@@ -1405,6 +1482,9 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
         bool loc_do_field_ionization = do_field_ionization;
         int loc_ionization_initial_level = ionization_initial_level;
+#ifdef WARPX_DIM_RZ
+        int const loc_flux_normal_axis = plasma_injector->flux_normal_axis;
+#endif
 
         // Loop over all new particles and inject them (creates too many
         // particles, in particular does not consider xmin, xmax etc.).
@@ -1474,8 +1554,23 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 } else {
                     theta = 2._rt*MathConst::pi*r.y;
                 }
-                pos.x = xb*std::cos(theta);
-                pos.y = xb*std::sin(theta);
+                Real const cos_theta = std::cos(theta);
+                Real const sin_theta = std::sin(theta);
+                // Rotate the position
+                pos.x = xb*cos_theta;
+                pos.y = xb*sin_theta;
+                if ( (inj_mom->type == InjectorMomentum::Type::gaussianflux) &&
+                     (loc_flux_normal_axis != 2) ) {
+                    // Rotate the momentum
+                    // This because, when the flux direction is e.g. "r"
+                    // the `inj_mom` objects generates a v*Gaussian distribution
+                    // along the Cartesian "x" directionm by default. This
+                    // needs to be rotated along "r".
+                    Real ur = u.x;
+                    Real ut = u.y;
+                    u.x = cos_theta*ur - sin_theta*ut;
+                    u.y = sin_theta*ur + cos_theta*ut;
+                }
 #endif
 
                 // Lab-frame simulation
@@ -1515,13 +1610,21 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Real weight = dens * scale_fac / (AMREX_D_TERM(fac, *fac, *fac));
                 Real weight = dens * scale_fac * dt;
 #ifdef WARPX_DIM_RZ
-                if (radially_weighted) {
-                    weight *= 2._rt*MathConst::pi*xb;
-                } else {
-                    // This is not correct since it might shift the particle
-                    // out of the local grid
-                    pos.x = std::sqrt(xb*rmax);
-                    weight *= dx[0];
+                // The particle weight is proportional to the user-specified
+                // flux (denoted as `dens` here) and the emission surface within
+                // one cell (captured partially by `scale_fac`).
+                // For cylindrical emission (flux_normal_axis==0
+                // or flux_normal_axis==2), the emission surface depends on
+                // the radius ; thus, the calculation is finalized here
+                if (loc_flux_normal_axis != 1) {
+                    if (radially_weighted) {
+                         weight *= 2._rt*MathConst::pi*xb;
+                    } else {
+                         // This is not correct since it might shift the particle
+                         // out of the local grid
+                         pos.x = std::sqrt(xb*rmax);
+                         weight *= dx[0];
+                    }
                 }
 #endif
                 pa[PIdx::w ][ip] = weight;
@@ -2513,7 +2616,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     int* AMREX_RESTRICT ion_lev = nullptr;
     if (do_field_ionization) {
-        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr() + offset;
     }
 
     const bool save_previous_position = m_save_previous_position;
@@ -2522,16 +2625,16 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* z_old = nullptr;
     if (save_previous_position) {
 #if (AMREX_SPACEDIM >= 2)
-        x_old = pti.GetAttribs(particle_comps["prev_x"]).dataPtr();
+        x_old = pti.GetAttribs(particle_comps["prev_x"]).dataPtr() + offset;
 #else
     amrex::ignore_unused(x_old);
 #endif
 #if defined(WARPX_DIM_3D)
-        y_old = pti.GetAttribs(particle_comps["prev_y"]).dataPtr();
+        y_old = pti.GetAttribs(particle_comps["prev_y"]).dataPtr() + offset;
 #else
     amrex::ignore_unused(y_old);
 #endif
-        z_old = pti.GetAttribs(particle_comps["prev_z"]).dataPtr();
+        z_old = pti.GetAttribs(particle_comps["prev_z"]).dataPtr() + offset;
     }
 
     // Loop over the particles and update their momentum
@@ -2550,7 +2653,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const bool local_has_quantum_sync = has_quantum_sync();
     if (local_has_quantum_sync) {
         evolve_opt = m_shr_p_qs_engine->build_evolve_functor();
-        p_optical_depth_QSR = pti.GetAttribs(particle_comps["opticalDepthQSR"]).dataPtr();
+        p_optical_depth_QSR = pti.GetAttribs(particle_comps["opticalDepthQSR"]).dataPtr()  + offset;
     }
 #endif
 

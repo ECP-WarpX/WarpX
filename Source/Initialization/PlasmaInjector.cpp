@@ -252,6 +252,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         if      (flux_normal_axis_string == "r" || flux_normal_axis_string == "R") {
             flux_normal_axis = 0;
         }
+        if      (flux_normal_axis_string == "t" || flux_normal_axis_string == "T") {
+            flux_normal_axis = 1;
+        }
 #else
 #    ifndef WARPX_DIM_1D_Z
         if      (flux_normal_axis_string == "x" || flux_normal_axis_string == "X") {
@@ -265,7 +268,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         }
 #endif
         if (flux_normal_axis_string == "z" || flux_normal_axis_string == "Z") {
-            flux_normal_axis = WARPX_ZINDEX;
+            flux_normal_axis = 2;
         }
 #ifdef WARPX_DIM_3D
         std::string flux_normal_axis_help = "'x', 'y', or 'z'.";
