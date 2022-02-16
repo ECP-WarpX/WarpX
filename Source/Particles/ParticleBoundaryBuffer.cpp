@@ -6,10 +6,13 @@
  */
 
 
+#include "WarpX.H"
 #include "EmbeddedBoundary/DistanceToEB.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Gather/ScalarFieldGather.H"
+
+#include <ablastr/particles/ParticleBuffer.H>
 
 #include <AMReX_Geometry.H>
 #include <AMReX_ParmParse.H>
@@ -164,7 +167,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 const auto& pc = mypc.GetParticleContainer(i);
                 if (!buffer[i].isDefined())
                 {
-                    buffer[i] = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(&pc);
+                    buffer[i] = ablastr::particles::ParticleBuffer<amrex::PinnedArenaAllocator>::make_container(&pc);
                     buffer[i].AddIntComp(false);  // for timestamp
                 }
                 auto& species_buffer = buffer[i];
@@ -205,7 +208,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         const auto& pc = mypc.GetParticleContainer(i);
         if (!buffer[i].isDefined())
         {
-            buffer[i] = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(&pc);
+            buffer[i] = ablastr::particles::ParticleBuffer<amrex::PinnedArenaAllocator>::make_container(&pc);
             buffer[i].AddIntComp(false);  // for timestamp
         }
         auto& species_buffer = buffer[i];
@@ -263,7 +266,7 @@ int ParticleBoundaryBuffer::getNumParticlesInContainer(
     else return 0;
 }
 
-ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>&
+ablastr::particles::ParticleBuffer<amrex::PinnedArenaAllocator>::ContainerLike<WarpXParticleContainer> &
 ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];

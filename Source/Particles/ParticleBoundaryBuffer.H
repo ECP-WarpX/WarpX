@@ -7,8 +7,9 @@
 #ifndef PARTICLEBOUNDARYBUFFER_H_
 #define PARTICLEBOUNDARYBUFFER_H_
 
-#include "Particles/ParticleBuffer.H"
+#include "ablastr/particles/ParticleBuffer.H"
 #include "Particles/MultiParticleContainer_fwd.H"
+#include "Particles/WarpXParticleContainer.H"
 
 #include <vector>
 
@@ -18,6 +19,10 @@
 class ParticleBoundaryBuffer
 {
 public:
+    using BufferType = ablastr::particles::ParticleBuffer<
+        amrex::PinnedArenaAllocator
+    >::ContainerLike<WarpXParticleContainer>;
+
     ParticleBoundaryBuffer ();
 
     int numSpecies() const { return getSpeciesNames().size(); }
@@ -43,7 +48,7 @@ public:
 
     int getNumParticlesInContainer(const std::string species_name, int boundary);
 
-    ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>& getParticleBuffer(const std::string species_name, int boundary);
+    BufferType& getParticleBuffer(const std::string species_name, int boundary);
 
     static constexpr int numBoundaries () {
         return AMREX_SPACEDIM*2
@@ -55,7 +60,7 @@ public:
 
 private:
     // over boundary, then number of species
-    std::vector<std::vector<ParticleBuffer::BufferType<amrex::PinnedArenaAllocator> > > m_particle_containers;
+    std::vector<std::vector<BufferType> > m_particle_containers;
 
     // over boundary, then number of species
     std::vector<std::vector<int> > m_do_boundary_buffer;

@@ -9,7 +9,7 @@
 
 #include "Particles/ParticleIO.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/ParticleBuffer.H"
+#include "ablastr/particles/ParticleBuffer.H"
 #include "Particles/PhysicalParticleContainer.H"
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/RigidInjectedParticleContainer.H"
