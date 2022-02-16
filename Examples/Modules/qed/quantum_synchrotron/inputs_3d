@@ -95,41 +95,25 @@ p4.qed_quantum_sync_phot_product_species = qsp_4
 
 ### PRODUCT SPECIES ###
 qsp_1.species_type = "photon"
-qsp_1.injection_style = nuniformpercell
-qsp_1.num_particles_per_cell_each_dim = 0 0 0
-qsp_1.profile = constant
-qsp_1.density = 0.0
-qsp_1.momentum_distribution_type = "at_rest"
+qsp_1.injection_style = "none"
 qsp_1.do_qed_breit_wheeler = 1
 qsp_1.qed_breit_wheeler_ele_product_species = dummy_ele
 qsp_1.qed_breit_wheeler_pos_product_species = dummy_pos
 
 qsp_2.species_type = "photon"
-qsp_2.injection_style = nuniformpercell
-qsp_2.num_particles_per_cell_each_dim = 0 0 0
-qsp_2.profile = constant
-qsp_2.density = 0.0
-qsp_2.momentum_distribution_type = "at_rest"
+qsp_2.injection_style = "none"
 qsp_2.do_qed_breit_wheeler = 1
 qsp_2.qed_breit_wheeler_ele_product_species = dummy_ele
 qsp_2.qed_breit_wheeler_pos_product_species = dummy_pos
 
 qsp_3.species_type = "photon"
-qsp_3.injection_style = nuniformpercell
-qsp_3.num_particles_per_cell_each_dim = 0 0 0
-qsp_3.profile = constant
-qsp_3.density = 0.0
-qsp_3.momentum_distribution_type = "at_rest"
+qsp_3.injection_style = "none"
 qsp_3.do_qed_breit_wheeler = 1
 qsp_3.qed_breit_wheeler_ele_product_species = dummy_ele
 qsp_3.qed_breit_wheeler_pos_product_species = dummy_pos
 
 qsp_4.species_type = "photon"
-qsp_4.injection_style = nuniformpercell
-qsp_4.num_particles_per_cell_each_dim = 0 0 0
-qsp_4.profile = constant
-qsp_4.density = 0.0
-qsp_4.momentum_distribution_type = "at_rest"
+qsp_4.injection_style = "none"
 qsp_4.do_qed_breit_wheeler = 1
 qsp_4.qed_breit_wheeler_ele_product_species = dummy_ele
 qsp_4.qed_breit_wheeler_pos_product_species = dummy_pos
@@ -137,18 +121,10 @@ qsp_4.qed_breit_wheeler_pos_product_species = dummy_pos
 #################################
 
 dummy_ele.species_type = "electron"
-dummy_ele.injection_style = nuniformpercell
-dummy_ele.num_particles_per_cell_each_dim = 0 0 0
-dummy_ele.profile = constant
-dummy_ele.density = 0.0
-dummy_ele.momentum_distribution_type = "at_rest"
+dummy_ele.injection_style = "none"
 
 dummy_pos.species_type = "positron"
-dummy_pos.injection_style = nuniformpercell
-dummy_pos.num_particles_per_cell_each_dim = 0 0 0
-dummy_pos.profile = constant
-dummy_pos.density = 0.0
-dummy_pos.momentum_distribution_type = "at_rest"
+dummy_pos.injection_style = "none"
 
 #################################
 

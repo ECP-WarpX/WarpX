@@ -43,9 +43,6 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in] dt time step of the simulation
          * \param[in] update_with_rho whether the update equation for E uses rho or not
          * \param[in] time_averaging whether to use time averaging for large time steps
-         * \param[in] do_multi_J whether the multi-J algorithm is used (hence two currents
-         *                       computed at the beginning and the end of the time interval
-         *                       instead of one current computed at half time)
          * \param[in] dive_cleaning Update F as part of the field update, so that errors in divE=rho propagate away at the speed of light
          * \param[in] divb_cleaning Update G as part of the field update, so that errors in divB=0 propagate away at the speed of light
          */
@@ -62,7 +59,6 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const amrex::Real dt,
             const bool update_with_rho,
             const bool time_averaging,
-            const bool do_multi_J,
             const bool dive_cleaning,
             const bool divb_cleaning);
 
@@ -81,19 +77,6 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in] dt time step of the simulation
          */
         void InitializeSpectralCoefficients (
-            const SpectralKSpace& spectral_kspace,
-            const amrex::DistributionMapping& dm,
-            const amrex::Real dt);
-
-        /**
-         * \brief Initialize additional coefficients used in \c pushSpectralFields to update E,B,
-         *        required only when using time averaging with the assumption that J is linear in time
-         *
-         * \param[in] spectral_kspace spectral space
-         * \param[in] dm distribution mapping
-         * \param[in] dt time step of the simulation
-         */
-        void InitializeSpectralCoefficientsAvgLin (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const amrex::Real dt);
@@ -153,8 +136,6 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients T2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
 
-        SpectralComplexCoefficients X5_coef, X6_coef;
-
         // These real and complex coefficients are allocated only with averaged Galilean PSATD
         SpectralComplexCoefficients Psi1_coef, Psi2_coef, Y1_coef, Y2_coef, Y3_coef, Y4_coef;
 
@@ -172,7 +153,6 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         amrex::Real m_dt;
         bool m_update_with_rho;
         bool m_time_averaging;
-        bool m_do_multi_J;
         bool m_dive_cleaning;
         bool m_divb_cleaning;
         bool m_is_galilean;

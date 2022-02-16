@@ -57,6 +57,13 @@ Overall simulation parameters
     it is generated. It is mainly intended for debug purposes, in case a simulation
     crashes before a global warning report can be printed.
 
+* ``warpx.abort_on_warning_threshold`` (string: ``low``, ``medium`` or ``high``) optional
+    Optional threshold to abort as soon as a warning is raised.
+    If the threshold is set, warning messages with priority greater than or
+    equal to the threshold trigger an immediate abort.
+    It is mainly intended for debug purposes, and is best used with
+    ``warpx.always_warn_immediately=1``.
+
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
     If provided ``warpx.random_seed = random``, the random seed will be determined
     using `std::random_device` and `std::clock()`,
@@ -850,6 +857,39 @@ Particle initialization
     If `1` is given, this species will not be pushed
     by any pusher during the simulation.
 
+* ``<species_name>.addIntegerAttributes`` (list of `string`)
+    User-defined integer particle attribute for species, ``species_name``.
+    These integer attributes will be initialized with user-defined functions
+    when the particles are generated.
+    If the user-defined integer attribute is ``<int_attrib_name>`` then the
+    following required parameter must be specified to initialize the attribute.
+    * ``<species_name>.attribute.<int_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
+    ``t`` represents the physical time in seconds during the simulation.
+    ``x``, ``y``, ``z`` represent particle positions in the unit of meter.
+    ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
+    :math:`\gamma v/c`, where
+    :math:`\gamma` is the Lorentz factor,
+    :math:`v/c` is the particle velocity normalized by the speed of light.
+    E.g. If ``electrons.addIntegerAttributes = upstream``
+    and ``electrons.upstream(x,y,z,ux,uy,uz,t) = (x>0.0)*1`` is provided
+    then, an integer attribute ``upstream`` is added to all electron particles
+    and when these particles are generated, the particles with position less than ``0``
+    are assigned a value of ``1``.
+
+* ``<species_name>.addRealAttributes`` (list of `string`)
+    User-defined real particle attribute for species, ``species_name``.
+    These real attributes will be initialized with user-defined functions
+    when the particles are generated.
+    If the user-defined real attribute is ``<real_attrib_name>`` then the
+    following required parameter must be specified to initialize the attribute.
+    * ``<species_name>.attribute.<real_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
+    ``t`` represents the physical time in seconds during the simulation.
+    ``x`, ``y``, ``z` represent particle positions in the unit of meter.
+    ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
+    :math:`\gamma v/c`, where
+    :math:`\gamma` is the Lorentz factor,
+    :math:`v/c` is the particle velocity normalized by the speed of light.
+
 * ``<species>.save_particles_at_xlo/ylo/zlo``,  ``<species>.save_particles_at_xhi/yhi/zhi`` and ``<species>.save_particles_at_eb`` (`0` or `1` optional, default `0`)
     If `1` particles of this species will be copied to the scraped particle
     buffer for the specified boundary if they leave the simulation domain in
@@ -1311,7 +1351,7 @@ External fields
 Collision initialization
 ------------------------
 
-WarpX provides a relativistic elastic Monte Carlo binary collision model,
+WarpX provides a relativistic elastic Monte Carlo binary Coulomb collision model,
 following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
 When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
 since the current implementation of the collision module assumes axisymmetry.
@@ -1367,6 +1407,11 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
     Only for ``background_mcc``. The MCC scattering processes that should be
     included. Available options are ``elastic``, ``back`` & ``charge_exchange``
     for ions and ``elastic``, ``excitationX`` & ``ionization`` for electrons.
+    The ``elastic`` option uses hard-sphere scattering, with a differential
+    cross section that is independent of angle.
+    With ``charge_exchange``, the ion velocity is replaced with the neutral
+    velocity, chosen from a Maxwellian based on the value of
+    ``<collision_name>.background_temperature``.
     Multiple excitation events can be included for electrons corresponding to
     excitation to different levels, the ``X`` above can be changed to a unique
     identifier for each excitation process. For each scattering process specified

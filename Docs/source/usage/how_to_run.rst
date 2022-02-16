@@ -34,6 +34,11 @@ Try it like this:
 
 Hitting the ``<TAB>`` key will suggest available WarpX executables as found in your ``PATH`` `environment variable <https://en.wikipedia.org/wiki/PATH_(variable)>`__.
 
+.. note::
+
+   WarpX needs separate binaries to run in dimensionality of 1D, 2D, 3D, and RZ.
+   We encode the supported dimensionality in the binary file name.
+
 If you :ref:`compiled the code yourself <install-developers>`, the WarpX executable is stored in the source folder under ``build/bin``.
 We also create a symbolic link that is just called ``warpx`` that points to the last executable you built, which can be copied, too.
 Copy the **executable** to this directory:

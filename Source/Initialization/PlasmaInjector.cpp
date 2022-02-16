@@ -55,6 +55,8 @@ PlasmaInjector::PlasmaInjector () {}
 PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     : species_id(ispecies), species_name(name)
 {
+    using namespace amrex::literals;
+
     amrex::ParmParse pp_species_name(species_name);
 
 #ifdef AMREX_USE_GPU
@@ -211,6 +213,19 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         pp_species_name.query("do_symmetrize", do_symmetrize);
         gaussian_beam = true;
         parseMomentum(pp_species_name);
+#if defined(WARPX_DIM_XZ)
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( y_rms > 0._rt,
+        "Error: Gaussian beam y_rms must be strictly greater than 0 in 2D "
+        "(it is used when computing the particles' weights from the total beam charge)");
+#elif defined(WARPX_DIM_1D_Z)
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( x_rms > 0._rt,
+        "Error: Gaussian beam x_rms must be strictly greater than 0 in 1D "
+        "(it is used when computing the particles' weights from the total beam charge)");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( y_rms > 0._rt,
+        "Error: Gaussian beam y_rms must be strictly greater than 0 in 1D "
+        "(it is used when computing the particles' weights from the total beam charge)");
+#endif
+
     }
     // Depending on injection type at runtime, initialize inj_pos
     // so that inj_pos->getPositionUnitBox calls
@@ -252,6 +267,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         if      (flux_normal_axis_string == "r" || flux_normal_axis_string == "R") {
             flux_normal_axis = 0;
         }
+        if      (flux_normal_axis_string == "t" || flux_normal_axis_string == "T") {
+            flux_normal_axis = 1;
+        }
 #else
 #    ifndef WARPX_DIM_1D_Z
         if      (flux_normal_axis_string == "x" || flux_normal_axis_string == "X") {
@@ -265,7 +283,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         }
 #endif
         if (flux_normal_axis_string == "z" || flux_normal_axis_string == "Z") {
-            flux_normal_axis = WARPX_ZINDEX;
+            flux_normal_axis = 2;
         }
 #ifdef WARPX_DIM_3D
         std::string flux_normal_axis_help = "'x', 'y', or 'z'.";

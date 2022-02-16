@@ -4,19 +4,19 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_GALILEAN_PSATD_ALGORITHM_RZ_H_
-#define WARPX_GALILEAN_PSATD_ALGORITHM_RZ_H_
+#ifndef WARPX_PSATD_ALGORITHM_GALILEAN_RZ_H_
+#define WARPX_PSATD_ALGORITHM_GALILEAN_RZ_H_
 
 #include "SpectralBaseAlgorithmRZ.H"
 
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
  */
-class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
+class PsatdAlgorithmGalileanRZ : public SpectralBaseAlgorithmRZ
 {
 
     public:
-        GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
+        PsatdAlgorithmGalileanRZ (SpectralKSpaceRZ const & spectral_kspace,
                                   amrex::DistributionMapping const & dm,
                                   const SpectralFieldIndex& spectral_index,
                                   int const n_rz_azimuthal_modes, int const norder_z,
@@ -75,4 +75,4 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
 
 };
 
-#endif // WARPX_GALILEAN_PSATD_ALGORITHM_RZ_H_
+#endif // WARPX_PSATD_ALGORITHM_GALILEAN_RZ_H_

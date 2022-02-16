@@ -63,6 +63,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -484,7 +485,8 @@ public:
      * can appear in parallel simulations. This will be called
      * when FieldBoundaryType is set to damped. Vector version.
      */
-    void DampFieldsInGuards (std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+    void DampFieldsInGuards (const int lev,
+                             std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                              std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
 
     /**
@@ -494,7 +496,7 @@ public:
      * can appear in parallel simulations. This will be called
      * when FieldBoundaryType is set to damped. Scalar version.
      */
-    void DampFieldsInGuards (std::unique_ptr<amrex::MultiFab>& mf);
+    void DampFieldsInGuards (const int lev, std::unique_ptr<amrex::MultiFab>& mf);
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -683,7 +685,7 @@ public:
 
     void ComputeDivE(amrex::MultiFab& divE, const int lev);
 
-    const amrex::IntVect getngE() const { return guard_cells.ng_alloc_EB; }
+    const amrex::IntVect getngEB() const { return guard_cells.ng_alloc_EB; }
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
     const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
     const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
@@ -989,7 +991,7 @@ private:
 #endif
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                        const amrex::IntVect& ngE, const amrex::IntVect& ngJ,
+                        const amrex::IntVect& ngEB, const amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const amrex::IntVect& ngG, const bool aux_is_nodal);
 #ifdef WARPX_USE_PSATD
@@ -1013,6 +1015,8 @@ private:
     std::unique_ptr<Utils::WarnManager> m_p_warn_manager;
     // Flag to control if WarpX has to emit a warning message as soon as a warning is recorded
     bool m_always_warn_immediately = false;
+    // Threshold to abort immediately on a warning message
+    std::optional<WarnPriority> m_abort_on_warning_threshold = std::nullopt;
 
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?

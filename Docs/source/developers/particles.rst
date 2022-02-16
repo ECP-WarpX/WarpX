@@ -107,19 +107,49 @@ To reduce numerical artifacts at the boundary of a mesh-refinement patch, WarpX 
 
    Buffers are complex!
 
-Runtime particle attributes
----------------------------
+Particle attributes
+-------------------
 
-WarpX allows extra runtime attributes to be added to particle containers (through ``AddRealComp("attrname")`` or ``AddIntComp("attrname")``). The attribute name can then be used to access the values of that attribute. For example, using a particle iterator, ``pti``, to loop over the particles the command ``pti.GetAttribs(particle_comps["attrname"]).dataPtr();`` will return the values of the ``"attrname"`` attribute.
+WarpX adds the following particle attributes by default to WarpX particles.
+These attributes are either stored in an Array-of-Struct (AoS) or Struct-of-Array (SoA) location of the AMReX particle containers.
+The data structures for those are either pre-described at compile-time (CT) or runtime (RT).
 
-Commonly used runtime attributes are described in the table below.
+====================  ================  ==================================  ===== ==== =====================
+Attribute name        ``int``/``real``  Description                         Where When Notes
+====================  ================  ==================================  ===== ==== =====================
+``position_x/y/z``    ``real``          Particle position.                  AoS   CT
+``cpu``               ``int``           CPU index where the particle        AoS   CT
+                                        was created.
+``id``                ``int``           CPU-local particle index            AoS   CT
+                                        where the particle was created.
+``ionization_level``  ``int``           Ion ionization level                SoA   RT   Added when ionization
+                                                                                       physics is used.
+``opticalDepthQSR``   ``real``          QED: optical depth of the Quantum-  SoA   RT   Added when PICSAR QED
+                                        Synchrotron process                            physics is used.
+``opticalDepthBW``    ``real``          QED: optical depth of the Breit-    SoA   RT   Added when PICSAR QED
+                                        Wheeler process                                physics is used.
+====================  ================  ==================================  ===== ==== =====================
 
-==================  ================  =================================  =============
+WarpX allows extra runtime attributes to be added to particle containers (through ``AddRealComp("attrname")`` or ``AddIntComp("attrname")``).
+The attribute name can then be used to access the values of that attribute.
+For example, using a particle iterator, ``pti``, to loop over the particles the command ``pti.GetAttribs(particle_comps["attrname"]).dataPtr();`` will return the values of the ``"attrname"`` attribute.
+
+User-defined integer or real attributes are initialized when particles are generated in ``AddPlasma()``.
+The attribute is initialized with a required user-defined parser function.
+Please see the :ref:`input options <running-cpp-parameters-particle>` ``addIntegerAttributes`` and ``addRealAttributes`` for a user-facing documentation.
+
+Commonly used runtime attributes are described in the table below and are all part of SoA particle storage:
+
+==================  ================  =================================  ==============
 Attribute name      ``int``/``real``  Description                        Default value
-==================  ================  =================================  =============
-``prev_x/y/z``      ``real``          The coordinates of the particles
+==================  ================  =================================  ==============
+``prev_x/y/z``      ``real``          The coordinates of the particles   *user-defined*
                                       at the previous timestep.
-==================  ================  =================================  =============
+``orig_x/y/z``      ``real``          The coordinates of the particles   *user-defined*
+                                      when they were created.
+==================  ================  =================================  ==============
+
+A Python example that adds runtime options can be found in :download:`Examples/Tests/ParticleDataPython <../../../Examples/Tests/ParticleDataPython/PICMI_inputs_prev_pos_2d.py>`
 
 .. note::
 

@@ -20,7 +20,7 @@ boundary.field_hi = pec pec
 #################################
 warpx.verbose = 1
 warpx.do_dive_cleaning = 0
-warpx.use_filter = 1
+warpx.use_filter = 0
 warpx.cfl = 1. # if 1., the time step is set to its CFL limit
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z # Only z is supported for the moment
@@ -45,6 +45,9 @@ electrons.profile = constant
 electrons.density = 2.e23  # number of electrons per m^3
 electrons.momentum_distribution_type = "at_rest"
 electrons.do_continuous_injection = 1
+electrons.addRealAttributes = orig_x orig_z
+electrons.attribute.orig_x(x,y,z,ux,uy,uz,t) = "x"
+electrons.attribute.orig_z(x,y,z,ux,uy,uz,t) = "z"
 
 beam.charge = -q_e
 beam.mass = m_e
