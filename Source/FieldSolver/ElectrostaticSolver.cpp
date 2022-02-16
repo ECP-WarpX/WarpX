@@ -276,7 +276,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #ifndef AMREX_USE_EB
 #ifdef WARPX_DIM_RZ
         // Define the linear operator (Poisson operator)
-        MLEBNodeFDLaplacian linop( {geom_scaled(lev)}, {boxArray(lev)}, {DistributionMap(lev)}, info );
+        MLEBNodeFDLaplacian linop( {geom_scaled[lev]}, {boxArray(lev)}, {DistributionMap(lev)}, info );
 #else
         // Define the linear operator (Poisson operator)
         MLNodeTensorLaplacian linop( {Geom(lev)}, {boxArray(lev)}, {DistributionMap(lev)} );
