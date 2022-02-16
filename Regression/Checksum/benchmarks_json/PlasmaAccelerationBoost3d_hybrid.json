@@ -33,36 +33,36 @@
     "particle_weight": 6241509074.460762
   },
   "lev=0": {
-    "Bx": 254740.25252704462,
-    "By": 254761.47201363926,
-    "Bz": 36.59956460191184,
-    "Ex": 40281016800918.5,
-    "Ey": 40277541730141.95,
-    "Ez": 83344393717045.77,
-    "jx": 375034189604.46545,
-    "jy": 404034658343.9009,
-    "jz": 1808630943777422.5
+    "Bx": 254740.25256197058,
+    "By": 254761.47204868746,
+    "Bz": 36.599570847466225,
+    "Ex": 40281016743227.555,
+    "Ey": 40277541672525.516,
+    "Ez": 83344393705917.66,
+    "jx": 375044756268.98486,
+    "jy": 404045214551.0391,
+    "jz": 1808630950792409.5
   },
   "plasma_e": {
     "particle_cpu": 12600.0,
     "particle_id": 147426300.0,
-    "particle_momentum_x": 5.35879582076585e-21,
-    "particle_momentum_y": 5.348862545124558e-21,
-    "particle_momentum_z": 3.4238483821898766e-17,
-    "particle_position_x": 0.44299487403195736,
-    "particle_position_y": 0.44299482840676885,
-    "particle_position_z": 0.8316760175980666,
+    "particle_momentum_x": 5.358964077056521e-21,
+    "particle_momentum_y": 5.349030609230336e-21,
+    "particle_momentum_z": 3.4238483930416167e-17,
+    "particle_position_x": 0.4429948751670466,
+    "particle_position_y": 0.44299482954008035,
+    "particle_position_z": 0.8316760176044319,
     "particle_weight": 361785049075.76086
   },
   "plasma_p": {
     "particle_cpu": 12600.0,
     "particle_id": 170106300.0,
-    "particle_momentum_x": 5.3610579126063325e-21,
-    "particle_momentum_y": 5.351131441745109e-21,
-    "particle_momentum_z": 6.286466725755022e-14,
-    "particle_position_x": 0.4429687357677136,
-    "particle_position_y": 0.4429687357925686,
-    "particle_position_z": 0.8316759736464996,
+    "particle_momentum_x": 5.361226298232144e-21,
+    "particle_momentum_y": 5.351299635701116e-21,
+    "particle_momentum_z": 6.28646672574414e-14,
+    "particle_position_x": 0.442968735767095,
+    "particle_position_y": 0.44296873579195095,
+    "particle_position_z": 0.8316759736464954,
     "particle_weight": 361785049075.76086
   }
 }
