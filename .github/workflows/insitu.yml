@@ -38,7 +38,7 @@ jobs:
     env:
       CXX: g++
       CC: gcc
-      CMAKE_PREFIX_PATH: /ascent/install-debug/lib/cmake/
+      CMAKE_PREFIX_PATH: /ascent/install/lib/cmake/
     container:
       image: alpinedav/ascent:0.8.0
     steps:
