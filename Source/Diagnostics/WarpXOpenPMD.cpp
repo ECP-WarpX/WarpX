@@ -495,7 +495,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 
   for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-    auto tmp = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(pc);
+    auto tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;
