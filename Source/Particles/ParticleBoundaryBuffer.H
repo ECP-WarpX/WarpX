@@ -7,7 +7,6 @@
 #ifndef PARTICLEBOUNDARYBUFFER_H_
 #define PARTICLEBOUNDARYBUFFER_H_
 
-#include "ablastr/particles/ParticleBuffer.H"
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer.H"
 
@@ -19,9 +18,7 @@
 class ParticleBoundaryBuffer
 {
 public:
-    using BufferType = ablastr::particles::ParticleBuffer<
-        amrex::PinnedArenaAllocator
-    >::ContainerLike<WarpXParticleContainer>;
+    using BufferType = typename WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator>;
 
     ParticleBoundaryBuffer ();
 
