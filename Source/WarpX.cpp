@@ -1689,11 +1689,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_fp[y]"));
     Efield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_fp[z]"));
 
+#ifdef AMREX_USE_EB
     constexpr int nc_ls = 1;
     constexpr int ng_ls = 2;
     m_distance_to_eb[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, tag("m_distance_to_eb"));
 
-#ifdef AMREX_USE_EB
     // EB info are needed only at the finest level
     if (lev == maxLevel())
     {
