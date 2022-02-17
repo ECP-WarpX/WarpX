@@ -151,7 +151,6 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
     const amrex::Geometry& geom = warpx_instance.Geom(0);
     auto plo = geom.ProbLoArray();
     auto phi = geom.ProbHiArray();
-    auto dxi = geom.InvCellSizeArray();
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
         if (geom.isPeriodic(idim)) continue;
@@ -212,6 +211,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         for (int lev = 0; lev < pc.numLevels(); ++lev)
         {
             const auto& plevel = pc.GetParticles(lev);
+            auto dxi = warpx_instance.Geom(lev).InvCellSizeArray();
             for(PIter pti(pc, lev); pti.isValid(); ++pti)
             {
                 auto phiarr = (*distance_to_eb[lev])[pti].array();  // signed distance function
