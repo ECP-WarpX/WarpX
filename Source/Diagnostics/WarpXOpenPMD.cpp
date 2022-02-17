@@ -157,7 +157,7 @@ namespace detail
   "adios2": {)END";
 
         end_block = R"END(
-  }    
+  }
 })END";
 
         // add the operator string block
@@ -168,7 +168,7 @@ namespace detail
         {
           "type": ")END";
             op_block += operator_type + "\"";
-        
+
             if (!op_parameters.empty()) {
                 op_block += R"END(,
           "parameters": {
@@ -181,7 +181,7 @@ namespace detail
     })END";
         if (!engine_type.empty())
             op_block += ",";
-        
+
         }  // end operator string block
 
         // add the engine string block
@@ -190,26 +190,26 @@ namespace detail
     "engine": {
       "type": ")END";
             en_block += engine_type + "\"";
-        
+
             if (!en_parameters.empty()) {
                 en_block += R"END(,
       "parameters": {
 )END";
-            en_block += en_parameters + "}"; 
+            en_block += en_parameters + "}";
             }
-            
+
             en_block += R"END(
     })END";
-            
+
         }  // end engine string block
-        
+
         options = top_block + op_block + en_block + end_block;
 
         int rank;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         if (rank == 0)
             std::cout << options << std::endl;
-        
+
         return options;
     }
 
