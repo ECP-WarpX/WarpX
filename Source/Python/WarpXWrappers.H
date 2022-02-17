@@ -142,6 +142,7 @@ extern "C" {
 
   int warpx_maxStep ();
   amrex::Real warpx_stopTime ();
+  int warpx_terminateFlag ();
 
   int warpx_finestLevel ();
 

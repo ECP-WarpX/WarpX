@@ -47,16 +47,26 @@
 
 #include <algorithm>
 #include <array>
+#include <csignal>
 #include <memory>
 #include <ostream>
 #include <vector>
 
 using namespace amrex;
 
+void exitSignalHandler(int param)
+{
+    WarpX::GetInstance().setTerminateFlag(param);
+    Print() << "SIGTERM registered" << std::endl;
+}
+
 void
 WarpX::Evolve (int numsteps)
 {
     WARPX_PROFILE("WarpX::Evolve()");
+
+    // register handling of SIGTERM signal
+    signal(SIGTERM, exitSignalHandler);
 
     Real cur_time = t_new[0];
 
@@ -348,7 +358,7 @@ WarpX::Evolve (int numsteps)
                       << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n";
         }
 
-        if (cur_time >= stop_time - 1.e-3*dt[0]) {
+        if ((cur_time >= stop_time - 1.e-3*dt[0]) || terminate_flag) {
             break;
         }
 

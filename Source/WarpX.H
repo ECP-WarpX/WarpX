@@ -618,6 +618,8 @@ public:
 
     int maxStep () const {return max_step;}
     amrex::Real stopTime () const {return stop_time;}
+    void setTerminateFlag (int val) {terminate_flag = val;}
+    int terminateFlag () {return terminate_flag;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, const amrex::IntVect ngrow) const;
@@ -1197,6 +1199,7 @@ private:
 
     int max_step   = std::numeric_limits<int>::max();
     amrex::Real stop_time = std::numeric_limits<amrex::Real>::max();
+    int terminate_flag = 0;
 
     int regrid_int = -1;
 
