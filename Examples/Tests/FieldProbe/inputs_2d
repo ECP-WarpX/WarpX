@@ -74,10 +74,8 @@ FP_line.intervals = 100
 FP_line.integrate = 1
 FP_line.probe_geometry = Line
 FP_line.x_probe = -1.5e-6
-FP_line.y_probe = 0.
 FP_line.z_probe = 1.7e-6
 FP_line.x1_probe = 1.5e-6
-FP_line.y1_probe = 0.
 FP_line.z1_probe = 1.7e-6
 FP_line.resolution = 201
 

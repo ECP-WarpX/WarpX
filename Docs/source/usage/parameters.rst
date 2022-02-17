@@ -2198,6 +2198,7 @@ Reduced Diagnostics
         **Plane**: probe a 2 dimensional plane of points to create a square plane detector.
         Initial input parameters ``x_probe``, ``y_probe``, and ``z_probe`` designate the center of the detector.
         The detector plane is normal to a vector specified by ``<reduced_diags_name>.target_normal_x``, ``<reduced_diags_name>.target_normal_y``, and ``<reduced_diags_name>.target_normal_z``.
+        Note that it is not necessary to specify the ``target_normal`` vector in a 2D simulation (the only supported normal is in ``y``).
         The top of the plane is perpendicular to an "up" vector denoted by ``<reduced_diags_name>.target_up_x``, ``<reduced_diags_name>.target_up_y``, and ``<reduced_diags_name>.target_up_z``.
         The detector has a square radius to be determined by ``<reduced_diags_name>.detector_radius``.
         Similarly to the line detector, the plane detector requires a resolution ``<reduced_diags_name>.resolution``, which denotes the number of detector particles along each side of the square detector.
