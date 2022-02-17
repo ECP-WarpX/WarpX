@@ -123,6 +123,14 @@ FieldProbe::FieldProbe (std::string rd_name)
     pp_rd_name.query("raw_fields", raw_fields);
     pp_rd_name.query("interp_order", interp_order);
 
+    if (WarpX::gamma_boost > 1.0_rt)
+    {
+        WarpX::GetInstance().RecordWarning(
+            "Boosted Frame Invalid",
+            "The FieldProbe Diagnostic will not record lab-frame, but boosted frame data.",
+            WarnPriority::low);
+    }
+
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
                                      "Field probe interp_order should be less than or equal to algo.particle_shape");
     if (ParallelDescriptor::IOProcessor())
