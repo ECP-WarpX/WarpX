@@ -389,7 +389,6 @@ WarpX::OneStep_nosub (Real cur_time)
     // Apply current correction in Fourier space: for periodic single-box global FFTs
     // without guard cells, apply this after calling SyncCurrent
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        if (fft_periodic_single_box && current_correction) CurrentCorrection();
         if (fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay))
             VayDeposition();
     }
@@ -934,28 +933,6 @@ WarpX::applyMirrors(Real time){
             }
         }
     }
-}
-
-// Apply current correction in Fourier space
-void
-WarpX::CurrentCorrection ()
-{
-#ifdef WARPX_USE_PSATD
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
-    {
-        for ( int lev = 0; lev <= finest_level; ++lev )
-        {
-            spectral_solver_fp[lev]->CurrentCorrection( lev, current_fp[lev], rho_fp[lev] );
-            if ( spectral_solver_cp[lev] ) spectral_solver_cp[lev]->CurrentCorrection( lev, current_cp[lev], rho_cp[lev] );
-        }
-    } else {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
-            "WarpX::CurrentCorrection: only implemented for spectral solver.");
-    }
-#else
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
-    "WarpX::CurrentCorrection: requires WarpX build with spectral solver support.");
-#endif
 }
 
 // Compute current from Vay deposition in Fourier space
