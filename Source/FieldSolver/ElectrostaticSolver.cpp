@@ -295,11 +295,6 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #endif
 #else
         // With embedded boundary: extract EB info
-        //Vector<EBFArrayBoxFactory const*> eb_factory;
-        //eb_factory.resize(1);
-        //for (int lev = 0; lev <= max_level; ++lev) {
-            //eb_factory[0] = &WarpX::fieldEBFactory(lev);
-        //}
         MLEBNodeFDLaplacian linop( {Geom(lev)}, {boxArray(lev)}, {DistributionMap(lev)}, info, {&WarpX::fieldEBFactory(lev)});
 
 #ifndef WARPX_DIM_RZ
@@ -338,9 +333,6 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         if (lev < finest_level) {
 
             // Allocate phi_cp for lev+1
-            // Similar to https://github.com/AMReX-Codes/amrex/blob/development/Src/LinearSolvers/MLMG/AMReX_MLMG.cpp#L576
-            // https://github.com/AMReX-Codes/amrex/blob/development/Src/LinearSolvers/MLMG/AMReX_MLMG.cpp#L587
-
             BoxArray ba = phi[lev+1]->boxArray();
             const IntVect& refratio = refRatio(lev);
             ba.coarsen(refratio);
@@ -348,15 +340,11 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
             MultiFab phi_cp(ba, phi[lev+1]->DistributionMap(), ncomp, 1);
 
             // Copy from phi[lev] to phi_cp (in parallel)
-            // (Similar to https://github.com/ECP-WarpX/WarpX/blob/eeab8143e983df862b1f4646ea1baf6e6c85e33f/Source/Parallelization/WarpXComm.cpp#L306)
             const amrex::IntVect& ng = IntVect::TheUnitVector();
             const amrex::Periodicity& crse_period = Geom(lev).periodicity();
             WarpXCommUtil::ParallelCopy(phi_cp, *phi[lev], 0, 0, 1, ng, ng, crse_period);
 
             // Local interpolation from phi_cp to phi[lev+1]
-            // (Call mf_nodebilin_interp (from AMReX_MFInterp_C.H) in MFIter loop)
-            // (similar to https://github.com/ECP-WarpX/WarpX/blob/eeab8143e983df862b1f4646ea1baf6e6c85e33f/Source/Parallelization/WarpXComm.cpp#L329)
-            // but calling `mf_nodebilin_interp` instead of warpx_interp
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
