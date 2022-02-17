@@ -363,7 +363,7 @@ protected:
     void ContinuousInjection (const amrex::RealBox& injection_box) override;
 
     // Continuously inject a flux of particles from a defined surface
-    void ContinuousFluxInjection (const amrex::Real dt) override;
+    void ContinuousFluxInjection (const amrex::Real t, const amrex::Real dt) override;
 
     //This function return true if the PhysicalParticleContainer contains electrons
     //or positrons, false otherwise

@@ -98,14 +98,8 @@ class SpectralSolverRZ
          * defined in the base class SpectralBaseAlgorithmRZ and possibly overridden
          * by its derived classes (e.g. PsatdAlgorithmRZ), from
          * objects of class SpectralSolverRZ through the private unique pointer \c algorithm
-         *
-         * \param[in]     lev     The mesh refinement level
-         * \param[in,out] current two-dimensional array of unique pointers to MultiFab
-         *                        storing the three components of the current density
-         * \param[in]     rho     unique pointer to MultiFab storing the charge density
          */
-        void CurrentCorrection (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                const std::unique_ptr<amrex::MultiFab>& rho);
+        void CurrentCorrection ();
 
         /**
          * \brief Public interface to call the virtual function \c VayDeposition,
