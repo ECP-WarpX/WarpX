@@ -728,12 +728,11 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
             const DistributionMapping& fine_dm = rho[lev+1]->DistributionMap();
             BoxArray coarsened_fine_BA = rho[lev+1]->boxArray();
             coarsened_fine_BA.coarsen(m_gdb->refRatio(lev));
-            MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), 0);
+            const IntVect ngrow = (rho[lev+1]->nGrowVect()+1)/m_gdb->refRatio(lev);
+            MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), ngrow );
             coarsened_fine_data.setVal(0.0);
 
-            int const refinement_ratio = 2;
-
-            CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], IntVect(refinement_ratio) );
+            CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], m_gdb->refRatio(lev) );
             WarpXCommUtil::ParallelAdd(*rho[lev], coarsened_fine_data, 0, 0, rho[lev]->nComp(),
                                        amrex::IntVect::TheZeroVector(),
                                        amrex::IntVect::TheZeroVector(),
