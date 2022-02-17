@@ -570,6 +570,14 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
                 PSATDForwardTransformRho(0, 1);
             }
 
+            // Correct the current in Fourier space so that the continuity equation is satisfied, and
+            // transform back to real space so that the current correction is reflected in the diagnostics
+            if (WarpX::current_correction)
+            {
+                PSATDCurrentCorrection();
+                PSATDBackwardTransformJ();
+            }
+
             // Advance E,B,F,G fields in time and update the average fields
             PSATDPushSpectralFields();
 
