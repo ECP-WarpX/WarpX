@@ -204,12 +204,6 @@ namespace detail
         }  // end engine string block
 
         options = top_block + op_block + en_block + end_block;
-
-        int rank;
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        if (rank == 0)
-            std::cout << options << std::endl;
-
         return options;
     }
 
