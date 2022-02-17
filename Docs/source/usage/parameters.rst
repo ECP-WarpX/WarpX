@@ -2222,6 +2222,8 @@ Reduced Diagnostics
         Integrated electric and magnetic field components can instead be obtained by specifying
         ``<reduced_diags_name>.integrate == true``.
 
+        WARNING! The FieldProbe reduced diagnostic does not yet add a lorentz back transformation for boosted frames and is not valid for these simulations.
+
     * ``RhoMaximum``
         This type computes the maximum and minimum values of the total charge density as well as
         the maximum absolute value of the charge density of each charged species.
