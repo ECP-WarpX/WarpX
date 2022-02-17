@@ -285,7 +285,7 @@ public:
     int doContinuousInjection() const;
 
     // Inject particles from a surface during the simulation
-    void ContinuousFluxInjection(amrex::Real dt) const;
+    void ContinuousFluxInjection(amrex::Real t, amrex::Real dt) const;
 
     std::vector<std::string> GetSpeciesNames() const { return species_names; }
 

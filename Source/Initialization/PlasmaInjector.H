@@ -107,6 +107,8 @@ public:
 
     bool surface_flux = false; // inject from a surface
     amrex::Real surface_flux_pos; // surface location
+    amrex::Real flux_tmin = -1.; // Time after which we start injecting particles
+    amrex::Real flux_tmax = -1.; // Time after which we stop injecting particles
     // Flux normal axis represents the direction in which to emit particles
     // When compiled in Cartesian geometry, 0 = x, 1 = y, 2 = z
     // When compiled in cylindrical geometry, 0 = radial, 1 = azimuthal, 2 = z
