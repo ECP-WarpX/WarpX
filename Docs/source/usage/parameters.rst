@@ -2223,7 +2223,7 @@ Reduced Diagnostics
         ``<reduced_diags_name>.integrate == true``.
 
         .. warning::
-        
+
            The FieldProbe reduced diagnostic does not yet add a Lorentz back transformation for boosted frame simulations.
            Thus, it records field data in the boosted frame, not (yet) in the lab frame.
 
