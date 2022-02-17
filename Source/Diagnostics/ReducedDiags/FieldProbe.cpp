@@ -127,7 +127,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     {
         WarpX::GetInstance().RecordWarning(
             "Boosted Frame Invalid",
-            "The FieldProbe Diagnostic is not yet valid for boosted frames",
+            "The FieldProbe Diagnostic will not record lab-frame, but boosted frame data.",
             WarnPriority::low);
     }
 
