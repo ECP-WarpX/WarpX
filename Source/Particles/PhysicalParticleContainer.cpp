@@ -1559,8 +1559,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Rotate the position
                 pos.x = xb*cos_theta;
                 pos.y = xb*sin_theta;
-                if ( (inj_mom->type == InjectorMomentum::Type::gaussianflux) &&
-                     (loc_flux_normal_axis != 2) ) {
+                if (loc_flux_normal_axis != 2) {
                     // Rotate the momentum
                     // This because, when the flux direction is e.g. "r"
                     // the `inj_mom` objects generates a v*Gaussian distribution
