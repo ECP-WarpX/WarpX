@@ -113,7 +113,7 @@ Periodically commit your changes with
 The commit message (between quotation marks) is super important in order to follow the developments during code-review and identify bugs.
 A typical format is:
 
-.. code-block::
+.. code-block:: text
 
    This is a short, 40-character title
 

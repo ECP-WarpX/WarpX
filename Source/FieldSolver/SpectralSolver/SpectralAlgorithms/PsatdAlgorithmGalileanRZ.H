@@ -4,19 +4,19 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_GALILEAN_PSATD_ALGORITHM_RZ_H_
-#define WARPX_GALILEAN_PSATD_ALGORITHM_RZ_H_
+#ifndef WARPX_PSATD_ALGORITHM_GALILEAN_RZ_H_
+#define WARPX_PSATD_ALGORITHM_GALILEAN_RZ_H_
 
 #include "SpectralBaseAlgorithmRZ.H"
 
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
  */
-class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
+class PsatdAlgorithmGalileanRZ : public SpectralBaseAlgorithmRZ
 {
 
     public:
-        GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
+        PsatdAlgorithmGalileanRZ (SpectralKSpaceRZ const & spectral_kspace,
                                   amrex::DistributionMapping const & dm,
                                   const SpectralFieldIndex& spectral_index,
                                   int const n_rz_azimuthal_modes, int const norder_z,
@@ -35,16 +35,9 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          * base class \c SpectralBaseAlgorithmRZ (qualifier \c override) and cannot be
          * overridden by further derived classes (qualifier \c final).
          *
-         * \param[in]     lev        mesh-refinement level
          * \param[in,out] field_data all fields in Fourier space
-         * \param[in,out] current    two-dimensional array of unique pointers to MultiFab
-         *                           storing the three components of the current density
-         * \param[in]     rho        unique pointer to MultiFab storing the charge density
          */
-        virtual void CurrentCorrection ( const int lev,
-                                         SpectralFieldDataRZ& field_data,
-                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                         const std::unique_ptr<amrex::MultiFab>& rho ) override final;
+        virtual void CurrentCorrection (SpectralFieldDataRZ& field_data) override final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
@@ -75,4 +68,4 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
 
 };
 
-#endif // WARPX_GALILEAN_PSATD_ALGORITHM_RZ_H_
+#endif // WARPX_PSATD_ALGORITHM_GALILEAN_RZ_H_

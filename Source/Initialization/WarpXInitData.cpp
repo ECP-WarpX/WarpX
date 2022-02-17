@@ -11,6 +11,9 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#   include "BoundaryConditions/PML_RZ.H"
+#endif
 #include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
@@ -19,6 +22,7 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Parallelization/WarpXCommUtil.H"
+#include "Utils/MPIInitHelpers.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -63,6 +67,8 @@
 #include <utility>
 #include <vector>
 #include <sstream>
+
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 
 using namespace amrex;
 
@@ -286,6 +292,8 @@ void
 WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
+    utils::warpx_check_mpi_thread_level();
+
     Print() << "WarpX (" << WarpX::Version() << ")\n";
 #ifdef WARPX_QED
     Print() << "PICSAR (" << WarpX::PicsarVersion() << ")\n";
@@ -415,9 +423,10 @@ WarpX::InitPML ()
     {
         amrex::IntVect do_pml_Lo_corrected = do_pml_Lo;
 
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
         do_pml_Lo_corrected[0] = 0; // no PML at r=0, in cylindrical geometry
-#endif
+        pml_rz[0] = std::make_unique<PML_RZ>(0, boxArray(0), DistributionMap(0), &Geom(0), pml_ncell, do_pml_in_domain);
+#else
         pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
@@ -426,6 +435,7 @@ WarpX::InitPML ()
                              do_pml_dive_cleaning, do_pml_divb_cleaning,
                              guard_cells.ng_FieldSolver.max(),
                              do_pml_Lo_corrected, do_pml_Hi);
+#endif
 
         for (int lev = 1; lev <= finest_level; ++lev)
         {
@@ -467,7 +477,8 @@ WarpX::ComputePMLFactors ()
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            pml[lev]->ComputePMLFactors(dt[lev]);
+            if (pml[lev])
+                pml[lev]->ComputePMLFactors(dt[lev]);
         }
     }
 }
@@ -759,24 +770,42 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Ezfield_parser->compile<3>(),
                                                  m_edge_lengths[lev],
                                                  lev);
-       if (lev > 0) {
-          InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
-                                                    Efield_aux[lev][1].get(),
-                                                    Efield_aux[lev][2].get(),
-                                                    Exfield_parser->compile<3>(),
-                                                    Eyfield_parser->compile<3>(),
-                                                    Ezfield_parser->compile<3>(),
-                                                    m_edge_lengths[lev],
-                                                    lev);
 
-          InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
-                                                    Efield_cp[lev][1].get(),
-                                                    Efield_cp[lev][2].get(),
-                                                    Exfield_parser->compile<3>(),
-                                                    Eyfield_parser->compile<3>(),
-                                                    Ezfield_parser->compile<3>(),
-                                                    m_edge_lengths[lev],
-                                                    lev);
+#ifdef AMREX_USE_EB
+        // We initialize ECTRhofield consistently with the Efield
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+            m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_fp[lev], m_edge_lengths[lev],
+                                                m_face_areas[lev], ECTRhofield[lev], lev);
+
+        }
+#endif
+
+       if (lev > 0) {
+            InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
+                                                      Efield_aux[lev][1].get(),
+                                                      Efield_aux[lev][2].get(),
+                                                      Exfield_parser->compile<3>(),
+                                                      Eyfield_parser->compile<3>(),
+                                                      Ezfield_parser->compile<3>(),
+                                                      m_edge_lengths[lev],
+                                                      lev);
+
+            InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
+                                                      Efield_cp[lev][1].get(),
+                                                      Efield_cp[lev][2].get(),
+                                                      Exfield_parser->compile<3>(),
+                                                      Eyfield_parser->compile<3>(),
+                                                      Ezfield_parser->compile<3>(),
+                                                      m_edge_lengths[lev],
+                                                      lev);
+#ifdef AMREX_USE_EB
+           if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+               // We initialize ECTRhofield consistently with the Efield
+               m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
+                                                   m_face_areas[lev], ECTRhofield[lev], lev);
+
+           }
+#endif
        }
     }
 

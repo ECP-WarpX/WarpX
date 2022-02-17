@@ -727,6 +727,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
                                          "PML: PSATD solver selected but not built.");
 #else
         // Flags passed to the spectral solver constructor
+        const amrex::IntVect fill_guards = amrex::IntVect(0);
         const bool in_pml = true;
         const bool periodic_single_box = false;
         const bool update_with_rho = false;
@@ -738,7 +739,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+            nox_fft, noy_fft, noz_fft, do_nodal, fill_guards, v_galilean_zero,
             v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
             fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif
@@ -846,6 +847,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
                                              "PML: PSATD solver selected but not built.");
 #else
             // Flags passed to the spectral solver constructor
+            const amrex::IntVect fill_guards = amrex::IntVect(0);
             const bool in_pml = true;
             const bool periodic_single_box = false;
             const bool update_with_rho = false;
@@ -857,7 +859,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
-                nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+                nox_fft, noy_fft, noz_fft, do_nodal, fill_guards, v_galilean_zero,
                 v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
                 fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif
@@ -1073,60 +1075,15 @@ PML::GetG_cp ()
     return pml_G_cp.get();
 }
 
-void
-PML::ExchangeB (const std::array<amrex::MultiFab*,3>& B_fp,
-                const std::array<amrex::MultiFab*,3>& B_cp,
-                int do_pml_in_domain)
+void PML::Exchange (const std::array<amrex::MultiFab*,3>& mf_pml,
+                    const std::array<amrex::MultiFab*,3>& mf,
+                    const PatchType& patch_type,
+                    const int do_pml_in_domain)
 {
-  ExchangeB(PatchType::fine, B_fp, do_pml_in_domain);
-  ExchangeB(PatchType::coarse, B_cp, do_pml_in_domain);
-}
-
-void
-PML::ExchangeB (PatchType patch_type,
-                const std::array<amrex::MultiFab*,3>& Bp,
-                int do_pml_in_domain)
-{
-    if (patch_type == PatchType::fine && pml_B_fp[0] && Bp[0])
-    {
-        Exchange(*pml_B_fp[0], *Bp[0], *m_geom, do_pml_in_domain);
-        Exchange(*pml_B_fp[1], *Bp[1], *m_geom, do_pml_in_domain);
-        Exchange(*pml_B_fp[2], *Bp[2], *m_geom, do_pml_in_domain);
-    }
-    else if (patch_type == PatchType::coarse && pml_B_cp[0] && Bp[0])
-    {
-        Exchange(*pml_B_cp[0], *Bp[0], *m_cgeom, do_pml_in_domain);
-        Exchange(*pml_B_cp[1], *Bp[1], *m_cgeom, do_pml_in_domain);
-        Exchange(*pml_B_cp[2], *Bp[2], *m_cgeom, do_pml_in_domain);
-    }
-}
-
-void
-PML::ExchangeE (const std::array<amrex::MultiFab*,3>& E_fp,
-                const std::array<amrex::MultiFab*,3>& E_cp,
-                int do_pml_in_domain)
-{
-    ExchangeE(PatchType::fine, E_fp, do_pml_in_domain);
-    ExchangeE(PatchType::coarse, E_cp, do_pml_in_domain);
-}
-
-void
-PML::ExchangeE (PatchType patch_type,
-                const std::array<amrex::MultiFab*,3>& Ep,
-                int do_pml_in_domain)
-{
-    if (patch_type == PatchType::fine && pml_E_fp[0] && Ep[0])
-    {
-        Exchange(*pml_E_fp[0], *Ep[0], *m_geom, do_pml_in_domain);
-        Exchange(*pml_E_fp[1], *Ep[1], *m_geom, do_pml_in_domain);
-        Exchange(*pml_E_fp[2], *Ep[2], *m_geom, do_pml_in_domain);
-    }
-    else if (patch_type == PatchType::coarse && pml_E_cp[0] && Ep[0])
-    {
-        Exchange(*pml_E_cp[0], *Ep[0], *m_cgeom, do_pml_in_domain);
-        Exchange(*pml_E_cp[1], *Ep[1], *m_cgeom, do_pml_in_domain);
-        Exchange(*pml_E_cp[2], *Ep[2], *m_cgeom, do_pml_in_domain);
-    }
+    const amrex::Geometry& geom = (patch_type == PatchType::fine) ? *m_geom : *m_cgeom;
+    if (mf_pml[0] && mf[0]) Exchange(*mf_pml[0], *mf[0], geom, do_pml_in_domain);
+    if (mf_pml[1] && mf[1]) Exchange(*mf_pml[1], *mf[1], geom, do_pml_in_domain);
+    if (mf_pml[2] && mf[2]) Exchange(*mf_pml[2], *mf[2], geom, do_pml_in_domain);
 }
 
 void

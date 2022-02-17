@@ -206,7 +206,7 @@ public:
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
     virtual void DepositCharge (WarpXParIter& pti,
-                               RealVector& wp,
+                               RealVector const & wp,
                                const int * const ion_lev,
                                amrex::MultiFab* rho,
                                int icomp,
@@ -245,7 +245,7 @@ public:
     virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
 
     // Inject a continuous flux of particles from a defined plane
-    virtual void ContinuousFluxInjection(amrex::Real /*dt*/) {}
+    virtual void ContinuousFluxInjection(amrex::Real /*t*/, amrex::Real /*dt*/) {}
 
     ///
     /// This returns the total charge for all the particles in this ParticleContainer.

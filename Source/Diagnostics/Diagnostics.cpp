@@ -214,33 +214,37 @@ Diagnostics::InitData ()
         InitializeParticleFunctors();
     }
 
-    amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
-    if ( queryArrWithParser(pp_diag_name, "diag_lo", dummy_val, 0, AMREX_SPACEDIM) ||
-         queryArrWithParser(pp_diag_name, "diag_hi", dummy_val, 0, AMREX_SPACEDIM) ) {
-        // set geometry filter for particle-diags to true when the diagnostic domain-extent
-        // is specified by the user.
-        // Note that the filter is set for every ith snapshot, and the number of snapshots
-        // for full diagnostics is 1, while for BTD it is user-defined.
-        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
-            for (int i = 0; i < m_output_species.size(); ++i) {
-                m_output_species[i_buffer][i].m_do_geom_filter = true;
-            }
-            // Disabling particle-io for reduced domain diagnostics by reducing
-            // the particle-diag vector to zero.
-            // This is a temporary fix until particle_buffer is supported in diagnostics.
-            m_output_species[i_buffer].clear();
-        }
-        m_output_species.clear();
-        amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
-    }
-
     if (write_species == 0) {
         if (m_format == "checkpoint"){
             amrex::Abort("For checkpoint format, write_species flag must be 1.");
         }
         // if user-defined value for write_species == 0, then clear species vector
-        m_output_species.clear();
+        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
+            m_output_species.at(i_buffer).clear();
+        }
         m_output_species_names.clear();
+    } else {
+        amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
+        if ( queryArrWithParser(pp_diag_name, "diag_lo", dummy_val, 0, AMREX_SPACEDIM) ||
+             queryArrWithParser(pp_diag_name, "diag_hi", dummy_val, 0, AMREX_SPACEDIM) ) {
+            // set geometry filter for particle-diags to true when the diagnostic domain-extent
+            // is specified by the user.
+            // Note that the filter is set for every ith snapshot, and the number of snapshots
+            // for full diagnostics is 1, while for BTD it is user-defined.
+            for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
+                for (auto& v : m_output_species.at(i_buffer)) {
+                    v.m_do_geom_filter = true;
+                }
+                // Disabling particle-io for reduced domain diagnostics by reducing
+                // the particle-diag vector to zero.
+                // This is a temporary fix until particle_buffer is supported in diagnostics.
+                m_output_species.at(i_buffer).clear();
+            }
+            std::string warnMsg = "For full diagnostics on a reduced domain, particle I/O is not ";
+            warnMsg += "supported, yet! Therefore, particle I/O is disabled for this diagnostics: ";
+            warnMsg += m_diag_name;
+            WarpX::GetInstance().RecordWarning("Diagnostics", warnMsg);
+        }
     }
 }
 
@@ -303,6 +307,8 @@ Diagnostics::InitBaseData ()
         m_geom_output[i].resize( nmax_lev );
     }
 
+    // allocate vector of particle buffers
+    m_output_species.resize(m_num_buffers);
 }
 
 void

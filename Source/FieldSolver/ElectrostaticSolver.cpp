@@ -172,10 +172,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     std::array<Real, 3> beta = {0._rt};
 
     // Compute the potential phi, by solving the Poisson equation
-    if (warpx_py_poissonsolver) {
-        WARPX_PROFILE("warpx_py_poissonsolver");
-        warpx_py_poissonsolver();
-    }
+    if ( IsPythonCallBackInstalled("poissonsolver") ) ExecutePythonCallback("poissonsolver");
     else computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
                      self_fields_absolute_tolerance, self_fields_max_iters,
                      self_fields_verbosity );
@@ -185,7 +182,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 #ifndef AMREX_USE_EB
     computeE( Efield_fp, phi_fp, beta );
 #else
-    if (warpx_py_poissonsolver) computeE( Efield_fp, phi_fp, beta );
+    if ( IsPythonCallBackInstalled("poissonsolver") ) computeE( Efield_fp, phi_fp, beta );
 #endif
 
     // Compute the magnetic field
@@ -514,7 +511,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                                                   + phi_arr(i+1,j,k+1)-phi_arr(i-1,j,k+1))
                         +beta_z*beta_y*0.25_rt*inv_dy*(phi_arr(i,j+1,k  )-phi_arr(i,j-1,k  )
                                                   + phi_arr(i,j+1,k+1)-phi_arr(i,j-1,k+1))
-                        +(beta_y*beta_z-1)*inv_dz*( phi_arr(i,j,k+1)-phi_arr(i,j,k) );
+                        +(beta_z*beta_z-1)*inv_dz*( phi_arr(i,j,k+1)-phi_arr(i,j,k) );
                 }
             );
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -529,17 +526,18 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                     Ez_arr(i,j,k) +=
                         +beta_z*beta_x*0.25_rt*inv_dx*(phi_arr(i+1,j  ,k)-phi_arr(i-1,j  ,k)
                                                   + phi_arr(i+1,j+1,k)-phi_arr(i-1,j+1,k))
-                        +(beta_y*beta_z-1)*inv_dz*( phi_arr(i,j+1,k)-phi_arr(i,j,k) );
+                        +(beta_z*beta_z-1)*inv_dz*( phi_arr(i,j+1,k)-phi_arr(i,j,k) );
                 }
             );
+            ignore_unused(beta_y);
 #else
             amrex::ParallelFor( tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ez_arr(i,j,k) +=
-                        +(beta_y*beta_z-1)*inv_dz*( phi_arr(i+1,j,k)-phi_arr(i,j,k) );
+                        +(beta_z*beta_z-1)*inv_dz*( phi_arr(i+1,j,k)-phi_arr(i,j,k) );
                 }
             );
-            ignore_unused(beta_x);
+            ignore_unused(beta_x,beta_y);
 #endif
         }
     }

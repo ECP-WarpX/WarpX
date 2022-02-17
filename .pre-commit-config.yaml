@@ -33,6 +33,14 @@ repos:
 #  - id: fix-encoding-pragma
 #    exclude: ^noxfile.py$
 
+# documentation files: .rst
+-   repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.9.0
+    hooks:
+#    - id: rst-backticks
+    - id: rst-directive-colons
+    - id: rst-inline-touching-normal
+
 #- repo: https://github.com/asottile/pyupgrade
 #  rev: v2.29.0
 #  hooks:
@@ -40,7 +48,7 @@ repos:
 
 # Changes tabs to spaces
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.1.10
+  rev: v1.1.12
   hooks:
   - id: remove-tabs
     exclude: 'Make.WarpX|Make.package|Makefile|GNUmake'

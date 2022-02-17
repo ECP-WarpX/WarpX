@@ -765,10 +765,10 @@ MultiParticleContainer::doContinuousInjection () const
  * calls virtual function ContinuousFluxInjection.
  */
 void
-MultiParticleContainer::ContinuousFluxInjection (amrex::Real dt) const
+MultiParticleContainer::ContinuousFluxInjection (amrex::Real t, amrex::Real dt) const
 {
     for (auto& pc : allcontainers){
-        pc->ContinuousFluxInjection(dt);
+        pc->ContinuousFluxInjection(t, dt);
     }
 }
 

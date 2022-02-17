@@ -9,8 +9,9 @@
 #SBATCH -t 01:00:00
 #SBATCH -N 4
 #SBATCH -J WarpX
+#    note: <proj> must end on _g
 #SBATCH -A <proj>
-# for m3906 LBNL/AMP users: for large runs, comment in
+# for m3906_g LBNL/AMP users: for large runs, comment in
 ##SBATCH -q early_science
 #SBATCH -C gpu
 #SBATCH -c 32

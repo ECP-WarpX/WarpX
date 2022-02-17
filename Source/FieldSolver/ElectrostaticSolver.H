@@ -27,7 +27,8 @@ struct PhiCalculatorEB {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real operator() (const amrex::Real x, const amrex::Real z) const noexcept
     {
-        return potential_eb(x, 0.0, z, t);
+        using namespace amrex::literals;
+        return potential_eb(x, 0.0_rt, z, t);
     }
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE

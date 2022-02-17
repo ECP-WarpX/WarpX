@@ -83,10 +83,7 @@ WarpX::Evolve (int numsteps)
         if (verbose) {
             amrex::Print() << "\nSTEP " << step+1 << " starts ...\n";
         }
-        if (warpx_py_beforestep) {
-            WARPX_PROFILE("warpx_py_beforestep");
-            warpx_py_beforestep();
-        }
+        ExecutePythonCallback("beforestep");
 
         amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
         if (cost) {
@@ -108,7 +105,7 @@ WarpX::Evolve (int numsteps)
                     // instantaneous costs)
                     for (int i : cost->IndexArray())
                     {
-                        (*cost)[i] *= (1. - 2./load_balance_intervals.localPeriod(step+1));
+                        (*cost)[i] *= (1._rt - 2._rt/load_balance_intervals.localPeriod(step+1));
                     }
                 }
             }
@@ -159,7 +156,9 @@ WarpX::Evolve (int numsteps)
         // Run multi-physics modules:
         // ionization, Coulomb collisions, QED
         doFieldIonization();
+        ExecutePythonCallback("beforecollisions");
         mypc->doCollisions( cur_time );
+        ExecutePythonCallback("aftercollisions");
 #ifdef WARPX_QED
         doQEDEvents();
         mypc->doQEDSchwinger();
@@ -168,10 +167,7 @@ WarpX::Evolve (int numsteps)
         // Main PIC operation:
         // gather fields, push particles, deposit sources, update fields
 
-        if (warpx_py_particleinjection) {
-            WARPX_PROFILE("warpx_py_particleinjection");
-            warpx_py_particleinjection();
-        }
+        ExecutePythonCallback("particleinjection");
         // Electrostatic case: only gather fields and push particles,
         // deposition and calculation of fields done further below
         if (do_electrostatic != ElectrostaticSolverAlgo::None)
@@ -263,7 +259,7 @@ WarpX::Evolve (int numsteps)
         // We might need to move j because we are going to make a plotfile.
         int num_moved = MoveWindow(step+1, move_j);
 
-        mypc->ContinuousFluxInjection(dt[0]);
+        mypc->ContinuousFluxInjection(cur_time, dt[0]);
 
         mypc->ApplyBoundaryConditions();
 
@@ -307,10 +303,7 @@ WarpX::Evolve (int numsteps)
         }
 
         if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
-            if (warpx_py_beforeEsolve) {
-                WARPX_PROFILE("warpx_py_beforeEsolve");
-                warpx_py_beforeEsolve();
-            }
+            ExecutePythonCallback("beforeEsolve");
             // Electrostatic solver:
             // For each species: deposit charge and add the associated space-charge
             // E and B field to the grid ; this is done at the end of the PIC
@@ -319,18 +312,12 @@ WarpX::Evolve (int numsteps)
             // and so that the fields are at the correct time in the output.
             bool const reset_fields = true;
             ComputeSpaceChargeField( reset_fields );
-            if (warpx_py_afterEsolve) {
-                WARPX_PROFILE("warpx_py_afterEsolve");
-                warpx_py_afterEsolve();
-            }
+            ExecutePythonCallback("afterEsolve");
         }
 
-        // warpx_py_afterstep runs with the updated global time. It is included
+        // afterstep callback runs with the updated global time. It is included
         // in the evolve timing.
-        if (warpx_py_afterstep) {
-            WARPX_PROFILE("warpx_py_afterstep");
-            warpx_py_afterstep();
-        }
+        ExecutePythonCallback("afterstep");
 
         /// reduced diags
         if (reduced_diags->m_plot_rd != 0)
@@ -387,20 +374,13 @@ WarpX::OneStep_nosub (Real cur_time)
     //               from p^{n-1/2} to p^{n+1/2}
     // Deposit current j^{n+1/2}
     // Deposit charge density rho^{n}
-    if (warpx_py_particlescraper) {
-        WARPX_PROFILE("warpx_py_particlescraper");
-        warpx_py_particlescraper();
-    }
-    if (warpx_py_beforedeposition) {
-        WARPX_PROFILE("warpx_py_beforedeposition");
-        warpx_py_beforedeposition();
-    }
+
+    ExecutePythonCallback("particlescraper");
+    ExecutePythonCallback("beforedeposition");
+
     PushParticlesandDepose(cur_time);
 
-    if (warpx_py_afterdeposition) {
-        WARPX_PROFILE("warpx_py_afterdeposition");
-        warpx_py_afterdeposition();
-    }
+    ExecutePythonCallback("afterdeposition");
 
     // Synchronize J and rho
     SyncCurrent();
@@ -409,7 +389,6 @@ WarpX::OneStep_nosub (Real cur_time)
     // Apply current correction in Fourier space: for periodic single-box global FFTs
     // without guard cells, apply this after calling SyncCurrent
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        if (fft_periodic_single_box && current_correction) CurrentCorrection();
         if (fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay))
             VayDeposition();
     }
@@ -422,10 +401,7 @@ WarpX::OneStep_nosub (Real cur_time)
     if (do_pml && pml_has_particles) CopyJPML();
     if (do_pml && do_pml_j_damping) DampJPML();
 
-    if (warpx_py_beforeEsolve) {
-        WARPX_PROFILE("warpx_py_beforeEsolve");
-        warpx_py_beforeEsolve();
-    }
+    ExecutePythonCallback("beforeEsolve");
 
     // Push E and B from {n} to {n+1}
     // (And update guard cells immediately afterwards)
@@ -507,10 +483,7 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryB(guard_cells.ng_alloc_EB);
     } // !PSATD
 
-    if (warpx_py_afterEsolve) {
-        WARPX_PROFILE("warpx_py_afterEsolve");
-        warpx_py_afterEsolve();
-    }
+    ExecutePythonCallback("afterEsolve");
 }
 
 void
@@ -960,28 +933,6 @@ WarpX::applyMirrors(Real time){
             }
         }
     }
-}
-
-// Apply current correction in Fourier space
-void
-WarpX::CurrentCorrection ()
-{
-#ifdef WARPX_USE_PSATD
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
-    {
-        for ( int lev = 0; lev <= finest_level; ++lev )
-        {
-            spectral_solver_fp[lev]->CurrentCorrection( lev, current_fp[lev], rho_fp[lev] );
-            if ( spectral_solver_cp[lev] ) spectral_solver_cp[lev]->CurrentCorrection( lev, current_cp[lev], rho_cp[lev] );
-        }
-    } else {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
-            "WarpX::CurrentCorrection: only implemented for spectral solver.");
-    }
-#else
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
-    "WarpX::CurrentCorrection: requires WarpX build with spectral solver support.");
-#endif
 }
 
 // Compute current from Vay deposition in Fourier space

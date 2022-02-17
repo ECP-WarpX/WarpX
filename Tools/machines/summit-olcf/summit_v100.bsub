@@ -44,7 +44,7 @@ cat > romio-hints << EOL
    romio_ds_write enable
    cb_buffer_size 16777216
    cb_nodes ${NUM_HOSTS}
-   EOL
+EOL
 
 # OpenMP: 1 thread per MPI rank
 export OMP_NUM_THREADS=1

@@ -39,13 +39,22 @@ struct InjectorPositionRandomPlane
                         amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex::literals;
+#if ((defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+        // In RZ, the 3 components of the `XDim3` vector below correspond to r, theta, z respectively
         if (dir == 0) return amrex::XDim3{0._rt, amrex::Random(engine), amrex::Random(engine)};
-#if (defined WARPX_DIM_RZ)
-        if (dir == 1) return amrex::XDim3{amrex::Random(engine), 0._rt, 0._rt};
-#else
         if (dir == 1) return amrex::XDim3{amrex::Random(engine), 0._rt, amrex::Random(engine)};
-#endif
         else          return amrex::XDim3{amrex::Random(engine), amrex::Random(engine), 0._rt};
+#elif (defined(WARPX_DIM_XZ))
+        // In 2D, the 2 first components of the `XDim3` vector below correspond to x and z
+        if (dir == 0) return amrex::XDim3{0._rt, amrex::Random(engine), 0._rt};
+        if (dir == 1) return amrex::XDim3{amrex::Random(engine), amrex::Random(engine), 0._rt};
+        else          return amrex::XDim3{amrex::Random(engine), 0._rt, 0._rt};
+#elif (defined(WARPX_DIM_1D_Z))
+        // In 2D, the first components of the `XDim3` vector below correspond to z
+        if (dir == 0) return amrex::XDim3{amrex::Random(engine), 0._rt, 0._rt};
+        if (dir == 1) return amrex::XDim3{amrex::Random(engine), 0._rt, 0._rt};
+        else          return amrex::XDim3{0._rt, 0._rt, 0._rt};
+#endif
     }
 private:
     int dir;

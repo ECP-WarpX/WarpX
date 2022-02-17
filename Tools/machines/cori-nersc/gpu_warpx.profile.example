@@ -1,0 +1,32 @@
+export proj="m1759"
+
+module purge
+module load modules
+module load cgpu
+module load esslurm
+module load gcc/8.3.0 cuda/11.4.0 cmake/3.21.3
+module load openmpi
+
+export CMAKE_PREFIX_PATH=$HOME/sw/c-blosc-1.12.1-gpu-install:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-gpu-install:$CMAKE_PREFIX_PATH
+
+if [ -d "$HOME/sw/venvs/gpu_warpx" ]
+then
+  source $HOME/sw/venvs/gpu_warpx/bin/activate
+fi
+
+# compiler environment hints
+export CC=$(which gcc)
+export CXX=$(which g++)
+export FC=$(which gfortran)
+export CUDACXX=$(which nvcc)
+export CUDAHOSTCXX=$(which g++)
+
+# optimize CUDA compilation for V100
+export AMREX_CUDA_ARCH=7.0
+
+# allocate a GPU, e.g. to compile on
+#   10 logical cores (5 physical), 1 GPU
+function getNode() {
+    salloc -C gpu -N 1 -t 30 -c 10 --gres=gpu:1 -A $proj
+}

@@ -37,6 +37,7 @@ MCCProcess::MCCProcess (
 void
 MCCProcess::init (const std::string& scattering_process, const amrex::Real energy)
 {
+    using namespace amrex::literals;
     m_exe_h.m_sigmas_data = m_sigmas_h.data();
 
     // save energy grid parameters for easy use
@@ -45,7 +46,7 @@ MCCProcess::init (const std::string& scattering_process, const amrex::Real energ
     m_exe_h.m_energy_hi = m_energies[m_grid_size-1];
     m_exe_h.m_sigma_lo = m_sigmas_h[0];
     m_exe_h.m_sigma_hi = m_sigmas_h[m_grid_size-1];
-    m_exe_h.m_dE = (m_exe_h.m_energy_hi - m_exe_h.m_energy_lo)/(m_grid_size - 1.);
+    m_exe_h.m_dE = (m_exe_h.m_energy_hi - m_exe_h.m_energy_lo)/(m_grid_size - 1._rt);
     m_exe_h.m_energy_penalty = energy;
     m_exe_h.m_type = parseProcessType(scattering_process);
 
@@ -99,7 +100,7 @@ MCCProcess::readCrossSectionFile (
     std::ifstream infile(cross_section_file);
     if(!infile.is_open()) amrex::Abort("Failed to open cross-section data file");
 
-    double energy, sigma;
+    amrex::Real energy, sigma;
     while (infile >> energy >> sigma) {
         energies.push_back(energy);
         sigmas.push_back(sigma);

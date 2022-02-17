@@ -52,6 +52,10 @@ electrons.profile = constant
 electrons.density = 2.e23  # number of electrons per m^3
 electrons.momentum_distribution_type = "at_rest"
 electrons.do_continuous_injection = 1
+electrons.addIntegerAttributes = regionofinterest
+electrons.attribute.regionofinterest(x,y,z,ux,uy,uz,t) = "(z>12.0e-6) * (z<13.0e-6)"
+electrons.addRealAttributes = initialenergy
+electrons.attribute.initialenergy(x,y,z,ux,uy,uz,t) = " ux*ux + uy*uy + uz*uz"
 
 #################################
 ############ LASER  #############

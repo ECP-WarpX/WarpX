@@ -121,18 +121,12 @@ class SpectralSolver
         /**
          * \brief Public interface to call the virtual function \c CurrentCorrection,
          * defined in the base class SpectralBaseAlgorithm and possibly overridden
-         * by its derived classes (e.g. PsatdAlgorithm, GalileanAlgorithm), from
+         * by its derived classes (e.g. PsatdAlgorithm, PsatdAlgorithmComoving, etc.), from
          * objects of class SpectralSolver through the private unique pointer \c algorithm
-         *
-         * \param[in]     lev     The mesh refinement level
-         * \param[in,out] current three-dimensional array of unique pointers to MultiFab
-         *                        storing the three components of the current density
-         * \param[in]     rho     unique pointer to MultiFab storing the charge density
          */
-        void CurrentCorrection ( const int lev,
-                                 std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                 const std::unique_ptr<amrex::MultiFab>& rho ) {
-            algorithm->CurrentCorrection( lev, field_data, current, rho );
+        void CurrentCorrection ()
+        {
+            algorithm->CurrentCorrection(field_data);
         }
 
         /**
