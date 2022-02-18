@@ -688,7 +688,7 @@ public:
 
     void ComputeDivE(amrex::MultiFab& divE, const int lev);
 
-    const amrex::IntVect getngE() const { return guard_cells.ng_alloc_EB; }
+    const amrex::IntVect getngEB() const { return guard_cells.ng_alloc_EB; }
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
     const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
     const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
@@ -994,7 +994,7 @@ private:
 #endif
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                        const amrex::IntVect& ngE, const amrex::IntVect& ngJ,
+                        const amrex::IntVect& ngEB, const amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const amrex::IntVect& ngG, const bool aux_is_nodal);
 #ifdef WARPX_USE_PSATD
@@ -1360,6 +1360,11 @@ private:
     void PSATDForwardTransformJ ();
 
     /**
+     * \brief Backward FFT of J on all mesh refinement levels
+     */
+    void PSATDBackwardTransformJ ();
+
+    /**
      * \brief Forward FFT of rho on all mesh refinement levels,
      *        with k-space filtering (if needed)
      *
@@ -1397,6 +1402,11 @@ private:
      * \brief Backward FFT of G on all mesh refinement levels
      */
     void PSATDBackwardTransformG ();
+
+    /**
+     * \brief Correct current in Fourier space so that the continuity equation is satisfied
+     */
+    void PSATDCurrentCorrection ();
 
     /**
      * \brief Update all necessary fields in spectral space
