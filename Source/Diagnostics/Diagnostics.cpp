@@ -362,8 +362,6 @@ Diagnostics::FilterComputePackFlush (int step, bool force_flush)
     const auto& warpx = WarpX::GetInstance();
     const auto finest_level = warpx.finestLevel();
 
-    std::cout << "THOOOOOOOMAS::::::::" << finest_level << std::endl;
-
     for (auto& buf : m_mf_output){
         if(buf.size() > finest_level+1) buf.pop_back();
     }
