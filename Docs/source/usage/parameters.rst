@@ -1860,8 +1860,8 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 .. Note ::
 
-    When using the RZ mode with ``diag1.format = openpmd``, only the cylindrical vector field components ``r``, ``t``, and ``z`` are stored.
-    Even if requested, the cartesian components will be ignored.  Also, only the ``rho`` and ``divE`` scalar fields can be stored.
+    When using the RZ mode with ``diag1.format = openpmd``, only the cylindrical vector field components ``r``, ``t``, and ``z`` are dumped to file.
+    Even if requested, the cartesian components will be ignored.  Also, only the ``rho`` and ``divE`` scalar fields can be dumped.
 
 * ``<diag_name>.dump_rz_modes`` (`0` or `1`) optional (default `0` for all but openPMD)
     In RZ, by default we reconstruct a 2D Cartesian slice of the fields for output at :math:`\theta=0`.
