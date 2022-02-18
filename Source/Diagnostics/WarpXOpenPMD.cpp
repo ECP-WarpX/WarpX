@@ -1059,9 +1059,11 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
 {
        amrex::Box const & global_box = full_geom.Domain();
        auto global_size = getReversedVec(global_box.size());
+#if defined(WARPX_DIM_RZ)
        auto & warpx = WarpX::GetInstance();
        int n_rz_mode_inds = 2 * warpx.n_rz_azimuthal_modes - 1;
        global_size.emplace(global_size.begin(), n_rz_mode_inds);
+#endif
        // - Grid spacing
        std::vector<double> const grid_spacing = getReversedVec(full_geom.CellSize());
        // - Global offset
@@ -1259,7 +1261,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
         // assume fields are scalar unless they match the following match of known vector fields
         int field_str_end_index = varname.size();
 #if defined(WARPX_DIM_RZ)
-        int mode_index;
+        int mode_index = 0;
         GetFieldModeIndices(varname, field_str_end_index, mode_index);
 #endif
         std::string field_name = varname.substr(0,field_str_end_index);
@@ -1280,11 +1282,11 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
             // Determine the offset and size of this chunk
             amrex::IntVect const box_offset = local_box.smallEnd() - global_box.smallEnd();
             auto chunk_offset = getReversedVec( box_offset );
-            auto tempoffs(chunk_offset);
-            chunk_offset.emplace(chunk_offset.begin(), mode_index);
             auto chunk_size = getReversedVec( local_box.size() );
-            auto temp_sizes(chunk_size);
+#if defined(WARPX_DIM_RZ)
+            chunk_offset.emplace(chunk_offset.begin(), mode_index);
             chunk_size.emplace(chunk_size.begin(), 1);
+#endif
             amrex::Real const * local_data = fab.dataPtr( icomp );
             mesh_comp.storeChunk( openPMD::shareRaw(local_data),
                                     chunk_offset, chunk_size );

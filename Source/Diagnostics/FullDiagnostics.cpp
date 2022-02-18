@@ -415,8 +415,11 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
 
     // Species index to loop over species that dump rho per species
     int i = 0;
+    bool is_rz = false;
 #if defined(WARPX_DIM_RZ)
-    if (m_format != "openpmd")
+    is_rz = true;
+#endif
+    if (!(m_format == "openpmd" && is_rz))
     {
         m_all_field_functors[lev].resize( m_varnames.size() );
         // Fill vector of functors for all components except individual cylindrical modes.
@@ -466,7 +469,6 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             }
         }
     }
-#endif
     AddRZModesToDiags( lev );
 }
 
