@@ -57,7 +57,30 @@ Diagnostics::BaseReadParameters ()
     // Query list of grid fields to write to output
     bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames);
     if (!varnames_specified){
-        m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
+#if defined(WARPX_DIM_RZ)
+    bool is_rz = true;
+#else
+    bool is_rz = false;
+#endif
+        if( m_format != "openpmd" && !is_rz)
+        {
+            m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
+        }
+    } else {
+#if defined(WARPX_DIM_RZ)
+        if( m_format == "openpmd" )
+        {
+            std::cout << "WarpX IS in RZ, openPMD vector fields defaulting to";
+            std::cout << " E, B, and j with components r, t, and z." << std::endl;
+            auto it = m_varnames.end();
+            while (it != m_varnames.begin()) {
+                it--;
+                if (!(*it == "rho" || *it == "divE")) {
+                    m_varnames.erase(it);
+                }
+            }
+        }
+#endif
     }
 
     // Sanity check if user requests to plot phi
