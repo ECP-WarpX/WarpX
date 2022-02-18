@@ -82,32 +82,56 @@ FieldProbe::FieldProbe (std::string rd_name)
     if (m_probe_geometry_str == "Point")
     {
         m_probe_geometry = DetectorGeometry::Point;
+        x_probe = 0._rt;
+        y_probe = 0._rt;
+#if !defined(WARPX_DIM_1D_Z)
         getWithParser(pp_rd_name, "x_probe", x_probe);
+#endif
+#if defined(WARPX_DIM_3D)
         getWithParser(pp_rd_name, "y_probe", y_probe);
+#endif
         getWithParser(pp_rd_name, "z_probe", z_probe);
     }
     else if (m_probe_geometry_str == "Line")
     {
         m_probe_geometry = DetectorGeometry::Line;
+        x_probe = 0._rt;
+        x1_probe = 0._rt;
+        y_probe = 0._rt;
+        y1_probe = 0._rt;
+#if !defined(WARPX_DIM_1D_Z)
         getWithParser(pp_rd_name, "x_probe", x_probe);
-        getWithParser(pp_rd_name, "y_probe", y_probe);
-        getWithParser(pp_rd_name, "z_probe", z_probe);
         getWithParser(pp_rd_name, "x1_probe", x1_probe);
+#endif
+#if defined(WARPX_DIM_3D)
+        getWithParser(pp_rd_name, "y_probe", y_probe);
         getWithParser(pp_rd_name, "y1_probe", y1_probe);
+#endif
+        getWithParser(pp_rd_name, "z_probe", z_probe);
         getWithParser(pp_rd_name, "z1_probe", z1_probe);
         getWithParser(pp_rd_name, "resolution", m_resolution);
     }
     else if (m_probe_geometry_str == "Plane")
     {
+#if defined(WARPX_DIM_1D_Z)
+        amrex::Abort("ERROR: Plane probe should be used in a 2D or 3D simulation only");
+#endif
         m_probe_geometry = DetectorGeometry::Plane;
-        getWithParser(pp_rd_name, "x_probe", x_probe);
+        y_probe = 0._rt;
+        target_normal_x = 0._rt;
+        target_normal_y = 1._rt;
+        target_normal_z = 0._rt;
+        target_up_y = 0._rt;
+#if defined(WARPX_DIM_3D)
         getWithParser(pp_rd_name, "y_probe", y_probe);
-        getWithParser(pp_rd_name, "z_probe", z_probe);
         getWithParser(pp_rd_name, "target_normal_x", target_normal_x);
         getWithParser(pp_rd_name, "target_normal_y", target_normal_y);
         getWithParser(pp_rd_name, "target_normal_z", target_normal_z);
-        getWithParser(pp_rd_name, "target_up_x", target_up_x);
         getWithParser(pp_rd_name, "target_up_y", target_up_y);
+#endif
+        getWithParser(pp_rd_name, "x_probe", x_probe);
+        getWithParser(pp_rd_name, "z_probe", z_probe);
+        getWithParser(pp_rd_name, "target_up_x", target_up_x);
         getWithParser(pp_rd_name, "target_up_z", target_up_z);
         getWithParser(pp_rd_name, "detector_radius", detector_radius);
         getWithParser(pp_rd_name, "resolution", m_resolution);
@@ -122,6 +146,14 @@ FieldProbe::FieldProbe (std::string rd_name)
     pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
     pp_rd_name.query("interp_order", interp_order);
+
+    if (WarpX::gamma_boost > 1.0_rt)
+    {
+        WarpX::GetInstance().RecordWarning(
+            "Boosted Frame Invalid",
+            "The FieldProbe Diagnostic will not record lab-frame, but boosted frame data.",
+            WarnPriority::low);
+    }
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
                                      "Field probe interp_order should be less than or equal to algo.particle_shape");

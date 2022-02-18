@@ -100,7 +100,7 @@ Test cases
 
 PICMI (Python) test cases included that can be used as a reference:
 
-* :download:`Gaussian beam <../../../Examples//Modules/gaussian_beam/PICMI_inputs_gaussian_beam.py>`
+* :download:`Gaussian beam <../../../Examples/Modules/gaussian_beam/PICMI_inputs_gaussian_beam.py>`
 * :download:`Langmuir plasma wave test in 3d <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir_rt.py>`
 * :download:`Langmuir plasma wave test in RZ <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir_rz_multimode_analyze.py>`
 * :download:`Langmuir plasma wave test in 2D <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir2d.py>`

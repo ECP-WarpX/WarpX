@@ -122,9 +122,18 @@ namespace detail
      */
     inline std::string
     getSeriesOptions (std::string const & operator_type,
-                      std::map< std::string, std::string > const & operator_parameters)
+                      std::map< std::string, std::string > const & operator_parameters,
+                      std::string const & engine_type,
+                      std::map< std::string, std::string > const & engine_parameters)
     {
+        if (operator_type.empty() && engine_type.empty())
+            return "{}";
+
         std::string options;
+        std::string top_block;
+        std::string end_block;
+        std::string op_block;
+        std::string en_block;
 
         std::string op_parameters;
         for (const auto& kv : operator_parameters) {
@@ -133,31 +142,68 @@ namespace detail
                     .append("\"").append(kv.first).append("\": ")    /* key */
                     .append("\"").append(kv.second).append("\""); /* value (as string) */
         }
-        if (!operator_type.empty()) {
-            options = R"END(
+
+        std::string en_parameters;
+        for (const auto& kv : engine_parameters) {
+            if (!en_parameters.empty()) en_parameters.append(",\n");
+            en_parameters.append(std::string(12, ' '))         /* just pretty alignment */
+                    .append("\"").append(kv.first).append("\": ")    /* key */
+                    .append("\"").append(kv.second).append("\""); /* value (as string) */
+        }
+
+        // create the outer-level blocks
+        top_block = R"END(
 {
-  "adios2": {
+  "adios2": {)END";
+
+        end_block = R"END(
+  }
+})END";
+
+        // add the operator string block
+        if (!operator_type.empty()) {
+            op_block = R"END(
     "dataset": {
       "operators": [
         {
           "type": ")END";
-            options += operator_type + "\"";
-        }
-        if (!operator_type.empty() && !op_parameters.empty()) {
-            options += R"END(
-         ,"parameters": {
+            op_block += operator_type + "\"";
+
+            if (!op_parameters.empty()) {
+                op_block += R"END(,
+          "parameters": {
 )END";
-            options += op_parameters + "}";
+            op_block += op_parameters + "}";
         }
-        if (!operator_type.empty())
-            options += R"END(
+            op_block += R"END(
         }
       ]
-    }
-  }
-}
+    })END";
+        if (!engine_type.empty())
+            op_block += ",";
+
+        }  // end operator string block
+
+        // add the engine string block
+        if (!engine_type.empty()) {
+            en_block = R"END(
+    "engine": {
+      "type": ")END";
+            en_block += engine_type + "\"";
+
+            if (!en_parameters.empty()) {
+                en_block += R"END(,
+      "parameters": {
 )END";
-        if (options.empty()) options = "{}";
+            en_block += en_parameters + "}";
+            }
+
+            en_block += R"END(
+    })END";
+
+        }  // end engine string block
+
+        options = top_block + op_block + en_block + end_block;
         return options;
     }
 
@@ -337,6 +383,8 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     std::string openPMDFileType,
     std::string operator_type,
     std::map< std::string, std::string > operator_parameters,
+    std::string engine_type,
+    std::map< std::string, std::string > engine_parameters,
     std::vector<bool> fieldPMLdirections)
   :m_Series(nullptr),
    m_Encoding(ie),
@@ -355,7 +403,8 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     m_OpenPMDFileType = "json";
 #endif
 
-    m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters);
+    m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
+                                                engine_type, engine_parameters);
 }
 
 WarpXOpenPMDPlot::~WarpXOpenPMDPlot ()
@@ -495,7 +544,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 
   for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-    auto tmp = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(pc);
+    auto tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;

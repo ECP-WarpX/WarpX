@@ -35,16 +35,9 @@ class PsatdAlgorithmGalileanRZ : public SpectralBaseAlgorithmRZ
          * base class \c SpectralBaseAlgorithmRZ (qualifier \c override) and cannot be
          * overridden by further derived classes (qualifier \c final).
          *
-         * \param[in]     lev        mesh-refinement level
          * \param[in,out] field_data all fields in Fourier space
-         * \param[in,out] current    two-dimensional array of unique pointers to MultiFab
-         *                           storing the three components of the current density
-         * \param[in]     rho        unique pointer to MultiFab storing the charge density
          */
-        virtual void CurrentCorrection ( const int lev,
-                                         SpectralFieldDataRZ& field_data,
-                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                         const std::unique_ptr<amrex::MultiFab>& rho ) override final;
+        virtual void CurrentCorrection (SpectralFieldDataRZ& field_data) override final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space

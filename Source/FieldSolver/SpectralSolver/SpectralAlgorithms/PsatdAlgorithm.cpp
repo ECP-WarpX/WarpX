@@ -732,26 +732,12 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
     }
 }
 
-void
-PsatdAlgorithm::CurrentCorrection (
-    const int lev,
-    SpectralFieldData& field_data,
-    std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-    const std::unique_ptr<amrex::MultiFab>& rho)
+void PsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data)
 {
     // Profiling
     BL_PROFILE("PsatdAlgorithm::CurrentCorrection");
 
     const SpectralFieldIndex& Idx = m_spectral_index;
-
-    // Forward Fourier transform of J and rho
-    field_data.ForwardTransform(lev, *current[0], Idx.Jx, 0);
-    field_data.ForwardTransform(lev, *current[1], Idx.Jy, 0);
-    field_data.ForwardTransform(lev, *current[2], Idx.Jz, 0);
-    field_data.ForwardTransform(lev, *rho, Idx.rho_old, 0);
-    field_data.ForwardTransform(lev, *rho, Idx.rho_new, 1);
-
-    const amrex::IntVect& fill_guards = m_fill_guards;
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -843,11 +829,6 @@ PsatdAlgorithm::CurrentCorrection (
             }
         });
     }
-
-    // Backward Fourier transform of J
-    field_data.BackwardTransform(lev, *current[0], Idx.Jx, 0, fill_guards);
-    field_data.BackwardTransform(lev, *current[1], Idx.Jy, 0, fill_guards);
-    field_data.BackwardTransform(lev, *current[2], Idx.Jz, 0, fill_guards);
 }
 
 void

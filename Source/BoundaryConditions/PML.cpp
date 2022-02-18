@@ -727,6 +727,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
                                          "PML: PSATD solver selected but not built.");
 #else
         // Flags passed to the spectral solver constructor
+        const amrex::IntVect fill_guards = amrex::IntVect(0);
         const bool in_pml = true;
         const bool periodic_single_box = false;
         const bool update_with_rho = false;
@@ -738,7 +739,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+            nox_fft, noy_fft, noz_fft, do_nodal, fill_guards, v_galilean_zero,
             v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
             fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif
@@ -846,6 +847,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
                                              "PML: PSATD solver selected but not built.");
 #else
             // Flags passed to the spectral solver constructor
+            const amrex::IntVect fill_guards = amrex::IntVect(0);
             const bool in_pml = true;
             const bool periodic_single_box = false;
             const bool update_with_rho = false;
@@ -857,7 +859,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
-                nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+                nox_fft, noy_fft, noz_fft, do_nodal, fill_guards, v_galilean_zero,
                 v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
                 fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif

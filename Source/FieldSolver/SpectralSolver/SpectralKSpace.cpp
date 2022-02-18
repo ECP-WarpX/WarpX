@@ -266,7 +266,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                     } else {
                         // The other axes contains both positive and negative k ;
                         // the Nyquist frequency is in the middle of the array.
-                        if (i == N/2) {
+                        if ( (N%2==0) && (i == N/2) ){
                             p_modified_k[i] = 0.0_rt;
                         }
                     }
