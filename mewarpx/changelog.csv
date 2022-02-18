@@ -1,4 +1,25 @@
 Version, Physics version, Date,        List of changes
+7.1.0, 2, 2/18/2022, "
+
+**Features**:
+
+- Added
+  :class:`mewarpx.diags_store.particle_histogram_diagnostic.ParticleHistDiag`
+  to track positions of where particles are scraped.
+
+**Other changes**:
+
+- Merge ``upstream/development`` (git hash ``8e1517a``) into memaster. This
+  includes an update of the AMReX version which fixed a bug in restarts when
+  the cumulative particle count over the simulation exceeds 2^31.
+- Refactored the :class:`mewarpx.assemblies.Assembly` and
+  :class:`mewarpx.diags_store.flux_diagnostic.SurfaceFluxDiag` with regards to
+  how scraped particles are processed. A ``scraped_particle_array`` is now
+  created to hold information about scraped particles for each assembly. This
+  array is then processed by flux diagnostics to obtain the absorbed particle
+  and energy fluxes.
+
+"
 7.0.1, 2, 2/8/2022, "
 
 **Other changes**:

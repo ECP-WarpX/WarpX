@@ -5,10 +5,9 @@ import collections
 import logging
 
 import numpy as np
-from pywarpx import picmi
+from pywarpx import callbacks, picmi
 
 from mewarpx.mwxrun import mwxrun
-from mewarpx.utils_store import parallel_util
 from mewarpx.utils_store.appendablearray import AppendableArray
 
 # Get module-level logger
@@ -30,10 +29,7 @@ class Assembly(object):
     # the CSV file. It can be overridden by child classes, but is not currently
     # adjustable by the user.
 
-    # IF CHANGING THIS, CHANGE IN self.record_scrapedparticles() AS WELL.
-    fields = ['t', 'step', 'species_id', 'V_e', 'n', 'q', 'E_total']
-
-    def __init__(self, V, T, WF, name):
+    def __init__(self, V, T, WF, name, read_scraped_particles):
         """Basic initialization.
 
         Arguments:
@@ -46,6 +42,21 @@ class Assembly(object):
         self.T = T
         self.WF = WF
         self.name = name
+        self.read_scraped_particles = read_scraped_particles
+
+        # list of diagnostic functions to call after collecting scraped
+        # particles
+        self.scraper_diag_fnlist = []
+        # the step scraped will be recorded by default
+        self.scraped_particle_attribs_list = ["step_scraped"]
+        # if needed will be an appendable array to store scraped particle
+        # properties for easy processing with diagnostic functions
+        self.scraped_particle_array = None
+
+        # currently the beforeEsolve callback is the most immediate after
+        # scraping callback
+        if self.read_scraped_particles:
+            callbacks.installbeforeEsolve(self._run_scraper_diag_steps)
 
     def check_geom(self):
         """Throw an error if the simulation geometry is unsupported by the
@@ -97,56 +108,69 @@ class Assembly(object):
                 potential=f'"{self.V}"'
             )
 
-    def init_scrapedparticles(self, fieldlist):
-        """Set up the scraped particles array. Call before
-        append_scrapedparticles.
+    def add_diag_fn(self, diag_fn, attrib_list):
+        """Add a diagnostic function to the diagnostic function list.
 
         Arguments:
-            fieldlist (list): List of string titles for the fields. Order is
-                important; it must match the order for future particle appends
-                that are made.
+            diag_fn (function): Function to be run after
+                _read_scraped_particles() that processes the scraped particle
+                dictionary for a specific diagnostic purpose.
+            attrib_list: (list of strings): Particle attributes that should
+                be included in the scraped particle dictionary for the given
+                diagnostic function.
         """
-        self._scrapedparticles_fields = fieldlist
-        self._scrapedparticles_data = AppendableArray(
-            typecode='d', unitshape=[len(fieldlist)])
+        if not callable(diag_fn):
+            raise ValueError("Must provide a callable diagnostic function.")
 
-    def record_scrapedparticles(self):
-        """Handles transforming raw particle information from the WarpX
-        scraped particle buffer to the information used to record particles as
-        a function of time.
+        self.scraper_diag_fnlist.append(diag_fn)
 
-        Note:
-            Assumes the fixed form of fields given in Assembly().  Doesn't
-            check since this is called many times.
+        new_attribs = False
+        for attrib in attrib_list:
+            if attrib not in self.scraped_particle_attribs_list:
+                self.scraped_particle_attribs_list.append(attrib)
+                new_attribs = True
 
-        Note:
-            The total charge scraped and energy of the particles scraped
-            is multiplied by -1 since these quantities are leaving the system.
-        """
+        # re-initialize the scraped_particle_array so that it has space for
+        # the new particle attributes
+        if new_attribs:
+            if (self.scraped_particle_array is not None
+                and self.scraped_particle_array._datalen != 0
+            ):
+                raise RuntimeError(
+                    f"The scraped particle array of {self.name} is not empty; "
+                    "cannot add new particle attribute to track."
+                )
+            # note the +1 in unitshape is to save species ID
+            self.scraped_particle_array = AppendableArray(
+                typecode='d',
+                unitshape=[len(self.scraped_particle_attribs_list)+1]
+            )
 
-        # skip conductors that don't have a label to get scraped particles with
-        if not hasattr(self, 'scraper_label'):
-            logger.warning(f"Assembly {self.name} doesn't have a scraper label")
+    def _run_scraper_diag_steps(self):
+        """Perform the steps involved in diagnostics of scraped particles."""
+        # return early if no particle attributes will be recorded
+        if self.scraped_particle_array is None:
             return
 
+        if not hasattr(self, 'scraper_label'):
+            raise AttributeError(
+                f"Cannot record particles scraped on {self.name} since it "
+                "does not have a scraper label."
+            )
+
+        # accumulate the scraped particle data
+        self._read_scraped_particles()
+        # construct dictionary of scraped particle data
+        lpdict = self._get_scraped_particles_dict()
+        # run all diagnostic functions
+        for func in self.scraper_diag_fnlist:
+            func(lpdict)
+
+    def _read_scraped_particles(self):
+        """Function to read the scraped particle buffer and populate the
+        scraped_particle_array."""
         # loop over species and get the scraped particle data from the buffer
         for species in mwxrun.simulation.species:
-            data = np.zeros(7)
-            data[0] = mwxrun.get_t()
-            data[1] = mwxrun.get_it()
-            data[2] = species.species_number
-            data[3] = self.getvoltage_e()
-
-            # When pre-seeding a simulation with plasma we inject particles over
-            # embedded boundaries which causes the first scraping step to
-            # show very large currents. For this reason we skip that first step
-            # but note that we inject after the first step so we need to skip
-            # scraping step 2.
-            if data[1] == 2:
-                self.append_scrapedparticles(data)
-                continue
-
-            empty = True
             idx_list = []
 
             # get the number of particles in the buffer - this is primarily
@@ -157,104 +181,95 @@ class Assembly(object):
             )
             # logger.info(f"{self.name} scraped {buffer_count} {species.name}")
 
-            if buffer_count > 0:
-                # get the timesteps at which particles were scraped
-                comp_steps = mwxrun.sim_ext.get_particle_boundary_buffer(
-                    species.name, self.scraper_label, "step_scraped", mwxrun.lev
-                )
-                # get the particles that were scraped in this timestep
-                for arr in comp_steps:
-                    idx_list.append(np.where(arr == mwxrun.get_it())[0])
-                    if len(idx_list[-1]) != 0:
-                        empty = False
+            # if there are no particles in the buffer return early
+            if buffer_count == 0:
+                return
 
-                # sort the particles appropriately if this is an eb
-                if not empty and self.scraper_label == 'eb':
-                    temp_idx_list = []
-                    structs = mwxrun.sim_ext.get_particle_boundary_buffer_structs(
-                        species.name, self.scraper_label, mwxrun.lev
+            # get the timesteps at which particles were scraped
+            comp_steps = mwxrun.sim_ext.get_particle_boundary_buffer(
+                species.name, self.scraper_label, "step_scraped", mwxrun.lev
+            )
+            # get the particles that were scraped in this timestep
+            for arr in comp_steps:
+                idx_list.append(np.where(arr == mwxrun.get_it())[0])
+
+            raw_particle_data = {}
+
+            # get the particle structs from the boundary buffer
+            structs = mwxrun.sim_ext.get_particle_boundary_buffer_structs(
+                species.name, self.scraper_label, mwxrun.lev
+            )
+            if mwxrun.geom_str == 'XZ' or mwxrun.geom_str == 'RZ':
+                raw_particle_data['x'] = [struct['x'] for struct in structs]
+                raw_particle_data['y'] = [
+                    np.zeros(len(struct['y'])) for struct in structs]
+                raw_particle_data['z'] = [struct['y'] for struct in structs]
+            elif mwxrun.geom_str == 'XYZ':
+                raw_particle_data['x'] = [struct['x'] for struct in structs]
+                raw_particle_data['y'] = [struct['y'] for struct in structs]
+                raw_particle_data['z'] = [struct['z'] for struct in structs]
+            else:
+                raise NotImplementedError(
+                    f"Scraping not implemented for {mwxrun.geom_str}."
+                )
+
+            # sort the particles appropriately if this is an eb
+            if self.scraper_label == 'eb':
+                temp_idx_list = []
+
+                for i in range(len(idx_list)):
+                    is_inside = self.isinside(
+                        raw_particle_data['x'][i][idx_list[i]],
+                        raw_particle_data['y'][i][idx_list[i]],
+                        raw_particle_data['z'][i][idx_list[i]]
+                    )
+                    temp_idx_list.append(idx_list[i][np.where(is_inside)])
+
+                    # set the scraped timestep to -1 for particles in this
+                    # EB so that they are not considered again
+                    comp_steps[i][idx_list[i][np.where(is_inside)]] = -1
+
+                idx_list = temp_idx_list
+
+            for ii, attrib in enumerate(self.scraped_particle_attribs_list):
+                # get the desired particle property
+                if attrib not in ['x', 'y', 'z']:
+                    raw_particle_data[attrib] = (
+                        mwxrun.sim_ext.get_particle_boundary_buffer(
+                            species.name, self.scraper_label, attrib, mwxrun.lev
+                        )
                     )
 
-                    if mwxrun.geom_str == 'XZ':
-                        xpos = [struct['x'] for struct in structs]
-                        ypos = [struct['y'] for struct in structs]
-                        zpos = [struct['y'] for struct in structs]
-                    elif mwxrun.geom_str == 'XYZ':
-                        xpos = [struct['x'] for struct in structs]
-                        ypos = [struct['y'] for struct in structs]
-                        zpos = [struct['z'] for struct in structs]
-                    elif mwxrun.geom_str == 'RZ':
-                        xpos = [struct['x'] for struct in structs]
-                        ypos = [np.zeros(len(struct['y'])) for struct in structs]
-                        zpos = [struct['y'] for struct in structs]
-                    else:
-                        raise NotImplementedError(
-                            f"Scraping not implemented for {mwxrun.geom_str}."
-                        )
-
-                    for i in range(len(idx_list)):
-                        is_inside = self.isinside(
-                            xpos[i][idx_list[i]], ypos[i][idx_list[i]],
-                            zpos[i][idx_list[i]]
-                        )
-                        temp_idx_list.append(idx_list[i][np.where(is_inside)])
-
-                        # set the scraped timestep to -1 for particles in this
-                        # EB so that they are not considered again
-                        comp_steps[i][idx_list[i][np.where(is_inside)]] = -1
-
-                    idx_list = temp_idx_list
-
-            if not empty:
-                data[4] = sum(np.size(idx) for idx in idx_list)
-                w_arrays = mwxrun.sim_ext.get_particle_boundary_buffer(
-                    species.name, self.scraper_label, "w", mwxrun.lev
+            # loop over all tiles and append the particle data from that tile
+            # to scraped_particle_data
+            for ii, idxs in enumerate(idx_list):
+                if len(idxs) == 0:
+                    continue
+                data = np.zeros(
+                    (len(idxs), len(self.scraped_particle_attribs_list)+1)
                 )
-                data[5] = -species.sq * sum(np.sum(w_arrays[i][idx_list[i]])
-                     for i in range(len(idx_list))
-                )
-                E_arrays = mwxrun.sim_ext.get_particle_boundary_buffer(
-                    species.name, self.scraper_label, "E_total", mwxrun.lev
-                )
-                data[6] = -sum(np.sum(E_arrays[i][idx_list[i]])
-                     for i in range(len(idx_list))
-                )
+                data[:,0] = species.species_number
+                for jj in range(0, len(self.scraped_particle_attribs_list)):
+                    data[:,jj+1] = raw_particle_data[
+                        self.scraped_particle_attribs_list[jj]][ii][idxs]
+                self.scraped_particle_array.append(data)
 
-            self.append_scrapedparticles(data)
-
-    def append_scrapedparticles(self, data):
-        """Append one or more lines of scraped particles data.
-
-        Arguments:
-            data (np.ndarray): Array of shape (m) or (n, m) where m is the
-                number of fields and n is the number of rows of data to append.
-        """
-        self._scrapedparticles_data.append(data)
-
-    def get_scrapedparticles(self, clear=False):
-        """Retrieve a copy of scrapedparticles data.
-
-        Arguments:
-            clear (bool): If True, clear the particle data rows entered (field
-                names are still initialized as before). Default False.
+    def _get_scraped_particles_dict(self):
+        """Retrieve a dictionary containing the scraped particle data.
 
         Returns:
             scrapedparticles_dict (collections.OrderedDict): Keys are the
                 originally passed field strings for lost particles. Values are
                 an (n)-shape numpy array for each field.
         """
-        lpdata = self._scrapedparticles_data.data()
-
-        # Sum all except t/step/jsid/V_e from all processors
-        lpdata[:,4:] = parallel_util.parallelsum(np.array(lpdata[:,4:]))
+        lpdata = self.scraped_particle_array.data()
 
         lpdict = collections.OrderedDict(
-            [(fieldname, np.array(lpdata[:, ii], copy=True))
-             for ii, fieldname in enumerate(self._scrapedparticles_fields)])
+            [(name, np.array(lpdata[:, ii], copy=True)) for ii, name in
+            enumerate(["species_id"]+self.scraped_particle_attribs_list)]
+        )
 
-        if clear:
-            self._scrapedparticles_data.cleardata()
-
+        self.scraped_particle_array.cleardata()
         return lpdict
 
 
@@ -263,7 +278,7 @@ class ZPlane(Assembly):
     """A semi-infinite plane."""
     geoms = ['RZ', 'X', 'XZ', 'XYZ']
 
-    def __init__(self, z, zsign, V, T, WF, name):
+    def __init__(self, z, zsign, V, T, WF, name, read_scraped_particles=True):
         """Basic initialization.
 
         Arguments:
@@ -275,7 +290,10 @@ class ZPlane(Assembly):
             WF (float): Work function (eV)
             name (str): Assembly name
         """
-        super(ZPlane, self).__init__(V=V, T=T, WF=WF, name=name)
+        super(ZPlane, self).__init__(
+            V=V, T=T, WF=WF, name=name,
+            read_scraped_particles=read_scraped_particles
+        )
 
         self.z = z
 
@@ -287,9 +305,10 @@ class ZPlane(Assembly):
 class Cathode(ZPlane):
     """A basic wrapper to define a semi-infinite plane for the cathode."""
 
-    def __init__(self, V, T, WF):
+    def __init__(self, V, T, WF, read_scraped_particles=True):
         super(Cathode, self).__init__(
-            z=0, zsign=-1, V=V, T=T, WF=WF, name="Cathode"
+            z=0, zsign=-1, V=V, T=T, WF=WF, name="Cathode",
+            read_scraped_particles=read_scraped_particles
         )
         # set solver boundary potential
         mwxrun.grid.potential_zmin = self.V
@@ -300,9 +319,10 @@ class Cathode(ZPlane):
 class Anode(ZPlane):
     """A basic wrapper to define a semi-infinite plane for the anode."""
 
-    def __init__(self, z, V, T, WF):
+    def __init__(self, z, V, T, WF, read_scraped_particles=True):
         super(Anode, self).__init__(
-            z=z, zsign=1, V=V, T=T, WF=WF, name="Anode"
+            z=z, zsign=1, V=V, T=T, WF=WF, name="Anode",
+            read_scraped_particles=read_scraped_particles
         )
         # set solver boundary potential
         mwxrun.grid.potential_zmax = self.V
@@ -315,7 +335,7 @@ class InfCylinderY(Assembly):
     geoms = ['XZ', 'XYZ']
 
     def __init__(self, center_x, center_z, radius, V, T, WF, name,
-                 install_in_simulation=True):
+                 install_in_simulation=True, read_scraped_particles=True):
         """Basic initialization.
 
         Arguments:
@@ -331,7 +351,10 @@ class InfCylinderY(Assembly):
             install_in_simulation (bool): If True and the Assembly is an
                 embedded boundary it will be included in the WarpX simulation
         """
-        super(InfCylinderY, self).__init__(V=V, T=T, WF=WF, name=name)
+        super(InfCylinderY, self).__init__(
+            V=V, T=T, WF=WF, name=name,
+            read_scraped_particles=read_scraped_particles
+        )
         self.center_x = center_x
         self.center_z = center_z
         self.radius = radius
@@ -395,7 +418,7 @@ class CylinderZ(Assembly):
     geoms = ['RZ']
 
     def __init__(self, V, T, WF, name, r_outer, r_inner=0.0, zmin=None,
-                 zmax=None):
+                 zmax=None, read_scraped_particles=True):
         """Basic initialization.
 
         Arguments:
@@ -410,7 +433,10 @@ class CylinderZ(Assembly):
             zmax (float): Upper z limit of the cylinder (m). Defaults to
                 mwxrun.zmax.
         """
-        super(CylinderZ, self).__init__(V=V, T=T, WF=WF, name=name)
+        super(CylinderZ, self).__init__(
+            V=V, T=T, WF=WF, name=name,
+            read_scraped_particles=read_scraped_particles
+        )
         self.r_inner = r_inner
         self.r_outer = r_outer
         self.r_center = (self.r_inner + self.r_outer) / 2.0
@@ -543,7 +569,7 @@ class Rectangle(Assembly):
     geoms = ['XZ', 'XYZ']
 
     def __init__(self, center_x, center_z, length_x, length_z, V, T, WF, name,
-                 install_in_simulation=True):
+                 install_in_simulation=True, read_scraped_particles=True):
         """Basic initialization.
 
         Arguments:
@@ -560,7 +586,10 @@ class Rectangle(Assembly):
             install_in_simulation (bool): If True and the Assembly is an
                 embedded boundary it will be included in the WarpX simulation
         """
-        super(Rectangle, self).__init__(V=V, T=T, WF=WF, name=name)
+        super(Rectangle, self).__init__(
+            V=V, T=T, WF=WF, name=name,
+            read_scraped_particles=read_scraped_particles
+        )
         self.center_x = float(center_x)
         self.center_z = float(center_z)
         self.length_x = float(length_x)

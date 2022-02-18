@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from mewarpx import assemblies, emission
+from mewarpx.diags_store.flux_diagnostic import SurfaceFluxDiag
 from mewarpx.mwxrun import mwxrun
 from mewarpx.setups_store import diode_setup
 from mewarpx.utils_store import testing_util
@@ -279,6 +280,9 @@ def test_two_embedded_cylinders_scraping():
         npart=4000, plasma_density=1e14,
     )
 
+    cyl1_flux = SurfaceFluxDiag(run.DIAG_STEPS, cylinder1, "diags/fluxes")
+    cyl2_flux = SurfaceFluxDiag(run.DIAG_STEPS, cylinder2, "diags/fluxes")
+
     # Initialize the simulation
     run.init_simulation()
     run.init_warpx()
@@ -291,16 +295,11 @@ def test_two_embedded_cylinders_scraping():
     # Check flux on each cylinder                                         #
     #######################################################################
 
-    cylinder1.init_scrapedparticles(cylinder1.fields)
-    cylinder1.record_scrapedparticles()
-    cyl1_scraped = cylinder1.get_scrapedparticles()
+    cyl1_scraped = cyl1_flux._collect_dataframe()
+    cyl2_scraped = cyl2_flux._collect_dataframe()
 
-    cylinder2.init_scrapedparticles(cylinder2.fields)
-    cylinder2.record_scrapedparticles()
-    cyl2_scraped = cylinder2.get_scrapedparticles()
-
-    assert np.allclose(cyl1_scraped['n'], np.array([2, 0]))
-    assert np.allclose(cyl2_scraped['n'], np.array([1, 2]))
+    assert np.allclose(np.array(cyl1_scraped['n'][-2:]), np.array([2, 0]))
+    assert np.allclose(np.array(cyl2_scraped['n'][-2:]), np.array([1, 2]))
 
     #######################################################################
     # Check rho results against reference data                            #

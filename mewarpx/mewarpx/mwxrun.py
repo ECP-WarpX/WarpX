@@ -130,6 +130,13 @@ class MEWarpXRun(object):
             )
         callbacks.installafterinit(self._after_init)
 
+        # install a callback to clear the particle boundary buffer before
+        # every step, all assemblies for which scraping is enabled will
+        # move particles from the particle boundary buffer to their own
+        # scraped_particle_array before the E-field solve
+        callbacks.installbeforestep(
+            self.sim_ext.libwarpx_so.warpx_clearParticleBoundaryBuffer)
+
     def _set_geom_str(self, use_rz):
         """Function to set the geometry string and coordinate map
         appropriately."""
