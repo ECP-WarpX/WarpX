@@ -66,6 +66,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
   std::string const prefix = diag_name + ".adios2_operator.parameters";
   ParmParse pp;
   auto entr = pp.getEntries(prefix);
+
   std::map< std::string, std::string > operator_parameters;
   auto const prefix_len = prefix.size() + 1;
   for (std::string k : entr) {
@@ -81,6 +82,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
   std::string const engine_prefix = diag_name + ".adios2_engine.parameters";
   ParmParse ppe;
   auto eng_entr = ppe.getEntries(engine_prefix);
+
   std::map< std::string, std::string > engine_parameters;
   auto const prefixlen = engine_prefix.size() + 1;
   for (std::string k : eng_entr) {
