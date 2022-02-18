@@ -202,13 +202,13 @@ WarpX::PrintMainPICparameters ()
     amrex::Print() << "-------------------------------------------------------------------------------\n";
     // Print solver's type: Yee, CKC, ECT
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee){
-      amrex::Print() << "Maxwell Solver:       | yee \n";
+      amrex::Print() << "Maxwell Solver:       | Yee \n";
       }
     else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC){
-      amrex::Print() << "Maxwell Solver:        | ckc \n";
+      amrex::Print() << "Maxwell Solver:       | CKC \n";
     }
     else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
-      amrex::Print() << "Maxwell Solver:        | ect \n";
+      amrex::Print() << "Maxwell Solver:       | ECT \n";
     }
   #ifdef WARPX_USE_PSATD
     // Print PSATD solver's configuration
@@ -239,7 +239,7 @@ WarpX::PrintMainPICparameters ()
       }
     if (do_multi_J == 1){
       amrex::Print() << "                      | - multi-J deposition is ON \n";
-      amrex::Print() << "                      |   - warpx.do_multi_J_n_depositions = "
+      amrex::Print() << "                      |   - do_multi_J_n_depositions = "
                                         << WarpX::do_multi_J_n_depositions << "\n";
     }
     if (fft_do_time_averaging == 1){
@@ -308,6 +308,16 @@ WarpX::PrintMainPICparameters ()
     amrex::Print() << "                      |  - boost_direction = (" << WarpX::boost_direction[0] <<
                              "," << WarpX::boost_direction[1] << "," << WarpX::boost_direction[2] << ")\n";
     amrex::Print() << "------------------------------------------------------------------------------- \n";
+    }
+
+    ParmParse pp_warpx("warpx");
+    std::string moving_window_dir = "unknown";
+    pp_warpx.query( "moving_window_dir", moving_window_dir );
+    if (WarpX::do_moving_window == 1){
+      amrex::Print() << "Moving window:        |    ON  \n";
+      amrex::Print() << "                      |  - moving_window_dir = " << moving_window_dir << "\n";
+      amrex::Print() << "                      |  - moving_window_v = " << WarpX::moving_window_v << "\n";
+      amrex::Print() << "------------------------------------------------------------------------------- \n";
     }
 }
 
