@@ -76,10 +76,27 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     operator_parameters.insert({k, v});
   }
 
+  // ADIOS2 engine type & parameters
+  std::string engine_type;
+  pp_diag_name.query("adios2_engine.type", engine_type);
+  std::string const engine_prefix = diag_name + ".adios2_engine.parameters";
+  ParmParse ppe;
+  auto eng_entr = ppe.getEntries(engine_prefix);
+
+  std::map< std::string, std::string > engine_parameters;
+  auto const prefixlen = engine_prefix.size() + 1;
+  for (std::string k : eng_entr) {
+    std::string v;
+    ppe.get(k.c_str(), v);
+    k.erase(0, prefixlen);
+    engine_parameters.insert({k, v});
+  }
+
   auto & warpx = WarpX::GetInstance();
   m_OpenPMDPlotWriter = std::make_unique<WarpXOpenPMDPlot>(
     encoding, openpmd_backend,
     operator_type, operator_parameters,
+    engine_type, engine_parameters,
     warpx.getPMLdirections()
   );
 
