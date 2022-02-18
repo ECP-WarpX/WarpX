@@ -45,6 +45,9 @@ electrons.profile = constant
 electrons.density = 2.e23  # number of electrons per m^3
 electrons.momentum_distribution_type = "at_rest"
 electrons.do_continuous_injection = 1
+electrons.addRealAttributes = orig_x orig_z
+electrons.attribute.orig_x(x,y,z,ux,uy,uz,t) = "x"
+electrons.attribute.orig_z(x,y,z,ux,uy,uz,t) = "z"
 
 beam.charge = -q_e
 beam.mass = m_e

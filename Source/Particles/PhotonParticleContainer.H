@@ -73,7 +73,7 @@ public:
                         amrex::FArrayBox const * bxfab,
                         amrex::FArrayBox const * byfab,
                         amrex::FArrayBox const * bzfab,
-                        const amrex::IntVect ngE, const int /*e_is_nodal*/,
+                        const amrex::IntVect ngEB, const int /*e_is_nodal*/,
                         const long offset,
                         const long np_to_push,
                         int lev, int gather_lev,
@@ -93,7 +93,7 @@ public:
 
     // DepositCharge should do nothing for photons
     virtual void DepositCharge (WarpXParIter& /*pti*/,
-                                RealVector& /*wp*/,
+                                RealVector const & /*wp*/,
                                 const int * const /*ion_lev*/,
                                 amrex::MultiFab* /*rho*/,
                                 int /*icomp*/,

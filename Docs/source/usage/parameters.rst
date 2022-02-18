@@ -610,9 +610,11 @@ Particle initialization
       The density specified by the density profile is interpreted to have the units of #/m^2/s.
       This requires the additional parameters:
       ``<species_name>.surface_flux_pos`` (`double`, location of the injection plane [meter])
-      ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r` or `z` for RZ)
+      ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r`, `t`, or `z` for RZ. When `flux_normal_axis` is `r` or `t`, the `x` and `y` components of the user-specified momentum distribution are interpreted as the `r` and `t` components respectively)
       ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
       ``<species_name>.num_particles_per_cell`` (`double`)
+      ``<species_name>.flux_tmin`` (`double`, Optional time at which the flux will be turned on. Ignored when negative.)
+      ``<species_name>.flux_tmax`` (`double`, Optional time at which the flux will be turned off. Ignored when negative.)
 
     * ``none``: Do not inject macro-particles (for example, in a simulation that starts with neutral, ionizable atoms, one may want to create the electrons species -- where ionized electrons can be stored later on -- without injecting electron macro-particles).
 
@@ -856,6 +858,39 @@ Particle initialization
 * ``<species_name>.do_not_push`` (`0` or `1` optional; default `0`)
     If `1` is given, this species will not be pushed
     by any pusher during the simulation.
+
+* ``<species_name>.addIntegerAttributes`` (list of `string`)
+    User-defined integer particle attribute for species, ``species_name``.
+    These integer attributes will be initialized with user-defined functions
+    when the particles are generated.
+    If the user-defined integer attribute is ``<int_attrib_name>`` then the
+    following required parameter must be specified to initialize the attribute.
+    * ``<species_name>.attribute.<int_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
+    ``t`` represents the physical time in seconds during the simulation.
+    ``x``, ``y``, ``z`` represent particle positions in the unit of meter.
+    ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
+    :math:`\gamma v/c`, where
+    :math:`\gamma` is the Lorentz factor,
+    :math:`v/c` is the particle velocity normalized by the speed of light.
+    E.g. If ``electrons.addIntegerAttributes = upstream``
+    and ``electrons.upstream(x,y,z,ux,uy,uz,t) = (x>0.0)*1`` is provided
+    then, an integer attribute ``upstream`` is added to all electron particles
+    and when these particles are generated, the particles with position less than ``0``
+    are assigned a value of ``1``.
+
+* ``<species_name>.addRealAttributes`` (list of `string`)
+    User-defined real particle attribute for species, ``species_name``.
+    These real attributes will be initialized with user-defined functions
+    when the particles are generated.
+    If the user-defined real attribute is ``<real_attrib_name>`` then the
+    following required parameter must be specified to initialize the attribute.
+    * ``<species_name>.attribute.<real_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
+    ``t`` represents the physical time in seconds during the simulation.
+    ``x`, ``y``, ``z` represent particle positions in the unit of meter.
+    ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
+    :math:`\gamma v/c`, where
+    :math:`\gamma` is the Lorentz factor,
+    :math:`v/c` is the particle velocity normalized by the speed of light.
 
 * ``<species>.save_particles_at_xlo/ylo/zlo``,  ``<species>.save_particles_at_xhi/yhi/zhi`` and ``<species>.save_particles_at_eb`` (`0` or `1` optional, default `0`)
     If `1` particles of this species will be copied to the scraped particle
@@ -1318,7 +1353,7 @@ External fields
 Collision initialization
 ------------------------
 
-WarpX provides a relativistic elastic Monte Carlo binary collision model,
+WarpX provides a relativistic elastic Monte Carlo binary Coulomb collision model,
 following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
 When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
 since the current implementation of the collision module assumes axisymmetry.
@@ -1374,6 +1409,11 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
     Only for ``background_mcc``. The MCC scattering processes that should be
     included. Available options are ``elastic``, ``back`` & ``charge_exchange``
     for ions and ``elastic``, ``excitationX`` & ``ionization`` for electrons.
+    The ``elastic`` option uses hard-sphere scattering, with a differential
+    cross section that is independent of angle.
+    With ``charge_exchange``, the ion velocity is replaced with the neutral
+    velocity, chosen from a Maxwellian based on the value of
+    ``<collision_name>.background_temperature``.
     Multiple excitation events can be included for electrons corresponding to
     excitation to different levels, the ``X`` above can be changed to a unique
     identifier for each excitation process. For each scattering process specified
@@ -1852,6 +1892,21 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
         <diag_name>.adios2_operator.type = zfp
         <diag_name>.adios2_operator.parameters.precision = 3
 
+* ``<diag_name>.adios2_engine.type`` (``bp4``, ``sst``, ``ssc``, ``dataman``) optional,
+    `ADIOS2 Engine type <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    See full list of engines at `ADIOS2 readthedocs <https://adios2.readthedocs.io/en/latest/engines/engines.html>`__
+
+* ``<diag_name>.adios2_engine.parameters.*`` optional,
+    `ADIOS2 Engine parameters <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+
+    An example for parameters for the BP engine are setting the number of writers (``NumAggregators``), transparently redirecting data to burst buffers etc.
+    A detailed list of engine-specific parameters are available at the official `ADIOS2 documentation <https://adios2.readthedocs.io/en/latest/engines/engines.html>`__
+
+    .. code-block:: text
+
+        <diag_name>.adios2_engine.parameter.NumAggregators = 2048
+        <diag_name>.adios2_engine.parameters.BurstBufferPath="/mnt/bb/username"
+
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
     Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe.
@@ -2167,6 +2222,7 @@ Reduced Diagnostics
         **Plane**: probe a 2 dimensional plane of points to create a square plane detector.
         Initial input parameters ``x_probe``, ``y_probe``, and ``z_probe`` designate the center of the detector.
         The detector plane is normal to a vector specified by ``<reduced_diags_name>.target_normal_x``, ``<reduced_diags_name>.target_normal_y``, and ``<reduced_diags_name>.target_normal_z``.
+        Note that it is not necessary to specify the ``target_normal`` vector in a 2D simulation (the only supported normal is in ``y``).
         The top of the plane is perpendicular to an "up" vector denoted by ``<reduced_diags_name>.target_up_x``, ``<reduced_diags_name>.target_up_y``, and ``<reduced_diags_name>.target_up_z``.
         The detector has a square radius to be determined by ``<reduced_diags_name>.detector_radius``.
         Similarly to the line detector, the plane detector requires a resolution ``<reduced_diags_name>.resolution``, which denotes the number of detector particles along each side of the square detector.
@@ -2190,6 +2246,11 @@ Reduced Diagnostics
         otherwise it is set to ``1``.
         Integrated electric and magnetic field components can instead be obtained by specifying
         ``<reduced_diags_name>.integrate == true``.
+
+        .. warning::
+
+           The FieldProbe reduced diagnostic does not yet add a Lorentz back transformation for boosted frame simulations.
+           Thus, it records field data in the boosted frame, not (yet) in the lab frame.
 
     * ``RhoMaximum``
         This type computes the maximum and minimum values of the total charge density as well as

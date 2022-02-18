@@ -71,7 +71,7 @@ amrex::ParticleReal ProtonBoronFusionCrossSectionNevins (const amrex::ParticleRe
         constexpr auto D2 = -20.3_prt;
         constexpr auto D5 = -1.58_prt;
         const amrex::ParticleReal E_norm = (E_keV-400._prt) * 1.e-2_prt;
-        astrophysical_factor = D0 + D1*E_norm + D2*E_norm*E_norm + D5*std::pow(E_norm,5);
+        astrophysical_factor = D0 + D1*E_norm + D2*E_norm*E_norm + D5*std::pow(E_norm, 5_prt);
     }
     else
     {
@@ -115,7 +115,7 @@ amrex::ParticleReal ProtonBoronFusionCrossSectionBuck (const amrex::ParticleReal
     constexpr amrex::ParticleReal E_start_fit = 3500._prt; // Fit starts at 3.5 MeV
     // cross section at E = E_start_fit, in barn
     constexpr amrex::ParticleReal cross_section_start_fit = 0.2168440845211521_prt;
-    constexpr amrex::ParticleReal slope_fit = -2.661840717596765;
+    constexpr amrex::ParticleReal slope_fit = -2.661840717596765_prt;
 
     // Compute fitted value
     return cross_section_start_fit*std::pow(E_keV/E_start_fit, slope_fit);

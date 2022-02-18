@@ -70,9 +70,9 @@ IntervalsParser::IntervalsParser (const std::vector<std::string>& instr_vec)
 
     auto insplit = WarpXUtilStr::split<std::vector<std::string>>(inconcatenated, m_separator);
 
-    for(int i=0; i<static_cast<int>(insplit.size()); i++)
+    for(const auto& inslc : insplit)
     {
-        SliceParser temp_slice(insplit[i]);
+        SliceParser temp_slice(inslc);
         m_slices.push_back(temp_slice);
         if ((temp_slice.getPeriod() > 0) &&
                (temp_slice.getStop() >= temp_slice.getStart())) m_activated = true;
@@ -81,17 +81,15 @@ IntervalsParser::IntervalsParser (const std::vector<std::string>& instr_vec)
 
 bool IntervalsParser::contains (const int n) const
 {
-    for(int i=0; i<static_cast<int>(m_slices.size()); i++){
-        if (m_slices[i].contains(n)) return true;
-    }
-    return false;
+    return std::any_of(m_slices.begin(), m_slices.end(),
+        [&](const auto& slice){return slice.contains(n);});
 }
 
 int IntervalsParser::nextContains (const int n) const
 {
     int next = std::numeric_limits<int>::max();
-    for(int i=0; i<static_cast<int>(m_slices.size()); i++){
-        next = std::min(m_slices[i].nextContains(n),next);
+    for(const auto& slice: m_slices){
+        next = std::min(slice.nextContains(n),next);
     }
     return next;
 }
@@ -99,8 +97,8 @@ int IntervalsParser::nextContains (const int n) const
 int IntervalsParser::previousContains (const int n) const
 {
     int previous = 0;
-    for(int i=0; i<static_cast<int>(m_slices.size()); i++){
-        previous = std::max(m_slices[i].previousContains(n),previous);
+    for(const auto& slice: m_slices){
+        previous = std::max(slice.previousContains(n),previous);
     }
     return previous;
 }

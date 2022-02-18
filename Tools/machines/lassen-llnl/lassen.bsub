@@ -18,5 +18,9 @@
 #BSUB -o WarpXo.%J
 #BSUB -e WarpXe.%J
 
+# Work-around OpenMPI bug with chunked HDF5
+#   https://github.com/open-mpi/ompi/issues/7795
+export OMPI_MCA_io=ompio
+
 export OMP_NUM_THREADS=1
 jsrun -r 4 -a 1 -g 1 -c 7 -l GPU-CPU -d packed -b rs -M "-gpu" <path/to/executable> <input file> > output.txt
