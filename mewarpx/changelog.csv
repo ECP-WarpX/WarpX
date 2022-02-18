@@ -6,6 +6,8 @@ Version, Physics version, Date,        List of changes
 - Added
   :class:`mewarpx.diags_store.particle_histogram_diagnostic.ParticleHistDiag`
   to track positions of where particles are scraped.
+- Added :class:`mewarpx.coulomb_scattering.PairwiseCoulombScattering` as a
+  wrapper to initialize pairwise Coulomb collisions in simulations.
 
 **Other changes**:
 
