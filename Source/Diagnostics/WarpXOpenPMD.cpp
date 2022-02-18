@@ -224,9 +224,9 @@ namespace detail
         vs const axisLabels{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
         // if we are start to write individual modes
-        //vs const axisLabels{"r", "z"};
+        vs const axisLabels{"r", "z"};
         // if we just write reconstructed 2D fields at theta=0
-        vs const axisLabels{"x", "z"};
+        // vs const axisLabels{"x", "z"};
 #elif defined(WARPX_DIM_3D)
         vs const axisLabels{"x", "y", "z"};
 #else
@@ -245,9 +245,9 @@ namespace detail
         using vs = std::vector< std::string >;
 #if defined(WARPX_DIM_RZ)
         // if we are start to write individual modes
-        //vs const fieldComponents{"r", "z"};
+        vs const fieldComponents{"r", "t", "z"};
         // if we just write reconstructed fields at theta=0
-        vs const fieldComponents{"x", "y", "z"};
+        // vs const fieldComponents{"x", "y", "z"};
 #else
         // note: 1D3V and 2D3V simulations still have 3 components for the fields
         vs const fieldComponents{"x", "y", "z"};
@@ -1058,7 +1058,10 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
                                  openPMD::MeshRecordComponent& mesh_comp) const
 {
        amrex::Box const & global_box = full_geom.Domain();
-       auto const global_size = getReversedVec(global_box.size());
+       auto global_size = getReversedVec(global_box.size());
+       auto & warpx = WarpX::GetInstance();
+       int n_rz_mode_inds = 2 * warpx.n_rz_azimuthal_modes - 1;
+       global_size.emplace(global_size.begin(), n_rz_mode_inds);
        // - Grid spacing
        std::vector<double> const grid_spacing = getReversedVec(full_geom.CellSize());
        // - Global offset
@@ -1071,6 +1074,10 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
        auto const dataset = openPMD::Dataset(datatype, global_size);
 
        mesh.setDataOrder(openPMD::Mesh::DataOrder::C);
+#if defined(WARPX_DIM_RZ)
+       mesh.setGeometry("thetaMode");
+       mesh.setGeometryParameters("m=" + std::to_string(WarpX::n_rz_azimuthal_modes) + ";imag=+");
+#endif
        mesh.setAxisLabels(axis_labels);
        mesh.setGridSpacing(grid_spacing);
        mesh.setGridGlobalOffset(global_offset);
@@ -1101,9 +1108,9 @@ WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
         // Check if this field is a vector. If so, then extract the field name
         std::vector< std::string > const vector_fields = {"E", "B", "j"};
         std::vector< std::string > const field_components = detail::getFieldComponentLabels();
-        for( std::string const& field : vector_fields ) {
+        for( std::string const& vector_field : vector_fields ) {
             for( std::string const& component : field_components ) {
-                if( field.compare( varname_1st ) == 0 &&
+                if( vector_field.compare( varname_1st ) == 0 &&
                     component.compare( varname_2nd ) == 0 )
                 {
                     field_name = varname_1st + varname.substr(2); // Strip component
@@ -1117,6 +1124,41 @@ WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
       return;
 
     field_name += std::string("_lvl").append(std::to_string(meshLevel));
+}
+/*
+ *
+ *
+ */
+void
+GetFieldModeIndices(const std::string& varname,
+                   int& field_str_end_index,
+                   int& mode_index)
+{
+    mode_index = -1;
+    field_str_end_index = varname.size();
+    if (varname.size() >= 6) {
+        std::string real_imag = varname.substr(field_str_end_index - 4);
+        if (real_imag == "real") {
+            field_str_end_index -= 6;
+        } else if (real_imag == "imag") {
+            mode_index += 1;
+            field_str_end_index -= 6;
+        }
+        else {
+            return;
+        }
+        int num_mode_digits = 0;
+        while ( varname[field_str_end_index] != '_') {
+            field_str_end_index--;
+            num_mode_digits++;
+        }
+        int mode = std::stoi(varname.substr(field_str_end_index+1, num_mode_digits));
+        if (mode == 0) {
+            mode_index = 0;
+        } else {
+            mode_index += 2 * mode;
+        }
+    }
 }
 /*
  * Write Field with all mesh levels
@@ -1167,44 +1209,87 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 
     int const ncomp = mf[i].nComp();
     for ( int icomp=0; icomp<ncomp; icomp++ ) {
-          std::string const & varname = varnames[icomp];
+        std::string const & varname = varnames[icomp];
 
-          // assume fields are scalar unless they match the following match of known vector fields
-          std::string field_name = varname;
-          std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
-          std::cout << "field_name=" << field_name << std::endl;
-          GetMeshCompNames( i, varname, field_name, comp_name );
-          std::cout << "varname=" << varname << " field_name=" << field_name << " comp_name=" << comp_name << std::endl;
+        // assume fields are scalar unless they match the following match of known vector fields
+        int field_str_end_index = varname.size();
+#if defined(WARPX_DIM_RZ)
+        int mode_index;
+        GetFieldModeIndices(varname, field_str_end_index, mode_index);
+#endif
+        std::string field_name = varname.substr(0,field_str_end_index);
+        std::string varname_no_mode = varname.substr(0,field_str_end_index);
+        std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
+        GetMeshCompNames( i, varname_no_mode, field_name, comp_name );
+        if ( first_write_to_iteration )
+        {
+            if (comp_name == openPMD::MeshRecordComponent::SCALAR) {
+                auto meshes_it = meshes.find(field_name);
+                if (meshes_it == meshes.end()) {
+                    auto mesh = meshes[field_name];          
+                    auto mesh_comp = mesh[comp_name];
 
-          auto mesh = meshes[field_name];
-          auto mesh_comp = mesh[comp_name];
-          if ( first_write_to_iteration )
-          {
-             SetupMeshComp( mesh, full_geom, mesh_comp ); // TODO: handle RZ components
-             detail::setOpenPMDUnit( mesh, field_name );
+                    SetupMeshComp( mesh, full_geom, mesh_comp ); // TODO: handle RZ components
+                    detail::setOpenPMDUnit( mesh, field_name );
 
-             auto relative_cell_pos = utils::getRelativeCellPosition(mf[i]);     // AMReX Fortran index order
-             std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
-             mesh_comp.setPosition( relative_cell_pos );
-           }
+                    auto relative_cell_pos = utils::getRelativeCellPosition(mf[i]);     // AMReX Fortran index order
+                    std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
+                    mesh_comp.setPosition( relative_cell_pos );
+                }
+            } else {
+                auto mesh = meshes[field_name];
+                auto mesh_it = mesh.find(comp_name);
+                if (mesh_it == mesh.end()) {
+                    auto mesh_comp = mesh[comp_name];
 
-           // Loop through the multifab, and store each box as a chunk,
-           // in the openPMD file.
-           for( amrex::MFIter mfi(mf[i]); mfi.isValid(); ++mfi )
-           {
-                amrex::FArrayBox const& fab = mf[i][mfi];
-                amrex::Box const& local_box = fab.box();
+                    SetupMeshComp( mesh, full_geom, mesh_comp ); // TODO: handle RZ components
+                    detail::setOpenPMDUnit( mesh, field_name );
 
-                // Determine the offset and size of this chunk
-                amrex::IntVect const box_offset = local_box.smallEnd() - global_box.smallEnd();
-                auto const chunk_offset = getReversedVec( box_offset );
-                auto const chunk_size = getReversedVec( local_box.size() );
-
-                amrex::Real const * local_data = fab.dataPtr( icomp );
-                mesh_comp.storeChunk( openPMD::shareRaw(local_data),
-                                      chunk_offset, chunk_size );
+                    auto relative_cell_pos = utils::getRelativeCellPosition(mf[i]);     // AMReX Fortran index order
+                    std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
+                    mesh_comp.setPosition( relative_cell_pos );
+                }
             }
-    } // icomp loop
+        } 
+    } // icomp setup loop
+    
+    for ( int icomp=0; icomp<ncomp; icomp++ ) {
+        std::string const & varname = varnames[icomp];
+
+        // assume fields are scalar unless they match the following match of known vector fields
+        int field_str_end_index = varname.size();
+#if defined(WARPX_DIM_RZ)
+        int mode_index;
+        GetFieldModeIndices(varname, field_str_end_index, mode_index);
+#endif
+        std::string field_name = varname.substr(0,field_str_end_index);
+        std::string varname_no_mode = varname.substr(0,field_str_end_index);
+        std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
+        GetMeshCompNames( i, varname_no_mode, field_name, comp_name );
+
+        auto mesh = meshes[field_name];          
+        auto mesh_comp = mesh[comp_name];
+
+        // Loop through the multifab, and store each box as a chunk,
+        // in the openPMD file.
+        for( amrex::MFIter mfi(mf[i]); mfi.isValid(); ++mfi )
+        {
+            amrex::FArrayBox const& fab = mf[i][mfi];
+            amrex::Box const& local_box = fab.box();
+
+            // Determine the offset and size of this chunk
+            amrex::IntVect const box_offset = local_box.smallEnd() - global_box.smallEnd();
+            auto chunk_offset = getReversedVec( box_offset );
+            auto tempoffs(chunk_offset);
+            chunk_offset.emplace(chunk_offset.begin(), mode_index);
+            auto chunk_size = getReversedVec( local_box.size() );
+            auto temp_sizes(chunk_size);
+            chunk_size.emplace(chunk_size.begin(), 1);
+            amrex::Real const * local_data = fab.dataPtr( icomp );
+            mesh_comp.storeChunk( openPMD::shareRaw(local_data),
+                                    chunk_offset, chunk_size );
+        }
+    } // icomp store loop
     // Flush data to disk after looping over all components
     m_Series->flush();
   } // levels loop (i)
