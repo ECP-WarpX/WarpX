@@ -3,7 +3,6 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Particles/ParticleBuffer.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
 #include "Utils/Interpolate.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -302,7 +301,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-        auto tmp = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(pc);
+        auto tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
         if (isBTD) {
             PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
             tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
