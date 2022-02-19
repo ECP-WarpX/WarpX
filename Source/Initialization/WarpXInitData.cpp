@@ -277,23 +277,32 @@ WarpX::PrintMainPICparameters ()
     if (WarpX::use_hybrid_QED == true){
       amrex::Print() << "                      | - use_hybrid_QED = true \n";
     }
-    // Print solver's order
-    std::string psatd_nox_fft, psatd_noy_fft, psatd_noz_fft;
-    psatd_nox_fft = (nox_fft == -1) ? "inf" : std::to_string(nox_fft);
-    psatd_noy_fft = (noy_fft == -1) ? "inf" : std::to_string(noy_fft);
-    psatd_noz_fft = (noz_fft == -1) ? "inf" : std::to_string(noz_fft);
 
-    if (dims=="3"){
-      amrex::Print() << "Spectral order:       | - psatd.nox = " << psatd_nox_fft << "\n";
-      amrex::Print() << "                      | - psatd.noy = " << psatd_noy_fft << "\n";
-      amrex::Print() << "                      | - psatd.noz = " << psatd_noz_fft << "\n";
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
+    // Print solver's order
+      std::string psatd_nox_fft, psatd_noy_fft, psatd_noz_fft;
+      psatd_nox_fft = (nox_fft == -1) ? "inf" : std::to_string(nox_fft);
+      psatd_noy_fft = (noy_fft == -1) ? "inf" : std::to_string(noy_fft);
+      psatd_noz_fft = (noz_fft == -1) ? "inf" : std::to_string(noz_fft);
+
+      if (dims=="3" ){
+        amrex::Print() << "Spectral order:       | - psatd.nox = " << psatd_nox_fft << "\n";
+        amrex::Print() << "                      | - psatd.noy = " << psatd_noy_fft << "\n";
+        amrex::Print() << "                      | - psatd.noz = " << psatd_noz_fft << "\n";
+      }
+      else if (dims=="2" and WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
+        amrex::Print() << "Spectral order:       | - psatd.nox = " << psatd_nox_fft << "\n";
+        amrex::Print() << "                      | - psatd.noz = " << psatd_noz_fft << "\n";
+      }
+      else if (dims=="1" and WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
+        amrex::Print() << "Spectral order:       | - psatd.noz = " << psatd_noz_fft << "\n";
+      }
     }
-    else if (dims=="2"){
-      amrex::Print() << "Spectral order:       | - psatd.nox = " << psatd_nox_fft << "\n";
-      amrex::Print() << "                      | - psatd.noz = " << psatd_noz_fft << "\n";
-    }
-    else if (dims=="1"){
-      amrex::Print() << "Spectral order:       | - psatd.noz = " << psatd_noz_fft << "\n";
+    else{
+      amrex::Print() << "    ***********************************************************************\n";
+      amrex::Print() << "    *    In order to use Yee or CKC or ECT solver, WarpX needs to be      *\n" <<
+      "    *     compiled with a finite-difference (FDTD) Maxwell solver         *\n";
+      amrex::Print() << "    ***********************************************************************\n";
     }
     // Print guard cells number
     amrex::Print() << "Guard cells           | - ng_alloc_EB = " << guard_cells.ng_alloc_EB << "\n";
@@ -309,13 +318,20 @@ WarpX::PrintMainPICparameters ()
                              "," << WarpX::boost_direction[1] << "," << WarpX::boost_direction[2] << ")\n";
     amrex::Print() << "------------------------------------------------------------------------------- \n";
     }
-
-    ParmParse pp_warpx("warpx");
-    std::string moving_window_dir = "unknown";
-    pp_warpx.query( "moving_window_dir", moving_window_dir );
+    //Print moving window details
     if (WarpX::do_moving_window == 1){
       amrex::Print() << "Moving window:        |    ON  \n";
-      amrex::Print() << "                      |  - moving_window_dir = " << moving_window_dir << "\n";
+      if (WarpX::moving_window_dir == 0){
+        amrex::Print() << "                      |  - moving_window_dir = x \n";
+      }
+      #if defined(WARPX_DIM_3D)
+      else if (WarpX::moving_window_dir == 1){
+        amrex::Print() << "                      |  - moving_window_dir = y \n";
+      }
+      #endif
+      else if (WarpX::moving_window_dir == WARPX_ZINDEX) {
+        amrex::Print() << "                      |  - moving_window_dir = z \n";
+      }
       amrex::Print() << "                      |  - moving_window_v = " << WarpX::moving_window_v << "\n";
       amrex::Print() << "------------------------------------------------------------------------------- \n";
     }
