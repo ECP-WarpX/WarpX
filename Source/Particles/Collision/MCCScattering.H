@@ -154,10 +154,12 @@ public:
         if (Random(engine) > m_total_collision_prob) return false;
 
         // get references to the particle to get its position
-        auto& p = ptd.m_aos[i];
+        const auto& p = ptd.getSuperParticle(i);
+        ParticleReal x, y, z;
+        get_particle_position(p, x, y, z);
 
         // calculate neutral density at particle location
-        const Real n_a = m_n_a_func(p.pos(0), p.pos(1), p.pos(2), m_t);
+        const Real n_a = m_n_a_func(x, y, z, m_t);
 
         // get the particle velocity
         const ParticleReal ux = ptd.m_rdata[PIdx::ux][i];
@@ -244,13 +246,13 @@ public:
         using std::sqrt;
 
         // get references to the particle to get its position
-        auto& p = src.m_aos[i_src];
+        const auto& p = src.getSuperParticle(i_src);
+        ParticleReal x, y, z;
+        get_particle_position(p, x, y, z);
 
         // calculate standard deviation in neutral velocity distribution using
         // the local temperature
-        const Real ion_vel_std = (
-            m_sqrt_kb_m * sqrt(m_T_a_func(p.pos(0), p.pos(1), p.pos(2), m_t))
-        );
+        const Real ion_vel_std = m_sqrt_kb_m * sqrt(m_T_a_func(x, y, z, m_t));
 
         // get references to the original particle's velocity
         auto& ux = src.m_rdata[PIdx::ux][i_src];
