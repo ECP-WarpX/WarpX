@@ -398,7 +398,7 @@ void ParticleExtrema::ComputeDiags (int step)
             const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
             const int nox = WarpX::nox;
             const bool galerkin_interpolation = WarpX::galerkin_interpolation;
-            const amrex::IntVect ngE = warpx.getngE();
+            const amrex::IntVect ngEB = warpx.getngEB();
             amrex::Vector<amrex::Real> v_galilean = myspc.get_v_galilean();
             const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
 
@@ -432,7 +432,7 @@ void ParticleExtrema::ComputeDiags (int step)
 
                     // define variables in preparation for field gathering
                     amrex::Box box = pti.tilebox();
-                    box.grow(ngE);
+                    box.grow(ngEB);
                     const Dim3 lo = amrex::lbound(box);
                     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, lev);
                     const GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};

@@ -859,6 +859,27 @@ class Mirror(picmistandard.PICMI_Mirror):
         pywarpx.warpx.mirror_z_npoints.append(self.number_of_cells)
 
 
+class CoulombCollisions(picmistandard.base._ClassWithInit):
+    """Custom class to handle setup of binary Coulmb collisions in WarpX. If
+    collision initialization is added to picmistandard this can be changed to
+    inherit that functionality."""
+
+    def __init__(self, name, species, CoulombLog=None, ndt=None, **kw):
+        self.name = name
+        self.species = species
+        self.CoulombLog = CoulombLog
+        self.ndt = ndt
+
+        self.handle_init(kw)
+
+    def initialize_inputs(self):
+        collision = pywarpx.Collisions.newcollision(self.name)
+        collision.type = 'pairwisecoulomb'
+        collision.species = [species.name for species in self.species]
+        collision.CoulombLog = self.CoulombLog
+        collision.ndt = self.ndt
+
+
 class MCCCollisions(picmistandard.base._ClassWithInit):
     """Custom class to handle setup of MCC collisions in WarpX. If collision
     initialization is added to picmistandard this can be changed to inherit

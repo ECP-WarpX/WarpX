@@ -4,7 +4,7 @@ Module for Coulomb scattering in WarpX.
 import logging
 
 import numpy as np
-from pywarpx import callbacks
+from pywarpx import callbacks, picmi
 
 from mewarpx.mwxrun import mwxrun
 import mewarpx.utils_store.mwxconstants as constants
@@ -64,13 +64,13 @@ class LangevinElectronIonScattering(object):
 
         print_str = (
             "Initialized electron-ion Coulomb scattering for species "
-            f"{self.collider.name} and {self.field.name}."
+            f"{self.collider.name} and {self.field.name}\n"
         )
         if self.log_lambda is None:
-            print_str += 'The Coulomb logarithm will be calculated.'
+            print_str += "  - the Coulomb logarithm will be calculated"
         else:
             print_str += (
-                'The Coulomb logarithm is fixed at %.2f.' % self.log_lambda
+                f"  - the Coulomb logarithm is fixed at {self.log_lambda:.2f}"
             )
         logger.info(print_str)
 
@@ -217,3 +217,53 @@ class LangevinElectronIonScattering(object):
             # )
             # print(f"delta energy = {np.sum(E_init - E_final):.3e} eV")
             # assert np.allclose(E_init, E_final)
+
+
+class PairwiseCoulombScattering(object):
+
+    """Wrapper used to initialize pairwise Coulomb collisions."""
+
+    def __init__(self, species1, species2=None, log_lambda=None,
+                 subcycling_steps=None):
+        """
+        Arguments:
+            species1 (:class:`mewarpx.mespecies.Species`): First species that
+                will be scattered.
+            species2 (:class:`mewarpx.mespecies.Species`): Second species that
+                will be scattered. If None species1 will be used.
+            log_lambda (float): If specified, a fixed value for the Coulomb
+                logarithm. If not specified it will be calculated according to
+                the algorithm in Perez et al. (Phys. Plasmas 19, 083104, 2012).
+            subcycling_steps (int): Number of steps between performing pairwise
+                scattering. Default 1 in WarpX code.
+        """
+        self.species1 = species1
+        self.species2 = species2
+        if self.species2 is None:
+            self.species2 = self.species1
+
+        self.log_lambda = log_lambda
+        self.subcycling_steps = subcycling_steps
+
+        print_str = (
+            "Initialized pairwise Coulomb scattering for species "
+            f"{self.species1.name} and {self.species2.name}\n"
+        )
+        if self.log_lambda is None:
+            print_str += "  - the Coulomb logarithm will be calculated"
+        else:
+            print_str += (
+                f"  - the Coulomb logarithm is fixed at {self.log_lambda:.2f}"
+            )
+        logger.info(print_str)
+
+        name = f"coulomb_{self.species1.name}_{self.species2.name}"
+
+        self.collision_object = picmi.CoulombCollisions(
+            name=name, species=[self.species1, self.species2],
+            CoulombLog=self.log_lambda, ndt=self.subcycling_steps
+        )
+
+        if mwxrun.simulation.collisions is None:
+            mwxrun.simulation.collisions = []
+        mwxrun.simulation.collisions.append(self.collision_object)

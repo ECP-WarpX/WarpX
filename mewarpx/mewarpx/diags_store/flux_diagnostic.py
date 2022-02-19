@@ -13,6 +13,8 @@ from pywarpx import callbacks
 
 from mewarpx.diags_store import diag_base, timeseries
 from mewarpx.mwxrun import mwxrun
+from mewarpx.utils_store import parallel_util
+from mewarpx.utils_store.appendablearray import AppendableArray
 import mewarpx.utils_store.util as mwxutil
 
 logger = logging.getLogger(__name__)
@@ -170,6 +172,9 @@ class SurfaceFluxDiag(ParticleCSVDiag):
     This class is used by FluxDiag; rarely used directly.
     """
 
+    # IF CHANGING THIS, CHANGE IN self._record_particle_flux() AS WELL.
+    fields = ['t', 'step', 'species_id', 'V_e', 'n', 'q', 'E_total']
+
     def __init__(self, diag_steps, surface, write_dir, **kwargs):
         """Initialize surface-specific features.
 
@@ -189,7 +194,6 @@ class SurfaceFluxDiag(ParticleCSVDiag):
             raise RuntimeError("Cannot attach two SurfaceFluxDiag objects "
                                "to the same surface.")
         self.surface.scraper_diag = self
-        self.surface.init_scrapedparticles(self.surface.fields)
 
         save_name = self.surface.name + '_scraped.csv'
 
@@ -200,16 +204,81 @@ class SurfaceFluxDiag(ParticleCSVDiag):
             **kwargs
         )
 
-        # install callback that will have the assembly object check the
-        # particle buffer and record the scraped particles data
-        # TODO change this to only process the particle buffer on a diagnostic
-        # step instead of after every step
-        callbacks.installbeforestep(
-            mwxrun.sim_ext.libwarpx_so.warpx_clearParticleBoundaryBuffer)
-        callbacks.installbeforeEsolve(self.surface.record_scrapedparticles)
+        # install diagnostic function to collect scraped particle data
+        self.surface.add_diag_fn(
+            diag_fn=self._record_particle_flux, attrib_list=["w", "E_total"]
+        )
+
+        # create the flux_dict to track fluxes
+        self.flux_array = AppendableArray(
+            typecode='d', unitshape=[len(self.fields)])
+
+    def _record_particle_flux(self, scraped_particle_dict):
+        """Function to process the scraped particle dict for the total
+        particle and energy flux. The scraped particle array is cleared after
+        every step so it is known that all particles in the
+        scraped_particle_dict was scraped on this step.
+
+        Arguments:
+            scraped_particle_dict (dict): Dictionary containing scraped
+                particle data.
+
+        Note:
+            The total charge scraped and energy of the particles scraped
+            is multiplied by -1 since these quantities are leaving the system.
+        """
+        # loop over species and process scraped particle data
+        for species in mwxrun.simulation.species:
+            data = np.zeros(7)
+            data[0] = mwxrun.get_t()
+            data[1] = mwxrun.get_it()
+            data[2] = species.species_number
+            data[3] = self.surface.getvoltage_e()
+
+            # When pre-seeding a simulation with plasma we inject particles over
+            # embedded boundaries which causes the first scraping step to
+            # show very large currents. For this reason we skip that first step
+            # but note that we inject after the first step so we need to skip
+            # scraping step 2.
+            if data[1] == 2:
+                self.flux_array.append(data)
+                continue
+
+            idx = np.where(scraped_particle_dict["species_id"] == data[2])
+            data[4] = np.size(idx)
+            data[5] = -species.sq * np.sum(scraped_particle_dict["w"][idx])
+            data[6] = -np.sum(scraped_particle_dict["E_total"][idx])
+
+            self.flux_array.append(data)
+
+    def _get_total_particle_flux(self, clear=False):
+        """Get a dictionary containing the fluxes summed over processors.
+
+        Arguments:
+            clear (bool): If True, clear the particle data rows entered (field
+                names are still initialized as before). Default False.
+
+        Returns:
+            scrapedparticles_dict (collections.OrderedDict): Keys are the
+                originally passed field strings for lost particles. Values are
+                an (n)-shape numpy array for each field.
+        """
+        lpdata = self.flux_array.data()
+
+        # Sum all except t/step/jsid/V_e from all processors
+        lpdata[:,4:] = parallel_util.parallelsum(np.array(lpdata[:,4:]))
+
+        lpdict = collections.OrderedDict(
+            [(fieldname, np.array(lpdata[:, ii], copy=True))
+             for ii, fieldname in enumerate(self.fields)])
+
+        if clear:
+            self.flux_array.cleardata()
+
+        return lpdict
 
     def _collect_dataframe(self, clear=True):
-        partdict = self.surface.get_scrapedparticles(clear=clear)
+        partdict = self._get_total_particle_flux(clear=clear)
         # Convert species_id & step to int, because they come out as floats.
         partdict['species_id'] = partdict['species_id'].astype(int)
         partdict['step'] = partdict['step'].astype(int)
