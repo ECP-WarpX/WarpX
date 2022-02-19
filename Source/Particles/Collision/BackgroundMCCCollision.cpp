@@ -291,7 +291,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 
     // get neutral mass
     amrex::Real mass_a = m_background_mass;
-    // compile parsers for the background density and temperature
+    // get parsers for the background density and temperature
     auto n_a_func = m_background_density_func;
     auto T_a_func = m_background_temperature_func;
 

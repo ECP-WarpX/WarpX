@@ -40,6 +40,7 @@ public:
     /** Perform particle conserving MCC collisions within a tile
      *
      * @param pti particle iterator
+     * @param t current time
      *
      */
     void doBackgroundCollisionsWithinTile ( WarpXParIter& pti, amrex::Real t);
@@ -50,6 +51,7 @@ public:
      * @param[in,out] cost pointer to (load balancing) cost corresponding to box where present particles are ionized.
      * @param[in,out] species1,species2 reference to species container used to inject
      * new particles
+     * @param t current time
      *
      */
     void doBackgroundIonization (
