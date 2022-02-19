@@ -11,6 +11,7 @@
 #include "CollisionBase.H"
 #include "MCCProcess.H"
 
+#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
 #include <AMReX_GpuContainers.H>
@@ -41,7 +42,7 @@ public:
      * @param pti particle iterator
      *
      */
-    void doBackgroundCollisionsWithinTile ( WarpXParIter& pti );
+    void doBackgroundCollisionsWithinTile ( WarpXParIter& pti, amrex::Real t);
 
     /** Perform MCC ionization interactions
      *
@@ -55,7 +56,8 @@ public:
                                  int lev,
                                  amrex::LayoutData<amrex::Real>* cost,
                                  WarpXParticleContainer& species1,
-                                 WarpXParticleContainer& species2
+                                 WarpXParticleContainer& species2,
+                                 amrex::Real t
                                  );
 
 private:
@@ -70,13 +72,18 @@ private:
 
     amrex::Real m_mass1;
 
-    amrex::Real m_background_temperature;
-    amrex::Real m_background_density;
+    amrex::Real m_max_background_density = 0;
     amrex::Real m_background_mass;
     amrex::Real m_total_collision_prob;
     amrex::Real m_total_collision_prob_ioniz = 0;
     amrex::Real m_nu_max;
     amrex::Real m_nu_max_ioniz;
+
+    amrex::Parser m_background_density_parser;
+    amrex::Parser m_background_temperature_parser;
+
+    amrex::ParserExecutor<4> m_background_density_func;
+    amrex::ParserExecutor<4> m_background_temperature_func;
 };
 
 #endif // WARPX_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_
