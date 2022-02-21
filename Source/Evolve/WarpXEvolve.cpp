@@ -378,7 +378,6 @@ WarpX::OneStep_nosub (Real cur_time)
     if(istep[0]+1==end_fine_patch_step){
         SyncCurrent();
         SyncRho();
-        const int fine_lev = 1;
         const int coarse_lev = 0;
         regrid(coarse_lev, cur_time);
         Print() << "Remove the patch" << '\n';
