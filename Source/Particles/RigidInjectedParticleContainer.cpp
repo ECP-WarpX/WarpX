@@ -256,7 +256,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
         const amrex::Real z_plane_lev = zinject_plane_lev;
         const amrex::Real vz_ave_boosted = vzbeam_ave_boosted;
         const bool rigid = rigid_advance;
-        const amrex::Real inv_csq = 1._rt/(PhysConst::c*PhysConst::c);
+        constexpr amrex::Real inv_csq = 1._rt/(PhysConst::c*PhysConst::c);
         amrex::ParallelFor( np_to_push,
                             [=] AMREX_GPU_DEVICE (long i) {
                                 amrex::ParticleReal xp, yp, zp;
