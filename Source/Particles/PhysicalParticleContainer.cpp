@@ -877,7 +877,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             {
                 auto index = overlap_box.index(iv);
                 if (lrefine_injection) {
-                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, shifted);
+                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, -shifted);
                     if (fine_overlap_box.ok()) {
                         int r = (fine_overlap_box.contains(iv)) ?
                             AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac) : 1;
@@ -1398,7 +1398,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             {
                 auto index = overlap_box.index(iv);
                 if (lrefine_injection) {
-                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, shifted);
+                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, -shifted);
                     if (fine_overlap_box.ok()) {
                         int r = (fine_overlap_box.contains(iv)) ?
                             AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac) : 1;
