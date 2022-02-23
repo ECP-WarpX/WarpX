@@ -29,11 +29,11 @@
 FiniteDifferenceSolver::FiniteDifferenceSolver (
     int const fdtd_algo,
     std::array<amrex::Real,3> cell_size,
-    bool do_nodal ) {
+    bool do_centered ) {
 
     // Register the type of finite-difference algorithm
     m_fdtd_algo = fdtd_algo;
-    m_do_nodal = do_nodal;
+    m_do_centered = do_centered;
 
     // return if not FDTD
     if (fdtd_algo == MaxwellSolverAlgo::PSATD)
@@ -60,7 +60,7 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
         amrex::Abort("FiniteDifferenceSolver: Unknown algorithm");
     }
 #else
-    if (do_nodal) {
+    if (do_centered) {
 
         CartesianNodalAlgorithm::InitializeStencilCoefficients( cell_size,
             m_h_stencil_coefs_x, m_h_stencil_coefs_y, m_h_stencil_coefs_z );

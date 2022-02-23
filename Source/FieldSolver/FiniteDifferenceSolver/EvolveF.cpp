@@ -57,7 +57,7 @@ void FiniteDifferenceSolver::EvolveF (
         EvolveFCylindrical <CylindricalYeeAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
 #else
-    if (m_do_nodal) {
+    if (m_do_centered) {
 
         EvolveFCartesian <CartesianNodalAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 

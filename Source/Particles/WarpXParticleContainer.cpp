@@ -424,8 +424,8 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
-        if (WarpX::do_nodal==1) {
-          amrex::Abort("The Esirkepov algorithm cannot be used with a nodal grid.");
+        if (WarpX::do_centered==1) {
+          amrex::Abort("The Esirkepov algorithm cannot be used with a cell-centered grid.");
         }
         if ( (m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)){
             amrex::Abort("The Esirkepov algorithm cannot be used with the Galilean algorithm.");
@@ -757,7 +757,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 
     WarpX& warpx = WarpX::GetInstance();
 
-    // Call surroundingNodes() only if the rho MultiFab is NOT fully cell-centered
+    // Call surroundingNodes() only if the rho MultiFab is NOT cell-centered
     // (the index type of rho does not change between fine and coarse patch,
     // so checking only on rho_fp should be fine)
     if (warpx.m_rho_nodal_flag != amrex::IntVect::TheCellVector())

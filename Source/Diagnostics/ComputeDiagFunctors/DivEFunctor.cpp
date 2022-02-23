@@ -28,7 +28,7 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_
     // output Multifab, mf_dst, the guard-cell data is not needed especially considering
     // the operations performend in the CoarsenAndInterpolate function.
     constexpr int ng = 1;
-    // divE is fully cell-centered if rho is fully cell-centered, and nodal otherwise
+    // divE is cell-centered if rho is cell-centered, and nodal otherwise
     // (the index type of rho does not change between fine and coarse patch,
     // so checking only on rho_fp should be fine)
     amrex::IntVect cell_type =

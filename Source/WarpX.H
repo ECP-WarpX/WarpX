@@ -280,8 +280,11 @@ public:
     static int n_field_gather_buffer;       //! in number of cells from the edge (identical for each dimension)
     static int n_current_deposition_buffer; //! in number of cells from the edge (identical for each dimension)
 
-    // do nodal
-    static int do_nodal;
+    /**
+     * \brief Control whether all MultiFabs should be cell-centered
+     */
+    static bool do_centered;
+
     amrex::IntVect m_rho_nodal_flag;
 
     std::array<const amrex::MultiFab* const, 3>

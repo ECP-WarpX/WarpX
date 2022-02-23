@@ -46,7 +46,7 @@ void FiniteDifferenceSolver::EvolveG (
     amrex::ignore_unused(Gfield, Bfield, dt);
 #else
     // Select algorithm
-    if (m_do_nodal)
+    if (m_do_centered)
     {
         EvolveGCartesian<CartesianNodalAlgorithm>(Gfield, Bfield, dt);
     }

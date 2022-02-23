@@ -35,7 +35,7 @@ guardCellManager::Init (
     const amrex::RealVect dx,
     const bool do_subcycling,
     const bool do_fdtd_nci_corr,
-    const bool do_nodal,
+    const bool do_centered,
     const bool do_moving_window,
     const int moving_window_dir,
     const int nox,
@@ -188,9 +188,9 @@ guardCellManager::Init (
         // currents in the latter case). This does not seem to be necessary in x and y,
         // where it still seems fine to set half the number of guard cells of the nodal case.
 
-        int ngFFt_x = do_nodal ? nox_fft : nox_fft / 2;
-        int ngFFt_y = do_nodal ? noy_fft : noy_fft / 2;
-        int ngFFt_z = (do_nodal || galilean) ? noz_fft : noz_fft / 2;
+        int ngFFt_x = do_centered ? nox_fft : nox_fft / 2;
+        int ngFFt_y = do_centered ? noy_fft : noy_fft / 2;
+        int ngFFt_z = (do_centered || galilean) ? noz_fft : noz_fft / 2;
 
         ParmParse pp_psatd("psatd");
         queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
@@ -250,7 +250,7 @@ guardCellManager::Init (
     }
 #else
     else {
-        if (do_nodal) {
+        if (do_centered) {
             ng_FieldSolver  = CartesianNodalAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianNodalAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianNodalAlgorithm::GetMaxGuardCell();

@@ -45,9 +45,9 @@ using namespace amrex;
 void
 WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> a_dt)
 {
-    if (WarpX::do_nodal == 0) {
+    if (WarpX::do_centered == 0) {
         amrex::Abort("Error: The Hybrid QED method is "
-            "currently only compatible with the nodal scheme.");
+            "currently only compatible with the cell-centered scheme.");
     }
     for (int lev = 0; lev <= finest_level; ++lev) {
         Hybrid_QED_Push(lev, a_dt[lev]);

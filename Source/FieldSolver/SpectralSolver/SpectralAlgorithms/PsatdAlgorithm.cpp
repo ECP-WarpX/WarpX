@@ -844,7 +844,7 @@ PsatdAlgorithm::VayDeposition (
 
     // Forward Fourier transform of D (temporarily stored in current):
     // D is nodal and does not match the staggering of J, therefore we pass the staggering of D
-    // to the ForwardTransform function (nodal, unless all quantities are fully cell-centered)
+    // to the ForwardTransform function (nodal, unless all quantities are cell-centered)
 
     amrex::IntVect jx_nodal_flag =
         ((*current[0]).ixType().toIntVect() == amrex::IntVect::TheCellVector()) ?

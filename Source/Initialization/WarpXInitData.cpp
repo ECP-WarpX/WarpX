@@ -250,7 +250,7 @@ WarpX::InitPML ()
 #else
         pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
-                             dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
+                             dt[0], nox_fft, noy_fft, noz_fft, do_centered,
                              do_moving_window, pml_has_particles, do_pml_in_domain,
                              do_multi_J,
                              do_pml_dive_cleaning, do_pml_divb_cleaning,
@@ -282,7 +282,7 @@ WarpX::InitPML ()
             pml[lev] = std::make_unique<PML>(lev, boxArray(lev), DistributionMap(lev),
                                    &Geom(lev), &Geom(lev-1),
                                    pml_ncell, pml_delta, refRatio(lev-1),
-                                   dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
+                                   dt[lev], nox_fft, noy_fft, noz_fft, do_centered,
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
                                    do_multi_J, do_pml_dive_cleaning, do_pml_divb_cleaning,
                                    guard_cells.ng_FieldSolver.max(),

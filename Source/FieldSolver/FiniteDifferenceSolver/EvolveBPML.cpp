@@ -51,7 +51,7 @@ void FiniteDifferenceSolver::EvolveBPML (
     amrex::ignore_unused(Bfield, Efield, dt, dive_cleaning);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
-    if (m_do_nodal) {
+    if (m_do_centered) {
 
         EvolveBPMLCartesian <CartesianNodalAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 

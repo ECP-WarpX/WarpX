@@ -38,7 +38,7 @@ algo.particle_shape = 3
 #################################
 particles.species_names = electrons ions
 
-warpx.do_nodal = 1
+warpx.do_centered = 1
 warpx.use_filter = 1
 
 psatd.nox = 8

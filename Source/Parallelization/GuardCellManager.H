@@ -28,7 +28,7 @@ public:
      * \param dx cell spacing
      * \param do_subcycling bool, whether to use subcycling
      * \param do_fdtd_nci_corr bool, whether to use Godfrey NCI corrector
-     * \param do_nodal bool, whether the field solver is nodal
+     * \param do_centered bool, whether the field solver is cell-centered
      * \param do_moving_window bool, whether to use moving window
      * \param moving_window_dir direction of moving window
      * \param nox order of current deposition
@@ -54,7 +54,7 @@ public:
         const amrex::RealVect dx,
         const bool do_subcycling,
         const bool do_fdtd_nci_corr,
-        const bool do_nodal,
+        const bool do_centered,
         const bool do_moving_window,
         const int moving_window_dir,
         const int nox,
