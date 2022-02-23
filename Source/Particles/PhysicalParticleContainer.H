@@ -163,10 +163,7 @@ public:
                         int const lev,
                         amrex::iMultiFab const* current_masks,
                         amrex::iMultiFab const* gather_masks,
-                        RealVector& uxp,
-                        RealVector& uyp,
-                        RealVector& uzp,
-                        RealVector& wp );
+                        std::array<RealVector, PIdx::nattribs>& attribs );
 
     virtual void PostRestart () final {}
 
