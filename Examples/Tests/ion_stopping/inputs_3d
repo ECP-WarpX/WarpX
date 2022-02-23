@@ -1,0 +1,39 @@
+my_constants.max_ion_energy = 100.  # eV
+my_constants.max_ion_velocity = sqrt(2.*max_ion_energy*q_e/m_p)/clight
+
+max_step = 10
+
+amr.n_cell = 8 8 8
+amr.max_level = 0
+geometry.dims = 3
+geometry.prob_lo = -1. -1. -1.
+geometry.prob_hi = +1. +1. +1.
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
+boundary.particle_lo = periodic periodic periodic
+boundary.particle_hi = periodic periodic periodic
+algo.particle_shape = 1
+
+particles.species_names = ions
+
+ions.species_type = proton
+ions.injection_style = "MultipleParticles"
+ions.multiple_particles_pos_x = 0. 0. 0. 0.
+ions.multiple_particles_pos_y = 0. 0. 0. 0.
+ions.multiple_particles_pos_z = 0. 0. 0. 0.
+ions.multiple_particles_vel_x = max_ion_velocity 0. 0. max_ion_velocity/2.
+ions.multiple_particles_vel_y = 0. max_ion_velocity 0. max_ion_velocity/2.
+ions.multiple_particles_vel_z = 0. 0. -max_ion_velocity -max_ion_velocity/2.
+ions.multiple_particles_weight = 1. 1. 1. 1.
+
+collisions.collision_names = ion_stopping
+ion_stopping.type = background_stopping
+ion_stopping.species = ions
+ion_stopping.background_density = 1.e20
+ion_stopping.background_temperature = 1. # eV
+ion_stopping.background_mass = m_e
+
+diagnostics.diags_names = diag1
+diag1.diag_type = Full
+diag1.format = plotfile
+diag1.intervals = 1
