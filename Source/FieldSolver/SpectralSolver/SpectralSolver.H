@@ -89,10 +89,40 @@ class SpectralSolver
          * \brief Transform the component `i_comp` of MultiFab `mf`
          *  to spectral space, and store the corresponding result internally
          *  (in the spectral field specified by `field_index`) */
-        void ForwardTransform( const int lev,
+        void ForwardTransform (const int lev,
                                const amrex::MultiFab& mf,
                                const int field_index,
-                               const int i_comp=0 );
+                               const int i_comp,
+                               const amrex::IntVect& stag);
+
+        // This overload is used if stag is not passed
+        AMREX_FORCE_INLINE
+        void ForwardTransform (const int lev,
+                               const amrex::MultiFab& mf,
+                               const int field_index,
+                               const int i_comp)
+        {
+            ForwardTransform(lev, mf, field_index, i_comp, mf.ixType().toIntVect());
+        }
+
+        // This overload is used if i_comp is not passed
+        AMREX_FORCE_INLINE
+        void ForwardTransform (const int lev,
+                               const amrex::MultiFab& mf,
+                               const int field_index,
+                               const amrex::IntVect& stag)
+        {
+            ForwardTransform(lev, mf, field_index, 0, stag);
+        }
+
+        // This overload is used if i_comp and stag are not passed
+        AMREX_FORCE_INLINE
+        void ForwardTransform (const int lev,
+                               const amrex::MultiFab& mf,
+                               const int field_index)
+        {
+            ForwardTransform(lev, mf, field_index, 0, mf.ixType().toIntVect());
+        }
 
         /**
          * \brief Transform spectral field specified by `field_index` back to
@@ -139,9 +169,9 @@ class SpectralSolver
          * \param[in,out] current Array of unique pointers to \c MultiFab storing
          *                        the three components of the current density
          */
-        void VayDeposition (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+        void VayDeposition ()
         {
-            algorithm->VayDeposition(lev, field_data, current);
+            algorithm->VayDeposition(field_data);
         }
 
         /**
