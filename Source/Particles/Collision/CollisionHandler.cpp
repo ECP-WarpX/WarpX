@@ -11,6 +11,7 @@
 #include "Particles/Collision/BinaryCollision/BinaryCollision.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
 #include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
+#include "Particles/Collision/BackgroundStopping/BackgroundStopping.H"
 
 #include <AMReX_ParmParse.H>
 
@@ -46,6 +47,9 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
         }
         else if (type == "background_mcc") {
             allcollisions[i] = std::make_unique<BackgroundMCCCollision>(collision_names[i]);
+        }
+        else if (type == "background_stopping") {
+            allcollisions[i] = std::make_unique<BackgroundStopping>(collision_names[i]);
         }
         else if (type == "nuclearfusion") {
             allcollisions[i] =
