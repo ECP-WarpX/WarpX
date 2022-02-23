@@ -130,4 +130,3 @@ void BackgroundStopping::doBackgroundStoppingWithinTile (WarpXParIter& pti, amre
         }
         );
 }
-
