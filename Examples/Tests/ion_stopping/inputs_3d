@@ -14,24 +14,40 @@ boundary.particle_lo = periodic periodic periodic
 boundary.particle_hi = periodic periodic periodic
 algo.particle_shape = 1
 
-particles.species_names = ions
+particles.species_names = ions1 ions2
 
-ions.species_type = proton
-ions.injection_style = "MultipleParticles"
-ions.multiple_particles_pos_x = 0. 0. 0. 0.
-ions.multiple_particles_pos_y = 0. 0. 0. 0.
-ions.multiple_particles_pos_z = 0. 0. 0. 0.
-ions.multiple_particles_vel_x = max_ion_velocity 0. 0. max_ion_velocity/2.
-ions.multiple_particles_vel_y = 0. max_ion_velocity 0. max_ion_velocity/2.
-ions.multiple_particles_vel_z = 0. 0. -max_ion_velocity -max_ion_velocity/2.
-ions.multiple_particles_weight = 1. 1. 1. 1.
+ions1.species_type = proton
+ions1.injection_style = "MultipleParticles"
+ions1.multiple_particles_pos_x = 0. 0. 0. 0.
+ions1.multiple_particles_pos_y = 0. 0. 0. 0.
+ions1.multiple_particles_pos_z = 0. 0. 0. 0.
+ions1.multiple_particles_vel_x = max_ion_velocity 0. 0. max_ion_velocity/2.
+ions1.multiple_particles_vel_y = 0. max_ion_velocity 0. max_ion_velocity/2.
+ions1.multiple_particles_vel_z = 0. 0. -max_ion_velocity -max_ion_velocity/2.
+ions1.multiple_particles_weight = 1. 1. 1. 1.
 
-collisions.collision_names = ion_stopping
-ion_stopping.type = background_stopping
-ion_stopping.species = ions
-ion_stopping.background_density = 1.e20
-ion_stopping.background_temperature = 1. # eV
-ion_stopping.background_mass = m_e
+ions2.species_type = proton
+ions2.injection_style = "MultipleParticles"
+ions2.multiple_particles_pos_x = -0.1 +0.1 -0.1 +0.1
+ions2.multiple_particles_pos_y = -0.1 -0.1 +0.1 +0.1
+ions2.multiple_particles_pos_z = 0. 0. 0. 0.
+ions2.multiple_particles_vel_x = max_ion_velocity max_ion_velocity max_ion_velocity max_ion_velocity
+ions2.multiple_particles_vel_y = 0. 0. 0. 0.
+ions2.multiple_particles_vel_z = 0. 0. 0. 0.
+ions2.multiple_particles_weight = 1. 1. 1. 1.
+
+collisions.collision_names = ion_stopping_constant ion_stopping_parsed
+
+ion_stopping_constant.type = background_stopping
+ion_stopping_constant.species = ions1
+ion_stopping_constant.background_density = 1.e20
+ion_stopping_constant.background_temperature = 1. # eV
+ion_stopping_constant.background_mass = m_e
+
+ion_stopping_parsed.type = background_stopping
+ion_stopping_parsed.species = ions2
+ion_stopping_parsed.background_density(x,y,z,t) = if(x>0,1.e20,1.e21)
+ion_stopping_parsed.background_temperature(x,y,z,t) = if(y>0,1.,2.)
 
 diagnostics.diags_names = diag1
 diag1.diag_type = Full
