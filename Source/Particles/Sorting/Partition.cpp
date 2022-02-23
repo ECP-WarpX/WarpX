@@ -133,13 +133,13 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
     {
         // Prepare temporary particle tile to copy to
         ParticleTileType ptile_tmp;
-        ptile_tmp.define(m_num_runtime_real, m_num_runtime_int);
+        ptile_tmp.define(NumRuntimeRealComps(), NumRuntimeIntComps());
         ptile_tmp.resize(np);
 
         // Copy and re-order the data of the current particle tile
         ParticleTileType& ptile = pti.GetParticleTile();
         amrex::gatherParticles(ptile_tmp, ptile, np, pid.dataPtr());
-        ptile.swap(ptile_tmp)
+        ptile.swap(ptile_tmp);
 
         // Make sure that the temporary particle tile is not destroyed before
         // the GPU kernels finish running
