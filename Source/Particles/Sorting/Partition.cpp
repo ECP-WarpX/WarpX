@@ -48,8 +48,7 @@ using namespace amrex;
  *       in the deposition buffers or in the interior of the fine patch
  * \param gather_masks indicates, for each cell, whether that cell is
  *       in the gather buffers or in the interior of the fine patch
- * \param uxp, uyp, uzp, wp references to the particle momenta and weight
- *         (modified by this function)
+ * \param attribs Structure that contains the compile-time attributes
  */
 void
 PhysicalParticleContainer::PartitionParticlesInBuffers(
@@ -57,7 +56,7 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
     WarpXParIter& pti, int const lev,
     iMultiFab const* current_masks,
     iMultiFab const* gather_masks,
-    RealVector& uxp, RealVector& uyp, RealVector& uzp, RealVector& wp)
+    std::array<RealVector, PIdx::nattribs>& attribs)
 {
     WARPX_PROFILE("PhysicalParticleContainer::PartitionParticlesInBuffers");
 
@@ -149,14 +148,11 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
         tmp.resize(np);
 
         // Copy individual attributes
-        amrex::ParallelFor( np, copyAndReorder<Real>( wp, tmp, pid ) );
-        std::swap(wp, tmp);
-        amrex::ParallelFor( np, copyAndReorder<Real>( uxp, tmp, pid ) );
-        std::swap(uxp, tmp);
-        amrex::ParallelFor( np, copyAndReorder<Real>( uyp, tmp, pid ) );
-        std::swap(uyp, tmp);
-        amrex::ParallelFor( np, copyAndReorder<Real>( uzp, tmp, pid ) );
-        std::swap(uzp, tmp);
+        for (int ia = 0; ia < PIdx::nattribs; ++ia) {
+            auto& particle_attrib = attribs[ia];
+            amrex::ParallelFor( np, copyAndReorder<Real>( particle_attrib, tmp, pid ) );
+            std::swap(particle_attrib, tmp);
+        }
 
         // Make sure that the temporary arrays are not destroyed before
         // the GPU kernels finish running

@@ -1790,7 +1790,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 //    and (thus) the `np-nfine_current`/`np-nfine_gather` last particles
                 //    deposit/gather in the buffer
                 PartitionParticlesInBuffers( nfine_current, nfine_gather, np,
-                    pti, lev, current_masks, gather_masks, uxp, uyp, uzp, wp );
+                    pti, lev, current_masks, gather_masks, attribs );
             }
 
             const long np_current = (cjx) ? nfine_current : np;
