@@ -29,6 +29,9 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 
     amrex::Real background_density = 0;
     if (queryWithParser(pp_collision_name, "background_density", background_density)) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (background_density > 0), "The background density must be greater than 0."
+        );
         m_background_density_parser = makeParser(std::to_string(background_density), {"x", "y", "z", "t"});
     }
     else {
@@ -39,6 +42,9 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 
     amrex::Real background_temperature;
     if (queryWithParser(pp_collision_name, "background_temperature", background_temperature)) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (background_temperature >= 0), "The background temperature must be positive."
+        );
         m_background_temperature_parser = makeParser(std::to_string(background_temperature), {"x", "y", "z", "t"});
     }
     else {
