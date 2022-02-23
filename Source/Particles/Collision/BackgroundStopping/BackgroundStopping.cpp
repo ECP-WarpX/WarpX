@@ -116,7 +116,7 @@ void BackgroundStopping::doBackgroundStoppingWithinTile (WarpXParIter& pti, amre
 
     // get background properties
     amrex::Real n_e_constant = m_background_density;
-    amrex::Real T_e_constant = m_background_temperature*PhysConst::q_e; // Converted from eV to Joules
+    amrex::Real T_e_constant = m_background_temperature*PhysConst::kb; // Converted from K to Joules
     amrex::Real mass_e = m_background_mass;
 
     // setup parsers for the background density and temperature
@@ -144,7 +144,7 @@ void BackgroundStopping::doBackgroundStoppingWithinTile (WarpXParIter& pti, amre
                 amrex::ParticleReal x, y, z;
                 GetPosition.AsStored(ip, x, y, z);
                 if (m_background_density_is_parsed) n_e = n_e_func(x, y, z, t);
-                if (m_background_temperature_is_parsed) T_e = T_e_func(x, y, z, t)*PhysConst::q_e;
+                if (m_background_temperature_is_parsed) T_e = T_e_func(x, y, z, t)*PhysConst::kb;
             }
 
             // This implements the equation 14.12 from Introduction to Plasma Physics,
