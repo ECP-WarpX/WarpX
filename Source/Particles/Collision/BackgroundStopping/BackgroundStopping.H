@@ -35,7 +35,7 @@ public:
      * @param pti particle iterator
      *
      */
-    void doBackgroundStoppingWithinTile (WarpXParIter& pti, amrex::Real dt,
+    void doBackgroundStoppingWithinTile (WarpXParIter& pti, amrex::Real dt, amrex::Real t,
                                          amrex::Real species_mass, amrex::Real species_charge);
 
 private:
@@ -43,6 +43,15 @@ private:
     amrex::Real m_background_temperature;
     amrex::Real m_background_density;
     amrex::Real m_background_mass;
+
+    bool m_background_density_is_parsed;
+    bool m_background_temperature_is_parsed;
+
+    amrex::Parser m_background_density_parser;
+    amrex::Parser m_background_temperature_parser;
+
+    amrex::ParserExecutor<4> m_background_density_func;
+    amrex::ParserExecutor<4> m_background_temperature_func;
 
 };
 
