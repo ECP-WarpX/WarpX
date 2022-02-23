@@ -110,6 +110,8 @@ public:
                     std::string filetype,
                     std::string operator_type,
                     std::map< std::string, std::string > operator_parameters,
+                    std::string engine_type,
+                    std::map< std::string, std::string > engine_parameters,
                     std::vector<bool> fieldPMLdirections);
 
   ~WarpXOpenPMDPlot ();

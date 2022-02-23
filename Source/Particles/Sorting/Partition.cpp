@@ -48,15 +48,13 @@ using namespace amrex;
  *       in the deposition buffers or in the interior of the fine patch
  * \param gather_masks indicates, for each cell, whether that cell is
  *       in the gather buffers or in the interior of the fine patch
- * \param attribs Structure that contains the compile-time attributes
  */
 void
 PhysicalParticleContainer::PartitionParticlesInBuffers(
     long& nfine_current, long& nfine_gather, long const np,
     WarpXParIter& pti, int const lev,
     iMultiFab const* current_masks,
-    iMultiFab const* gather_masks,
-    std::array<RealVector, PIdx::nattribs>& attribs)
+    iMultiFab const* gather_masks )
 {
     WARPX_PROFILE("PhysicalParticleContainer::PartitionParticlesInBuffers");
 
@@ -133,28 +131,17 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
     // Reorder the actual particle array, using the `pid` indices
     if (nfine_current != np || nfine_gather != np)
     {
-        // Temporary array for particle AoS
-        ParticleVector particle_tmp;
-        particle_tmp.resize(np);
+        // Prepare temporary particle tile to copy to
+        ParticleTileType ptile_tmp;
+        ptile_tmp.define(NumRuntimeRealComps(), NumRuntimeIntComps());
+        ptile_tmp.resize(np);
 
-        // Copy particle AoS
-        auto& aos = pti.GetArrayOfStructs();
-        amrex::ParallelFor( np,
-            copyAndReorder<ParticleType>( aos(), particle_tmp, pid ) );
-        std::swap(aos(), particle_tmp);
+        // Copy and re-order the data of the current particle tile
+        ParticleTileType& ptile = pti.GetParticleTile();
+        amrex::gatherParticles(ptile_tmp, ptile, np, pid.dataPtr());
+        ptile.swap(ptile_tmp);
 
-        // Temporary array for particle individual attributes
-        RealVector tmp;
-        tmp.resize(np);
-
-        // Copy individual attributes
-        for (int ia = 0; ia < PIdx::nattribs; ++ia) {
-            auto& particle_attrib = attribs[ia];
-            amrex::ParallelFor( np, copyAndReorder<Real>( particle_attrib, tmp, pid ) );
-            std::swap(particle_attrib, tmp);
-        }
-
-        // Make sure that the temporary arrays are not destroyed before
+        // Make sure that the temporary particle tile is not destroyed before
         // the GPU kernels finish running
         Gpu::streamSynchronize();
     }
