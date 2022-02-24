@@ -1690,6 +1690,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_fp[z]"));
 
 #ifdef AMREX_USE_EB
+    constexpr int nc_ls = 1;
+    constexpr int ng_ls = 2;
+    m_distance_to_eb[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, tag("m_distance_to_eb"));
+
     // EB info are needed only at the finest level
     if (lev == maxLevel())
     {
@@ -1703,9 +1707,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             m_face_areas[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_face_areas[y]"));
             m_face_areas[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_face_areas[z]"));
         }
-        constexpr int nc_ls = 1;
-        constexpr int ng_ls = 2;
-        m_distance_to_eb[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheNodeVector()), dm, nc_ls, ng_ls, tag("m_distance_to_eb"));
         if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
             m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[x]"));
             m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[y]"));
