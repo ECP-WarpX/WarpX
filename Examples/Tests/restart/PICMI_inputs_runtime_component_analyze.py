@@ -111,15 +111,18 @@ sim.initialize_warpx()
 # python particle data access
 ##########################
 
+# set numpy random seed so that the particle properties generated
+# below will be reproducible from run to run
+np.random.seed(30025025)
 
 sim.extension.add_real_comp('electrons', 'newPid')
 
 def add_particles():
 
     nps = 10
-    x = np.random.rand(nps) * 0.03
+    x = np.linspace(0.005, 0.025, nps)
     y = np.zeros(nps)
-    z = np.random.random(nps) * 0.03
+    z = np.linspace(0.005, 0.025, nps)
     ux = np.random.normal(loc=0, scale=1e3, size=nps)
     uy = np.random.normal(loc=0, scale=1e3, size=nps)
     uz = np.random.normal(loc=0, scale=1e3, size=nps)

@@ -1,0 +1,54 @@
+# please set your project account
+#export proj=<yourProject>
+
+# required dependencies
+module load cmake/3.22.1
+module load craype-accel-amd-gfx90a
+module load rocm/4.5.2
+module load cray-mpich
+module load cce/13.0.1  # must be loaded after rocm
+
+# optional: faster builds
+module load ccache
+module load ninja
+
+# optional: just an additional text editor
+module load nano
+
+# optional: for PSATD in RZ geometry support (not yet available)
+#module load blaspp
+#module load lapackpp
+
+# optional: for QED lookup table generation support
+module load boost/1.77.0-cxx17
+
+# optional: for openPMD support
+module load adios2/2.7.1
+module load hdf5/1.10.7
+
+# optional: for Python bindings or libEnsemble
+module load cray-python/3.9.4.2
+
+# fix system defaults: do not escape $ with a \ on tab completion
+shopt -s direxpand
+
+# an alias to request an interactive batch node for one hour
+#   for paralle execution, start on the batch node: srun <command>
+alias getNode="salloc -A $proj -J warpx -t 01:00:00 -p batch -N 1 -c 8 --ntasks-per-node=8"
+# an alias to run a command on a batch node for up to 30min
+#   usage: runNode <command>
+alias runNode="srun -A $proj -J warpx -t 00:30:00 -p batch -N 1 -c 8 --ntasks-per-node=8"
+
+# GPU-aware MPI
+export MPICH_GPU_SUPPORT_ENABLED=1
+
+# optimize CUDA compilation for MI250X
+export AMREX_AMD_ARCH=gfx90a
+
+# compiler environment hints
+export CC=$(which cc)
+export CXX=$(which CC)
+export FC=$(which ftn)
+export CFLAGS="-I${ROCM_PATH}/include"
+export CXXFLAGS="-I${ROCM_PATH}/include"
+export LDFLAGS="-L${ROCM_PATH}/lib -lamdhip64"

@@ -86,32 +86,36 @@ class CallbackFunctions(object):
         self.lcallonce = lcallonce
 
     def __call__(self,*args,**kw):
-        "Call all of the functions in the list"
+        """Call all of the functions in the list"""
         tt = self.callfuncsinlist(*args,**kw)
         self.time = self.time + tt
         if self.lcallonce: self.funcs = []
 
     def clearlist(self):
+        """Unregister/clear out all registered C callbacks"""
         self.funcs = []
+        libwarpx.libwarpx_so.warpx_clear_callback_py(
+            ctypes.c_char_p(self.name.encode('utf-8'))
+        )
 
-    def __nonzero__(self):
-        "Returns True if functions are installed, otherwise False"
+    def __bool__(self):
+        """Returns True if functions are installed, otherwise False"""
         return self.hasfuncsinstalled()
 
     def __len__(self):
-        "Returns number of functions installed"
+        """Returns number of functions installed"""
         return len(self.funcs)
 
     def hasfuncsinstalled(self):
-        "Checks if there are any functions installed"
+        """Checks if there are any functions installed"""
         return len(self.funcs) > 0
 
     def _getmethodobject(self,func):
-        "For call backs that are methods, returns the method's instance"
+        """For call backs that are methods, returns the method's instance"""
         return func[0]
 
     def callbackfunclist(self):
-        "Generator returning callable functions from the list"
+        """Generator returning callable functions from the list"""
         funclistcopy = copy.copy(self.funcs)
         for f in funclistcopy:
             if isinstance(f,list):
@@ -147,15 +151,16 @@ class CallbackFunctions(object):
             yield result
 
     def installfuncinlist(self,f):
-        "Check if the specified function is installed"
+        """Check if the specified function is installed"""
         if len(self.funcs) == 0:
             # If this is the first function installed, set the callback in the C++
             # to call this class instance.
             # Note that the _c_func must be saved.
             _CALLBACK_FUNC_0 = ctypes.CFUNCTYPE(None)
             self._c_func = _CALLBACK_FUNC_0(self)
-            callback_setter = getattr(libwarpx.libwarpx_so, f'warpx_set_callback_py_{self.name}')
-            callback_setter(self._c_func)
+            libwarpx.libwarpx_so.warpx_set_callback_py(
+                ctypes.c_char_p(self.name.encode('utf-8')), self._c_func
+            )
         if isinstance(f,types.MethodType):
             # --- If the function is a method of a class instance, then save a full
             # --- reference to that instance and the method name.
@@ -177,7 +182,7 @@ class CallbackFunctions(object):
             self.funcs.append(f)
 
     def uninstallfuncinlist(self,f):
-        "Uninstall the specified function"
+        """Uninstall the specified function"""
         # --- An element by element search is needed
         # --- f can be a function or method object, or a name (string).
         # --- Note that method objects can not be removed by name.
@@ -185,27 +190,34 @@ class CallbackFunctions(object):
         for func in funclistcopy:
             if f == func:
                 self.funcs.remove(f)
-                return
+                break
             elif isinstance(func,list) and isinstance(f,types.MethodType):
                 object = self._getmethodobject(func)
-                if f.im_self is object and f.__name__ == func[1]:
+                if f.__self__ is object and f.__name__ == func[1]:
                     self.funcs.remove(func)
-                    return
+                    break
             elif isinstance(func,str):
                 if f.__name__ == func:
                     self.funcs.remove(func)
-                    return
+                    break
             elif isinstance(f,str):
                 if isinstance(func,str): funcname = func
                 elif isinstance(func,list): funcname = None
                 else:                        funcname = func.__name__
                 if f == funcname:
                     self.funcs.remove(func)
-                    return
-        raise Exception('Warning: no such function had been installed')
+                    break
+
+        # check that a function was removed
+        if len(self.funcs) == len(funclistcopy):
+            raise Exception(f'Warning: no function, {f}, had been installed')
+
+        # if there are no functions left, remove the C callback
+        if not self.hasfuncsinstalled():
+            self.clearlist()
 
     def isinstalledfuncinlist(self,f):
-        "Checks if the specified function is installed"
+        """Checks if the specified function is installed"""
         # --- An element by element search is needed
         funclistcopy = copy.copy(self.funcs)
         for func in funclistcopy:
@@ -213,7 +225,7 @@ class CallbackFunctions(object):
                 return 1
             elif isinstance(func,list) and isinstance(f,types.MethodType):
                 object = self._getmethodobject(func)
-                if f.im_self is object and f.__name__ == func[1]:
+                if f.__self__ is object and f.__name__ == func[1]:
                     return 1
             elif isinstance(func,str):
                 if f.__name__ == func:
@@ -221,7 +233,7 @@ class CallbackFunctions(object):
         return 0
 
     def callfuncsinlist(self,*args,**kw):
-        "Call the functions in the list"
+        """Call the functions in the list"""
         bb = time.time()
         for f in self.callbackfunclist():
             #barrier()
@@ -238,6 +250,8 @@ class CallbackFunctions(object):
 
 # --- Now create the actual instances.
 _afterinit = CallbackFunctions('afterinit')
+_beforecollisions = CallbackFunctions('beforecollisions')
+_aftercollisions = CallbackFunctions('aftercollisions')
 _beforeEsolve = CallbackFunctions('beforeEsolve')
 _poissonsolver = CallbackFunctions('poissonsolver')
 _afterEsolve = CallbackFunctions('afterEsolve')
@@ -302,6 +316,34 @@ def isinstalledafterinit(f):
     return _afterinit.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
+def callfrombeforecollisions(f):
+    installbeforecollisions(f)
+    return f
+def installbeforecollisions(f):
+    "Adds a function to the list of functions called before collisions"
+    _beforecollisions.installfuncinlist(f)
+def uninstallbeforecollisions(f):
+    "Removes the function from the list of functions called before collisions"
+    _beforecollisions.uninstallfuncinlist(f)
+def isinstalledbeforecollisions(f):
+    "Checks if the function is called before collisions"
+    return _beforecollisions.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def callfromaftercollisions(f):
+    installaftercollisions(f)
+    return f
+def installaftercollisions(f):
+    "Adds a function to the list of functions called after collisions"
+    _aftercollisions.installfuncinlist(f)
+def uninstallaftercollisions(f):
+    "Removes the function from the list of functions called after collisions"
+    _aftercollisions.uninstallfuncinlist(f)
+def isinstalledaftercollisions(f):
+    "Checks if the function is called after collisions"
+    return _aftercollisions.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
 def callfrombeforeEsolve(f):
     installbeforeEsolve(f)
     return f
@@ -320,16 +362,15 @@ def callfrompoissonsolver(f):
     installpoissonsolver(f)
     return f
 def installpoissonsolver(f):
-    """Adds a function to solve Poisson's equation. Note that the C++ object
-    warpx_py_poissonsolver is declared as a nullptr but once the call to set it
-    to _c_poissonsolver below is executed it is no longer a nullptr, and therefore
-    if (warpx_py_poissonsolver) evaluates to True. For this reason a poissonsolver
-    cannot be uninstalled with the uninstallfuncinlist functionality at present."""
+    """Installs an external function to solve Poisson's equation"""
     if _poissonsolver.hasfuncsinstalled():
-        raise RuntimeError('Only one field solver can be installed.')
+        raise RuntimeError("Only one external Poisson solver can be installed.")
     _poissonsolver.installfuncinlist(f)
+def uninstallpoissonsolver(f):
+    """Removes the external function to solve Poisson's equation"""
+    _poissonsolver.uninstallfuncinlist(f)
 def isinstalledpoissonsolver(f):
-    """Checks if the function is called for a field solve"""
+    """Checks if the function is called to solve Poisson's equation"""
     return _poissonsolver.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------

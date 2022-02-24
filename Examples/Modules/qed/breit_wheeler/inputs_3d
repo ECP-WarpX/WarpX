@@ -99,91 +99,55 @@ p4.qed_breit_wheeler_pos_product_species = pos4
 
 ### PRODUCT SPECIES ###
 ele1.species_type = "electron"
-ele1.injection_style = nuniformpercell
-ele1.num_particles_per_cell_each_dim = 0 0 0
-ele1.profile = constant
-ele1.density = 0.0
-ele1.momentum_distribution_type = "at_rest"
+ele1.injection_style = "none"
 ele1.do_not_push = 1
 ele1.do_qed_quantum_sync = 1
 ele1.qed_quantum_sync_phot_product_species = dummy_phot
 
 ele2.species_type = "electron"
-ele2.injection_style = nuniformpercell
-ele2.num_particles_per_cell_each_dim = 0 0 0
-ele2.profile = constant
-ele2.density = 0.0
-ele2.momentum_distribution_type = "at_rest"
+ele2.injection_style = "none"
 ele2.do_not_push = 1
 ele2.do_qed_quantum_sync = 1
 ele2.qed_quantum_sync_phot_product_species = dummy_phot
 
 ele3.species_type = "electron"
-ele3.injection_style = nuniformpercell
-ele3.num_particles_per_cell_each_dim = 0 0 0
-ele3.profile = constant
-ele3.density = 0.0
-ele3.momentum_distribution_type = "at_rest"
+ele3.injection_style = "none"
 ele3.do_not_push = 1
 ele3.do_qed_quantum_sync = 1
 ele3.qed_quantum_sync_phot_product_species = dummy_phot
 
 ele4.species_type = "electron"
-ele4.injection_style = nuniformpercell
-ele4.num_particles_per_cell_each_dim = 0 0 0
-ele4.profile = constant
-ele4.density = 0.0
-ele4.momentum_distribution_type = "at_rest"
+ele4.injection_style = "none"
 ele4.do_not_push = 1
 ele4.do_qed_quantum_sync = 1
 ele4.qed_quantum_sync_phot_product_species = dummy_phot
 
 pos1.species_type = "positron"
-pos1.injection_style = nuniformpercell
-pos1.num_particles_per_cell_each_dim = 0 0 0
-pos1.profile = constant
-pos1.density = 0.0
-pos1.momentum_distribution_type = "at_rest"
+pos1.injection_style = "none"
 pos1.do_not_push = 1
 pos1.do_qed_quantum_sync = 1
 pos1.qed_quantum_sync_phot_product_species = dummy_phot
 
 pos2.species_type = "positron"
-pos2.injection_style = nuniformpercell
-pos2.num_particles_per_cell_each_dim = 0 0 0
-pos2.profile = constant
-pos2.density = 0.0
-pos2.momentum_distribution_type = "at_rest"
+pos2.injection_style = "none"
 pos2.do_not_push = 1
 pos2.do_qed_quantum_sync = 1
 pos2.qed_quantum_sync_phot_product_species = dummy_phot
 
 pos3.species_type = "positron"
-pos3.injection_style = nuniformpercell
-pos3.num_particles_per_cell_each_dim = 0 0 0
-pos3.profile = constant
-pos3.density = 0.0
-pos3.momentum_distribution_type = "at_rest"
+pos3.injection_style = "none"
 pos3.do_not_push = 1
 pos3.do_qed_quantum_sync = 1
 pos3.qed_quantum_sync_phot_product_species = dummy_phot
 
 pos4.species_type = "positron"
-pos4.injection_style = nuniformpercell
-pos4.num_particles_per_cell_each_dim = 0 0 0
-pos4.profile = constant
-pos4.density = 0.0
-pos4.momentum_distribution_type = "at_rest"
+pos4.injection_style = "none"
 pos4.do_not_push = 1
 pos4.do_qed_quantum_sync = 1
 pos4.qed_quantum_sync_phot_product_species = dummy_phot
 
 dummy_phot.species_type = "photon"
-dummy_phot.injection_style = nuniformpercell
-dummy_phot.num_particles_per_cell_each_dim = 0 0 0
-dummy_phot.profile = constant
-dummy_phot.density = 0.0
-dummy_phot.momentum_distribution_type = "at_rest"
+dummy_phot.injection_style = "none"
 
 #################################
 

@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.18.0)
-project(WarpX VERSION 21.12)
+project(WarpX VERSION 22.02)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -389,6 +389,44 @@ endif()
 #        ${WarpX_BINARY_DIR}/WarpXConfigVersion.cmake
 #    DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
 #)
+
+
+# pip helpers for the pywarpx package #########################################
+#
+if(WarpX_LIB)
+    set(PYINSTALLOPTIONS "" CACHE STRING
+        "Additional parameters to pass to `pip install`")
+
+    # build the wheel by re-using the shared library we build
+    add_custom_target(pip_wheel
+        ${CMAKE_COMMAND} -E rm -f ${WarpX_BINARY_DIR}/pywarpx*whl
+        COMMAND
+            ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+                python3 -m pip wheel -v --no-build-isolation --use-feature=in-tree-build ${WarpX_SOURCE_DIR}
+        WORKING_DIRECTORY
+            ${WarpX_BINARY_DIR}
+        DEPENDS
+            shared
+    )
+
+    # this will also upgrade/downgrade dependencies, e.g., when the version of picmistandard changes
+    add_custom_target(pip_install_requirements
+        python3 -m pip install -r ${WarpX_SOURCE_DIR}/requirements.txt
+        WORKING_DIRECTORY
+            ${WarpX_BINARY_DIR}
+    )
+
+    # We force-install because in development, it is likely that the version of
+    # the package does not change, but the code did change. We need --no-deps,
+    # because otherwise pip would also force reinstall all dependencies.
+    add_custom_target(pip_install
+        python3 -m pip install --force-reinstall --no-deps ${PYINSTALLOPTIONS} ${WarpX_BINARY_DIR}/pywarpx*whl
+        WORKING_DIRECTORY
+            ${WarpX_BINARY_DIR}
+        DEPENDS
+            shared pip_wheel pip_install_requirements
+    )
+endif()
 
 
 # Tests #######################################################################

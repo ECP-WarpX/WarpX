@@ -9,24 +9,31 @@
 #define WARPX_PY_H_
 
 #include "WarpXWrappers.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
+#include <map>
+#include <string>
 
-extern "C" {
+/**
+ * Declare global map to hold python callback functions.
+ *
+ * The keys of the map describe at what point in the simulation the python
+ * functions will be called. Currently supported keys (callback points) are
+ * afterinit, beforecollisions, aftercollisions, beforeEsolve, poissonsolver,
+ * afterEsolve, beforedeposition, afterdeposition, particlescraper,
+ * particleloader, beforestep, afterstep, afterrestart, particleinjection and
+ * appliedfields.
+*/
+extern std::map< std::string, WARPX_CALLBACK_PY_FUNC_0 > warpx_callback_py_map;
 
-    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterinit;
-    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_beforeEsolve;
-    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_poissonsolver;
-    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterEsolve;
-    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_beforedeposition;
-    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterdeposition;
-    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_particlescraper;
-    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_particleloader;
-    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_beforestep;
-    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterstep;
-    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_afterrestart;
-    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_particleinjection;
-    extern WARPX_CALLBACK_PY_FUNC_0 warpx_py_appliedfields;
+/**
+ * \brief Function to check if the given name is a key in warpx_callback_py_map
+ */
+bool IsPythonCallBackInstalled ( std::string name );
 
-}
+/**
+ * \brief Function to look for and execute Python callbacks
+ */
+void ExecutePythonCallback ( std::string name );
 
 #endif

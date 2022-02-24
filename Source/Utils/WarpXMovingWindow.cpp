@@ -9,6 +9,9 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#   include "BoundaryConditions/PML_RZ.H"
+#endif
 #include "Particles/MultiParticleContainer.H"
 #include "Parallelization/WarpXCommUtil.H"
 #include "Utils/WarpXConst.H"
@@ -179,13 +182,20 @@ WarpX::MoveWindow (const int step, bool move_j)
             if (move_j) {
                 shiftMF(*current_fp[lev][dim], geom[lev], num_shift, dir);
             }
-            if (do_pml && pml[lev]->ok()) {
+            if (pml[lev] && pml[lev]->ok()) {
                 const std::array<amrex::MultiFab*, 3>& pml_B = pml[lev]->GetB_fp();
                 const std::array<amrex::MultiFab*, 3>& pml_E = pml[lev]->GetE_fp();
                 shiftMF(*pml_B[dim], geom[lev], num_shift, dir);
                 shiftMF(*pml_E[dim], geom[lev], num_shift, dir);
             }
-
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+            if (pml_rz[lev] && dim < 2) {
+                const std::array<amrex::MultiFab*, 2>& pml_rz_B = pml_rz[lev]->GetB_fp();
+                const std::array<amrex::MultiFab*, 2>& pml_rz_E = pml_rz[lev]->GetE_fp();
+                shiftMF(*pml_rz_B[dim], geom[lev], num_shift, dir);
+                shiftMF(*pml_rz_E[dim], geom[lev], num_shift, dir);
+            }
+#endif
             if (lev > 0) {
                 // coarse grid
                 shiftMF(*Bfield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, B_external_grid[dim], use_Bparser, Bfield_parser);
@@ -286,6 +296,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom, int num_shift,
                 amrex::Real external_field, bool useparser,
                 amrex::ParserExecutor<3> const& field_parser)
 {
+    using namespace amrex::literals;
     WARPX_PROFILE("WarpX::shiftMF()");
     const amrex::BoxArray& ba = mf.boxArray();
     const amrex::DistributionMapping& dm = mf.DistributionMap();
@@ -372,22 +383,22 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom, int num_shift,
                 {
                       // Compute x,y,z co-ordinates based on index type of mf
 #if defined(WARPX_DIM_1D_Z)
-                      amrex::Real x = 0.0;
-                      amrex::Real y = 0.0;
-                      amrex::Real fac_z = (1.0 - mf_type[0]) * dx[0]*0.5;
+                      amrex::Real x = 0.0_rt;
+                      amrex::Real y = 0.0_rt;
+                      amrex::Real fac_z = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
                       amrex::Real z = i*dx[0] + real_box.lo(0) + fac_z;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                      amrex::Real fac_x = (1.0 - mf_type[0]) * dx[0]*0.5;
+                      amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
                       amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
                       amrex::Real y = 0.0;
-                      amrex::Real fac_z = (1.0 - mf_type[1]) * dx[1]*0.5;
+                      amrex::Real fac_z = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
                       amrex::Real z = j*dx[1] + real_box.lo(1) + fac_z;
 #else
-                      amrex::Real fac_x = (1.0 - mf_type[0]) * dx[0]*0.5;
+                      amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
                       amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
-                      amrex::Real fac_y = (1.0 - mf_type[1]) * dx[1]*0.5;
+                      amrex::Real fac_y = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
                       amrex::Real y = j*dx[1] + real_box.lo(1) + fac_y;
-                      amrex::Real fac_z = (1.0 - mf_type[2]) * dx[2]*0.5;
+                      amrex::Real fac_z = (1.0_rt - mf_type[2]) * dx[2]*0.5_rt;
                       amrex::Real z = k*dx[2] + real_box.lo(2) + fac_z;
 #endif
                       srcfab(i,j,k,n) = field_parser(x,y,z);
@@ -407,6 +418,33 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom, int num_shift,
             dstfab(i,j,k,n) = srcfab(i+shift.x,j+shift.y,k+shift.z,n);
         })
     }
+
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    if (WarpX::GetInstance().getPMLRZ()) {
+        // This does the exchange of data in the corner guard cells, the cells that are in the
+        // guard region both radially and longitudinally. These are the PML cells in the overlapping
+        // longitudinal region. FillBoundary normally does not update these cells.
+        // This update is needed so that the cells at the end of the FABs are updated appropriately
+        // with the data shifted from the nieghboring FAB. Without this update, the RZ PML becomes
+        // unstable with the moving grid.
+        // This code creates a temporary MultiFab using a BoxList where the radial size of all of
+        // its boxes is increased so that the radial guard cells are included in the boxes valid domain.
+        // The temporary MultiFab is setup to refer to the data of the original Multifab (this can
+        // be done since the shape of the data is all the same, just the indexing is different).
+        amrex::BoxList bl;
+        for (int i = 0, N=ba.size(); i < N; ++i) {
+            bl.push_back(amrex::grow(ba[i], 0, mf.nGrowVect()[0]));
+        }
+        amrex::BoxArray rba(std::move(bl));
+        amrex::MultiFab rmf(rba, dm, mf.nComp(), IntVect(0,mf.nGrowVect()[1]), MFInfo().SetAlloc(false));
+
+        for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi) {
+            rmf.setFab(mfi, FArrayBox(mf[mfi], amrex::make_alias, 0, mf.nComp()));
+        }
+        rmf.FillBoundary(false);
+    }
+#endif
+
 }
 
 void

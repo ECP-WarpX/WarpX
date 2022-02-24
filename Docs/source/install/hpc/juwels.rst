@@ -31,38 +31,17 @@ Use the following commands to download the WarpX source code and switch to the c
 
 We use the following modules and environments on the system.
 
-.. code-block:: bash
-
-   # please set your project account
-   export proj=<yourProject>
-
-   # required dependencies
-   module load ccache
-   module load CMake
-   module load GCC
-   module load CUDA/11.3
-   module load OpenMPI
-   module load FFTW
-   module load HDF5
-   module load Python
-
-   # JUWELS' job scheduler may not map ranks to GPUs,
-   # so we give a hint to AMReX about the node layout.
-   # This is usually done in Make.<supercomputing center> files in AMReX
-   # but there is no such file for JSC yet.
-   export GPUS_PER_SOCKET=2
-   export GPUS_PER_NODE=4
-
-   # optimize CUDA compilation for V100 (7.0) or for A100 (8.0)
-   export AMREX_CUDA_ARCH=8.0
+.. literalinclude:: ../../../../Tools/machines/juwels-jsc/juwels_warpx.profile.example
+   :language: bash
+   :caption: You can copy this file from ``Tools/machines/juwels-jsc/juwels_warpx.profile.example``.
 
 Note that for now WarpX must rely on OpenMPI instead of the recommended MPI implementation on this platform MVAPICH2.
 
-We recommend to store the above lines in a file, such as ``$HOME/warpx.profile``, and load it into your shell after a login:
+We recommend to store the above lines in a file, such as ``$HOME/juwels_warpx.profile``, and load it into your shell after a login:
 
 .. code-block:: bash
 
-   source $HOME/warpx.profile
+   source $HOME/juwels_warpx.profile
 
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
 
@@ -98,8 +77,9 @@ The `Juwels GPUs <https://apps.fz-juelich.de/jsc/hps/juwels/configuration.html>`
 
 An example submission script reads
 
-.. literalinclude:: ../../../../Tools/BatchScripts/batch_juwels.sh
+.. literalinclude:: ../../../../Tools/machines/juwels-jsc/juwels.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/juwels-jsc/juwels.sbatch``.
 
 Queue: batch (2 x Intel Xeon Platinum 8168 CPUs, 24 Cores + 24 Hyperthreads/CPU)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

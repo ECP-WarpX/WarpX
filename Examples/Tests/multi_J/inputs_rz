@@ -37,7 +37,6 @@ warpx.do_dive_cleaning = 1
 warpx.do_divb_cleaning = 1
 warpx.do_multi_J = 1
 warpx.do_multi_J_n_depositions = 2
-psatd.J_linear_in_time = 1
 psatd.do_time_averaging = 1
 
 # PSATD

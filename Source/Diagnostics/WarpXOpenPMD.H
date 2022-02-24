@@ -9,7 +9,6 @@
 #define WARPX_OPEN_PMD_H_
 
 #include "Particles/WarpXParticleContainer.H"
-#include "Particles/ParticleBuffer.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
@@ -60,7 +59,7 @@ private:
 class WarpXParticleCounter
 {
 public:
-  using ParticleContainer = typename ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>;
+  using ParticleContainer = typename WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator>;
   using ParticleIter = typename amrex::ParIter<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
   WarpXParticleCounter (ParticleContainer* pc);
@@ -96,7 +95,7 @@ private:
 class WarpXOpenPMDPlot
 {
 public:
-  using ParticleContainer = typename amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
+  using ParticleContainer = typename WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator>;
   using ParticleIter = typename amrex::ParConstIter<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
   /** Initialize openPMD I/O routines
@@ -111,6 +110,8 @@ public:
                     std::string filetype,
                     std::string operator_type,
                     std::map< std::string, std::string > operator_parameters,
+                    std::string engine_type,
+                    std::map< std::string, std::string > engine_parameters,
                     std::vector<bool> fieldPMLdirections);
 
   ~WarpXOpenPMDPlot ();
@@ -129,8 +130,10 @@ public:
    */
   void CloseStep (bool isBTD = false, bool isLastBTDFlush = false);
 
-  void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
-                              const bool isBTD = false);
+  void WriteOpenPMDParticles (
+              const amrex::Vector<ParticleDiag>& particle_diags,
+              const bool isBTD = false,
+              const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>());
 
   void WriteOpenPMDFieldsAll (
               const std::vector<std::string>& varnames,
@@ -140,6 +143,8 @@ public:
               bool isBTD = false,
               const amrex::Geometry& full_BTD_snapshot=amrex::Geometry() ) const;
 
+  /** Return OpenPMD File type ("bp" or "h5" or "json")*/
+  std::string OpenPMDFileType () { return m_OpenPMDFileType; }
 
 private:
   void Init (openPMD::Access access, bool isBTD);
@@ -199,7 +204,7 @@ private:
         openPMD::ParticleSpecies& currSpecies,
         const unsigned long long& np,
         amrex::ParticleReal const charge,
-        amrex::ParticleReal const mass) const ;
+        amrex::ParticleReal const mass, bool const isBTD = false);
 
   /** This function sets up the entries for particle properties
    *
@@ -215,7 +220,7 @@ private:
                const amrex::Vector<std::string>& real_comp_names,
                const amrex::Vector<int>& write_int_comp,
                const amrex::Vector<std::string>& int_comp_names,
-               unsigned long long np) const;
+               const unsigned long long np, bool const isBTD = false) const;
 
   /** This function saves the values of the entries for particle properties
    *
@@ -256,8 +261,8 @@ private:
             const amrex::Vector<std::string>& real_comp_names,
             const amrex::Vector<std::string>&  int_comp_names,
             amrex::ParticleReal const charge,
-            amrex::ParticleReal const mass,
-            const bool isBTD) const;
+            amrex::ParticleReal const mass, const bool isBTD = false,
+            int ParticleFlushOffset = 0);
 
   /** Get the openPMD-api filename for openPMD::Series
    *
@@ -270,6 +275,9 @@ private:
   std::string GetFileName (std::string& filepath);
 
   std::unique_ptr<openPMD::Series> m_Series;
+
+  /** To set particle meta-data for the openpmd dump. */
+  bool m_doParticleSetUp = true;
 
   /** This is the output directory
    *

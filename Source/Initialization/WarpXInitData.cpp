@@ -11,6 +11,9 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#   include "BoundaryConditions/PML_RZ.H"
+#endif
 #include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
@@ -19,6 +22,7 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Parallelization/WarpXCommUtil.H"
+#include "Utils/MPIInitHelpers.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -63,6 +67,8 @@
 #include <utility>
 #include <vector>
 #include <sstream>
+
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 
 using namespace amrex;
 
@@ -109,6 +115,8 @@ void
 WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
+    utils::warpx_check_mpi_thread_level();
+
     Print() << "WarpX (" << WarpX::Version() << ")\n";
 #ifdef WARPX_QED
     Print() << "PICSAR (" << WarpX::PicsarVersion() << ")\n";
@@ -236,17 +244,19 @@ WarpX::InitPML ()
     {
         amrex::IntVect do_pml_Lo_corrected = do_pml_Lo;
 
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
         do_pml_Lo_corrected[0] = 0; // no PML at r=0, in cylindrical geometry
-#endif
+        pml_rz[0] = std::make_unique<PML_RZ>(0, boxArray(0), DistributionMap(0), &Geom(0), pml_ncell, do_pml_in_domain);
+#else
         pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
                              do_moving_window, pml_has_particles, do_pml_in_domain,
-                             J_linear_in_time,
+                             do_multi_J,
                              do_pml_dive_cleaning, do_pml_divb_cleaning,
                              guard_cells.ng_FieldSolver.max(),
                              do_pml_Lo_corrected, do_pml_Hi);
+#endif
 
         for (int lev = 1; lev <= finest_level; ++lev)
         {
@@ -274,7 +284,7 @@ WarpX::InitPML ()
                                    pml_ncell, pml_delta, refRatio(lev-1),
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
-                                   J_linear_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   do_multi_J, do_pml_dive_cleaning, do_pml_divb_cleaning,
                                    guard_cells.ng_FieldSolver.max(),
                                    do_pml_Lo_MR, do_pml_Hi_MR);
         }
@@ -288,7 +298,8 @@ WarpX::ComputePMLFactors ()
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            pml[lev]->ComputePMLFactors(dt[lev]);
+            if (pml[lev])
+                pml[lev]->ComputePMLFactors(dt[lev]);
         }
     }
 }
@@ -523,7 +534,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Bxfield_parser->compile<3>(),
                                                  Byfield_parser->compile<3>(),
                                                  Bzfield_parser->compile<3>(),
+                                                 m_edge_lengths[lev],
                                                  m_face_areas[lev],
+                                                 'B',
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Bfield_aux[lev][0].get(),
@@ -532,7 +545,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Bxfield_parser->compile<3>(),
                                                     Byfield_parser->compile<3>(),
                                                     Bzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'B',
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Bfield_cp[lev][0].get(),
@@ -541,7 +556,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Bxfield_parser->compile<3>(),
                                                     Byfield_parser->compile<3>(),
                                                     Bzfield_parser->compile<3>(),
+                                                    m_edge_lengths[lev],
                                                     m_face_areas[lev],
+                                                    'B',
                                                     lev);
        }
     }
@@ -573,7 +590,19 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Eyfield_parser->compile<3>(),
                                                  Ezfield_parser->compile<3>(),
                                                  m_edge_lengths[lev],
+                                                 m_face_areas[lev],
+                                                 'E',
                                                  lev);
+
+#ifdef AMREX_USE_EB
+        // We initialize ECTRhofield consistently with the Efield
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+            m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_fp[lev], m_edge_lengths[lev],
+                                                m_face_areas[lev], ECTRhofield[lev], lev);
+
+        }
+#endif
+
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
                                                     Efield_aux[lev][1].get(),
@@ -582,6 +611,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Eyfield_parser->compile<3>(),
                                                     Ezfield_parser->compile<3>(),
                                                     m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'E',
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
@@ -591,7 +622,17 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Eyfield_parser->compile<3>(),
                                                     Ezfield_parser->compile<3>(),
                                                     m_edge_lengths[lev],
+                                                    m_face_areas[lev],
+                                                    'E',
                                                     lev);
+#ifdef AMREX_USE_EB
+           if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+               // We initialize ECTRhofield consistently with the Efield
+               m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
+                                                   m_face_areas[lev], ECTRhofield[lev], lev);
+
+           }
+#endif
        }
     }
 
@@ -633,7 +674,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        MultiFab *mfx, MultiFab *mfy, MultiFab *mfz,
        ParserExecutor<3> const& xfield_parser, ParserExecutor<3> const& yfield_parser,
        ParserExecutor<3> const& zfield_parser,
-       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& geom_data,
+       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+       const char field,
        const int lev)
 {
 
@@ -653,17 +696,32 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        auto const& mfzfab = mfz->array(mfi);
 
 #ifdef AMREX_USE_EB
-       amrex::Array4<amrex::Real> const& geom_data_x = geom_data[0]->array(mfi);
-       amrex::Array4<amrex::Real> const& geom_data_y = geom_data[1]->array(mfi);
-       amrex::Array4<amrex::Real> const& geom_data_z = geom_data[2]->array(mfi);
-#else
-       amrex::ignore_unused(geom_data);
+       amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
+       amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
+       amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
+       amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
+       amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
+       amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
+
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        amrex::ignore_unused(ly, Sx, Sz);
+#elif defined(WARPX_DIM_1D_Z)
+        amrex::ignore_unused(lx, ly, lz, Sx, Sy, Sz);
 #endif
 
-       amrex::ParallelFor (tbx, tby, tbz,
+#else
+       amrex::ignore_unused(edge_lengths, face_areas, field);
+#endif
+
+        amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
-                if(geom_data_x(i, j, k)<=0) return;
+#ifdef WARPX_DIM_3D
+                if((field=='E' and lx(i, j, k)<=0) or (field=='B' and Sx(i, j, k)<=0))  return;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                //In XZ and RZ Ex is associated with a x-edge, while Bx is associated with a z-edge
+                if((field=='E' and lx(i, j, k)<=0) or (field=='B' and lz(i, j, k)<=0)) return;
+#endif
 #endif
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
@@ -691,7 +749,13 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
-                if(geom_data_y(i, j, k)<=0) return;
+#ifdef WARPX_DIM_3D
+                if((field=='E' and ly(i, j, k)<=0) or (field=='B' and Sy(i, j, k)<=0))  return;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                //In XZ and RZ Ey is associated with a mesh node, so we need to check if  the mesh node is covered
+                if((field=='E' and (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j, k)<=0 || lz(i, j, k-1)<=0)) or
+                   (field=='B' and Sy(i,j,k)<=0)) return;
+#endif
 #endif
 #if defined(WARPX_DIM_1D_Z)
                 amrex::Real x = 0._rt;
@@ -717,7 +781,12 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
-                if(geom_data_z(i, j, k)<=0) return;
+#ifdef WARPX_DIM_3D
+                if((field=='E' and lz(i, j, k)<=0) or (field=='B' and Sz(i, j, k)<=0))  return;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                //In XZ and RZ Ez is associated with a z-edge, while Bz is associated with a x-edge
+                if((field=='E' and lz(i, j, k)<=0) or (field=='B' and lx(i, j, k)<=0)) return;
+#endif
 #endif
 #if defined(WARPX_DIM_1D_Z)
                 amrex::Real x = 0._rt;
@@ -882,8 +951,8 @@ void WarpX::InitializeEBGridData (int lev)
             auto const eb_fact = fieldEBFactory(lev);
 
             ComputeEdgeLengths(m_edge_lengths[lev], eb_fact);
-            ComputeFaceAreas(m_face_areas[lev], eb_fact);
             ScaleEdges(m_edge_lengths[lev], CellSize(lev));
+            ComputeFaceAreas(m_face_areas[lev], eb_fact);
             ScaleAreas(m_face_areas[lev], CellSize(lev));
 
             if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {

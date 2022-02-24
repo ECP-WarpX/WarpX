@@ -13,7 +13,7 @@
 [![Language: Python](https://img.shields.io/badge/language-Python-orange.svg)](https://python.org/)  
 [![License WarpX](https://img.shields.io/badge/license-BSD--3--Clause--LBNL-blue.svg)](https://spdx.org/licenses/BSD-3-Clause-LBNL.html)
 [![DOI (source)](https://img.shields.io/badge/DOI%20(source)-10.5281/zenodo.4571577-blue.svg)](https://doi.org/10.5281/zenodo.4571577)
-[![DOI (paper)](https://img.shields.io/badge/DOI%20(paper)-10.1063/5.0028512-blue.svg)](https://doi.org/10.1063/5.0028512)
+[![DOI (paper)](https://img.shields.io/badge/DOI%20(paper)-10.1016/j.parco.2021.102833-blue.svg)](https://doi.org/10.1016/j.parco.2021.102833)
 
 ## Overview
 
@@ -45,7 +45,7 @@ Our workflow is described in [CONTRIBUTING.rst](CONTRIBUTING.rst).
 
 ## License
 
-WarpX Copyright (c) 2018-2021, The Regents of the University of California,
+WarpX Copyright (c) 2018-2022, The Regents of the University of California,
 through Lawrence Berkeley National Laboratory (subject to receipt of any
 required approvals from the U.S. Dept. of Energy).  All rights reserved.
 

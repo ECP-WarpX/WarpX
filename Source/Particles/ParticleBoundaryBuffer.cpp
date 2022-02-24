@@ -5,7 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
-
+#include "WarpX.H"
 #include "EmbeddedBoundary/DistanceToEB.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/MultiParticleContainer.H"
@@ -151,7 +151,6 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
     const amrex::Geometry& geom = warpx_instance.Geom(0);
     auto plo = geom.ProbLoArray();
     auto phi = geom.ProbHiArray();
-    auto dxi = geom.InvCellSizeArray();
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
         if (geom.isPeriodic(idim)) continue;
@@ -164,7 +163,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 const auto& pc = mypc.GetParticleContainer(i);
                 if (!buffer[i].isDefined())
                 {
-                    buffer[i] = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(&pc);
+                    buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
                     buffer[i].AddIntComp(false);  // for timestamp
                 }
                 auto& species_buffer = buffer[i];
@@ -205,13 +204,14 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         const auto& pc = mypc.GetParticleContainer(i);
         if (!buffer[i].isDefined())
         {
-            buffer[i] = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(&pc);
+            buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
             buffer[i].AddIntComp(false);  // for timestamp
         }
         auto& species_buffer = buffer[i];
         for (int lev = 0; lev < pc.numLevels(); ++lev)
         {
             const auto& plevel = pc.GetParticles(lev);
+            auto dxi = warpx_instance.Geom(lev).InvCellSizeArray();
             for(PIter pti(pc, lev); pti.isValid(); ++pti)
             {
                 auto phiarr = (*distance_to_eb[lev])[pti].array();  // signed distance function
@@ -249,7 +249,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         }
     }
 #else
-    amrex::ignore_unused(distance_to_eb, dxi);
+    amrex::ignore_unused(distance_to_eb);
 #endif
 }
 
@@ -263,7 +263,7 @@ int ParticleBoundaryBuffer::getNumParticlesInContainer(
     else return 0;
 }
 
-ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>&
+WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator> &
 ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];
