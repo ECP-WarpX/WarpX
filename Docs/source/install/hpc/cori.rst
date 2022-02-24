@@ -32,29 +32,9 @@ KNL
 
 We use the following modules and environments on the system (``$HOME/knl_warpx.profile``).
 
-.. code-block:: bash
-
-   module swap craype-haswell craype-mic-knl
-   module swap PrgEnv-intel PrgEnv-gnu
-   module load cmake/3.21.3
-   module switch cray-libsci cray-libsci/20.09.1
-   module load cray-hdf5-parallel/1.10.5.2
-   module load cray-fftw/3.3.8.4
-   module load cray-python/3.7.3.2
-
-   export PKG_CONFIG_PATH=$FFTW_DIR/pkgconfig:$PKG_CONFIG_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/c-blosc-1.12.1-knl-install:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-knl-install:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/blaspp-master-knl-install:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/lapackpp-master-knl-install:$CMAKE_PREFIX_PATH
-
-   if [ -d "$HOME/sw/venvs/knl_warpx" ]
-   then
-     source $HOME/sw/venvs/knl_warpx/bin/activate
-   fi
-
-   export CXXFLAGS="-march=knl"
-   export CFLAGS="-march=knl"
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/knl_warpx.profile.example
+   :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/knl_warpx.profile.example``.
 
 And install ADIOS2, BLAS++ and LAPACK++:
 
@@ -105,25 +85,9 @@ Haswell
 
 We use the following modules and environments on the system (``$HOME/haswell_warpx.profile``).
 
-.. code-block:: bash
-
-   module swap PrgEnv-intel PrgEnv-gnu
-   module load cmake/3.21.3
-   module switch cray-libsci cray-libsci/20.09.1
-   module load cray-hdf5-parallel/1.10.5.2
-   module load cray-fftw/3.3.8.4
-   module load cray-python/3.7.3.2
-
-   export PKG_CONFIG_PATH=$FFTW_DIR/pkgconfig:$PKG_CONFIG_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/c-blosc-1.12.1-haswell-install:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-haswell-install:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/blaspp-master-haswell-install:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/lapackpp-master-haswell-install:$CMAKE_PREFIX_PATH
-
-   if [ -d "$HOME/sw/venvs/haswell_warpx" ]
-   then
-     source $HOME/sw/venvs/haswell_warpx/bin/activate
-   fi
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/haswell_warpx.profile.example
+   :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/haswell_warpx.profile.example``.
 
 And install ADIOS2, BLAS++ and LAPACK++:
 
@@ -174,41 +138,11 @@ GPU (V100)
 
 Cori provides a partition with `18 nodes that include V100 (16 GB) GPUs <https://docs-dev.nersc.gov/cgpu/>`__.
 We use the following modules and environments on the system (``$HOME/gpu_warpx.profile``).
+You can copy this file from ``Tools/machines/cori-nersc/gpu_warpx.profile.example``:
 
-.. code-block:: bash
-
-   export proj="m1759"
-
-   module purge
-   module load modules
-   module load cgpu
-   module load esslurm
-   module load gcc/8.3.0 cuda/11.4.0 cmake/3.21.3
-   module load openmpi
-
-   export CMAKE_PREFIX_PATH=$HOME/sw/c-blosc-1.12.1-gpu-install:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-gpu-install:$CMAKE_PREFIX_PATH
-
-   if [ -d "$HOME/sw/venvs/gpu_warpx" ]
-   then
-     source $HOME/sw/venvs/gpu_warpx/bin/activate
-   fi
-
-   # compiler environment hints
-   export CC=$(which gcc)
-   export CXX=$(which g++)
-   export FC=$(which gfortran)
-   export CUDACXX=$(which nvcc)
-   export CUDAHOSTCXX=$(which g++)
-
-   # optimize CUDA compilation for V100
-   export AMREX_CUDA_ARCH=7.0
-
-   # allocate a GPU, e.g. to compile on
-   #   10 logical cores (5 physical), 1 GPU
-   function getNode() {
-       salloc -C gpu -N 1 -t 30 -c 10 --gres=gpu:1 -A $proj
-   }
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/gpu_warpx.profile.example
+   :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/gpu_warpx.profile.example``.
 
 And install ADIOS2:
 
@@ -306,14 +240,15 @@ Do not forget to first ``source $HOME/knl_warpx.profile`` if you have not done s
 
 For PICMI Python runs, the ``<path/to/executable>`` has to read ``python3`` and the ``<input file>`` is the path to your PICMI input script.
 
-.. literalinclude:: ../../../../Tools/BatchScripts/batch_cori.sh
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/cori_knl.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/cori_knl.sbatch``.
 
-To run a simulation, copy the lines above to a file ``batch_cori.sh`` and run
+To run a simulation, copy the lines above to a file ``cori_knl.sbatch`` and run
 
 .. code-block:: bash
 
-   sbatch batch_cori.sh
+   sbatch cori_knl.sbatch
 
 to submit the job.
 
@@ -338,15 +273,16 @@ The batch script below can be used to run a WarpX simulation on 1 `Haswell node 
 
 Do not forget to first ``source $HOME/haswell_warpx.profile`` if you have not done so already for this terminal session.
 
-.. literalinclude:: ../../../../Tools/BatchScripts/batch_cori_haswell.sh
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/cori_haswell.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/cori_haswell.sbatch``.
 
-To run a simulation, copy the lines above to a file ``batch_cori_haswell.sh`` and
+To run a simulation, copy the lines above to a file ``cori_haswell.sbatch`` and
 run
 
 .. code-block:: bash
 
-   sbatch batch_cori_haswell.sh
+   sbatch cori_haswell.sbatch
 
 to submit the job.
 
@@ -367,8 +303,9 @@ For single-node runs, try to run one grid per GPU.
 
 A multi-node batch script template can be found below:
 
-.. literalinclude:: ../../../../Tools/BatchScripts/batch_cori_gpu.sh
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/cori_gpu.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/cori_gpu.sbatch``.
 
 
 .. _post-processing-cori:
@@ -383,7 +320,7 @@ In this manual, we often use this ``conda create`` line over the officially docu
 
 .. code-block:: bash
 
-   conda create -n myenv -c conda-forge python mamba ipykernel ipympl matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram
+   conda create -n myenv -c conda-forge python mamba ipykernel ipympl==0.8.6 matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram
 
 We then follow the `Customizing Kernels with a Helper Shell Script <https://docs.nersc.gov/services/jupyter/#customizing-kernels-with-a-helper-shell-script>`__ section to finalize the setup of using this conda-environment as a custom Jupyter kernel.
 
@@ -391,3 +328,9 @@ When opening a Jupyter notebook, just select the name you picked for your custom
 
 Additional software can be installed later on, e.g., in a Jupyter cell using ``!mamba install -c conda-forge ...``.
 Software that is not available via conda can be installed via ``!python -m pip install ...``.
+
+.. warning::
+
+   Jan 6th, 2022 (NERSC-INC0179165 and `ipympl #416 <https://github.com/matplotlib/ipympl/issues/416>`__):
+   Above, we fixated the ``ipympl`` version to *not* take the latest release of `Matplotlib Jupyter Widgets <https://github.com/matplotlib/ipympl>`__.
+   This is an intentional work-around; the ``ipympl`` version needs to exactly fit the version pre-installed on the Jupyter base system.

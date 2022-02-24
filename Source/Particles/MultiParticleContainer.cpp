@@ -765,10 +765,10 @@ MultiParticleContainer::doContinuousInjection () const
  * calls virtual function ContinuousFluxInjection.
  */
 void
-MultiParticleContainer::ContinuousFluxInjection (amrex::Real dt) const
+MultiParticleContainer::ContinuousFluxInjection (amrex::Real t, amrex::Real dt) const
 {
     for (auto& pc : allcontainers){
-        pc->ContinuousFluxInjection(dt);
+        pc->ContinuousFluxInjection(t, dt);
     }
 }
 
@@ -844,6 +844,31 @@ MultiParticleContainer::getSpeciesID (std::string product_str) const
     );
 
     return i_product;
+}
+
+void
+MultiParticleContainer::SetDoBackTransformedParticles (const bool do_back_transformed_particles) {
+    m_do_back_transformed_particles = do_back_transformed_particles;
+}
+
+void
+MultiParticleContainer::SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles) {
+    auto species_names_list = GetSpeciesNames();
+    bool found = 0;
+    // Loop over species
+    for (int i = 0; i < static_cast<int>(species_names.size()); ++i) {
+        // If species name matches, set back-transformed particles parameters
+        if (species_names_list[i] == species_name) {
+           found = 1;
+           auto& pc = allcontainers[i];
+           pc->SetDoBackTransformedParticles(do_back_transformed_particles);
+        }
+    }
+    WarpXUtilMsg::AlwaysAssert(
+        found != 0,
+        "ERROR: could not find the ID of product species '"
+        + species_name + "'" + ". Wrong name?"
+    );
 }
 
 void

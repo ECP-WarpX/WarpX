@@ -46,8 +46,9 @@ From the base of the WarpX source directory, execute:
    # compile, here we use four threads
    cmake --build build -j 4
 
-That's all! WarpX binaries are now in ``build/bin/``.
-Most people execute these binaries directly or copy them out.
+**That's it!**
+A 3D WarpX binary is now in ``build/bin/`` and :ref:`can be run <usage_run>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out.
 
 If you want to install the executables in a programmatic way, run this:
 
@@ -62,7 +63,8 @@ You can inspect and modify build options after running ``cmake -S . -B build`` w
 
    ccmake build
 
-or by adding arguments with ``-D<OPTION>=<VALUE>`` to the first CMake call, e.g.:
+or by adding arguments with ``-D<OPTION>=<VALUE>`` to the first CMake call.
+For example, this builds WarpX in 2D geometry and enables Nvidia GPU (CUDA) support:
 
 .. code-block:: bash
 
@@ -80,14 +82,15 @@ CMake Option                  Default & Values                             Descr
 ``CMAKE_BUILD_TYPE``          RelWithDebInfo/**Release**/Debug             Type of build, symbols & optimizations
 ``CMAKE_INSTALL_PREFIX``      system-dependent path                        Install path prefix
 ``CMAKE_VERBOSE_MAKEFILE``    ON/**OFF**                                   Print all compiler commands to the terminal during build
+``PYINSTALLOPTIONS``                                                       Additional options for ``pip install``, e.g., ``-v --user``
 ``WarpX_APP``                 **ON**/OFF                                   Build the WarpX executable application
 ``WarpX_ASCENT``              ON/**OFF**                                   Ascent in situ visualization
 ``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
-``WarpX_DIMS``                **3**/2/RZ                                   Simulation dimensionality
+``WarpX_DIMS``                **3**/2/1/RZ                                 Simulation dimensionality
 ``WarpX_EB``                  ON/**OFF**                                   Embedded boundary support (not supported in RZ yet)
 ``WarpX_GPUCLOCK``            **ON**/OFF                                   Add GPU kernel timers (cost function, +4 registers/kernel)
 ``WarpX_IPO``                 ON/**OFF**                                   Compile WarpX with interprocedural optimization (aka LTO)
-``WarpX_LIB``                 ON/**OFF**                                   Build WarpX as a shared library
+``WarpX_LIB``                 ON/**OFF**                                   Build WarpX as a shared library, e.g., for PICMI Python
 ``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)
 ``WarpX_MPI_THREAD_MULTIPLE`` **ON**/OFF                                   MPI thread-multiple support, i.e. for ``async_io``
 ``WarpX_OPENPMD``             **ON**/OFF                                   openPMD I/O (HDF5, ADIOS)
@@ -136,6 +139,8 @@ If you re-compile often, consider installing the `Ninja <https://github.com/ninj
 Pass ``-G Ninja`` to the CMake configuration call to speed up parallel compiles.
 
 
+.. _building-cmake-envvars:
+
 Configure your compiler
 -----------------------
 
@@ -154,6 +159,13 @@ If you also want to select a CUDA compiler:
    export CUDACXX=$(which nvcc)
    export CUDAHOSTCXX=$(which clang++)
 
+We also support adding `additional compiler flags via environment variables <https://cmake.org/cmake/help/latest/manual/cmake-language.7.html#cmake-language-environment-variables>`__ such as `CXXFLAGS <https://cmake.org/cmake/help/latest/envvar/CXXFLAGS.html>`__/`LDFLAGS <https://cmake.org/cmake/help/latest/envvar/LDFLAGS.html>`__:
+
+.. code-block:: bash
+
+   # example: treat all compiler warnings as errors
+   export CXXFLAGS="-Werror"
+
 .. note::
 
    Please clean your build directory with ``rm -rf build/`` after changing the compiler.
@@ -164,21 +176,79 @@ Run
 ---
 
 An executable WarpX binary with the current compile-time options encoded in its file name will be created in ``build/bin/``.
+Note that you need separate binaries to run 1D, 2D, 3D, and RZ geometry inputs scripts.
+Additionally, a `symbolic link <https://en.wikipedia.org/wiki/Symbolic_link>`__ named ``warpx`` can be found in that directory, which points to the last built WarpX executable.
 
-Additionally, a `symbolic link <https://en.wikipedia.org/wiki/Symbolic_link>`_ named ``warpx`` can be found in that directory, which points to the last built WarpX executable.
+More details on running simulations are in the section :ref:`Run WarpX <usage_run>`.
+Alternatively, read on and also build our PICMI Python interface.
 
 
 .. _building-cmake-python:
 
-Python Bindings
----------------
+PICMI Python Bindings
+---------------------
 
-Build and install ``pywarpx`` from the root of the WarpX source tree:
+.. note::
+
+   Preparation: make sure you work with up-to-date Python tooling.
+
+   .. code-block:: bash
+
+      python3 -m pip install -U pip setuptools wheel
+
+For PICMI Python bindings, configure WarpX to produce a library and call our ``pip_install`` *CMake target*:
+
+.. code-block:: bash
+
+   # find dependencies & configure
+   cmake -S . -B build -DWarpX_LIB=ON
+
+   # build and then call "python3 -m pip install ..."
+   cmake --build build --target pip_install -j 4
+
+**That's it!**
+You can now :ref:`run a first 3D PICMI script <usage-picmi>` from our :ref:`examples <usage-examples>`.
+
+Developers could now change the WarpX source code and then call the build line again to refresh the Python installation.
+
+.. note::
+
+   These commands build one ``-DWarpX_DIMS=...`` dimensionality (default: ``3``) at a time.
+   If your ``build/lib*/`` directory contains previously built ``libwarpx*`` libraries, then ``--target pip_install`` picks them up as well.
+   A new call to ``cmake --build build ...`` will only rebuild *one* dimensionality, as set via ``WarpX_DIMS``.
+
+If you like to build a WarpX Python package that supports *all* dimensionalities, you can run this:
+
+.. code-block:: bash
+
+   for d in 1 2 3 RZ; do
+       cmake -S . -B build -DWarpX_DIMS=$d -DWarpX_LIB=ON
+       cmake --build build -j 4
+   done
+   cmake --build build --target pip_install
+
+.. tip::
+
+   If you do *not* develop with :ref:`a user-level package manager <install-dependencies>`, e.g., because you rely on a HPC system's environment modules, then consider to set up a virtual environment via `Python venv <https://docs.python.org/3/library/venv.html>`__.
+   Otherwise, without a virtual environment, you likely need to add the CMake option ``-DPYINSTALLOPTIONS="--user"``.
+
+
+.. _building-pip-python:
+
+Python Bindings (Package Management)
+------------------------------------
+
+This section is relevant for Python package management, mainly for maintainers or people that rather like to interact only with ``pip``.
+
+One can build and install ``pywarpx`` from the root of the WarpX source tree:
 
 .. code-block:: bash
 
    python3 -m pip wheel -v .
-   python3 -m pip install *whl
+   python3 -m pip install pywarpx*whl
+
+This will call the CMake logic above implicitly.
+Using this workflow has the advantage that it can build and package up multiple libraries with varying ``WarpX_DIMS`` into one ``pywarpx`` package.
 
 Environment variables can be used to control the build step:
 
@@ -186,7 +256,7 @@ Environment variables can be used to control the build step:
 Environment Variable          Default & Values                             Description
 ============================= ============================================ ================================================================
 ``WARPX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
-``WARPX_DIMS``                ``"2;3;RZ"``                                 Simulation dimensionalities (semicolon-separated list)
+``WARPX_DIMS``                ``"1;2;3;RZ"``                               Simulation dimensionalities (semicolon-separated list)
 ``WARPX_EB``                  ON/**OFF**                                   Embedded boundary support (not supported in RZ yet)
 ``WARPX_MPI``                 ON/**OFF**                                   Multi-node support (message-passing)
 ``WARPX_OPENPMD``             **ON**/OFF                                   openPMD I/O (HDF5, ADIOS)
@@ -199,6 +269,8 @@ Environment Variable          Default & Values                             Descr
 ``HDF5_USE_STATIC_LIBRARIES`` ON/**OFF**                                   Prefer static libraries for HDF5 dependency (openPMD)
 ``ADIOS_USE_STATIC_LIBS``     ON/**OFF**                                   Prefer static libraries for ADIOS1 dependency (openPMD)
 ``WARPX_AMREX_SRC``           *None*                                       Absolute path to AMReX source directory (preferred if set)
+``WARPX_AMREX_REPO``          *None (uses cmake default)*                  Repository URI to pull and build AMReX from
+``WARPX_AMREX_BRANCH``        *None (uses cmake default)*                  Repository branch for ``WARPX_AMREX_REPO``
 ``WARPX_AMREX_INTERNAL``      **ON**/OFF                                   Needs a pre-installed AMReX library if set to ``OFF``
 ``WARPX_OPENPMD_SRC``         *None*                                       Absolute path to openPMD-api source directory (preferred if set)
 ``WARPX_OPENPMD_INTERNAL``    **ON**/OFF                                   Needs a pre-installed openPMD-api library if set to ``OFF``
@@ -208,28 +280,27 @@ Environment Variable          Default & Values                             Descr
 ``PYWARPX_LIB_DIR``           *None*                                       If set, search for pre-built WarpX C++ libraries (see below)
 ============================= ============================================ ================================================================
 
+Note that we currently change the ``WARPX_MPI`` default intentionally to ``OFF``, to simplify a first install from source.
 
-Python Bindings (Developers)
-----------------------------
-
-**Developers** might have all Python dependencies already installed and want to just overwrite an already installed ``pywarpx`` package:
+Some hints and workflows follow.
+Developers, that want to test a change of the source code but did not change the ``pywarpx`` version number, can force a reinstall via:
 
 .. code-block:: bash
 
-   python3 -m pip install --force-reinstall -v .
+   python3 -m pip install --force-reinstall --no-deps -v .
 
 Some Developers like to code directly against a local copy of AMReX, changing both code-bases at a time:
 
 .. code-block:: bash
 
-   WARPX_AMREX_SRC=$PWD/../amrex python3 -m pip install --force-reinstall -v .
+   WARPX_AMREX_SRC=$PWD/../amrex python3 -m pip install --force-reinstall --no-deps -v .
 
 Additional environment control as common for CMake (:ref:`see above <building-cmake-intro>`) can be set as well, e.g. ``CC``, `CXX``, and ``CMAKE_PREFIX_PATH`` hints.
 So another sophisticated example might be: use Clang as the compiler, build with local source copies of PICSAR and AMReX, support the PSATD solver, MPI and openPMD, hint a parallel HDF5 installation in ``$HOME/sw/hdf5-parallel-1.10.4``, and only build 3D geometry:
 
 .. code-block:: bash
 
-   CC=$(which clang) CXX=$(which clang++) WARPX_AMREX_SRC=$PWD/../amrex WARPX_PICSAR_SRC=$PWD/../picsar WARPX_PSATD=ON WARPX_MPI=ON WARPX_DIMS=3 CMAKE_PREFIX_PATH=$HOME/sw/hdf5-parallel-1.10.4:$CMAKE_PREFIX_PATH python3 -m pip install --force-reinstall -v .
+   CC=$(which clang) CXX=$(which clang++) WARPX_AMREX_SRC=$PWD/../amrex WARPX_PICSAR_SRC=$PWD/../picsar WARPX_PSATD=ON WARPX_MPI=ON WARPX_DIMS=3 CMAKE_PREFIX_PATH=$HOME/sw/hdf5-parallel-1.10.4:$CMAKE_PREFIX_PATH python3 -m pip install --force-reinstall --no-deps -v .
 
 Here we wrote this all in one line, but one can also set all environment variables in a development environment and keep the pip call nice and short as in the beginning.
 Note that you need to use absolute paths for external source trees, because pip builds in a temporary directory, e.g. ``export WARPX_AMREX_SRC=$HOME/src/amrex``.
@@ -241,7 +312,7 @@ If the C++ libraries are already pre-compiled, we can pick them up in the Python
 .. code-block:: bash
 
    # build WarpX executables and libraries
-   for d in 2 3 RZ; do
+   for d in 1 2 3 RZ; do
      cmake -S . -B build -DWarpX_DIMS=$d -DWarpX_LIB=ON
      cmake --build build -j 4
    done

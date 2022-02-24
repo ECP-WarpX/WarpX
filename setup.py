@@ -117,6 +117,10 @@ class CMakeBuild(build_ext):
         # further dependency control (developers & package managers)
         if WARPX_AMREX_SRC:
             cmake_args.append('-DWarpX_amrex_src=' + WARPX_AMREX_SRC)
+        if WARPX_AMREX_REPO:
+            cmake_args.append('-DWarpX_amrex_repo=' + WARPX_AMREX_REPO)
+        if WARPX_AMREX_BRANCH:
+            cmake_args.append('-DWarpX_amrex_branch=' + WARPX_AMREX_BRANCH)
         if WARPX_OPENPMD_SRC:
             cmake_args.append('-DWarpX_openpmd_src=' + WARPX_OPENPMD_SRC)
         if WARPX_PICSAR_SRC:
@@ -202,6 +206,8 @@ HDF5_USE_STATIC_LIBRARIES = env.pop('HDF5_USE_STATIC_LIBRARIES', 'OFF')
 ADIOS_USE_STATIC_LIBS = env.pop('ADIOS_USE_STATIC_LIBS', 'OFF')
 # CMake dependency control (developers & package managers)
 WARPX_AMREX_SRC = env.pop('WARPX_AMREX_SRC', '')
+WARPX_AMREX_REPO = env.pop('WARPX_AMREX_REPO', '')
+WARPX_AMREX_BRANCH = env.pop('WARPX_AMREX_BRANCH', '')
 WARPX_AMREX_INTERNAL = env.pop('WARPX_AMREX_INTERNAL', 'ON')
 WARPX_OPENPMD_SRC = env.pop('WARPX_OPENPMD_SRC', '')
 WARPX_OPENPMD_INTERNAL = env.pop('WARPX_OPENPMD_INTERNAL', 'ON')
@@ -253,7 +259,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '22.01',
+    version = '22.02',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',

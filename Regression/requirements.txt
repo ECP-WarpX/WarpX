@@ -2,5 +2,6 @@ matplotlib
 mpi4py
 numpy
 openpmd-api
+pandas
 scipy
 yt

@@ -33,7 +33,7 @@ grid = picmi.CylindricalGrid(
     upper_boundary_conditions = ['dirichlet', 'dirichlet'],
     lower_boundary_conditions_particles = ['absorbing', 'absorbing'],
     upper_boundary_conditions_particles = ['absorbing', 'absorbing'],
-    moving_window_zvelocity = c,
+    moving_window_velocity = [0., c],
     warpx_max_grid_size = max_grid_size,
     warpx_blocking_factor = blocking_factor)
 
@@ -131,7 +131,7 @@ sim = picmi.Simulation(
     max_steps = max_steps,
     verbose = 1,
     particle_shape = 'cubic',
-    warpx_use_filter = 1)
+    warpx_use_filter = 0)
 
 # Add plasma electrons
 sim.add_species(

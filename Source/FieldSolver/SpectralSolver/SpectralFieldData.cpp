@@ -8,6 +8,7 @@
 #include "SpectralFieldData.H"
 
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX_Array4.H>
@@ -34,10 +35,11 @@ using namespace amrex;
 
 SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
                                         const bool time_averaging,
-                                        const bool J_linear_in_time,
+                                        const bool do_multi_J,
                                         const bool dive_cleaning,
                                         const bool divb_cleaning,
-                                        const bool pml)
+                                        const bool pml,
+                                        const bool pml_rz)
 {
     // TODO Use these to allocate rho_old, rho_new, F, and G only when needed
     amrex::ignore_unused(update_with_rho);
@@ -66,10 +68,19 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
 
         if (divb_cleaning) G = c++;
 
-        if (J_linear_in_time)
+        if (do_multi_J)
         {
-            Jx_new = c++; Jy_new = c++; Jz_new = c++;
+            Jx_new = c++;
+            Jy_new = c++;
+            Jz_new = c++;
         }
+
+        if (pml_rz)
+        {
+            Er_pml = c++; Et_pml = c++;
+            Br_pml = c++; Bt_pml = c++;
+        }
+
     }
     else // PML
     {
@@ -102,6 +113,7 @@ SpectralFieldData::SpectralFieldData( const int lev,
                                       const bool periodic_single_box)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, realspace_ba, dm);
 
     m_periodic_single_box = periodic_single_box;
 
@@ -145,7 +157,7 @@ SpectralFieldData::SpectralFieldData( const int lev,
     // Loop over boxes and allocate the corresponding plan
     // for each box owned by the local MPI proc
     for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
         }
@@ -166,7 +178,7 @@ SpectralFieldData::SpectralFieldData( const int lev,
             reinterpret_cast<AnyFFT::Complex*>( tmpSpectralField[mfi].dataPtr()),
             AnyFFT::direction::C2R, AMREX_SPACEDIM);
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -191,10 +203,11 @@ SpectralFieldData::~SpectralFieldData()
  *  (in the spectral field specified by `field_index`) */
 void
 SpectralFieldData::ForwardTransform (const int lev,
-                     const MultiFab& mf, const int field_index,
+                                     const MultiFab& mf, const int field_index,
                                      const int i_comp, const IntVect& stag)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space
 #if (AMREX_SPACEDIM >= 2)
@@ -213,7 +226,7 @@ SpectralFieldData::ForwardTransform (const int lev,
     // Note: we do NOT OpenMP parallelize here, since we use OpenMP threads for
     //       the FFTs on each box!
     for ( MFIter mfi(mf); mfi.isValid(); ++mfi ){
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
         }
@@ -281,7 +294,7 @@ SpectralFieldData::ForwardTransform (const int lev,
             });
         }
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -301,6 +314,7 @@ SpectralFieldData::BackwardTransform (const int lev,
                                       const amrex::IntVect& fill_guards)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space
 #if (AMREX_SPACEDIM >= 2)
@@ -337,7 +351,7 @@ SpectralFieldData::BackwardTransform (const int lev,
     // Note: we do NOT OpenMP parallelize here, since we use OpenMP threads for
     //       the iFFTs on each box!
     for ( MFIter mfi(mf); mfi.isValid(); ++mfi ){
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
         }
@@ -441,7 +455,7 @@ SpectralFieldData::BackwardTransform (const int lev,
             });
         }
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;

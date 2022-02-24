@@ -6,9 +6,10 @@
  */
 #include "FieldSolver/SpectralSolver/SpectralAlgorithms/SpectralBaseAlgorithm.H"
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
-#include "SpectralAlgorithms/ComovingPsatdAlgorithm.H"
-#include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
+#include "SpectralAlgorithms/PsatdAlgorithmComoving.H"
+#include "SpectralAlgorithms/PsatdAlgorithmPml.H"
 #include "SpectralAlgorithms/PsatdAlgorithm.H"
+#include "SpectralAlgorithms/PsatdAlgorithmJLinearInTime.H"
 #include "SpectralKSpace.H"
 #include "SpectralSolver.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -30,7 +31,7 @@ SpectralSolver::SpectralSolver(
                 const bool pml, const bool periodic_single_box,
                 const bool update_with_rho,
                 const bool fft_do_time_averaging,
-                const bool J_linear_in_time,
+                const bool do_multi_J,
                 const bool dive_cleaning,
                 const bool divb_cleaning)
 {
@@ -42,29 +43,41 @@ SpectralSolver::SpectralSolver(
     const SpectralKSpace k_space= SpectralKSpace(realspace_ba, dm, dx);
 
     m_spectral_index = SpectralFieldIndex(update_with_rho, fft_do_time_averaging,
-                                          J_linear_in_time, dive_cleaning, divb_cleaning, pml);
+                                          do_multi_J, dive_cleaning, divb_cleaning, pml);
 
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
 
-    if (pml) {
-        algorithm = std::make_unique<PMLPsatdAlgorithm>(
+    if (pml) // PSATD equations in the PML grids
+    {
+        algorithm = std::make_unique<PsatdAlgorithmPml>(
             k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
             fill_guards, dt, dive_cleaning, divb_cleaning);
     }
-    else {
+    else // PSATD equations in the regulard grids
+    {
         // Comoving PSATD algorithm
-        if (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.) {
-            algorithm = std::make_unique<ComovingPsatdAlgorithm>(
+        if (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.)
+        {
+            algorithm = std::make_unique<PsatdAlgorithmComoving>(
                 k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
                 fill_guards, v_comoving, dt, update_with_rho);
         }
-        // PSATD algorithms: standard, Galilean, or averaged Galilean
-        else {
-            algorithm = std::make_unique<PsatdAlgorithm>(
-                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards,
-                v_galilean, dt, update_with_rho, fft_do_time_averaging, J_linear_in_time,
-                dive_cleaning, divb_cleaning);
+        else // PSATD algorithms: standard, Galilean, averaged Galilean, multi-J
+        {
+            if (do_multi_J)
+            {
+                algorithm = std::make_unique<PsatdAlgorithmJLinearInTime>(
+                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                    fill_guards, dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
+            }
+            else // standard, Galilean, averaged Galilean
+            {
+                algorithm = std::make_unique<PsatdAlgorithm>(
+                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                    fill_guards, v_galilean, dt, update_with_rho, fft_do_time_averaging,
+                    dive_cleaning, divb_cleaning);
+            }
         }
     }
 

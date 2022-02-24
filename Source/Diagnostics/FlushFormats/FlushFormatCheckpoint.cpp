@@ -1,6 +1,9 @@
 #include "FlushFormatCheckpoint.H"
 
 #include "BoundaryConditions/PML.H"
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#   include "BoundaryConditions/PML_RZ.H"
+#endif
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -33,7 +36,7 @@ FlushFormatCheckpoint::WriteToFile (
         bool /*plot_raw_fields_guards*/,
         bool /*isBTD*/, int /*snapshotID*/,
         const amrex::Geometry& /*full_BTD_snapshot*/,
-        bool /*isLastBTDFlush*/) const
+        bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
 {
     WARPX_PROFILE("FlushFormatCheckpoint::WriteToFile()");
 
@@ -138,9 +141,17 @@ FlushFormatCheckpoint::WriteToFile (
             }
         }
 
-        if (warpx.DoPML() && warpx.GetPML(lev)) {
-            warpx.GetPML(lev)->CheckPoint(
-                amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "pml"));
+        if (warpx.DoPML()) {
+            if (warpx.GetPML(lev)) {
+                warpx.GetPML(lev)->CheckPoint(
+                    amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "pml"));
+            }
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+            if (warpx.GetPML_RZ(lev)) {
+                warpx.GetPML_RZ(lev)->CheckPoint(
+                    amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "pml_rz"));
+            }
+#endif
         }
     }
 

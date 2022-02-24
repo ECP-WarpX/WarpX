@@ -93,12 +93,15 @@ class WarpX(Bucket):
     def write_inputs(self, filename='inputs', **kw):
         argv = self.create_argv_list()
 
+        for k, v in kw.items():
+            argv.append(f'{k} = {v}')
+
+        # Sort the argv list to make it more human readable
+        argv.sort()
+
         with open(filename, 'w') as ff:
 
-            for k, v in kw.items():
-                ff.write('{0} = {1}\n'.format(k, v))
-
             for arg in argv:
-                ff.write('{0}\n'.format(arg))
+                ff.write(f'{arg}\n')
 
 warpx = WarpX('warpx')

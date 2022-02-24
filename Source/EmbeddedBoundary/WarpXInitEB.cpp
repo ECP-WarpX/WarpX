@@ -397,18 +397,11 @@ void
 WarpX::ComputeDistanceToEB () {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeDistanceToEB");
-
-    amrex::ParmParse pp_warpx("warpx");
-    std::string impf;
-    pp_warpx.query("eb_implicit_function", impf);
-    if (! impf.empty()) {
-        auto eb_if_parser = makeParser(impf, {"x", "y", "z"});
-        ParserIF pif(eb_if_parser.compile<3>());
-        auto gshop = amrex::EB2::makeShop(pif);
-        amrex::FillImpFunc(*m_distance_to_eb[maxLevel()], gshop, Geom(maxLevel()));
-        m_distance_to_eb[maxLevel()]->negate(m_distance_to_eb[maxLevel()]->nGrow()); // signed distance f = - imp. f.
-    } else {
-        m_distance_to_eb[maxLevel()]->setVal(100.0); // some positive value
+    const amrex::EB2::IndexSpace& eb_is = amrex::EB2::IndexSpace::top();
+    for (int lev=0; lev<=maxLevel(); lev++) {
+        const amrex::EB2::Level& eb_level = eb_is.getLevel(Geom(lev));
+        auto const eb_fact = fieldEBFactory(lev);
+        amrex::FillSignedDistance(*m_distance_to_eb[lev], eb_level, eb_fact, 1);
     }
 #endif
 }

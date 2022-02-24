@@ -417,6 +417,13 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
 
+        # Geometry
+        # Set these as soon as the information is available
+        # (since these are needed to determine which shared object to load)
+        pywarpx.geometry.dims = 'RZ'
+        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
+        pywarpx.geometry.prob_hi = self.upper_bound
+
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -432,10 +439,6 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         assert self.lower_bound[0] >= 0., Exception('Lower radial boundary must be >= 0.')
         assert self.bc_rmin != 'periodic' and self.bc_rmax != 'periodic', Exception('Radial boundaries can not be periodic')
 
-        # Geometry
-        pywarpx.geometry.dims = 'RZ'
-        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
-        pywarpx.geometry.prob_hi = self.upper_bound
         pywarpx.warpx.n_rz_azimuthal_modes = self.n_azimuthal_modes
 
         # Boundary conditions
@@ -444,14 +447,14 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.boundary.particle_lo = [self.bc_rmin_particles, self.bc_zmin_particles]
         pywarpx.boundary.particle_hi = [self.bc_rmax_particles, self.bc_zmax_particles]
 
-        if self.moving_window_zvelocity is not None:
-            if np.isscalar(self.moving_window_zvelocity):
-                if self.moving_window_zvelocity !=0:
-                    pywarpx.warpx.do_moving_window = 1
-                    pywarpx.warpx.moving_window_dir = 'z'
-                    pywarpx.warpx.moving_window_v = self.moving_window_zvelocity/constants.c  # in units of the speed of light
-            else:
-                raise Exception('RZ PICMI moving_window_velocity (only available in z direction) should be a scalar')
+        if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
+            pywarpx.warpx.do_moving_window = 1
+            if self.moving_window_velocity[0] != 0.:
+                pywarpx.warpx.moving_window_dir = 'r'
+                pywarpx.warpx.moving_window_v = self.moving_window_velocity[0]/constants.c  # in units of the speed of light
+            if self.moving_window_velocity[1] != 0.:
+                pywarpx.warpx.moving_window_dir = 'z'
+                pywarpx.warpx.moving_window_v = self.moving_window_velocity[1]/constants.c  # in units of the speed of light
 
         if self.refined_regions:
             assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
@@ -478,6 +481,13 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
 
+        # Geometry
+        # Set these as soon as the information is available
+        # (since these are needed to determine which shared object to load)
+        pywarpx.geometry.dims = '1'
+        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
+        pywarpx.geometry.prob_hi = self.upper_bound
+
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -488,11 +498,6 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         pywarpx.amr.blocking_factor = self.blocking_factor
         pywarpx.amr.blocking_factor_x = self.blocking_factor_x
 
-        # Geometry
-        pywarpx.geometry.dims = '1'
-        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
-        pywarpx.geometry.prob_hi = self.upper_bound
-
         # Boundary conditions
         pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin]]
         pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax]]
@@ -501,9 +506,9 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
-            if self.moving_window_velocity[2] != 0.:
+            if self.moving_window_velocity[0] != 0.:
                 pywarpx.warpx.moving_window_dir = 'z'
-                pywarpx.warpx.moving_window_v = self.moving_window_velocity[2]/constants.c  # in units of the speed of light
+                pywarpx.warpx.moving_window_v = self.moving_window_velocity[0]/constants.c  # in units of the speed of light
 
         if self.refined_regions:
             assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
@@ -531,6 +536,13 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
 
+        # Geometry
+        # Set these as soon as the information is available
+        # (since these are needed to determine which shared object to load)
+        pywarpx.geometry.dims = '2'
+        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
+        pywarpx.geometry.prob_hi = self.upper_bound
+
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -542,11 +554,6 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         pywarpx.amr.blocking_factor = self.blocking_factor
         pywarpx.amr.blocking_factor_x = self.blocking_factor_x
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
-
-        # Geometry
-        pywarpx.geometry.dims = '2'
-        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
-        pywarpx.geometry.prob_hi = self.upper_bound
 
         # Boundary conditions
         pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin, self.bc_ymin]]
@@ -592,6 +599,13 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
 
+        # Geometry
+        # Set these as soon as the information is available
+        # (since these are needed to determine which shared object to load)
+        pywarpx.geometry.dims = '3'
+        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
+        pywarpx.geometry.prob_hi = self.upper_bound
+
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
@@ -605,11 +619,6 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         pywarpx.amr.blocking_factor_x = self.blocking_factor_x
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
         pywarpx.amr.blocking_factor_z = self.blocking_factor_z
-
-        # Geometry
-        pywarpx.geometry.dims = '3'
-        pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
-        pywarpx.geometry.prob_hi = self.upper_bound
 
         # Boundary conditions
         pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin, self.bc_ymin, self.bc_zmin]]
