@@ -283,6 +283,9 @@ public:
     // do nodal
     static int do_nodal;
 
+    // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
+    amrex::IntVect m_rho_nodal_flag;
+
     std::array<const amrex::MultiFab* const, 3>
     get_array_Bfield_aux  (const int lev) const {
         return {

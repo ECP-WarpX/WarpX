@@ -263,18 +263,18 @@ WarpX::PSATDForwardTransformJ ()
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         // With Vay's deposition, J stores a temporary current (D) that is later modified
-        // in Fourier space: its staggering is always nodal and does not match that of J
+        // in Fourier space: its staggering matches that of rho and not J
         amrex::IntVect jx_stag =
             (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
-            amrex::IntVect::TheNodeVector() : current_fp[lev][0]->ixType().toIntVect();
+            WarpX::m_rho_nodal_flag : current_fp[lev][0]->ixType().toIntVect();
 
         amrex::IntVect jy_stag =
             (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
-            amrex::IntVect::TheNodeVector() : current_fp[lev][1]->ixType().toIntVect();
+            WarpX::m_rho_nodal_flag : current_fp[lev][1]->ixType().toIntVect();
 
         amrex::IntVect jz_stag =
             (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
-            amrex::IntVect::TheNodeVector() : current_fp[lev][2]->ixType().toIntVect();
+            WarpX::m_rho_nodal_flag : current_fp[lev][2]->ixType().toIntVect();
 
         ForwardTransformVect(lev, *spectral_solver_fp[lev], current_fp[lev],
                              idx_jx, idx_jy, idx_jz, jx_stag, jy_stag, jz_stag);
@@ -282,18 +282,18 @@ WarpX::PSATDForwardTransformJ ()
         if (spectral_solver_cp[lev])
         {
             // With Vay's deposition, J stores a temporary current (D) that is later modified
-            // in Fourier space: its staggering is always nodal and does not match that of J
+            // in Fourier space: its staggering matches that of rho and not J
             jx_stag =
                 (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
-                amrex::IntVect::TheNodeVector() : current_cp[lev][0]->ixType().toIntVect();
+                WarpX::m_rho_nodal_flag : current_cp[lev][0]->ixType().toIntVect();
 
             jy_stag =
                 (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
-                amrex::IntVect::TheNodeVector() : current_cp[lev][1]->ixType().toIntVect();
+                WarpX::m_rho_nodal_flag : current_cp[lev][1]->ixType().toIntVect();
 
             jz_stag =
                 (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
-                amrex::IntVect::TheNodeVector() : current_cp[lev][2]->ixType().toIntVect();
+                WarpX::m_rho_nodal_flag : current_cp[lev][2]->ixType().toIntVect();
 
             ForwardTransformVect(lev, *spectral_solver_cp[lev], current_cp[lev],
                                  idx_jx, idx_jy, idx_jz, jx_stag, jy_stag, jz_stag);
