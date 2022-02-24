@@ -57,7 +57,7 @@ namespace
 #endif
         for ( amrex::MFIter mfi(mf, false); mfi.isValid(); ++mfi ) {
             int i = mfi.LocalIndex();
-            data[i] = (amrex::Real*) mf[mfi].dataPtr();
+            data[i] = (amrex::Real*) mf[mfi].dataPtr(); //DANGEROUS CONST CAST !!
             for (int j = 0; j < AMREX_SPACEDIM; ++j) {
                 (*shapes)[shapesize*i+j] = mf[mfi].box().length(j);
             }
