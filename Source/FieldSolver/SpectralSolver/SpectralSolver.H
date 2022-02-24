@@ -86,16 +86,24 @@ class SpectralSolver
                         const bool divb_cleaning);
 
         /**
-         * \brief Transform the component `i_comp` of MultiFab `mf`
-         *  to spectral space, and store the corresponding result internally
-         *  (in the spectral field specified by `field_index`) */
+         * \brief Transform the component i_comp of the MultiFab mf to Fourier space,
+         * and store the result internally (in the spectral field specified by field_index)
+         *
+         * \param[in] lev mesh refinement level
+         * \param[in] mf MultiFab that is transformed to Fourier space (component i_comp)
+         * \param[in] field_index index of the spectral field that stores the FFT result
+         * \param[in] i_comp component of the MultiFab mf that is transformed to Fourier space
+         * \param[in] stag index type that needs to be used to perform the FFT operation
+         */
         void ForwardTransform (const int lev,
                                const amrex::MultiFab& mf,
                                const int field_index,
                                const int i_comp,
                                const amrex::IntVect& stag);
 
-        // This overload is used if stag is not passed
+        /**
+         * \brief Overload of ForwardTransform used if stag is not passed
+         */
         AMREX_FORCE_INLINE
         void ForwardTransform (const int lev,
                                const amrex::MultiFab& mf,
@@ -105,7 +113,9 @@ class SpectralSolver
             ForwardTransform(lev, mf, field_index, i_comp, mf.ixType().toIntVect());
         }
 
-        // This overload is used if i_comp is not passed
+        /**
+         * \brief Overload of ForwardTransform used if i_comp is not passed
+         */
         AMREX_FORCE_INLINE
         void ForwardTransform (const int lev,
                                const amrex::MultiFab& mf,
@@ -115,7 +125,9 @@ class SpectralSolver
             ForwardTransform(lev, mf, field_index, 0, stag);
         }
 
-        // This overload is used if i_comp and stag are not passed
+        /**
+         * Overload of ForwardTransform used if both i_comp and stag are not passed
+         */
         AMREX_FORCE_INLINE
         void ForwardTransform (const int lev,
                                const amrex::MultiFab& mf,
