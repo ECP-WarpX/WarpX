@@ -38,7 +38,7 @@
 
 namespace
 {
-    amrex::Real** getMultiFabPointers(const amrex::MultiFab& mf, int *num_boxes, int *ncomps, int **ngrowvect, int **shapes)
+    amrex::Real** getMultiFabPointers (amrex::MultiFab& mf, int *num_boxes, int *ncomps, int **ngrowvect, int **shapes)
     {
         *ncomps = mf.nComp();
         *num_boxes = mf.local_size();
@@ -57,7 +57,7 @@ namespace
 #endif
         for ( amrex::MFIter mfi(mf, false); mfi.isValid(); ++mfi ) {
             int i = mfi.LocalIndex();
-            data[i] = (amrex::Real*) mf[mfi].dataPtr(); //DANGEROUS CONST CAST !!
+            data[i] = mf[mfi].dataPtr();
             for (int j = 0; j < AMREX_SPACEDIM; ++j) {
                 (*shapes)[shapesize*i+j] = mf[mfi].box().length(j);
             }
@@ -65,7 +65,7 @@ namespace
         }
         return data;
     }
-    int* getMultiFabLoVects(const amrex::MultiFab& mf, int *num_boxes, int **ngrowvect)
+    int* getMultiFabLoVects (const amrex::MultiFab& mf, int *num_boxes, int **ngrowvect)
     {
         int shapesize = AMREX_SPACEDIM;
         *ngrowvect = static_cast<int*>(malloc(sizeof(int)*shapesize));
