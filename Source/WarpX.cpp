@@ -101,7 +101,7 @@ int WarpX::moving_window_dir = -1;
 Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
 int WarpX::end_fine_patch_step=-1;
-bool WarpX::EndInit=false;
+bool WarpX::FinelevInit_flag=false;
 
 bool WarpX::fft_do_time_averaging = false;
 

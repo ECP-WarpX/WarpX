@@ -31,7 +31,7 @@
 void
 WarpX::ComputeDt ()
 {   int Finelev;
-    if (EndInit==false) Finelev = max_level;
+    if (FinelevInit_flag==false) Finelev = max_level;
     else Finelev = AmrMesh::finestLevel();
     // Determine
     const amrex::Real* dx = geom[Finelev].CellSize();
@@ -87,7 +87,7 @@ WarpX::ComputeDt ()
 void
 WarpX::PrintDtDxDyDz ()
 {   int Finelev;
-    if (EndInit==false) Finelev = max_level;
+    if (FinelevInit_flag==false) Finelev = max_level;
     else Finelev = AmrMesh::finestLevel();
     for (int lev=0; lev <= Finelev; lev++) {
         const amrex::Real* dx_lev = geom[lev].CellSize();
