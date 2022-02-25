@@ -101,7 +101,6 @@ WarpX::AddBoundaryField ()
     // stored yet
     if (!field_boundary_handler.bcs_set) field_boundary_handler.definePhiBCs();
 
-    // Calculate the E and B components due to boundary potentials alone
     // Allocate fields for charge and potential
     const int num_levels = max_level + 1;
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
