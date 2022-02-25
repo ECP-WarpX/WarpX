@@ -18,6 +18,8 @@ Optional dependencies include:
 - `CUDA Toolkit 11.0+ <https://developer.nvidia.com/cuda-downloads>`__: for Nvidia GPU support (see `matching host-compilers <https://gist.github.com/ax3l/9489132>`_)
 - `OpenMP 3.1+ <https://www.openmp.org>`__: for threaded CPU execution (currently not fully accelerated)
 - `FFTW3 <http://www.fftw.org>`_: for spectral solver (PSATD) support
+
+  - also needs the ``pkg-config`` tool on Unix
 - `BLAS++ <https://bitbucket.org/icl/blaspp>`_ and `LAPACK++ <https://bitbucket.org/icl/lapackpp>`_: for spectral solver (PSATD) support in RZ geometry
 - `Boost 1.66.0+ <https://www.boost.org/>`__: for QED lookup tables generation support
 - `openPMD-api 0.14.2+ <https://github.com/openPMD/openPMD-api>`__: we automatically download and compile a copy of openPMD-api for openPMD I/O support
@@ -125,7 +127,7 @@ Without MPI:
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw matplotlib mamba ninja pip virtualenv
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
    source activate warpx-dev
 
    # compile WarpX with -DWarpX_MPI=OFF
@@ -134,7 +136,7 @@ With MPI (only Linux/macOS):
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp "openpmd-api=*=mpi_openmpi*" python numpy pandas scipy yt "fftw=*=mpi_openmpi*" matplotlib mamba ninja openmpi pip virtualenv
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp "openpmd-api=*=mpi_openmpi*" python numpy pandas scipy yt "fftw=*=mpi_openmpi*" pkg-config matplotlib mamba ninja openmpi pip virtualenv
    source activate warpx-dev
 
 For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you also need to set:
