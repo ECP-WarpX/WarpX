@@ -49,7 +49,7 @@ void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::unique_ptr<amrex::MultiFab> const& Gfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,    
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
@@ -369,7 +369,7 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,    
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     int lev, amrex::Real const dt ) {
 
@@ -400,7 +400,7 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
 
 #ifdef AMREX_USE_EB
         amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
-        amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);        
+        amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
         amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
 #endif
 
