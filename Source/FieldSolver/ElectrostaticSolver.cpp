@@ -64,48 +64,20 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         AddSpaceChargeFieldLabFrame();
     }
     else {
-        bool calculate_background_field = false;
-        // Loop over the species and add their space-charge contribution to E and B
+        // Loop over the species and add their space-charge contribution to E and B.
+        // Note that the fields calculated here does not include the E field
+        // due to simulation boundary potentials
         for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
             WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
             if (species.initialize_self_fields ||
                 (do_electrostatic == ElectrostaticSolverAlgo::Relativistic)) {
                 AddSpaceChargeField(species);
-                calculate_background_field = true;
             }
         }
 
-        if (calculate_background_field){
-            // Calculate the E and B components due to boundary potentials alone
-            // Allocate fields for charge and potential
-            const int num_levels = max_level + 1;
-            Vector<std::unique_ptr<MultiFab> > rho(num_levels);
-            Vector<std::unique_ptr<MultiFab> > phi(num_levels);
-            // Use number of guard cells used for local deposition of rho
-            const amrex::IntVect ng = guard_cells.ng_depos_rho;
-            for (int lev = 0; lev <= max_level; lev++) {
-                BoxArray nba = boxArray(lev);
-                nba.surroundingNodes();
-                rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
-                rho[lev]->setVal(0.);
-                phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
-                phi[lev]->setVal(0.);
-            }
-
-            // Set the boundary potentials appropriately
-            setPhiBC(phi);
-
-            // beta is zero for boundaries
-            std::array<Real, 3> beta = {0._rt};
-
-            // Compute the potential phi, by solving the Poisson equation
-            computePhi( rho, phi, beta, self_fields_required_precision,
-                        self_fields_absolute_tolerance, self_fields_max_iters,
-                        self_fields_verbosity );
-
-            // Compute the corresponding electric and magnetic field, from the potential phi
-            computeE( Efield_fp, phi, beta );
-            computeB( Bfield_fp, phi, beta );
+        // Add the field due to the boundary potentials
+        if (do_electrostatic == ElectrostaticSolverAlgo::Relativistic){
+            AddBoundaryField();
         }
     }
     // Transfer fields from 'fp' array to 'aux' array.
@@ -114,6 +86,51 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
     UpdateAuxilaryData();
     FillBoundaryAux(guard_cells.ng_UpdateAux);
 
+}
+
+/* Compute the potential `phi` by solving the Poisson equation with the
+   simulation specific boundary conditions and boundary values, then add the
+   E field due to that `phi` to `Efield_fp`.
+*/
+void
+WarpX::AddBoundaryField ()
+{
+    WARPX_PROFILE("WarpX::AddBoundaryField");
+
+    // Store the boundary conditions for the field solver if they haven't been
+    // stored yet
+    if (!field_boundary_handler.bcs_set) field_boundary_handler.definePhiBCs();
+
+    // Calculate the E and B components due to boundary potentials alone
+    // Allocate fields for charge and potential
+    const int num_levels = max_level + 1;
+    Vector<std::unique_ptr<MultiFab> > rho(num_levels);
+    Vector<std::unique_ptr<MultiFab> > phi(num_levels);
+    // Use number of guard cells used for local deposition of rho
+    const amrex::IntVect ng = guard_cells.ng_depos_rho;
+    for (int lev = 0; lev <= max_level; lev++) {
+        BoxArray nba = boxArray(lev);
+        nba.surroundingNodes();
+        rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
+        rho[lev]->setVal(0.);
+        phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
+        phi[lev]->setVal(0.);
+    }
+
+    // Set the boundary potentials appropriately
+    setPhiBC(phi);
+
+    // beta is zero for boundaries
+    std::array<Real, 3> beta = {0._rt};
+
+    // Compute the potential phi, by solving the Poisson equation
+    computePhi( rho, phi, beta, self_fields_required_precision,
+                self_fields_absolute_tolerance, self_fields_max_iters,
+                self_fields_verbosity );
+
+    // Compute the corresponding electric and magnetic field, from the potential phi.
+    computeE( Efield_fp, phi, beta );
+    computeB( Bfield_fp, phi, beta );
 }
 
 void

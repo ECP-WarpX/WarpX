@@ -694,6 +694,7 @@ public:
 
     ElectrostaticSolver::BoundaryHandler field_boundary_handler;
     void ComputeSpaceChargeField (bool const reset_fields);
+    void AddBoundaryField ();
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void AddSpaceChargeFieldLabFrame ();
     void computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
