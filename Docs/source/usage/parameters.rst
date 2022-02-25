@@ -1396,9 +1396,15 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
 
 * ``<collision_name>.background_density`` (`float`)
     Only for ``background_mcc``. The density of the neutral background gas in :math:`m^{-3}`.
+    Can also provide ``<collision_name>.background_density(x,y,z,t)`` using the parser
+    initialization style for spatially and temporally varying density. If a function
+    is used for the background density, the input parameter ``<collision_name>.max_background_density``
+    must also be provided to calculate the maximum collision probability.
 
 * ``<collision_name>.background_temperature`` (`float`)
     Only for ``background_mcc``. The temperature of the neutral background gas in Kelvin.
+    Can also provide ``<collision_name>.background_temperature(x,y,z,t)`` using the parser
+    initialization style for spatially and temporally varying temperature.
 
 * ``<collision_name>.background_mass`` (`float`) optional
     Only for ``background_mcc``. The mass of the background gas in kg. If not
