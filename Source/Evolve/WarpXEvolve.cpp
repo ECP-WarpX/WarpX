@@ -44,7 +44,6 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
-
 #include <algorithm>
 #include <array>
 #include <memory>
@@ -376,11 +375,14 @@ WarpX::OneStep_nosub (Real cur_time)
     // Deposit charge density rho^{n}
 
     if(istep[0]+1==end_fine_patch_step){
+        auto& warpx = WarpX::GetInstance();
         SyncCurrent();
         SyncRho();
         const int coarse_lev = 0;
         regrid(coarse_lev, cur_time);
         Print() << "Remove the patch" << '\n';
+        warpx.ComputeDt()  ;
+        PrintDtDxDyDz ();
     }
 
     ExecutePythonCallback("particlescraper");
@@ -676,10 +678,13 @@ WarpX::OneStep_sub1 (Real curtime)
     const int coarse_lev = 0;
 
     if(istep[0]+1==end_fine_patch_step){
+        auto& warpx = WarpX::GetInstance();
         SyncCurrent();
         SyncRho();
         regrid(coarse_lev, curtime);
         Print() << "Remove the patch" << '\n';
+        warpx.ComputeDt()  ;
+        PrintDtDxDyDz ();
     }
 
     // i) Push particles and fields on the fine patch (first fine step)

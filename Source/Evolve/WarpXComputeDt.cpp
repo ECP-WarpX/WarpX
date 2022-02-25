@@ -22,7 +22,7 @@
 #include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-
+#include <AMReX_AmrMesh.H>
 #include <algorithm>
 #include <memory>
 
@@ -30,9 +30,11 @@
  * Determine the timestep of the simulation. */
 void
 WarpX::ComputeDt ()
-{
+{   int Finelev;
+    if (EndInit==false) Finelev = max_level;
+    else Finelev = AmrMesh::finestLevel();
     // Determine
-    const amrex::Real* dx = geom[max_level].CellSize();
+    const amrex::Real* dx = geom[Finelev].CellSize();
     amrex::Real deltat = 0.;
 
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
@@ -67,10 +69,10 @@ WarpX::ComputeDt ()
     }
 
     dt.resize(0);
-    dt.resize(max_level+1,deltat);
+    dt.resize(Finelev+1,deltat);
 
     if (do_subcycling) {
-        for (int lev = max_level-1; lev >= 0; --lev) {
+        for (int lev = Finelev-1; lev >= 0; --lev) {
             dt[lev] = dt[lev+1] * refRatio(lev)[0];
         }
     }
@@ -82,8 +84,10 @@ WarpX::ComputeDt ()
 
 void
 WarpX::PrintDtDxDyDz ()
-{
-    for (int lev=0; lev <= max_level; lev++) {
+{   int Finelev;
+    if (EndInit==false) Finelev = max_level;
+    else Finelev = AmrMesh::finestLevel();
+    for (int lev=0; lev <= Finelev; lev++) {
         const amrex::Real* dx_lev = geom[lev].CellSize();
         amrex::Print() << "Level " << lev << ": dt = " << dt[lev]
 #if defined(WARPX_DIM_1D_Z)

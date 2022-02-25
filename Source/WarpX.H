@@ -670,6 +670,7 @@ public:
 
     //Parameters to remove the fine patch at a given time step
     static int end_fine_patch_step;
+    static bool EndInit;
 
     // slice generation //
     static int num_slice_snapshots_lab;
