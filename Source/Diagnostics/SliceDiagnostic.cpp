@@ -66,7 +66,7 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
 
     Vector<int> slice_ncells(AMREX_SPACEDIM);
     int nghost = 1;
-    int nlevels = dom_geom.size();
+    auto nlevels = static_cast<int>(dom_geom.size());
     int ncomp = (mf).nComp();
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nlevels==1,

@@ -2324,7 +2324,7 @@ WarpX::getPMLdirections() const
 #endif
     if( do_pml )
     {
-        for( unsigned int i = 0u; i < dirsWithPML.size() / 2u; ++i )
+        for( int i = 0; i < static_cast<int>(dirsWithPML.size()) / 2; ++i )
         {
             dirsWithPML.at( 2u*i      ) = bool(do_pml_Lo[i]);
             dirsWithPML.at( 2u*i + 1u ) = bool(do_pml_Hi[i]);
