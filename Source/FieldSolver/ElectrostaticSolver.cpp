@@ -64,14 +64,22 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
 
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
         AddSpaceChargeFieldLabFrame();
-    } else {
-        // Loop over the species and add their space-charge contribution to E and B
+    }
+    else {
+        // Loop over the species and add their space-charge contribution to E and B.
+        // Note that the fields calculated here does not include the E field
+        // due to simulation boundary potentials
         for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
             WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
             if (species.initialize_self_fields ||
                 (do_electrostatic == ElectrostaticSolverAlgo::Relativistic)) {
                 AddSpaceChargeField(species);
             }
+        }
+
+        // Add the field due to the boundary potentials
+        if (do_electrostatic == ElectrostaticSolverAlgo::Relativistic){
+            AddBoundaryField();
         }
     }
     // Transfer fields from 'fp' array to 'aux' array.
@@ -80,6 +88,50 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
     UpdateAuxilaryData();
     FillBoundaryAux(guard_cells.ng_UpdateAux);
 
+}
+
+/* Compute the potential `phi` by solving the Poisson equation with the
+   simulation specific boundary conditions and boundary values, then add the
+   E field due to that `phi` to `Efield_fp`.
+*/
+void
+WarpX::AddBoundaryField ()
+{
+    WARPX_PROFILE("WarpX::AddBoundaryField");
+
+    // Store the boundary conditions for the field solver if they haven't been
+    // stored yet
+    if (!field_boundary_handler.bcs_set) field_boundary_handler.definePhiBCs();
+
+    // Allocate fields for charge and potential
+    const int num_levels = max_level + 1;
+    Vector<std::unique_ptr<MultiFab> > rho(num_levels);
+    Vector<std::unique_ptr<MultiFab> > phi(num_levels);
+    // Use number of guard cells used for local deposition of rho
+    const amrex::IntVect ng = guard_cells.ng_depos_rho;
+    for (int lev = 0; lev <= max_level; lev++) {
+        BoxArray nba = boxArray(lev);
+        nba.surroundingNodes();
+        rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
+        rho[lev]->setVal(0.);
+        phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
+        phi[lev]->setVal(0.);
+    }
+
+    // Set the boundary potentials appropriately
+    setPhiBC(phi);
+
+    // beta is zero for boundaries
+    std::array<Real, 3> beta = {0._rt};
+
+    // Compute the potential phi, by solving the Poisson equation
+    computePhi( rho, phi, beta, self_fields_required_precision,
+                self_fields_absolute_tolerance, self_fields_max_iters,
+                self_fields_verbosity );
+
+    // Compute the corresponding electric and magnetic field, from the potential phi.
+    computeE( Efield_fp, phi, beta );
+    computeB( Bfield_fp, phi, beta );
 }
 
 void
@@ -173,6 +225,9 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     // Todo: use simpler finite difference form with beta=0
     std::array<Real, 3> beta = {0._rt};
 
+    // set the boundary potentials appropriately
+    setPhiBC(phi_fp);
+
     // Compute the potential phi, by solving the Poisson equation
     if ( IsPythonCallBackInstalled("poissonsolver") ) ExecutePythonCallback("poissonsolver");
     else computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
@@ -236,22 +291,6 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         geom_scaled[lev].define(geom_lev.Domain(), &rb);
     }
 #endif
-
-    // get the boundary potentials at the current time
-    amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
-    amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
-    phi_bc_values_lo[WARPX_ZINDEX] = field_boundary_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[WARPX_ZINDEX] = field_boundary_handler.potential_zhi(gett_new(0));
-#ifndef WARPX_DIM_1D_Z
-    phi_bc_values_lo[0] = field_boundary_handler.potential_xlo(gett_new(0));
-    phi_bc_values_hi[0] = field_boundary_handler.potential_xhi(gett_new(0));
-#endif
-#if defined(WARPX_DIM_3D)
-    phi_bc_values_lo[1] = field_boundary_handler.potential_ylo(gett_new(0));
-    phi_bc_values_hi[1] = field_boundary_handler.potential_yhi(gett_new(0));
-#endif
-
-    setPhiBC(phi, phi_bc_values_lo, phi_bc_values_hi);
 
     // scale rho appropriately; also determine if rho is zero everywhere
     amrex::Real max_norm_b = 0.0;
@@ -409,12 +448,24 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
    \param[in] idim The dimension for which the Dirichlet boundary condition is set
 */
 void
-WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi,
-                 Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_lo,
-                 Array<amrex::Real,AMREX_SPACEDIM>& phi_bc_values_hi ) const
+WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
 {
     // check if any dimension has non-periodic boundary conditions
     if (!field_boundary_handler.has_non_periodic) return;
+
+    // get the boundary potentials at the current time
+    amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
+    amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
+    phi_bc_values_lo[WARPX_ZINDEX] = field_boundary_handler.potential_zlo(gett_new(0));
+    phi_bc_values_hi[WARPX_ZINDEX] = field_boundary_handler.potential_zhi(gett_new(0));
+#ifndef WARPX_DIM_1D_Z
+    phi_bc_values_lo[0] = field_boundary_handler.potential_xlo(gett_new(0));
+    phi_bc_values_hi[0] = field_boundary_handler.potential_xhi(gett_new(0));
+#endif
+#if defined(WARPX_DIM_3D)
+    phi_bc_values_lo[1] = field_boundary_handler.potential_ylo(gett_new(0));
+    phi_bc_values_hi[1] = field_boundary_handler.potential_yhi(gett_new(0));
+#endif
 
     auto dirichlet_flag = field_boundary_handler.dirichlet_flag;
 
@@ -600,6 +651,9 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                  const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                  std::array<amrex::Real, 3> const beta ) const
 {
+    // return early if beta is 0 since there will be no B-field
+    if ((beta[0] == 0._rt) && (beta[1] == 0._rt) && (beta[2] == 0._rt)) return;
+
     for (int lev = 0; lev <= max_level; lev++) {
 
         const Real* dx = Geom(lev).CellSize();
