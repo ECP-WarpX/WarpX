@@ -52,9 +52,9 @@ def do_analysis(single_precision = False):
     uz = ad['electrons', 'particle_momentum_z'].to_ndarray() / m_e / c
     w  = ad['electrons', 'particle_weight'].to_ndarray()
 
-    x_ind = np.array([int(xv) for xv in (x - ds.domain_left_edge[0].value) / dx[0]])
-    y_ind = np.array([int(xv) for xv in (y - ds.domain_left_edge[1].value) / dx[1]])
-    z_ind = np.array([int(xv) for xv in (z - ds.domain_left_edge[2].value) / dx[2]])
+    x_ind = ((x - ds.domain_left_edge[0].value) / dx[0]).astype(int)
+    y_ind = ((y - ds.domain_left_edge[1].value) / dx[1]).astype(int)
+    z_ind = ((z - ds.domain_left_edge[2].value) / dx[2]).astype(int)
 
     zavg = np.zeros(ds.domain_dimensions)
     uzavg = np.zeros(ds.domain_dimensions)
@@ -79,9 +79,9 @@ def do_analysis(single_precision = False):
     uz = ad['protons', 'particle_momentum_z'].to_ndarray() / m_p / c
     w  = ad['protons', 'particle_weight'].to_ndarray()
 
-    x_ind = np.array([int(xv) for xv in (x - ds.domain_left_edge[0].value) / dx[0]])
-    y_ind = np.array([int(xv) for xv in (y - ds.domain_left_edge[1].value) / dx[1]])
-    z_ind = np.array([int(xv) for xv in (z - ds.domain_left_edge[2].value) / dx[2]])
+    x_ind = ((x - ds.domain_left_edge[0].value) / dx[0]).astype(int)
+    y_ind = ((y - ds.domain_left_edge[1].value) / dx[1]).astype(int)
+    z_ind = ((z - ds.domain_left_edge[2].value) / dx[2]).astype(int)
 
     zavg = np.zeros(ds.domain_dimensions)
     uzavg = np.zeros(ds.domain_dimensions)
@@ -106,9 +106,9 @@ def do_analysis(single_precision = False):
     uz = ad['photons', 'particle_momentum_z'].to_ndarray() / m_e / c
     w  = ad['photons', 'particle_weight'].to_ndarray()
 
-    x_ind = np.array([int(xv) for xv in (x - ds.domain_left_edge[0].value) / dx[0]])
-    y_ind = np.array([int(xv) for xv in (y - ds.domain_left_edge[1].value) / dx[1]])
-    z_ind = np.array([int(xv) for xv in (z - ds.domain_left_edge[2].value) / dx[2]])
+    x_ind = ((x - ds.domain_left_edge[0].value) / dx[0]).astype(int)
+    y_ind = ((y - ds.domain_left_edge[1].value) / dx[1]).astype(int)
+    z_ind = ((z - ds.domain_left_edge[2].value) / dx[2]).astype(int)
 
     zavg = np.zeros(ds.domain_dimensions)
     uzavg = np.zeros(ds.domain_dimensions)
