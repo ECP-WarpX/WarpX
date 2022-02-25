@@ -877,7 +877,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             {
                 auto index = overlap_box.index(iv);
                 if (lrefine_injection) {
-                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, shifted);
+                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, -shifted);
                     if (fine_overlap_box.ok()) {
                         int r = (fine_overlap_box.contains(iv)) ?
                             AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac) : 1;
@@ -1398,7 +1398,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             {
                 auto index = overlap_box.index(iv);
                 if (lrefine_injection) {
-                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, shifted);
+                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, -shifted);
                     if (fine_overlap_box.ok()) {
                         int r = (fine_overlap_box.contains(iv)) ?
                             AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac) : 1;
@@ -1744,8 +1744,8 @@ PhysicalParticleContainer::Evolve (int lev,
 
             const Box& box = pti.validbox();
 
+            // Extract particle data
             auto& attribs = pti.GetAttribs();
-
             auto&  wp = attribs[PIdx::w];
             auto& uxp = attribs[PIdx::ux];
             auto& uyp = attribs[PIdx::uy];
@@ -1790,7 +1790,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 //    and (thus) the `np-nfine_current`/`np-nfine_gather` last particles
                 //    deposit/gather in the buffer
                 PartitionParticlesInBuffers( nfine_current, nfine_gather, np,
-                    pti, lev, current_masks, gather_masks, uxp, uyp, uzp, wp );
+                    pti, lev, current_masks, gather_masks );
             }
 
             const long np_current = (cjx) ? nfine_current : np;
