@@ -49,6 +49,7 @@ void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::unique_ptr<amrex::MultiFab> const& Gfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,    
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
@@ -66,8 +67,9 @@ void FiniteDifferenceSolver::EvolveB (
 #ifdef WARPX_DIM_RZ
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
         ignore_unused(Gfield);
-        EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, face_areas, lev, dt );
+        EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, edge_lengths, face_areas, lev, dt );
 #else
+    amrex::ignore_unused(edge_lengths);
     if(m_do_nodal or m_fdtd_algo != MaxwellSolverAlgo::ECT){
         amrex::ignore_unused(face_areas);
     }
@@ -367,6 +369,7 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,    
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
     int lev, amrex::Real const dt ) {
 
@@ -396,9 +399,9 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
         Array4<Real> const& Ez = Efield[2]->array(mfi);
 
 #ifdef AMREX_USE_EB
-        amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);        
         amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
-        amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
 #endif
 
         // Extract stencil coefficients
@@ -423,7 +426,8 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (Sx(i, j, 0) <= 0) return;
+                // In RZ, Br is associated with a z-edge
+                if (lz(i, j, 0) <= 0) return;
 #endif
                 Real const r = rmin + i*dr; // r on nodal point (Br is nodal in r)
                 if (r != 0) { // Off-axis, regular Maxwell equations
@@ -478,7 +482,8 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
-                if (Sz(i, j, 0) <= 0) return;
+                // (In RZ, Bz is associated with a x-edge.)
+                if (lx(i, j, 0) <= 0) return;
 #endif
                 Real const r = rmin + (i + 0.5)*dr; // r on a cell-centered grid (Bz is cell-centered in r)
                 Bz(i, j, 0, 0) += dt*( - T_Algo::UpwardDrr_over_r(Et, r, dr, coefs_r, n_coefs_r, i, j, 0, 0));
