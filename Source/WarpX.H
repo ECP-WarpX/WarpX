@@ -742,7 +742,9 @@ public:
      * \param[in] xfield_parser, parser function to initialize x-field
      * \param[in] yfield_parser, parser function to initialize y-field
      * \param[in] zfield_parser, parser function to initialize z-field
-     * \param[in] geom_data, geometric data, can be m_edge_lengths or m_face_areass
+     * \param[in] edge_lengths, edge lengths information
+     * \param[in] face_areas, face areas information
+     * \param[in] field, flag indicating which field is being initialized ('E' for electric, 'B' for magnetic)
      * \param[in] lev, level of the Multifabs that is initialized
      */
     void InitializeExternalFieldsOnGridUsingParser (
@@ -750,7 +752,10 @@ public:
          amrex::ParserExecutor<3> const& xfield_parser,
          amrex::ParserExecutor<3> const& yfield_parser,
          amrex::ParserExecutor<3> const& zfield_parser,
-         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& geom_data, const int lev);
+         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+         std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+         const char field,
+         const int lev);
 
     /**
      * \brief
