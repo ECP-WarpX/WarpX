@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 #
-# --- Input file for binary Coulomb collision testing. This input scripts
-# --- runs the same test as inputs_2d but via Python.
+# --- Input file for binary Coulomb collision testing. This input script
+# --- runs the same test as inputs_2d but via Python, therefore the input
+# --- values where directly copied from inputs_2d.
 
 from pywarpx import picmi
 
