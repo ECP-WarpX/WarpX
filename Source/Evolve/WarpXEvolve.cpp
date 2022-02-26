@@ -79,6 +79,8 @@ WarpX::Evolve (int numsteps)
         WARPX_PROFILE("WarpX::Evolve::step");
         Real evolve_time_beg_step = amrex::second();
 
+        CheckSignals();
+
         multi_diags->NewIteration();
 
         // Start loop on time steps
@@ -342,6 +344,8 @@ WarpX::Evolve (int numsteps)
         Real evolve_time_end_step = amrex::second();
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
+        HandleSignals();
+
         if (verbose) {
             amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
                         << " DT = " << dt[0] << "\n";
@@ -350,7 +354,7 @@ WarpX::Evolve (int numsteps)
                       << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n";
         }
 
-        if (cur_time >= stop_time - 1.e-3*dt[0]) {
+        if (cur_time >= stop_time - 1.e-3*dt[0] || signal_requested_break) {
             break;
         }
 
@@ -927,5 +931,49 @@ WarpX::applyMirrors(Real time){
                 NullifyMF(cBz, lev, z_min, z_max);
             }
         }
+    }
+}
+
+void
+WarpX::CheckSignals()
+{
+    // We assume that signals will definitely be delivered to rank 0,
+    // and may be delivered to other ranks as well. For coordination,
+    // we process them according to when they're received by rank 0.
+    if (amrex::ParallelDescriptor::MyProc() == 0)
+    {
+        for (int i = 0; i < 32; ++i)
+        {
+            // Read into a local temporary to ensure the same value is
+            // used throughout. Atomically exchange it with zero to
+            // unset the flag without risking loss of a signal - if a
+            // signal arrives after this, it will be handled the next
+            // time this function is called.
+            bool signal_i_received = signal_received_flags[i].exchange(false);
+
+            if (signal_i_received)
+            {
+                signal_requested_break |= signal_conf_requests_break[i];
+                signal_requested_checkpoint |= signal_conf_requests_checkpoint[i];
+            }
+        }
+    }
+
+    auto comm = amrex::ParallelDescriptor::Communicator();
+
+    MPI_Ibcast(&signal_requested_break     , 1, MPI_CXX_BOOL, 0, comm, &signal_mpi_ibcast_requests[0]);
+    MPI_Ibcast(&signal_requested_checkpoint, 1, MPI_CXX_BOOL, 0, comm, &signal_mpi_ibcast_requests[1]);
+}
+
+void
+WarpX::HandleSignals()
+{
+    MPI_Waitall(std::size(signal_mpi_ibcast_requests), signal_mpi_ibcast_requests, MPI_STATUSES_IGNORE);
+
+    // signal_requested_break is handled directly in WarpX::Evolve
+
+    if (signal_requested_checkpoint)
+    {
+        // do checkpoint stuff
     }
 }

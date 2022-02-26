@@ -951,6 +951,30 @@ private:
     // Singleton is used when the code is run from python
     static WarpX* m_instance;
 
+    /**
+     * Signal handling
+     *
+     * Rank 0 will accept signals and asynchronously broadcast the
+     * configured resposne; other processes will ignore them and
+     * follow the lead of rank 0 to avoid potential for deadlocks or
+     * timestep-skewed response.
+     *
+     * Variables and functions are static rather than per-instance
+     * because signal handlers are configured at the process level.
+     */
+    static void CheckSignals();
+    static void HandleSignals();
+    // Whether a given signal has been received since the last check
+    static std::atomic<bool> signal_received_flags[32];
+    // Whether configuration requests the code to break out of the timestep loop on a particular signal
+    static bool signal_conf_requests_break[32];
+    // Whether configuration requests the code to checkpoint at this timestep on a particular signal
+    static bool signal_conf_requests_checkpoint[32];
+    // MPI requests for the asynchronous broadcasts of the signal-requested actions
+    static MPI_Request signal_mpi_ibcast_requests[2];
+    static bool signal_requested_break;
+    static bool signal_requested_checkpoint;
+
     ///
     /// Advance the simulation by numsteps steps, electromagnetic case.
     ///
