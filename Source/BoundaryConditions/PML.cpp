@@ -434,7 +434,7 @@ SigmaBox::ComputePMLFactorsB (const Real* a_dx, Real dt)
         p_sigma_star_cumsum_fac[idim] = sigma_star_cumsum_fac[idim].data();
         p_sigma_star[idim] = sigma_star[idim].data();
         p_sigma_star_cumsum[idim] = sigma_star_cumsum[idim].data();
-        N[idim] = sigma_star[idim].size();
+        N[idim] = static_cast<int>(sigma_star[idim].size());
         dx[idim] = a_dx[idim];
     }
     amrex::ParallelFor(
@@ -468,7 +468,7 @@ SigmaBox::ComputePMLFactorsE (const Real* a_dx, Real dt)
         p_sigma_cumsum_fac[idim] = sigma_cumsum_fac[idim].data();
         p_sigma[idim] = sigma[idim].data();
         p_sigma_cumsum[idim] = sigma_cumsum[idim].data();
-        N[idim] = sigma[idim].size();
+        N[idim] = static_cast<int>(sigma[idim].size());
         dx[idim] = a_dx[idim];
     }
     amrex::ParallelFor(
