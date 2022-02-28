@@ -673,7 +673,7 @@ WarpX::OneStep_sub1 (Real curtime)
     const int fine_lev = finestLevel();
     const int coarse_lev = 0;
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(fine_lev== 1, "Must have exactly two levels");
-    
+
 
     // i) Push particles and fields on the fine patch (first fine step)
     PushParticlesandDepose(fine_lev, curtime, DtType::FirstHalf);
@@ -805,7 +805,7 @@ WarpX::OneStep_sub1 (Real curtime)
     }
     if ( safe_guard_cells )
         FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
-    
+
     if(istep[0]+1==end_fine_patch_step){
         SyncCurrent();
         SyncRho();
