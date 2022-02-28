@@ -940,10 +940,8 @@ WarpX::CheckSignals()
     // We assume that signals will definitely be delivered to rank 0,
     // and may be delivered to other ranks as well. For coordination,
     // we process them according to when they're received by rank 0.
-    if (amrex::ParallelDescriptor::MyProc() == 0)
-    {
-        for (int i = 0; i < 32; ++i)
-        {
+    if (amrex::ParallelDescriptor::MyProc() == 0) {
+        for (int i = 0; i < 32; ++i) {
             // Read into a local temporary to ensure the same value is
             // used throughout. Atomically exchange it with zero to
             // unset the flag without risking loss of a signal - if a
@@ -951,8 +949,7 @@ WarpX::CheckSignals()
             // time this function is called.
             bool signal_i_received = signal_received_flags[i].exchange(false);
 
-            if (signal_i_received)
-            {
+            if (signal_i_received) {
                 signal_requested_break |= signal_conf_requests_break[i];
                 signal_requested_checkpoint |= signal_conf_requests_checkpoint[i];
             }
@@ -972,8 +969,7 @@ WarpX::HandleSignals()
 
     // signal_requested_break is handled directly in WarpX::Evolve
 
-    if (signal_requested_checkpoint)
-    {
+    if (signal_requested_checkpoint) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
     }
 }
