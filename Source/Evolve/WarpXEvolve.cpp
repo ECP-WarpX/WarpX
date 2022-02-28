@@ -974,6 +974,6 @@ WarpX::HandleSignals()
 
     if (signal_requested_checkpoint)
     {
-        // do checkpoint stuff
+        multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
     }
 }
