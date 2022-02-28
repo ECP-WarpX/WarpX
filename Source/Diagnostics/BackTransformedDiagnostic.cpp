@@ -589,21 +589,10 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
 
     m_dz_lab_ = PhysConst::c * m_dt_boost_ * m_inv_beta_boost_ * m_inv_gamma_boost_;
     m_inv_dz_lab_ = 1.0_rt / m_dz_lab_;
-    int Nz_lab = static_cast<unsigned>((zmax_lab - zmin_lab) * m_inv_dz_lab_);
-#if (AMREX_SPACEDIM >= 2)
     int Nx_lab = geom.Domain().length(0);
-#endif
-#if defined(WARPX_DIM_3D)
     int Ny_lab = geom.Domain().length(1);
+    int Nz_lab = static_cast<unsigned>((zmax_lab - zmin_lab) * m_inv_dz_lab_);
     IntVect prob_ncells_lab = {Nx_lab, Ny_lab, Nz_lab};
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    // Ny_lab = 1;
-    IntVect prob_ncells_lab = {Nx_lab, Nz_lab};
-#else
-    // Nx_lab = 1;
-    // Ny_lab = 1;
-    IntVect prob_ncells_lab(Nz_lab);
-#endif
     writeMetaData();
 
     // Query fields to dump
@@ -668,7 +657,6 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
                                           ( (1._rt+m_beta_boost_)*m_gamma_boost_);
         auto Nz_slice_lab = static_cast<int>(
             (zmax_slice_lab - zmin_slice_lab) * m_inv_dz_lab_);
-#if (AMREX_SPACEDIM >= 2)
         auto Nx_slice_lab = static_cast<int>(
             (current_slice_hi[0] - current_slice_lo[0] ) /
             geom.CellSize(0));
@@ -676,8 +664,6 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
         // if the x-dimension is reduced, increase total_cells by 1
         // to be consistent with the number of cells created for the output.
         if (Nx_lab != Nx_slice_lab) Nx_slice_lab++;
-#endif
-#if defined(WARPX_DIM_3D)
         auto Ny_slice_lab = static_cast<int>(
             (current_slice_hi[1] - current_slice_lo[1]) /
             geom.CellSize(1));
@@ -686,11 +672,6 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
         // to be consistent with the number of cells created for the output.
         if (Ny_lab != Ny_slice_lab) Ny_slice_lab++;
         amrex::IntVect slice_ncells_lab = {Nx_slice_lab, Ny_slice_lab, Nz_slice_lab};
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::IntVect slice_ncells_lab = {Nx_slice_lab, Nz_slice_lab};
-#else
-        amrex::IntVect slice_ncells_lab(Nz_slice_lab);
-#endif
 
         IntVect slice_lo(AMREX_D_DECL(0,0,0));
         IntVect slice_hi(AMREX_D_DECL(1,1,1));

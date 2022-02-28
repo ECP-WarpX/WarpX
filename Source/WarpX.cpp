@@ -1496,13 +1496,11 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 {
     bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 
-#if   defined(WARPX_DIM_1D_Z)
-    amrex::RealVect dx(WarpX::CellSize(lev)[2]);
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[2]};
-#elif defined(WARPX_DIM_3D)
-    amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[1], WarpX::CellSize(lev)[2]};
-#endif
+    amrex::RealVect const dx = {
+        WarpX::CellSize(lev)[0],
+        WarpX::CellSize(lev)[1],
+        WarpX::CellSize(lev)[2]
+    };
 
     guard_cells.Init(
         dt[lev],
@@ -1573,29 +1571,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     amrex::IntVect F_nodal_flag, G_nodal_flag;
 
     // Set nodal flags
-#if   defined(WARPX_DIM_1D_Z)
-    // AMReX convention: x = missing dimension, y = missing dimension, z = only dimension
-    Ex_nodal_flag = IntVect(1);
-    Ey_nodal_flag = IntVect(1);
-    Ez_nodal_flag = IntVect(0);
-    Bx_nodal_flag = IntVect(0);
-    By_nodal_flag = IntVect(0);
-    Bz_nodal_flag = IntVect(1);
-    jx_nodal_flag = IntVect(1);
-    jy_nodal_flag = IntVect(1);
-    jz_nodal_flag = IntVect(0);
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    // AMReX convention: x = first dimension, y = missing dimension, z = second dimension
-    Ex_nodal_flag = IntVect(0,1);
-    Ey_nodal_flag = IntVect(1,1);
-    Ez_nodal_flag = IntVect(1,0);
-    Bx_nodal_flag = IntVect(1,0);
-    By_nodal_flag = IntVect(0,0);
-    Bz_nodal_flag = IntVect(0,1);
-    jx_nodal_flag = IntVect(0,1);
-    jy_nodal_flag = IntVect(1,1);
-    jz_nodal_flag = IntVect(1,0);
-#elif defined(WARPX_DIM_3D)
     Ex_nodal_flag = IntVect(0,1,1);
     Ey_nodal_flag = IntVect(1,0,1);
     Ez_nodal_flag = IntVect(1,1,0);
@@ -1605,7 +1580,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     jx_nodal_flag = IntVect(0,1,1);
     jy_nodal_flag = IntVect(1,0,1);
     jz_nodal_flag = IntVect(1,1,0);
-#endif
     rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
     phi_nodal_flag = IntVect::TheNodeVector();
     F_nodal_flag = amrex::IntVect::TheNodeVector();
