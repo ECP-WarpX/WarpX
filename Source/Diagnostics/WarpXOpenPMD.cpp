@@ -1176,40 +1176,39 @@ WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
 
     field_name += std::string("_lvl").append(std::to_string(meshLevel));
 }
-/*
+/* Split varname into name and theta mode mode index
  *
- *
+ * @param varname [IN]: variable name
+ * @param varname field_str_end_index [OUT] : if varname = fieldName_modeNumber_realOrImag,  index of underscore after fieldName, otherwise, varname.size()
+ * @param varname mode_index [OUT] : if varname = fieldName_modeNumber_realOrImag, returns 2 * modeNumber - 1 + (realOrImag == 'imag'), otherwise, -1
  */
-void
-GetFieldModeIndices(const std::string& varname,
-                   int& field_str_end_index,
-                   int& mode_index)
+std::tuple<int, int>
+GetFieldModeIndices (const std::string& varname)
 {
-    mode_index = -1;
-    field_str_end_index = varname.size();
+    int mode_index = -1;
+    int field_str_end_index = varname.size();
     if (varname.size() >= 6) {
         std::string real_imag = varname.substr(field_str_end_index - 4);
-        if (real_imag == "real") {
-            field_str_end_index -= 6;
-        } else if (real_imag == "imag") {
-            mode_index += 1;
-            field_str_end_index -= 6;
-        }
-        else {
-            return;
-        }
-        int num_mode_digits = 0;
-        while ( varname[field_str_end_index] != '_') {
-            field_str_end_index--;
-            num_mode_digits++;
-        }
-        int mode = std::stoi(varname.substr(field_str_end_index+1, num_mode_digits));
-        if (mode == 0) {
-            mode_index = 0;
-        } else {
-            mode_index += 2 * mode;
+        if (real_imag == "real" || real_imag == "imag") {
+            if (real_imag[0] == 'i') {
+                mode_index += 1;
+            }
+            field_str_end_index -= 6; // varname has form <varname>_modeNumber_realOrImag
+                                      // extracting modeNumber:
+            int num_mode_digits = 0;
+            while ( varname[field_str_end_index] != '_') {
+                field_str_end_index--;
+                num_mode_digits++;
+            }
+            int mode = std::stoi(varname.substr(field_str_end_index+1, num_mode_digits));
+            if (mode == 0) {
+                mode_index = 0;
+            } else {
+                mode_index += 2 * mode;
+            }
         }
     }
+    return std::make_tuple(field_str_end_index, mode_index);
 }
 /*
  * Write Field with all mesh levels
@@ -1263,11 +1262,11 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
         std::string const & varname = varnames[icomp];
 
         // assume fields are scalar unless they match the following match of known vector fields
-        int field_str_end_index = varname.size();
-#if defined(WARPX_DIM_RZ)
-        int mode_index;
-        GetFieldModeIndices(varname, field_str_end_index, mode_index);
-#endif
+        // int field_str_end_index = varname.size();
+// #if defined(WARPX_DIM_RZ)
+        // int mode_index;
+        auto [field_str_end_index, mode_index] = GetFieldModeIndices(varname);
+// #endif
         std::string field_name = varname.substr(0,field_str_end_index);
         std::string varname_no_mode = varname.substr(0,field_str_end_index);
         std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
@@ -1308,11 +1307,11 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
         std::string const & varname = varnames[icomp];
 
         // assume fields are scalar unless they match the following match of known vector fields
-        int field_str_end_index = varname.size();
-#if defined(WARPX_DIM_RZ)
-        int mode_index = 0;
-        GetFieldModeIndices(varname, field_str_end_index, mode_index);
-#endif
+//         int field_str_end_index = varname.size();
+// #if defined(WARPX_DIM_RZ)
+//         int mode_index = 0;
+        auto [field_str_end_index, mode_index] = GetFieldModeIndices(varname);
+// #endif
         std::string field_name = varname.substr(0,field_str_end_index);
         std::string varname_no_mode = varname.substr(0,field_str_end_index);
         std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
