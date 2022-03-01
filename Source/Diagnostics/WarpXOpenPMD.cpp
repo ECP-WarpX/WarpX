@@ -666,6 +666,11 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
+  AMREX_ALWAYS_ASSERT(write_real_comp.size() == pc->NumRealComps());
+  AMREX_ALWAYS_ASSERT( write_int_comp.size() == pc->NumIntComps());
+  AMREX_ALWAYS_ASSERT(real_comp_names.size() == pc->NumRealComps());
+  AMREX_ALWAYS_ASSERT( int_comp_names.size() == pc->NumIntComps());
+
   WarpXParticleCounter counter(pc);
   if (counter.GetTotalNumParticles() == 0) return;
   openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
