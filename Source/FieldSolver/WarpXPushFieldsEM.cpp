@@ -741,8 +741,8 @@ void
 WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->MacroscopicEvolveE( Efield_fp[lev], Bfield_fp[lev],
-                                             current_fp[lev], a_dt,
-                                             m_macroscopic_properties);
+                                             current_fp[lev], m_edge_lengths[lev],
+                                             a_dt, m_macroscopic_properties);
     }
     else {
         amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
