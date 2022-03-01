@@ -20,6 +20,7 @@
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
 #include <AMReX_Config.H>
+#include <AMReX_DataAllocator.H>
 #include <AMReX_FArrayBox.H>
 #include <AMReX_FabArray.H>
 #include <AMReX_GpuQualifiers.H>
@@ -39,6 +40,7 @@
 #include <cstdint>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <tuple>
@@ -664,6 +666,11 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
+  AMREX_ALWAYS_ASSERT(write_real_comp.size() == pc->NumRealComps());
+  AMREX_ALWAYS_ASSERT( write_int_comp.size() == pc->NumIntComps());
+  AMREX_ALWAYS_ASSERT(real_comp_names.size() == pc->NumRealComps());
+  AMREX_ALWAYS_ASSERT( int_comp_names.size() == pc->NumIntComps());
+
   WarpXParticleCounter counter(pc);
   if (counter.GetTotalNumParticles() == 0) return;
   openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
@@ -1247,11 +1254,29 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                 auto const chunk_offset = getReversedVec( box_offset );
                 auto const chunk_size = getReversedVec( local_box.size() );
 
-                amrex::Real const * local_data = fab.dataPtr( icomp );
-                mesh_comp.storeChunk( openPMD::shareRaw(local_data),
-                                      chunk_offset, chunk_size );
+                // we avoid relying on managed memory by copying explicitly to host
+                //   remove the copies and "streamSynchronize" if you like to pass
+                //   GPU pointers to the I/O library
+
+#ifdef AMREX_USE_GPU
+                if (fab.arena()->isManaged() || fab.arena()->isDevice()) {
+                    amrex::BaseFab<amrex::Real> foo(local_box, 1, amrex::The_Pinned_Arena());
+                    std::shared_ptr<amrex::Real> data_pinned(foo.release());
+                    amrex::Gpu::dtoh_memcpy_async(data_pinned.get(), fab.dataPtr(icomp), local_box.numPts()*sizeof(amrex::Real));
+                    // intentionally delayed until before we .flush(): amrex::Gpu::streamSynchronize();
+                    mesh_comp.storeChunk(data_pinned, chunk_offset, chunk_size);
+                } else
+#endif
+                {
+                    amrex::Real const *local_data = fab.dataPtr(icomp);
+                    mesh_comp.storeChunk(openPMD::shareRaw(local_data),
+                                         chunk_offset, chunk_size);
+                }
             }
     } // icomp loop
+#ifdef AMREX_USE_GPU
+    amrex::Gpu::streamSynchronize();
+#endif
     // Flush data to disk after looping over all components
     m_Series->flush();
   } // levels loop (i)

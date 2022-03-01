@@ -877,7 +877,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             {
                 auto index = overlap_box.index(iv);
                 if (lrefine_injection) {
-                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, shifted);
+                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, -shifted);
                     if (fine_overlap_box.ok()) {
                         int r = (fine_overlap_box.contains(iv)) ?
                             AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac) : 1;
@@ -952,7 +952,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
         int* pi = nullptr;
         if (do_field_ionization) {
-            pi = soa.GetIntData(particle_icomps["ionization_level"]).data() + old_size;
+            pi = soa.GetIntData(particle_icomps["ionizationLevel"]).data() + old_size;
         }
 
 #ifdef WARPX_QED
@@ -1398,7 +1398,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             {
                 auto index = overlap_box.index(iv);
                 if (lrefine_injection) {
-                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, shifted);
+                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, -shifted);
                     if (fine_overlap_box.ok()) {
                         int r = (fine_overlap_box.contains(iv)) ?
                             AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac) : 1;
@@ -1448,7 +1448,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
         int* p_ion_level = nullptr;
         if (do_field_ionization) {
-            p_ion_level = soa.GetIntData(particle_icomps["ionization_level"]).data() + old_size;
+            p_ion_level = soa.GetIntData(particle_icomps["ionizationLevel"]).data() + old_size;
         }
 
 #ifdef WARPX_QED
@@ -1744,8 +1744,8 @@ PhysicalParticleContainer::Evolve (int lev,
 
             const Box& box = pti.validbox();
 
+            // Extract particle data
             auto& attribs = pti.GetAttribs();
-
             auto&  wp = attribs[PIdx::w];
             auto& uxp = attribs[PIdx::ux];
             auto& uyp = attribs[PIdx::uy];
@@ -1790,7 +1790,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 //    and (thus) the `np-nfine_current`/`np-nfine_gather` last particles
                 //    deposit/gather in the buffer
                 PartitionParticlesInBuffers( nfine_current, nfine_gather, np,
-                    pti, lev, current_masks, gather_masks, uxp, uyp, uzp, wp );
+                    pti, lev, current_masks, gather_masks );
             }
 
             const long np_current = (cjx) ? nfine_current : np;
@@ -1799,7 +1799,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 // Deposit charge before particle push, in component 0 of MultiFab rho.
                 int* AMREX_RESTRICT ion_lev;
                 if (do_field_ionization){
-                    ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                    ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
                 } else {
                     ion_lev = nullptr;
                 }
@@ -1870,7 +1870,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 if (! skip_deposition) {
                     int* AMREX_RESTRICT ion_lev;
                     if (do_field_ionization){
-                        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                        ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
                     } else {
                         ion_lev = nullptr;
                     }
@@ -1893,7 +1893,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 if (WarpX::do_electrostatic == ElectrostaticSolverAlgo::None) {
                     int* AMREX_RESTRICT ion_lev;
                     if (do_field_ionization){
-                        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                        ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
                     } else {
                         ion_lev = nullptr;
                     }
@@ -2255,7 +2255,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization) {
-                ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
             }
 
             // Loop over the particles and update their momentum
@@ -2621,7 +2621,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     int* AMREX_RESTRICT ion_lev = nullptr;
     if (do_field_ionization) {
-        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr() + offset;
+        ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr() + offset;
     }
 
     const bool save_previous_position = m_save_previous_position;
@@ -2733,7 +2733,7 @@ PhysicalParticleContainer::InitIonizationModule ()
     pp_species_name.get("ionization_product_species", ionization_product_name);
     pp_species_name.get("physical_element", physical_element);
     // Add runtime integer component for ionization level
-    AddIntComp("ionization_level");
+    AddIntComp("ionizationLevel");
     // Get atomic number and ionization energies from file
     int const ion_element_id = ion_map_ids.at(physical_element);
     ion_atomic_number = ion_atomic_numbers[ion_element_id];
@@ -2802,7 +2802,7 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 adk_prefactor.dataPtr(),
                                 adk_exp_prefactor.dataPtr(),
                                 adk_power.dataPtr(),
-                                particle_icomps["ionization_level"],
+                                particle_icomps["ionizationLevel"],
                                 ion_atomic_number);
 }
 

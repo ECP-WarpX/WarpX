@@ -1,7 +1,10 @@
+amr.max_level = 1
+warpx.fine_tag_lo = 0.0  -0.5
+warpx.fine_tag_hi = 0.25  0.0
+
 max_step = 37
 
 amr.n_cell = 64 64
-amr.max_level = 0
 amr.blocking_factor = 8
 amr.max_grid_size = 128
 
