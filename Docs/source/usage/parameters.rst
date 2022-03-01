@@ -1408,7 +1408,16 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
     Only for ``background_mcc`` and ``background_stopping``. The mass of the background gas in kg.
     With ``background_mcc``, if not given the mass of the colliding species will be used unless ionization is
     included in which case the mass of the product species will be used.
-    With ``background_stopping``, if not given defaults to the electron mass.
+    With ``background_stopping``, and ``background_type`` set to ``electrons``, if not given defaults to the electron mass. With
+    ``background_type`` set to ``ions``, the mass must be given.
+
+* ``<collision_name>.background_charge_state`` (`float`)
+    Only for ``background_stopping``, where it is required when ``background_type`` is set to ``ions``.
+    This specifies the charge state of the background ions.
+
+* ``<collision_name>.background_type`` (`string`)
+    Only for ``background_stopping``, where it is required, the type of the background.
+    The possible values are ``electrons`` and ``ions``.
 
 * ``<collision_name>.scattering_processes`` (`strings` separated by spaces)
     Only for ``background_mcc``. The MCC scattering processes that should be

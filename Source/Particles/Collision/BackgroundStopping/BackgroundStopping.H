@@ -14,6 +14,12 @@
 
 #include <string>
 
+enum class BackgroundStoppingType {
+    INVALID,
+    ELECTRONS,
+    IONS,
+};
+
 class BackgroundStopping final
     : public CollisionBase
 {
@@ -30,22 +36,35 @@ public:
      */
     void doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc) override;
 
-    /** Perform the stopping calculation within a tile
+    /** Perform the stopping calculation within a tile for stopping on electrons
      *
      * @param pti particle iterator
+     * @param dt time step size
+     * @param t current simulation time
+     * @param species_mass mass of the active species
+     * @param species_charge charge of the active species
      *
      */
-    void doBackgroundStoppingWithinTile (WarpXParIter& pti, amrex::Real dt, amrex::Real t,
-                                         amrex::Real species_mass, amrex::Real species_charge);
+    void doBackgroundStoppingOnElectronsWithinTile (WarpXParIter& pti, amrex::Real dt, amrex::Real t,
+                                                    amrex::Real species_mass, amrex::Real species_charge);
+
+    /** Perform the stopping calculation within a tile for stopping on ions
+     *
+     * @param pti particle iterator
+     * @param dt time step size
+     * @param t current simulation time
+     * @param species_mass mass of the active species
+     * @param species_charge charge of the active species
+     *
+     */
+    void doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti, amrex::Real dt, amrex::Real t,
+                                               amrex::Real species_mass, amrex::Real species_charge);
 
 private:
 
-    amrex::Real m_background_temperature;
-    amrex::Real m_background_density;
     amrex::Real m_background_mass;
-
-    bool m_background_density_is_parsed;
-    bool m_background_temperature_is_parsed;
+    amrex::Real m_background_charge_state;
+    BackgroundStoppingType m_background_type;
 
     amrex::Parser m_background_density_parser;
     amrex::Parser m_background_temperature_parser;
