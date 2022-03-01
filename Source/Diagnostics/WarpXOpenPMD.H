@@ -183,7 +183,8 @@ private:
   void SetupMeshComp (
       openPMD::Mesh& mesh,
       amrex::Geometry& full_geom,
-      openPMD::MeshRecordComponent& mesh_comp
+      openPMD::MeshRecordComponent& mesh_comp,
+      bool var_in_theta_mode
   ) const;
 
   void GetMeshCompNames (
