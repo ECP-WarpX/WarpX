@@ -913,7 +913,8 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
   auto const& soa = pti.GetStructOfArrays();
   // first we concatinate the AoS into contiguous arrays
   {
-    for( auto idx=0; idx<ParticleIter::ContainerType::NStructReal; idx++ ) {
+    // note: WarpX does not yet use extra AoS Real attributes
+    for( auto idx=0; idx<ParticleIter::ContainerType::NStructReal; idx++ ) {  // lgtm [cpp/constant-comparison]
       if( write_real_comp[idx] ) {
           // handle scalar and non-scalar records by name
           const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[idx]);
