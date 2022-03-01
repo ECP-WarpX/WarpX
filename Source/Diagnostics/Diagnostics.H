@@ -61,7 +61,16 @@ public:
      * during the simulation to load-balance.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
-    virtual void InitializeFieldFunctors (int lev) = 0;
+    virtual void InitializeFieldFunctors (int lev) = 0;    
+    /** Initialize functors that store pointers to the fields requested by the user.
+     *
+     * Derived classes MUST implement this function, and it must allocate m_all_field_functors
+     * and fill it with ComputeDiagFunctor objects.
+     * The functions is called at intiailization and when the domain is decomposed
+     * during the simulation to load-balance.
+     * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+     */
+    virtual void InitializeFieldFunctorsRZ (int lev) {};
     /** Initialize functors that store pointers to the species data requested by the user. */
     virtual void InitializeParticleFunctors () {}
     /** whether to compute and pack data in output buffers at this time step
