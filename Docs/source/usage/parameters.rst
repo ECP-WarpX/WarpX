@@ -1909,14 +1909,12 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
-    Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe.
-    Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
+    Possible scalar fields: ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe.
+    Possible vector field components in Cartesian geometry: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz``.
+    Possible vector field components in RZ geometry: ``Er`` ``Et`` ``Ez`` ``Br`` ``Bt`` ``Bz`` ``jr`` ``jt`` ``jz``.
+    Default in Cartesian geometry is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
+    Default in RZ geometry is ``<diag_name>.fields_to_plot = Er Et Ez Br Bt Bz jr jt jz``.
     Note that the fields are averaged on the cell centers before they are written to file.
-
-.. Note ::
-
-    When using the RZ mode with ``diag1.format = openpmd``, only the cylindrical vector field components ``r``, ``t``, and ``z`` are dumped to file.
-    Even if requested, the cartesian components will be ignored.  Also, only the ``rho`` and ``divE`` scalar fields can be dumped.
 
 * ``<diag_name>.dump_rz_modes`` (`0` or `1`) optional (default `0` for all but openPMD)
     In RZ, by default we reconstruct a 2D Cartesian slice of the fields for output at :math:`\theta=0`.
