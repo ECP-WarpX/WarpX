@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2019 Jean-Luc Vay, Maxence Thevenet, Remi Lehe
+# Copyright 2019-2022 Jean-Luc Vay, Maxence Thevenet, Remi Lehe, Axel Huebl
 #
 #
 # This file is part of WarpX.
@@ -13,6 +13,7 @@
 # $$ E_x = \epsilon \,\frac{m_e c^2 k_x}{q_e}\sin(k_x x)\cos(k_y y)\cos(k_z z)\sin( \omega_p t)$$
 # $$ E_y = \epsilon \,\frac{m_e c^2 k_y}{q_e}\cos(k_x x)\sin(k_y y)\cos(k_z z)\sin( \omega_p t)$$
 # $$ E_z = \epsilon \,\frac{m_e c^2 k_z}{q_e}\cos(k_x x)\cos(k_y y)\sin(k_z z)\sin( \omega_p t)$$
+import os
 import re
 import sys
 
@@ -23,7 +24,6 @@ import matplotlib.pyplot as plt
 import yt
 
 yt.funcs.mylog.setLevel(50)
-import os
 
 import numpy as np
 from scipy.constants import c, e, epsilon_0, m_e
@@ -151,8 +151,8 @@ if current_correction or vay_deposition:
     assert( error_rel < tolerance )
 
 if div_cleaning:
-    ds_old = yt.load('Langmuir_multi_psatd_div_cleaning_plt00038')
-    ds_mid = yt.load('Langmuir_multi_psatd_div_cleaning_plt00039')
+    ds_old = yt.load('Langmuir_multi_psatd_div_cleaning_plt000038')
+    ds_mid = yt.load('Langmuir_multi_psatd_div_cleaning_plt000039')
     ds_new = yt.load(fn) # this is the last plotfile
 
     ad_old = ds_old.covering_grid(level = 0, left_edge = ds_old.domain_left_edge, dims = ds_old.domain_dimensions)
