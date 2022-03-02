@@ -24,10 +24,6 @@ import yt
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-# gamma threshold to switch between the relativistic expression of
-# the kinetic energy and its Taylor expansion.
-gamma_relativistic_threshold = 1.005
-
 def do_analysis(single_precision = False):
     fn = sys.argv[1]
 
@@ -148,9 +144,6 @@ def do_analysis(single_precision = False):
     error = dict()
     tolerance = 5e-3 if single_precision else 1e-12
 
-    # The comparison of field energies requires a large tolerance,
-    # because the field energy from the plotfiles is computed from cell-centered data,
-    # while the field energy from the reduced diagnostics is computed from (Yee) staggered data.
     for k in values_yt.keys():
         # check that the zeros line up, since we'll be ignoring them in the error calculation
         assert(np.all((values_yt[k] == 0) == (values_rd[k] == 0)))
