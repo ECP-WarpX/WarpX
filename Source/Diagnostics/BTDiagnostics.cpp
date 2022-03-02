@@ -701,7 +701,7 @@ BTDiagnostics::Flush (int i_buffer)
     auto & warpx = WarpX::GetInstance();
     std::string file_name = m_file_prefix;
     if (m_format=="plotfile") {
-        file_name = amrex::Concatenate(m_file_prefix,i_buffer,5);
+        file_name = amrex::Concatenate(m_file_prefix, i_buffer, m_file_min_digits);
         file_name = file_name+"/buffer";
     }
     SetSnapshotFullStatus(i_buffer);
@@ -742,13 +742,13 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
     const amrex::Vector<int> iteration = warpx.getistep();
     if (amrex::ParallelContext::IOProcessorSub()) {
         // Path to final snapshot plotfiles
-        std::string snapshot_path = amrex::Concatenate(m_file_prefix,i_snapshot,5);
+        std::string snapshot_path = amrex::Concatenate(m_file_prefix, i_snapshot, m_file_min_digits);
         // BTD plotfile have only one level, Level0.
         std::string snapshot_Level0_path = snapshot_path + "/Level_0";
         std::string snapshot_Header_filename = snapshot_path + "/Header";
         // Path of the buffer recently flushed
         std::string BufferPath_prefix = snapshot_path + "/buffer";
-        const std::string recent_Buffer_filepath = amrex::Concatenate(BufferPath_prefix,iteration[0]);
+        const std::string recent_Buffer_filepath = amrex::Concatenate(BufferPath_prefix,iteration[0], m_file_min_digits);
         // Header file of the recently flushed buffer
         std::string recent_Header_filename = recent_Buffer_filepath+"/Header";
         std::string recent_Buffer_Level0_path = recent_Buffer_filepath + "/Level_0";
@@ -786,9 +786,9 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                                                   + Buffer_FabHeader.FabName(0);
             // Existing snapshot Fab Header Filename
             std::string snapshot_FabHeaderFilename = snapshot_Level0_path + "/Cell_H";
-            std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_",m_buffer_flush_counter[i_snapshot], 5);
+            std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_",m_buffer_flush_counter[i_snapshot], m_file_min_digits);
             // Name of the newly appended fab in the snapshot
-            std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_",m_buffer_flush_counter[i_snapshot],5);
+            std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_",m_buffer_flush_counter[i_snapshot],m_file_min_digits);
 
             if ( m_buffer_flush_counter[i_snapshot] == 0) {
                 std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
@@ -820,14 +820,19 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                                                      m_output_species_names[i]);
             BufferSpeciesHeader.ReadHeader();
             // only one box is flushed out at a time
-            std::string recent_ParticleDataFilename = amrex::Concatenate(recent_species_prefix + "/Level_0/DATA_",BufferSpeciesHeader.m_which_data[0][0]);
+            std::string recent_ParticleDataFilename = amrex::Concatenate(
+                recent_species_prefix + "/Level_0/DATA_",
+                BufferSpeciesHeader.m_which_data[0][0],
+                m_file_min_digits);
             // Path to snapshot particle files
             std::string snapshot_species_path = snapshot_path + "/" + m_output_species_names[i];
             std::string snapshot_species_Level0path = snapshot_species_path + "/Level_0";
             std::string snapshot_species_Header = snapshot_species_path + "/Header";
             std::string snapshot_ParticleHdrFilename = snapshot_species_Level0path + "/Particle_H";
-            std::string snapshot_ParticleDataFilename = amrex::Concatenate(snapshot_species_Level0path + "/DATA_",m_buffer_flush_counter[i_snapshot],5);
-
+            std::string snapshot_ParticleDataFilename = amrex::Concatenate(
+                snapshot_species_Level0path + "/DATA_",
+                m_buffer_flush_counter[i_snapshot],
+                m_file_min_digits);
 
             if (m_buffer_flush_counter[i_snapshot] == 0) {
                 BufferSpeciesHeader.set_DataIndex(0,0,m_buffer_flush_counter[i_snapshot]);
