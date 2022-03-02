@@ -38,8 +38,9 @@ public:
 private:
     int const m_lev; /**< level on which mf_src is defined */
     int const m_ispec; /**< index of species to average over */
+    /** Parser function to be averaged by the functor. Arguments: x, y, z, ux, uy, uz */
     std::unique_ptr<amrex::Parser> m_map_fn_parser;
-    /** Parser function that takes x, y, z, ux, uz, uz */
+    /** Compiled #m_map_fn_parser */
     amrex::ParserExecutor<6> m_map_fn;
 };
 
