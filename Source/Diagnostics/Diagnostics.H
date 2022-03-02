@@ -61,7 +61,7 @@ public:
      * during the simulation to load-balance.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
-    virtual void InitializeFieldFunctors (int lev) = 0;    
+    virtual void InitializeFieldFunctors (int lev) = 0;
     /** Initialize functors that store pointers to the fields requested by the user.
      *
      * Derived classes MUST implement this function, and it must allocate m_all_field_functors

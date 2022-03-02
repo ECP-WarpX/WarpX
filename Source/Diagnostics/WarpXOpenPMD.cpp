@@ -1278,7 +1278,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                 if (comp_name == openPMD::MeshRecordComponent::SCALAR) {
                     auto meshes_it = meshes.find(field_name);
                     if (meshes_it == meshes.end()) {
-                        auto mesh = meshes[field_name];          
+                        auto mesh = meshes[field_name];
                         auto mesh_comp = mesh[comp_name];
 
                         SetupMeshComp( mesh, full_geom, mesh_comp, var_in_theta_mode );
@@ -1302,9 +1302,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                         mesh_comp.setPosition( relative_cell_pos );
                     }
                 }
-            } 
+            }
         } // icomp setup loop
-    
+
         for ( int icomp=0; icomp<ncomp; icomp++ ) {
             std::string const & varname = varnames[icomp];
 
@@ -1317,7 +1317,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
             // assume fields are scalar unless they match the following match of known vector fields
             GetMeshCompNames( i, varname_no_mode, field_name, comp_name );
 
-            auto mesh = meshes[field_name];          
+            auto mesh = meshes[field_name];
             auto mesh_comp = mesh[comp_name];
 
             // Loop through the multifab, and store each box as a chunk,
