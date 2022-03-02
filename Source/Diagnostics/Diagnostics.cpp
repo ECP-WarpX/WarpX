@@ -132,11 +132,9 @@ Diagnostics::BaseReadParameters ()
         p_species_name_is_wrong = true;
         // Loop over all species
         for (int i = 0, n = int(m_all_species_names.size()); i < n; i++) {
-            // Check if species name extracted from the string rho_<species_name>
-            // matches any of the species in the simulation
             if (species == m_all_species_names[i]) {
-                // Store species index: will be used in RhoFunctor to dump
-                // rho for this species
+                // Store species index: will be used in ParticleReductionFunctor to calculate
+                // averages for this species
                 m_pfield_species_index.push_back(i);
                 p_species_name_is_wrong = false;
             }
