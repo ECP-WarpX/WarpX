@@ -815,7 +815,7 @@ Particle initialization
 
       .. math::
 
-          n = n_0 n(x,y) n(z)
+          n = n_0 n(x,y) n(z-z_0)
 
       with
 
@@ -824,7 +824,7 @@ Particle initialization
           n(x,y) = 1 + 4\frac{x^2+y^2}{k_p^2 R_c^4}
 
       where :math:`k_p` is the plasma wavenumber associated with density :math:`n_0`.
-      Here, :math:`n(z)` is a cosine-like up-ramp from :math:`0` to :math:`L_{ramp,up}`,
+      Here, with :math:`z_0` as the start of the plasma, :math:`n(z-z_0)` is a cosine-like up-ramp from :math:`0` to :math:`L_{ramp,up}`,
       constant to :math:`1` from :math:`L_{ramp,up}` to :math:`L_{ramp,up} + L_{plateau}`
       and a cosine-like down-ramp from :math:`L_{ramp,up} + L_{plateau}` to
       :math:`L_{ramp,up} + L_{plateau}+L_{ramp,down}`. All parameters are given
@@ -835,7 +835,7 @@ Particle initialization
 
     * If ``species_name.predefined_profile_name`` is ``parabolic_channel``,
       ``predefined_profile_params`` contains a space-separated list of the
-      following parameters, in this order: :math:`L_{ramp,up}` :math:`L_{plateau}`
+      following parameters, in this order: :math:`z_0` :math:`L_{ramp,up}` :math:`L_{plateau}`
       :math:`L_{ramp,down}` :math:`R_c` :math:`n_0`
 
 * ``<species_name>.do_backward_propagation`` (`bool`)
@@ -1396,9 +1396,15 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
 
 * ``<collision_name>.background_density`` (`float`)
     Only for ``background_mcc``. The density of the neutral background gas in :math:`m^{-3}`.
+    Can also provide ``<collision_name>.background_density(x,y,z,t)`` using the parser
+    initialization style for spatially and temporally varying density. If a function
+    is used for the background density, the input parameter ``<collision_name>.max_background_density``
+    must also be provided to calculate the maximum collision probability.
 
 * ``<collision_name>.background_temperature`` (`float`)
     Only for ``background_mcc``. The temperature of the neutral background gas in Kelvin.
+    Can also provide ``<collision_name>.background_temperature(x,y,z,t)`` using the parser
+    initialization style for spatially and temporally varying temperature.
 
 * ``<collision_name>.background_mass`` (`float`) optional
     Only for ``background_mcc``. The mass of the background gas in kg. If not

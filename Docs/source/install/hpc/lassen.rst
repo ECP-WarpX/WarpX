@@ -88,3 +88,20 @@ regime), the following set of parameters provided good performance:
   node)
 
 * **Two `128x128x128` grids per GPU**, or **one `128x128x256` grid per GPU**.
+
+
+.. _building-lassen-issues:
+
+Known System Issues
+-------------------
+
+.. warning::
+
+   Feb 17th, 2022 (INC0278922):
+   The implementation of AllGatherv in IBM's MPI optimization library "libcollectives" is broken and leads to HDF5 crashes for multi-node runs.
+
+   Our batch script templates above `apply this work-around <https://github.com/ECP-WarpX/WarpX/pull/2874>`__ *before* the call to ``jsrun``, which avoids the broken routines from IBM and trades them for an OpenMPI implementation of collectives:
+
+   .. code-block:: bash
+
+      export OMPI_MCA_coll_ibm_skip_allgatherv=true

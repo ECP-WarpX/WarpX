@@ -422,7 +422,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
             diag_dom.setLo( idim, warpx.Geom(lev).ProbLo(idim) +
                 ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim));
             diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) +
-                (ba.getCellCenteredBox( ba.size()-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
+                (ba.getCellCenteredBox( static_cast<int>(ba.size())-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
         }
     }
 
@@ -436,7 +436,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
     int ngrow = (m_format == "sensei" || m_format == "ascent") ? 1 : 0;
     // The zero is hard-coded since the number of output buffers = 1 for FullDiagnostics
-    m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow);
+    m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, static_cast<int>(m_varnames.size()), ngrow);
 
 
     if (lev == 0) {
@@ -469,7 +469,8 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
     int i = 0;
     m_all_field_functors[lev].resize( m_varnames.size() );
     // Fill vector of functors for all components except individual cylindrical modes.
-    for (int comp=0, n=m_all_field_functors[lev].size(); comp<n; comp++){
+    const auto n = static_cast<int>(m_all_field_functors[lev].size());
+    for (int comp=0; comp<n; comp++){
         if        ( m_varnames[comp] == "Ex" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "Ey" ){

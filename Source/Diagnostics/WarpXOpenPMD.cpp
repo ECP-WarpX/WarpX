@@ -20,6 +20,7 @@
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
 #include <AMReX_Config.H>
+#include <AMReX_DataAllocator.H>
 #include <AMReX_FArrayBox.H>
 #include <AMReX_FabArray.H>
 #include <AMReX_GpuQualifiers.H>
@@ -39,6 +40,7 @@
 #include <cstdint>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <tuple>
@@ -664,6 +666,11 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
+  AMREX_ALWAYS_ASSERT(write_real_comp.size() == pc->NumRealComps());
+  AMREX_ALWAYS_ASSERT( write_int_comp.size() == pc->NumIntComps());
+  AMREX_ALWAYS_ASSERT(real_comp_names.size() == pc->NumRealComps());
+  AMREX_ALWAYS_ASSERT( int_comp_names.size() == pc->NumIntComps());
+
   WarpXParticleCounter counter(pc);
   if (counter.GetTotalNumParticles() == 0) return;
   openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
@@ -717,7 +724,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
       m_doParticleSetUp = true;
   }
   SetupPos(currSpecies, NewParticleVectorSize, charge, mass, isBTD);
-  SetupRealProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, NewParticleVectorSize, isBTD);
+  SetupRealProperties(pc, currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, NewParticleVectorSize, isBTD);
   // open files from all processors, in case some will not contribute below
   m_Series->flush();
   for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++)
@@ -814,7 +821,8 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 }
 
 void
-WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
+WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
+                      openPMD::ParticleSpecies& currSpecies,
                       const amrex::Vector<int>& write_real_comp,
                       const amrex::Vector<std::string>& real_comp_names,
                       const amrex::Vector<int>& write_int_comp,
@@ -849,9 +857,10 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
 
     // attributes need to be set only the first time BTD flush is called for a snapshot
     if (isBTD and m_doParticleSetUp == false) return;
+
     std::set< std::string > addedRecords; // add meta-data per record only once
-    for (auto idx=0; idx<m_NumSoARealAttributes; idx++) {
-        auto ii = m_NumAoSRealAttributes + idx; // jump over AoS names
+    for (auto idx=0; idx<pc->NumRealComps(); idx++) {
+        auto ii = ParticleContainer::NStructReal + idx; // jump over extra AoS names
         if (write_real_comp[ii]) {
             // handle scalar and non-scalar records by name
             const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[ii]);
@@ -873,7 +882,7 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
         }
     }
     for (auto idx=0; idx<int_counter; idx++) {
-        auto ii = m_NumAoSIntAttributes + idx; // jump over AoS names
+        auto ii = ParticleContainer::NStructInt + idx; // jump over extra AoS names
         if (write_int_comp[ii]) {
             // handle scalar and non-scalar records by name
             const auto [record_name, component_name] = detail::name2openPMD(int_comp_names[ii]);
@@ -903,20 +912,14 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
                        amrex::Vector<std::string> const& int_comp_names) const
 
 {
-  int numOutputReal = 0;
-  int const totalRealAttrs = m_NumAoSRealAttributes + m_NumSoARealAttributes;
-
-  for( int i = 0; i < totalRealAttrs; ++i )
-    if( write_real_comp[i] )
-      ++numOutputReal;
-
   auto const numParticleOnTile = pti.numParticles();
   uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
   auto const& aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
   auto const& soa = pti.GetStructOfArrays();
   // first we concatinate the AoS into contiguous arrays
   {
-    for( auto idx=0; idx<m_NumAoSRealAttributes; idx++ ) {
+    // note: WarpX does not yet use extra AoS Real attributes
+    for( auto idx=0; idx<ParticleIter::ContainerType::NStructReal; idx++ ) {  // lgtm [cpp/constant-comparison]
       if( write_real_comp[idx] ) {
           // handle scalar and non-scalar records by name
           const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[idx]);
@@ -947,7 +950,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
   {
     auto const real_counter = std::min(write_real_comp.size(), real_comp_names.size());
     for (auto idx=0; idx<real_counter; idx++) {
-      auto ii = m_NumAoSRealAttributes + idx;
+      auto ii = ParticleIter::ContainerType::NStructReal + idx;  // jump over extra AoS names
       if (write_real_comp[ii]) {
         getComponentRecord(real_comp_names[ii]).storeChunk(openPMD::shareRaw(soa.GetRealData(idx)),
           {offset}, {numParticleOnTile64});
@@ -958,7 +961,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
   {
     auto const int_counter = std::min(write_int_comp.size(), int_comp_names.size());
     for (auto idx=0; idx<int_counter; idx++) {
-      auto ii = m_NumAoSIntAttributes + idx; // jump over AoS names
+      auto ii = ParticleIter::ContainerType::NStructInt + idx;  // jump over extra AoS names
       if (write_int_comp[ii]) {
         getComponentRecord(int_comp_names[ii]).storeChunk(openPMD::shareRaw(soa.GetIntData(idx)),
           {offset}, {numParticleOnTile64});
@@ -1107,37 +1110,36 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
                                  openPMD::MeshRecordComponent& mesh_comp,
                                  bool var_in_theta_mode) const
 {
-        amrex::Box const & global_box = full_geom.Domain();
-        auto global_size = getReversedVec(global_box.size());
+    amrex::Box const & global_box = full_geom.Domain();
+    auto global_size = getReversedVec(global_box.size());
 #if defined(WARPX_DIM_RZ)
-        auto & warpx = WarpX::GetInstance();
-        int n_rz_mode_inds = 2 * warpx.n_rz_azimuthal_modes - 1;
-        if (var_in_theta_mode) {
-                global_size.emplace(global_size.begin(), n_rz_mode_inds);
-        }
+    auto & warpx = WarpX::GetInstance();
+    int n_rz_mode_inds = 2 * warpx.n_rz_azimuthal_modes - 1;
+    if (var_in_theta_mode) {
+            global_size.emplace(global_size.begin(), n_rz_mode_inds);
+    }
 #endif
-        // - Grid spacing
-        std::vector<double> const grid_spacing = getReversedVec(full_geom.CellSize());
-        // - Global offset
-        std::vector<double> const global_offset = getReversedVec(full_geom.ProbLo());
-        // - AxisLabels
-        std::vector<std::string> axis_labels = detail::getFieldAxisLabels();
+    // - Grid spacing
+    std::vector<double> const grid_spacing = getReversedVec(full_geom.CellSize());
+    // - Global offset
+    std::vector<double> const global_offset = getReversedVec(full_geom.ProbLo());
+    // - AxisLabels
+    std::vector<std::string> axis_labels = detail::getFieldAxisLabels();
 
-        // Prepare the type of dataset that will be written
-        openPMD::Datatype const datatype = openPMD::determineDatatype<amrex::Real>();
-        auto const dataset = openPMD::Dataset(datatype, global_size);
+    // Prepare the type of dataset that will be written
+    openPMD::Datatype const datatype = openPMD::determineDatatype<amrex::Real>();
+    auto const dataset = openPMD::Dataset(datatype, global_size);
 
-        mesh.setDataOrder(openPMD::Mesh::DataOrder::C);
+    mesh.setDataOrder(openPMD::Mesh::DataOrder::C);
 #if defined(WARPX_DIM_RZ)
-        mesh.setGeometry("thetaMode");
-        mesh.setGeometryParameters("m=" + std::to_string(WarpX::n_rz_azimuthal_modes) + ";imag=+");
+    mesh.setGeometry("thetaMode");
+    mesh.setGeometryParameters("m=" + std::to_string(WarpX::n_rz_azimuthal_modes) + ";imag=+");
 #endif
-        mesh.setAxisLabels(axis_labels);
-        mesh.setGridSpacing(grid_spacing);
-        mesh.setGridGlobalOffset(global_offset);
-        mesh.setAttribute("fieldSmoothing", "none");
-        mesh_comp.resetDataset(dataset);
-
+    mesh.setAxisLabels(axis_labels);
+    mesh.setGridSpacing(grid_spacing);
+    mesh.setGridGlobalOffset(global_offset);
+    mesh.setAttribute("fieldSmoothing", "none");
+    mesh_comp.resetDataset(dataset);
 }
 
 /*
@@ -1175,7 +1177,7 @@ WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
     }
 
     if ( 0 == meshLevel )
-      return;
+        return;
 
     field_name += std::string("_lvl").append(std::to_string(meshLevel));
 }
@@ -1226,126 +1228,144 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                       const double time, bool isBTD,
                       const amrex::Geometry& full_BTD_snapshot ) const
 {
-  //This is AMReX's tiny profiler. Possibly will apply it later
-  WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
+    //This is AMReX's tiny profiler. Possibly will apply it later
+    WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
 
-  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
 
-  // is this either a regular write (true) or the first write in a
-  // backtransformed diagnostic (BTD):
-  bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
+    // is this either a regular write (true) or the first write in a
+    // backtransformed diagnostic (BTD):
+    bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
 
-  // meta data
-  openPMD::Iteration series_iteration = GetIteration(m_CurrentStep, isBTD);
+    // meta data
+    openPMD::Iteration series_iteration = GetIteration(m_CurrentStep, isBTD);
 
-  // collective open
-  series_iteration.open();
+    // collective open
+    series_iteration.open();
 
-  auto meshes = series_iteration.meshes;
-  if (first_write_to_iteration) {
-    // lets see whether full_geom varies from geom[0]   xgeom[1]
-    series_iteration.setTime( time );
-  }
+    auto meshes = series_iteration.meshes;
+    if (first_write_to_iteration) {
+        // lets see whether full_geom varies from geom[0]   xgeom[1]
+        series_iteration.setTime( time );
+    }
 
-  for (int i=0; i<geom.size(); i++) {
-    amrex::Geometry full_geom = geom[i];
-    if( isBTD )
-      full_geom = full_BTD_snapshot;
+    for (int i=0; i<geom.size(); i++) {
+        amrex::Geometry full_geom = geom[i];
+        if( isBTD )
+            full_geom = full_BTD_snapshot;
 
-    // setup is called once. So it uses property "period" from first
-    // geometry for <all> field levels.
-    if ( (0 == i) && first_write_to_iteration )
-      SetupFields(meshes, full_geom);
+        // setup is called once. So it uses property "period" from first
+        // geometry for <all> field levels.
+        if ( (0 == i) && first_write_to_iteration )
+            SetupFields(meshes, full_geom);
 
-    amrex::Box const & global_box = full_geom.Domain();
-    auto const global_size = getReversedVec(global_box.size());
+        amrex::Box const & global_box = full_geom.Domain();
+        auto const global_size = getReversedVec(global_box.size());
 
-    int const ncomp = mf[i].nComp();
-    for ( int icomp=0; icomp<ncomp; icomp++ ) {
-        std::string const & varname = varnames[icomp];
+        int const ncomp = mf[i].nComp();
+        for ( int icomp=0; icomp<ncomp; icomp++ ) {
+            std::string const & varname = varnames[icomp];
 
-        auto [field_str_end_index, mode_index] = GetFieldModeIndices(varname);
-        bool var_in_theta_mode = field_str_end_index < varname.size();
-        std::string field_name = varname.substr(0,field_str_end_index);
-        std::string varname_no_mode = varname.substr(0,field_str_end_index);
-        std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
-        // assume fields are scalar unless they match the following match of known vector fields
-        GetMeshCompNames( i, varname_no_mode, field_name, comp_name );
-        if ( first_write_to_iteration )
-        {
-            if (comp_name == openPMD::MeshRecordComponent::SCALAR) {
-                auto meshes_it = meshes.find(field_name);
-                if (meshes_it == meshes.end()) {
-                    auto mesh = meshes[field_name];          
-                    auto mesh_comp = mesh[comp_name];
+            auto [field_str_end_index, mode_index] = GetFieldModeIndices(varname);
+            bool var_in_theta_mode = field_str_end_index < varname.size();
+            std::string field_name = varname.substr(0,field_str_end_index);
+            std::string varname_no_mode = varname.substr(0,field_str_end_index);
+            std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
+            // assume fields are scalar unless they match the following match of known vector fields
+            GetMeshCompNames( i, varname_no_mode, field_name, comp_name );
+            if ( first_write_to_iteration )
+            {
+                if (comp_name == openPMD::MeshRecordComponent::SCALAR) {
+                    auto meshes_it = meshes.find(field_name);
+                    if (meshes_it == meshes.end()) {
+                        auto mesh = meshes[field_name];          
+                        auto mesh_comp = mesh[comp_name];
 
-                    SetupMeshComp( mesh, full_geom, mesh_comp, var_in_theta_mode ); // TODO: handle RZ components
-                    detail::setOpenPMDUnit( mesh, field_name );
+                        SetupMeshComp( mesh, full_geom, mesh_comp, var_in_theta_mode );
+                        detail::setOpenPMDUnit( mesh, field_name );
 
-                    auto relative_cell_pos = utils::getRelativeCellPosition(mf[i]);     // AMReX Fortran index order
-                    std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
-                    mesh_comp.setPosition( relative_cell_pos );
+                        auto relative_cell_pos = utils::getRelativeCellPosition(mf[i]);     // AMReX Fortran index order
+                        std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
+                        mesh_comp.setPosition( relative_cell_pos );
+                    }
+                } else {
+                    auto mesh = meshes[field_name];
+                    auto mesh_it = mesh.find(comp_name);
+                    if (mesh_it == mesh.end()) {
+                        auto mesh_comp = mesh[comp_name];
+
+                        SetupMeshComp( mesh, full_geom, mesh_comp, var_in_theta_mode);
+                        detail::setOpenPMDUnit( mesh, field_name );
+
+                        auto relative_cell_pos = utils::getRelativeCellPosition(mf[i]);     // AMReX Fortran index order
+                        std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
+                        mesh_comp.setPosition( relative_cell_pos );
+                    }
                 }
-            } else {
-                auto mesh = meshes[field_name];
-                auto mesh_it = mesh.find(comp_name);
-                if (mesh_it == mesh.end()) {
-                    auto mesh_comp = mesh[comp_name];
-
-                    SetupMeshComp( mesh, full_geom, mesh_comp, var_in_theta_mode); // TODO: handle RZ components
-                    detail::setOpenPMDUnit( mesh, field_name );
-
-                    auto relative_cell_pos = utils::getRelativeCellPosition(mf[i]);     // AMReX Fortran index order
-                    std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
-                    mesh_comp.setPosition( relative_cell_pos );
-                }
-            }
-        } 
-    } // icomp setup loop
+            } 
+        } // icomp setup loop
     
-    for ( int icomp=0; icomp<ncomp; icomp++ ) {
-        std::string const & varname = varnames[icomp];
+        for ( int icomp=0; icomp<ncomp; icomp++ ) {
+            std::string const & varname = varnames[icomp];
 
-        // assume fields are scalar unless they match the following match of known vector fields
-//         int field_str_end_index = varname.size();
-// #if defined(WARPX_DIM_RZ)
-//         int mode_index = 0;
-        auto [field_str_end_index, mode_index] = GetFieldModeIndices(varname);
-        bool var_in_theta_mode = field_str_end_index < varname.size();
-// #endif
-        std::string field_name = varname.substr(0,field_str_end_index);
-        std::string varname_no_mode = varname.substr(0,field_str_end_index);
-        std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
-        GetMeshCompNames( i, varname_no_mode, field_name, comp_name );
+            auto [field_str_end_index, mode_index] = GetFieldModeIndices(varname);
+            bool var_in_theta_mode = field_str_end_index < varname.size();
 
-        auto mesh = meshes[field_name];          
-        auto mesh_comp = mesh[comp_name];
+            std::string field_name = varname.substr(0,field_str_end_index);
+            std::string varname_no_mode = varname.substr(0,field_str_end_index);
+            std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
+            // assume fields are scalar unless they match the following match of known vector fields
+            GetMeshCompNames( i, varname_no_mode, field_name, comp_name );
 
-        // Loop through the multifab, and store each box as a chunk,
-        // in the openPMD file.
-        for( amrex::MFIter mfi(mf[i]); mfi.isValid(); ++mfi )
-        {
-            amrex::FArrayBox const& fab = mf[i][mfi];
-            amrex::Box const& local_box = fab.box();
+            auto mesh = meshes[field_name];          
+            auto mesh_comp = mesh[comp_name];
 
-            // Determine the offset and size of this chunk
-            amrex::IntVect const box_offset = local_box.smallEnd() - global_box.smallEnd();
-            auto chunk_offset = getReversedVec( box_offset );
-            auto chunk_size = getReversedVec( local_box.size() );
+            // Loop through the multifab, and store each box as a chunk,
+            // in the openPMD file.
+            for( amrex::MFIter mfi(mf[i]); mfi.isValid(); ++mfi )
+            {
+                amrex::FArrayBox const& fab = mf[i][mfi];
+                amrex::Box const& local_box = fab.box();
+
+                // Determine the offset and size of this chunk
+                amrex::IntVect const box_offset = local_box.smallEnd() - global_box.smallEnd();
+                auto chunk_offset = getReversedVec( box_offset );
+                auto chunk_size = getReversedVec( local_box.size() );
+
+
 #if defined(WARPX_DIM_RZ)
-            if (var_in_theta_mode) {
-                chunk_offset.emplace(chunk_offset.begin(), mode_index);
-                chunk_size.emplace(chunk_size.begin(), 1);
-            }
+                if (var_in_theta_mode) {
+                    chunk_offset.emplace(chunk_offset.begin(), mode_index);
+                    chunk_size.emplace(chunk_size.begin(), 1);
+                }
 #endif
-            amrex::Real const * local_data = fab.dataPtr( icomp );
-            mesh_comp.storeChunk( openPMD::shareRaw(local_data),
-                                    chunk_offset, chunk_size );
-        }
-    } // icomp store loop
-    // Flush data to disk after looping over all components
-    m_Series->flush();
-  } // levels loop (i)
+
+                // we avoid relying on managed memory by copying explicitly to host
+                //   remove the copies and "streamSynchronize" if you like to pass
+                //   GPU pointers to the I/O library
+#ifdef AMREX_USE_GPU
+                if (fab.arena()->isManaged() || fab.arena()->isDevice()) {
+                    amrex::BaseFab<amrex::Real> foo(local_box, 1, amrex::The_Pinned_Arena());
+                    std::shared_ptr<amrex::Real> data_pinned(foo.release());
+                    amrex::Gpu::dtoh_memcpy_async(data_pinned.get(), fab.dataPtr(icomp), local_box.numPts()*sizeof(amrex::Real));
+                    // intentionally delayed until before we .flush(): amrex::Gpu::streamSynchronize();
+                    mesh_comp.storeChunk(data_pinned, chunk_offset, chunk_size);
+                } else
+#endif
+                {
+                    amrex::Real const *local_data = fab.dataPtr(icomp);
+                    mesh_comp.storeChunk(openPMD::shareRaw(local_data),
+                                            chunk_offset, chunk_size);
+                }
+            }
+        } // icomp store loop
+
+    #ifdef AMREX_USE_GPU
+        amrex::Gpu::streamSynchronize();
+    #endif
+        // Flush data to disk after looping over all components
+        m_Series->flush();
+    } // levels loop (i)
 }
 #endif // WARPX_USE_OPENPMD
 
