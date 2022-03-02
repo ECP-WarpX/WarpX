@@ -1112,6 +1112,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
 
     def initialize_inputs(self):
@@ -1130,6 +1131,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.dump_rz_modes = self.dump_rz_modes
         self.diagnostic.intervals = self.period
         self.diagnostic.diag_lo = self.lower_bound
@@ -1200,6 +1202,7 @@ class Checkpoint(picmistandard.base._ClassWithInit):
         self.period = period
         self.write_dir = write_dir
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.name = name
 
         if self.name is None:
@@ -1218,6 +1221,7 @@ class Checkpoint(picmistandard.base._ClassWithInit):
         self.diagnostic.intervals = self.period
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = 'checkpoint'
+        self.diagnostic.file_min_digits = self.file_min_digits
 
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
@@ -1230,6 +1234,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.random_fraction = kw.pop('warpx_random_fraction', None)
         self.uniform_stride = kw.pop('warpx_uniform_stride', None)
         self.plot_filter_function = kw.pop('warpx_plot_filter_function', None)
@@ -1261,6 +1266,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.intervals = self.period
 
         if self.write_dir is not None or self.file_prefix is not None:
@@ -1327,6 +1333,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
       - warpx_format: Passed to <diagnostic name>.format
       - warpx_openpmd_backend: Passed to <diagnostic name>.openpmd_backend
       - warpx_file_prefix: Passed to <diagnostic name>.file_prefix
+      - warpx_file_min_digits: Passed to <diagnostic name>.file_min_digits
       - warpx_buffer_size: Passed to <diagnostic name>.buffer_size
       - warpx_lower_bound: Passed to <diagnostic name>.lower_bound
       - warpx_upper_bound: Passed to <diagnostic name>.upper_bound
@@ -1339,6 +1346,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
             self.format = kw.pop('warpx_format', None)
             self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
             self.file_prefix = kw.pop('warpx_file_prefix', None)
+            self.file_min_digits = kw.pop('warpx_file_min_digits', None)
             self.buffer_size = kw.pop('warpx_buffer_size', None)
             self.lower_bound = kw.pop('warpx_lower_bound', None)
             self.upper_bound = kw.pop('warpx_upper_bound', None)
@@ -1377,6 +1385,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
         self.diagnostic.diag_type = 'BackTransformed'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
 
