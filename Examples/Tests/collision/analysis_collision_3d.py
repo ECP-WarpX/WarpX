@@ -26,7 +26,6 @@
 import glob
 import math
 import os
-import glob
 import re
 import sys
 
