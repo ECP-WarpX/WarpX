@@ -102,7 +102,6 @@ Diagnostics::BaseReadParameters ()
 
 
     // Get parser strings for particle fields and generate map of parsers
-    bool pfield_parser_specified = false;
     std::string parser_str;
     amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
@@ -241,7 +240,6 @@ Diagnostics::BaseReadParameters ()
     if (m_format == "checkpoint"){
        if ( varnames_specified == false &&
             pfield_varnames_specified == false &&
-            pfield_parser_specified == false &&
             pfield_species_specified == false &&
             lo_specified == false &&
             hi_specified == false &&
