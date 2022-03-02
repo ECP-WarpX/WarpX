@@ -90,7 +90,7 @@ Diagnostics::BaseReadParameters ()
     }
 
     // Get names of particle quantities to average at each grid point
-    bool pfield_varnames_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
+    const bool pfield_varnames_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
     if (!pfield_varnames_specified){
         m_pfield_varnames = {};
     }
@@ -111,7 +111,7 @@ Diagnostics::BaseReadParameters ()
             m_pfield_strings.insert({var, parser_str});
         }
         else {
-            amrex::Abort("Input error: cannot find parser string for " + var + ". " +
+            amrex::Abort("Input error: cannot find parser string for " + var + "." +
                          m_diag_name + ".particle_fields." + var + " in file");
         }
     }
@@ -120,7 +120,7 @@ Diagnostics::BaseReadParameters ()
     m_all_species_names = warpx.GetPartContainer().GetSpeciesNames();
 
     // Get names of species to average at each grid point
-    bool pfield_species_specified = pp_diag_name.queryarr("particle_fields_species", m_pfield_species);
+    const bool pfield_species_specified = pp_diag_name.queryarr("particle_fields_species", m_pfield_species);
     if (!pfield_species_specified){
         m_pfield_species = m_all_species_names;
     }

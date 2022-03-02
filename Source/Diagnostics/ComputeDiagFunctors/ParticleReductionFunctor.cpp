@@ -16,7 +16,7 @@
 using namespace amrex::literals;
 
 ParticleReductionFunctor::ParticleReductionFunctor (const amrex::MultiFab* mf_src, const int lev,
-        amrex::IntVect crse_ratio, const std::string fn_str, const int ispec, const int ncomp)
+        const amrex::IntVect crse_ratio, const std::string fn_str, const int ispec, const int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev), m_ispec(ispec)
 {
     // mf_src will not be used, let's make sure it's null.
@@ -55,12 +55,12 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
             {
                 // Get position in WarpX convention to use in parser. Will be different from
                 // p.pos() for 1D and 2D simulations.
-                amrex::ParticleReal xw = 0, yw = 0, zw = 0;
+                amrex::ParticleReal xw = 0._rt, yw = 0._rt, zw = 0._rt;
                 get_particle_position(p, xw, yw, zw);
 
                 // Get position in AMReX convention to calculate corresponding index.
                 // Ideally this will be replaced with the AMReX NGP interpolator
-                amrex::ParticleReal x = 0, y = 0, z = 0;
+                amrex::ParticleReal x = 0._rt, y = 0._rt, z = 0._rt;
                 amrex::Real lx, ly, lz;
                 int ii = 0, jj = 0, kk = 0;
                 // Always do x direction
@@ -95,7 +95,7 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
 
                 // Get position in AMReX convention to calculate corresponding index.
                 // Ideally this will be replaced with the AMReX NGP interpolator
-                amrex::ParticleReal x = 0, y = 0, z = 0;
+                amrex::ParticleReal x = 0._rt, y = 0._rt, z = 0._rt;
                 amrex::Real lx, ly, lz;
                 int ii = 0, jj = 0, kk = 0;
 

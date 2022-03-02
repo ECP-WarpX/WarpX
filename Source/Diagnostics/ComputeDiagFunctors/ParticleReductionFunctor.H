@@ -15,14 +15,14 @@ ParticleReductionFunctor final : public ComputeDiagFunctor
 {
 public:
     /** Constructor.
-     * \param[in] mf_src source multifab. Must be nullptr as not source MF is needed
+     * \param[in] mf_src source multifab. Must be nullptr as no source MF is needed
      *            to compute the number of particles per cell, banane.
      * \param[in] lev level of multifab.
      * \param[in] crse_ratio for interpolating field values from simulation MultiFabs
                   to the output diagnostic MultiFab mf_dst.
      * \param[in] fn_str parser string that describes the function to apply to particles
      *            and then average over each cell
-     * \param[in[ ispec index of the species over which to calculate the average
+     * \param[in] ispec index of the species over which to calculate the average
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
     ParticleReductionFunctor(const amrex::MultiFab * const mf_src, const int lev,
@@ -43,4 +43,4 @@ private:
     amrex::ParserExecutor<6> m_map_fn;
 };
 
-#endif // WARPX_PARTPERCELLFUNCTOR_H_
+#endif // WARPX_PARTICLEREDUCTIONFUNCTOR_H_
