@@ -84,8 +84,18 @@ We only prefix it to request a node for the compilation (``runNode``), so we can
    # PICMI build
    cd $HOME/src/warpx
 
-   # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
+   # compile parallel PICMI interfaces in 3D, 2D, 1D and RZ
    runNode WARPX_MPI=ON WARPX_COMPUTE=CUDA WARPX_PSATD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall --no-deps -v .
+
+Or, if you are *developing*, do a quick PICMI install of a *single geometry* (see: :ref:`WarpX_DIMS <building-cmake-options>`) using:
+
+.. code-block:: bash
+
+   # find dependencies & configure
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_LIB=ON -DWarpX_DIMS=RZ
+
+   # build and then call "python3 -m pip install ..."
+   cmake --build build --target pip_install -j 6
 
 
 .. _running-cpp-summit:

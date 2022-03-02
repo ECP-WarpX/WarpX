@@ -9,18 +9,32 @@ module load cudatoolkit
 # optional: just an additional text editor
 # module load nano  # TODO: request from support
 
-# optional: for openPMD support
+# optional: for openPMD and PSATD+RZ support
 module load cray-hdf5-parallel/1.12.0.7
 export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/adios2-2.7.1:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/blaspp-master:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/lapackpp-master:$CMAKE_PREFIX_PATH
 
-# optional: Python, ...
-# TODO
+export LD_LIBRARY_PATH=$HOME/sw/perlmutter/c-blosc-1.21.1/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$HOME/sw/perlmutter/adios2-2.7.1/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$HOME/sw/perlmutter/blaspp-master/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$HOME/sw/perlmutter/lapackpp-master/lib64:$LD_LIBRARY_PATH
 
-# optional: an alias to request an interactive node for two hours
-function getNode() {
-    salloc -N 1 --ntasks-per-node=4 -t 2:00:00 -C gpu -c 32 -G 4 -A $proj
-}
+# optional: for Python bindings or libEnsemble
+module load cray-python/3.9.4.2
+
+if [ -d "$HOME/sw/perlmutter/venvs/warpx" ]
+then
+  source $HOME/sw/perlmutter/venvs/warpx/bin/activate
+fi
+
+# an alias to request an interactive batch node for one hour
+#   for parallel execution, start on the batch node: srun <command>
+alias getNode="salloc -N 1 --ntasks-per-node=4 -t 1:00:00 -q interactive -C gpu --gpu-bind=single:1 -c 32 -G 4 -A $proj"
+# an alias to run a command on a batch node for up to 30min
+#   usage: runNode <command>
+alias runNode="srun -N 1 --ntasks-per-node=4 -t 0:30:00 -q interactive -C gpu --gpu-bind=single:1 -c 32 -G 4 -A $proj"
 
 # GPU-aware MPI
 export MPICH_GPU_SUPPORT_ENABLED=1

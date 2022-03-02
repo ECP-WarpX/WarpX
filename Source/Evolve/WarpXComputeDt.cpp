@@ -76,7 +76,9 @@ WarpX::ComputeDt ()
     }
 
     if (do_electrostatic != ElectrostaticSolverAlgo::None) {
-        dt[0] = const_dt;
+        for (int lev=0; lev<=max_level; lev++) {
+            dt[lev] = const_dt;
+        }
     }
 }
 

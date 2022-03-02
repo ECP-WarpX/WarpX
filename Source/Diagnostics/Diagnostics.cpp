@@ -393,7 +393,8 @@ Diagnostics::ComputeAndPack ()
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for(int lev=0; lev<nlev_output; lev++){
             int icomp_dst = 0;
-            for (int icomp=0, n=m_all_field_functors[lev].size(); icomp<n; icomp++){
+            const auto n = static_cast<int>(m_all_field_functors[lev].size());
+            for (int icomp=0; icomp<n; icomp++){
                 // Call all functors in m_all_field_functors[lev]. Each of them computes
                 // a diagnostics and writes in one or more components of the output
                 // multifab m_mf_output[lev].
