@@ -408,9 +408,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
     // Species index to loop over species that dump rho per species
     int i = 0;
 
-    const int nvar = m_varnames_fields.size();
-    const int nspec = m_pfield_species.size();
-    const int ntot = nvar + m_pfield_varnames.size() * nspec;
+    const auto nvar = static_cast<int>(m_varnames_fields.size());
+    const auto nspec = static_cast<int>(m_pfield_species.size());
+    const auto ntot = static_cast<int>(nvar + m_pfield_varnames.size() * nspec);
 
     m_all_field_functors[lev].resize(ntot);
     // Fill vector of functors for all components except individual cylindrical modes.
