@@ -191,6 +191,9 @@ public:
     static long field_gathering_algo;
     static long particle_pusher_algo;
     static int maxwell_solver_id;
+    /** Records a number corresponding to the load balance cost update strategy
+     *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
+     */
     static long load_balance_costs_update_algo;
     static int em_solver_medium;
     static int macroscopic_solver_algo;
