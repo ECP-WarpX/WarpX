@@ -198,6 +198,9 @@ public:
     static long particle_pusher_algo;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
     static int maxwell_solver_id;
+    /** Records a number corresponding to the load balance cost update strategy
+     *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
+     */
     static long load_balance_costs_update_algo;
     static int em_solver_medium;
     static int macroscopic_solver_algo;
