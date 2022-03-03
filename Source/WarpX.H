@@ -267,6 +267,15 @@ public:
     //! If true, a Numerical Cherenkov Instability (NCI) corrector is applied
     //! (for simulations using the FDTD Maxwell solver)
     static bool use_fdtd_nci_corr;
+    //! If true (Galerkin method): The fields are interpolated directly from the staggered
+    //! grid to the particle positions (with reduced interpolation order in the parallel
+    //! direction). This scheme is energy conserving in the limit of infinitely small time
+    //! steps.
+    //! Otherwise, "momentum conserving" (in the same limit): The fields are first
+    //! interpolated from the staggered grid points to the corners of each cell, and then
+    //! from the cell corners to the particle position (with the same order of interpolation
+    //! in all directions). This scheme is momentum conserving in the limit of infinitely
+    //! small time steps.
     static bool galerkin_interpolation;
 
     //! If true, a bilinear filter is used to smooth charge and currents
@@ -276,7 +285,7 @@ public:
     //! If true, a compensation step is added to the bilinear filtering of charge and currents
     static bool use_filter_compensation;
 
-    //! If true, the initial conditions are serialized (useful for reproducible testing)
+    //! If true, the initial conditions from random number generators are serialized (useful for reproducible testing with OpenMP)
     static bool serialize_ics;
 
     // Back transformation diagnostic
