@@ -2,6 +2,7 @@
 
 import os
 import sys
+import re
 
 import numpy as np
 from scipy.constants import c, mu_0, pi
@@ -43,7 +44,7 @@ data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_d
 
 # Parse test name and check whether this use the macroscopic solver
 # (i.e. solving the equation in a dielectric)
-macroscopic = True if re.search( 'macroscopic', fn ) else False
+macroscopic = True if re.search( 'macroscopic', filename ) else False
 
 # Calculate frequency of the mode oscillation
 omega = np.sqrt( h_2 ) * c
