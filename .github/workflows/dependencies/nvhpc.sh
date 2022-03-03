@@ -10,6 +10,7 @@ sudo apt-get -qqq update
 sudo apt-get install -y \
     build-essential     \
     ca-certificates     \
+    ccache              \
     cmake               \
     environment-modules \
     gnupg               \
