@@ -963,6 +963,7 @@ private:
      * because signal handlers are configured at the process level.
      */
     static void CheckSignals();
+    static void SignalSetFlag(int signal_number);
     void HandleSignals();
     // Whether a given signal has been received since the last check
     static std::atomic<bool> signal_received_flags[32];

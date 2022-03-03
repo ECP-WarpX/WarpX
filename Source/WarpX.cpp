@@ -497,6 +497,12 @@ WarpX::PrintGlobalWarnings(const std::string& when)
 }
 
 void
+WarpX::SignalSetFlag(int signal_number)
+{
+    signal_received_flags[signal_number] = true;
+}
+
+void
 WarpX::ReadParameters ()
 {
     // Ensure that geometry.dims is set properly.
@@ -561,6 +567,33 @@ WarpX::ReadParameters ()
                 numprocs[idim] = numprocs_in[idim];
             }
         }
+
+	std::vector<int> signals_in;
+	pp_warpx.queryarr("break_signals", signals_in);
+	for (int i : signals_in) {
+	    AMREX_ALWAYS_ASSERT(i < 32);
+	    signal_conf_requests_break[i] = true;
+	}
+	signals_in.clear();
+	pp_warpx.queryarr("checkpoint_signals", signals_in);
+	for (int i : signals_in) {
+	    AMREX_ALWAYS_ASSERT(i < 32);
+	    signal_conf_requests_checkpoint[i] = true;
+	}
+	{
+	    struct sigaction sa;
+	    sigemptyset(&sa.sa_mask);
+	    for (int i = 0; i < 32; ++i) {
+		if (signal_conf_requests_checkpoint[i] || signal_conf_requests_break[i]) {
+		    if (ParallelDescriptor::MyProc() == 0) {
+			sa.sa_handler = &WarpX::SignalSetFlag;
+		    } else {
+			sa.sa_handler = SIG_IGN;
+		    }
+		    sigaction(i, &sa, nullptr);
+		}
+	    }
+	}
 
         // set random seed
         std::string random_seed = "default";
