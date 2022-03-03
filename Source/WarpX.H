@@ -256,17 +256,37 @@ public:
     //! Order of finite centering of currents (from nodal grid to staggered grid), along z
     static int current_centering_noz;
 
-    // Number of modes for the RZ multimode version
+    //! Number of modes for the RZ multi-mode version
     static int n_rz_azimuthal_modes;
+    //! Number of MultiFab components
+    //! (with the RZ multi-mode version, each mode has a real and imaginary component,
+    //! except mode 0 which is purely real: component 0 is mode 0, odd components are
+    //! the real parts, even components are the imaginary parts)
     static int ncomps;
 
+    //! If true, a Numerical Cherenkov Instability (NCI) corrector is applied
+    //! (for simulations using the FDTD Maxwell solver)
     static bool use_fdtd_nci_corr;
+    //! If true (Galerkin method): The fields are interpolated directly from the staggered
+    //! grid to the particle positions (with reduced interpolation order in the parallel
+    //! direction). This scheme is energy conserving in the limit of infinitely small time
+    //! steps.
+    //! Otherwise, "momentum conserving" (in the same limit): The fields are first
+    //! interpolated from the staggered grid points to the corners of each cell, and then
+    //! from the cell corners to the particle position (with the same order of interpolation
+    //! in all directions). This scheme is momentum conserving in the limit of infinitely
+    //! small time steps.
     static bool galerkin_interpolation;
 
+    //! If true, a bilinear filter is used to smooth charge and currents
     static bool use_filter;
+    //! If true, the bilinear filtering of charge and currents is done in Fourier space
     static bool use_kspace_filter;
+    //! If true, a compensation step is added to the bilinear filtering of charge and currents
     static bool use_filter_compensation;
-    static bool serialize_ics; //! Serialize the initial conditions
+
+    //! If true, the initial conditions from random number generators are serialized (useful for reproducible testing with OpenMP)
+    static bool serialize_ics;
 
     // Back transformation diagnostic
     static bool do_back_transformed_diagnostics;
@@ -276,11 +296,19 @@ public:
     static bool do_back_transformed_fields;
     static bool do_back_transformed_particles;
 
-    // Boosted frame parameters
+    //! Lorentz factor of the boosted frame in which a boosted-frame simulation is run
     static amrex::Real gamma_boost;
+    //! Beta value corresponding to the Lorentz factor of the boosted frame of the simulation
     static amrex::Real beta_boost;
+    //! Direction of the Lorentz transform that defines the boosted frame of the simulation
     static amrex::Vector<int> boost_direction;
+    //! If specified, the maximum number of iterations is computed automatically so that
+    //! the lower end of the simulation domain along z reaches #zmax_plasma_to_compute_max_step
+    //! in the boosted frame
     static amrex::Real zmax_plasma_to_compute_max_step;
+    //! Set to true if #zmax_plasma_to_compute_max_step is specified, in which case
+    //! the maximum number of iterations is computed automatically so that the lower end of the
+    //! simulation domain along z reaches #zmax_plasma_to_compute_max_step in the boosted frame
     static int do_compute_max_step_from_zmax;
 
     static bool do_dynamic_scheduling;
@@ -296,11 +324,16 @@ public:
     static bool do_device_synchronize;
     static bool safe_guard_cells;
 
-    // buffers
-    static int n_field_gather_buffer;       //! in number of cells from the edge (identical for each dimension)
-    static int n_current_deposition_buffer; //! in number of cells from the edge (identical for each dimension)
+    //! With mesh refinement, particles located inside a refinement patch, but within
+    //! #n_field_gather_buffer cells of the edge of the patch, will gather the fields
+    //! from the lower refinement level instead of the refinement patch itself
+    static int n_field_gather_buffer;
+    //! With mesh refinement, particles located inside a refinement patch, but within
+    //! #n_current_deposition_buffer cells of the edge of the patch, will deposit their charge
+    //! and current onto the lower refinement level instead of the refinement patch itself
+    static int n_current_deposition_buffer;
 
-    // do nodal
+    //! If true, all fields are evaluated on a nodal grid and all MultiFabs have a nodal index type
     static int do_nodal;
 
     std::array<const amrex::MultiFab* const, 3>
