@@ -22,6 +22,11 @@ DivBFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer
     constexpr int ng = 1;
     // A cell-centered divB multifab spanning the entire domain is generated
     // and divB is computed on the cell-center, with ng=1.
+#ifdef WARPX_DIM_RZ
+    int const n_rz_mode_inds = 2*warpx.n_rz_azimuthal_modes-1;
+#else
+    int const n_rz_mode_inds = 1;
+#endif
     amrex::MultiFab divB( warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 2*warpx.n_rz_azimuthal_modes-1, ng );
     warpx.ComputeDivB(divB, 0, m_arr_mf_src, WarpX::CellSize(m_lev) );
     // // Coarsen and Interpolate from divB to coarsened/reduced_domain mf_dst
