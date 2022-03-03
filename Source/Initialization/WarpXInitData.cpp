@@ -298,12 +298,6 @@ WarpX::PrintMainPICparameters ()
         amrex::Print() << "Spectral order:       | - psatd.noz = " << psatd_noz_fft << "\n";
       }
     }
-    else{
-      amrex::Print() << "    ***********************************************************************\n";
-      amrex::Print() << "    *    In order to use Yee or CKC or ECT solver, WarpX needs to be      *\n" <<
-      "    *     compiled with a finite-difference (FDTD) Maxwell solver         *\n";
-      amrex::Print() << "    ***********************************************************************\n";
-    }
     // Print guard cells number
     amrex::Print() << "Guard cells           | - ng_alloc_EB = " << guard_cells.ng_alloc_EB << "\n";
     amrex::Print() << " (allocated for E/B)  | \n";
