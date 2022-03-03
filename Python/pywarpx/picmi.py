@@ -967,7 +967,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.field_gathering_algo = kw.pop('warpx_field_gathering_algo', None)
         self.particle_pusher_algo = kw.pop('warpx_particle_pusher_algo', None)
         self.use_filter = kw.pop('warpx_use_filter', None)
-        self.serialize_ics = kw.pop('warpx_serialize_ics', None)
+        self.serialize_initial_conditions = kw.pop('warpx_serialize_initial_conditions', None)
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
         self.load_balance_intervals = kw.pop('warpx_load_balance_intervals', None)
         self.load_balance_efficiency_ratio_threshold = kw.pop('warpx_load_balance_efficiency_ratio_threshold', None)
@@ -1013,7 +1013,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.algo.costs_heuristic_cells_wt = self.costs_heuristic_cells_wt
 
         pywarpx.warpx.use_filter = self.use_filter
-        pywarpx.warpx.serialize_ics = self.serialize_ics
+        pywarpx.warpx.serialize_initial_conditions = self.serialize_initial_conditions
 
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
 

@@ -286,7 +286,7 @@ public:
     static bool use_filter_compensation;
 
     //! If true, the initial conditions from random number generators are serialized (useful for reproducible testing with OpenMP)
-    static bool serialize_ics;
+    static bool serialize_initial_conditions;
 
     // Back transformation diagnostic
     static bool do_back_transformed_diagnostics;

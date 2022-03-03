@@ -154,7 +154,7 @@ bool WarpX::use_filter = true;
 bool WarpX::use_kspace_filter       = true;
 bool WarpX::use_filter_compensation = false;
 
-bool WarpX::serialize_ics     = false;
+bool WarpX::serialize_initial_conditions = false;
 bool WarpX::refine_plasma     = false;
 
 int WarpX::num_mirrors = 0;
@@ -751,7 +751,7 @@ WarpX::ReadParameters ()
         }
 #endif
 
-        pp_warpx.query("serialize_ics", serialize_ics);
+        pp_warpx.query("serialize_initial_conditions", serialize_initial_conditions);
         pp_warpx.query("refine_plasma", refine_plasma);
         pp_warpx.query("do_dive_cleaning", do_dive_cleaning);
         pp_warpx.query("do_divb_cleaning", do_divb_cleaning);
