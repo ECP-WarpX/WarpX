@@ -750,18 +750,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     const auto dx = geom.CellSizeArray();
     const auto problo = geom.ProbLoArray();
 
-    Real scale_fac = 0.0_rt;
-
-    if(num_ppc != 0){
-#if defined(WARPX_DIM_3D)
-        scale_fac = dx[0]*dx[1]*dx[2]/num_ppc;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        scale_fac = dx[0]*dx[1]/num_ppc;
-#elif defined(WARPX_DIM_1D_Z)
-        scale_fac = dx[0]/num_ppc;
-#endif
-    }
-
     defineAllParticleTiles();
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
@@ -803,7 +791,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     }
 #ifdef AMREX_USE_OMP
     info.SetDynamic(true);
-#pragma omp parallel if (not WarpX::serialize_ics)
+#pragma omp parallel if (not WarpX::serialize_initial_conditions)
 #endif
     for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
     {
@@ -1004,6 +992,18 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             Real theta_offset = 0._rt;
             if (rz_random_theta) theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi;
 #endif
+
+            Real scale_fac = 0.0_rt;
+            if( pcounts[index] != 0) {
+#if defined(WARPX_DIM_3D)
+                scale_fac = dx[0]*dx[1]*dx[2]/pcounts[index];
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                scale_fac = dx[0]*dx[1]/pcounts[index];
+#elif defined(WARPX_DIM_1D_Z)
+                scale_fac = dx[0]/pcounts[index];
+#endif
+            }
+
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
                 long ip = poffset[index] + i_part;
@@ -1173,7 +1173,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
 
-                // Real weight = dens * scale_fac / (AMREX_D_TERM(fac, *fac, *fac));
                 Real weight = dens * scale_fac;
 #ifdef WARPX_DIM_RZ
                 if (radially_weighted) {
@@ -1606,8 +1605,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 }
 #endif
 
-                // Real weight = dens * scale_fac / (AMREX_D_TERM(fac, *fac, *fac));
-                Real weight = dens * scale_fac * dt;
+                Real weight = dens * scale_fac * dt * num_ppc_real / pcounts[index];
 #ifdef WARPX_DIM_RZ
                 // The particle weight is proportional to the user-specified
                 // flux (denoted as `dens` here) and the emission surface within

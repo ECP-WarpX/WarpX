@@ -159,12 +159,14 @@ public:
     //! Author of an input file / simulation setup
     static std::string authors;
 
-    // Initial field on the grid.
+    //! Initial electric field on the grid
     static amrex::Vector<amrex::Real> E_external_grid;
+    //! Initial magnetic field on the grid
     static amrex::Vector<amrex::Real> B_external_grid;
 
-    // Initialization Type for External E and B on grid
+    //! Initialization type for external magnetic field on the grid
     static std::string B_ext_grid_s;
+    //! Initialization type for external electric field on the grid
     static std::string E_ext_grid_s;
 
     // Parser for B_external on the grid
@@ -186,11 +188,19 @@ public:
     std::unique_ptr<amrex::Parser> Ezfield_parser;
 
     // Algorithms
+    //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay)
     static long current_deposition_algo;
+    //! Integer that corresponds to the charge deposition algorithm (only standard deposition)
     static long charge_deposition_algo;
+    //! Integer that corresponds to the field gathering algorithm (energy-conserving, momentum-conserving)
     static long field_gathering_algo;
+    //! Integer that corresponds to the particle push algorithm (Boris, Vay, Higuera-Cary)
     static long particle_pusher_algo;
+    //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
     static int maxwell_solver_id;
+    /** Records a number corresponding to the load balance cost update strategy
+     *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
+     */
     static long load_balance_costs_update_algo;
     static int em_solver_medium;
     static int macroscopic_solver_algo;
@@ -200,53 +210,83 @@ public:
     static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
 
 
-    // If true, the current is deposited on a nodal grid and then centered onto a staggered grid
+    //! If true, the current is deposited on a nodal grid and then centered onto a staggered grid
+    //! using finite centering of order given by #current_centering_nox, #current_centering_noy,
+    //! and #current_centering_noz
     static bool do_current_centering;
 
-    // PSATD: If true (overwritten by the user in the input file), the current correction
-    // defined in equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010 is applied
+    //! If true, a correction is applied to the current in Fourier space, so that the continuity
+    //! equation is satisfied
     bool current_correction = false;
 
-    // PSATD: If true, the update equation for E contains both J and rho (at times n and n+1):
-    // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
+    //! If true, the PSATD update equation for E contains both J and rho
+    //! (default is false for standard PSATD and true for Galilean PSATD)
     bool update_with_rho = false;
 
     //! perform field communications in single precision
     static int do_single_precision_comms;
 
-    // PSATD: Whether to fill the guard cells with inverse FFTs based on the boundary conditions
+    //! Whether to fill the guard cells when computing inverse FFTs, based on the boundary conditions
     static amrex::IntVect fill_guards;
 
-    // div(E) and div(B) cleaning
+    //! Solve additional Maxwell equation for F in order to control errors in Gauss' law
+    //! (useful when using current deposition algorithms that are not charge-conserving)
     static bool do_dive_cleaning;
+    //! Solve additional Maxwell equation for G in order to control errors in magnetic Gauss' law
     static bool do_divb_cleaning;
 
-    // Interpolation order
+    //! Order of the particle shape factors (splines) along x
     static int nox;
+    //! Order of the particle shape factors (splines) along y
     static int noy;
+    //! Order of the particle shape factors (splines) along z
     static int noz;
 
-    // Order of finite-order centering of fields (staggered to nodal)
+    //! Order of finite centering of fields (from staggered grid to nodal grid), along x
     static int field_centering_nox;
+    //! Order of finite centering of fields (from staggered grid to nodal grid), along y
     static int field_centering_noy;
+    //! Order of finite centering of fields (from staggered grid to nodal grid), along z
     static int field_centering_noz;
 
-    // Order of finite-order centering of currents (nodal to staggered)
+    //! Order of finite centering of currents (from nodal grid to staggered grid), along x
     static int current_centering_nox;
+    //! Order of finite centering of currents (from nodal grid to staggered grid), along y
     static int current_centering_noy;
+    //! Order of finite centering of currents (from nodal grid to staggered grid), along z
     static int current_centering_noz;
 
-    // Number of modes for the RZ multimode version
+    //! Number of modes for the RZ multi-mode version
     static int n_rz_azimuthal_modes;
+    //! Number of MultiFab components
+    //! (with the RZ multi-mode version, each mode has a real and imaginary component,
+    //! except mode 0 which is purely real: component 0 is mode 0, odd components are
+    //! the real parts, even components are the imaginary parts)
     static int ncomps;
 
+    //! If true, a Numerical Cherenkov Instability (NCI) corrector is applied
+    //! (for simulations using the FDTD Maxwell solver)
     static bool use_fdtd_nci_corr;
+    //! If true (Galerkin method): The fields are interpolated directly from the staggered
+    //! grid to the particle positions (with reduced interpolation order in the parallel
+    //! direction). This scheme is energy conserving in the limit of infinitely small time
+    //! steps.
+    //! Otherwise, "momentum conserving" (in the same limit): The fields are first
+    //! interpolated from the staggered grid points to the corners of each cell, and then
+    //! from the cell corners to the particle position (with the same order of interpolation
+    //! in all directions). This scheme is momentum conserving in the limit of infinitely
+    //! small time steps.
     static bool galerkin_interpolation;
 
+    //! If true, a bilinear filter is used to smooth charge and currents
     static bool use_filter;
+    //! If true, the bilinear filtering of charge and currents is done in Fourier space
     static bool use_kspace_filter;
+    //! If true, a compensation step is added to the bilinear filtering of charge and currents
     static bool use_filter_compensation;
-    static bool serialize_ics; //! Serialize the initial conditions
+
+    //! If true, the initial conditions from random number generators are serialized (useful for reproducible testing with OpenMP)
+    static bool serialize_initial_conditions;
 
     // Back transformation diagnostic
     static bool do_back_transformed_diagnostics;
@@ -256,11 +296,19 @@ public:
     static bool do_back_transformed_fields;
     static bool do_back_transformed_particles;
 
-    // Boosted frame parameters
+    //! Lorentz factor of the boosted frame in which a boosted-frame simulation is run
     static amrex::Real gamma_boost;
+    //! Beta value corresponding to the Lorentz factor of the boosted frame of the simulation
     static amrex::Real beta_boost;
+    //! Direction of the Lorentz transform that defines the boosted frame of the simulation
     static amrex::Vector<int> boost_direction;
+    //! If specified, the maximum number of iterations is computed automatically so that
+    //! the lower end of the simulation domain along z reaches #zmax_plasma_to_compute_max_step
+    //! in the boosted frame
     static amrex::Real zmax_plasma_to_compute_max_step;
+    //! Set to true if #zmax_plasma_to_compute_max_step is specified, in which case
+    //! the maximum number of iterations is computed automatically so that the lower end of the
+    //! simulation domain along z reaches #zmax_plasma_to_compute_max_step in the boosted frame
     static int do_compute_max_step_from_zmax;
 
     static bool do_dynamic_scheduling;
@@ -276,12 +324,20 @@ public:
     static bool do_device_synchronize;
     static bool safe_guard_cells;
 
-    // buffers
-    static int n_field_gather_buffer;       //! in number of cells from the edge (identical for each dimension)
-    static int n_current_deposition_buffer; //! in number of cells from the edge (identical for each dimension)
+    //! With mesh refinement, particles located inside a refinement patch, but within
+    //! #n_field_gather_buffer cells of the edge of the patch, will gather the fields
+    //! from the lower refinement level instead of the refinement patch itself
+    static int n_field_gather_buffer;
+    //! With mesh refinement, particles located inside a refinement patch, but within
+    //! #n_current_deposition_buffer cells of the edge of the patch, will deposit their charge
+    //! and current onto the lower refinement level instead of the refinement patch itself
+    static int n_current_deposition_buffer;
 
-    // do nodal
+    //! If true, all fields are evaluated on a nodal grid and all MultiFabs have a nodal index type
     static int do_nodal;
+
+    // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
+    amrex::IntVect m_rho_nodal_flag;
 
     std::array<const amrex::MultiFab* const, 3>
     get_array_Bfield_aux  (const int lev) const {
@@ -891,24 +947,6 @@ private:
     void AddRhoFromFineLevelandSumBoundary (int lev, int icomp, int ncomp);
     void NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp);
 
-    /**
-     * \brief Private function for current correction in Fourier space
-     * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010):
-     * loops over the MR levels and applies the correction on the fine and coarse
-     * patches (calls the virtual method \c CurrentCorrection of the spectral
-     * algorithm in use, via the public interface defined in the class SpectralSolver).
-     */
-    void CurrentCorrection ();
-
-    /**
-     * \brief Private function for Vay deposition in Fourier space
-     * (equations (20)-(24) of https://doi.org/10.1016/j.jcp.2013.03.010):
-     * loops over the MR levels and applies the correction on the fine and coarse
-     * patches (calls the virtual method \c VayDeposition of the spectral
-     * algorithm in use, via the public interface defined in the class SpectralSolver).
-     */
-    void VayDeposition ();
-
     void ReadParameters ();
 
     /** This function queries deprecated input parameters and abort
@@ -1408,6 +1446,11 @@ private:
      * \brief Correct current in Fourier space so that the continuity equation is satisfied
      */
     void PSATDCurrentCorrection ();
+
+    /**
+     * \brief Vay deposition in Fourier space (https://doi.org/10.1016/j.jcp.2013.03.010)
+     */
+    void PSATDVayDeposition ();
 
     /**
      * \brief Update all necessary fields in spectral space

@@ -55,8 +55,30 @@ using namespace amrex;
 #ifdef WARPX_USE_PSATD
 namespace {
 
-    void
-    ForwardTransformVect (
+    void ForwardTransformVect (
+        const int lev,
+#ifdef WARPX_DIM_RZ
+        SpectralSolverRZ& solver,
+#else
+        SpectralSolver& solver,
+#endif
+        std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
+        const int compx, const int compy, const int compz,
+        const amrex::IntVect& stag_x, const amrex::IntVect& stag_y, const amrex::IntVect& stag_z)
+    {
+#ifdef WARPX_DIM_RZ
+        amrex::ignore_unused(stag_x, stag_y, stag_z);
+        solver.ForwardTransform(lev, *vector_field[0], compx, *vector_field[1], compy);
+        solver.ForwardTransform(lev, *vector_field[2], compz);
+#else
+        solver.ForwardTransform(lev, *vector_field[0], compx, stag_x);
+        solver.ForwardTransform(lev, *vector_field[1], compy, stag_y);
+        solver.ForwardTransform(lev, *vector_field[2], compz, stag_z);
+#endif
+    }
+
+    AMREX_FORCE_INLINE
+    void ForwardTransformVect (
         const int lev,
 #ifdef WARPX_DIM_RZ
         SpectralSolverRZ& solver,
@@ -66,13 +88,10 @@ namespace {
         std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
         const int compx, const int compy, const int compz)
     {
-#ifdef WARPX_DIM_RZ
-        solver.ForwardTransform(lev, *vector_field[0], compx, *vector_field[1], compy);
-#else
-        solver.ForwardTransform(lev, *vector_field[0], compx);
-        solver.ForwardTransform(lev, *vector_field[1], compy);
-#endif
-        solver.ForwardTransform(lev, *vector_field[2], compz);
+        ForwardTransformVect(lev, solver, vector_field, compx, compy, compz,
+                             (*vector_field[0]).ixType().toIntVect(),
+                             (*vector_field[1]).ixType().toIntVect(),
+                             (*vector_field[2]).ixType().toIntVect());
     }
 
     void
@@ -243,11 +262,41 @@ WarpX::PSATDForwardTransformJ ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        ForwardTransformVect(lev, *spectral_solver_fp[lev], current_fp[lev], idx_jx, idx_jy, idx_jz);
+        // With Vay's deposition, J stores a temporary current (D) that is later modified
+        // in Fourier space: its staggering matches that of rho and not J
+        amrex::IntVect jx_stag =
+            (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
+            WarpX::m_rho_nodal_flag : current_fp[lev][0]->ixType().toIntVect();
+
+        amrex::IntVect jy_stag =
+            (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
+            WarpX::m_rho_nodal_flag : current_fp[lev][1]->ixType().toIntVect();
+
+        amrex::IntVect jz_stag =
+            (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
+            WarpX::m_rho_nodal_flag : current_fp[lev][2]->ixType().toIntVect();
+
+        ForwardTransformVect(lev, *spectral_solver_fp[lev], current_fp[lev],
+                             idx_jx, idx_jy, idx_jz, jx_stag, jy_stag, jz_stag);
 
         if (spectral_solver_cp[lev])
         {
-            ForwardTransformVect(lev, *spectral_solver_cp[lev], current_cp[lev], idx_jx, idx_jy, idx_jz);
+            // With Vay's deposition, J stores a temporary current (D) that is later modified
+            // in Fourier space: its staggering matches that of rho and not J
+            jx_stag =
+                (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
+                WarpX::m_rho_nodal_flag : current_cp[lev][0]->ixType().toIntVect();
+
+            jy_stag =
+                (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
+                WarpX::m_rho_nodal_flag : current_cp[lev][1]->ixType().toIntVect();
+
+            jz_stag =
+                (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
+                WarpX::m_rho_nodal_flag : current_cp[lev][2]->ixType().toIntVect();
+
+            ForwardTransformVect(lev, *spectral_solver_cp[lev], current_cp[lev],
+                                 idx_jx, idx_jy, idx_jz, jx_stag, jy_stag, jz_stag);
         }
     }
 
@@ -344,6 +393,19 @@ void WarpX::PSATDCurrentCorrection ()
         if (spectral_solver_cp[lev])
         {
             spectral_solver_cp[lev]->CurrentCorrection();
+        }
+    }
+}
+
+void WarpX::PSATDVayDeposition ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->VayDeposition();
+
+        if (spectral_solver_cp[lev])
+        {
+            spectral_solver_cp[lev]->VayDeposition();
         }
     }
 }
@@ -473,6 +535,14 @@ WarpX::PushPSATD ()
     if (WarpX::current_correction)
     {
         PSATDCurrentCorrection();
+        PSATDBackwardTransformJ();
+    }
+
+    // Compute the current in Fourier space according to the Vay deposition scheme, and
+    // transform back to real space so that the Vay deposition is reflected in the diagnostics
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+    {
+        PSATDVayDeposition();
         PSATDBackwardTransformJ();
     }
 
@@ -741,8 +811,8 @@ void
 WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->MacroscopicEvolveE( Efield_fp[lev], Bfield_fp[lev],
-                                             current_fp[lev], a_dt,
-                                             m_macroscopic_properties);
+                                             current_fp[lev], m_edge_lengths[lev],
+                                             a_dt, m_macroscopic_properties);
     }
     else {
         amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");

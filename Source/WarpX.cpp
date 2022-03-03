@@ -154,7 +154,7 @@ bool WarpX::use_filter = true;
 bool WarpX::use_kspace_filter       = true;
 bool WarpX::use_filter_compensation = false;
 
-bool WarpX::serialize_ics     = false;
+bool WarpX::serialize_initial_conditions = false;
 bool WarpX::refine_plasma     = false;
 
 int WarpX::num_mirrors = 0;
@@ -192,6 +192,7 @@ int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
 int WarpX::do_nodal = false;
+amrex::IntVect m_rho_nodal_flag;
 
 int WarpX::do_similar_dm_pml = 1;
 
@@ -751,7 +752,7 @@ WarpX::ReadParameters ()
         }
 #endif
 
-        pp_warpx.query("serialize_ics", serialize_ics);
+        pp_warpx.query("serialize_initial_conditions", serialize_initial_conditions);
         pp_warpx.query("refine_plasma", refine_plasma);
         pp_warpx.query("do_dive_cleaning", do_dive_cleaning);
         pp_warpx.query("do_divb_cleaning", do_divb_cleaning);
@@ -1326,16 +1327,19 @@ WarpX::ReadParameters ()
 void
 WarpX::BackwardCompatibility ()
 {
-    ParmParse pp_amr("amr");
+    // Auxiliary variables
     int backward_int;
+    bool backward_bool;
+    std::string backward_str;
+    amrex::Real backward_Real;
+
+    ParmParse pp_amr("amr");
     if (pp_amr.query("plot_int", backward_int)){
         amrex::Abort("amr.plot_int is not supported anymore. Please use the new syntax for diagnostics:\n"
             "diagnostics.diags_names = my_diag\n"
             "my_diag.intervals = 10\n"
             "for output every 10 iterations. See documentation for more information");
     }
-
-    std::string backward_str;
     if (pp_amr.query("plot_file", backward_str)){
         amrex::Abort("amr.plot_file is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
@@ -1364,7 +1368,6 @@ WarpX::BackwardCompatibility ()
                      "Please use the renamed option algo.load_balance_intervals instead.");
     }
 
-    amrex::Real backward_Real;
     if (pp_warpx.query("load_balance_efficiency_ratio_threshold", backward_Real)){
         amrex::Abort("warpx.load_balance_efficiency_ratio_threshold is not supported anymore. "
                      "Please use the renamed option algo.load_balance_efficiency_ratio_threshold.");
@@ -1392,6 +1395,11 @@ WarpX::BackwardCompatibility ()
     if ( pp_warpx.query("do_pml", backward_int) ) {
         amrex::Abort( "do_pml is not supported anymore. Please use boundary.field_lo and boundary.field_hi to set the boundary conditions.");
     }
+    if (pp_warpx.query("serialize_ics", backward_bool)) {
+        amrex::Abort("warpx.serialize_ics is no longer a valid option. "
+                     "Please use the renamed option warpx.serialize_initial_conditions instead.");
+    }
+
     ParmParse pp_interpolation("interpolation");
     if (pp_interpolation.query("nox", backward_int) ||
         pp_interpolation.query("noy", backward_int) ||
@@ -1415,6 +1423,7 @@ WarpX::BackwardCompatibility ()
             "particles.nspecies is ignored. Just use particles.species_names please.",
             WarnPriority::low);
     }
+
     ParmParse pp_collisions("collisions");
     int ncollisions;
     if (pp_collisions.query("ncollisions", ncollisions)){
@@ -1422,6 +1431,7 @@ WarpX::BackwardCompatibility ()
             "collisions.ncollisions is ignored. Just use particles.collision_names please.",
             WarnPriority::low);
     }
+
     ParmParse pp_lasers("lasers");
     int nlasers;
     if (pp_lasers.query("nlasers", nlasers)){
@@ -1649,6 +1659,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     // Even components are the imaginary parts.
     ncomps = n_rz_azimuthal_modes*2 - 1;
 #endif
+
+    // Set global rho nodal flag to know about rho index type when rho MultiFab is not allocated
+    m_rho_nodal_flag = rho_nodal_flag;
 
     // set human-readable tag for each MultiFab
     auto const tag = [lev]( std::string tagname ) {

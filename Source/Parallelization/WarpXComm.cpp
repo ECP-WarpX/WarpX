@@ -1045,12 +1045,12 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
                 ng_depos_J.min(ng);
                 MultiFab jfc(current_cp[lev+1][idim]->boxArray(),
                              current_cp[lev+1][idim]->DistributionMap(), current_cp[lev+1][idim]->nComp(), ng);
-                bilinear_filter.ApplyStencil(jfc, *current_cp[lev+1][idim], lev);
+                bilinear_filter.ApplyStencil(jfc, *current_cp[lev+1][idim], lev+1);
 
                 // buffer patch of fine level
                 MultiFab jfb(current_buf[lev+1][idim]->boxArray(),
                              current_buf[lev+1][idim]->DistributionMap(), current_buf[lev+1][idim]->nComp(), ng);
-                bilinear_filter.ApplyStencil(jfb, *current_buf[lev+1][idim], lev);
+                bilinear_filter.ApplyStencil(jfb, *current_buf[lev+1][idim], lev+1);
 
                 MultiFab::Add(jfb, jfc, 0, 0, current_buf[lev+1][idim]->nComp(), ng);
                 WarpXCommUtil::ParallelAdd(mf, jfb, 0, 0, current_buf[lev+1][idim]->nComp(), ng, IntVect::TheZeroVector(), period);
@@ -1065,7 +1065,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
                 ng_depos_J.min(ng);
                 MultiFab jf(current_cp[lev+1][idim]->boxArray(),
                             current_cp[lev+1][idim]->DistributionMap(), current_cp[lev+1][idim]->nComp(), ng);
-                bilinear_filter.ApplyStencil(jf, *current_cp[lev+1][idim], lev);
+                bilinear_filter.ApplyStencil(jf, *current_cp[lev+1][idim], lev+1);
 
                 WarpXCommUtil::ParallelAdd(mf, jf, 0, 0, current_cp[lev+1][idim]->nComp(), ng, IntVect::TheZeroVector(), period);
                 WarpXSumGuardCells(*current_cp[lev+1][idim], jf, period, ng_depos_J, 0, current_cp[lev+1][idim]->nComp());
@@ -1171,12 +1171,12 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
             ng_depos_rho.min(ng);
             MultiFab rhofc(rho_cp[lev+1]->boxArray(),
                          rho_cp[lev+1]->DistributionMap(), ncomp, ng);
-            bilinear_filter.ApplyStencil(rhofc, *rho_cp[lev+1], lev, icomp, 0, ncomp);
+            bilinear_filter.ApplyStencil(rhofc, *rho_cp[lev+1], lev+1, icomp, 0, ncomp);
 
             // buffer patch of fine level
             MultiFab rhofb(charge_buf[lev+1]->boxArray(),
                            charge_buf[lev+1]->DistributionMap(), ncomp, ng);
-            bilinear_filter.ApplyStencil(rhofb, *charge_buf[lev+1], lev, icomp, 0, ncomp);
+            bilinear_filter.ApplyStencil(rhofb, *charge_buf[lev+1], lev+1, icomp, 0, ncomp);
 
             MultiFab::Add(rhofb, rhofc, 0, 0, ncomp, ng);
 
@@ -1189,7 +1189,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
             ng_depos_rho += bilinear_filter.stencil_length_each_dir-1;
             ng_depos_rho.min(ng);
             MultiFab rf(rho_cp[lev+1]->boxArray(), rho_cp[lev+1]->DistributionMap(), ncomp, ng);
-            bilinear_filter.ApplyStencil(rf, *rho_cp[lev+1], lev, icomp, 0, ncomp);
+            bilinear_filter.ApplyStencil(rf, *rho_cp[lev+1], lev+1, icomp, 0, ncomp);
 
             WarpXCommUtil::ParallelAdd(mf, rf, 0, 0, ncomp, ng, IntVect::TheZeroVector(), period);
             WarpXSumGuardCells( *rho_cp[lev+1], rf, period, ng_depos_rho, icomp, ncomp );

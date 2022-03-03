@@ -25,7 +25,7 @@ filename = sys.argv[1]
 energy_start = 7.282940107273505e-08 # electromagnetic energy at iteration 50
 
 # Check consistency of field energy diagnostics with initial energy above
-ds = yt.load('pml_x_psatd_plt00050')
+ds = yt.load('pml_x_psatd_plt000050')
 all_data_level_0 = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 Bx = all_data_level_0['boxlib', 'Bx'].v.squeeze()
 By = all_data_level_0['boxlib', 'By'].v.squeeze()
