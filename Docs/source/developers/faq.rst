@@ -16,7 +16,7 @@ There is also ``0.0_prt``, which is a literal zero of type ``amrex::ParticleReal
 In std C++, you know: ``0.0`` (literal ``double``), ``0.0f`` (literal ``float``) and ``0.0L`` (literal ``long double``).
 We do not use use those, so that we can configure floating point precision at compile time and use different precision for fields (``amrex::Real``) and particles (``amrex::ParticleReal``).
 
-You can also things like ``42.0_prt`` if you like to have another value than zero.
+You can also write things like ``42.0_prt`` if you like to have another value than zero.
 
 We use these `C++ user literals <https://en.cppreference.com/w/cpp/language/user_literal>`__ (`[1] <https://github.com/AMReX-Codes/amrex/pull/577>`__, `[2] <https://github.com/AMReX-Codes/amrex/pull/578>`__, `[3] <https://github.com/AMReX-Codes/amrex/pull/869>`__), because we want to avoid that double operations, i.e., ``3. / 4.``, implicit casts, or even worse integer operations, i.e., ``3 / 4``, sneak into the code base and make results wrong or slower.
 
