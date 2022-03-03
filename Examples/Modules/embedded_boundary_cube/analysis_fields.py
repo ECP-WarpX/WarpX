@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import os
-import sys
 import re
+import sys
 
 import numpy as np
 from scipy.constants import c, mu_0, pi
