@@ -117,8 +117,8 @@ short WarpX::field_gathering_algo;
 short WarpX::particle_pusher_algo;
 short WarpX::maxwell_solver_id;
 short WarpX::load_balance_costs_update_algo;
-bool WarpX::do_dive_cleaning = 0;
-bool WarpX::do_divb_cleaning = 0;
+bool WarpX::do_dive_cleaning = false;
+bool WarpX::do_divb_cleaning = false;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
@@ -795,23 +795,23 @@ WarpX::ReadParameters ()
         // false for FDTD solver, true for PSATD solver.
         if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
         {
-            do_pml_dive_cleaning = 0;
-            do_pml_divb_cleaning = 0;
+            do_pml_dive_cleaning = false;
+            do_pml_divb_cleaning = false;
         }
         else
         {
-            do_pml_dive_cleaning = 1;
-            do_pml_divb_cleaning = 1;
+            do_pml_dive_cleaning = true;
+            do_pml_divb_cleaning = true;
         }
 
-        // If WarpX::do_dive_cleaning = 1, set also WarpX::do_pml_dive_cleaning = 1
+        // If WarpX::do_dive_cleaning = true, set also WarpX::do_pml_dive_cleaning = true
         // (possibly overwritten by users in the input file, see query below)
-        if (do_dive_cleaning) do_pml_dive_cleaning = 1;
+        if (do_dive_cleaning) do_pml_dive_cleaning = true;
 
-        // If WarpX::do_divb_cleaning = 1, set also WarpX::do_pml_divb_cleaning = 1
+        // If WarpX::do_divb_cleaning = true, set also WarpX::do_pml_divb_cleaning = true
         // (possibly overwritten by users in the input file, see query below)
         // TODO Implement div(B) cleaning in PML with FDTD and remove second if condition
-        if (do_divb_cleaning && maxwell_solver_id == MaxwellSolverAlgo::PSATD) do_pml_divb_cleaning = 1;
+        if (do_divb_cleaning && maxwell_solver_id == MaxwellSolverAlgo::PSATD) do_pml_divb_cleaning = true;
 
         // Query input parameters to use div(E) and div(B) cleaning in PMLs
         pp_warpx.query("do_pml_dive_cleaning", do_pml_dive_cleaning);
@@ -821,8 +821,8 @@ WarpX::ReadParameters ()
         if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
         {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                do_pml_divb_cleaning == 0,
-                "warpx.do_pml_divb_cleaning = 1 not implemented for FDTD solver");
+                do_pml_divb_cleaning == false,
+                "warpx.do_pml_divb_cleaning = true not implemented for FDTD solver");
         }
 
         // Divergence cleaning in PMLs for PSATD solver implemented only
