@@ -10,7 +10,7 @@ geometry.dims = 2
 geometry.prob_lo     = -25.e-6  -25.0e-6     # physical domain
 geometry.prob_hi     =  25.e-6   25.e-6
 warpx.verbose = 1
-warpx.serialize_ics = 1
+warpx.serialize_initial_conditions = 1
 
 #################################
 ####### Boundary condition ######
