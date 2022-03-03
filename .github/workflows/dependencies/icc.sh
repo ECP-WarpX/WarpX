@@ -11,8 +11,9 @@ export DEBIAN_FRONTEND=noninteractive
 sudo apt-get -qqq update
 sudo apt-get install -y \
   build-essential \
-  cmake           \
   ca-certificates \
+  ccache          \
+  cmake           \
   gnupg           \
   pkg-config      \
   wget
