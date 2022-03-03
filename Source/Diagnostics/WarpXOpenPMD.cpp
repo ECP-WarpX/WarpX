@@ -1114,7 +1114,7 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     auto global_size = getReversedVec(global_box.size());
 #if defined(WARPX_DIM_RZ)
     auto & warpx = WarpX::GetInstance();
-    int n_rz_mode_inds = 2 * warpx.n_rz_azimuthal_modes - 1;
+    int const n_rz_mode_inds = 2 * warpx.n_rz_azimuthal_modes - 1;
     if (var_in_theta_mode) {
             global_size.emplace(global_size.begin(), n_rz_mode_inds);
     }
@@ -1181,25 +1181,41 @@ WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
 
     field_name += std::string("_lvl").append(std::to_string(meshLevel));
 }
-/* Split varname into name and theta mode mode index
+/* Find length of field name in varname and get the theta mode index, if varname = fieldName_mode_realOrImag
  *
- * @param varname [IN]: variable name
- * @param varname field_str_end_index [OUT] : if varname = fieldName_modeNumber_realOrImag,  index of underscore after fieldName, otherwise, varname.size()
- * @param varname mode_index [OUT] : if varname = fieldName_modeNumber_realOrImag, returns 2 * modeNumber - 1 + (realOrImag == 'imag'), otherwise, -1
+ * @param varname [IN]: name of the field variable being parsed
+ * @returns varname field_str_length if varname = fieldName_mode_realOrImag, length of fieldName, otherwise, varname.size() and
+ * if varname = fieldName_modeNumber_realOrImag, returns 2 * mode - 1 + (realOrImag == 'imag'), otherwise, -1
+ * 
+ * Examples :
+ * rho -> 3, -1
+ * rho_0_real -> 3, 1
+ * Er_1_real -> 2, 2
+ * divB_1_imag -> 4, 3
  */
 std::tuple<int, int>
 GetFieldModeIndices (const std::string& varname)
 {
+    // mode_index = -1 if varname isn't of form fieldName_mode_realOrImag
+    // mode_index = 2 * mode - 1 + (realOrImag == 'imag')
+    // in either case, there is a -1 in mode_index
     int mode_index = -1;
+    // field str_end_index
+    // field_str_len will be the value of field_str_end_index
     int field_str_end_index = varname.size();
-    if (varname.size() >= 6) {
-        std::string real_imag = varname.substr(field_str_end_index - 4);
+
+    int const real_imag_len = 4;
+    int offset_last_digit_of_mode = 6; // assume varname has form <varname>_mode_realOrImag
+                                    //  -6 points to the last digit of mode ^
+    if (field_str_end_index >= offset_last_digit_of_mode) {
+        int const start_real_imag = field_str_end_index - real_imag_len;
+        std::string real_imag = varname.substr(start_real_imag);
         if (real_imag == "real" || real_imag == "imag") {
-            if (real_imag[0] == 'i') {
+            if (real_imag == "imag") {
                 mode_index += 1;
             }
-            field_str_end_index -= 6; // varname has form <varname>_modeNumber_realOrImag
-                                      // extracting modeNumber:
+            field_str_end_index -= offset_last_digit_of_mode; 
+            // extracting mode: find '_' preceding mode
             int num_mode_digits = 0;
             while ( varname[field_str_end_index] != '_') {
                 field_str_end_index--;
@@ -1213,6 +1229,7 @@ GetFieldModeIndices (const std::string& varname)
             }
         }
     }
+    // field_str_len is the value of field_str_end_index
     return std::make_tuple(field_str_end_index, mode_index);
 }
 /*
@@ -1266,10 +1283,10 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
         for ( int icomp=0; icomp<ncomp; icomp++ ) {
             std::string const & varname = varnames[icomp];
 
-            auto [field_str_end_index, mode_index] = GetFieldModeIndices(varname);
-            bool var_in_theta_mode = field_str_end_index < varname.size();
-            std::string field_name = varname.substr(0,field_str_end_index);
-            std::string varname_no_mode = varname.substr(0,field_str_end_index);
+            auto [field_str_length, mode_index] = GetFieldModeIndices(varname);
+            bool var_in_theta_mode = field_str_length < varname.size();
+            std::string field_name = varname.substr(0,field_str_length);
+            std::string varname_no_mode = varname.substr(0,field_str_length);
             std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
             // assume fields are scalar unless they match the following match of known vector fields
             GetMeshCompNames( i, varname_no_mode, field_name, comp_name );
@@ -1355,14 +1372,14 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                 {
                     amrex::Real const *local_data = fab.dataPtr(icomp);
                     mesh_comp.storeChunk(openPMD::shareRaw(local_data),
-                                            chunk_offset, chunk_size);
+                                         chunk_offset, chunk_size);
                 }
             }
         } // icomp store loop
 
-    #ifdef AMREX_USE_GPU
+#ifdef AMREX_USE_GPU
         amrex::Gpu::streamSynchronize();
-    #endif
+#endif
         // Flush data to disk after looping over all components
         m_Series->flush();
     } // levels loop (i)
