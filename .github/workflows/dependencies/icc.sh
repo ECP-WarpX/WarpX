@@ -35,6 +35,7 @@ set -eu
 sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
 sudo chmod a+x /usr/local/bin/cmake-easyinstall
 export CEI_SUDO="sudo"
+export CEI_TMP="/tmp/cei"
 
 # openPMD-api
 CXX=$(which icpc) CC=$(which icc) \
@@ -44,4 +45,5 @@ CXX=$(which icpc) CC=$(which icc) \
   -DopenPMD_USE_PYTHON=OFF \
   -DBUILD_TESTING=OFF      \
   -DBUILD_EXAMPLES=OFF     \
-  -DBUILD_CLI_TOOLS=OFF
+  -DBUILD_CLI_TOOLS=OFF    \
+  -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)
