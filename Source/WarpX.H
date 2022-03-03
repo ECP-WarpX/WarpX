@@ -159,12 +159,14 @@ public:
     //! Author of an input file / simulation setup
     static std::string authors;
 
-    // Initial field on the grid.
+    //! Initial electric field on the grid
     static amrex::Vector<amrex::Real> E_external_grid;
+    //! Initial magnetic field on the grid
     static amrex::Vector<amrex::Real> B_external_grid;
 
-    // Initialization Type for External E and B on grid
+    //! Initialization type for external magnetic field on the grid
     static std::string B_ext_grid_s;
+    //! Initialization type for external electric field on the grid
     static std::string E_ext_grid_s;
 
     // Parser for B_external on the grid
@@ -186,10 +188,15 @@ public:
     std::unique_ptr<amrex::Parser> Ezfield_parser;
 
     // Algorithms
+    //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay)
     static long current_deposition_algo;
+    //! Integer that corresponds to the charge deposition algorithm (only standard deposition)
     static long charge_deposition_algo;
+    //! Integer that corresponds to the field gathering algorithm (energy-conserving, momentum-conserving)
     static long field_gathering_algo;
+    //! Integer that corresponds to the particle push algorithm (Boris, Vay, Higuera-Cary)
     static long particle_pusher_algo;
+    //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
     static int maxwell_solver_id;
     static long load_balance_costs_update_algo;
     static int em_solver_medium;
@@ -200,40 +207,50 @@ public:
     static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
 
 
-    // If true, the current is deposited on a nodal grid and then centered onto a staggered grid
+    //! If true, the current is deposited on a nodal grid and then centered onto a staggered grid
+    //! using finite centering of order given by #current_centering_nox, #current_centering_noy,
+    //! and #current_centering_noz
     static bool do_current_centering;
 
-    // PSATD: If true (overwritten by the user in the input file), the current correction
-    // defined in equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010 is applied
+    //! If true, a correction is applied to the current in Fourier space, so that the continuity
+    //! equation is satisfied
     bool current_correction = false;
 
-    // PSATD: If true, the update equation for E contains both J and rho (at times n and n+1):
-    // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
+    //! If true, the PSATD update equation for E contains both J and rho
+    //! (default is false for standard PSATD and true for Galilean PSATD)
     bool update_with_rho = false;
 
     //! perform field communications in single precision
     static int do_single_precision_comms;
 
-    // PSATD: Whether to fill the guard cells with inverse FFTs based on the boundary conditions
+    //! Whether to fill the guard cells when computing inverse FFTs, based on the boundary conditions
     static amrex::IntVect fill_guards;
 
-    // div(E) and div(B) cleaning
+    //! Solve additional Maxwell equation for F in order to control errors in Gauss' law
+    //! (useful when using current deposition algorithms that are not charge-conserving)
     static bool do_dive_cleaning;
+    //! Solve additional Maxwell equation for G in order to control errors in magnetic Gauss' law
     static bool do_divb_cleaning;
 
-    // Interpolation order
+    //! Order of the particle shape factors (splines) along x
     static int nox;
+    //! Order of the particle shape factors (splines) along y
     static int noy;
+    //! Order of the particle shape factors (splines) along z
     static int noz;
 
-    // Order of finite-order centering of fields (staggered to nodal)
+    //! Order of finite centering of fields (from staggered grid to nodal grid), along x
     static int field_centering_nox;
+    //! Order of finite centering of fields (from staggered grid to nodal grid), along y
     static int field_centering_noy;
+    //! Order of finite centering of fields (from staggered grid to nodal grid), along z
     static int field_centering_noz;
 
-    // Order of finite-order centering of currents (nodal to staggered)
+    //! Order of finite centering of currents (from nodal grid to staggered grid), along x
     static int current_centering_nox;
+    //! Order of finite centering of currents (from nodal grid to staggered grid), along y
     static int current_centering_noy;
+    //! Order of finite centering of currents (from nodal grid to staggered grid), along z
     static int current_centering_noz;
 
     // Number of modes for the RZ multimode version
