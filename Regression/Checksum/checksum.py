@@ -57,7 +57,8 @@ class Checksum:
         grid_fields = [item for item in ds.field_list if item[0] == 'boxlib']
         species_list = set([item[0] for item in ds.field_list if
                             item[1][:9] == 'particle_' and item[0] != 'all' and
-                            item[0] != 'nbody'])
+                            item[0] != 'nbody' and item[1][:12] != 'particle_cpu' and
+                            item[1][:11] != 'particle_id'])
 
         data = {}
 
