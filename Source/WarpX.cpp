@@ -490,10 +490,10 @@ WarpX::ReadParameters ()
 {
     // Ensure that geometry.dims is set properly.
     CheckDims();
-
+    auto has_max_step=false;
     {
         ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
-        queryWithParser(pp, "max_step", max_step);
+        has_max_step=queryWithParser(pp, "max_step", max_step);
         queryWithParser(pp, "stop_time", stop_time);
         pp.query("authors", authors);
     }
@@ -631,7 +631,13 @@ WarpX::ReadParameters ()
 
 
         if(max_level>0){
-            pp_warpx.query("end_fine_patch_step", end_fine_patch_step);
+            const auto end_fine_patch_defined=queryWithParser(pp_warpx,"end_fine_patch_step", end_fine_patch_step);
+            if(has_max_step && end_fine_patch_defined && do_subcycling==0){
+                auto ss = std::stringstream{};
+                ss << "When the fine patch is removed, the max step will be " << end_fine_patch_step + (max_step-end_fine_patch_step)*0.5 ;
+
+                 this->RecordWarning("Mesh Refinement", ss.str(), WarnPriority::high);
+            }
         }
 
         pp_warpx.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);
