@@ -1390,6 +1390,7 @@ bool reverse = false;
 #endif
                 {
                     amrex::Real const *local_data = fab.dataPtr(icomp);
+#ifdef WARPX_DIM_RZ
 
                     amrex::BaseFab<amrex::Real> tmp_fab(local_box, 1);
                     std::shared_ptr<amrex::Real> data(tmp_fab.release());
@@ -1401,10 +1402,13 @@ bool reverse = false;
                         int transposed_ii = col + row * Nz;
                         data_ptr[transposed_ii] = local_data[ii];
                     }
-
                     mesh_comp.storeChunk(data,
-                    // mesh_comp.storeChunk(openPMD::shareRaw(local_data),
                                          chunk_offset, chunk_size);
+#else
+                    mesh_comp.storeChunk(openPMD::shareRaw(local_data),
+                                         chunk_offset, chunk_size);
+
+#endif
                 }
             }
         } // icomp store loop
