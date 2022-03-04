@@ -1123,7 +1123,7 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     std::vector<double> const grid_spacing = getVec(full_geom.CellSize(), reverse);
     // - Global offset
     std::vector<double> const global_offset = getVec(full_geom.ProbLo(), reverse);
-#else 
+#else
     auto global_size = getReversedVec(global_box.size());
     // - Grid spacing
     std::vector<double> const grid_spacing = getReversedVec(full_geom.CellSize());
