@@ -1193,7 +1193,7 @@ WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
  * @param varname [IN]: name of the field variable being parsed
  * @returns varname field_str_length if varname = fieldName_mode_realOrImag, length of fieldName, otherwise, varname.size() and
  * if varname = fieldName_modeNumber_realOrImag, returns 2 * mode - 1 + (realOrImag == 'imag'), otherwise, -1
- * 
+ *
  * Examples :
  * rho -> 3, -1
  * rho_0_real -> 3, 1
@@ -1221,7 +1221,7 @@ GetFieldModeIndices (const std::string& varname)
             if (real_imag == "imag") {
                 mode_index += 1;
             }
-            field_str_end_index -= offset_last_digit_of_mode; 
+            field_str_end_index -= offset_last_digit_of_mode;
             // extracting mode: find '_' preceding mode
             int num_mode_digits = 0;
             while ( varname[field_str_end_index] != '_') {
