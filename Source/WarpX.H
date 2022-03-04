@@ -286,7 +286,7 @@ public:
     static bool use_filter_compensation;
 
     //! If true, the initial conditions from random number generators are serialized (useful for reproducible testing with OpenMP)
-    static bool serialize_ics;
+    static bool serialize_initial_conditions;
 
     // Back transformation diagnostic
     static bool do_back_transformed_diagnostics;
@@ -335,6 +335,9 @@ public:
 
     //! If true, all fields are evaluated on a nodal grid and all MultiFabs have a nodal index type
     static bool do_nodal;
+
+    // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
+    amrex::IntVect m_rho_nodal_flag;
 
     std::array<const amrex::MultiFab* const, 3>
     get_array_Bfield_aux  (const int lev) const {
@@ -944,24 +947,6 @@ private:
     void AddRhoFromFineLevelandSumBoundary (int lev, int icomp, int ncomp);
     void NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp);
 
-    /**
-     * \brief Private function for current correction in Fourier space
-     * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010):
-     * loops over the MR levels and applies the correction on the fine and coarse
-     * patches (calls the virtual method \c CurrentCorrection of the spectral
-     * algorithm in use, via the public interface defined in the class SpectralSolver).
-     */
-    void CurrentCorrection ();
-
-    /**
-     * \brief Private function for Vay deposition in Fourier space
-     * (equations (20)-(24) of https://doi.org/10.1016/j.jcp.2013.03.010):
-     * loops over the MR levels and applies the correction on the fine and coarse
-     * patches (calls the virtual method \c VayDeposition of the spectral
-     * algorithm in use, via the public interface defined in the class SpectralSolver).
-     */
-    void VayDeposition ();
-
     void ReadParameters ();
 
     /** This function queries deprecated input parameters and abort
@@ -1461,6 +1446,11 @@ private:
      * \brief Correct current in Fourier space so that the continuity equation is satisfied
      */
     void PSATDCurrentCorrection ();
+
+    /**
+     * \brief Vay deposition in Fourier space (https://doi.org/10.1016/j.jcp.2013.03.010)
+     */
+    void PSATDVayDeposition ();
 
     /**
      * \brief Update all necessary fields in spectral space

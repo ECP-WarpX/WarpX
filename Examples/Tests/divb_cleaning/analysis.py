@@ -24,8 +24,8 @@ from scipy.constants import c
 fn = sys.argv[1]
 
 # Load yt data
-ds_old = yt.load('divb_cleaning_3d_plt00398')
-ds_mid = yt.load('divb_cleaning_3d_plt00399')
+ds_old = yt.load('divb_cleaning_3d_plt000398')
+ds_mid = yt.load('divb_cleaning_3d_plt000399')
 ds_new = yt.load(fn) # this is the last plotfile
 
 ad_old = ds_old.covering_grid(level = 0, left_edge = ds_old.domain_left_edge, dims = ds_old.domain_dimensions)

@@ -20,7 +20,7 @@ geometry.prob_hi     =  20.e-6
 boundary.field_lo = periodic
 boundary.field_hi = periodic
 
-warpx.serialize_ics = 1
+warpx.serialize_initial_conditions = 1
 
 # Verbosity
 warpx.verbose = 1

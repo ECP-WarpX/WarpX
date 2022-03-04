@@ -63,14 +63,9 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
          * base class \c SpectralBaseAlgorithm and cannot be overridden by further
          * derived classes.
          *
-         * \param[in]     lev        The mesh-refinement level
          * \param[in,out] field_data All fields in Fourier space
-         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
-         *                           the three components of the current density
          */
-        virtual void VayDeposition (const int lev,
-                                    SpectralFieldData& field_data,
-                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
+        virtual void VayDeposition (SpectralFieldData& field_data) override final;
 
     private:
         SpectralFieldIndex m_spectral_index;

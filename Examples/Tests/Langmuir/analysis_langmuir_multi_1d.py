@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2019-2021 Jean-Luc Vay, Maxence Thevenet, Remi Lehe, Prabhat Kumar
+# Copyright 2019-2022 Jean-Luc Vay, Maxence Thevenet, Remi Lehe, Prabhat Kumar, Axel Huebl
 #
 #
 # This file is part of WarpX.
@@ -11,6 +11,7 @@
 # the script `inputs.multi.rt`. This simulates a 1D periodic plasma wave.
 # The electric field in the simulation is given (in theory) by:
 # $$ E_z = \epsilon \,\frac{m_e c^2 k_z}{q_e}\sin(k_z z)\sin( \omega_p t)$$
+import os
 import re
 import sys
 
@@ -21,6 +22,7 @@ import matplotlib.pyplot as plt
 import yt
 
 yt.funcs.mylog.setLevel(50)
+
 import numpy as np
 from scipy.constants import c, e, epsilon_0, m_e
 
@@ -75,7 +77,7 @@ data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
 # Check the validity of the fields
 error_rel = 0
 for field in ['Ez']:
-    E_sim = data[field].to_ndarray()[:,0,0]
+    E_sim = data[('mesh',field)].to_ndarray()[:,0,0]
     E_th = get_theoretical_field(field, t0)
     max_error = abs(E_sim-E_th).max()/abs(E_th).max()
     print('%s: Max error: %.2e' %(field,max_error))
@@ -104,8 +106,8 @@ assert( error_rel < tolerance_rel )
 # current correction (psatd.do_current_correction=1) is applied or when
 # Vay current deposition (algo.current_deposition=vay) is used
 if current_correction or vay_deposition:
-    rho  = data['rho' ].to_ndarray()
-    divE = data['divE'].to_ndarray()
+    rho  = data[('boxlib','rho')].to_ndarray()
+    divE = data[('boxlib','divE')].to_ndarray()
     error_rel = np.amax( np.abs( divE - rho/epsilon_0 ) ) / np.amax( np.abs( rho/epsilon_0 ) )
     tolerance = 1.e-9
     print("Check charge conservation:")
@@ -113,5 +115,5 @@ if current_correction or vay_deposition:
     print("tolerance = {}".format(tolerance))
     assert( error_rel < tolerance )
 
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn)

@@ -86,6 +86,7 @@ checkpoint = picmi.Checkpoint(
     name = 'chkpoint',
     period = diagnostic_intervals,
     write_dir = '.',
+    warpx_file_min_digits = 5,
     warpx_file_prefix = f'Python_restart_eb_chk'
 )
 
