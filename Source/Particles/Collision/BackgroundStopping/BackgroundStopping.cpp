@@ -256,6 +256,7 @@ void BackgroundStopping::doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti
 
             amrex::Real const W0 = 0.5_rt*species_mass*(ux[ip]*ux[ip] + uy[ip]*uy[ip] + uz[ip]*uz[ip]);
             amrex::Real const f1 = pow(W0, 1.5_rt) - 1.5_rt*alpha*dt;
+            // If f1 goes negative, the particle has fully stopped, so set W1 to 0.
             amrex::Real const W1 = pow((f1 > 0._rt ? f1 : 0._rt), 2._rt/3._rt);
             amrex::Real const vscale = (W0 > 0._rt ? std::sqrt(W1/W0) : 0._rt);
 
