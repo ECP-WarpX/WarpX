@@ -184,7 +184,7 @@ void BackgroundStopping::doBackgroundStoppingOnElectronsWithinTile (WarpXParIter
             amrex::Real const q2 = species_charge*species_charge;
             amrex::Real const T32 = T_e*sqrt(T_e);
 
-            amrex::Real alpha = sqrt(2._rt)*n_e*q2*q_e2*sqrt(mass_e)*loglambda/(12._rt*pi32*ep02*species_mass*T32);
+            amrex::Real const alpha = sqrt(2._rt)*n_e*q2*q_e2*sqrt(mass_e)*loglambda/(12._rt*pi32*ep02*species_mass*T32);
 
             ux[ip] *= exp(-alpha*dt);
             uy[ip] *= exp(-alpha*dt);
