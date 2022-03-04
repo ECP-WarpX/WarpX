@@ -8,6 +8,7 @@
 #include "MCCScattering.H"
 #include "Particles/ParticleCreation/FilterCopyTransform.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
+#include "Utils/TextMsg.H"
 #include "Utils/ParticleUtils.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -237,10 +238,12 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
             m_background_mass = species1.getMass();
         }
 
-        amrex::Print() <<
-            "Setting up collisions for " << m_species_names[0] << " with total "
-            "collision probability: " <<
-            m_total_collision_prob + m_total_collision_prob_ioniz << "\n";
+        amrex::Print() << Utils::TextMsg::Info(
+            "Setting up collisions for " + m_species_names[0] + " with total "
+            + "collision probability: " <<
+            + std::to_string(m_total_collision_prob) + " "
+            + std::to_string(m_total_collision_prob_ioniz)
+        );
 
         init_flag = true;
     }

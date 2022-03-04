@@ -32,6 +32,7 @@
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/IonizationEnergiesTable.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -2822,7 +2823,7 @@ void PhysicalParticleContainer::resample (const int timestep)
     WARPX_PROFILE_VAR_START(blp_resample_actual);
     if (m_resampler.triggered(timestep, global_numparts))
     {
-        amrex::Print() << "Resampling " << species_name << ".\n";
+        amrex::Print() << Utils::TextMsg::Info("Resampling " + species_name);
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)

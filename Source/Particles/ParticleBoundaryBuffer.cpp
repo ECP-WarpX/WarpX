@@ -10,6 +10,7 @@
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Gather/ScalarFieldGather.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX_Geometry.H>
 #include <AMReX_ParmParse.H>
@@ -100,9 +101,11 @@ void ParticleBoundaryBuffer::printNumParticles () const {
             for (int i = 0; i < numSpecies(); ++i)
             {
                 int np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
-                amrex::Print() << "Species " << getSpeciesNames()[i] << " has "
-                               << np << " particles in the boundary buffer "
-                               << "for side " << iside << " of dim " << idim << "\n";
+                amrex::Print() << Utils::TextMsg::Info(
+                    "Species " + getSpeciesNames()[i] + " has "
+                    + std::to_string(np) + " particles in the boundary buffer "
+                    + "for side " + std::to_string(iside) + " of dim " + std::to_string(idim)
+                );
             }
         }
     }
@@ -111,8 +114,10 @@ void ParticleBoundaryBuffer::printNumParticles () const {
     for (int i = 0; i < numSpecies(); ++i)
     {
         int np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
-        amrex::Print() << "Species " << getSpeciesNames()[i] << " has "
-                       << np << " particles in the EB boundary buffer \n";
+        amrex::Print() << Utils::TextMsg::Info(
+            "Species " + getSpeciesNames()[i] + " has "
+            + std::to_string(np) + " particles in the EB boundary buffer"
+        );
     }
 #endif
 }

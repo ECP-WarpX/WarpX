@@ -1,5 +1,6 @@
 #include "MacroscopicProperties.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
@@ -116,7 +117,7 @@ MacroscopicProperties::ReadParameters ()
 void
 MacroscopicProperties::InitData ()
 {
-    amrex::Print() << "we are in init data of macro \n";
+    amrex::Print() << Utils::TextMsg::Info("we are in init data of macro");
     auto & warpx = WarpX::GetInstance();
 
     // Get BoxArray and DistributionMap of warpx instance.

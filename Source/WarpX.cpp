@@ -30,6 +30,7 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/MsgLogger/MsgLogger.H"
 #include "Utils/WarnManager.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -437,10 +438,15 @@ WarpX::RecordWarning(
         msg_priority = Utils::MsgLogger::Priority::medium;
 
     if(m_always_warn_immediately){
+
         amrex::Warning(
-            "!!!!!! WARNING: ["
-            + std::string(Utils::MsgLogger::PriorityToString(msg_priority))
-            + "][" + topic + "] " + text);
+            Utils::TextMsg::Warn(
+                "["
+                + std::string(Utils::MsgLogger::PriorityToString(msg_priority))
+                + "]["
+                + topic
+                + "] "
+                + text));
     }
 
 #ifdef AMREX_USE_OMP

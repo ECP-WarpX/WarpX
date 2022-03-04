@@ -5,6 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MCCProcess.H"
+
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
 MCCProcess::MCCProcess (
@@ -12,8 +14,9 @@ MCCProcess::MCCProcess (
                         const std::string& cross_section_file,
                         const amrex::Real energy )
 {
-    amrex::Print() << "Reading file " << cross_section_file << " for "
-                   << scattering_process << " scattering cross-sections.\n";
+    amrex::Print() << Utils::TextMsg::Info(
+        "Reading file " + cross_section_file + " for "
+        + scattering_process + " scattering cross-sections.");
 
     // read the cross-section data file into memory
     readCrossSectionFile(cross_section_file, m_energies, m_sigmas_h);
