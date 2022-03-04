@@ -457,6 +457,9 @@ public:
     /** Determine the timestep of the simulation. */
     void ComputeDt ();
 
+    /** Print main PIC parameters to stdout */
+    void PrintMainPICparameters ();
+
     /** Print dt and dx,dy,dz */
     void PrintDtDxDyDz ();
 
