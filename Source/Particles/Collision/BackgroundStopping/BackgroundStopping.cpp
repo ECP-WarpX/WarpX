@@ -80,6 +80,8 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, MultiParticleContainer* 
     WARPX_PROFILE("BackgroundStopping::doCollisions()");
     using namespace amrex::literals;
 
+    // Note that the lowest level time step is used for all levels since the
+    // collision operation will be done only once per step at the lowest level.
     const amrex::Real dt = WarpX::GetInstance().getdt(0);
     if (int(std::floor(cur_time/dt)) % m_ndt != 0) return;
 
