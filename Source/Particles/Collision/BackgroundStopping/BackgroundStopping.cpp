@@ -80,8 +80,8 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, MultiParticleContainer* 
     WARPX_PROFILE("BackgroundStopping::doCollisions()");
     using namespace amrex::literals;
 
-    const amrex::Real dt_lev0 = WarpX::GetInstance().getdt(0);
-    if (int(std::floor(cur_time/dt_lev0)) % m_ndt != 0) return;
+    const amrex::Real dt = WarpX::GetInstance().getdt(0);
+    if (int(std::floor(cur_time/dt)) % m_ndt != 0) return;
 
     auto& species = mypc->GetParticleContainerFromName(m_species_names[0]);
     amrex::Real species_mass = species.getMass();
@@ -92,8 +92,6 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, MultiParticleContainer* 
     // Loop over refinement levels
     auto const flvl = species.finestLevel();
     for (int lev = 0; lev <= flvl; ++lev) {
-
-        const amrex::Real dt_lev = WarpX::GetInstance().getdt(lev);
 
         auto cost = WarpX::getCosts(lev);
 
@@ -109,9 +107,9 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, MultiParticleContainer* 
             amrex::Real wt = amrex::second();
 
             if (background_type == BackgroundStoppingType::ELECTRONS) {
-                doBackgroundStoppingOnElectronsWithinTile(pti, dt_lev, cur_time, species_mass, species_charge);
+                doBackgroundStoppingOnElectronsWithinTile(pti, dt, cur_time, species_mass, species_charge);
             } else if (background_type == BackgroundStoppingType::IONS) {
-                doBackgroundStoppingOnIonsWithinTile(pti, dt_lev, cur_time, species_mass, species_charge);
+                doBackgroundStoppingOnIonsWithinTile(pti, dt, cur_time, species_mass, species_charge);
             }
 
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
