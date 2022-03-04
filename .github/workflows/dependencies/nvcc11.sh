@@ -11,10 +11,11 @@ sudo apt-get -qqq update
 sudo apt-get install -y \
     build-essential     \
     ca-certificates     \
-    ccache              \
     cmake               \
     gnupg               \
+    libhiredis-dev      \
     libopenmpi-dev      \
+    libzstd-dev         \
     ninja-build         \
     openmpi-bin         \
     pkg-config          \
@@ -37,7 +38,26 @@ sudo apt-get install -y          \
     libcurand-dev-11-0
 sudo ln -s cuda-11.0 /usr/local/cuda
 
+# if we run out of temporary storage in CI:
+#du -sh /usr/local/cuda-11.0
+#echo "+++ REDUCING CUDA Toolkit install size +++"
+#sudo rm -rf /usr/local/cuda-11.0/targets/x86_64-linux/lib/libcu{fft,pti,rand}_static.a
+#sudo rm -rf /usr/local/cuda-11.0/targets/x86_64-linux/lib/libnvperf_host_static.a
+#du -sh /usr/local/cuda-11.0/
+#df -h
+
 # cmake-easyinstall
 #
 sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
 sudo chmod a+x /usr/local/bin/cmake-easyinstall
+export CEI_SUDO="sudo"
+export CEI_TMP="/tmp/cei"
+
+# ccache 4.2+
+#
+cmake-easyinstall --prefix=/usr/local \
+    git+https://github.com/ccache/ccache.git@v4.6 \
+    -DCMAKE_BUILD_TYPE=Release        \
+    -DENABLE_DOCUMENTATION=OFF        \
+    -DENABLE_TESTING=OFF              \
+    -DWARNINGS_AS_ERRORS=OFF

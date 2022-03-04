@@ -40,12 +40,14 @@ jobs:
     - name: install openPMD-api
       run: |
         export CEI_SUDO="sudo"
+        export CEI_TMP="/tmp/cei"
         cmake-easyinstall --prefix=/usr/local \
           git+https://github.com/openPMD/openPMD-api.git@0.14.3 \
           -DopenPMD_USE_PYTHON=OFF    \
           -DBUILD_TESTING=OFF         \
           -DBUILD_EXAMPLES=OFF        \
           -DBUILD_CLI_TOOLS=OFF       \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
           -DCMAKE_VERBOSE_MAKEFILE=ON
     - name: build WarpX
       run: |
@@ -91,7 +93,7 @@ jobs:
 
         git clone https://github.com/AMReX-Codes/amrex.git ../amrex
         cd amrex && git checkout --detach 22.03 && cd -
-        make COMP=gcc QED=FALSE USE_MPI=TRUE USE_GPU=TRUE USE_OMP=FALSE USE_PSATD=TRUE -j 2
+        make COMP=gcc QED=FALSE USE_MPI=TRUE USE_GPU=TRUE USE_OMP=FALSE USE_PSATD=TRUE USE_CCACHE=TRUE -j 2
 
   build_nvhpc21-9-nvcc:
     name: NVHPC@21.9 NVCC/NVC++ Release [tests]
