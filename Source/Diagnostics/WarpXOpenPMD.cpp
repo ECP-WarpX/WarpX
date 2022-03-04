@@ -1111,18 +1111,25 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
                                  bool var_in_theta_mode) const
 {
     amrex::Box const & global_box = full_geom.Domain();
-    auto global_size = getReversedVec(global_box.size());
 #if defined(WARPX_DIM_RZ)
+    bool reverse = false;
+    auto global_size = getVec(global_box.size(), reverse );
     auto & warpx = WarpX::GetInstance();
     int const n_rz_mode_inds = 2 * warpx.n_rz_azimuthal_modes - 1;
     if (var_in_theta_mode) {
             global_size.emplace(global_size.begin(), n_rz_mode_inds);
     }
-#endif
+    // - Grid spacing
+    std::vector<double> const grid_spacing = getVec(full_geom.CellSize(), reverse);
+    // - Global offset
+    std::vector<double> const global_offset = getVec(full_geom.ProbLo(), reverse);
+#else 
+    auto global_size = getReversedVec(global_box.size());
     // - Grid spacing
     std::vector<double> const grid_spacing = getReversedVec(full_geom.CellSize());
     // - Global offset
     std::vector<double> const global_offset = getReversedVec(full_geom.ProbLo());
+#endif
     // - AxisLabels
     std::vector<std::string> axis_labels = detail::getFieldAxisLabels();
 
@@ -1266,6 +1273,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
         series_iteration.setTime( time );
     }
 
+bool reverse = false;
     for (int i=0; i<geom.size(); i++) {
         amrex::Geometry full_geom = geom[i];
         if( isBTD )
@@ -1302,7 +1310,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                         detail::setOpenPMDUnit( mesh, field_name );
 
                         auto relative_cell_pos = utils::getRelativeCellPosition(mf[i]);     // AMReX Fortran index order
+#ifndef WARPX_DIM_RZ
                         std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
+#endif
                         mesh_comp.setPosition( relative_cell_pos );
                     }
                 } else {
@@ -1315,7 +1325,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                         detail::setOpenPMDUnit( mesh, field_name );
 
                         auto relative_cell_pos = utils::getRelativeCellPosition(mf[i]);     // AMReX Fortran index order
+#ifndef WARPX_DIM_RZ
                         std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
+#endif
                         mesh_comp.setPosition( relative_cell_pos );
                     }
                 }
@@ -1346,11 +1358,18 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 
                 // Determine the offset and size of this chunk
                 amrex::IntVect const box_offset = local_box.smallEnd() - global_box.smallEnd();
+#if defined(WARPX_DIM_RZ)
+                auto chunk_offset = getVec( box_offset, reverse);
+                auto chunk_size = getVec( local_box.size(), reverse );
+#else
                 auto chunk_offset = getReversedVec( box_offset );
                 auto chunk_size = getReversedVec( local_box.size() );
-
+#endif
 
 #if defined(WARPX_DIM_RZ)
+                int Nx = chunk_size[0];
+                int Nz = chunk_size[1];
+
                 if (var_in_theta_mode) {
                     chunk_offset.emplace(chunk_offset.begin(), mode_index);
                     chunk_size.emplace(chunk_size.begin(), 1);
@@ -1371,7 +1390,20 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 #endif
                 {
                     amrex::Real const *local_data = fab.dataPtr(icomp);
-                    mesh_comp.storeChunk(openPMD::shareRaw(local_data),
+
+                    amrex::BaseFab<amrex::Real> tmp_fab(local_box, 1);
+                    std::shared_ptr<amrex::Real> data(tmp_fab.release());
+                    auto data_ptr = data.get();
+
+                    for (int ii = 0; ii < local_box.numPts(); ii++) {
+                        int row = ii%Nx;
+                        int col = ii/Nx;
+                        int transposed_ii = col + row * Nz;
+                        data_ptr[transposed_ii] = local_data[ii];
+                    }
+
+                    mesh_comp.storeChunk(data,
+                    // mesh_comp.storeChunk(openPMD::shareRaw(local_data),
                                          chunk_offset, chunk_size);
                 }
             }
