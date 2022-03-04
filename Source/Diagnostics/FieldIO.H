@@ -30,6 +30,12 @@ AverageAndPackScalarField( amrex::MultiFab& mf_avg,
                          const int dcomp, const amrex::IntVect ngrow );
 
 std::vector<std::uint64_t>
+getVec( const amrex::IntVect& v, bool reverse = false);
+
+std::vector<double>
+getVec( const amrex::Real* v, bool reverse = false );
+
+std::vector<std::uint64_t>
 getReversedVec( const amrex::IntVect& v );
 
 std::vector<double>
