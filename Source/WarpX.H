@@ -189,19 +189,19 @@ public:
 
     // Algorithms
     //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay)
-    static long current_deposition_algo;
+    static short current_deposition_algo;
     //! Integer that corresponds to the charge deposition algorithm (only standard deposition)
-    static long charge_deposition_algo;
+    static short charge_deposition_algo;
     //! Integer that corresponds to the field gathering algorithm (energy-conserving, momentum-conserving)
-    static long field_gathering_algo;
+    static short field_gathering_algo;
     //! Integer that corresponds to the particle push algorithm (Boris, Vay, Higuera-Cary)
-    static long particle_pusher_algo;
+    static short particle_pusher_algo;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
-    static int maxwell_solver_id;
+    static short maxwell_solver_id;
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
-    static long load_balance_costs_update_algo;
+    static short load_balance_costs_update_algo;
     static int em_solver_medium;
     static int macroscopic_solver_algo;
     static amrex::Vector<int> field_boundary_lo;
@@ -224,7 +224,7 @@ public:
     bool update_with_rho = false;
 
     //! perform field communications in single precision
-    static int do_single_precision_comms;
+    static bool do_single_precision_comms;
 
     //! Whether to fill the guard cells when computing inverse FFTs, based on the boundary conditions
     static amrex::IntVect fill_guards;
@@ -309,7 +309,7 @@ public:
     //! Set to true if #zmax_plasma_to_compute_max_step is specified, in which case
     //! the maximum number of iterations is computed automatically so that the lower end of the
     //! simulation domain along z reaches #zmax_plasma_to_compute_max_step in the boosted frame
-    static int do_compute_max_step_from_zmax;
+    static bool do_compute_max_step_from_zmax;
 
     static bool do_dynamic_scheduling;
     static bool refine_plasma;
@@ -317,8 +317,8 @@ public:
     static IntervalsParser sort_intervals;
     static amrex::IntVect sort_bin_size;
 
-    static int do_subcycling;
-    static int do_multi_J;
+    static bool do_subcycling;
+    static bool do_multi_J;
     static int do_multi_J_n_depositions;
 
     static bool do_device_synchronize;
@@ -334,7 +334,7 @@ public:
     static int n_current_deposition_buffer;
 
     //! If true, all fields are evaluated on a nodal grid and all MultiFabs have a nodal index type
-    static int do_nodal;
+    static bool do_nodal;
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;
@@ -456,6 +456,9 @@ public:
 
     /** Determine the timestep of the simulation. */
     void ComputeDt ();
+
+    /** Print main PIC parameters to stdout */
+    void PrintMainPICparameters ();
 
     /** Print dt and dx,dy,dz */
     void PrintDtDxDyDz ();
