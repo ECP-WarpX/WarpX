@@ -1239,6 +1239,26 @@ GetFieldModeIndices (const std::string& varname)
     // field_str_len is the value of field_str_end_index
     return std::make_tuple(field_str_end_index, mode_index);
 }
+
+void
+transposeChunk(std::shared_ptr<amrex::Real> data,  amrex::Real const* local_data, amrex::Box const& local_box)
+{
+WARPX_PROFILE("WarpXOpenPMDPlot::transposeChunk");
+    auto data_ptr = data.get();
+    auto chunk_size = local_box.size();
+    auto Nx = chunk_size[0];
+    auto Nz = chunk_size[1];
+    // std::cout << "Nx = " << Nx << " , Nz = " << Nz << std::endl;
+
+    for (int ii = 0; ii < local_box.numPts(); ii++) {
+        int row = ii%Nx;
+        int col = ii/Nx;
+        int transposed_ii = col + row * Nz;
+        data_ptr[transposed_ii] = local_data[ii];
+    }
+
+}
+
 /*
  * Write Field with all mesh levels
  *
@@ -1392,18 +1412,21 @@ bool reverse = false;
                     amrex::Real const *local_data = fab.dataPtr(icomp);
 #ifdef WARPX_DIM_RZ
 
-                    amrex::BaseFab<amrex::Real> tmp_fab(local_box, 1);
-                    std::shared_ptr<amrex::Real> data(tmp_fab.release());
-                    auto data_ptr = data.get();
+                    {
+                        amrex::BaseFab<amrex::Real> tmp_fab(local_box, 1);
+                        std::shared_ptr<amrex::Real> data(tmp_fab.release());
+                        transposeChunk(data, local_data, local_box);
+                        // auto data_ptr = data.get();
 
-                    for (int ii = 0; ii < local_box.numPts(); ii++) {
-                        int row = ii%Nx;
-                        int col = ii/Nx;
-                        int transposed_ii = col + row * Nz;
-                        data_ptr[transposed_ii] = local_data[ii];
-                    }
+                        // for (int ii = 0; ii < local_box.numPts(); ii++) {
+                        //     int row = ii%Nx;
+                        //     int col = ii/Nx;
+                        //     int transposed_ii = col + row * Nz;
+                        //     data_ptr[transposed_ii] = local_data[ii];
+                        // }
                     mesh_comp.storeChunk(data,
                                          chunk_offset, chunk_size);
+                    }
 #else
                     mesh_comp.storeChunk(openPMD::shareRaw(local_data),
                                          chunk_offset, chunk_size);
@@ -1421,6 +1444,8 @@ bool reverse = false;
     } // levels loop (i)
 }
 #endif // WARPX_USE_OPENPMD
+
+
 
 
 
