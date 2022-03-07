@@ -569,8 +569,8 @@ WarpX::ReadParameters ()
             }
         }
 
+#if defined(__GNU_LIBRARY__) || defined(__APPLE__)
         std::vector<std::string> signals_in;
-
         pp_warpx.queryarr("break_signals", signals_in);
         for (const std::string &str : signals_in) {
             int sig = parseSignalNameToNumber(str);
@@ -599,6 +599,7 @@ WarpX::ReadParameters ()
                 }
             }
         }
+#endif
 
         // set random seed
         std::string random_seed = "default";
