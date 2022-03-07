@@ -887,13 +887,14 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
 
     def __init__(self, name, species, background_density,
                  background_temperature, scattering_processes,
-                 background_mass=None, **kw):
+                 background_mass=None, ndt=None, **kw):
         self.name = name
         self.species = species
         self.background_density = background_density
         self.background_temperature = background_temperature
         self.background_mass = background_mass
         self.scattering_processes = scattering_processes
+        self.ndt = ndt
 
         self.handle_init(kw)
 
@@ -904,6 +905,7 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
         collision.background_density = self.background_density
         collision.background_temperature = self.background_temperature
         collision.background_mass = self.background_mass
+        collision.ndt = self.ndt
 
         collision.scattering_processes = self.scattering_processes.keys()
         for process, kw in self.scattering_processes.items():
