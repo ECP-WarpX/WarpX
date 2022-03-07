@@ -43,6 +43,8 @@
 #include <string>
 #include <utility>
 
+using namespace amrex::literals;
+
 namespace ParticleStringNames
 {
     const std::map<std::string, int> to_index = {
@@ -176,17 +178,14 @@ public:
      *
      * \param[in,out] J vector of current densities (one three-dimensional array of pointers
      *                to MultiFabs per mesh refinement level)
-     * \param[in] dt: Time step for particle level (is used when temporarily
-     *                modifying the particle positions, either within the
-     *                Esirkepov or when `relative_t` is different than 0
-     * \param[in] relative_t: Time at which to deposit J, relative to the time
-     *                of the current positions of the particles (expressed as
-     *                a fraction of dt). When different than 0, the particle
-     *                position will be temporarily modified to match the
-     *                time of the deposition.
+     * \param[in] dt Time step for particle level
+     * \param[in] relative_time Time at which to deposit J, relative to the time of the
+     *                          current positions of the particles. When different than 0,
+     *                          the particle position will be temporarily modified to match
+     *                          the time of the deposition.
      */
     void DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                         const amrex::Real dt, const amrex::Real relative_t);
+                         const amrex::Real dt, const amrex::Real relative_time);
 
     /**
      * \brief Deposit charge density.
