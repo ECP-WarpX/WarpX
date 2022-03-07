@@ -23,6 +23,7 @@
 #include <AMReX_FabArray.H>
 #include <AMReX_GpuControl.H>
 #include <AMReX_GpuLaunch.H>
+#include <AMReX_IParser.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
@@ -392,6 +393,39 @@ parseStringtoInt(std::string str, std::string name)
     auto const rval = static_cast<amrex::Real>(parseStringtoReal(str));
     int ival = safeCastToInt(std::round(rval), name);
     return ival;
+}
+
+int
+parseSignalNameToNumber(const std::string &str)
+{
+    IParser signals_parser(str);
+
+    for (int i = 0; i < 32; ++i) {
+#if defined(__GNU_LIBRARY__)
+        // Returns upper-case, no "SIG"
+        std::string name_upper = sigabbrex_np(i);
+        std::string name_lower = name_upper;
+        for (char &c : name_lower) {
+            c = tolower(c);
+        }
+#elif defined(__APPLE__)
+        // Contains lower-case, no "sig"
+        std::string name_lower = sys_signame[i];
+        std::string name_upper = name_lower;
+        for (char &c : name_upper) {
+            c = toupper(c);
+        }
+#endif
+        signals_parser.setConstant(name_upper, i);
+        signals_parser.setConstant(name_lower, i);
+        name_upper = "SIG" + name_upper;
+        name_lower = "sig" + name_lower;
+        signals_parser.setConstant(name_upper, i);
+        signals_parser.setConstant(name_lower, i);
+    }
+    auto spf = signals_parser.compileHost<0>();
+
+    return spf();
 }
 
 // Overloads for float/double instead of amrex::Real to allow makeParser() to query for

@@ -72,6 +72,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <limits>
 #include <random>
 #include <string>
@@ -568,33 +569,36 @@ WarpX::ReadParameters ()
             }
         }
 
-	std::vector<int> signals_in;
-	pp_warpx.queryarr("break_signals", signals_in);
-	for (int i : signals_in) {
-	    AMREX_ALWAYS_ASSERT(i < 32);
-	    signal_conf_requests_break[i] = true;
-	}
-	signals_in.clear();
-	pp_warpx.queryarr("checkpoint_signals", signals_in);
-	for (int i : signals_in) {
-	    AMREX_ALWAYS_ASSERT(i < 32);
-	    signal_conf_requests_checkpoint[i] = true;
-	}
-	{
-	    struct sigaction sa;
-	    sigemptyset(&sa.sa_mask);
-	    for (int i = 0; i < 32; ++i) {
-		signal_received_flags[i] = false;
-		if (signal_conf_requests_checkpoint[i] || signal_conf_requests_break[i]) {
-		    if (ParallelDescriptor::MyProc() == 0) {
-			sa.sa_handler = &WarpX::SignalSetFlag;
-		    } else {
-			sa.sa_handler = SIG_IGN;
-		    }
-		    sigaction(i, &sa, nullptr);
-		}
-	    }
-	}
+        std::vector<std::string> signals_in;
+
+        pp_warpx.queryarr("break_signals", signals_in);
+        for (const std::string &str : signals_in) {
+            int sig = parseSignalNameToNumber(str);
+            AMREX_ALWAYS_ASSERT(sig < 32);
+            signal_conf_requests_break[sig] = true;
+        }
+        signals_in.clear();
+        pp_warpx.queryarr("checkpoint_signals", signals_in);
+        for (const std::string &str : signals_in) {
+            int sig = parseSignalNameToNumber(str);
+            AMREX_ALWAYS_ASSERT(sig < 32);
+            signal_conf_requests_checkpoint[sig] = true;
+        }
+        {
+            struct sigaction sa;
+            sigemptyset(&sa.sa_mask);
+            for (int i = 0; i < 32; ++i) {
+                signal_received_flags[i] = false;
+                if (signal_conf_requests_checkpoint[i] || signal_conf_requests_break[i]) {
+                    if (ParallelDescriptor::MyProc() == 0) {
+                        sa.sa_handler = &WarpX::SignalSetFlag;
+                    } else {
+                        sa.sa_handler = SIG_IGN;
+                    }
+                    sigaction(i, &sa, nullptr);
+                }
+            }
+        }
 
         // set random seed
         std::string random_seed = "default";
