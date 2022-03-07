@@ -279,10 +279,10 @@ MultiParticleContainer::ReadParameters ()
             pp_particles.queryarr("deposit_on_main_grid", tmp);
             for (auto const& name : tmp) {
                 auto it = std::find(species_names.begin(), species_names.end(), name);
-                WarpXUtilMsg::AlwaysAssert(
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                     it != species_names.end(),
-                    "ERROR: species '" + name
-                    + "' in particles.deposit_on_main_grid must be part of particles.species_names"
+                    Utils::TextMsg::Err("species '" + name
+                        + "' in particles.deposit_on_main_grid must be part of particles.species_names")
                 );
                 int i = std::distance(species_names.begin(), it);
                 m_deposit_on_main_grid[i] = true;
@@ -293,10 +293,10 @@ MultiParticleContainer::ReadParameters ()
             pp_particles.queryarr("gather_from_main_grid", tmp_gather);
             for (auto const& name : tmp_gather) {
                 auto it = std::find(species_names.begin(), species_names.end(), name);
-                WarpXUtilMsg::AlwaysAssert(
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                     it != species_names.end(),
-                    "ERROR: species '" + name
-                    + "' in particles.gather_from_main_grid must be part of particles.species_names"
+                    Utils::TextMsg::Err("species '" + name
+                        + "' in particles.gather_from_main_grid must be part of particles.species_names")
                 );
                 int i = std::distance(species_names.begin(), it);
                 m_gather_from_main_grid.at(i) = true;
@@ -310,10 +310,10 @@ MultiParticleContainer::ReadParameters ()
             if (!rigid_injected_species.empty()) {
                 for (auto const& name : rigid_injected_species) {
                     auto it = std::find(species_names.begin(), species_names.end(), name);
-                    WarpXUtilMsg::AlwaysAssert(
+                    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                         it != species_names.end(),
-                        "ERROR: species '" + name
-                        + "' in particles.rigid_injected_species must be part of particles.species_names"
+                        Utils::TextMsg::Err("species '" + name
+                        + "' in particles.rigid_injected_species must be part of particles.species_names")
                     );
                     int i = std::distance(species_names.begin(), it);
                     species_types[i] = PCTypes::RigidInjected;
@@ -325,10 +325,10 @@ MultiParticleContainer::ReadParameters ()
             if (!photon_species.empty()) {
                 for (auto const& name : photon_species) {
                     auto it = std::find(species_names.begin(), species_names.end(), name);
-                    WarpXUtilMsg::AlwaysAssert(
+                    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                         it != species_names.end(),
-                        "ERROR: species '" + name
-                        + "' in particles.photon_species must be part of particles.species_names"
+                        Utils::TextMsg::Err("species '" + name
+                        + "' in particles.photon_species must be part of particles.species_names")
                     );
                     int i = std::distance(species_names.begin(), it);
                     species_types[i] = PCTypes::Photon;
@@ -374,6 +374,18 @@ MultiParticleContainer::ReadParameters ()
 #endif
         initialized = true;
     }
+}
+
+WarpXParticleContainer&
+MultiParticleContainer::GetParticleContainerFromName (const std::string& name) const
+{
+    auto it = std::find(species_names.begin(), species_names.end(), name);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        it != species_names.end(),
+        Utils::TextMsg::Err("unknown species name");
+    );
+    int i = std::distance(species_names.begin(), it);
+    return *allcontainers[i];
 }
 
 void
@@ -837,11 +849,10 @@ MultiParticleContainer::getSpeciesID (std::string product_str) const
         }
     }
 
-    WarpXUtilMsg::AlwaysAssert(
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         found != 0,
-        "ERROR: could not find the ID of product species '"
-        + product_str + "'" + ". Wrong name?"
-    );
+        Utils::TextMsg::Err("could not find the ID of product species '"
+        + product_str + "'" + ". Wrong name?"));
 
     return i_product;
 }
@@ -864,11 +875,10 @@ MultiParticleContainer::SetDoBackTransformedParticles (std::string species_name,
            pc->SetDoBackTransformedParticles(do_back_transformed_particles);
         }
     }
-    WarpXUtilMsg::AlwaysAssert(
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         found != 0,
-        "ERROR: could not find the ID of product species '"
-        + species_name + "'" + ". Wrong name?"
-    );
+        Utils::TextMsg("ERROR: could not find the ID of product species '"
+        + species_name + "'" + ". Wrong name?"));
 }
 
 void

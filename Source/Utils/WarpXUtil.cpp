@@ -7,6 +7,7 @@
  */
 #include "WarpX.H"
 
+#include "TextMsg.H"
 #include "WarpXAlgorithmSelection.H"
 #include "WarpXConst.H"
 #include "WarpXProfilerWrapper.H"
@@ -74,12 +75,12 @@ void ParseGeometryInput()
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] == 0.,
-            "Lower bound of radial coordinate (prob_lo[0]) with RZ PSATD solver must be zero");
+            Utils::TextMsg::Err("Lower bound of radial coordinate (prob_lo[0]) with RZ PSATD solver must be zero"));
     }
     else
     {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] >= 0.,
-            "Lower bound of radial coordinate (prob_lo[0]) with RZ FDTD solver must be non-negative");
+            Utils::TextMsg::Err("Lower bound of radial coordinate (prob_lo[0]) with RZ FDTD solver must be non-negative"));
     }
 #endif
 
@@ -124,12 +125,11 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
             boost_direction[2] = 1;
         }
         else {
-            const std::string msg = "Unknown boost_dir: "+s;
-            Abort(msg.c_str());
+            Abort(Utils::TextMsg::Err("Unknown boost_dir: "+s));
         }
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( s == "z" || s == "Z" ,
-                                          "The boost must be in the z direction.");
+            Utils::TextMsg::Err("The boost must be in the z direction."));
     }
 }
 
@@ -295,16 +295,16 @@ int safeCastToInt(const amrex::Real x, const std::string& real_name) {
             result = static_cast<int>(x);
         } else {
             error_detected = true;
-            assert_msg = "Error: Negative overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
+            assert_msg = "Negative overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
         }
     } else if (x > 0) {
         error_detected = true;
-        assert_msg =  "Error: Overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
+        assert_msg =  "Overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
     } else {
         error_detected = true;
-        assert_msg =  "Error: NaN detected when casting " + real_name + " to int";
+        assert_msg =  "NaN detected when casting " + real_name + " to int";
     }
-    WarpXUtilMsg::AlwaysAssert(!error_detected, assert_msg);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!error_detected, Utils::TextMsg::Err(assert_msg));
     return result;
 }
 
@@ -349,7 +349,9 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
         // user's expressions because of the limited range of exponentials in single precision
         double v;
 
-        WarpXUtilMsg::AlwaysAssert(recursive_symbols.count(*it)==0, "Expressions contains recursive symbol "+*it);
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            recursive_symbols.count(*it)==0,
+            Utils::TextMsg::Err("Expressions contains recursive symbol "+*it));
         recursive_symbols.insert(*it);
         const bool is_input = queryWithParser(pp_my_constants, it->c_str(), v);
         recursive_symbols.erase(*it);
@@ -370,7 +372,7 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
         ++it;
     }
     for (auto const& s : symbols) {
-        amrex::Abort("makeParser::Unknown symbol "+s);
+        amrex::Abort(Utils::TextMsg::Err("makeParser::Unknown symbol "+s));
     }
     return parser;
 }
@@ -536,11 +538,11 @@ void CheckDims ()
     ParmParse pp_geometry("geometry");
     std::string dims;
     pp_geometry.get("dims", dims);
-    std::string dims_error = "ERROR: The selected WarpX executable was built as '";
+    std::string dims_error = "The selected WarpX executable was built as '";
     dims_error.append(dims_compiled).append("'-dimensional, but the ");
     dims_error.append("inputs file declares 'geometry.dims = ").append(dims).append("'.\n");
     dims_error.append("Please re-compile with a different WarpX_DIMS option or select the right executable name.");
-    WarpXUtilMsg::AlwaysAssert(dims == dims_compiled, dims_error);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(dims == dims_compiled, dims_error);
 }
 
 void CheckGriddingForRZSpectral ()

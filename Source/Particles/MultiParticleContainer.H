@@ -77,12 +77,7 @@ public:
     GetParticleContainerPtr (int ispecies) const {return allcontainers[ispecies].get();}
 
     WarpXParticleContainer&
-    GetParticleContainerFromName (std::string name) const {
-        auto it = std::find(species_names.begin(), species_names.end(), name);
-        WarpXUtilMsg::AlwaysAssert(it != species_names.end(), "ERROR: Unknown species name");
-        int i = std::distance(species_names.begin(), it);
-        return *allcontainers[i];
-    }
+    GetParticleContainerFromName (const std::string& name) const;
 
 #ifdef WARPX_USE_OPENPMD
     std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int ispecies) {

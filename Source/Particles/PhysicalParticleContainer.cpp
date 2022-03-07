@@ -258,12 +258,12 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false
-    WarpXUtilMsg::AlwaysAssert(
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         !(do_classical_radiation_reaction &&
         !(AmIA<PhysicalSpecies::electron>() ||
         AmIA<PhysicalSpecies::positron>() )),
-        "ERROR: can't enable classical radiation reaction for non lepton species '"
-        + species_name + "'."
+        Utils::TextMsg::Err("can't enable classical radiation reaction for non lepton species '"
+            + species_name + "'.")
     );
 
     //Only Boris pusher is compatible with radiation reaction
@@ -897,8 +897,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        WarpXUtilMsg::AlwaysAssert(static_cast<Long>(pid + max_new_particles) < LastParticleID,
-                                   "ERROR: overflow on particle id numbers");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            static_cast<Long>(pid + max_new_particles) < LastParticleID,
+            Utils::TextMsg::Err("ERROR: overflow on particle id numbers"));
 
         const int cpuid = ParallelDescriptor::MyProc();
 
@@ -1428,8 +1429,9 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        WarpXUtilMsg::AlwaysAssert(static_cast<Long>(pid + max_new_particles) < LastParticleID,
-                                   "ERROR: overflow on particle id numbers");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            static_cast<Long>(pid + max_new_particles) < LastParticleID,
+            Utils::TextMsg::Err("overflow on particle id numbers"));
 
         const int cpuid = ParallelDescriptor::MyProc();
 

@@ -298,7 +298,7 @@ WarpX::Evolve (int numsteps)
 
         if (sort_intervals.contains(step+1)) {
             if (verbose) {
-                Utils::Msg::print_info("re-sorting particles");
+                amrex::Print() << Utils::TextMsg::Info("re-sorting particles");
             }
             mypc->SortParticlesByBin(sort_bin_size);
         }

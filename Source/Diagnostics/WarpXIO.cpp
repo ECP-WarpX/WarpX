@@ -94,8 +94,8 @@ WarpX::InitFromCheckpoint ()
 {
     WARPX_PROFILE("WarpX::InitFromCheckpoint()");
 
-    amrex::Print(Utils::TextMsg::Info(
-        "  Restart from checkpoint " + restart_chkfile));;
+    amrex::Print()<< Utils::TextMsg::Info(
+        "restart from checkpoint " + restart_chkfile);
 
     // Header
     {

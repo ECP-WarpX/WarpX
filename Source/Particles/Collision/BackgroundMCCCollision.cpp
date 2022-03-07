@@ -240,7 +240,7 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
 
         amrex::Print() << Utils::TextMsg::Info(
             "Setting up collisions for " + m_species_names[0] + " with total "
-            + "collision probability: " <<
+            + "collision probability: "
             + std::to_string(m_total_collision_prob) + " "
             + std::to_string(m_total_collision_prob_ioniz)
         );

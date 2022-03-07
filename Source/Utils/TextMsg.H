@@ -10,6 +10,8 @@
 
 #include <string>
 
+#define WARPX_ALWAYS_ASSERT_WITH_MESSAGE(EX,MSG) (EX)?((void)0):Utils::TextMsg::Assert( # EX , __FILE__, __LINE__ , MSG)
+
 namespace Utils
 {
 namespace TextMsg
@@ -45,6 +47,8 @@ namespace TextMsg
     * @return the formatted message
     */
     std::string Warn(const std::string& msg, const bool do_text_wrapping = true);
+
+    void Assert(const char* ex, const char* file, const int line, const std::string& msg);
 }
 }
 

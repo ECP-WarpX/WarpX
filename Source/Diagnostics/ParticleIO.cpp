@@ -120,8 +120,6 @@ PhysicalParticleContainer::WriteHeader (std::ostream& os) const
 void
 MultiParticleContainer::Restart (const std::string& dir)
 {
-    auto& warpx = WarpX::GetInstance();
-
     // note: all containers is sorted like this
     // - species_names
     // - lasers_names
@@ -201,11 +199,11 @@ MultiParticleContainer::Restart (const std::string& dir)
             auto current_comp_names = pc->getParticleiComps();
             auto search = current_comp_names.find(comp_name);
             if (search == current_comp_names.end()) {
-                amrex::Print(Utils::TextMsg::Info(
+                amrex::Print()<< Utils::TextMsg::Info(
                     "Runtime int component " + comp_name
                     + " was found in the checkpoint file, but it has not been added yet. "
                     + " Adding it now."
-                ));
+                );
                 pc->AddIntComp(comp_name);
             }
         }

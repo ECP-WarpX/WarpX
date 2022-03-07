@@ -6,7 +6,7 @@
  */
 #include "Laser/LaserProfiles.H"
 
-#include "Utils/InfoMsg.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpX_Complex.H"
 #include "WarpX.H"
@@ -276,7 +276,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::find_left_right_time_indices(amrex
 void
 WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int t_end)
 {
-    Utils::Msg::print_info(
+    amrex::Print() << Utils::TextMsg::Info(
         "Reading [" + std::to_string(t_begin) + ", " + std::to_string(t_end) +
         ") data chunk from " + m_params.txye_file_name);
 

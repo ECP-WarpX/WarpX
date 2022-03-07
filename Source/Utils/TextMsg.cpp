@@ -13,8 +13,6 @@
 
 #include <sstream>
 
-using namespace Utils::TextMsg;
-
 namespace
 {
     constexpr auto err_prefix       = "### ERROR   : ";
@@ -50,20 +48,26 @@ namespace
     }
 }
 
-std::string Err(const std::string& msg, const bool do_text_wrapping = true)
+std::string Utils::TextMsg::Err(const std::string& msg, const bool do_text_wrapping)
 {
     return ::Msg(
         msg, ::err_prefix, ::err_line_prefix, ::line_length, do_text_wrapping);
 }
 
-std::string Info(const std::string& msg, const bool do_text_wrapping = true)
+std::string Utils::TextMsg::Info(const std::string& msg, const bool do_text_wrapping)
 {
     return ::Msg(
         msg, ::info_prefix, ::line_prefix, ::line_length, do_text_wrapping);
 }
 
-std::string Warn(const std::string& msg, const bool do_text_wrapping = true)
+std::string Utils::TextMsg::Warn(const std::string& msg, const bool do_text_wrapping)
 {
     return ::Msg(
         msg, ::warn_prefix, ::line_prefix, ::line_length, do_text_wrapping);
+}
+
+void Utils::TextMsg::Assert(const char* ex, const char* file, const int line, const std::string& msg)
+{
+    const auto n_msg = "\n" + Err(msg);
+    amrex::Assert(ex , file, line , n_msg.c_str());
 }
