@@ -198,8 +198,28 @@ public:
 
     ~PML () = default;
 
+    void LoadBalance (const int lev,
+                      const amrex::BoxArray& grid_ba,
+                      const amrex::DistributionMapping& grid_dm,
+                      amrex::IntVect ref_ratio, amrex::Real dt,
+                      int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
+                      int do_moving_window, bool do_multi_J, int max_guard_EB);
+
 private:
     bool m_ok;
+
+    int m_ncell;
+    int m_delta;
+    int m_do_pml_in_domain;
+
+    amrex::IntVect m_do_pml_Lo;
+    amrex::IntVect m_do_pml_Hi;
+
+    amrex::BoxArray m_ba;
+    amrex::BoxArray m_cba;
+
+    amrex::Box m_domain0;
+    bool m_is_single_box_domain;
 
     bool m_dive_cleaning;
     bool m_divb_cleaning;
