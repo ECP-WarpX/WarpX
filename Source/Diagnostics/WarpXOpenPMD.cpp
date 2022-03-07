@@ -1239,7 +1239,13 @@ GetFieldModeIndices (const std::string& varname)
     // field_str_len is the value of field_str_end_index
     return std::make_tuple(field_str_end_index, mode_index);
 }
-
+/* Transpose diagnostic data from WarpX/AMReX/Fortran order to openPMD (RZ) / C order
+ * NOTE : duplicates chunk in memory and is NOT optimized
+ * 
+ * @param varname [IN]: pointer to the data to be transposed
+ * @param local_data [OUT]: pointer to the place to store transpoed copy of the chunk
+ * @param local_box [OUT]: reference to chunk `amrex::Box` for chunk_size information
+ */
 void
 transposeChunk(std::shared_ptr<amrex::Real> data,  amrex::Real const* local_data, amrex::Box const& local_box)
 {
@@ -1248,7 +1254,6 @@ WARPX_PROFILE("WarpXOpenPMDPlot::transposeChunk");
     auto chunk_size = local_box.size();
     auto Nx = chunk_size[0];
     auto Nz = chunk_size[1];
-    // std::cout << "Nx = " << Nx << " , Nz = " << Nz << std::endl;
 
     for (int ii = 0; ii < local_box.numPts(); ii++) {
         int row = ii%Nx;
@@ -1256,7 +1261,6 @@ WARPX_PROFILE("WarpXOpenPMDPlot::transposeChunk");
         int transposed_ii = col + row * Nz;
         data_ptr[transposed_ii] = local_data[ii];
     }
-
 }
 
 /*
@@ -1387,9 +1391,6 @@ bool reverse = false;
 #endif
 
 #if defined(WARPX_DIM_RZ)
-                int Nx = chunk_size[0];
-                int Nz = chunk_size[1];
-
                 if (var_in_theta_mode) {
                     chunk_offset.emplace(chunk_offset.begin(), mode_index);
                     chunk_size.emplace(chunk_size.begin(), 1);
@@ -1411,22 +1412,13 @@ bool reverse = false;
                 {
                     amrex::Real const *local_data = fab.dataPtr(icomp);
 #ifdef WARPX_DIM_RZ
+                    amrex::BaseFab<amrex::Real> tmp_fab(local_box, 1);
+                    std::shared_ptr<amrex::Real> data(tmp_fab.release());
+                    // transpose data for RZ openPMD ordering, this is currently NOT optimized
+                    transposeChunk(data, local_data, local_box);
 
-                    {
-                        amrex::BaseFab<amrex::Real> tmp_fab(local_box, 1);
-                        std::shared_ptr<amrex::Real> data(tmp_fab.release());
-                        transposeChunk(data, local_data, local_box);
-                        // auto data_ptr = data.get();
-
-                        // for (int ii = 0; ii < local_box.numPts(); ii++) {
-                        //     int row = ii%Nx;
-                        //     int col = ii/Nx;
-                        //     int transposed_ii = col + row * Nz;
-                        //     data_ptr[transposed_ii] = local_data[ii];
-                        // }
                     mesh_comp.storeChunk(data,
                                          chunk_offset, chunk_size);
-                    }
 #else
                     mesh_comp.storeChunk(openPMD::shareRaw(local_data),
                                          chunk_offset, chunk_size);
