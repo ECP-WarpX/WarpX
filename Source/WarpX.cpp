@@ -109,20 +109,20 @@ Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
 Real WarpX::gamma_boost = 1._rt;
 Real WarpX::beta_boost = 0._rt;
 Vector<int> WarpX::boost_direction = {0,0,0};
-int WarpX::do_compute_max_step_from_zmax = 0;
+bool WarpX::do_compute_max_step_from_zmax = false;
 Real WarpX::zmax_plasma_to_compute_max_step = 0._rt;
 
-long WarpX::current_deposition_algo;
-long WarpX::charge_deposition_algo;
-long WarpX::field_gathering_algo;
-long WarpX::particle_pusher_algo;
-int WarpX::maxwell_solver_id;
-long WarpX::load_balance_costs_update_algo;
-bool WarpX::do_dive_cleaning = 0;
-bool WarpX::do_divb_cleaning = 0;
+short WarpX::current_deposition_algo;
+short WarpX::charge_deposition_algo;
+short WarpX::field_gathering_algo;
+short WarpX::particle_pusher_algo;
+short WarpX::maxwell_solver_id;
+short WarpX::load_balance_costs_update_algo;
+bool WarpX::do_dive_cleaning = false;
+bool WarpX::do_divb_cleaning = false;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
-int WarpX::do_single_precision_comms=0;
+bool WarpX::do_single_precision_comms = false;
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
@@ -182,8 +182,8 @@ Real WarpX::self_fields_absolute_tolerance = 0.0_rt;
 int WarpX::self_fields_max_iters = 200;
 int WarpX::self_fields_verbosity = 2;
 
-int WarpX::do_subcycling = 0;
-int WarpX::do_multi_J = 0;
+bool WarpX::do_subcycling = false;
+bool WarpX::do_multi_J = false;
 int WarpX::do_multi_J_n_depositions;
 bool WarpX::safe_guard_cells = 0;
 
@@ -192,7 +192,7 @@ IntVect WarpX::filter_npass_each_dir(1);
 int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
-int WarpX::do_nodal = false;
+bool WarpX::do_nodal = false;
 amrex::IntVect m_rho_nodal_flag;
 
 int WarpX::do_similar_dm_pml = 1;
@@ -802,23 +802,23 @@ WarpX::ReadParameters ()
         // false for FDTD solver, true for PSATD solver.
         if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
         {
-            do_pml_dive_cleaning = 0;
-            do_pml_divb_cleaning = 0;
+            do_pml_dive_cleaning = false;
+            do_pml_divb_cleaning = false;
         }
         else
         {
-            do_pml_dive_cleaning = 1;
-            do_pml_divb_cleaning = 1;
+            do_pml_dive_cleaning = true;
+            do_pml_divb_cleaning = true;
         }
 
-        // If WarpX::do_dive_cleaning = 1, set also WarpX::do_pml_dive_cleaning = 1
+        // If WarpX::do_dive_cleaning = true, set also WarpX::do_pml_dive_cleaning = true
         // (possibly overwritten by users in the input file, see query below)
-        if (do_dive_cleaning) do_pml_dive_cleaning = 1;
+        if (do_dive_cleaning) do_pml_dive_cleaning = true;
 
-        // If WarpX::do_divb_cleaning = 1, set also WarpX::do_pml_divb_cleaning = 1
+        // If WarpX::do_divb_cleaning = true, set also WarpX::do_pml_divb_cleaning = true
         // (possibly overwritten by users in the input file, see query below)
         // TODO Implement div(B) cleaning in PML with FDTD and remove second if condition
-        if (do_divb_cleaning && maxwell_solver_id == MaxwellSolverAlgo::PSATD) do_pml_divb_cleaning = 1;
+        if (do_divb_cleaning && maxwell_solver_id == MaxwellSolverAlgo::PSATD) do_pml_divb_cleaning = true;
 
         // Query input parameters to use div(E) and div(B) cleaning in PMLs
         pp_warpx.query("do_pml_dive_cleaning", do_pml_dive_cleaning);
@@ -828,8 +828,8 @@ WarpX::ReadParameters ()
         if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
         {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                do_pml_divb_cleaning == 0,
-                "warpx.do_pml_divb_cleaning = 1 not implemented for FDTD solver");
+                do_pml_divb_cleaning == false,
+                "warpx.do_pml_divb_cleaning = true not implemented for FDTD solver");
         }
 
         // Divergence cleaning in PMLs for PSATD solver implemented only
