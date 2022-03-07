@@ -981,6 +981,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
 
+        self.break_signals = kw.pop('warpx_break_signals', None)
+        self.checkpoint_signals = kw.pop('warpx_checkpoint_signals', None)
+
         self.inputs_initialized = False
         self.warpx_initialized = False
 
@@ -1018,6 +1021,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 
         pywarpx.amr.check_input = self.amr_check_input
+
+        pywarpx.warpx.break_signals = self.break_signals
+        pywarpx.warpx.checkpoint_signals = self.checkpoint_signals
 
         particle_shape = self.particle_shape
         for s in self.species:
