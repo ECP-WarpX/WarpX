@@ -1,4 +1,11 @@
 Version, Physics version, Date,        List of changes
+7.1.1, 2, 3/8/2022, "
+
+**Other changes**:
+
+- Merge ``upstream/development`` (git hash ``0a64c2b``) into memaster.
+
+"
 7.1.0, 2, 2/18/2022, "
 
 **Features**:
