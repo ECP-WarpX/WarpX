@@ -476,8 +476,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 
             // computes current and old position in grid units
 #if defined(WARPX_DIM_RZ)
-            Real const xp_mid = xp + (relative_time + 0.5_rt)*uxp[ip]*gaminv;
-            Real const yp_mid = yp + (relative_time + 0.5_rt)*uyp[ip]*gaminv;
+            Real const xp_mid = xp + (relative_time + 0.5_rt*dt)*uxp[ip]*gaminv;
+            Real const yp_mid = yp + (relative_time + 0.5_rt*dt)*uyp[ip]*gaminv;
             Real const xp_old = xp + relative_time*uxp[ip]*gaminv;
             Real const yp_old = yp + relative_time*uyp[ip]*gaminv;
             Real const rp_new = std::sqrt(xp*xp + yp*yp);
