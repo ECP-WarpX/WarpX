@@ -54,11 +54,18 @@ private:
     /** Initialize functors that store pointers to the RZ fields requested by the user.
      * \parm[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
-    void InitializeFieldFunctorsRZ (int lev) override;
+    void InitializeFieldFunctorsRZopenPMD (int lev) override;
+    /** Append m_all_field_functors[lev] with all modes of all components of E B and j
+     * and add name to varnames.
+     * \param[in] lev level on which source multifabs are defined.
+     */
+    void AddRZModesToDiags (int lev);
     /** Initialize functors that store pointers to the fields requested by the user.
       * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
       */
     void InitializeFieldFunctors (int lev) override;
+    /** Whether to dump the RZ modes */
+    bool m_dump_rz_modes = false;
     void InitializeParticleBuffer () override;
     /** Prepare field data to be used for diagnostics */
     void PrepareFieldDataForOutput () override;

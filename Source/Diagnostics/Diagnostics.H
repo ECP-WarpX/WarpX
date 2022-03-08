@@ -68,7 +68,7 @@ public:
      * during the simulation to load-balance.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
-    virtual void InitializeFieldFunctorsRZ (int lev) {}
+    virtual void InitializeFieldFunctorsRZopenPMD (int lev) {}
     /** Initialize functors that store pointers to the species data requested by the user. */
     virtual void InitializeParticleFunctors () {}
     /** whether to compute and pack data in output buffers at this time step

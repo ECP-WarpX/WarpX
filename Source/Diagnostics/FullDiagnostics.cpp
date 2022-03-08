@@ -87,6 +87,16 @@ FullDiagnostics::ReadParameters ()
     bool raw_specified = pp_diag_name.query("plot_raw_fields", m_plot_raw_fields);
     raw_specified += pp_diag_name.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
 
+#ifdef WARPX_DIM_RZ
+    if (m_format == "openpmd") {
+        m_dump_rz_modes = true;
+    } else {
+        pp_diag_name.query("dump_rz_modes", m_dump_rz_modes);
+    }
+#else
+    amrex::ignore_unused(m_dump_rz_modes);
+#endif
+
     if (m_format == "checkpoint"){
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             raw_specified == false &&
@@ -152,7 +162,7 @@ FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
 }
 
 void
-FullDiagnostics::InitializeFieldFunctorsRZ (int lev)
+FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
 {
 #ifdef WARPX_DIM_RZ
 
@@ -306,6 +316,107 @@ FullDiagnostics::InitializeFieldFunctorsRZ (int lev)
     }
     if (convert2cartesian) {
         m_varnames = temp_m_varnames;
+    }
+    // Sum the number of components in input vector m_all_field_functors
+    // and check that it corresponds to the number of components in m_varnames
+    // and m_mf_output
+    int ncomp_from_src = 0;
+    for (int jj=0; jj<m_all_field_functors[0].size(); jj++){
+        ncomp_from_src += m_all_field_functors[lev][jj]->nComp();
+    }
+    AMREX_ALWAYS_ASSERT( ncomp_from_src == m_varnames.size() );
+#else
+    amrex::ignore_unused(lev);
+#endif
+}
+
+void
+FullDiagnostics::AddRZModesToDiags (int lev)
+{
+#ifdef WARPX_DIM_RZ
+
+    if (!m_dump_rz_modes) return;
+
+    auto & warpx = WarpX::GetInstance();
+    int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0, 0)->nComp();
+    // Make sure all multifabs have the same number of components
+    for (int dim=0; dim<3; dim++){
+        AMREX_ALWAYS_ASSERT(
+            warpx.get_pointer_Efield_aux(lev, dim)->nComp() == ncomp_multimodefab );
+        AMREX_ALWAYS_ASSERT(
+            warpx.get_pointer_Bfield_aux(lev, dim)->nComp() == ncomp_multimodefab );
+        AMREX_ALWAYS_ASSERT(
+            warpx.get_pointer_current_fp(lev, dim)->nComp() == ncomp_multimodefab );
+    }
+
+    // Check if divE is requested
+    // If so, all components will be written out
+    bool divE_requested = false;
+    for (int comp = 0; comp < m_varnames.size(); comp++) {
+        if ( m_varnames[comp] == "divE" ) {
+            divE_requested = true;
+        }
+    }
+
+    // If rho is requested, all components will be written out
+    bool rho_requested = WarpXUtilStr::is_in( m_varnames, "rho" );
+
+    // First index of m_all_field_functors[lev] where RZ modes are stored
+    int icomp = m_all_field_functors[0].size();
+    const std::array<std::string, 3> coord {"r", "theta", "z"};
+
+    // Er, Etheta, Ez, Br, Btheta, Bz, jr, jtheta, jz
+    // Each of them being a multi-component multifab
+    int n_new_fields = 9;
+    if (divE_requested) {
+        n_new_fields += 1;
+    }
+    if (rho_requested) {
+        n_new_fields += 1;
+    }
+    m_all_field_functors[lev].resize( m_all_field_functors[0].size() + n_new_fields );
+    // E
+    for (int dim=0; dim<3; dim++){
+        // 3 components, r theta z
+        m_all_field_functors[lev][icomp] =
+            std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, dim), lev,
+                              m_crse_ratio, false, ncomp_multimodefab);
+        AddRZModesToOutputNames(std::string("E") + coord[dim],
+                                warpx.get_pointer_Efield_aux(0, 0)->nComp());
+        icomp += 1;
+    }
+    // B
+    for (int dim=0; dim<3; dim++){
+        // 3 components, r theta z
+        m_all_field_functors[lev][icomp] =
+            std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, dim), lev,
+                              m_crse_ratio, false, ncomp_multimodefab);
+        AddRZModesToOutputNames(std::string("B") + coord[dim],
+                                warpx.get_pointer_Bfield_aux(0, 0)->nComp());
+        icomp += 1;
+    }
+    // j
+    for (int dim=0; dim<3; dim++){
+        // 3 components, r theta z
+        m_all_field_functors[lev][icomp] =
+            std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, dim), lev,
+                              m_crse_ratio, false, ncomp_multimodefab);
+        icomp += 1;
+        AddRZModesToOutputNames(std::string("J") + coord[dim],
+                                warpx.get_pointer_current_fp(0, 0)->nComp());
+    }
+    // divE
+    if (divE_requested) {
+        m_all_field_functors[lev][icomp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev,
+                              m_crse_ratio, false, ncomp_multimodefab);
+        icomp += 1;
+        AddRZModesToOutputNames(std::string("divE"), ncomp_multimodefab);
+    }
+    // rho
+    if (rho_requested) {
+        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1, false, ncomp_multimodefab);
+        icomp += 1;
+        AddRZModesToOutputNames(std::string("rho"), ncomp_multimodefab);
     }
     // Sum the number of components in input vector m_all_field_functors
     // and check that it corresponds to the number of components in m_varnames
@@ -515,6 +626,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             amrex::Abort("Error: " + m_varnames[comp] + " is not a known field output type");
         }
     }
+    AddRZModesToDiags( lev );
 }
 
 

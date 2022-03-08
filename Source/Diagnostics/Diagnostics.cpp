@@ -61,7 +61,7 @@ Diagnostics::BaseReadParameters ()
     // Query list of grid fields to write to output
     bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames);
     if (!varnames_specified){
-        if( dims == "RZ" ) {
+        if( dims == "RZ" and m_format == "openpmd" ) {
             m_varnames = {"Er", "Et", "Ez", "Br", "Bt", "Bz", "jr", "jt", "jz"};
         }
         else {
@@ -210,8 +210,8 @@ Diagnostics::InitData ()
         // loop over all levels
         for (int lev = 0; lev < nmax_lev; ++lev) {
             // allocate and initialize m_all_field_functors depending on diag type
-            if (dims == "RZ" ) {
-                InitializeFieldFunctorsRZ(lev);
+            if (dims == "RZ" and m_format == "openpmd") {
+                InitializeFieldFunctorsRZopenPMD(lev);
             } else {
                 InitializeFieldFunctors(lev);
             }
