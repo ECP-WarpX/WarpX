@@ -589,7 +589,7 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
 
     m_dz_lab_ = PhysConst::c * m_dt_boost_ * m_inv_beta_boost_ * m_inv_gamma_boost_;
     m_inv_dz_lab_ = 1.0_rt / m_dz_lab_;
-    int Nz_lab = static_cast<unsigned>((zmax_lab - zmin_lab) * m_inv_dz_lab_);
+    int Nz_lab = static_cast<int>((zmax_lab - zmin_lab) * m_inv_dz_lab_);
 #if (AMREX_SPACEDIM >= 2)
     int Nx_lab = geom.Domain().length(0);
 #endif
@@ -620,7 +620,7 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
         map_actual_fields_to_dump.push_back(i);
 
     if (do_user_fields){
-        m_ncomp_to_dump = user_fields_to_dump.size();
+        m_ncomp_to_dump = static_cast<int>(user_fields_to_dump.size());
         map_actual_fields_to_dump.resize(m_ncomp_to_dump);
         m_mesh_field_names.resize(m_ncomp_to_dump);
         for (int i=0; i<m_ncomp_to_dump; i++){
@@ -752,7 +752,7 @@ void BackTransformedDiagnostic::Flush (const Geometry& /*geom*/)
     for (auto& lf_diags : m_LabFrameDiags_) {
 
         Real zmin_lab = lf_diags->m_prob_domain_lab_.lo(WARPX_ZINDEX);
-        auto i_lab = static_cast<unsigned>(
+        auto i_lab = static_cast<int>(
             (lf_diags->m_current_z_lab - zmin_lab) / m_dz_lab_);
 
         if (lf_diags->m_buff_counter_ != 0) {
@@ -1382,7 +1382,7 @@ LabFrameSnapShot::
 AddDataToBuffer( MultiFab& tmp, int k_lab,
                  amrex::Vector<int> const& map_actual_fields_to_dump)
 {
-    const int ncomp_to_dump = map_actual_fields_to_dump.size();
+    const int ncomp_to_dump = static_cast<int>(map_actual_fields_to_dump.size());
     MultiFab& buf = *m_data_buffer_;
 #ifdef AMREX_USE_GPU
     Gpu::DeviceVector<int> d_map_actual_fields_to_dump(ncomp_to_dump);
@@ -1422,7 +1422,7 @@ LabFrameSlice::
 AddDataToBuffer( MultiFab& tmp, int k_lab,
                  amrex::Vector<int> const& map_actual_fields_to_dump)
 {
-    const int ncomp_to_dump = map_actual_fields_to_dump.size();
+    const int ncomp_to_dump = static_cast<int>(map_actual_fields_to_dump.size());
     MultiFab& buf = *m_data_buffer_;
 #ifdef AMREX_USE_GPU
     Gpu::DeviceVector<int> d_map_actual_fields_to_dump(ncomp_to_dump);
@@ -1462,13 +1462,13 @@ AddPartDataToParticleBuffer(
     Vector<WarpXParticleContainer::DiagnosticParticleData> const& tmp_particle_buffer,
     int nspeciesBoostedFrame) {
     for (int isp = 0; isp < nspeciesBoostedFrame; ++isp) {
-        auto np = tmp_particle_buffer[isp].GetRealData(DiagIdx::w).size();
+        auto np = static_cast<int>(tmp_particle_buffer[isp].GetRealData(DiagIdx::w).size());
         if (np == 0) continue;
 
         // allocate size of particle buffer array to np
         // This is a growing array. Each time we add np elements
         // to the existing array which has size = init_size
-        const int init_size = m_particles_buffer_[isp].GetRealData(DiagIdx::w).size();
+        const int init_size = static_cast<int>(m_particles_buffer_[isp].GetRealData(DiagIdx::w).size());
         const int total_size = init_size + np;
         m_particles_buffer_[isp].resize(total_size);
 
@@ -1588,7 +1588,8 @@ AddPartDataToParticleBuffer(
         // flag values. These location indices are used to copy data
         // from src to dst when the copy-flag is set to 1.
         const int copy_size = amrex::Scan::ExclusiveSum(np, Flag, IndexLocation);
-        const int init_size = m_particles_buffer_[isp].GetRealData(DiagIdx::w).size();
+        const auto init_size = static_cast<int>(
+            m_particles_buffer_[isp].GetRealData(DiagIdx::w).size());
         const int total_reducedDiag_size = copy_size + init_size;
 
         // allocate array size for reduced diagnostic buffer array

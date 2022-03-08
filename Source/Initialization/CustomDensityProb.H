@@ -7,6 +7,7 @@
 #ifndef CUSTOM_DENSITY_PROB_H_
 #define CUSTOM_DENSITY_PROB_H_
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXUtil.H"
 
 #include <AMReX_Arena.H>
@@ -25,7 +26,7 @@ struct InjectorDensityCustom
         // Read parameters for custom density profile from file
         amrex::ParmParse pp_species_name(species_name);
         std::vector<amrex::Real> v;
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
                                          "Too many parameters for InjectorDensityCustom");
         getArrWithParser(pp_species_name, "custom_profile_params", v);
         for (int i = 0; i < static_cast<int>(v.size()); ++i) {

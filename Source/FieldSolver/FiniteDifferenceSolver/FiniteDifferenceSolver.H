@@ -109,6 +109,7 @@ class FiniteDifferenceSolver
         void MacroscopicEvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                       amrex::Real const dt,
                       std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
@@ -245,6 +246,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr< amrex::MultiFab>, 3>& Efield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Bfield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             amrex::Real const dt,
             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 

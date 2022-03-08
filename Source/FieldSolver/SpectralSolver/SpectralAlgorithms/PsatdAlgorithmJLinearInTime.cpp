@@ -433,15 +433,12 @@ void PsatdAlgorithmJLinearInTime::CurrentCorrection (SpectralFieldData& field_da
 }
 
 void
-PsatdAlgorithmJLinearInTime::VayDeposition (
-    const int lev,
-    SpectralFieldData& field_data,
-    std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+PsatdAlgorithmJLinearInTime::VayDeposition (SpectralFieldData& field_data)
 {
     // Profiling
     BL_PROFILE("PsatdAlgorithmJLinearInTime::VayDeposition()");
 
-    amrex::ignore_unused(lev, field_data, current);
+    amrex::ignore_unused(field_data);
     amrex::Abort("Vay deposition not implemented for multi-J PSATD algorithm");
 }
 

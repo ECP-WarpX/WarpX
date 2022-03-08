@@ -17,6 +17,7 @@
 #include "Parallelization/WarpXCommUtil.H"
 #include "ParticleBoundaries_K.H"
 #include "Utils/CoarsenMR.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -305,7 +306,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                                         int const thread_num, const int lev, int const depos_lev,
                                         amrex::Real const dt, amrex::Real const relative_time)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                      (depos_lev==(lev  )),
                                      "Deposition buffers only work for lev-1");
 
@@ -554,7 +555,7 @@ WarpXParticleContainer::DepositCurrent (
             int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization)
             {
-                ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
             }
 
             DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev,
@@ -696,7 +697,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
             int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization)
             {
-                ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
             }
 
             DepositCharge(pti, wp, ion_lev, rho[lev].get(), icomp, 0, np, thread_num, lev, lev);
@@ -781,7 +782,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 
             int* AMREX_RESTRICT ion_lev;
             if (do_field_ionization){
-                ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
             } else {
                 ion_lev = nullptr;
             }

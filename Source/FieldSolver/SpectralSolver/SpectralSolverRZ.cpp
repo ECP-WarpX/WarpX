@@ -157,7 +157,7 @@ SpectralSolverRZ::CurrentCorrection ()
 }
 
 void
-SpectralSolverRZ::VayDeposition (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+SpectralSolverRZ::VayDeposition ()
 {
-    algorithm->VayDeposition(lev, field_data, current);
+    algorithm->VayDeposition(field_data);
 }

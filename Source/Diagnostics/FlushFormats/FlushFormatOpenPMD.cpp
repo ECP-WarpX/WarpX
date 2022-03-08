@@ -1,5 +1,6 @@
 #include "FlushFormatOpenPMD.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -135,7 +136,7 @@ FlushFormatOpenPMD::WriteToFile (
 {
     WARPX_PROFILE("FlushFormatOpenPMD::WriteToFile()");
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !plot_raw_fields && !plot_raw_fields_guards,
         "Cannot plot raw data with OpenPMD output format. Use plotfile instead.");
 

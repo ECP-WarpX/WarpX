@@ -13,8 +13,9 @@
 #endif
 #include "FieldIO.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Utils/CoarsenIO.H"
 #include "Parallelization/WarpXCommUtil.H"
+#include "Utils/CoarsenIO.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -93,7 +94,8 @@ WarpX::InitFromCheckpoint ()
 {
     WARPX_PROFILE("WarpX::InitFromCheckpoint()");
 
-    amrex::Print() << "  Restart from checkpoint " << restart_chkfile << "\n";
+    amrex::Print()<< Utils::TextMsg::Info(
+        "restart from checkpoint " + restart_chkfile);
 
     // Header
     {

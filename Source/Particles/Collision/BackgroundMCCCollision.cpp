@@ -8,6 +8,7 @@
 #include "MCCScattering.H"
 #include "Particles/ParticleCreation/FilterCopyTransform.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
+#include "Utils/TextMsg.H"
 #include "Utils/ParticleUtils.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -22,14 +23,14 @@
 BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name)
     : CollisionBase(collision_name)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 1,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 1,
                                      "Background MCC must have exactly one species.");
 
     amrex::ParmParse pp_collision_name(collision_name);
 
     amrex::Real background_density = 0;
     if (queryWithParser(pp_collision_name, "background_density", background_density)) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             (background_density > 0), "The background density must be greater than 0."
         );
         m_background_density_parser = makeParser(std::to_string(background_density), {"x", "y", "z", "t"});
@@ -42,7 +43,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 
     amrex::Real background_temperature;
     if (queryWithParser(pp_collision_name, "background_temperature", background_temperature)) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             (background_temperature >= 0), "The background temperature must be positive."
         );
         m_background_temperature_parser = makeParser(std::to_string(background_temperature), {"x", "y", "z", "t"});
@@ -64,7 +65,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
     if (m_max_background_density == 0 && background_density != 0) {
         m_max_background_density = background_density;
     }
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         (m_max_background_density > 0),
         "The maximum background density must be greater than 0."
     );
@@ -99,7 +100,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 
         MCCProcess process(scattering_process, cross_section_file, energy);
 
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(process.type() != MCCProcessType::INVALID,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(process.type() != MCCProcessType::INVALID,
                                          "Cannot add an unknown MCC process type");
 
         // if the scattering process is ionization get the secondary species
@@ -108,7 +109,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
         // the maximum collision frequency with the same function used for
         // particle conserving processes
         if (process.type() == MCCProcessType::IONIZATION) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!ionization_flag,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!ionization_flag,
                                              "Background MCC only supports a single ionization process");
             ionization_flag = true;
 
@@ -204,13 +205,13 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
         m_nu_max = get_nu_max(m_scattering_processes);
 
         // calculate total collision probability
-        auto coll_n = m_nu_max * dt;
+        auto coll_n = m_nu_max * m_ndt * dt;
         m_total_collision_prob = 1.0_rt - std::exp(-coll_n);
 
         // dt has to be small enough that a linear expansion of the collision
         // probability is sufficiently accurately, otherwise the MCC results
         // will be very heavily affected by small changes in the timestep
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n < 0.1_rt,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n < 0.1_rt,
             "dt is too large to ensure accurate MCC results"
         );
 
@@ -219,10 +220,10 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
             m_nu_max_ioniz = get_nu_max(m_ionization_processes);
 
             // calculate total ionization probability
-            auto coll_n_ioniz = m_nu_max_ioniz * dt;
+            auto coll_n_ioniz = m_nu_max_ioniz * m_ndt * dt;
             m_total_collision_prob_ioniz = 1.0_rt - std::exp(-coll_n_ioniz);
 
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n_ioniz < 0.1_rt,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n_ioniz < 0.1_rt,
                 "dt is too large to ensure accurate MCC results"
             );
 
@@ -237,10 +238,12 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
             m_background_mass = species1.getMass();
         }
 
-        amrex::Print() <<
-            "Setting up collisions for " << m_species_names[0] << " with total "
-            "collision probability: " <<
-            m_total_collision_prob + m_total_collision_prob_ioniz << "\n";
+        amrex::Print() << Utils::TextMsg::Info(
+            "Setting up collisions for " + m_species_names[0] + " with total "
+            + "collision probability: "
+            + std::to_string(m_total_collision_prob) + " "
+            + std::to_string(m_total_collision_prob_ioniz)
+        );
 
         init_flag = true;
     }

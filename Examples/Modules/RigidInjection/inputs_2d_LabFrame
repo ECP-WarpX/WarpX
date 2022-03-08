@@ -15,7 +15,7 @@ warpx.cfl = .999
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0 # in units of the speed of light
-warpx.serialize_ics = 1
+warpx.serialize_initial_conditions = 1
 warpx.use_filter = 0
 
 # Order of particle shape factors
