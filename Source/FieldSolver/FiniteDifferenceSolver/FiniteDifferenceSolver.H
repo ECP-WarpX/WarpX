@@ -49,7 +49,6 @@ class FiniteDifferenceSolver
         void EvolveB ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
                        std::unique_ptr<amrex::MultiFab> const& Gfield,
-                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
@@ -161,8 +160,6 @@ class FiniteDifferenceSolver
         void EvolveBCylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
             const int lev,
             amrex::Real const dt );
 
