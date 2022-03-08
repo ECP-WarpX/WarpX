@@ -22,7 +22,7 @@
 
 /**
  * This struct contains only static functions to initialize the stencil coefficients
- * and to compute finite-difference derivatives for the Cartesian Yee algorithm.
+ * and to compute finite-difference derivatives for the Cartesian CKC algorithm.
  */
 struct CylindricalCKCAlgorithm {
 
