@@ -27,7 +27,7 @@ DivBFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer
 #else
     int const n_rz_mode_inds = 1;
 #endif
-    amrex::MultiFab divB( warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 2*warpx.n_rz_azimuthal_modes-1, ng );
+    amrex::MultiFab divB( warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), n_rz_mode_inds, ng );
     warpx.ComputeDivB(divB, 0, m_arr_mf_src, WarpX::CellSize(m_lev) );
     // // Coarsen and Interpolate from divB to coarsened/reduced_domain mf_dst
     // CoarsenIO::Coarsen( mf_dst, divB, dcomp, 0, nComp(), 0, m_crse_ratio);
