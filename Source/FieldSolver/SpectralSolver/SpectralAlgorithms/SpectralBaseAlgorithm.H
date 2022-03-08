@@ -57,14 +57,9 @@ class SpectralBaseAlgorithm
          * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).
          * This virtual function is pure and must be defined in derived classes.
          *
-         * \param[in]     lev        The mesh-refinement level
          * \param[in,out] field_data All fields in Fourier space
-         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
-         *                           the three components of the current density
          */
-        virtual void VayDeposition (const int lev,
-                                    SpectralFieldData& field_data,
-                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current) = 0;
+        virtual void VayDeposition (SpectralFieldData& field_data) = 0;
 
         /**
          * \brief Compute spectral divergence of E

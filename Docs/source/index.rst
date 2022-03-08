@@ -78,6 +78,7 @@ Usage
    usage/examples
    usage/pwfa
    usage/workflows
+   usage/faq
 
 Data Analysis
 -------------
@@ -123,6 +124,7 @@ Development
    developers/developers
    developers/doxygen
    developers/gnumake
+   developers/faq
 .. good to have in the future:
 ..   developers/repostructure
 

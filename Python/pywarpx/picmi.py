@@ -887,13 +887,14 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
 
     def __init__(self, name, species, background_density,
                  background_temperature, scattering_processes,
-                 background_mass=None, **kw):
+                 background_mass=None, ndt=None, **kw):
         self.name = name
         self.species = species
         self.background_density = background_density
         self.background_temperature = background_temperature
         self.background_mass = background_mass
         self.scattering_processes = scattering_processes
+        self.ndt = ndt
 
         self.handle_init(kw)
 
@@ -904,6 +905,7 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
         collision.background_density = self.background_density
         collision.background_temperature = self.background_temperature
         collision.background_mass = self.background_mass
+        collision.ndt = self.ndt
 
         collision.scattering_processes = self.scattering_processes.keys()
         for process, kw in self.scattering_processes.items():
@@ -967,7 +969,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.field_gathering_algo = kw.pop('warpx_field_gathering_algo', None)
         self.particle_pusher_algo = kw.pop('warpx_particle_pusher_algo', None)
         self.use_filter = kw.pop('warpx_use_filter', None)
-        self.serialize_ics = kw.pop('warpx_serialize_ics', None)
+        self.serialize_initial_conditions = kw.pop('warpx_serialize_initial_conditions', None)
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
         self.load_balance_intervals = kw.pop('warpx_load_balance_intervals', None)
         self.load_balance_efficiency_ratio_threshold = kw.pop('warpx_load_balance_efficiency_ratio_threshold', None)
@@ -1013,7 +1015,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.algo.costs_heuristic_cells_wt = self.costs_heuristic_cells_wt
 
         pywarpx.warpx.use_filter = self.use_filter
-        pywarpx.warpx.serialize_ics = self.serialize_ics
+        pywarpx.warpx.serialize_initial_conditions = self.serialize_initial_conditions
 
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
 
@@ -1112,6 +1114,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
 
     def initialize_inputs(self):
@@ -1130,6 +1133,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.dump_rz_modes = self.dump_rz_modes
         self.diagnostic.intervals = self.period
         self.diagnostic.diag_lo = self.lower_bound
@@ -1200,6 +1204,7 @@ class Checkpoint(picmistandard.base._ClassWithInit):
         self.period = period
         self.write_dir = write_dir
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.name = name
 
         if self.name is None:
@@ -1218,6 +1223,7 @@ class Checkpoint(picmistandard.base._ClassWithInit):
         self.diagnostic.intervals = self.period
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = 'checkpoint'
+        self.diagnostic.file_min_digits = self.file_min_digits
 
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
@@ -1230,6 +1236,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.random_fraction = kw.pop('warpx_random_fraction', None)
         self.uniform_stride = kw.pop('warpx_uniform_stride', None)
         self.plot_filter_function = kw.pop('warpx_plot_filter_function', None)
@@ -1261,6 +1268,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.intervals = self.period
 
         if self.write_dir is not None or self.file_prefix is not None:
@@ -1327,6 +1335,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
       - warpx_format: Passed to <diagnostic name>.format
       - warpx_openpmd_backend: Passed to <diagnostic name>.openpmd_backend
       - warpx_file_prefix: Passed to <diagnostic name>.file_prefix
+      - warpx_file_min_digits: Passed to <diagnostic name>.file_min_digits
       - warpx_buffer_size: Passed to <diagnostic name>.buffer_size
       - warpx_lower_bound: Passed to <diagnostic name>.lower_bound
       - warpx_upper_bound: Passed to <diagnostic name>.upper_bound
@@ -1339,6 +1348,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
             self.format = kw.pop('warpx_format', None)
             self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
             self.file_prefix = kw.pop('warpx_file_prefix', None)
+            self.file_min_digits = kw.pop('warpx_file_min_digits', None)
             self.buffer_size = kw.pop('warpx_buffer_size', None)
             self.lower_bound = kw.pop('warpx_lower_bound', None)
             self.upper_bound = kw.pop('warpx_upper_bound', None)
@@ -1377,6 +1387,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
         self.diagnostic.diag_type = 'BackTransformed'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
 
