@@ -16,6 +16,7 @@
 #include "Parallelization/WarpXCommUtil.H"
 #include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
 #include "Utils/CoarsenIO.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
@@ -120,23 +121,23 @@ BTDiagnostics::ReadParameters ()
     BaseReadParameters();
     auto & warpx = WarpX::GetInstance();
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.gamma_boost > 1.0_rt,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.gamma_boost > 1.0_rt,
         "gamma_boost must be > 1 to use the back-transformed diagnostics");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.boost_direction[2] == 1,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.boost_direction[2] == 1,
         "The back transformed diagnostics currently only works if the boost is in the z-direction");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.do_moving_window,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.do_moving_window,
            "The moving window should be on if using the boosted frame diagnostic.");
     // The next two asserts could be relaxed with respect to check to current step
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.end_moving_window_step < 0,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.end_moving_window_step < 0,
         "The moving window must not stop when using the boosted frame diagnostic.");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.start_moving_window_step == 0,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.start_moving_window_step == 0,
         "The moving window must start at step zero for the boosted frame diagnostic.");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.moving_window_dir == WARPX_ZINDEX,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.moving_window_dir == WARPX_ZINDEX,
            "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd",
         "<diag>.format must be plotfile or openpmd for back transformed diagnostics");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_crse_ratio == amrex::IntVect(1),
         "Only support for coarsening ratio of 1 in all directions is included for BTD\n"
         );
@@ -149,7 +150,7 @@ BTDiagnostics::ReadParameters ()
     pp_diag_name.query("do_back_transformed_fields", m_do_back_transformed_fields);
     pp_diag_name.query("do_back_transformed_particles", m_do_back_transformed_particles);
     AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_back_transformed_fields, " fields must be turned on for the new back-transformed diagnostics");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_back_transformed_fields, " fields must be turned on for the new back-transformed diagnostics");
     if (m_do_back_transformed_fields == false) m_varnames.clear();
 
     getWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
@@ -162,7 +163,7 @@ BTDiagnostics::ReadParameters ()
         m_dt_snapshots_lab = m_dz_snapshots_lab/PhysConst::c;
         snapshot_interval_is_specified = true;
     }
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
 
     if (queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
@@ -266,7 +267,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
         // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
         if ( hi[idim] <= lo[idim] ) {
              hi[idim]  = lo[idim] + 1;
-             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 m_crse_ratio[idim]==1, "coarsening ratio in reduced dimension must be 1."
              );
         }

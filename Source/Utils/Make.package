@@ -4,6 +4,7 @@ CEXE_sources += WarpXUtil.cpp
 CEXE_sources += WarpXAlgorithmSelection.cpp
 CEXE_sources += CoarsenIO.cpp
 CEXE_sources += CoarsenMR.cpp
+CEXE_sources += TextMsg.cpp
 CEXE_sources += Interpolate.cpp
 CEXE_sources += IntervalsParser.cpp
 CEXE_sources += MPIInitHelpers.cpp
