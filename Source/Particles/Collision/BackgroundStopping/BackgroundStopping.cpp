@@ -82,7 +82,7 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, MultiParticleContainer* 
 
     // Note that the lowest level time step is used for all levels since the
     // collision operation will be done only once per step at the lowest level.
-    const amrex::Real dt = WarpX::GetInstance().getdt(0);
+    const amrex::Real dt = WarpX::GetInstance().getdt(0) * m_ndt;
     if (int(std::floor(cur_time/dt)) % m_ndt != 0) return;
 
     auto& species = mypc->GetParticleContainerFromName(m_species_names[0]);

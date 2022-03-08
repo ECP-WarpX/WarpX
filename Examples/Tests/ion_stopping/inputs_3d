@@ -26,6 +26,7 @@ ions1.multiple_particles_vel_x = max_ion_velocity12 0. 0. max_ion_velocity12/2.
 ions1.multiple_particles_vel_y = 0. max_ion_velocity12 0. max_ion_velocity12/2.
 ions1.multiple_particles_vel_z = 0. 0. -max_ion_velocity12 -max_ion_velocity12/2.
 ions1.multiple_particles_weight = 1. 1. 1. 1.
+ions1.do_not_deposit = 1
 
 ions2.species_type = proton
 ions2.injection_style = "MultipleParticles"
@@ -36,6 +37,7 @@ ions2.multiple_particles_vel_x = max_ion_velocity12 max_ion_velocity12 max_ion_v
 ions2.multiple_particles_vel_y = 0. 0. 0. 0.
 ions2.multiple_particles_vel_z = 0. 0. 0. 0.
 ions2.multiple_particles_weight = 1. 1. 1. 1.
+ions2.do_not_deposit = 1
 
 ions3.charge = q_e
 ions3.mass = 4*m_p
@@ -47,6 +49,7 @@ ions3.multiple_particles_vel_x = max_ion_velocity34 0. 0. max_ion_velocity34/2.
 ions3.multiple_particles_vel_y = 0. max_ion_velocity34 0. max_ion_velocity34/2.
 ions3.multiple_particles_vel_z = 0. 0. -max_ion_velocity34 -max_ion_velocity34/2.
 ions3.multiple_particles_weight = 1. 1. 1. 1.
+ions3.do_not_deposit = 1
 
 ions4.charge = q_e
 ions4.mass = 4*m_p
@@ -58,6 +61,7 @@ ions4.multiple_particles_vel_x = max_ion_velocity34 max_ion_velocity34 max_ion_v
 ions4.multiple_particles_vel_y = 0. 0. 0. 0.
 ions4.multiple_particles_vel_z = 0. 0. 0. 0.
 ions4.multiple_particles_weight = 1. 1. 1. 1.
+ions4.do_not_deposit = 1
 
 collisions.collision_names = stopping_on_electrons_constant stopping_on_electrons_parsed stopping_on_ions_constant stopping_on_ions_parsed
 
