@@ -1540,7 +1540,7 @@ Numerics and algorithms
                 IEEE Antennas and Propagation Society International Symposium (2005),
                 <https://ieeexplore.ieee.org/document/1551259>)
 
-     If ``algo.maxwell_solver`` is not specified, ``yee`` is the default.
+     If ``algo.maxwell_solver`` is not specified, then ``ckc`` is the default for Cartesian and ``yee`` is the default for RZ simulations.
 
 * ``algo.em_solver_medium`` (`string`, optional)
     The medium for evaluating the Maxwell solver. Available options are :
