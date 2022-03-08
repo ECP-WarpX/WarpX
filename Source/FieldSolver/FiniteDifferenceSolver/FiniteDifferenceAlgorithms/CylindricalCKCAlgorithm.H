@@ -14,6 +14,7 @@
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
 #include <AMReX_REAL.H>
+#include <AMReX_BLassert.H>
 
 #include <array>
 #include <cmath>
@@ -57,8 +58,8 @@ struct CylindricalCKCAlgorithm {
      */
     static amrex::Real ComputeMaxDt ( amrex::Real const * const dx,
                                       int const n_rz_azimuthal_modes ) {
-        AMREX_ALWAYS_ASSERT( dx[2] < dx[0], "RZ CKC solver only works for dz < dr.")
-        AMREX_ALWAYS_ASSERT( n_rz_azimuthal_modes < 2, "RZ CKC solver only works for m=0")
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(dx[2] <= dx[0], "RZ CKC solver only works for dz < dr.");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes < 2, "RZ CKC solver only works for m=0");
         return dx[2] / PhysConst::c;
     }
 

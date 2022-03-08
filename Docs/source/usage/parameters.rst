@@ -1533,7 +1533,7 @@ Numerics and algorithms
     Available options are:
 
      - ``yee``: Yee FDTD solver.
-     - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
+     - ``ckc``: Cole-Karkkainen solver with Cowan
        coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
      - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-pic-mwsolve-psatd>`)
      - ``ect``: Enlarged cell technique (conformal finite difference solver. See Xiao and Liu,
