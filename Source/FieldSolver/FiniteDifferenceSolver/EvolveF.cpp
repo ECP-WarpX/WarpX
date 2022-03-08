@@ -12,6 +12,7 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalCKCAlgorithm.H"
 #endif
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -55,6 +56,10 @@ void FiniteDifferenceSolver::EvolveF (
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
 
         EvolveFCylindrical <CylindricalYeeAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
+
+    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC){
+
+            EvolveFCylindrical <CylindricalCKCAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
 #else
     if (m_do_nodal) {

@@ -12,6 +12,7 @@
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #else
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#   include "FiniteDifferenceAlgorithms/CylindricalCKCAlgorithm.H"
 #endif
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -64,9 +65,14 @@ void FiniteDifferenceSolver::EvolveB (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
+    ignore_unused(Gfield, face_areas);
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
-        ignore_unused(Gfield, face_areas);
+
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
+
+    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC){
+
+        EvolveBCylindrical <CylindricalCKCAlgorithm> ( Bfield, Efield, lev, dt );
 #else
     if(m_do_nodal or m_fdtd_algo != MaxwellSolverAlgo::ECT){
         amrex::ignore_unused(face_areas);
