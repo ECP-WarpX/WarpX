@@ -12,6 +12,7 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalCKCAlgorithm.H"
 #endif
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -51,6 +52,8 @@ WarpX::ComputeDt ()
         // - In RZ geometry
         if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
             deltat = cfl * CylindricalYeeAlgorithm::ComputeMaxDt(dx,  n_rz_azimuthal_modes);
+        } else if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
+            deltat = cfl * CylindricalCKCAlgorithm::ComputeMaxDt(dx,  n_rz_azimuthal_modes);
 #else
         // - In Cartesian geometry
         if (do_nodal) {
