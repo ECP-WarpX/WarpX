@@ -169,7 +169,8 @@ void FiniteDifferenceSolver::EvolveECartesian (
                 if (ly(i,j,k) <= 0) return;
 #elif defined(WARPX_DIM_XZ)
                 //In XZ Ey is associated with a mesh node, so we need to check if the mesh node is covered
-                if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j, k)<=0 || lz(i, j, k-1)<=0) return;
+                amrex::ignore_unused(ly);
+                if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
 #endif
 #endif
                 Ey(i, j, k) += c2 * dt * (
