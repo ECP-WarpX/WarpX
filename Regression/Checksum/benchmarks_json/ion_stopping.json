@@ -2,10 +2,10 @@
   "ions1": {
     "particle_cpu": 0.0,
     "particle_id": 10.0,
-    "particle_momentum_x": 3.4560250353184565e-22,
+    "particle_momentum_x": 3.4560250353184555e-22,
     "particle_momentum_y": 3.4560250353184555e-22,
     "particle_momentum_z": 3.4560250353184555e-22,
-    "particle_position_x": 0.0006978687369019062,
+    "particle_position_x": 0.0006978687369019061,
     "particle_position_y": 0.0006978687369019061,
     "particle_position_z": 0.0006978687369019061,
     "particle_weight": 4.0
@@ -14,11 +14,11 @@
     "particle_cpu": 0.0,
     "particle_id": 26.0,
     "particle_momentum_x": 9.111625188610108e-22,
-    "particle_momentum_y": 4.0107992660694485e-38,
-    "particle_momentum_z": 1.1847086330140824e-38,
+    "particle_momentum_y": 0.0,
+    "particle_momentum_z": 0.0,
     "particle_position_x": 0.4000131356596105,
     "particle_position_y": 0.4,
-    "particle_position_z": 9.350300569982922e-21,
+    "particle_position_z": 0.0,
     "particle_weight": 4.0
   },
   "ions3": {
@@ -36,22 +36,22 @@
     "particle_cpu": 0.0,
     "particle_id": 58.0,
     "particle_momentum_x": 1.8496124473858214e-21,
-    "particle_momentum_y": 4.034690594614101e-38,
-    "particle_momentum_z": 1.1828809375809212e-38,
+    "particle_momentum_y": 0.0,
+    "particle_momentum_z": 0.0,
     "particle_position_x": 0.4000005258500433,
     "particle_position_y": 0.4,
-    "particle_position_z": 2.3454196040908738e-21,
+    "particle_position_z": 0.0,
     "particle_weight": 4.0
   },
   "lev=0": {
-    "Bx": 3.7479264701354426e-18,
-    "By": 1.0863040039063157e-17,
-    "Bz": 9.90537877767134e-18,
-    "Ex": 6.132289809041395e-09,
-    "Ey": 3.3777108471083774e-09,
-    "Ez": 3.5717540278435548e-09,
-    "jx": 1.1603379678838566e-11,
-    "jy": 3.1828004875702986e-12,
-    "jz": 3.1828004875702986e-12
+    "Bx": 0.0,
+    "By": 0.0,
+    "Bz": 0.0,
+    "Ex": 0.0,
+    "Ey": 0.0,
+    "Ez": 0.0,
+    "jx": 0.0,
+    "jy": 0.0,
+    "jz": 0.0
   }
 }
