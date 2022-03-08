@@ -398,14 +398,19 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #if !defined(WARPX_DIM_1D_Z)
     Real const dxi = 1.0_rt / dx[0];
 #endif
+#if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z)
+    Real const rt_dxi = relative_time*dxi;
+#endif
 #if !defined(WARPX_DIM_1D_Z)
     Real const xmin = xyzmin[0];
 #endif
 #if defined(WARPX_DIM_3D)
     Real const dyi = 1.0_rt / dx[1];
+    Real const rt_dyi = relative_time*dyi;
     Real const ymin = xyzmin[1];
 #endif
     Real const dzi = 1.0_rt / dx[2];
+    Real const rt_dzi = relative_time*dzi;
     Real const zmin = xyzmin[2];
 
 #if defined(WARPX_DIM_3D)
@@ -512,17 +517,17 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             // Keep these double to avoid bug in single precision
 #if !defined(WARPX_DIM_1D_Z)
             double const x_new = (xp - xmin)*dxi;
-            double const x_old = x_new + relative_time*uxp[ip]*gaminv*dxi;
+            double const x_old = x_new + rt_dxi*uxp[ip]*gaminv;
 #endif
 #endif
 #if defined(WARPX_DIM_3D)
             // Keep these double to avoid bug in single precision
             double const y_new = (yp - ymin)*dyi;
-            double const y_old = y_new + relative_time*uyp[ip]*gaminv*dyi;
+            double const y_old = y_new + rt_dyi*uyp[ip]*gaminv;
 #endif
             // Keep these double to avoid bug in single precision
             double const z_new = (zp - zmin)*dzi;
-            double const z_old = z_new + relative_time*uzp[ip]*gaminv*dzi;
+            double const z_old = z_new + rt_dzi*uzp[ip]*gaminv;
 
 #if defined(WARPX_DIM_RZ)
             Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
