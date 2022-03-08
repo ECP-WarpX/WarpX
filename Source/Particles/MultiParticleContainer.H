@@ -20,6 +20,7 @@
 #   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
 #include "PhysicalParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
@@ -513,7 +514,7 @@ private:
                              First const& pc_dst, Args const&... others) const noexcept
     {
         if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
                 "For particle creation processes, either all or none of the "
                 "particle species must use tiling.");
         }

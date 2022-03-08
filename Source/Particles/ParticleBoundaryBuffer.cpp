@@ -274,10 +274,10 @@ ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int bo
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_boundary_buffer[boundary][index],
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_boundary_buffer[boundary][index],
                                      "Attempted to get particle buffer for boundary "
-                                     + boundary + ", which is not used!");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(buffer[index].isDefined(),
+                                     + std::to_string(boundary) + ", which is not used!");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(buffer[index].isDefined(),
                                      "Tried to get a buffer that is not defined!");
 
     return buffer[index];

@@ -23,10 +23,9 @@ SliceParser::SliceParser (const std::string& instr)
     }
     else // 2 colons in input string. The input is start:stop:period
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             insplit.size() == 3,
-            Utils::TextMsg::Err(instr + "' is not a valid syntax for a slice.")
-        );
+            instr + "' is not a valid syntax for a slice.");
         if (!insplit[0].empty()){
             m_start = parseStringtoInt(insplit[0], "interval start");}
         if (!insplit[1].empty()){

@@ -45,11 +45,10 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
             // of the species' PIdx variables.
             if (var != "rho") {
                 // Return error if var not in PIdx.
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     ParticleStringNames::to_index.count(var),
-                    Utils::TextMsg::Err("variables argument '" + var
-                        +"' not in ParticleStringNames")
-                    );
+                    "variables argument '" + var
+                    +"' not in ParticleStringNames");
                 plot_flags[ParticleStringNames::to_index.at(var)] = 1;
             }
         }

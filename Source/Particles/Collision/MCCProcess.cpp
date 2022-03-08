@@ -60,7 +60,7 @@ MCCProcess::init (const std::string& scattering_process, const amrex::Real energ
     // cost is > 0 - this is to prevent the possibility of negative left
     // over energy after a collision event
     if (m_exe_h.m_energy_penalty > 0) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             (getCrossSection(m_exe_h.m_energy_penalty) == 0),
             "Cross-section > 0 at energy cost for collision."
         );
@@ -121,7 +121,7 @@ MCCProcess::sanityCheckEnergyGrid (
     // confirm that the input data for the cross-section was provided with
     // equal energy steps, otherwise the linear interpolation will fail
     for (unsigned i = 1; i < energies.size(); i++) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                                          (std::abs(energies[i] - energies[i-1] - dE) < dE / 100.0),
                                          "Energy grid not evenly spaced."
                                          );

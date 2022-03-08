@@ -154,7 +154,7 @@ MacroscopicProperties::InitData ()
     // In the Maxwell solver, `epsilon` is used in the denominator.
     // Therefore, it needs to be strictly positive
     bool const local=true;
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( m_eps_mf->min(0,0,local) > 0,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_eps_mf->min(0,0,local) > 0,
     "WarpX encountered zero or negative values for the relative permittivity `epsilon`. Please check the initialization of `epsilon`.");
 
     // Initialize mu

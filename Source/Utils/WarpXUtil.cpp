@@ -74,13 +74,13 @@ void ParseGeometryInput()
     int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] == 0.,
-            Utils::TextMsg::Err("Lower bound of radial coordinate (prob_lo[0]) with RZ PSATD solver must be zero"));
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] == 0.,
+            "Lower bound of radial coordinate (prob_lo[0]) with RZ PSATD solver must be zero");
     }
     else
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] >= 0.,
-            Utils::TextMsg::Err("Lower bound of radial coordinate (prob_lo[0]) with RZ FDTD solver must be non-negative"));
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] >= 0.,
+            "Lower bound of radial coordinate (prob_lo[0]) with RZ FDTD solver must be non-negative");
     }
 #endif
 
@@ -128,8 +128,8 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
             Abort(Utils::TextMsg::Err("Unknown boost_dir: "+s));
         }
 
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( s == "z" || s == "Z" ,
-            Utils::TextMsg::Err("The boost must be in the z direction."));
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( s == "z" || s == "Z" ,
+            "The boost must be in the z direction.");
     }
 }
 
@@ -304,7 +304,7 @@ int safeCastToInt(const amrex::Real x, const std::string& real_name) {
         error_detected = true;
         assert_msg =  "NaN detected when casting " + real_name + " to int";
     }
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!error_detected, Utils::TextMsg::Err(assert_msg));
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!error_detected, assert_msg);
     return result;
 }
 
@@ -349,9 +349,9 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
         // user's expressions because of the limited range of exponentials in single precision
         double v;
 
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             recursive_symbols.count(*it)==0,
-            Utils::TextMsg::Err("Expressions contains recursive symbol "+*it));
+            "Expressions contains recursive symbol "+*it);
         recursive_symbols.insert(*it);
         const bool is_input = queryWithParser(pp_my_constants, it->c_str(), v);
         recursive_symbols.erase(*it);
@@ -372,7 +372,7 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
         ++it;
     }
     for (auto const& s : symbols) {
-        amrex::Abort(Utils::TextMsg::Err("makeParser::Unknown symbol "+s));
+        amrex::Abort("makeParser::Unknown symbol "+s);
     }
     return parser;
 }
@@ -596,7 +596,7 @@ void CheckGriddingForRZSpectral ()
     // The factor of 8 is there to make some room for higher order
     // shape factors and filtering.
     int nprocs = ParallelDescriptor::NProcs();
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_cell[1] >= 8*nprocs,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_cell[1] >= 8*nprocs,
                                      "With RZ spectral, there must be at least eight z-cells per processor so that there can be at least one block per processor.");
 
     // Get the longitudinal blocking factor in case it was set by the user.
@@ -675,12 +675,12 @@ void ReadBCParams ()
             WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Periodic ) {
             geom_periodicity[idim] = 1;
             // to ensure both lo and hi are set to periodic consistently for both field and particles.
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 (WarpX::field_boundary_lo[idim]  == FieldBoundaryType::Periodic) &&
                 (WarpX::field_boundary_hi[idim]  == FieldBoundaryType::Periodic),
             "field boundary must be consistenly periodic in both lo and hi");
             if (particle_boundary_specified) {
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Periodic) &&
                     (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Periodic),
                "field and particle boundary must be periodic in both lo and hi");

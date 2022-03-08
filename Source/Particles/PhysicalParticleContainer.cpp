@@ -258,16 +258,15 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !(do_classical_radiation_reaction &&
         !(AmIA<PhysicalSpecies::electron>() ||
         AmIA<PhysicalSpecies::positron>() )),
-        Utils::TextMsg::Err("can't enable classical radiation reaction for non lepton species '"
-            + species_name + "'.")
-    );
+        "can't enable classical radiation reaction for non lepton species '"
+            + species_name + "'.");
 
     //Only Boris pusher is compatible with radiation reaction
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !(do_classical_radiation_reaction &&
         WarpX::particle_pusher_algo != ParticlePusherAlgo::Boris),
         "Radiation reaction can be enabled only if Boris pusher is used");
@@ -536,7 +535,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 #ifdef WARPX_USE_OPENPMD
     //TODO: Make changes for read/write in multiple MPI ranks
     if (ParallelDescriptor::IOProcessor()) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(plasma_injector,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(plasma_injector,
                                          "AddPlasmaFromFile: plasma injector not initialized.\n");
         // take ownership of the series and close it when done
         auto series = std::move(plasma_injector->m_openpmd_input_series);
@@ -897,9 +896,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             static_cast<Long>(pid + max_new_particles) < LastParticleID,
-            Utils::TextMsg::Err("ERROR: overflow on particle id numbers"));
+            "ERROR: overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
 
@@ -1429,9 +1428,9 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             static_cast<Long>(pid + max_new_particles) < LastParticleID,
-            Utils::TextMsg::Err("overflow on particle id numbers"));
+            "overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
 
@@ -2549,7 +2548,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                    amrex::Real dt, ScaleFields scaleFields,
                                    DtType a_dt_type)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
                                      (gather_lev==(lev  )),
                                      "Gather buffers only work for lev-1");
     // If no particles, do not do anything

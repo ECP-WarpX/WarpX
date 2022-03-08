@@ -13,6 +13,7 @@
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/ParticleBoundaries_K.H"
 #include "Utils/CoarsenMR.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -71,7 +72,7 @@ FieldProbeParticleContainer::AddNParticles (int lev,
                                             amrex::Vector<amrex::ParticleReal> const & y,
                                             amrex::Vector<amrex::ParticleReal> const & z)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "AddNParticles: only lev=0 is supported yet.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "AddNParticles: only lev=0 is supported yet.");
     AMREX_ALWAYS_ASSERT(x.size() == y.size());
     AMREX_ALWAYS_ASSERT(x.size() == z.size());
 
