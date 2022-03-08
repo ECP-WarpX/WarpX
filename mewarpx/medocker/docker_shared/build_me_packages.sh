@@ -30,3 +30,10 @@ fi
 python3 -m pip install -v .
 
 popd
+
+# install minerva
+pushd minerva
+
+python3 -m pip install .
+
+popd

@@ -30,6 +30,12 @@ if [ ! -d "../../../../WarpX" ]; then
 elif [ ! -d "../../../../warpx-data" ]; then
     echo "No warpx-data install found in ../../.."
     exit 111
+elif [ ! -d "../../../../mwxp" ]; then
+    echo "No mwxp install found in ../../.."
+    exit 111
+elif [ ! -d "../../../../minerva" ]; then
+    echo "No minerva install found in ../../.."
+    exit 111
 fi
 
 # Do the docker build

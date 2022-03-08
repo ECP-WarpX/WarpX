@@ -31,6 +31,8 @@ RUN bash --login /root/python_packages.sh
 # Copy in files
 COPY --chown=me_user:me_user WarpX /merunset/WarpX
 COPY --chown=me_user:me_user warpx-data /merunset/warpx-data
+COPY --chown=me_user:me_user mwxp /merunset/mwxp
+COPY --chown=me_user:me_user minerva /merunset/minerva
 COPY --chown=me_user:me_user WarpX/mewarpx/medocker/docker_shared/run_warpx.sh /merunset/run/
 
 WORKDIR /merunset
@@ -47,6 +49,10 @@ RUN /bin/bash --login /root/build_me_packages.sh
 ENV DIRECTORY=null
 # BUCKET is used to select S3 bucket
 ENV BUCKET=null
+# # OVERRIDE_RUN_SCRIPT is used to override the default behavior of run_warpx.sh
+# ENV OVERRIDE_RUN_SCRIPT=null
+# # COMPUTE is used for identifying cpu or gpu run when automatically benchmarking an image
+# ENV COMPUTE=null
 
 WORKDIR /merunset/run
-ENTRYPOINT ["/bin/bash", "--login", "-c", "source /etc/profile && ./run_warpx.sh $DIRECTORY $BUCKET"]
+CMD ["/bin/bash", "--login", "-c", "source /etc/profile && ./run_warpx.sh $DIRECTORY $BUCKET"]

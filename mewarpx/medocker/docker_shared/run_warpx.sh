@@ -7,12 +7,24 @@
 # back to S3. Dump files are never moved or copied to S3; they will be copied
 # from S3 if they're already there.
 
+# if OVERRIDE_RUN_SCRIPT env var set to a bash script, run that bash script to
+# generate the run script, note must also set COMPUTE as "gpu" or "cpu" if
+# OVERRIDE_RUN_SCRIPT is set
+
+if [ -n "${OVERRIDE_RUN_SCRIPT}" ]; then
+    echo "Using override script at $OVERRIDE_RUN_SCRIPT"
+    source "${OVERRIDE_RUN_SCRIPT}"
+else
 # S3 can sometimes make directories with no name ("") if two slashes are
 # present in sequence
 # https://stackoverflow.com/questions/1848415/remove-slash-from-the-end-of-a-variable
-DIRNAME=${1%/}
-BUCKET=$2
-SCRIPTNAME='run_script.sh'
+    DIR=$1
+    DIRNAME=${1%/}
+    BUCKET=$2
+fi
+
+SCRIPTNAME="run_script.sh"
+
 
 # TIMEOUT can be an environment variable. If no output to stdout has been made
 # in the previous TIMEOUT seconds, this script terminates.
@@ -33,6 +45,12 @@ echo Make directory ${DIRNAME} in EFS and cd there
 mkdir -p /efs/WarpX_simulation_runs/${DIRNAME}
 cd /efs/WarpX_simulation_runs/${DIRNAME}
 
+# Copy file or dir to efs if CP_FILE_NAME is defined
+if [ -n "${CP_FILE_NAME}" ]; then
+    echo "Copying autorun benchmark ${CP_FILE_NAME} to efs"
+    cp /merunset/run/${CP_FILE_NAME}/* .
+fi
+
 # Copy files from S3
 aws s3 cp --recursive s3://${BUCKET}/${DIRNAME} ./ --exclude "*" \
     --include "run*" --include "std*"
@@ -46,11 +64,11 @@ set +e
 function checkptmove {
     # Check file is not open. Since they shouldn't be re-opened, this should be
     # fine.
-    if ! lsof $1 > /dev/null
+    if ! lsof $DIR > /dev/null
     then
         # http://www.linuxjournal.com/content/normalizing-path-names-bash
         # Remove all /./ and // sequences.
-        local path=${DIRNAME}/"$1"
+        local path=${DIRNAME}/"$DIR"
         path=${path//\/.\//\/}
         path=${path//\/\//\/}
         path=${path/diags_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]/diags}
@@ -61,7 +79,7 @@ function checkptmove {
             path=${path/${BASH_REMATCH[0]}/}
         done
         echo $path
-        aws s3 mv $1 s3://${BUCKET}/${path}
+        aws s3 mv $DIR s3://${BUCKET}/${path}
     fi
 }
 
