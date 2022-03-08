@@ -921,12 +921,6 @@ WarpX::ReadParameters ()
 
     {
         ParmParse pp_algo("algo");
-#ifdef WARPX_DIM_RZ
-        if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
-                "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
-        }
-#endif
 #ifndef WARPX_USE_PSATD
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,

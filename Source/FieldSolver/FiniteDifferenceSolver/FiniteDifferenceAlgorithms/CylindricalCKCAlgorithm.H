@@ -37,10 +37,10 @@ struct CylindricalCKCAlgorithm {
         Real const inv_dr = 1._rt/cell_size[0];
         Real const inv_dz = 1._rt/cell_size[2];
         constexpr Real beta = 0.25_rt;
-        Real const betathetaz = beta*inv_dr;
+//        Real const betathetaz = beta*inv_dr;
+//        Real const alphatheta = (1._rt - 2._rt*beta)*inv_dr;
         Real const betarz = beta*inv_dr;
         Real const alphar = (1._rt - 2._rt*beta)*inv_dr;
-        Real const alphatheta = (1._rt - 2._rt*beta)*inv_dr;
 
         stencil_coefs_r.resize(3);
         stencil_coefs_r[0] = inv_dr;
@@ -57,6 +57,8 @@ struct CylindricalCKCAlgorithm {
      */
     static amrex::Real ComputeMaxDt ( amrex::Real const * const dx,
                                       int const n_rz_azimuthal_modes ) {
+        AMREX_ALWAYS_ASSERT( dx[2] < dx[0], "RZ CKC solver only works for dz < dr.")
+        AMREX_ALWAYS_ASSERT( n_rz_azimuthal_modes < 2, "RZ CKC solver only works for m=0")
         return dx[2] / PhysConst::c;
     }
 
