@@ -205,7 +205,7 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
         m_nu_max = get_nu_max(m_scattering_processes);
 
         // calculate total collision probability
-        auto coll_n = m_nu_max * dt;
+        auto coll_n = m_nu_max * m_ndt * dt;
         m_total_collision_prob = 1.0_rt - std::exp(-coll_n);
 
         // dt has to be small enough that a linear expansion of the collision
@@ -220,7 +220,7 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
             m_nu_max_ioniz = get_nu_max(m_ionization_processes);
 
             // calculate total ionization probability
-            auto coll_n_ioniz = m_nu_max_ioniz * dt;
+            auto coll_n_ioniz = m_nu_max_ioniz * m_ndt * dt;
             m_total_collision_prob_ioniz = 1.0_rt - std::exp(-coll_n_ioniz);
 
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n_ioniz < 0.1_rt,

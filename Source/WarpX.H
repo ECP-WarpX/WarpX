@@ -169,22 +169,30 @@ public:
     //! Initialization type for external electric field on the grid
     static std::string E_ext_grid_s;
 
-    // Parser for B_external on the grid
+    //! String storing parser function to initialize x-component of the magnetic field on the grid
     static std::string str_Bx_ext_grid_function;
+    //! String storing parser function to initialize y-component of the magnetic field on the grid
     static std::string str_By_ext_grid_function;
+    //! String storing parser function to initialize z-component of the magnetic field on the grid
     static std::string str_Bz_ext_grid_function;
-    // Parser for E_external on the grid
+    //! String storing parser function to initialize x-component of the electric field on the grid
     static std::string str_Ex_ext_grid_function;
+    //! String storing parser function to initialize y-component of the electric field on the grid
     static std::string str_Ey_ext_grid_function;
+    //! String storing parser function to initialize z-component of the electric field on the grid
     static std::string str_Ez_ext_grid_function;
 
-    // Parser for B_external on the grid
+    //! User-defined parser to initialize x-component of the magnetic field on the grid
     std::unique_ptr<amrex::Parser> Bxfield_parser;
+    //! User-defined parser to initialize y-component of the magnetic field on the grid
     std::unique_ptr<amrex::Parser> Byfield_parser;
+    //! User-defined parser to initialize z-component of the magnetic field on the grid
     std::unique_ptr<amrex::Parser> Bzfield_parser;
-    // Parser for E_external on the grid
+    //! User-defined parser to initialize x-component of the electric field on the grid
     std::unique_ptr<amrex::Parser> Exfield_parser;
+    //! User-defined parser to initialize y-component of the electric field on the grid
     std::unique_ptr<amrex::Parser> Eyfield_parser;
+    //! User-defined parser to initialize z-component of the electric field on the grid
     std::unique_ptr<amrex::Parser> Ezfield_parser;
 
     // Algorithms
@@ -202,11 +210,31 @@ public:
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
     static short load_balance_costs_update_algo;
+    //! Integer that corresponds to electromagnetic Maxwell solver (vaccum - 0, macroscopic - 1)
     static int em_solver_medium;
+    /** Integer that correspond to macroscopic Maxwell solver algorithm
+     *  (BackwardEuler - 0, Lax-Wendroff - 1)
+     */
     static int macroscopic_solver_algo;
+    /** Integers that correspond to boundary condition applied to fields at the
+     *  lower domain boundaries
+     *  (0 to 6 correspond to PML, Periodic, PEC, PMC, Damped, Absorbing Silver-Mueller, None)
+     */
     static amrex::Vector<int> field_boundary_lo;
+    /** Integers that correspond to boundary condition applied to fields at the
+     *  upper domain boundaries
+     *  (0 to 6 correspond to PML, Periodic, PEC, PMC, Damped, Absorbing Silver-Mueller, None)
+     */
     static amrex::Vector<int> field_boundary_hi;
+    /** Integers that correspond to boundary condition applied to particles at the
+     *  lower domain boundaries
+     *  (0 to 3 correspond to Absorbing, Open, Reflecting, Periodic)
+     */
     static amrex::Vector<ParticleBoundaryType> particle_boundary_lo;
+    /** Integers that correspond to boundary condition applied to particles at the
+     *  upper domain boundaries
+     *  (0 to 3 correspond to Absorbing, Open, Reflecting, Periodic)
+     */
     static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
 
 
@@ -288,12 +316,20 @@ public:
     //! If true, the initial conditions from random number generators are serialized (useful for reproducible testing with OpenMP)
     static bool serialize_initial_conditions;
 
-    // Back transformation diagnostic
+    //! If true, then lab-frame data will be computed for boosted frame simulations
+    //! with customized output format
     static bool do_back_transformed_diagnostics;
+    //! Name of the back-transformed diagnostics output directory
     static std::string lab_data_directory;
+    //! Number of back-tranformed snapshots in the lab-frame
     static int  num_snapshots_lab;
+    //! Time interval in lab-frame between the back-transformed snapshots
     static amrex::Real dt_snapshots_lab;
+    //! If true, then lab-frame data will be computed for the fields and flushed out
+    //! in customized format
     static bool do_back_transformed_fields;
+    //! If true, then lab-frame data will be computed for the particles and flushed out
+    //! in customized format
     static bool do_back_transformed_particles;
 
     //! Lorentz factor of the boosted frame in which a boosted-frame simulation is run
