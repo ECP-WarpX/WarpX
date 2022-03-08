@@ -106,12 +106,8 @@ class SpectralSolverRZ
          * declared in the base class SpectralBaseAlgorithmRZ and defined in its
          * derived classes, from objects of class SpectralSolverRZ through the private
          * unique pointer \c algorithm.
-         *
-         * \param[in]     lev     The mesh refinement level
-         * \param[in,out] current Array of unique pointers to \c MultiFab storing
-         * the three components of the current density
          */
-        void VayDeposition (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current);
+        void VayDeposition ();
 
         /**
          * \brief Copy spectral data from component \c src_comp to component \c dest_comp

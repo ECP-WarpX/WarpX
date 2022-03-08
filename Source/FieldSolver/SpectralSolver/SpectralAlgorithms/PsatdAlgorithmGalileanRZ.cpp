@@ -360,9 +360,7 @@ PsatdAlgorithmGalileanRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 }
 
 void
-PsatdAlgorithmGalileanRZ::VayDeposition (const int /*lev*/,
-                                         SpectralFieldDataRZ& /*field_data*/,
-                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
+PsatdAlgorithmGalileanRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
     amrex::Abort("Vay deposition not implemented in RZ geometry");
 }

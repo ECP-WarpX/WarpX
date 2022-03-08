@@ -19,7 +19,7 @@ boundary.field_hi = periodic periodic periodic
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.serialize_ics = 1
+warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
 warpx.cfl = 1.0
 
