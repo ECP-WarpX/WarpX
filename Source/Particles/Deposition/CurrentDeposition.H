@@ -768,14 +768,14 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 #if defined(WARPX_DIM_RZ)
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab,
-        np_to_depose, dt, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
+        np_to_depose, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
     amrex::Abort("Vay deposition not implemented in RZ geometry");
 #endif
 
 #if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab,
-        np_to_depose, dt, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
+        np_to_depose, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
     amrex::Abort("Vay deposition not implemented in cartesian 1D geometry");
 #endif
 
