@@ -196,8 +196,6 @@ Diagnostics::BaseReadParameters ()
 void
 Diagnostics::InitData ()
 {
-    auto & warpx = WarpX::GetInstance();
-
     // initialize member variables and arrays in base class::Diagnostics
     InitBaseData();
     // initialize member variables and arrays specific to each derived class
