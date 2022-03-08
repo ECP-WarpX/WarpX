@@ -1,6 +1,7 @@
 #include "CellCenterFunctor.H"
 
 #include "Utils/CoarsenIO.H"
+#include "Utils/TextMsg.H"
 #ifdef WARPX_DIM_RZ
 #   include "WarpX.H"
 #endif
@@ -23,7 +24,7 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_
     if (m_convertRZmodes2cartesian) {
         // In cylindrical geometry, sum real part of all modes of m_mf_src in
         // temporary multifab mf_dst_stag, and cell-center it to mf_dst.
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             nComp()==1,
             "The RZ averaging over modes must write into 1 single component");
         auto& warpx = WarpX::GetInstance();

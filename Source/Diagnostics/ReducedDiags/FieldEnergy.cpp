@@ -9,6 +9,7 @@
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
@@ -31,7 +32,7 @@ FieldEnergy::FieldEnergy (std::string rd_name)
 {
     // RZ coordinate is not working
 #if (defined WARPX_DIM_RZ)
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "FieldEnergy reduced diagnostics does not work for RZ coordinate.");
 #endif
 

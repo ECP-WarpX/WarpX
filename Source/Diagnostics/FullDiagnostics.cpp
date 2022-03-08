@@ -10,6 +10,7 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FlushFormats/FlushFormat.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 
@@ -76,7 +77,7 @@ FullDiagnostics::ReadParameters ()
     // Read list of full diagnostics fields requested by the user.
     bool checkpoint_compatibility = BaseReadParameters();
     amrex::ParmParse pp_diag_name(m_diag_name);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd" ||
         m_format == "checkpoint" || m_format == "ascent" ||
         m_format == "sensei",
@@ -94,7 +95,7 @@ FullDiagnostics::ReadParameters ()
 #endif
 
     if (m_format == "checkpoint"){
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             raw_specified == false &&
             checkpoint_compatibility == true,
             "For a checkpoint output, cannot specify these parameters as all data must be dumped "
@@ -288,13 +289,13 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
     // Check if warpx BoxArray is coarsenable.
     if (warpx.get_numprocs() == 0)
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE (
             ba.coarsenable(m_crse_ratio), "Invalid coarsening ratio for field diagnostics."
             "Must be an integer divisor of the blocking factor.");
     }
     else
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE (
             ba.coarsenable(m_crse_ratio), "Invalid coarsening ratio for field diagnostics."
             "The total number of cells must be a multiple of the coarsening ratio multiplied by numprocs.");
     }
@@ -316,7 +317,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
         // removed if warpx.numprocs is used for the domain decomposition.
         if (warpx.get_numprocs() == 0)
         {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( blockingFactor[idim] % m_crse_ratio[idim]==0,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( blockingFactor[idim] % m_crse_ratio[idim]==0,
                            " coarsening ratio must be integer divisor of blocking factor");
         }
     }
@@ -338,7 +339,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
             // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
             if ( hi[idim] <= lo[idim] ) {
                  hi[idim]  = lo[idim] + 1;
-                 AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     m_crse_ratio[idim]==1, "coarsening ratio in reduced dimension must be 1."
                  );
             }
@@ -365,7 +366,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
         }
     }
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_crse_ratio.min() > 0, "Coarsening ratio must be non-zero.");
     // The BoxArray is coarsened based on the user-defined coarsening ratio.
     ba.coarsen(m_crse_ratio);

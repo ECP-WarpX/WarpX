@@ -30,6 +30,7 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/MsgLogger/MsgLogger.H"
 #include "Utils/WarnManager.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -408,7 +409,7 @@ WarpX::WarpX ()
     }
 
     if (WarpX::current_deposition_algo != CurrentDepositionAlgo::Esirkepov) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             use_fdtd_nci_corr == 0,
             "The NCI corrector should only be used with Esirkepov deposition");
     }
@@ -437,10 +438,15 @@ WarpX::RecordWarning(
         msg_priority = Utils::MsgLogger::Priority::medium;
 
     if(m_always_warn_immediately){
+
         amrex::Warning(
-            "!!!!!! WARNING: ["
-            + std::string(Utils::MsgLogger::PriorityToString(msg_priority))
-            + "][" + topic + "] " + text);
+            Utils::TextMsg::Warn(
+                "["
+                + std::string(Utils::MsgLogger::PriorityToString(msg_priority))
+                + "]["
+                + topic
+                + "] "
+                + text));
     }
 
 #ifdef AMREX_USE_OMP
@@ -536,10 +542,10 @@ WarpX::ReadParameters ()
         std::vector<int> numprocs_in;
         queryArrWithParser(pp_warpx, "numprocs", numprocs_in, 0, AMREX_SPACEDIM);
         if (not numprocs_in.empty()) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE
                 (numprocs_in.size() == AMREX_SPACEDIM,
                  "warpx.numprocs, if specified, must have AMREX_SPACEDIM numbers");
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE
                 (ParallelDescriptor::NProcs() == AMREX_D_TERM(numprocs_in[0],
                                                              *numprocs_in[1],
                                                              *numprocs_in[2]),
@@ -582,7 +588,7 @@ WarpX::ReadParameters ()
         pp_warpx.queryarr("override_sync_intervals", override_sync_intervals_string_vec);
         override_sync_intervals = IntervalsParser(override_sync_intervals_string_vec);
 
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
                                          "Subcycling method 1 only works for 2 levels.");
 
         ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
@@ -618,7 +624,7 @@ WarpX::ReadParameters ()
                 amrex::Abort(msg.c_str());
             }
 
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(moving_window_dir) == 0,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(moving_window_dir) == 0,
                        "The problem must be non-periodic in the moving window direction");
 
             moving_window_x = geom[0].ProbLo(moving_window_dir);
@@ -630,14 +636,14 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);
         if (do_back_transformed_diagnostics) {
 
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(gamma_boost > 1.0,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(gamma_boost > 1.0,
                    "gamma_boost must be > 1 to use the boosted frame diagnostic.");
 
             pp_warpx.query("lab_data_directory", lab_data_directory);
 
             std::string s;
             pp_warpx.get("boost_direction", s);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( (s == "z" || s == "Z"),
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (s == "z" || s == "Z"),
                    "The boosted frame diagnostic currently only works if the boost is in the z direction.");
 
             queryWithParser(pp_warpx, "num_snapshots_lab", num_snapshots_lab);
@@ -650,7 +656,7 @@ WarpX::ReadParameters ()
                 dt_snapshots_lab = dz_snapshots_lab/PhysConst::c;
                 snapshot_interval_is_specified = 1;
             }
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 snapshot_interval_is_specified,
                 "When using back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab.");
 
@@ -658,18 +664,18 @@ WarpX::ReadParameters ()
 
             pp_warpx.query("do_back_transformed_fields", do_back_transformed_fields);
 
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_moving_window,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(do_moving_window,
                    "The moving window should be on if using the boosted frame diagnostic.");
 
             pp_warpx.get("moving_window_dir", s);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( (s == "z" || s == "Z"),
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (s == "z" || s == "Z"),
                    "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
         }
 
         do_electrostatic = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
 
 #if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_electrostatic!=ElectrostaticSolverAlgo::None,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(do_electrostatic!=ElectrostaticSolverAlgo::None,
         "Currently, the embedded boundary in RZ only works for electrostatic solvers.");
 #endif
 
@@ -821,7 +827,7 @@ WarpX::ReadParameters ()
         // TODO Implement div(B) cleaning in PML with FDTD and remove ASSERT
         if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
         {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 do_pml_divb_cleaning == false,
                 "warpx.do_pml_divb_cleaning = true not implemented for FDTD solver");
         }
@@ -844,9 +850,9 @@ WarpX::ReadParameters ()
         }
 
 #ifdef WARPX_DIM_RZ
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false || maxwell_solver_id == MaxwellSolverAlgo::PSATD,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false || maxwell_solver_id == MaxwellSolverAlgo::PSATD,
             "PML are not implemented in RZ geometry with FDTD; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( field_boundary_lo[1] != FieldBoundaryType::PML && field_boundary_hi[1] != FieldBoundaryType::PML,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( field_boundary_lo[1] != FieldBoundaryType::PML && field_boundary_hi[1] != FieldBoundaryType::PML,
             "PML are not implemented in RZ geometry along z; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
 #endif
 
@@ -894,7 +900,7 @@ WarpX::ReadParameters ()
 #ifdef WARPX_DIM_RZ
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         queryWithParser(pp_warpx, "n_rz_azimuthal_modes", n_rz_azimuthal_modes);
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( n_rz_azimuthal_modes > 0,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( n_rz_azimuthal_modes > 0,
             "The number of azimuthal modes (n_rz_azimuthal_modes) must be at least 1");
 #endif
 
@@ -917,24 +923,24 @@ WarpX::ReadParameters ()
         ParmParse pp_algo("algo");
 #ifdef WARPX_DIM_RZ
         if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
                 "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
         }
 #endif
 #ifndef WARPX_USE_PSATD
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
                                               "algo.maxwell_solver = psatd is not supported because WarpX was built without spectral solvers");
         }
 #endif
 
 #ifdef WARPX_DIM_RZ
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
             "The problem must not be periodic in the radial direction");
 
         // Ensure code aborts if PEC is specified at r=0 for RZ
         if (Geom(0).ProbLo(0) == 0){
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
                 "Error : Field boundary at r=0 must be ``none``. \n");
         }
@@ -1070,7 +1076,7 @@ WarpX::ReadParameters ()
             // (note that when WarpX::do_nodal = 1 finite-order centering is not used anyways)
             if (maxLevel() > 0 && WarpX::do_nodal == 0)
             {
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
                     "High-order centering of fields (order > 2) is not implemented with mesh refinement");
             }
@@ -1130,9 +1136,9 @@ WarpX::ReadParameters ()
 
 
         if (!fft_periodic_single_box) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(nox_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(noy_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(noz_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nox_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(noy_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(noz_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
         }
 
         pp_psatd.query("current_correction", current_correction);
@@ -1238,7 +1244,7 @@ WarpX::ReadParameters ()
         }
 
         if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
                 "psatd.update_with_rho must be equal to 1 for comoving PSATD");
         }
 
@@ -1249,7 +1255,7 @@ WarpX::ReadParameters ()
                 amrex::Abort("Multi-J algorithm not implemented with Galilean PSATD");
             }
 
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
                 "psatd.update_with_rho must be set to 1 when warpx.do_multi_J = 1");
         }
 
@@ -1257,7 +1263,7 @@ WarpX::ReadParameters ()
         {
             if (WarpX::field_boundary_lo[dir] == FieldBoundaryType::Damped ||
                 WarpX::field_boundary_hi[dir] == FieldBoundaryType::Damped ) {
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     WarpX::field_boundary_lo[dir] == WarpX::field_boundary_hi[dir],
                     "field boundary in both lo and hi must be set to Damped for PSATD"
                 );
@@ -1312,7 +1318,7 @@ WarpX::ReadParameters ()
        }
 
        if (do_back_transformed_diagnostics) {
-          AMREX_ALWAYS_ASSERT_WITH_MESSAGE(gamma_boost > 1.0,
+          WARPX_ALWAYS_ASSERT_WITH_MESSAGE(gamma_boost > 1.0,
                  "gamma_boost must be > 1 to use the boost frame diagnostic");
           queryWithParser(pp_slice, "num_slice_snapshots_lab", num_slice_snapshots_lab);
           if (num_slice_snapshots_lab > 0) {
@@ -1792,19 +1798,19 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         // Allocate and initialize the spectral solver
 #ifndef WARPX_USE_PSATD
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
             "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
 #else
 
         // Check whether the option periodic, single box is valid here
         if (fft_periodic_single_box) {
 #   ifdef WARPX_DIM_RZ
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 geom[0].isPeriodic(1)          // domain is periodic in z
                 && ba.size() == 1 && lev == 0, // domain is decomposed in a single box
                 "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box");
 #   else
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 geom[0].isAllPeriodic()        // domain is periodic in all directions
                 && ba.size() == 1 && lev == 0, // domain is decomposed in a single box
                 "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box");
@@ -1953,7 +1959,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         {
             // Allocate and initialize the spectral solver
 #ifndef WARPX_USE_PSATD
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
                 "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
 #else
 
@@ -2219,7 +2225,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
         "ComputeDivB not implemented with do_nodal."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 
@@ -2257,7 +2263,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx, IntVect const ngrow)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
         "ComputeDivB not implemented with do_nodal."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 

@@ -27,6 +27,7 @@
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Python/WarpX_py.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -195,8 +196,9 @@ WarpX::Evolve (int numsteps)
         }
         else
         {
-            amrex::Print() << "Error: do_subcycling = " << do_subcycling << std::endl;
-            amrex::Abort("Unsupported do_subcycling type");
+            amrex::Abort(Utils::TextMsg::Err(
+                "do_subcycling = " + std::to_string(do_subcycling)
+                + " is an unsupported do_subcycling type."));
         }
 
         // Resample particles
@@ -296,7 +298,7 @@ WarpX::Evolve (int numsteps)
 
         if (sort_intervals.contains(step+1)) {
             if (verbose) {
-                amrex::Print() << "re-sorting particles \n";
+                amrex::Print() << Utils::TextMsg::Info("re-sorting particles");
             }
             mypc->SortParticlesByBin(sort_bin_size);
         }
@@ -651,7 +653,7 @@ WarpX::OneStep_sub1 (Real curtime)
 
     // TODO: we could save some charge depositions
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
     const int fine_lev = 1;
     const int coarse_lev = 0;
 

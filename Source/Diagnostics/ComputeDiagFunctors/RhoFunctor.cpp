@@ -9,6 +9,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/CoarsenIO.H"
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -72,7 +73,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     if (m_convertRZmodes2cartesian) {
         // In cylindrical geometry, sum real part of all modes of rho in
         // temporary MultiFab mf_dst_stag, and cell-center it to mf_dst
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             nComp()==1,
             "The RZ averaging over modes must write into one single component");
         amrex::MultiFab mf_dst_stag( rho->boxArray(), warpx.DistributionMap(m_lev), 1, rho->nGrowVect() );

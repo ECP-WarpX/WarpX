@@ -23,6 +23,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Parallelization/WarpXCommUtil.H"
 #include "Utils/MPIInitHelpers.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -556,16 +557,16 @@ void
 WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
     // Sanity checks: can use zmax_plasma_to_compute_max_step only if
     // the moving window and the boost are all in z direction.
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         WarpX::moving_window_dir == WARPX_ZINDEX,
-        "Can use zmax_plasma_to_compute_max_step only if " +
+        "Can use zmax_plasma_to_compute_max_step only if "
         "moving window along z. TODO: all directions.");
     if (gamma_boost > 1){
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             (WarpX::boost_direction[0]-0)*(WarpX::boost_direction[0]-0) +
             (WarpX::boost_direction[1]-0)*(WarpX::boost_direction[1]-0) +
             (WarpX::boost_direction[2]-1)*(WarpX::boost_direction[2]-1) < 1.e-12,
-            "Can use zmax_plasma_to_compute_max_step in boosted frame only if " +
+            "Can use zmax_plasma_to_compute_max_step in boosted frame only if "
             "warpx.boost_direction = z. TODO: all directions.");
     }
 
