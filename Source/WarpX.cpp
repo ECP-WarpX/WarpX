@@ -1341,9 +1341,7 @@ WarpX::ReadParameters ()
              getWithParser(pp_slice, "particle_slice_width_lab",particle_slice_width_lab);
           }
        }
-
     }
-
 }
 
 void

@@ -393,8 +393,6 @@ WarpX::OneStep_nosub (Real cur_time)
 
     ExecutePythonCallback("afterdeposition");
 
-
-
     // Synchronize J and rho
     SyncCurrent();
     SyncRho();
@@ -488,7 +486,6 @@ WarpX::OneStep_nosub (Real cur_time)
         if (safe_guard_cells)
             FillBoundaryB(guard_cells.ng_alloc_EB);
     } // !PSATD
-
 
     ExecutePythonCallback("afterEsolve");
 }
@@ -807,7 +804,6 @@ WarpX::OneStep_sub1 (Real curtime)
         Print() << "Remove the patch" << '\n';
         do_subcycling=0;
     }
-
 }
 
 void
