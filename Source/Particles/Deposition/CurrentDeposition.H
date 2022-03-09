@@ -466,10 +466,6 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             ParticleReal xp, yp, zp;
             GetPosition(ip, xp, yp, zp);
 
-            const amrex::Real vx = uxp[ip]*gaminv;
-            amrex::Real vy = uyp[ip]*gaminv;
-            const amrex::Real vz = uzp[ip]*gaminv;
-
 #if !defined(WARPX_DIM_1D_Z)
             Real const wqx = wq*invdtdx;
 #endif
@@ -480,10 +476,10 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 
             // computes current and old position in grid units
 #if defined(WARPX_DIM_RZ)
-            Real const xp_mid = xp - 0.5_rt * dt * vx;
-            Real const yp_mid = yp - 0.5_rt * dt * vy;
-            Real const xp_old = xp - dt * vx;
-            Real const yp_old = yp - dt * vy;
+            Real const xp_mid = xp - 0.5_rt*dt*uxp[ip]*gaminv;
+            Real const yp_mid = yp - 0.5_rt*dt*uyp[ip]*gaminv;
+            Real const xp_old = xp - dt*uxp[ip]*gaminv;
+            Real const yp_old = yp - dt*uyp[ip]*gaminv;
             Real const rp_new = std::sqrt(xp*xp + yp*yp);
             Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid);
             Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
@@ -520,21 +516,26 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #else
             // Keep these double to avoid bug in single precision
 #if !defined(WARPX_DIM_1D_Z)
-            double const x_new = ((xp - xmin) + (relative_time + 0.5_rt*dt)*vx)*dxi;
-            double const x_old = x_new - dt_dxi*vx;
+            double const x_new = ((xp - xmin) + (relative_time + 0.5_rt*dt)*uxp[ip]*gaminv)*dxi;
+            double const x_old = x_new - dt_dxi*uxp[ip]*gaminv;
 #endif
 #endif
 #if defined(WARPX_DIM_3D)
             // Keep these double to avoid bug in single precision
-            double const y_new = ((yp - ymin) + (relative_time + 0.5_rt*dt)*vy)*dyi;
-            double const y_old = y_new - dt_dyi*vy;
+            double const y_new = ((yp - ymin) + (relative_time + 0.5_rt*dt)*uyp[ip]*gaminv)*dyi;
+            double const y_old = y_new - dt_dyi*uyp[ip]*gaminv;
 #endif
             // Keep these double to avoid bug in single precision
-            double const z_new = ((zp - zmin) + (relative_time + 0.5_rt*dt)*vz)*dzi;
-            double const z_old = z_new - dt_dzi*vz;
+            double const z_new = ((zp - zmin) + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv)*dzi;
+            double const z_old = z_new - dt_dzi*uzp[ip]*gaminv;
 
 #if defined(WARPX_DIM_RZ)
-            vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
+            Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
+#elif defined(WARPX_DIM_XZ)
+            Real const vy = uyp[ip]*gaminv;
+#elif defined(WARPX_DIM_1D_Z)
+            Real const vx = uxp[ip]*gaminv;
+            Real const vy = uyp[ip]*gaminv;
 #endif
 
             // Shape factor arrays
