@@ -465,7 +465,7 @@ WarpX::RecordWarning(
             abort_priority = Utils::MsgLogger::Priority::medium;
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            msg_priority >= abort_priority,
+            msg_priority < abort_priority,
             "A warning with priority '"
             + Utils::MsgLogger::PriorityToString(msg_priority)
             + "' has been raised."
