@@ -604,15 +604,8 @@ LaserParticleContainer::Evolve (int lev,
             // Current Deposition
             if (skip_deposition == false)
             {
-                // Deposit at t_{n+1/2} for direct current deposition
+                // Deposit at t_{n+1/2}
                 amrex::Real relative_time = -0.5_rt * dt;
-                // Deposit at the current particle position and at the beginning of the time step
-                // for Esirkepov and Vay deposition
-                if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
-                    WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
-                {
-                    relative_time = -dt;
-                }
 
                 int* ion_lev = nullptr;
                 // Deposit inside domains
