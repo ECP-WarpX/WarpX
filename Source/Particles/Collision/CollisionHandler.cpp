@@ -6,12 +6,12 @@
  */
 #include "CollisionHandler.H"
 
-#include "BackgroundMCCCollision.H"
+#include "Particles/Collision/BackgroundMCC/BackgroundMCCCollision.H"
+#include "Particles/Collision/BackgroundStopping/BackgroundStopping.H"
 #include "Particles/Collision/BinaryCollision/Coulomb/PairWiseCoulombCollisionFunc.H"
 #include "Particles/Collision/BinaryCollision/BinaryCollision.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
 #include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
-#include "Particles/Collision/BackgroundStopping/BackgroundStopping.H"
 #include "Utils/TextMsg.H"
 
 #include <AMReX_ParmParse.H>
