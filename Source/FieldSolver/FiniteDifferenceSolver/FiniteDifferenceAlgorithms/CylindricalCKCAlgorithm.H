@@ -86,8 +86,12 @@ struct CylindricalCKCAlgorithm {
         using namespace amrex;
         ignore_unused(n_coefs_r);
 
-        Real const inv_dr = coefs_r[0];
-        return 1._rt/r * inv_dr*( (r+0.5_rt*dr)*F(i+1,j,k,comp) - (r-0.5_rt*dr)*F(i,j,k,comp) );
+        Real const alphar = coefs_r[1];
+        Real const betarz = coefs_r[2];
+        return 1._rt/r * (
+          alphar*((r+0.5_rt*dr)*F(i+1,j  ,k,comp) - (r-0.5_rt*dr)*F(i,j  ,k,comp))
+        + betarz*((r+0.5_rt*dr)*F(i+1,j+1,k,comp) - (r-0.5_rt*dr)*F(i,j+1,k,comp))
+        + betarz*((r+0.5_rt*dr)*F(i+1,j-1,k,comp) - (r-0.5_rt*dr)*F(i,j-1,k,comp)) );
     }
 
     /** Applies the differential operator `1/r * d(rF)/dr`,
