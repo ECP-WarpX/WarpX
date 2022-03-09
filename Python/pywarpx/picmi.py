@@ -1144,44 +1144,45 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
 
-        for dataname in self.data_list:
-            if dataname == 'E':
-                fields_to_plot.add('Ex')
-                fields_to_plot.add('Ey')
-                fields_to_plot.add('Ez')
-            elif dataname == 'B':
-                fields_to_plot.add('Bx')
-                fields_to_plot.add('By')
-                fields_to_plot.add('Bz')
-            elif dataname == 'J':
-                fields_to_plot.add('jx')
-                fields_to_plot.add('jy')
-                fields_to_plot.add('jz')
-            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
-                fields_to_plot.add(dataname)
-            elif dataname in ['Jx', 'Jy', 'Jz']:
-                fields_to_plot.add(dataname.lower())
-            elif dataname.startswith('rho_'):
-                # Adds rho_species diagnostic
-                fields_to_plot.add(dataname)
-            elif dataname == 'dive':
-                fields_to_plot.add('divE')
-            elif dataname == 'divb':
-                fields_to_plot.add('divB')
-            elif dataname == 'raw_fields':
-                self.plot_raw_fields = 1
-            elif dataname == 'raw_fields_guards':
-                self.plot_raw_fields_guards = 1
-            elif dataname == 'finepatch':
-                self.plot_finepatch = 1
-            elif dataname == 'crsepatch':
-                self.plot_crsepatch = 1
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'E':
+                    fields_to_plot.add('Ex')
+                    fields_to_plot.add('Ey')
+                    fields_to_plot.add('Ez')
+                elif dataname == 'B':
+                    fields_to_plot.add('Bx')
+                    fields_to_plot.add('By')
+                    fields_to_plot.add('Bz')
+                elif dataname == 'J':
+                    fields_to_plot.add('jx')
+                    fields_to_plot.add('jy')
+                    fields_to_plot.add('jz')
+                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+                    fields_to_plot.add(dataname)
+                elif dataname in ['Jx', 'Jy', 'Jz']:
+                    fields_to_plot.add(dataname.lower())
+                elif dataname.startswith('rho_'):
+                    # Adds rho_species diagnostic
+                    fields_to_plot.add(dataname)
+                elif dataname == 'dive':
+                    fields_to_plot.add('divE')
+                elif dataname == 'divb':
+                    fields_to_plot.add('divB')
+                elif dataname == 'raw_fields':
+                    self.plot_raw_fields = 1
+                elif dataname == 'raw_fields_guards':
+                    self.plot_raw_fields_guards = 1
+                elif dataname == 'finepatch':
+                    self.plot_finepatch = 1
+                elif dataname == 'crsepatch':
+                    self.plot_crsepatch = 1
 
-        # --- Convert the set to a sorted list so that the order
-        # --- is the same on all processors.
-        fields_to_plot = list(fields_to_plot)
-        fields_to_plot.sort()
-        self.diagnostic.fields_to_plot = fields_to_plot
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            fields_to_plot = list(fields_to_plot)
+            fields_to_plot.sort()
+            self.diagnostic.fields_to_plot = fields_to_plot
 
         self.diagnostic.plot_raw_fields = self.plot_raw_fields
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
@@ -1279,30 +1280,31 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()
 
-        for dataname in self.data_list:
-            if dataname == 'position':
-                # --- The positions are alway written out anyway
-                pass
-            elif dataname == 'momentum':
-                variables.add('ux')
-                variables.add('uy')
-                variables.add('uz')
-            elif dataname == 'weighting':
-                variables.add('w')
-            elif dataname == 'fields':
-                variables.add('Ex')
-                variables.add('Ey')
-                variables.add('Ez')
-                variables.add('Bx')
-                variables.add('By')
-                variables.add('Bz')
-            elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
-                variables.add(dataname)
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'position':
+                    # --- The positions are alway written out anyway
+                    pass
+                elif dataname == 'momentum':
+                    variables.add('ux')
+                    variables.add('uy')
+                    variables.add('uz')
+                elif dataname == 'weighting':
+                    variables.add('w')
+                elif dataname == 'fields':
+                    variables.add('Ex')
+                    variables.add('Ey')
+                    variables.add('Ez')
+                    variables.add('Bx')
+                    variables.add('By')
+                    variables.add('Bz')
+                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
+                    variables.add(dataname)
 
-        # --- Convert the set to a sorted list so that the order
-        # --- is the same on all processors.
-        variables = list(variables)
-        variables.sort()
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            variables = list(variables)
+            variables.sort()
 
         if np.iterable(self.species):
             species_list = self.species
@@ -1399,32 +1401,33 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
 
-        for dataname in self.data_list:
-            if dataname == 'E':
-                fields_to_plot.add('Ex')
-                fields_to_plot.add('Ey')
-                fields_to_plot.add('Ez')
-            elif dataname == 'B':
-                fields_to_plot.add('Bx')
-                fields_to_plot.add('By')
-                fields_to_plot.add('Bz')
-            elif dataname == 'J':
-                fields_to_plot.add('jx')
-                fields_to_plot.add('jy')
-                fields_to_plot.add('jz')
-            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho']:
-                fields_to_plot.add(dataname)
-            elif dataname in ['Jx', 'Jy', 'Jz']:
-                fields_to_plot.add(dataname.lower())
-            elif dataname.startswith('rho_'):
-                # Adds rho_species diagnostic
-                fields_to_plot.add(dataname)
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'E':
+                    fields_to_plot.add('Ex')
+                    fields_to_plot.add('Ey')
+                    fields_to_plot.add('Ez')
+                elif dataname == 'B':
+                    fields_to_plot.add('Bx')
+                    fields_to_plot.add('By')
+                    fields_to_plot.add('Bz')
+                elif dataname == 'J':
+                    fields_to_plot.add('jx')
+                    fields_to_plot.add('jy')
+                    fields_to_plot.add('jz')
+                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho']:
+                    fields_to_plot.add(dataname)
+                elif dataname in ['Jx', 'Jy', 'Jz']:
+                    fields_to_plot.add(dataname.lower())
+                elif dataname.startswith('rho_'):
+                    # Adds rho_species diagnostic
+                    fields_to_plot.add(dataname)
 
-        # --- Convert the set to a sorted list so that the order
-        # --- is the same on all processors.
-        fields_to_plot = list(fields_to_plot)
-        fields_to_plot.sort()
-        self.diagnostic.fields_to_plot = fields_to_plot
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            fields_to_plot = list(fields_to_plot)
+            fields_to_plot.sort()
+            self.diagnostic.fields_to_plot = fields_to_plot
 
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
