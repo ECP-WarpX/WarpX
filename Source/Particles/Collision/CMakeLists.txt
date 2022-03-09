@@ -7,3 +7,4 @@ target_sources(WarpX
 )
 
 add_subdirectory(BinaryCollision)
+add_subdirectory(BackgroundStopping)

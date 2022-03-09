@@ -122,7 +122,7 @@ Attribute name        ``int``/``real``  Description                         Wher
                                         was created.
 ``id``                ``int``           CPU-local particle index            AoS   CT
                                         where the particle was created.
-``ionization_level``  ``int``           Ion ionization level                SoA   RT   Added when ionization
+``ionizationLevel``   ``int``           Ion ionization level                SoA   RT   Added when ionization
                                                                                        physics is used.
 ``opticalDepthQSR``   ``real``          QED: optical depth of the Quantum-  SoA   RT   Added when PICSAR QED
                                         Synchrotron process                            physics is used.

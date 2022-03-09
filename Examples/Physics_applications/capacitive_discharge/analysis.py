@@ -14,6 +14,6 @@ sys.path.append('../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 my_check = checksumAPI.evaluate_checksum(
-    'background_mcc', 'Python_background_mcc_plt00050',
+    'background_mcc', 'Python_background_mcc_plt000050',
     do_particles=True, rtol=3.7e-3
 )

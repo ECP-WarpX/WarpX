@@ -13,6 +13,7 @@
 #include "FlushFormats/FlushFormatSensei.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Parallelization/WarpXCommUtil.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
@@ -62,14 +63,14 @@ Diagnostics::BaseReadParameters ()
 
     // Sanity check if user requests to plot phi
     if (WarpXUtilStr::is_in(m_varnames, "phi")){
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             warpx.do_electrostatic==ElectrostaticSolverAlgo::LabFrame,
             "plot phi only works if do_electrostatic = labframe");
     }
 
     // Sanity check if user requests to plot F
     if (WarpXUtilStr::is_in(m_varnames, "F")){
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             warpx.do_dive_cleaning,
             "plot F only works if warpx.do_dive_cleaning = 1");
     }
@@ -77,7 +78,7 @@ Diagnostics::BaseReadParameters ()
     // G can be written to file only if WarpX::do_divb_cleaning = 1
     if (WarpXUtilStr::is_in(m_varnames, "G"))
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             warpx.do_divb_cleaning, "G can be written to file only if warpx.do_divb_cleaning = 1");
     }
 
@@ -327,7 +328,8 @@ Diagnostics::ComputeAndPack ()
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for(int lev=0; lev < warpx.finestLevel() + 1; lev++){
             int icomp_dst = 0;
-            for (int icomp=0, n=m_all_field_functors[lev].size(); icomp<n; icomp++){
+            const auto n = static_cast<int>(m_all_field_functors[lev].size());
+            for (int icomp=0; icomp<n; icomp++){
                 // Call all functors in m_all_field_functors[lev]. Each of them computes
                 // a diagnostics and writes in one or more components of the output
                 // multifab m_mf_output[lev].

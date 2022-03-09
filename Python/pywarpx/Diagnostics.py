@@ -17,7 +17,10 @@ class Diagnostic(Bucket):
             self._localsetattr(name, value)
         else:
             if name in self.argvattrs:
-                assert value == self.argvattrs[name], Exception(f'Diagnostic attributes not consistent for {self.instancename}')
+                assert value == self.argvattrs[name], \
+                       Exception(f'Diagnostic attributes not consistent for '
+                                 f'"{self.instancename}": '
+                                 f'"{value}" != "{self.argvattrs[name]}"')
             self.argvattrs[name] = value
 
     def __setattr__(self, name, value):

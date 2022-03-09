@@ -10,14 +10,14 @@
 # using electron-ion temperature relaxation in 2D.
 # Initially, electrons and ions are both in equilibrium
 # (gaussian) distributions, but have different temperatures.
-# Relaxation occurs to bring the two temperatures to be
-# a final same temperature through collisions.
+# Relaxation occurs to bring the two temperatures to the
+# same final temperature through collisions.
 # The code was tested to be valid, more detailed results
 # were used to obtain an exponential fit with
 # coefficients a and b.
 # This automated test compares the results with the fit.
-# Unrelated to the collision module, we also test the plotfile particle filter function in this
-# analysis script.
+# Unrelated to the collision module, we also test the plotfile
+# particle filter function in this analysis script.
 
 # Possible errors:
 # tolerance: 0.001
@@ -58,7 +58,7 @@ last_fn = sys.argv[1]
 # Remove trailing '/' from file name, if necessary
 last_fn.rstrip('/')
 # Find last iteration in file name, such as 'test_name_plt000001' (last_it = '000001')
-last_it = re.search('\d+$', last_fn).group()
+last_it = re.search('\d+', last_fn).group()
 # Find output prefix in file name, such as 'test_name_plt000001' (prefix = 'test_name_plt')
 prefix = last_fn[:-len(last_it)]
 # Collect all output files in fn_list (names match pattern prefix + arbitrary number)
@@ -70,7 +70,7 @@ for fn in fn_list:
     # load file
     ds  = yt.load( fn )
     ad  = ds.all_data()
-    px  = ad['particle_momentum_x'].to_ndarray()
+    px  = ad[('all', 'particle_momentum_x')].to_ndarray()
     # get time index j
     j = int(fn[-5:])
     # compute error
@@ -87,6 +87,10 @@ print('error = ', error)
 print('tolerance = ', tolerance)
 assert(error < tolerance)
 
+# The second part of the analysis is not done for the Python test
+# since the particle filter function is not accessible from PICMI yet
+if "Python" in last_fn:
+    exit()
 
 ## In the second past of the test, we verify that the diagnostic particle filter function works as
 ## expected. For this, we only use the last simulation timestep.

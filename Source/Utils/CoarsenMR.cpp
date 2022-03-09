@@ -1,5 +1,7 @@
 #include "CoarsenMR.H"
 
+#include "Utils/TextMsg.H"
+
 #include <AMReX_BLProfiler.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_BoxArray.H>
@@ -91,7 +93,7 @@ CoarsenMR::Coarsen ( MultiFab& mf_dst,
 {
     BL_PROFILE("CoarsenMR::Coarsen()");
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_src.ixType() == mf_dst.ixType(),
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( mf_src.ixType() == mf_dst.ixType(),
         "source MultiFab and destination MultiFab have different IndexType" );
 
     // Number of guard cells to fill on coarse patch and number of components

@@ -333,17 +333,6 @@ void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std
                        const int start_ix = amrex::ParmParse::FIRST,
                        const int num_val = amrex::ParmParse::LAST);
 
-namespace WarpXUtilMsg{
-
-/** \brief If is_expression_true is false, this function prints msg and calls amrex::abort()
- *
- * @param[in] is_expression_true
- * @param[in] msg the string to be printed if is_expression_true is false (default value is "ERROR!")
- */
-void AlwaysAssert(bool is_expression_true, const std::string& msg);
-
-}
-
 namespace WarpXUtilStr
 {
     /** Return true if elem is in vect, false otherwise
@@ -397,6 +386,17 @@ namespace WarpXUtilStr
             cont.push_back(instr.substr(previous, current - previous));}
         return cont;
     }
+
+    /** \brief This function performs automatic text wrapping on a string,
+     *  returning an array of strings each not exceeding the maximum line length
+     *  (unless the text contains a word exceeding the maximum line length).
+     *
+     * @param[in] text the string containing the text to be wrapped
+     * @param[in] max_line_length the maximum line length
+     * @return an std::vector containing the lines of the wrapped text
+     */
+    std::vector<std::string> automatic_text_wrap(
+        const std::string& text, const int max_line_length);
 
 }
 

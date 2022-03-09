@@ -7,6 +7,7 @@
 #include "NCIGodfreyFilter.H"
 
 #include "Utils/NCIGodfreyTables.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -48,10 +49,10 @@ void NCIGodfreyFilter::ComputeStencils(){
 
     // Sanity checks: filter length shoulz be 5 in z
 #if  defined(WARPX_DIM_3D)
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         slen.z==5,"ERROR: NCI filter requires 5 points in z");
 #else
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         slen.y==5,"ERROR: NCI filter requires 5 points in z");
 #endif
     // Interpolate coefficients from the table, and store into prestencil.

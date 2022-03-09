@@ -27,6 +27,7 @@
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Python/WarpX_py.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -194,8 +195,9 @@ WarpX::Evolve (int numsteps)
         }
         else
         {
-            amrex::Print() << "Error: do_subcycling = " << do_subcycling << std::endl;
-            amrex::Abort("Unsupported do_subcycling type");
+            amrex::Abort(Utils::TextMsg::Err(
+                "do_subcycling = " + std::to_string(do_subcycling)
+                + " is an unsupported do_subcycling type."));
         }
 
         // Resample particles
@@ -295,7 +297,7 @@ WarpX::Evolve (int numsteps)
 
         if (sort_intervals.contains(step+1)) {
             if (verbose) {
-                amrex::Print() << "re-sorting particles \n";
+                amrex::Print() << Utils::TextMsg::Info("re-sorting particles");
             }
             mypc->SortParticlesByBin(sort_bin_size);
         }
@@ -396,14 +398,6 @@ WarpX::OneStep_nosub (Real cur_time)
     // Synchronize J and rho
     SyncCurrent();
     SyncRho();
-
-
-    // Apply current correction in Fourier space: for periodic single-box global FFTs
-    // without guard cells, apply this after calling SyncCurrent
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        if (fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay))
-            VayDeposition();
-    }
 
     // At this point, J is up-to-date inside the domain, and E and B are
     // up-to-date including enough guard cells for first step of the field
@@ -673,9 +667,9 @@ WarpX::OneStep_sub1 (Real curtime)
     const int fine_lev = finestLevel();
     const int coarse_lev = 0;
 
-    // TODO: we could save some charge depositions
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
-
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
+    const int fine_lev = 1;
+    const int coarse_lev = 0;
 
     // i) Push particles and fields on the fine patch (first fine step)
     PushParticlesandDepose(fine_lev, curtime, DtType::FirstHalf);
@@ -956,26 +950,4 @@ WarpX::applyMirrors(Real time){
             }
         }
     }
-}
-
-// Compute current from Vay deposition in Fourier space
-void
-WarpX::VayDeposition ()
-{
-#ifdef WARPX_USE_PSATD
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
-    {
-        for (int lev = 0; lev <= finest_level; ++lev)
-        {
-            spectral_solver_fp[lev]->VayDeposition(lev, current_fp[lev]);
-            if (spectral_solver_cp[lev]) spectral_solver_cp[lev]->VayDeposition(lev, current_cp[lev]);
-        }
-    } else {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
-            "WarpX::VayDeposition: only implemented for spectral solver.");
-    }
-#else
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
-    "WarpX::CurrentCorrection: requires WarpX build with spectral solver support.");
-#endif
 }
