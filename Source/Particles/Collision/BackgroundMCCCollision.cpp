@@ -181,13 +181,10 @@ BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> const& mcc_processe
 }
 
 void
-BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc)
+BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleContainer* mypc)
 {
     WARPX_PROFILE("BackgroundMCCCollision::doCollisions()");
     using namespace amrex::literals;
-
-    const amrex::Real dt = WarpX::GetInstance().getdt(0);
-    if ( int(std::floor(cur_time/dt)) % m_ndt != 0 ) return;
 
     auto& species1 = mypc->GetParticleContainerFromName(m_species_names[0]);
     // this is a very ugly hack to have species2 be a reference and be
@@ -205,7 +202,7 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
         m_nu_max = get_nu_max(m_scattering_processes);
 
         // calculate total collision probability
-        auto coll_n = m_nu_max * m_ndt * dt;
+        auto coll_n = m_nu_max * dt;
         m_total_collision_prob = 1.0_rt - std::exp(-coll_n);
 
         // dt has to be small enough that a linear expansion of the collision
@@ -220,7 +217,7 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, MultiParticleContain
             m_nu_max_ioniz = get_nu_max(m_ionization_processes);
 
             // calculate total ionization probability
-            auto coll_n_ioniz = m_nu_max_ioniz * m_ndt * dt;
+            auto coll_n_ioniz = m_nu_max_ioniz * dt;
             m_total_collision_prob_ioniz = 1.0_rt - std::exp(-coll_n_ioniz);
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n_ioniz < 0.1_rt,
