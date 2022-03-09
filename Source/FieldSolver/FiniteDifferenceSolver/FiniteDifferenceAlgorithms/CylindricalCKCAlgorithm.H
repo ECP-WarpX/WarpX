@@ -61,7 +61,7 @@ struct CylindricalCKCAlgorithm {
         amrex::Print() << dx[1] << " " << dx[0] << std::endl;
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(dx[1] <= dx[0], "RZ CKC solver only works for dz < dr.");
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes < 2, "RZ CKC solver only works for m=0");
-        return dx[2] / PhysConst::c;
+        return dx[1] / PhysConst::c;
     }
 
     /**
