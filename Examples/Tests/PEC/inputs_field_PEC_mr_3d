@@ -23,7 +23,7 @@ warpx.fine_tag_hi     =  4.e-6   4.e-6   2.e-6      # physical domain
 boundary.field_lo = periodic periodic pec
 boundary.field_hi = periodic periodic pec
 
-warpx.serialize_ics = 1
+warpx.serialize_initial_conditions = 1
 
 # Verbosity
 warpx.verbose = 1

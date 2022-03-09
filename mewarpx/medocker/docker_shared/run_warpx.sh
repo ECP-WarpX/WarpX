@@ -18,7 +18,6 @@ else
 # S3 can sometimes make directories with no name ("") if two slashes are
 # present in sequence
 # https://stackoverflow.com/questions/1848415/remove-slash-from-the-end-of-a-variable
-    DIR=$1
     DIRNAME=${1%/}
     BUCKET=$2
 fi
@@ -64,11 +63,11 @@ set +e
 function checkptmove {
     # Check file is not open. Since they shouldn't be re-opened, this should be
     # fine.
-    if ! lsof $DIR > /dev/null
+    if ! lsof $1 > /dev/null
     then
         # http://www.linuxjournal.com/content/normalizing-path-names-bash
         # Remove all /./ and // sequences.
-        local path=${DIRNAME}/"$DIR"
+        local path=${DIRNAME}/"$1"
         path=${path//\/.\//\/}
         path=${path//\/\//\/}
         path=${path/diags_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]/diags}
@@ -79,7 +78,7 @@ function checkptmove {
             path=${path/${BASH_REMATCH[0]}/}
         done
         echo $path
-        aws s3 mv $DIR s3://${BUCKET}/${path}
+        aws s3 mv $1 s3://${BUCKET}/${path}
     fi
 }
 

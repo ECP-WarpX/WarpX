@@ -12,7 +12,7 @@
   "ions": {
     "particle_cpu": 5888.0,
     "particle_id": 42547456.0,
-    "particle_ionization_level": 72897.0,
+    "particle_ionizationLevel": 72897.0,
     "particle_momentum_x": 1.761324005206226e-18,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 3.618696690270335e-23,

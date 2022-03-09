@@ -79,7 +79,7 @@ def test_create_checkpoints():
     mwxrun.simulation.step(MAX_STEPS)
 
     checkpoint_names = [
-        f"{CHECKPOINT_NAME}{i:05}"
+        f"{CHECKPOINT_NAME}{i:06}"
         for i in range(DIAG_STEPS, MAX_STEPS + 1, DIAG_STEPS)
     ]
 
@@ -113,14 +113,14 @@ def test_create_checkpoints_with_fluxdiag():
     mwxrun.simulation.step(MAX_STEPS)
 
     checkpoint_names = [
-        f"{CHECKPOINT_NAME}{i:05}"
+        f"{CHECKPOINT_NAME}{i:06}"
         for i in range(DIAG_STEPS, MAX_STEPS + 1, DIAG_STEPS)
     ]
 
     for name in checkpoint_names:
         print(f"Looking for checkpoint file 'diags/{name}'...")
         assert os.path.isdir(os.path.join("diags", name))
-    assert os.path.isfile("diags/checkpoint00004/fluxdata.ckpt")
+    assert os.path.isfile("diags/checkpoint000004/fluxdata.ckpt")
 
 
 @pytest.mark.parametrize("force, files_exist",

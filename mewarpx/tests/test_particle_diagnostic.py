@@ -79,7 +79,7 @@ def test_particle_diag():
             for param in DIAG_PLOT_DATA_LIST:
                 file_name = os.path.join(
                     run.particle_diag.write_dir,
-                    specimen + '_' + param + f'_{i:05d}.png'
+                    specimen + '_' + param + f'_{i:06d}.png'
                 )
                 print(file_name)
                 assert os.path.isfile(file_name), f"{file_name} not found"

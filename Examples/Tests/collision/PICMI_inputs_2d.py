@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 #
-# --- Input file for binary Coulomb collision testing. This input scripts
-# --- runs the same test as inputs_2d but via Python.
+# --- Input file for binary Coulomb collision testing. This input script
+# --- runs the same test as inputs_2d but via Python, therefore the input
+# --- values where directly copied from inputs_2d.
 
 from pywarpx import picmi
 
@@ -31,7 +32,7 @@ number_per_cell = 200
 #################################
 ############ NUMERICS ###########
 #################################
-serialize_ics = 1
+serialize_initial_conditions = 1
 verbose = 1
 cfl = 1.0
 
@@ -122,7 +123,7 @@ sim = picmi.Simulation(
     solver=solver,
     max_steps=max_steps,
     verbose=verbose,
-    warpx_serialize_ics=serialize_ics,
+    warpx_serialize_initial_conditions=serialize_initial_conditions,
     warpx_collisions=[collision1, collision2, collision3]
 )
 
