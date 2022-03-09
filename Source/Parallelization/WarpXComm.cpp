@@ -15,6 +15,7 @@
 #include "Filter/BilinearFilter.H"
 #include "Utils/CoarsenMR.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpXComm_K.H"
@@ -65,7 +66,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 {
 #ifndef WARPX_USE_PSATD
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
             "WarpX::UpdateAuxilaryDataStagToNodal: PSATD solver requires "
             "WarpX build with spectral solver support.");
     }
@@ -587,7 +588,7 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
     // Fill guard cells in valid domain
     for (int i = 0; i < 3; ++i)
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             ng <= mf[i]->nGrowVect(),
             "Error: in FillBoundaryE, requested more guard cells than allocated");
 
@@ -644,7 +645,7 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
     // Fill guard cells in valid domain
     for (int i = 0; i < 3; ++i)
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             ng <= mf[i]->nGrowVect(),
             "Error: in FillBoundaryB, requested more guard cells than allocated");
 
@@ -675,7 +676,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
             Vector<MultiFab*> mf{Efield_avg_fp[lev][0].get(),Efield_avg_fp[lev][1].get(),Efield_avg_fp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, period);
         } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ng <= Efield_avg_fp[lev][0]->nGrowVect(),
                 "Error: in FillBoundaryE_avg, requested more guard cells than allocated");
             WarpXCommUtil::FillBoundary(*Efield_avg_fp[lev][0], ng, period);
@@ -696,7 +697,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
             WarpXCommUtil::FillBoundary(mf, cperiod);
 
         } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ng <= Efield_avg_cp[lev][0]->nGrowVect(),
                 "Error: in FillBoundaryE, requested more guard cells than allocated");
             WarpXCommUtil::FillBoundary(*Efield_avg_cp[lev][0], ng, cperiod);
@@ -728,7 +729,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             Vector<MultiFab*> mf{Bfield_avg_fp[lev][0].get(),Bfield_avg_fp[lev][1].get(),Bfield_avg_fp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, period);
         } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ng <= Bfield_fp[lev][0]->nGrowVect(),
                 "Error: in FillBoundaryB, requested more guard cells than allocated");
             WarpXCommUtil::FillBoundary(*Bfield_avg_fp[lev][0], ng, period);
@@ -748,7 +749,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
             Vector<MultiFab*> mf{Bfield_avg_cp[lev][0].get(),Bfield_avg_cp[lev][1].get(),Bfield_avg_cp[lev][2].get()};
             WarpXCommUtil::FillBoundary(mf, cperiod);
         } else {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ng <= Bfield_avg_cp[lev][0]->nGrowVect(),
                 "Error: in FillBoundaryB_avg, requested more guard cells than allocated");
             WarpXCommUtil::FillBoundary(*Bfield_avg_cp[lev][0], ng, cperiod);
@@ -1045,12 +1046,12 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
                 ng_depos_J.min(ng);
                 MultiFab jfc(current_cp[lev+1][idim]->boxArray(),
                              current_cp[lev+1][idim]->DistributionMap(), current_cp[lev+1][idim]->nComp(), ng);
-                bilinear_filter.ApplyStencil(jfc, *current_cp[lev+1][idim], lev);
+                bilinear_filter.ApplyStencil(jfc, *current_cp[lev+1][idim], lev+1);
 
                 // buffer patch of fine level
                 MultiFab jfb(current_buf[lev+1][idim]->boxArray(),
                              current_buf[lev+1][idim]->DistributionMap(), current_buf[lev+1][idim]->nComp(), ng);
-                bilinear_filter.ApplyStencil(jfb, *current_buf[lev+1][idim], lev);
+                bilinear_filter.ApplyStencil(jfb, *current_buf[lev+1][idim], lev+1);
 
                 MultiFab::Add(jfb, jfc, 0, 0, current_buf[lev+1][idim]->nComp(), ng);
                 WarpXCommUtil::ParallelAdd(mf, jfb, 0, 0, current_buf[lev+1][idim]->nComp(), ng, IntVect::TheZeroVector(), period);
@@ -1065,7 +1066,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (int lev)
                 ng_depos_J.min(ng);
                 MultiFab jf(current_cp[lev+1][idim]->boxArray(),
                             current_cp[lev+1][idim]->DistributionMap(), current_cp[lev+1][idim]->nComp(), ng);
-                bilinear_filter.ApplyStencil(jf, *current_cp[lev+1][idim], lev);
+                bilinear_filter.ApplyStencil(jf, *current_cp[lev+1][idim], lev+1);
 
                 WarpXCommUtil::ParallelAdd(mf, jf, 0, 0, current_cp[lev+1][idim]->nComp(), ng, IntVect::TheZeroVector(), period);
                 WarpXSumGuardCells(*current_cp[lev+1][idim], jf, period, ng_depos_J, 0, current_cp[lev+1][idim]->nComp());
@@ -1171,12 +1172,12 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
             ng_depos_rho.min(ng);
             MultiFab rhofc(rho_cp[lev+1]->boxArray(),
                          rho_cp[lev+1]->DistributionMap(), ncomp, ng);
-            bilinear_filter.ApplyStencil(rhofc, *rho_cp[lev+1], lev, icomp, 0, ncomp);
+            bilinear_filter.ApplyStencil(rhofc, *rho_cp[lev+1], lev+1, icomp, 0, ncomp);
 
             // buffer patch of fine level
             MultiFab rhofb(charge_buf[lev+1]->boxArray(),
                            charge_buf[lev+1]->DistributionMap(), ncomp, ng);
-            bilinear_filter.ApplyStencil(rhofb, *charge_buf[lev+1], lev, icomp, 0, ncomp);
+            bilinear_filter.ApplyStencil(rhofb, *charge_buf[lev+1], lev+1, icomp, 0, ncomp);
 
             MultiFab::Add(rhofb, rhofc, 0, 0, ncomp, ng);
 
@@ -1189,7 +1190,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
             ng_depos_rho += bilinear_filter.stencil_length_each_dir-1;
             ng_depos_rho.min(ng);
             MultiFab rf(rho_cp[lev+1]->boxArray(), rho_cp[lev+1]->DistributionMap(), ncomp, ng);
-            bilinear_filter.ApplyStencil(rf, *rho_cp[lev+1], lev, icomp, 0, ncomp);
+            bilinear_filter.ApplyStencil(rf, *rho_cp[lev+1], lev+1, icomp, 0, ncomp);
 
             WarpXCommUtil::ParallelAdd(mf, rf, 0, 0, ncomp, ng, IntVect::TheZeroVector(), period);
             WarpXSumGuardCells( *rho_cp[lev+1], rf, period, ng_depos_rho, icomp, ncomp );

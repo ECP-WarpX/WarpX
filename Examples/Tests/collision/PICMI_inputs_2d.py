@@ -32,7 +32,7 @@ number_per_cell = 200
 #################################
 ############ NUMERICS ###########
 #################################
-serialize_ics = 1
+serialize_initial_conditions = 1
 verbose = 1
 cfl = 1.0
 
@@ -123,7 +123,7 @@ sim = picmi.Simulation(
     solver=solver,
     max_steps=max_steps,
     verbose=verbose,
-    warpx_serialize_ics=serialize_ics,
+    warpx_serialize_initial_conditions=serialize_initial_conditions,
     warpx_collisions=[collision1, collision2, collision3]
 )
 

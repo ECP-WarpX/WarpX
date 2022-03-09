@@ -166,9 +166,7 @@ PsatdAlgorithmPmlRZ::CurrentCorrection (SpectralFieldDataRZ& /* field_data */)
 }
 
 void
-PsatdAlgorithmPmlRZ::VayDeposition (const int /* lev */,
-                                    SpectralFieldDataRZ& /*field_data*/,
-                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
+PsatdAlgorithmPmlRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
     amrex::Abort("Vay deposition not implemented in RZ geometry PML");
 }

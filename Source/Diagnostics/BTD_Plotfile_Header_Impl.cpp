@@ -6,6 +6,7 @@
  */
 #include "BTD_Plotfile_Header_Impl.H"
 
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -108,7 +109,7 @@ void
 BTDPlotfileHeaderImpl::WriteHeader ()
 {
     if ( amrex::FileExists(m_Header_path) ) {
-        amrex::Print() << " removing this file : " << m_Header_path << "\n";
+        amrex::Print() << Utils::TextMsg::Info(" removing this file : " + m_Header_path);
         amrex::FileSystem::Remove(m_Header_path);
     }
     std::ofstream HeaderFile;
@@ -257,7 +258,7 @@ void
 BTDMultiFabHeaderImpl::WriteMultiFabHeader ()
 {
     if ( amrex::FileExists(m_Header_path) ) {
-        amrex::Print() << " removing this file : " << m_Header_path << "\n";
+        amrex::Print() << Utils::TextMsg::Info(" removing this file : " + m_Header_path);
         amrex::FileSystem::Remove(m_Header_path);
     }
     std::ofstream FabHeaderFile;

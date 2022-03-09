@@ -33,7 +33,7 @@ geometry.prob_hi     =  lx/2.    lx/2.    lx/2.
 boundary.field_lo = periodic periodic periodic
 boundary.field_hi = periodic periodic periodic
 
-warpx.serialize_ics = 1
+warpx.serialize_initial_conditions = 1
 
 # Verbosity
 warpx.verbose = 1

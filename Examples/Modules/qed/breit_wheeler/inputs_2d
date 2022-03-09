@@ -27,7 +27,7 @@ warpx.verbose = 1
 warpx.do_dive_cleaning = 0
 warpx.use_filter = 1
 warpx.cfl = 1. # if 1., the time step is set to its CFL limit
-warpx.serialize_ics = 1
+warpx.serialize_initial_conditions = 1
 
 # Order of particle shape factors
 algo.particle_shape = 3

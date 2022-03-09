@@ -130,7 +130,7 @@ protected:
     /** Prefix for output directories */
     std::string m_file_prefix;
     /** Minimum number of digits to iteration number in file name */
-    int m_file_min_digits = 5;
+    int m_file_min_digits = 6;
     /** Index of diagnostics in MultiDiagnostics::alldiags */
     int m_diag_index;
     /** Names of  each component requested by the user.

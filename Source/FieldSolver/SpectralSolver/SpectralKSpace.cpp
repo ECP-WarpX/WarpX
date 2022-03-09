@@ -7,6 +7,7 @@
  */
 #include "SpectralKSpace.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_BLassert.H>
@@ -38,7 +39,7 @@ SpectralKSpace::SpectralKSpace( const BoxArray& realspace_ba,
                                 const RealVect realspace_dx )
     : dx(realspace_dx)  // Store the cell size as member `dx`
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         realspace_ba.ixType()==IndexType::TheCellType(),
         "SpectralKSpace expects a cell-centered box.");
 
@@ -104,9 +105,9 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
         // Fill the k vector
         IntVect fft_size = realspace_ba[mfi].length();
         const Real dk = 2*MathConst::pi/(fft_size[i_dim]*dx[i_dim]);
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( bx.smallEnd(i_dim) == 0,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( bx.smallEnd(i_dim) == 0,
             "Expected box to start at 0, in spectral space.");
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( bx.bigEnd(i_dim) == N-1,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( bx.bigEnd(i_dim) == N-1,
             "Expected different box end index in spectral space.");
         if (only_positive_k){
             // Fill the full axis with positive k values
@@ -280,7 +281,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
 Vector<Real>
 getFornbergStencilCoefficients(const int n_order, const bool nodal)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
 
     const int m = n_order / 2;
     Vector<Real> coefs;

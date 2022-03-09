@@ -13,7 +13,7 @@ geometry.prob_hi     =  20.e-6    20.e-6
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.serialize_ics = 1
+warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
 warpx.cfl = .9999
 amr.plot_int = 1000

@@ -9,6 +9,7 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FieldIO.H"
 #include "Particles/Filter/FilterFunctors.H"
+#include "Utils/TextMsg.H"
 #include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -443,7 +444,7 @@ WarpXOpenPMDPlot::GetFileName (std::string& filepath)
 void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix, int file_min_digits,
                                 bool isBTD)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
 
     m_dirPrefix = dirPrefix;
     m_file_min_digits = file_min_digits;
@@ -664,7 +665,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     amrex::ParticleReal const mass, const bool isBTD,
                     int ParticleFlushOffset)
 {
-  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
+  WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
   AMREX_ALWAYS_ASSERT(write_real_comp.size() == pc->NumRealComps());
   AMREX_ALWAYS_ASSERT( write_int_comp.size() == pc->NumIntComps());
@@ -762,8 +763,8 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
            //   reconstruct x and y from polar coordinates r, theta
            auto const& soa = pti.GetStructOfArrays();
            amrex::ParticleReal const* theta = soa.GetRealData(PIdx::theta).dataPtr();
-           AMREX_ALWAYS_ASSERT_WITH_MESSAGE(theta != nullptr, "openPMD: invalid theta pointer.");
-           AMREX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
+           WARPX_ALWAYS_ASSERT_WITH_MESSAGE(theta != nullptr, "openPMD: invalid theta pointer.");
+           WARPX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
                                             "openPMD: theta and tile size do not match");
            {
                std::shared_ptr< amrex::ParticleReal > x(
@@ -1186,7 +1187,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
   //This is AMReX's tiny profiler. Possibly will apply it later
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
 
-  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
+  WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
 
   // is this either a regular write (true) or the first write in a
   // backtransformed diagnostic (BTD):

@@ -17,6 +17,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/UpdatePositionPhoton.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
 #include <AMReX_Array.H>
@@ -62,7 +63,7 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
         //Check for processes which do not make sense for photons
         bool test_quantum_sync = false;
         pp_species_name.query("do_qed_quantum_sync", test_quantum_sync);
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         test_quantum_sync == 0,
         "ERROR: do_qed_quantum_sync can be 1 for species NOT listed in particles.photon_species only!");
         //_________________________________________________________

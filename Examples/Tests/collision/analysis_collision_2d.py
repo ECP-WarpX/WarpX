@@ -58,7 +58,7 @@ last_fn = sys.argv[1]
 # Remove trailing '/' from file name, if necessary
 last_fn.rstrip('/')
 # Find last iteration in file name, such as 'test_name_plt000001' (last_it = '000001')
-last_it = re.search('\d+$', last_fn).group()
+last_it = re.search('\d+', last_fn).group()
 # Find output prefix in file name, such as 'test_name_plt000001' (prefix = 'test_name_plt')
 prefix = last_fn[:-len(last_it)]
 # Collect all output files in fn_list (names match pattern prefix + arbitrary number)

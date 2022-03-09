@@ -26,8 +26,10 @@ sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
     build-essential \
     gfortran        \
+    libhiredis-dev  \
     libnuma-dev     \
     libopenmpi-dev  \
+    libzstd-dev     \
     ninja-build     \
     openmpi-bin     \
     rocm-dev        \
@@ -47,3 +49,13 @@ which clang++
 sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
 sudo chmod a+x /usr/local/bin/cmake-easyinstall
 export CEI_SUDO="sudo"
+export CEI_TMP="/tmp/cei"
+
+# ccache 4.2+
+#
+CXXFLAGS="" cmake-easyinstall --prefix=/usr/local \
+    git+https://github.com/ccache/ccache.git@v4.6 \
+    -DCMAKE_BUILD_TYPE=Release        \
+    -DENABLE_DOCUMENTATION=OFF        \
+    -DENABLE_TESTING=OFF              \
+    -DWARNINGS_AS_ERRORS=OFF
