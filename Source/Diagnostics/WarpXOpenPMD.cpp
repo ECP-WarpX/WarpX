@@ -1227,7 +1227,7 @@ GetFieldNameModeInt (const std::string& varname)
             }
             mode_index += 2 * mode;
         }
-        
+
         return std::make_tuple(std::string(sm[1]), mode_index);
     }
 }

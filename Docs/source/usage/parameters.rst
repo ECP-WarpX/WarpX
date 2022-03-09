@@ -1960,7 +1960,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Possible scalar fields: ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe.
     Possible vector field components in Cartesian geometry: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz``.
     Possible vector field components in RZ geometry: ``Er`` ``Et`` ``Ez`` ``Br`` ``Bt`` ``Bz`` ``jr`` ``jt`` ``jz``.
-    Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``, 
+    Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``,
     unless in RZ geometry with ``<diag_name>.format == openpmd``,
     then default is ``<diag_name>.fields_to_plot = Er Et Ez Br Bt Bz jr jt jz``.
     Note that the fields are averaged on the cell centers before they are written to file.
