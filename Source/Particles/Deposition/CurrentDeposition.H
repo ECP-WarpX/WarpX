@@ -867,15 +867,15 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         // Current and old particle positions in grid units
         // Keep these double to avoid bug in single precision.
         double const x_new = ((xp - xmin) + (relative_time + 0.5_rt*dt)*vx) * dxi;
-        double const x_old = x_new - dt * vx * dxi;
+        double const x_old = x_new - vx * dt * dxi;
 #if defined(WARPX_DIM_3D)
         // Keep these double to avoid bug in single precision.
         double const y_new = ((yp - ymin) + (relative_time + 0.5_rt*dt)*vy) * dyi;
-        double const y_old = y_new - dt * vy * dyi;
+        double const y_old = y_new - vy * dt * dyi;
 #endif
         // Keep these double to avoid bug in single precision.
         double const z_new = ((zp - zmin) + (relative_time + 0.5_rt*dt)) * dzi;
-        double const z_old = z_new - dt * vz * dzi;
+        double const z_old = z_new - vz * dt * dzi;
 
         // Shape factor arrays for current and old positions (nodal)
         // Keep these double to avoid bug in single precision.
