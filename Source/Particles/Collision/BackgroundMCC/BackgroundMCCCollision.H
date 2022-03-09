@@ -7,9 +7,9 @@
 #ifndef WARPX_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_
 #define WARPX_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_
 
-#include "Particles/MultiParticleContainer.H"
-#include "CollisionBase.H"
 #include "MCCProcess.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/Collision/CollisionBase.H"
 
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
