@@ -37,11 +37,13 @@ struct CylindricalCKCAlgorithm {
         // Compute Cole-Karkkainen-Cowan coefficients
         Real const inv_dr = 1._rt/cell_size[0];
         Real const inv_dz = 1._rt/cell_size[2];
+        Real const delta = std::max(inv_dr,inv_dz);
+        Real const rz = (inv_dz/delta)*(inv_dz/delta);
         constexpr Real beta = 0.25_rt;
-//        Real const betathetaz = beta*inv_dr;
-//        Real const alphatheta = (1._rt - 2._rt*beta)*inv_dr;
-        Real const betarz = beta*inv_dr;
-        Real const alphar = (1._rt - 2._rt*beta)*inv_dr;
+//        Real const betathetaz = beta*rz*inv_dr;
+//        Real const alphatheta = (1._rt - 2._rt*rz*beta)*inv_dr;
+        Real const betarz = beta*rz*inv_dr;
+        Real const alphar = (1._rt - 2._rt*rz*beta)*inv_dr;
 
         stencil_coefs_r.resize(3);
         stencil_coefs_r[0] = inv_dr;
@@ -58,8 +60,6 @@ struct CylindricalCKCAlgorithm {
      */
     static amrex::Real ComputeMaxDt ( amrex::Real const * const dx,
                                       int const n_rz_azimuthal_modes ) {
-        amrex::Print() << dx[1] << " " << dx[0] << std::endl;
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(dx[1] <= dx[0], "RZ CKC solver only works for dz < dr.");
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes < 2, "RZ CKC solver only works for m=0");
         return dx[1] / PhysConst::c;
     }
@@ -125,8 +125,8 @@ struct CylindricalCKCAlgorithm {
         Real const alphar = coefs_r[1];
         Real const betarz = coefs_r[2];
         return alphar*( F(i+1,j  ,k,comp) - F(i,j  ,k,comp) )
-             + betarz*( F(i+1,j+1,k,comp) - F(i,j+1,k,comp)
-                      + F(i+1,j-1,k,comp) - F(i,j-1,k,comp) );
+             + betarz*( F(i+1,j+1,k,comp) - F(i,j+1,k,comp) )
+             + betarz*( F(i+1,j-1,k,comp) - F(i,j-1,k,comp) );
     }
 
     /**
