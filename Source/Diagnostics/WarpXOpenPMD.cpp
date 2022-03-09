@@ -1117,9 +1117,8 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     bool reverse = false;
     auto global_size = getVec(global_box.size(), reverse );
     auto & warpx = WarpX::GetInstance();
-    int const n_rz_mode_inds = 2 * warpx.n_rz_azimuthal_modes - 1;
     if (var_in_theta_mode) {
-            global_size.emplace(global_size.begin(), n_rz_mode_inds);
+            global_size.emplace(global_size.begin(), warpx.ncomps);
     }
     // - Grid spacing
     std::vector<double> const grid_spacing = getVec(full_geom.CellSize(), reverse);

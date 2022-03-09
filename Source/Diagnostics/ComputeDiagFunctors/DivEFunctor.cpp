@@ -38,7 +38,7 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_
         cell_type = amrex::IntVect::TheCellVector();
 #endif
     const amrex::BoxArray& ba = amrex::convert(warpx.boxArray(m_lev), cell_type);
-    amrex::MultiFab divE(ba, warpx.DistributionMap(m_lev), 2*warpx.n_rz_azimuthal_modes-1, ng );
+    amrex::MultiFab divE(ba, warpx.DistributionMap(m_lev), warpx.ncomps, ng );
     warpx.ComputeDivE(divE, m_lev);
 
 #ifdef WARPX_DIM_RZ
