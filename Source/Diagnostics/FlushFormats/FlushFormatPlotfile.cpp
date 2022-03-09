@@ -5,6 +5,7 @@
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
 #include "Utils/Interpolate.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -64,7 +65,7 @@ FlushFormatPlotfile::WriteToFile (
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
     const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
-    amrex::Print() << "  Writing plotfile " << filename << "\n";
+    amrex::Print() << Utils::TextMsg::Info("Writing plotfile " + filename);
 
     Vector<std::string> rfs;
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();

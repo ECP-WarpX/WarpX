@@ -10,6 +10,7 @@
 
 #include "Particles/WarpXParticleContainer.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
+#include "Utils/TextMsg.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
@@ -45,7 +46,8 @@ public:
   ~Timer () {
       m_End = amrex::second();
       amrex::ParallelDescriptor::ReduceRealMax(m_End, amrex::ParallelDescriptor::IOProcessorNumber());
-      amrex::Print()<<m_Tag<<" took:"<<m_End - m_Start<<" seconds\n";
+      amrex::Print() << Utils::TextMsg::Info(
+        m_Tag + " took: "+ std::to_string(m_End - m_Start) + " seconds");
   }
 private:
   amrex::Real m_Start;

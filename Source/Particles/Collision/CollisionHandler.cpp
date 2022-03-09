@@ -11,6 +11,8 @@
 #include "Particles/Collision/BinaryCollision/BinaryCollision.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
 #include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
+#include "Particles/Collision/BackgroundStopping/BackgroundStopping.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX_ParmParse.H>
 
@@ -30,7 +32,7 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
     for (int i = 0; i < static_cast<int>(ncollisions); ++i) {
         amrex::ParmParse pp_collision_name(collision_names[i]);
 
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1,
         "RZ mode `warpx.n_rz_azimuthal_modes` must be 1 when using the binary collision module.");
 
         // For legacy, pairwisecoulomb is the default
@@ -46,6 +48,9 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
         }
         else if (type == "background_mcc") {
             allcollisions[i] = std::make_unique<BackgroundMCCCollision>(collision_names[i]);
+        }
+        else if (type == "background_stopping") {
+            allcollisions[i] = std::make_unique<BackgroundStopping>(collision_names[i]);
         }
         else if (type == "nuclearfusion") {
             allcollisions[i] =

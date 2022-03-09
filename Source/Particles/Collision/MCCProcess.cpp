@@ -5,6 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MCCProcess.H"
+
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
 MCCProcess::MCCProcess (
@@ -12,8 +14,9 @@ MCCProcess::MCCProcess (
                         const std::string& cross_section_file,
                         const amrex::Real energy )
 {
-    amrex::Print() << "Reading file " << cross_section_file << " for "
-                   << scattering_process << " scattering cross-sections.\n";
+    amrex::Print() << Utils::TextMsg::Info(
+        "Reading file " + cross_section_file + " for "
+        + scattering_process + " scattering cross-sections.");
 
     // read the cross-section data file into memory
     readCrossSectionFile(cross_section_file, m_energies, m_sigmas_h);
@@ -57,7 +60,7 @@ MCCProcess::init (const std::string& scattering_process, const amrex::Real energ
     // cost is > 0 - this is to prevent the possibility of negative left
     // over energy after a collision event
     if (m_exe_h.m_energy_penalty > 0) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             (getCrossSection(m_exe_h.m_energy_penalty) == 0),
             "Cross-section > 0 at energy cost for collision."
         );
@@ -118,7 +121,7 @@ MCCProcess::sanityCheckEnergyGrid (
     // confirm that the input data for the cross-section was provided with
     // equal energy steps, otherwise the linear interpolation will fail
     for (unsigned i = 1; i < energies.size(); i++) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                                          (std::abs(energies[i] - energies[i-1] - dE) < dE / 100.0),
                                          "Energy grid not evenly spaced."
                                          );
