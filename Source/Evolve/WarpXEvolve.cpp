@@ -665,7 +665,7 @@ WarpX::OneStep_sub1 (Real curtime)
     const int coarse_lev = 0;
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
-    
+
     // TODO: we could save some charge depositions
 
     // i) Push particles and fields on the fine patch (first fine step)
