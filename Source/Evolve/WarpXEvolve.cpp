@@ -799,7 +799,7 @@ WarpX::OneStep_sub1 (Real curtime)
     }
     if ( safe_guard_cells )
         FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
-    
+
     if(istep[0]+1==end_fine_patch_step){
         SyncCurrent();
         SyncRho();

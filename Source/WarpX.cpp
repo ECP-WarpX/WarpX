@@ -1343,7 +1343,7 @@ WarpX::ReadParameters ()
        }
 
     }
-    
+
 }
 
 void

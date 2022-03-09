@@ -167,7 +167,7 @@ Setting up the field mesh
     Note: in development; currently allowed value: ``2 2 2``.
 
 * ``warpx.end_fine_patch_step`` (`integer`, default: ``-1``)
-    When using mesh refinement, this can be used to remove the finest level at a given timestep. 
+    When using mesh refinement, this can be used to remove the finest level at a given timestep.
 
     Note: in development; currently, only working on GPU is supported. Moreover, the max_step is modified and we encourage you to use stop_time instead.
 
