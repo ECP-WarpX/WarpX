@@ -634,9 +634,10 @@ WarpX::ReadParameters ()
             const auto end_fine_patch_defined=queryWithParser(pp_warpx,"end_fine_patch_step", end_fine_patch_step);
             if(has_max_step && end_fine_patch_defined && do_subcycling==0){
                 auto ss = std::stringstream{};
-                ss << "When the fine patch is removed, the max step will be " << end_fine_patch_step + (max_step-end_fine_patch_step)*0.5 ;
-
-                 this->RecordWarning("Mesh Refinement", ss.str(), WarnPriority::high);
+                if(max_step>=end_fine_patch_step){
+                    ss << "When the fine patch is removed, the max step will be " << end_fine_patch_step + std::floor(0.5*(max_step-end_fine_patch_step)) ;
+                    this->RecordWarning("Mesh Refinement", ss.str(), WarnPriority::high);
+                }
             }
         }
 
