@@ -1233,7 +1233,7 @@ GetFieldNameModeInt (const std::string& varname)
 }
 /* Transpose diagnostic data from WarpX/AMReX/Fortran order to openPMD (RZ) / C order
  * NOTE : duplicates chunk in memory and is NOT optimized
- * 
+ *
  * @param varname [IN]: pointer to the data to be transposed
  * @param local_data [OUT]: pointer to the place to store transpoed copy of the chunk
  * @param local_box [OUT]: reference to chunk `amrex::Box` for chunk_size information
