@@ -464,12 +464,12 @@ WarpX::RecordWarning(
         else if(m_abort_on_warning_threshold == WarnPriority::medium)
             abort_priority = Utils::MsgLogger::Priority::medium;
 
-        if (msg_priority >= abort_priority){
-            const auto t_str = "A warning with priority '" +
-                Utils::MsgLogger::PriorityToString(msg_priority) +
-                "' has been raised.";
-            Abort(t_str.c_str());
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            msg_priority >= abort_priority,
+            "A warning with priority '"
+            + Utils::MsgLogger::PriorityToString(msg_priority)
+            + "' has been raised."
+        );
     }
 }
 
@@ -533,9 +533,8 @@ WarpX::ReadParameters ()
             else if (str_abort_on_warning_threshold == "low")
                 m_abort_on_warning_threshold = WarnPriority::low;
             else {
-                const auto t_str = str_abort_on_warning_threshold +
-                    "is not a valid option for warpx.abort_on_warning_threshold (use: low, medium or high)";
-                Abort(t_str.c_str());
+                Abort(Utils::TextMsg::Err(str_abort_on_warning_threshold
+                    +"is not a valid option for warpx.abort_on_warning_threshold (use: low, medium or high)"));
             }
         }
 
@@ -569,7 +568,8 @@ WarpX::ReadParameters ()
                 unsigned long seed = myproc_1 * std::stoul(random_seed);
                 ResetRandomSeed(seed);
             } else {
-                Abort("warpx.random_seed must be \"default\", \"random\" or an integer > 0.");
+                Abort(Utils::TextMsg::Err(
+                    "warpx.random_seed must be \"default\", \"random\" or an integer > 0."));
             }
         }
 
@@ -620,8 +620,7 @@ WarpX::ReadParameters ()
                 moving_window_dir = WARPX_ZINDEX;
             }
             else {
-                const std::string msg = "Unknown moving_window_dir: "+s;
-                amrex::Abort(msg.c_str());
+                amrex::Abort(Utils::TextMsg::Err("Unknown moving_window_dir: "+s));
             }
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(moving_window_dir) == 0,
@@ -732,10 +731,8 @@ WarpX::ReadParameters ()
         {
             // Filter currently not working with FDTD solver in RZ geometry
             // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
-            if (use_filter)
-            {
-                amrex::Abort("Filter currently not working with FDTD solver in RZ geometry");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!use_filter,
+                "Filter currently not working with FDTD solver in RZ geometry");
         }
 #endif
 
@@ -753,8 +750,10 @@ WarpX::ReadParameters ()
 #ifdef AMREX_USE_FLOAT
         if (do_single_precision_comms) {
             do_single_precision_comms = 0;
-            amrex::Warning("\nWARNING: Overwrote warpx.do_single_precision_comms"
-                               " to be 0, since WarpX was built in single precision.");
+            this->RecordWarning(
+                "comms",
+                "Overwrote warpx.do_single_precision_comms to be 0, since WarpX was built in single precision.",
+                WarnPriority::low);
         }
 #endif
 
@@ -773,21 +772,23 @@ WarpX::ReadParameters ()
         }
 
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if ( ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML &&
-                   WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ) ||
-                 ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML &&
-                   WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller ) )
-            {
-                amrex::Abort("PML and Silver-Mueller boundary conditions cannot be activated at the same time.");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                !(
+                    ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML &&
+                    WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ) ||
+                    ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML &&
+                     WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller )
+                ),
+                "PML and Silver-Mueller boundary conditions cannot be activated at the same time.");
+
 
             if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ||
                 WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller)
             {
                 // SilverMueller is implemented for Yee
-                if (maxwell_solver_id != MaxwellSolverAlgo::Yee) {
-                    amrex::Abort("The Silver-Mueller boundary condition can only be used with the Yee solver.");
-                }
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    maxwell_solver_id == MaxwellSolverAlgo::Yee,
+                    "The Silver-Mueller boundary condition can only be used with the Yee solver.");
             }
         }
 
@@ -836,17 +837,15 @@ WarpX::ReadParameters ()
         // for both div(E) and div(B) cleaning
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
         {
-            if (do_pml_dive_cleaning != do_pml_divb_cleaning)
-            {
-                std::stringstream ss;
-                ss << "\nwarpx.do_pml_dive_cleaning = "
-                   << do_pml_dive_cleaning
-                   << " and warpx.do_pml_divb_cleaning = "
-                   << do_pml_divb_cleaning
-                   << ":\nthis case is not implemented yet,"
-                   << " please set both parameters to the same value";
-                amrex::Abort(ss.str());
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                do_pml_dive_cleaning == do_pml_divb_cleaning,
+                "warpx.do_pml_dive_cleaning = "
+                + std::to_string(do_pml_dive_cleaning)
+                +" and warpx.do_pml_divb_cleaning = "
+                +std::to_string(do_pml_divb_cleaning)
+                +": this case is not implemented yet,"
+                +" please set both parameters to the same value"
+            );
         }
 
 #ifdef WARPX_DIM_RZ
@@ -856,9 +855,10 @@ WarpX::ReadParameters ()
             "PML are not implemented in RZ geometry along z; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
 #endif
 
-        if ( (do_pml_j_damping==1)&&(do_pml_in_domain==0) ){
-            amrex::Abort("J-damping can only be done when PML are inside simulation domain (do_pml_in_domain=1)");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (do_pml_j_damping==0)||(do_pml_in_domain==1),
+            "J-damping can only be done when PML are inside simulation domain (do_pml_in_domain=1)"
+        );
 
         {
             // Parameters below control all plotfile diagnostics
@@ -913,25 +913,21 @@ WarpX::ReadParameters ()
             pp_warpx.query("do_current_centering", do_current_centering);
         }
 
-        if ((maxLevel() > 0) && do_current_centering)
-        {
-            amrex::Abort("\nFinite-order centering of currents is not implemented with mesh refinement");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            maxLevel() == 0 || !do_current_centering,
+            "Finite-order centering of currents is not implemented with mesh refinement"
+        );
     }
 
     {
         ParmParse pp_algo("algo");
 #ifdef WARPX_DIM_RZ
-        if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
-                "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( maxwell_solver_id != MaxwellSolverAlgo::CKC,
+            "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
 #endif
 #ifndef WARPX_USE_PSATD
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
-                                              "algo.maxwell_solver = psatd is not supported because WarpX was built without spectral solvers");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( maxwell_solver_id != MaxwellSolverAlgo::PSATD,
+            "algo.maxwell_solver = psatd is not supported because WarpX was built without spectral solvers");
 #endif
 
 #ifdef WARPX_DIM_RZ
@@ -993,25 +989,23 @@ WarpX::ReadParameters ()
         pp_lasers.queryarr("names", lasers_names);
 
         std::vector<std::string> sort_intervals_string_vec = {"-1"};
+        int particle_shape;
         if (!species_names.empty() || !lasers_names.empty()) {
-            int particle_shape;
-            if (queryWithParser(pp_algo, "particle_shape", particle_shape) == false)
-            {
-                amrex::Abort("\nalgo.particle_shape must be set in the input file:"
-                             "\nplease set algo.particle_shape to 1, 2, or 3");
+            if (queryWithParser(pp_algo, "particle_shape", particle_shape)){
+
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (particle_shape >= 1) && (particle_shape <=3),
+                    "algo.particle_shape can be only 1, 2, or 3"
+                );
+
+                nox = particle_shape;
+                noy = particle_shape;
+                noz = particle_shape;
             }
-            else
-            {
-                if (particle_shape < 1 || particle_shape > 3)
-                {
-                    amrex::Abort("\nalgo.particle_shape can be only 1, 2, or 3");
-                }
-                else
-                {
-                    nox = particle_shape;
-                    noy = particle_shape;
-                    noz = particle_shape;
-                }
+            else{
+                amrex::Abort(Utils::TextMsg::Err(
+                    "algo.particle_shape must be set in the input file:"
+                    " please set algo.particle_shape to 1, 2, or 3"));
             }
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
@@ -1144,14 +1138,20 @@ WarpX::ReadParameters ()
         pp_psatd.query("current_correction", current_correction);
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
 
-        if (!fft_periodic_single_box && current_correction)
-            amrex::Abort(
-                    "\nCurrent correction does not guarantee charge conservation with local FFTs over guard cells:\n"
-                    "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
-        if (!fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay))
-            amrex::Abort(
-                    "\nVay current deposition does not guarantee charge conservation with local FFTs over guard cells:\n"
-                    "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            fft_periodic_single_box || !current_correction,
+            "Current correction does not guarantee charge conservation with"
+            " local FFTs over guard cells: set psatd.periodic_single_box_fft=1 too,"
+            " in order to guarantee charge conservation"
+        );
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            fft_periodic_single_box || WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay,
+            "Vay current deposition does not guarantee charge conservation with"
+            " local FFTs over guard cells: set psatd.periodic_single_box_fft=1 too,"
+            " in order to guarantee charge conservation"
+
+        );
 
         // Auxiliary: boosted_frame = true if warpx.gamma_boost is set in the inputs
         amrex::ParmParse pp_warpx("warpx");
@@ -1160,13 +1160,15 @@ WarpX::ReadParameters ()
         // Check whether the default Galilean velocity should be used
         bool use_default_v_galilean = false;
         pp_psatd.query("use_default_v_galilean", use_default_v_galilean);
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !use_default_v_galilean || !boosted_frame,
+            "psatd.use_default_v_galilean = 1 can be used only if warpx.gamma_boost is also set"
+        );
+
         if (use_default_v_galilean == true && boosted_frame == true)
         {
             m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
-        }
-        else if (use_default_v_galilean == true && boosted_frame == false)
-        {
-            amrex::Abort("psatd.use_default_v_galilean = 1 can be used only if warpx.gamma_boost is also set");
         }
         else
         {
@@ -1176,52 +1178,57 @@ WarpX::ReadParameters ()
         // Check whether the default comoving velocity should be used
         bool use_default_v_comoving = false;
         pp_psatd.query("use_default_v_comoving", use_default_v_comoving);
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !use_default_v_comoving || !boosted_frame,
+            "psatd.use_default_v_comoving = 1 can be used only if warpx.gamma_boost is also set"
+        );
+
         if (use_default_v_comoving == true && boosted_frame == true)
         {
             m_v_comoving[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
-        }
-        else if (use_default_v_comoving == true && boosted_frame == false)
-        {
-            amrex::Abort("psatd.use_default_v_comoving = 1 can be used only if warpx.gamma_boost is also set");
         }
         else
         {
             queryArrWithParser(pp_psatd, "v_comoving", m_v_comoving, 0, 3);
         }
 
-        // Galilean and comoving algorithms should not be used together
-        if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.)
-        {
-            if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.)
-            {
-                amrex::Abort("Galilean and comoving algorithms should not be used together");
-            }
-        }
-
         // Scale the Galilean/comoving velocity by the speed of light
-        for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
-        for (int i=0; i<3; i++) m_v_comoving[i] *= PhysConst::c;
+        for (auto& vv : m_v_galilean) vv*= PhysConst::c;
+        for (auto& vv : m_v_comoving) vv*= PhysConst::c;
+
+        const auto v_galilean_is_zero =
+            std::all_of(m_v_galilean.begin(), m_v_galilean.end(),
+            [](const auto& val){return val == 0.;});
+
+        const auto v_comoving_is_zero =
+            std::all_of(m_v_comoving.begin(), m_v_comoving.end(),
+            [](const auto& val){return val == 0.;});
+
+
+        // Galilean and comoving algorithms should not be used together
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            v_galilean_is_zero || v_comoving_is_zero,
+            "Galilean and comoving algorithms should not be used together"
+        );
 
         // The comoving PSATD algorithm is not implemented nor tested with Esirkepov current deposition
-        if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
-            if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
-                amrex::Abort("Esirkepov current deposition cannot be used with the comoving PSATD algorithm");
-            }
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (current_deposition_algo != CurrentDepositionAlgo::Esirkepov) ||
+            v_comoving_is_zero,
+            "Esirkepov current deposition cannot be used with the comoving PSATD algorithm"
+        );
 
-        if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
-            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.) {
-                amrex::Abort("Vay current deposition not implemented for Galilean algorithms");
-            }
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (current_deposition_algo != CurrentDepositionAlgo::Vay) ||
+            v_galilean_is_zero,
+            "Vay current deposition not implemented for Galilean algorithms"
+        );
 
-        if (current_correction) {
-            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.) {
-                if (fft_do_time_averaging) {
-                    amrex::Abort("Current correction not implemented for averaged Galilean algorithm");
-                }
-            }
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (!current_correction) || v_galilean_is_zero || (!fft_do_time_averaging),
+            "Current correction not implemented for averaged Galilean algorithm"
+        );
 
 #   ifdef WARPX_DIM_RZ
         update_with_rho = true;  // Must be true for RZ PSATD
@@ -1238,25 +1245,26 @@ WarpX::ReadParameters ()
         // Overwrite update_with_rho with value set in input file
         pp_psatd.query("update_with_rho", update_with_rho);
 
-        if (do_dive_cleaning == true && update_with_rho == false)
-        {
-            amrex::Abort("warpx.do_dive_cleaning = 1 not implemented with psatd.update_with_rho = 0");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (!do_dive_cleaning) || update_with_rho,
+            "warpx.do_dive_cleaning = 1 not implemented with psatd.update_with_rho = 0"
+        );
 
-        if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
-                "psatd.update_with_rho must be equal to 1 for comoving PSATD");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            v_comoving_is_zero || !update_with_rho,
+            "psatd.update_with_rho must be equal to 1 for comoving PSATD"
+        );
 
         if (do_multi_J)
         {
-            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.)
-            {
-                amrex::Abort("Multi-J algorithm not implemented with Galilean PSATD");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                v_galilean_is_zero,
+                "Multi-J algorithm not implemented with Galilean PSATD"
+            );
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
-                "psatd.update_with_rho must be set to 1 when warpx.do_multi_J = 1");
+                "psatd.update_with_rho must be set to 1 when warpx.do_multi_J = 1"
+            );
         }
 
         for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
@@ -1285,10 +1293,11 @@ WarpX::ReadParameters ()
 
     if (maxwell_solver_id != MaxwellSolverAlgo::PSATD ) {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Damped ||
-                WarpX::field_boundary_hi[idim] == FieldBoundaryType::Damped ) {
-                    amrex::Abort("FieldBoundaryType::Damped is only supported for PSATD");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (WarpX::field_boundary_lo[idim] != FieldBoundaryType::Damped) &&
+                (WarpX::field_boundary_hi[idim] != FieldBoundaryType::Damped),
+                "FieldBoundaryType::Damped is only supported for PSATD"
+            );
         }
     }
 
@@ -1340,87 +1349,115 @@ WarpX::BackwardCompatibility ()
     amrex::Real backward_Real;
 
     ParmParse pp_amr("amr");
-    if (pp_amr.query("plot_int", backward_int)){
-        amrex::Abort("amr.plot_int is not supported anymore. Please use the new syntax for diagnostics:\n"
-            "diagnostics.diags_names = my_diag\n"
-            "my_diag.intervals = 10\n"
-            "for output every 10 iterations. See documentation for more information");
-    }
-    if (pp_amr.query("plot_file", backward_str)){
-        amrex::Abort("amr.plot_file is not supported anymore. "
-                     "Please use the new syntax for diagnostics, see documentation.");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_amr.query("plot_int", backward_int),
+        "amr.plot_int is not supported anymore. Please use the new syntax for diagnostics:\n"
+        "diagnostics.diags_names = my_diag\n"
+        "my_diag.intervals = 10\n"
+        "for output every 10 iterations. See documentation for more information"
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_amr.query("plot_file", backward_str),
+        "amr.plot_file is not supported anymore. "
+        "Please use the new syntax for diagnostics, see documentation."
+    );
 
     ParmParse pp_warpx("warpx");
     std::vector<std::string> backward_strings;
-    if (pp_warpx.queryarr("fields_to_plot", backward_strings)){
-        amrex::Abort("warpx.fields_to_plot is not supported anymore. "
-                     "Please use the new syntax for diagnostics, see documentation.");
-    }
-    if (pp_warpx.query("plot_finepatch", backward_int)){
-        amrex::Abort("warpx.plot_finepatch is not supported anymore. "
-                     "Please use the new syntax for diagnostics, see documentation.");
-    }
-    if (pp_warpx.query("plot_crsepatch", backward_int)){
-        amrex::Abort("warpx.plot_crsepatch is not supported anymore. "
-                     "Please use the new syntax for diagnostics, see documentation.");
-    }
-    if (pp_warpx.queryarr("load_balance_int", backward_strings)){
-        amrex::Abort("warpx.load_balance_int is no longer a valid option. "
-                     "Please use the renamed option algo.load_balance_intervals instead.");
-    }
-    if (pp_warpx.queryarr("load_balance_intervals", backward_strings)){
-        amrex::Abort("warpx.load_balance_intervals is no longer a valid option. "
-                     "Please use the renamed option algo.load_balance_intervals instead.");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.queryarr("fields_to_plot", backward_strings),
+        "warpx.fields_to_plot is not supported anymore. "
+        "Please use the new syntax for diagnostics, see documentation."
+    );
 
-    if (pp_warpx.query("load_balance_efficiency_ratio_threshold", backward_Real)){
-        amrex::Abort("warpx.load_balance_efficiency_ratio_threshold is not supported anymore. "
-                     "Please use the renamed option algo.load_balance_efficiency_ratio_threshold.");
-    }
-    if (pp_warpx.query("load_balance_with_sfc", backward_int)){
-        amrex::Abort("warpx.load_balance_with_sfc is not supported anymore. "
-                     "Please use the renamed option algo.load_balance_with_sfc.");
-    }
-    if (pp_warpx.query("load_balance_knapsack_factor", backward_Real)){
-        amrex::Abort("warpx.load_balance_knapsack_factor is not supported anymore. "
-                     "Please use the renamed option algo.load_balance_knapsack_factor.");
-    }
-    if (pp_warpx.queryarr("override_sync_int", backward_strings)){
-        amrex::Abort("warpx.override_sync_int is no longer a valid option. "
-                     "Please use the renamed option warpx.override_sync_intervals instead.");
-    }
-    if (pp_warpx.queryarr("sort_int", backward_strings)){
-        amrex::Abort("warpx.sort_int is no longer a valid option. "
-                     "Please use the renamed option warpx.sort_intervals instead.");
-    }
-    if (pp_warpx.query("use_kspace_filter", backward_int)){
-        amrex::Abort("warpx.use_kspace_filter is not supported anymore. "
-                     "Please use the flag use_filter, see documentation.");
-    }
-    if ( pp_warpx.query("do_pml", backward_int) ) {
-        amrex::Abort( "do_pml is not supported anymore. Please use boundary.field_lo and boundary.field_hi to set the boundary conditions.");
-    }
-    if (pp_warpx.query("serialize_ics", backward_bool)) {
-        amrex::Abort("warpx.serialize_ics is no longer a valid option. "
-                     "Please use the renamed option warpx.serialize_initial_conditions instead.");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("plot_finepatch", backward_int),
+        "warpx.plot_finepatch is not supported anymore. "
+        "Please use the new syntax for diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("plot_crsepatch", backward_int),
+        "warpx.plot_crsepatch is not supported anymore. "
+        "Please use the new syntax for diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.queryarr("load_balance_int", backward_strings),
+        "warpx.load_balance_int is no longer a valid option. "
+        "Please use the renamed option algo.load_balance_intervals instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.queryarr("load_balance_intervals", backward_strings),
+        "warpx.load_balance_intervals is no longer a valid option. "
+        "Please use the renamed option algo.load_balance_intervals instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("load_balance_efficiency_ratio_threshold", backward_Real),
+        "warpx.load_balance_efficiency_ratio_threshold is not supported anymore. "
+        "Please use the renamed option algo.load_balance_efficiency_ratio_threshold."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("load_balance_with_sfc", backward_int),
+        "warpx.load_balance_with_sfc is not supported anymore. "
+        "Please use the renamed option algo.load_balance_with_sfc."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("load_balance_knapsack_factor", backward_Real),
+        "warpx.load_balance_knapsack_factor is not supported anymore. "
+        "Please use the renamed option algo.load_balance_knapsack_factor."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.queryarr("override_sync_int", backward_strings),
+        "warpx.override_sync_int is no longer a valid option. "
+        "Please use the renamed option warpx.override_sync_intervals instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.queryarr("sort_int", backward_strings),
+        "warpx.sort_int is no longer a valid option. "
+        "Please use the renamed option warpx.sort_intervals instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("use_kspace_filter", backward_int),
+        "warpx.use_kspace_filter is not supported anymore. "
+        "Please use the flag use_filter, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_pml", backward_int),
+        "do_pml is not supported anymore. Please use boundary.field_lo and boundary.field_hi"
+        " to set the boundary conditions."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("serialize_ics", backward_bool),
+        "warpx.serialize_ics is no longer a valid option. "
+        "Please use the renamed option warpx.serialize_initial_conditions instead."
+    );
 
     ParmParse pp_interpolation("interpolation");
-    if (pp_interpolation.query("nox", backward_int) ||
-        pp_interpolation.query("noy", backward_int) ||
-        pp_interpolation.query("noz", backward_int))
-    {
-        amrex::Abort("\ninterpolation.nox (as well as .noy, .noz) are not supported anymore:"
-                     "\nplease use the new syntax algo.particle_shape instead");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_interpolation.query("nox", backward_int) &&
+        !pp_interpolation.query("noy", backward_int) &&
+        !pp_interpolation.query("noz", backward_int),
+        "interpolation.nox (as well as .noy, .noz) are not supported anymore."
+        " Please use the new syntax algo.particle_shape instead"
+    );
 
     ParmParse pp_algo("algo");
     int backward_mw_solver;
-    if (pp_algo.query("maxwell_fdtd_solver", backward_mw_solver)){
-        amrex::Abort("algo.maxwell_fdtd_solver is not supported anymore. "
-                     "Please use the renamed option algo.maxwell_solver");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_algo.query("maxwell_fdtd_solver", backward_mw_solver),
+        "algo.maxwell_fdtd_solver is not supported anymore. "
+        "Please use the renamed option algo.maxwell_solver");
 
     ParmParse pp_particles("particles");
     int nspecies;
@@ -2303,7 +2340,8 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 #ifdef WARPX_USE_PSATD
         spectral_solver_fp[lev]->ComputeSpectralDivE( lev, Efield_aux[lev], divE );
 #else
-        amrex::Abort("ComputeDivE: PSATD requested but not compiled");
+        amrex::Abort(Utils::TextMsg::Err(
+            "ComputeDivE: PSATD requested but not compiled"));
 #endif
     } else {
         m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
