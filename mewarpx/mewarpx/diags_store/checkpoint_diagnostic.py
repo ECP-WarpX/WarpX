@@ -81,7 +81,7 @@ class CheckPointDiagnostic(WarpXDiagnostic):
             # that we can continue to blindly move all .dpkl files from EFS
             # to S3 when running on AWS
             dst = os.path.join(
-                self.write_dir, f"{self.name}{(mwxrun.get_it() - 1):05d}",
+                self.write_dir, f"{self.name}{(mwxrun.get_it() - 1):06d}",
                 "fluxdata.ckpt"
             )
             self.flux_diag.save(filepath=dst)
