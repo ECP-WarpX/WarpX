@@ -90,7 +90,7 @@ include guards. Below we provide a simple example:
 
    class MyClass;
 
-   #endif //MY_CLASS_FWD_H
+   #endif // MY_CLASS_FWD_H
 
 ``MyClass.H``:
 
@@ -101,24 +101,52 @@ include guards. Below we provide a simple example:
 
    #include "MyClass_fwd.H"
    #include "someHeader.H"
-   class MyClass{/* stuff */};
 
-   #endif //MY_CLASS_H
+   class MyClass {
+       void stuff ();
+   };
+
+   #endif // MY_CLASS_H
 
 ``MyClass.cpp``:
 
 .. code-block:: cpp
 
    #include "MyClass.H"
-   class MyClass{/* stuff */};
 
-Usage: in ``SimpleUsage.H``
+   class MyClass {
+       void stuff () { /* stuff */ }
+   };
+
+Usage: in ``SomeType.H``
 
 .. code-block:: cpp
 
-   #include "MyClass_fwd.H"
+   #ifndef SOMETYPE_H
+   #define SOMETYPE_H
+
+   #include "MyClass_fwd.H" // all info we need here
    #include <memory>
 
-   /* stuff */
-   std::unique_ptr<MyClass> p_my_class;
-   /* stuff */
+   struct SomeType {
+       std::unique_ptr<MyClass> p_my_class;
+   };
+
+   #endif // SOMETYPE_H
+
+Usage: in ``somewhere.cpp``
+
+.. code-block:: cpp
+
+   #include "SomeType.H"
+   #include "MyClass.H"  // because we call "stuff()" we really need
+                         // to know the full declaration of MyClass
+
+   void somewhere ()
+   {
+       SomeType s;
+       s.p_my_class = std::make_unique<MyClass>();
+       s.p_my_class->stuff();
+   }
+
+All files that only need to know the type ``SomeType`` from ``SomeType.H`` but do not access the implementation details of ``MyClass`` will benefit from improved compilation times.
