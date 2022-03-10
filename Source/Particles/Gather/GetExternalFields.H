@@ -82,7 +82,7 @@ struct GetExternalEBField
             Ey = m_Efield_value[1];
             Ez = m_Efield_value[2];
         }
-        else if (m_Etype == Parser)
+        else if (m_Etype == ExternalFieldInitType::Parser)
         {
             amrex::ParticleReal x, y, z;
             m_get_position(i, x, y, z);
@@ -102,7 +102,7 @@ struct GetExternalEBField
             By = m_Bfield_value[1];
             Bz = m_Bfield_value[2];
         }
-        else if (m_Btype == Parser)
+        else if (m_Btype == ExternalFieldInitType::Parser)
         {
             amrex::ParticleReal x, y, z;
             m_get_position(i, x, y, z);
