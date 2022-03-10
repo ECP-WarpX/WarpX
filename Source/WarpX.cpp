@@ -1180,7 +1180,7 @@ WarpX::ReadParameters ()
         pp_psatd.query("use_default_v_comoving", use_default_v_comoving);
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            !use_default_v_comoving || !boosted_frame,
+            !use_default_v_comoving || boosted_frame,
             "psatd.use_default_v_comoving = 1 can be used only if warpx.gamma_boost is also set"
         );
 
