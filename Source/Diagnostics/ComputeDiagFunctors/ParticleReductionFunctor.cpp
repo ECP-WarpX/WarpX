@@ -60,22 +60,20 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
 
                 // Get position in AMReX convention to calculate corresponding index.
                 // Ideally this will be replaced with the AMReX NGP interpolator
-                amrex::ParticleReal x = 0._rt, y = 0._rt, z = 0._rt;
-                amrex::Real lx = 0._rt, ly = 0._rt, lz = 0._rt;
-                int ii = 0, jj = 0, kk = 0;
                 // Always do x direction. No RZ case because it's not implemented, and code
                 // will have aborted
-                x = p.pos(0);
-                lx = (x - plo[0]) * dxi[0];
+                int ii = 0, jj = 0, kk = 0;
+                amrex::ParticleReal x = p.pos(0);
+                amrex::Real lx = (x - plo[0]) * dxi[0];
                 ii = static_cast<int>(amrex::Math::floor(lx));
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D)
-                y = p.pos(1);
-                ly = (y - plo[1]) * dxi[1];
+                amrex::ParticleReal y = p.pos(1);
+                amrex::Real ly = (y - plo[1]) * dxi[1];
                 jj = static_cast<int>(amrex::Math::floor(ly));
 #endif
 #if defined(WARPX_DIM_3D)
-                z = p.pos(2);
-                lz = (z - plo[2]) * dxi[2];
+                amrex::ParticleReal z = p.pos(2);
+                amrex::Real lz = (z - plo[2]) * dxi[2];
                 kk = static_cast<int>(amrex::Math::floor(lz));
 #endif
 
@@ -96,21 +94,20 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
 
                 // Get position in AMReX convention to calculate corresponding index.
                 // Ideally this will be replaced with the AMReX NGP interpolator
-                amrex::ParticleReal x = 0._rt, y = 0._rt, z = 0._rt;
-                amrex::Real lx = 0._rt, ly = 0._rt, lz = 0._rt;
+                // Always do x direction. No RZ case because it's not implemented, and code
+                // will have aborted
                 int ii = 0, jj = 0, kk = 0;
-
-                x = p.pos(0);
-                lx = (x - plo[0]) * dxi[0];
+                amrex::ParticleReal x = p.pos(0);
+                amrex::Real lx = (x - plo[0]) * dxi[0];
                 ii = static_cast<int>(amrex::Math::floor(lx));
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D)
-                y = p.pos(1);
-                ly = (y - plo[1]) * dxi[1];
+                amrex::ParticleReal y = p.pos(1);
+                amrex::Real ly = (y - plo[1]) * dxi[1];
                 jj = static_cast<int>(amrex::Math::floor(ly));
 #endif
 #if defined(WARPX_DIM_3D)
-                z = p.pos(2);
-                lz = (z - plo[2]) * dxi[2];
+                amrex::ParticleReal z = p.pos(2);
+                amrex::Real lz = (z - plo[2]) * dxi[2];
                 kk = static_cast<int>(amrex::Math::floor(lz));
 #endif
                 amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), p.rdata(PIdx::w));
