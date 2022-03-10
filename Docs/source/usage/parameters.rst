@@ -1924,10 +1924,11 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``<diag_name>.particle_fields_species`` (list of `strings`, optional)
          Species for which to calculate ``particle_fields_to_plot``.
+         Fields will be calculated separately for each specified species.
          The default is a list of all of the available particle species.
 
 * ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)`` (parser `string`)
-   Parser function to be calculated for each particle and averaged per cell. The field written to the plotfile is
+   Parser function to be calculated for each particle and averaged per cell. The field written is
 
         .. math::
 
