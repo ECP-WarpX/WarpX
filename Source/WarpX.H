@@ -1127,6 +1127,7 @@ private:
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_cumsum;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
@@ -1490,6 +1491,12 @@ private:
      * \brief Vay deposition in Fourier space (https://doi.org/10.1016/j.jcp.2013.03.010)
      */
     void PSATDVayDeposition ();
+
+    // TODO Add Doxygen string
+    void PSATDComputeCurrentPartialSums ();
+
+    // TODO Add Doxygen string
+    void PSATDSubtractCurrentPartialSumsAvg ();
 
     /**
      * \brief Update all necessary fields in spectral space

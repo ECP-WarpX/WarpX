@@ -288,6 +288,11 @@ WarpX::WarpX ()
     Efield_avg_fp.resize(nlevs_max);
     Bfield_avg_fp.resize(nlevs_max);
 
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+    {
+        current_fp_cumsum.resize(nlevs_max);
+    }
+
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
     m_distance_to_eb.resize(nlevs_max);
@@ -1467,6 +1472,11 @@ WarpX::ClearLevel (int lev)
         Efield_fp [lev][i].reset();
         Bfield_fp [lev][i].reset();
 
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            current_fp_cumsum[lev][i].reset();
+        }
+
         current_store[lev][i].reset();
 
         if (do_current_centering)
@@ -1691,6 +1701,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     current_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,jx_nodal_flag),dm,ncomps,ngJ,tag("current_fp[x]"));
     current_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_fp[y]"));
     current_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_fp[z]"));
+
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+    {
+        current_fp_cumsum[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, jx_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_cumsum[x]"));
+        current_fp_cumsum[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, jy_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_cumsum[y]"));
+        current_fp_cumsum[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, jz_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_cumsum[z]"));
+    }
 
     if (do_current_centering)
     {
