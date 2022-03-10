@@ -7,6 +7,9 @@
 
 #include <AMReX_BaseFwd.H>
 
+#include <memory>
+#include <string>
+
 /**
  * \brief Functor to calculate per-cell averages of particle properties.
  */
