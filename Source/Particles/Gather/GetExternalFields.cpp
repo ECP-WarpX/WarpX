@@ -52,7 +52,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
 
     if (mypc.m_E_ext_particle_s == "parse_e_ext_particle_function")
     {
-        m_Etype = Parser;
+        m_Etype = ExternalFieldInitType::Parser;
         m_Exfield_partparser = mypc.m_Ex_particle_parser->compile<4>();
         m_Eyfield_partparser = mypc.m_Ey_particle_parser->compile<4>();
         m_Ezfield_partparser = mypc.m_Ez_particle_parser->compile<4>();
@@ -60,7 +60,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
 
     if (mypc.m_B_ext_particle_s == "parse_b_ext_particle_function")
     {
-        m_Btype = Parser;
+        m_Btype = ExternalFieldInitType::Parser;
         m_Bxfield_partparser = mypc.m_Bx_particle_parser->compile<4>();
         m_Byfield_partparser = mypc.m_By_particle_parser->compile<4>();
         m_Bzfield_partparser = mypc.m_Bz_particle_parser->compile<4>();
