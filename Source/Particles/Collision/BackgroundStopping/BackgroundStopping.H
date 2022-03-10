@@ -31,10 +31,11 @@ public:
     /** Perform the stopping calculation
      *
      * @param cur_time Current time
+     * @param dt Time step size
      * @param mypc Container of species involved
      *
      */
-    void doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc) override;
+    void doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleContainer* mypc) override;
 
     /** Perform the stopping calculation within a tile for stopping on electrons
      *
