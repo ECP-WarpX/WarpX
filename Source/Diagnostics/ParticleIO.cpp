@@ -9,12 +9,12 @@
 
 #include "Particles/ParticleIO.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/ParticleBuffer.H"
 #include "Particles/PhysicalParticleContainer.H"
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/RigidInjectedParticleContainer.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -152,10 +152,11 @@ MultiParticleContainer::Restart (const std::string& dir)
         for (auto const& comp : pc->getParticleRuntimeComps()) {
             auto search = std::find(real_comp_names.begin(), real_comp_names.end(), comp.first);
             if (search == real_comp_names.end()) {
-                std::stringstream ss;
-                ss << "Species " << species_names[i] << "needs runtime real component " << comp.first;
-                ss << ", but it was not found in the checkpoint file. \n";
-                amrex::Abort(ss.str());
+                amrex::Abort(Utils::TextMsg::Err(
+                    "Species " + species_names[i]
+                    + "needs runtime real component " +  comp.first
+                    + ", but it was not found in the checkpoint file."
+                ));
             }
         }
 
@@ -164,9 +165,11 @@ MultiParticleContainer::Restart (const std::string& dir)
             auto current_comp_names = pc->getParticleComps();
             auto search = current_comp_names.find(comp_name);
             if (search == current_comp_names.end()) {
-                amrex::Print() << "Runtime real component " << comp_name
-                               << " was found in the checkpoint file, but it has not been added yet. "
-                               << " Adding it now. \n";
+                amrex::Print() << Utils::TextMsg::Info(
+                    "Runtime real component " + comp_name
+                    + " was found in the checkpoint file, but it has not been added yet. "
+                    + " Adding it now."
+                );
                 pc->AddRealComp(comp_name);
             }
         }
@@ -196,9 +199,11 @@ MultiParticleContainer::Restart (const std::string& dir)
             auto current_comp_names = pc->getParticleiComps();
             auto search = current_comp_names.find(comp_name);
             if (search == current_comp_names.end()) {
-                amrex::Print() << "Runtime int component " << comp_name
-                               << " was found in the checkpoint file, but it has not been added yet. "
-                               << " Adding it now. \n";
+                amrex::Print()<< Utils::TextMsg::Info(
+                    "Runtime int component " + comp_name
+                    + " was found in the checkpoint file, but it has not been added yet. "
+                    + " Adding it now."
+                );
                 pc->AddIntComp(comp_name);
             }
         }

@@ -116,17 +116,21 @@ public:
     * @param[in] mcc_process an MCCProcess object associated with the ionization
     * @param[in] mass colliding particle's mass (could also assume electron)
     * @param[in] total_collision_prob total probability for a collision to occur
-    * @param[in] nu_max_norm normalized maximum collision frequency, normalized
-    *            by the neutral density.
+    * @param[in] nu_max maximum collision frequency
+    * @param[in] n_a_func ParserExecutor<4> function to get the background
+                 density in m^-3 as a function of space and time
+    * @param[in] t the current simulation time
     */
     ImpactIonizationFilterFunc(
         MCCProcess const& mcc_process,
         amrex::Real const mass,
         amrex::Real const total_collision_prob,
-        amrex::Real const nu_max_norm
+        amrex::Real const nu_max,
+        amrex::ParserExecutor<4> const& n_a_func,
+        amrex::Real t
     ) : m_mcc_process(mcc_process.executor()), m_mass(mass),
         m_total_collision_prob(total_collision_prob),
-        m_nu_max_norm(nu_max_norm){ }
+        m_nu_max(nu_max), m_n_a_func(n_a_func), m_t(t) { }
 
     /**
     * \brief Functor call. This method determines if a given (electron) particle
@@ -149,6 +153,14 @@ public:
         // determine if this particle should collide
         if (Random(engine) > m_total_collision_prob) return false;
 
+        // get references to the particle to get its position
+        const auto& p = ptd.getSuperParticle(i);
+        ParticleReal x, y, z;
+        get_particle_position(p, x, y, z);
+
+        // calculate neutral density at particle location
+        const Real n_a = m_n_a_func(x, y, z, m_t);
+
         // get the particle velocity
         const ParticleReal ux = ptd.m_rdata[PIdx::ux][i];
         const ParticleReal uy = ptd.m_rdata[PIdx::uy][i];
@@ -163,7 +175,7 @@ public:
         const Real sigma_E = m_mcc_process.getCrossSection(E_coll);
 
         // calculate normalized collision frequency
-        const Real nu_i = sigma_E * v_coll / m_nu_max_norm;
+        const Real nu_i = n_a * sigma_E * v_coll / m_nu_max;
 
         // check if this collision should be performed
         return (Random(engine) <= nu_i);
@@ -173,7 +185,9 @@ private:
     MCCProcess::Executor m_mcc_process;
     amrex::Real m_mass;
     amrex::Real m_total_collision_prob = 0;
-    amrex::Real m_nu_max_norm;
+    amrex::Real m_nu_max;
+    amrex::ParserExecutor<4> m_n_a_func;
+    amrex::Real m_t;
 };
 
 
@@ -196,13 +210,17 @@ public:
     *
     * @param[in] energy_cost energy cost of ionization
     * @param[in] mass1 mass of the colliding species
-    * @param[in] standard deviation of ion velocity distribution for each velocity
-                 direction; for a Maxwellian distribution it should equal sqrt(kB*T/m)
+    * @param[in] sqrt_kb_m value of sqrt(kB/m), where kB is Boltzmann's constant
+                 and m is the background neutral mass
+    * @param[in] T_a_func ParserExecutor<4> function to get the background
+                 temperature in Kelvin as a function of space and time
+    * @param[in] t the current simulation time
     */
     ImpactIonizationTransformFunc(
-        amrex::Real energy_cost, amrex::Real mass1, amrex::Real ion_vel_std
+        amrex::Real energy_cost, amrex::Real mass1, amrex::Real sqrt_kb_m,
+        amrex::ParserExecutor<4> const& T_a_func, amrex::Real t
     ) :  m_energy_cost(energy_cost), m_mass1(mass1),
-         m_ion_vel_std(ion_vel_std) { }
+         m_sqrt_kb_m(sqrt_kb_m), m_T_a_func(T_a_func), m_t(t) { }
 
     /**
     * \brief Functor call. It determines the properties of the generated pair
@@ -226,6 +244,15 @@ public:
     {
         using namespace amrex;
         using std::sqrt;
+
+        // get references to the particle to get its position
+        const auto& p = src.getSuperParticle(i_src);
+        ParticleReal x, y, z;
+        get_particle_position(p, x, y, z);
+
+        // calculate standard deviation in neutral velocity distribution using
+        // the local temperature
+        const Real ion_vel_std = m_sqrt_kb_m * sqrt(m_T_a_func(x, y, z, m_t));
 
         // get references to the original particle's velocity
         auto& ux = src.m_rdata[PIdx::ux][i_src];
@@ -257,14 +284,16 @@ public:
         ParticleUtils::RandomizeVelocity(e_ux, e_uy, e_uz, vp, engine);
 
         // get velocities for the ion from a Maxwellian distribution
-        i_ux = m_ion_vel_std * RandomNormal(0_prt, 1.0_prt, engine);
-        i_uy = m_ion_vel_std * RandomNormal(0_prt, 1.0_prt, engine);
-        i_uz = m_ion_vel_std * RandomNormal(0_prt, 1.0_prt, engine);
+        i_ux = ion_vel_std * RandomNormal(0_prt, 1.0_prt, engine);
+        i_uy = ion_vel_std * RandomNormal(0_prt, 1.0_prt, engine);
+        i_uz = ion_vel_std * RandomNormal(0_prt, 1.0_prt, engine);
     }
 
 private:
     amrex::Real m_energy_cost;
     amrex::Real m_mass1;
-    amrex::Real m_ion_vel_std;
+    amrex::Real m_sqrt_kb_m;
+    amrex::ParserExecutor<4> m_T_a_func;
+    amrex::Real m_t;
 };
 #endif // WARPX_PARTICLES_COLLISION_MCC_SCATTERING_H_

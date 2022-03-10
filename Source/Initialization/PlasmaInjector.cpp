@@ -15,6 +15,7 @@
 #include "Initialization/InjectorMomentum.H"
 #include "Initialization/InjectorPosition.H"
 #include "Particles/SpeciesPhysicalProperties.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
@@ -55,6 +56,8 @@ PlasmaInjector::PlasmaInjector () {}
 PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     : species_id(ispecies), species_name(name)
 {
+    using namespace amrex::literals;
+
     amrex::ParmParse pp_species_name(species_name);
 
 #ifdef AMREX_USE_GPU
@@ -67,7 +70,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #endif
 
     pp_species_name.query("radially_weighted", radially_weighted);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
 
     // Unlimited boundaries
     xmin = std::numeric_limits<amrex::Real>::lowest();
@@ -183,7 +186,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         getArrWithParser(pp_species_name, "multiple_particles_vel_y", multiple_particles_vel_y);
         getArrWithParser(pp_species_name, "multiple_particles_vel_z", multiple_particles_vel_z);
         getArrWithParser(pp_species_name, "multiple_particles_weight", multiple_particles_weight);
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             ((multiple_particles_pos_x.size() == multiple_particles_pos_y.size()) &&
              (multiple_particles_pos_x.size() == multiple_particles_pos_z.size()) &&
              (multiple_particles_pos_x.size() == multiple_particles_vel_x.size()) &&
@@ -211,6 +214,19 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         pp_species_name.query("do_symmetrize", do_symmetrize);
         gaussian_beam = true;
         parseMomentum(pp_species_name);
+#if defined(WARPX_DIM_XZ)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( y_rms > 0._rt,
+        "Error: Gaussian beam y_rms must be strictly greater than 0 in 2D "
+        "(it is used when computing the particles' weights from the total beam charge)");
+#elif defined(WARPX_DIM_1D_Z)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( x_rms > 0._rt,
+        "Error: Gaussian beam x_rms must be strictly greater than 0 in 1D "
+        "(it is used when computing the particles' weights from the total beam charge)");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( y_rms > 0._rt,
+        "Error: Gaussian beam y_rms must be strictly greater than 0 in 1D "
+        "(it is used when computing the particles' weights from the total beam charge)");
+#endif
+
     }
     // Depending on injection type at runtime, initialize inj_pos
     // so that inj_pos->getPositionUnitBox calls
@@ -219,7 +235,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell);
 #if WARPX_DIM_RZ
         if (WarpX::n_rz_azimuthal_modes > 1) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell>=2*WarpX::n_rz_azimuthal_modes,
             "Error: For accurate use of WarpX cylindrical gemoetry the number "
             "of particles should be at least two times n_rz_azimuthal_modes "
@@ -237,7 +253,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell_real);
 #ifdef WARPX_DIM_RZ
         if (WarpX::n_rz_azimuthal_modes > 1) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_real>=2*WarpX::n_rz_azimuthal_modes,
             "Error: For accurate use of WarpX cylindrical geometry the number "
             "of particles should be at least two times n_rz_azimuthal_modes "
@@ -245,6 +261,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         }
 #endif
         getWithParser(pp_species_name, "surface_flux_pos", surface_flux_pos);
+        queryWithParser(pp_species_name, "flux_tmin", flux_tmin);
+        queryWithParser(pp_species_name, "flux_tmax", flux_tmax);
         std::string flux_normal_axis_string;
         pp_species_name.get("flux_normal_axis", flux_normal_axis_string);
         flux_normal_axis = -1;
@@ -281,10 +299,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         std::string flux_normal_axis_help = "'z'.";
 #    endif
 #endif
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(flux_normal_axis >= 0,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flux_normal_axis >= 0,
             "Error: Invalid value for flux_normal_axis. It must be " + flux_normal_axis_help);
         pp_species_name.get("flux_direction", flux_direction);
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(flux_direction == +1 || flux_direction == -1,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flux_direction == +1 || flux_direction == -1,
             "Error: flux_direction must be -1 or +1.");
         // Construct InjectorPosition with InjectorPositionRandom.
         h_inj_pos = std::make_unique<InjectorPosition>(
@@ -315,7 +333,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #endif
 #if WARPX_DIM_RZ
         if (WarpX::n_rz_azimuthal_modes > 1) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell_each_dim[1]>=2*WarpX::n_rz_azimuthal_modes,
             "Error: For accurate use of WarpX cylindrical geometry the number "
             "of particles in the theta direction should be at least two times "
@@ -351,23 +369,23 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             m_openpmd_input_series = std::make_unique<openPMD::Series>(
                 str_injection_file, openPMD::Access::READ_ONLY);
 
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 m_openpmd_input_series->iterations.size() == 1u,
                 "External file should contain only 1 iteration\n");
             openPMD::Iteration it = m_openpmd_input_series->iterations.begin()->second;
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 it.particles.size() == 1u,
                 "External file should contain only 1 species\n");
             std::string const ps_name = it.particles.begin()->first;
             openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ps.contains("charge") || charge_is_specified || species_is_specified,
                 std::string("'") + ps_name +
                 ".injection_file' does not contain a 'charge' species record. "
                 "Please specify '" + ps_name + ".charge' or "
                 "'" + ps_name + ".species_type' in your input file!\n");
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 ps.contains("mass") || mass_is_specified || species_is_specified,
                 std::string("'") + ps_name +
                 ".injection_file' does not contain a 'mass' species record. "
@@ -564,7 +582,7 @@ void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussian*)nullptr,
                                              ux_m, uy_m, uz_m, ux_th, uy_th, uz_th));
     } else if (mom_dist_s == "gaussianflux") {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(surface_flux,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(surface_flux,
             "Error: gaussianflux can only be used with injection_style = NFluxPerCell");
         amrex::Real ux_m = 0._rt;
         amrex::Real uy_m = 0._rt;

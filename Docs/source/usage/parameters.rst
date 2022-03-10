@@ -610,9 +610,11 @@ Particle initialization
       The density specified by the density profile is interpreted to have the units of #/m^2/s.
       This requires the additional parameters:
       ``<species_name>.surface_flux_pos`` (`double`, location of the injection plane [meter])
-      ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r` or `z` for RZ)
+      ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r`, `t`, or `z` for RZ. When `flux_normal_axis` is `r` or `t`, the `x` and `y` components of the user-specified momentum distribution are interpreted as the `r` and `t` components respectively)
       ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
       ``<species_name>.num_particles_per_cell`` (`double`)
+      ``<species_name>.flux_tmin`` (`double`, Optional time at which the flux will be turned on. Ignored when negative.)
+      ``<species_name>.flux_tmax`` (`double`, Optional time at which the flux will be turned off. Ignored when negative.)
 
     * ``none``: Do not inject macro-particles (for example, in a simulation that starts with neutral, ionizable atoms, one may want to create the electrons species -- where ionized electrons can be stored later on -- without injecting electron macro-particles).
 
@@ -813,7 +815,7 @@ Particle initialization
 
       .. math::
 
-          n = n_0 n(x,y) n(z)
+          n = n_0 n(x,y) n(z-z_0)
 
       with
 
@@ -822,7 +824,7 @@ Particle initialization
           n(x,y) = 1 + 4\frac{x^2+y^2}{k_p^2 R_c^4}
 
       where :math:`k_p` is the plasma wavenumber associated with density :math:`n_0`.
-      Here, :math:`n(z)` is a cosine-like up-ramp from :math:`0` to :math:`L_{ramp,up}`,
+      Here, with :math:`z_0` as the start of the plasma, :math:`n(z-z_0)` is a cosine-like up-ramp from :math:`0` to :math:`L_{ramp,up}`,
       constant to :math:`1` from :math:`L_{ramp,up}` to :math:`L_{ramp,up} + L_{plateau}`
       and a cosine-like down-ramp from :math:`L_{ramp,up} + L_{plateau}` to
       :math:`L_{ramp,up} + L_{plateau}+L_{ramp,down}`. All parameters are given
@@ -833,7 +835,7 @@ Particle initialization
 
     * If ``species_name.predefined_profile_name`` is ``parabolic_channel``,
       ``predefined_profile_params`` contains a space-separated list of the
-      following parameters, in this order: :math:`L_{ramp,up}` :math:`L_{plateau}`
+      following parameters, in this order: :math:`z_0` :math:`L_{ramp,up}` :math:`L_{plateau}`
       :math:`L_{ramp,down}` :math:`R_c` :math:`n_0`
 
 * ``<species_name>.do_backward_propagation`` (`bool`)
@@ -918,7 +920,7 @@ Particle initialization
     boosted frame, whether or not to plot back-transformed diagnostics for
     this species.
 
-* ``warpx.serialize_ics`` (`0` or `1`) optional (default `0`)
+* ``warpx.serialize_initial_conditions`` (`0` or `1`) optional (default `0`)
     Serialize the initial conditions for reproducible testing.
     Mainly whether or not to use OpenMP threading for particle initialization.
 
@@ -1355,14 +1357,7 @@ External fields
 Collision initialization
 ------------------------
 
-WarpX provides a relativistic elastic Monte Carlo binary Coulomb collision model,
-following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
-When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
-since the current implementation of the collision module assumes axisymmetry.
-A non-relativistic Monte Carlo treatment for particles colliding
-with a neutral, uniform background gas is also available. The implementation follows the so-called
-null collision strategy discussed for example in `Birdsall (IEEE Transactions on
-Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/document/106800>`_.
+WarpX provides several particle collions models, using varying degrees of approximation.
 
 * ``collisions.collision_names`` (`strings`, separated by spaces)
     The name of each collision type.
@@ -1370,8 +1365,21 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
     in this documentation we use ``<collision_name>`` as a placeholder.
 
 * ``<collision_name>.type`` (`string`) optional
-    The type of collsion. The types implemented are ``pairwisecoulomb`` for pairwise Coulomb collisions and
-    ``background_mcc`` for collisions between particles and a neutral background. If not specified, it defaults to ``pairwisecoulomb``.
+    The type of collsion. The types implemented are:
+
+    - ``pairwisecoulomb`` for pairwise Coulomb collisions, the default if unspecified.
+      This provides a pair-wise relativistic elastic Monte Carlo binary Coulomb collision model,
+      following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+      When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
+      since the current implementation of the collision module assumes axisymmetry.
+    - ``background_mcc`` for collisions between particles and a neutral background.
+      This is a non-relativistic Monte Carlo treatment for particles colliding
+      with a neutral, uniform background gas. The implementation follows the so-called
+      null collision strategy discussed for example in `Birdsall (IEEE Transactions on
+      Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/document/106800>`_.
+    - ``background_stopping`` for slowing of ions due to collisions with electrons or ions.
+      This implements the approximate formulae as derived in Introduction to Plasma Physics,
+      from Goldston and Rutherford, section 14.2.
 
 * ``<collision_name>.species`` (`strings`)
     If using ``pairwisecoulomb`` type this should be the names of two species,
@@ -1397,15 +1405,57 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
     Execute collision every # time steps. The default value is 1.
 
 * ``<collision_name>.background_density`` (`float`)
-    Only for ``background_mcc``. The density of the neutral background gas in :math:`m^{-3}`.
+    Only for ``background_mcc`` and ``background_stopping``. The density of the background in :math:`m^{-3}`.
+    Can also provide ``<collision_name>.background_density(x,y,z,t)`` using the parser
+    initialization style for spatially and temporally varying density. With ``background_mcc``, if a function
+    is used for the background density, the input parameter ``<collision_name>.max_background_density``
+    must also be provided to calculate the maximum collision probability.
 
 * ``<collision_name>.background_temperature`` (`float`)
-    Only for ``background_mcc``. The temperature of the neutral background gas in Kelvin.
+    Only for ``background_mcc`` and ``background_stopping``. The temperature of the background in Kelvin.
+    Can also provide ``<collision_name>.background_temperature(x,y,z,t)`` using the parser
+    initialization style for spatially and temporally varying temperature.
 
 * ``<collision_name>.background_mass`` (`float`) optional
-    Only for ``background_mcc``. The mass of the background gas in kg. If not
-    given the mass of the colliding species will be used unless ionization is
+    Only for ``background_mcc`` and ``background_stopping``. The mass of the background gas in kg.
+    With ``background_mcc``, if not given the mass of the colliding species will be used unless ionization is
     included in which case the mass of the product species will be used.
+    With ``background_stopping``, and ``background_type`` set to ``electrons``, if not given defaults to the electron mass. With
+    ``background_type`` set to ``ions``, the mass must be given.
+
+* ``<collision_name>.background_charge_state`` (`float`)
+    Only for ``background_stopping``, where it is required when ``background_type`` is set to ``ions``.
+    This specifies the charge state of the background ions.
+
+* ``<collision_name>.background_type`` (`string`)
+    Only for ``background_stopping``, where it is required, the type of the background.
+    The possible values are ``electrons`` and ``ions``. When ``electrons``, equation 14.12 from Goldston and Rutherford is used.
+    This formula is based on Coulomb collisions with the approximations that :math:`M_b >> m_e` and :math:`V << v_{thermal\_e}`,
+    and the assumption that the electrons have a Maxwellian distribution with temperature :math:`T_e`.
+
+    .. math::
+        \frac{dV}{dt} = - \frac{2^{1/2}n_eZ_b^2e^4m_e^{1/2}\log\Lambda}{12\pi^{3/2}\epsilon_0M_bT_e^{3/2}}V
+
+    where :math:`V` is each velocity component, :math:`n_e` is the background density, :math:`Z_b` is the ion charge state,
+    :math:`e` is the electron charge, :math:`m_e` is the background mass, :math:`\log\Lambda=\log((12\pi/Z_b)(n_e\lambda_{de}^3))`,
+    :math:`\lambda_{de}` is the DeBye length, and :math:`M_b` is the ion mass.
+    The equation is integrated over a time step, giving :math:`V(t+dt) = V(t)*\exp(-\alpha*{dt})`
+    where :math:`\alpha` is the factor multiplying :math:`V`.
+
+    When ``ions``, equation 14.20 is used.
+    This formula is based on Coulomb collisions with the approximations that :math:`M_b >> M` and :math:`V >> v_{thermal\_i}`.
+    The background ion temperature only appears in the :math:`\log\Lambda` term.
+
+    .. math::
+        \frac{dW_b}{dt} = - \frac{2^{1/2}n_iZ^2Z_b^2e^4M_b^{1/2}\log\Lambda}{8\pi\epsilon_0MW_b^{1/2}}
+
+    where :math:`W_b` is the ion energy, :math:`n_i` is the background density,
+    :math:`Z` is the charge state of the background ions, :math:`Z_b` is the ion charge state,
+    :math:`e` is the electron charge, :math:`M_b` is the ion mass, :math:`\log\Lambda=\log((12\pi/Z_b)(n_i\lambda_{di}^3))`,
+    :math:`\lambda_{di}` is the DeBye length, and :math:`M` is the background ion mass.
+    The equation is integrated over a time step, giving :math:`W_b(t+dt) = ((W_b(t)^{3/2}) - 3/2\beta{dt})^{2/3}`
+    where :math:`\beta` is the term on the r.h.s except :math:`W_b`.
+
 
 * ``<collision_name>.scattering_processes`` (`strings` separated by spaces)
     Only for ``background_mcc``. The MCC scattering processes that should be
@@ -1894,6 +1944,21 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
         <diag_name>.adios2_operator.type = zfp
         <diag_name>.adios2_operator.parameters.precision = 3
 
+* ``<diag_name>.adios2_engine.type`` (``bp4``, ``sst``, ``ssc``, ``dataman``) optional,
+    `ADIOS2 Engine type <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    See full list of engines at `ADIOS2 readthedocs <https://adios2.readthedocs.io/en/latest/engines/engines.html>`__
+
+* ``<diag_name>.adios2_engine.parameters.*`` optional,
+    `ADIOS2 Engine parameters <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+
+    An example for parameters for the BP engine are setting the number of writers (``NumAggregators``), transparently redirecting data to burst buffers etc.
+    A detailed list of engine-specific parameters are available at the official `ADIOS2 documentation <https://adios2.readthedocs.io/en/latest/engines/engines.html>`__
+
+    .. code-block:: text
+
+        <diag_name>.adios2_engine.parameter.NumAggregators = 2048
+        <diag_name>.adios2_engine.parameters.BurstBufferPath="/mnt/bb/username"
+
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
     Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe.
@@ -1924,7 +1989,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 * ``<diag_name>.file_prefix`` (`string`) optional (default `diags/<diag_name>`)
     Root for output file names. Supports sub-directories.
 
-* ``<diag_name>.file_min_digits`` (`int`) optional (default `5`)
+* ``<diag_name>.file_min_digits`` (`int`) optional (default `6`)
     The minimum number of digits used for the iteration number appended to the diagnostic file names.
 
 * ``<diag_name>.diag_lo`` (list `float`, 1 per dimension) optional (default `-infinity -infinity -infinity`)
@@ -2200,6 +2265,7 @@ Reduced Diagnostics
         **Plane**: probe a 2 dimensional plane of points to create a square plane detector.
         Initial input parameters ``x_probe``, ``y_probe``, and ``z_probe`` designate the center of the detector.
         The detector plane is normal to a vector specified by ``<reduced_diags_name>.target_normal_x``, ``<reduced_diags_name>.target_normal_y``, and ``<reduced_diags_name>.target_normal_z``.
+        Note that it is not necessary to specify the ``target_normal`` vector in a 2D simulation (the only supported normal is in ``y``).
         The top of the plane is perpendicular to an "up" vector denoted by ``<reduced_diags_name>.target_up_x``, ``<reduced_diags_name>.target_up_y``, and ``<reduced_diags_name>.target_up_z``.
         The detector has a square radius to be determined by ``<reduced_diags_name>.detector_radius``.
         Similarly to the line detector, the plane detector requires a resolution ``<reduced_diags_name>.resolution``, which denotes the number of detector particles along each side of the square detector.
@@ -2223,6 +2289,11 @@ Reduced Diagnostics
         otherwise it is set to ``1``.
         Integrated electric and magnetic field components can instead be obtained by specifying
         ``<reduced_diags_name>.integrate == true``.
+
+        .. warning::
+
+           The FieldProbe reduced diagnostic does not yet add a Lorentz back transformation for boosted frame simulations.
+           Thus, it records field data in the boosted frame, not (yet) in the lab frame.
 
     * ``RhoMaximum``
         This type computes the maximum and minimum values of the total charge density as well as

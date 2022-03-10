@@ -64,6 +64,9 @@ class CapacitiveDischargeExample(object):
         if self.test:
             self.max_steps = 20
             self.diag_steps = 5
+            self.mcc_subcycling_steps = 2
+        else:
+            self.mcc_subcycling_steps = None
 
         self.rho_wrapper = None
         self.ion_density_array = np.zeros(self.nz + 1)
@@ -129,6 +132,7 @@ class CapacitiveDischargeExample(object):
             background_density=self.gas_density,
             background_temperature=self.gas_temp,
             background_mass=self.ions.mass,
+            ndt=self.mcc_subcycling_steps,
             scattering_processes={
                 'elastic' : {
                     'cross_section' : cross_sec_direc+'electron_scattering.dat'
@@ -154,6 +158,7 @@ class CapacitiveDischargeExample(object):
             species=self.ions,
             background_density=self.gas_density,
             background_temperature=self.gas_temp,
+            ndt=self.mcc_subcycling_steps,
             scattering_processes={
                 'elastic' : {
                     'cross_section' : cross_sec_direc+'ion_scattering.dat'

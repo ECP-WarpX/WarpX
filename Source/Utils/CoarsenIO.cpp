@@ -1,5 +1,7 @@
 #include "CoarsenIO.H"
 
+#include "Utils/TextMsg.H"
+
 #include <AMReX_BLProfiler.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
@@ -29,10 +31,10 @@ CoarsenIO::Loop ( MultiFab& mf_dst,
     const IntVect stag_src = mf_src.boxArray().ixType().toIntVect();
     const IntVect stag_dst = mf_dst.boxArray().ixType().toIntVect();
 
-    if ( crse_ratio > IntVect(1) ) AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ngrowvect == IntVect(0),
+    if ( crse_ratio > IntVect(1) ) WARPX_ALWAYS_ASSERT_WITH_MESSAGE( ngrowvect == IntVect(0),
         "option of filling guard cells of destination MultiFab with coarsening not supported for this interpolation" );
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_src.nGrowVect() >= stag_dst-stag_src+ngrowvect,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( mf_src.nGrowVect() >= stag_dst-stag_src+ngrowvect,
         "source fine MultiFab does not have enough guard cells for this interpolation" );
 
     // Auxiliary integer arrays (always 3D)
@@ -127,7 +129,7 @@ CoarsenIO::Coarsen ( MultiFab& mf_dst,
 
     // Convert BoxArray of source MultiFab to staggering of destination MultiFab and coarsen it
     BoxArray ba_tmp = amrex::convert( mf_src.boxArray(), mf_dst.ixType().toIntVect() );
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ba_tmp.coarsenable( crse_ratio ),
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( ba_tmp.coarsenable( crse_ratio ),
         "source MultiFab converted to staggering of destination MultiFab is not coarsenable" );
     ba_tmp.coarsen( crse_ratio );
 

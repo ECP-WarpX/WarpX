@@ -3,9 +3,9 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Particles/ParticleBuffer.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
 #include "Utils/Interpolate.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -65,7 +65,7 @@ FlushFormatPlotfile::WriteToFile (
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
     const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
-    amrex::Print() << "  Writing plotfile " << filename << "\n";
+    amrex::Print() << Utils::TextMsg::Info("Writing plotfile " + filename);
 
     Vector<std::string> rfs;
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
@@ -302,7 +302,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-        auto tmp = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(pc);
+        auto tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
         if (isBTD) {
             PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
             tmp.SetParticleGeometry(0,pinned_pc->Geom(0));

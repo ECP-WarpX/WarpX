@@ -32,6 +32,7 @@
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/IonizationEnergiesTable.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -257,16 +258,15 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false
-    WarpXUtilMsg::AlwaysAssert(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !(do_classical_radiation_reaction &&
         !(AmIA<PhysicalSpecies::electron>() ||
         AmIA<PhysicalSpecies::positron>() )),
-        "ERROR: can't enable classical radiation reaction for non lepton species '"
-        + species_name + "'."
-    );
+        "can't enable classical radiation reaction for non lepton species '"
+            + species_name + "'.");
 
     //Only Boris pusher is compatible with radiation reaction
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !(do_classical_radiation_reaction &&
         WarpX::particle_pusher_algo != ParticlePusherAlgo::Boris),
         "Radiation reaction can be enabled only if Boris pusher is used");
@@ -535,7 +535,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 #ifdef WARPX_USE_OPENPMD
     //TODO: Make changes for read/write in multiple MPI ranks
     if (ParallelDescriptor::IOProcessor()) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(plasma_injector,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(plasma_injector,
                                          "AddPlasmaFromFile: plasma injector not initialized.\n");
         // take ownership of the series and close it when done
         auto series = std::move(plasma_injector->m_openpmd_input_series);
@@ -750,18 +750,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     const auto dx = geom.CellSizeArray();
     const auto problo = geom.ProbLoArray();
 
-    Real scale_fac = 0.0_rt;
-
-    if(num_ppc != 0){
-#if defined(WARPX_DIM_3D)
-        scale_fac = dx[0]*dx[1]*dx[2]/num_ppc;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        scale_fac = dx[0]*dx[1]/num_ppc;
-#elif defined(WARPX_DIM_1D_Z)
-        scale_fac = dx[0]/num_ppc;
-#endif
-    }
-
     defineAllParticleTiles();
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
@@ -803,7 +791,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     }
 #ifdef AMREX_USE_OMP
     info.SetDynamic(true);
-#pragma omp parallel if (not WarpX::serialize_ics)
+#pragma omp parallel if (not WarpX::serialize_initial_conditions)
 #endif
     for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
     {
@@ -877,7 +865,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             {
                 auto index = overlap_box.index(iv);
                 if (lrefine_injection) {
-                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, shifted);
+                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, -shifted);
                     if (fine_overlap_box.ok()) {
                         int r = (fine_overlap_box.contains(iv)) ?
                             AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac) : 1;
@@ -908,8 +896,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        WarpXUtilMsg::AlwaysAssert(static_cast<Long>(pid + max_new_particles) < LastParticleID,
-                                   "ERROR: overflow on particle id numbers");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            static_cast<Long>(pid + max_new_particles) < LastParticleID,
+            "ERROR: overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
 
@@ -952,7 +941,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
         int* pi = nullptr;
         if (do_field_ionization) {
-            pi = soa.GetIntData(particle_icomps["ionization_level"]).data() + old_size;
+            pi = soa.GetIntData(particle_icomps["ionizationLevel"]).data() + old_size;
         }
 
 #ifdef WARPX_QED
@@ -1004,6 +993,18 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             Real theta_offset = 0._rt;
             if (rz_random_theta) theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi;
 #endif
+
+            Real scale_fac = 0.0_rt;
+            if( pcounts[index] != 0) {
+#if defined(WARPX_DIM_3D)
+                scale_fac = dx[0]*dx[1]*dx[2]/pcounts[index];
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                scale_fac = dx[0]*dx[1]/pcounts[index];
+#elif defined(WARPX_DIM_1D_Z)
+                scale_fac = dx[0]/pcounts[index];
+#endif
+            }
+
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
                 long ip = poffset[index] + i_part;
@@ -1173,7 +1174,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
 
-                // Real weight = dens * scale_fac / (AMREX_D_TERM(fac, *fac, *fac));
                 Real weight = dens * scale_fac;
 #ifdef WARPX_DIM_RZ
                 if (radially_weighted) {
@@ -1398,7 +1398,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             {
                 auto index = overlap_box.index(iv);
                 if (lrefine_injection) {
-                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, shifted);
+                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, -shifted);
                     if (fine_overlap_box.ok()) {
                         int r = (fine_overlap_box.contains(iv)) ?
                             AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac) : 1;
@@ -1428,8 +1428,9 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        WarpXUtilMsg::AlwaysAssert(static_cast<Long>(pid + max_new_particles) < LastParticleID,
-                                   "ERROR: overflow on particle id numbers");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            static_cast<Long>(pid + max_new_particles) < LastParticleID,
+            "overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
 
@@ -1448,7 +1449,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
         int* p_ion_level = nullptr;
         if (do_field_ionization) {
-            p_ion_level = soa.GetIntData(particle_icomps["ionization_level"]).data() + old_size;
+            p_ion_level = soa.GetIntData(particle_icomps["ionizationLevel"]).data() + old_size;
         }
 
 #ifdef WARPX_QED
@@ -1559,8 +1560,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Rotate the position
                 pos.x = xb*cos_theta;
                 pos.y = xb*sin_theta;
-                if ( (inj_mom->type == InjectorMomentum::Type::gaussianflux) &&
-                     (loc_flux_normal_axis != 2) ) {
+                if (loc_flux_normal_axis != 2) {
                     // Rotate the momentum
                     // This because, when the flux direction is e.g. "r"
                     // the `inj_mom` objects generates a v*Gaussian distribution
@@ -1607,8 +1607,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 }
 #endif
 
-                // Real weight = dens * scale_fac / (AMREX_D_TERM(fac, *fac, *fac));
-                Real weight = dens * scale_fac * dt;
+                Real weight = dens * scale_fac * dt * num_ppc_real / pcounts[index];
 #ifdef WARPX_DIM_RZ
                 // The particle weight is proportional to the user-specified
                 // flux (denoted as `dens` here) and the emission surface within
@@ -1745,8 +1744,8 @@ PhysicalParticleContainer::Evolve (int lev,
 
             const Box& box = pti.validbox();
 
+            // Extract particle data
             auto& attribs = pti.GetAttribs();
-
             auto&  wp = attribs[PIdx::w];
             auto& uxp = attribs[PIdx::ux];
             auto& uyp = attribs[PIdx::uy];
@@ -1791,7 +1790,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 //    and (thus) the `np-nfine_current`/`np-nfine_gather` last particles
                 //    deposit/gather in the buffer
                 PartitionParticlesInBuffers( nfine_current, nfine_gather, np,
-                    pti, lev, current_masks, gather_masks, uxp, uyp, uzp, wp );
+                    pti, lev, current_masks, gather_masks );
             }
 
             const long np_current = (cjx) ? nfine_current : np;
@@ -1800,7 +1799,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 // Deposit charge before particle push, in component 0 of MultiFab rho.
                 int* AMREX_RESTRICT ion_lev;
                 if (do_field_ionization){
-                    ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                    ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
                 } else {
                     ion_lev = nullptr;
                 }
@@ -1871,7 +1870,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 if (! skip_deposition) {
                     int* AMREX_RESTRICT ion_lev;
                     if (do_field_ionization){
-                        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                        ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
                     } else {
                         ion_lev = nullptr;
                     }
@@ -1894,7 +1893,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 if (WarpX::do_electrostatic == ElectrostaticSolverAlgo::None) {
                     int* AMREX_RESTRICT ion_lev;
                     if (do_field_ionization){
-                        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                        ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
                     } else {
                         ion_lev = nullptr;
                     }
@@ -2256,7 +2255,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization) {
-                ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
             }
 
             // Loop over the particles and update their momentum
@@ -2518,10 +2517,16 @@ PhysicalParticleContainer::ContinuousInjection (const RealBox& injection_box)
 /* \brief Inject a flux of particles during the simulation
  */
 void
-PhysicalParticleContainer::ContinuousFluxInjection (amrex::Real dt)
+PhysicalParticleContainer::ContinuousFluxInjection (amrex::Real t, amrex::Real dt)
 {
-    if (plasma_injector->surface_flux) {
-        AddPlasmaFlux(dt);
+    if (plasma_injector->surface_flux){
+        // Check the optional parameters for start and stop of injection
+        if ( ((plasma_injector->flux_tmin<0) || (t>=plasma_injector->flux_tmin)) &&
+             ((plasma_injector->flux_tmax<0) || (t< plasma_injector->flux_tmax)) ){
+
+            AddPlasmaFlux(dt);
+
+        }
     }
 }
 
@@ -2543,7 +2548,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                    amrex::Real dt, ScaleFields scaleFields,
                                    DtType a_dt_type)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
                                      (gather_lev==(lev  )),
                                      "Gather buffers only work for lev-1");
     // If no particles, do not do anything
@@ -2616,7 +2621,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     int* AMREX_RESTRICT ion_lev = nullptr;
     if (do_field_ionization) {
-        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr() + offset;
+        ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr() + offset;
     }
 
     const bool save_previous_position = m_save_previous_position;
@@ -2728,7 +2733,7 @@ PhysicalParticleContainer::InitIonizationModule ()
     pp_species_name.get("ionization_product_species", ionization_product_name);
     pp_species_name.get("physical_element", physical_element);
     // Add runtime integer component for ionization level
-    AddIntComp("ionization_level");
+    AddIntComp("ionizationLevel");
     // Get atomic number and ionization energies from file
     int const ion_element_id = ion_map_ids.at(physical_element);
     ion_atomic_number = ion_atomic_numbers[ion_element_id];
@@ -2797,7 +2802,7 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 adk_prefactor.dataPtr(),
                                 adk_exp_prefactor.dataPtr(),
                                 adk_power.dataPtr(),
-                                particle_icomps["ionization_level"],
+                                particle_icomps["ionizationLevel"],
                                 ion_atomic_number);
 }
 
@@ -2819,7 +2824,7 @@ void PhysicalParticleContainer::resample (const int timestep)
     WARPX_PROFILE_VAR_START(blp_resample_actual);
     if (m_resampler.triggered(timestep, global_numparts))
     {
-        amrex::Print() << "Resampling " << species_name << ".\n";
+        amrex::Print() << Utils::TextMsg::Info("Resampling " + species_name);
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)

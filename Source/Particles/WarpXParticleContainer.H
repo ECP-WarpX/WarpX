@@ -15,6 +15,7 @@
 #include "Evolve/WarpXDtType.H"
 #include "Particles/ParticleBoundaries.H"
 #include "SpeciesPhysicalProperties.H"
+#include "Utils/TextMsg.H"
 
 #ifdef WARPX_QED
 #    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
@@ -245,7 +246,7 @@ public:
     virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
 
     // Inject a continuous flux of particles from a defined plane
-    virtual void ContinuousFluxInjection(amrex::Real /*dt*/) {}
+    virtual void ContinuousFluxInjection(amrex::Real /*t*/, amrex::Real /*dt*/) {}
 
     ///
     /// This returns the total charge for all the particles in this ParticleContainer.
@@ -300,7 +301,8 @@ public:
             particle_runtime_comps[name] = NumRealComps() - PIdx::nattribs;
             AddRealComp(comm);
         } else {
-            amrex::Print() << name << " already exists in particle_comps, not adding. \n";
+            amrex::Print() << Utils::TextMsg::Info(
+                name + " already exists in particle_comps, not adding.");
         }
     }
 
@@ -312,7 +314,8 @@ public:
             particle_runtime_icomps[name] = NumIntComps() - 0;
             AddIntComp(comm);
         } else {
-            amrex::Print() << name << " already exists in particle_icomps, not adding. \n";
+            amrex::Print() << Utils::TextMsg::Info(
+                name + " already exists in particle_icomps, not adding.");
         }
     }
 

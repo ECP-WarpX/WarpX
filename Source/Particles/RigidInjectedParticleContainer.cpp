@@ -169,16 +169,25 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     auto& uyp = attribs[PIdx::uy];
     auto& uzp = attribs[PIdx::uz];
 
-    // Save the position and momenta, making copies
-    Gpu::DeviceVector<ParticleReal> xp_save, yp_save, zp_save;
-    RealVector uxp_save, uyp_save, uzp_save;
+    // Save the position, momentum and optical depth, making copies
+    amrex::Gpu::DeviceVector<ParticleReal> xp_save, yp_save, zp_save;
+    amrex::Gpu::DeviceVector<ParticleReal> uxp_save, uyp_save, uzp_save;
+#ifdef WARPX_QED
+    amrex::Gpu::DeviceVector<ParticleReal> optical_depth_save;
+#endif
 
     const auto GetPosition = GetParticlePosition(pti, offset);
           auto SetPosition = SetParticlePosition(pti, offset);
 
-    ParticleReal* const AMREX_RESTRICT ux = uxp.dataPtr() + offset;
-    ParticleReal* const AMREX_RESTRICT uy = uyp.dataPtr() + offset;
-    ParticleReal* const AMREX_RESTRICT uz = uzp.dataPtr() + offset;
+    amrex::ParticleReal* const AMREX_RESTRICT ux = uxp.dataPtr() + offset;
+    amrex::ParticleReal* const AMREX_RESTRICT uy = uyp.dataPtr() + offset;
+    amrex::ParticleReal* const AMREX_RESTRICT uz = uzp.dataPtr() + offset;
+
+#ifdef WARPX_QED
+    const bool loc_has_quantum_sync = has_quantum_sync();
+    amrex::ParticleReal* AMREX_RESTRICT p_optical_depth = nullptr;
+    amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_save = nullptr;
+#endif
 
     if (!done_injecting_lev)
     {
@@ -191,17 +200,26 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
         uyp_save.resize(np_to_push);
         uzp_save.resize(np_to_push);
 
-        amrex::Real* const AMREX_RESTRICT xp_save_ptr = xp_save.dataPtr();
-        amrex::Real* const AMREX_RESTRICT yp_save_ptr = yp_save.dataPtr();
-        amrex::Real* const AMREX_RESTRICT zp_save_ptr = zp_save.dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT xp_save_ptr = xp_save.dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT yp_save_ptr = yp_save.dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT zp_save_ptr = zp_save.dataPtr();
 
-        amrex::Real* const AMREX_RESTRICT uxp_save_ptr = uxp_save.dataPtr();
-        amrex::Real* const AMREX_RESTRICT uyp_save_ptr = uyp_save.dataPtr();
-        amrex::Real* const AMREX_RESTRICT uzp_save_ptr = uzp_save.dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT uxp_save_ptr = uxp_save.dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT uyp_save_ptr = uyp_save.dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT uzp_save_ptr = uzp_save.dataPtr();
+
+#ifdef WARPX_QED
+        if(loc_has_quantum_sync){
+            p_optical_depth = pti.GetAttribs(particle_comps["opticalDepthQSR"]).dataPtr()
+                              + offset;
+            optical_depth_save.resize(np_to_push);
+            p_optical_depth_save = optical_depth_save.dataPtr();
+        }
+#endif
 
         amrex::ParallelFor( np_to_push,
                             [=] AMREX_GPU_DEVICE (long i) {
-                                ParticleReal xp, yp, zp;
+                                amrex::ParticleReal xp, yp, zp;
                                 GetPosition(i, xp, yp, zp);
                                 xp_save_ptr[i] = xp;
                                 yp_save_ptr[i] = yp;
@@ -209,6 +227,10 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                 uxp_save_ptr[i] = ux[i];
                                 uyp_save_ptr[i] = uy[i];
                                 uzp_save_ptr[i] = uz[i];
+#ifdef WARPX_QED
+                                if(loc_has_quantum_sync){
+                                    p_optical_depth_save[i] = p_optical_depth[i];}
+#endif
                             });
     }
 
@@ -222,22 +244,22 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
 
     if (!done_injecting_lev) {
 
-        ParticleReal* AMREX_RESTRICT x_save = xp_save.dataPtr();
-        ParticleReal* AMREX_RESTRICT y_save = yp_save.dataPtr();
-        ParticleReal* AMREX_RESTRICT z_save = zp_save.dataPtr();
-        ParticleReal* AMREX_RESTRICT ux_save = uxp_save.dataPtr();
-        ParticleReal* AMREX_RESTRICT uy_save = uyp_save.dataPtr();
-        ParticleReal* AMREX_RESTRICT uz_save = uzp_save.dataPtr();
+        amrex::ParticleReal* AMREX_RESTRICT x_save = xp_save.dataPtr();
+        amrex::ParticleReal* AMREX_RESTRICT y_save = yp_save.dataPtr();
+        amrex::ParticleReal* AMREX_RESTRICT z_save = zp_save.dataPtr();
+        amrex::ParticleReal* AMREX_RESTRICT ux_save = uxp_save.dataPtr();
+        amrex::ParticleReal* AMREX_RESTRICT uy_save = uyp_save.dataPtr();
+        amrex::ParticleReal* AMREX_RESTRICT uz_save = uzp_save.dataPtr();
 
         // Undo the push for particles not injected yet.
         // The zp are advanced a fixed amount.
-        const Real z_plane_lev = zinject_plane_lev;
-        const Real vz_ave_boosted = vzbeam_ave_boosted;
+        const amrex::Real z_plane_lev = zinject_plane_lev;
+        const amrex::Real vz_ave_boosted = vzbeam_ave_boosted;
         const bool rigid = rigid_advance;
-        const Real inv_csq = 1._rt/(PhysConst::c*PhysConst::c);
+        constexpr amrex::Real inv_csq = 1._rt/(PhysConst::c*PhysConst::c);
         amrex::ParallelFor( np_to_push,
                             [=] AMREX_GPU_DEVICE (long i) {
-                                ParticleReal xp, yp, zp;
+                                amrex::ParticleReal xp, yp, zp;
                                 GetPosition(i, xp, yp, zp);
                                 if (zp <= z_plane_lev) {
                                     ux[i] = ux_save[i];
@@ -249,10 +271,15 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                         zp = z_save[i] + dt*vz_ave_boosted;
                                     }
                                     else {
-                                        const Real gi = 1._rt/std::sqrt(1._rt + (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])*inv_csq);
+                                        const amrex::Real gi = 1._rt/std::sqrt(1._rt + (ux[i]*ux[i]
+                                                             + uy[i]*uy[i] + uz[i]*uz[i])*inv_csq);
                                         zp = z_save[i] + dt*uz[i]*gi;
                                     }
                                     SetPosition(i, xp, yp, zp);
+#ifdef WARPX_QED
+                                    if(loc_has_quantum_sync){
+                                        p_optical_depth[i] = p_optical_depth_save[i];}
+#endif
                                 }
                             });
     }
@@ -361,7 +388,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization) {
-                ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
             }
 
             // Save the position and momenta, making copies

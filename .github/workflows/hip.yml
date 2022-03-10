@@ -19,6 +19,18 @@ jobs:
     - name: install dependencies
       shell: bash
       run: .github/workflows/dependencies/hip.sh
+    - name: CCache Cache
+      uses: actions/cache@v2
+      # - once stored under a key, they become immutable (even if local cache path content changes)
+      # - for a refresh the key has to change, e.g., hash of a tracked file in the key
+      with:
+        path: |
+          ~/.ccache
+          ~/.cache/ccache
+        key: ccache-hip-3dsp-${{ hashFiles('.github/workflows/hip.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+        restore-keys: |
+          ccache-hip-3dsp-${{ hashFiles('.github/workflows/hip.yml') }}-
+          ccache-hip-3dsp-
     - name: build WarpX
       shell: bash
       run: |
@@ -62,6 +74,18 @@ jobs:
     - name: install dependencies
       shell: bash
       run: .github/workflows/dependencies/hip.sh
+    - name: CCache Cache
+      uses: actions/cache@v2
+      # - once stored under a key, they become immutable (even if local cache path content changes)
+      # - for a refresh the key has to change, e.g., hash of a tracked file in the key
+      with:
+        path: |
+          ~/.ccache
+          ~/.cache/ccache
+        key: ccache-hip-2ddp-${{ hashFiles('.github/workflows/hip.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+        restore-keys: |
+          ccache-hip-2ddp-${{ hashFiles('.github/workflows/hip.yml') }}-
+          ccache-hip-2ddp-
     - name: build WarpX
       shell: bash
       run: |

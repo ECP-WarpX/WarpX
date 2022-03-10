@@ -75,6 +75,7 @@ checkpoint = picmi.Checkpoint(
     name = 'chkpoint',
     period = 5,
     write_dir = '.',
+    warpx_file_min_digits = 5,
     warpx_file_prefix = f'Python_restart_runtime_components_chk'
 )
 

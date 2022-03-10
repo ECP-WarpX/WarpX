@@ -13,6 +13,7 @@
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #endif
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -434,7 +435,7 @@ SigmaBox::ComputePMLFactorsB (const Real* a_dx, Real dt)
         p_sigma_star_cumsum_fac[idim] = sigma_star_cumsum_fac[idim].data();
         p_sigma_star[idim] = sigma_star[idim].data();
         p_sigma_star_cumsum[idim] = sigma_star_cumsum[idim].data();
-        N[idim] = sigma_star[idim].size();
+        N[idim] = static_cast<int>(sigma_star[idim].size());
         dx[idim] = a_dx[idim];
     }
     amrex::ParallelFor(
@@ -468,7 +469,7 @@ SigmaBox::ComputePMLFactorsE (const Real* a_dx, Real dt)
         p_sigma_cumsum_fac[idim] = sigma_cumsum_fac[idim].data();
         p_sigma[idim] = sigma[idim].data();
         p_sigma_cumsum[idim] = sigma_cumsum[idim].data();
-        N[idim] = sigma[idim].size();
+        N[idim] = static_cast<int>(sigma[idim].size());
         dx[idim] = a_dx[idim];
     }
     amrex::ParallelFor(
@@ -583,7 +584,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     IntVect ngf = IntVect(AMREX_D_DECL(ngf_int, ngf_int, ngf_int));
 
     if (do_moving_window) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(lev <= 1,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev <= 1,
             "The number of grow cells for the moving window currently assumes 2 levels max.");
         int rr = ref_ratio[WarpX::moving_window_dir];
         nge[WarpX::moving_window_dir] = std::max(nge[WarpX::moving_window_dir], rr);
@@ -723,10 +724,11 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 #   if(AMREX_SPACEDIM!=3)
         amrex::ignore_unused(noy_fft);
 #   endif
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                                         "PML: PSATD solver selected but not built.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+            "PML: PSATD solver selected but not built.");
 #else
         // Flags passed to the spectral solver constructor
+        const amrex::IntVect fill_guards = amrex::IntVect(0);
         const bool in_pml = true;
         const bool periodic_single_box = false;
         const bool update_with_rho = false;
@@ -738,7 +740,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+            nox_fft, noy_fft, noz_fft, do_nodal, fill_guards, v_galilean_zero,
             v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
             fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif
@@ -842,10 +844,11 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
             amrex::ignore_unused(dt);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                                             "PML: PSATD solver selected but not built.");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                "PML: PSATD solver selected but not built.");
 #else
             // Flags passed to the spectral solver constructor
+            const amrex::IntVect fill_guards = amrex::IntVect(0);
             const bool in_pml = true;
             const bool periodic_single_box = false;
             const bool update_with_rho = false;
@@ -857,7 +860,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
-                nox_fft, noy_fft, noz_fft, do_nodal, WarpX::fill_guards, v_galilean_zero,
+                nox_fft, noy_fft, noz_fft, do_nodal, fill_guards, v_galilean_zero,
                 v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
                 fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif
@@ -944,7 +947,7 @@ PML::MakeBoxArray_multiple (const amrex::Geometry& geom, const amrex::BoxArray& 
             // The check is only needed along the axis where PMLs are being used.
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                 if (do_pml_Lo[idim] || do_pml_Hi[idim]) {
-                    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                         grid_bx.length(idim) > ncell[idim],
                         "Consider using larger amr.blocking_factor with PMLs");
                 }
