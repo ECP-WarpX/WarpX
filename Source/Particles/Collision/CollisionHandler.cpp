@@ -6,7 +6,8 @@
  */
 #include "CollisionHandler.H"
 
-#include "BackgroundMCCCollision.H"
+#include "Particles/Collision/BackgroundMCC/BackgroundMCCCollision.H"
+#include "Particles/Collision/BackgroundStopping/BackgroundStopping.H"
 #include "Particles/Collision/BinaryCollision/Coulomb/PairWiseCoulombCollisionFunc.H"
 #include "Particles/Collision/BinaryCollision/BinaryCollision.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
@@ -47,6 +48,9 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
         }
         else if (type == "background_mcc") {
             allcollisions[i] = std::make_unique<BackgroundMCCCollision>(collision_names[i]);
+        }
+        else if (type == "background_stopping") {
+            allcollisions[i] = std::make_unique<BackgroundStopping>(collision_names[i]);
         }
         else if (type == "nuclearfusion") {
             allcollisions[i] =
