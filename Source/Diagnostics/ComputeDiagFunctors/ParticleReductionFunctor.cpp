@@ -63,16 +63,17 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::ParticleReal x = 0._rt, y = 0._rt, z = 0._rt;
                 amrex::Real lx, ly, lz;
                 int ii = 0, jj = 0, kk = 0;
-                // Always do x direction
+                // Always do x direction. No RZ case because it's not implemented, and code
+                // will have aborted
                 x = p.pos(0);
                 lx = (x - plo[0]) * dxi[0];
                 ii = static_cast<int>(amrex::Math::floor(lx));
-                if (AMREX_SPACEDIM >= 2) {
+                if (WARPX_DIM_XZ || WARPX_DIM_3D) {
                     y = p.pos(1);
                     ly = (y - plo[1]) * dxi[1];
                     jj = static_cast<int>(amrex::Math::floor(ly));
                 }
-                if (AMREX_SPACEDIM == 3) {
+                if (WARPX_DIM_3D) {
                     z = p.pos(2);
                     lz = (z - plo[2]) * dxi[2];
                     kk = static_cast<int>(amrex::Math::floor(lz));
@@ -102,12 +103,12 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 x = p.pos(0);
                 lx = (x - plo[0]) * dxi[0];
                 ii = static_cast<int>(amrex::Math::floor(lx));
-                if (AMREX_SPACEDIM >= 2) {
+                if (WARPX_DIM_XZ || WARPX_DIM_3D) {
                     y = p.pos(1);
                     ly = (y - plo[1]) * dxi[1];
                     jj = static_cast<int>(amrex::Math::floor(ly));
                 }
-                if (AMREX_SPACEDIM == 3) {
+                if (WARPX_DIM_3D) {
                     z = p.pos(2);
                     lz = (z - plo[2]) * dxi[2];
                     kk = static_cast<int>(amrex::Math::floor(lz));
