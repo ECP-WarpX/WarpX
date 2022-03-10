@@ -33,7 +33,7 @@ namespace TextMsg
     *   adding the '### ERROR: ' prefix and (by default) performing text wrapping
     *
     * @param[in] msg the string to be formatted
-    * @param[in] do_text_wrapping if true, the message is automatically wrapped
+    * @param[in] do_text_wrapping if true, the text of the message is automatically wrapped
     *
     * @return the formatted message
     */
@@ -44,7 +44,7 @@ namespace TextMsg
     *   adding the '### INFO: ' prefix and (by default) performing text wrapping
     *
     * @param[in] msg the string to be formatted
-    * @param[in] do_text_wrapping if true, the message is automatically wrapped
+    * @param[in] do_text_wrapping if true, the text of the message is automatically wrapped
     *
     * @return the formatted message
     */
@@ -57,7 +57,7 @@ namespace TextMsg
     *   dedicated, formatter.
     *
     * @param[in] msg the string to be formatted
-    * @param[in] do_text_wrapping if true, the message is automatically wrapped
+    * @param[in] do_text_wrapping if true, the text of the message is automatically wrapped
     *
     * @return the formatted message
     */
