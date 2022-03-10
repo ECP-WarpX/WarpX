@@ -160,7 +160,6 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         m_position[0] += (Z0_boost-m_Z0_lab)*m_nvec[0];
         m_position[1] += (Z0_boost-m_Z0_lab)*m_nvec[1];
         m_position[2] += (Z0_boost-m_Z0_lab)*m_nvec[2];
-        m_vz_antenna = (m_vz_antenna-WarpX::beta_boost)/(1._rt-WarpX::beta_boost*m_vz_antenna);
     }
 
     // The first polarization vector
