@@ -1920,7 +1920,9 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Note that the fields are averaged on the cell centers before they are written to file.
 
 * ``<diag_name>.particle_fields_to_plot`` (list of `strings`, optional)
-   Names of per-cell averages of particle properties to calculate and output. Default is none. Parser functions for these field names are specified by ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)``.
+   Names of per-cell averages of particle properties to calculate and output as additional fields.
+   Default is none.
+   Parser functions for these field names are specified by ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)``.
 
 * ``<diag_name>.particle_fields_species`` (list of `strings`, optional)
          Species for which to calculate ``particle_fields_to_plot``.

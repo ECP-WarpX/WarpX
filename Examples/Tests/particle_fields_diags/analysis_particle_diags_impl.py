@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2019-2021 Luca Fedeli, Yinjian Zhao
+# Copyright 2019-2022 Luca Fedeli, Yinjian Zhao, Hannah Klion
 #
 # This file is part of WarpX.
 #
