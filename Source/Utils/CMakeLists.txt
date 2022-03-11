@@ -2,7 +2,6 @@ target_sources(WarpX
   PRIVATE
     CoarsenIO.cpp
     CoarsenMR.cpp
-    TextMsg.cpp
     Interpolate.cpp
     IntervalsParser.cpp
     ParticleUtils.cpp
