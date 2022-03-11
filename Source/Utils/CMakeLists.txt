@@ -12,6 +12,7 @@ target_sources(WarpX
     WarpXMovingWindow.cpp
     WarpXTagging.cpp
     WarpXUtil.cpp
+    WarpXVersion.cpp
 )
 
 add_subdirectory(MsgLogger)

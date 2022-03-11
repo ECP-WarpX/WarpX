@@ -37,7 +37,6 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
-#include "Utils/WarpXVersion.H"
 
 #ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -2566,32 +2565,6 @@ WarpX::RestoreCurrent (int lev)
             std::swap(current_fp[lev][idim], current_store[lev][idim]);
         }
     }
-}
-
-std::string
-WarpX::Version ()
-{
-    std::string version;
-#ifdef WARPX_GIT_VERSION
-    version = std::string(WARPX_GIT_VERSION);
-#endif
-    if( version.empty() )
-        return std::string("Unknown");
-    else
-        return version;
-}
-
-std::string
-WarpX::PicsarVersion ()
-{
-    std::string version;
-#ifdef PICSAR_GIT_VERSION
-    version = std::string(PICSAR_GIT_VERSION);
-#endif
-    if( version.empty() )
-        return std::string("Unknown");
-    else
-        return version;
 }
 
 bool
