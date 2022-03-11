@@ -763,7 +763,7 @@ public:
     static amrex::Real moving_window_v;
     static bool fft_do_time_averaging;
 
-    //Parameters to remove the fine patch at a given time step
+    //Parameter to remove the fine patch at a given time step
     static int end_fine_patch_step;
     //This flag is set to true as soon as the finest_level element is initialized
     static bool FinelevInit_flag;
