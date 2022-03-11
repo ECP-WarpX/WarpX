@@ -411,7 +411,7 @@ if(WarpX_LIB)
 
     # this will also upgrade/downgrade dependencies, e.g., when the version of picmistandard changes
     add_custom_target(pip_install_requirements
-        python3 -m pip install -r ${WarpX_SOURCE_DIR}/requirements.txt
+        python3 -m pip install ${PYINSTALLOPTIONS} -r ${WarpX_SOURCE_DIR}/requirements.txt
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
     )
@@ -420,7 +420,8 @@ if(WarpX_LIB)
     # the package does not change, but the code did change. We need --no-deps,
     # because otherwise pip would also force reinstall all dependencies.
     add_custom_target(pip_install
-        python3 -m pip install --force-reinstall --no-deps ${PYINSTALLOPTIONS} ${WarpX_BINARY_DIR}/pywarpx*whl
+        ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
+            python3 -m pip install --force-reinstall --no-deps ${PYINSTALLOPTIONS} ${WarpX_BINARY_DIR}/pywarpx*whl
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS

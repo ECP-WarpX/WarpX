@@ -6,12 +6,12 @@
  */
 #include "CollisionHandler.H"
 
-#include "BackgroundMCCCollision.H"
+#include "Particles/Collision/BackgroundMCC/BackgroundMCCCollision.H"
+#include "Particles/Collision/BackgroundStopping/BackgroundStopping.H"
 #include "Particles/Collision/BinaryCollision/Coulomb/PairWiseCoulombCollisionFunc.H"
 #include "Particles/Collision/BinaryCollision/BinaryCollision.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
 #include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
-#include "Particles/Collision/BackgroundStopping/BackgroundStopping.H"
 #include "Utils/TextMsg.H"
 
 #include <AMReX_ParmParse.H>
@@ -71,11 +71,14 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
  * @param mypc MultiParticleContainer calling this method
  *
  */
-void CollisionHandler::doCollisions ( amrex::Real cur_time, MultiParticleContainer* mypc)
+void CollisionHandler::doCollisions ( amrex::Real cur_time, amrex::Real dt, MultiParticleContainer* mypc)
 {
 
     for (auto& collision : allcollisions) {
-        collision->doCollisions(cur_time, mypc);
+        int const ndt = collision->get_ndt();
+        if ( int(std::floor(cur_time/dt)) % ndt == 0 ) {
+            collision->doCollisions(cur_time, dt*ndt, mypc);
+        }
     }
 
 }

@@ -7,9 +7,9 @@
 #ifndef WARPX_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_
 #define WARPX_PARTICLES_COLLISION_BACKGROUNDMCCCOLLISION_H_
 
-#include "Particles/MultiParticleContainer.H"
-#include "CollisionBase.H"
 #include "MCCProcess.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/Collision/CollisionBase.H"
 
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
@@ -32,10 +32,11 @@ public:
     /** Perform the collisions
      *
      * @param cur_time Current time
+     * @param dt Time step size
      * @param mypc Container of species involved
      *
      */
-    void doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc) override;
+    void doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleContainer* mypc) override;
 
     /** Perform particle conserving MCC collisions within a tile
      *

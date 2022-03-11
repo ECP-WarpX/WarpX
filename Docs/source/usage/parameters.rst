@@ -1488,7 +1488,7 @@ WarpX provides several particle collions models, using varying degrees of approx
 Numerics and algorithms
 -----------------------
 
-* ``warpx.cfl`` (`float`)
+* ``warpx.cfl`` (`float`) optional (default `0.999`)
     The ratio between the actual timestep that is used in the simulation
     and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
     the timestep will be exactly equal to the CFL limit.)
