@@ -1,0 +1,18 @@
+/* Copyright 2022 Axel Huebl
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#ifndef WARPX_VERSION_H_
+#define WARPX_VERSION_H_
+
+#ifndef WARPX_GIT_VERSION
+#   define WARPX_GIT_VERSION "@WarpX_GIT_VERSION@"
+#endif
+
+#ifndef PICSAR_GIT_VERSION
+#   define PICSAR_GIT_VERSION "@PXRMP_QED_GIT_VERSION@"
+#endif
+
+#endif // WARPX_VERSION_H_
