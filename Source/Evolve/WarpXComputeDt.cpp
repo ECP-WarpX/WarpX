@@ -30,7 +30,8 @@
  * Determine the timestep of the simulation. */
 void
 WarpX::ComputeDt ()
-{   int Finelev;
+{
+    int Finelev;
     if (!FinelevInit_flag) Finelev = max_level;
     else Finelev = AmrMesh::finestLevel();
     // Determine
