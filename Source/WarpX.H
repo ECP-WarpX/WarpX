@@ -765,7 +765,7 @@ public:
 
     //Parameters to remove the fine patch at a given time step
     static int end_fine_patch_step;
-    //Flag which said when the finest_level element is initialised
+    //This flag is set to true as soon as the finest_level element is initialized
     static bool FinelevInit_flag;
 
     // slice generation //
