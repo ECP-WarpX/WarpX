@@ -528,6 +528,8 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
+        const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
+
         amrex::MultiFab& jx = *current_fp[lev][0];
         amrex::MultiFab& jy = *current_fp[lev][1];
         amrex::MultiFab& jz = *current_fp[lev][2];
@@ -560,7 +562,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
             {
                 for (int ii = lo_jx.x; ii <= hi_jx.x; ++ii)
                 {
-                    jx_arr(i,j,k) -= jx_cumsum_arr(ii,j,k) / static_cast<amrex::Real>(nx);
+                    jx_arr(i,j,k) -= jx_cumsum_arr(ii,j,k) * dx[0] / static_cast<amrex::Real>(nx);
                 }
             });
         }
@@ -583,7 +585,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
             {
                 for (int jj = lo_jy.y; jj <= hi_jy.y; ++jj)
                 {
-                    jy_arr(i,j,k) -= jy_cumsum_arr(i,jj,k) / static_cast<amrex::Real>(ny);
+                    jy_arr(i,j,k) -= jy_cumsum_arr(i,jj,k) * dx[1] / static_cast<amrex::Real>(ny);
                 }
             });
         }
@@ -612,13 +614,13 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
                 // z direction is in the second component
                 for (int jj = lo_jz.y; jj <= hi_jz.y; ++jj)
                 {
-                    jz_arr(i,j,k) -= jz_cumsum_arr(i,jj,k) / static_cast<amrex::Real>(nz);
+                    jz_arr(i,j,k) -= jz_cumsum_arr(i,jj,k) * dx[2] / static_cast<amrex::Real>(nz);
                 }
 #elif defined (WARPX_DIM_3D)
                 // z direction is in the third component
                 for (int kk = lo_jz.z; kk <= hi_jz.z; ++kk)
                 {
-                    jz_arr(i,j,k) -= jz_cumsum_arr(i,j,kk) / static_cast<amrex::Real>(nz);
+                    jz_arr(i,j,k) -= jz_cumsum_arr(i,j,kk) * dx[2] / static_cast<amrex::Real>(nz);
                 }
 #endif
             });

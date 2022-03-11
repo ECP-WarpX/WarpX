@@ -1153,10 +1153,10 @@ WarpX::ReadParameters ()
             amrex::Abort(
                     "\nCurrent correction does not guarantee charge conservation with local FFTs over guard cells:\n"
                     "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
-        if (!fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay))
-            amrex::Abort(
-                    "\nVay current deposition does not guarantee charge conservation with local FFTs over guard cells:\n"
-                    "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
+        //if (!fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay))
+        //    amrex::Abort(
+        //            "\nVay current deposition does not guarantee charge conservation with local FFTs over guard cells:\n"
+        //            "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
 
         // Auxiliary: boosted_frame = true if warpx.gamma_boost is set in the inputs
         amrex::ParmParse pp_warpx("warpx");
