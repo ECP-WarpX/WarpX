@@ -255,25 +255,29 @@ WarpX::PSATDBackwardTransformG ()
 void
 WarpX::PSATDForwardTransformJ ()
 {
-    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
-
-    const int idx_jx = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
-    const int idx_jy = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
-    const int idx_jz = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
+    SpectralFieldIndex Idx;
+    int idx_jx, idx_jy, idx_jz;
+    amrex::IntVect jx_stag, jy_stag, jz_stag;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
+        Idx = spectral_solver_fp[lev]->m_spectral_index;
+
+        idx_jx = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
+        idx_jy = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
+        idx_jz = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
+
         // With Vay's deposition, J stores a temporary current (D) that is later modified
         // in Fourier space: its staggering matches that of rho and not J
-        amrex::IntVect jx_stag =
+        jx_stag =
             (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
             WarpX::m_rho_nodal_flag : current_fp[lev][0]->ixType().toIntVect();
 
-        amrex::IntVect jy_stag =
+        jy_stag =
             (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
             WarpX::m_rho_nodal_flag : current_fp[lev][1]->ixType().toIntVect();
 
-        amrex::IntVect jz_stag =
+        jz_stag =
             (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
             WarpX::m_rho_nodal_flag : current_fp[lev][2]->ixType().toIntVect();
 
@@ -282,6 +286,12 @@ WarpX::PSATDForwardTransformJ ()
 
         if (spectral_solver_cp[lev])
         {
+            Idx = spectral_solver_cp[lev]->m_spectral_index;
+
+            idx_jx = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
+            idx_jy = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
+            idx_jz = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
+
             // With Vay's deposition, J stores a temporary current (D) that is later modified
             // in Fourier space: its staggering matches that of rho and not J
             jx_stag =
