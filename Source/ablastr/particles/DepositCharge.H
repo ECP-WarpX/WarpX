@@ -12,7 +12,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Particles/Deposition/ChargeDeposition.H"
-#include "Utils/TextMsg.H"
+#include "ablastr/utils/TextMsg.H"
 #ifdef WARPX_DIM_RZ
 #   include "Utils/WarpX_Complex.H"
 #endif

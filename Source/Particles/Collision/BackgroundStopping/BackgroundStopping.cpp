@@ -75,15 +75,10 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
 }
 
 void
-BackgroundStopping::doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc)
+BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleContainer* mypc)
 {
     WARPX_PROFILE("BackgroundStopping::doCollisions()");
     using namespace amrex::literals;
-
-    // Note that the lowest level time step is used for all levels since the
-    // collision operation will be done only once per step at the lowest level.
-    const amrex::Real dt = WarpX::GetInstance().getdt(0) * m_ndt;
-    if (int(std::floor(cur_time/dt)) % m_ndt != 0) return;
 
     auto& species = mypc->GetParticleContainerFromName(m_species_names[0]);
     amrex::Real species_mass = species.getMass();
