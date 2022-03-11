@@ -17,7 +17,6 @@ import os
 import re
 import sys
 
-import matplotlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import yt
