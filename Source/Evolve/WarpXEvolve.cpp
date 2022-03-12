@@ -355,6 +355,7 @@ WarpX::Evolve (int numsteps)
         }
 
         if (cur_time >= stop_time - 1.e-3*dt[0] || signal_actions_requested[SIGNAL_REQUESTS_BREAK]) {
+            signal_actions_requested[SIGNAL_REQUESTS_BREAK] = false;
             break;
         }
 
