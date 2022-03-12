@@ -354,7 +354,7 @@ WarpX::Evolve (int numsteps)
                       << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n";
         }
 
-        if (cur_time >= stop_time - 1.e-3*dt[0] || signal_requested_break) {
+        if (cur_time >= stop_time - 1.e-3*dt[0] || signal_actions_requested[SIGNAL_REQUESTS_BREAK]) {
             break;
         }
 
@@ -950,26 +950,25 @@ WarpX::CheckSignals()
             bool signal_i_received = signal_received_flags[i].exchange(false);
 
             if (signal_i_received) {
-                signal_requested_break |= signal_conf_requests_break[i];
-                signal_requested_checkpoint |= signal_conf_requests_checkpoint[i];
+                signal_actions_requested[SIGNAL_REQUESTS_BREAK] |= signal_conf_requests_break[i];
+                signal_actions_requested[SIGNAL_REQUESTS_CHECKPOINT] |= signal_conf_requests_checkpoint[i];
             }
         }
     }
 
     auto comm = amrex::ParallelDescriptor::Communicator();
 
-    MPI_Ibcast(&signal_requested_break     , 1, MPI_CXX_BOOL, 0, comm, &signal_mpi_ibcast_requests[0]);
-    MPI_Ibcast(&signal_requested_checkpoint, 1, MPI_CXX_BOOL, 0, comm, &signal_mpi_ibcast_requests[1]);
+    MPI_Ibcast(signal_actions_requested, 2, MPI_CXX_BOOL, 0, comm, &signal_mpi_ibcast_request);
 }
 
 void
 WarpX::HandleSignals()
 {
-    MPI_Waitall(std::size(signal_mpi_ibcast_requests), signal_mpi_ibcast_requests, MPI_STATUSES_IGNORE);
+    MPI_Wait(&signal_mpi_ibcast_request, MPI_STATUS_IGNORE);
 
-    // signal_requested_break is handled directly in WarpX::Evolve
+    // SIGNAL_REQUESTs_BREAK is handled directly in WarpX::Evolve
 
-    if (signal_requested_checkpoint) {
+    if (signal_actions_requested[SIGNAL_REQUESTS_CHECKPOINT]) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
     }
 }

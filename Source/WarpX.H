@@ -952,6 +952,7 @@ private:
     static WarpX* m_instance;
 
     /**
+     * \brief
      * Signal handling
      *
      * Rank 0 will accept signals and asynchronously broadcast the
@@ -962,19 +963,25 @@ private:
      * Variables and functions are static rather than per-instance
      * because signal handlers are configured at the process level.
      */
+    //! Check and clear signal flags and asynchronously broadcast them from process 0
     static void CheckSignals();
+    //! Signal handler to set flags on process 0 (other processes ignore configured signals)
     static void SignalSetFlag(int signal_number);
+    //! Complete the asynchronous broadcast of signal flags, and initiate a checkpoint if requested
     void HandleSignals();
-    // Whether a given signal has been received since the last check
+    //! On process 0, whether a given signal has been received since the last check
     static std::atomic<bool> signal_received_flags[32];
-    // Whether configuration requests the code to break out of the timestep loop on a particular signal
+    //! Whether configuration requests the code to break out of the timestep loop on a particular signal
     static bool signal_conf_requests_break[32];
-    // Whether configuration requests the code to checkpoint at this timestep on a particular signal
+    //! Whether configuration requests the code to checkpoint at this timestep on a particular signal
     static bool signal_conf_requests_checkpoint[32];
-    // MPI requests for the asynchronous broadcasts of the signal-requested actions
-    static MPI_Request signal_mpi_ibcast_requests[2];
-    static bool signal_requested_break;
-    static bool signal_requested_checkpoint;
+    //! Boolean flags transmitted between CheckSignals() and
+    //! HandleSignals() to indicate actions requested by signals
+    static bool signal_actions_requested[2];
+    //! Labels for indexed positions in signal_actions_requests
+    enum signal_action_requested_labels { SIGNAL_REQUESTS_BREAK = 0, SIGNAL_REQUESTS_CHECKPOINT = 1 };
+    //! MPI requests for the asynchronous broadcasts of the signal-requested actions
+    static MPI_Request signal_mpi_ibcast_request;
 
     ///
     /// Advance the simulation by numsteps steps, electromagnetic case.
