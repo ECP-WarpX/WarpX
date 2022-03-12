@@ -970,5 +970,6 @@ WarpX::HandleSignals()
 
     if (signal_actions_requested[SIGNAL_REQUESTS_CHECKPOINT]) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
+        signal_actions_requested[SIGNAL_REQUESTS_CHECKPOINT] = false;
     }
 }
