@@ -568,7 +568,6 @@ WarpX::ReadParameters ()
             }
         }
 
-#if defined(__GNU_LIBRARY__) || defined(__APPLE__)
         std::vector<std::string> signals_in;
         pp_warpx.queryarr("break_signals", signals_in);
         for (const std::string &str : signals_in) {
@@ -583,6 +582,7 @@ WarpX::ReadParameters ()
             AMREX_ALWAYS_ASSERT(sig < NUM_SIGNALS);
             signal_conf_requests_checkpoint[sig] = true;
         }
+#if defined(__GNU_LIBRARY__) || defined(__APPLE__)
         {
             struct sigaction sa;
             sigemptyset(&sa.sa_mask);
@@ -596,6 +596,13 @@ WarpX::ReadParameters ()
                     }
                     sigaction(i, &sa, nullptr);
                 }
+            }
+        }
+#else
+        for (int i = 0; i < NUM_SIGNALS; ++i) {
+            if (signal_conf_requests_break[i] ||
+                signal_conf_requests_checkpoint[i]) {
+                Abort("Signal handling requested in input, but is not supported on this platform");
             }
         }
 #endif
