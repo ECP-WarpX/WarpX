@@ -966,7 +966,7 @@ WarpX::HandleSignals()
 {
     MPI_Wait(&signal_mpi_ibcast_request, MPI_STATUS_IGNORE);
 
-    // SIGNAL_REQUESTs_BREAK is handled directly in WarpX::Evolve
+    // SIGNAL_REQUESTS_BREAK is handled directly in WarpX::Evolve
 
     if (signal_actions_requested[SIGNAL_REQUESTS_CHECKPOINT]) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
