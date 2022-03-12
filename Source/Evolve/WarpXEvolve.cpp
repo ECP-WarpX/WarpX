@@ -943,7 +943,7 @@ WarpX::CheckSignals()
     if (amrex::ParallelDescriptor::MyProc() == 0) {
         for (int i = 0; i < 32; ++i) {
             // Read into a local temporary to ensure the same value is
-            // used throughout. Atomically exchange it with zero to
+            // used throughout. Atomically exchange it with false to
             // unset the flag without risking loss of a signal - if a
             // signal arrives after this, it will be handled the next
             // time this function is called.
