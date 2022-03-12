@@ -573,20 +573,20 @@ WarpX::ReadParameters ()
         pp_warpx.queryarr("break_signals", signals_in);
         for (const std::string &str : signals_in) {
             int sig = parseSignalNameToNumber(str);
-            AMREX_ALWAYS_ASSERT(sig < 32);
+            AMREX_ALWAYS_ASSERT(sig < NUM_SIGNALS);
             signal_conf_requests_break[sig] = true;
         }
         signals_in.clear();
         pp_warpx.queryarr("checkpoint_signals", signals_in);
         for (const std::string &str : signals_in) {
             int sig = parseSignalNameToNumber(str);
-            AMREX_ALWAYS_ASSERT(sig < 32);
+            AMREX_ALWAYS_ASSERT(sig < NUM_SIGNALS);
             signal_conf_requests_checkpoint[sig] = true;
         }
         {
             struct sigaction sa;
             sigemptyset(&sa.sa_mask);
-            for (int i = 0; i < 32; ++i) {
+            for (int i = 0; i < NUM_SIGNALS; ++i) {
                 signal_received_flags[i] = false;
                 if (signal_conf_requests_checkpoint[i] || signal_conf_requests_break[i]) {
                     if (ParallelDescriptor::MyProc() == 0) {

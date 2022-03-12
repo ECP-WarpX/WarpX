@@ -969,12 +969,14 @@ private:
     static void SignalSetFlag(int signal_number);
     //! Complete the asynchronous broadcast of signal flags, and initiate a checkpoint if requested
     void HandleSignals();
+    //! The range of signal values to accept
+    static constexpr int NUM_SIGNALS = 32;
     //! On process 0, whether a given signal has been received since the last check
-    static std::atomic<bool> signal_received_flags[32];
+    static std::atomic<bool> signal_received_flags[NUM_SIGNALS];
     //! Whether configuration requests the code to break out of the timestep loop on a particular signal
-    static bool signal_conf_requests_break[32];
+    static bool signal_conf_requests_break[NUM_SIGNALS];
     //! Whether configuration requests the code to checkpoint at this timestep on a particular signal
-    static bool signal_conf_requests_checkpoint[32];
+    static bool signal_conf_requests_checkpoint[NUM_SIGNALS];
     //! Boolean flags transmitted between CheckSignals() and
     //! HandleSignals() to indicate actions requested by signals
     static bool signal_actions_requested[2];
