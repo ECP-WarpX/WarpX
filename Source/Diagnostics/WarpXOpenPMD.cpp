@@ -1289,7 +1289,6 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
         series_iteration.setTime( time );
     }
 
-bool reverse = false;
     for (int i=0; i<geom.size(); i++) {
         amrex::Geometry full_geom = geom[i];
         if( isBTD )
@@ -1354,7 +1353,7 @@ bool reverse = false;
             std::string const & varname = varnames[icomp];
 
             auto [varname_no_mode, mode_index] = GetFieldNameModeInt(varname);
-            bool var_in_theta_mode = mode_index != -1;
+            [[maybe_unused]] bool var_in_theta_mode = mode_index != -1;
 
             std::string field_name (varname_no_mode);
             std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
