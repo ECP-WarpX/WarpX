@@ -87,7 +87,8 @@ WarpX::ComputeDt ()
 
 void
 WarpX::PrintDtDxDyDz ()
-{   int Finelev;
+{
+    int Finelev;
     if (!FinelevInit_flag) Finelev = max_level;
     else Finelev = AmrMesh::finestLevel();
     for (int lev=0; lev <= Finelev; lev++) {
