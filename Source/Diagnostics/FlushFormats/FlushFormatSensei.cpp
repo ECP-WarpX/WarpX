@@ -33,7 +33,7 @@ FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_amr_mesh && !m_insitu_bridge->initialize(),
         "FlushFormtSensei::FlushFormatSensei : "
-            "Failed to initialize the in situ bridge." << std::endl
+        "Failed to initialize the in situ bridge."
     );
     m_insitu_bridge->setFrequency(1);
 #endif
