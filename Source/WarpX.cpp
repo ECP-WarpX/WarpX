@@ -240,6 +240,8 @@ WarpX::WarpX ()
 
     InitEB();
 
+    InitSignalHandling();
+
     // Geometry on all levels has been defined already.
     // No valid BoxArray and DistributionMapping have been defined.
     // But the arrays for them have been resized.
@@ -503,6 +505,52 @@ WarpX::SignalSetFlag(int signal_number)
 }
 
 void
+WarpX::InitSignalHandling()
+{
+    bool have_checkpoint_diagnostic = false;
+
+    ParmParse pp("diagnostics");
+    std::vector<std::string> diags_names;
+    pp.queryarr("diags_names", diags_names);
+
+    for (const auto &diag : diags_names) {
+        ParmParse dd(diag);
+        std::string format;
+        dd.query("format", format);
+        if (format == "checkpoint") {
+            have_checkpoint_diagnostic = true;
+            break;
+        }
+    }
+
+#if defined(__GNU_LIBRARY__) || defined(__APPLE__)
+    struct sigaction sa;
+    sigemptyset(&sa.sa_mask);
+    for (int i = 0; i < NUM_SIGNALS; ++i) {
+        signal_received_flags[i] = false;
+        if (signal_conf_requests_checkpoint[i] || signal_conf_requests_break[i]) {
+            if (ParallelDescriptor::MyProc() == 0) {
+                sa.sa_handler = &WarpX::SignalSetFlag;
+            } else {
+                sa.sa_handler = SIG_IGN;
+            }
+            sigaction(i, &sa, nullptr);
+        }
+        if (signal_conf_requests_checkpoint[i] && !have_checkpoint_diagnostic) {
+            Abort("Signal handling was requested to checkpoint, but no checkpoint diagnostic is configured");
+        }
+    }
+#else
+    for (int i = 0; i < NUM_SIGNALS; ++i) {
+        if (signal_conf_requests_break[i] ||
+            signal_conf_requests_checkpoint[i]) {
+            Abort("Signal handling requested in input, but is not supported on this platform");
+        }
+    }
+#endif
+}
+
+void
 WarpX::ReadParameters ()
 {
     // Ensure that geometry.dims is set properly.
@@ -582,30 +630,6 @@ WarpX::ReadParameters ()
             AMREX_ALWAYS_ASSERT(sig < NUM_SIGNALS);
             signal_conf_requests_checkpoint[sig] = true;
         }
-#if defined(__GNU_LIBRARY__) || defined(__APPLE__)
-        {
-            struct sigaction sa;
-            sigemptyset(&sa.sa_mask);
-            for (int i = 0; i < NUM_SIGNALS; ++i) {
-                signal_received_flags[i] = false;
-                if (signal_conf_requests_checkpoint[i] || signal_conf_requests_break[i]) {
-                    if (ParallelDescriptor::MyProc() == 0) {
-                        sa.sa_handler = &WarpX::SignalSetFlag;
-                    } else {
-                        sa.sa_handler = SIG_IGN;
-                    }
-                    sigaction(i, &sa, nullptr);
-                }
-            }
-        }
-#else
-        for (int i = 0; i < NUM_SIGNALS; ++i) {
-            if (signal_conf_requests_break[i] ||
-                signal_conf_requests_checkpoint[i]) {
-                Abort("Signal handling requested in input, but is not supported on this platform");
-            }
-        }
-#endif
 
         // set random seed
         std::string random_seed = "default";

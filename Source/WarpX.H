@@ -963,6 +963,8 @@ private:
      * Variables and functions are static rather than per-instance
      * because signal handlers are configured at the process level.
      */
+    //! Set up signal handlers based on input configuration
+    void InitSignalHandling();
     //! Check and clear signal flags and asynchronously broadcast them from process 0
     static void CheckSignals();
     //! Signal handler to set flags on process 0 (other processes ignore configured signals)
