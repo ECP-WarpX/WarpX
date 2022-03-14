@@ -1961,6 +1961,27 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
     Note that the fields are averaged on the cell centers before they are written to file.
 
+* ``<diag_name>.particle_fields_to_plot`` (list of `strings`, optional)
+   Names of per-cell averages of particle properties to calculate and output as additional fields.
+   Note that these averages do not respect the particle shape factor, and instead use nearest-grid point interpolation.
+   Default is none.
+   Parser functions for these field names are specified by ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)``.
+
+* ``<diag_name>.particle_fields_species`` (list of `strings`, optional)
+         Species for which to calculate ``particle_fields_to_plot``.
+         Fields will be calculated separately for each specified species.
+         The default is a list of all of the available particle species.
+
+* ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)`` (parser `string`)
+   Parser function to be calculated for each particle and averaged per cell. The field written is
+
+        .. math::
+
+            \texttt{<field_name>_<species>} = \frac{\sum_{i=1}^N w_i \, f(x_i,y_i,z_i,u_{x,i},u_{y,i},u_{z,i})}{\sum_{i=1}^N w_i}
+
+   where the sums are over all particles of type ``<species>`` in a cell (ignoring the particle shape factor), :math:`w_i` is the particle weight, :math:`f()` is the parser function, and :math:`(x_i,y_i,z_i)` are particle positions in units of a meter.
+   In 1D or 2D, the particle coordinates will follow the WarpX convention. :math:`(u_{x,i},u_{y,i},u_{z,i})` are components of the particle four-velocity. :math:`u = \gamma v/c`, :math:`\gamma` is the Lorentz factor, :math:`v` is the particle velocity, and :math:`c` is the speed of light.
+
 * ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
     By default, the fields written in the plot files are averaged on the cell centers.
     When ``<diag_name>.plot_raw_fields = 1``, then the raw (i.e. non-averaged)
