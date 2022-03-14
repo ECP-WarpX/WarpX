@@ -331,9 +331,7 @@ void WarpX::PSATDBackwardTransformJ ()
         idx_jy = static_cast<int>(Idx.Jy);
         idx_jz = static_cast<int>(Idx.Jz);
 
-        auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
-
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], current[lev], idx_jx, idx_jy, idx_jz);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], current_fp[lev], idx_jx, idx_jy, idx_jz);
 
         if (spectral_solver_cp[lev])
         {
@@ -343,8 +341,6 @@ void WarpX::PSATDBackwardTransformJ ()
             idx_jy = static_cast<int>(Idx.Jy);
             idx_jz = static_cast<int>(Idx.Jz);
 
-            // Current centering is not implemented with mesh refinement, so we do not yet need to
-            // distinguish between current_cp and current_cp_nodal, as for the fine patch currents
             BackwardTransformVect(lev, *spectral_solver_cp[lev], current_cp[lev], idx_jx, idx_jy, idx_jz);
         }
     }
