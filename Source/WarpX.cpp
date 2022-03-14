@@ -1251,7 +1251,7 @@ WarpX::ReadParameters ()
         );
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            v_comoving_is_zero || !update_with_rho,
+            v_comoving_is_zero || update_with_rho,
             "psatd.update_with_rho must be equal to 1 for comoving PSATD"
         );
 
