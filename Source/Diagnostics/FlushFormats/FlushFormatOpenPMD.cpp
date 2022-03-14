@@ -115,11 +115,13 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
   // Check user-defined option to turn off species output
   pp_diag_name.query("write_species", write_species);
   if (write_species == 0) species_output = false;
-  if (diag_type_str == "BackTransformed" and species_output == true) {
-      if (m_OpenPMDPlotWriter->OpenPMDFileType() == "bp") {
-          amrex::Abort(" Currently BackTransformed diagnostics type does not support species output for ADIOS backend. Please select h5 as openpmd backend");
-      }
-  }
+  WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    (diag_type_str != "BackTransformed") ||
+    (!species_output) ||
+    (m_OpenPMDPlotWriter->OpenPMDFileType() != "bp"),
+    " Currently BackTransformed diagnostics type does not support"
+    " species output for ADIOS backend. Please select h5 as openpmd backend"
+  );
 }
 
 void

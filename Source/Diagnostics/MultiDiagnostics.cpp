@@ -2,6 +2,7 @@
 
 #include "Diagnostics/BTDiagnostics.H"
 #include "Diagnostics/FullDiagnostics.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX.H>
@@ -24,7 +25,7 @@ MultiDiagnostics::MultiDiagnostics ()
         } else if ( diags_types[i] == DiagTypes::BackTransformed ){
             alldiags[i] = std::make_unique<BTDiagnostics>(i, diags_names[i]);
         } else {
-            amrex::Abort("Unknown diagnostic type");
+            amrex::Abort(Utils::TextMsg::Err("Unknown diagnostic type"));
         }
     }
 }
