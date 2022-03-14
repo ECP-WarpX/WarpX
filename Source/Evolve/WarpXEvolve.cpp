@@ -520,7 +520,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // Filter, exchange boundary, and interpolate across levels
         SyncCurrent();
         // Forward FFT of J
-        PSATDForwardTransformJ();
+        PSATDForwardTransformJ(current_fp, current_cp);
 
         // Number of depositions for multi-J scheme
         const int n_depose = WarpX::do_multi_J_n_depositions;
@@ -544,7 +544,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Filter, exchange boundary, and interpolate across levels
             SyncCurrent();
             // Forward FFT of J
-            PSATDForwardTransformJ();
+            PSATDForwardTransformJ(current_fp, current_cp);
 
             // Deposit new rho
             if (WarpX::update_with_rho)
@@ -836,14 +836,23 @@ WarpX::PushParticlesandDepose (amrex::Real cur_time, bool skip_deposition)
 void
 WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_deposition)
 {
-    // If warpx.do_current_centering = 1, the current is deposited on the nodal MultiFab current_fp_nodal
-    // and then centered onto the staggered MultiFab current_fp
-    amrex::MultiFab* current_x = (WarpX::do_current_centering) ? current_fp_nodal[lev][0].get()
-                                                               : current_fp[lev][0].get();
-    amrex::MultiFab* current_y = (WarpX::do_current_centering) ? current_fp_nodal[lev][1].get()
-                                                               : current_fp[lev][1].get();
-    amrex::MultiFab* current_z = (WarpX::do_current_centering) ? current_fp_nodal[lev][2].get()
-                                                               : current_fp[lev][2].get();
+    amrex::MultiFab* current_x = current_fp[lev][0].get();
+    amrex::MultiFab* current_y = current_fp[lev][1].get();
+    amrex::MultiFab* current_z = current_fp[lev][2].get();
+
+    if (WarpX::do_current_centering)
+    {
+        current_x = current_fp_nodal[lev][0].get();
+        current_y = current_fp_nodal[lev][1].get();
+        current_z = current_fp_nodal[lev][2].get();
+    }
+
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+    {
+        current_x = current_fp_vay[lev][0].get();
+        current_y = current_fp_vay[lev][1].get();
+        current_z = current_fp_vay[lev][2].get();
+    }
 
     mypc->Evolve(lev,
                  *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],

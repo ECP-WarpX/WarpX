@@ -1138,6 +1138,7 @@ private:
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_vay;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
@@ -1445,8 +1446,15 @@ private:
     /**
      * \brief Forward FFT of J on all mesh refinement levels,
      *        with k-space filtering (if needed)
+     *
+     * \param J_fp Vector of three-dimensional arrays (for each level)
+     *             storing the fine patch current to be transformed
+     * \param J_cp Vector of three-dimensional arrays (for each level)
+     *             storing the coarse patch current to be transformed
      */
-    void PSATDForwardTransformJ ();
+    void PSATDForwardTransformJ (
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
 
     /**
      * \brief Backward FFT of J on all mesh refinement levels
