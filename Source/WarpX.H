@@ -975,11 +975,22 @@ private:
     void OneStep_multiJ (const amrex::Real t);
 
     void RestrictCurrentFromFineToCoarsePatch (int lev);
-    void AddCurrentFromFineLevelandSumBoundary (int lev);
+    void AddCurrentFromFineLevelandSumBoundary (
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        int lev);
     void StoreCurrent (int lev);
     void RestoreCurrent (int lev);
-    void ApplyFilterandSumBoundaryJ (int lev, PatchType patch_type);
-    void NodalSyncJ (int lev, PatchType patch_type);
+    void ApplyFilterandSumBoundaryJ (
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        int lev,
+        PatchType patch_type);
+    void NodalSyncJ (
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        int lev,
+        PatchType patch_type);
 
     void RestrictRhoFromFineToCoarsePatch (int lev);
     void ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp);
