@@ -5,6 +5,7 @@
 #include "ComputeDiagFunctors/DivEFunctor.H"
 #include "ComputeDiagFunctors/PartPerCellFunctor.H"
 #include "ComputeDiagFunctors/PartPerGridFunctor.H"
+#include "ComputeDiagFunctors/ParticleReductionFunctor.H"
 #include "ComputeDiagFunctors/RhoFunctor.H"
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
@@ -408,10 +409,13 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
     // Species index to loop over species that dump rho per species
     int i = 0;
 
-    m_all_field_functors[lev].resize( m_varnames.size() );
+    const auto nvar = static_cast<int>(m_varnames_fields.size());
+    const auto nspec = static_cast<int>(m_pfield_species.size());
+    const auto ntot = static_cast<int>(nvar + m_pfield_varnames.size() * nspec);
+
+    m_all_field_functors[lev].resize(ntot);
     // Fill vector of functors for all components except individual cylindrical modes.
-    const auto n = static_cast<int>(m_all_field_functors[lev].size());
-    for (int comp=0; comp<n; comp++){
+    for (int comp=0; comp<nvar; comp++){
         if        ( m_varnames[comp] == "Ex" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "Ey" ){
@@ -454,6 +458,14 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         }
         else {
             amrex::Abort("Error: " + m_varnames[comp] + " is not a known field output type");
+        }
+    }
+    // Add functors for average particle data for each species
+    for (int pcomp=0; pcomp<int(m_pfield_varnames.size()); pcomp++) {
+        std::string varname = m_pfield_varnames[pcomp];
+        for (int ispec=0; ispec<int(m_pfield_species.size()); ispec++) {
+            m_all_field_functors[lev][nvar + pcomp * nspec + ispec] = std::make_unique<ParticleReductionFunctor>(nullptr,
+                    lev, m_crse_ratio, m_pfield_strings[varname], m_pfield_species_index[ispec]);
         }
     }
     AddRZModesToDiags( lev );

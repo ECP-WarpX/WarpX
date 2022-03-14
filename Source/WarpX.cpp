@@ -340,7 +340,7 @@ WarpX::WarpX ()
     // Set default values for particle and cell weights for costs update;
     // Default values listed here for the case AMREX_USE_GPU are determined
     // from single-GPU tests on Summit.
-    if (costs_heuristic_cells_wt<0. && costs_heuristic_particles_wt<0.
+    if (costs_heuristic_cells_wt<=0. && costs_heuristic_particles_wt<=0.
         && WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic)
     {
 #ifdef AMREX_USE_GPU
@@ -2603,32 +2603,6 @@ WarpX::RestoreCurrent (int lev)
             std::swap(current_fp[lev][idim], current_store[lev][idim]);
         }
     }
-}
-
-std::string
-WarpX::Version ()
-{
-    std::string version;
-#ifdef WARPX_GIT_VERSION
-    version = std::string(WARPX_GIT_VERSION);
-#endif
-    if( version.empty() )
-        return std::string("Unknown");
-    else
-        return version;
-}
-
-std::string
-WarpX::PicsarVersion ()
-{
-    std::string version;
-#ifdef PICSAR_GIT_VERSION
-    version = std::string(PICSAR_GIT_VERSION);
-#endif
-    if( version.empty() )
-        return std::string("Unknown");
-    else
-        return version;
 }
 
 bool

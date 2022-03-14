@@ -177,6 +177,7 @@ endif()
 # own headers
 target_include_directories(WarpX PUBLIC
     $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
+    $<BUILD_INTERFACE:${WarpX_BINARY_DIR}/Source>
 )
 target_include_directories(ablastr PUBLIC
     # future: own directory root
@@ -276,12 +277,6 @@ set_warpx_binary_name()
 
 # Defines #####################################################################
 #
-get_source_version(WarpX ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(ablastr PUBLIC WARPX_GIT_VERSION="${WarpX_GIT_VERSION}")
-if(WarpX_QED)
-    target_compile_definitions(ablastr PUBLIC PICSAR_GIT_VERSION="${PXRMP_QED_GIT_VERSION}")
-endif()
-
 if(WarpX_DIMS STREQUAL 3)
     target_compile_definitions(ablastr PUBLIC WARPX_DIM_3D WARPX_ZINDEX=2)
 elseif(WarpX_DIMS STREQUAL 2)
@@ -324,6 +319,13 @@ set_cxx_warnings()
 
 # Generate Configuration and .pc Files ########################################
 #
+get_source_version(WarpX ${WarpX_SOURCE_DIR})
+configure_file(
+    ${WarpX_SOURCE_DIR}/Source/Utils/WarpXVersion.H.in
+    ${WarpX_BINARY_DIR}/Source/Utils/WarpXVersion.H
+    @ONLY
+)
+
 # these files are used if WarpX is installed and picked up by a downstream
 # project (not needed yet)
 
