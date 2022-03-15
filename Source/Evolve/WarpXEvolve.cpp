@@ -961,9 +961,8 @@ WarpX::CheckSignals()
         }
     }
 
-    auto comm = amrex::ParallelDescriptor::Communicator();
-
 #if defined(AMREX_USE_MPI)
+    auto comm = amrex::ParallelDescriptor::Communicator();
     MPI_Ibcast(signal_actions_requested, 2, MPI_CXX_BOOL, 0, comm, &signal_mpi_ibcast_request);
 #endif
 }
