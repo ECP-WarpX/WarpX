@@ -967,7 +967,13 @@ WarpX::ReadParameters ()
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay &&
             WarpX::do_current_centering)
         {
-            amrex::Abort("\nCurrent centering not implemented with Vay deposition");
+            amrex::Abort("\nVay deposition not implemented with current centering");
+        }
+
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay
+            && maxLevel() > 0)
+        {
+            amrex::Abort("\nVay deposition not implemented with mesh refinement");
         }
 
         field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
