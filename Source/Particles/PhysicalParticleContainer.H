@@ -162,11 +162,7 @@ public:
                         WarpXParIter& pti,
                         int const lev,
                         amrex::iMultiFab const* current_masks,
-                        amrex::iMultiFab const* gather_masks,
-                        RealVector& uxp,
-                        RealVector& uyp,
-                        RealVector& uzp,
-                        RealVector& wp );
+                        amrex::iMultiFab const* gather_masks );
 
     virtual void PostRestart () final {}
 

@@ -173,7 +173,7 @@ def generate():
         f.write("algo.charge_deposition = standard\n")
         f.write("algo.field_gathering = energy-conserving\n")
         f.write("warpx.cfl = 1.0\n")
-        f.write("warpx.serialize_ics = 1\n")
+        f.write("warpx.serialize_initial_conditions = 1\n")
 
         f.write("particles.species_names = ")
         for cc in cases:

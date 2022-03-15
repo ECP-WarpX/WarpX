@@ -1,4 +1,5 @@
 from distutils.command.build import build
+from distutils.command.clean import clean
 from distutils.version import LooseVersion
 import os
 import platform
@@ -14,13 +15,23 @@ from setuptools.command.build_ext import build_ext
 class CopyPreBuild(build):
     def initialize_options(self):
         build.initialize_options(self)
-        # We just overwrite this because the default "build/lib" clashes with
-        # directories many developers have in their source trees;
+        # We just overwrite this because the default "build" (and "build/lib")
+        # clashes with directories many developers have in their source trees;
         # this can create confusing results with "pip install .", which clones
         # the whole source tree by default
-        self.build_lib = '_tmppythonbuild'
+        self.build_base = '_tmppythonbuild'
 
     def run(self):
+        # remove existing build directory
+        #   by default, this stays around. we want to make sure generated
+        #   files like libwarpx.(2d|3d|rz).(so|pyd) are always only the
+        #   ones we want to package and not ones from an earlier wheel's stage
+        c = clean(self.distribution)
+        c.all = True
+        c.finalize_options()
+        c.run()
+
+        # call superclass
         build.run(self)
 
         # matches: libwarpx.(2d|3d|rz).(so|pyd)
@@ -259,7 +270,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '22.02',
+    version = '22.03',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',

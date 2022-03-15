@@ -17,12 +17,12 @@ sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksum
 
 # this will be the name of the first plot file
-fn1 = "Python_pass_mpi_comm_plt1_00010"
+fn1 = "Python_pass_mpi_comm_plt1_000010"
 # second plot file
-fn2 = "Python_pass_mpi_comm_plt2_00010"
+fn2 = "Python_pass_mpi_comm_plt2_000010"
 
-test_name1 = fn1[:-9]
-test_name2 = fn2[:-9]
+test_name1 = fn1[:-10]
+test_name2 = fn2[:-10]
 
 
 checksum1 = checksum.Checksum(test_name1, fn1, do_fields=True,

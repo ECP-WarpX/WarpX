@@ -1,4 +1,5 @@
 #include "IntervalsParser.H"
+#include "TextMsg.H"
 #include "WarpXUtil.H"
 
 #include <AMReX_Utility.H>
@@ -8,8 +9,6 @@
 
 SliceParser::SliceParser (const std::string& instr)
 {
-    const std::string assert_msg = "ERROR: '" + instr + "' is not a valid syntax for a slice.";
-
     // split string and trim whitespaces
     auto insplit = WarpXUtilStr::split<std::vector<std::string>>(instr, m_separator, true);
 
@@ -24,7 +23,9 @@ SliceParser::SliceParser (const std::string& instr)
     }
     else // 2 colons in input string. The input is start:stop:period
     {
-        WarpXUtilMsg::AlwaysAssert(insplit.size() == 3,assert_msg);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            insplit.size() == 3,
+            instr + "' is not a valid syntax for a slice.");
         if (!insplit[0].empty()){
             m_start = parseStringtoInt(insplit[0], "interval start");}
         if (!insplit[1].empty()){

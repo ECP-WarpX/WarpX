@@ -38,7 +38,7 @@
 
 namespace
 {
-    amrex::Real** getMultiFabPointers(const amrex::MultiFab& mf, int *num_boxes, int *ncomps, int **ngrowvect, int **shapes)
+    amrex::Real** getMultiFabPointers (amrex::MultiFab& mf, int *num_boxes, int *ncomps, int **ngrowvect, int **shapes)
     {
         *ncomps = mf.nComp();
         *num_boxes = mf.local_size();
@@ -57,7 +57,7 @@ namespace
 #endif
         for ( amrex::MFIter mfi(mf, false); mfi.isValid(); ++mfi ) {
             int i = mfi.LocalIndex();
-            data[i] = (amrex::Real*) mf[mfi].dataPtr();
+            data[i] = mf[mfi].dataPtr();
             for (int j = 0; j < AMREX_SPACEDIM; ++j) {
                 (*shapes)[shapesize*i+j] = mf[mfi].box().length(j);
             }
@@ -65,7 +65,7 @@ namespace
         }
         return data;
     }
-    int* getMultiFabLoVects(const amrex::MultiFab& mf, int *num_boxes, int **ngrowvect)
+    int* getMultiFabLoVects (const amrex::MultiFab& mf, int *num_boxes, int **ngrowvect)
     {
         int shapesize = AMREX_SPACEDIM;
         *ngrowvect = static_cast<int*>(malloc(sizeof(int)*shapesize));
@@ -73,7 +73,7 @@ namespace
             (*ngrowvect)[j] = mf.nGrow(j);
         }
         *num_boxes = mf.local_size();
-        int *loVects = (int*) malloc((*num_boxes)*AMREX_SPACEDIM * sizeof(int));
+        auto loVects = static_cast<int*>(malloc((*num_boxes)*AMREX_SPACEDIM * sizeof(int)));
 
         int i = 0;
         for ( amrex::MFIter mfi(mf, false); mfi.isValid(); ++mfi, ++i ) {
@@ -90,7 +90,7 @@ namespace
     {
         if (mf == nullptr) return nullptr;
         const amrex::IntVect nodal_flag( mf->ixType().toIntVect() );
-        int *nodal_flag_data = (int*) malloc(AMREX_SPACEDIM * sizeof(int));
+        auto *nodal_flag_data = static_cast<int*>(malloc(AMREX_SPACEDIM * sizeof(int)));
 
         constexpr int NODE = amrex::IndexType::NODE;
 
@@ -451,9 +451,9 @@ namespace
 
         // *num_tiles = myspc.numLocalTilesAtLevel(lev);
         *num_tiles = i;
-        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
+        *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
 
-        amrex::ParticleReal** data = (amrex::ParticleReal**) malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*));
+        auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*)));
         i = 0;
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {
             auto& aos = pti.GetArrayOfStructs();
@@ -478,9 +478,9 @@ namespace
 
         // *num_tiles = myspc.numLocalTilesAtLevel(lev);
         *num_tiles = i;
-        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
+        *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
 
-        amrex::ParticleReal** data = (amrex::ParticleReal**) malloc(*num_tiles*sizeof(amrex::ParticleReal*));
+        auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(amrex::ParticleReal*)));
         i = 0;
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {
             auto& soa = pti.GetStructOfArrays();
@@ -546,9 +546,9 @@ namespace
 
         // *num_tiles = myspc.numLocalTilesAtLevel(lev);
         *num_tiles = i;
-        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
+        *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
 
-        int** data = (int**) malloc(*num_tiles*sizeof(int*));
+        auto data = static_cast<int**>(malloc(*num_tiles*sizeof(int*)));
         i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
             auto& soa = pti.GetStructOfArrays();
@@ -573,9 +573,9 @@ namespace
 
         // *num_tiles = myspc.numLocalTilesAtLevel(lev);
         *num_tiles = i;
-        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
+        *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
 
-        amrex::ParticleReal** data = (amrex::ParticleReal**) malloc(*num_tiles*sizeof(amrex::ParticleReal*));
+        auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(amrex::ParticleReal*)));
         i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
             auto& soa = pti.GetStructOfArrays();
@@ -598,9 +598,9 @@ namespace
 
         // *num_tiles = myspc.numLocalTilesAtLevel(lev);
         *num_tiles = i;
-        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
+        *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
 
-        amrex::ParticleReal** data = (amrex::ParticleReal**) malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*));
+        auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*)));
         i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
             auto& aos = pti.GetArrayOfStructs();

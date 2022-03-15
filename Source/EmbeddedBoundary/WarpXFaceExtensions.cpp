@@ -6,6 +6,9 @@
  */
 
 #include "WarpX.H"
+
+#include "Utils/TextMsg.H"
+
 #include <AMReX_Scan.H>
 #include <AMReX_iMultiFab.H>
 #include <AMReX_MultiFab.H>
@@ -174,15 +177,16 @@ WarpX::CountExtFaces() {
     return sums;
 }
 
-
 void
 WarpX::ComputeFaceExtensions(){
 #ifdef AMREX_USE_EB
     if(WarpX::verbose) {
         amrex::Array1D<int, 0, 2> N_ext_faces = CountExtFaces();
-        amrex::Print() << "Faces to be extended in x:\t" << N_ext_faces(0) << std::endl;
-        amrex::Print() << "Faces to be extended in y:\t" << N_ext_faces(1) << std::endl;
-        amrex::Print() << "Faces to be extended in z:\t" << N_ext_faces(2) << std::endl;
+        amrex::Print() << Utils::TextMsg::Info(
+            "Faces to be extended in x:\t" + std::to_string(N_ext_faces(0)) + "\n"
+            +"Faces to be extended in y:\t" + std::to_string(N_ext_faces(1)) + "\n"
+            +"Faces to be extended in z:\t" + std::to_string(N_ext_faces(2))
+        );
     }
 
     InitBorrowing();
@@ -190,12 +194,14 @@ WarpX::ComputeFaceExtensions(){
 
     if(WarpX::verbose) {
         amrex::Array1D<int, 0, 2> N_ext_faces_after_one_way = CountExtFaces();
-        amrex::Print() << "Faces to be extended after one way extension in x:\t" <<
-                       N_ext_faces_after_one_way(0) << std::endl;
-        amrex::Print() << "Faces to be extended after one way extension in y:\t" <<
-                       N_ext_faces_after_one_way(1) << std::endl;
-        amrex::Print() << "Faces to be extended after one way extension in z:\t" <<
-                       N_ext_faces_after_one_way(2) << std::endl;
+        amrex::Print() << Utils::TextMsg::Info(
+            "Faces to be extended after one way extension in x:\t"
+            + std::to_string(N_ext_faces_after_one_way(0)) + "\n"
+            +"Faces to be extended after one way extension in y:\t"
+            + std::to_string(N_ext_faces_after_one_way(1)) + "\n"
+            +"Faces to be extended after one way extension in z:\t"
+            + std::to_string(N_ext_faces_after_one_way(2))
+        );
     }
 
     ComputeEightWaysExtensions();
@@ -203,21 +209,23 @@ WarpX::ComputeFaceExtensions(){
 
     amrex::Array1D<int, 0, 2> N_ext_faces_after_eight_ways = CountExtFaces();
     if(WarpX::verbose) {
-        amrex::Print() << "Faces to be extended after eight ways extension in x:\t" <<
-                       N_ext_faces_after_eight_ways(0) << std::endl;
-        amrex::Print() << "Faces to be extended after eight ways extension in y:\t" <<
-                       N_ext_faces_after_eight_ways(1) << std::endl;
-        amrex::Print() << "Faces to be extended after eight ways extension ins z:\t" <<
-                       N_ext_faces_after_eight_ways(2) << std::endl;
+        amrex::Print() << Utils::TextMsg::Info(
+            "Faces to be extended after eight ways extension in x:\t"
+            + std::to_string(N_ext_faces_after_eight_ways(0)) + "\n"
+            +"Faces to be extended after eight ways extension in y:\t"
+            + std::to_string(N_ext_faces_after_eight_ways(1)) + "\n"
+            +"Faces to be extended after eight ways extension in z:\t"
+            + std::to_string(N_ext_faces_after_eight_ways(2))
+        );
     }
     if (N_ext_faces_after_eight_ways(0) > 0) {
-        amrex::Abort("Some x faces could not be extended");
+        amrex::Abort(Utils::TextMsg::Err("Some x faces could not be extended"));
     }
     if (N_ext_faces_after_eight_ways(1) > 0) {
-        amrex::Abort("Some y faces could not be extended");
+        amrex::Abort(Utils::TextMsg::Err("Some y faces could not be extended"));
     }
     if (N_ext_faces_after_eight_ways(2) > 0) {
-        amrex::Abort("Some z faces could not be extended");
+        amrex::Abort(Utils::TextMsg::Err("Some z faces could not be extended"));
     }
 #endif
 }
