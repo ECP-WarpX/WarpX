@@ -1373,8 +1373,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                 // Determine the offset and size of this chunk
                 amrex::IntVect const box_offset = local_box.smallEnd() - global_box.smallEnd();
 #if defined(WARPX_DIM_RZ)
-                auto chunk_offset = getVec( box_offset, reverse);
-                auto chunk_size = getVec( local_box.size(), reverse );
+                auto chunk_offset = getVec( box_offset);
+                auto chunk_size = getVec( local_box.size());
 #else
                 auto chunk_offset = getReversedVec( box_offset );
                 auto chunk_size = getReversedVec( local_box.size() );
