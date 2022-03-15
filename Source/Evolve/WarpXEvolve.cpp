@@ -836,9 +836,9 @@ WarpX::PushParticlesandDepose (amrex::Real cur_time, bool skip_deposition)
 void
 WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_deposition)
 {
-    amrex::MultiFab* current_x = current_fp[lev][0].get();
-    amrex::MultiFab* current_y = current_fp[lev][1].get();
-    amrex::MultiFab* current_z = current_fp[lev][2].get();
+    amrex::MultiFab* current_x = nullptr;
+    amrex::MultiFab* current_y = nullptr;
+    amrex::MultiFab* current_z = nullptr;
 
     if (WarpX::do_current_centering)
     {
@@ -846,12 +846,17 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
         current_y = current_fp_nodal[lev][1].get();
         current_z = current_fp_nodal[lev][2].get();
     }
-
-    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+    else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
         current_x = current_fp_vay[lev][0].get();
         current_y = current_fp_vay[lev][1].get();
         current_z = current_fp_vay[lev][2].get();
+    }
+    else
+    {
+        current_x = current_fp[lev][0].get();
+        current_y = current_fp[lev][1].get();
+        current_z = current_fp[lev][2].get();
     }
 
     mypc->Evolve(lev,
