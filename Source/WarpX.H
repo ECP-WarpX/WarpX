@@ -1409,6 +1409,18 @@ public:
     */
     void ComputeEightWaysExtensions();
 
+    /**
+     * \brief Compute cumulative sums of the preliminary current D
+     *        deposited according to the Vay deposition scheme
+     */
+    void PSATDComputeCurrentPartialSums ();
+
+    /**
+     * \brief Subtract the average of the cumulative sums of the preliminary current D
+     *        from the current J (computed from D according to the Vay deposition scheme)
+     */
+    void PSATDSubtractCurrentPartialSumsAvg ();
+
 private:
     void ScrapeParticles ();
 
@@ -1491,12 +1503,6 @@ private:
      * \brief Vay deposition in Fourier space (https://doi.org/10.1016/j.jcp.2013.03.010)
      */
     void PSATDVayDeposition ();
-
-    // TODO Add Doxygen string
-    void PSATDComputeCurrentPartialSums ();
-
-    // TODO Add Doxygen string
-    void PSATDSubtractCurrentPartialSumsAvg ();
 
     /**
      * \brief Update all necessary fields in spectral space

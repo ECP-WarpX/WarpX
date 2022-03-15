@@ -452,7 +452,6 @@ void WarpX::PSATDComputeCurrentPartialSums ()
             amrex::Array4<amrex::Real> const& jx_cumsum_arr = jx_cumsum.array(mfi);
 
             const amrex::Dim3 lo_jx = amrex::lbound(bx);
-            const amrex::Dim3 hi_jx = amrex::ubound(bx);
 
             // Compute cumulative sum along x only
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
@@ -475,7 +474,6 @@ void WarpX::PSATDComputeCurrentPartialSums ()
             amrex::Array4<amrex::Real> const& jy_cumsum_arr = jy_cumsum.array(mfi);
 
             const amrex::Dim3 lo_jy = amrex::lbound(bx);
-            const amrex::Dim3 hi_jy = amrex::ubound(bx);
 
             // Compute cumulative sum along y only
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
@@ -498,7 +496,6 @@ void WarpX::PSATDComputeCurrentPartialSums ()
             amrex::Array4<amrex::Real> const& jz_cumsum_arr = jz_cumsum.array(mfi);
 
             const amrex::Dim3 lo_jz = amrex::lbound(bx);
-            const amrex::Dim3 hi_jz = amrex::ubound(bx);
 
             // Compute cumulative sum along z only
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
