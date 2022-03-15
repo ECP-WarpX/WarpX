@@ -206,9 +206,9 @@ bool WarpX::do_device_synchronize = false;
 
 WarpX* WarpX::m_instance = nullptr;
 
-std::atomic<bool> WarpX::signal_received_flags[32];
-bool WarpX::signal_conf_requests_break[32];
-bool WarpX::signal_conf_requests_checkpoint[32];
+std::atomic<bool> WarpX::signal_received_flags[NUM_SIGNALS];
+bool WarpX::signal_conf_requests_break[NUM_SIGNALS];
+bool WarpX::signal_conf_requests_checkpoint[NUM_SIGNALS];
 bool WarpX::signal_actions_requested[2];
 #if defined(AMREX_USE_MPI)
 MPI_Request WarpX::signal_mpi_ibcast_request;
