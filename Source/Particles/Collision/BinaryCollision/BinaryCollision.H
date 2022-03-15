@@ -107,13 +107,12 @@ public:
     /** Perform the collisions
      *
      * @param cur_time Current time
+     * @param dt Time step size
      * @param mypc Container of species involved
      *
      */
-    void doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc) override
+    void doCollisions (amrex::Real /*cur_time*/, amrex::Real dt, MultiParticleContainer* mypc) override
     {
-        const amrex::Real dt = WarpX::GetInstance().getdt(0);
-        if ( int(std::floor(cur_time/dt)) % m_ndt != 0 ) return;
 
         auto& species1 = mypc->GetParticleContainerFromName(m_species_names[0]);
         auto& species2 = mypc->GetParticleContainerFromName(m_species_names[1]);
@@ -178,7 +177,7 @@ public:
                 }
                 amrex::Real wt = amrex::second();
 
-                doCollisionsWithinTile( lev, mfi, species1, species2, product_species_vector,
+                doCollisionsWithinTile( dt, lev, mfi, species1, species2, product_species_vector,
                                          copy_species1_data, copy_species2_data);
 
                 if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
@@ -203,7 +202,7 @@ public:
      *
      */
     void doCollisionsWithinTile (
-        int const lev, amrex::MFIter const& mfi,
+        amrex::Real dt, int const lev, amrex::MFIter const& mfi,
         WarpXParticleContainer& species_1,
         WarpXParticleContainer& species_2,
         amrex::Vector<WarpXParticleContainer*> product_species_vector,
@@ -212,7 +211,6 @@ public:
         using namespace ParticleUtils;
         using namespace amrex::literals;
 
-        int const ndt = m_ndt;
         CollisionFunctorType binary_collision_functor = m_binary_collision_functor;
         const bool have_product_species = m_have_product_species;
 
@@ -255,7 +253,6 @@ public:
             ParticleType * AMREX_RESTRICT
                                  particle_ptr_1 = ptile_1.GetArrayOfStructs()().data();
 
-            const amrex::Real dt = WarpX::GetInstance().getdt(lev);
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
 #if defined WARPX_DIM_1D_Z
             auto dV = geom.CellSize(0);
@@ -350,7 +347,7 @@ public:
                         cell_half_1, cell_stop_1,
                         indices_1, indices_1,
                         soa_1, soa_1, get_position_1, get_position_1,
-                        q1, q1, m1, m1, dt*ndt, dV,
+                        q1, q1, m1, m1, dt, dV,
                         cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
                         p_pair_reaction_weight, engine );
                 }
@@ -406,7 +403,6 @@ public:
             ParticleType * AMREX_RESTRICT
                                  particle_ptr_2 = ptile_2.GetArrayOfStructs()().data();
 
-            const amrex::Real dt = WarpX::GetInstance().getdt(lev);
             amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
 #if defined WARPX_DIM_1D_Z
             auto dV = geom.CellSize(0);
@@ -511,7 +507,7 @@ public:
                         cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
                         indices_1, indices_2,
                         soa_1, soa_2, get_position_1, get_position_2,
-                        q1, q2, m1, m2, dt*ndt, dV,
+                        q1, q2, m1, m2, dt, dV,
                         cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
                         p_pair_reaction_weight, engine );
                 }

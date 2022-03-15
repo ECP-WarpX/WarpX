@@ -136,8 +136,7 @@ endif
 
 WARPX_GIT_VERSION := $(shell cd $(WARPX_HOME); git describe --abbrev=12 --dirty --always --tags)
 PICSAR_GIT_VERSION := $(shell cd $(PICSAR_HOME); git describe --abbrev=12 --dirty --always --tags)
-DEFINES += -DWARPX_GIT_VERSION=\"$(WARPX_GIT_VERSION)\"
-DEFINES += -DPICSAR_GIT_VERSION=\"$(PICSAR_GIT_VERSION)\"
+WARPX_DEFINES = -DWARPX_GIT_VERSION=\"$(WARPX_GIT_VERSION)\" -DPICSAR_GIT_VERSION=\"$(PICSAR_GIT_VERSION)\"
 
 DEFINES += -DPICSAR_NO_ASSUMED_ALIGNMENT
 DEFINES += -DWARPX
@@ -291,6 +290,18 @@ AMReX_buildInfo.cpp:
           --F_comp_name "$(F90)" --F_flags "$(F90FLAGS)" \
           --link_flags "$(LDFLAGS)" --libraries "$(libraries)" \
           --GIT ". $(AMREX_HOME) $(PICSAR_HOME)"
+
+vpath WarpXVersion.H $(srcTempDir)/Utils
+
+AUTO_BUILD_SOURCES += $(srcTempDir)/Utils/WarpXVersion.H
+
+$(srcTempDir)/Utils/WarpXVersion.H:
+	@echo Generating WarpXVersion.H ...
+	@if [ ! -d $(srcTempDir)/Utils ]; then mkdir -p $(srcTempDir)/Utils; fi
+	@ $(MKVERSIONHEADER) --code="WARPX" --defines="$(WARPX_DEFINES)" > $@
+
+cleanconfig::
+	$(SILENT) $(RM) -r $(srcTempDir)/Utils
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.rules
 

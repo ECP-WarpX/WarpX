@@ -10,6 +10,8 @@
 #include "MsgLogger/MsgLogger.H"
 #include "WarpXUtil.H"
 
+#include <ablastr/utils/TextMsg.H>
+
 #include <AMReX_ParallelDescriptor.H>
 
 #include <algorithm>
@@ -202,7 +204,7 @@ WarnManager::msg_formatter(
     const auto prefix = "*" + std::string(tab_size, ' ');
     const auto prefix_length = static_cast<int>(prefix.length());
 
-    const auto wrapped_text = WarpXUtilStr::automatic_text_wrap(
+    const auto wrapped_text = ablastr::utils::automatic_text_wrap(
         msg, line_size-prefix_length);
 
     std::stringstream ss_out;
