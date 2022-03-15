@@ -38,6 +38,11 @@
 #include <string>
 #include <limits>
 
+// C library header for sigabbrev_np on GNU/Linux
+#include <string.h>
+// System header for sys_signame on macOS
+#include <signal.h>
+
 using namespace amrex;
 
 void PreparseAMReXInputIntArray(amrex::ParmParse& a_pp, char const * const input_str, const bool replace)
