@@ -984,8 +984,10 @@ private:
     static bool signal_actions_requested[2];
     //! Labels for indexed positions in signal_actions_requests
     enum signal_action_requested_labels { SIGNAL_REQUESTS_BREAK = 0, SIGNAL_REQUESTS_CHECKPOINT = 1 };
+#if defined(AMREX_USE_MPI)
     //! MPI requests for the asynchronous broadcasts of the signal-requested actions
     static MPI_Request signal_mpi_ibcast_request;
+#endif
 
     ///
     /// Advance the simulation by numsteps steps, electromagnetic case.

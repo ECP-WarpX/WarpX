@@ -46,6 +46,10 @@
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 
+#if defined(AMREX_USE_MPI)
+#   include <mpi.h>
+#endif
+
 #include <algorithm>
 #include <array>
 #include <memory>
@@ -959,13 +963,17 @@ WarpX::CheckSignals()
 
     auto comm = amrex::ParallelDescriptor::Communicator();
 
+#if defined(AMREX_USE_MPI)
     MPI_Ibcast(signal_actions_requested, 2, MPI_CXX_BOOL, 0, comm, &signal_mpi_ibcast_request);
+#endif
 }
 
 void
 WarpX::HandleSignals()
 {
+#if defined(AMREX_USE_MPI)
     MPI_Wait(&signal_mpi_ibcast_request, MPI_STATUS_IGNORE);
+#endif
 
     // SIGNAL_REQUESTS_BREAK is handled directly in WarpX::Evolve
 
