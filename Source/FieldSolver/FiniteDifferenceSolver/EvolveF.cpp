@@ -13,6 +13,7 @@
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #ifdef WARPX_DIM_RZ
@@ -71,7 +72,7 @@ void FiniteDifferenceSolver::EvolveF (
 
 #endif
     } else {
-        amrex::Abort("EvolveF: Unknown algorithm");
+        amrex::Abort(Utils::TextMsg::Err("EvolveF: Unknown algorithm"));
     }
 
 }
