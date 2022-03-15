@@ -403,7 +403,7 @@ parseSignalNameToNumber(const std::string &str)
     for (int i = 0; i < 32; ++i) {
 #if defined(__GNU_LIBRARY__)
         // Returns upper-case, no "SIG"
-        std::string name_upper = sigabbrex_np(i);
+        std::string name_upper = sigabbrev_np(i);
         std::string name_lower = name_upper;
         for (char &c : name_lower) {
             c = tolower(c);
