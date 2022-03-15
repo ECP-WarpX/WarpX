@@ -1968,7 +1968,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Otherwise, we reconstruct a 2D Cartesian slice of the fields for output at :math:`\theta=0`.
 
 * ``<diag_name>.dump_rz_modes`` (`0` or `1`) optional (default `0`)
-    Whether to save all modes when in RZ.  Ignored unless in RZ and not using ``openPMD``.
+    Whether to save all modes when in RZ.  When ``openpmd_backend = openpmd``, this parameter is ignored and all modes are saved.
 
 * ``<diag_name>.particle_fields_to_plot`` (list of `strings`, optional)
    Names of per-cell averages of particle properties to calculate and output as additional fields.
