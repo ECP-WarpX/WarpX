@@ -421,7 +421,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
         }
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            direct_faces.size() == 1,
+            direct_faces.size() <= 1,
             "SigmaBox::SigmaBox(): direct_faces.size() > 1, Box gaps not wide enough?"
         );
     }
