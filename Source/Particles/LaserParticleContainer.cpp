@@ -154,7 +154,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
                                          + m_nvec[2]*WarpX::boost_direction[2] - 1. < 1.e-12,
                                            "The Lorentz boost should be in the same direction as the laser propagation");
         // Check that the laser velocity is not being combined with boosted-frame
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(  m_vz_antenna_over_c != 0.,
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(  m_vz_antenna_over_c < 1.0e-14,
            "A moving antenna (in the lab frame) is currently incompatible with boosted-frame simulations.");
         // Get the position of the plane, along the boost direction, in the lab frame
         // and convert the position of the antenna to the boosted frame
