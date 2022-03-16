@@ -44,6 +44,7 @@
 #include <AMReX_RealVect.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_VisMF.H>
+#include <AMReX_Graph.H> // kngott/graphviz
 
 #include <algorithm>
 #include <cmath>
@@ -1201,6 +1202,11 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
             ablastr::utils::communication::ParallelCopy(tmpregmf, totpmlmf, 0, 0, 1, IntVect(0), ngr,
                                    WarpX::do_single_precision_comms,
                                                         period);
+            amrex::Graph graph;
+            graph.addParallelCopy("PML-comm", "tmpregmf", "totpmlmf", 0.0,
+                tmpregmf, totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
+            graph.print_table("comm_data");
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
