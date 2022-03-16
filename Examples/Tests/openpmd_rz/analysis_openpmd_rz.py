@@ -18,6 +18,4 @@ assert Nr == 64, 'Wrong number of radial points stored or possible incorrect ord
 assert Nz == 512, 'Wrong number of z points stored or possible incorrect ordering when flushed'
 
 assert ii.meshes['part_per_grid'][io.Mesh_Record_Component.SCALAR].shape == [64,512], 'problem with part_per_grid'
-assert ii.meshes['divE'][io.Mesh_Record_Component.SCALAR].shape == [3, 64, 512], 'problem with rho_electrons'
-assert ii.meshes['divB'][io.Mesh_Record_Component.SCALAR].shape == [3, 64, 512], 'problem with rho_electrons'
 assert ii.meshes['rho_electrons'][io.Mesh_Record_Component.SCALAR].shape == [3, 64, 512], 'problem with rho_electrons'
