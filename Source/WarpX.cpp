@@ -842,9 +842,9 @@ WarpX::ReadParameters ()
                 "warpx.do_pml_dive_cleaning = "
                 + std::to_string(do_pml_dive_cleaning)
                 +" and warpx.do_pml_divb_cleaning = "
-                +std::to_string(do_pml_divb_cleaning)
-                +": this case is not implemented yet,"
-                +" please set both parameters to the same value"
+                + std::to_string(do_pml_divb_cleaning)
+                + ": this case is not implemented yet,"
+                + " please set both parameters to the same value"
             );
         }
 
