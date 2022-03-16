@@ -1,17 +1,43 @@
 .. _developers-profiling:
 
-Profiling
-=========
+Profiling the code
+==================
+
+Profiling allows us to find the bottle-necks of the code as it is currently implemented.
+Bottle-necks are the parts of the code that may delay the simulation, making it more computationally expensive.
+Once found, we can update the related code sections and improve its efficiency.
+Profiling tools can also be used to check how load balanced the simulation is, i.e. if the work is well distributed across all MPI ranks used.
+Load balancing can be activated in WarpX by setting input parameters, see the :ref:`parallelization input parameter section <running-cpp-parameters-parallelization>`.
 
 .. _developers-profiling-tiny-profiler:
 
-Tiny Profiler
--------------
+Profiling with AMReX's built-in profiling tools
+-----------------------------------------------
 
-The so-called "Tiny Profiler" is a component of lightweight profiling that we perform with each WarpX run by default.
-A table of the summary of most often called and most costly functions is printed to ``stdout`` at the end of every WarpX run.
+By default, WarpX uses the AMReX baseline tool, the TINYPROFILER, to evaluate the time information for different parts of the code (functions) between the different MPI ranks.
+The results, timers, are stored into four tables in the standard output, stdout, that are located below the simulation steps information and above the warnings regarding unused input file parameters (if there were any).
 
-`See the full documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/AMReX_Profiling_Tools_Chapter.html>`__.
+The timers are displayed in tables for which the columns correspond to:
+
+* name of the function
+* number of times it is called in total
+* minimum of time spent exclusively/inclusively in it, between all ranks
+* average of time, between all ranks
+* maximum time, between all ranks
+* maximum percentage of time spent, across all ranks
+
+If the simulation is well load balanced the minimum, average and maximum times should be identical.
+
+The top two tables refer to the complete simulation information.
+The bottom two are related to the Evolve() section of the code (where each time step is computed).
+
+Each set of two timers show the exclusive, top, and inclusive, bottom, information depending on whether the time spent in nested sections of the codes are included.
+
+For more detailed information please visit the `AMReX profiling documentation <https://amrex-codes.github.io/amrex/docs_html/AMReX_Profiling_Tools_Chapter.html>`__.
+
+.. note::
+
+   When creating performance-related issues on the WarpX GitHub repo, please include Tiny Profiler tables (besides the usual issue description, input file and submission script), or (even better) the whole standard output.
 
 There is a script located `here <https://github.com/AMReX-Codes/amrex/tree/development/Tools/TinyProfileParser>`__ that parses the Tiny Profiler output and generates a JSON file that can be used with `Hatchet <https://hatchet.readthedocs.io/en/latest/>`__ in order to analyze performance.
 
@@ -23,15 +49,11 @@ Nvidia Nsight-Systems
 
 `Vendor homepage <https://developer.nvidia.com/nsight-systems>`__ and `product manual <https://docs.nvidia.com/nsight-systems/>`__.
 
-Example on how to create traces on a multi-GPU system that uses the Slurm scheduler:
+Example on how to create traces on a multi-GPU system that uses the Slurm scheduler (e.g. NERSC's Perlmutter system):
 
 .. code-block:: bash
 
    rm -rf profiling*
-
-   # adjust if needed
-   #export GPUS_PER_SOCKET=2
-   #export GPUS_PER_NODE=4
    export OMP_NUM_THREADS=1
 
    # record
@@ -42,6 +64,21 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
          --mpi-impl=openmpi \
        ./warpx.3d.MPI.CUDA.DP.QED inputs_3d \
          warpx.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
+
+ Example on how to create traces on a multi-GPU system that uses the ``jsrun`` scheduler (e.g. OLCF's Summit system):
+
+ .. code-block:: bash
+
+    rm -rf profiling*
+    export OMP_NUM_THREADS=1
+
+    # record
+    jsrun -n 4 -a 1 -g 1 -c 7 --bind=packed:$OMP_NUM_THREADS \
+        nsys profile -f true \
+          -o profiling_%p \
+          -t mpi,cuda,nvtx,osrt,openmp   \
+        ./warpx.3d.MPI.CUDA.DP.QED inputs_3d \
+          warpx.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
 
 In this example, the individual lines for recording a trace profile are:
 
