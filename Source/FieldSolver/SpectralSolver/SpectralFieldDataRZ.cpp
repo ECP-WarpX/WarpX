@@ -444,9 +444,9 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         if ( !(field_mf[mfi].box().contains(field_mf_copy[mfi].box())) ) {
             // If field_mf[mfi] is smaller than field_mf_copy[mfi], then fill field_mf_copy[mfi] with
             // zeros so that all of it is initialized.
-            field_mf_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, ncomp);
+            field_mf_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, m_ncomps);
             }
-        field_mf_copy[mfi].copy<amrex::RunOn::Device>(field_mf[mfi], i_comp*ncomp, 0, ncomp);
+        field_mf_copy[mfi].copy<amrex::RunOn::Device>(field_mf[mfi], i_comp*m_ncomps, 0, m_ncomps);
         multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Scalar(field_mf_copy[mfi], tempHTransformedSplit[mfi]);
 
         FABZForwardTransform(mfi, realspace_bx, tempHTransformedSplit, field_index, is_nodal_z);
@@ -582,7 +582,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         // Get the intersection of the two boxes in case the field_mf has fewer z-guard cells
         realspace_bx &= realspace_bx_with_guards;
 
-        ParallelFor(realspace_bx, ncomp,
+        ParallelFor(realspace_bx, m_ncomps,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int icomp) noexcept {
             int ii = i;
             amrex::Real sign = +1._rt;
