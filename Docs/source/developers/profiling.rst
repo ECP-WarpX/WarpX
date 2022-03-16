@@ -1,6 +1,6 @@
 .. _developers-profiling:
 
-Profiling the code
+Profiling the Code
 ==================
 
 Profiling allows us to find the bottle-necks of the code as it is currently implemented.
@@ -11,7 +11,7 @@ Load balancing can be activated in WarpX by setting input parameters, see the :r
 
 .. _developers-profiling-tiny-profiler:
 
-Profiling with AMReX's built-in profiling tools
+Profiling with AMReX's built-in Profiling Tools
 -----------------------------------------------
 
 By default, WarpX uses the AMReX baseline tool, the TINYPROFILER, to evaluate the time information for different parts of the code (functions) between the different MPI ranks.
