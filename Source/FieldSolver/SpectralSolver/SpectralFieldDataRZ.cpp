@@ -26,7 +26,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
                                           int const n_field_required,
                                           int const n_modes)
     : n_rz_azimuthal_modes(n_modes),
-      m_ncomps(2 * n_rz_azimuthal_modes - 1),
+      m_ncomps(2 * n_modes - 1),
       m_n_fields(n_field_required)
 {
     amrex::BoxArray const & spectralspace_ba = k_space.spectralspace_ba;
@@ -503,10 +503,11 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
             }
         field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 0, 0, 1); // Real part of mode 0
         field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 0, 0, 1); // Real part of mode 0
-        field_mf_r_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0
-        field_mf_t_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0
-        field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 1, 2, 2*n_rz_azimuthal_modes-2); // why -2 not -1 or 0?
-        field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 1, 2, 2*n_rz_azimuthal_modes-2); // why -2 not -1 or 0?
+        field_mf_r_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0 (all zero)
+        field_mf_t_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0 (all zero)
+        const int ncomps_left = 2 * (n_rz_azimuthal_modes - 1);  // mode zero with an additional imaginary part already handled
+        field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 1, 2, ncomps_left);
+        field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 1, 2, ncomps_left);
 
         // Perform the Hankel transform first.
         multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Vector(realspace_bx,
