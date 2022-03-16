@@ -35,6 +35,20 @@ Each set of two timers show the exclusive, top, and inclusive, bottom, informati
 
 For more detailed information please visit the `AMReX profiling documentation <https://amrex-codes.github.io/amrex/docs_html/AMReX_Profiling_Tools_Chapter.html>`__.
 
+Please note that the `AMReX build options <https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#customization-options>`__ for ``AMReX_TINY_PROFILE`` (our default: ``ON``) and full profiling traces via ``AMReX_BASE_PROFILE`` are mutually exclusive.
+Further tracing options are sub-options of ``AMReX_BASE_PROFILE``.
+If you want to switch from tiny profiling defaults to trace profiling, configure like this:
+
+.. code-block:: bash
+
+   cmake -S . -B build -DAMReX_BASE_PROFILE=YES -DAMReX_TRACE_PROFILE=YES  -DAMReX_COMM_PROFILE=YES -DAMReX_TINY_PROFILE=OFF
+
+To turn on the tiny profiler again, remove the ``build`` directory or turn off ``AMReX_BASE_PROFILE`` again:
+
+.. code-block:: bash
+
+   cmake -S . -B build -DAMReX_BASE_PROFILE=OFF -DAMReX_TINY_PROFILE=ON
+
 .. note::
 
    When creating performance-related issues on the WarpX GitHub repo, please include Tiny Profiler tables (besides the usual issue description, input file and submission script), or (even better) the whole standard output.
@@ -49,7 +63,7 @@ Nvidia Nsight-Systems
 
 `Vendor homepage <https://developer.nvidia.com/nsight-systems>`__ and `product manual <https://docs.nvidia.com/nsight-systems/>`__.
 
-Example on how to create traces on a multi-GPU system that uses the Slurm scheduler (e.g. NERSC's Perlmutter system):
+Example on how to create traces on a multi-GPU system that uses the Slurm scheduler (e.g., NERSC's Perlmutter system):
 
 .. code-block:: bash
 
@@ -65,7 +79,7 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
        ./warpx.3d.MPI.CUDA.DP.QED inputs_3d \
          warpx.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
 
- Example on how to create traces on a multi-GPU system that uses the ``jsrun`` scheduler (e.g. OLCF's Summit system):
+ Example on how to create traces on a multi-GPU system that uses the ``jsrun`` scheduler (e.g., `OLCF's Summit system <https://docs.olcf.ornl.gov/systems/summit_user_guide.html#optimizing-and-profiling>`__):
 
  .. code-block:: bash
 
