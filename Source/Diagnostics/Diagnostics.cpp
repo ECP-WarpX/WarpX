@@ -272,6 +272,9 @@ Diagnostics::InitData ()
     pp_geometry.get("dims", dims);
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         // loop over all levels
+        // This includes full diagnostics and BTD as well as cell-center functors for BTD.
+        // Note that the cell-centered data for BTD is computed for all levels and hence
+        // the corresponding functor is also initialized for all the levels
         for (int lev = 0; lev < nmax_lev; ++lev) {
             // allocate and initialize m_all_field_functors depending on diag type
             if (dims == "RZ" and m_format == "openpmd") {
@@ -279,6 +282,11 @@ Diagnostics::InitData ()
             } else {
                 InitializeFieldFunctors(lev);
             }
+        }
+        // loop over the levels selected for output
+        // This includes all the levels for full diagnostics
+        // and only the coarse level (mother grid) for BTD
+        for (int lev = 0; lev < nlev_output; ++lev) {
             // Initialize buffer data required for particle and/or fields
             InitializeBufferData(i_buffer, lev);
         }

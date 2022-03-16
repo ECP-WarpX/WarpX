@@ -80,8 +80,8 @@ deposit_charge (typename T_PC::ParIterType& pti,
     amrex::IntVect ng_rho = rho->nGrowVect();
     if (num_rho_deposition_guards.has_value())
         ng_rho = num_rho_deposition_guards.value();
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ng_rho <= rho->nGrowVect(),
-                                     "num_rho_deposition_guards are larger than allocated!");
+    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(ng_rho <= rho->nGrowVect(),
+                                       "num_rho_deposition_guards are larger than allocated!");
     // particle shape
     auto const[nox, noy, noz] = std::array<int, 3>{particle_shape, particle_shape, particle_shape};
 
@@ -89,18 +89,18 @@ deposit_charge (typename T_PC::ParIterType& pti,
     // current box; with offset, we start at a later particle index
     if (!np_to_depose.has_value())
         np_to_depose = pti.numParticles();
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(np_to_depose.value() + offset <= pti.numParticles(),
-                                     "np_to_depose + offset are out-of-bounds for particle iterator");
+    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(np_to_depose.value() + offset <= pti.numParticles(),
+                                       "np_to_depose + offset are out-of-bounds for particle iterator");
 
     int const lev = pti.GetLevel();
     if (!depos_lev.has_value())
         depos_lev = lev;
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev.value() == (lev-1)) ||
-                                     (depos_lev.value() == (lev  )),
-                                     "Deposition buffers only work for lev or lev-1");
+    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev.value() == (lev-1)) ||
+                                       (depos_lev.value() == (lev  )),
+                                       "Deposition buffers only work for lev or lev-1");
     if (!rel_ref_ratio.has_value()) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev == depos_lev,
-                                         "rel_ref_ratio must be set if lev != depos_lev");
+        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(lev == depos_lev,
+                                           "rel_ref_ratio must be set if lev != depos_lev");
         rel_ref_ratio = amrex::IntVect(AMREX_D_DECL(1, 1, 1));
     }
 
@@ -134,7 +134,7 @@ deposit_charge (typename T_PC::ParIterType& pti,
     const amrex::IntVect range = rho->nGrowVect() - shape_extent;
 #endif
     amrex::ignore_unused(range); // for release builds
-    AMREX_ASSERT_WITH_MESSAGE(
+    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, range) == 0,
         "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for charge deposition");
 
