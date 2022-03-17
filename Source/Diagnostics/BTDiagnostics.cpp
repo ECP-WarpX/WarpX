@@ -217,7 +217,6 @@ BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 void
 BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
 {
-    lev = 0;
     auto & warpx = WarpX::GetInstance();
     // Lab-frame time for the i^th snapshot
     m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab;
@@ -741,10 +740,12 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
 
     auto & warpx = WarpX::GetInstance();
     const amrex::Vector<int> iteration = warpx.getistep();
-    // Minimum number of digits for plotfile containing multifab data (Cell_H_XXXXX)
-    const int amrex_fabfile_min_digits = 5;
-    // Minimum number of digits for plotfile containing particle data (DATA_XXXXX)
-    const int amrex_partfile_min_digits = 5;
+    // number of digits for plotfile containing multifab data (Cell_H_XXXXX)
+    // the digits here are "multifab ids" (independent of the step) and thus always small
+    const int amrex_fabfile_digits = 5;
+    // number of digits for plotfile containing particle data (DATA_XXXXX)
+    // the digits here are "... ids" (independent of the step) and thus always small
+    const int amrex_partfile_digits = 5;
     if (amrex::ParallelContext::IOProcessorSub()) {
         // Path to final snapshot plotfiles
         std::string snapshot_path = amrex::Concatenate(m_file_prefix, i_snapshot, m_file_min_digits);
@@ -793,10 +794,10 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             // Cell_D_<number> is padded with 5 zeros as that is the default AMReX output
             // The number is the multifab ID here.
             std::string snapshot_FabHeaderFilename = snapshot_Level0_path + "/Cell_H";
-            std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_",m_buffer_flush_counter[i_snapshot], amrex_fabfile_min_digits);
+            std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_", m_buffer_flush_counter[i_snapshot], amrex_fabfile_digits);
             // Name of the newly appended fab in the snapshot
             // Cell_D_<number> is padded with 5 zeros as that is the default AMReX output
-            std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_",m_buffer_flush_counter[i_snapshot],amrex_fabfile_min_digits);
+            std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_", m_buffer_flush_counter[i_snapshot], amrex_fabfile_digits);
 
             if ( m_buffer_flush_counter[i_snapshot] == 0) {
                 std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
@@ -832,7 +833,8 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             // The number is the ID of the multifab that the particles belong to.
             std::string recent_ParticleDataFilename = amrex::Concatenate(
                 recent_species_prefix + "/Level_0/DATA_",
-                BufferSpeciesHeader.m_which_data[0][0],amrex_partfile_min_digits);
+                BufferSpeciesHeader.m_which_data[0][0],
+                amrex_partfile_digits);
             // Path to snapshot particle files
             std::string snapshot_species_path = snapshot_path + "/" + m_output_species_names[i];
             std::string snapshot_species_Level0path = snapshot_species_path + "/Level_0";
@@ -840,7 +842,8 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             std::string snapshot_ParticleHdrFilename = snapshot_species_Level0path + "/Particle_H";
             std::string snapshot_ParticleDataFilename = amrex::Concatenate(
                 snapshot_species_Level0path + "/DATA_",
-                m_buffer_flush_counter[i_snapshot],amrex_partfile_min_digits);
+                m_buffer_flush_counter[i_snapshot],
+                amrex_partfile_digits);
 
             if (m_buffer_flush_counter[i_snapshot] == 0) {
                 BufferSpeciesHeader.set_DataIndex(0,0,m_buffer_flush_counter[i_snapshot]);
