@@ -740,7 +740,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
 
     auto & warpx = WarpX::GetInstance();
     const amrex::Vector<int> iteration = warpx.getistep();
-    // number of digits for plotfile containing multifab data (Cell_H_XXXXX)
+    // number of digits for plotfile containing multifab data (Cell_D_XXXXX)
     // the digits here are "multifab ids" (independent of the step) and thus always small
     const int amrex_fabfile_digits = 5;
     // number of digits for plotfile containing particle data (DATA_XXXXX)
