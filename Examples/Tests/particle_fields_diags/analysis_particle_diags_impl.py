@@ -143,7 +143,6 @@ def do_analysis(single_precision = False):
     values_rd['photons: zuzavg'] = ad0[('boxlib','zuz_photons')]
 
     values_opmd = dict()
-    opmd_i = opmd.iterations[200]
     # Load reduced particle diagnostic data from OPMD output
     values_opmd['electrons: zavg'] = opmd_i.meshes['z_electrons'][io.Mesh_Record_Component.SCALAR].load_chunk()
     values_opmd['protons: zavg'] = opmd_i.meshes['z_protons'][io.Mesh_Record_Component.SCALAR].load_chunk()
