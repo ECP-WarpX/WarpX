@@ -719,10 +719,6 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
             auto& aos   = ptile.GetArrayOfStructs();
             auto pstruct_ptr = aos().dataPtr();
 
-            ParticleTileType ptile_tmp;
-            ptile_tmp.define(ptile.NumRuntimeRealComps(), ptile.NumRuntimeIntComps());
-            ptile_tmp.resize(ptile.numParticles());
-
             Box box = pti.validbox();
             box.grow(ng_rho);
             amrex::IntVect bin_size = WarpX::sort_bin_size;
@@ -737,9 +733,6 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
                            auto tid = getTileIndex(iv, box, true, bin_size, tbx);
                            return static_cast<unsigned int>(tid);
                        });
-
-            gatherParticles(ptile_tmp, ptile, ptile.numParticles(), bins.permutationPtr());
-            ptile.swap(ptile_tmp);
         }
         WARPX_PROFILE_VAR_STOP(blp_sort);
 
@@ -766,7 +759,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
                                    const int bin_start = offsets_ptr[ibin];
                                    const int bin_stop = offsets_ptr[ibin+1];
                                    if (bin_start < bin_stop) {
-                                       const auto& p = pstruct_ptr[bin_start];
+                                       const auto& p = pstruct_ptr[bins.permutationPtr()[bin_start]];
                                        Box tbx;
                                        auto iv = getParticleCell(p, plo, dxi, domain);
                                        AMREX_ASSERT(box.contains(iv));

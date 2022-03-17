@@ -273,6 +273,8 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 {
     using namespace amrex;
 
+    auto permutation = a_bins.permutationPtr();
+
 #if !defined(AMREX_USE_GPU)
     amrex::ignore_unused(ix_type, cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size);
 #endif
@@ -351,7 +353,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                   nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
                   [=] AMREX_GPU_DEVICE () noexcept
 #else // defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
-    amrex::ParallelFor(np_to_deposit, [=] AMREX_GPU_DEVICE (long ip) noexcept
+    amrex::ParallelFor(np_to_deposit, [=] AMREX_GPU_DEVICE (long ip_orig) noexcept
 #endif
       {
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
@@ -364,7 +366,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         amrex::Box buffer_box;
         {
           ParticleReal xp, yp, zp;
-          GetPosition(bin_start, xp, yp, zp);
+          GetPosition(permutation[bin_start], xp, yp, zp);
 #if defined(WARPX_DIM_3D)
           IntVect iv = IntVect(int(amrex::Math::floor((xp-plo[0])*dxiarr[0])),
                                int(amrex::Math::floor((yp-plo[1])*dxiarr[1])),
@@ -399,9 +401,11 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif // defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
-        for (unsigned int ip = bin_start + threadIdx.x; ip < bin_stop; ip += blockDim.x)
+        for (unsigned int ip_orig = bin_start + threadIdx.x; ip_orig < bin_stop; ip_orig += blockDim.x)
 #endif
         {
+            unsigned int ip = permutation[ip_orig];
+
 #if defined(WARPX_USE_GPUCLOCK)
             KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                                  == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
