@@ -90,11 +90,7 @@ FullDiagnostics::ReadParameters ()
     raw_specified += pp_diag_name.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
 
 #ifdef WARPX_DIM_RZ
-    if (m_format == "openpmd") {
-        m_dump_rz_modes = true;
-    } else {
-        pp_diag_name.query("dump_rz_modes", m_dump_rz_modes);
-    }
+    pp_diag_name.query("dump_rz_modes", m_dump_rz_modes);
 #else
     amrex::ignore_unused(m_dump_rz_modes);
 #endif
