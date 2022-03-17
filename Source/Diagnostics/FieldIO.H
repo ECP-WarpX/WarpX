@@ -29,7 +29,7 @@ AverageAndPackScalarField( amrex::MultiFab& mf_avg,
                          const amrex::DistributionMapping& dm,
                          const int dcomp, const amrex::IntVect ngrow );
 /** Convert amrex IntVect to vector of `uint64`, reverse if requested
- * 
+ *
  * @param[in] v vector to convert
  * @param[in] reverse (optional) boolean indicating whether to reverse ``v``
  * @return converted vector of type `uint64`, reversed if requested
@@ -37,7 +37,7 @@ AverageAndPackScalarField( amrex::MultiFab& mf_avg,
 std::vector<std::uint64_t>
 getVec( const amrex::IntVect& v, bool reverse = false);
 /** Convert vector of `amrex Reals` to vector of `double`, reverse if requested
- * 
+ *
  * @param[in] v vector to convert
  * @param[in] reverse (optional) boolean indicating whether to reverse ``v``
  * @return converted vector of type `amrex::Real`, reversed if requested
