@@ -26,6 +26,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
                                           int const n_field_required,
                                           int const n_modes)
     : n_rz_azimuthal_modes(n_modes),
+      m_ncomps(2 * n_modes - 1),
       m_n_fields(n_field_required)
 {
     amrex::BoxArray const & spectralspace_ba = k_space.spectralspace_ba;
@@ -414,15 +415,13 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
     // Only cell centered in r is supported.
     bool const is_nodal_z = field_mf.is_nodal(1);
 
-    int const ncomp = 2*n_rz_azimuthal_modes - 1;
-
     // Create a copy of the input multifab since the shape of field_mf
     // might not be what is needed in transform.
     // For example, with periodic_single_box_fft, field_mf will have guard cells but
     // the transformed array does not.
     // Note that the copy will not include the imaginary part of mode 0 as
     // PhysicalToSpectral_Scalar expects.
-    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), field_mf.DistributionMap(), ncomp, 0);
+    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), field_mf.DistributionMap(), m_ncomps, 0);
 
     // This will hold the Hankel transformed data, with the real and imaginary parts split.
     // A full multifab is created so that each GPU stream has its own temp space.
@@ -445,9 +444,9 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         if ( !(field_mf[mfi].box().contains(field_mf_copy[mfi].box())) ) {
             // If field_mf[mfi] is smaller than field_mf_copy[mfi], then fill field_mf_copy[mfi] with
             // zeros so that all of it is initialized.
-            field_mf_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, ncomp);
+            field_mf_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, m_ncomps);
             }
-        field_mf_copy[mfi].copy<amrex::RunOn::Device>(field_mf[mfi], i_comp*ncomp, 0, ncomp);
+        field_mf_copy[mfi].copy<amrex::RunOn::Device>(field_mf[mfi], i_comp*m_ncomps, 0, m_ncomps);
         multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Scalar(field_mf_copy[mfi], tempHTransformedSplit[mfi]);
 
         FABZForwardTransform(mfi, realspace_bx, tempHTransformedSplit, field_index, is_nodal_z);
@@ -504,10 +503,11 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
             }
         field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 0, 0, 1); // Real part of mode 0
         field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 0, 0, 1); // Real part of mode 0
-        field_mf_r_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0
-        field_mf_t_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0
-        field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 1, 2, 2*n_rz_azimuthal_modes-2);
-        field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 1, 2, 2*n_rz_azimuthal_modes-2);
+        field_mf_r_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0 (all zero)
+        field_mf_t_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0 (all zero)
+        const int ncomps_left = 2 * (n_rz_azimuthal_modes - 1);  // mode zero with an additional imaginary part already handled
+        field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 1, 2, ncomps_left);
+        field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 1, 2, ncomps_left);
 
         // Perform the Hankel transform first.
         multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Vector(realspace_bx,
@@ -539,14 +539,12 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
     // Check field index type, in order to apply proper shift in spectral space.
     bool const is_nodal_z = field_mf.is_nodal(1);
 
-    int const ncomp = 2*n_rz_azimuthal_modes - 1;
-
     // A full multifab is created so that each GPU stream has its own temp space.
     amrex::MultiFab tempHTransformedSplit(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
 
     // Create a temporary to hold the inverse Hankel transform field.
     // This allows the final result to have a different shape than the transformed field.
-    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes-1, 0);
+    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), m_ncomps, 0);
 
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf); mfi.isValid(); ++mfi){
@@ -584,7 +582,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         // Get the intersection of the two boxes in case the field_mf has fewer z-guard cells
         realspace_bx &= realspace_bx_with_guards;
 
-        ParallelFor(realspace_bx, ncomp,
+        ParallelFor(realspace_bx, m_ncomps,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int icomp) noexcept {
             int ii = i;
             amrex::Real sign = +1._rt;
@@ -674,7 +672,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         // Get the intersection of the two boxes in case the field_mf has fewer z-guard cells
         realspace_bx &= realspace_bx_with_guards;
 
-        ParallelFor(realspace_bx, 2*n_rz_azimuthal_modes-1,
+        ParallelFor(realspace_bx, m_ncomps,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int icomp) noexcept {
             int ii = i;
             amrex::Real sign = +1._rt;

@@ -17,10 +17,8 @@ import os
 import re
 import sys
 
-import matplotlib
-
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import yt
 
 yt.funcs.mylog.setLevel(50)
@@ -79,8 +77,9 @@ def get_theoretical_field( field, t ):
 # Read the file
 ds = yt.load(fn)
 t0 = ds.current_time.to_value()
-data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
-                                    dims=ds.domain_dimensions)
+data = ds.covering_grid(level = 0, left_edge = ds.domain_left_edge, dims = ds.domain_dimensions)
+edge = np.array([(ds.domain_left_edge[1]).item(), (ds.domain_right_edge[1]).item(), \
+                 (ds.domain_left_edge[0]).item(), (ds.domain_right_edge[0]).item()])
 
 # Check the validity of the fields
 error_rel = 0
@@ -92,16 +91,26 @@ for field in ['Ex', 'Ez']:
     error_rel = max( error_rel, max_error )
 
 # Plot the last field from the loop (Ez at iteration 40)
-plt.subplot2grid( (1,2), (0,0) )
-plt.imshow( E_sim )
-plt.colorbar()
-plt.title('Ez, last iteration\n(simulation)')
-plt.subplot2grid( (1,2), (0,1) )
-plt.imshow( E_th )
-plt.colorbar()
-plt.title('Ez, last iteration\n(theory)')
-plt.tight_layout()
-plt.savefig('langmuir_multi_2d_analysis.png')
+fig, (ax1, ax2) = plt.subplots(1, 2, dpi = 100)
+vmin = min(E_sim.min(), E_th.min())
+vmax = max(E_sim.max(), E_th.max())
+# First plot
+cax1 = make_axes_locatable(ax1).append_axes('right', size = '5%', pad = '5%')
+im1 = ax1.imshow(E_sim, origin = 'lower', extent = edge, vmin = vmin, vmax = vmax)
+cb1 = fig.colorbar(im1, cax = cax1)
+ax1.set_xlabel(r'$z$')
+ax1.set_ylabel(r'$x$')
+ax1.set_title(r'$E_z$ (sim)')
+# Second plot
+cax2 = make_axes_locatable(ax2).append_axes('right', size = '5%', pad = '5%')
+im2 = ax2.imshow(E_th, origin = 'lower', extent = edge, vmin = vmin, vmax = vmax)
+cb2 = fig.colorbar(im2, cax = cax2)
+ax2.set_xlabel(r'$z$')
+ax2.set_ylabel(r'$x$')
+ax2.set_title(r'$E_z$ (theory)')
+# Save figure
+fig.tight_layout()
+fig.savefig('Langmuir_multi_2d_analysis.png', dpi = 200)
 
 tolerance_rel = 0.05
 

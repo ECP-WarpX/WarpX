@@ -1265,13 +1265,13 @@ private:
      * The problem setup for these tests is an empty (i.e. no particles) domain
      * of size 256 by 256 by 256 cells, from which the average time per iteration
      * per cell is computed. */
-    amrex::Real costs_heuristic_cells_wt = amrex::Real(-1);
+    amrex::Real costs_heuristic_cells_wt = amrex::Real(0);
     /** Weight factor for particles in `Heuristic` costs update.
      * Default values on GPU are determined from single-GPU tests on Summit.
      * The problem setup for these tests is a high-ppc (27 particles per cell)
      * uniform plasma on a domain of size 128 by 128 by 128, from which the approximate
      * time per iteration per particle is computed. */
-    amrex::Real costs_heuristic_particles_wt = amrex::Real(-1);
+    amrex::Real costs_heuristic_particles_wt = amrex::Real(0);
 
     // Determines timesteps for override sync
     IntervalsParser override_sync_intervals;
@@ -1286,7 +1286,7 @@ private:
 
     int regrid_int = -1;
 
-    amrex::Real cfl = amrex::Real(0.7);
+    amrex::Real cfl = amrex::Real(0.999);
 
     std::string restart_chkfile;
 
