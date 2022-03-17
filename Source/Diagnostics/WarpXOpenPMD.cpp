@@ -1190,17 +1190,17 @@ WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
 
     field_name += std::string("_lvl").append(std::to_string(meshLevel));
 }
-/* Find length of field name in varname and get the theta mode index, if varname = fieldName_mode_realOrImag
+/** Find fieldName in varname and get the theta mode index, if varname = fieldName_mode_realOrImag
  *
- * @param varname [IN]: name of the field variable being parsed
+ * @param[in] varname name of the field variable being parsed
  * @returns varname fieldName if varname = fieldName_mode_realOrImag, otherwise, varname and
  * if varname = fieldName_modeNumber_realOrImag, returns 2 * mode - 1 + (realOrImag == 'imag'), otherwise, -1
  *
  * Examples :
- * rho -> 3, -1
- * rho_0_real -> 3, 1
- * Er_1_real -> 2, 2
- * divB_1_imag -> 4, 3
+ * rho -> rho, -1
+ * rho_0_real -> rho, 1
+ * Er_1_real -> Er, 2
+ * rho_species_12_1_imag -> rho_species_12, 3
  */
 std::tuple<std::string, int>
 GetFieldNameModeInt (const std::string& varname)
@@ -1231,12 +1231,12 @@ GetFieldNameModeInt (const std::string& varname)
         return std::make_tuple(std::string(sm[1]), mode_index);
     }
 }
-/* Transpose diagnostic data from WarpX/AMReX/Fortran order to openPMD (RZ) / C order
+/** Transpose diagnostic data from WarpX/AMReX/Fortran order to openPMD (RZ) / C order
  * NOTE : duplicates chunk in memory and is NOT optimized
  *
- * @param varname [IN]: pointer to the data to be transposed
- * @param local_data [OUT]: pointer to the place to store transpoed copy of the chunk
- * @param local_box [OUT]: reference to chunk `amrex::Box` for chunk_size information
+ * @param[in] varname pointer to the data to be transposed
+ * @param[out] local_data pointer to the place to store transpoed copy of the chunk
+ * @param[out] local_box reference to chunk `amrex::Box` for chunk_size information
  */
 void
 transposeChunk(std::shared_ptr<amrex::Real> data,  amrex::Real const* local_data, amrex::Box const& local_box)
@@ -1255,8 +1255,7 @@ WARPX_PROFILE("WarpXOpenPMDPlot::transposeChunk");
     }
 }
 
-/*
- * Write Field with all mesh levels
+/** Write Field with all mesh levels
  *
  */
 void

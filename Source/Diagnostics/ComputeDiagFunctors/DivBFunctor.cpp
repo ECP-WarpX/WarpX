@@ -40,8 +40,10 @@ DivBFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer
             // Real part of all modes > 0
             amrex::MultiFab::Add(mf_dst_stag, divB, ic, 0, 1, divB.nGrowVect());
         }
+        // TODO check if coarsening is needed, otherwise copy
         CoarsenIO::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
     } else {
+        // TODO check if coarsening is needed, otherwise copy
         CoarsenIO::Coarsen( mf_dst, divB, dcomp, 0, nComp(), 0, m_crse_ratio);
     }
 #else
