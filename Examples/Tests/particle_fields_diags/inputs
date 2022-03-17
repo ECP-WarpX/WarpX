@@ -78,6 +78,7 @@ diag1.particle_fields.uz(x,y,z,ux,uy,uz) = uz
 diag1.particle_fields.zuz(x,y,z,ux,uy,uz) = z * uz
 
 openpmd.format = openpmd
+openpmd.openpmd_backend = h5
 openpmd.intervals = 200
 openpmd.diag_type = Full
 openpmd.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_protons
