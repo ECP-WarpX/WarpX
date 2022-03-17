@@ -6,10 +6,10 @@
  */
 #include "FieldSolver/SpectralSolver/SpectralAlgorithms/SpectralBaseAlgorithm.H"
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
-#include "SpectralAlgorithms/ComovingPsatdAlgorithm.H"
-#include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
+#include "SpectralAlgorithms/PsatdAlgorithmComoving.H"
+#include "SpectralAlgorithms/PsatdAlgorithmPml.H"
 #include "SpectralAlgorithms/PsatdAlgorithm.H"
-#include "SpectralAlgorithms/PsatdAlgorithmMultiJ.H"
+#include "SpectralAlgorithms/PsatdAlgorithmJLinearInTime.H"
 #include "SpectralKSpace.H"
 #include "SpectralSolver.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -50,7 +50,7 @@ SpectralSolver::SpectralSolver(
 
     if (pml) // PSATD equations in the PML grids
     {
-        algorithm = std::make_unique<PMLPsatdAlgorithm>(
+        algorithm = std::make_unique<PsatdAlgorithmPml>(
             k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
             fill_guards, dt, dive_cleaning, divb_cleaning);
     }
@@ -59,7 +59,7 @@ SpectralSolver::SpectralSolver(
         // Comoving PSATD algorithm
         if (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.)
         {
-            algorithm = std::make_unique<ComovingPsatdAlgorithm>(
+            algorithm = std::make_unique<PsatdAlgorithmComoving>(
                 k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
                 fill_guards, v_comoving, dt, update_with_rho);
         }
@@ -67,7 +67,7 @@ SpectralSolver::SpectralSolver(
         {
             if (do_multi_J)
             {
-                algorithm = std::make_unique<PsatdAlgorithmMultiJ>(
+                algorithm = std::make_unique<PsatdAlgorithmJLinearInTime>(
                     k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
                     fill_guards, dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
             }
@@ -92,10 +92,11 @@ void
 SpectralSolver::ForwardTransform( const int lev,
                                   const amrex::MultiFab& mf,
                                   const int field_index,
-                                  const int i_comp )
+                                  const int i_comp,
+                                  const amrex::IntVect& stag )
 {
     WARPX_PROFILE("SpectralSolver::ForwardTransform");
-    field_data.ForwardTransform( lev, mf, field_index, i_comp );
+    field_data.ForwardTransform( lev, mf, field_index, i_comp, stag );
 }
 
 void

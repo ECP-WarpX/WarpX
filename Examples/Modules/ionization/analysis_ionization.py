@@ -32,7 +32,7 @@ import checksumAPI
 filename = sys.argv[1]
 ds = yt.load( filename )
 ad = ds.all_data()
-ilev = ad['ions', 'particle_ionization_level'].v
+ilev = ad['ions', 'particle_ionizationLevel'].v
 
 # Fraction of Nitrogen ions that are N5+.
 N5_fraction = ilev[ilev == 5].size/float(ilev.size)
@@ -55,7 +55,7 @@ if do_plot:
     species = 'ions';
     xi = ad[species, 'particle_position_x'].v
     zi = ad[species, 'particle_position_y'].v
-    ii = ad[species, 'particle_ionization_level'].v
+    ii = ad[species, 'particle_ionizationLevel'].v
     plt.figure(figsize=(10,10))
     plt.subplot(211)
     plt.imshow(np.abs(F), extent=extent, aspect='auto',

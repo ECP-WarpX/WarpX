@@ -591,11 +591,6 @@ class LibWarpX():
         for key, val in kwargs.items():
             assert np.size(val)==1 or len(val)==maxlen, f"Length of {key} doesn't match len of others"
 
-        # --- If the length of the input is zero, then quietly return
-        # --- This is not an error - it just means that no particles are to be injected.
-        if maxlen == 0:
-            return
-
         # --- Broadcast scalars into appropriate length arrays
         # --- If the parameter was not supplied, use the default value
         if lenx == 1:
@@ -630,7 +625,7 @@ class LibWarpX():
             x, y, z, ux, uy, uz, nattr, attr, unique_particles
         )
 
-    def get_particle_count(self, species_name):
+    def get_particle_count(self, species_name, local=False):
         '''
 
         This returns the number of particles of the specified species in the
@@ -640,6 +635,8 @@ class LibWarpX():
         ----------
 
             species_name : the species name that the number will be returned for
+            local        : If True the particle count on this processor will
+                           be returned.
 
         Returns
         -------
@@ -648,7 +645,7 @@ class LibWarpX():
 
         '''
         return self.libwarpx_so.warpx_getNumParticles(
-            ctypes.c_char_p(species_name.encode('utf-8'))
+            ctypes.c_char_p(species_name.encode('utf-8')), local
         )
 
     def get_particle_structs(self, species_name, level):

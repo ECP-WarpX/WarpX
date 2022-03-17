@@ -9,8 +9,8 @@
 #define WARPX_OPEN_PMD_H_
 
 #include "Particles/WarpXParticleContainer.H"
-#include "Particles/ParticleBuffer.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
+#include "Utils/TextMsg.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
@@ -46,7 +46,8 @@ public:
   ~Timer () {
       m_End = amrex::second();
       amrex::ParallelDescriptor::ReduceRealMax(m_End, amrex::ParallelDescriptor::IOProcessorNumber());
-      amrex::Print()<<m_Tag<<" took:"<<m_End - m_Start<<" seconds\n";
+      amrex::Print() << Utils::TextMsg::Info(
+        m_Tag + " took: "+ std::to_string(m_End - m_Start) + " seconds");
   }
 private:
   amrex::Real m_Start;
@@ -60,7 +61,7 @@ private:
 class WarpXParticleCounter
 {
 public:
-  using ParticleContainer = typename ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>;
+  using ParticleContainer = typename WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator>;
   using ParticleIter = typename amrex::ParIter<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
   WarpXParticleCounter (ParticleContainer* pc);
@@ -96,7 +97,7 @@ private:
 class WarpXOpenPMDPlot
 {
 public:
-  using ParticleContainer = typename amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
+  using ParticleContainer = typename WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator>;
   using ParticleIter = typename amrex::ParConstIter<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
   /** Initialize openPMD I/O routines
@@ -111,6 +112,8 @@ public:
                     std::string filetype,
                     std::string operator_type,
                     std::map< std::string, std::string > operator_parameters,
+                    std::string engine_type,
+                    std::map< std::string, std::string > engine_parameters,
                     std::vector<bool> fieldPMLdirections);
 
   ~WarpXOpenPMDPlot ();
@@ -134,11 +137,25 @@ public:
               const bool isBTD = false,
               const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>());
 
+  /** Write out all openPMD fields for all active MR levels
+   *
+   * @param varnames variable names in each multifab
+   * @param mf multifab for each level
+   * @param geometry for each level
+   * @param output_levels the finest level to output, <= maxLevel
+   * @param iteration the current iteration or reconstructed labframe station number
+   * @param time the current simulation time in the lab frame
+   * @param isBTD true if this is part of a back-transformed diagnostics (BTD) station flush;
+                  in BTD, we write multiple times to the same iteration
+   * @param full_BTD_snapshot the geometry of the full lab frame for BTD
+   */
   void WriteOpenPMDFieldsAll (
               const std::vector<std::string>& varnames,
               const amrex::Vector<amrex::MultiFab>& mf,
               amrex::Vector<amrex::Geometry>& geom,
-              const int iteration, const double time,
+              int output_levels,
+              const int iteration,
+              const double time,
               bool isBTD = false,
               const amrex::Geometry& full_BTD_snapshot=amrex::Geometry() ) const;
 
@@ -207,6 +224,7 @@ private:
 
   /** This function sets up the entries for particle properties
    *
+   * @param[in] pc The particle container of the species
    * @param[in] currSpecies The openPMD species
    * @param[in] write_real_comp The real attribute ids, from WarpX
    * @param[in] real_comp_names The real attribute names, from WarpX
@@ -214,7 +232,8 @@ private:
    * @param[in] int_comp_names The int attribute names, from WarpX
    * @param[in] np  Number of particles
    */
-  void SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
+  void SetupRealProperties (ParticleContainer const * pc,
+               openPMD::ParticleSpecies& currSpecies,
                const amrex::Vector<int>& write_real_comp,
                const amrex::Vector<std::string>& real_comp_names,
                const amrex::Vector<int>& write_int_comp,
@@ -292,12 +311,6 @@ private:
 
   int m_MPIRank = 0;
   int m_MPISize = 1;
-
-  int m_NumSoARealAttributes = PIdx::nattribs; //! WarpX' additional real particle attributes in SoA
-  int m_NumAoSRealAttributes = 0; //! WarpX definition: no additional real attributes in particle AoS
-
-  //int m_NumSoAIntAttributes = PIdx::nattribs; //! WarpX' additional int particle attributes in SoA
-  int m_NumAoSIntAttributes = 0; //! WarpX definition: no additional int attributes in particle AoS
 
   openPMD::IterationEncoding m_Encoding = openPMD::IterationEncoding::fileBased;
   std::string m_OpenPMDFileType = "bp"; //! MPI-parallel openPMD backend: bp or h5

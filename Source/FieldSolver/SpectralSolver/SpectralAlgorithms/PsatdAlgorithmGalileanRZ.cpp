@@ -4,7 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "GalileanPsatdAlgorithmRZ.H"
+#include "PsatdAlgorithmGalileanRZ.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -15,7 +15,7 @@ using namespace amrex::literals;
 
 
 /* \brief Initialize coefficients for the update equation */
-GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
+PsatdAlgorithmGalileanRZ::PsatdAlgorithmGalileanRZ (SpectralKSpaceRZ const & spectral_kspace,
                                                     amrex::DistributionMapping const & dm,
                                                     const SpectralFieldIndex& spectral_index,
                                                     int const n_rz_azimuthal_modes, int const norder_z,
@@ -50,7 +50,7 @@ GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spe
  * The algorithm is described in https://doi.org/10.1103/PhysRevE.94.053305
  * */
 void
-GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
+PsatdAlgorithmGalileanRZ::pushSpectralFields (SpectralFieldDataRZ & f)
 {
 
     bool const update_with_rho = m_update_with_rho;
@@ -175,7 +175,7 @@ GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
     }
 }
 
-void GalileanPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
+void PsatdAlgorithmGalileanRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
 {
 
     // Fill them with the right values:
@@ -290,22 +290,12 @@ void GalileanPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldData
 }
 
 void
-GalileanPsatdAlgorithmRZ::CurrentCorrection (const int lev,
-                                             SpectralFieldDataRZ& field_data,
-                                             std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                             const std::unique_ptr<amrex::MultiFab>& rho )
+PsatdAlgorithmGalileanRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 {
     // Profiling
-    WARPX_PROFILE( "GalileanPsatdAlgorithmRZ::CurrentCorrection" );
+    WARPX_PROFILE( "PsatdAlgorithmGalileanRZ::CurrentCorrection" );
 
     const SpectralFieldIndex& Idx = m_spectral_index;
-
-    // Forward Fourier transform of J and rho
-    field_data.ForwardTransform( lev, *current[0], Idx.Jx,
-                                 *current[1], Idx.Jy);
-    field_data.ForwardTransform( lev, *current[2], Idx.Jz, 0);
-    field_data.ForwardTransform( lev, *rho, Idx.rho_old, 0 );
-    field_data.ForwardTransform( lev, *rho, Idx.rho_new, 1 );
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -367,19 +357,10 @@ GalileanPsatdAlgorithmRZ::CurrentCorrection (const int lev,
             }
         });
     }
-
-    // Backward Fourier transform of J
-    field_data.BackwardTransform( lev,
-                                  *current[0], Idx.Jx,
-                                  *current[1], Idx.Jy);
-    field_data.BackwardTransform( lev, *current[2], Idx.Jz, 0 );
-
 }
 
 void
-GalileanPsatdAlgorithmRZ::VayDeposition (const int /*lev*/,
-                                         SpectralFieldDataRZ& /*field_data*/,
-                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
+PsatdAlgorithmGalileanRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
     amrex::Abort("Vay deposition not implemented in RZ geometry");
 }

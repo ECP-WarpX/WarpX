@@ -1,5 +1,6 @@
 #include "FlushFormatOpenPMD.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -76,10 +77,27 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     operator_parameters.insert({k, v});
   }
 
+  // ADIOS2 engine type & parameters
+  std::string engine_type;
+  pp_diag_name.query("adios2_engine.type", engine_type);
+  std::string const engine_prefix = diag_name + ".adios2_engine.parameters";
+  ParmParse ppe;
+  auto eng_entr = ppe.getEntries(engine_prefix);
+
+  std::map< std::string, std::string > engine_parameters;
+  auto const prefixlen = engine_prefix.size() + 1;
+  for (std::string k : eng_entr) {
+    std::string v;
+    ppe.get(k.c_str(), v);
+    k.erase(0, prefixlen);
+    engine_parameters.insert({k, v});
+  }
+
   auto & warpx = WarpX::GetInstance();
   m_OpenPMDPlotWriter = std::make_unique<WarpXOpenPMDPlot>(
     encoding, openpmd_backend,
     operator_type, operator_parameters,
+    engine_type, engine_parameters,
     warpx.getPMLdirections()
   );
 
@@ -110,7 +128,7 @@ FlushFormatOpenPMD::WriteToFile (
     const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
-    const amrex::Vector<ParticleDiag>& particle_diags, int /*nlev*/,
+    const amrex::Vector<ParticleDiag>& particle_diags, int output_levels,
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,
     bool isBTD, int snapshotID, const amrex::Geometry& full_BTD_snapshot,
@@ -118,7 +136,7 @@ FlushFormatOpenPMD::WriteToFile (
 {
     WARPX_PROFILE("FlushFormatOpenPMD::WriteToFile()");
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !plot_raw_fields && !plot_raw_fields_guards,
         "Cannot plot raw data with OpenPMD output format. Use plotfile instead.");
 
@@ -134,7 +152,7 @@ FlushFormatOpenPMD::WriteToFile (
 
     // fields: only dumped for coarse level
     m_OpenPMDPlotWriter->WriteOpenPMDFieldsAll(
-        varnames, mf, geom, output_iteration, time, isBTD, full_BTD_snapshot);
+        varnames, mf, geom, output_levels, output_iteration, time, isBTD, full_BTD_snapshot);
 
     // particles: all (reside only on locally finest level)
     m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags, isBTD, totalParticlesFlushedAlready);

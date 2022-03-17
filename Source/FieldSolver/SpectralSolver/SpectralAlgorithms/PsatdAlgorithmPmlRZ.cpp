@@ -4,7 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "PMLPsatdAlgorithmRZ.H"
+#include "PsatdAlgorithmPmlRZ.H"
 #include "FieldSolver/SpectralSolver/SpectralHankelTransform/HankelTransform.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -16,7 +16,7 @@ using amrex::operator""_rt;
 
 
 /* \brief Initialize coefficients for the update equation */
-PMLPsatdAlgorithmRZ::PMLPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
+PsatdAlgorithmPmlRZ::PsatdAlgorithmPmlRZ (SpectralKSpaceRZ const & spectral_kspace,
                                           amrex::DistributionMapping const & dm,
                                           const SpectralFieldIndex& spectral_index,
                                           int const n_rz_azimuthal_modes, int const norder_z,
@@ -37,7 +37,7 @@ PMLPsatdAlgorithmRZ::PMLPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspa
 /* Advance the E and B field in spectral space (stored in `f`)
  * over one time step */
 void
-PMLPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
+PsatdAlgorithmPmlRZ::pushSpectralFields (SpectralFieldDataRZ & f)
 {
 
     if (not coefficients_initialized) {
@@ -113,7 +113,7 @@ PMLPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
     }
 }
 
-void PMLPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
+void PsatdAlgorithmPmlRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
 {
 
     // Fill them with the right values:
@@ -160,18 +160,13 @@ void PMLPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ co
 }
 
 void
-PMLPsatdAlgorithmRZ::CurrentCorrection (const int /* lev */,
-                                        SpectralFieldDataRZ& /* field_data */,
-                                        std::array<std::unique_ptr<amrex::MultiFab>,3>& /* current */,
-                                        const std::unique_ptr<amrex::MultiFab>& /* rho */)
+PsatdAlgorithmPmlRZ::CurrentCorrection (SpectralFieldDataRZ& /* field_data */)
 {
     amrex::Abort("Current correction not implemented in RZ geometry PML");
 }
 
 void
-PMLPsatdAlgorithmRZ::VayDeposition (const int /* lev */,
-                                    SpectralFieldDataRZ& /*field_data*/,
-                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
+PsatdAlgorithmPmlRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
     amrex::Abort("Vay deposition not implemented in RZ geometry PML");
 }

@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PSATD_ALGORITHM_MULTIJ_H_
-#define WARPX_PSATD_ALGORITHM_MULTIJ_H_
+#ifndef WARPX_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_
+#define WARPX_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
@@ -27,12 +27,12 @@
  *        linear in time and two currents, deposited at the beginning and the end of the time step,
  *        are used for the PSATD update equations, instead of only one current deposited at half time.
  */
-class PsatdAlgorithmMultiJ : public SpectralBaseAlgorithm
+class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
 {
     public:
 
         /**
-         * \brief Constructor of the class PsatdAlgorithmMultiJ
+         * \brief Constructor of the class PsatdAlgorithmJLinearInTime
          *
          * \param[in] spectral_kspace spectral space
          * \param[in] dm distribution mapping
@@ -47,7 +47,7 @@ class PsatdAlgorithmMultiJ : public SpectralBaseAlgorithm
          * \param[in] dive_cleaning Update F as part of the field update, so that errors in divE=rho propagate away at the speed of light
          * \param[in] divb_cleaning Update G as part of the field update, so that errors in divB=0 propagate away at the speed of light
          */
-        PsatdAlgorithmMultiJ (
+        PsatdAlgorithmJLinearInTime (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const SpectralFieldIndex& spectral_index,
@@ -100,17 +100,9 @@ class PsatdAlgorithmMultiJ : public SpectralBaseAlgorithm
          * base class \c SpectralBaseAlgorithm and cannot be overridden by further
          * derived classes.
          *
-         * \param[in]     lev        The mesh-refinement level
          * \param[in,out] field_data All fields in Fourier space
-         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
-         *                           the three components of the current density
-         * \param[in]     rho        Unique pointer to \c MultiFab storing the charge density
          */
-        virtual void CurrentCorrection (
-            const int lev,
-            SpectralFieldData& field_data,
-            std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-            const std::unique_ptr<amrex::MultiFab>& rho) override final;
+        virtual void CurrentCorrection (SpectralFieldData& field_data) override final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
@@ -119,15 +111,9 @@ class PsatdAlgorithmMultiJ : public SpectralBaseAlgorithm
          * base class \c SpectralBaseAlgorithm and cannot be overridden by further
          * derived classes.
          *
-         * \param[in]     lev        The mesh-refinement level
          * \param[in,out] field_data All fields in Fourier space
-         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
-         *                           the three components of the current density
          */
-        virtual void VayDeposition (
-            const int lev,
-            SpectralFieldData& field_data,
-            std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
+        virtual void VayDeposition (SpectralFieldData& field_data) override final;
 
     private:
 
@@ -144,4 +130,4 @@ class PsatdAlgorithmMultiJ : public SpectralBaseAlgorithm
         bool m_divb_cleaning;
 };
 #endif // WARPX_USE_PSATD
-#endif // WARPX_PSATD_ALGORITHM_MULTIJ_H_
+#endif // WARPX_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_

@@ -11,19 +11,19 @@ import yt
 # the problem domain yet.
 
 # all particles are still there
-if Path("particle_scrape_plt00040").is_dir():
-    filename = "particle_scrape_plt00040"
+if Path("particle_scrape_plt000040").is_dir():
+    filename = "particle_scrape_plt000040"
 else:
-    filename = "Python_particle_scrape_plt00040"
+    filename = "Python_particle_scrape_plt000040"
 ds40 = yt.load(filename)
 np40 = ds40.index.particle_headers['electrons'].num_particles
 assert(np40 == 612)
 
 # all particles have been removed
-if Path("particle_scrape_plt00060").is_dir():
-    filename = "particle_scrape_plt00060"
+if Path("particle_scrape_plt000060").is_dir():
+    filename = "particle_scrape_plt000060"
 else:
-    filename = "Python_particle_scrape_plt00060"
+    filename = "Python_particle_scrape_plt000060"
 ds60 = yt.load(filename)
 np60 = ds60.index.particle_headers['electrons'].num_particles
 assert(np60 == 0)

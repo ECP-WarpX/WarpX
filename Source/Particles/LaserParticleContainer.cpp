@@ -13,6 +13,7 @@
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -56,7 +57,7 @@
 #include <array>
 #include <cmath>
 #include <cstdlib>
-#include <ctype.h>
+#include <cctype>
 #include <functional>
 #include <limits>
 #include <map>
@@ -138,7 +139,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec[0] == amrex::Real(0),
         "Laser propagation direction must be 0 along x in 1D");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec[1] == amrex::Real(0),
-        "Laser propagation direction must be 0 along y in 2D");
+        "Laser propagation direction must be 0 along y in 1D");
 #endif
 
     // Plane normal
@@ -495,7 +496,7 @@ LaserParticleContainer::InitData (int lev)
     amrex::Vector<amrex::Real> particle_uy(np, 0.0);
     amrex::Vector<amrex::Real> particle_uz(np, 0.0);
 
-    if (Verbose()) amrex::Print() << "Adding laser particles\n";
+    if (Verbose()) amrex::Print() << Utils::TextMsg::Info("Adding laser particles");
     // Add particles on level 0. They will be redistributed afterwards
     AddNParticles(0,
                   np, particle_x.dataPtr(), particle_y.dataPtr(), particle_z.dataPtr(),

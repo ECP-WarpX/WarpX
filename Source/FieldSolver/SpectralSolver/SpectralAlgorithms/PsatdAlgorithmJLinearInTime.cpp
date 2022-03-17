@@ -4,7 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "PsatdAlgorithmMultiJ.H"
+#include "PsatdAlgorithmJLinearInTime.H"
 
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpX_Complex.H"
@@ -26,7 +26,7 @@
 
 using namespace amrex::literals;
 
-PsatdAlgorithmMultiJ::PsatdAlgorithmMultiJ(
+PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const SpectralFieldIndex& spectral_index,
@@ -68,7 +68,7 @@ PsatdAlgorithmMultiJ::PsatdAlgorithmMultiJ(
 }
 
 void
-PsatdAlgorithmMultiJ::pushSpectralFields (SpectralFieldData& f) const
+PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
 {
     const bool time_averaging = m_time_averaging;
     const bool dive_cleaning = m_dive_cleaning;
@@ -260,7 +260,7 @@ PsatdAlgorithmMultiJ::pushSpectralFields (SpectralFieldData& f) const
     }
 }
 
-void PsatdAlgorithmMultiJ::InitializeSpectralCoefficients (
+void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const amrex::Real dt)
@@ -353,7 +353,7 @@ void PsatdAlgorithmMultiJ::InitializeSpectralCoefficients (
     }
 }
 
-void PsatdAlgorithmMultiJ::InitializeSpectralCoefficientsAveraging (
+void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficientsAveraging (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const amrex::Real dt)
@@ -423,30 +423,22 @@ void PsatdAlgorithmMultiJ::InitializeSpectralCoefficientsAveraging (
     }
 }
 
-void
-PsatdAlgorithmMultiJ::CurrentCorrection (
-    const int lev,
-    SpectralFieldData& field_data,
-    std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-    const std::unique_ptr<amrex::MultiFab>& rho)
+void PsatdAlgorithmJLinearInTime::CurrentCorrection (SpectralFieldData& field_data)
 {
     // Profiling
-    BL_PROFILE("PsatdAlgorithmMultiJ::CurrentCorrection");
+    BL_PROFILE("PsatdAlgorithmJLinearInTime::CurrentCorrection");
 
-    amrex::ignore_unused(lev, field_data, current, rho);
+    amrex::ignore_unused(field_data);
     amrex::Abort("Current correction not implemented for multi-J PSATD algorithm");
 }
 
 void
-PsatdAlgorithmMultiJ::VayDeposition (
-    const int lev,
-    SpectralFieldData& field_data,
-    std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+PsatdAlgorithmJLinearInTime::VayDeposition (SpectralFieldData& field_data)
 {
     // Profiling
-    BL_PROFILE("PsatdAlgorithmMultiJ::VayDeposition()");
+    BL_PROFILE("PsatdAlgorithmJLinearInTime::VayDeposition()");
 
-    amrex::ignore_unused(lev, field_data, current);
+    amrex::ignore_unused(field_data);
     amrex::Abort("Vay deposition not implemented for multi-J PSATD algorithm");
 }
 

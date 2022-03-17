@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.18.0)
-project(WarpX VERSION 22.01)
+project(WarpX VERSION 22.03)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -142,7 +142,7 @@ endif()
 #
 # collect all objects for compilation
 add_library(WarpX OBJECT)
-add_library(ablastr OBJECT)
+add_library(ablastr)
 
 # ABLASTR library
 set(_BUILDINFO_SRC ablastr)
@@ -177,6 +177,7 @@ endif()
 # own headers
 target_include_directories(WarpX PUBLIC
     $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
+    $<BUILD_INTERFACE:${WarpX_BINARY_DIR}/Source>
 )
 target_include_directories(ablastr PUBLIC
     # future: own directory root
@@ -195,7 +196,7 @@ if(WarpX_APP)
     target_sources(app PRIVATE Source/main.cpp)
 endif()
 
-#add_subdirectory(Source/ablastr)
+add_subdirectory(Source/ablastr)
 add_subdirectory(Source/BoundaryConditions)
 add_subdirectory(Source/Diagnostics)
 add_subdirectory(Source/EmbeddedBoundary)
@@ -276,12 +277,6 @@ set_warpx_binary_name()
 
 # Defines #####################################################################
 #
-get_source_version(WarpX ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(ablastr PUBLIC WARPX_GIT_VERSION="${WarpX_GIT_VERSION}")
-if(WarpX_QED)
-    target_compile_definitions(ablastr PUBLIC PICSAR_GIT_VERSION="${PXRMP_QED_GIT_VERSION}")
-endif()
-
 if(WarpX_DIMS STREQUAL 3)
     target_compile_definitions(ablastr PUBLIC WARPX_DIM_3D WARPX_ZINDEX=2)
 elseif(WarpX_DIMS STREQUAL 2)
@@ -324,6 +319,13 @@ set_cxx_warnings()
 
 # Generate Configuration and .pc Files ########################################
 #
+get_source_version(WarpX ${WarpX_SOURCE_DIR})
+configure_file(
+    ${WarpX_SOURCE_DIR}/Source/Utils/WarpXVersion.H.in
+    ${WarpX_BINARY_DIR}/Source/Utils/WarpXVersion.H
+    @ONLY
+)
+
 # these files are used if WarpX is installed and picked up by a downstream
 # project (not needed yet)
 
@@ -391,23 +393,43 @@ endif()
 #)
 
 
-# CI Helper ###################################################################
+# pip helpers for the pywarpx package #########################################
 #
+if(WarpX_LIB)
+    set(PYINSTALLOPTIONS "" CACHE STRING
+        "Additional parameters to pass to `pip install`")
 
-# calling `python -m pip wheel .` and install re-using the build directory
-# note: this is mainly for our CI Python regression scripts, users and package
-#       managers should just use `python -m pip wheel .` and `... install *whl`
-#       directly
-set(PYINSTALLOPTIONS "" CACHE STRING "Additional parameters to pass to `pip install`")
-add_custom_target(install_pip
-    ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY} python3 -m pip wheel -v --use-feature=in-tree-build ${WarpX_SOURCE_DIR}
-    COMMAND
-        python3 -m pip install --force-reinstall --no-deps -v ${PYINSTALLOPTIONS} ${CMAKE_BINARY_DIR}/*whl
-    WORKING_DIRECTORY
-        ${CMAKE_BINARY_DIR}
-    DEPENDS
-        shared
-)
+    # build the wheel by re-using the shared library we build
+    add_custom_target(pip_wheel
+        ${CMAKE_COMMAND} -E rm -f ${WarpX_BINARY_DIR}/pywarpx*whl
+        COMMAND
+            ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+                python3 -m pip wheel -v --no-build-isolation --use-feature=in-tree-build ${WarpX_SOURCE_DIR}
+        WORKING_DIRECTORY
+            ${WarpX_BINARY_DIR}
+        DEPENDS
+            shared
+    )
+
+    # this will also upgrade/downgrade dependencies, e.g., when the version of picmistandard changes
+    add_custom_target(pip_install_requirements
+        python3 -m pip install ${PYINSTALLOPTIONS} -r ${WarpX_SOURCE_DIR}/requirements.txt
+        WORKING_DIRECTORY
+            ${WarpX_BINARY_DIR}
+    )
+
+    # We force-install because in development, it is likely that the version of
+    # the package does not change, but the code did change. We need --no-deps,
+    # because otherwise pip would also force reinstall all dependencies.
+    add_custom_target(pip_install
+        ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
+            python3 -m pip install --force-reinstall --no-deps ${PYINSTALLOPTIONS} ${WarpX_BINARY_DIR}/pywarpx*whl
+        WORKING_DIRECTORY
+            ${WarpX_BINARY_DIR}
+        DEPENDS
+            shared pip_wheel pip_install_requirements
+    )
+endif()
 
 
 # Tests #######################################################################

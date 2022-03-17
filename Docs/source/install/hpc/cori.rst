@@ -78,7 +78,17 @@ For PICMI and Python workflows, also install a virtual environment:
    source $HOME/sw/venvs/knl_warpx/bin/activate
 
    python3 -m pip install --upgrade pip
+   python3 -m pip install --upgrade wheel
+   python3 -m pip install --upgrade cython
+   python3 -m pip install --upgrade numpy
+   python3 -m pip install --upgrade pandas
+   python3 -m pip install --upgrade scipy
    MPICC="cc -shared" python3 -m pip install -U --no-cache-dir -v mpi4py
+   python3 -m pip install --upgrade openpmd-api
+   python3 -m pip install --upgrade matplotlib
+   python3 -m pip install --upgrade yt
+   # optional: for libEnsemble
+   #python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 
 Haswell
 ^^^^^^^
@@ -131,7 +141,17 @@ For PICMI and Python workflows, also install a virtual environment:
    source $HOME/sw/venvs/haswell_warpx/bin/activate
 
    python3 -m pip install --upgrade pip
+   python3 -m pip install --upgrade wheel
+   python3 -m pip install --upgrade cython
+   python3 -m pip install --upgrade numpy
+   python3 -m pip install --upgrade pandas
+   python3 -m pip install --upgrade scipy
    MPICC="cc -shared" python3 -m pip install -U --no-cache-dir -v mpi4py
+   python3 -m pip install --upgrade openpmd-api
+   python3 -m pip install --upgrade matplotlib
+   python3 -m pip install --upgrade yt
+   # optional: for libEnsemble
+   #python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 
 GPU (V100)
 ^^^^^^^^^^
@@ -173,7 +193,17 @@ For PICMI and Python workflows, also install a virtual environment:
    source $HOME/sw/venvs/gpu_warpx/bin/activate
 
    python3 -m pip install --upgrade pip
+   python3 -m pip install --upgrade wheel
+   python3 -m pip install --upgrade cython
+   python3 -m pip install --upgrade numpy
+   python3 -m pip install --upgrade pandas
+   python3 -m pip install --upgrade scipy
    python3 -m pip install -U --no-cache-dir -v mpi4py
+   python3 -m pip install --upgrade openpmd-api
+   python3 -m pip install --upgrade matplotlib
+   python3 -m pip install --upgrade yt
+   # optional: for libEnsemble
+   #python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 
 Building WarpX
 --------------
@@ -220,7 +250,31 @@ The general :ref:`cmake compile-time options and instructions for Python (PICMI)
    cd $HOME/src/warpx
 
    # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
-   WARPX_MPI=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall -v .
+   WARPX_MPI=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall --no-deps -v .
+
+
+.. _building-cori-tests:
+
+Testing
+-------
+
+To run all tests (here on KNL), do:
+
+* change in ``Regressions/WarpX-tests.ini`` from ``mpiexec`` to ``srun``: ``MPIcommand = srun -n @nprocs@ @command@``
+
+.. code-block:: bash
+
+   # set test directory to a shared directory available on all nodes
+   #   note: the tests will create the directory automatically
+   export WARPX_CI_TMP="$HOME/warpx-regression-tests"
+
+   # compile with more cores
+   export WARPX_CI_NUM_MAKE_JOBS=16
+
+   # run all integration tests
+   #   note: we set MPICC as a build-setting for mpi4py on KNL/Haswell
+   MPICC="cc -shared" ./run_test.sh
+
 
 .. _running-cpp-cori:
 
@@ -320,7 +374,7 @@ In this manual, we often use this ``conda create`` line over the officially docu
 
 .. code-block:: bash
 
-   conda create -n myenv -c conda-forge python mamba ipykernel ipympl matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram
+   conda create -n myenv -c conda-forge python mamba ipykernel ipympl==0.8.6 matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram dask dask-jobqueue pyarrow
 
 We then follow the `Customizing Kernels with a Helper Shell Script <https://docs.nersc.gov/services/jupyter/#customizing-kernels-with-a-helper-shell-script>`__ section to finalize the setup of using this conda-environment as a custom Jupyter kernel.
 
@@ -328,3 +382,9 @@ When opening a Jupyter notebook, just select the name you picked for your custom
 
 Additional software can be installed later on, e.g., in a Jupyter cell using ``!mamba install -c conda-forge ...``.
 Software that is not available via conda can be installed via ``!python -m pip install ...``.
+
+.. warning::
+
+   Jan 6th, 2022 (NERSC-INC0179165 and `ipympl #416 <https://github.com/matplotlib/ipympl/issues/416>`__):
+   Above, we fixated the ``ipympl`` version to *not* take the latest release of `Matplotlib Jupyter Widgets <https://github.com/matplotlib/ipympl>`__.
+   This is an intentional work-around; the ``ipympl`` version needs to exactly fit the version pre-installed on the Jupyter base system.

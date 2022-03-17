@@ -150,7 +150,7 @@ For instance, the following inputfile
    #################################
    ############ NUMERICS ###########
    #################################
-   warpx.serialize_ics = 1
+   warpx.serialize_initial_conditions = 1
    warpx.verbose = 1
    warpx.cfl = 1.0
    warpx.use_filter = 0

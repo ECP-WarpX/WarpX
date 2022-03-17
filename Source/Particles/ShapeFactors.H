@@ -62,9 +62,10 @@ struct Compute_shape_factor
             // index of the leftmost cell where particle deposits
             return j-1;
         }
-
-        amrex::Abort("Unknown particle shape selected in Compute_shape_factor");
-        amrex::ignore_unused(sx, xmid);
+        else{
+            amrex::Abort("Unknown particle shape selected in Compute_shape_factor");
+            amrex::ignore_unused(sx, xmid);
+        }
         return 0;
     }
 };
@@ -115,9 +116,10 @@ struct Compute_shifted_shape_factor
             // index of the leftmost cell where particle deposits
             return i - 1;
         }
-
-        amrex::Abort("Unknown particle shape selected in Compute_shifted_shape_factor");
-        amrex::ignore_unused(sx, x_old, i_new);
+        else{
+            amrex::Abort("Unknown particle shape selected in Compute_shifted_shape_factor");
+            amrex::ignore_unused(sx, x_old, i_new);
+        }
         return 0;
     }
 };

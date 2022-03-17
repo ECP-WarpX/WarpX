@@ -1,5 +1,5 @@
-#ifndef WARPX_COMOVING_PSATD_ALGORITHM_H_
-#define WARPX_COMOVING_PSATD_ALGORITHM_H_
+#ifndef WARPX_PSATD_ALGORITHM_COMOVING_H_
+#define WARPX_PSATD_ALGORITHM_COMOVING_H_
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
@@ -19,14 +19,14 @@
 /* \brief Class that updates the field in spectral space and stores the coefficients
  * of the corresponding update equation, according to the comoving spectral scheme.
  */
-class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
+class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
 {
     public:
 
         /**
          * \brief Class constructor
          */
-        ComovingPsatdAlgorithm (const SpectralKSpace& spectral_kspace,
+        PsatdAlgorithmComoving (const SpectralKSpace& spectral_kspace,
                                 const amrex::DistributionMapping& dm,
                                 const SpectralFieldIndex& spectral_index,
                                 const int norder_x,
@@ -55,16 +55,9 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
          * base class \c SpectralBaseAlgorithm and cannot be overridden by further
          * derived classes.
          *
-         * \param[in]     lev        The mesh-refinement level
          * \param[in,out] field_data All fields in Fourier space
-         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
-         *                           the three components of the current density
-         * \param[in]     rho        Unique pointer to \c MultiFab storing the charge density
          */
-        virtual void CurrentCorrection (const int lev,
-                                        SpectralFieldData& field_data,
-                                        std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                        const std::unique_ptr<amrex::MultiFab>& rho) override final;
+        virtual void CurrentCorrection (SpectralFieldData& field_data) override final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space.
@@ -72,14 +65,9 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
          * base class \c SpectralBaseAlgorithm and cannot be overridden by further
          * derived classes.
          *
-         * \param[in]     lev        The mesh-refinement level
          * \param[in,out] field_data All fields in Fourier space
-         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
-         *                           the three components of the current density
          */
-        virtual void VayDeposition (const int lev,
-                                    SpectralFieldData& field_data,
-                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
+        virtual void VayDeposition (SpectralFieldData& field_data) override final;
 
     private:
 
@@ -102,4 +90,4 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
 };
 
 #endif // WARPX_USE_PSATD
-#endif // WARPX_COMOVING_PSATD_ALGORITHM_H_
+#endif // WARPX_PSATD_ALGORITHM_COMOVING_H_
