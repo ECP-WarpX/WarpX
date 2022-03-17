@@ -155,7 +155,7 @@ FlushFormatOpenPMD::WriteToFile (
         varnames, mf, geom, output_levels, output_iteration, time, isBTD, full_BTD_snapshot);
 
     // particles: all (reside only on locally finest level)
-    m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags, isBTD, totalParticlesFlushedAlready);
+    m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags, isBTD, isLastBTDFlush, totalParticlesFlushedAlready);
 
     // signal that no further updates will be written to this iteration
     m_OpenPMDPlotWriter->CloseStep(isBTD, isLastBTDFlush);

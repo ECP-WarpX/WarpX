@@ -541,7 +541,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 
 void
 WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
-                  const bool isBTD, const amrex::Vector<int>& totalParticlesFlushedAlready)
+                  const bool isBTD, const bool isLastBTDFlush, const amrex::Vector<int>& totalParticlesFlushedAlready)
 {
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
 
@@ -633,7 +633,8 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
              int_flags,
              real_names, int_names,
              pc->getCharge(), pc->getMass(),
-             isBTD, totalParticlesFlushedAlready[i]
+             isBTD, isLastBTDFlush,
+             totalParticlesFlushedAlready[i]
           );
       } else {
           DumpToFile(&tmp,
@@ -643,7 +644,8 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
              int_flags,
              real_names, int_names,
              pc->getCharge(), pc->getMass(),
-             isBTD, 0
+             isBTD, isLastBTDFlush,
+             0
           );
       }
     }
@@ -662,7 +664,9 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     const amrex::Vector<std::string>& real_comp_names,
                     const amrex::Vector<std::string>&  int_comp_names,
                     amrex::ParticleReal const charge,
-                    amrex::ParticleReal const mass, const bool isBTD,
+                    amrex::ParticleReal const mass,
+                    const bool isBTD,
+                    const bool isLastBTDFlush,
                     int ParticleFlushOffset)
 {
   WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
@@ -719,10 +723,16 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
   // define positions & offsets
   //
   const unsigned long long NewParticleVectorSize = counter.GetTotalNumParticles() + ParticleFlushOffset;
-  m_doParticleSetUp = false;
-  if (counter.GetTotalNumParticles() > 0 and ParticleFlushOffset == 0) {
-      // This will trigger meta-data flush for particles the first-time non-zero number of particles are flushed.
-      m_doParticleSetUp = true;
+  // we will set up empty particles unless it's BTD, where we might add more
+  m_doParticleSetUp = true;
+  if (isBTD && !isLastBTDFlush) {
+      if (counter.GetTotalNumParticles() > 0 and ParticleFlushOffset == 0) {
+          // This will trigger meta-data flush for particles the first-time non-zero number of particles are flushed.
+          m_doParticleSetUp = true;
+      }
+      else {
+          m_doParticleSetUp = true;
+      }
   }
   SetupPos(currSpecies, NewParticleVectorSize, charge, mass, isBTD);
   SetupRealProperties(pc, currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, NewParticleVectorSize, isBTD);
