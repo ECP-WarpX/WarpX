@@ -15,12 +15,12 @@ import os
 import sys
 
 import numpy as np
+import openpmd_api as io
 from scipy.constants import c
 from scipy.constants import epsilon_0 as eps0
 from scipy.constants import m_e, m_p
 from scipy.constants import mu_0 as mu0
 import yt
-import openpmd_api as io
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
