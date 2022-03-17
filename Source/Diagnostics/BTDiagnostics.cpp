@@ -744,7 +744,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
     // the digits here are "multifab ids" (independent of the step) and thus always small
     const int amrex_fabfile_digits = 5;
     // number of digits for plotfile containing particle data (DATA_XXXXX)
-    // the digits here are "... ids" (independent of the step) and thus always small
+    // the digits here are fab ids that the particles belong to (independent of the step) and thus always small
     const int amrex_partfile_digits = 5;
     if (amrex::ParallelContext::IOProcessorSub()) {
         // Path to final snapshot plotfiles
