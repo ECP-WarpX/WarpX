@@ -14,6 +14,7 @@ jobs:
     CEI_SUDO: 'sudo'
     CEI_TMP: '/tmp/cei'
     CMAKE_GENERATOR: 'Ninja'
+    CXXFLAGS: '-g'
     FFTW_HOME: '/usr'
     LAPACKPP_HOME: '/usr/local'
     OMP_NUM_THREADS: 1
