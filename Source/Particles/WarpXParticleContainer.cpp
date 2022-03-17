@@ -755,12 +755,13 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
             const auto offsets_ptr = bins.offsetsPtr();
             auto tbox_ptr = tboxes.dataPtr();
+            auto permutation = bins.permutationPtr();
             amrex::ParallelFor(bins.numBins(),
                                [=] AMREX_GPU_DEVICE (int ibin) {
                                    const int bin_start = offsets_ptr[ibin];
                                    const int bin_stop = offsets_ptr[ibin+1];
                                    if (bin_start < bin_stop) {
-                                       const auto& p = pstruct_ptr[bins.permutationPtr()[bin_start]];
+                                       auto p = pstruct_ptr[permutation[bin_start]];
                                        Box tbx;
                                        auto iv = getParticleCell(p, plo, dxi, domain);
                                        AMREX_ASSERT(box.contains(iv));
