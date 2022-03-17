@@ -137,11 +137,25 @@ public:
               const bool isBTD = false,
               const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>());
 
+  /** Write out all openPMD fields for all active MR levels
+   *
+   * @param varnames variable names in each multifab
+   * @param mf multifab for each level
+   * @param geometry for each level
+   * @param output_levels the finest level to output, <= maxLevel
+   * @param iteration the current iteration or reconstructed labframe station number
+   * @param time the current simulation time in the lab frame
+   * @param isBTD true if this is part of a back-transformed diagnostics (BTD) station flush;
+                  in BTD, we write multiple times to the same iteration
+   * @param full_BTD_snapshot the geometry of the full lab frame for BTD
+   */
   void WriteOpenPMDFieldsAll (
               const std::vector<std::string>& varnames,
               const amrex::Vector<amrex::MultiFab>& mf,
               amrex::Vector<amrex::Geometry>& geom,
-              const int iteration, const double time,
+              int output_levels,
+              const int iteration,
+              const double time,
               bool isBTD = false,
               const amrex::Geometry& full_BTD_snapshot=amrex::Geometry() ) const;
 
