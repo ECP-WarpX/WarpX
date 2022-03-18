@@ -667,166 +667,192 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     amrex::ParticleReal const mass,
                     const bool isBTD,
                     const bool isLastBTDFlush,
-                    int ParticleFlushOffset)
-{
-  WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
+                    int ParticleFlushOffset) {
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
-  AMREX_ALWAYS_ASSERT(write_real_comp.size() == pc->NumRealComps());
-  AMREX_ALWAYS_ASSERT( write_int_comp.size() == pc->NumIntComps());
-  AMREX_ALWAYS_ASSERT(real_comp_names.size() == pc->NumRealComps());
-  AMREX_ALWAYS_ASSERT( int_comp_names.size() == pc->NumIntComps());
+    AMREX_ALWAYS_ASSERT(write_real_comp.size() == pc->NumRealComps());
+    AMREX_ALWAYS_ASSERT(write_int_comp.size() == pc->NumIntComps());
+    AMREX_ALWAYS_ASSERT(real_comp_names.size() == pc->NumRealComps());
+    AMREX_ALWAYS_ASSERT(int_comp_names.size() == pc->NumIntComps());
 
-  WarpXParticleCounter counter(pc);
-  if (counter.GetTotalNumParticles() == 0) return;
-  openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
+    WarpXParticleCounter counter(pc);
+    auto const total_particles = counter.GetTotalNumParticles();
 
-  openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
-  // meta data for ED-PIC extension
-  currSpecies.setAttribute( "particleShape", double( WarpX::noz ) );
-  // TODO allow this per direction in the openPMD standard, ED-PIC extension?
-  currSpecies.setAttribute( "particleShapes", [](){
-      return std::vector< double >{
-#if AMREX_SPACEDIM>=2
-          double(WarpX::nox),
+    openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
+    openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
+
+    // prepare data structures the first time BTD has non-zero particles
+    //   we set some of them to zero extent, so we need to time that welll
+    bool const is_first_flush_with_particles = total_particles > 0 && ParticleFlushOffset == 0;
+    // write structure & declare particles in this (lab) step empty:
+    //   if not BTD, then this is the only (and last) time we flush to this step
+    //   if BTD, then we do this multiple times
+    bool const is_last_flush_to_step = !isBTD || (isBTD && isLastBTDFlush);
+    // well, even in BTD we have to recognize that some lab stations have no
+    //   particles - so we mark them empty at the end of station reconstruction
+    bool const is_last_flush_and_never_particles =
+            is_last_flush_to_step && total_particles == 0 && ParticleFlushOffset == 0;
+
+    //
+    // prepare structure and meta-data
+    //
+
+    // meta data for ED-PIC extension
+    if (is_last_flush_to_step) {
+        currSpecies.setAttribute("particleShape", double(WarpX::noz));
+        // TODO allow this per direction in the openPMD standard, ED-PIC extension?
+        currSpecies.setAttribute("particleShapes", []() {
+            return std::vector<double>{
+#if AMREX_SPACEDIM >= 2
+                    double(WarpX::nox),
 #endif
 #if defined(WARPX_DIM_3D)
-          double(WarpX::noy),
+                    double(WarpX::noy),
 #endif
-          double(WarpX::noz)
-      };
-  }() );
-  currSpecies.setAttribute( "particlePush", [](){
-      switch( WarpX::particle_pusher_algo ) {
-          case ParticlePusherAlgo::Boris : return "Boris";
-          case ParticlePusherAlgo::Vay : return "Vay";
-          case ParticlePusherAlgo::HigueraCary : return "HigueraCary";
-          default: return "other";
-      }
-  }() );
-  currSpecies.setAttribute( "particleInterpolation", [](){
-      switch( WarpX::field_gathering_algo ) {
-          case GatheringAlgo::EnergyConserving : return "energyConserving";
-          case GatheringAlgo::MomentumConserving : return "momentumConserving";
-          default: return "other";
-      }
-  }() );
-  currSpecies.setAttribute( "particleSmoothing", "none" );
-  currSpecies.setAttribute( "currentDeposition", [](){
-      switch( WarpX::current_deposition_algo ) {
-          case CurrentDepositionAlgo::Esirkepov : return "Esirkepov";
-          case CurrentDepositionAlgo::Vay : return "Vay";
-          default: return "directMorseNielson";
-      }
-  }() );
+                    double(WarpX::noz)
+            };
+        }());
+        currSpecies.setAttribute("particlePush", []() {
+            switch (WarpX::particle_pusher_algo) {
+                case ParticlePusherAlgo::Boris :
+                    return "Boris";
+                case ParticlePusherAlgo::Vay :
+                    return "Vay";
+                case ParticlePusherAlgo::HigueraCary :
+                    return "HigueraCary";
+                default:
+                    return "other";
+            }
+        }());
+        currSpecies.setAttribute("particleInterpolation", []() {
+            switch (WarpX::field_gathering_algo) {
+                case GatheringAlgo::EnergyConserving :
+                    return "energyConserving";
+                case GatheringAlgo::MomentumConserving :
+                    return "momentumConserving";
+                default:
+                    return "other";
+            }
+        }());
+        currSpecies.setAttribute("particleSmoothing", "none");
+        currSpecies.setAttribute("currentDeposition", []() {
+            switch (WarpX::current_deposition_algo) {
+                case CurrentDepositionAlgo::Esirkepov :
+                    return "Esirkepov";
+                case CurrentDepositionAlgo::Vay :
+                    return "Vay";
+                default:
+                    return "directMorseNielson";
+            }
+        }());
+    }
 
-  //
-  // define positions & offsets
-  //
-  const unsigned long long NewParticleVectorSize = counter.GetTotalNumParticles() + ParticleFlushOffset;
-  // we will set up empty particles unless it's BTD, where we might add more
-  m_doParticleSetUp = true;
-  if (isBTD && !isLastBTDFlush) {
-      if (counter.GetTotalNumParticles() > 0 and ParticleFlushOffset == 0) {
-          // This will trigger meta-data flush for particles the first-time non-zero number of particles are flushed.
-          m_doParticleSetUp = true;
-      }
-      else {
-          m_doParticleSetUp = true;
-      }
-  }
-  SetupPos(currSpecies, NewParticleVectorSize, charge, mass, isBTD);
-  SetupRealProperties(pc, currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, NewParticleVectorSize, isBTD);
-  // open files from all processors, in case some will not contribute below
-  m_Series->flush();
-  for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++)
-    {
-      uint64_t offset = static_cast<uint64_t>( counter.m_ParticleOffsetAtRank[currentLevel] );
-      // For BTD, the offset include the number of particles already flushed
-      if (isBTD) offset += ParticleFlushOffset;
-      for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
-         auto const numParticleOnTile = pti.numParticles();
-         uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
+    // define positions & offset structure
+    const unsigned long long NewParticleVectorSize = total_particles + ParticleFlushOffset;
+    // we will set up empty particles unless it's BTD, where we might add some in a following buffer dump
+    //   during this setup, we mark some particle properties as constant and potentially zero-sized
+    m_doParticleSetUp = true;
+    if (isBTD)
+        m_doParticleSetUp = is_first_flush_with_particles || is_last_flush_and_never_particles;
 
-         // Do not call storeChunk() with zero-sized particle tiles:
-         //   https://github.com/openPMD/openPMD-api/issues/1147
-         if (numParticleOnTile == 0) continue;
+    // this setup stage also implicitly calls "makeEmpty" if needed (i.e., is_last_flush_and_never_particles)
+    SetupPos(currSpecies, NewParticleVectorSize, charge, mass, isBTD);
+    SetupRealProperties(pc, currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names,
+                        NewParticleVectorSize, isBTD);
+    // open files from all processors, in case some will not contribute below
+    m_Series->flush();
 
-         // get position and particle ID from aos
-         // note: this implementation iterates the AoS 4x...
-         // if we flush late as we do now, we can also copy out the data in one go
-         const auto& aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
-         {
-           // Save positions
-           auto const positionComponents = detail::getParticlePositionComponentLabels();
+    // dump individual particles
+    for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++) {
+        uint64_t offset = static_cast<uint64_t>( counter.m_ParticleOffsetAtRank[currentLevel] );
+        // For BTD, the offset include the number of particles already flushed
+        if (isBTD) offset += ParticleFlushOffset;
+        for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
+            auto const numParticleOnTile = pti.numParticles();
+            uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
+
+            // Do not call storeChunk() with zero-sized particle tiles:
+            //   https://github.com/openPMD/openPMD-api/issues/1147
+            if (numParticleOnTile == 0) continue;
+
+            // get position and particle ID from aos
+            // note: this implementation iterates the AoS 4x...
+            // if we flush late as we do now, we can also copy out the data in one go
+            const auto &aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
+            {
+                // Save positions
+                auto const positionComponents = detail::getParticlePositionComponentLabels();
 #if defined(WARPX_DIM_RZ)
-           {
-              std::shared_ptr<amrex::ParticleReal> z(
-                      new amrex::ParticleReal[numParticleOnTile],
-                      [](amrex::ParticleReal const *p) { delete[] p; }
-              );
-              for (auto i = 0; i < numParticleOnTile; i++)
-                  z.get()[i] = aos[i].pos(1);  // {0: "r", 1: "z"}
-              std::string const positionComponent = "z";
-              currSpecies["position"]["z"].storeChunk(z, {offset}, {numParticleOnTile64});
-           }
-
-           //   reconstruct x and y from polar coordinates r, theta
-           auto const& soa = pti.GetStructOfArrays();
-           amrex::ParticleReal const* theta = soa.GetRealData(PIdx::theta).dataPtr();
-           WARPX_ALWAYS_ASSERT_WITH_MESSAGE(theta != nullptr, "openPMD: invalid theta pointer.");
-           WARPX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
-                                            "openPMD: theta and tile size do not match");
-           {
-               std::shared_ptr< amrex::ParticleReal > x(
-                       new amrex::ParticleReal[numParticleOnTile],
-                       [](amrex::ParticleReal const *p){ delete[] p; }
-               );
-               std::shared_ptr< amrex::ParticleReal > y(
-                       new amrex::ParticleReal[numParticleOnTile],
-                       [](amrex::ParticleReal const *p){ delete[] p; }
-               );
-               for (auto i=0; i<numParticleOnTile; i++) {
-                   auto const r = aos[i].pos(0);  // {0: "r", 1: "z"}
-                   x.get()[i] = r * std::cos(theta[i]);
-                   y.get()[i] = r * std::sin(theta[i]);
-               }
-               currSpecies["position"]["x"].storeChunk(x, {offset}, {numParticleOnTile64});
-               currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
-           }
-#else
-           for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
-                std::shared_ptr< amrex::ParticleReal > curr(
-                    new amrex::ParticleReal[numParticleOnTile],
-                    [](amrex::ParticleReal const *p){ delete[] p; }
-                );
-                for (auto i=0; i<numParticleOnTile; i++) {
-                     curr.get()[i] = aos[i].pos(currDim);
+                {
+                   std::shared_ptr<amrex::ParticleReal> z(
+                           new amrex::ParticleReal[numParticleOnTile],
+                           [](amrex::ParticleReal const *p) { delete[] p; }
+                   );
+                   for (auto i = 0; i < numParticleOnTile; i++)
+                       z.get()[i] = aos[i].pos(1);  // {0: "r", 1: "z"}
+                   std::string const positionComponent = "z";
+                   currSpecies["position"]["z"].storeChunk(z, {offset}, {numParticleOnTile64});
                 }
-                std::string const positionComponent = positionComponents[currDim];
-                currSpecies["position"][positionComponent].storeChunk(curr, {offset}, {numParticleOnTile64});
-           }
+
+                //   reconstruct x and y from polar coordinates r, theta
+                auto const& soa = pti.GetStructOfArrays();
+                amrex::ParticleReal const* theta = soa.GetRealData(PIdx::theta).dataPtr();
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(theta != nullptr, "openPMD: invalid theta pointer.");
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
+                                                 "openPMD: theta and tile size do not match");
+                {
+                    std::shared_ptr< amrex::ParticleReal > x(
+                            new amrex::ParticleReal[numParticleOnTile],
+                            [](amrex::ParticleReal const *p){ delete[] p; }
+                    );
+                    std::shared_ptr< amrex::ParticleReal > y(
+                            new amrex::ParticleReal[numParticleOnTile],
+                            [](amrex::ParticleReal const *p){ delete[] p; }
+                    );
+                    for (auto i=0; i<numParticleOnTile; i++) {
+                        auto const r = aos[i].pos(0);  // {0: "r", 1: "z"}
+                        x.get()[i] = r * std::cos(theta[i]);
+                        y.get()[i] = r * std::sin(theta[i]);
+                    }
+                    currSpecies["position"]["x"].storeChunk(x, {offset}, {numParticleOnTile64});
+                    currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
+                }
+#else
+                for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
+                    std::shared_ptr<amrex::ParticleReal> curr(
+                            new amrex::ParticleReal[numParticleOnTile],
+                            [](amrex::ParticleReal const *p) { delete[] p; }
+                    );
+                    for (auto i = 0; i < numParticleOnTile; i++) {
+                        curr.get()[i] = aos[i].pos(currDim);
+                    }
+                    std::string const positionComponent = positionComponents[currDim];
+                    currSpecies["position"][positionComponent].storeChunk(curr, {offset},
+                                                                          {numParticleOnTile64});
+                }
 #endif
 
-           // save particle ID after converting it to a globally unique ID
-           std::shared_ptr< uint64_t > ids(
-               new uint64_t[numParticleOnTile],
-               [](uint64_t const *p){ delete[] p; }
-           );
-           for (auto i=0; i<numParticleOnTile; i++) {
-               ids.get()[i] = WarpXUtilIO::localIDtoGlobal( aos[i].id(), aos[i].cpu() );
-           }
-           auto const scalar = openPMD::RecordComponent::SCALAR;
-           currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
-         }
-         //  save "extra" particle properties in AoS and SoA
-         SaveRealProperty(pti,
-             currSpecies,
-             offset,
-             write_real_comp, real_comp_names,
-             write_int_comp, int_comp_names);
+                // save particle ID after converting it to a globally unique ID
+                std::shared_ptr<uint64_t> ids(
+                        new uint64_t[numParticleOnTile],
+                        [](uint64_t const *p) { delete[] p; }
+                );
+                for (auto i = 0; i < numParticleOnTile; i++) {
+                    ids.get()[i] = WarpXUtilIO::localIDtoGlobal(aos[i].id(), aos[i].cpu());
+                }
+                auto const scalar = openPMD::RecordComponent::SCALAR;
+                currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
 
-         offset += numParticleOnTile64;
-      }
+            }
+            //  save "extra" particle properties in AoS and SoA
+            SaveRealProperty(pti,
+                             currSpecies,
+                             offset,
+                             write_real_comp, real_comp_names,
+                             write_int_comp, int_comp_names);
+
+            offset += numParticleOnTile64;
+        }
     }
     m_Series->flush();
 }
