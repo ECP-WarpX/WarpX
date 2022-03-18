@@ -8,6 +8,9 @@
 #include "WarnManager.H"
 
 #include "MsgLogger/MsgLogger.H"
+#include "WarpXUtil.H"
+
+#include <ablastr/utils/TextMsg.H>
 
 #include <AMReX_ParallelDescriptor.H>
 
@@ -201,39 +204,12 @@ WarnManager::msg_formatter(
     const auto prefix = "*" + std::string(tab_size, ' ');
     const auto prefix_length = static_cast<int>(prefix.length());
 
+    const auto wrapped_text = ablastr::utils::automatic_text_wrap(
+        msg, line_size-prefix_length);
+
     std::stringstream ss_out;
-    std::stringstream ss_msg{msg};
-
-    std::string line;
-    std::string word;
-
-    while(std::getline(ss_msg, line,'\n')){
-        ss_out << prefix;
-
-        std::stringstream ss_line{line};
-        int counter = prefix_length;
-
-        while (ss_line >> word){
-            const auto wlen = static_cast<int>(word.length());
-
-            if(counter == prefix_length){
-                ss_out << word;
-                counter += wlen;
-            }
-            else{
-                if (counter + wlen < line_size){
-                    ss_out << " " << word;
-                    counter += (wlen+1);
-                }
-                else{
-                    ss_out << "\n" << prefix << word;
-                    counter = prefix_length + wlen;
-                }
-            }
-        }
-
-        ss_out << '\n';
-    }
+    for (const auto& line : wrapped_text)
+        ss_out << prefix << line << "\n";
 
     return ss_out.str();
 }

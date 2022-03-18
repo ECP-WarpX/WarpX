@@ -196,6 +196,9 @@ Once your code is ready with documentation and automated test, congratulations!
 You can create the PR (or remove the ``[WIP]`` tag if you already created it).
 Reviewers will interact with you if they have comments/questions.
 
+
+.. _developers-contributing-style-conventions:
+
 Style and conventions
 ---------------------
 

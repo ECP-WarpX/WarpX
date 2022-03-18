@@ -12,11 +12,14 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Particles/Deposition/ChargeDeposition.H"
+#include "ablastr/utils/TextMsg.H"
 #ifdef WARPX_DIM_RZ
 #   include "Utils/WarpX_Complex.H"
 #endif
 
 #include <AMReX.H>
+
+#include <optional>
 
 
 namespace ablastr {
@@ -28,51 +31,78 @@ namespace particles {
  *
  * \param pti an amrex::ParIter pointing to the tile to operate on
  * \param wp vector of the particle weights for those particles.
+ * \param charge charge of the particle species
  * \param ion_lev pointer to array of particle ionization level. This is
                   required to have the charge of each macroparticle
                   since q is a scalar. For non-ionizable species,
                   ion_lev is a null pointer.
  * \param rho MultiFab of the charge density
- * \param icomp component in MultiFab to start depositing to
- * \param nc number of components to deposit
- * \param offset index to start at when looping over particles to depose
- * \param np_to_depose number of particles to depose
  * \param local_rho temporary FArrayBox for deposition with OpenMP
- * \param lev the level of the particles we are on
- * \param depos_lev the level to deposit the particles to
- * \param charge charge of the particle species
- * \param nox shape factor in the x direction
- * \param noy shape factor in the y direction
- * \param noz shape factor in the z direction
- * \param ng_rho number of ghost cells to use for rho
+ * \param particle_shape shape factor in each direction
  * \param dx cell spacing at level lev
  * \param xyzmin lo corner of the current tile in physical coordinates.
- * \param ref_ratio mesh refinement ratio between lev and depos_lev
+ * \param n_rz_azimuthal_modes number of azimuthal modes in use, irrelevant outside RZ geometry (default: 0)
+ * \param num_rho_deposition_guards number of ghost cells to use for rho (default: rho.nGrowVect())
+ * \param depos_lev the level to deposit the particles to (default: lev)
+ * \param rel_ref_ratio mesh refinement ratio between lev and depos_lev (default: 1)
+ * \param offset index to start at when looping over particles to depose (default: 0)
+ * \param np_to_depose number of particles to depose (default: pti.numParticles())
+ * \param icomp component in MultiFab to start depositing to
+ * \param nc number of components to deposit
  * \param cost pointer to (load balancing) cost corresponding to box where present
-               particles deposit current. If nullptr, costs are not updated.
- * \param n_rz_azimuthal_modes number of azimuthal modes in use, irrelevant outside RZ geometry.
- * \param load_balance_costs_update_algo selected method for updating load balance costs.
- * \param do_device_synchronize call amrex::Gpu::synchronize() for tiny profiler regions
+               particles deposit current. If nullptr, costs are not updated. (default: nullptr)
+ * \param load_balance_costs_update_algo selected method for updating load balance costs (default: 0)
+ * \param do_device_synchronize call amrex::Gpu::synchronize() for tiny profiler regions (default: true)
  */
 template< typename T_PC >
 static void
 deposit_charge (typename T_PC::ParIterType& pti,
                 typename T_PC::RealVector const& wp,
-                const int * const ion_lev,
-                amrex::MultiFab* rho, const int icomp, const int nc,
-                const long offset, const long np_to_depose,
-                amrex::FArrayBox& local_rho, const int lev, const int depos_lev,
-                const amrex::Real charge, const int nox, const int noy, const int noz,
-                const amrex::IntVect& ng_rho, const std::array<amrex::Real,3>& dx,
-                const std::array<amrex::Real, 3>& xyzmin,
-                const amrex::IntVect& ref_ratio,
-                amrex::Real* cost, const int n_rz_azimuthal_modes,
-                const long load_balance_costs_update_algo,
-                const bool do_device_synchronize)
+                amrex::Real const charge,
+                int const * const ion_lev,
+                amrex::MultiFab* rho,
+                amrex::FArrayBox& local_rho,
+                int const particle_shape,
+                std::array<amrex::Real, 3> const & dx,
+                std::array<amrex::Real, 3> const & xyzmin,
+                int const n_rz_azimuthal_modes = 0,
+                std::optional<amrex::IntVect> num_rho_deposition_guards = std::nullopt,
+                std::optional<int> depos_lev = std::nullopt,
+                std::optional<amrex::IntVect> rel_ref_ratio = std::nullopt,
+                long const offset = 0,
+                std::optional<long> np_to_depose = std::nullopt,
+                int const icomp = 0, int const nc = 1,
+                amrex::Real * const AMREX_RESTRICT cost = nullptr,
+                long const load_balance_costs_update_algo = 0,
+                bool const do_device_synchronize = true)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
-                                     (depos_lev==(lev  )),
-                                     "Deposition buffers only work for lev-1");
+    // deposition guards
+    amrex::IntVect ng_rho = rho->nGrowVect();
+    if (num_rho_deposition_guards.has_value())
+        ng_rho = num_rho_deposition_guards.value();
+    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(ng_rho <= rho->nGrowVect(),
+                                       "num_rho_deposition_guards are larger than allocated!");
+    // particle shape
+    auto const[nox, noy, noz] = std::array<int, 3>{particle_shape, particle_shape, particle_shape};
+
+    // used for MR when we want to deposit for a subset of the particles on the level in the
+    // current box; with offset, we start at a later particle index
+    if (!np_to_depose.has_value())
+        np_to_depose = pti.numParticles();
+    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(np_to_depose.value() + offset <= pti.numParticles(),
+                                       "np_to_depose + offset are out-of-bounds for particle iterator");
+
+    int const lev = pti.GetLevel();
+    if (!depos_lev.has_value())
+        depos_lev = lev;
+    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev.value() == (lev-1)) ||
+                                       (depos_lev.value() == (lev  )),
+                                       "Deposition buffers only work for lev or lev-1");
+    if (!rel_ref_ratio.has_value()) {
+        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(lev == depos_lev,
+                                           "rel_ref_ratio must be set if lev != depos_lev");
+        rel_ref_ratio = amrex::IntVect(AMREX_D_DECL(1, 1, 1));
+    }
 
     // If no particles, do not do anything
     if (np_to_depose == 0) return;
@@ -104,7 +134,7 @@ deposit_charge (typename T_PC::ParIterType& pti,
     const amrex::IntVect range = rho->nGrowVect() - shape_extent;
 #endif
     amrex::ignore_unused(range); // for release builds
-    AMREX_ASSERT_WITH_MESSAGE(
+    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, range) == 0,
         "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for charge deposition");
 
@@ -118,7 +148,7 @@ deposit_charge (typename T_PC::ParIterType& pti,
     if (lev == depos_lev) {
         tilebox = pti.tilebox();
     } else {
-        tilebox = amrex::coarsen(pti.tilebox(),ref_ratio);
+        tilebox = amrex::coarsen(pti.tilebox(), rel_ref_ratio.value());
     }
 
 #ifndef AMREX_USE_GPU
@@ -154,17 +184,17 @@ deposit_charge (typename T_PC::ParIterType& pti,
 
     if        (nox == 1){
         doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_fab, np_to_depose, dx, xyzmin, lo, charge,
+                                    rho_fab, np_to_depose.value(), dx, xyzmin, lo, charge,
                                     n_rz_azimuthal_modes, cost,
                                     load_balance_costs_update_algo);
     } else if (nox == 2){
         doChargeDepositionShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_fab, np_to_depose, dx, xyzmin, lo, charge,
+                                    rho_fab, np_to_depose.value(), dx, xyzmin, lo, charge,
                                     n_rz_azimuthal_modes, cost,
                                     load_balance_costs_update_algo);
     } else if (nox == 3){
         doChargeDepositionShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_fab, np_to_depose, dx, xyzmin, lo, charge,
+                                    rho_fab, np_to_depose.value(), dx, xyzmin, lo, charge,
                                     n_rz_azimuthal_modes, cost,
                                     load_balance_costs_update_algo);
     }

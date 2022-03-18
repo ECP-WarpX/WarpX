@@ -11,6 +11,6 @@ sys.path.append('../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 my_check = checksumAPI.evaluate_checksum(
-    'ElectrostaticSphereEB', 'Python_ElectrostaticSphereEB_plt00001',
+    'ElectrostaticSphereEB', 'Python_ElectrostaticSphereEB_plt000001',
     do_particles=False, atol=1e-12
 )

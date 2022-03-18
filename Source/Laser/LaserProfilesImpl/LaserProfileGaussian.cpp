@@ -7,6 +7,7 @@
  */
 #include "Laser/LaserProfiles.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpX_Complex.H"
@@ -48,7 +49,7 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
     queryWithParser(ppl, "phi0", m_params.phi0);
 
     m_params.stc_direction = m_common_params.p_X;
-    ppl.queryarr("stc_direction", m_params.stc_direction);
+    queryArrWithParser(ppl, "stc_direction", m_params.stc_direction);
     auto const s = 1.0_rt / std::sqrt(
         m_params.stc_direction[0]*m_params.stc_direction[0] +
         m_params.stc_direction[1]*m_params.stc_direction[1] +
@@ -62,7 +63,7 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
             m_common_params.nvec.begin(),
             m_common_params.nvec.end(),
             m_params.stc_direction.begin(), 0.0);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(std::abs(dp2) < 1.0e-14,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(std::abs(dp2) < 1.0e-14,
         "stc_direction is not perpendicular to the laser plane vector");
 
     // Get angle between p_X and stc_direction

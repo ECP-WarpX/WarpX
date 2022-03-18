@@ -55,7 +55,7 @@ MultiDiagnostics::ReadParameters ()
     pp_diagnostics.query("enable", enable_diags);
     if (enable_diags == 1) {
         pp_diagnostics.queryarr("diags_names", diags_names);
-        ndiags = diags_names.size();
+        ndiags = static_cast<int>(diags_names.size());
     }
 
     diags_types.resize( ndiags );

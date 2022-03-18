@@ -20,13 +20,16 @@ public:
 
     CollisionBase (std::string collision_name);
 
-    virtual void doCollisions (amrex::Real /*cur_time*/, MultiParticleContainer* /*mypc*/ ){}
+    virtual void doCollisions (amrex::Real /*cur_time*/, amrex::Real /*dt*/, MultiParticleContainer* /*mypc*/ ){}
 
     CollisionBase(CollisionBase const &) = delete;
     CollisionBase(CollisionBase &&) = delete;
     CollisionBase & operator=(CollisionBase const &) = delete;
 
     virtual ~CollisionBase() = default;
+
+    int get_ndt() {return m_ndt;}
+
 protected:
 
     amrex::Vector<std::string> m_species_names;

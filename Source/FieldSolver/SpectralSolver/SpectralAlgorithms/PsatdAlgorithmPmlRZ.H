@@ -35,14 +35,8 @@ class PsatdAlgorithmPmlRZ : public SpectralBaseAlgorithmRZ
          * derived classes.
          *
          * \param[in,out] field_data All fields in Fourier space
-         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
-         *                           the three components of the current density
-         * \param[in]     rho        Unique pointer to \c MultiFab storing the charge density
          */
-        virtual void CurrentCorrection (const int lev,
-                                        SpectralFieldDataRZ& field_data,
-                                        std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                        const std::unique_ptr<amrex::MultiFab>& rho) override final;
+        virtual void CurrentCorrection (SpectralFieldDataRZ& field_data) override final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
@@ -52,12 +46,8 @@ class PsatdAlgorithmPmlRZ : public SpectralBaseAlgorithmRZ
          * derived classes.
          *
          * \param[in,out] field_data All fields in Fourier space
-         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
-         *                           the three components of the current density
          */
-        virtual void VayDeposition (const int lev,
-                                    SpectralFieldDataRZ& field_data,
-                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
+        virtual void VayDeposition (SpectralFieldDataRZ& field_data) override final;
 
     private:
 

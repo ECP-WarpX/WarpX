@@ -149,20 +149,15 @@ SpectralSolverRZ::ComputeSpectralDivE (const int lev,
  * defined in the base class SpectralBaseAlgorithmRZ and possibly overridden
  * by its derived classes (e.g. PsatdAlgorithmRZ), from
  * objects of class SpectralSolverRZ through the private unique pointer \c algorithm
- *
- * \param[in,out] current two-dimensional array of unique pointers to MultiFab
- *                        storing the three components of the current density
- * \param[in]     rho     unique pointer to MultiFab storing the charge density
  */
 void
-SpectralSolverRZ::CurrentCorrection (const int lev,
-                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                     const std::unique_ptr<amrex::MultiFab>& rho) {
-    algorithm->CurrentCorrection(lev, field_data, current, rho);
+SpectralSolverRZ::CurrentCorrection ()
+{
+    algorithm->CurrentCorrection(field_data);
 }
 
 void
-SpectralSolverRZ::VayDeposition (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+SpectralSolverRZ::VayDeposition ()
 {
-    algorithm->VayDeposition(lev, field_data, current);
+    algorithm->VayDeposition(field_data);
 }

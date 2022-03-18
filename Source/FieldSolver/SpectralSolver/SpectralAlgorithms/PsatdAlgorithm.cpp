@@ -732,26 +732,12 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
     }
 }
 
-void
-PsatdAlgorithm::CurrentCorrection (
-    const int lev,
-    SpectralFieldData& field_data,
-    std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-    const std::unique_ptr<amrex::MultiFab>& rho)
+void PsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data)
 {
     // Profiling
     BL_PROFILE("PsatdAlgorithm::CurrentCorrection");
 
     const SpectralFieldIndex& Idx = m_spectral_index;
-
-    // Forward Fourier transform of J and rho
-    field_data.ForwardTransform(lev, *current[0], Idx.Jx, 0);
-    field_data.ForwardTransform(lev, *current[1], Idx.Jy, 0);
-    field_data.ForwardTransform(lev, *current[2], Idx.Jz, 0);
-    field_data.ForwardTransform(lev, *rho, Idx.rho_old, 0);
-    field_data.ForwardTransform(lev, *rho, Idx.rho_new, 1);
-
-    const amrex::IntVect& fill_guards = m_fill_guards;
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -843,32 +829,15 @@ PsatdAlgorithm::CurrentCorrection (
             }
         });
     }
-
-    // Backward Fourier transform of J
-    field_data.BackwardTransform(lev, *current[0], Idx.Jx, 0, fill_guards);
-    field_data.BackwardTransform(lev, *current[1], Idx.Jy, 0, fill_guards);
-    field_data.BackwardTransform(lev, *current[2], Idx.Jz, 0, fill_guards);
 }
 
 void
-PsatdAlgorithm::VayDeposition (
-    const int lev,
-    SpectralFieldData& field_data,
-    std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+PsatdAlgorithm::VayDeposition (SpectralFieldData& field_data)
 {
     // Profiling
     BL_PROFILE("PsatdAlgorithm::VayDeposition()");
 
     const SpectralFieldIndex& Idx = m_spectral_index;
-
-    // Forward Fourier transform of D (temporarily stored in current):
-    // D is nodal and does not match the staggering of J, therefore we pass the
-    // actual staggering of D (IntVect(1)) to the ForwardTransform function
-    field_data.ForwardTransform(lev, *current[0], Idx.Jx, 0, IntVect(1));
-    field_data.ForwardTransform(lev, *current[1], Idx.Jy, 0, IntVect(1));
-    field_data.ForwardTransform(lev, *current[2], Idx.Jz, 0, IntVect(1));
-
-    const amrex::IntVect& fill_guards = m_fill_guards;
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi)
@@ -922,11 +891,6 @@ PsatdAlgorithm::VayDeposition (
             else                 fields(i,j,k,Idx.Jz) = 0._rt;
         });
     }
-
-    // Backward Fourier transform of J
-    field_data.BackwardTransform(lev, *current[0], Idx.Jx, 0, fill_guards);
-    field_data.BackwardTransform(lev, *current[1], Idx.Jy, 0, fill_guards);
-    field_data.BackwardTransform(lev, *current[2], Idx.Jz, 0, fill_guards);
 }
 
 #endif // WARPX_USE_PSATD

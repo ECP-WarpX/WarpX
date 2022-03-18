@@ -13,6 +13,7 @@
 #include "FlushFormats/FlushFormatSensei.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Parallelization/WarpXCommUtil.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
@@ -55,38 +56,103 @@ Diagnostics::BaseReadParameters ()
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
     // Query list of grid fields to write to output
-    bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames);
+    bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames_fields);
     if (!varnames_specified){
-        m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
+        m_varnames_fields = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
     }
 
     // Sanity check if user requests to plot phi
-    if (WarpXUtilStr::is_in(m_varnames, "phi")){
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    if (WarpXUtilStr::is_in(m_varnames_fields, "phi")){
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             warpx.do_electrostatic==ElectrostaticSolverAlgo::LabFrame,
             "plot phi only works if do_electrostatic = labframe");
     }
 
     // Sanity check if user requests to plot F
-    if (WarpXUtilStr::is_in(m_varnames, "F")){
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    if (WarpXUtilStr::is_in(m_varnames_fields, "F")){
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             warpx.do_dive_cleaning,
             "plot F only works if warpx.do_dive_cleaning = 1");
     }
 
     // G can be written to file only if WarpX::do_divb_cleaning = 1
-    if (WarpXUtilStr::is_in(m_varnames, "G"))
+    if (WarpXUtilStr::is_in(m_varnames_fields, "G"))
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             warpx.do_divb_cleaning, "G can be written to file only if warpx.do_divb_cleaning = 1");
     }
 
     // If user requests to plot proc_number for a serial run,
     // delete proc_number from fields_to_plot
     if (amrex::ParallelDescriptor::NProcs() == 1){
-        m_varnames.erase(
-            std::remove(m_varnames.begin(), m_varnames.end(), "proc_number"),
-            m_varnames.end());
+        m_varnames_fields.erase(
+            std::remove(m_varnames_fields.begin(), m_varnames_fields.end(), "proc_number"),
+            m_varnames_fields.end());
+    }
+
+    // Get names of particle quantities to average at each grid point
+    const bool pfield_varnames_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
+    if (!pfield_varnames_specified){
+        m_pfield_varnames = {};
+    }
+#ifdef WARPX_DIM_RZ
+    if (m_pfield_varnames.size() != 0) {
+        amrex::Abort("Input error: cannot use particle_fields_to_plot not implemented for RZ");
+    }
+#endif
+
+
+    // Get parser strings for particle fields and generate map of parsers
+    std::string parser_str;
+    amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
+    for (const auto& var : m_pfield_varnames) {
+        Store_parserString(pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)").c_str(), parser_str);
+        if (parser_str != "") {
+            m_pfield_strings.insert({var, parser_str});
+        }
+        else {
+            amrex::Abort("Input error: cannot find parser string for " + var + "." +
+                         m_diag_name + ".particle_fields." + var + " in file");
+        }
+    }
+
+    // Names of all species in the simulation
+    m_all_species_names = warpx.GetPartContainer().GetSpeciesNames();
+
+    // Get names of species to average at each grid point
+    const bool pfield_species_specified = pp_diag_name.queryarr("particle_fields_species", m_pfield_species);
+    if (!pfield_species_specified){
+        m_pfield_species = m_all_species_names;
+    }
+
+    // Check that species names specified in m_pfield_species are valid
+    bool p_species_name_is_wrong;
+    // Loop over all species specified above
+    for (const auto& species : m_pfield_species) {
+        // Boolean used to check if species name was misspelled
+        p_species_name_is_wrong = true;
+        // Loop over all species
+        for (int i = 0, n = int(m_all_species_names.size()); i < n; i++) {
+            if (species == m_all_species_names[i]) {
+                // Store species index: will be used in ParticleReductionFunctor to calculate
+                // averages for this species
+                m_pfield_species_index.push_back(i);
+                p_species_name_is_wrong = false;
+            }
+        }
+        // If species name was misspelled, abort with error message
+        if (p_species_name_is_wrong) {
+            amrex::Abort("Input error: string " + species + " in " + m_diag_name +
+                         ".particle_fields_species does not match any species");
+        }
+    }
+
+    m_varnames = m_varnames_fields;
+    // Generate names of averaged particle fields and append to m_varnames
+    for (int ivar=0; ivar<m_pfield_varnames.size(); ivar++) {
+        for (int ispec=0; ispec < int(m_pfield_species.size()); ispec++) {
+            m_varnames.push_back(m_pfield_varnames[ivar] + '_' + m_pfield_species[ispec]);
+        }
     }
 
     // Read user-defined physical extents for the output and store in m_lo and m_hi.
@@ -138,8 +204,6 @@ Diagnostics::BaseReadParameters ()
     // Names of species to write to output
     bool species_specified = pp_diag_name.queryarr("species", m_output_species_names);
 
-    // Names of all species in the simulation
-    m_all_species_names = warpx.GetPartContainer().GetSpeciesNames();
 
     // Auxiliary variables
     std::string species;
@@ -174,6 +238,8 @@ Diagnostics::BaseReadParameters ()
     bool checkpoint_compatibility = false;
     if (m_format == "checkpoint"){
        if ( varnames_specified == false &&
+            pfield_varnames_specified == false &&
+            pfield_species_specified == false &&
             lo_specified == false &&
             hi_specified == false &&
             cr_specified == false &&
@@ -195,9 +261,17 @@ Diagnostics::InitData ()
     // loop over all buffers
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         // loop over all levels
+        // This includes full diagnostics and BTD as well as cell-center functors for BTD.
+        // Note that the cell-centered data for BTD is computed for all levels and hence
+        // the corresponding functor is also initialized for all the levels
         for (int lev = 0; lev < nmax_lev; ++lev) {
             // allocate and initialize m_all_field_functors depending on diag type
             InitializeFieldFunctors(lev);
+        }
+        // loop over the levels selected for output
+        // This includes all the levels for full diagnostics
+        // and only the coarse level (mother grid) for BTD
+        for (int lev = 0; lev < nlev_output; ++lev) {
             // Initialize buffer data required for particle and/or fields
             InitializeBufferData(i_buffer, lev);
         }
@@ -328,7 +402,8 @@ Diagnostics::ComputeAndPack ()
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for(int lev=0; lev<nlev_output; lev++){
             int icomp_dst = 0;
-            for (int icomp=0, n=m_all_field_functors[lev].size(); icomp<n; icomp++){
+            const auto n = static_cast<int>(m_all_field_functors[lev].size());
+            for (int icomp=0; icomp<n; icomp++){
                 // Call all functors in m_all_field_functors[lev]. Each of them computes
                 // a diagnostics and writes in one or more components of the output
                 // multifab m_mf_output[lev].
