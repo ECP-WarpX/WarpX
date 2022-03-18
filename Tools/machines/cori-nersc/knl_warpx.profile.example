@@ -12,9 +12,9 @@ export CMAKE_PREFIX_PATH=$HOME/sw/knl/adios2-2.7.1-install:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=$HOME/sw/knl/blaspp-master-install:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=$HOME/sw/knl/lapackpp-master-install:$CMAKE_PREFIX_PATH
 
-if [ -d "$HOME/sw/haswell/venvs/knl_warpx" ]
+if [ -d "$HOME/sw/knl/venvs/knl_warpx" ]
 then
-  source $HOME/sw/haswell/venvs/knl_warpx/bin/activate
+  source $HOME/sw/knl/venvs/knl_warpx/bin/activate
 fi
 
 export CXXFLAGS="-march=knl"
