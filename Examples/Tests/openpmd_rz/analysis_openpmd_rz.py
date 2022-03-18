@@ -2,13 +2,13 @@
 
 import openpmd_api as io
 
-series = io.Series("diags/diag1/openpmd_%T.h5", io.Access.read_only)
+series = io.Series("diags/diag1/openpmd_%T.bp", io.Access.read_only)
 
 assert len(series.iterations) == 3, 'improper number of iterations stored'
 
-ii = series.iterations[2]
+ii = series.iterations[20]
 
-assert len(ii.meshes) == 9, 'improper number of meshes'
+assert len(ii.meshes) == 7, 'improper number of meshes'
 
 jt = ii.meshes['j']['t']
 (Nm, Nr, Nz) = jt.shape
