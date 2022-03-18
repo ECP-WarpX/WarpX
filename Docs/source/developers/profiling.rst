@@ -83,7 +83,11 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
 
  .. code-block:: bash
 
-    rm -rf profiling*
+    # nsys: remove old traces
+    rm -rf profiling* tmp-traces
+    # nsys: a location where we can write temporary nsys files to
+    export TMPDIR=$PWD/tmp-traces
+    # WarpX: one OpenMP thread per MPI rank
     export OMP_NUM_THREADS=1
 
     # record
