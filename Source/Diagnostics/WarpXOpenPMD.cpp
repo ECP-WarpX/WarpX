@@ -9,6 +9,7 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FieldIO.H"
 #include "Particles/Filter/FilterFunctors.H"
+#include "Utils/TextMsg.H"
 #include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -443,7 +444,7 @@ WarpXOpenPMDPlot::GetFileName (std::string& filepath)
 void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix, int file_min_digits,
                                 bool isBTD)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
 
     m_dirPrefix = dirPrefix;
     m_file_min_digits = file_min_digits;
@@ -664,7 +665,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     amrex::ParticleReal const mass, const bool isBTD,
                     int ParticleFlushOffset)
 {
-  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
+  WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
   AMREX_ALWAYS_ASSERT(write_real_comp.size() == pc->NumRealComps());
   AMREX_ALWAYS_ASSERT( write_int_comp.size() == pc->NumIntComps());
@@ -762,8 +763,8 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
            //   reconstruct x and y from polar coordinates r, theta
            auto const& soa = pti.GetStructOfArrays();
            amrex::ParticleReal const* theta = soa.GetRealData(PIdx::theta).dataPtr();
-           AMREX_ALWAYS_ASSERT_WITH_MESSAGE(theta != nullptr, "openPMD: invalid theta pointer.");
-           AMREX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
+           WARPX_ALWAYS_ASSERT_WITH_MESSAGE(theta != nullptr, "openPMD: invalid theta pointer.");
+           WARPX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
                                             "openPMD: theta and tile size do not match");
            {
                std::shared_ptr< amrex::ParticleReal > x(
@@ -1179,14 +1180,16 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                       const std::vector<std::string>& varnames,
                       const amrex::Vector<amrex::MultiFab>& mf,
                       amrex::Vector<amrex::Geometry>& geom,
+                      int output_levels,
                       const int iteration,
-                      const double time, bool isBTD,
+                      const double time,
+                      bool isBTD,
                       const amrex::Geometry& full_BTD_snapshot ) const
 {
   //This is AMReX's tiny profiler. Possibly will apply it later
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
 
-  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
+  WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
 
   // is this either a regular write (true) or the first write in a
   // backtransformed diagnostic (BTD):
@@ -1204,27 +1207,29 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
     series_iteration.setTime( time );
   }
 
-  for (int i=0; i<geom.size(); i++) {
-    amrex::Geometry full_geom = geom[i];
+  // loop over levels up to output_levels
+  //   note: this is usually the finestLevel, not the maxLevel
+  for (int lev=0; lev < output_levels; lev++) {
+    amrex::Geometry full_geom = geom[lev];
     if( isBTD )
       full_geom = full_BTD_snapshot;
 
     // setup is called once. So it uses property "period" from first
     // geometry for <all> field levels.
-    if ( (0 == i) && first_write_to_iteration )
+    if ( (0 == lev) && first_write_to_iteration )
       SetupFields(meshes, full_geom);
 
     amrex::Box const & global_box = full_geom.Domain();
     auto const global_size = getReversedVec(global_box.size());
 
-    int const ncomp = mf[i].nComp();
+    int const ncomp = mf[lev].nComp();
     for ( int icomp=0; icomp<ncomp; icomp++ ) {
           std::string const & varname = varnames[icomp];
 
           // assume fields are scalar unless they match the following match of known vector fields
           std::string field_name = varname;
           std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
-          GetMeshCompNames( i, varname, field_name, comp_name );
+          GetMeshCompNames( lev, varname, field_name, comp_name );
 
           auto mesh = meshes[field_name];
           auto mesh_comp = mesh[comp_name];
@@ -1233,16 +1238,16 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
              SetupMeshComp( mesh, full_geom, mesh_comp );
              detail::setOpenPMDUnit( mesh, field_name );
 
-             auto relative_cell_pos = utils::getRelativeCellPosition(mf[i]);     // AMReX Fortran index order
+             auto relative_cell_pos = utils::getRelativeCellPosition(mf[lev]);     // AMReX Fortran index order
              std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
              mesh_comp.setPosition( relative_cell_pos );
            }
 
            // Loop through the multifab, and store each box as a chunk,
            // in the openPMD file.
-           for( amrex::MFIter mfi(mf[i]); mfi.isValid(); ++mfi )
+           for( amrex::MFIter mfi(mf[lev]); mfi.isValid(); ++mfi )
            {
-                amrex::FArrayBox const& fab = mf[i][mfi];
+                amrex::FArrayBox const& fab = mf[lev][mfi];
                 amrex::Box const& local_box = fab.box();
 
                 // Determine the offset and size of this chunk

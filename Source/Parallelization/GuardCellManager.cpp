@@ -15,6 +15,7 @@
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Filter/NCIGodfreyFilter.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -99,7 +100,7 @@ guardCellManager::Init (
     // the fine grid by a number of cells equal to the ref_ratio in the moving
     // window direction.
     if (do_moving_window) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
             "The number of grow cells for the moving window currently assumes 2 levels max.");
         const int nlevs = ref_ratios.size()+1;
         int max_r = (nlevs > 1) ? ref_ratios[0][moving_window_dir] : 2;

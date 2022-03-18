@@ -7,6 +7,7 @@
  */
 #include "WarpX.H"
 
+#include "TextMsg.H"
 #include "WarpXAlgorithmSelection.H"
 #include "WarpXConst.H"
 #include "WarpXProfilerWrapper.H"
@@ -73,12 +74,12 @@ void ParseGeometryInput()
     int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] == 0.,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] == 0.,
             "Lower bound of radial coordinate (prob_lo[0]) with RZ PSATD solver must be zero");
     }
     else
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] >= 0.,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] >= 0.,
             "Lower bound of radial coordinate (prob_lo[0]) with RZ FDTD solver must be non-negative");
     }
 #endif
@@ -124,12 +125,11 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
             boost_direction[2] = 1;
         }
         else {
-            const std::string msg = "Unknown boost_dir: "+s;
-            Abort(msg.c_str());
+            Abort(Utils::TextMsg::Err("Unknown boost_dir: "+s));
         }
 
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( s == "z" || s == "Z" ,
-                                          "The boost must be in the z direction.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( s == "z" || s == "Z" ,
+            "The boost must be in the z direction.");
     }
 }
 
@@ -295,16 +295,16 @@ int safeCastToInt(const amrex::Real x, const std::string& real_name) {
             result = static_cast<int>(x);
         } else {
             error_detected = true;
-            assert_msg = "Error: Negative overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
+            assert_msg = "Negative overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
         }
     } else if (x > 0) {
         error_detected = true;
-        assert_msg =  "Error: Overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
+        assert_msg =  "Overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
     } else {
         error_detected = true;
-        assert_msg =  "Error: NaN detected when casting " + real_name + " to int";
+        assert_msg =  "NaN detected when casting " + real_name + " to int";
     }
-    WarpXUtilMsg::AlwaysAssert(!error_detected, assert_msg);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!error_detected, assert_msg);
     return result;
 }
 
@@ -349,7 +349,9 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
         // user's expressions because of the limited range of exponentials in single precision
         double v;
 
-        WarpXUtilMsg::AlwaysAssert(recursive_symbols.count(*it)==0, "Expressions contains recursive symbol "+*it);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            recursive_symbols.count(*it)==0,
+            "Expressions contains recursive symbol "+*it);
         recursive_symbols.insert(*it);
         const bool is_input = queryWithParser(pp_my_constants, it->c_str(), v);
         recursive_symbols.erase(*it);
@@ -536,11 +538,11 @@ void CheckDims ()
     ParmParse pp_geometry("geometry");
     std::string dims;
     pp_geometry.get("dims", dims);
-    std::string dims_error = "ERROR: The selected WarpX executable was built as '";
+    std::string dims_error = "The selected WarpX executable was built as '";
     dims_error.append(dims_compiled).append("'-dimensional, but the ");
     dims_error.append("inputs file declares 'geometry.dims = ").append(dims).append("'.\n");
     dims_error.append("Please re-compile with a different WarpX_DIMS option or select the right executable name.");
-    WarpXUtilMsg::AlwaysAssert(dims == dims_compiled, dims_error);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(dims == dims_compiled, dims_error);
 }
 
 void CheckGriddingForRZSpectral ()
@@ -594,7 +596,7 @@ void CheckGriddingForRZSpectral ()
     // The factor of 8 is there to make some room for higher order
     // shape factors and filtering.
     int nprocs = ParallelDescriptor::NProcs();
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_cell[1] >= 8*nprocs,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_cell[1] >= 8*nprocs,
                                      "With RZ spectral, there must be at least eight z-cells per processor so that there can be at least one block per processor.");
 
     // Get the longitudinal blocking factor in case it was set by the user.
@@ -673,12 +675,12 @@ void ReadBCParams ()
             WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Periodic ) {
             geom_periodicity[idim] = 1;
             // to ensure both lo and hi are set to periodic consistently for both field and particles.
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 (WarpX::field_boundary_lo[idim]  == FieldBoundaryType::Periodic) &&
                 (WarpX::field_boundary_hi[idim]  == FieldBoundaryType::Periodic),
             "field boundary must be consistenly periodic in both lo and hi");
             if (particle_boundary_specified) {
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Periodic) &&
                     (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Periodic),
                "field and particle boundary must be periodic in both lo and hi");
@@ -703,17 +705,6 @@ void ReadBCParams ()
     pp_geometry.addarr("is_periodic", geom_periodicity);
 }
 
-namespace WarpXUtilMsg{
-
-void AlwaysAssert(bool is_expression_true, const std::string& msg = "ERROR!")
-{
-    if(is_expression_true) return;
-
-    amrex::Abort(msg);
-}
-
-}
-
 namespace WarpXUtilStr
 {
     bool is_in(const std::vector<std::string>& vect,
@@ -729,6 +720,45 @@ namespace WarpXUtilStr
             [&](const auto elem){return is_in(vect, elem);});
     }
 
+    std::vector<std::string> automatic_text_wrap(
+        const std::string& text, const int max_line_length){
+
+        auto ss_text = std::stringstream{text};
+        auto wrapped_text_lines = std::vector<std::string>{};
+
+        std::string line;
+        while(std::getline(ss_text, line,'\n')){
+
+            auto ss_line = std::stringstream{line};
+            int counter = 0;
+            std::stringstream ss_line_out;
+            std::string word;
+
+            while (ss_line >> word){
+                const auto wlen = static_cast<int>(word.length());
+
+                if(counter == 0){
+                    ss_line_out << word;
+                    counter += wlen;
+                }
+                else{
+                    if (counter + wlen < max_line_length){
+                        ss_line_out << " " << word;
+                        counter += (wlen+1);
+                    }
+                    else{
+                        wrapped_text_lines.push_back(ss_line_out.str());
+                        ss_line_out = std::stringstream{word};
+                        counter = wlen;
+                    }
+                }
+            }
+
+            wrapped_text_lines.push_back(ss_line_out.str());
+        }
+
+        return wrapped_text_lines;
+    }
 }
 
 namespace WarpXUtilLoadBalance

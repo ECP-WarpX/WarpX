@@ -171,11 +171,11 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
         Real constexpr c2 = PhysConst::c * PhysConst::c;
 
         // Use the right shift in components:
-        // - the first 2*n_rz_azimuthal_modes-1 components correspond to rho old (i.e. rhocomp=0)
-        // - the next 2*n_rz_azimuthal_modes-1 components correspond to rho new (i.e. rhocomp=1)
+        // - the first WarpX::ncomps (2*n_rz_azimuthal_modes-1) components correspond to rho old (i.e. rhocomp=0)
+        // - the next WarpX::ncomps (2*n_rz_azimuthal_modes-1) components correspond to rho new (i.e. rhocomp=1)
         int rho_shift = 0;
         if (rhocomp == 1) {
-            rho_shift = 2*WarpX::n_rz_azimuthal_modes-1;
+            rho_shift = WarpX::ncomps;
         }
 
         // Loop over the cells and update the fields
