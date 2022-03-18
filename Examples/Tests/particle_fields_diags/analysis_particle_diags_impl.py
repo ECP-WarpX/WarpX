@@ -153,4 +153,6 @@ def do_analysis(single_precision = False):
         assert(error[k] < tolerance)
 
     test_name = os.path.split(os.getcwd())[1]
-    checksumAPI.evaluate_checksum(test_name, fn)
+
+    checksum_rtol = 2e-9 if single_precision else 1e-9
+    checksumAPI.evaluate_checksum(test_name, fn, rtol=checksum_rtol)
