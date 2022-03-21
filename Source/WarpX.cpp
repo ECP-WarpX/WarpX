@@ -123,7 +123,7 @@ bool WarpX::do_divb_cleaning = false;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
-bool WarpX::do_shared_mem_charge_deposition = true;
+bool WarpX::do_shared_mem_charge_deposition = false;
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
