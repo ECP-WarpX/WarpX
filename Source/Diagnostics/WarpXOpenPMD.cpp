@@ -682,16 +682,16 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
 
     // prepare data structures the first time BTD has non-zero particles
-    //   we set some of them to zero extent, so we need to time that welll
+    //   we set some of them to zero extent, so we need to time that well
     bool const is_first_flush_with_particles = num_dump_particles > 0 && ParticleFlushOffset == 0;
     // BTD: we flush multiple times to the same lab step and thus need to resize
     //   our declared particle output sizes
     bool const is_resizing_flush = num_dump_particles > 0 && ParticleFlushOffset > 0;
     // write structure & declare particles in this (lab) step empty:
     //   if not BTD, then this is the only (and last) time we flush to this step
-    //   if BTD, then we do this multiple times
+    //   if BTD, then we may do this multiple times until it is the last BTD flush
     bool const is_last_flush_to_step = !isBTD || (isBTD && isLastBTDFlush);
-    // well, even in BTD we have to recognize that some lab stations have no
+    // well, even in BTD we have to recognize that some lab stations may have no
     //   particles - so we mark them empty at the end of station reconstruction
     bool const is_last_flush_and_never_particles =
             is_last_flush_to_step && num_dump_particles == 0 && ParticleFlushOffset == 0;
@@ -709,7 +709,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
         doParticleSetup = is_first_flush_with_particles || is_last_flush_and_never_particles;
 
     // this setup stage also implicitly calls "makeEmpty" if needed (i.e., is_last_flush_and_never_particles)
-    //   for BTD, we call this multiple times as we will resize in subsequent dumps
+    //   for BTD, we call this multiple times as we may resize in subsequent dumps if number of particles in the buffer > 0
     if (doParticleSetup || is_resizing_flush) {
         SetupPos(currSpecies, NewParticleVectorSize, isBTD);
         SetupRealProperties(pc, currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names,
