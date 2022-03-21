@@ -598,7 +598,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
     if (WarpX::do_shared_mem_charge_deposition)
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                          (depos_lev==(lev  )),
                                          "Deposition buffers only work for lev-1");
 
