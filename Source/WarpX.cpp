@@ -968,7 +968,7 @@ WarpX::ReadParameters ()
         {
             amrex::Abort("\nCurrent centering (nodal deposition) cannot be used with Esirkepov deposition."
                          "\nPlease set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
-        }      
+        }
 
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay && do_current_centering)
         {
