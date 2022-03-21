@@ -80,6 +80,8 @@ WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
 int
 WarpX::MoveWindow (const int step, bool move_j)
 {
+    WARPX_PROFILE("WarpX::MoveWindow");
+
     if (step == start_moving_window_step) {
         amrex::Print() << Utils::TextMsg::Info("Starting moving window");
     }
