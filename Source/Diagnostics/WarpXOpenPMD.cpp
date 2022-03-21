@@ -276,7 +276,7 @@ namespace detail
         // if we are start to write individual modes
         vs const axisLabels{"r", "z"};
         // if we just write reconstructed 2D fields at theta=0
-        // vs const axisLabels{"x", "z"};
+        //vs const axisLabels{"x", "z"};
 #elif defined(WARPX_DIM_3D)
         vs const axisLabels{"x", "y", "z"};
 #else
@@ -297,7 +297,7 @@ namespace detail
         // if we are start to write individual modes
         vs const fieldComponents{"r", "t", "z"};
         // if we just write reconstructed fields at theta=0
-        // vs const fieldComponents{"x", "y", "z"};
+        //vs const fieldComponents{"x", "y", "z"};
 #else
         // note: 1D3V and 2D3V simulations still have 3 components for the fields
         vs const fieldComponents{"x", "y", "z"};
@@ -1190,6 +1190,7 @@ WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
 
     field_name += std::string("_lvl").append(std::to_string(meshLevel));
 }
+
 /** Find fieldName in varname and get the theta mode index, if varname = fieldName_mode_realOrImag
  *
  * @param[in] varname name of the field variable being parsed
@@ -1210,9 +1211,9 @@ GetFieldNameModeInt (const std::string& varname)
     // in either case, there is a -1 in mode_index
     int mode_index = -1;
 
-    std::regex e_real_imag ("(.*)_([0-9]*)_(real|imag)");
+    std::regex e_real_imag("(.*)_([0-9]*)_(real|imag)");
     std::smatch sm;
-    std::regex_match (varname, sm, e_real_imag, std::regex_constants::match_default);
+    std::regex_match(varname, sm, e_real_imag, std::regex_constants::match_default);
 
     if (sm.size() != 4 ) {
         return std::make_tuple(varname, mode_index);
@@ -1231,6 +1232,7 @@ GetFieldNameModeInt (const std::string& varname)
         return std::make_tuple(std::string(sm[1]), mode_index);
     }
 }
+
 /** Transpose diagnostic data from WarpX/AMReX/Fortran order to openPMD (RZ) / C order
  * NOTE : duplicates chunk in memory and is NOT optimized
  *
@@ -1312,7 +1314,6 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
             auto [varname_no_mode, mode_index] = GetFieldNameModeInt(varname);
             bool var_in_theta_mode = mode_index != -1;
             std::string field_name = varname_no_mode;
-            // std::string varname_no_mode = varname.substr(0,field_str_length);
             std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
             // assume fields are scalar unless they match the following match of known vector fields
             GetMeshCompNames( lev, varname_no_mode, field_name, comp_name );
@@ -1428,8 +1429,6 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
     } // levels loop (i)
 }
 #endif // WARPX_USE_OPENPMD
-
-
 
 
 

@@ -22,7 +22,7 @@ using namespace amrex;
 
 /** \brief
  * Convert an IntVect to a std::vector<std::uint64_t>
- * (used for compatibility with the openPMD API)
+ * (used for compatibility with openPMD-api)
  */
 std::vector<std::uint64_t>
 getVec( const IntVect& v, bool reverse)
@@ -61,7 +61,7 @@ getVec( const Real* v , bool reverse)
   };
   // Reverse the order of elements, if v corresponds to the indices of a
   // Fortran-order array (like an AMReX FArrayBox)
-  // but u is intended to be used with a C-order API (like openPMD)
+  // but u is intended to be used with a C-order API (like openPMD-api)
   if (reverse) {
     std::reverse( u.begin(), u.end() );
   }
