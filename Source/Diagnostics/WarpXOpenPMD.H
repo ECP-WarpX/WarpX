@@ -210,18 +210,31 @@ private:
       std::string& comp_name
   ) const;
 
-  /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
+  /** This function sets up the entries for storing the particle positions and global IDs
   *
   * @param[in] currSpecies Corresponding openPMD species
   * @param[in] np          Number of particles
-  * @param[in] charge      Charge of the particles (note: fix for ions)
-  * @param[in] mass        Mass of the particles
+  * @param[in] isBTD       Is this a back-transformed diagnostics output?
   */
   void SetupPos (
         openPMD::ParticleSpecies& currSpecies,
         const unsigned long long& np,
+        bool const isBTD = false);
+
+  /** This function sets constant particle records and ED-PIC attributes.
+   *
+   * Sets the entries for storing particle position offset, constant records (charge, mass) and ED-PIC attributes.
+   *
+   * @param[in] currSpecies Corresponding openPMD species
+   * @param[in] np          Number of particles
+   * @param[in] charge      Charge of the particles (note: fix for ions)
+   * @param[in] mass        Mass of the particles
+   */
+  void SetConstParticleRecordsEDPIC (
+        openPMD::ParticleSpecies& currSpecies,
+        const unsigned long long& np,
         amrex::ParticleReal const charge,
-        amrex::ParticleReal const mass, bool const isBTD = false);
+        amrex::ParticleReal const mass);
 
   /** This function sets up the entries for particle properties
    *
@@ -298,9 +311,6 @@ private:
   std::string GetFileName (std::string& filepath);
 
   std::unique_ptr<openPMD::Series> m_Series;
-
-  /** To set particle meta-data for the openpmd dump. */
-  bool m_doParticleSetUp = true;
 
   /** This is the output directory
    *

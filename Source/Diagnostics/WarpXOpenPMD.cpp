@@ -676,14 +676,17 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     AMREX_ALWAYS_ASSERT(int_comp_names.size() == pc->NumIntComps());
 
     WarpXParticleCounter counter(pc);
-    auto const total_particles = counter.GetTotalNumParticles();
+    auto const num_dump_particles = counter.GetTotalNumParticles();
 
     openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
     openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
 
     // prepare data structures the first time BTD has non-zero particles
     //   we set some of them to zero extent, so we need to time that welll
-    bool const is_first_flush_with_particles = total_particles > 0 && ParticleFlushOffset == 0;
+    bool const is_first_flush_with_particles = num_dump_particles > 0 && ParticleFlushOffset == 0;
+    // BTD: we flush multiple times to the same lab step and thus need to resize
+    //   our declared particle output sizes
+    bool const is_resizing_flush = num_dump_particles > 0 && ParticleFlushOffset > 0;
     // write structure & declare particles in this (lab) step empty:
     //   if not BTD, then this is the only (and last) time we flush to this step
     //   if BTD, then we do this multiple times
@@ -691,74 +694,32 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     // well, even in BTD we have to recognize that some lab stations have no
     //   particles - so we mark them empty at the end of station reconstruction
     bool const is_last_flush_and_never_particles =
-            is_last_flush_to_step && total_particles == 0 && ParticleFlushOffset == 0;
+            is_last_flush_to_step && num_dump_particles == 0 && ParticleFlushOffset == 0;
 
     //
     // prepare structure and meta-data
     //
 
-    // meta data for ED-PIC extension
-    if (is_last_flush_to_step) {
-        currSpecies.setAttribute("particleShape", double(WarpX::noz));
-        // TODO allow this per direction in the openPMD standard, ED-PIC extension?
-        currSpecies.setAttribute("particleShapes", []() {
-            return std::vector<double>{
-#if AMREX_SPACEDIM >= 2
-                    double(WarpX::nox),
-#endif
-#if defined(WARPX_DIM_3D)
-                    double(WarpX::noy),
-#endif
-                    double(WarpX::noz)
-            };
-        }());
-        currSpecies.setAttribute("particlePush", []() {
-            switch (WarpX::particle_pusher_algo) {
-                case ParticlePusherAlgo::Boris :
-                    return "Boris";
-                case ParticlePusherAlgo::Vay :
-                    return "Vay";
-                case ParticlePusherAlgo::HigueraCary :
-                    return "HigueraCary";
-                default:
-                    return "other";
-            }
-        }());
-        currSpecies.setAttribute("particleInterpolation", []() {
-            switch (WarpX::field_gathering_algo) {
-                case GatheringAlgo::EnergyConserving :
-                    return "energyConserving";
-                case GatheringAlgo::MomentumConserving :
-                    return "momentumConserving";
-                default:
-                    return "other";
-            }
-        }());
-        currSpecies.setAttribute("particleSmoothing", "none");
-        currSpecies.setAttribute("currentDeposition", []() {
-            switch (WarpX::current_deposition_algo) {
-                case CurrentDepositionAlgo::Esirkepov :
-                    return "Esirkepov";
-                case CurrentDepositionAlgo::Vay :
-                    return "Vay";
-                default:
-                    return "directMorseNielson";
-            }
-        }());
-    }
-
     // define positions & offset structure
-    const unsigned long long NewParticleVectorSize = total_particles + ParticleFlushOffset;
+    const unsigned long long NewParticleVectorSize = num_dump_particles + ParticleFlushOffset;
     // we will set up empty particles unless it's BTD, where we might add some in a following buffer dump
     //   during this setup, we mark some particle properties as constant and potentially zero-sized
-    m_doParticleSetUp = true;
+    bool doParticleSetup = true;
     if (isBTD)
-        m_doParticleSetUp = is_first_flush_with_particles || is_last_flush_and_never_particles;
+        doParticleSetup = is_first_flush_with_particles || is_last_flush_and_never_particles;
 
     // this setup stage also implicitly calls "makeEmpty" if needed (i.e., is_last_flush_and_never_particles)
-    SetupPos(currSpecies, NewParticleVectorSize, charge, mass, isBTD);
-    SetupRealProperties(pc, currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names,
-                        NewParticleVectorSize, isBTD);
+    //   for BTD, we call this multiple times as we will resize in subsequent dumps
+    if (doParticleSetup || is_resizing_flush) {
+        SetupPos(currSpecies, NewParticleVectorSize, isBTD);
+        SetupRealProperties(pc, currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names,
+                            NewParticleVectorSize, isBTD);
+    }
+
+    if (is_last_flush_to_step) {
+        SetConstParticleRecordsEDPIC(currSpecies, NewParticleVectorSize, charge, mass);
+    }
+
     // open files from all processors, in case some will not contribute below
     m_Series->flush();
 
@@ -892,9 +853,6 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
         }
     }
 
-    // attributes need to be set only the first time BTD flush is called for a snapshot
-    if (isBTD and m_doParticleSetUp == false) return;
-
     std::set< std::string > addedRecords; // add meta-data per record only once
     for (auto idx=0; idx<pc->NumRealComps(); idx++) {
         auto ii = ParticleContainer::NStructReal + idx; // jump over extra AoS names
@@ -1012,51 +970,110 @@ void
 WarpXOpenPMDPlot::SetupPos (
     openPMD::ParticleSpecies& currSpecies,
     const unsigned long long& np,
-    amrex::ParticleReal const charge,
-    amrex::ParticleReal const mass,
     bool const isBTD)
 {
   std::string options = "{}";
   if (isBTD) options = "{ \"resizable\": true }";
-  auto realType= openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np}, options);
+  auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np}, options);
   auto idType = openPMD::Dataset(openPMD::determineDatatype< uint64_t >(), {np}, options);
 
   auto const positionComponents = detail::getParticlePositionComponentLabels();
   for( auto const& comp : positionComponents ) {
-      currSpecies["positionOffset"][comp].resetDataset( realType );
       currSpecies["position"][comp].resetDataset( realType );
   }
 
   auto const scalar = openPMD::RecordComponent::SCALAR;
   currSpecies["id"][scalar].resetDataset( idType );
-  currSpecies["charge"][scalar].resetDataset( realType );
-  currSpecies["mass"][scalar].resetDataset( realType );
+}
 
-  if (isBTD and m_doParticleSetUp == false) return;
-  // make constant
-  for( auto const& comp : positionComponents ) {
-      currSpecies["positionOffset"][comp].makeConstant( 0. );
-  }
-  currSpecies["charge"][scalar].makeConstant( charge );
-  currSpecies["mass"][scalar].makeConstant( mass );
+void
+WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
+        openPMD::ParticleSpecies& currSpecies,
+        const unsigned long long& np,
+        amrex::ParticleReal const charge,
+        amrex::ParticleReal const mass)
+{
+    auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
 
-  // meta data
-  currSpecies["position"].setUnitDimension( detail::getUnitDimension("position") );
-  currSpecies["positionOffset"].setUnitDimension( detail::getUnitDimension("positionOffset") );
-  currSpecies["charge"].setUnitDimension( detail::getUnitDimension("charge") );
-  currSpecies["mass"].setUnitDimension( detail::getUnitDimension("mass") );
+    auto const positionComponents = detail::getParticlePositionComponentLabels();
+    for( auto const& comp : positionComponents ) {
+        currSpecies["positionOffset"][comp].resetDataset( realType );
+    }
 
-  // meta data for ED-PIC extension
-  currSpecies["position"].setAttribute( "macroWeighted", 0u );
-  currSpecies["position"].setAttribute( "weightingPower", 0.0 );
-  currSpecies["positionOffset"].setAttribute( "macroWeighted", 0u );
-  currSpecies["positionOffset"].setAttribute( "weightingPower", 0.0 );
-  currSpecies["id"].setAttribute( "macroWeighted", 0u );
-  currSpecies["id"].setAttribute( "weightingPower", 0.0 );
-  currSpecies["charge"].setAttribute( "macroWeighted", 0u );
-  currSpecies["charge"].setAttribute( "weightingPower", 1.0 );
-  currSpecies["mass"].setAttribute( "macroWeighted", 0u );
-  currSpecies["mass"].setAttribute( "weightingPower", 1.0 );
+    // make constant
+    using namespace amrex::literals;
+    auto const scalar = openPMD::RecordComponent::SCALAR;
+    for( auto const& comp : positionComponents ) {
+        currSpecies["positionOffset"][comp].makeConstant( 0._prt );
+    }
+    currSpecies["charge"][scalar].makeConstant( charge );
+    currSpecies["mass"][scalar].makeConstant( mass );
+
+    // meta data
+    currSpecies["position"].setUnitDimension( detail::getUnitDimension("position") );
+    currSpecies["positionOffset"].setUnitDimension( detail::getUnitDimension("positionOffset") );
+    currSpecies["charge"].setUnitDimension( detail::getUnitDimension("charge") );
+    currSpecies["mass"].setUnitDimension( detail::getUnitDimension("mass") );
+
+    // meta data for ED-PIC extension
+    currSpecies["position"].setAttribute( "macroWeighted", 0u );
+    currSpecies["position"].setAttribute( "weightingPower", 0.0 );
+    currSpecies["positionOffset"].setAttribute( "macroWeighted", 0u );
+    currSpecies["positionOffset"].setAttribute( "weightingPower", 0.0 );
+    currSpecies["id"].setAttribute( "macroWeighted", 0u );
+    currSpecies["id"].setAttribute( "weightingPower", 0.0 );
+    currSpecies["charge"].setAttribute( "macroWeighted", 0u );
+    currSpecies["charge"].setAttribute( "weightingPower", 1.0 );
+    currSpecies["mass"].setAttribute( "macroWeighted", 0u );
+    currSpecies["mass"].setAttribute( "weightingPower", 1.0 );
+
+    // more ED-PIC attributes
+    currSpecies.setAttribute("particleShape", double(WarpX::noz));
+    // TODO allow this per direction in the openPMD standard, ED-PIC extension?
+    currSpecies.setAttribute("particleShapes", []() {
+        return std::vector<double>{
+#if AMREX_SPACEDIM >= 2
+                double(WarpX::nox),
+#endif
+#if defined(WARPX_DIM_3D)
+                double(WarpX::noy),
+#endif
+                double(WarpX::noz)
+        };
+    }());
+    currSpecies.setAttribute("particlePush", []() {
+        switch (WarpX::particle_pusher_algo) {
+            case ParticlePusherAlgo::Boris :
+                return "Boris";
+            case ParticlePusherAlgo::Vay :
+                return "Vay";
+            case ParticlePusherAlgo::HigueraCary :
+                return "HigueraCary";
+            default:
+                return "other";
+        }
+    }());
+    currSpecies.setAttribute("particleInterpolation", []() {
+        switch (WarpX::field_gathering_algo) {
+            case GatheringAlgo::EnergyConserving :
+                return "energyConserving";
+            case GatheringAlgo::MomentumConserving :
+                return "momentumConserving";
+            default:
+                return "other";
+        }
+    }());
+    currSpecies.setAttribute("particleSmoothing", "none");
+    currSpecies.setAttribute("currentDeposition", []() {
+        switch (WarpX::current_deposition_algo) {
+            case CurrentDepositionAlgo::Esirkepov :
+                return "Esirkepov";
+            case CurrentDepositionAlgo::Vay :
+                return "Vay";
+            default:
+                return "directMorseNielson";
+        }
+    }());
 }
 
 
