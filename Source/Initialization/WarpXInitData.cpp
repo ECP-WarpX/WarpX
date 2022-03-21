@@ -352,7 +352,7 @@ WarpX::InitData ()
     else
     {
         InitFromCheckpoint();
-        ComputeDt();        
+        ComputeDt();
         WarpX::PrintDtDxDyDz();
         PostRestart();
     }
