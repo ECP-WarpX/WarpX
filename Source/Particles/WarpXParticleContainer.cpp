@@ -633,9 +633,9 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
         const amrex::IntVect range = rho->nGrowVect() - shape_extent;
 #endif
 
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                                         amrex::numParticlesOutOfRange(pti, range) == 0,
-                                         "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for charge deposition");
+        AMREX_ASSERT_WITH_MESSAGE(
+                                  amrex::numParticlesOutOfRange(pti, range) == 0,
+                                  "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for charge deposition");
 
         const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
         const Real q = this->charge;
