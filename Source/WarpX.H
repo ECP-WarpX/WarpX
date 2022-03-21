@@ -867,16 +867,26 @@ public:
 
     void ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp);
 
-#ifdef WARPX_USE_PSATD
+    /**
+     * \brief Returns an array of coefficients (Fornberg coefficients), corresponding
+     * to the weight of each point in a finite-difference approximation of a derivative
+     * (up to order \c n_order).
+     *
+     * \param[in] n_order order of the finite-difference approximation
+     * \param[in] nodal   whether the finite-difference approximation is computed
+     *                    on a nodal grid or a staggered grid
+     */
+    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const bool nodal);
+
     // Device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_y;
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_z;
+
     // Device vectors of stencil coefficients used for finite-order centering of currents
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_x;
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_y;
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_z;
-#endif
 
 protected:
 
@@ -1050,7 +1060,6 @@ private:
         return gather_buffer_masks[lev].get();
     }
 
-#ifdef WARPX_USE_PSATD
     /**
      * \brief Re-orders the Fornberg coefficients so that they can be used more conveniently for
      * finite-order centering operations. For example, for finite-order centering of order 6,
@@ -1080,7 +1089,6 @@ private:
                                         const int centering_nox,
                                         const int centering_noy,
                                         const int centering_noz);
-#endif
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngEB, const amrex::IntVect& ngJ,

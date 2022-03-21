@@ -21,7 +21,7 @@ picmistandard.register_codename(codename)
 
 # dictionary to map field boundary conditions from picmistandard to WarpX
 BC_map = {
-    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped', 'none':'none'
+    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped', 'none':'none', None:'none'
 }
 
 class constants:
@@ -437,15 +437,15 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
 
         assert self.lower_bound[0] >= 0., Exception('Lower radial boundary must be >= 0.')
-        assert self.bc_rmin != 'periodic' and self.bc_rmax != 'periodic', Exception('Radial boundaries can not be periodic')
+        assert self.lower_boundary_conditions[0] != 'periodic' and self.upper_boundary_conditions[0] != 'periodic', Exception('Radial boundaries can not be periodic')
 
         pywarpx.warpx.n_rz_azimuthal_modes = self.n_azimuthal_modes
 
         # Boundary conditions
-        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_rmin, self.bc_zmin]]
-        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_rmax, self.bc_zmax]]
-        pywarpx.boundary.particle_lo = [self.bc_rmin_particles, self.bc_zmin_particles]
-        pywarpx.boundary.particle_hi = [self.bc_rmax_particles, self.bc_zmax_particles]
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in self.lower_boundary_conditions]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
+        pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
+        pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -499,10 +499,10 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         pywarpx.amr.blocking_factor_x = self.blocking_factor_x
 
         # Boundary conditions
-        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin]]
-        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax]]
-        pywarpx.boundary.particle_lo = [self.bc_xmin_particles]
-        pywarpx.boundary.particle_hi = [self.bc_xmax_particles]
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in self.lower_boundary_conditions]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
+        pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
+        pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -556,10 +556,10 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
 
         # Boundary conditions
-        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin, self.bc_ymin]]
-        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax, self.bc_ymax]]
-        pywarpx.boundary.particle_lo = [self.bc_xmin_particles, self.bc_ymin_particles]
-        pywarpx.boundary.particle_hi = [self.bc_xmax_particles, self.bc_ymax_particles]
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in self.lower_boundary_conditions]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
+        pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
+        pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -621,14 +621,10 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         pywarpx.amr.blocking_factor_z = self.blocking_factor_z
 
         # Boundary conditions
-        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin, self.bc_ymin, self.bc_zmin]]
-        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax, self.bc_ymax, self.bc_zmax]]
-        pywarpx.boundary.particle_lo = [
-            self.bc_xmin_particles, self.bc_ymin_particles, self.bc_zmin_particles
-        ]
-        pywarpx.boundary.particle_hi = [
-            self.bc_xmax_particles, self.bc_ymax_particles, self.bc_zmax_particles
-        ]
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in self.lower_boundary_conditions]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
+        pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
+        pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1

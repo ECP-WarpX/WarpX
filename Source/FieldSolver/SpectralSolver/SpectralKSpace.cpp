@@ -7,6 +7,7 @@
  */
 #include "SpectralKSpace.H"
 
+#include "WarpX.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 
@@ -216,7 +217,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
     } else {
 
         // Compute real-space stencil coefficients
-        Vector<Real> h_stencil_coef = getFornbergStencilCoefficients(n_order, nodal);
+        Vector<Real> h_stencil_coef = WarpX::getFornbergStencilCoefficients(n_order, nodal);
         Gpu::DeviceVector<Real> d_stencil_coef(h_stencil_coef.size());
         Gpu::copyAsync(Gpu::hostToDevice, h_stencil_coef.begin(), h_stencil_coef.end(),
                        d_stencil_coef.begin());
@@ -276,42 +277,4 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
         }
     }
     return modified_k_comp;
-}
-
-Vector<Real>
-getFornbergStencilCoefficients(const int n_order, const bool nodal)
-{
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
-
-    const int m = n_order / 2;
-    Vector<Real> coefs;
-    coefs.resize(m);
-
-    // There are closed-form formula for these coefficients, but they result in
-    // an overflow when evaluated numerically. One way to avoid the overflow is
-    // to calculate the coefficients by recurrence.
-
-    // Coefficients for nodal (that is, centered) finite-difference approximation
-    if (nodal == true) {
-       // First coefficient
-       coefs[0] = m * 2. / (m+1);
-       // Other coefficients by recurrence
-       for (int n = 1; n < m; n++) {
-           coefs[n] = - (m-n) * 1. / (m+n+1) * coefs[n-1];
-       }
-    }
-    // Coefficients for staggered finite-difference approximation
-    else {
-       Real prod = 1.;
-       for (int k = 1; k < m+1; k++) {
-           prod *= (m + k) / (4. * k);
-       }
-       // First coefficient
-       coefs[0] = 4 * m * prod * prod;
-       // Other coefficients by recurrence
-       for (int n = 1; n < m; n++) {
-           coefs[n] = - ((2*n-1) * (m-n)) * 1. / ((2*n+1) * (m+n)) * coefs[n-1];
-       }
-    }
-    return coefs;
 }
