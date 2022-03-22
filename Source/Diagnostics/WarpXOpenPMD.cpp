@@ -1109,11 +1109,12 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
 void
 WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
                                  amrex::Geometry& full_geom,
-                                 openPMD::MeshRecordComponent& mesh_comp,
+                                 std::string comp_name,
                                  std::string field_name,
                                  amrex::MultiFab const& mf,
                                  bool var_in_theta_mode) const
 {
+    auto mesh_comp = mesh[comp_name];
     amrex::Box const & global_box = full_geom.Domain();
 #if defined(WARPX_DIM_RZ)
     bool reverse = false;
@@ -1337,10 +1338,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                 if (comp_name == openPMD::MeshRecordComponent::SCALAR) {
                     if ( ! meshes.contains(field_name) ) {
                         auto mesh = meshes[field_name];
-                        auto mesh_comp = mesh[comp_name];
                         SetupMeshComp(  mesh, 
                                         full_geom, 
-                                        mesh_comp, 
+                                        comp_name, 
                                         field_name,
                                         mf[lev],
                                         var_in_theta_mode );
@@ -1348,11 +1348,10 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                 } else {
                     auto mesh = meshes[field_name];
                     if ( ! mesh.contains(comp_name) ) {
-                        auto mesh_comp = mesh[comp_name];
 
                         SetupMeshComp(  mesh, 
                                         full_geom, 
-                                        mesh_comp, 
+                                        comp_name, 
                                         field_name,
                                         mf[lev],
                                         var_in_theta_mode);
