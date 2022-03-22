@@ -200,7 +200,10 @@ private:
   void SetupMeshComp (
       openPMD::Mesh& mesh,
       amrex::Geometry& full_geom,
-      openPMD::MeshRecordComponent& mesh_comp
+      std::string comp_name,
+      std::string field_name,
+      amrex::MultiFab const& mf,
+      bool var_in_theta_mode
   ) const;
 
   void GetMeshCompNames (
