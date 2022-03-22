@@ -60,6 +60,7 @@
 #include <AMReX_AmrCoreFwd.H>
 
 #include <array>
+#include <atomic>
 #include <iostream>
 #include <limits>
 #include <memory>
