@@ -1333,9 +1333,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                 if (comp_name == openPMD::MeshRecordComponent::SCALAR) {
                     if ( ! meshes.contains(field_name) ) {
                         auto mesh = meshes[field_name];
-                        SetupMeshComp(  mesh, 
-                                        full_geom, 
-                                        comp_name, 
+                        SetupMeshComp(  mesh,
+                                        full_geom,
+                                        comp_name,
                                         field_name,
                                         mf[lev],
                                         var_in_theta_mode );
@@ -1344,9 +1344,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                     auto mesh = meshes[field_name];
                     if ( ! mesh.contains(comp_name) ) {
 
-                        SetupMeshComp(  mesh, 
-                                        full_geom, 
-                                        comp_name, 
+                        SetupMeshComp(  mesh,
+                                        full_geom,
+                                        comp_name,
                                         field_name,
                                         mf[lev],
                                         var_in_theta_mode);
