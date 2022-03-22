@@ -38,9 +38,7 @@
 #include <string>
 #include <limits>
 
-// C library header for sigabbrev_np on GNU/Linux
-#include <string.h>
-// System header for sys_signame on macOS
+// For definitions of signal values
 #include <signal.h>
 
 using namespace amrex;

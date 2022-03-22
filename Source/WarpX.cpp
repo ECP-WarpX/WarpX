@@ -78,6 +78,9 @@
 #include <string>
 #include <utility>
 
+// For sigaction() et al.
+#include <signal.h>
+
 using namespace amrex;
 
 Vector<Real> WarpX::E_external_grid(3, 0.0);
