@@ -396,19 +396,14 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #if !defined(WARPX_DIM_1D_Z)
     Real const dxi = 1.0_rt / dx[0];
 #endif
-#if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z)
-    Real const dt_dxi = dt*dxi;
-#endif
 #if !defined(WARPX_DIM_1D_Z)
     Real const xmin = xyzmin[0];
 #endif
 #if defined(WARPX_DIM_3D)
     Real const dyi = 1.0_rt / dx[1];
-    Real const dt_dyi = dt*dyi;
     Real const ymin = xyzmin[1];
 #endif
     Real const dzi = 1.0_rt / dx[2];
-    Real const dt_dzi = dt*dzi;
     Real const zmin = xyzmin[2];
 
 #if defined(WARPX_DIM_3D)
@@ -464,6 +459,11 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             ParticleReal xp, yp, zp;
             GetPosition(ip, xp, yp, zp);
 
+            // Modify the particle position to match the time of the deposition
+            xp += relative_time * uxp[ip] * gaminv;
+            yp += relative_time * uyp[ip] * gaminv;
+            zp += relative_time * uzp[ip] * gaminv;
+
 #if !defined(WARPX_DIM_1D_Z)
             Real const wqx = wq*invdtdx;
 #endif
@@ -474,25 +474,25 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 
             // computes current and old position in grid units
 #if defined(WARPX_DIM_RZ)
-            Real const xp_mid = xp - 0.5_rt*dt*uxp[ip]*gaminv;
-            Real const yp_mid = yp - 0.5_rt*dt*uyp[ip]*gaminv;
-            Real const xp_old = xp - dt*uxp[ip]*gaminv;
-            Real const yp_old = yp - dt*uyp[ip]*gaminv;
-            Real const rp_new = std::sqrt(xp*xp + yp*yp);
-            Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid);
+            Real const xp_new = xp + 0.5_rt*dt*uxp[ip]*gaminv;
+            Real const yp_new = yp + 0.5_rt*dt*uyp[ip]*gaminv;
+            Real const xp_old = xp - 0.5_rt*dt*uxp[ip]*gaminv;
+            Real const yp_old = yp - 0.5_rt*dt*uyp[ip]*gaminv;
+            Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
+            Real const rp_mid = std::sqrt(xp*xp + yp*yp);
             Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
             Real costheta_new, sintheta_new;
             if (rp_new > 0._rt) {
-                costheta_new = xp/rp_new;
-                sintheta_new = yp/rp_new;
+                costheta_new = xp_new/rp_new;
+                sintheta_new = yp_new/rp_new;
             } else {
                 costheta_new = 1._rt;
                 sintheta_new = 0._rt;
             }
             amrex::Real costheta_mid, sintheta_mid;
             if (rp_mid > 0._rt) {
-                costheta_mid = xp_mid/rp_mid;
-                sintheta_mid = yp_mid/rp_mid;
+                costheta_mid = xp/rp_mid;
+                sintheta_mid = yp/rp_mid;
             } else {
                 costheta_mid = 1._rt;
                 sintheta_mid = 0._rt;
@@ -514,18 +514,18 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #else
             // Keep these double to avoid bug in single precision
 #if !defined(WARPX_DIM_1D_Z)
-            double const x_new = ((xp - xmin) + (relative_time + 0.5_rt*dt)*uxp[ip]*gaminv)*dxi;
-            double const x_old = x_new - dt_dxi*uxp[ip]*gaminv;
+            double const x_new = (xp - xmin + 0.5_rt*dt*uxp[ip]*gaminv)*dxi;
+            double const x_old = (xp - xmin - 0.5_rt*dt*uxp[ip]*gaminv)*dxi;
 #endif
 #endif
 #if defined(WARPX_DIM_3D)
             // Keep these double to avoid bug in single precision
-            double const y_new = ((yp - ymin) + (relative_time + 0.5_rt*dt)*uyp[ip]*gaminv)*dyi;
-            double const y_old = y_new - dt_dyi*uyp[ip]*gaminv;
+            double const y_new = (yp - ymin + 0.5_rt*dt*uyp[ip]*gaminv)*dyi;
+            double const y_old = (yp - ymin - 0.5_rt*dt*uyp[ip]*gaminv)*dyi;
 #endif
             // Keep these double to avoid bug in single precision
-            double const z_new = ((zp - zmin) + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv)*dzi;
-            double const z_old = z_new - dt_dzi*uzp[ip]*gaminv;
+            double const z_new = (zp - zmin + 0.5_rt*dt*uzp[ip]*gaminv)*dzi;
+            double const z_old = (zp - zmin - 0.5_rt*dt*uzp[ip]*gaminv)*dzi;
 
 #if defined(WARPX_DIM_RZ)
             Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
