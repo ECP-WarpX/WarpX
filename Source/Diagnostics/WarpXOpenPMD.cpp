@@ -1110,6 +1110,8 @@ void
 WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
                                  amrex::Geometry& full_geom,
                                  openPMD::MeshRecordComponent& mesh_comp,
+                                 std::string field_name,
+                                 amrex::MultiFab const& mf,
                                  bool var_in_theta_mode) const
 {
     amrex::Box const & global_box = full_geom.Domain();
@@ -1149,6 +1151,13 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     mesh.setGridGlobalOffset(global_offset);
     mesh.setAttribute("fieldSmoothing", "none");
     mesh_comp.resetDataset(dataset);
+
+    detail::setOpenPMDUnit( mesh, field_name );
+    auto relative_cell_pos = utils::getRelativeCellPosition(mf);     // AMReX Fortran index order
+#ifndef WARPX_DIM_RZ
+    std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
+#endif
+    mesh_comp.setPosition( relative_cell_pos );
 }
 
 /*
@@ -1257,6 +1266,12 @@ WARPX_PROFILE("WarpXOpenPMDPlot::transposeChunk");
     }
 }
 
+/**
+ * @brief 
+ * 
+ */
+// std::tuple<openPMD::Mesh, openPMD::MeshRecord> 
+
 /** Write Field with all mesh levels
  *
  */
@@ -1274,7 +1289,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
     //This is AMReX's tiny profiler. Possibly will apply it later
     WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
 
-  WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
 
     // is this either a regular write (true) or the first write in a
     // backtransformed diagnostic (BTD):
@@ -1292,17 +1307,17 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
         series_iteration.setTime( time );
     }
 
-  // loop over levels up to output_levels
-  //   note: this is usually the finestLevel, not the maxLevel
-  for (int lev=0; lev < output_levels; lev++) {
-    amrex::Geometry full_geom = geom[lev];
-    if( isBTD )
-      full_geom = full_BTD_snapshot;
+    // loop over levels up to output_levels
+    //   note: this is usually the finestLevel, not the maxLevel
+    for (int lev=0; lev < output_levels; lev++) {
+        amrex::Geometry full_geom = geom[lev];
+        if( isBTD )
+            full_geom = full_BTD_snapshot;
 
-    // setup is called once. So it uses property "period" from first
-    // geometry for <all> field levels.
-    if ( (0 == lev) && first_write_to_iteration )
-      SetupFields(meshes, full_geom);
+        // setup is called once. So it uses property "period" from first
+        // geometry for <all> field levels.
+        if ( (0 == lev) && first_write_to_iteration )
+            SetupFields(meshes, full_geom);
 
         amrex::Box const & global_box = full_geom.Domain();
         auto const global_size = getReversedVec(global_box.size());
@@ -1320,32 +1335,27 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
             if ( first_write_to_iteration )
             {
                 if (comp_name == openPMD::MeshRecordComponent::SCALAR) {
-                    auto meshes_it = meshes.find(field_name);
-                    if (meshes_it == meshes.end()) {
+                    if ( ! meshes.contains(field_name) ) {
                         auto mesh = meshes[field_name];
                         auto mesh_comp = mesh[comp_name];
-                        SetupMeshComp( mesh, full_geom, mesh_comp, var_in_theta_mode );
-                        detail::setOpenPMDUnit( mesh, field_name );
-                        auto relative_cell_pos = utils::getRelativeCellPosition(mf[lev]);     // AMReX Fortran index order
-#ifndef WARPX_DIM_RZ
-                        std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
-#endif
-                        mesh_comp.setPosition( relative_cell_pos );
+                        SetupMeshComp(  mesh, 
+                                        full_geom, 
+                                        mesh_comp, 
+                                        field_name,
+                                        mf[lev],
+                                        var_in_theta_mode );
                     }
                 } else {
                     auto mesh = meshes[field_name];
-                    auto mesh_it = mesh.find(comp_name);
-                    if (mesh_it == mesh.end()) {
+                    if ( ! mesh.contains(comp_name) ) {
                         auto mesh_comp = mesh[comp_name];
 
-                        SetupMeshComp( mesh, full_geom, mesh_comp, var_in_theta_mode);
-                        detail::setOpenPMDUnit( mesh, field_name );
-
-                        auto relative_cell_pos = utils::getRelativeCellPosition(mf[lev]);     // AMReX Fortran index order
-#ifndef WARPX_DIM_RZ
-                        std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
-#endif
-                        mesh_comp.setPosition( relative_cell_pos );
+                        SetupMeshComp(  mesh, 
+                                        full_geom, 
+                                        mesh_comp, 
+                                        field_name,
+                                        mf[lev],
+                                        var_in_theta_mode);
                     }
                 }
             }
@@ -1411,10 +1421,10 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                     transposeChunk(data, local_data, local_box);
 
                     mesh_comp.storeChunk(data,
-                                         chunk_offset, chunk_size);
+                                            chunk_offset, chunk_size);
 #else
                     mesh_comp.storeChunk(openPMD::shareRaw(local_data),
-                                         chunk_offset, chunk_size);
+                                            chunk_offset, chunk_size);
 
 #endif
                 }

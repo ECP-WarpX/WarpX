@@ -200,6 +200,8 @@ private:
       openPMD::Mesh& mesh,
       amrex::Geometry& full_geom,
       openPMD::MeshRecordComponent& mesh_comp,
+      std::string field_name,
+      amrex::MultiFab const& mf,
       bool var_in_theta_mode
   ) const;
 
