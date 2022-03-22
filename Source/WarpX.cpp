@@ -525,7 +525,7 @@ WarpX::InitSignalHandling()
         }
     }
 
-#if defined(__GNU_LIBRARY__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__)
     struct sigaction sa;
     sigemptyset(&sa.sa_mask);
     for (int i = 0; i < NUM_SIGNALS; ++i) {
