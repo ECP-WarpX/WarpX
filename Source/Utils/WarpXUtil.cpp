@@ -403,11 +403,11 @@ parseSignalNameToNumber(const std::string &str)
 {
     IParser signals_parser(str);
 
+#if defined(__linux__) || defined(__APPLE__)
     struct {
         const char* abbrev;
         const int value;
     } signals_to_parse[] = {
-#if defined(__linux__) || defined(__APPLE__)
         {"ABRT", SIGABRT},
         {"ALRM", SIGALRM},
         {"BUS", SIGBUS},
@@ -453,7 +453,6 @@ parseSignalNameToNumber(const std::string &str)
         {"WINCH", SIGWINCH},
         {"XCPU", SIGXCPU},
         {"XFSZ", SIGXFSZ},
-#endif // #if defined(__linux__) || defined(__APPLE__)
     };
 
     for (const auto& sp : signals_to_parse) {
@@ -470,6 +469,7 @@ parseSignalNameToNumber(const std::string &str)
         signals_parser.setConstant(name_upper, sp.value);
         signals_parser.setConstant(name_lower, sp.value);
     }
+#endif // #if defined(__linux__) || defined(__APPLE__)
 
     auto spf = signals_parser.compileHost<0>();
 
