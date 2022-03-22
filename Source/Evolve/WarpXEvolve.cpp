@@ -57,6 +57,7 @@ using namespace amrex;
 void
 WarpX::Evolve (int numsteps)
 {
+    WARPX_PROFILE_REGION("WarpX::Evolve()");
     WARPX_PROFILE("WarpX::Evolve()");
 
     Real cur_time = t_new[0];

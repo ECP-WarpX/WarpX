@@ -45,25 +45,25 @@ And install ADIOS2, BLAS++ and LAPACK++:
    # c-blosc (I/O compression)
    git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
    rm -rf src/c-blosc-knl-build
-   cmake -S src/c-blosc -B src/c-blosc-knl-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/c-blosc-1.12.1-knl-install
+   cmake -S src/c-blosc -B src/c-blosc-knl-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/knl/c-blosc-1.12.1-install
    cmake --build src/c-blosc-knl-build --target install --parallel 16
 
    # ADIOS2
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
    rm -rf src/adios2-knl-build
-   cmake -S src/adios2 -B src/adios2-knl-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-knl-install
+   cmake -S src/adios2 -B src/adios2-knl-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/knl/adios2-2.7.1-install
    cmake --build src/adios2-knl-build --target install --parallel 16
 
    # BLAS++ (for PSATD+RZ)
    git clone https://bitbucket.org/icl/blaspp.git src/blaspp
    rm -rf src/blaspp-knl-build
-   cmake -S src/blaspp -B src/blaspp-knl-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/blaspp-master-knl-install
+   cmake -S src/blaspp -B src/blaspp-knl-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/knl/blaspp-master-install
    cmake --build src/blaspp-knl-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
    git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-knl-build
-   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-knl-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/lapackpp-master-knl-install
+   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-knl-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/knl/lapackpp-master-install
    cmake --build src/lapackpp-knl-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:
@@ -74,8 +74,8 @@ For PICMI and Python workflows, also install a virtual environment:
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
 
-   python3 -m venv $HOME/sw/venvs/knl_warpx
-   source $HOME/sw/venvs/knl_warpx/bin/activate
+   python3 -m venv $HOME/sw/knl/venvs/knl_warpx
+   source $HOME/sw/knl/venvs/knl_warpx/bin/activate
 
    python3 -m pip install --upgrade pip
    python3 -m pip install --upgrade wheel
@@ -108,13 +108,13 @@ And install ADIOS2, BLAS++ and LAPACK++:
    # c-blosc (I/O compression)
    git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
    rm -rf src/c-blosc-haswell-build
-   cmake -S src/c-blosc -B src/c-blosc-haswell-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/c-blosc-1.12.1-haswell-install
+   cmake -S src/c-blosc -B src/c-blosc-haswell-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/haswell/c-blosc-1.12.1-install
    cmake --build src/c-blosc-haswell-build --target install --parallel 16
 
    # ADIOS2
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
    rm -rf src/adios2-haswell-build
-   cmake -S src/adios2 -B src/adios2-haswell-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-haswell-install
+   cmake -S src/adios2 -B src/adios2-haswell-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/haswell/adios2-2.7.1-install
    cmake --build src/adios2-haswell-build --target install --parallel 16
 
    # BLAS++ (for PSATD+RZ)
@@ -126,7 +126,7 @@ And install ADIOS2, BLAS++ and LAPACK++:
    # LAPACK++ (for PSATD+RZ)
    git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-haswell-build
-   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-haswell-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/lapackpp-master-haswell-install
+   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-haswell-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/haswell/lapackpp-master-install
    cmake --build src/lapackpp-haswell-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:
@@ -137,8 +137,8 @@ For PICMI and Python workflows, also install a virtual environment:
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
 
-   python3 -m venv $HOME/sw/venvs/haswell_warpx
-   source $HOME/sw/venvs/haswell_warpx/bin/activate
+   python3 -m venv $HOME/sw/haswell/venvs/haswell_warpx
+   source $HOME/sw/haswell/venvs/haswell_warpx/bin/activate
 
    python3 -m pip install --upgrade pip
    python3 -m pip install --upgrade wheel
@@ -173,12 +173,12 @@ And install ADIOS2:
    # c-blosc (I/O compression)
    git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
    rm -rf src/c-blosc-gpu-build
-   cmake -S src/c-blosc -B src/c-blosc-gpu-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/c-blosc-1.12.1-gpu-install
+   cmake -S src/c-blosc -B src/c-blosc-gpu-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/cori_gpu/c-blosc-1.12.1-install
    cmake --build src/c-blosc-gpu-build --target install --parallel 16
 
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
    rm -rf src/adios2-gpu-build
-   cmake -S src/adios2 -B src/adios2-gpu-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-gpu-install
+   cmake -S src/adios2 -B src/adios2-gpu-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/cori_gpu/adios2-2.7.1-install
    cmake --build src/adios2-gpu-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:
@@ -189,8 +189,8 @@ For PICMI and Python workflows, also install a virtual environment:
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
 
-   python3 -m venv $HOME/sw/venvs/gpu_warpx
-   source $HOME/sw/venvs/gpu_warpx/bin/activate
+   python3 -m venv $HOME/sw/cori_gpu/venvs/gpu_warpx
+   source $HOME/sw/cori_gpu/venvs/gpu_warpx/bin/activate
 
    python3 -m pip install --upgrade pip
    python3 -m pip install --upgrade wheel
