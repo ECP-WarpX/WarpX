@@ -1267,11 +1267,6 @@ WARPX_PROFILE("WarpXOpenPMDPlot::transposeChunk");
     }
 }
 
-/**
- * @brief 
- * 
- */
-// std::tuple<openPMD::Mesh, openPMD::MeshRecord> 
 
 /** Write Field with all mesh levels
  *
