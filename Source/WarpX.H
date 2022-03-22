@@ -1003,9 +1003,26 @@ private:
         PatchType patch_type);
 
     void RestrictRhoFromFineToCoarsePatch (int lev);
-    void ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp);
-    void AddRhoFromFineLevelandSumBoundary (int lev, int icomp, int ncomp);
-    void NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp);
+    void ApplyFilterandSumBoundaryRho (
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const int lev,
+        PatchType patch_type,
+        const int icomp,
+        const int ncomp);
+    void AddRhoFromFineLevelandSumBoundary (
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const int lev,
+        const int icomp,
+        const int ncomp);
+    void NodalSyncRho (
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const int lev,
+        PatchType patch_type,
+        const int icomp,
+        const int ncomp);
 
     void ReadParameters ();
 

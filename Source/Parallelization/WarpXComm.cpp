@@ -909,7 +909,7 @@ WarpX::SyncRho ()
     // - add the coarse patch/buffer of `lev+1` into the fine patch of `lev`
     // - sum guard cells of the coarse patch of `lev+1` and fine patch of `lev`
     for (int lev=0; lev <= finest_level; ++lev) {
-        AddRhoFromFineLevelandSumBoundary(lev, 0, ncomp);
+        AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, lev, 0, ncomp);
     }
 }
 
@@ -1088,13 +1088,18 @@ WarpX::RestrictRhoFromFineToCoarsePatch (int lev)
     }
 }
 
-void
-WarpX::ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp)
+void WarpX::ApplyFilterandSumBoundaryRho (
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const int lev,
+    PatchType patch_type,
+    const int icomp,
+    const int ncomp)
 {
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
-    std::unique_ptr<amrex::MultiFab>& r = (patch_type == PatchType::fine) ? rho_fp[lev] : rho_cp[lev];
-    if (r == nullptr) return;
-    ApplyFilterandSumBoundaryRho(lev, glev, *r, icomp, ncomp);
+    std::unique_ptr<amrex::MultiFab>& rho = (patch_type == PatchType::fine) ? charge_fp[lev] : charge_cp[lev];
+    if (rho == nullptr) return;
+    ApplyFilterandSumBoundaryRho(lev, glev, *rho, icomp, ncomp);
 }
 
 void
@@ -1129,21 +1134,25 @@ WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab& rho
 * Then update the fine patch of `lev` by adding the charge density for the coarse
 * patch (and buffer region) of `lev+1`
 */
-void
-WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
+void WarpX::AddRhoFromFineLevelandSumBoundary (
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const int lev,
+    const int icomp,
+    const int ncomp)
 {
-    if (!rho_fp[lev]) return;
+    if (!charge_fp[lev]) return;
 
-    ApplyFilterandSumBoundaryRho(lev, PatchType::fine, icomp, ncomp);
+    ApplyFilterandSumBoundaryRho(charge_fp, charge_cp, lev, PatchType::fine, icomp, ncomp);
 
     if (lev < finest_level){
 
         const amrex::Periodicity& period = Geom(lev).periodicity();
-        MultiFab mf(rho_fp[lev]->boxArray(),
-                    rho_fp[lev]->DistributionMap(),
+        MultiFab mf(charge_fp[lev]->boxArray(),
+                    charge_fp[lev]->DistributionMap(),
                     ncomp, 0);
         mf.setVal(0.0);
-        IntVect ng = rho_cp[lev+1]->nGrowVect();
+        IntVect ng = charge_cp[lev+1]->nGrowVect();
         IntVect ng_depos_rho = get_ng_depos_rho();
         if (use_filter && charge_buf[lev+1])
         {
@@ -1151,9 +1160,9 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
             ng += bilinear_filter.stencil_length_each_dir-1;
             ng_depos_rho += bilinear_filter.stencil_length_each_dir-1;
             ng_depos_rho.min(ng);
-            MultiFab rhofc(rho_cp[lev+1]->boxArray(),
-                         rho_cp[lev+1]->DistributionMap(), ncomp, ng);
-            bilinear_filter.ApplyStencil(rhofc, *rho_cp[lev+1], lev+1, icomp, 0, ncomp);
+            MultiFab rhofc(charge_cp[lev+1]->boxArray(),
+                           charge_cp[lev+1]->DistributionMap(), ncomp, ng);
+            bilinear_filter.ApplyStencil(rhofc, *charge_cp[lev+1], lev+1, icomp, 0, ncomp);
 
             // buffer patch of fine level
             MultiFab rhofb(charge_buf[lev+1]->boxArray(),
@@ -1163,45 +1172,45 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
             MultiFab::Add(rhofb, rhofc, 0, 0, ncomp, ng);
 
             WarpXCommUtil::ParallelAdd(mf, rhofb, 0, 0, ncomp, ng, IntVect::TheZeroVector(), period);
-            WarpXSumGuardCells( *rho_cp[lev+1], rhofc, period, ng_depos_rho, icomp, ncomp );
+            WarpXSumGuardCells( *charge_cp[lev+1], rhofc, period, ng_depos_rho, icomp, ncomp );
         }
         else if (use_filter) // but no buffer
         {
             ng += bilinear_filter.stencil_length_each_dir-1;
             ng_depos_rho += bilinear_filter.stencil_length_each_dir-1;
             ng_depos_rho.min(ng);
-            MultiFab rf(rho_cp[lev+1]->boxArray(), rho_cp[lev+1]->DistributionMap(), ncomp, ng);
-            bilinear_filter.ApplyStencil(rf, *rho_cp[lev+1], lev+1, icomp, 0, ncomp);
+            MultiFab rf(charge_cp[lev+1]->boxArray(), charge_cp[lev+1]->DistributionMap(), ncomp, ng);
+            bilinear_filter.ApplyStencil(rf, *charge_cp[lev+1], lev+1, icomp, 0, ncomp);
 
             WarpXCommUtil::ParallelAdd(mf, rf, 0, 0, ncomp, ng, IntVect::TheZeroVector(), period);
-            WarpXSumGuardCells( *rho_cp[lev+1], rf, period, ng_depos_rho, icomp, ncomp );
+            WarpXSumGuardCells( *charge_cp[lev+1], rf, period, ng_depos_rho, icomp, ncomp );
         }
         else if (charge_buf[lev+1]) // but no filter
         {
             ng_depos_rho.min(ng);
             MultiFab::Add(*charge_buf[lev+1],
-                           *rho_cp[lev+1], icomp, icomp, ncomp,
-                           rho_cp[lev+1]->nGrowVect());
+                          *charge_cp[lev+1], icomp, icomp, ncomp,
+                           charge_cp[lev+1]->nGrowVect());
 
             WarpXCommUtil::ParallelAdd(mf, *charge_buf[lev+1], icomp, 0,
                                        ncomp,
                                        charge_buf[lev+1]->nGrowVect(), IntVect::TheZeroVector(),
                                        period);
-            WarpXSumGuardCells(*(rho_cp[lev+1]), period, ng_depos_rho, icomp, ncomp);
+            WarpXSumGuardCells(*(charge_cp[lev+1]), period, ng_depos_rho, icomp, ncomp);
         }
         else // no filter, no buffer
         {
             ng_depos_rho.min(ng);
-            WarpXCommUtil::ParallelAdd(mf, *rho_cp[lev+1], icomp, 0, ncomp,
-                                       rho_cp[lev+1]->nGrowVect(), IntVect::TheZeroVector(),
+            WarpXCommUtil::ParallelAdd(mf, *charge_cp[lev+1], icomp, 0, ncomp,
+                                       charge_cp[lev+1]->nGrowVect(), IntVect::TheZeroVector(),
                                        period);
-            WarpXSumGuardCells(*(rho_cp[lev+1]), period, ng_depos_rho, icomp, ncomp);
+            WarpXSumGuardCells(*(charge_cp[lev+1]), period, ng_depos_rho, icomp, ncomp);
         }
-        MultiFab::Add(*rho_fp[lev], mf, 0, icomp, ncomp, 0);
-        NodalSyncRho(lev+1, PatchType::coarse, icomp, ncomp);
+        MultiFab::Add(*charge_fp[lev], mf, 0, icomp, ncomp, 0);
+        NodalSyncRho(charge_fp, charge_cp, lev+1, PatchType::coarse, icomp, ncomp);
     }
 
-    NodalSyncRho(lev, PatchType::fine, icomp, ncomp);
+    NodalSyncRho(charge_fp, charge_cp, lev, PatchType::fine, icomp, ncomp);
 }
 
 void
@@ -1228,21 +1237,26 @@ WarpX::NodalSyncJ (
     }
 }
 
-void
-WarpX::NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp)
+void WarpX::NodalSyncRho (
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const int lev,
+    PatchType patch_type,
+    const int icomp,
+    const int ncomp)
 {
     if (!override_sync_intervals.contains(istep[0])) return;
 
-    if (patch_type == PatchType::fine && rho_fp[lev])
+    if (patch_type == PatchType::fine && charge_fp[lev])
     {
         const amrex::Periodicity& period = Geom(lev).periodicity();
-        MultiFab rhof(*rho_fp[lev], amrex::make_alias, icomp, ncomp);
+        MultiFab rhof(*charge_fp[lev], amrex::make_alias, icomp, ncomp);
         WarpXCommUtil::OverrideSync(rhof, period);
     }
-    else if (patch_type == PatchType::coarse && rho_cp[lev])
+    else if (patch_type == PatchType::coarse && charge_cp[lev])
     {
         const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
-        MultiFab rhoc(*rho_cp[lev], amrex::make_alias, icomp, ncomp);
+        MultiFab rhoc(*charge_cp[lev], amrex::make_alias, icomp, ncomp);
         WarpXCommUtil::OverrideSync(rhoc, cperiod);
     }
 }
