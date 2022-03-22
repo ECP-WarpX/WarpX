@@ -946,7 +946,7 @@ WarpX::CheckSignals()
     // and may be delivered to other ranks as well. For coordination,
     // we process them according to when they're received by rank 0.
     if (amrex::ParallelDescriptor::MyProc() == 0) {
-        for (int i = 0; i < 32; ++i) {
+        for (int i = 0; i < NUM_SIGNALS; ++i) {
             // Read into a local temporary to ensure the same value is
             // used throughout. Atomically exchange it with false to
             // unset the flag without risking loss of a signal - if a
