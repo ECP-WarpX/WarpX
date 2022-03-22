@@ -407,6 +407,7 @@ parseSignalNameToNumber(const std::string &str)
         const char* abbrev;
         const int value;
     } signals_to_parse[] = {
+#if defined(__linux__) || defined(__APPLE__)
         {"ABRT", SIGABRT},
         {"ALRM", SIGALRM},
         {"BUS", SIGBUS},
@@ -452,6 +453,7 @@ parseSignalNameToNumber(const std::string &str)
         {"WINCH", SIGWINCH},
         {"XCPU", SIGXCPU},
         {"XFSZ", SIGXFSZ},
+#endif // #if defined(__linux__) || defined(__APPLE__)
     };
 
     for (const auto& sp : signals_to_parse) {
