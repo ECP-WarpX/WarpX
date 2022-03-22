@@ -405,29 +405,72 @@ parseSignalNameToNumber(const std::string &str)
 {
     IParser signals_parser(str);
 
-    for (int i = 0; i < 32; ++i) {
-#if defined(__GNU_LIBRARY__)
-        // Returns upper-case, no "SIG"
-        std::string name_upper = sigabbrev_np(i);
+    struct {
+        const char* abbrev;
+        const int value;
+    } signals_to_parse[] = {
+        {"ABRT", SIGABRT},
+        {"ALRM", SIGALRM},
+        {"BUS", SIGBUS},
+        {"CHLD", SIGCHLD},
+        {"CLD", SIGCHLD}, // Synonymous to SIGCHLD on Linux
+        {"CONT", SIGCONT},
+#if defined(SIGEMT)
+        {"EMT", SIGEMT}, // macOS and some Linux architectures
+#endif
+        // Omitted because AMReX typically handles SIGFPE specially
+        // {"FPE", SIGFPE},
+        {"HUP", SIGHUP},
+        {"ILL", SIGILL},
+#if defined(SIGINFO)
+        {"INFO", SIGINFO}, // macOS and some Linux architectures
+#endif
+        {"INT", SIGINT},
+        {"IO", SIGIO},
+        {"IOT", SIGABRT}, // Synonymous to SIGABRT on Linux
+        // {"KILL", SIGKILL}, // Cannot be handled
+        {"PIPE", SIGPIPE},
+        {"POLL", SIGIO}, // Synonymous to SIGIO on Linux
+        {"PROF", SIGPROF},
+#if defined(SIGPWR)
+        {"PWR", SIGPWR}, // Linux-only
+#endif
+        {"QUIT", SIGQUIT},
+        {"SEGV", SIGSEGV},
+#if defined(SIGSTKFLT)
+        {"STKFLT", SIGSTKFLT}, // Linux-only
+#endif
+        // {"STOP", SIGSTOP}, // Cannot be handled
+        {"SYS", SIGSYS},
+        {"TERM", SIGTERM},
+        {"TRAP", SIGTRAP},
+        {"TSTP", SIGTSTP},
+        {"TTIN", SIGTTIN},
+        {"TTOU", SIGTTOU},
+        {"URG", SIGURG},
+        {"USR1", SIGUSR1},
+        {"USR2", SIGUSR2},
+        {"VTALRM", SIGVTALRM},
+        {"WINCH", SIGWINCH},
+        {"XCPU", SIGXCPU},
+        {"XFSZ", SIGXFSZ},
+    };
+
+    for (const auto& sp : signals_to_parse) {
+        std::string name_upper = sp.abbrev;
         std::string name_lower = name_upper;
         for (char &c : name_lower) {
             c = tolower(c);
         }
-#elif defined(__APPLE__)
-        // Contains lower-case, no "sig"
-        std::string name_lower = sys_signame[i];
-        std::string name_upper = name_lower;
-        for (char &c : name_upper) {
-            c = toupper(c);
-        }
-#endif
-        signals_parser.setConstant(name_upper, i);
-        signals_parser.setConstant(name_lower, i);
+
+        signals_parser.setConstant(name_upper, sp.value);
+        signals_parser.setConstant(name_lower, sp.value);
         name_upper = "SIG" + name_upper;
         name_lower = "sig" + name_lower;
-        signals_parser.setConstant(name_upper, i);
-        signals_parser.setConstant(name_lower, i);
+        signals_parser.setConstant(name_upper, sp.value);
+        signals_parser.setConstant(name_lower, sp.value);
     }
+
     auto spf = signals_parser.compileHost<0>();
 
     return spf();
