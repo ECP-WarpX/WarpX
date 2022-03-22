@@ -22,6 +22,55 @@ using namespace amrex;
 
 /** \brief
  * Convert an IntVect to a std::vector<std::uint64_t>
+ * (used for compatibility with openPMD-api)
+ */
+std::vector<std::uint64_t>
+getVec( const IntVect& v, bool reverse)
+{
+  // Convert the IntVect v to and std::vector u
+  std::vector<std::uint64_t> u = {
+    AMREX_D_DECL(
+                 static_cast<std::uint64_t>(v[0]),
+                 static_cast<std::uint64_t>(v[1]),
+                 static_cast<std::uint64_t>(v[2])
+                 )
+  };
+  // Reverse the order of elements, if v corresponds to the indices of a
+  // Fortran-order array (like an AMReX FArrayBox)
+  // but u is intended to be used with a C-order API (like openPMD)
+  if (reverse) {
+    std::reverse( u.begin(), u.end() );
+  }
+
+  return u;
+}
+/** \brief
+ * Convert Real* pointer to a std::vector<double>,
+ * (used for compatibility with the openPMD API)
+ */
+std::vector<double>
+getVec( const Real* v , bool reverse)
+{
+  // Convert Real* v to and std::vector u
+  std::vector<double> u = {
+    AMREX_D_DECL(
+                 static_cast<double>(v[0]),
+                 static_cast<double>(v[1]),
+                 static_cast<double>(v[2])
+                 )
+  };
+  // Reverse the order of elements, if v corresponds to the indices of a
+  // Fortran-order array (like an AMReX FArrayBox)
+  // but u is intended to be used with a C-order API (like openPMD-api)
+  if (reverse) {
+    std::reverse( u.begin(), u.end() );
+  }
+
+  return u;
+}
+
+/** \brief
+ * Convert an IntVect to a std::vector<std::uint64_t>
  * and reverse the order of the elements
  * (used for compatibility with the openPMD API)
  */
