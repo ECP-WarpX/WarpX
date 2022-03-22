@@ -1437,14 +1437,40 @@ private:
 
     /**
      * \brief Forward FFT of E,B on all mesh refinement levels
+     *
+     * \param E_fp Vector of three-dimensional arrays (for each level)
+     *             storing the fine patch electric field to be transformed
+     * \param B_fp Vector of three-dimensional arrays (for each level)
+     *             storing the fine patch magnetic field to be transformed
+     * \param E_cp Vector of three-dimensional arrays (for each level)
+     *             storing the coarse patch electric field to be transformed
+     * \param B_cp Vector of three-dimensional arrays (for each level)
+     *             storing the coarse patch magnetic field to be transformed
      */
-    void PSATDForwardTransformEB ();
+    void PSATDForwardTransformEB (
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
 
     /**
      * \brief Backward FFT of E,B on all mesh refinement levels,
      *        with field damping in the guard cells (if needed)
+     *
+     * \param E_fp Vector of three-dimensional arrays (for each level)
+     *             storing the fine patch electric field to be transformed
+     * \param B_fp Vector of three-dimensional arrays (for each level)
+     *             storing the fine patch magnetic field to be transformed
+     * \param E_cp Vector of three-dimensional arrays (for each level)
+     *             storing the coarse patch electric field to be transformed
+     * \param B_cp Vector of three-dimensional arrays (for each level)
+     *             storing the coarse patch magnetic field to be transformed
      */
-    void PSATDBackwardTransformEB ();
+    void PSATDBackwardTransformEB (
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
 
     /**
      * \brief Backward FFT of averaged E,B on all mesh refinement levels
