@@ -59,7 +59,6 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
                         amrex::FArrayBox& jy_fab,
                         amrex::FArrayBox& jz_fab,
                         const long np_to_depose,
-                        const amrex::Real dt,
                         const amrex::Real relative_time,
                         const std::array<amrex::Real,3>& dx,
                         const std::array<amrex::Real,3>& xyzmin,
@@ -69,7 +68,6 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
                         amrex::Real* cost,
                         const long load_balance_costs_update_algo)
 {
-    amrex::ignore_unused(dt);
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
