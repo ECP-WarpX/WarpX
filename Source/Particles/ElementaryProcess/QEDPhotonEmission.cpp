@@ -57,11 +57,7 @@ PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor
     m_dx_arr = {dx[0], dx[1], dx[2]};
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
-    amrex::Real cur_time = WarpX::GetInstance().gett_new(lev);
-    const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
-    amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
-    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, lev);
+    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, true, 0.);
     m_xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
     m_galerkin_interpolation = WarpX::galerkin_interpolation;

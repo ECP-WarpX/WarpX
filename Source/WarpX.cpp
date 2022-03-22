@@ -1207,6 +1207,9 @@ WarpX::ReadParameters ()
             if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
                 amrex::Abort("Esirkepov current deposition cannot be used with the comoving PSATD algorithm");
             }
+            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.) {
+                amrex::Abort("Esirkepov current deposition  cannot be used with the Galilean algorithm.");
+            }
         }
 
         if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
@@ -2174,11 +2177,22 @@ WarpX::getRealBox(const Box& bx, int lev)
 }
 
 std::array<Real,3>
-WarpX::LowerCorner(const Box& bx, std::array<amrex::Real,3> galilean_shift, int lev)
+WarpX::LowerCorner(const Box& bx, int lev, bool with_galilean_shift, amrex::Real time_shift_delta)
 {
+    auto & warpx = GetInstance();
     RealBox grid_box = getRealBox( bx, lev );
 
     const Real* xyzmin = grid_box.lo();
+
+    amrex::Array<amrex::Real,3> galilean_shift = { 0., 0., 0. };
+
+    if (with_galilean_shift) {
+        amrex::Real cur_time = warpx.gett_new(lev);
+        amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
+        galilean_shift = { warpx.m_v_galilean[0]*time_shift,
+                           warpx.m_v_galilean[1]*time_shift,
+                           warpx.m_v_galilean[2]*time_shift };
+    }
 
 #if defined(WARPX_DIM_3D)
     return { xyzmin[0] + galilean_shift[0], xyzmin[1] + galilean_shift[1], xyzmin[2] + galilean_shift[2] };
@@ -2203,15 +2217,6 @@ WarpX::UpperCorner(const Box& bx, int lev)
 #elif defined(WARPX_DIM_1D_Z)
     return { std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), xyzmax[0] };
 #endif
-}
-
-std::array<Real,3>
-WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Vector<amrex::Real>& v_galilean, int lev)
-{
-    amrex::Real cur_time = gett_new(lev);
-    amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
-    return WarpX::LowerCorner(bx, galilean_shift, lev);
 }
 
 IntVect

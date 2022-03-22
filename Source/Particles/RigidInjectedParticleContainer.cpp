@@ -356,7 +356,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             const auto getExternalEB = GetExternalEBField(pti);
 
-            const auto& xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box,m_v_galilean,lev);
+            const auto& xyzmin = WarpX::LowerCorner(box, lev, true, 0.);
 
             const Dim3 lo = lbound(box);
 
