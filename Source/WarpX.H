@@ -979,11 +979,11 @@ private:
     static bool signal_conf_requests_break[NUM_SIGNALS];
     //! Whether configuration requests the code to checkpoint at this timestep on a particular signal
     static bool signal_conf_requests_checkpoint[NUM_SIGNALS];
+    //! Labels for indexed positions in signal_actions_requests
+    enum signal_action_requested_labels { SIGNAL_REQUESTS_BREAK = 0, SIGNAL_REQUESTS_CHECKPOINT = 1, SIGNAL_REQUESTS_MAX = 1 };
     //! Boolean flags transmitted between CheckSignals() and
     //! HandleSignals() to indicate actions requested by signals
-    static bool signal_actions_requested[2];
-    //! Labels for indexed positions in signal_actions_requests
-    enum signal_action_requested_labels { SIGNAL_REQUESTS_BREAK = 0, SIGNAL_REQUESTS_CHECKPOINT = 1 };
+    static bool signal_actions_requested[SIGNAL_REQUESTS_MAX+1];
 #if defined(AMREX_USE_MPI)
     //! MPI requests for the asynchronous broadcasts of the signal-requested actions
     static MPI_Request signal_mpi_ibcast_request;
