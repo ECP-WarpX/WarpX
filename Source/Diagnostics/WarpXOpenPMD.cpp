@@ -1361,7 +1361,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
             auto [varname_no_mode, mode_index] = GetFieldNameModeInt(varname);
             [[maybe_unused]] bool var_in_theta_mode = mode_index != -1;
 
-            std::string field_name (varname_no_mode);
+            std::string field_name(varname_no_mode);
             std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
             // assume fields are scalar unless they match the following match of known vector fields
             GetMeshCompNames( lev, varname_no_mode, field_name, comp_name );
@@ -1415,10 +1415,10 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                     transposeChunk(data, local_data, local_box);
 
                     mesh_comp.storeChunk(data,
-                                            chunk_offset, chunk_size);
+                                         chunk_offset, chunk_size);
 #else
                     mesh_comp.storeChunk(openPMD::shareRaw(local_data),
-                                            chunk_offset, chunk_size);
+                                         chunk_offset, chunk_size);
 
 #endif
                 }
