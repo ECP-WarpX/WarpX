@@ -511,7 +511,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Filter, exchange boundary, and interpolate across levels
             SyncRho();
             // Forward FFT of rho_new
-            PSATDForwardTransformRho(0, 1);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
         }
 
         // 4) Deposit J at relative time -dt with time step dt
@@ -558,7 +558,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
                 // Filter, exchange boundary, and interpolate across levels
                 SyncRho();
                 // Forward FFT of rho_new
-                PSATDForwardTransformRho(0, 1);
+                PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
             }
 
             // Advance E,B,F,G fields in time and update the average fields

@@ -280,7 +280,9 @@ WarpX::PSATDForwardTransformJ (
 #endif
 }
 
-void WarpX::PSATDBackwardTransformJ ()
+void WarpX::PSATDBackwardTransformJ (
+    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
 {
     SpectralFieldIndex Idx;
     int idx_jx, idx_jy, idx_jz;
@@ -293,7 +295,7 @@ void WarpX::PSATDBackwardTransformJ ()
         idx_jy = static_cast<int>(Idx.Jy);
         idx_jz = static_cast<int>(Idx.Jz);
 
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], current_fp[lev], idx_jx, idx_jy, idx_jz);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], J_fp[lev], idx_jx, idx_jy, idx_jz);
 
         if (spectral_solver_cp[lev])
         {
@@ -303,13 +305,16 @@ void WarpX::PSATDBackwardTransformJ ()
             idx_jy = static_cast<int>(Idx.Jy);
             idx_jz = static_cast<int>(Idx.Jz);
 
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], current_cp[lev], idx_jx, idx_jy, idx_jz);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], J_cp[lev], idx_jx, idx_jy, idx_jz);
         }
     }
 }
 
 void
-WarpX::PSATDForwardTransformRho (const int icomp, const int dcomp)
+WarpX::PSATDForwardTransformRho (
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const int icomp, const int dcomp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
@@ -318,11 +323,11 @@ WarpX::PSATDForwardTransformRho (const int icomp, const int dcomp)
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (rho_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *rho_fp[lev], dst_comp, icomp);
+        if (charge_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *charge_fp[lev], dst_comp, icomp);
 
         if (spectral_solver_cp[lev])
         {
-            if (rho_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *rho_cp[lev], dst_comp, icomp);
+            if (charge_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *charge_cp[lev], dst_comp, icomp);
         }
     }
 
@@ -489,8 +494,8 @@ WarpX::PushPSATD ()
     // Do rho FFTs only if needed
     if (WarpX::update_with_rho || WarpX::current_correction || WarpX::do_dive_cleaning)
     {
-        PSATDForwardTransformRho(0,0); // rho old
-        PSATDForwardTransformRho(1,1); // rho new
+        PSATDForwardTransformRho(rho_fp, rho_cp, 0,0); // rho old
+        PSATDForwardTransformRho(rho_fp, rho_cp, 1,1); // rho new
     }
 
     // Correct the current in Fourier space so that the continuity equation is satisfied, and
@@ -498,7 +503,7 @@ WarpX::PushPSATD ()
     if (WarpX::current_correction)
     {
         PSATDCurrentCorrection();
-        PSATDBackwardTransformJ();
+        PSATDBackwardTransformJ(current_fp, current_cp);
     }
 
     // Compute the current in Fourier space according to the Vay deposition scheme, and
@@ -506,7 +511,7 @@ WarpX::PushPSATD ()
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
         PSATDVayDeposition();
-        PSATDBackwardTransformJ();
+        PSATDBackwardTransformJ(current_fp, current_cp);
     }
 
 #ifdef WARPX_DIM_RZ

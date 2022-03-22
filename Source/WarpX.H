@@ -1466,17 +1466,29 @@ private:
 
     /**
      * \brief Backward FFT of J on all mesh refinement levels
+     *
+     * \param J_fp Vector of three-dimensional arrays (for each level)
+     *             storing the fine patch current to be transformed
+     * \param J_cp Vector of three-dimensional arrays (for each level)
+     *             storing the coarse patch current to be transformed
      */
-    void PSATDBackwardTransformJ ();
+    void PSATDBackwardTransformJ (
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
 
     /**
      * \brief Forward FFT of rho on all mesh refinement levels,
      *        with k-space filtering (if needed)
      *
+     * \param charge_fp Vector (for each level) storing the fine patch charge to be transformed
+     * \param charge_cp Vector (for each level) storing the coarse patch charge to be transformed
      * \param[in] icomp index of fourth component (0 for rho_old, 1 for rho_new)
      * \param[in] dcomp index of spectral component (0 for rho_old, 1 for rho_new)
      */
-    void PSATDForwardTransformRho (const int icomp, const int dcomp);
+    void PSATDForwardTransformRho (
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const int icomp, const int dcomp);
 
     /**
      * \brief Copy rho_new to rho_old in spectral space
