@@ -857,6 +857,11 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         const amrex::Real vy = uyp[ip] * invgam;
         const amrex::Real vz = uzp[ip] * invgam;
 
+        // Modify the particle position to match the time of the deposition
+        xp += relative_time * vx;
+        yp += relative_time * vy;
+        zp += relative_time * vz;
+
         // Particle current densities
 #if defined(WARPX_DIM_XZ)
         const amrex::Real wqy = wq * vy * invvol;
@@ -864,16 +869,16 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 
         // Current and old particle positions in grid units
         // Keep these double to avoid bug in single precision.
-        double const x_new = ((xp - xmin) + (relative_time + 0.5_rt*dt)*vx) * dxi;
-        double const x_old = x_new - vx * dt * dxi;
+        double const x_new = (xp - xmin + 0.5_rt*dt*vx) * dxi;
+        double const x_old = (xp - xmin - 0.5_rt*dt*vx) * dxi;
 #if defined(WARPX_DIM_3D)
         // Keep these double to avoid bug in single precision.
-        double const y_new = ((yp - ymin) + (relative_time + 0.5_rt*dt)*vy) * dyi;
-        double const y_old = y_new - vy * dt * dyi;
+        double const y_new = (yp - ymin + 0.5_rt*dt*vy) * dyi;
+        double const y_old = (yp - ymin - 0.5_rt*dt*vy) * dyi;
 #endif
         // Keep these double to avoid bug in single precision.
-        double const z_new = ((zp - zmin) + (relative_time + 0.5_rt*dt)) * dzi;
-        double const z_old = z_new - vz * dt * dzi;
+        double const z_new = (zp - zmin + 0.5_rt*dt*vz) * dzi;
+        double const z_old = (zp - zmin - 0.5_rt*dt*vz) * dzi;
 
         // Shape factor arrays for current and old positions (nodal)
         // Keep these double to avoid bug in single precision.
