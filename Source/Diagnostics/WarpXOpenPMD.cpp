@@ -1343,7 +1343,6 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                 } else {
                     auto mesh = meshes[field_name];
                     if ( ! mesh.contains(comp_name) ) {
-
                         SetupMeshComp(  mesh,
                                         full_geom,
                                         comp_name,
