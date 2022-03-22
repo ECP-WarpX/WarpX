@@ -888,6 +888,10 @@ public:
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_y;
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_z;
 
+    // This needs to be public for CUDA.
+    //! Tagging cells for refinement
+    virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
+
 protected:
 
     /**
@@ -916,9 +920,6 @@ protected:
      *  can be used in the function used to define the E and B fields on the grid.
      */
     void InitLevelData (int lev, amrex::Real time);
-
-    //! Tagging cells for refinement
-    virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
 
     //! Use this function to override the Level 0 grids made by AMReX.
     //! This function is called in amrex::AmrCore::InitFromScratch.
