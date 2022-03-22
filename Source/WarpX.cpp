@@ -539,7 +539,10 @@ WarpX::InitSignalHandling()
             } else {
                 sa.sa_handler = SIG_IGN;
             }
-            sigaction(i, &sa, nullptr);
+            int result = sigaction(i, &sa, nullptr);
+            if (result != 0) {
+                Abort("Failed to install signal handler for a configured signal");
+            }
         }
         if (signal_conf_requests_checkpoint[i] && !have_checkpoint_diagnostic) {
             Abort("Signal handling was requested to checkpoint, but no checkpoint diagnostic is configured");
