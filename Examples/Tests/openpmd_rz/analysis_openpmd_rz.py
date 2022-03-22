@@ -2,7 +2,7 @@
 
 import openpmd_api as io
 
-series = io.Series("LaserAccelerationRZ_opmd_plt/openpmd_%T.bp", io.Access.read_only)
+series = io.Series("LaserAccelerationRZ_opmd_plt/openpmd_%T.h5", io.Access.read_only)
 
 assert len(series.iterations) == 3, 'improper number of iterations stored'
 
