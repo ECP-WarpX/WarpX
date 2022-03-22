@@ -1267,10 +1267,10 @@ WARPX_PROFILE("WarpXOpenPMDPlot::transposeChunk");
 }
 
 /**
- * @brief 
- * 
+ * @brief
+ *
  */
-// std::tuple<openPMD::Mesh, openPMD::MeshRecord> 
+// std::tuple<openPMD::Mesh, openPMD::MeshRecord>
 
 /** Write Field with all mesh levels
  *
@@ -1338,9 +1338,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                     if ( ! meshes.contains(field_name) ) {
                         auto mesh = meshes[field_name];
                         auto mesh_comp = mesh[comp_name];
-                        SetupMeshComp(  mesh, 
-                                        full_geom, 
-                                        mesh_comp, 
+                        SetupMeshComp(  mesh,
+                                        full_geom,
+                                        mesh_comp,
                                         field_name,
                                         mf[lev],
                                         var_in_theta_mode );
@@ -1350,9 +1350,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                     if ( ! mesh.contains(comp_name) ) {
                         auto mesh_comp = mesh[comp_name];
 
-                        SetupMeshComp(  mesh, 
-                                        full_geom, 
-                                        mesh_comp, 
+                        SetupMeshComp(  mesh,
+                                        full_geom,
+                                        mesh_comp,
                                         field_name,
                                         mf[lev],
                                         var_in_theta_mode);
