@@ -144,20 +144,23 @@ void WarpX::PSATDBackwardTransformEB (
     }
 }
 
-void
-WarpX::PSATDBackwardTransformEBavg ()
+void WarpX::PSATDBackwardTransformEBavg (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_cp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_cp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], Efield_avg_fp[lev], Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg);
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], Bfield_avg_fp[lev], Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], E_avg_fp[lev], Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], B_avg_fp[lev], Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg);
 
         if (spectral_solver_cp[lev])
         {
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], Efield_avg_cp[lev], Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg);
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], Bfield_avg_cp[lev], Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], E_avg_cp[lev], Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], B_avg_cp[lev], Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg);
         }
     }
 }
@@ -238,8 +241,7 @@ WarpX::PSATDBackwardTransformG ()
     }
 }
 
-void
-WarpX::PSATDForwardTransformJ (
+void WarpX::PSATDForwardTransformJ (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
 {
@@ -315,8 +317,7 @@ void WarpX::PSATDBackwardTransformJ (
     }
 }
 
-void
-WarpX::PSATDForwardTransformRho (
+void WarpX::PSATDForwardTransformRho (
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
     const int icomp, const int dcomp)
@@ -527,7 +528,8 @@ WarpX::PushPSATD ()
     if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
     PSATDPushSpectralFields();
     PSATDBackwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
-    if (WarpX::fft_do_time_averaging) PSATDBackwardTransformEBavg();
+    if (WarpX::fft_do_time_averaging)
+        PSATDBackwardTransformEBavg(Efield_avg_fp, Bfield_avg_fp, Efield_avg_cp, Bfield_avg_cp);
     if (WarpX::do_dive_cleaning) PSATDBackwardTransformF();
     if (WarpX::do_divb_cleaning) PSATDBackwardTransformG();
 

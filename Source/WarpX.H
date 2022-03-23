@@ -1497,8 +1497,21 @@ private:
 
     /**
      * \brief Backward FFT of averaged E,B on all mesh refinement levels
+     *
+     * \param E_avg_fp Vector of three-dimensional arrays (for each level)
+     *                 storing the fine patch averaged electric field to be transformed
+     * \param B_avg_fp Vector of three-dimensional arrays (for each level)
+     *                 storing the fine patch averaged magnetic field to be transformed
+     * \param E_avg_cp Vector of three-dimensional arrays (for each level)
+     *                 storing the coarse patch averaged electric field to be transformed
+     * \param B_avg_cp Vector of three-dimensional arrays (for each level)
+     *                 storing the coarse patch averaged magnetic field to be transformed
      */
-    void PSATDBackwardTransformEBavg ();
+    void PSATDBackwardTransformEBavg (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_cp);
 
     /**
      * \brief Forward FFT of J on all mesh refinement levels,
