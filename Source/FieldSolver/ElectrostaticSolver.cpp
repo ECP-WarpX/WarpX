@@ -76,7 +76,7 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
             WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
             if (species.initialize_self_fields ||
                 (do_electrostatic == ElectrostaticSolverAlgo::Relativistic)) {
-                AddSpaceChargeField(species);
+                AddSpaceChargeField(species); // this
             }
         }
 
@@ -170,6 +170,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     bool const reset = true;
     bool const do_rz_volume_scaling = true;
     pc.DepositCharge(rho, local, reset, do_rz_volume_scaling);
+    // ImpactX: add MPI comms to make deposition non-local
 
     // Get the particle beta vector
     bool const local_average = false; // Average across all MPI ranks
@@ -179,11 +180,11 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     // Compute the potential phi, by solving the Poisson equation
     computePhi( rho, phi, beta, pc.self_fields_required_precision,
                 pc.self_fields_absolute_tolerance, pc.self_fields_max_iters,
-                pc.self_fields_verbosity );
+                pc.self_fields_verbosity ); // this
 
     // Compute the corresponding electric and magnetic field, from the potential phi
-    computeE( Efield_fp, phi, beta );
-    computeB( Bfield_fp, phi, beta );
+    computeE( Efield_fp, phi, beta ); // modify for ImpactX to be nodal
+    computeB( Bfield_fp, phi, beta ); // modify for ImpactX to be nodal
 
 }
 
@@ -341,7 +342,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 
         // Note: this assumes that the beam is propagating along
         // one of the axes of the grid, i.e. that only *one* of the
-        // components of `beta` is non-negligible.
+        // components of `beta` is non-negligible. // we use this
 #if defined(WARPX_DIM_RZ)
         linop.setSigma({0._rt, 1._rt-beta_solver[1]*beta_solver[1]});
 #else
@@ -364,7 +365,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         // that can handle beams propagating in any direction
         MLNodeTensorLaplacian linop( {Geom(lev)}, {boxArray(lev)},
             {DistributionMap(lev)}, info );
-        linop.setBeta( beta_solver );
+        linop.setBeta( beta_solver ); // for the non-axis-aligned solver
 #endif
 
         // Solve the Poisson equation
@@ -372,7 +373,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #ifdef WARPX_DIM_RZ
         linop.setRZ(true);
 #endif
-        MLMG mlmg(linop);
+        MLMG mlmg(linop); // actual solver defined here
         mlmg.setVerbose(verbosity);
         mlmg.setMaxIter(max_iters);
         mlmg.setAlwaysUseBNorm(always_use_bnorm);
@@ -381,6 +382,9 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         mlmg.solve( {phi[lev].get()}, {rho[lev].get()},
                     required_precision, absolute_tolerance );
 
+        // needed for solving the levels by levels:
+        // - coarser level is initial guess for finer level
+        // - coarser level provides boundary varlues for finer level patch
         // Interpolation from phi[lev] to phi[lev+1]
         // (This provides both the boundary conditions and initial guess for phi[lev+1])
         if (lev < finest_level) {
