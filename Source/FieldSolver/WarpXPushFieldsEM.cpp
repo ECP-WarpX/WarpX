@@ -63,7 +63,7 @@ namespace {
 #else
         SpectralSolver& solver,
 #endif
-        std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
+        const std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
         const int compx, const int compy, const int compz)
     {
 #ifdef WARPX_DIM_RZ
@@ -76,15 +76,14 @@ namespace {
 #endif
     }
 
-    void
-    BackwardTransformVect (
+    void BackwardTransformVect (
         const int lev,
 #ifdef WARPX_DIM_RZ
         SpectralSolverRZ& solver,
 #else
         SpectralSolver& solver,
 #endif
-        std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
+        const std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
         const int compx, const int compy, const int compz)
     {
 #ifdef WARPX_DIM_RZ
@@ -814,8 +813,8 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
 
 void
 WarpX::DampFieldsInGuards(const int lev,
-                          std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                          std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield) {
+                          const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                          const std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield) {
 
     // Loop over dimensions
     for (int dampdir = 0 ; dampdir < AMREX_SPACEDIM ; dampdir++)
