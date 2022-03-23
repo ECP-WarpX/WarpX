@@ -15,6 +15,7 @@ import os
 import sys
 
 import numpy as np
+import openpmd_api as io
 from scipy.constants import c
 from scipy.constants import epsilon_0 as eps0
 from scipy.constants import m_e, m_p
@@ -31,6 +32,9 @@ def do_analysis(single_precision = False):
     ds = yt.load(fn)
     ad = ds.all_data()
     ad0 = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
+
+    opmd = io.Series('diags/openpmd/openpmd_%T.h5', io.Access.read_only)
+    opmd_i = opmd.iterations[200]
 
     #--------------------------------------------------------------------------------------------------
     # Part 1: get results from plotfiles (label '_yt')
@@ -138,19 +142,43 @@ def do_analysis(single_precision = False):
     values_rd['protons: zuzavg'] = ad0[('boxlib','zuz_protons')]
     values_rd['photons: zuzavg'] = ad0[('boxlib','zuz_photons')]
 
+    values_opmd = dict()
+    # Load reduced particle diagnostic data from OPMD output
+    values_opmd['electrons: zavg'] = opmd_i.meshes['z_electrons'][io.Mesh_Record_Component.SCALAR].load_chunk()
+    values_opmd['protons: zavg'] = opmd_i.meshes['z_protons'][io.Mesh_Record_Component.SCALAR].load_chunk()
+    values_opmd['photons: zavg'] = opmd_i.meshes['z_photons'][io.Mesh_Record_Component.SCALAR].load_chunk()
+
+    values_opmd['electrons: uzavg'] = opmd_i.meshes['uz_electrons'][io.Mesh_Record_Component.SCALAR].load_chunk()
+    values_opmd['protons: uzavg'] = opmd_i.meshes['uz_protons'][io.Mesh_Record_Component.SCALAR].load_chunk()
+    values_opmd['photons: uzavg'] = opmd_i.meshes['uz_photons'][io.Mesh_Record_Component.SCALAR].load_chunk()
+
+    values_opmd['electrons: zuzavg'] = opmd_i.meshes['zuz_electrons'][io.Mesh_Record_Component.SCALAR].load_chunk()
+    values_opmd['protons: zuzavg'] = opmd_i.meshes['zuz_protons'][io.Mesh_Record_Component.SCALAR].load_chunk()
+    values_opmd['photons: zuzavg'] = opmd_i.meshes['zuz_photons'][io.Mesh_Record_Component.SCALAR].load_chunk()
+    opmd.flush()
+    del opmd
+
     #--------------------------------------------------------------------------------------------------
     # Part 3: compare values from plotfiles and diagnostics and print output
     #--------------------------------------------------------------------------------------------------
 
-    error = dict()
+    error_plt = dict()
+    error_opmd = dict()
     tolerance = 5e-3 if single_precision else 1e-12
+    # if single precision, increase tolerance from default value
+    check_tolerance = 5e-3 if single_precision else 1e-9
 
     for k in values_yt.keys():
         # check that the zeros line up, since we'll be ignoring them in the error calculation
         assert(np.all((values_yt[k] == 0) == (values_rd[k] == 0)))
-        error[k] = np.max(abs(values_yt[k] - values_rd[k])[values_yt[k] != 0] / abs(values_yt[k])[values_yt[k] != 0])
-        print(k, 'relative error = ', error[k])
-        assert(error[k] < tolerance)
+        error_plt[k] = np.max(abs(values_yt[k] - values_rd[k])[values_yt[k] != 0] / abs(values_yt[k])[values_yt[k] != 0])
+        print(k, 'relative error plotfile = ', error_plt[k])
+        assert(error_plt[k] < tolerance)
+        assert(np.all((values_yt[k] == 0) == (values_opmd[k].T == 0)))
+        error_opmd[k] = np.max(abs(values_yt[k] - values_opmd[k].T)[values_yt[k] != 0] / abs(values_yt[k])[values_yt[k] != 0])
+        assert(error_opmd[k] < tolerance)
+        print(k, 'relative error openPMD = ', error_opmd[k])
+
 
     test_name = os.path.split(os.getcwd())[1]
-    checksumAPI.evaluate_checksum(test_name, fn)
+    checksumAPI.evaluate_checksum(test_name, fn, rtol=check_tolerance)
