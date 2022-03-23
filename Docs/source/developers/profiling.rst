@@ -112,25 +112,52 @@ Nvidia Nsight-Systems
 
 `Vendor homepage <https://developer.nvidia.com/nsight-systems>`__ and `product manual <https://docs.nvidia.com/nsight-systems/>`__.
 
+
+Perlmutter Example
+""""""""""""""""""
+
 Example on how to create traces on a multi-GPU system that uses the Slurm scheduler (e.g., NERSC's Perlmutter system):
 
 .. code-block:: bash
 
-   rm -rf profiling*
+   # GPU-aware MPI
+   export MPICH_GPU_SUPPORT_ENABLED=1
+   # 1 OpenMP thread
    export OMP_NUM_THREADS=1
+
+   export TMPDIR="$PWD/tmp"
+   rm -rf ${TMPDIR} profiling*
+   mkdir -p ${TMPDIR}
+
+   # 2021.5.1 (broken: lacks most trace info)
+   #NSYS="/global/common/software/nersc/pm-2021q4/easybuild/software/Nsight-Systems/2021.5.1/bin/nsys"
+   # 2021.4.1 (working)
+   NSYS="/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/compilers/bin/nsys"
 
    # record
    srun --ntasks=4 --gpus=4 --cpu-bind=cores \
-       nsys profile -f true \
-         -o profiling_%q{SLURM_TASK_PID} \
-         -t mpi,cuda,nvtx,osrt,openmp   \
-         --mpi-impl=openmpi \
-       ./warpx.3d.MPI.CUDA.DP.QED inputs_3d \
-         warpx.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
+       ${NSYS} profile -f true               \
+         -o profiling_%q{SLURM_TASK_PID}     \
+         -t mpi,cuda,nvtx,osrt,openmp        \
+         --mpi-impl=mpich                    \
+       ./warpx.3d.MPI.CUDA.DP.QED            \
+         inputs_3d                           \
+           warpx.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
+
+.. warning::
+
+   March 23rd, 2022 (INC0182505):
+   Currently, the environment pre-loads a ``Nsight-Systems/2021.5.1`` module that ships ``nsys`` version 2021.5.1.
+   This version does not record all trace information.
+   You need to use the one directly shipped with the NVHPC base system, version 2021.4.1, located in ``/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/compilers/bin/nsys``.
+
+
+Summit Example
+""""""""""""""
 
  Example on how to create traces on a multi-GPU system that uses the ``jsrun`` scheduler (e.g., `OLCF's Summit system <https://docs.olcf.ornl.gov/systems/summit_user_guide.html#optimizing-and-profiling>`__):
 
- .. code-block:: bash
+.. code-block:: bash
 
     # nsys: remove old traces
     rm -rf profiling* tmp-traces
@@ -145,10 +172,20 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
         nsys profile -f true \
           -o profiling_%p \
           -t mpi,cuda,nvtx,osrt,openmp   \
+          --mpi-impl=openmpi             \
         ./warpx.3d.MPI.CUDA.DP.QED inputs_3d \
           warpx.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
 
-In this example, the individual lines for recording a trace profile are:
+.. warning::
+
+   Sep 10th, 2021 (OLCFHELP-3580):
+   The Nsight-Compute (``nsys``) version installed on Summit does not record details of GPU kernels.
+   This is reported to Nvidia and OLCF.
+
+Details
+"""""""
+
+In these examples, the individual lines for recording a trace profile are:
 
 * ``srun``: execute multi-GPU runs with ``srun`` (Slurm's ``mpiexec`` wrapper), here for four GPUs
 * ``-f true`` overwrite previously written trace profiles
