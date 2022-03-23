@@ -916,8 +916,7 @@ WarpX::SyncRho ()
 /** \brief Fills the values of the current on the coarse patch by
  *  averaging the values of the current of the fine patch (on the same level).
  */
-void
-WarpX::RestrictCurrentFromFineToCoarsePatch (int lev)
+void WarpX::RestrictCurrentFromFineToCoarsePatch (const int lev)
 {
     current_cp[lev][0]->setVal(0.0);
     current_cp[lev][1]->setVal(0.0);
@@ -936,11 +935,11 @@ WarpX::RestrictCurrentFromFineToCoarsePatch (int lev)
     CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
 }
 
-void
-WarpX::ApplyFilterandSumBoundaryJ (
+void WarpX::ApplyFilterandSumBoundaryJ (
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-    int lev, PatchType patch_type)
+    const int lev,
+    PatchType patch_type)
 {
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
     const amrex::Periodicity& period = Geom(glev).periodicity();
@@ -989,11 +988,10 @@ WarpX::ApplyFilterandSumBoundaryJ (
 * Then update the fine patch of `lev` by adding the currents for the coarse
 * patch (and buffer region) of `lev+1`
 */
-void
-WarpX::AddCurrentFromFineLevelandSumBoundary (
+void WarpX::AddCurrentFromFineLevelandSumBoundary (
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-    int lev)
+    const int lev)
 {
     ApplyFilterandSumBoundaryJ(J_fp, J_cp, lev, PatchType::fine);
 
@@ -1078,8 +1076,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (
     NodalSyncJ(J_fp, J_cp, lev, PatchType::fine);
 }
 
-void
-WarpX::RestrictRhoFromFineToCoarsePatch (int lev)
+void WarpX::RestrictRhoFromFineToCoarsePatch (const int lev)
 {
     if (rho_fp[lev]) {
         rho_cp[lev]->setVal(0.0);
@@ -1102,8 +1099,7 @@ void WarpX::ApplyFilterandSumBoundaryRho (
     ApplyFilterandSumBoundaryRho(lev, glev, *rho, icomp, ncomp);
 }
 
-void
-WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab& rho, int icomp, int ncomp)
+void WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab& rho, int icomp, int ncomp)
 {
     const amrex::Periodicity& period = Geom(glev).periodicity();
     IntVect ng = rho.nGrowVect();
@@ -1213,11 +1209,11 @@ void WarpX::AddRhoFromFineLevelandSumBoundary (
     NodalSyncRho(charge_fp, charge_cp, lev, PatchType::fine, icomp, ncomp);
 }
 
-void
-WarpX::NodalSyncJ (
+void WarpX::NodalSyncJ (
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-    int lev, PatchType patch_type)
+    const int lev,
+    PatchType patch_type)
 {
     if (!override_sync_intervals.contains(istep[0])) return;
 
