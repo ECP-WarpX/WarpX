@@ -1829,6 +1829,15 @@ Numerics and algorithms
      If ``sort_intervals`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
 
+* ``warpx.do_shared_mem_charge_deposition`` (`bool`) optional (default `false`)
+     If activated, charge deposition will allocate and use small
+     temporary buffers on which to accumulate deposited charge values
+     from particles. On GPUs these buffers will reside in ``__shared__``
+     memory, which is faster than the usual ``__global__``
+     memory. Performance impact will depend on the relative overhead
+     of assigning the particles to bins small enough to fit in the
+     space available for the temporary buffers.
+
 .. _running-cpp-parameters-diagnostics:
 
 Diagnostics and output
