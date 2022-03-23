@@ -13,6 +13,7 @@
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #else
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalCKCAlgorithm.H"
 #endif
 #include "Filter/NCIGodfreyFilter.H"
 #include "Utils/TextMsg.H"
@@ -244,10 +245,16 @@ guardCellManager::Init (
         ng_FieldSolverG = ng_alloc_EB;
     }
 #ifdef WARPX_DIM_RZ
-    else if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
-        ng_FieldSolver  = CylindricalYeeAlgorithm::GetMaxGuardCell();
-        ng_FieldSolverF = CylindricalYeeAlgorithm::GetMaxGuardCell();
-        ng_FieldSolverG = CylindricalYeeAlgorithm::GetMaxGuardCell();
+    else {
+        if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
+            ng_FieldSolver  = CylindricalYeeAlgorithm::GetMaxGuardCell();
+            ng_FieldSolverF = CylindricalYeeAlgorithm::GetMaxGuardCell();
+            ng_FieldSolverG = CylindricalYeeAlgorithm::GetMaxGuardCell();
+        } else if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
+            ng_FieldSolver  = CylindricalCKCAlgorithm::GetMaxGuardCell();
+            ng_FieldSolverF = CylindricalCKCAlgorithm::GetMaxGuardCell();
+            ng_FieldSolverG = CylindricalCKCAlgorithm::GetMaxGuardCell();
+        }
     }
 #else
     else {

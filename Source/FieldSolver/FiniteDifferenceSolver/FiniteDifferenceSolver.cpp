@@ -12,6 +12,7 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalCKCAlgorithm.H"
 #endif
 #include "Utils/WarpXAlgorithmSelection.H"
 #ifdef WARPX_DIM_RZ
@@ -45,20 +46,28 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
     m_nmodes = WarpX::GetInstance().n_rz_azimuthal_modes;
     m_rmin = WarpX::GetInstance().Geom(0).ProbLo(0);
     if (fdtd_algo == MaxwellSolverAlgo::Yee) {
+
         CylindricalYeeAlgorithm::InitializeStencilCoefficients( cell_size,
             m_h_stencil_coefs_r, m_h_stencil_coefs_z );
-        m_stencil_coefs_r.resize(m_h_stencil_coefs_r.size());
-        m_stencil_coefs_z.resize(m_h_stencil_coefs_z.size());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                              m_h_stencil_coefs_r.begin(), m_h_stencil_coefs_r.end(),
-                              m_stencil_coefs_r.begin());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                              m_h_stencil_coefs_z.begin(), m_h_stencil_coefs_z.end(),
-                              m_stencil_coefs_z.begin());
-        amrex::Gpu::synchronize();
+
+    } else if (fdtd_algo == MaxwellSolverAlgo::CKC) {
+
+        CylindricalCKCAlgorithm::InitializeStencilCoefficients( cell_size,
+            m_h_stencil_coefs_r, m_h_stencil_coefs_z );
+
     } else {
         amrex::Abort("FiniteDifferenceSolver: Unknown algorithm");
     }
+    m_stencil_coefs_r.resize(m_h_stencil_coefs_r.size());
+    m_stencil_coefs_z.resize(m_h_stencil_coefs_z.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                          m_h_stencil_coefs_r.begin(), m_h_stencil_coefs_r.end(),
+                          m_stencil_coefs_r.begin());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                          m_h_stencil_coefs_z.begin(), m_h_stencil_coefs_z.end(),
+                          m_stencil_coefs_z.begin());
+    amrex::Gpu::synchronize();
+
 #else
     if (do_nodal) {
 

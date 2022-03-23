@@ -13,6 +13,7 @@
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #else
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#   include "FiniteDifferenceAlgorithms/CylindricalCKCAlgorithm.H"
 #endif
 
 #include <AMReX.H>
@@ -48,6 +49,10 @@ void FiniteDifferenceSolver::ComputeDivE (
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
 
         ComputeDivECylindrical <CylindricalYeeAlgorithm> ( Efield, divEfield );
+
+    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC){
+
+        ComputeDivECylindrical <CylindricalCKCAlgorithm> ( Efield, divEfield );
 
 #else
     if (m_do_nodal) {
