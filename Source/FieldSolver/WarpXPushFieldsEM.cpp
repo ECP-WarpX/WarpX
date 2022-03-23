@@ -98,10 +98,10 @@ namespace {
 }
 
 void WarpX::PSATDForwardTransformEB (
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp)
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
@@ -119,10 +119,10 @@ void WarpX::PSATDForwardTransformEB (
 }
 
 void WarpX::PSATDBackwardTransformEB (
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp)
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
@@ -241,8 +241,8 @@ WarpX::PSATDBackwardTransformG ()
 
 void
 WarpX::PSATDForwardTransformJ (
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
 {
     SpectralFieldIndex Idx;
     int idx_jx, idx_jy, idx_jz;
@@ -287,8 +287,8 @@ WarpX::PSATDForwardTransformJ (
 }
 
 void WarpX::PSATDBackwardTransformJ (
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
 {
     SpectralFieldIndex Idx;
     int idx_jx, idx_jy, idx_jz;
@@ -318,8 +318,8 @@ void WarpX::PSATDBackwardTransformJ (
 
 void
 WarpX::PSATDForwardTransformRho (
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
     const int icomp, const int dcomp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;

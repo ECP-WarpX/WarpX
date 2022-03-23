@@ -916,35 +916,38 @@ WarpX::SyncRho ()
 /** \brief Fills the values of the current on the coarse patch by
  *  averaging the values of the current of the fine patch (on the same level).
  */
-void WarpX::RestrictCurrentFromFineToCoarsePatch (const int lev)
+void WarpX::RestrictCurrentFromFineToCoarsePatch (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const int lev)
 {
-    current_cp[lev][0]->setVal(0.0);
-    current_cp[lev][1]->setVal(0.0);
-    current_cp[lev][2]->setVal(0.0);
+    J_cp[lev][0]->setVal(0.0);
+    J_cp[lev][1]->setVal(0.0);
+    J_cp[lev][2]->setVal(0.0);
 
     const IntVect& refinement_ratio = refRatio(lev-1);
 
-    std::array<const MultiFab*,3> fine { current_fp[lev][0].get(),
-                                         current_fp[lev][1].get(),
-                                         current_fp[lev][2].get() };
-    std::array<      MultiFab*,3> crse { current_cp[lev][0].get(),
-                                         current_cp[lev][1].get(),
-                                         current_cp[lev][2].get() };
+    std::array<const MultiFab*,3> fine { J_fp[lev][0].get(),
+                                         J_fp[lev][1].get(),
+                                         J_fp[lev][2].get() };
+    std::array<      MultiFab*,3> crse { J_cp[lev][0].get(),
+                                         J_cp[lev][1].get(),
+                                         J_cp[lev][2].get() };
     CoarsenMR::Coarsen( *crse[0], *fine[0], refinement_ratio );
     CoarsenMR::Coarsen( *crse[1], *fine[1], refinement_ratio );
     CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
 }
 
 void WarpX::ApplyFilterandSumBoundaryJ (
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
     const int lev,
     PatchType patch_type)
 {
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
     const amrex::Periodicity& period = Geom(glev).periodicity();
-    std::array<std::unique_ptr<amrex::MultiFab>,3>& j = (patch_type == PatchType::fine) ?
-                                                        J_fp[lev] : J_cp[lev];
+    const std::array<std::unique_ptr<amrex::MultiFab>,3>& j = (patch_type == PatchType::fine) ?
+                                                              J_fp[lev] : J_cp[lev];
     for (int idim = 0; idim < 3; ++idim) {
         IntVect ng = j[idim]->nGrowVect();
         IntVect ng_depos_J = get_ng_depos_J();
@@ -989,8 +992,8 @@ void WarpX::ApplyFilterandSumBoundaryJ (
 * patch (and buffer region) of `lev+1`
 */
 void WarpX::AddCurrentFromFineLevelandSumBoundary (
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
     const int lev)
 {
     ApplyFilterandSumBoundaryJ(J_fp, J_cp, lev, PatchType::fine);
@@ -1076,25 +1079,29 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
     NodalSyncJ(J_fp, J_cp, lev, PatchType::fine);
 }
 
-void WarpX::RestrictRhoFromFineToCoarsePatch (const int lev)
+void WarpX::RestrictRhoFromFineToCoarsePatch (
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const int lev)
 {
-    if (rho_fp[lev]) {
-        rho_cp[lev]->setVal(0.0);
+    if (charge_fp[lev]) {
+        charge_cp[lev]->setVal(0.0);
         const IntVect& refinement_ratio = refRatio(lev-1);
-        CoarsenMR::Coarsen( *rho_cp[lev], *rho_fp[lev], refinement_ratio );
+        CoarsenMR::Coarsen( *charge_cp[lev], *charge_fp[lev], refinement_ratio );
     }
 }
 
 void WarpX::ApplyFilterandSumBoundaryRho (
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
     const int lev,
     PatchType patch_type,
     const int icomp,
     const int ncomp)
 {
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
-    std::unique_ptr<amrex::MultiFab>& rho = (patch_type == PatchType::fine) ? charge_fp[lev] : charge_cp[lev];
+    const std::unique_ptr<amrex::MultiFab>& rho = (patch_type == PatchType::fine) ?
+                                                  charge_fp[lev] : charge_cp[lev];
     if (rho == nullptr) return;
     ApplyFilterandSumBoundaryRho(lev, glev, *rho, icomp, ncomp);
 }
@@ -1131,8 +1138,8 @@ void WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab
 * patch (and buffer region) of `lev+1`
 */
 void WarpX::AddRhoFromFineLevelandSumBoundary (
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
     const int lev,
     const int icomp,
     const int ncomp)
@@ -1210,8 +1217,8 @@ void WarpX::AddRhoFromFineLevelandSumBoundary (
 }
 
 void WarpX::NodalSyncJ (
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
     const int lev,
     PatchType patch_type)
 {
@@ -1234,8 +1241,8 @@ void WarpX::NodalSyncJ (
 }
 
 void WarpX::NodalSyncRho (
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
     const int lev,
     PatchType patch_type,
     const int icomp,

@@ -984,41 +984,47 @@ private:
      */
     void OneStep_multiJ (const amrex::Real t);
 
-    void RestrictCurrentFromFineToCoarsePatch (const int lev);
+    void RestrictCurrentFromFineToCoarsePatch (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const int lev);
     void AddCurrentFromFineLevelandSumBoundary (
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
         const int lev);
     void StoreCurrent (const int lev);
     void RestoreCurrent (const int lev);
     void ApplyFilterandSumBoundaryJ (
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
         const int lev,
         PatchType patch_type);
     void NodalSyncJ (
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
         const int lev,
         PatchType patch_type);
 
-    void RestrictRhoFromFineToCoarsePatch (const int lev);
+    void RestrictRhoFromFineToCoarsePatch (
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const int lev);
     void ApplyFilterandSumBoundaryRho (
-        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
         const int lev,
         PatchType patch_type,
         const int icomp,
         const int ncomp);
     void AddRhoFromFineLevelandSumBoundary (
-        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
         const int lev,
         const int icomp,
         const int ncomp);
     void NodalSyncRho (
-        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
         const int lev,
         PatchType patch_type,
         const int icomp,
@@ -1465,10 +1471,10 @@ private:
      *             storing the coarse patch magnetic field to be transformed
      */
     void PSATDForwardTransformEB (
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
 
     /**
      * \brief Backward FFT of E,B on all mesh refinement levels,
@@ -1484,10 +1490,10 @@ private:
      *             storing the coarse patch magnetic field to be transformed
      */
     void PSATDBackwardTransformEB (
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
 
     /**
      * \brief Backward FFT of averaged E,B on all mesh refinement levels
@@ -1504,8 +1510,8 @@ private:
      *             storing the coarse patch current to be transformed
      */
     void PSATDForwardTransformJ (
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
 
     /**
      * \brief Backward FFT of J on all mesh refinement levels
@@ -1516,8 +1522,8 @@ private:
      *             storing the coarse patch current to be transformed
      */
     void PSATDBackwardTransformJ (
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
 
     /**
      * \brief Forward FFT of rho on all mesh refinement levels,
@@ -1529,8 +1535,8 @@ private:
      * \param[in] dcomp index of spectral component (0 for rho_old, 1 for rho_new)
      */
     void PSATDForwardTransformRho (
-        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
         const int icomp, const int dcomp);
 
     /**
