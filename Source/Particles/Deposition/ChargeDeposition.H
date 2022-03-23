@@ -340,15 +340,12 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
 
-    if (shared_mem_bytes > max_shared_mem_bytes) {
-      std::cout << "Tile size for charge deposition of " << shared_mem_bytes
-                << " bytes would not fit in GPU's shared memory of " << max_shared_mem_bytes << " bytes" << std::endl;
-      amrex::Abort("Tile size too big for GPU shared memory charge deposition");
-    }
-    ignore_unused(np_to_deposit);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
+                                      "Tile size too big for GPU shared memory charge deposition");
 #endif
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
+    amrex::ignore_unused(np_to_deposit);
     // Loop with one block per tile (the shared memory is allocated on a per-block basis)
     // The threads within each block loop over the particles of its tile
     // (Each threads processes a different set of particles.)
