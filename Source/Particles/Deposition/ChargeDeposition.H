@@ -349,6 +349,9 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
+    // Loop with one block per tile (the shared memory is allocated on a per-block basis)
+    // The threads within each block loop over the particles of its tile
+    // (Each threads processes a different set of particles.)
     amrex::launch(
                   nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
                   [=] AMREX_GPU_DEVICE () noexcept
@@ -401,6 +404,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif // defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
+        // Loop over macroparticles: each threads loops over particles with a stride of `blockDim.x`
         for (unsigned int ip_orig = bin_start + threadIdx.x; ip_orig < bin_stop; ip_orig += blockDim.x)
 #endif
         {
