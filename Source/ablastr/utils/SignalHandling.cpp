@@ -153,7 +153,7 @@ SignalState::CheckSignals()
 
 #if defined(AMREX_USE_MPI)
     auto comm = amrex::ParallelDescriptor::Communicator();
-    MPI_Ibcast(signal_actions_requested, SIGNAL_REQUESTS_MAX+1, MPI_CXX_BOOL, 0, comm, &signal_mpi_ibcast_request);
+    BL_MPI_REQUIRE(MPI_Ibcast(signal_actions_requested, SIGNAL_REQUESTS_MAX+1, MPI_CXX_BOOL, 0, comm, &signal_mpi_ibcast_request));
 #endif
 }
 
@@ -161,7 +161,7 @@ void
 SignalState::WaitSignals()
 {
 #if defined(AMREX_USE_MPI)
-    MPI_Wait(&signal_mpi_ibcast_request, MPI_STATUS_IGNORE);
+    BL_MPI_REQUIRE(MPI_Wait(&signal_mpi_ibcast_request, MPI_STATUS_IGNORE));
 #endif
 }
 
