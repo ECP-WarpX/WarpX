@@ -512,6 +512,7 @@ WarpX::SignalSetFlag(int signal_number)
 void
 WarpX::InitSignalHandling()
 {
+#if defined(__linux__) || defined(__APPLE__)
     bool have_checkpoint_diagnostic = false;
 
     ParmParse pp("diagnostics");
@@ -528,7 +529,6 @@ WarpX::InitSignalHandling()
         }
     }
 
-#if defined(__linux__) || defined(__APPLE__)
     struct sigaction sa;
     sigemptyset(&sa.sa_mask);
     for (int i = 0; i < NUM_SIGNALS; ++i) {
@@ -545,13 +545,6 @@ WarpX::InitSignalHandling()
         }
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!(signal_conf_requests_checkpoint[i] && !have_checkpoint_diagnostic),
                                          "Signal handling was requested to checkpoint, but no checkpoint diagnostic is configured");
-    }
-#else
-    for (int i = 0; i < NUM_SIGNALS; ++i) {
-        if (signal_conf_requests_break[i] ||
-            signal_conf_requests_checkpoint[i]) {
-            Abort("Signal handling requested in input, but is not supported on this platform");
-        }
     }
 #endif
 }
@@ -624,18 +617,30 @@ WarpX::ReadParameters ()
 
         std::vector<std::string> signals_in;
         pp_warpx.queryarr("break_signals", signals_in);
+
+#if defined(__linux__) || defined(__APPLE__)
         for (const std::string &str : signals_in) {
             int sig = parseSignalNameToNumber(str);
             AMREX_ALWAYS_ASSERT(sig < NUM_SIGNALS);
             signal_conf_requests_break[sig] = true;
         }
         signals_in.clear();
+#else
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(signals_in.empty(),
+                                         "Signal handling requested in input, but is not supported on this platform");
+#endif
+
         pp_warpx.queryarr("checkpoint_signals", signals_in);
+#if defined(__linux__) || defined(__APPLE__)
         for (const std::string &str : signals_in) {
             int sig = parseSignalNameToNumber(str);
             AMREX_ALWAYS_ASSERT(sig < NUM_SIGNALS);
             signal_conf_requests_checkpoint[sig] = true;
         }
+#else
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(signals_in.empty(),
+                                         "Signal handling requested in input, but is not supported on this platform");
+#endif
 
         // set random seed
         std::string random_seed = "default";
