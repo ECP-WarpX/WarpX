@@ -112,7 +112,7 @@ Diagnostics::BaseReadParameters ()
 
 
     // Get parser strings for particle fields and generate map of parsers
-    std::string parser_str;
+    std::string parser_str, filter_parser_str;
     amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
         Store_parserString(pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)").c_str(), parser_str);
@@ -122,6 +122,16 @@ Diagnostics::BaseReadParameters ()
         else {
             amrex::Abort("Input error: cannot find parser string for " + var + "." +
                          m_diag_name + ".particle_fields." + var + " in file");
+        }
+        // Look for and record filter functions
+        Store_parserString(pp_diag_pfield, (var + ".filter(x,y,z,ux,uy,uz)").c_str(), filter_parser_str);
+        if (filter_parser_str != "") {
+            m_pfield_dofilter.insert({var, true});
+            m_pfield_filter_strings.insert({var, filter_parser_str});
+        }
+        else {
+            m_pfield_dofilter.insert({var, false});
+            m_pfield_filter_strings.insert({var, ""});
         }
     }
 
