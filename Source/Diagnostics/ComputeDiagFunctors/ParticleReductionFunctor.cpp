@@ -52,9 +52,10 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
     red_mf.setVal(0._rt);
     ppc_mf.setVal(0._rt);
     auto& pc = warpx.GetPartContainer().GetParticleContainer(m_ispec);
-    // Copy over compiled parser function so that it can be captured by value in the lambda
+    // Copy over member variables so they can be captured by the lambda
     auto map_fn = m_map_fn;
     auto filter_fn = m_filter_fn;
+    bool do_filter = m_do_filter;
     ParticleToMesh(pc, red_mf, m_lev,
             [=] AMREX_GPU_DEVICE (const WarpXParticleContainer::SuperParticleType& p,
                 amrex::Array4<amrex::Real> const& out_array,
@@ -91,7 +92,7 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::ParticleReal uz = p.rdata(PIdx::uz) / PhysConst::c;
                 amrex::Real value = map_fn(xw, yw, zw, ux, uy, uz);
                 amrex::Real filter = 1._rt;
-                if (m_do_filter) {
+                if (do_filter) {
                     amrex::Real filter_val = filter_fn(xw, yw, zw, ux, uy, uz);
                     if (filter_val >= 0.5) filter = 1._rt;
                     else filter = 0._rt;
@@ -133,7 +134,7 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::ParticleReal uy = p.rdata(PIdx::uy) / PhysConst::c;
                 amrex::ParticleReal uz = p.rdata(PIdx::uz) / PhysConst::c;
                 amrex::Real filter = 1._rt;
-                if (m_do_filter) {
+                if (do_filter) {
                     amrex::Real filter_val = filter_fn(xw, yw, zw, ux, uy, uz);
                     if (filter_val >= 0.5) filter = 1._rt;
                     else filter = 0._rt;
