@@ -620,7 +620,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
         } else{
             time_shift_delta = dt;
         }
-        const auto& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, true, time_shift_delta);
+        const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, true, time_shift_delta);
 
         // pointer to costs data
         amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
