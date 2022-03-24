@@ -38,6 +38,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
+#include <ablastr/utils/SignalHandling.H>
+
 #ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
@@ -77,9 +79,6 @@
 #include <random>
 #include <string>
 #include <utility>
-
-// For sigaction() et al.
-#include <signal.h>
 
 using namespace amrex;
 
@@ -209,14 +208,6 @@ bool WarpX::do_device_synchronize = false;
 
 WarpX* WarpX::m_instance = nullptr;
 
-std::atomic<bool> WarpX::signal_received_flags[NUM_SIGNALS];
-bool WarpX::signal_conf_requests_break[NUM_SIGNALS];
-bool WarpX::signal_conf_requests_checkpoint[NUM_SIGNALS];
-bool WarpX::signal_actions_requested[2];
-#if defined(AMREX_USE_MPI)
-MPI_Request WarpX::signal_mpi_ibcast_request;
-#endif
-
 WarpX&
 WarpX::GetInstance ()
 {
@@ -245,7 +236,7 @@ WarpX::WarpX ()
 
     InitEB();
 
-    InitSignalHandling();
+    SignalState::InitSignalHandling();
 
     // Geometry on all levels has been defined already.
     // No valid BoxArray and DistributionMapping have been defined.
@@ -504,52 +495,6 @@ WarpX::PrintGlobalWarnings(const std::string& when)
 }
 
 void
-WarpX::SignalSetFlag(int signal_number)
-{
-    signal_received_flags[signal_number] = true;
-}
-
-void
-WarpX::InitSignalHandling()
-{
-#if defined(__linux__) || defined(__APPLE__)
-    bool have_checkpoint_diagnostic = false;
-
-    ParmParse pp("diagnostics");
-    std::vector<std::string> diags_names;
-    pp.queryarr("diags_names", diags_names);
-
-    for (const auto &diag : diags_names) {
-        ParmParse dd(diag);
-        std::string format;
-        dd.query("format", format);
-        if (format == "checkpoint") {
-            have_checkpoint_diagnostic = true;
-            break;
-        }
-    }
-
-    struct sigaction sa;
-    sigemptyset(&sa.sa_mask);
-    for (int i = 0; i < NUM_SIGNALS; ++i) {
-        signal_received_flags[i] = false;
-        if (signal_conf_requests_checkpoint[i] || signal_conf_requests_break[i]) {
-            if (ParallelDescriptor::MyProc() == 0) {
-                sa.sa_handler = &WarpX::SignalSetFlag;
-            } else {
-                sa.sa_handler = SIG_IGN;
-            }
-            int result = sigaction(i, &sa, nullptr);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(result == 0,
-                                             "Failed to install signal handler for a configured signal");
-        }
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!(signal_conf_requests_checkpoint[i] && !have_checkpoint_diagnostic),
-                                         "Signal handling was requested to checkpoint, but no checkpoint diagnostic is configured");
-    }
-#endif
-}
-
-void
 WarpX::ReadParameters ()
 {
     // Ensure that geometry.dims is set properly.
@@ -620,9 +565,8 @@ WarpX::ReadParameters ()
 
 #if defined(__linux__) || defined(__APPLE__)
         for (const std::string &str : signals_in) {
-            int sig = parseSignalNameToNumber(str);
-            AMREX_ALWAYS_ASSERT(sig < NUM_SIGNALS);
-            signal_conf_requests_break[sig] = true;
+            int sig = SignalState::parseSignalNameToNumber(str);
+            SignalState::signal_conf_requests_break[sig] = true;
         }
         signals_in.clear();
 #else
@@ -630,12 +574,29 @@ WarpX::ReadParameters ()
                                          "Signal handling requested in input, but is not supported on this platform");
 #endif
 
+        bool have_checkpoint_diagnostic = false;
+
+        ParmParse pp("diagnostics");
+        std::vector<std::string> diags_names;
+        pp.queryarr("diags_names", diags_names);
+
+        for (const auto &diag : diags_names) {
+            ParmParse dd(diag);
+            std::string format;
+            dd.query("format", format);
+            if (format == "checkpoint") {
+                have_checkpoint_diagnostic = true;
+                break;
+            }
+        }
+
         pp_warpx.queryarr("checkpoint_signals", signals_in);
 #if defined(__linux__) || defined(__APPLE__)
         for (const std::string &str : signals_in) {
-            int sig = parseSignalNameToNumber(str);
-            AMREX_ALWAYS_ASSERT(sig < NUM_SIGNALS);
-            signal_conf_requests_checkpoint[sig] = true;
+            int sig = SignalState::parseSignalNameToNumber(str);
+            SignalState::signal_conf_requests_checkpoint[sig] = true;
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(have_checkpoint_diagnostic,
+                                             "Signal handling was requested to checkpoint, but no checkpoint diagnostic is configured");
         }
 #else
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(signals_in.empty(),

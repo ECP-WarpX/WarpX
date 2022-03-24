@@ -249,8 +249,6 @@ double parseStringtoReal(std::string str);
  */
 int parseStringtoInt(std::string str, std::string name);
 
-int parseSignalNameToNumber(const std::string &str);
-
 template <int N>
 amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
 {

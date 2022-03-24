@@ -33,6 +33,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
+#include <ablastr/utils/SignalHandling.H>
+
 #include <AMReX.H>
 #include <AMReX_Array.H>
 #include <AMReX_BLassert.H>
@@ -358,8 +360,7 @@ WarpX::Evolve (int numsteps)
                       << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n";
         }
 
-        if (cur_time >= stop_time - 1.e-3*dt[0] || signal_actions_requested[SIGNAL_REQUESTS_BREAK]) {
-            signal_actions_requested[SIGNAL_REQUESTS_BREAK] = false;
+        if (cur_time >= stop_time - 1.e-3*dt[0] || SignalState::TestAndResetActionRequestFlag(SignalState::SIGNAL_REQUESTS_BREAK)) {
             break;
         }
 
@@ -942,42 +943,17 @@ WarpX::applyMirrors(Real time){
 void
 WarpX::CheckSignals()
 {
-    // We assume that signals will definitely be delivered to rank 0,
-    // and may be delivered to other ranks as well. For coordination,
-    // we process them according to when they're received by rank 0.
-    if (amrex::ParallelDescriptor::MyProc() == 0) {
-        for (int i = 0; i < NUM_SIGNALS; ++i) {
-            // Read into a local temporary to ensure the same value is
-            // used throughout. Atomically exchange it with false to
-            // unset the flag without risking loss of a signal - if a
-            // signal arrives after this, it will be handled the next
-            // time this function is called.
-            bool signal_i_received = signal_received_flags[i].exchange(false);
-
-            if (signal_i_received) {
-                signal_actions_requested[SIGNAL_REQUESTS_BREAK] |= signal_conf_requests_break[i];
-                signal_actions_requested[SIGNAL_REQUESTS_CHECKPOINT] |= signal_conf_requests_checkpoint[i];
-            }
-        }
-    }
-
-#if defined(AMREX_USE_MPI)
-    auto comm = amrex::ParallelDescriptor::Communicator();
-    MPI_Ibcast(signal_actions_requested, SIGNAL_REQUESTS_MAX+1, MPI_CXX_BOOL, 0, comm, &signal_mpi_ibcast_request);
-#endif
+    SignalState::CheckSignals();
 }
 
 void
 WarpX::HandleSignals()
 {
-#if defined(AMREX_USE_MPI)
-    MPI_Wait(&signal_mpi_ibcast_request, MPI_STATUS_IGNORE);
-#endif
+    SignalState::WaitSignals();
 
     // SIGNAL_REQUESTS_BREAK is handled directly in WarpX::Evolve
 
-    if (signal_actions_requested[SIGNAL_REQUESTS_CHECKPOINT]) {
+    if (SignalState::TestAndResetActionRequestFlag(SignalState::SIGNAL_REQUESTS_CHECKPOINT)) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
-        signal_actions_requested[SIGNAL_REQUESTS_CHECKPOINT] = false;
     }
 }

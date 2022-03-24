@@ -38,9 +38,6 @@
 #include <string>
 #include <limits>
 
-// For definitions of signal values
-#include <signal.h>
-
 using namespace amrex;
 
 void PreparseAMReXInputIntArray(amrex::ParmParse& a_pp, char const * const input_str, const bool replace)
@@ -396,84 +393,6 @@ parseStringtoInt(std::string str, std::string name)
     auto const rval = static_cast<amrex::Real>(parseStringtoReal(str));
     int ival = safeCastToInt(std::round(rval), name);
     return ival;
-}
-
-int
-parseSignalNameToNumber(const std::string &str)
-{
-    IParser signals_parser(str);
-
-#if defined(__linux__) || defined(__APPLE__)
-    struct {
-        const char* abbrev;
-        const int value;
-    } signals_to_parse[] = {
-        {"ABRT", SIGABRT},
-        {"ALRM", SIGALRM},
-        {"BUS", SIGBUS},
-        {"CHLD", SIGCHLD},
-        {"CLD", SIGCHLD}, // Synonymous to SIGCHLD on Linux
-        {"CONT", SIGCONT},
-#if defined(SIGEMT)
-        {"EMT", SIGEMT}, // macOS and some Linux architectures
-#endif
-        // Omitted because AMReX typically handles SIGFPE specially
-        // {"FPE", SIGFPE},
-        {"HUP", SIGHUP},
-        {"ILL", SIGILL},
-#if defined(SIGINFO)
-        {"INFO", SIGINFO}, // macOS and some Linux architectures
-#endif
-        {"INT", SIGINT},
-        {"IO", SIGIO},
-        {"IOT", SIGABRT}, // Synonymous to SIGABRT on Linux
-        // {"KILL", SIGKILL}, // Cannot be handled
-        {"PIPE", SIGPIPE},
-        {"POLL", SIGIO}, // Synonymous to SIGIO on Linux
-        {"PROF", SIGPROF},
-#if defined(SIGPWR)
-        {"PWR", SIGPWR}, // Linux-only
-#endif
-        {"QUIT", SIGQUIT},
-        {"SEGV", SIGSEGV},
-#if defined(SIGSTKFLT)
-        {"STKFLT", SIGSTKFLT}, // Linux-only
-#endif
-        // {"STOP", SIGSTOP}, // Cannot be handled
-        {"SYS", SIGSYS},
-        {"TERM", SIGTERM},
-        {"TRAP", SIGTRAP},
-        {"TSTP", SIGTSTP},
-        {"TTIN", SIGTTIN},
-        {"TTOU", SIGTTOU},
-        {"URG", SIGURG},
-        {"USR1", SIGUSR1},
-        {"USR2", SIGUSR2},
-        {"VTALRM", SIGVTALRM},
-        {"WINCH", SIGWINCH},
-        {"XCPU", SIGXCPU},
-        {"XFSZ", SIGXFSZ},
-    };
-
-    for (const auto& sp : signals_to_parse) {
-        std::string name_upper = sp.abbrev;
-        std::string name_lower = name_upper;
-        for (char &c : name_lower) {
-            c = tolower(c);
-        }
-
-        signals_parser.setConstant(name_upper, sp.value);
-        signals_parser.setConstant(name_lower, sp.value);
-        name_upper = "SIG" + name_upper;
-        name_lower = "sig" + name_lower;
-        signals_parser.setConstant(name_upper, sp.value);
-        signals_parser.setConstant(name_lower, sp.value);
-    }
-#endif // #if defined(__linux__) || defined(__APPLE__)
-
-    auto spf = signals_parser.compileHost<0>();
-
-    return spf();
 }
 
 // Overloads for float/double instead of amrex::Real to allow makeParser() to query for
