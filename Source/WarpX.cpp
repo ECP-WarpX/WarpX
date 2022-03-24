@@ -1208,7 +1208,7 @@ WarpX::ReadParameters ()
                 amrex::Abort("Esirkepov current deposition cannot be used with the comoving PSATD algorithm");
             }
             if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.) {
-                amrex::Abort("Esirkepov current deposition  cannot be used with the Galilean algorithm.");
+                amrex::Abort("Esirkepov current deposition cannot be used with the Galilean algorithm.");
             }
         }
 
