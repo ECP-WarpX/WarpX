@@ -48,10 +48,6 @@
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 
-#if defined(AMREX_USE_MPI)
-#   include <mpi.h>
-#endif
-
 #include <algorithm>
 #include <array>
 #include <memory>
