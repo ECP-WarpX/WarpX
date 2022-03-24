@@ -1182,7 +1182,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
         // these do not include the guard cells.
-        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev, false, 0.);
+        const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev, false, 0._rt);
         const Dim3 lo = lbound(tilebox);
         const Real rmin = xyzmin[0];
         const Real rminr = xyzmin[0] + (tb.type(0) == NODE ? 0. : 0.5*dx[0]);
