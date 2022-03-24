@@ -580,17 +580,18 @@ void FieldProbe::ComputeDiags (int step)
                             getPosition(ip, xp, yp, zp);
                             if (warpx.moving_window_dir == 0)
                             {
-                                setPosition(ip, xp+(dt*warpx.moving_window_v*PhysConst::c), yp, zp)
+                                setPosition(ip, xp+(dt*warpx.moving_window_v*PhysConst::c), yp, zp);
                             }
                             if (warpx.moving_window_dir == 1)
                             {
-                                setPosition(ip, xp, yp+(dt*warpx.moving_window_v*PhysConst::c), zp)
+                                setPosition(ip, xp, yp+(dt*warpx.moving_window_v*PhysConst::c), zp);
                             }
                             if (warpx.moving_window_dir == WARPX_ZINDEX)
                             {
-                                setPosition(ip, xp, yp, zp+(dt*warpx.moving_window_v*PhysConst::c))
+                                setPosition(ip, xp, yp, zp+(dt*warpx.moving_window_v*PhysConst::c));
                             }
                         }
+                    }
                     else
                     {
                         for (auto ip=0; ip < np; ip++)
@@ -599,15 +600,15 @@ void FieldProbe::ComputeDiags (int step)
                             getPosition(ip, xp, yp, zp);
                             if (warpx.moving_window_dir == 0)
                             {
-                                setPosition(ip, xp+(dt*warpx.moving_window_v*PhysConst::c)*(step-m_last_compute_step), yp, zp)
+                                setPosition(ip, xp+(dt*warpx.moving_window_v*PhysConst::c)*(step-m_last_compute_step), yp, zp);
                             }
                             if (warpx.moving_window_dir == 1)
                             {
-                                setPosition(ip, xp, yp+(dt*warpx.moving_window_v*PhysConst::c)*(step-m_last_compute_step), zp)
+                                setPosition(ip, xp, yp+(dt*warpx.moving_window_v*PhysConst::c)*(step-m_last_compute_step), zp);
                             }
                             if (warpx.moving_window_dir == WARPX_ZINDEX)
                             {
-                                setPosition(ip, xp, yp, zp+(dt*warpx.moving_window_v*PhysConst::c)*(step-m_last_compute_step))
+                                setPosition(ip, xp, yp, zp+(dt*warpx.moving_window_v*PhysConst::c)*(step-m_last_compute_step));
                             }
                         }
                     }

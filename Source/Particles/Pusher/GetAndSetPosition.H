@@ -155,7 +155,9 @@ struct SetParticlePosition
 #if defined(WARPX_DIM_RZ)
     RType* AMREX_RESTRICT m_theta;
 #endif
-    SetParticlePosition (WarpXParIter& a_pti, int a_offset = 0) noexcept
+
+    template <typename ptiType>
+    SetParticlePosition (const ptiType& a_pti, int a_offset = 0) noexcept
     {
         auto& aos = a_pti.GetArrayOfStructs();
         m_structs = aos().dataPtr() + a_offset;
