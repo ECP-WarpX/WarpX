@@ -44,15 +44,15 @@ public:
     enum signal_action_requested_labels { SIGNAL_REQUESTS_BREAK = 0, SIGNAL_REQUESTS_CHECKPOINT = 1, SIGNAL_REQUESTS_MAX = 1 };
 
     //! Take a string and convert it to a corresponding signal number if possible
-    static int parseSignalNameToNumber(const std::string &str);
+    static int parseSignalNameToNumber (const std::string &str);
 
     //! Set up signal handlers based on input configuration provided in `signal_conf_requests_*`
     static void InitSignalHandling ();
 
     //! Check and clear signal flags and asynchronously broadcast them from process 0
-    static void CheckSignals();
+    static void CheckSignals ();
     //! Complete the asynchronous broadcast of signal flags
-    static void WaitSignals();
+    static void WaitSignals ();
 
     //! Check whether a given action has been requested, and reset the associated flag
     static bool TestAndResetActionRequestFlag (int action_to_test);

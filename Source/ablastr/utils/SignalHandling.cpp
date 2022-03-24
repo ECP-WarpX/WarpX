@@ -178,4 +178,3 @@ SignalState::SignalSetFlag(int signal_number)
 {
     signal_received_flags[signal_number] = true;
 }
-
