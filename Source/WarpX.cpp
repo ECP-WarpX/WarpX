@@ -288,11 +288,6 @@ WarpX::WarpX ()
     Efield_avg_fp.resize(nlevs_max);
     Bfield_avg_fp.resize(nlevs_max);
 
-    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
-    {
-        current_fp_cumsum.resize(nlevs_max);
-    }
-
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
     m_distance_to_eb.resize(nlevs_max);
@@ -314,6 +309,7 @@ WarpX::WarpX ()
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
         current_fp_vay.resize(nlevs_max);
+        current_fp_cumsum.resize(nlevs_max);
     }
 
     F_cp.resize(nlevs_max);
@@ -1485,11 +1481,6 @@ WarpX::ClearLevel (int lev)
         Efield_fp [lev][i].reset();
         Bfield_fp [lev][i].reset();
 
-        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
-        {
-            current_fp_cumsum[lev][i].reset();
-        }
-
         current_store[lev][i].reset();
 
         if (do_current_centering)
@@ -1500,6 +1491,7 @@ WarpX::ClearLevel (int lev)
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
             current_fp_vay[lev][i].reset();
+            current_fp_cumsum[lev][i].reset();
         }
 
         current_cp[lev][i].reset();
