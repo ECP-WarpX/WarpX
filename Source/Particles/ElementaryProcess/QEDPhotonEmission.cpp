@@ -32,6 +32,9 @@ PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor
  m_opt_depth_runtime_comp{opt_depth_runtime_comp},
  m_emission_functor{emission_functor}
 {
+
+    using namespace amrex::literals;
+
     m_get_position  = GetParticlePosition(a_pti, a_offset);
     m_get_externalEB = GetExternalEBField(a_pti, a_offset);
 

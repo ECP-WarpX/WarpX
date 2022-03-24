@@ -614,12 +614,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
         // Note that this includes guard cells since it is after tilebox.ngrow
         // Take into account Galilean shift
         const amrex::Real dt = warpx.getdt(lev);
-        amrex::Real time_shift_delta;
-        if (icomp==0){
-            time_shift_delta = 0;
-        } else{
-            time_shift_delta = dt;
-        }
+        const amrex::Real time_shift_delta = (icomp == 0 ? 0.0_rt : dt);
         const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, true, time_shift_delta);
 
         // pointer to costs data

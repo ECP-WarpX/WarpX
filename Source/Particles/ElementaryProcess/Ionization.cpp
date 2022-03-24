@@ -32,6 +32,9 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
                                             int a_atomic_number,
                                             int a_offset) noexcept
 {
+
+    using namespace amrex::literals;
+
     m_ionization_energies = a_ionization_energies;
     m_adk_prefactor = a_adk_prefactor;
     m_adk_exp_prefactor = a_adk_exp_prefactor;
