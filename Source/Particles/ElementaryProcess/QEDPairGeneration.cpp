@@ -53,7 +53,7 @@ PairGenerationTransformFunc (BreitWheelerGeneratePairs const generate_functor,
     m_dx_arr = {dx[0], dx[1], dx[2]};
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
-    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, true, 0.);
+    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, true, 0._rt);
     m_xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
     m_galerkin_interpolation = WarpX::galerkin_interpolation;
