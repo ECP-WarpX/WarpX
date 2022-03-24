@@ -2177,7 +2177,7 @@ WarpX::getRealBox(const Box& bx, int lev)
 }
 
 std::array<Real,3>
-WarpX::LowerCorner(const Box& bx, int lev, bool with_galilean_shift, amrex::Real time_shift_delta)
+WarpX::LowerCorner(const Box& bx, const int lev, const bool with_galilean_shift, const amrex::Real time_shift_delta)
 {
     auto & warpx = GetInstance();
     RealBox grid_box = getRealBox( bx, lev );
