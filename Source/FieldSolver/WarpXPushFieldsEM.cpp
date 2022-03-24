@@ -380,9 +380,9 @@ void WarpX::PSATDComputeCurrentPartialSums ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        amrex::MultiFab const& jx = *current_fp[lev][0];
-        amrex::MultiFab const& jy = *current_fp[lev][1];
-        amrex::MultiFab const& jz = *current_fp[lev][2];
+        amrex::MultiFab const& jx = *current_fp_vay[lev][0];
+        amrex::MultiFab const& jy = *current_fp_vay[lev][1];
+        amrex::MultiFab const& jz = *current_fp_vay[lev][2];
         amrex::MultiFab& jx_cumsum = *current_fp_cumsum[lev][0];
         amrex::MultiFab& jy_cumsum = *current_fp_cumsum[lev][1];
         amrex::MultiFab& jz_cumsum = *current_fp_cumsum[lev][2];

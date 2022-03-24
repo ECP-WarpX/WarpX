@@ -1720,16 +1720,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     current_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_fp[y]"));
     current_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_fp[z]"));
 
-    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
-    {
-        current_fp_cumsum[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, jx_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_cumsum[x]"));
-        current_fp_cumsum[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, jy_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_cumsum[y]"));
-        current_fp_cumsum[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, jz_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_cumsum[z]"));
-    }
-
     if (do_current_centering)
     {
         amrex::BoxArray const& nodal_ba = amrex::convert(ba, amrex::IntVect::TheNodeVector());
@@ -1746,6 +1736,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             dm, ncomps, ngJ, tag("current_fp_vay[y]"));
         current_fp_vay[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
             dm, ncomps, ngJ, tag("current_fp_vay[z]"));
+
+        current_fp_cumsum[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_cumsum[x]"));
+        current_fp_cumsum[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_cumsum[y]"));
+        current_fp_cumsum[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_cumsum[z]"));
     }
 
     Bfield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_fp[x]"));
