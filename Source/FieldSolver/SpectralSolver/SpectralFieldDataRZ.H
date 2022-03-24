@@ -113,10 +113,13 @@ class SpectralFieldDataRZ
             return multi_spectral_hankel_transformer[mfi].getKrArray();
         }
 
-        // `fields` stores fields in spectral space, as multicomponent FabArray
+        //! `fields` stores fields in spectral space, as multicomponent FabArray
         SpectralField fields;
 
+        //! Number of modes for the RZ multi-mode version, see WarpX::n_rz_azimuthal_modes
         int n_rz_azimuthal_modes;
+        //! Number of MultiFab components, see WarpX::ncomps
+        int m_ncomps;
 
     private:
 

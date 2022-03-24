@@ -142,7 +142,7 @@ endif()
 #
 # collect all objects for compilation
 add_library(WarpX OBJECT)
-add_library(ablastr OBJECT)
+add_library(ablastr)
 
 # ABLASTR library
 set(_BUILDINFO_SRC ablastr)
