@@ -599,15 +599,15 @@ void FieldProbe::ComputeDiags (int step)
                             getPosition(ip, xp, yp, zp);
                             if (warpx.moving_window_dir == 0)
                             {
-                                setPosition(ip, xp+(dt*warpx.moving_window_v*PhysConst::c)*m_intervals, yp, zp)
+                                setPosition(ip, xp+(dt*warpx.moving_window_v*PhysConst::c)*(step-m_last_compute_step), yp, zp)
                             }
                             if (warpx.moving_window_dir == 1)
                             {
-                                setPosition(ip, xp, yp+(dt*warpx.moving_window_v*PhysConst::c)*m_intervals, zp)
+                                setPosition(ip, xp, yp+(dt*warpx.moving_window_v*PhysConst::c)*(step-m_last_compute_step), zp)
                             }
                             if (warpx.moving_window_dir == WARPX_ZINDEX)
                             {
-                                setPosition(ip, xp, yp, zp+(dt*warpx.moving_window_v*PhysConst::c)*m_intervals)
+                                setPosition(ip, xp, yp, zp+(dt*warpx.moving_window_v*PhysConst::c)*(step-m_last_compute_step))
                             }
                         }
                     }
@@ -661,6 +661,7 @@ void FieldProbe::ComputeDiags (int step)
     }// end loop over refinement levels
     // make sure data is in m_data on the IOProcessor
     // TODO: In the future, we want to use a parallel I/O method instead (plotfiles or openPMD)
+    m_last_compute_step = step;
 } // end void FieldProbe::ComputeDiags
 
 void FieldProbe::WriteToFile (int step) const

@@ -76,6 +76,9 @@ private:
     //! counts number of particles for all MPI ranks
     long m_valid_particles {0};
 
+    //! counts the number of steps since last computation (for non-integrated detectors)
+    int m_last_compute_step = 0;
+
     //! determines geometry of detector point distribution
     DetectorGeometry m_probe_geometry = DetectorGeometry::Point;
 
