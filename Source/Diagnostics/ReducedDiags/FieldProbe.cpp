@@ -573,7 +573,7 @@ void FieldProbe::ComputeDiags (int step)
                 if (do_moving_window_FP)
                 {
                     if (temp_field_probe_integrate)
-                    {    
+                    {
                         for (auto ip=0; ip < np; ip++)
                         {
                             amrex::ParticleReal xp, yp, zp;
