@@ -2211,7 +2211,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const auto getExternalEB = GetExternalEBField(pti);
 
-            const auto& xyzmin = WarpX::LowerCorner(box, lev, true, 0.);
+            const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(box, lev, true, 0._rt);
 
             const Dim3 lo = lbound(box);
 
