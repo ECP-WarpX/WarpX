@@ -11,6 +11,8 @@
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_IParser.H>
 
+#include <cctype>
+
 // For sigaction() et al.
 #if defined(__linux__) || defined(__APPLE__)
 #include <signal.h>
@@ -85,7 +87,7 @@ SignalState::parseSignalNameToNumber(const std::string &str)
         std::string name_upper = sp.abbrev;
         std::string name_lower = name_upper;
         for (char &c : name_lower) {
-            c = tolower(c);
+            c = std::tolower(c);
         }
 
         signals_parser.setConstant(name_upper, sp.value);
