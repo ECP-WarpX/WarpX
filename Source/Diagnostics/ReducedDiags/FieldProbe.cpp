@@ -8,6 +8,8 @@
 #include "FieldProbe.H"
 #include "FieldProbeParticleContainer.H"
 #include "Particles/Gather/FieldGather.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Pusher/UpdatePosition.H"
 
 #include "Utils/IntervalsParser.H"
 #include "Utils/TextMsg.H"
@@ -147,6 +149,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
     pp_rd_name.query("interp_order", interp_order);
+    pp_rd_name.query("do_moving_window_FP", do_moving_window_FP);
 
     if (WarpX::gamma_boost > 1.0_rt)
     {
@@ -426,6 +429,8 @@ void FieldProbe::ComputeDiags (int step)
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
             const auto getPosition = GetParticlePosition(pti);
+                auto setPosition = SetParticlePosition(pti);
+
             auto const np = pti.numParticles();
 
             if( ProbeInDomain() )
@@ -564,6 +569,48 @@ void FieldProbe::ComputeDiags (int step)
                     }
                 /* m_data now contains up-to-date values for:
                  *  [x, y, z, Ex, Ey, Ez, Bx, By, Bz, and S] */
+                }
+                if (do_moving_window_FP)
+                {
+                    if (temp_field_probe_integrate)
+                    {    
+                        for (auto ip=0; ip < np; ip++)
+                        {
+                            amrex::ParticleReal xp, yp, zp;
+                            getPosition(ip, xp, yp, zp);
+                            if (warpx.moving_window_dir == 0)
+                            {
+                                setPosition(ip, xp+(dt*warpx.moving_window_v*PhysConst::c), yp, zp)
+                            }
+                            if (warpx.moving_window_dir == 1)
+                            {
+                                setPosition(ip, xp, yp+(dt*warpx.moving_window_v*PhysConst::c), zp)
+                            }
+                            if (warpx.moving_window_dir == WARPX_ZINDEX)
+                            {
+                                setPosition(ip, xp, yp, zp+(dt*warpx.moving_window_v*PhysConst::c))
+                            }
+                        }
+                    else
+                    {
+                        for (auto ip=0; ip < np; ip++)
+                        {
+                            amrex::ParticleReal xp, yp, zp;
+                            getPosition(ip, xp, yp, zp);
+                            if (warpx.moving_window_dir == 0)
+                            {
+                                setPosition(ip, xp+(dt*warpx.moving_window_v*PhysConst::c)*m_intervals, yp, zp)
+                            }
+                            if (warpx.moving_window_dir == 1)
+                            {
+                                setPosition(ip, xp, yp+(dt*warpx.moving_window_v*PhysConst::c)*m_intervals, zp)
+                            }
+                            if (warpx.moving_window_dir == WARPX_ZINDEX)
+                            {
+                                setPosition(ip, xp, yp, zp+(dt*warpx.moving_window_v*PhysConst::c)*m_intervals)
+                            }
+                        }
+                    }
                 }
             }
         } // end particle iterator loop

@@ -100,6 +100,9 @@ private:
     //! Judges whether to gather raw fields or interpolated data
     bool raw_fields = false;
 
+    //! Judges whether to follow a moving window
+    bool do_moving_window_FP = false;
+
     /**
      * Built-in function in ReducedDiags to write out test data
      */
