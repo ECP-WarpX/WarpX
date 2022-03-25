@@ -388,6 +388,11 @@ void FieldProbe::ComputeDiags (int step)
     {
         const amrex::Geometry& gm = warpx.Geom(lev);
         const auto prob_lo = gm.ProbLo();
+        amrex::Real const dt = WarpX::GetInstance().getdt(lev);
+        if (do_moving_window_FP)
+        {
+            temp_dist_mult = dt*warpx.moving_window_v*PhysConst::c;
+        }
 
         // get MultiFab data at lev
         const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
@@ -433,6 +438,27 @@ void FieldProbe::ComputeDiags (int step)
 
             auto const np = pti.numParticles();
 
+            if (do_moving_window_FP)
+            {
+                int step_diff = step - m_last_compute_step;
+                for (auto ip=0; ip < np; ip++)
+                {
+                    amrex::ParticleReal xp, yp, zp;
+                    getPosition(ip, xp, yp, zp);
+                    if (warpx.moving_window_dir == 0)
+                    {
+                        setPosition(ip, xp+(temp_dist_mult*step_diff), yp, zp);
+                    }
+                    if (warpx.moving_window_dir == 1)
+                    {
+                        setPosition(ip, xp, yp+(temp_dist_mult*step_diff), zp);
+                    }
+                    if (warpx.moving_window_dir == WARPX_ZINDEX)
+                    {
+                        setPosition(ip, xp, yp, zp+(temp_dist_mult*step_diff));
+                    }
+                }
+            }
             if( ProbeInDomain() )
             {
                 const auto cell_size = gm.CellSizeArray();
@@ -484,7 +510,6 @@ void FieldProbe::ComputeDiags (int step)
                 const int temp_interp_order = interp_order;
                 const bool temp_raw_fields = raw_fields;
                 const bool temp_field_probe_integrate = m_field_probe_integrate;
-                amrex::Real const dt = WarpX::GetInstance().getdt(lev);
 
                 // Interpolating to the probe positions for each particle
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
@@ -569,49 +594,6 @@ void FieldProbe::ComputeDiags (int step)
                     }
                 /* m_data now contains up-to-date values for:
                  *  [x, y, z, Ex, Ey, Ez, Bx, By, Bz, and S] */
-                }
-                if (do_moving_window_FP)
-                {
-                    if (temp_field_probe_integrate)
-                    {
-                        for (auto ip=0; ip < np; ip++)
-                        {
-                            amrex::ParticleReal xp, yp, zp;
-                            getPosition(ip, xp, yp, zp);
-                            if (warpx.moving_window_dir == 0)
-                            {
-                                setPosition(ip, xp+(dt*warpx.moving_window_v*PhysConst::c), yp, zp);
-                            }
-                            if (warpx.moving_window_dir == 1)
-                            {
-                                setPosition(ip, xp, yp+(dt*warpx.moving_window_v*PhysConst::c), zp);
-                            }
-                            if (warpx.moving_window_dir == WARPX_ZINDEX)
-                            {
-                                setPosition(ip, xp, yp, zp+(dt*warpx.moving_window_v*PhysConst::c));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (auto ip=0; ip < np; ip++)
-                        {
-                            amrex::ParticleReal xp, yp, zp;
-                            getPosition(ip, xp, yp, zp);
-                            if (warpx.moving_window_dir == 0)
-                            {
-                                setPosition(ip, xp+(dt*warpx.moving_window_v*PhysConst::c)*(step-m_last_compute_step), yp, zp);
-                            }
-                            if (warpx.moving_window_dir == 1)
-                            {
-                                setPosition(ip, xp, yp+(dt*warpx.moving_window_v*PhysConst::c)*(step-m_last_compute_step), zp);
-                            }
-                            if (warpx.moving_window_dir == WARPX_ZINDEX)
-                            {
-                                setPosition(ip, xp, yp, zp+(dt*warpx.moving_window_v*PhysConst::c)*(step-m_last_compute_step));
-                            }
-                        }
-                    }
                 }
             }
         } // end particle iterator loop

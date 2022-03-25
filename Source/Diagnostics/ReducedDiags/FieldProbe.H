@@ -106,6 +106,8 @@ private:
     //! Judges whether to follow a moving window
     bool do_moving_window_FP = false;
 
+    //! Calculates particle movement in moving window sims
+    amrex::Real temp_dist_mult;
     /**
      * Built-in function in ReducedDiags to write out test data
      */
