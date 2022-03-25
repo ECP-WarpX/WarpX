@@ -391,7 +391,7 @@ void FieldProbe::ComputeDiags (int step)
         amrex::Real const dt = WarpX::GetInstance().getdt(lev);
         if (do_moving_window_FP)
         {
-            temp_dist_mult = dt*warpx.moving_window_v*PhysConst::c;
+            temp_dist_mult = dt*warpx.moving_window_v;
         }
 
         // get MultiFab data at lev
@@ -437,8 +437,7 @@ void FieldProbe::ComputeDiags (int step)
                 auto setPosition = SetParticlePosition(pti);
 
             auto const np = pti.numParticles();
-
-            if (do_moving_window_FP)
+            if (do_moving_window_FP && step > warpx.start_moving_window_step && step <= warpx.end_moving_window_step)
             {
                 int step_diff = step - m_last_compute_step;
                 for (auto ip=0; ip < np; ip++)
