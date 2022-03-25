@@ -231,7 +231,7 @@ openPMDbw.hydrogen.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz<0)
 # histograms with 2.0 degree acceptance angle in fw direction
 # 2 deg * pi / 180 : 0.03490658503 rad
 # half-angle +/-   : 0.017453292515 rad
-warpx.reduced_diags_names                   = histuH histue histuzAll
+warpx.reduced_diags_names                   = histuH histue histuzAll FieldProbe_Z FieldProbe_ScatPoint FieldProbe_ScatLine
 
 histuH.type                                 = ParticleHistogram
 histuH.intervals                            = 100
@@ -264,6 +264,32 @@ histuzAll.bin_min                              = -35.0
 histuzAll.bin_max                              =  35.0
 histuzAll.histogram_function(t,x,y,z,ux,uy,uz) = "uz"
 
+FieldProbe_Z.type = FieldProbe
+FieldProbe_Z.intervals = 100
+FieldProbe_Z.integrate = 0
+FieldProbe_Z.probe_geometry = Line
+FieldProbe_Z.x_probe = 0.0
+FieldProbe_Z.z_probe = -5.0e-6
+FieldProbe_Z.x1_probe = 0.0
+FieldProbe_Z.z1_probe = 25.0e-6
+FieldProbe_Z.resolution = 3712
+
+FieldProbe_ScatPoint.type = FieldProbe
+FieldProbe_ScatPoint.intervals = 1
+FieldProbe_ScatPoint.integrate = 0
+FieldProbe_ScatPoint.probe_geometry = Point
+FieldProbe_ScatPoint.x_probe = 0.0
+FieldProbe_ScatPoint.z_probe = 15e-6
+
+FieldProbe_ScatLine.type = FieldProbe
+FieldProbe_ScatLine.intervals = 100
+FieldProbe_ScatLine.integrate = 1
+FieldProbe_ScatLine.probe_geometry = Line
+FieldProbe_ScatLine.x_probe = -2.5e-6
+FieldProbe_ScatLine.z_probe = 15e-6
+FieldProbe_ScatLine.x1_probe = 2.5e-6
+FieldProbe_ScatLine.z1_probe = 15e-6
+FieldProbe_ScatLine.resolution = 201
 
 #################################
 # Physical Background
