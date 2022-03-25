@@ -469,12 +469,14 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 
             // computes current and old position in grid units
 #if defined(WARPX_DIM_RZ)
-            Real const xp_new = xp + 0.5_rt*dt*uxp[ip]*gaminv;
-            Real const yp_new = yp + 0.5_rt*dt*uyp[ip]*gaminv;
+            Real const xp_new = xp + (relative_time + 0.5_rt*dt)*uxp[ip]*gaminv;
+            Real const yp_new = yp + (relative_time + 0.5_rt*dt)*uyp[ip]*gaminv;
+            Real const xp_mid = xp_new - 0.5_rt*dt*uxp[ip]*gaminv;
+            Real const yp_mid = yp_new - 0.5_rt*dt*uyp[ip]*gaminv;
             Real const xp_old = xp_new - dt*uxp[ip]*gaminv;
             Real const yp_old = yp_new - dt*uyp[ip]*gaminv;
             Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
-            Real const rp_mid = std::sqrt(xp*xp + yp*yp);
+            Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid);
             Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
             Real costheta_new, sintheta_new;
             if (rp_new > 0._rt) {
@@ -486,8 +488,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             }
             amrex::Real costheta_mid, sintheta_mid;
             if (rp_mid > 0._rt) {
-                costheta_mid = xp/rp_mid;
-                sintheta_mid = yp/rp_mid;
+                costheta_mid = xp_mid/rp_mid;
+                sintheta_mid = yp_mid/rp_mid;
             } else {
                 costheta_mid = 1._rt;
                 sintheta_mid = 0._rt;
