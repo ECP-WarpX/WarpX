@@ -382,6 +382,7 @@ WarpX::OneStep_nosub (Real cur_time)
         SyncRho();
         const int coarse_lev = 0;
         regrid(coarse_lev, cur_time);
+        mypc->Redistribute();
         Print() << "Remove the patch" << '\n';
         warpx.ComputeDt()  ;
         PrintDtDxDyDz ();
