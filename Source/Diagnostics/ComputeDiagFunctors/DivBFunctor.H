@@ -21,7 +21,8 @@ public:
                   to the output diagnostic MultiFab, mf_dst.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
-    DivBFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, amrex::IntVect crse_ratio, const int ncomp=1);
+    DivBFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, amrex::IntVect crse_ratio,
+                bool convertRZmodes2cartesian=true, const int ncomp=1);
 
     /** \brief Compute DivB directly into mf_dst.
      *
@@ -34,6 +35,8 @@ private:
     /** Vector of pointer to source multifab Bx, By, Bz */
     std::array<const amrex::MultiFab * const, 3> m_arr_mf_src;
     int const m_lev; /**< level on which mf_src is defined (used in cylindrical) */
+    /**< (for cylindrical) whether to average all modes into 1 comp */
+    bool m_convertRZmodes2cartesian;
 };
 
 #endif // WARPX_DIVBFUNCTOR_H_

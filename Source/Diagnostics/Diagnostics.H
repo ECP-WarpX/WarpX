@@ -62,6 +62,13 @@ public:
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
     virtual void InitializeFieldFunctors (int lev) = 0;
+    /** Initialize functors that store pointers to the fields requested by the user.
+     *
+     * The function is called at initialization and when the domain is decomposed
+     * during the simulation to load-balance.
+     * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+     */
+    virtual void InitializeFieldFunctorsRZopenPMD ([[maybe_unused]] int lev) { }
     /** Initialize functors that store pointers to the species data requested by the user. */
     virtual void InitializeParticleFunctors () {}
     /** whether to compute and pack data in output buffers at this time step
