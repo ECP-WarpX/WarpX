@@ -724,10 +724,17 @@ public:
 
     static std::array<amrex::Real,3> CellSize (int lev);
     static amrex::RealBox getRealBox(const amrex::Box& bx, int lev);
-    static std::array<amrex::Real,3> LowerCorner (const amrex::Box& bx, const int lev,
-                                                  const bool with_galilean_shift, const amrex::Real time_shift_delta);
-    static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, const int lev,
-                                                  const bool with_galilean_shift, const amrex::Real time_shift_delta);
+
+    /**
+     * \brief Return the lower or upper corner of the box in real units.
+     * \param bx The box
+     * \param lev The refinement level of the box
+     * \param time_shift_delta The time relative to the current time at which to calculate the position
+     *                         (when v_galilean is not zero)
+     * \return An array of the position coordinates
+     */
+    static std::array<amrex::Real,3> LowerCorner (const amrex::Box& bx, const int lev, const amrex::Real time_shift_delta);
+    static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, const int lev, const amrex::Real time_shift_delta);
 
     static amrex::IntVect RefRatio (int lev);
 

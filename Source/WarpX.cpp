@@ -2177,22 +2177,18 @@ WarpX::getRealBox(const Box& bx, int lev)
 }
 
 std::array<Real,3>
-WarpX::LowerCorner(const Box& bx, const int lev, const bool with_galilean_shift, const amrex::Real time_shift_delta)
+WarpX::LowerCorner(const Box& bx, const int lev, const amrex::Real time_shift_delta)
 {
     auto & warpx = GetInstance();
     RealBox grid_box = getRealBox( bx, lev );
 
     const Real* xyzmin = grid_box.lo();
 
-    amrex::Array<amrex::Real,3> galilean_shift = { 0., 0., 0. };
-
-    if (with_galilean_shift) {
-        amrex::Real cur_time = warpx.gett_new(lev);
-        amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
-        galilean_shift = { warpx.m_v_galilean[0]*time_shift,
-                           warpx.m_v_galilean[1]*time_shift,
-                           warpx.m_v_galilean[2]*time_shift };
-    }
+    amrex::Real cur_time = warpx.gett_new(lev);
+    amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
+    amrex::Array<amrex::Real,3> galilean_shift = { warpx.m_v_galilean[0]*time_shift,
+                                                   warpx.m_v_galilean[1]*time_shift,
+                                                   warpx.m_v_galilean[2]*time_shift };
 
 #if defined(WARPX_DIM_3D)
     return { xyzmin[0] + galilean_shift[0], xyzmin[1] + galilean_shift[1], xyzmin[2] + galilean_shift[2] };
@@ -2206,22 +2202,18 @@ WarpX::LowerCorner(const Box& bx, const int lev, const bool with_galilean_shift,
 }
 
 std::array<Real,3>
-WarpX::UpperCorner(const Box& bx, const int lev, const bool with_galilean_shift, const amrex::Real time_shift_delta)
+WarpX::UpperCorner(const Box& bx, const int lev, const amrex::Real time_shift_delta)
 {
     auto & warpx = GetInstance();
     const RealBox grid_box = getRealBox( bx, lev );
 
     const Real* xyzmax = grid_box.hi();
 
-    amrex::Array<amrex::Real,3> galilean_shift = { 0., 0., 0. };
-
-    if (with_galilean_shift) {
-        amrex::Real cur_time = warpx.gett_new(lev);
-        amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
-        galilean_shift = { warpx.m_v_galilean[0]*time_shift,
-                           warpx.m_v_galilean[1]*time_shift,
-                           warpx.m_v_galilean[2]*time_shift };
-    }
+    amrex::Real cur_time = warpx.gett_new(lev);
+    amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
+    amrex::Array<amrex::Real,3> galilean_shift = { warpx.m_v_galilean[0]*time_shift,
+                                                   warpx.m_v_galilean[1]*time_shift,
+                                                   warpx.m_v_galilean[2]*time_shift };
 
 #if defined(WARPX_DIM_3D)
     return { xyzmax[0] + galilean_shift[0], xyzmax[1] + galilean_shift[1], xyzmax[2] + galilean_shift[2] };
