@@ -52,8 +52,7 @@ def do_analysis(single_precision = False):
     z = ad['electrons', 'particle_position_z'].to_ndarray()
     uz = ad['electrons', 'particle_momentum_z'].to_ndarray() / m_e / c
     w  = ad['electrons', 'particle_weight'].to_ndarray()
-    filt = np.where(uz < 0, 1, 0)
-    print(np.sum(filt), len(filt))
+    filt = uz < 0
 
     x_ind = ((x - ds.domain_left_edge[0].value) / dx[0]).astype(int)
     y_ind = ((y - ds.domain_left_edge[1].value) / dx[1]).astype(int)
@@ -87,7 +86,7 @@ def do_analysis(single_precision = False):
     z = ad['protons', 'particle_position_z'].to_ndarray()
     uz = ad['protons', 'particle_momentum_z'].to_ndarray() / m_p / c
     w  = ad['protons', 'particle_weight'].to_ndarray()
-    filt = np.where(uz < 0, 1, 0)
+    filt = uz < 0
 
     x_ind = ((x - ds.domain_left_edge[0].value) / dx[0]).astype(int)
     y_ind = ((y - ds.domain_left_edge[1].value) / dx[1]).astype(int)
@@ -121,7 +120,7 @@ def do_analysis(single_precision = False):
     z = ad['photons', 'particle_position_z'].to_ndarray()
     uz = ad['photons', 'particle_momentum_z'].to_ndarray() / m_e / c
     w  = ad['photons', 'particle_weight'].to_ndarray()
-    filt = np.where(uz < 0, 1, 0)
+    filt = uz < 0
 
     x_ind = ((x - ds.domain_left_edge[0].value) / dx[0]).astype(int)
     y_ind = ((y - ds.domain_left_edge[1].value) / dx[1]).astype(int)
