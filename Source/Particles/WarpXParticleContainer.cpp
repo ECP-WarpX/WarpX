@@ -589,9 +589,9 @@ WarpXParticleContainer::DepositCurrent (
 void
 WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                        const int * const ion_lev,
-                                       amrex::MultiFab* rho, int icomp,
+                                       amrex::MultiFab* rho, const int icomp,
                                        const long offset, const long np_to_depose,
-                                       int thread_num, int lev, int depos_lev)
+                                       const int thread_num, const int lev, const int depos_lev)
 {
     // If user decides not to deposit
     if (do_not_deposit) return;
