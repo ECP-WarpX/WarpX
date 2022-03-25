@@ -90,14 +90,10 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::ParticleReal ux = p.rdata(PIdx::ux) / PhysConst::c;
                 amrex::ParticleReal uy = p.rdata(PIdx::uy) / PhysConst::c;
                 amrex::ParticleReal uz = p.rdata(PIdx::uz) / PhysConst::c;
-                amrex::Real value = map_fn(xw, yw, zw, ux, uy, uz);
-                amrex::Real filter = 1._rt;
-                if (do_filter) {
-                    amrex::Real filter_val = filter_fn(xw, yw, zw, ux, uy, uz);
-                    if (filter_val >= 0.5) filter = 1._rt;
-                    else filter = 0._rt;
-                }
-                amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), p.rdata(PIdx::w) * value * filter);
+                amrex::Real value;
+                if ((do_filter) && (filter_fn(xw, yw, zw, ux, uy, uz) <= 0.5)) value = 0._rt;
+                else value = map_fn(xw, yw, zw, ux, uy, uz);
+                amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), p.rdata(PIdx::w) * value);
             });
     // Add the weight for each particle -- total number of particles of this species
     ParticleToMesh(pc, ppc_mf, m_lev,
@@ -133,12 +129,9 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::ParticleReal ux = p.rdata(PIdx::ux) / PhysConst::c;
                 amrex::ParticleReal uy = p.rdata(PIdx::uy) / PhysConst::c;
                 amrex::ParticleReal uz = p.rdata(PIdx::uz) / PhysConst::c;
-                amrex::Real filter = 1._rt;
-                if (do_filter) {
-                    amrex::Real filter_val = filter_fn(xw, yw, zw, ux, uy, uz);
-                    if (filter_val >= 0.5) filter = 1._rt;
-                    else filter = 0._rt;
-                }
+                amrex::Real filter;
+                if ((do_filter) && (filter_fn(xw, yw, zw, ux, uy, uz) <= 0.5)) filter = 0._rt;
+                else filter = 1._rt;
                 amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), p.rdata(PIdx::w) * filter);
             });
     // Divide value by number of particles for average. Set average to zero if there are no particles
