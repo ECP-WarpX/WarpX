@@ -805,6 +805,7 @@ WarpX::OneStep_sub1 (Real curtime)
         SyncCurrent();
         SyncRho();
         regrid(coarse_lev, curtime);
+        mypc->Redistribute();
         Print() << "Remove the patch" << '\n';
         do_subcycling=0;
     }
