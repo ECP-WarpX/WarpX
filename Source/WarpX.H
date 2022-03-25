@@ -726,7 +726,8 @@ public:
     static amrex::RealBox getRealBox(const amrex::Box& bx, int lev);
     static std::array<amrex::Real,3> LowerCorner (const amrex::Box& bx, const int lev,
                                                   const bool with_galilean_shift, const amrex::Real time_shift_delta);
-    static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, int lev);
+    static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, const int lev,
+                                                  const bool with_galilean_shift, const amrex::Real time_shift_delta);
 
     static amrex::IntVect RefRatio (int lev);
 

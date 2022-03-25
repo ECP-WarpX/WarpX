@@ -2206,16 +2206,31 @@ WarpX::LowerCorner(const Box& bx, const int lev, const bool with_galilean_shift,
 }
 
 std::array<Real,3>
-WarpX::UpperCorner(const Box& bx, int lev)
+WarpX::UpperCorner(const Box& bx, const int lev, const bool with_galilean_shift, const amrex::Real time_shift_delta)
 {
+    auto & warpx = GetInstance();
     const RealBox grid_box = getRealBox( bx, lev );
+
     const Real* xyzmax = grid_box.hi();
+
+    amrex::Array<amrex::Real,3> galilean_shift = { 0., 0., 0. };
+
+    if (with_galilean_shift) {
+        amrex::Real cur_time = warpx.gett_new(lev);
+        amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
+        galilean_shift = { warpx.m_v_galilean[0]*time_shift,
+                           warpx.m_v_galilean[1]*time_shift,
+                           warpx.m_v_galilean[2]*time_shift };
+    }
+
 #if defined(WARPX_DIM_3D)
-    return { xyzmax[0], xyzmax[1], xyzmax[2] };
+    return { xyzmax[0] + galilean_shift[0], xyzmax[1] + galilean_shift[1], xyzmax[2] + galilean_shift[2] };
+
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    return { xyzmax[0], std::numeric_limits<Real>::max(), xyzmax[1] };
+    return { xyzmax[0] + galilean_shift[0], std::numeric_limits<Real>::max(), xyzmax[1] + galilean_shift[1] };
+
 #elif defined(WARPX_DIM_1D_Z)
-    return { std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), xyzmax[0] };
+    return { std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), xyzmax[0] + galilean_shift[0] };
 #endif
 }
 
