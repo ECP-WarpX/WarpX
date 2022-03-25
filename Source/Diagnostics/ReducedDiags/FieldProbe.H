@@ -76,7 +76,7 @@ private:
     //! counts number of particles for all MPI ranks
     long m_valid_particles {0};
 
-    //! counts the number of steps since last computation (for non-integrated detectors)
+    //! remember the last time `ComputeDiags` was called to count the number of steps  in between(for non-integrated detectors)
     int m_last_compute_step = 0;
 
     //! determines geometry of detector point distribution
