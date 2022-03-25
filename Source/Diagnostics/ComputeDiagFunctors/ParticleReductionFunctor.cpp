@@ -52,7 +52,7 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
     red_mf.setVal(0._rt);
     ppc_mf.setVal(0._rt);
     auto& pc = warpx.GetPartContainer().GetParticleContainer(m_ispec);
-    // Copy over member variables so they can be captured by the lambda
+    // Copy over member variables so they can be captured in the lambda
     auto map_fn = m_map_fn;
     auto filter_fn = m_filter_fn;
     bool do_filter = m_do_filter;

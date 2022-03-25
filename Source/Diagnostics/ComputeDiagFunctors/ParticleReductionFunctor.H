@@ -48,7 +48,7 @@ private:
     bool const m_do_filter; /**< whether to apply #m_filter_fn */
     /** Parser function to be averaged by the functor. Arguments: x, y, z, ux, uy, uz */
     std::unique_ptr<amrex::Parser> m_map_fn_parser;
-    /** Parser function to filter particles before pass to map.. Arguments: x, y, z, ux, uy, uz */
+    /** Parser function to filter particles before pass to map. Arguments: x, y, z, ux, uy, uz */
     std::unique_ptr<amrex::Parser> m_filter_fn_parser;
     /** Compiled #m_map_fn_parser */
     amrex::ParserExecutor<6> m_map_fn;
