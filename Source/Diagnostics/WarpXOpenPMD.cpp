@@ -721,6 +721,16 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
         SetConstParticleRecordsEDPIC(currSpecies, NewParticleVectorSize, charge, mass);
     }
 
+
+    amrex::Print() << "isBTD=" << isBTD << std::endl;
+    amrex::Print() << "iteration=" << iteration << std::endl;
+    amrex::Print() << "num_dump_particles=" << num_dump_particles << std::endl;
+    amrex::Print() << "ParticleFlushOffset=" << ParticleFlushOffset << std::endl;
+    amrex::Print() << "doParticleSetup=" << doParticleSetup << std::endl;
+    amrex::Print() << "is_resizing_flush=" << is_resizing_flush << std::endl;
+    amrex::Print() << "is_last_flush_and_never_particles=" << is_last_flush_and_never_particles << std::endl;
+    amrex::Print() << "is_last_flush_to_step=" << is_last_flush_to_step << std::endl;
+
     // open files from all processors, in case some will not contribute below
     m_Series->flush();
 
