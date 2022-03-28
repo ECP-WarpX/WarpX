@@ -31,10 +31,10 @@ public:
         const std::string prefix, int file_min_digits,
         bool plot_raw_fields,
         bool plot_raw_fields_guards,
-        bool plot_raw_rho, bool plot_raw_F,
         bool isBTD = false, int snapshotID = -1,
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
-        bool isLastBTDFlush = false) const override;
+        bool isLastBTDFlush = false,
+        const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const override;
 
     /** Write general info of the run into the plotfile */
     void WriteJobInfo(const std::string& dir) const;
@@ -42,14 +42,14 @@ public:
     void WriteWarpXHeader(const std::string& name, amrex::Vector<amrex::Geometry>& geom) const;
     void WriteAllRawFields (const bool plot_raw_fields, const int nlevels,
                             const std::string& plotfilename,
-                            const bool plot_raw_fields_guards,
-                            const bool plot_raw_rho, bool plot_raw_F) const;
+                            const bool plot_raw_fields_guards) const;
     /** \brief Write particles data to file.
      * \param[in] filename name of output directory
      * \param[in] particle_diags Each element of this vector handles output of 1 species.
      */
     void WriteParticles(const std::string& filename,
-                        const amrex::Vector<ParticleDiag>& particle_diags) const;
+                        const amrex::Vector<ParticleDiag>& particle_diags,
+                        bool isBTD = false) const;
 
     ~FlushFormatPlotfile() {}
 };

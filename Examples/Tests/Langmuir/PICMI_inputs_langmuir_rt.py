@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # --- Simple example of Langmuir oscillations in a uniform plasma
 
 from pywarpx import picmi
@@ -99,4 +101,3 @@ sim.add_diagnostic(part_diag1)
 
 # Alternatively, sim.step will run WarpX, controlling it from Python
 sim.step()
-

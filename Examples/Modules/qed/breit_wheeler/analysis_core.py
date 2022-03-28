@@ -1,16 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
 # Copyright 2019 Luca Fedeli, Maxence Thevenet
 #
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
-# -*- coding: utf-8 -*-
-
-import numpy as np
-import scipy.special as spe
-import scipy.integrate as integ
-import scipy.stats as st
 
 import matplotlib.pyplot as plt
+import numpy as np
+import scipy.integrate as integ
+import scipy.special as spe
+import scipy.stats as st
 
 # This script performs detailed checks of the Breit-Wheeler pair production process.
 # Four populations of photons are initialized with different momenta in different
@@ -268,4 +269,3 @@ def check(dt, particle_data):
         check_opt_depths(phot_data, ele_data, pos_data)
 
         print("*************\n")
-

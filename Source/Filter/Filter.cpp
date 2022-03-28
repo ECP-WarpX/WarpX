@@ -92,14 +92,16 @@ void Filter::DoFilter (const Box& tbx,
                        Array4<Real      > const& dst,
                        int scomp, int dcomp, int ncomp)
 {
+#if (AMREX_SPACEDIM >= 2)
     amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
     amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
 #endif
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
     Dim3 slen_local = slen;
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
@@ -129,7 +131,7 @@ void Filter::DoFilter (const Box& tbx,
 
         dst(i,j,k,dcomp+n) = d;
     });
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
@@ -155,6 +157,32 @@ void Filter::DoFilter (const Box& tbx,
 
         dst(i,j,k,dcomp+n) = d;
     });
+#elif defined(WARPX_DIM_1D_Z)
+    AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
+    {
+        Real d = 0.0;
+
+        // Pad source array with zeros beyond ghost cells
+        // for out-of-bound accesses due to large-stencil operations
+        const auto src_zeropad = [src] (const int jj, const int kk, const int ll, const int nn) noexcept
+        {
+            return src.contains(jj,kk,ll) ? src(jj,kk,ll,nn) : 0.0_rt;
+        };
+
+        for         (int iz=0; iz < slen_local.z; ++iz){
+            for     (int iy=0; iy < slen_local.y; ++iy){
+                for (int ix=0; ix < slen_local.x; ++ix){
+                    Real sss = sz[iy];
+                    d += sss*( src_zeropad(i-ix,j,k,scomp+n)
+                              +src_zeropad(i+ix,j,k,scomp+n));
+                }
+            }
+        }
+
+        dst(i,j,k,dcomp+n) = d;
+    });
+#else
+    amrex::Abort("Filter not implemented for the current geometry!");
 #endif
 }
 
@@ -247,8 +275,10 @@ void Filter::DoFilter (const Box& tbx,
     const auto lo = amrex::lbound(tbx);
     const auto hi = amrex::ubound(tbx);
     // tmp and dst are of type Array4 (Fortran ordering)
+#if (AMREX_SPACEDIM >= 2)
     amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
     amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
 #endif
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
@@ -265,17 +295,19 @@ void Filter::DoFilter (const Box& tbx,
         for         (int iz=0; iz < slen.z; ++iz){
             for     (int iy=0; iy < slen.y; ++iy){
                 for (int ix=0; ix < slen.x; ++ix){
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                     Real sss = sx[ix]*sy[iy]*sz[iz];
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                     Real sss = sx[ix]*sz[iy];
+#else
+                    Real sss = sz[ix];
 #endif
                     // 3 nested loop on 3D array
                     for         (int k = lo.z; k <= hi.z; ++k) {
                         for     (int j = lo.y; j <= hi.y; ++j) {
                             AMREX_PRAGMA_SIMD
                             for (int i = lo.x; i <= hi.x; ++i) {
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j-iy,k-iz,scomp+n)
                                                           +tmp(i+ix,j-iy,k-iz,scomp+n)
                                                           +tmp(i-ix,j+iy,k-iz,scomp+n)
@@ -284,11 +316,16 @@ void Filter::DoFilter (const Box& tbx,
                                                           +tmp(i+ix,j-iy,k+iz,scomp+n)
                                                           +tmp(i-ix,j+iy,k+iz,scomp+n)
                                                           +tmp(i+ix,j+iy,k+iz,scomp+n));
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j-iy,k,scomp+n)
                                                           +tmp(i+ix,j-iy,k,scomp+n)
                                                           +tmp(i-ix,j+iy,k,scomp+n)
                                                           +tmp(i+ix,j+iy,k,scomp+n));
+#elif defined(WARPX_DIM_1D_Z)
+                                dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j,k,scomp+n)
+                                                          +tmp(i+ix,j,k,scomp+n));
+#else
+    amrex::Abort("Filter not implemented for the current geometry!");
 #endif
                             }
                         }

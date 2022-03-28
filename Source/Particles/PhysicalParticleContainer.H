@@ -101,6 +101,7 @@ public:
      * \param t current physical time
      * \param dt time step by which particles are advanced
      * \param a_dt_type type of time step (used for sub-cycling)
+     * \param skip_deposition Skip the charge and current deposition.
      *
      * Evolve iterates over particle iterator (each box) and performs filtering,
      * field gather, particle push and current deposition for all particles
@@ -139,7 +140,7 @@ public:
                          amrex::FArrayBox const * bxfab,
                          amrex::FArrayBox const * byfab,
                          amrex::FArrayBox const * bzfab,
-                         const amrex::IntVect ngE, const int /*e_is_nodal*/,
+                         const amrex::IntVect ngEB, const int /*e_is_nodal*/,
                          const long offset,
                          const long np_to_push,
                          int lev, int gather_lev,
@@ -161,11 +162,7 @@ public:
                         WarpXParIter& pti,
                         int const lev,
                         amrex::iMultiFab const* current_masks,
-                        amrex::iMultiFab const* gather_masks,
-                        RealVector& uxp,
-                        RealVector& uyp,
-                        RealVector& uzp,
-                        RealVector& wp );
+                        amrex::iMultiFab const* gather_masks );
 
     virtual void PostRestart () final {}
 
@@ -173,7 +170,7 @@ public:
 
     IonizationFilterFunc getIonizationFunc (const WarpXParIter& pti,
                                             int lev,
-                                            amrex::IntVect ngE,
+                                            amrex::IntVect ngEB,
                                             const amrex::FArrayBox& Ex,
                                             const amrex::FArrayBox& Ey,
                                             const amrex::FArrayBox& Ez,
@@ -199,10 +196,9 @@ public:
     /**
      * Create new macroparticles for this species, with a fixed
      * number of particles per cell in a plane.
-     * @param[in] lev the index of the refinement level
      * @param[in] dt time step size, used to partially advance the particles
     */
-    void AddPlasmaFlux (int lev, amrex::Real dt);
+    void AddPlasmaFlux (amrex::Real dt);
 
     void MapParticletoBoostedFrame (amrex::Real& x, amrex::Real& y, amrex::Real& z,
                                     amrex::Real& ux, amrex::Real& uy, amrex::Real& uz);
@@ -303,7 +299,6 @@ public:
     * \brief This function determines if resampling should be done for the current species, and
     * if so, performs the resampling.
     *
-    * @param[in] resampler the Resampling object used for resampling.
     * @param[in] timestep the current timestep.
     */
     void resample (const int timestep) override final;
@@ -364,7 +359,7 @@ protected:
     void ContinuousInjection (const amrex::RealBox& injection_box) override;
 
     // Continuously inject a flux of particles from a defined surface
-    void ContinuousFluxInjection (const amrex::Real dt) override;
+    void ContinuousFluxInjection (const amrex::Real t, const amrex::Real dt) override;
 
     //This function return true if the PhysicalParticleContainer contains electrons
     //or positrons, false otherwise
@@ -389,6 +384,14 @@ protected:
     // A smart pointer to an instance of a Breit Wheeler engine [photons only!]
     std::shared_ptr<BreitWheelerEngine> m_shr_p_bw_engine;
 #endif
+    /* Vector of user-defined integer attributes for species, species_name */
+    std::vector<std::string> m_user_int_attribs;
+    /* Vector of user-defined real attributes for species, species_name */
+    std::vector<std::string> m_user_real_attribs;
+    /* Vector of user-defined parser for initializing user-defined integer attributes */
+    std::vector< std::unique_ptr<amrex::Parser> > m_user_int_attrib_parser;
+    /* Vector of user-defined parser for initializing user-defined real attributes */
+    std::vector< std::unique_ptr<amrex::Parser> > m_user_real_attrib_parser;
 
 };
 

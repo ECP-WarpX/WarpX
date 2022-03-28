@@ -20,6 +20,7 @@
 #   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
 #include "PhysicalParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
@@ -77,12 +78,7 @@ public:
     GetParticleContainerPtr (int ispecies) const {return allcontainers[ispecies].get();}
 
     WarpXParticleContainer&
-    GetParticleContainerFromName (std::string name) const {
-        auto it = std::find(species_names.begin(), species_names.end(), name);
-        WarpXUtilMsg::AlwaysAssert(it != species_names.end(), "ERROR: Unknown species name");
-        int i = std::distance(species_names.begin(), it);
-        return *allcontainers[i];
-    }
+    GetParticleContainerFromName (const std::string& name) const;
 
 #ifdef WARPX_USE_OPENPMD
     std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int ispecies) {
@@ -179,7 +175,7 @@ public:
                             const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                             const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
 
-    void doCollisions (amrex::Real cur_time);
+    void doCollisions (amrex::Real cur_time, amrex::Real dt);
 
     /**
     * \brief This function loops over all species and performs resampling if appropriate.
@@ -246,6 +242,17 @@ public:
     int nSpeciesBackTransformedDiagnostics() const {return nspecies_back_transformed_diagnostics;}
     int mapSpeciesBackTransformedDiagnostics(int i) const {return map_species_back_transformed_diagnostics[i];}
     int doBackTransformedDiagnostics() const {return do_back_transformed_diagnostics;}
+    /** Whether back-transformed diagnostics need to be performed for any plasma species.
+     *
+     * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
+     */
+    void SetDoBackTransformedParticles (const bool do_back_transformed_particles);
+    /** Whether back-transformed diagnostics is set for species with species_name.
+     *
+     * \param[in] species_name The species for which back-transformed particles is set.
+     * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
+     */
+    void SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles);
 
     int nSpeciesDepositOnMainGrid () const {
         bool const onMainGrid = true;
@@ -274,7 +281,7 @@ public:
     int doContinuousInjection() const;
 
     // Inject particles from a surface during the simulation
-    void ContinuousFluxInjection(amrex::Real dt) const;
+    void ContinuousFluxInjection(amrex::Real t, amrex::Real dt) const;
 
     std::vector<std::string> GetSpeciesNames() const { return species_names; }
 
@@ -290,8 +297,8 @@ public:
 
     void ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
 
-    std::string m_B_ext_particle_s = "default";
-    std::string m_E_ext_particle_s = "default";
+    std::string m_B_ext_particle_s = "none";
+    std::string m_E_ext_particle_s = "none";
     // External fields added to particle fields.
     amrex::Vector<amrex::Real> m_B_external_particle;
     amrex::Vector<amrex::Real> m_E_external_particle;
@@ -495,6 +502,7 @@ private:
     // MultiParticleContainer for 0<i<nspecies_back_transformed_diagnostics
     std::vector<int> map_species_back_transformed_diagnostics;
     int do_back_transformed_diagnostics = 0;
+    bool m_do_back_transformed_particles = false;
 
     void MFItInfoCheckTiling(const WarpXParticleContainer& /*pc_src*/) const noexcept
     {
@@ -506,7 +514,7 @@ private:
                              First const& pc_dst, Args const&... others) const noexcept
     {
         if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
                 "For particle creation processes, either all or none of the "
                 "particle species must use tiling.");
         }

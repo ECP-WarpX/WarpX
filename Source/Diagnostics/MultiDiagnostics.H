@@ -26,7 +26,7 @@ public:
     /** \brief Loop over diags in alldiags and call their InitDiags */
     void InitData ();
     /** \brief Called at each iteration. Compute diags and flush. */
-    void FilterComputePackFlush (int step, bool force_flush=false);
+    void FilterComputePackFlush (int step, bool force_flush=false, bool BackTransform=false);
     /** \brief Called only at the last iteration. Loop over each diag and if m_dump_last_timestep
      *         is true, compute diags and flush with force_flush=true. */
     void FilterComputePackFlushLastTimestep (int step);

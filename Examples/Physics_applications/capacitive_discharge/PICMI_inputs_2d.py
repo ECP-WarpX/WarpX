@@ -1,16 +1,14 @@
+#!/usr/bin/env python3
+#
 # --- Input file for MCC testing. There is already a test of the MCC
 # --- functionality. This tests the PICMI interface for the MCC and
 # --- provides an example of how an external Poisson solver can be
 # --- used for the field solve step.
 
-# _libwarpx requires the geometry be set before importing
-from pywarpx import geometry
-geometry.coord_sys = 0
-geometry.prob_lo = [0, 0]
-
 import numpy as np
-from scipy.sparse import csc_matrix, linalg as sla
-from pywarpx import picmi, callbacks, _libwarpx, fields
+from pywarpx import callbacks, fields, picmi
+from scipy.sparse import csc_matrix
+from scipy.sparse import linalg as sla
 
 constants = picmi.constants
 
@@ -23,7 +21,7 @@ D_CA = 0.067 # m
 N_INERT = 9.64e20 # m^-3
 T_INERT = 300.0 # K
 
-FREQ = 13.56e6 # MHz
+FREQ = 13.56e6 # Hz
 
 VOLTAGE = 450.0
 
@@ -178,7 +176,7 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
         calculating phi from rho."""
         right_voltage = eval(
             self.right_voltage,
-            {'t':_libwarpx.libwarpx.warpx_gett_new(0), 'sin':np.sin, 'pi':np.pi}
+            {'t':sim.extension.gett_new(0), 'sin':np.sin, 'pi':np.pi}
         )
         left_voltage = 0.0
 
@@ -292,6 +290,7 @@ mcc_ions = picmi.MCCCollisions(
 
 grid = picmi.Cartesian2DGrid(
     number_of_cells = [nx, ny],
+    warpx_max_grid_size=128,
     lower_bound = [xmin, ymin],
     upper_bound = [xmax, ymax],
     bc_xmin = 'dirichlet',

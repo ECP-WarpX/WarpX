@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019 Andrew Myers, Jean-Luc Vay, Maxence Thevenet
 # Remi Lehe, Weiqun Zhang
@@ -8,11 +8,15 @@
 # License: BSD-3-Clause-LBNL
 
 
+import os
 import sys
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -25,5 +29,5 @@ s = 1 + np.sin(2*np.pi*t)
 plt.plot(t, s)
 plt.savefig("laser_analysis.png")
 
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn)

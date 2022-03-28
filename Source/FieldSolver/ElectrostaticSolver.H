@@ -10,13 +10,9 @@
 #include "Utils/WarpXUtil.H"
 
 #include <AMReX_Array.H>
-#ifdef WARPX_DIM_RZ
-#    include <AMReX_MLNodeLaplacian.H>
-#else
-#    include <AMReX_MLNodeTensorLaplacian.H>
-#    ifdef AMREX_USE_EB
-#        include <AMReX_MLEBNodeFDLaplacian.H>
-#    endif
+#include <AMReX_MLNodeTensorLaplacian.H>
+#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
+#    include <AMReX_MLEBNodeFDLaplacian.H>
 #endif
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
@@ -31,7 +27,8 @@ struct PhiCalculatorEB {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real operator() (const amrex::Real x, const amrex::Real z) const noexcept
     {
-        return potential_eb(x, 0.0, z, t);
+        using namespace amrex::literals;
+        return potential_eb(x, 0.0_rt, z, t);
     }
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE

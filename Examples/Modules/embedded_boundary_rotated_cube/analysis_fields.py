@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2021 Lorenzo Giacomel
 #
@@ -7,10 +7,13 @@
 # License: BSD-3-Clause-LBNL
 
 
-import yt
-import os, sys
-from scipy.constants import mu_0, pi, c
+import os
+import sys
+
 import numpy as np
+from scipy.constants import c, mu_0, pi
+import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

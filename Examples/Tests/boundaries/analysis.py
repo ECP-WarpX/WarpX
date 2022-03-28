@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2021 David Grote
 #
@@ -14,10 +14,13 @@ along each of the three axis. It launches particles heading toward each of the b
 and checks that they end up in the correct place (or are deleted).
 """
 
+import os
 import sys
-import yt
+
 import numpy as np
-from scipy.constants import m_e, c
+from scipy.constants import c, m_e
+import yt
+
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -101,6 +104,5 @@ assert (np.all(vz == +vz0)), 'Periodic particle velocity not correct'
 assert (np.all(np.abs((xx - xxa)/xx) < 1.e-15)), 'Reflecting particle position not correct'
 assert (np.all(np.abs((zz - zza)/zz) < 1.e-15)), 'Periodic particle position not correct'
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
-

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019 Andrew Myers, Jean-Luc Vay, Maxence Thevenet
 # Remi Lehe, Weiqun Zhang, Luca Fedeli
@@ -17,14 +17,18 @@
 # the simulation and it compares it with theory. It also checks that the
 # central frequency of the Fourier transform is the expected one.
 
-import yt
+import os
 import sys
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from scipy.signal import hilbert
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -198,7 +202,7 @@ def main():
 
     check_laser(filename_end)
 
-    test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
+    test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename_end)
 
 if __name__ == "__main__":

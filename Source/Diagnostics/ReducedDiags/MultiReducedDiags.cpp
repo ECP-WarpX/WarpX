@@ -21,6 +21,7 @@
 #include "ParticleNumber.H"
 #include "RhoMaximum.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -80,9 +81,28 @@ MultiReducedDiags::MultiReducedDiags ()
 }
 // end constructor
 
+void MultiReducedDiags::InitData ()
+{
+    // loop over all reduced diags
+    for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
+    {
+        m_multi_rd[i_rd] -> InitData();
+    }
+}
+
+void MultiReducedDiags::LoadBalance () {
+    // loop over all reduced diags
+    for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
+    {
+        m_multi_rd[i_rd] -> LoadBalance();
+    }
+}
+
 // call functions to compute diags
 void MultiReducedDiags::ComputeDiags (int step)
 {
+    WARPX_PROFILE("MultiReducedDiags::ComputeDiags()");
+
     // loop over all reduced diags
     for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
     {

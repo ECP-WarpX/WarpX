@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019-2020 Axel Huebl, Remi Lehe
 #
@@ -15,13 +15,16 @@ This script verifies that the field at the end of the simulation corresponds
 to the theoretical field of a Gaussian beam.
 """
 import sys
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import yt
 import numpy as np
 import scipy.constants as scc
 from scipy.special import gammainc
+import yt
+
 yt.funcs.mylog.setLevel(0)
 
 # Parameters from the Simulation
@@ -48,7 +51,7 @@ elif ds.dimensionality == 3:
     Ey_array = ad0[("mesh", "Ey")].to_ndarray()
     Ez_array = ad0[("mesh", "Ez")].to_ndarray()
     E_array = ( Ex_array**2 + Ey_array**2 + Ez_array**2 )**.5
-    relative_tolerance = 0.15
+    relative_tolerance = 0.165
 
 # Extract grid coordinates
 Nx, Ny, Nz =  ds.domain_dimensions

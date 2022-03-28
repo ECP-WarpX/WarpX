@@ -1,26 +1,37 @@
+from distutils.command.build import build
+from distutils.command.clean import clean
+from distutils.version import LooseVersion
 import os
-import re
-import sys
 import platform
+import re
 import shutil
 import subprocess
+import sys
 
-from setuptools import setup, Extension
+from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
-from distutils.command.build import build
-from distutils.version import LooseVersion
 
 
 class CopyPreBuild(build):
     def initialize_options(self):
         build.initialize_options(self)
-        # We just overwrite this because the default "build/lib" clashes with
-        # directories many developers have in their source trees;
+        # We just overwrite this because the default "build" (and "build/lib")
+        # clashes with directories many developers have in their source trees;
         # this can create confusing results with "pip install .", which clones
         # the whole source tree by default
-        self.build_lib = '_tmppythonbuild'
+        self.build_base = '_tmppythonbuild'
 
     def run(self):
+        # remove existing build directory
+        #   by default, this stays around. we want to make sure generated
+        #   files like libwarpx.(2d|3d|rz).(so|pyd) are always only the
+        #   ones we want to package and not ones from an earlier wheel's stage
+        c = clean(self.distribution)
+        c.all = True
+        c.finalize_options()
+        c.run()
+
+        # call superclass
         build.run(self)
 
         # matches: libwarpx.(2d|3d|rz).(so|pyd)
@@ -52,7 +63,7 @@ class CMakeBuild(build_ext):
             out = subprocess.check_output(['cmake', '--version'])
         except OSError:
             raise RuntimeError(
-                "CMake 3.15.0+ must be installed to build the following " +
+                "CMake 3.18.0+ must be installed to build the following " +
                 "extensions: " +
                 ", ".join(e.name for e in self.extensions))
 
@@ -60,8 +71,8 @@ class CMakeBuild(build_ext):
             r'version\s*([\d.]+)',
             out.decode()
         ).group(1))
-        if cmake_version < '3.15.0':
-            raise RuntimeError("CMake >= 3.15.0 is required")
+        if cmake_version < '3.18.0':
+            raise RuntimeError("CMake >= 3.18.0 is required")
 
         for ext in self.extensions:
             self.build_extension(ext)
@@ -74,7 +85,7 @@ class CMakeBuild(build_ext):
         if not extdir.endswith(os.path.sep):
             extdir += os.path.sep
 
-        r_dim = re.search(r'warpx_(2|3|rz)(?:d*)', ext.name)
+        r_dim = re.search(r'warpx_(1|2|3|rz)(?:d*)', ext.name)
         dims = r_dim.group(1).upper()
 
         cmake_args = [
@@ -117,6 +128,10 @@ class CMakeBuild(build_ext):
         # further dependency control (developers & package managers)
         if WARPX_AMREX_SRC:
             cmake_args.append('-DWarpX_amrex_src=' + WARPX_AMREX_SRC)
+        if WARPX_AMREX_REPO:
+            cmake_args.append('-DWarpX_amrex_repo=' + WARPX_AMREX_REPO)
+        if WARPX_AMREX_BRANCH:
+            cmake_args.append('-DWarpX_amrex_branch=' + WARPX_AMREX_BRANCH)
         if WARPX_OPENPMD_SRC:
             cmake_args.append('-DWarpX_openpmd_src=' + WARPX_OPENPMD_SRC)
         if WARPX_PICSAR_SRC:
@@ -184,12 +199,12 @@ env = os.environ.copy()
 WARPX_COMPUTE = env.pop('WARPX_COMPUTE', 'OMP')
 WARPX_MPI = env.pop('WARPX_MPI', 'OFF')
 WARPX_EB = env.pop('WARPX_EB', 'OFF')
-WARPX_OPENPMD = env.pop('WARPX_OPENPMD', 'OFF')
+WARPX_OPENPMD = env.pop('WARPX_OPENPMD', 'ON')
 WARPX_PRECISION = env.pop('WARPX_PRECISION', 'DOUBLE')
 WARPX_PSATD = env.pop('WARPX_PSATD', 'OFF')
 WARPX_QED = env.pop('WARPX_QED', 'ON')
 WARPX_QED_TABLE_GEN = env.pop('WARPX_QED_TABLE_GEN', 'OFF')
-WARPX_DIMS = env.pop('WARPX_DIMS', '2;3;RZ')
+WARPX_DIMS = env.pop('WARPX_DIMS', '1;2;3;RZ')
 BUILD_PARALLEL = env.pop('BUILD_PARALLEL', '2')
 BUILD_SHARED_LIBS = env.pop('WARPX_BUILD_SHARED_LIBS',
                                    'OFF')
@@ -202,6 +217,8 @@ HDF5_USE_STATIC_LIBRARIES = env.pop('HDF5_USE_STATIC_LIBRARIES', 'OFF')
 ADIOS_USE_STATIC_LIBS = env.pop('ADIOS_USE_STATIC_LIBS', 'OFF')
 # CMake dependency control (developers & package managers)
 WARPX_AMREX_SRC = env.pop('WARPX_AMREX_SRC', '')
+WARPX_AMREX_REPO = env.pop('WARPX_AMREX_REPO', '')
+WARPX_AMREX_BRANCH = env.pop('WARPX_AMREX_BRANCH', '')
 WARPX_AMREX_INTERNAL = env.pop('WARPX_AMREX_INTERNAL', 'ON')
 WARPX_OPENPMD_SRC = env.pop('WARPX_OPENPMD_SRC', '')
 WARPX_OPENPMD_INTERNAL = env.pop('WARPX_OPENPMD_INTERNAL', 'ON')
@@ -228,7 +245,7 @@ else:
 
 
 # for CMake
-cxx_modules = []     # values: warpx_2d, warpx_3d, warpx_rz
+cxx_modules = []     # values: warpx_1d, warpx_2d, warpx_3d, warpx_rz
 cmdclass = {}        # build extensions
 
 # externally pre-built: pick up pre-built WarpX libraries
@@ -253,7 +270,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '21.10',
+    version = '22.03',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',
@@ -276,9 +293,9 @@ setup(
     # CMake: self-built as extension module
     ext_modules=cxx_modules,
     cmdclass=cmdclass,
-    # scripts=['warpx_2d', 'warpx_3d', 'warpx_rz'],
+    # scripts=['warpx_1d', 'warpx_2d', 'warpx_3d', 'warpx_rz'],
     zip_safe=False,
-    python_requires='>=3.6, <3.10',
+    python_requires='>=3.6',
     # tests_require=['pytest'],
     install_requires=install_requires,
     # see: src/bindings/python/cli
@@ -293,7 +310,7 @@ setup(
     # cmdclass={'test': PyTest},
     # platforms='any',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Natural Language :: English',
         'Environment :: Console',
         'Intended Audience :: Science/Research',
@@ -306,6 +323,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         ('License :: OSI Approved :: '
          'BSD License'), # TODO: use real SPDX: BSD-3-Clause-LBNL
     ],
@@ -313,4 +331,3 @@ setup(
     license='BSD-3-Clause-LBNL',
     license_files = ['LICENSE.txt', 'LEGAL.txt'],
 )
-
