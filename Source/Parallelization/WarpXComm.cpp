@@ -458,18 +458,103 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
 void
 WarpX::FillBoundaryB (IntVect ng)
 {
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
-        FillBoundaryB(lev, ng);
+    // PML exchange
+    if (do_pml) {
+        for (int lev=0; lev<=finest_level; ++lev){
+            if (pml[lev]->ok()) {
+                pml[lev]->ExchangeB(PatchType::coarse,
+                    { Bfield_cp[lev][0].get(), Bfield_cp[lev][1].get(),
+                      Bfield_cp[lev][2].get() }, do_pml_in_domain);
+                pml[lev]->ExchangeB(PatchType::fine,
+                    { Bfield_fp[lev][0].get(), Bfield_fp[lev][1].get(),
+                      Bfield_fp[lev][2].get() }, do_pml_in_domain);
+                pml[lev]->FillBoundaryB(PatchType::coarse);
+                pml[lev]->FillBoundaryB(PatchType::fine);
+            }
+        }
     }
+
+    // Launch asynchronous MPI communications
+    WarpX::FillBoundary_nowait( Bfield_fp, ng, PatchType::fine );
+    WarpX::FillBoundary_nowait( Bfield_cp, ng, PatchType::coarse );
+
+    // Finalize MPI communications
+    WarpX::FillBoundary_finish( Bfield_fp, PatchType::fine );
+    WarpX::FillBoundary_finish( Bfield_cp, PatchType::coarse );
 }
 
 void
 WarpX::FillBoundaryE (IntVect ng)
 {
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
-        FillBoundaryE(lev, ng);
+    // PML exchange
+    if (do_pml) {
+        for (int lev=0; lev<=finest_level; ++lev){
+            if (pml[lev]->ok()) {
+                pml[lev]->ExchangeE(PatchType::coarse,
+                    { Efield_cp[lev][0].get(), Efield_cp[lev][1].get(),
+                      Efield_cp[lev][2].get() }, do_pml_in_domain);
+                pml[lev]->ExchangeE(PatchType::fine,
+                    { Efield_fp[lev][0].get(), Efield_fp[lev][1].get(),
+                      Efield_fp[lev][2].get() }, do_pml_in_domain);
+                pml[lev]->FillBoundaryE(PatchType::coarse);
+                pml[lev]->FillBoundaryE(PatchType::fine);
+            }
+        }
+    }
+
+    // Launch asynchronous MPI communications
+    WarpX::FillBoundary_nowait( Efield_fp, ng, PatchType::fine );
+    WarpX::FillBoundary_nowait( Efield_cp, ng, PatchType::coarse );
+
+    // Finalize MPI communications
+    WarpX::FillBoundary_finish( Efield_fp, PatchType::fine );
+    WarpX::FillBoundary_finish( Efield_cp, PatchType::coarse );
+}
+
+void
+WarpX::FillBoundary_nowait(
+    Vector<std::array< std::unique_ptr<MultiFab>, 3 > >& vector_mf,
+    IntVect ng, PatchType patch_type )
+{
+    // Loop through levels
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        // Check that MultiFab exists at this level
+        if ( patch_type==PatchType::fine || lev > 0 ) {
+            // Extract periodicity
+            const auto& period = (patch_type==PatchType::coarse)?
+                Geom(lev-1).periodicity() :  Geom(lev).periodicity();
+            // Loop over vector components
+            for (int idim=0; idim < 3; ++idim) {
+                // Launch asynchronous MPI communication
+                if ( safe_guard_cells ){
+                    vector_mf[lev][idim]->FillBoundary_nowait(period);
+                } else {
+                    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                        ng <= vector_mf[lev][idim]->nGrowVect(),
+                        "Error: requested more guard cells than allocated");
+                    vector_mf[lev][idim]->FillBoundary_nowait(0,
+                            vector_mf[lev][idim]->nComp(), ng, period);
+                }
+            }
+        }
+    }
+}
+
+void
+WarpX::FillBoundary_finish(
+    Vector<std::array< std::unique_ptr<MultiFab>, 3 > >& vector_mf,
+    PatchType patch_type )
+{
+    // Loop through levels
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        // Check that MultiFab exists at this level
+        if ( patch_type==PatchType::fine || lev > 0 ) {
+            // Loop over vector components
+            for (int idim=0; idim < 3; ++idim) {
+                // Finalize asynchronous MPI communication
+                vector_mf[lev][idim]->FillBoundary_finish();
+            }
+        }
     }
 }
 
