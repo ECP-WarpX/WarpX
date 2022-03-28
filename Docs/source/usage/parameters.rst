@@ -2067,6 +2067,12 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     WarpX must be configured with ``-DWarpX_MPI_THREAD_MULTIPLE=ON``.
     Please see the :ref:`data analysis section <dataanalysis-formats>` for more information.
 
+* ``warpx.field_io_nfiles`` and ``warpx.particle_io_nfiles`` (`int`) optional (default `1024`)
+    The maximum number of files to use when writing field and particle data to plotfile directories.
+
+* ``warpx.mffile_nstreams`` (`int`) optional (default `4`)
+    Limit the number of concurrent readers per file.
+
 .. _running-cpp-parameters-diagnostics-btd:
 
 BackTransformed Diagnostics (with support for Plotfile/openPMD output)
