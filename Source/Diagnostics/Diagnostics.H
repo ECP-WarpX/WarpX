@@ -16,6 +16,7 @@
 
 #include <AMReX_BaseFwd.H>
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
