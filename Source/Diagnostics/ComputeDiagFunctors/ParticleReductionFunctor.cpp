@@ -91,7 +91,7 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::ParticleReal uy = p.rdata(PIdx::uy) / PhysConst::c;
                 amrex::ParticleReal uz = p.rdata(PIdx::uz) / PhysConst::c;
                 amrex::Real value;
-                if ((do_filter) && (filter_fn(xw, yw, zw, ux, uy, uz) <= 0.5)) value = 0._rt;
+                if ((do_filter) && (!filter_fn(xw, yw, zw, ux, uy, uz))) value = 0._rt;
                 else value = map_fn(xw, yw, zw, ux, uy, uz);
                 amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), p.rdata(PIdx::w) * value);
             });
@@ -130,7 +130,7 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::ParticleReal uy = p.rdata(PIdx::uy) / PhysConst::c;
                 amrex::ParticleReal uz = p.rdata(PIdx::uz) / PhysConst::c;
                 amrex::Real filter;
-                if ((do_filter) && (filter_fn(xw, yw, zw, ux, uy, uz) <= 0.5)) filter = 0._rt;
+                if ((do_filter) && (!filter_fn(xw, yw, zw, ux, uy, uz))) filter = 0._rt;
                 else filter = 1._rt;
                 amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), p.rdata(PIdx::w) * filter);
             });
