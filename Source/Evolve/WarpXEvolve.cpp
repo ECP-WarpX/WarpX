@@ -384,6 +384,16 @@ WarpX::OneStep_nosub (Real cur_time)
 
     ExecutePythonCallback("afterdeposition");
 
+#ifdef WARPX_USE_PSATD
+    // Compute cumulative sums of the preliminary current D
+    // deposited according to the Vay deposition scheme
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD &&
+        WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+    {
+        PSATDComputeCurrentPartialSums();
+    }
+#endif
+
     // Synchronize J and rho
     SyncCurrent();
     SyncRho();

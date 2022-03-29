@@ -720,7 +720,6 @@ WarpX::PushPSATD ()
     // transform back to real space so that the Vay deposition is reflected in the diagnostics
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
-        PSATDComputeCurrentPartialSums();
         PSATDVayDeposition();
         PSATDBackwardTransformJ();
         PSATDSubtractCurrentPartialSumsAvg();
