@@ -20,9 +20,8 @@
 #endif
 
 std::atomic<bool> SignalState::signal_received_flags[NUM_SIGNALS];
-bool SignalState::signal_conf_requests_break[NUM_SIGNALS];
-bool SignalState::signal_conf_requests_checkpoint[NUM_SIGNALS];
-bool SignalState::signal_actions_requested[2];
+bool SignalState::signal_conf_requests[SIGNAL_REQUESTS_SIZE][NUM_SIGNALS];
+bool SignalState::signal_actions_requested[SIGNAL_REQUESTS_SIZE];
 #if defined(AMREX_USE_MPI)
 MPI_Request SignalState::signal_mpi_ibcast_request;
 #endif
@@ -115,15 +114,20 @@ SignalState::InitSignalHandling()
 #if defined(__linux__) || defined(__APPLE__)
     struct sigaction sa;
     sigemptyset(&sa.sa_mask);
-    for (int i = 0; i < NUM_SIGNALS; ++i) {
-        signal_received_flags[i] = false;
-        if (signal_conf_requests_checkpoint[i] || signal_conf_requests_break[i]) {
+    for (int signal_number = 0; signal_number < NUM_SIGNALS; ++signal_number) {
+        signal_received_flags[signal_number] = false;
+
+        bool signal_active = false;
+        for (int signal_request = 0; signal_request < SIGNAL_REQUESTS_SIZE; ++signal_request) {
+            signal_active |= signal_conf_requests[signal_request][signal_number];
+        }
+        if (signal_active) {
             if (amrex::ParallelDescriptor::MyProc() == 0) {
                 sa.sa_handler = &SignalState::SignalSetFlag;
             } else {
                 sa.sa_handler = SIG_IGN;
             }
-            int result = sigaction(i, &sa, nullptr);
+            int result = sigaction(signal_number, &sa, nullptr);
             ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(result == 0,
                                                "Failed to install signal handler for a configured signal");
         }
@@ -138,17 +142,18 @@ SignalState::CheckSignals()
     // and may be delivered to other ranks as well. For coordination,
     // we process them according to when they're received by rank 0.
     if (amrex::ParallelDescriptor::MyProc() == 0) {
-        for (int i = 0; i < NUM_SIGNALS; ++i) {
+        for (int signal_number = 0; signal_number < NUM_SIGNALS; ++signal_number) {
             // Read into a local temporary to ensure the same value is
             // used throughout. Atomically exchange it with false to
             // unset the flag without risking loss of a signal - if a
             // signal arrives after this, it will be handled the next
             // time this function is called.
-            bool signal_i_received = signal_received_flags[i].exchange(false);
+            bool signal_received = signal_received_flags[signal_number].exchange(false);
 
-            if (signal_i_received) {
-                signal_actions_requested[SIGNAL_REQUESTS_BREAK] |= signal_conf_requests_break[i];
-                signal_actions_requested[SIGNAL_REQUESTS_CHECKPOINT] |= signal_conf_requests_checkpoint[i];
+            if (signal_received) {
+                for (int signal_request = 0; signal_request < SIGNAL_REQUESTS_SIZE; ++signal_request) {
+                    signal_actions_requested[signal_request] |= signal_conf_requests[signal_request][signal_number];
+                }
             }
         }
     }

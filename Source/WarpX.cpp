@@ -565,7 +565,7 @@ WarpX::ReadParameters ()
 #if defined(__linux__) || defined(__APPLE__)
         for (const std::string &str : signals_in) {
             int sig = SignalState::parseSignalNameToNumber(str);
-            SignalState::signal_conf_requests_break[sig] = true;
+            SignalState::signal_conf_requests[SignalState::SIGNAL_REQUESTS_BREAK][sig] = true;
         }
         signals_in.clear();
 #else
@@ -593,7 +593,7 @@ WarpX::ReadParameters ()
 #if defined(__linux__) || defined(__APPLE__)
         for (const std::string &str : signals_in) {
             int sig = SignalState::parseSignalNameToNumber(str);
-            SignalState::signal_conf_requests_checkpoint[sig] = true;
+            SignalState::signal_conf_requests[SignalState::SIGNAL_REQUESTS_CHECKPOINT][sig] = true;
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(have_checkpoint_diagnostic,
                                              "Signal handling was requested to checkpoint, but no checkpoint diagnostic is configured");
         }
