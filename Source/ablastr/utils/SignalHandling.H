@@ -29,7 +29,7 @@
  * Variables and functions are static rather than per-instance
  * because signal handlers are configured at the process level.
  */
-class SignalState
+class SignalHandling
 {
 public:
     //! The range of signal values to accept
@@ -76,6 +76,9 @@ private:
     //! Boolean flags transmitted between CheckSignals() and
     //! HandleSignals() to indicate actions requested by signals
     static bool signal_actions_requested[SIGNAL_REQUESTS_SIZE];
+
+     // Don't allow clients to incorrectly try to construct and use an instance of this type
+    SignalHandling() = delete;
 };
 
 

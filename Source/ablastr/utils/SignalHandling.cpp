@@ -19,15 +19,15 @@
 #include <signal.h>
 #endif
 
-std::atomic<bool> SignalState::signal_received_flags[NUM_SIGNALS];
-bool SignalState::signal_conf_requests[SIGNAL_REQUESTS_SIZE][NUM_SIGNALS];
-bool SignalState::signal_actions_requested[SIGNAL_REQUESTS_SIZE];
+std::atomic<bool> SignalHandling::signal_received_flags[NUM_SIGNALS];
+bool SignalHandling::signal_conf_requests[SIGNAL_REQUESTS_SIZE][NUM_SIGNALS];
+bool SignalHandling::signal_actions_requested[SIGNAL_REQUESTS_SIZE];
 #if defined(AMREX_USE_MPI)
-MPI_Request SignalState::signal_mpi_ibcast_request;
+MPI_Request SignalHandling::signal_mpi_ibcast_request;
 #endif
 
 int
-SignalState::parseSignalNameToNumber(const std::string &str)
+SignalHandling::parseSignalNameToNumber(const std::string &str)
 {
     amrex::IParser signals_parser(str);
 
@@ -109,7 +109,7 @@ SignalState::parseSignalNameToNumber(const std::string &str)
 }
 
 void
-SignalState::InitSignalHandling()
+SignalHandling::InitSignalHandling()
 {
 #if defined(__linux__) || defined(__APPLE__)
     struct sigaction sa;
@@ -123,7 +123,7 @@ SignalState::InitSignalHandling()
         }
         if (signal_active) {
             if (amrex::ParallelDescriptor::MyProc() == 0) {
-                sa.sa_handler = &SignalState::SignalSetFlag;
+                sa.sa_handler = &SignalHandling::SignalSetFlag;
             } else {
                 sa.sa_handler = SIG_IGN;
             }
@@ -136,7 +136,7 @@ SignalState::InitSignalHandling()
 }
 
 void
-SignalState::CheckSignals()
+SignalHandling::CheckSignals()
 {
     // We assume that signals will definitely be delivered to rank 0,
     // and may be delivered to other ranks as well. For coordination,
@@ -166,7 +166,7 @@ SignalState::CheckSignals()
 }
 
 void
-SignalState::WaitSignals()
+SignalHandling::WaitSignals()
 {
 #if defined(AMREX_USE_MPI)
     BL_MPI_REQUIRE(MPI_Wait(&signal_mpi_ibcast_request, MPI_STATUS_IGNORE));
@@ -174,7 +174,7 @@ SignalState::WaitSignals()
 }
 
 bool
-SignalState::TestAndResetActionRequestFlag(int action_to_test)
+SignalHandling::TestAndResetActionRequestFlag(int action_to_test)
 {
     bool retval = signal_actions_requested[action_to_test];
     signal_actions_requested[action_to_test] = false;
@@ -182,7 +182,7 @@ SignalState::TestAndResetActionRequestFlag(int action_to_test)
 }
 
 void
-SignalState::SignalSetFlag(int signal_number)
+SignalHandling::SignalSetFlag(int signal_number)
 {
     signal_received_flags[signal_number] = true;
 }

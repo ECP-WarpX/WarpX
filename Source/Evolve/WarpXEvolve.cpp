@@ -356,7 +356,7 @@ WarpX::Evolve (int numsteps)
                       << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n";
         }
 
-        if (cur_time >= stop_time - 1.e-3*dt[0] || SignalState::TestAndResetActionRequestFlag(SignalState::SIGNAL_REQUESTS_BREAK)) {
+        if (cur_time >= stop_time - 1.e-3*dt[0] || SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK)) {
             break;
         }
 
@@ -939,17 +939,17 @@ WarpX::applyMirrors(Real time){
 void
 WarpX::CheckSignals()
 {
-    SignalState::CheckSignals();
+    SignalHandling::CheckSignals();
 }
 
 void
 WarpX::HandleSignals()
 {
-    SignalState::WaitSignals();
+    SignalHandling::WaitSignals();
 
     // SIGNAL_REQUESTS_BREAK is handled directly in WarpX::Evolve
 
-    if (SignalState::TestAndResetActionRequestFlag(SignalState::SIGNAL_REQUESTS_CHECKPOINT)) {
+    if (SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_CHECKPOINT)) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
     }
 }
