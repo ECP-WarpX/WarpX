@@ -11,7 +11,7 @@
 #include <AMReX_Config.H>
 
 #if defined(AMREX_USE_MPI)
-#include <mpi.h>
+#   include <mpi.h>
 #endif
 
 #include <atomic>

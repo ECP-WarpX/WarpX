@@ -16,7 +16,7 @@
 
 // For sigaction() et al.
 #if defined(__linux__) || defined(__APPLE__)
-#include <signal.h>
+#   include <signal.h>
 #endif
 
 namespace ablastr::utils {
