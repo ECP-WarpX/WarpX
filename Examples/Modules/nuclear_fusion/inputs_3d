@@ -48,6 +48,7 @@ proton1.momentum_function_uy(x,y,z) = 0.
 ## Thanks to the floor, all particles in the same cell have the exact same momentum
 proton1.momentum_function_uz(x,y,z) = sqrt(2*m_reduced*Energy_step*(floor(z)**2))/(m_p*clight)
 proton1.do_not_push = 1
+proton1.do_not_deposit = 1
 
 boron1.species_type = boron11
 boron1.injection_style = "NRandomPerCell"
@@ -60,9 +61,11 @@ boron1.momentum_function_uy(x,y,z) = 0.
 ## Thanks to the floor, all particles in the same cell have the exact same momentum
 boron1.momentum_function_uz(x,y,z) = -sqrt(2*m_reduced*Energy_step*(floor(z)**2))/(m_b11*clight)
 boron1.do_not_push = 1
+boron1.do_not_deposit = 1
 
 alpha1.species_type = alpha
 alpha1.do_not_push = 1
+alpha1.do_not_deposit = 1
 
 my_constants.background_dens = 1.e26
 my_constants.beam_dens = 1.e20
@@ -80,6 +83,7 @@ proton2.momentum_function_uy(x,y,z) = 0.
 proton2.momentum_function_uz(x,y,z) = "if(y - floor(y) < 0.1,
                                           0., sqrt(2*m_p*Energy_step*(floor(z)**2))/(m_p*clight))"
 proton2.do_not_push = 1
+proton2.do_not_deposit = 1
 
 boron2.species_type = boron11
 boron2.injection_style = "NRandomPerCell"
@@ -88,9 +92,11 @@ boron2.profile = constant
 boron2.density = background_dens
 boron2.momentum_distribution_type = "constant"
 boron2.do_not_push = 1
+boron2.do_not_deposit = 1
 
 alpha2.species_type = alpha
 alpha2.do_not_push = 1
+alpha2.do_not_deposit = 1
 
 my_constants.temperature = 44. * keV_to_J
 
@@ -102,6 +108,7 @@ proton3.density = 1.e28
 proton3.momentum_distribution_type = "maxwell_boltzmann"
 proton3.theta = temperature/(m_p*clight**2)
 proton3.do_not_push = 1
+proton3.do_not_deposit = 1
 
 boron3.species_type = boron11
 boron3.injection_style = "NRandomPerCell"
@@ -111,9 +118,11 @@ boron3.density = 5.e28
 boron3.momentum_distribution_type = "maxwell_boltzmann"
 boron3.theta = temperature/(m_b11*clight**2)
 boron3.do_not_push = 1
+boron3.do_not_deposit = 1
 
 alpha3.species_type = alpha
 alpha3.do_not_push = 1
+alpha3.do_not_deposit = 1
 
 my_constants.proton4_energy = 550*keV_to_J
 
@@ -125,6 +134,7 @@ proton4.density = 1.e35
 proton4.momentum_distribution_type = "constant"
 proton4.uz = sqrt(2*m_p*proton4_energy)/(m_p*clight)
 proton4.do_not_push = 1
+proton4.do_not_deposit = 1
 
 boron4.species_type = boron11
 boron4.injection_style = "NRandomPerCell"
@@ -133,9 +143,11 @@ boron4.profile = constant
 boron4.density = 1.
 boron4.momentum_distribution_type = "constant"
 boron4.do_not_push = 1
+boron4.do_not_deposit = 1
 
 alpha4.species_type = alpha
 alpha4.do_not_push = 1
+alpha4.do_not_deposit = 1
 
 proton5.species_type = proton
 proton5.injection_style = "NRandomPerCell"
@@ -145,6 +157,7 @@ proton5.density = 1.e35
 proton5.momentum_distribution_type = "constant"
 proton5.uz = sqrt(2*m_p*proton4_energy)/(m_p*clight)
 proton5.do_not_push = 1
+proton5.do_not_deposit = 1
 
 boron5.species_type = boron11
 boron5.injection_style = "NRandomPerCell"
@@ -153,9 +166,11 @@ boron5.profile = constant
 boron5.density = 1.
 boron5.momentum_distribution_type = "constant"
 boron5.do_not_push = 1
+boron5.do_not_deposit = 1
 
 alpha5.species_type = alpha
 alpha5.do_not_push = 1
+alpha5.do_not_deposit = 1
 
 #################################
 ############ COLLISION ##########
