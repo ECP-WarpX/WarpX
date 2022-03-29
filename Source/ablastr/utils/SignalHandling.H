@@ -35,13 +35,17 @@ public:
     //! The range of signal values to accept
     static constexpr int NUM_SIGNALS = 32;
 
+    //! Labels for indexed positions in signal_actions_requests
+    enum signal_action_requested_labels {
+        SIGNAL_REQUESTS_BREAK = 0,
+        SIGNAL_REQUESTS_CHECKPOINT = 1,
+        SIGNAL_REQUESTS_SIZE = 2 // This should always be 1 greater than the last valid value
+    };
+
     //! Whether configuration requests the code to break out of the timestep loop on a particular signal
     static bool signal_conf_requests_break[NUM_SIGNALS];
     //! Whether configuration requests the code to checkpoint at this timestep on a particular signal
     static bool signal_conf_requests_checkpoint[NUM_SIGNALS];
-
-    //! Labels for indexed positions in signal_actions_requests
-    enum signal_action_requested_labels { SIGNAL_REQUESTS_BREAK = 0, SIGNAL_REQUESTS_CHECKPOINT = 1, SIGNAL_REQUESTS_MAX = 1 };
 
     //! Take a string and convert it to a corresponding signal number if possible
     static int parseSignalNameToNumber (const std::string &str);
@@ -71,7 +75,7 @@ private:
 
     //! Boolean flags transmitted between CheckSignals() and
     //! HandleSignals() to indicate actions requested by signals
-    static bool signal_actions_requested[SIGNAL_REQUESTS_MAX+1];
+    static bool signal_actions_requested[SIGNAL_REQUESTS_SIZE];
 };
 
 
