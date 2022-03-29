@@ -263,7 +263,11 @@ namespace detail
      * of the index labels for the AMReX FArrayBox.
      */
     inline std::vector< std::string >
-    getFieldAxisLabels ()
+    getFieldAxisLabels (
+#if defined(WARPX_DIM_RZ)
+                        bool is_theta_mode
+#endif
+    )
     {
         using vs = std::vector< std::string >;
 
@@ -274,17 +278,27 @@ namespace detail
         vs const axisLabels{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
         // if we are start to write individual modes
-        vs const axisLabels{"r", "z"};
+        vs const circAxisLabels{"r", "z"};
         // if we just write reconstructed 2D fields at theta=0
-        //vs const axisLabels{"x", "z"};
+        vs const cartAxisLabels{"x", "z"};
 #elif defined(WARPX_DIM_3D)
         vs const axisLabels{"x", "y", "z"};
 #else
 #   error Unknown WarpX dimensionality.
 #endif
 
+#if defined(WARPX_DIM_RZ)
+        if (is_theta_mode) {
+            // revert to C order (fastest varying index last)
+            return {circAxisLabels.rbegin(), circAxisLabels.rend()};
+        } else {
+            // revert to C order (fastest varying index last)
+            return {cartAxisLabels.rbegin(), cartAxisLabels.rend()};
+        }
+#else
         // revert to C order (fastest varying index last)
         return {axisLabels.rbegin(), axisLabels.rend()};
+#endif
     }
 
     /** Return the component names of a mesh
@@ -1189,17 +1203,21 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     std::vector<double> const global_offset = getReversedVec(full_geom.ProbLo());
 #endif
     // - AxisLabels
-    std::vector<std::string> axis_labels = detail::getFieldAxisLabels();
+    std::vector<std::string> axis_labels = detail::getFieldAxisLabels(
+#if defined(WARPX_DIM_RZ)
+                                                        var_in_theta_mode
+#endif
+                                                                    );
 
     // Prepare the type of dataset that will be written
     openPMD::Datatype const datatype = openPMD::determineDatatype<amrex::Real>();
     auto const dataset = openPMD::Dataset(datatype, global_size);
 
     mesh.setDataOrder(openPMD::Mesh::DataOrder::C);
-#if defined(WARPX_DIM_RZ)
-    mesh.setGeometry("thetaMode");
-    mesh.setGeometryParameters("m=" + std::to_string(WarpX::n_rz_azimuthal_modes) + ";imag=+");
-#endif
+    if (var_in_theta_mode) {
+        mesh.setGeometry("thetaMode");
+        mesh.setGeometryParameters("m=" + std::to_string(WarpX::n_rz_azimuthal_modes) + ";imag=+");
+    }
     mesh.setAxisLabels(axis_labels);
     mesh.setGridSpacing(grid_spacing);
     mesh.setGridGlobalOffset(global_offset);
