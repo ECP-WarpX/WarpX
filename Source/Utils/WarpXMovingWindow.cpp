@@ -177,7 +177,7 @@ WarpX::MoveWindow (const int step, bool move_j)
                 if (dim == 2) Efield_parser = Ezfield_parser->compile<3>();
             }
             shiftMF(*Bfield_fp[lev][dim], geom[lev], num_shift, dir, lev, B_external_grid[dim], use_Bparser, Bfield_parser);
-            shiftMF(*Efield_fp[lev][dim], geom[lev], num_shift, dir, lev, E_external_grid[dim], use_Eparser, Efield_parser, lev);
+            shiftMF(*Efield_fp[lev][dim], geom[lev], num_shift, dir, lev, E_external_grid[dim], use_Eparser, Efield_parser);
             if (fft_do_time_averaging) {
                 shiftMF(*Bfield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, B_external_grid[dim], use_Bparser, Bfield_parser);
                 shiftMF(*Efield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, E_external_grid[dim], use_Eparser, Efield_parser);
@@ -296,7 +296,7 @@ WarpX::MoveWindow (const int step, bool move_j)
 
 void
 WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
-                int num_shift, int dir, int lev,
+                int num_shift, int dir, const int lev,
                 amrex::Real external_field, bool useparser,
                 amrex::ParserExecutor<3> const& field_parser)
 {
@@ -367,7 +367,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        amrex::Real wt = amrex::second();
 
         auto const& dstfab = mf.array(mfi);
         auto const& srcfab = tmpmf.array(mfi);
