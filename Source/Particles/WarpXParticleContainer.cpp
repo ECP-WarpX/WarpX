@@ -415,21 +415,11 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     // Note that this includes guard cells since it is after tilebox.ngrow
     const Dim3 lo = lbound(tilebox);
     // Take into account Galilean shift
-    Real cur_time = warpx.gett_new(lev);
-    const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
-    Real time_shift = (cur_time + 0.5_rt*dt - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = {
-        m_v_galilean[0]* time_shift,
-        m_v_galilean[1]*time_shift,
-        m_v_galilean[2]*time_shift };
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
+    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, 0.5_rt*dt);
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if (WarpX::do_nodal==1) {
           amrex::Abort("The Esirkepov algorithm cannot be used with a nodal grid.");
-        }
-        if ( (m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)){
-            amrex::Abort("The Esirkepov algorithm cannot be used with the Galilean algorithm.");
         }
         if ( relative_time != -0.5_rt ) {
             amrex::Abort("The Esirkepov deposition cannot be performed at another time then -0.5 dt.");
@@ -623,24 +613,9 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
         // Lower corner of tile box physical domain
         // Note that this includes guard cells since it is after tilebox.ngrow
         // Take into account Galilean shift
-        const amrex::Real cur_time = warpx.gett_new(lev);
         const amrex::Real dt = warpx.getdt(lev);
-        const amrex::Real time_of_last_gal_shift = warpx.time_of_last_gal_shift;
-        const amrex::Real time_shift_rho_old = (cur_time - time_of_last_gal_shift);
-        const amrex::Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
-        amrex::Array<amrex::Real,3> galilean_shift;
-        if (icomp==0){
-            galilean_shift = {
-                m_v_galilean[0]*time_shift_rho_old,
-                m_v_galilean[1]*time_shift_rho_old,
-                m_v_galilean[2]*time_shift_rho_old };
-        } else{
-            galilean_shift = {
-                m_v_galilean[0]*time_shift_rho_new,
-                m_v_galilean[1]*time_shift_rho_new,
-                m_v_galilean[2]*time_shift_rho_new };
-        }
-        const auto& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
+        const amrex::Real time_shift_delta = (icomp == 0 ? 0.0_rt : dt);
+        const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, time_shift_delta);
 
         // pointer to costs data
         amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
