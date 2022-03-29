@@ -6,6 +6,7 @@
  */
 
 #include "SignalHandling.H"
+#include "TextMsg.H"
 
 #include <AMReX.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -102,7 +103,8 @@ SignalState::parseSignalNameToNumber(const std::string &str)
     auto spf = signals_parser.compileHost<0>();
 
     int sig = spf();
-    AMREX_ALWAYS_ASSERT(sig < NUM_SIGNALS);
+    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(sig < NUM_SIGNALS,
+                                       "Parsed signal value is outside the supported range of [1, 31]");
 
     return sig;
 }
@@ -122,8 +124,8 @@ SignalState::InitSignalHandling()
                 sa.sa_handler = SIG_IGN;
             }
             int result = sigaction(i, &sa, nullptr);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(result == 0,
-                                             "Failed to install signal handler for a configured signal");
+            ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(result == 0,
+                                               "Failed to install signal handler for a configured signal");
         }
     }
 #endif
