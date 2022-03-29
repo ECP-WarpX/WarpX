@@ -2046,7 +2046,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     The value provided should be an integer greater than or equal to 0.
 
 * ``<diag_name>.<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
-    Users can provide an expression returning a boolean for whether a particle is dumped (the exact test is whether the return value is `> 0.5`).
+    Users can provide an expression returning a boolean for whether a particle is dumped.
     `t` represents the physical time in seconds during the simulation.
     `x, y, z` represent particle positions in the unit of meter.
     `ux, uy, uz` represent particle velocities in the unit of
@@ -2492,8 +2492,7 @@ Reduced Diagnostics
 
         * ``<reduced_diags_name>.filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
             Users can provide an expression returning a boolean for whether a particle is taken
-            into account when calculating the histogram (the exact test is whether the return
-            value is `> 0.5`).
+            into account when calculating the histogram.
             `t` represents the physical time in seconds during the simulation.
             `x, y, z` represent particle positions in the unit of meter.
             `ux, uy, uz` represent particle velocities in the unit of
