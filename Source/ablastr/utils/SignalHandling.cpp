@@ -19,6 +19,8 @@
 #include <signal.h>
 #endif
 
+namespace ablastr::utils {
+
 std::atomic<bool> SignalHandling::signal_received_flags[NUM_SIGNALS];
 bool SignalHandling::signal_conf_requests[SIGNAL_REQUESTS_SIZE][NUM_SIGNALS];
 bool SignalHandling::signal_actions_requested[SIGNAL_REQUESTS_SIZE];
@@ -186,3 +188,5 @@ SignalHandling::SignalSetFlag(int signal_number)
 {
     signal_received_flags[signal_number] = true;
 }
+
+} // namespace ablastr::utils

@@ -235,7 +235,7 @@ WarpX::WarpX ()
 
     InitEB();
 
-    SignalHandling::InitSignalHandling();
+    ablastr::utils::SignalHandling::InitSignalHandling();
 
     // Geometry on all levels has been defined already.
     // No valid BoxArray and DistributionMapping have been defined.
@@ -559,6 +559,7 @@ WarpX::ReadParameters ()
             }
         }
 
+        using ablastr::utils::SignalHandling;
         std::vector<std::string> signals_in;
         pp_warpx.queryarr("break_signals", signals_in);
 

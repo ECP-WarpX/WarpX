@@ -17,6 +17,8 @@
 #include <atomic>
 #include <string>
 
+namespace ablastr::utils {
+
 /**
  * \brief
  * Signal handling
@@ -81,5 +83,6 @@ private:
     SignalHandling() = delete;
 };
 
+} // namespace ablastr::utils
 
 #endif // ABLASTR_SIGNAL_HANDLING_H_
