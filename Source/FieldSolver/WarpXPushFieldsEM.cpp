@@ -398,7 +398,7 @@ void WarpX::PSATDComputeCurrentPartialSums ()
         // Compute cumulative sum for Jx
         for (amrex::MFIter mfi(jx_cumsum, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
-            const amrex::Box& bx = (WarpX::fft_periodic_single_box) ? mfi.validbox() : mfi.growntilebox();
+            const amrex::Box& bx = mfi.growntilebox();
 
             amrex::Array4<amrex::Real const> const& jx_arr = jx.const_array(mfi);
             amrex::Array4<amrex::Real> const& jx_cumsum_arr = jx_cumsum.array(mfi);
@@ -420,7 +420,7 @@ void WarpX::PSATDComputeCurrentPartialSums ()
         // Compute cumulative sum for Jy
         for (amrex::MFIter mfi(jy_cumsum, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
-            const amrex::Box& bx = (WarpX::fft_periodic_single_box) ? mfi.validbox() : mfi.growntilebox();
+            const amrex::Box& bx = mfi.growntilebox();
 
             amrex::Array4<amrex::Real const> const& jy_arr = jy.const_array(mfi);
             amrex::Array4<amrex::Real> const& jy_cumsum_arr = jy_cumsum.array(mfi);
@@ -442,7 +442,7 @@ void WarpX::PSATDComputeCurrentPartialSums ()
         // Compute cumulative sum for Jz
         for (amrex::MFIter mfi(jz_cumsum, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
-            const amrex::Box& bx = (WarpX::fft_periodic_single_box) ? mfi.validbox() : mfi.growntilebox();
+            const amrex::Box& bx = mfi.growntilebox();
 
             amrex::Array4<amrex::Real const> const& jz_arr = jz.const_array(mfi);
             amrex::Array4<amrex::Real> const& jz_cumsum_arr = jz_cumsum.array(mfi);
@@ -503,7 +503,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
         // Subtract average of cumulative sum from Jx
         for (amrex::MFIter mfi(jx, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
-            const amrex::Box& bx = (WarpX::fft_periodic_single_box) ? mfi.validbox() : mfi.growntilebox();
+            const amrex::Box& bx = mfi.growntilebox();
 
             amrex::Array4<amrex::Real> const& jx_arr = jx.array(mfi);
             amrex::Array4<amrex::Real const> const& jx_cumsum_arr = jx_cumsum.const_array(mfi);
@@ -526,7 +526,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
         // Subtract average of cumulative sum from Jy
         for (amrex::MFIter mfi(jy, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
-            const amrex::Box& bx = (WarpX::fft_periodic_single_box) ? mfi.validbox() : mfi.growntilebox();
+            const amrex::Box& bx = mfi.growntilebox();
 
             amrex::Array4<amrex::Real> const& jy_arr = jy.array(mfi);
             amrex::Array4<amrex::Real const> const& jy_cumsum_arr = jy_cumsum.const_array(mfi);
@@ -549,7 +549,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
         // Subtract average of cumulative sum from Jz
         for (amrex::MFIter mfi(jz, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
-            const amrex::Box& bx = (WarpX::fft_periodic_single_box) ? mfi.validbox() : mfi.growntilebox();
+            const amrex::Box& bx = mfi.growntilebox();
 
             amrex::Array4<amrex::Real> const& jz_arr = jz.array(mfi);
             amrex::Array4<amrex::Real const> const& jz_cumsum_arr = jz_cumsum.const_array(mfi);
