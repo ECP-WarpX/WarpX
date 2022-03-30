@@ -2769,6 +2769,18 @@ PhysicalParticleContainer::InitIonizationModule ()
                    h_ionization_energies.begin(), h_ionization_energies.end(),
                    ionization_energies.begin());
 
+    Vector<Real> h_correction_factors(4);
+    constexpr int offset_corr = 0; // hard-coded: only Hydrogen
+    for(int i=0; i<4; i++){
+        h_ionization_energies[i] = table_correction_factors[i+offset_corr];
+    }
+    if (do_adk_correction) {
+        adk_correction_factors.resize(4);
+        Gpu::copyAsync(Gpu::hostToDevice,
+                       h_correction_factors.begin(), h_correction_factors.end(),
+                       adk_correction_factors.begin());
+    }
+
     Real const* AMREX_RESTRICT p_ionization_energies = ionization_energies.data();
     Real * AMREX_RESTRICT p_adk_power = adk_power.data();
     Real * AMREX_RESTRICT p_adk_prefactor = adk_prefactor.data();
@@ -2784,17 +2796,6 @@ PhysicalParticleContainer::InitIonizationModule ()
         p_adk_exp_prefactor[i] = -2._rt/3._rt * std::pow( Uion/UH,3._rt/2._rt) * Ea;
     });
 
-
-    Vector<Real> h_correction_factors(4);
-    constexpr int offset_corr = 0; // hard-coded: only Hydrogen
-    for(int i=0; i<4; i++){
-        h_ionization_energies[i] = table_correction_factors[i+offset_corr];
-    }
-    adk_correction_factors.resize(4);
-    Gpu::copyAsync(Gpu::hostToDevice,
-                   h_correction_factors.begin(), h_correction_factors.end(),
-                   adk_correction_factors.begin());
-    Real const * const AMREX_RESTRICT p_adk_correction_factors = adk_correction_factors.data();
     Gpu::synchronize();
 }
 
