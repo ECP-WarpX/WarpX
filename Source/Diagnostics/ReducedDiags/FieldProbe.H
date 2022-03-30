@@ -76,7 +76,7 @@ private:
     //! counts number of particles for all MPI ranks
     long m_valid_particles {0};
 
-    //! remember the last time `ComputeDiags` was called to count the number of steps  in between(for non-integrated detectors)
+    //! remember the last time @see ComputeDiags was called to count the number of steps in between (for non-integrated detectors)
     int m_last_compute_step = 0;
 
     //! determines geometry of detector point distribution
@@ -106,8 +106,6 @@ private:
     //! Judges whether to follow a moving window
     bool do_moving_window_FP = false;
 
-    //! Calculates particle movement in moving window sims
-    amrex::Real temp_dist_mult;
     /**
      * Built-in function in ReducedDiags to write out test data
      */

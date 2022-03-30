@@ -389,9 +389,16 @@ void FieldProbe::ComputeDiags (int step)
         const amrex::Geometry& gm = warpx.Geom(lev);
         const auto prob_lo = gm.ProbLo();
         amrex::Real const dt = WarpX::GetInstance().getdt(lev);
-        if (do_moving_window_FP)
+        // Calculates particle movement in moving window sims
+        amrex::Real move_dist = 0.0;
+        bool const update_particles_moving_window =
+            do_moving_window_FP &&
+            step > warpx.start_moving_window_step &&
+            step <= warpx.end_moving_window_step;
+        if (update_particles_moving_window)
         {
-            temp_dist_mult = dt*warpx.moving_window_v;
+            int step_diff = step - m_last_compute_step;
+            move_dist = dt*warpx.moving_window_v*step_diff;
         }
 
         // get MultiFab data at lev
@@ -434,27 +441,26 @@ void FieldProbe::ComputeDiags (int step)
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
             const auto getPosition = GetParticlePosition(pti);
-                auto setPosition = SetParticlePosition(pti);
+            auto setPosition = SetParticlePosition(pti);
 
             auto const np = pti.numParticles();
-            if (do_moving_window_FP && step > warpx.start_moving_window_step && step <= warpx.end_moving_window_step)
+            if (update_particles_moving_window)
             {
-                int step_diff = step - m_last_compute_step;
-                for (auto ip=0; ip < np; ip++)
+                for::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
                     amrex::ParticleReal xp, yp, zp;
                     getPosition(ip, xp, yp, zp);
                     if (warpx.moving_window_dir == 0)
                     {
-                        setPosition(ip, xp+(temp_dist_mult*step_diff), yp, zp);
+                        setPosition(ip, xp+move_dist, yp, zp);
                     }
                     if (warpx.moving_window_dir == 1)
                     {
-                        setPosition(ip, xp, yp+(temp_dist_mult*step_diff), zp);
+                        setPosition(ip, xp, yp+move_dist, zp);
                     }
                     if (warpx.moving_window_dir == WARPX_ZINDEX)
                     {
-                        setPosition(ip, xp, yp, zp+(temp_dist_mult*step_diff));
+                        setPosition(ip, xp, yp, zp+move_dist);
                     }
                 }
             }
