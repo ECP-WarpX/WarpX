@@ -753,6 +753,7 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
         self.laser.polarization = self.polarization_direction  # The main polarization vector
         self.laser.profile_waist = self.waist  # The waist of the laser (in meters)
         self.laser.profile_duration = self.duration  # The duration of the laser (in seconds)
+        self.laser.direction = self.propagation_direction
         self.laser.zeta = self.zeta
         self.laser.beta = self.beta
         self.laser.phi2 = self.phi2
@@ -775,6 +776,7 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
         self.laser.wavelength = self.wavelength  # The wavelength of the laser (in meters)
         self.laser.e_max = self.Emax  # Maximum amplitude of the laser field (in V/m)
         self.laser.polarization = self.polarization_direction  # The main polarization vector
+        self.laser.direction = self.propagation_direction
         self.laser.do_continuous_injection = self.fill_in
 
         if self.mangle_dict is None:
