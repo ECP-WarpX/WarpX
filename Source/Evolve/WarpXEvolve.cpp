@@ -419,8 +419,9 @@ WarpX::OneStep_nosub (Real cur_time)
             FillBoundaryE(guard_cells.ng_afterPushPSATD);
         }
         else {
-            FillBoundaryE(guard_cells.ng_afterPushPSATD);
-            FillBoundaryB(guard_cells.ng_afterPushPSATD);
+            bool sync_nodal_points=true;
+            FillBoundaryE(guard_cells.ng_afterPushPSATD, sync_nodal_points);
+            FillBoundaryB(guard_cells.ng_afterPushPSATD, sync_nodal_points);
             if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning)
                 FillBoundaryF(guard_cells.ng_alloc_F);
             if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
@@ -428,8 +429,8 @@ WarpX::OneStep_nosub (Real cur_time)
         }
 
         // Synchronize E, B, F, G fields on nodal points
-        NodalSync(Efield_fp, Efield_cp);
-        NodalSync(Bfield_fp, Bfield_cp);
+        // NodalSync(Efield_fp, Efield_cp);
+        // NodalSync(Bfield_fp, Bfield_cp);
         if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
         if (WarpX::do_divb_cleaning) NodalSync(G_fp, G_cp);
 
@@ -443,7 +444,8 @@ WarpX::OneStep_nosub (Real cur_time)
         FillBoundaryG(guard_cells.ng_FieldSolverG);
         EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
 
-        FillBoundaryB(guard_cells.ng_FieldSolver);
+        bool sync_nodal_points=true;
+        FillBoundaryB(guard_cells.ng_FieldSolver, sync_nodal_points);
 
         if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
             // vacuum medium
@@ -455,14 +457,14 @@ WarpX::OneStep_nosub (Real cur_time)
             amrex::Abort(" Medium for EM is unknown \n");
         }
 
-        FillBoundaryE(guard_cells.ng_FieldSolver);
+        FillBoundaryE(guard_cells.ng_FieldSolver, sync_nodal_points);
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
 
         // Synchronize E and B fields on nodal points
-        NodalSync(Efield_fp, Efield_cp);
-        NodalSync(Bfield_fp, Bfield_cp);
+        // NodalSync(Efield_fp, Efield_cp);
+        // NodalSync(Bfield_fp, Bfield_cp);
 
         if (do_pml) {
             FillBoundaryF(guard_cells.ng_alloc_F);
