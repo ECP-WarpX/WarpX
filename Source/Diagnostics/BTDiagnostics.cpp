@@ -736,7 +736,7 @@ BTDiagnostics::Flush (int i_buffer)
 
 void BTDiagnostics::RedistributeParticleBuffer (const int i_buffer)
 {
-    for (int isp = 0; isp < m_particles_buffer[i_buffer].size(); ++isp) {
+    for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
         m_particles_buffer[i_buffer][isp]->Redistribute();
     }
 }
