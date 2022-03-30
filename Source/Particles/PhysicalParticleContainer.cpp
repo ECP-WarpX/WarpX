@@ -2750,12 +2750,12 @@ PhysicalParticleContainer::InitIonizationModule ()
                    h_ionization_energies.begin(), h_ionization_energies.end(),
                    ionization_energies.begin());
 
-    Vector<Real> h_correction_factors(4);
-    constexpr int offset_corr = 0; // hard-coded: only Hydrogen
-    for(int i=0; i<4; i++){
-        h_ionization_energies[i] = table_correction_factors[i+offset_corr];
-    }
     if (do_adk_correction) {
+        Vector<Real> h_correction_factors(4);
+        constexpr int offset_corr = 0; // hard-coded: only Hydrogen
+        for(int i=0; i<4; i++){
+            h_ionization_energies[i] = table_correction_factors[i+offset_corr];
+        }
         adk_correction_factors.resize(4);
         Gpu::copyAsync(Gpu::hostToDevice,
                        h_correction_factors.begin(), h_correction_factors.end(),
@@ -2800,8 +2800,8 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 adk_power.dataPtr(),
                                 adk_correction_factors.dataPtr(),
                                 particle_icomps["ionizationLevel"],
-                                do_adk_correction,
-                                ion_atomic_number);
+                                ion_atomic_number,
+                                do_adk_correction);
 }
 
 void PhysicalParticleContainer::resample (const int timestep)
