@@ -39,6 +39,7 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
     m_adk_prefactor = a_adk_prefactor;
     m_adk_exp_prefactor = a_adk_exp_prefactor;
     m_adk_power = a_adk_power;
+    m_adk_correction_factors = a_adk_correction_factors;
     m_do_adk_correction = a_do_adk_correction;
     comp = a_comp;
     m_atomic_number = a_atomic_number;
