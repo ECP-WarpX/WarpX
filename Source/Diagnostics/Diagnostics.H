@@ -62,6 +62,13 @@ public:
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
     virtual void InitializeFieldFunctors (int lev) = 0;
+    /** Initialize functors that store pointers to the fields requested by the user.
+     *
+     * The function is called at initialization and when the domain is decomposed
+     * during the simulation to load-balance.
+     * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+     */
+    virtual void InitializeFieldFunctorsRZopenPMD ([[maybe_unused]] int lev) { }
     /** Initialize functors that store pointers to the species data requested by the user. */
     virtual void InitializeParticleFunctors () {}
     /** whether to compute and pack data in output buffers at this time step
@@ -134,9 +141,20 @@ protected:
     /** Index of diagnostics in MultiDiagnostics::alldiags */
     int m_diag_index;
     /** Names of  each component requested by the user.
-     * in cylindrical geometry, this list is appended with
-     * automatically-constructed names for all modes of all fields */
+     * The list is appended with the average particle fields, if used.
+     * In cylindrical geometry, this list is also appended with
+     * automatically-constructed names for all modes of all fields.*/
     amrex::Vector< std::string > m_varnames;
+    /** Names of plotfile fields requested by the user */
+    amrex::Vector< std::string > m_varnames_fields;
+    /** Names of averaged particle properties to output */
+    amrex::Vector< std::string > m_pfield_varnames;
+    /** Names of species for which to output average particle fields */
+    std::vector< std::string > m_pfield_species;
+    /** Species indices corresponding to elements of m_pfield_varnames */
+    std::vector< int > m_pfield_species_index;
+    /** Map connecting particle field variable names to the corresponding parser strings */
+    std::map< std::string, std::string > m_pfield_strings = {};
     /** If true, a dump is performed at the last timestep regardless of the required dump timesteps */
     bool m_dump_last_timestep = true;
     /** format for output files, "plotfile" or "openpmd" or "sensei" or "ascent"
