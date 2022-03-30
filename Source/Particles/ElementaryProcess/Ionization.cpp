@@ -29,14 +29,17 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
                                             const amrex::Real* const AMREX_RESTRICT a_adk_prefactor,
                                             const amrex::Real* const AMREX_RESTRICT a_adk_exp_prefactor,
                                             const amrex::Real* const AMREX_RESTRICT a_adk_power,
+                          const amrex::Real* const AMREX_RESTRICT a_adk_correction_factors,
                                             int a_comp,
                                             int a_atomic_number,
+                                            int a_do_adk_correction,
                                             int a_offset) noexcept
 {
     m_ionization_energies = a_ionization_energies;
     m_adk_prefactor = a_adk_prefactor;
     m_adk_exp_prefactor = a_adk_exp_prefactor;
     m_adk_power = a_adk_power;
+    m_do_adk_correction = a_do_adk_correction;
     comp = a_comp;
     m_atomic_number = a_atomic_number;
 

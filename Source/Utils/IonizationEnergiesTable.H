@@ -225,4 +225,11 @@ constexpr amrex::Real table_ionization_energies[energies_tab_length]{
     amrex::Real(110842.0), amrex::Real(112843.7)
 };
 
+constexpr int correction_factors_length = 4;
+// a1, a2, a3, Ecrit from Zhang et al., PRA 90, 043410 (2014).
+constexpr amrex::Real table_correction_factors[correction_factors_length]{
+    // H
+    amrex::Real(0.11714), amrex::Real(-0.90933), amrex::Real(-0.06034), amrex::Real(32125000000.)
+};
+
 #endif // #ifndef WARPX_IONIZATION_TABLE_H_
