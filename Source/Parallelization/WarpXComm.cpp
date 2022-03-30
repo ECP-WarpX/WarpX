@@ -456,38 +456,38 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
 }
 
 void
-WarpX::FillBoundaryB (IntVect ng)
+WarpX::FillBoundaryB (IntVect ng, bool fill_nodal_points)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryB(lev, ng);
+        FillBoundaryB(lev, ng, fill_nodal_points);
     }
 }
 
 void
-WarpX::FillBoundaryE (IntVect ng)
+WarpX::FillBoundaryE (IntVect ng, bool fill_nodal_points)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryE(lev, ng);
+        FillBoundaryE(lev, ng, fill_nodal_points);
     }
 }
 
 void
-WarpX::FillBoundaryF (IntVect ng)
+WarpX::FillBoundaryF (IntVect ng, bool fill_nodal_points)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryF(lev, ng);
+        FillBoundaryF(lev, ng, fill_nodal_points);
     }
 }
 
 void
-WarpX::FillBoundaryG (IntVect ng)
+WarpX::FillBoundaryG (IntVect ng, bool fill_nodal_points)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryG(lev, ng);
+        FillBoundaryG(lev, ng, fill_nodal_points);
     }
 }
 
@@ -511,14 +511,14 @@ WarpX::FillBoundaryE_avg (IntVect ng)
 
 
 void
-WarpX::FillBoundaryE(int lev, IntVect ng)
+WarpX::FillBoundaryE (int lev, IntVect ng, bool fill_nodal_points)
 {
-    FillBoundaryE(lev, PatchType::fine, ng);
-    if (lev > 0) FillBoundaryE(lev, PatchType::coarse, ng);
+    FillBoundaryE(lev, PatchType::fine, ng, fill_nodal_points);
+    if (lev > 0) FillBoundaryE(lev, PatchType::coarse, ng, fill_nodal_points);
 }
 
 void
-WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng)
+WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, bool fill_nodal_points)
 {
     std::array<amrex::MultiFab*,3> mf;
     amrex::Periodicity period;
@@ -568,14 +568,14 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
 }
 
 void
-WarpX::FillBoundaryB (int lev, IntVect ng)
+WarpX::FillBoundaryB (int lev, IntVect ng, bool fill_nodal_points)
 {
-    FillBoundaryB(lev, PatchType::fine, ng);
-    if (lev > 0) FillBoundaryB(lev, PatchType::coarse, ng);
+    FillBoundaryB(lev, PatchType::fine, ng, fill_nodal_points);
+    if (lev > 0) FillBoundaryB(lev, PatchType::coarse, ng, fill_nodal_points);
 }
 
 void
-WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng)
+WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, bool fill_nodal_points)
 {
     std::array<amrex::MultiFab*,3> mf;
     amrex::Periodicity period;
@@ -730,14 +730,14 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryF (int lev, IntVect ng)
+WarpX::FillBoundaryF (int lev, IntVect ng, bool fill_nodal_points)
 {
-    FillBoundaryF(lev, PatchType::fine, ng);
-    if (lev > 0) FillBoundaryF(lev, PatchType::coarse, ng);
+    FillBoundaryF(lev, PatchType::fine, ng, fill_nodal_points);
+    if (lev > 0) FillBoundaryF(lev, PatchType::coarse, ng, fill_nodal_points);
 }
 
 void
-WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
+WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, bool fill_nodal_points)
 {
     if (patch_type == PatchType::fine)
     {
@@ -771,17 +771,17 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
     }
 }
 
-void WarpX::FillBoundaryG (int lev, IntVect ng)
+void WarpX::FillBoundaryG (int lev, IntVect ng, bool fill_nodal_points)
 {
-    FillBoundaryG(lev, PatchType::fine, ng);
+    FillBoundaryG(lev, PatchType::fine, ng, fill_nodal_points);
 
     if (lev > 0)
     {
-        FillBoundaryG(lev, PatchType::coarse, ng);
+        FillBoundaryG(lev, PatchType::coarse, ng, fill_nodal_points);
     }
 }
 
-void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
+void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, bool fill_nodal_points)
 {
     if (patch_type == PatchType::fine)
     {
