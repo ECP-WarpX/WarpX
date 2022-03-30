@@ -679,16 +679,16 @@ public:
     void FillBoundaryB_avg   (amrex::IntVect ng);
     void FillBoundaryE_avg   (amrex::IntVect ng);
 
-    void FillBoundaryF   (amrex::IntVect ng, bool sync_nodal_points=false);
-    void FillBoundaryG   (amrex::IntVect ng, bool sync_nodal_points=false);
+    void FillBoundaryF   (amrex::IntVect ng);
+    void FillBoundaryG   (amrex::IntVect ng);
     void FillBoundaryAux (amrex::IntVect ng);
     void FillBoundaryE   (int lev, amrex::IntVect ng, bool sync_nodal_points=false);
     void FillBoundaryB   (int lev, amrex::IntVect ng, bool sync_nodal_points=false);
     void FillBoundaryE_avg   (int lev, amrex::IntVect ng);
     void FillBoundaryB_avg   (int lev, amrex::IntVect ng);
 
-    void FillBoundaryF   (int lev, amrex::IntVect ng, bool sync_nodal_points=false);
-    void FillBoundaryG   (int lev, amrex::IntVect ng, bool sync_nodal_points=false);
+    void FillBoundaryF   (int lev, amrex::IntVect ng);
+    void FillBoundaryG   (int lev, amrex::IntVect ng);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
 
     void SyncCurrent ();
@@ -970,8 +970,8 @@ private:
 
     void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, bool sync_nodal_points=false);
     void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, bool sync_nodal_points=false);
-    void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng, bool sync_nodal_points=false);
-    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng, bool sync_nodal_points=false);
+    void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng);
+    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng);
 
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
