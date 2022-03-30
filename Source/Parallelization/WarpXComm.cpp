@@ -841,9 +841,7 @@ WarpX::SyncCurrent ()
 {
     WARPX_PROFILE("WarpX::SyncCurrent()");
 
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp =
-        (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ? current_fp_vay : current_fp;
-
+    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp = current_fp;
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp = current_cp;
 
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
