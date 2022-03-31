@@ -619,7 +619,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
           tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
           tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
           tmp.SetParticleDistributionMap(0, pinned_pc->ParticleDistributionMap(0));
-          tmp.copyParticles(*pinned_pc);
+          tmp.copyParticles(*pinned_pc, true);
       }
 
     // real_names contains a list of all real particle attributes.
