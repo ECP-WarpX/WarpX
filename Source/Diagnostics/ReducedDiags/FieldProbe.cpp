@@ -446,23 +446,24 @@ void FieldProbe::ComputeDiags (int step)
             auto const np = pti.numParticles();
             if (update_particles_moving_window)
             {
-                for::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+                const auto temp_warpx_moving_window = warpx.moving_window_dir;
+                amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
                     amrex::ParticleReal xp, yp, zp;
                     getPosition(ip, xp, yp, zp);
-                    if (warpx.moving_window_dir == 0)
+                    if (temp_warpx_moving_window == 0)
                     {
                         setPosition(ip, xp+move_dist, yp, zp);
                     }
-                    if (warpx.moving_window_dir == 1)
+                    if (temp_warpx_moving_window == 1)
                     {
                         setPosition(ip, xp, yp+move_dist, zp);
                     }
-                    if (warpx.moving_window_dir == WARPX_ZINDEX)
+                    if (temp_warpx_moving_window == WARPX_ZINDEX)
                     {
                         setPosition(ip, xp, yp, zp+move_dist);
                     }
-                }
+                });
             }
             if( ProbeInDomain() )
             {
