@@ -55,7 +55,7 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
     // Copy over member variables so they can be captured in the lambda
     auto map_fn = m_map_fn;
     auto filter_fn = m_filter_fn;
-    bool do_filter = m_do_filter;
+    const bool do_filter = m_do_filter;
     ParticleToMesh(pc, red_mf, m_lev,
             [=] AMREX_GPU_DEVICE (const WarpXParticleContainer::SuperParticleType& p,
                 amrex::Array4<amrex::Real> const& out_array,
