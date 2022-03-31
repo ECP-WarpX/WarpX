@@ -714,7 +714,7 @@ WarpX::OneStep_sub1 (Real curtime)
     RestrictRhoFromFineToCoarsePatch(fine_lev);
     ApplyFilterandSumBoundaryJ(current_fp, current_cp, fine_lev, PatchType::fine);
     ApplyFilterandSumBoundaryRho(fine_lev, PatchType::fine, 0, ncomps);
-    
+
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
