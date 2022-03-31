@@ -52,6 +52,7 @@ def do_analysis(single_precision = False):
     z = ad['electrons', 'particle_position_z'].to_ndarray()
     uz = ad['electrons', 'particle_momentum_z'].to_ndarray() / m_e / c
     w  = ad['electrons', 'particle_weight'].to_ndarray()
+    filt = uz < 0
 
     x_ind = ((x - ds.domain_left_edge[0].value) / dx[0]).astype(int)
     y_ind = ((y - ds.domain_left_edge[1].value) / dx[1]).astype(int)
@@ -61,17 +62,23 @@ def do_analysis(single_precision = False):
     uzavg = np.zeros(ds.domain_dimensions)
     zuzavg = np.zeros(ds.domain_dimensions)
     wavg = np.zeros(ds.domain_dimensions)
+    uzavg_filt = np.zeros(ds.domain_dimensions)
+    wavg_filt = np.zeros(ds.domain_dimensions)
 
     for i_p in range(len(x)):
         zavg[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += z[i_p] * w[i_p]
         uzavg[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += uz[i_p] * w[i_p]
         zuzavg[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += z[i_p] * uz[i_p] * w[i_p]
         wavg[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += w[i_p]
+        uzavg_filt[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += uz[i_p] * w[i_p] * filt[i_p]
+        wavg_filt[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += w[i_p] * filt[i_p]
 
     wavg_adj = np.where(wavg == 0, 1, wavg)
+    wavg_filt_adj = np.where(wavg_filt == 0, 1, wavg_filt)
     values_yt['electrons: zavg'] = zavg / wavg_adj
     values_yt['electrons: uzavg'] = uzavg / wavg_adj
     values_yt['electrons: zuzavg'] = zuzavg / wavg_adj
+    values_yt['electrons: uzavg_filt'] = uzavg_filt / wavg_filt_adj
 
     # protons
     x = ad['protons', 'particle_position_x'].to_ndarray()
@@ -79,6 +86,7 @@ def do_analysis(single_precision = False):
     z = ad['protons', 'particle_position_z'].to_ndarray()
     uz = ad['protons', 'particle_momentum_z'].to_ndarray() / m_p / c
     w  = ad['protons', 'particle_weight'].to_ndarray()
+    filt = uz < 0
 
     x_ind = ((x - ds.domain_left_edge[0].value) / dx[0]).astype(int)
     y_ind = ((y - ds.domain_left_edge[1].value) / dx[1]).astype(int)
@@ -88,17 +96,23 @@ def do_analysis(single_precision = False):
     uzavg = np.zeros(ds.domain_dimensions)
     zuzavg = np.zeros(ds.domain_dimensions)
     wavg = np.zeros(ds.domain_dimensions)
+    uzavg_filt = np.zeros(ds.domain_dimensions)
+    wavg_filt = np.zeros(ds.domain_dimensions)
 
     for i_p in range(len(x)):
         zavg[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += z[i_p] * w[i_p]
         uzavg[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += uz[i_p] * w[i_p]
         zuzavg[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += z[i_p] * uz[i_p] * w[i_p]
         wavg[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += w[i_p]
+        uzavg_filt[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += uz[i_p] * w[i_p] * filt[i_p]
+        wavg_filt[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += w[i_p] * filt[i_p]
 
     wavg_adj = np.where(wavg == 0, 1, wavg)
+    wavg_filt_adj = np.where(wavg_filt == 0, 1, wavg_filt)
     values_yt['protons: zavg'] = zavg / wavg_adj
     values_yt['protons: uzavg'] = uzavg / wavg_adj
     values_yt['protons: zuzavg'] = zuzavg / wavg_adj
+    values_yt['protons: uzavg_filt'] = uzavg_filt / wavg_filt_adj
 
     # Photons (momentum in units of m_e c)
     x = ad['photons', 'particle_position_x'].to_ndarray()
@@ -106,6 +120,7 @@ def do_analysis(single_precision = False):
     z = ad['photons', 'particle_position_z'].to_ndarray()
     uz = ad['photons', 'particle_momentum_z'].to_ndarray() / m_e / c
     w  = ad['photons', 'particle_weight'].to_ndarray()
+    filt = uz < 0
 
     x_ind = ((x - ds.domain_left_edge[0].value) / dx[0]).astype(int)
     y_ind = ((y - ds.domain_left_edge[1].value) / dx[1]).astype(int)
@@ -115,17 +130,23 @@ def do_analysis(single_precision = False):
     uzavg = np.zeros(ds.domain_dimensions)
     zuzavg = np.zeros(ds.domain_dimensions)
     wavg = np.zeros(ds.domain_dimensions)
+    uzavg_filt = np.zeros(ds.domain_dimensions)
+    wavg_filt = np.zeros(ds.domain_dimensions)
 
     for i_p in range(len(x)):
         zavg[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += z[i_p] * w[i_p]
         uzavg[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += uz[i_p] * w[i_p]
         zuzavg[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += z[i_p] * uz[i_p] * w[i_p]
         wavg[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += w[i_p]
+        uzavg_filt[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += uz[i_p] * w[i_p] * filt[i_p]
+        wavg_filt[x_ind[i_p],y_ind[i_p],z_ind[i_p]] += w[i_p] * filt[i_p]
 
     wavg_adj = np.where(wavg == 0, 1, wavg)
+    wavg_filt_adj = np.where(wavg_filt == 0, 1, wavg_filt)
     values_yt['photons: zavg'] = zavg / wavg_adj
     values_yt['photons: uzavg'] = uzavg / wavg_adj
     values_yt['photons: zuzavg'] = zuzavg / wavg_adj
+    values_yt['photons: uzavg_filt'] = uzavg_filt / wavg_filt_adj
 
 
     values_rd = dict()
@@ -142,6 +163,10 @@ def do_analysis(single_precision = False):
     values_rd['protons: zuzavg'] = ad0[('boxlib','zuz_protons')]
     values_rd['photons: zuzavg'] = ad0[('boxlib','zuz_photons')]
 
+    values_rd['electrons: uzavg_filt'] = ad0[('boxlib','uz_filt_electrons')]
+    values_rd['protons: uzavg_filt'] = ad0[('boxlib','uz_filt_protons')]
+    values_rd['photons: uzavg_filt'] = ad0[('boxlib','uz_filt_photons')]
+
     values_opmd = dict()
     # Load reduced particle diagnostic data from OPMD output
     values_opmd['electrons: zavg'] = opmd_i.meshes['z_electrons'][io.Mesh_Record_Component.SCALAR].load_chunk()
@@ -155,6 +180,10 @@ def do_analysis(single_precision = False):
     values_opmd['electrons: zuzavg'] = opmd_i.meshes['zuz_electrons'][io.Mesh_Record_Component.SCALAR].load_chunk()
     values_opmd['protons: zuzavg'] = opmd_i.meshes['zuz_protons'][io.Mesh_Record_Component.SCALAR].load_chunk()
     values_opmd['photons: zuzavg'] = opmd_i.meshes['zuz_photons'][io.Mesh_Record_Component.SCALAR].load_chunk()
+
+    values_opmd['electrons: uzavg_filt'] = opmd_i.meshes['uz_filt_electrons'][io.Mesh_Record_Component.SCALAR].load_chunk()
+    values_opmd['protons: uzavg_filt'] = opmd_i.meshes['uz_filt_protons'][io.Mesh_Record_Component.SCALAR].load_chunk()
+    values_opmd['photons: uzavg_filt'] = opmd_i.meshes['uz_filt_photons'][io.Mesh_Record_Component.SCALAR].load_chunk()
     opmd.flush()
     del opmd
 

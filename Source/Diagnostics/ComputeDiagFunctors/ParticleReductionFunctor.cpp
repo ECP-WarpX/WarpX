@@ -16,8 +16,9 @@
 using namespace amrex::literals;
 
 ParticleReductionFunctor::ParticleReductionFunctor (const amrex::MultiFab* mf_src, const int lev,
-        const amrex::IntVect crse_ratio, const std::string fn_str, const int ispec, const int ncomp)
-    : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev), m_ispec(ispec)
+        const amrex::IntVect crse_ratio, const std::string fn_str, const int ispec,
+        const bool do_filter, const std::string filter_str, const int ncomp)
+    : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev), m_ispec(ispec), m_do_filter(do_filter)
 {
     // mf_src will not be used, let's make sure it's null.
     AMREX_ALWAYS_ASSERT(mf_src == nullptr);
@@ -28,6 +29,12 @@ ParticleReductionFunctor::ParticleReductionFunctor (const amrex::MultiFab* mf_sr
     m_map_fn_parser = std::make_unique<amrex::Parser>(makeParser(
                 fn_str, {"x", "y", "z", "ux", "uy", "uz"}));
     m_map_fn = m_map_fn_parser->compile<6>();
+    // Do the same for filter function, if it exists
+    if (m_do_filter) {
+        m_filter_fn_parser = std::make_unique<amrex::Parser>(makeParser(
+               filter_str, {"x", "y", "z", "ux", "uy", "uz"}));
+        m_filter_fn = m_filter_fn_parser->compile<6>();
+    }
 }
 
 void
@@ -45,8 +52,10 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
     red_mf.setVal(0._rt);
     ppc_mf.setVal(0._rt);
     auto& pc = warpx.GetPartContainer().GetParticleContainer(m_ispec);
-    // Copy over compiled parser function so that it can be captured by value in the lambda
+    // Copy over member variables so they can be captured in the lambda
     auto map_fn = m_map_fn;
+    auto filter_fn = m_filter_fn;
+    const bool do_filter = m_do_filter;
     ParticleToMesh(pc, red_mf, m_lev,
             [=] AMREX_GPU_DEVICE (const WarpXParticleContainer::SuperParticleType& p,
                 amrex::Array4<amrex::Real> const& out_array,
@@ -81,7 +90,9 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::ParticleReal ux = p.rdata(PIdx::ux) / PhysConst::c;
                 amrex::ParticleReal uy = p.rdata(PIdx::uy) / PhysConst::c;
                 amrex::ParticleReal uz = p.rdata(PIdx::uz) / PhysConst::c;
-                amrex::Real value = map_fn(xw, yw, zw, ux, uy, uz);
+                amrex::Real value;
+                if ((do_filter) && (!filter_fn(xw, yw, zw, ux, uy, uz))) value = 0._rt;
+                else value = map_fn(xw, yw, zw, ux, uy, uz);
                 amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), p.rdata(PIdx::w) * value);
             });
     // Add the weight for each particle -- total number of particles of this species
@@ -91,6 +102,10 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
                 amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi)
             {
+                // Get position in WarpX convention to use in parser. Will be different from
+                // p.pos() for 1D and 2D simulations.
+                amrex::ParticleReal xw = 0._rt, yw = 0._rt, zw = 0._rt;
+                get_particle_position(p, xw, yw, zw);
 
                 // Get position in AMReX convention to calculate corresponding index.
                 // Ideally this will be replaced with the AMReX NGP interpolator
@@ -110,7 +125,14 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::Real lz = (z - plo[2]) * dxi[2];
                 kk = static_cast<int>(amrex::Math::floor(lz));
 #endif
-                amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), p.rdata(PIdx::w));
+                // Fix dimensions since parser assumes u = gamma * v / c
+                amrex::ParticleReal ux = p.rdata(PIdx::ux) / PhysConst::c;
+                amrex::ParticleReal uy = p.rdata(PIdx::uy) / PhysConst::c;
+                amrex::ParticleReal uz = p.rdata(PIdx::uz) / PhysConst::c;
+                amrex::Real filter;
+                if ((do_filter) && (!filter_fn(xw, yw, zw, ux, uy, uz))) filter = 0._rt;
+                else filter = 1._rt;
+                amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), p.rdata(PIdx::w) * filter);
             });
     // Divide value by number of particles for average. Set average to zero if there are no particles
     for (amrex::MFIter mfi(red_mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
