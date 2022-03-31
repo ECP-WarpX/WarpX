@@ -1008,16 +1008,10 @@ private:
         amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
         int lev,
         PatchType patch_type);
-    void NodalSyncJ (
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-        int lev,
-        PatchType patch_type);
 
     void RestrictRhoFromFineToCoarsePatch (int lev);
     void ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp);
     void AddRhoFromFineLevelandSumBoundary (int lev, int icomp, int ncomp);
-    void NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp);
 
     void ReadParameters ();
 

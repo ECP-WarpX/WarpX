@@ -1073,9 +1073,7 @@ WarpX::AddCurrentFromFineLevelandSumBoundary (
             }
             MultiFab::Add(*J_fp[lev][idim], mf, 0, 0, J_fp[lev+1][idim]->nComp(), 0);
         }
-        NodalSyncJ(J_fp, J_cp, lev+1, PatchType::coarse);
     }
-    NodalSyncJ(J_fp, J_cp, lev, PatchType::fine);
 }
 
 void
@@ -1198,52 +1196,6 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
             WarpXSumGuardCells(*(rho_cp[lev+1]), period, ng_depos_rho, icomp, ncomp);
         }
         MultiFab::Add(*rho_fp[lev], mf, 0, icomp, ncomp, 0);
-        NodalSyncRho(lev+1, PatchType::coarse, icomp, ncomp);
-    }
-
-    NodalSyncRho(lev, PatchType::fine, icomp, ncomp);
-}
-
-void
-WarpX::NodalSyncJ (
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-    int lev, PatchType patch_type)
-{
-    if (!override_sync_intervals.contains(istep[0])) return;
-
-    if (patch_type == PatchType::fine)
-    {
-        const amrex::Periodicity& period = Geom(lev).periodicity();
-        WarpXCommUtil::OverrideSync(*J_fp[lev][0], period);
-        WarpXCommUtil::OverrideSync(*J_fp[lev][1], period);
-        WarpXCommUtil::OverrideSync(*J_fp[lev][2], period);
-    }
-    else if (patch_type == PatchType::coarse)
-    {
-        const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
-        WarpXCommUtil::OverrideSync(*J_cp[lev][0], cperiod);
-        WarpXCommUtil::OverrideSync(*J_cp[lev][1], cperiod);
-        WarpXCommUtil::OverrideSync(*J_cp[lev][2], cperiod);
-    }
-}
-
-void
-WarpX::NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp)
-{
-    if (!override_sync_intervals.contains(istep[0])) return;
-
-    if (patch_type == PatchType::fine && rho_fp[lev])
-    {
-        const amrex::Periodicity& period = Geom(lev).periodicity();
-        MultiFab rhof(*rho_fp[lev], amrex::make_alias, icomp, ncomp);
-        WarpXCommUtil::OverrideSync(rhof, period);
-    }
-    else if (patch_type == PatchType::coarse && rho_cp[lev])
-    {
-        const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
-        MultiFab rhoc(*rho_cp[lev], amrex::make_alias, icomp, ncomp);
-        WarpXCommUtil::OverrideSync(rhoc, cperiod);
     }
 }
 
