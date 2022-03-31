@@ -101,4 +101,3 @@ FP.x1_probe = 0
 FP.z1_probe = 12e-6
 FP.resolution = 300
 FP.do_moving_window_FP = 1
-
