@@ -221,6 +221,7 @@ WarpX::ComputeFaceExtensions(){
 
     bool using_bck = false;
 
+    // If any cell could not ne extended we use the BCK method to stabilize them
 #if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_RZ)
     if (N_ext_faces_after_eight_ways(0) > 0) {
         ApplyBCKCorrection(0);
@@ -702,7 +703,9 @@ WarpX::ApplyBCKCorrection(const int idim) {
 
         amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
             if (flag_ext_face(i, j, k)) {
+                // Modify the area according to the BCK algorithm
                 S(i, j, k) = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
+                // Update the face info so that the solver doesn't think that this face is being extended
                 flag_info_face(i, j, k) = -1;
             }
         });
