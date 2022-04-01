@@ -93,48 +93,11 @@ class SpectralSolver
          * \param[in] mf MultiFab that is transformed to Fourier space (component i_comp)
          * \param[in] field_index index of the spectral field that stores the FFT result
          * \param[in] i_comp component of the MultiFab mf that is transformed to Fourier space
-         * \param[in] stag index type that needs to be used to perform the FFT operation
          */
         void ForwardTransform (const int lev,
                                const amrex::MultiFab& mf,
                                const int field_index,
-                               const int i_comp,
-                               const amrex::IntVect& stag);
-
-        /**
-         * \brief Overload of ForwardTransform used if stag is not passed
-         */
-        AMREX_FORCE_INLINE
-        void ForwardTransform (const int lev,
-                               const amrex::MultiFab& mf,
-                               const int field_index,
-                               const int i_comp)
-        {
-            ForwardTransform(lev, mf, field_index, i_comp, mf.ixType().toIntVect());
-        }
-
-        /**
-         * \brief Overload of ForwardTransform used if i_comp is not passed
-         */
-        AMREX_FORCE_INLINE
-        void ForwardTransform (const int lev,
-                               const amrex::MultiFab& mf,
-                               const int field_index,
-                               const amrex::IntVect& stag)
-        {
-            ForwardTransform(lev, mf, field_index, 0, stag);
-        }
-
-        /**
-         * Overload of ForwardTransform used if both i_comp and stag are not passed
-         */
-        AMREX_FORCE_INLINE
-        void ForwardTransform (const int lev,
-                               const amrex::MultiFab& mf,
-                               const int field_index)
-        {
-            ForwardTransform(lev, mf, field_index, 0, mf.ixType().toIntVect());
-        }
+                               const int i_comp = 0);
 
         /**
          * \brief Transform spectral field specified by `field_index` back to

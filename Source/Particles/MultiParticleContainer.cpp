@@ -943,10 +943,10 @@ MultiParticleContainer::doFieldIonization (int lev,
 }
 
 void
-MultiParticleContainer::doCollisions ( Real cur_time )
+MultiParticleContainer::doCollisions ( Real cur_time, amrex::Real dt )
 {
     WARPX_PROFILE("MultiParticleContainer::doCollisions()");
-    collisionhandler->doCollisions(cur_time, this);
+    collisionhandler->doCollisions(cur_time, dt, this);
 }
 
 void MultiParticleContainer::doResampling (const int timestep)
@@ -1069,7 +1069,7 @@ void MultiParticleContainer::InitQuantumSync ()
     }
     else if(lookup_table_mode == "builtin"){
         WarpX::GetInstance().RecordWarning("QED",
-            "The built-in Quantum Synchrotron table will be used."
+            "The built-in Quantum Synchrotron table will be used. "
             "This low resolution table is intended for testing purposes only.",
             WarnPriority::medium);
         m_shr_p_qs_engine->init_builtin_tables(qs_minimum_chi_part);
@@ -1127,7 +1127,7 @@ void MultiParticleContainer::InitBreitWheeler ()
     }
     else if(lookup_table_mode == "builtin"){
         WarpX::GetInstance().RecordWarning("QED",
-            "The built-in Breit Wheeler table will be used."
+            "The built-in Breit Wheeler table will be used. "
             "This low resolution table is intended for testing purposes only.",
             WarnPriority::medium);
         m_shr_p_bw_engine->init_builtin_tables(bw_minimum_chi_part);
@@ -1537,8 +1537,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
             auto Transform = PairGenerationTransformFunc(pair_gen_functor,
                                                          pti, lev, Ex.nGrowVect(),
                                                          Ex[pti], Ey[pti], Ez[pti],
-                                                         Bx[pti], By[pti], Bz[pti],
-                                                         pc_source->get_v_galilean());
+                                                         Bx[pti], By[pti], Bz[pti]);
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);
             auto& dst_ele_tile = pc_product_ele->ParticlesAt(lev, pti);
@@ -1616,8 +1615,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                   m_shr_p_qs_engine->build_phot_em_functor(),
                   pti, lev, Ex.nGrowVect(),
                   Ex[pti], Ey[pti], Ez[pti],
-                  Bx[pti], By[pti], Bz[pti],
-                  pc_source->get_v_galilean());
+                  Bx[pti], By[pti], Bz[pti]);
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);
             auto& dst_tile = pc_product_phot->ParticlesAt(lev, pti);
