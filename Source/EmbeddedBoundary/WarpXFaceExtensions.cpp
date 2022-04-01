@@ -225,8 +225,8 @@ WarpX::ComputeFaceExtensions(){
     if (N_ext_faces_after_eight_ways(0) > 0) {
         ApplyBCKCorrection(0);
         using_bck = true;
-#endif
     }
+#endif
 
     if (N_ext_faces_after_eight_ways(1) > 0) {
         ApplyBCKCorrection(1);
@@ -239,6 +239,7 @@ WarpX::ComputeFaceExtensions(){
         using_bck = true;
     }
 #endif
+
     if(WarpX::verbose and using_bck) {
         amrex::Print() << Utils::TextMsg::Info(
                 "Some faces could not be stabilized with the ECT and the BCK correction was used.\n"
