@@ -633,7 +633,8 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         std::string varname = m_pfield_varnames[pcomp];
         for (int ispec=0; ispec<int(m_pfield_species.size()); ispec++) {
             m_all_field_functors[lev][nvar + pcomp * nspec + ispec] = std::make_unique<ParticleReductionFunctor>(nullptr,
-                    lev, m_crse_ratio, m_pfield_strings[varname], m_pfield_species_index[ispec]);
+                    lev, m_crse_ratio, m_pfield_strings[varname], m_pfield_species_index[ispec],
+                    m_pfield_dofilter[varname], m_pfield_filter_strings[varname]);
         }
     }
     AddRZModesToDiags( lev );

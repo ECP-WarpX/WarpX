@@ -708,6 +708,10 @@ BTDiagnostics::Flush (int i_buffer)
     bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
+
+    // Redistribute particles in the lab frame box arrays that correspond to the buffer
+    RedistributeParticleBuffer(i_buffer);
+
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
@@ -727,6 +731,13 @@ BTDiagnostics::Flush (int i_buffer)
         UpdateTotalParticlesFlushed(i_buffer);
         ResetTotalParticlesInBuffer(i_buffer);
         ClearParticleBuffer(i_buffer);
+    }
+}
+
+void BTDiagnostics::RedistributeParticleBuffer (const int i_buffer)
+{
+    for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
+        m_particles_buffer[i_buffer][isp]->Redistribute();
     }
 }
 
