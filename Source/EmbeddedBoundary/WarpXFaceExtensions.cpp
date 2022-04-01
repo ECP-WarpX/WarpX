@@ -682,9 +682,7 @@ WarpX::ComputeEightWaysExtensions() {
 
 void
 WarpX::ApplyBCKCorrection(const int idim) {
-#if defined(AMREX_USE_EB) || !defined(WARPX_DIM_RZ)
-    auto const eb_fact = fieldEBFactory(maxLevel());
-
+#if defined(AMREX_USE_EB) and !defined(WARPX_DIM_RZ)
     auto const &cell_size = CellSize(maxLevel());
 
     const amrex::Real dx = cell_size[0];
