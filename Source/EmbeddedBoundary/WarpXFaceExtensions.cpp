@@ -218,15 +218,37 @@ WarpX::ComputeFaceExtensions(){
             + std::to_string(N_ext_faces_after_eight_ways(2))
         );
     }
+
+    bool using_bck = false;
+
+#if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_RZ)
     if (N_ext_faces_after_eight_ways(0) > 0) {
-        amrex::Abort(Utils::TextMsg::Err("Some x faces could not be extended"));
+        ApplyBCKCorrection(0);
+        using_bck = true;
+#endif
     }
+
     if (N_ext_faces_after_eight_ways(1) > 0) {
-        amrex::Abort(Utils::TextMsg::Err("Some y faces could not be extended"));
+        ApplyBCKCorrection(1);
+        using_bck = true;
     }
+
+#if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_RZ)
     if (N_ext_faces_after_eight_ways(2) > 0) {
-        amrex::Abort(Utils::TextMsg::Err("Some z faces could not be extended"));
+        ApplyBCKCorrection(2);
+        using_bck = true;
     }
+#endif
+    if(WarpX::verbose and using_bck) {
+        amrex::Print() << Utils::TextMsg::Info(
+                "Some faces could not be stabilized with the ECT and the BCK correction was used.\n"
+                "We had to use the BCK correction for:\n"
+                "-" + std::to_string(N_ext_faces_after_eight_ways(0)) + " x-faces\n"
+                + "-" + std::to_string(N_ext_faces_after_eight_ways(1)) + " y-faces\n"
+                + "-" + std::to_string(N_ext_faces_after_eight_ways(2)) + " z-faces\n"
+        );
+    }
+
 #endif
 }
 
@@ -658,6 +680,38 @@ WarpX::ComputeEightWaysExtensions() {
 #endif
 }
 
+void
+WarpX::ApplyBCKCorrection(const int idim) {
+#ifdef AMREX_USE_EB
+#ifndef WARPX_DIM_RZ
+    auto const eb_fact = fieldEBFactory(maxLevel());
+
+    auto const &cell_size = CellSize(maxLevel());
+
+    const amrex::Real dx = cell_size[0];
+    const amrex::Real dy = cell_size[1];
+    const amrex::Real dz = cell_size[2];
+
+    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+
+        amrex::Box const &box = mfi.validbox();
+        auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
+        auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
+        auto const &S = m_face_areas[maxLevel()][idim]->array(mfi);
+        auto const &lx = m_face_areas[maxLevel()][0]->array(mfi);
+        auto const &ly = m_face_areas[maxLevel()][1]->array(mfi);
+        auto const &lz = m_face_areas[maxLevel()][2]->array(mfi);
+
+        amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+            if (flag_ext_face(i, j, k)) {
+                S(i, j, k) = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
+                flag_info_face(i, j, k) = -1;
+            }
+        });
+    }
+#endif
+#endif
+}
 
 void
 WarpX::ShrinkBorrowing() {
