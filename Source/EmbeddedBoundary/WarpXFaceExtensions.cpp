@@ -682,8 +682,7 @@ WarpX::ComputeEightWaysExtensions() {
 
 void
 WarpX::ApplyBCKCorrection(const int idim) {
-#ifdef AMREX_USE_EB
-#ifndef WARPX_DIM_RZ
+#if defined(AMREX_USE_EB) || !defined(WARPX_DIM_RZ)
     auto const eb_fact = fieldEBFactory(maxLevel());
 
     auto const &cell_size = CellSize(maxLevel());
@@ -709,7 +708,8 @@ WarpX::ApplyBCKCorrection(const int idim) {
             }
         });
     }
-#endif
+#else
+    amrex::ignore_unused(idim);
 #endif
 }
 
