@@ -151,7 +151,7 @@ public:
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
-                         int num_shift, int dir, amrex::Real external_field=0.0,
+                         int num_shift, int dir, const int lev, amrex::Real external_field=0.0,
                          bool useparser = false, amrex::ParserExecutor<3> const& field_parser={});
 
     static void GotoNextLine (std::istream& is);
@@ -724,14 +724,25 @@ public:
 
     static std::array<amrex::Real,3> CellSize (int lev);
     static amrex::RealBox getRealBox(const amrex::Box& bx, int lev);
-    static std::array<amrex::Real,3> LowerCorner (const amrex::Box& bx,
-                                                  std::array<amrex::Real,3> galilean_shift, int lev);
-    static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, int lev);
 
-    /*
-      /brief This computes the lower of the problem domain, taking into account any shift when using the Galilean algorithm.
+    /**
+     * \brief Return the lower corner of the box in real units.
+     * \param bx The box
+     * \param lev The refinement level of the box
+     * \param time_shift_delta The time relative to the current time at which to calculate the position
+     *                         (when v_galilean is not zero)
+     * \return An array of the position coordinates
      */
-    std::array<amrex::Real,3> LowerCornerWithGalilean (const amrex::Box& bx, const amrex::Vector<amrex::Real>& v_galilean, int lev);
+    static std::array<amrex::Real,3> LowerCorner (const amrex::Box& bx, const int lev, const amrex::Real time_shift_delta);
+    /**
+     * \brief Return the upper corner of the box in real units.
+     * \param bx The box
+     * \param lev The refinement level of the box
+     * \param time_shift_delta The time relative to the current time at which to calculate the position
+     *                         (when v_galilean is not zero)
+     * \return An array of the position coordinates
+     */
+    static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, const int lev, const amrex::Real time_shift_delta);
 
     static amrex::IntVect RefRatio (int lev);
 
@@ -867,16 +878,30 @@ public:
 
     void ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp);
 
-#ifdef WARPX_USE_PSATD
+    /**
+     * \brief Returns an array of coefficients (Fornberg coefficients), corresponding
+     * to the weight of each point in a finite-difference approximation of a derivative
+     * (up to order \c n_order).
+     *
+     * \param[in] n_order order of the finite-difference approximation
+     * \param[in] nodal   whether the finite-difference approximation is computed
+     *                    on a nodal grid or a staggered grid
+     */
+    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const bool nodal);
+
     // Device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_y;
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_z;
+
     // Device vectors of stencil coefficients used for finite-order centering of currents
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_x;
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_y;
     amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_z;
-#endif
+
+    // This needs to be public for CUDA.
+    //! Tagging cells for refinement
+    virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
 
 protected:
 
@@ -906,9 +931,6 @@ protected:
      *  can be used in the function used to define the E and B fields on the grid.
      */
     void InitLevelData (int lev, amrex::Real time);
-
-    //! Tagging cells for refinement
-    virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
 
     //! Use this function to override the Level 0 grids made by AMReX.
     //! This function is called in amrex::AmrCore::InitFromScratch.
@@ -975,11 +997,22 @@ private:
     void OneStep_multiJ (const amrex::Real t);
 
     void RestrictCurrentFromFineToCoarsePatch (int lev);
-    void AddCurrentFromFineLevelandSumBoundary (int lev);
+    void AddCurrentFromFineLevelandSumBoundary (
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        int lev);
     void StoreCurrent (int lev);
     void RestoreCurrent (int lev);
-    void ApplyFilterandSumBoundaryJ (int lev, PatchType patch_type);
-    void NodalSyncJ (int lev, PatchType patch_type);
+    void ApplyFilterandSumBoundaryJ (
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        int lev,
+        PatchType patch_type);
+    void NodalSyncJ (
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        int lev,
+        PatchType patch_type);
 
     void RestrictRhoFromFineToCoarsePatch (int lev);
     void ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp);
@@ -1039,7 +1072,6 @@ private:
         return gather_buffer_masks[lev].get();
     }
 
-#ifdef WARPX_USE_PSATD
     /**
      * \brief Re-orders the Fornberg coefficients so that they can be used more conveniently for
      * finite-order centering operations. For example, for finite-order centering of order 6,
@@ -1069,7 +1101,6 @@ private:
                                         const int centering_nox,
                                         const int centering_noy,
                                         const int centering_noz);
-#endif
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngEB, const amrex::IntVect& ngJ,
@@ -1127,6 +1158,7 @@ private:
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_vay;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
@@ -1434,8 +1466,15 @@ private:
     /**
      * \brief Forward FFT of J on all mesh refinement levels,
      *        with k-space filtering (if needed)
+     *
+     * \param J_fp Vector of three-dimensional arrays (for each level)
+     *             storing the fine patch current to be transformed
+     * \param J_cp Vector of three-dimensional arrays (for each level)
+     *             storing the coarse patch current to be transformed
      */
-    void PSATDForwardTransformJ ();
+    void PSATDForwardTransformJ (
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
 
     /**
      * \brief Backward FFT of J on all mesh refinement levels

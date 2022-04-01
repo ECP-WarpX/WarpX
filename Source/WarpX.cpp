@@ -306,6 +306,11 @@ WarpX::WarpX ()
         current_fp_nodal.resize(nlevs_max);
     }
 
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+    {
+        current_fp_vay.resize(nlevs_max);
+    }
+
     F_cp.resize(nlevs_max);
     G_cp.resize(nlevs_max);
     rho_cp.resize(nlevs_max);
@@ -959,6 +964,23 @@ WarpX::ReadParameters ()
         charge_deposition_algo = GetAlgorithmInteger(pp_algo, "charge_deposition");
         particle_pusher_algo = GetAlgorithmInteger(pp_algo, "particle_pusher");
 
+        if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov && do_current_centering)
+        {
+            amrex::Abort("\nCurrent centering (nodal deposition) cannot be used with Esirkepov deposition."
+                         "\nPlease set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
+        }
+
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay && do_current_centering)
+        {
+            amrex::Abort("\nVay deposition not implemented with current centering");
+        }
+
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay
+            && maxLevel() > 0)
+        {
+            amrex::Abort("\nVay deposition not implemented with mesh refinement");
+        }
+
         field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
             // Use same shape factors in all directions, for gathering
@@ -1048,61 +1070,56 @@ WarpX::ReadParameters ()
 
         pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
 
-#ifdef WARPX_USE_PSATD
-
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-
-            // Read order of finite-order centering of fields (staggered to nodal).
-            // Read this only if warpx.do_nodal = 0. Instead, if warpx.do_nodal = 1,
-            // Maxwell's equations are solved on a nodal grid and the electromagnetic
-            // forces are gathered from a nodal grid, hence the fields do not need to
-            // be centered onto a nodal grid.
-            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
-                WarpX::do_nodal == 0)
-            {
-                queryWithParser(pp_interpolation, "field_centering_nox", field_centering_nox);
-                queryWithParser(pp_interpolation, "field_centering_noy", field_centering_noy);
-                queryWithParser(pp_interpolation, "field_centering_noz", field_centering_noz);
-            }
-
-            // Read order of finite-order centering of currents (nodal to staggered)
-            if (WarpX::do_current_centering) {
-                queryWithParser(pp_interpolation, "current_centering_nox", current_centering_nox);
-                queryWithParser(pp_interpolation, "current_centering_noy", current_centering_noy);
-                queryWithParser(pp_interpolation, "current_centering_noz", current_centering_noz);
-            }
-
-            // Finite-order centering is not implemented with mesh refinement
-            // (note that when WarpX::do_nodal = 1 finite-order centering is not used anyways)
-            if (maxLevel() > 0 && WarpX::do_nodal == 0)
-            {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
-                    "High-order centering of fields (order > 2) is not implemented with mesh refinement");
-            }
-
-            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
-                WarpX::do_nodal == 0)
-            {
-                AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
-                                              device_field_centering_stencil_coeffs_y,
-                                              device_field_centering_stencil_coeffs_z,
-                                              field_centering_nox,
-                                              field_centering_noy,
-                                              field_centering_noz);
-            }
-
-            if (WarpX::do_current_centering)
-            {
-                AllocateCenteringCoefficients(device_current_centering_stencil_coeffs_x,
-                                              device_current_centering_stencil_coeffs_y,
-                                              device_current_centering_stencil_coeffs_z,
-                                              current_centering_nox,
-                                              current_centering_noy,
-                                              current_centering_noz);
-            }
+        // Read order of finite-order centering of fields (staggered to nodal).
+        // Read this only if warpx.do_nodal = 0. Instead, if warpx.do_nodal = 1,
+        // Maxwell's equations are solved on a nodal grid and the electromagnetic
+        // forces are gathered from a nodal grid, hence the fields do not need to
+        // be centered onto a nodal grid.
+        if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
+            WarpX::do_nodal == 0)
+        {
+            queryWithParser(pp_interpolation, "field_centering_nox", field_centering_nox);
+            queryWithParser(pp_interpolation, "field_centering_noy", field_centering_noy);
+            queryWithParser(pp_interpolation, "field_centering_noz", field_centering_noz);
         }
-#endif
+
+        // Read order of finite-order centering of currents (nodal to staggered)
+        if (WarpX::do_current_centering)
+        {
+            queryWithParser(pp_interpolation, "current_centering_nox", current_centering_nox);
+            queryWithParser(pp_interpolation, "current_centering_noy", current_centering_noy);
+            queryWithParser(pp_interpolation, "current_centering_noz", current_centering_noz);
+        }
+
+        // Finite-order centering is not implemented with mesh refinement
+        // (note that when WarpX::do_nodal = 1 finite-order centering is not used anyways)
+        if (maxLevel() > 0 && WarpX::do_nodal == 0)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
+                "High-order centering of fields (order > 2) is not implemented with mesh refinement");
+        }
+
+        if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
+            WarpX::do_nodal == 0)
+        {
+            AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
+                                          device_field_centering_stencil_coeffs_y,
+                                          device_field_centering_stencil_coeffs_z,
+                                          field_centering_nox,
+                                          field_centering_noy,
+                                          field_centering_noz);
+        }
+
+        if (WarpX::do_current_centering)
+        {
+            AllocateCenteringCoefficients(device_current_centering_stencil_coeffs_x,
+                                          device_current_centering_stencil_coeffs_y,
+                                          device_current_centering_stencil_coeffs_z,
+                                          current_centering_nox,
+                                          current_centering_noy,
+                                          current_centering_noz);
+        }
     }
 
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
@@ -1206,6 +1223,9 @@ WarpX::ReadParameters ()
         if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
             if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
                 amrex::Abort("Esirkepov current deposition cannot be used with the comoving PSATD algorithm");
+            }
+            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.) {
+                amrex::Abort("Esirkepov current deposition cannot be used with the Galilean algorithm.");
             }
         }
 
@@ -1474,6 +1494,11 @@ WarpX::ClearLevel (int lev)
             current_fp_nodal[lev][i].reset();
         }
 
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            current_fp_vay[lev][i].reset();
+        }
+
         current_cp[lev][i].reset();
         Efield_cp [lev][i].reset();
         Bfield_cp [lev][i].reset();
@@ -1698,6 +1723,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         current_fp_nodal[lev][0] = std::make_unique<MultiFab>(nodal_ba, dm, ncomps, ngJ);
         current_fp_nodal[lev][1] = std::make_unique<MultiFab>(nodal_ba, dm, ncomps, ngJ);
         current_fp_nodal[lev][2] = std::make_unique<MultiFab>(nodal_ba, dm, ncomps, ngJ);
+    }
+
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+    {
+        current_fp_vay[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_vay[x]"));
+        current_fp_vay[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_vay[y]"));
+        current_fp_vay[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_vay[z]"));
     }
 
     Bfield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_fp[x]"));
@@ -2174,11 +2209,18 @@ WarpX::getRealBox(const Box& bx, int lev)
 }
 
 std::array<Real,3>
-WarpX::LowerCorner(const Box& bx, std::array<amrex::Real,3> galilean_shift, int lev)
+WarpX::LowerCorner(const Box& bx, const int lev, const amrex::Real time_shift_delta)
 {
+    auto & warpx = GetInstance();
     RealBox grid_box = getRealBox( bx, lev );
 
     const Real* xyzmin = grid_box.lo();
+
+    amrex::Real cur_time = warpx.gett_new(lev);
+    amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
+    amrex::Array<amrex::Real,3> galilean_shift = { warpx.m_v_galilean[0]*time_shift,
+                                                   warpx.m_v_galilean[1]*time_shift,
+                                                   warpx.m_v_galilean[2]*time_shift };
 
 #if defined(WARPX_DIM_3D)
     return { xyzmin[0] + galilean_shift[0], xyzmin[1] + galilean_shift[1], xyzmin[2] + galilean_shift[2] };
@@ -2192,26 +2234,28 @@ WarpX::LowerCorner(const Box& bx, std::array<amrex::Real,3> galilean_shift, int 
 }
 
 std::array<Real,3>
-WarpX::UpperCorner(const Box& bx, int lev)
+WarpX::UpperCorner(const Box& bx, const int lev, const amrex::Real time_shift_delta)
 {
+    auto & warpx = GetInstance();
     const RealBox grid_box = getRealBox( bx, lev );
-    const Real* xyzmax = grid_box.hi();
-#if defined(WARPX_DIM_3D)
-    return { xyzmax[0], xyzmax[1], xyzmax[2] };
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    return { xyzmax[0], std::numeric_limits<Real>::max(), xyzmax[1] };
-#elif defined(WARPX_DIM_1D_Z)
-    return { std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), xyzmax[0] };
-#endif
-}
 
-std::array<Real,3>
-WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Vector<amrex::Real>& v_galilean, int lev)
-{
-    amrex::Real cur_time = gett_new(lev);
-    amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
-    return WarpX::LowerCorner(bx, galilean_shift, lev);
+    const Real* xyzmax = grid_box.hi();
+
+    amrex::Real cur_time = warpx.gett_new(lev);
+    amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
+    amrex::Array<amrex::Real,3> galilean_shift = { warpx.m_v_galilean[0]*time_shift,
+                                                   warpx.m_v_galilean[1]*time_shift,
+                                                   warpx.m_v_galilean[2]*time_shift };
+
+#if defined(WARPX_DIM_3D)
+    return { xyzmax[0] + galilean_shift[0], xyzmax[1] + galilean_shift[1], xyzmax[2] + galilean_shift[2] };
+
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    return { xyzmax[0] + galilean_shift[0], std::numeric_limits<Real>::max(), xyzmax[1] + galilean_shift[1] };
+
+#elif defined(WARPX_DIM_1D_Z)
+    return { std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), xyzmax[0] + galilean_shift[0] };
+#endif
 }
 
 IntVect
@@ -2462,7 +2506,49 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
 #endif
 }
 
-#ifdef WARPX_USE_PSATD
+amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_order, const bool nodal)
+{
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
+
+    const int m = n_order / 2;
+    amrex::Vector<amrex::Real> coeffs;
+    coeffs.resize(m);
+
+    // There are closed-form formula for these coefficients, but they result in
+    // an overflow when evaluated numerically. One way to avoid the overflow is
+    // to calculate the coefficients by recurrence.
+
+    // Coefficients for nodal (centered) finite-difference approximation
+    if (nodal == true)
+    {
+       // First coefficient
+       coeffs.at(0) = m * 2. / (m+1);
+       // Other coefficients by recurrence
+       for (int n = 1; n < m; n++)
+       {
+           coeffs.at(n) = - (m-n) * 1. / (m+n+1) * coeffs.at(n-1);
+       }
+    }
+    // Coefficients for staggered finite-difference approximation
+    else
+    {
+       Real prod = 1.;
+       for (int k = 1; k < m+1; k++)
+       {
+           prod *= (m + k) / (4. * k);
+       }
+       // First coefficient
+       coeffs.at(0) = 4 * m * prod * prod;
+       // Other coefficients by recurrence
+       for (int n = 1; n < m; n++)
+       {
+           coeffs.at(n) = - ((2*n-1) * (m-n)) * 1. / ((2*n+1) * (m+n)) * coeffs.at(n-1);
+       }
+    }
+
+    return coeffs;
+}
+
 void WarpX::ReorderFornbergCoefficients (amrex::Vector<amrex::Real>& ordered_coeffs,
                                          amrex::Vector<amrex::Real>& unordered_coeffs,
                                          const int order)
@@ -2532,7 +2618,6 @@ void WarpX::AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>
 
     amrex::Gpu::synchronize();
 }
-#endif
 
 const iMultiFab*
 WarpX::CurrentBufferMasks (int lev)

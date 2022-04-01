@@ -264,7 +264,7 @@ Domain Boundary Conditions
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
 
     * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. See the :ref:`PML theory section <theory-bc>` for more details.
-      Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
+      Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.pml_has_particles``, and ``warpx.do_pml_j_damping``.
 
     * ``absorbing_silver_mueller``: This option can be used to set the Silver-Mueller absorbing boundary conditions. These boundary conditions are simpler and less computationally expensive than the pml, but are also less effective at absorbing the field. They only work with the Yee Maxwell solver.
 
@@ -602,7 +602,7 @@ Particle initialization
       ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
       The external file must include the species ``openPMD::Record`` labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
-      If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ```<species_name>.charge`` or ```<species_name>.species_type``).
+      If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ``<species_name>.charge`` or ``<species_name>.species_type``).
       The ``external_file`` option is currently implemented for 2D, 3D and RZ geometries, with record components in the cartesian coordinates ``(x,y,z)`` for 3D and RZ, and ``(x,z)`` for 2D.
       For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :ref:`the install section <install-developers>`.
 
@@ -884,13 +884,14 @@ Particle initialization
     when the particles are generated.
     If the user-defined real attribute is ``<real_attrib_name>`` then the
     following required parameter must be specified to initialize the attribute.
-    * ``<species_name>.attribute.<real_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
-    ``t`` represents the physical time in seconds during the simulation.
-    ``x`, ``y``, ``z` represent particle positions in the unit of meter.
-    ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
-    :math:`\gamma v/c`, where
-    :math:`\gamma` is the Lorentz factor,
-    :math:`v/c` is the particle velocity normalized by the speed of light.
+
+   * ``<species_name>.attribute.<real_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
+     ``t`` represents the physical time in seconds during the simulation.
+     ``x``, ``y``, ``z`` represent particle positions in the unit of meter.
+     ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
+     :math:`\gamma v/c`, where
+     :math:`\gamma` is the Lorentz factor,
+     :math:`v/c` is the particle velocity normalized by the speed of light.
 
 * ``<species>.save_particles_at_xlo/ylo/zlo``,  ``<species>.save_particles_at_xhi/yhi/zhi`` and ``<species>.save_particles_at_eb`` (`0` or `1` optional, default `0`)
     If `1` particles of this species will be copied to the scraped particle
@@ -1029,7 +1030,7 @@ Laser initialization
     transversally.
 
     .. note::
-        In 2D, ```<laser_name>`.position`` is still given by 3 numbers,
+        In 2D, ``<laser_name>.position`` is still given by 3 numbers,
         but the second number is ignored.
 
     When running a **boosted-frame simulation**, provide the value of
@@ -1671,7 +1672,7 @@ Numerics and algorithms
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
     If ``psatd.periodic_single_box_fft`` is used, these can be set to ``inf`` for infinite-order PSATD.
 
-* ``psatd.nx_guard`, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
+* ``psatd.nx_guard``, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
     The number of guard cells to use with PSATD solver.
     If not set by users, these values are calculated automatically and determined *empirically* and
     would be equal the order of the solver for nodal grid, and half the order of the solver for staggered.
@@ -1908,7 +1909,6 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     ``bp`` is the `ADIOS I/O library <https://csmd.ornl.gov/adios>`_, ``h5`` is the `HDF5 format <https://www.hdfgroup.org/solutions/hdf5/>`_, and ``json`` is a `simple text format <https://en.wikipedia.org/wiki/JSON>`_.
     ``json`` only works with serial/single-rank jobs.
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
-    Note that when using ``BackTransformed`` diagnostic type, the openpmd format supports only ``h5`` backend for both species and fields, while ``bp`` backend can be used for visualizing fields, but not particles. The code will abort if ``bp`` is selected for particle output.
 
 * ``<diag_name>.openpmd_encoding`` (optional, ``v`` (variable based), ``f`` (file based) or ``g`` (group based) ) only read if ``<diag_name>.format = openpmd``.
      openPMD `file output encoding <https://openpmd-api.readthedocs.io/en/0.14.0/usage/concepts.html#iteration-and-series>`__.
@@ -1952,14 +1952,23 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
     .. code-block:: text
 
-        <diag_name>.adios2_engine.parameter.NumAggregators = 2048
+        <diag_name>.adios2_engine.parameters.NumAggregators = 2048
         <diag_name>.adios2_engine.parameters.BurstBufferPath="/mnt/bb/username"
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
-    Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe.
-    Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
+    Possible scalar fields: ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe.
+    Possible vector field components in Cartesian geometry: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz``.
+    Possible vector field components in RZ geometry: ``Er`` ``Et`` ``Ez`` ``Br`` ``Bt`` ``Bz`` ``jr`` ``jt`` ``jz``.
+    Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``,
+    unless in RZ geometry with ``<diag_name>.format == openpmd``,
+    then default is ``<diag_name>.fields_to_plot = Er Et Ez Br Bt Bz jr jt jz``.
     Note that the fields are averaged on the cell centers before they are written to file.
+    Also, when ``<diag_name>.format = openpmd``, the RZ modes for all fields are written.
+    Otherwise, we reconstruct a 2D Cartesian slice of the fields for output at :math:`\theta=0`.
+
+* ``<diag_name>.dump_rz_modes`` (`0` or `1`) optional (default `0`)
+    Whether to save all modes when in RZ.  When ``openpmd_backend = openpmd``, this parameter is ignored and all modes are saved.
 
 * ``<diag_name>.particle_fields_to_plot`` (list of `strings`, optional)
    Names of per-cell averages of particle properties to calculate and output as additional fields.
@@ -1979,8 +1988,13 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
             \texttt{<field_name>_<species>} = \frac{\sum_{i=1}^N w_i \, f(x_i,y_i,z_i,u_{x,i},u_{y,i},u_{z,i})}{\sum_{i=1}^N w_i}
 
-   where the sums are over all particles of type ``<species>`` in a cell (ignoring the particle shape factor), :math:`w_i` is the particle weight, :math:`f()` is the parser function, and :math:`(x_i,y_i,z_i)` are particle positions in units of a meter.
+   where :math:`w_i` is the particle weight, :math:`f()` is the parser function, and :math:`(x_i,y_i,z_i)` are particle positions in units of a meter. The sums are over all particles of type ``<species>`` in a cell (ignoring the particle shape factor) that satisfy ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)``.
    In 1D or 2D, the particle coordinates will follow the WarpX convention. :math:`(u_{x,i},u_{y,i},u_{z,i})` are components of the particle four-velocity. :math:`u = \gamma v/c`, :math:`\gamma` is the Lorentz factor, :math:`v` is the particle velocity, and :math:`c` is the speed of light.
+
+* ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)`` (parser `string`, optional)
+    Parser function returning a boolean for whether to include a particle in the average.
+    If not specified, all particles will be included (see above).
+    The function arguments are the same as above.
 
 * ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
     By default, the fields written in the plot files are averaged on the cell centers.
@@ -2037,7 +2051,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     The value provided should be an integer greater than or equal to 0.
 
 * ``<diag_name>.<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
-    Users can provide an expression returning a boolean for whether a particle is dumped (the exact test is whether the return value is `> 0.5`).
+    Users can provide an expression returning a boolean for whether a particle is dumped.
     `t` represents the physical time in seconds during the simulation.
     `x, y, z` represent particle positions in the unit of meter.
     `ux, uy, uz` represent particle velocities in the unit of
@@ -2058,6 +2072,12 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     To use asynchronous IO with more than ``amrex.async_out_nfiles`` MPI ranks,
     WarpX must be configured with ``-DWarpX_MPI_THREAD_MULTIPLE=ON``.
     Please see the :ref:`data analysis section <dataanalysis-formats>` for more information.
+
+* ``warpx.field_io_nfiles`` and ``warpx.particle_io_nfiles`` (`int`) optional (default `1024`)
+    The maximum number of files to use when writing field and particle data to plotfile directories.
+
+* ``warpx.mffile_nstreams`` (`int`) optional (default `4`)
+    Limit the number of concurrent readers per file.
 
 .. _running-cpp-parameters-diagnostics-btd:
 
@@ -2483,8 +2503,7 @@ Reduced Diagnostics
 
         * ``<reduced_diags_name>.filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
             Users can provide an expression returning a boolean for whether a particle is taken
-            into account when calculating the histogram (the exact test is whether the return
-            value is `> 0.5`).
+            into account when calculating the histogram.
             `t` represents the physical time in seconds during the simulation.
             `x, y, z` represent particle positions in the unit of meter.
             `ux, uy, uz` represent particle velocities in the unit of
