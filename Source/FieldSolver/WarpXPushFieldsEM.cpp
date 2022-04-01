@@ -380,15 +380,15 @@ void WarpX::PSATDComputeCurrentPartialSums ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        amrex::MultiFab const& jx = *current_fp_vay[lev][0];
-        amrex::MultiFab const& jy = *current_fp_vay[lev][1];
-        amrex::MultiFab const& jz = *current_fp_vay[lev][2];
-        amrex::MultiFab& jx_cumsum = *current_fp_cumsum[lev][0];
-        amrex::MultiFab& jy_cumsum = *current_fp_cumsum[lev][1];
-        amrex::MultiFab& jz_cumsum = *current_fp_cumsum[lev][2];
+        amrex::MultiFab const& Dx = *current_fp_vay[lev][0];
+        amrex::MultiFab const& Dy = *current_fp_vay[lev][1];
+        amrex::MultiFab const& Dz = *current_fp_vay[lev][2];
+        amrex::MultiFab& Dx_cumsum = *current_fp_cumsum[lev][0];
+        amrex::MultiFab& Dy_cumsum = *current_fp_cumsum[lev][1];
+        amrex::MultiFab& Dz_cumsum = *current_fp_cumsum[lev][2];
 
 #if defined (WARPX_DIM_XZ)
-        amrex::ignore_unused(jy, jy_cumsum);
+        amrex::ignore_unused(Dy, Dy_cumsum);
 #endif
 
 #ifdef AMREX_USE_OMP
@@ -396,74 +396,74 @@ void WarpX::PSATDComputeCurrentPartialSums ()
 #endif
 
         // Compute cumulative sum for Jx
-        for (amrex::MFIter mfi(jx_cumsum); mfi.isValid(); ++mfi)
+        for (amrex::MFIter mfi(Dx_cumsum); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
 
-            amrex::Array4<amrex::Real const> const& jx_arr = jx.const_array(mfi);
-            amrex::Array4<amrex::Real> const& jx_cumsum_arr = jx_cumsum.array(mfi);
+            amrex::Array4<amrex::Real const> const& Dx_arr = Dx.const_array(mfi);
+            amrex::Array4<amrex::Real> const& Dx_cumsum_arr = Dx_cumsum.array(mfi);
 
-            const amrex::Dim3 lo_jx = amrex::lbound(bx);
+            const amrex::Dim3 lo = amrex::lbound(bx);
 
             // Compute cumulative sum along x only
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
             {
-                jx_cumsum_arr(i,j,k) = 0._rt;
-                for (int ii = lo_jx.x; ii <= i; ++ii)
+                Dx_cumsum_arr(i,j,k) = 0._rt;
+                for (int ii = lo.x; ii <= i; ++ii)
                 {
-                    jx_cumsum_arr(i,j,k) += jx_arr(ii,j,k);
+                    Dx_cumsum_arr(i,j,k) += Dx_arr(ii,j,k);
                 }
             });
         }
 
 #if defined (WARPX_DIM_3D)
         // Compute cumulative sum for Jy
-        for (amrex::MFIter mfi(jy_cumsum); mfi.isValid(); ++mfi)
+        for (amrex::MFIter mfi(Dy_cumsum); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
 
-            amrex::Array4<amrex::Real const> const& jy_arr = jy.const_array(mfi);
-            amrex::Array4<amrex::Real> const& jy_cumsum_arr = jy_cumsum.array(mfi);
+            amrex::Array4<amrex::Real const> const& Dy_arr = Dy.const_array(mfi);
+            amrex::Array4<amrex::Real> const& Dy_cumsum_arr = Dy_cumsum.array(mfi);
 
-            const amrex::Dim3 lo_jy = amrex::lbound(bx);
+            const amrex::Dim3 lo = amrex::lbound(bx);
 
             // Compute cumulative sum along y only
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
             {
-                jy_cumsum_arr(i,j,k) = 0._rt;
-                for (int jj = lo_jy.y; jj <= j; ++jj)
+                Dy_cumsum_arr(i,j,k) = 0._rt;
+                for (int jj = lo.y; jj <= j; ++jj)
                 {
-                    jy_cumsum_arr(i,j,k) += jy_arr(i,jj,k);
+                    Dy_cumsum_arr(i,j,k) += Dy_arr(i,jj,k);
                 }
             });
         }
 #endif
 
         // Compute cumulative sum for Jz
-        for (amrex::MFIter mfi(jz_cumsum); mfi.isValid(); ++mfi)
+        for (amrex::MFIter mfi(Dz_cumsum); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
 
-            amrex::Array4<amrex::Real const> const& jz_arr = jz.const_array(mfi);
-            amrex::Array4<amrex::Real> const& jz_cumsum_arr = jz_cumsum.array(mfi);
+            amrex::Array4<amrex::Real const> const& Dz_arr = Dz.const_array(mfi);
+            amrex::Array4<amrex::Real> const& Dz_cumsum_arr = Dz_cumsum.array(mfi);
 
-            const amrex::Dim3 lo_jz = amrex::lbound(bx);
+            const amrex::Dim3 lo = amrex::lbound(bx);
 
             // Compute cumulative sum along z only
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
             {
-                jz_cumsum_arr(i,j,k) = 0._rt;
+                Dz_cumsum_arr(i,j,k) = 0._rt;
 #if defined (WARPX_DIM_XZ)
                 // z direction is in the second component
-                for (int jj = lo_jz.y; jj <= j; ++jj)
+                for (int jj = lo.y; jj <= j; ++jj)
                 {
-                    jz_cumsum_arr(i,j,k) += jz_arr(i,jj,k);
+                    Dz_cumsum_arr(i,j,k) += Dz_arr(i,jj,k);
                 }
 #elif defined (WARPX_DIM_3D)
                 // z direction is in the third component
-                for (int kk = lo_jz.z; kk <= k; ++kk)
+                for (int kk = lo.z; kk <= k; ++kk)
                 {
-                    jz_cumsum_arr(i,j,k) += jz_arr(i,j,kk);
+                    Dz_cumsum_arr(i,j,k) += Dz_arr(i,j,kk);
                 }
 #endif
             });
@@ -485,15 +485,15 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
     {
         const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
 
-        amrex::MultiFab& jx = *current_fp[lev][0];
-        amrex::MultiFab& jy = *current_fp[lev][1];
-        amrex::MultiFab& jz = *current_fp[lev][2];
-        amrex::MultiFab const& jx_cumsum = *current_fp_cumsum[lev][0];
-        amrex::MultiFab const& jy_cumsum = *current_fp_cumsum[lev][1];
-        amrex::MultiFab const& jz_cumsum = *current_fp_cumsum[lev][2];
+        amrex::MultiFab& Jx = *current_fp[lev][0];
+        amrex::MultiFab& Jy = *current_fp[lev][1];
+        amrex::MultiFab& Jz = *current_fp[lev][2];
+        amrex::MultiFab const& Dx_cumsum = *current_fp_cumsum[lev][0];
+        amrex::MultiFab const& Dy_cumsum = *current_fp_cumsum[lev][1];
+        amrex::MultiFab const& Dz_cumsum = *current_fp_cumsum[lev][2];
 
 #if defined (WARPX_DIM_XZ)
-        amrex::ignore_unused(jy, jy_cumsum);
+        amrex::ignore_unused(Jy, Dy_cumsum);
 #endif
 
 #ifdef AMREX_USE_OMP
@@ -501,65 +501,65 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 #endif
 
         // Subtract average of cumulative sum from Jx
-        for (amrex::MFIter mfi(jx); mfi.isValid(); ++mfi)
+        for (amrex::MFIter mfi(Jx); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
 
-            amrex::Array4<amrex::Real> const& jx_arr = jx.array(mfi);
-            amrex::Array4<amrex::Real const> const& jx_cumsum_arr = jx_cumsum.const_array(mfi);
+            amrex::Array4<amrex::Real> const& Jx_arr = Jx.array(mfi);
+            amrex::Array4<amrex::Real const> const& Dx_cumsum_arr = Dx_cumsum.const_array(mfi);
 
-            const amrex::Dim3 lo_jx = amrex::lbound(bx);
-            const amrex::Dim3 hi_jx = amrex::ubound(bx);
-            const int nx = hi_jx.x - lo_jx.x + 1;
+            const amrex::Dim3 lo = amrex::lbound(bx);
+            const amrex::Dim3 hi = amrex::ubound(bx);
+            const int nx = hi.x - lo.x + 1;
 
             // Subtract average of cumulative sum along x only
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
             {
-                for (int ii = lo_jx.x; ii <= hi_jx.x; ++ii)
+                for (int ii = lo.x; ii <= hi.x; ++ii)
                 {
-                    jx_arr(i,j,k) -= jx_cumsum_arr(ii,j,k) * dx[0] / static_cast<amrex::Real>(nx);
+                    Jx_arr(i,j,k) -= Dx_cumsum_arr(ii,j,k) * dx[0] / static_cast<amrex::Real>(nx);
                 }
             });
         }
 
 #if defined (WARPX_DIM_3D)
         // Subtract average of cumulative sum from Jy
-        for (amrex::MFIter mfi(jy); mfi.isValid(); ++mfi)
+        for (amrex::MFIter mfi(Jy); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
 
-            amrex::Array4<amrex::Real> const& jy_arr = jy.array(mfi);
-            amrex::Array4<amrex::Real const> const& jy_cumsum_arr = jy_cumsum.const_array(mfi);
+            amrex::Array4<amrex::Real> const& Jy_arr = Jy.array(mfi);
+            amrex::Array4<amrex::Real const> const& Dy_cumsum_arr = Dy_cumsum.const_array(mfi);
 
-            const amrex::Dim3 lo_jy = amrex::lbound(bx);
-            const amrex::Dim3 hi_jy = amrex::ubound(bx);
-            const int ny = hi_jy.y - lo_jy.y + 1;
+            const amrex::Dim3 lo = amrex::lbound(bx);
+            const amrex::Dim3 hi = amrex::ubound(bx);
+            const int ny = hi.y - lo.y + 1;
 
             // Subtract average of cumulative sum along y only
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
             {
-                for (int jj = lo_jy.y; jj <= hi_jy.y; ++jj)
+                for (int jj = lo.y; jj <= hi.y; ++jj)
                 {
-                    jy_arr(i,j,k) -= jy_cumsum_arr(i,jj,k) * dx[1] / static_cast<amrex::Real>(ny);
+                    Jy_arr(i,j,k) -= Dy_cumsum_arr(i,jj,k) * dx[1] / static_cast<amrex::Real>(ny);
                 }
             });
         }
 #endif
 
         // Subtract average of cumulative sum from Jz
-        for (amrex::MFIter mfi(jz); mfi.isValid(); ++mfi)
+        for (amrex::MFIter mfi(Jz); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
 
-            amrex::Array4<amrex::Real> const& jz_arr = jz.array(mfi);
-            amrex::Array4<amrex::Real const> const& jz_cumsum_arr = jz_cumsum.const_array(mfi);
+            amrex::Array4<amrex::Real> const& Jz_arr = Jz.array(mfi);
+            amrex::Array4<amrex::Real const> const& Dz_cumsum_arr = Dz_cumsum.const_array(mfi);
 
-            const amrex::Dim3 lo_jz = amrex::lbound(bx);
-            const amrex::Dim3 hi_jz = amrex::ubound(bx);
+            const amrex::Dim3 lo = amrex::lbound(bx);
+            const amrex::Dim3 hi = amrex::ubound(bx);
 #if defined (WARPX_DIM_XZ)
-            const int nz = hi_jz.y - lo_jz.y + 1;
+            const int nz = hi.y - lo.y + 1;
 #elif defined (WARPX_DIM_3D)
-            const int nz = hi_jz.z - lo_jz.z + 1;
+            const int nz = hi.z - lo.z + 1;
 #endif
 
             // Subtract average of cumulative sum along z only
@@ -567,15 +567,15 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
             {
 #if defined (WARPX_DIM_XZ)
                 // z direction is in the second component
-                for (int jj = lo_jz.y; jj <= hi_jz.y; ++jj)
+                for (int jj = lo.y; jj <= hi.y; ++jj)
                 {
-                    jz_arr(i,j,k) -= jz_cumsum_arr(i,jj,k) * dx[2] / static_cast<amrex::Real>(nz);
+                    Jz_arr(i,j,k) -= Dz_cumsum_arr(i,jj,k) * dx[2] / static_cast<amrex::Real>(nz);
                 }
 #elif defined (WARPX_DIM_3D)
                 // z direction is in the third component
-                for (int kk = lo_jz.z; kk <= hi_jz.z; ++kk)
+                for (int kk = lo.z; kk <= hi.z; ++kk)
                 {
-                    jz_arr(i,j,k) -= jz_cumsum_arr(i,j,kk) * dx[2] / static_cast<amrex::Real>(nz);
+                    Jz_arr(i,j,k) -= Dz_cumsum_arr(i,j,kk) * dx[2] / static_cast<amrex::Real>(nz);
                 }
 #endif
             });
