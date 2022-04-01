@@ -466,8 +466,7 @@ void FieldProbe::ComputeDiags (int step)
                 ParticleReal* const AMREX_RESTRICT part_Bz = attribs[FieldProbePIdx::Bz].dataPtr();
                 ParticleReal* const AMREX_RESTRICT part_S = attribs[FieldProbePIdx::S].dataPtr();
 
-                amrex::Vector<amrex::Real> v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
-                const auto &xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box, v_galilean, lev);
+                const auto &xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
                 const std::array<Real, 3> &dx = WarpX::CellSize(lev);
 
                 const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};

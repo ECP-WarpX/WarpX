@@ -176,47 +176,47 @@ WarpX::MoveWindow (const int step, bool move_j)
                 if (dim == 1) Efield_parser = Eyfield_parser->compile<3>();
                 if (dim == 2) Efield_parser = Ezfield_parser->compile<3>();
             }
-            shiftMF(*Bfield_fp[lev][dim], geom[lev], num_shift, dir, B_external_grid[dim], use_Bparser, Bfield_parser);
-            shiftMF(*Efield_fp[lev][dim], geom[lev], num_shift, dir, E_external_grid[dim], use_Eparser, Efield_parser);
+            shiftMF(*Bfield_fp[lev][dim], geom[lev], num_shift, dir, lev, B_external_grid[dim], use_Bparser, Bfield_parser);
+            shiftMF(*Efield_fp[lev][dim], geom[lev], num_shift, dir, lev, E_external_grid[dim], use_Eparser, Efield_parser);
             if (fft_do_time_averaging) {
-                shiftMF(*Bfield_avg_fp[lev][dim], geom[lev], num_shift, dir, B_external_grid[dim], use_Bparser, Bfield_parser);
-                shiftMF(*Efield_avg_fp[lev][dim], geom[lev], num_shift, dir, E_external_grid[dim], use_Eparser, Efield_parser);
+                shiftMF(*Bfield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, B_external_grid[dim], use_Bparser, Bfield_parser);
+                shiftMF(*Efield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, E_external_grid[dim], use_Eparser, Efield_parser);
             }
             if (move_j) {
-                shiftMF(*current_fp[lev][dim], geom[lev], num_shift, dir);
+                shiftMF(*current_fp[lev][dim], geom[lev], num_shift, dir, lev);
             }
             if (pml[lev] && pml[lev]->ok()) {
                 const std::array<amrex::MultiFab*, 3>& pml_B = pml[lev]->GetB_fp();
                 const std::array<amrex::MultiFab*, 3>& pml_E = pml[lev]->GetE_fp();
-                shiftMF(*pml_B[dim], geom[lev], num_shift, dir);
-                shiftMF(*pml_E[dim], geom[lev], num_shift, dir);
+                shiftMF(*pml_B[dim], geom[lev], num_shift, dir, lev);
+                shiftMF(*pml_E[dim], geom[lev], num_shift, dir, lev);
             }
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
             if (pml_rz[lev] && dim < 2) {
                 const std::array<amrex::MultiFab*, 2>& pml_rz_B = pml_rz[lev]->GetB_fp();
                 const std::array<amrex::MultiFab*, 2>& pml_rz_E = pml_rz[lev]->GetE_fp();
-                shiftMF(*pml_rz_B[dim], geom[lev], num_shift, dir);
-                shiftMF(*pml_rz_E[dim], geom[lev], num_shift, dir);
+                shiftMF(*pml_rz_B[dim], geom[lev], num_shift, dir, lev);
+                shiftMF(*pml_rz_E[dim], geom[lev], num_shift, dir, lev);
             }
 #endif
             if (lev > 0) {
                 // coarse grid
-                shiftMF(*Bfield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, B_external_grid[dim], use_Bparser, Bfield_parser);
-                shiftMF(*Efield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, E_external_grid[dim], use_Eparser, Efield_parser);
-                shiftMF(*Bfield_aux[lev][dim], geom[lev], num_shift, dir);
-                shiftMF(*Efield_aux[lev][dim], geom[lev], num_shift, dir);
+                shiftMF(*Bfield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, B_external_grid[dim], use_Bparser, Bfield_parser);
+                shiftMF(*Efield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, E_external_grid[dim], use_Eparser, Efield_parser);
+                shiftMF(*Bfield_aux[lev][dim], geom[lev], num_shift, dir, lev);
+                shiftMF(*Efield_aux[lev][dim], geom[lev], num_shift, dir, lev);
                 if (fft_do_time_averaging) {
-                    shiftMF(*Bfield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, B_external_grid[dim], use_Bparser, Bfield_parser);
-                    shiftMF(*Efield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, E_external_grid[dim], use_Eparser, Efield_parser);
+                    shiftMF(*Bfield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, B_external_grid[dim], use_Bparser, Bfield_parser);
+                    shiftMF(*Efield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, E_external_grid[dim], use_Eparser, Efield_parser);
                 }
                 if (move_j) {
-                    shiftMF(*current_cp[lev][dim], geom[lev-1], num_shift_crse, dir);
+                    shiftMF(*current_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev);
                 }
                 if (do_pml && pml[lev]->ok()) {
                     const std::array<amrex::MultiFab*, 3>& pml_B = pml[lev]->GetB_cp();
                     const std::array<amrex::MultiFab*, 3>& pml_E = pml[lev]->GetE_cp();
-                    shiftMF(*pml_B[dim], geom[lev-1], num_shift_crse, dir);
-                    shiftMF(*pml_E[dim], geom[lev-1], num_shift_crse, dir);
+                    shiftMF(*pml_B[dim], geom[lev-1], num_shift_crse, dir, lev);
+                    shiftMF(*pml_E[dim], geom[lev-1], num_shift_crse, dir, lev);
                 }
             }
         }
@@ -224,19 +224,19 @@ WarpX::MoveWindow (const int step, bool move_j)
         // Shift scalar component F for dive cleaning
         if (do_dive_cleaning) {
             // Fine grid
-            shiftMF(*F_fp[lev], geom[lev], num_shift, dir);
+            shiftMF(*F_fp[lev], geom[lev], num_shift, dir, lev);
             if (do_pml && pml[lev]->ok()) {
                 amrex::MultiFab* pml_F = pml[lev]->GetF_fp();
-                shiftMF(*pml_F, geom[lev], num_shift, dir);
+                shiftMF(*pml_F, geom[lev], num_shift, dir, lev);
             }
             if (lev > 0) {
                 // Coarse grid
-                shiftMF(*F_cp[lev], geom[lev-1], num_shift_crse, dir);
+                shiftMF(*F_cp[lev], geom[lev-1], num_shift_crse, dir, lev);
                 if (do_pml && pml[lev]->ok()) {
                     amrex::MultiFab* pml_F = pml[lev]->GetF_cp();
-                    shiftMF(*pml_F, geom[lev-1], num_shift_crse, dir);
+                    shiftMF(*pml_F, geom[lev-1], num_shift_crse, dir, lev);
                 }
-                shiftMF(*rho_cp[lev], geom[lev-1], num_shift_crse, dir);
+                shiftMF(*rho_cp[lev], geom[lev-1], num_shift_crse, dir, lev);
             }
         }
 
@@ -244,10 +244,10 @@ WarpX::MoveWindow (const int step, bool move_j)
         if (move_j) {
             if (rho_fp[lev]){
                 // Fine grid
-                shiftMF(*rho_fp[lev],   geom[lev], num_shift, dir);
+                shiftMF(*rho_fp[lev],   geom[lev], num_shift, dir, lev);
                 if (lev > 0){
                     // Coarse grid
-                    shiftMF(*rho_cp[lev], geom[lev-1], num_shift_crse, dir);
+                    shiftMF(*rho_cp[lev], geom[lev-1], num_shift_crse, dir, lev);
                 }
             }
         }
@@ -295,7 +295,8 @@ WarpX::MoveWindow (const int step, bool move_j)
 }
 
 void
-WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom, int num_shift, int dir,
+WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
+                int num_shift, int dir, const int lev,
                 amrex::Real external_field, bool useparser,
                 amrex::ParserExecutor<3> const& field_parser)
 {
@@ -355,13 +356,19 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom, int num_shift,
     const amrex::RealBox& real_box = geom.ProbDomain();
     const auto dx = geom.CellSizeArray();
 
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
 
-
     for (amrex::MFIter mfi(tmpmf); mfi.isValid(); ++mfi )
     {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        amrex::Real wt = amrex::second();
+
         auto const& dstfab = mf.array(mfi);
         auto const& srcfab = tmpmf.array(mfi);
 
@@ -420,6 +427,13 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom, int num_shift,
         {
             dstfab(i,j,k,n) = srcfab(i+shift.x,j+shift.y,k+shift.z,n);
         })
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
