@@ -25,8 +25,8 @@ public:
 
     bool isDefined () {return static_cast<int>(m_zstarts.size()) > 0;}
 
-    const amrex::Vector<amrex::Real> & get_zstarts () const {return m_zstarts;} 
-    const amrex::Vector<amrex::Real> & get_zends () const {return m_zends;} 
+    const amrex::Vector<amrex::Real> & get_zstarts () const {return m_zstarts;}
+    const amrex::Vector<amrex::Real> & get_zends () const {return m_zends;}
 
     // AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     virtual void get_field (const int /*ielement*/,
