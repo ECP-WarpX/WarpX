@@ -244,7 +244,7 @@ WarpX::ComputeFaceExtensions(){
     if(WarpX::verbose and using_bck) {
         amrex::Print() << Utils::TextMsg::Info(
                 "Some faces could not be stabilized with the ECT and the BCK correction was used.\n"
-                "We had to use the BCK correction for:\n"
+                "The BCK correction will be used for:\n"
                 "-" + std::to_string(N_ext_faces_after_eight_ways(0)) + " x-faces\n"
                 + "-" + std::to_string(N_ext_faces_after_eight_ways(1)) + " y-faces\n"
                 + "-" + std::to_string(N_ext_faces_after_eight_ways(2)) + " z-faces\n"
