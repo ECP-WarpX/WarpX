@@ -693,7 +693,7 @@ WarpX::ApplyBCKCorrection(const int idim) {
 
     for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
-        const amrex::Box &box = mfi.validbox();
+        const amrex::Box &box = mfi.tilebox();
         const amrex::Array4<int> &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
         const amrex::Array4<int> &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
         const amrex::Array4<amrex::Real> &S = m_face_areas[maxLevel()][idim]->array(mfi);
