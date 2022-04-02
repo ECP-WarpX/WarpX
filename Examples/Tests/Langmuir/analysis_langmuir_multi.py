@@ -118,20 +118,22 @@ for field in ['Ex', 'Ey', 'Ez']:
 
 # Plot the last field from the loop (Ez at iteration 40)
 fig, (ax1, ax2) = plt.subplots(1, 2, dpi = 100)
-vmin = min(E_sim.min(), E_th.min())
-vmax = max(E_sim.max(), E_th.max())
-# First plot
+# First plot (slice at y=0)
+E_plot = E_sim[:,Ncell[1]//2+1,:]
+vmin = E_plot.min()
+vmax = E_plot.max()
 cax1 = make_axes_locatable(ax1).append_axes('right', size = '5%', pad = '5%')
-# Plot slice at y=0
-im1 = ax1.imshow(E_sim[:,Ncell[1]//2+1,:], origin = 'lower', extent = edge, vmin = vmin, vmax = vmax)
+im1 = ax1.imshow(E_plot, origin = 'lower', extent = edge, vmin = vmin, vmax = vmax)
 cb1 = fig.colorbar(im1, cax = cax1)
 ax1.set_xlabel(r'$z$')
 ax1.set_ylabel(r'$x$')
 ax1.set_title(r'$E_z$ (sim)')
-# Second plot
+# Second plot (slice at y=0)
+E_plot = E_th[:,Ncell[1]//2+1,:]
+vmin = E_plot.min()
+vmax = E_plot.max()
 cax2 = make_axes_locatable(ax2).append_axes('right', size = '5%', pad = '5%')
-# Plot slice at y=0
-im2 = ax2.imshow(E_th[:,Ncell[1]//2+1,:], origin = 'lower', extent = edge, vmin = vmin, vmax = vmax)
+im2 = ax2.imshow(E_plot, origin = 'lower', extent = edge, vmin = vmin, vmax = vmax)
 cb2 = fig.colorbar(im2, cax = cax2)
 ax2.set_xlabel(r'$z$')
 ax2.set_ylabel(r'$x$')
