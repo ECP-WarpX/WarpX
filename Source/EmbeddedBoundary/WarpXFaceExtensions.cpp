@@ -221,7 +221,7 @@ WarpX::ComputeFaceExtensions(){
 
     bool using_bck = false;
 
-    // If any cell could not ne extended we use the BCK method to stabilize them
+    // If any cell could not be extended we use the BCK method to stabilize them
 #if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_RZ)
     if (N_ext_faces_after_eight_ways(0) > 0) {
         ApplyBCKCorrection(0);
@@ -685,21 +685,21 @@ WarpX::ComputeEightWaysExtensions() {
 void
 WarpX::ApplyBCKCorrection(const int idim) {
 #if defined(AMREX_USE_EB) and !defined(WARPX_DIM_RZ)
-    auto const &cell_size = CellSize(maxLevel());
+    const std::array<amrex::Real,3> &cell_size = CellSize(maxLevel());
 
     const amrex::Real dx = cell_size[0];
     const amrex::Real dy = cell_size[1];
     const amrex::Real dz = cell_size[2];
 
-    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
-        amrex::Box const &box = mfi.validbox();
-        auto const &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
-        auto const &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
-        auto const &S = m_face_areas[maxLevel()][idim]->array(mfi);
-        auto const &lx = m_face_areas[maxLevel()][0]->array(mfi);
-        auto const &ly = m_face_areas[maxLevel()][1]->array(mfi);
-        auto const &lz = m_face_areas[maxLevel()][2]->array(mfi);
+        const amrex::Box &box = mfi.validbox();
+        const amrex::Array4<int> &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
+        const amrex::Array4<int> &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
+        const amrex::Array4<amrex::Real> &S = m_face_areas[maxLevel()][idim]->array(mfi);
+        const amrex::Array4<amrex::Real> &lx = m_face_areas[maxLevel()][0]->array(mfi);
+        const amrex::Array4<amrex::Real> &ly = m_face_areas[maxLevel()][1]->array(mfi);
+        const amrex::Array4<amrex::Real> &lz = m_face_areas[maxLevel()][2]->array(mfi);
 
         amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
             if (flag_ext_face(i, j, k)) {
