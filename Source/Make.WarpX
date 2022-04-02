@@ -71,6 +71,7 @@ endif
 -include Make.package
 include $(WARPX_HOME)/Source/Make.package
 include $(WARPX_HOME)/Source/ablastr/Make.package
+include $(WARPX_HOME)/Source/AcceleratorLattice/Make.package
 include $(WARPX_HOME)/Source/BoundaryConditions/Make.package
 include $(WARPX_HOME)/Source/Diagnostics/Make.package
 include $(WARPX_HOME)/Source/EmbeddedBoundary/Make.package

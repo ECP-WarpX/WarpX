@@ -5,6 +5,8 @@
 
 #include "Particles/WarpXParticleContainer_fwd.H"
 
+#include "AcceleratorLattice/LatticeElementFinder.H"
+
 #include <AMReX.H>
 #include <AMReX_Array.H>
 #include <AMReX_Extension.H>
@@ -54,6 +56,8 @@ struct GetExternalEBField
     const amrex::ParticleReal* AMREX_RESTRICT m_uy = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uz = nullptr;
 
+    LatticeElementFinder m_lattice_element_finder;
+
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator () (long i,
                       amrex::ParticleReal& field_Ex,
@@ -64,6 +68,8 @@ struct GetExternalEBField
                       amrex::ParticleReal& field_Bz) const noexcept
     {
         using namespace amrex::literals;
+
+        m_lattice_element_finder(i, field_Ex, field_Ey, field_Ez, field_Bx, field_By, field_Bz);
 
         if (m_Etype == None && m_Btype == None) return;
 

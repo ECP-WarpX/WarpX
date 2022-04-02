@@ -30,6 +30,7 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
+#include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/TextMsg.H"
 #include "Utils/MsgLogger/MsgLogger.H"
 #include "Utils/WarnManager.H"
@@ -341,6 +342,7 @@ WarpX::WarpX ()
         m_macroscopic_properties = std::make_unique<MacroscopicProperties>();
     }
 
+    m_accelerator_lattice = std::make_shared<AcceleratorLattice>();
 
     // Set default values for particle and cell weights for costs update;
     // Default values listed here for the case AMREX_USE_GPU are determined

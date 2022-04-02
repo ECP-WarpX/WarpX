@@ -35,6 +35,7 @@
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
+#include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/IntervalsParser.H"
 #include "Utils/WarnManager_fwd.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -902,6 +903,9 @@ public:
     // This needs to be public for CUDA.
     //! Tagging cells for refinement
     virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
+
+    // Accelerator lattice elements
+    std::shared_ptr<AcceleratorLattice> m_accelerator_lattice;
 
 protected:
 
