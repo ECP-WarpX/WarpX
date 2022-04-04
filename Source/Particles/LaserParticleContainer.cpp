@@ -13,6 +13,7 @@
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -495,7 +496,7 @@ LaserParticleContainer::InitData (int lev)
     amrex::Vector<amrex::Real> particle_uy(np, 0.0);
     amrex::Vector<amrex::Real> particle_uz(np, 0.0);
 
-    if (Verbose()) amrex::Print() << "Adding laser particles\n";
+    if (Verbose()) amrex::Print() << Utils::TextMsg::Info("Adding laser particles");
     // Add particles on level 0. They will be redistributed afterwards
     AddNParticles(0,
                   np, particle_x.dataPtr(), particle_y.dataPtr(), particle_z.dataPtr(),

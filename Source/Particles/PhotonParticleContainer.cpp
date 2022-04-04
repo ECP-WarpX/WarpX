@@ -17,6 +17,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/UpdatePositionPhoton.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
 #include <AMReX_Array.H>
@@ -62,7 +63,7 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
         //Check for processes which do not make sense for photons
         bool test_quantum_sync = false;
         pp_species_name.query("do_qed_quantum_sync", test_quantum_sync);
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         test_quantum_sync == 0,
         "ERROR: do_qed_quantum_sync can be 1 for species NOT listed in particles.photon_species only!");
         //_________________________________________________________
@@ -135,14 +136,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     const auto getExternalEB = GetExternalEBField(pti, offset);
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
-    amrex::Real cur_time = WarpX::GetInstance().gett_new(lev);
-    const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
-    amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = {
-        m_v_galilean[0]*time_shift,
-        m_v_galilean[1]*time_shift,
-        m_v_galilean[2]*time_shift };
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, gather_lev);
+    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev, 0._rt);
 
     const Dim3 lo = lbound(box);
 
