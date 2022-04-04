@@ -76,6 +76,9 @@ private:
     //! counts number of particles for all MPI ranks
     long m_valid_particles {0};
 
+    //! remember the last time @see ComputeDiags was called to count the number of steps in between (for non-integrated detectors)
+    int m_last_compute_step = 0;
+
     //! determines geometry of detector point distribution
     DetectorGeometry m_probe_geometry = DetectorGeometry::Point;
 
@@ -99,6 +102,9 @@ private:
 
     //! Judges whether to gather raw fields or interpolated data
     bool raw_fields = false;
+
+    //! Judges whether to follow a moving window
+    bool do_moving_window_FP = false;
 
     /**
      * Built-in function in ReducedDiags to write out test data

@@ -8,6 +8,8 @@
 #include "FieldProbe.H"
 #include "FieldProbeParticleContainer.H"
 #include "Particles/Gather/FieldGather.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Pusher/UpdatePosition.H"
 
 #include "Utils/IntervalsParser.H"
 #include "Utils/TextMsg.H"
@@ -147,6 +149,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
     pp_rd_name.query("interp_order", interp_order);
+    pp_rd_name.query("do_moving_window_FP", do_moving_window_FP);
 
     if (WarpX::gamma_boost > 1.0_rt)
     {
@@ -385,6 +388,18 @@ void FieldProbe::ComputeDiags (int step)
     {
         const amrex::Geometry& gm = warpx.Geom(lev);
         const auto prob_lo = gm.ProbLo();
+        amrex::Real const dt = WarpX::GetInstance().getdt(lev);
+        // Calculates particle movement in moving window sims
+        amrex::Real move_dist = 0.0;
+        bool const update_particles_moving_window =
+            do_moving_window_FP &&
+            step > warpx.start_moving_window_step &&
+            step <= warpx.end_moving_window_step;
+        if (update_particles_moving_window)
+        {
+            int step_diff = step - m_last_compute_step;
+            move_dist = dt*warpx.moving_window_v*step_diff;
+        }
 
         // get MultiFab data at lev
         const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
@@ -426,8 +441,30 @@ void FieldProbe::ComputeDiags (int step)
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
             const auto getPosition = GetParticlePosition(pti);
-            auto const np = pti.numParticles();
+            auto setPosition = SetParticlePosition(pti);
 
+            auto const np = pti.numParticles();
+            if (update_particles_moving_window)
+            {
+                const auto temp_warpx_moving_window = warpx.moving_window_dir;
+                amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+                {
+                    amrex::ParticleReal xp, yp, zp;
+                    getPosition(ip, xp, yp, zp);
+                    if (temp_warpx_moving_window == 0)
+                    {
+                        setPosition(ip, xp+move_dist, yp, zp);
+                    }
+                    if (temp_warpx_moving_window == 1)
+                    {
+                        setPosition(ip, xp, yp+move_dist, zp);
+                    }
+                    if (temp_warpx_moving_window == WARPX_ZINDEX)
+                    {
+                        setPosition(ip, xp, yp, zp+move_dist);
+                    }
+                });
+            }
             if( ProbeInDomain() )
             {
                 const auto cell_size = gm.CellSizeArray();
@@ -478,7 +515,6 @@ void FieldProbe::ComputeDiags (int step)
                 const int temp_interp_order = interp_order;
                 const bool temp_raw_fields = raw_fields;
                 const bool temp_field_probe_integrate = m_field_probe_integrate;
-                amrex::Real const dt = WarpX::GetInstance().getdt(lev);
 
                 // Interpolating to the probe positions for each particle
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
@@ -613,6 +649,7 @@ void FieldProbe::ComputeDiags (int step)
     }// end loop over refinement levels
     // make sure data is in m_data on the IOProcessor
     // TODO: In the future, we want to use a parallel I/O method instead (plotfiles or openPMD)
+    m_last_compute_step = step;
 } // end void FieldProbe::ComputeDiags
 
 void FieldProbe::WriteToFile (int step) const
