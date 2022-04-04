@@ -26,6 +26,36 @@ struct LatticeElementFinder
 
     virtual ~LatticeElementFinder () = default;
 
+    AMREX_GPU_HOST_DEVICE
+    void setup_lattice_indices()
+    {
+
+        amrex::ParallelFor( nz,
+            [=] AMREX_GPU_DEVICE (int iz) {
+
+                // Get the location of the grid cell
+                amrex::Real const z_lower = zmin + iz*dz;
+                amrex::Real const z_upper = zmin + iz*dz + dz;
+
+                // For each grid node along z, find the element of each type that overlaps that grid cell
+                // Loop over the element types that have been defined
+                for (int itype=0 ; itype < nlattices ; itype++) {
+                    auto const element = accelerator_lattice->all_elements[itype];
+                    auto const zs = element->get_zstarts().dataPtr();
+                    auto const ze = element->get_zends().dataPtr();
+
+                    // Check if any elements overlap the grid cell, and if so, store its index
+                    // For now, this assumes that there is no overlap among elements of the same type
+                    for (int ie = 0 ; ie < element->nelements ; ie++) {
+                        if (zs[ie] <= z_upper && z_lower <= ze[ie]) {
+                            lattice_indices[itype][iz] = ie;
+                        }
+                    }
+                }
+            }
+        );
+    }
+
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator () (const long i,
                       const GetParticlePosition& get_position,
@@ -41,7 +71,6 @@ struct LatticeElementFinder
                       amrex::ParticleReal& field_Bz) const noexcept
     {
 
-        int nlattices = static_cast<int>(accelerator_lattice->all_elements.size());
         if (nlattices == 0) return;
 
         amrex::ParticleReal x, y, z;
@@ -67,6 +96,8 @@ struct LatticeElementFinder
         }
     }
 
+    int nlattices;
+    int nz;
     amrex::Real zmin;
     amrex::Real dz;
 

@@ -24,5 +24,7 @@ LatticeElement::LatticeElement (std::string const & element_name)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_zstarts.size() == m_zends.size(),
                  element_name + ": The zstarts and zends must have the same length");
 
+    nelements = static_cast<int>(m_zstarts.size());
+
 }
 

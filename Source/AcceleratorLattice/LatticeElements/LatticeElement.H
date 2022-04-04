@@ -14,9 +14,8 @@
 
 #include <string>
 
-class LatticeElement
+struct LatticeElement
 {
-public:
     LatticeElement (std::string const & element_name);
 
     LatticeElement(LatticeElement const &) = delete;
@@ -25,7 +24,7 @@ public:
 
     virtual ~LatticeElement () = default;
 
-    bool isDefined () {return static_cast<int>(m_zstarts.size()) > 0;}
+    bool isDefined () {return nelements > 0;}
 
     AMREX_GPU_HOST_DEVICE
     const amrex::Vector<amrex::Real> & get_zstarts () const& {return m_zstarts;}
@@ -48,10 +47,9 @@ public:
                             amrex::ParticleReal& /*By*/,
                             amrex::ParticleReal& /*Bz*/) {}
 
-protected:
-
     amrex::Vector<amrex::Real> m_zstarts;
     amrex::Vector<amrex::Real> m_zends;
+    int nelements;
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real hard_edged_fraction(const amrex::Real z,

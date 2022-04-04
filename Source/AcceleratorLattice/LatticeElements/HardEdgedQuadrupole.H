@@ -14,10 +14,9 @@
 
 #include <string>
 
-class HardEdgedQuadrupole
+struct HardEdgedQuadrupole
     : public LatticeElement
 {
-public:
 
     HardEdgedQuadrupole ();
 
@@ -48,8 +47,6 @@ public:
         Ey = -y*dEdx;
 
     }
-
-private:
 
     std::string const element_name = "quad";
 
