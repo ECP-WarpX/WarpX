@@ -51,9 +51,9 @@ LatticeElementFinder::LatticeElementFinder (WarpXParIter const& a_pti, int const
     // For each grid node along z, find the element of each type that overlaps that grid cell
     // Loop over the element types that have been defined
     for (int itype=0 ; itype < nlattices ; itype++) {
-        auto element = accelerator_lattice->all_elements[itype];
-        auto & zs = element->get_zstarts();
-        auto & ze = element->get_zends();
+        auto const element = accelerator_lattice->all_elements[itype];
+        auto const& zs = element->get_zstarts();
+        auto const& ze = element->get_zends();
 
         amrex::ParallelFor( nz,
             [=] AMREX_GPU_DEVICE (int iz) {
