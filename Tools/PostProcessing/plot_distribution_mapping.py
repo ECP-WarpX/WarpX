@@ -69,19 +69,22 @@ class SimData:
             unique_headers=[''.join([l for l in w if not l.isdigit()])
                             for w in h.split()][2::]
 
-        # Either 7 or 8 depending if GPU
-        n_data_fields = 7 if (len(set(unique_headers)) - 2)%7 == 0 else 8
+        # Either 9 or 10 depending if GPU
+        n_data_fields = 9 if (len(set(unique_headers)) - 2)%9 == 0 else 10
         f.close()
 
         # From data header, data layout is:
         #     [step, time,
         #      cost_box_0, proc_box_0, lev_box_0, i_low_box_0, j_low_box_0,
-        #           k_low_box_0(, gpu_ID_box_0 if GPU run), hostname_box_0
+        #           k_low_box_0, num_cells_0, num_macro_particles_0,
+        #           (, gpu_ID_box_0 if GPU run), hostname_box_0,
         #      cost_box_1, proc_box_1, lev_box_1, i_low_box_1, j_low_box_1,
-        #           k_low_box_1(, gpu_ID_box_1 if GPU run), hostname_box_1
+        #           k_low_box_1, num_cells_1, num_macro_particles_1,
+        #           (, gpu_ID_box_1 if GPU run), hostname_box_1
         #      ...
         #      cost_box_n, proc_box_n, lev_box_n, i_low_box_n, j_low_box_n,
-        #           k_low_box_n(, gpu_ID_box_n if GPU run), hostname_box_n
+        #           k_low_box_n, num_cells_n, num_macro_particles_n,
+        #           (, gpu_ID_box_n if GPU run), hostname_box_n
         i, j, k = (data[0,3::n_data_fields],
                    data[0,4::n_data_fields],
                    data[0,5::n_data_fields])
@@ -163,3 +166,4 @@ class SimData:
             self.data_fields[key]['lb_efficiency_min'] = efficiencies.min()
             self.data_fields[key]['t'] = times[row]
             self.data_fields[key]['step'] = steps[row]
+            # ...
