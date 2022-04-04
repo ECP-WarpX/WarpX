@@ -69,7 +69,9 @@ struct GetExternalEBField
     {
         using namespace amrex::literals;
 
-        m_lattice_element_finder(i, field_Ex, field_Ey, field_Ez, field_Bx, field_By, field_Bz);
+        m_lattice_element_finder(i, m_get_position, m_ux, m_uy, m_uz, m_dt,
+                                 field_Ex, field_Ey, field_Ez,
+                                 field_Bx, field_By, field_Bz);
 
         if (m_Etype == None && m_Btype == None) return;
 

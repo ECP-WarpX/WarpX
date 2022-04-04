@@ -15,10 +15,8 @@
 
 using namespace amrex::literals;
 
-LatticeElementFinder::LatticeElementFinder (WarpXParIter const& a_pti, int const a_offset)
+LatticeElementFinder::LatticeElementFinder (WarpXParIter const& a_pti)
 {
-
-    m_get_position = GetParticlePosition(a_pti, a_offset);
 
     auto& warpx = WarpX::GetInstance();
 

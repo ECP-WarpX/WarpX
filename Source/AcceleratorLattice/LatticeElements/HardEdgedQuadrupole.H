@@ -24,10 +24,14 @@ public:
     ~HardEdgedQuadrupole () = default;
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void get_field (int ielement,
+    void get_field (const int ielement,
                     const amrex::ParticleReal x,
                     const amrex::ParticleReal y,
-                    const amrex::ParticleReal /*z*/,
+                    const amrex::ParticleReal z,
+                    const amrex::ParticleReal ux,
+                    const amrex::ParticleReal uy,
+                    const amrex::ParticleReal uz,
+                    const amrex::ParticleReal dt,
                     amrex::ParticleReal& Ex,
                     amrex::ParticleReal& Ey,
                     amrex::ParticleReal& /*Ez*/,
@@ -36,7 +40,9 @@ public:
                     amrex::ParticleReal& /*Bz*/)
     {
 
-        amrex::Real dEdx = m_dEdx[ielement];
+        amrex::Real const frac = hard_edged_fraction(z, ux, uy, uz, dt, ielement);
+
+        amrex::Real dEdx = frac*m_dEdx[ielement];
 
         Ex = +x*dEdx;
         Ey = -y*dEdx;

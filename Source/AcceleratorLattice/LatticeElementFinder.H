@@ -17,18 +17,22 @@
 
 #include <string>
 
-class LatticeElementFinder
+struct LatticeElementFinder
 {
-public:
 
     LatticeElementFinder () = default;
 
-    LatticeElementFinder (WarpXParIter const& a_pti, int const a_offset);
+    LatticeElementFinder (WarpXParIter const& a_pti);
 
     virtual ~LatticeElementFinder () = default;
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator () (long i,
+    void operator () (const long i,
+                      const GetParticlePosition& get_position,
+                      const amrex::ParticleReal* AMREX_RESTRICT ux,
+                      const amrex::ParticleReal* AMREX_RESTRICT uy,
+                      const amrex::ParticleReal* AMREX_RESTRICT uz,
+                      const amrex::Real dt,
                       amrex::ParticleReal& field_Ex,
                       amrex::ParticleReal& field_Ey,
                       amrex::ParticleReal& field_Ez,
@@ -37,20 +41,22 @@ public:
                       amrex::ParticleReal& field_Bz) const noexcept
     {
 
+        int nlattices = static_cast<int>(accelerator_lattice->all_elements.size());
+        if (nlattices == 0) return;
+
         amrex::ParticleReal x, y, z;
-        m_get_position(i, x, y, z);
+        get_position(i, x, y, z);
 
         const int iz = static_cast<int>((z - zmin)/dz);
 
         // Loop over the element type and get the field from any elements that
         // the particle is in.
-        int nlattices = static_cast<int>(accelerator_lattice->all_elements.size());
         for (int itype = 0 ; itype < nlattices ; itype++) {
             if (lattice_indices[itype][iz] > -1) {
                 amrex::ParticleReal Ex, Ey, Ez, Bx, By, Bz;
                 int const ielement = lattice_indices[itype][iz];
                 auto element = accelerator_lattice->all_elements[itype];
-                element->get_field(ielement, x, y, z, Ex, Ey, Ez, Bx, By, Bz);
+                element->get_field(ielement, x, y, z, ux[i], uy[i], uz[i], dt, Ex, Ey, Ez, Bx, By, Bz);
                 field_Ex += Ex;
                 field_Ey += Ey;
                 field_Ez += Ez;
@@ -61,8 +67,6 @@ public:
         }
     }
 
-private:
-
     amrex::Real zmin;
     amrex::Real dz;
 
@@ -71,10 +75,6 @@ private:
     amrex::Vector< amrex::Vector <int> > lattice_indices;
 
     std::shared_ptr<AcceleratorLattice> accelerator_lattice;
-
-    GetParticlePosition m_get_position;
-
-
 
 };
 
