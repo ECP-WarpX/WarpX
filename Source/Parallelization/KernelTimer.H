@@ -7,6 +7,7 @@
 #ifndef KERNELTIMER_H_
 #define KERNELTIMER_H_
 
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
 #include <AMReX.H>

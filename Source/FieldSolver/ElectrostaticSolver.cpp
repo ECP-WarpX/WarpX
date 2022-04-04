@@ -13,6 +13,7 @@
 #include "Python/WarpX_py.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Parallelization/WarpXCommUtil.H"
@@ -144,7 +145,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     if (!field_boundary_handler.bcs_set) field_boundary_handler.definePhiBCs();
 
 #ifdef WARPX_DIM_RZ
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
@@ -194,7 +195,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     if (!field_boundary_handler.bcs_set) field_boundary_handler.definePhiBCs();
 
 #ifdef WARPX_DIM_RZ
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
@@ -790,7 +791,7 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
                 dirichlet_flag[idim*2] = false;
             }
             else {
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                     "Field boundary conditions have to be either periodic, PEC or none "
                     "when using the electrostatic solver"
                 );
@@ -805,7 +806,7 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
                 dirichlet_flag[idim*2+1] = false;
             }
             else {
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                     "Field boundary conditions have to be either periodic, PEC or none "
                     "when using the electrostatic solver"
                 );

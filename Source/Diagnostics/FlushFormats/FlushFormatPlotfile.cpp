@@ -5,6 +5,7 @@
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
 #include "Utils/Interpolate.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -64,7 +65,7 @@ FlushFormatPlotfile::WriteToFile (
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
     const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
-    amrex::Print() << "  Writing plotfile " << filename << "\n";
+    amrex::Print() << Utils::TextMsg::Info("Writing plotfile " + filename);
 
     Vector<std::string> rfs;
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
@@ -366,7 +367,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             }, true);
         } else {
             PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
-            tmp.copyParticles(*pinned_pc);
+            tmp.copyParticles(*pinned_pc, true);
         }
         // real_names contains a list of all particle attributes.
         // real_flags & int_flags are 1 or 0, whether quantity is dumped or not.

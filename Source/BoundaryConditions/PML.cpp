@@ -13,6 +13,7 @@
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #endif
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -583,7 +584,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     IntVect ngf = IntVect(AMREX_D_DECL(ngf_int, ngf_int, ngf_int));
 
     if (do_moving_window) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(lev <= 1,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev <= 1,
             "The number of grow cells for the moving window currently assumes 2 levels max.");
         int rr = ref_ratio[WarpX::moving_window_dir];
         nge[WarpX::moving_window_dir] = std::max(nge[WarpX::moving_window_dir], rr);
@@ -723,8 +724,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 #   if(AMREX_SPACEDIM!=3)
         amrex::ignore_unused(noy_fft);
 #   endif
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                                         "PML: PSATD solver selected but not built.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+            "PML: PSATD solver selected but not built.");
 #else
         // Flags passed to the spectral solver constructor
         const amrex::IntVect fill_guards = amrex::IntVect(0);
@@ -843,8 +844,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
             amrex::ignore_unused(dt);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                                             "PML: PSATD solver selected but not built.");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                "PML: PSATD solver selected but not built.");
 #else
             // Flags passed to the spectral solver constructor
             const amrex::IntVect fill_guards = amrex::IntVect(0);
@@ -946,7 +947,7 @@ PML::MakeBoxArray_multiple (const amrex::Geometry& geom, const amrex::BoxArray& 
             // The check is only needed along the axis where PMLs are being used.
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                 if (do_pml_Lo[idim] || do_pml_Hi[idim]) {
-                    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                         grid_bx.length(idim) > ncell[idim],
                         "Consider using larger amr.blocking_factor with PMLs");
                 }

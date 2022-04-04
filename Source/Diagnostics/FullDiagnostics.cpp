@@ -5,11 +5,13 @@
 #include "ComputeDiagFunctors/DivEFunctor.H"
 #include "ComputeDiagFunctors/PartPerCellFunctor.H"
 #include "ComputeDiagFunctors/PartPerGridFunctor.H"
+#include "ComputeDiagFunctors/ParticleReductionFunctor.H"
 #include "ComputeDiagFunctors/RhoFunctor.H"
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FlushFormats/FlushFormat.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 
@@ -76,7 +78,7 @@ FullDiagnostics::ReadParameters ()
     // Read list of full diagnostics fields requested by the user.
     bool checkpoint_compatibility = BaseReadParameters();
     amrex::ParmParse pp_diag_name(m_diag_name);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd" ||
         m_format == "checkpoint" || m_format == "ascent" ||
         m_format == "sensei",
@@ -94,7 +96,7 @@ FullDiagnostics::ReadParameters ()
 #endif
 
     if (m_format == "checkpoint"){
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             raw_specified == false &&
             checkpoint_compatibility == true,
             "For a checkpoint output, cannot specify these parameters as all data must be dumped "
@@ -157,6 +159,174 @@ FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
     return false;
 }
 
+void
+FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
+{
+#ifdef WARPX_DIM_RZ
+
+    auto & warpx = WarpX::GetInstance();
+    int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0, 0)->nComp();
+    // Make sure all multifabs have the same number of components
+    for (int dim=0; dim<3; dim++){
+        AMREX_ALWAYS_ASSERT(
+            warpx.get_pointer_Efield_aux(lev, dim)->nComp() == ncomp_multimodefab );
+        AMREX_ALWAYS_ASSERT(
+            warpx.get_pointer_Bfield_aux(lev, dim)->nComp() == ncomp_multimodefab );
+        AMREX_ALWAYS_ASSERT(
+            warpx.get_pointer_current_fp(lev, dim)->nComp() == ncomp_multimodefab );
+    }
+
+    amrex::Vector< std::string > temp_m_varnames(m_varnames);
+    // Clear any pre-existing vector to release stored data.
+    m_varnames.clear();
+    m_all_field_functors[lev].clear();
+
+    // Species index to loop over species that dump rho per species
+    int i = 0;
+    bool convert2cartesian;
+    int ncomp;
+    if (m_format == "openpmd") {
+        convert2cartesian = false;
+        ncomp = ncomp_multimodefab;
+    } else {
+        convert2cartesian = true;
+        ncomp = 1;
+    }
+    int n_rz = ncomp * temp_m_varnames.size();
+    m_varnames.reserve(n_rz);
+    m_all_field_functors[lev].resize(temp_m_varnames.size());
+
+    // Fill vector of functors for all components except individual cylindrical modes.
+    for (int comp=0, n=temp_m_varnames.size(); comp<n; comp++){
+        if        ( temp_m_varnames[comp] == "Er" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("Er"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp] == "Et" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 1), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("Et"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp] == "Ez" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 2), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("Ez"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp] == "Br" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 0), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("Br"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp] == "Bt" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 1), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("Bt"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp] == "Bz" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 2), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("Bz"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp] == "jr" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 0), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("jr"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp] == "jt" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 1), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("jt"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp] == "jz" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("jz"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp] == "rho" ){
+            // Initialize rho functor to dump total rho
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("rho"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp].rfind("rho_", 0) == 0 ){
+            // Initialize rho functor to dump rho per species
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, m_rho_per_species_index[i],
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("rho_") + m_all_species_names[i], ncomp);
+            }
+            i++;
+        } else if ( temp_m_varnames[comp] == "F" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("F"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp] == "G" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_G_fp(lev), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("G"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp] == "phi" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_phi_fp(lev), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("phi"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp] == "part_per_cell" ){
+            m_all_field_functors[lev][comp] = std::make_unique<PartPerCellFunctor>(nullptr, lev, m_crse_ratio);
+            if (!convert2cartesian) {
+                m_varnames.push_back(std::string("part_per_cell"));
+            }
+        } else if ( temp_m_varnames[comp] == "part_per_grid" ){
+            m_all_field_functors[lev][comp] = std::make_unique<PartPerGridFunctor>(nullptr, lev, m_crse_ratio);
+            if (!convert2cartesian) {
+                m_varnames.push_back(std::string("part_per_grid"));
+            }
+        } else if ( temp_m_varnames[comp] == "divB" ){
+            m_all_field_functors[lev][comp] = std::make_unique<DivBFunctor>(warpx.get_array_Bfield_aux(lev), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("divB"), ncomp);
+            }
+        } else if ( temp_m_varnames[comp] == "divE" ){
+            m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio,
+                                                        convert2cartesian, ncomp);
+            if (!convert2cartesian) {
+                AddRZModesToOutputNames(std::string("divE"), ncomp);
+            }
+        }
+        else {
+            amrex::Abort("Error: " + temp_m_varnames[comp] + " is not a known field output type in RZ geometry");
+        }
+    }
+    if (convert2cartesian) {
+        m_varnames = temp_m_varnames;
+    }
+    // Sum the number of components in input vector m_all_field_functors
+    // and check that it corresponds to the number of components in m_varnames
+    // and m_mf_output
+    int ncomp_from_src = 0;
+    for (int jj=0; jj<m_all_field_functors[0].size(); jj++){
+        ncomp_from_src += m_all_field_functors[lev][jj]->nComp();
+    }
+    AMREX_ALWAYS_ASSERT( ncomp_from_src == m_varnames.size() );
+#else
+    amrex::ignore_unused(lev);
+#endif
+}
 
 void
 FullDiagnostics::AddRZModesToDiags (int lev)
@@ -288,13 +458,13 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
     // Check if warpx BoxArray is coarsenable.
     if (warpx.get_numprocs() == 0)
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE (
             ba.coarsenable(m_crse_ratio), "Invalid coarsening ratio for field diagnostics."
             "Must be an integer divisor of the blocking factor.");
     }
     else
     {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE (
             ba.coarsenable(m_crse_ratio), "Invalid coarsening ratio for field diagnostics."
             "The total number of cells must be a multiple of the coarsening ratio multiplied by numprocs.");
     }
@@ -316,7 +486,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
         // removed if warpx.numprocs is used for the domain decomposition.
         if (warpx.get_numprocs() == 0)
         {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( blockingFactor[idim] % m_crse_ratio[idim]==0,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( blockingFactor[idim] % m_crse_ratio[idim]==0,
                            " coarsening ratio must be integer divisor of blocking factor");
         }
     }
@@ -338,7 +508,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
             // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
             if ( hi[idim] <= lo[idim] ) {
                  hi[idim]  = lo[idim] + 1;
-                 AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     m_crse_ratio[idim]==1, "coarsening ratio in reduced dimension must be 1."
                  );
             }
@@ -365,7 +535,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
         }
     }
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_crse_ratio.min() > 0, "Coarsening ratio must be non-zero.");
     // The BoxArray is coarsened based on the user-defined coarsening ratio.
     ba.coarsen(m_crse_ratio);
@@ -407,10 +577,13 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
     // Species index to loop over species that dump rho per species
     int i = 0;
 
-    m_all_field_functors[lev].resize( m_varnames.size() );
+    const auto nvar = static_cast<int>(m_varnames_fields.size());
+    const auto nspec = static_cast<int>(m_pfield_species.size());
+    const auto ntot = static_cast<int>(nvar + m_pfield_varnames.size() * nspec);
+
+    m_all_field_functors[lev].resize(ntot);
     // Fill vector of functors for all components except individual cylindrical modes.
-    const auto n = static_cast<int>(m_all_field_functors[lev].size());
-    for (int comp=0; comp<n; comp++){
+    for (int comp=0; comp<nvar; comp++){
         if        ( m_varnames[comp] == "Ex" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "Ey" ){
@@ -453,6 +626,15 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         }
         else {
             amrex::Abort("Error: " + m_varnames[comp] + " is not a known field output type");
+        }
+    }
+    // Add functors for average particle data for each species
+    for (int pcomp=0; pcomp<int(m_pfield_varnames.size()); pcomp++) {
+        std::string varname = m_pfield_varnames[pcomp];
+        for (int ispec=0; ispec<int(m_pfield_species.size()); ispec++) {
+            m_all_field_functors[lev][nvar + pcomp * nspec + ispec] = std::make_unique<ParticleReductionFunctor>(nullptr,
+                    lev, m_crse_ratio, m_pfield_strings[varname], m_pfield_species_index[ispec],
+                    m_pfield_dofilter[varname], m_pfield_filter_strings[varname]);
         }
     }
     AddRZModesToDiags( lev );
