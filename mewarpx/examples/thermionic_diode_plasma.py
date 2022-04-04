@@ -98,7 +98,7 @@ if __name__ == "__main__":
                         default=0)
     parser.add_argument('--steps', help='set the number of simulation steps',
                         type=int, default=3000)
-    parser.add_argument('--schottky', help='use Schottky enchancement',
+    parser.add_argument('--schottky', help='use Schottky enhancement',
                         default=False, action='store_true')
     args, left = parser.parse_known_args()
     sys.argv = sys.argv[:1]+left

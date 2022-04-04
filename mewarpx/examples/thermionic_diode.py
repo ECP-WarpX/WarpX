@@ -107,7 +107,7 @@ if __name__ == "__main__":
                         type=int, default=3000)
     parser.add_argument('--save', help='save voltage and current pairs',
                         default=False, action='store_true')
-    parser.add_argument('--schottky', help='use Schottky enchancement',
+    parser.add_argument('--schottky', help='use Schottky enhancement',
                         default=False, action='store_true')
     args, left = parser.parse_known_args()
     sys.argv = sys.argv[:1]+left

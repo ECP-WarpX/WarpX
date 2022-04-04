@@ -390,9 +390,9 @@ class ThermionicInjector(Injector):
         electrons_per_step = (mwxutil.J_RD(self.T, self.WF, self.A)
                               * area * dt / picmi.constants.q_e)
         logger.info(
-            f"Setting up thermionic paticle injection. Area {area:.3g} m^2, "
+            f"Setting up thermionic particle injection. Area {area:.3g} m^2, "
             f"dt {dt:.3e} s, J {mwxutil.J_RD(self.T, self.WF, self.A):.3g} "
-            "A/m^2. Schottky enchancement is "
+            "A/m^2. Schottky enhancement is "
             f"{'on' if self.use_Schottky else 'off'}."
         )
         logger.info(
