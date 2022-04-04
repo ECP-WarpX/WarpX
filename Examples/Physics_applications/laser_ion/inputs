@@ -64,7 +64,7 @@ warpx.numprocs = 1 2   # 2 MPI ranks
 #   The grid & block parameters above are needed for load balancing:
 #   an average of ~10 grids per MPI rank (and device) are a good granularity
 #   to allow efficient load-balancing as the simulation evolves
-algo.load_balance_intervals = 10
+algo.load_balance_intervals = 100
 algo.load_balance_costs_update = Heuristic
 
 # particle bin-sorting on GPU (ideal defaults not investigated in 2D)
@@ -231,7 +231,7 @@ openPMDbw.hydrogen.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz<0)
 # histograms with 2.0 degree acceptance angle in fw direction
 # 2 deg * pi / 180 : 0.03490658503 rad
 # half-angle +/-   : 0.017453292515 rad
-warpx.reduced_diags_names                   = histuH histue histuzAll FieldProbe_Z FieldProbe_ScatPoint FieldProbe_ScatLine
+warpx.reduced_diags_names                   = histuH histue histuzAll FieldProbe_Z FieldProbe_ScatPoint FieldProbe_ScatLine LBC
 
 histuH.type                                 = ParticleHistogram
 histuH.intervals                            = 100
@@ -290,6 +290,10 @@ FieldProbe_ScatLine.z_probe = 15e-6
 FieldProbe_ScatLine.x1_probe = 2.5e-6
 FieldProbe_ScatLine.z1_probe = 15e-6
 FieldProbe_ScatLine.resolution = 201
+
+# check computational load per box
+LBC.type = LoadBalanceCosts
+LBC.intervals = 100
 
 #################################
 # Physical Background
