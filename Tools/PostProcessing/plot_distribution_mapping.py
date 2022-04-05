@@ -70,7 +70,7 @@ class SimData:
                             for w in h.split()][2::]
 
         # Either 9 or 10 depending if GPU
-        n_data_fields = 9 if (len(set(unique_headers)) - 2)%9 == 0 else 10
+        n_data_fields = 9 if len(set(unique_headers))%9 == 0 else 10
         f.close()
 
         # From data header, data layout is:
