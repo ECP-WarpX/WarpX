@@ -315,12 +315,25 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 
 #ifndef AMREX_USE_EB
 #ifdef WARPX_DIM_RZ
+        Real const dx = geom_scaled[lev].CellSize(0);
+        Real const dz_scaled = geom_scaled[lev].CellSize(1);
+        int max_semicoarsening_level = 0;
+        int semicoarsening_direction = -1;
+        if (dz_scaled > dx) {
+            semicoarsening_direction = 1;
+            max_semicoarsening_level = static_cast<int>(std::log2(dz_scaled/dx));
+        } else if (dz_scaled < dx) {
+            semicoarsening_direction = 0;
+            max_semicoarsening_level = static_cast<int>(std::log2(dx/dz_scaled));
+        }
+        if (max_semicoarsening_level > 0) {
+            info.setSemicoarsening(true);
+            info.setMaxSemicoarseningLevel(max_semicoarsening_level);
+            info.setSemicoarseningDirection(semicoarsening_direction);
+        }
         // Define the linear operator (Poisson operator)
         MLEBNodeFDLaplacian linop( {geom_scaled[lev]}, {boxArray(lev)}, {DistributionMap(lev)}, info );
 #else
-        // Define the linear operator (Poisson operator)
-        MLNodeTensorLaplacian linop( {Geom(lev)}, {boxArray(lev)}, {DistributionMap(lev)} );
-
         // Set the value of beta
         amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
 #if defined(WARPX_DIM_1D_Z)
@@ -330,8 +343,28 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #else
             {{ beta[0], beta[1], beta[2] }};
 #endif
+        Array<Real,AMREX_SPACEDIM> dx_scaled
+            {AMREX_D_DECL(Geom(lev).CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
+                          Geom(lev).CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
+                          Geom(lev).CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
+        int max_semicoarsening_level = 0;
+        int semicoarsening_direction = -1;
+        int min_dir = std::distance(dx_scaled.begin(),
+                                    std::min_element(dx_scaled.begin(),dx_scaled.end()));
+        int max_dir = std::distance(dx_scaled.begin(),
+                                    std::max_element(dx_scaled.begin(),dx_scaled.end()));
+        if (dx_scaled[max_dir] > dx_scaled[min_dir]) {
+            semicoarsening_direction = max_dir;
+            max_semicoarsening_level = static_cast<int>
+                (std::log2(dx_scaled[max_dir]/dx_scaled[min_dir]));
+        }
+        if (max_semicoarsening_level > 0) {
+            info.setSemicoarsening(true);
+            info.setMaxSemicoarseningLevel(max_semicoarsening_level);
+            info.setSemicoarseningDirection(semicoarsening_direction);
+        }
+        MLNodeTensorLaplacian linop( {Geom(lev)}, {boxArray(lev)}, {DistributionMap(lev)}, info );
         linop.setBeta( beta_solver );
-        ignore_unused(info);
 #endif
 #else
         // With embedded boundary: extract EB info
