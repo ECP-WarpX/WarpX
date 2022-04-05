@@ -93,9 +93,14 @@ class SimData:
         j_blocks = np.diff(np.array(sorted(j.astype(int))))
         k_blocks = np.diff(np.array(sorted(k.astype(int))))
 
-        i_blocking_factor = i_blocks[i_blocks != 0].min()
-        j_blocking_factor = j_blocks[j_blocks != 0].min()
-        k_blocking_factor = k_blocks[k_blocks != 0].min()
+        i_non_zero = i_blocks[i_blocks != 0]
+        j_non_zero = j_blocks[j_blocks != 0]
+        k_non_zero = k_blocks[k_blocks != 0]
+
+        #                   only one block in a dir - or smalles block size
+        i_blocking_factor = 1 if len(i_non_zero) == 0 else i_non_zero.min()
+        j_blocking_factor = 1 if len(j_non_zero) == 0 else j_non_zero.min()
+        k_blocking_factor = 1 if len(k_non_zero) == 0 else k_non_zero.min()
 
         imax = i.astype(int).max()//i_blocking_factor
         jmax = j.astype(int).max()//j_blocking_factor
