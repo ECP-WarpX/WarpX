@@ -11,10 +11,11 @@ class SimData:
     """
     Structure for easy access to load costs reduced diagnostics
     """
-    def __init__(self, directory, prange):
+    def __init__(self, directory, prange, is_3D):
         """
         Set data-containing dir, data range; load data
         """
+        self.is_3D = is_3D
         self._get_costs_reduced_diagnostics(directory, prange)
 
     def __call__(self, i):
@@ -110,8 +111,6 @@ class SimData:
         j_is_int = all([el.is_integer() for el in j/j_blocking_factor])
         k_is_int = all([el.is_integer() for el in k/k_blocking_factor])
 
-        is_3D = i_is_int and j_is_int and k_is_int
-
         for key in self.keys:
             row = np.where(key == steps)[0][0]
             costs = data[row, 0::n_data_fields].astype(float)
@@ -121,8 +120,8 @@ class SimData:
             kcoords = k.astype(int)//k_blocking_factor
 
             # Fill in cost array
-            shape = (kmax+1, jmax+1, imax+1)[:2+is_3D]
-            coords = [coord[:2+is_3D] for coord in zip(kcoords, jcoords, icoords)]
+            shape = (kmax+1, jmax+1, imax+1)[:2+self.is_3D]
+            coords = [coord[:2+self.is_3D] for coord in zip(kcoords, jcoords, icoords)]
 
             cost_arr = np.full(shape, 0.0)
             rank_arr = np.full(shape, -1)
@@ -139,7 +138,7 @@ class SimData:
                 edges =   list(rank_arr[corner[0]:pos[0]+1, pos[1], pos[2]]) \
                         + list(rank_arr[pos[0], corner[1]:pos[1]+1, pos[2]]) \
                         + list(rank_arr[pos[0], pos[1], corner[2]:pos[2]+1]) \
-                        if is_3D else                                        \
+                        if self.is_3D else                                   \
                           list(rank_arr[corner[0]:pos[0]+1, pos[1]])         \
                         + list(rank_arr[pos[0], corner[1]:pos[1]+1])
                 if visited[pos] or not set(edges).issubset(set([prev, -1])): return
