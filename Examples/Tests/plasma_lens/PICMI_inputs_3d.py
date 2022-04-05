@@ -61,7 +61,9 @@ solver = picmi.ElectromagneticSolver(grid = grid,
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       period = max_steps,
                                       species = [electrons],
-                                      data_list = ['ux', 'uy', 'uz'])
+                                      data_list = ['ux', 'uy', 'uz'],
+                                      write_dir = '.',
+                                      warpx_file_prefix = 'Python_plasma_lens')
 
 # Set up simulation
 sim = picmi.Simulation(solver = solver,
