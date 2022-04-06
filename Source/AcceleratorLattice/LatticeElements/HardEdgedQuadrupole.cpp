@@ -14,15 +14,31 @@
 #include <string>
 
 HardEdgedQuadrupole::HardEdgedQuadrupole ()
-    : LatticeElement(element_name)
 {
 
-    amrex::ParmParse pp_element_name(element_name);
+    amrex::ParmParse pp_element_name("quad");
 
-    queryArrWithParser(pp_element_name, "dEdx", m_dEdx);
+    amrex::Vector<amrex::Real> zs;
+    amrex::Vector<amrex::Real> ze;
+    amrex::Vector<amrex::Real> dEdx;
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_zstarts.size() == m_dEdx.size(),
-                 element_name + ": The dEdx must have the same length and the zstarts and zends");
+    queryArrWithParser(pp_element_name, "zstarts", zs);
+    queryArrWithParser(pp_element_name, "zends", ze);
+    queryArrWithParser(pp_element_name, "dEdx", dEdx);
+
+    nelements = static_cast<int>(zs.size());
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(zs.size() == ze.size(),
+                 "quad: zstarts must have the same length and zends");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(zs.size() == dEdx.size(),
+                 "quad: dEdx must have the same length and the zstarts and zends");
+
+    d_zs.resize(zs.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, zs.begin(), zs.end(), d_zs.begin());
+    d_ze.resize(ze.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, ze.begin(), ze.end(), d_ze.begin());
+    d_dEdx.resize(dEdx.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, dEdx.begin(), dEdx.end(), d_dEdx.begin());
 
 }
 

@@ -905,7 +905,7 @@ public:
     virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
 
     // Accelerator lattice elements
-    std::shared_ptr<AcceleratorLattice> m_accelerator_lattice;
+    std::unique_ptr<AcceleratorLattice> m_accelerator_lattice;
 
 protected:
 
