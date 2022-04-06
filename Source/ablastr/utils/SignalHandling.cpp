@@ -162,8 +162,9 @@ SignalHandling::CheckSignals()
 
 #if defined(AMREX_USE_MPI)
     auto comm = amrex::ParallelDescriptor::Communicator();
+    static_assert(sizeof(bool) == 1, "We communicate bools as 1 byte-sized type in MPI");
     BL_MPI_REQUIRE(MPI_Ibcast(signal_actions_requested, SIGNAL_REQUESTS_SIZE,
-                              MPI_CXX_BOOL, 0, comm,&signal_mpi_ibcast_request));
+                              MPI_BYTE, 0, comm,&signal_mpi_ibcast_request));
 #endif
 }
 
