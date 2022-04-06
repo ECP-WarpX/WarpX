@@ -63,7 +63,7 @@ part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       species = [electrons],
                                       data_list = ['ux', 'uy', 'uz'],
                                       write_dir = '.',
-                                      warpx_file_prefix = 'Python_plasma_lens')
+                                      warpx_file_prefix = 'Python_plasma_lens_plt')
 
 # Set up simulation
 sim = picmi.Simulation(solver = solver,
