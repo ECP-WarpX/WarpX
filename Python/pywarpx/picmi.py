@@ -360,9 +360,9 @@ class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
         species.multiple_particles_pos_x = self.x
         species.multiple_particles_pos_y = self.y
         species.multiple_particles_pos_z = self.z
-        species.multiple_particles_vel_x = self.ux/constants.c
-        species.multiple_particles_vel_y = self.uy/constants.c
-        species.multiple_particles_vel_z = self.uz/constants.c
+        species.multiple_particles_vel_x = np.array(self.ux)/constants.c
+        species.multiple_particles_vel_y = np.array(self.uy)/constants.c
+        species.multiple_particles_vel_z = np.array(self.uz)/constants.c
         species.multiple_particles_weight = self.weight
         if density_scale is not None:
             species.multiple_particles_weight = self.weight*density_scale
@@ -951,6 +951,38 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
             assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
             expression = pywarpx.my_constants.mangle_expression(self.potential, self.mangle_dict)
             pywarpx.warpx.__setattr__('eb_potential(x,y,z,t)', expression)
+
+
+class PlasmaLens(picmistandard.base._ClassWithInit):
+    """
+    Custom class to setup a plasma lens lattice.
+    The applied fields are dependent on the transverse position
+      - Ex = x*stengths_E
+      - Ey = y*stengths_E
+      - Bx = +y*stengths_B
+      - By = -x*stengths_B
+    """
+    def __init__(self, period, starts, lengths, strengths_E=None, strengths_B=None, **kw):
+        self.period = period
+        self.starts = starts
+        self.lengths = lengths
+        self.strengths_E = strengths_E
+        self.strengths_B = strengths_B
+
+        assert (self.strengths_E is not None) or (self.strengths_B is not None),\
+               Exception('One of strengths_E or strengths_B must be supplied')
+
+        self.handle_init(kw)
+
+    def initialize_inputs(self):
+
+        pywarpx.particles.E_ext_particle_init_style = 'repeated_plasma_lens'
+        pywarpx.particles.B_ext_particle_init_style = 'repeated_plasma_lens'
+        pywarpx.particles.repeated_plasma_lens_period = self.period
+        pywarpx.particles.repeated_plasma_lens_starts = self.starts
+        pywarpx.particles.repeated_plasma_lens_lengths = self.lengths
+        pywarpx.particles.repeated_plasma_lens_strengths_E = self.strengths_E
+        pywarpx.particles.repeated_plasma_lens_strengths_B = self.strengths_B
 
 
 class Simulation(picmistandard.PICMI_Simulation):
