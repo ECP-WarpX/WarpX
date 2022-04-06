@@ -142,9 +142,9 @@ WarpX::Evolve (int numsteps)
                 // Beyond one step, we have E^{n} and B^{n}.
                 // Particles have p^{n-1/2} and x^{n}.
 
-                // E and B are up-to-date inside the domain only,
-                // so guard cells need to be exchanged
-                const bool sync_nodal_points=true; // Synchronize the nodal points too
+                // E and B are up-to-date inside the domain only:
+                // exchange guard cells and synchronize nodal points
+                const bool sync_nodal_points = true;
                 FillBoundaryE(guard_cells.ng_FieldGather, sync_nodal_points);
                 FillBoundaryB(guard_cells.ng_FieldGather, sync_nodal_points);
                 // E and B: enough guard cells to update Aux or call Field Gather in fp and cp
