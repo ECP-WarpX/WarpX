@@ -602,13 +602,16 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         }
 
         // Exchange guard cells
-        const bool sync_nodal_points = true;
-        FillBoundaryE(guard_cells.ng_alloc_EB, sync_nodal_points);
-        FillBoundaryB(guard_cells.ng_alloc_EB, sync_nodal_points);
-        if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning)
-            FillBoundaryF(guard_cells.ng_alloc_F, sync_nodal_points);
-        if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
-            FillBoundaryG(guard_cells.ng_alloc_G, sync_nodal_points);
+        FillBoundaryE(guard_cells.ng_alloc_EB);
+        FillBoundaryB(guard_cells.ng_alloc_EB);
+        if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning) FillBoundaryF(guard_cells.ng_alloc_F);
+        if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning) FillBoundaryG(guard_cells.ng_alloc_G);
+
+        // Synchronize E, B, F, G fields on nodal points
+        NodalSync(Efield_fp, Efield_cp);
+        NodalSync(Bfield_fp, Bfield_cp);
+        if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
+        if (WarpX::do_divb_cleaning) NodalSync(G_fp, G_cp);
 
         // Synchronize fields on nodal points in PML
         if (do_pml)
