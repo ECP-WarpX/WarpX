@@ -715,6 +715,11 @@ namespace
         return warpx.stopTime();
     }
 
+    bool warpx_terminateFlag() {
+        WarpX& warpx = WarpX::GetInstance();
+        return warpx.terminateFlag();
+    }
+
     int warpx_finestLevel () {
         WarpX& warpx = WarpX::GetInstance();
         return warpx.finestLevel();
