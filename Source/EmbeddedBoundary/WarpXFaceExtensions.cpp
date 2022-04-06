@@ -216,7 +216,7 @@ WarpX::ComputeFaceExtensions(){
     bool using_bck = false;
 
     // If any cell could not be extended we use the BCK method to stabilize them
-#if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_RZ)
+#if !defined(WARPX_DIM_XZ)
     if (N_ext_faces_after_eight_ways(0) > 0) {
         ApplyBCKCorrection(0);
         using_bck = true;
@@ -228,7 +228,7 @@ WarpX::ComputeFaceExtensions(){
         using_bck = true;
     }
 
-#if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_RZ)
+#if !defined(WARPX_DIM_XZ)
     if (N_ext_faces_after_eight_ways(2) > 0) {
         ApplyBCKCorrection(2);
         using_bck = true;
