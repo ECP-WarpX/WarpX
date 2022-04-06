@@ -64,6 +64,9 @@ public:
     static bool TestAndResetActionRequestFlag (int action_to_test);
 
 private:
+    //! Is any signal handling action configured in signal_conf_requests ?
+    static bool anySignalConfActive ();
+
     //! On process 0, whether a given signal has been received since the last check
     static std::atomic<bool> signal_received_flags[NUM_SIGNALS];
 

@@ -110,6 +110,18 @@ SignalHandling::parseSignalNameToNumber(const std::string &str)
     return sig;
 }
 
+bool
+SignalHandling::anySignalConfActive ()
+{
+    bool any_signal_active = false;
+    for (int signal_number = 0; signal_number < NUM_SIGNALS; ++signal_number) {
+        for (int signal_request = 0; signal_request < SIGNAL_REQUESTS_SIZE; ++signal_request) {
+            any_signal_active |= signal_conf_requests[signal_request][signal_number];
+        }
+    }
+    return any_signal_active;
+}
+
 void
 SignalHandling::InitSignalHandling()
 {
@@ -140,6 +152,10 @@ SignalHandling::InitSignalHandling()
 void
 SignalHandling::CheckSignals()
 {
+    // Do not perform MPI communication if no signal action is configured
+    if (!anySignalConfActive())
+        return;
+
     // We assume that signals will definitely be delivered to rank 0,
     // and may be delivered to other ranks as well. For coordination,
     // we process them according to when they're received by rank 0.
@@ -171,6 +187,10 @@ SignalHandling::CheckSignals()
 void
 SignalHandling::WaitSignals()
 {
+    // Do not perform MPI communication if no signal action is configured
+    if (!anySignalConfActive())
+        return;
+
 #if defined(AMREX_USE_MPI)
     BL_MPI_REQUIRE(MPI_Wait(&signal_mpi_ibcast_request, MPI_STATUS_IGNORE));
 #endif
