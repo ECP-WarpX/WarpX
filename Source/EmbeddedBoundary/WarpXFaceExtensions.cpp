@@ -216,7 +216,7 @@ WarpX::ComputeFaceExtensions(){
     bool using_bck = false;
 
     // If any cell could not be extended we use the BCK method to stabilize them
-#if !defined(WARPX_DIM_XZ)
+#if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_RZ)
     if (N_ext_faces_after_eight_ways(0) > 0) {
         ApplyBCKCorrection(0);
         using_bck = true;
@@ -228,21 +228,22 @@ WarpX::ComputeFaceExtensions(){
         using_bck = true;
     }
 
-#if !defined(WARPX_DIM_XZ)
+#if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_RZ)
     if (N_ext_faces_after_eight_ways(2) > 0) {
         ApplyBCKCorrection(2);
         using_bck = true;
     }
 #endif
 
-    WarpX::RecordWarning("Embedded Boundary",
-                "Some faces could not be stabilized with the ECT and the BCK correction was used.\n"
-                "The BCK correction will be used for:\n"
-                "-" + std::to_string(N_ext_faces_after_eight_ways(0)) + " x-faces\n"
-                + "-" + std::to_string(N_ext_faces_after_eight_ways(1)) + " y-faces\n"
-                + "-" + std::to_string(N_ext_faces_after_eight_ways(2)) + " z-faces\n"
-    );
-
+    if(using_bck) {
+        WarpX::RecordWarning("Embedded Boundary",
+                             "Some faces could not be stabilized with the ECT and the BCK correction was used.\n"
+                             "The BCK correction will be used for:\n"
+                             "-" + std::to_string(N_ext_faces_after_eight_ways(0)) + " x-faces\n"
+                             + "-" + std::to_string(N_ext_faces_after_eight_ways(1)) + " y-faces\n"
+                             + "-" + std::to_string(N_ext_faces_after_eight_ways(2)) + " z-faces\n"
+        );
+    }
 #endif
 }
 
