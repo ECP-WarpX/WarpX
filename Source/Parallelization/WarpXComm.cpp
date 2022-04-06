@@ -474,20 +474,20 @@ WarpX::FillBoundaryE (IntVect ng, const bool sync_nodal_points)
 }
 
 void
-WarpX::FillBoundaryF (IntVect ng)
+WarpX::FillBoundaryF (IntVect ng, const bool sync_nodal_points)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryF(lev, ng);
+        FillBoundaryF(lev, ng, sync_nodal_points);
     }
 }
 
 void
-WarpX::FillBoundaryG (IntVect ng)
+WarpX::FillBoundaryG (IntVect ng, const bool sync_nodal_points)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryG(lev, ng);
+        FillBoundaryG(lev, ng, sync_nodal_points);
     }
 }
 
@@ -730,14 +730,14 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryF (int lev, IntVect ng)
+WarpX::FillBoundaryF (int lev, IntVect ng, const bool sync_nodal_points)
 {
-    FillBoundaryF(lev, PatchType::fine, ng);
-    if (lev > 0) FillBoundaryF(lev, PatchType::coarse, ng);
+    FillBoundaryF(lev, PatchType::fine, ng, sync_nodal_points);
+    if (lev > 0) FillBoundaryF(lev, PatchType::coarse, ng, sync_nodal_points);
 }
 
 void
-WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
+WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, const bool sync_nodal_points)
 {
     if (patch_type == PatchType::fine)
     {
@@ -751,7 +751,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
         {
             const amrex::Periodicity& period = Geom(lev).periodicity();
             const amrex::IntVect& nghost = (safe_guard_cells) ? F_fp[lev]->nGrowVect() : ng;
-            WarpXCommUtil::FillBoundary(*F_fp[lev], nghost, period);
+            WarpXCommUtil::FillBoundary(*F_fp[lev], nghost, period, sync_nodal_points);
         }
     }
     else if (patch_type == PatchType::coarse)
@@ -766,22 +766,22 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
         {
             const amrex::Periodicity& period = Geom(lev-1).periodicity();
             const amrex::IntVect& nghost = (safe_guard_cells) ? F_cp[lev]->nGrowVect() : ng;
-            WarpXCommUtil::FillBoundary(*F_cp[lev], nghost, period);
+            WarpXCommUtil::FillBoundary(*F_cp[lev], nghost, period, sync_nodal_points);
         }
     }
 }
 
-void WarpX::FillBoundaryG (int lev, IntVect ng)
+void WarpX::FillBoundaryG (int lev, IntVect ng, const bool sync_nodal_points)
 {
-    FillBoundaryG(lev, PatchType::fine, ng);
+    FillBoundaryG(lev, PatchType::fine, ng, sync_nodal_points);
 
     if (lev > 0)
     {
-        FillBoundaryG(lev, PatchType::coarse, ng);
+        FillBoundaryG(lev, PatchType::coarse, ng, sync_nodal_points);
     }
 }
 
-void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
+void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, const bool sync_nodal_points)
 {
     if (patch_type == PatchType::fine)
     {
@@ -795,7 +795,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
         {
             const amrex::Periodicity& period = Geom(lev).periodicity();
             const amrex::IntVect& nghost = (safe_guard_cells) ? G_fp[lev]->nGrowVect() : ng;
-            WarpXCommUtil::FillBoundary(*G_fp[lev], nghost, period);
+            WarpXCommUtil::FillBoundary(*G_fp[lev], nghost, period, sync_nodal_points);
         }
     }
     else if (patch_type == PatchType::coarse)
@@ -810,7 +810,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng)
         {
             const amrex::Periodicity& period = Geom(lev-1).periodicity();
             const amrex::IntVect& nghost = (safe_guard_cells) ? G_cp[lev]->nGrowVect() : ng;
-            WarpXCommUtil::FillBoundary(*G_cp[lev], nghost, period);
+            WarpXCommUtil::FillBoundary(*G_cp[lev], nghost, period, sync_nodal_points);
         }
     }
 }

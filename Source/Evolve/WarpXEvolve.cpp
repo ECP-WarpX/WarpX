@@ -142,11 +142,9 @@ WarpX::Evolve (int numsteps)
                 // Beyond one step, we have E^{n} and B^{n}.
                 // Particles have p^{n-1/2} and x^{n}.
 
-                // E and B are up-to-date inside the domain only:
-                // exchange guard cells and synchronize nodal points
-                const bool sync_nodal_points = true;
-                FillBoundaryE(guard_cells.ng_FieldGather, sync_nodal_points);
-                FillBoundaryB(guard_cells.ng_FieldGather, sync_nodal_points);
+                // E and B are up-to-date inside the domain only
+                FillBoundaryE(guard_cells.ng_FieldGather);
+                FillBoundaryB(guard_cells.ng_FieldGather);
                 // E and B: enough guard cells to update Aux or call Field Gather in fp and cp
                 // Need to update Aux on lower levels, to interpolate to higher levels.
                 if (fft_do_time_averaging)
@@ -421,24 +419,21 @@ WarpX::OneStep_nosub (Real cur_time)
             DampPML();
         }
 
+        const bool sync_nodal_points = true;
         if (use_hybrid_QED) {
             FillBoundaryE(guard_cells.ng_alloc_EB);
-            FillBoundaryB(guard_cells.ng_alloc_EB);
+            FillBoundaryB(guard_cells.ng_alloc_EB, sync_nodal_points);
             WarpX::Hybrid_QED_Push(dt);
-            FillBoundaryE(guard_cells.ng_afterPushPSATD);
+            FillBoundaryE(guard_cells.ng_afterPushPSATD, sync_nodal_points);
         }
         else {
-            FillBoundaryE(guard_cells.ng_afterPushPSATD);
-            FillBoundaryB(guard_cells.ng_afterPushPSATD);
+            FillBoundaryE(guard_cells.ng_afterPushPSATD, sync_nodal_points);
+            FillBoundaryB(guard_cells.ng_afterPushPSATD, sync_nodal_points);
             if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning)
-                FillBoundaryF(guard_cells.ng_alloc_F);
+                FillBoundaryF(guard_cells.ng_alloc_F, sync_nodal_points);
             if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
-                FillBoundaryG(guard_cells.ng_alloc_G);
+                FillBoundaryG(guard_cells.ng_alloc_G, sync_nodal_points);
         }
-
-        // Synchronize F, G fields on nodal points
-        if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
-        if (WarpX::do_divb_cleaning) NodalSync(G_fp, G_cp);
 
         if (do_pml) {
             NodalSyncPML();
@@ -462,10 +457,12 @@ WarpX::OneStep_nosub (Real cur_time)
             amrex::Abort(" Medium for EM is unknown \n");
         }
 
-        FillBoundaryE(guard_cells.ng_FieldSolver);
+        const bool sync_nodal_points = true;
+        FillBoundaryE(guard_cells.ng_FieldSolver, sync_nodal_points);
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
+        FillBoundaryB(guard_cells.ng_FieldSolver, sync_nodal_points);
 
         if (do_pml) {
             FillBoundaryF(guard_cells.ng_alloc_F);
@@ -605,14 +602,13 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         }
 
         // Exchange guard cells
-        FillBoundaryE(guard_cells.ng_alloc_EB);
-        FillBoundaryB(guard_cells.ng_alloc_EB);
-        if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning) FillBoundaryF(guard_cells.ng_alloc_F);
-        if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning) FillBoundaryG(guard_cells.ng_alloc_G);
-
-        // Synchronize F, G fields on nodal points
-        if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
-        if (WarpX::do_divb_cleaning) NodalSync(G_fp, G_cp);
+        const bool sync_nodal_points = true;
+        FillBoundaryE(guard_cells.ng_alloc_EB, sync_nodal_points);
+        FillBoundaryB(guard_cells.ng_alloc_EB, sync_nodal_points);
+        if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning)
+            FillBoundaryF(guard_cells.ng_alloc_F, sync_nodal_points);
+        if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
+            FillBoundaryG(guard_cells.ng_alloc_G, sync_nodal_points);
 
         // Synchronize fields on nodal points in PML
         if (do_pml)
@@ -752,8 +748,10 @@ WarpX::OneStep_sub1 (Real curtime)
     AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, coarse_lev);
     AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, coarse_lev, ncomps, ncomps);
 
+    const bool sync_nodal_points = true;
+
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev]);
-    FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver);
+    FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver, sync_nodal_points);
 
     EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::SecondHalf);
     EvolveF(fine_lev, PatchType::coarse, dt[fine_lev], DtType::SecondHalf);
@@ -765,19 +763,21 @@ WarpX::OneStep_sub1 (Real curtime)
         FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_alloc_EB);
     }
 
-    FillBoundaryB(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver);
+    FillBoundaryB(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver, sync_nodal_points);
 
-    FillBoundaryF(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolverF);
+    FillBoundaryF(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolverF, sync_nodal_points);
 
     EvolveE(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
-    FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
+    FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver, sync_nodal_points);
 
     EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::SecondHalf);
+    FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver, sync_nodal_points);
+
     EvolveF(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::SecondHalf);
 
     if (do_pml) {
         if (moving_window_active(istep[0]+1)){
-            // Exchance guard cells of PMLs only (0 cells are exchanged for the
+            // Exchange guard cells of PMLs only (0 cells are exchanged for the
             // regular B field MultiFab). This is required as B and F have just been
             // evolved.
             FillBoundaryB(coarse_lev, PatchType::fine, IntVect::TheZeroVector());
@@ -790,8 +790,6 @@ WarpX::OneStep_sub1 (Real curtime)
     if ( safe_guard_cells )
         FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 
-    // Synchronize all nodal points at the end of the timestep
-    if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
     if (do_pml) NodalSyncPML();
 }
 
