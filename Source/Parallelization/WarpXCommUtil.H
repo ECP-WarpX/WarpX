@@ -60,7 +60,7 @@ void FillBoundary (amrex::MultiFab&          mf,
 void FillBoundary (amrex::MultiFab&          mf,
                    amrex::IntVect            ng,
                    const amrex::Periodicity& period = amrex::Periodicity::NonPeriodic(),
-                   bool                      sync_nodal_points = false);
+                   const bool                sync_nodal_points = false);
 
 void FillBoundary (amrex::iMultiFab&         mf,
                    const amrex::Periodicity& period = amrex::Periodicity::NonPeriodic());

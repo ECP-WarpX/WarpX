@@ -144,7 +144,7 @@ WarpX::Evolve (int numsteps)
 
                 // E and B are up-to-date inside the domain only,
                 // so guard cells need to be exchanged
-                bool sync_nodal_points=true; // Synchronize the nodal points too
+                const bool sync_nodal_points=true; // Synchronize the nodal points too
                 FillBoundaryE(guard_cells.ng_FieldGather, sync_nodal_points);
                 FillBoundaryB(guard_cells.ng_FieldGather, sync_nodal_points);
                 // E and B: enough guard cells to update Aux or call Field Gather in fp and cp

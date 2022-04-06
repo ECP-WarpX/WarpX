@@ -94,7 +94,7 @@ void FillBoundary (amrex::MultiFab& mf, const amrex::Periodicity& period)
 void FillBoundary (amrex::MultiFab&          mf,
                    amrex::IntVect            ng,
                    const amrex::Periodicity& period,
-                   bool                      sync_nodal_points)
+                   const bool                sync_nodal_points)
 {
     BL_PROFILE("WarpXCommUtil::FillBoundary");
 
