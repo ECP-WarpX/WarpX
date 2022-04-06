@@ -17,6 +17,7 @@ public:
 
     AcceleratorLattice ();
 
+    bool m_lattice_defined = false;
 
     std::unique_ptr<HardEdgedQuadrupole> h_quad;
     HardEdgedQuadrupole *d_quad = nullptr;

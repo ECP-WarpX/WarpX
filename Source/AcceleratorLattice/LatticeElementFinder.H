@@ -22,15 +22,23 @@ struct LatticeElementFinder
 
     LatticeElementFinder () = default;
 
-    LatticeElementFinder (WarpXParIter const& a_pti);
+    LatticeElementFinder (WarpXParIter const& a_pti, int const a_offset);
 
     virtual ~LatticeElementFinder () = default;
 
-    int nz;
-    amrex::Real zmin;
-    amrex::Real dz;
+    bool m_lattice_defined = false;
 
-    HardEdgedQuadrupole* d_quad;
+    int m_nz;
+    amrex::Real m_zmin;
+    amrex::Real m_dz;
+    amrex::Real m_dt;
+
+    GetParticlePosition m_get_position;
+    const amrex::ParticleReal* AMREX_RESTRICT m_ux = nullptr;
+    const amrex::ParticleReal* AMREX_RESTRICT m_uy = nullptr;
+    const amrex::ParticleReal* AMREX_RESTRICT m_uz = nullptr;
+
+    HardEdgedQuadrupole* d_quad = nullptr;
     amrex::Gpu::DeviceVector<int> quad_indices;
     void Setup_Quad();
 
@@ -45,12 +53,12 @@ struct LatticeElementFinder
         int * indices_arr = indices.data();
         int nelements = static_cast<int>(zs.size());
 
-        amrex::ParallelFor( nz,
+        amrex::ParallelFor( m_nz,
             [=] AMREX_GPU_DEVICE (int iz) {
 
                 // Get the location of the grid cell
-                amrex::Real const z_lower = zmin + iz*dz;
-                amrex::Real const z_upper = zmin + iz*dz + dz;
+                amrex::Real const z_lower = m_zmin + iz*m_dz;
+                amrex::Real const z_upper = m_zmin + iz*m_dz + m_dz;
 
                 // Check if any elements overlap the grid cell, and if so, store its index
                 // For now, this assumes that there is no overlap among elements of the same type
@@ -65,11 +73,6 @@ struct LatticeElementFinder
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator () (const long i,
-                      const GetParticlePosition& get_position,
-                      const amrex::ParticleReal* AMREX_RESTRICT ux,
-                      const amrex::ParticleReal* AMREX_RESTRICT uy,
-                      const amrex::ParticleReal* AMREX_RESTRICT uz,
-                      const amrex::Real dt,
                       amrex::ParticleReal& field_Ex,
                       amrex::ParticleReal& field_Ey,
                       amrex::ParticleReal& /*field_Ez*/,
@@ -78,16 +81,18 @@ struct LatticeElementFinder
                       amrex::ParticleReal& /*field_Bz*/) const noexcept
     {
 
-        amrex::ParticleReal x, y, z;
-        get_position(i, x, y, z);
+        if (!m_lattice_defined) return;
 
-        const int iz = static_cast<int>((z - zmin)/dz);
+        amrex::ParticleReal x, y, z;
+        m_get_position(i, x, y, z);
+
+        const int iz = static_cast<int>((z - m_zmin)/m_dz);
 
         if (d_quad) {
             if (quad_indices[iz] > -1) {
                 int ielement = quad_indices[iz];
                 amrex::Real Ex, Ey;
-                d_quad->get_field(ielement, x, y, z, ux[i], uy[i], uz[i], dt, Ex, Ey);
+                d_quad->get_field(ielement, x, y, z, m_ux[i], m_uy[i], m_uz[i], m_dt, Ex, Ey);
                 field_Ex += Ex;
                 field_Ey += Ey;
             }

@@ -12,7 +12,7 @@
 using namespace amrex::literals;
 
 GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset) noexcept
-    : m_lattice_element_finder(a_pti)
+    : m_lattice_element_finder(a_pti, a_offset)
 {
     auto& warpx = WarpX::GetInstance();
     auto& mypc = warpx.GetPartContainer();

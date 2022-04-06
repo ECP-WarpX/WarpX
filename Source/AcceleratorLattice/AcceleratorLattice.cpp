@@ -12,6 +12,7 @@ AcceleratorLattice::AcceleratorLattice ()
 
     h_quad.reset(new HardEdgedQuadrupole());
     if (h_quad->nelements > 0) {
+        m_lattice_defined = true;
 #ifdef AMREX_USE_GPU
         d_quad = static_cast<HardEdgedQuadrupole*>
             (amrex::The_Arena()->alloc(sizeof(HardEdgedQuadrupole)));
