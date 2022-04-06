@@ -184,7 +184,8 @@ WarpX::ComputeFaceExtensions(){
     WarpX::RecordWarning("Embedded Boundary",
             "Faces to be extended in x:\t" + std::to_string(N_ext_faces(0)) + "\n"
             +"Faces to be extended in y:\t" + std::to_string(N_ext_faces(1)) + "\n"
-            +"Faces to be extended in z:\t" + std::to_string(N_ext_faces(2))
+            +"Faces to be extended in z:\t" + std::to_string(N_ext_faces(2)),
+            WarnPriority::low
     );
 
     InitBorrowing();
@@ -197,7 +198,8 @@ WarpX::ComputeFaceExtensions(){
             +"Faces to be extended after one way extension in y:\t"
             + std::to_string(N_ext_faces_after_one_way(1)) + "\n"
             +"Faces to be extended after one way extension in z:\t"
-            + std::to_string(N_ext_faces_after_one_way(2))
+            + std::to_string(N_ext_faces_after_one_way(2)),
+            WarnPriority::low
     );
 
     ComputeEightWaysExtensions();
@@ -210,7 +212,8 @@ WarpX::ComputeFaceExtensions(){
             +"Faces to be extended after eight ways extension in y:\t"
             + std::to_string(N_ext_faces_after_eight_ways(1)) + "\n"
             +"Faces to be extended after eight ways extension in z:\t"
-            + std::to_string(N_ext_faces_after_eight_ways(2))
+            + std::to_string(N_ext_faces_after_eight_ways(2)),
+            WarnPriority::low
     );
 
     bool using_bck = false;
@@ -241,7 +244,8 @@ WarpX::ComputeFaceExtensions(){
                              "The BCK correction will be used for:\n"
                              "-" + std::to_string(N_ext_faces_after_eight_ways(0)) + " x-faces\n"
                              + "-" + std::to_string(N_ext_faces_after_eight_ways(1)) + " y-faces\n"
-                             + "-" + std::to_string(N_ext_faces_after_eight_ways(2)) + " z-faces\n"
+                             + "-" + std::to_string(N_ext_faces_after_eight_ways(2)) + " z-faces\n",
+                             WarnPriority::low
         );
     }
 #endif
