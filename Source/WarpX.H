@@ -1431,6 +1431,9 @@ public:
     * \brief Whenever an unstable cell cannot be extended we increase its area to be the minimal for stability.
     *        This is the method Benkler-Chavannes-Kuster method and it is less accurate than the regular ECT but it
     *        still works better than staircasing. (see https://ieeexplore.ieee.org/document/1638381)
+    *
+    * @param idim Integer indicating the dimension (x->0, y->1, z->2) for which the BCK correction is done
+    *
     */
     void ApplyBCKCorrection(const int idim);
 
