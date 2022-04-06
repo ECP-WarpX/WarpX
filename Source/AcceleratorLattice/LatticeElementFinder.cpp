@@ -32,9 +32,9 @@ LatticeElementFinder::LatticeElementFinder (WarpXParIter const& a_pti, int const
     m_dt = warpx.getdt(lev);
 
     // The lattice is assumed to extend in the z-direction
-    // Get the number of cells where indices will be setup
+    // Get the number of nodes where indices will be setup
     amrex::Box box = a_pti.tilebox();
-    m_nz = box.size()[WARPX_ZINDEX] - 1;
+    m_nz = box.size()[WARPX_ZINDEX];
 
     m_zmin = WarpX::LowerCorner(box, lev, 0._rt)[2];
     m_dz = WarpX::CellSize(lev)[2];
@@ -56,7 +56,7 @@ LatticeElementFinder::Setup_Quad()
         // The "-1" is the flag that no elements at that location
         quad_indices.resize(m_nz, -1);
 
-        setup_lattice_indices(d_quad->d_zs, d_quad->d_ze, quad_indices);
+        setup_lattice_indices(d_quad->d_zcenters, quad_indices);
     }
 
 }

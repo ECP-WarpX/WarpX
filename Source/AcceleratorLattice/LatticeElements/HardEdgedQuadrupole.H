@@ -26,7 +26,10 @@ struct HardEdgedQuadrupole
 
     amrex::Gpu::DeviceVector<amrex::Real> d_zs;
     amrex::Gpu::DeviceVector<amrex::Real> d_ze;
+    amrex::Gpu::DeviceVector<amrex::Real> d_zcenters;
+
     amrex::Gpu::DeviceVector<amrex::Real> d_dEdx;
+    amrex::Gpu::DeviceVector<amrex::Real> d_dBdx;
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void get_field (const int ielement,
@@ -38,15 +41,20 @@ struct HardEdgedQuadrupole
                     const amrex::ParticleReal uz,
                     const amrex::ParticleReal dt,
                     amrex::ParticleReal& Ex,
-                    amrex::ParticleReal& Ey)
+                    amrex::ParticleReal& Ey,
+                    amrex::ParticleReal& Bx,
+                    amrex::ParticleReal& By)
     {
 
         amrex::Real const frac = hard_edged_fraction(z, ux, uy, uz, dt, d_zs[ielement], d_ze[ielement]);
 
         amrex::Real dEdx = frac*d_dEdx[ielement];
+        amrex::Real dBdx = frac*d_dBdx[ielement];
 
         Ex = +x*dEdx;
         Ey = -y*dEdx;
+        Bx = +y*dBdx;
+        By = +x*dBdx;
 
     }
 
