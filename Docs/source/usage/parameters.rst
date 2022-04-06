@@ -64,6 +64,15 @@ Overall simulation parameters
     It is mainly intended for debug purposes, and is best used with
     ``warpx.always_warn_immediately=1``.
 
+* ``warpx.break_signals`` (array of `string`, separated by spaces) optional
+    A list of signal names or numbers that the simulation should
+    handle by cleanly terminating at the next timestep
+
+* ``warpx.checkpoint_signals`` (array of `string`, separated by spaces) optional
+    A list of signal names or numbers that the simulation should
+    handle by outputting a checkpoint at the next timestep. A
+    diagnostic of type `checkpoint` must be configured.
+
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
     If provided ``warpx.random_seed = random``, the random seed will be determined
     using `std::random_device` and `std::clock()`,
@@ -1988,8 +1997,13 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
             \texttt{<field_name>_<species>} = \frac{\sum_{i=1}^N w_i \, f(x_i,y_i,z_i,u_{x,i},u_{y,i},u_{z,i})}{\sum_{i=1}^N w_i}
 
-   where the sums are over all particles of type ``<species>`` in a cell (ignoring the particle shape factor), :math:`w_i` is the particle weight, :math:`f()` is the parser function, and :math:`(x_i,y_i,z_i)` are particle positions in units of a meter.
+   where :math:`w_i` is the particle weight, :math:`f()` is the parser function, and :math:`(x_i,y_i,z_i)` are particle positions in units of a meter. The sums are over all particles of type ``<species>`` in a cell (ignoring the particle shape factor) that satisfy ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)``.
    In 1D or 2D, the particle coordinates will follow the WarpX convention. :math:`(u_{x,i},u_{y,i},u_{z,i})` are components of the particle four-velocity. :math:`u = \gamma v/c`, :math:`\gamma` is the Lorentz factor, :math:`v` is the particle velocity, and :math:`c` is the speed of light.
+
+* ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)`` (parser `string`, optional)
+    Parser function returning a boolean for whether to include a particle in the average.
+    If not specified, all particles will be included (see above).
+    The function arguments are the same as above.
 
 * ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
     By default, the fields written in the plot files are averaged on the cell centers.
@@ -2321,6 +2335,7 @@ Reduced Diagnostics
         otherwise it is set to ``1``.
         Integrated electric and magnetic field components can instead be obtained by specifying
         ``<reduced_diags_name>.integrate == true``.
+        In a *moving window* simulation, the FieldProbe can be set to follow the moving frame by specifying ``<reduced_diags_name>.do_moving_window_FP = 1`` (default 0).
 
         .. warning::
 
