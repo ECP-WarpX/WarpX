@@ -275,6 +275,7 @@ class LibWarpX():
         self.libwarpx_so.warpx_getdt.restype = c_real
         self.libwarpx_so.warpx_maxStep.restype = ctypes.c_int
         self.libwarpx_so.warpx_stopTime.restype = c_real
+        self.libwarpx_so.warpx_terminateFlag.restype = ctypes.c_bool
         self.libwarpx_so.warpx_finestLevel.restype = ctypes.c_int
         self.libwarpx_so.warpx_getMyProc.restype = ctypes.c_int
         self.libwarpx_so.warpx_getNProcs.restype = ctypes.c_int
