@@ -1,5 +1,5 @@
 stop_time = 5.303669113650618e-09
-amr.n_cell = 32 32 32
+amr.n_cell = 64 64 64
 amr.max_grid_size = 128
 amr.max_level = 0
 
@@ -13,23 +13,23 @@ boundary.field_hi = pec pec pec
 
 algo.maxwell_solver = ect
 
-my_constants.xmin = -0.53
-my_constants.ymin = -0.53
-my_constants.zmin = -0.53
-my_constants.xmax = 0.53
-my_constants.ymax = 0.53
-my_constants.zmax = 0.53
+my_constants.xmin = -0.5
+my_constants.ymin = -0.5
+my_constants.zmin = -0.5
+my_constants.xmax = 0.5
+my_constants.ymax = 0.5
+my_constants.zmax = 0.5
 my_constants.pi = 3.141592653589793
-my_constants.theta = pi/8
+my_constants.theta = pi/6
 
 warpx.eb_implicit_function = "max(max(max(x+xmin,-(x+xmax)), max(y*cos(-theta)-z*sin(-theta)+ymin,-(y*cos(-theta)-z*sin(-theta)+ymax))), max(y*sin(-theta)+z*cos(-theta)+zmin,-(y*sin(-theta)+z*cos(-theta)+zmax)))"
 
 my_constants.m = 0
 my_constants.n = 1
 my_constants.p = 1
-my_constants.Lx = 1.06
-my_constants.Ly = 1.06
-my_constants.Lz = 1.06
+my_constants.Lx = 1
+my_constants.Ly = 1
+my_constants.Lz = 1
 my_constants.x_cent = 0.
 my_constants.y_cent = 0.
 my_constants.z_cent = 0.
