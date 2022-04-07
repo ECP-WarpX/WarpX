@@ -29,12 +29,13 @@ HardEdgedQuadrupole::HardEdgedQuadrupole ()
 
     nelements = static_cast<int>(zs.size());
 
+    if (nelements == 0) return;
+
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(zs.size() == ze.size(),
                  "quad: zstarts must have the same length and zends");
 
     amrex::Vector<amrex::Real> zcenters;
-    zcenters.resize(nelements + 1);
-    zcenters[0] = std::numeric_limits<amrex::Real>::lowest();
+    zcenters.resize(nelements + 1, std::numeric_limits<amrex::Real>::lowest());
     for (int i = 1 ; i < nelements ; i++) {
         zcenters[i] = 0.5_rt*(ze[i-1] + zs[i]);
     }
