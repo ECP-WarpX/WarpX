@@ -604,7 +604,9 @@ class DiodeRun_V1(object):
 
     def init_simcontrol(self):
         logger.info("### Init Diode SimControl ###")
-        self.control = SimControl(total_steps=self.TOTAL_TIMESTEPS)
+        self.control = SimControl(
+            total_steps=self.TOTAL_TIMESTEPS, diag_steps=self.DIAG_STEPS,
+        )
 
     def init_simulation(self):
         logger.info("### Init Simulation Setup ###")

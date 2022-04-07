@@ -1,4 +1,18 @@
 Version, Physics version, Date,        List of changes
+8.0.0, 2, In progress, "
+
+**API Changes**:
+
+- :class:`mewarpx.sim_control.SimControl` now takes argument ``diag_steps`` and
+  optional arguments ``checkpoint`` and ``dump_period`` at initialization. By
+  letting ``SimControl`` install checkpointing, flux diagnostics will also be
+  properly checkpointed during OS exit/terminate signals.
+
+**Other changes**:
+
+- Merge ``upstream/development`` (git hash ``d3a63bf``) into memaster.
+
+"
 7.1.1, 2, 3/8/2022, "
 
 **Other changes**:

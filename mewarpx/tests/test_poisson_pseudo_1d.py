@@ -45,7 +45,7 @@ def test_superLU_solver():
         NX=NX,
         NZ=NZ,
         DT=DT,
-        TOTAL_TIMESTEPS=50,
+        TOTAL_TIMESTEPS=DIAG_STEPS,
         DIAG_STEPS=DIAG_STEPS,
         DIAG_INTERVAL=DIAG_INTERVAL
     )
@@ -62,8 +62,7 @@ def test_superLU_solver():
     )
 
     # Run the main WARP loop
-    while run.control.check_criteria():
-        mwxrun.simulation.step()
+    run.control.run()
 
     #######################################################################
     # Check phi results against reference data from MLMG solver           #

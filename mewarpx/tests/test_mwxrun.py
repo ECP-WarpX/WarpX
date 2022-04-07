@@ -70,8 +70,7 @@ def test_capacitive_discharge_multigrid(caplog, name):
     )
 
     # Run the main WARP loop
-    while run.control.check_criteria():
-        mwxrun.simulation.step()
+    run.control.run()
 
     #######################################################################
     # Cleanup and final output                                            #
@@ -85,5 +84,5 @@ def test_capacitive_discharge_multigrid(caplog, name):
 
     print(all_log_output)
     # make sure out isn't empty
-    outstr = "SimControl: Termination from criteria: eval_total_steps"
+    outstr = "SimControl: Total steps reached."
     assert outstr in all_log_output
