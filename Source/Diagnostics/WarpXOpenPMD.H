@@ -203,7 +203,8 @@ private:
       std::string comp_name,
       std::string field_name,
       amrex::MultiFab const& mf,
-      bool var_in_theta_mode
+      bool var_in_theta_mode,
+      bool do_transpose=false
   ) const;
 
   void GetMeshCompNames (

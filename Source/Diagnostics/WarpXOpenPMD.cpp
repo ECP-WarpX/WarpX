@@ -265,7 +265,8 @@ namespace detail
     inline std::vector< std::string >
     getFieldAxisLabels (
 #if defined(WARPX_DIM_RZ)
-                        bool is_theta_mode
+                        bool is_theta_mode,
+                        bool do_transpose
 #endif
     )
     {
@@ -288,12 +289,18 @@ namespace detail
 #endif
 
 #if defined(WARPX_DIM_RZ)
+        vs axisLabels;
         if (is_theta_mode) {
-            // revert to C order (fastest varying index last)
-            return {circAxisLabels.rbegin(), circAxisLabels.rend()};
+            axisLabels = circAxisLabels;
+        } else {
+            axisLabels = cartAxisLabels;
+        }
+        if (do_transpose) {
+            // keep to F order (fastest varying index last)
+            return {axisLabels.begin(), axisLabels.end()};
         } else {
             // revert to C order (fastest varying index last)
-            return {cartAxisLabels.rbegin(), cartAxisLabels.rend()};
+            return {axisLabels.rbegin(), axisLabels.rend()};
         }
 #else
         // revert to C order (fastest varying index last)
@@ -1179,16 +1186,22 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
                                  std::string comp_name,
                                  std::string field_name,
                                  amrex::MultiFab const& mf,
-                                 bool var_in_theta_mode) const
+                                 bool var_in_theta_mode,
+                                 bool do_transpose) const
 {
     auto mesh_comp = mesh[comp_name];
     amrex::Box const & global_box = full_geom.Domain();
 #if defined(WARPX_DIM_RZ)
-    bool reverse = false;
+    // bool reverse = false;
+    bool reverse = !do_transpose;
     auto global_size = getVec(global_box.size(), reverse );
     auto & warpx = WarpX::GetInstance();
     if (var_in_theta_mode) {
+        // if (do_transpose) {
             global_size.emplace(global_size.begin(), warpx.ncomps);
+        // } else {
+            // global_size.emplace_back( warpx.ncomps);
+        // }
     }
     // - Grid spacing
     std::vector<double> const grid_spacing = getVec(full_geom.CellSize(), reverse);
@@ -1205,7 +1218,8 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     // - AxisLabels
     std::vector<std::string> axis_labels = detail::getFieldAxisLabels(
 #if defined(WARPX_DIM_RZ)
-                                                        var_in_theta_mode
+                                                        var_in_theta_mode,
+                                                        do_transpose
 #endif
                                                                     );
 
@@ -1213,7 +1227,11 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     openPMD::Datatype const datatype = openPMD::determineDatatype<amrex::Real>();
     auto const dataset = openPMD::Dataset(datatype, global_size);
 
-    mesh.setDataOrder(openPMD::Mesh::DataOrder::C);
+    // if (do_transpose) {
+        mesh.setDataOrder(openPMD::Mesh::DataOrder::C);
+    // } else {
+    //     mesh.setDataOrder(openPMD::Mesh::DataOrder::F);
+    // }
     if (var_in_theta_mode) {
         mesh.setGeometry("thetaMode");
         mesh.setGeometryParameters("m=" + std::to_string(WarpX::n_rz_azimuthal_modes) + ";imag=+");
@@ -1226,7 +1244,11 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
 
     detail::setOpenPMDUnit( mesh, field_name );
     auto relative_cell_pos = utils::getRelativeCellPosition(mf);     // AMReX Fortran index order
-#ifndef WARPX_DIM_RZ
+#if defined(WARPX_DIM_RZ)
+    if (reverse) {
+        std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
+    }
+#else
     std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
 #endif
     mesh_comp.setPosition( relative_cell_pos );
@@ -1358,6 +1380,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
 
+    bool do_transpose = false;
+    bool do_reverse = !do_transpose;
+
     // is this either a regular write (true) or the first write in a
     // backtransformed diagnostic (BTD):
     bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
@@ -1387,7 +1412,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
             SetupFields(meshes, full_geom);
 
         amrex::Box const & global_box = full_geom.Domain();
-        auto const global_size = getReversedVec(global_box.size());
+        // auto const global_size = getReversedVec(global_box.size());
 
         int const ncomp = mf[lev].nComp();
         for ( int icomp=0; icomp<ncomp; icomp++ ) {
@@ -1409,7 +1434,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                                         comp_name,
                                         field_name,
                                         mf[lev],
-                                        var_in_theta_mode );
+                                        var_in_theta_mode,
+                                        do_transpose );
                     }
                 } else {
                     auto mesh = meshes[field_name];
@@ -1419,7 +1445,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                                         comp_name,
                                         field_name,
                                         mf[lev],
-                                        var_in_theta_mode);
+                                        var_in_theta_mode,
+                                        do_transpose );
                     }
                 }
             }
@@ -1448,18 +1475,24 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 
                 // Determine the offset and size of this chunk
                 amrex::IntVect const box_offset = local_box.smallEnd() - global_box.smallEnd();
-#if defined(WARPX_DIM_RZ)
-                auto chunk_offset = getVec( box_offset);
-                auto chunk_size = getVec( local_box.size());
-#else
+// #if defined(WARPX_DIM_RZ)
+                auto chunk_offset = getVec( box_offset, do_reverse);
+                auto chunk_size = getVec( local_box.size(), do_reverse);
+// #else
+#ifndef WARPX_DIM_RZ
                 auto chunk_offset = getReversedVec( box_offset );
                 auto chunk_size = getReversedVec( local_box.size() );
 #endif
 
 #if defined(WARPX_DIM_RZ)
                 if (var_in_theta_mode) {
-                    chunk_offset.emplace(chunk_offset.begin(), mode_index);
-                    chunk_size.emplace(chunk_size.begin(), 1);
+                    // if (do_transpose) {
+                        chunk_offset.emplace(chunk_offset.begin(), mode_index);
+                        chunk_size.emplace(chunk_size.begin(), 1);
+                    // } else {
+                        // chunk_offset.emplace_back( mode_index);
+                        // chunk_size.emplace_back( 1);
+                    // }
                 }
 #endif
 
@@ -1478,19 +1511,20 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                 {
                     amrex::Real const *local_data = fab.dataPtr(icomp);
 #ifdef WARPX_DIM_RZ
+                    if (do_transpose) {
+                        amrex::BaseFab<amrex::Real> tmp_fab(local_box, 1);
+                        std::shared_ptr<amrex::Real> data(tmp_fab.release());
+                        // transpose data for RZ openPMD ordering, this is currently NOT optimized
+                        transposeChunk(data, local_data, local_box);
 
-                    amrex::BaseFab<amrex::Real> tmp_fab(local_box, 1);
-                    std::shared_ptr<amrex::Real> data(tmp_fab.release());
-                    // transpose data for RZ openPMD ordering, this is currently NOT optimized
-                    transposeChunk(data, local_data, local_box);
-
-                    mesh_comp.storeChunk(data,
-                                         chunk_offset, chunk_size);
-#else
-                    mesh_comp.storeChunk(openPMD::shareRaw(local_data),
-                                         chunk_offset, chunk_size);
-
+                        mesh_comp.storeChunk(data,
+                                            chunk_offset, chunk_size);
+                    } else 
 #endif
+                    {
+                        mesh_comp.storeChunk(openPMD::shareRaw(local_data),
+                                            chunk_offset, chunk_size);
+                    }
                 }
             }
         } // icomp store loop
