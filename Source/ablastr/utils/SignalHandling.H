@@ -65,7 +65,7 @@ public:
 
 private:
     //! Is any signal handling action configured in signal_conf_requests ?
-    static bool anySignalConfActive ();
+    static bool m_any_signal_action_active;
 
     //! On process 0, whether a given signal has been received since the last check
     static std::atomic<bool> signal_received_flags[NUM_SIGNALS];
@@ -83,7 +83,7 @@ private:
     static bool signal_actions_requested[SIGNAL_REQUESTS_SIZE];
 
      // Don't allow clients to incorrectly try to construct and use an instance of this type
-    SignalHandling() = delete;
+    SignalHandling () = delete;
 };
 
 } // namespace ablastr::utils
