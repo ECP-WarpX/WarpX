@@ -1520,7 +1520,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 
                         mesh_comp.storeChunk(data,
                                             chunk_offset, chunk_size);
-                    } else 
+                    } else
 #endif
                     {
                         mesh_comp.storeChunk(openPMD::shareRaw(local_data),
