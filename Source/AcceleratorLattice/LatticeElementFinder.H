@@ -39,7 +39,8 @@ struct LatticeElementFinder
     const amrex::ParticleReal* AMREX_RESTRICT m_uz = nullptr;
 
     HardEdgedQuadrupole* d_quad = nullptr;
-    amrex::Gpu::DeviceVector<int> quad_indices;
+    amrex::Gpu::DeviceVector<int> d_quad_indices;
+    int * d_quad_indices_arr = nullptr;
     void Setup_Quad();
 
     void setup_lattice_indices(amrex::Gpu::DeviceVector<amrex::Real> & zcenters,
@@ -90,8 +91,8 @@ struct LatticeElementFinder
         const int iz = static_cast<int>((z - m_zmin)/m_dz);
 
         if (d_quad) {
-            if (quad_indices[iz] > -1) {
-                int ielement = quad_indices[iz];
+            if (d_quad_indices_arr[iz] > -1) {
+                int ielement = d_quad_indices_arr[iz];
                 amrex::Real Ex, Ey, Bx, By;
                 d_quad->get_field(ielement, x, y, z, m_ux[i], m_uy[i], m_uz[i], m_dt, Ex, Ey, Bx, By);
                 field_Ex += Ex;

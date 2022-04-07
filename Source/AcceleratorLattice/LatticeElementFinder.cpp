@@ -54,9 +54,10 @@ LatticeElementFinder::Setup_Quad()
         // Allocate the space for the indices.
         // Note that this uses m_nz since the information is saved per cell
         // The "-1" is the flag that no elements at that location
-        quad_indices.resize(m_nz, -1);
+        d_quad_indices.resize(m_nz, -1);
 
-        setup_lattice_indices(d_quad->d_zcenters, quad_indices);
+        setup_lattice_indices(d_quad->d_zcenters, d_quad_indices);
+        d_quad_indices_arr = d_quad_indices.data();
     }
 
 }
