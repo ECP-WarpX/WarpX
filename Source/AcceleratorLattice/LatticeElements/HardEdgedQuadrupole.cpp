@@ -48,6 +48,9 @@ HardEdgedQuadrupole::HardEdgedQuadrupole ()
     d_ze.resize(zcenters.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, zcenters.begin(), zcenters.end(), d_zcenters.begin());
 
+    d_zs_arr = d_zs.data();
+    d_ze_arr = d_ze.data();
+
     // This is specific to the element type
     amrex::Vector<amrex::Real> dEdx;
     if (queryArrWithParser(pp_element_name, "dEdx", dEdx)) {
@@ -69,6 +72,9 @@ HardEdgedQuadrupole::HardEdgedQuadrupole ()
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, dEdx.begin(), dEdx.end(), d_dEdx.begin());
     d_dBdx.resize(dBdx.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, dBdx.begin(), dBdx.end(), d_dBdx.begin());
+
+    d_dEdx_arr = d_dEdx.data();
+    d_dBdx_arr = d_dBdx.data();
 
 }
 
