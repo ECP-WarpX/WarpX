@@ -1381,7 +1381,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
 
     bool do_transpose = false;
+#if defined(WARPX_DIM_RZ)
     bool do_reverse = !do_transpose;
+#endif
 
     // is this either a regular write (true) or the first write in a
     // backtransformed diagnostic (BTD):
@@ -1475,11 +1477,10 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 
                 // Determine the offset and size of this chunk
                 amrex::IntVect const box_offset = local_box.smallEnd() - global_box.smallEnd();
-// #if defined(WARPX_DIM_RZ)
+#if defined(WARPX_DIM_RZ)
                 auto chunk_offset = getVec( box_offset, do_reverse);
                 auto chunk_size = getVec( local_box.size(), do_reverse);
-// #else
-#ifndef WARPX_DIM_RZ
+#else
                 auto chunk_offset = getReversedVec( box_offset );
                 auto chunk_size = getReversedVec( local_box.size() );
 #endif
