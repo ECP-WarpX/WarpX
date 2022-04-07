@@ -336,6 +336,10 @@ WarpX::WarpX ()
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     pml_rz.resize(nlevs_max);
 #endif
+
+    do_pml_Lo.resize(nlevs_max);
+    do_pml_Hi.resize(nlevs_max);
+
     costs.resize(nlevs_max);
     load_balance_efficiency.resize(nlevs_max);
 
@@ -703,12 +707,11 @@ WarpX::ReadParameters ()
             queryWithParser(pp_warpx, "num_snapshots_lab", num_snapshots_lab);
 
             // Read either dz_snapshots_lab or dt_snapshots_lab
-            bool snapshot_interval_is_specified = 0;
             Real dz_snapshots_lab = 0;
-            snapshot_interval_is_specified += queryWithParser(pp_warpx, "dt_snapshots_lab", dt_snapshots_lab);
+            bool snapshot_interval_is_specified = queryWithParser(pp_warpx, "dt_snapshots_lab", dt_snapshots_lab);
             if ( queryWithParser(pp_warpx, "dz_snapshots_lab", dz_snapshots_lab) ){
                 dt_snapshots_lab = dz_snapshots_lab/PhysConst::c;
-                snapshot_interval_is_specified = 1;
+                snapshot_interval_is_specified = true;
             }
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 snapshot_interval_is_specified,
@@ -1210,10 +1213,19 @@ WarpX::ReadParameters ()
         pp_psatd.query("current_correction", current_correction);
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
 
-        if (!fft_periodic_single_box && current_correction)
-            amrex::Abort(
-                    "\nCurrent correction does not guarantee charge conservation with local FFTs over guard cells:\n"
-                    "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
+        if (WarpX::current_correction == true)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                fft_periodic_single_box == true,
+                "Option psatd.current_correction=1 must be used with psatd.periodic_single_box_fft=1.");
+        }
+
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                fft_periodic_single_box == false,
+                "Option algo.current_deposition=vay must be used with psatd.periodic_single_box_fft=0.");
+        }
 
         // Auxiliary: boosted_frame = true if warpx.gamma_boost is set in the inputs
         amrex::ParmParse pp_warpx("warpx");
@@ -1335,9 +1347,7 @@ WarpX::ReadParameters ()
             }
         }
 
-        // Whether to fill the guard cells with inverse FFTs:
-        // WarpX::fill_guards = amrex::IntVect(0) by default,
-        // except for non-periodic directions with damping.
+        // Fill guard cells with backward FFTs in directions with field damping
         for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
         {
             if (WarpX::field_boundary_lo[dir] == FieldBoundaryType::Damped ||
@@ -1345,6 +1355,12 @@ WarpX::ReadParameters ()
             {
                 WarpX::fill_guards[dir] = 1;
             }
+        }
+
+        // Fill guard cells with backward FFTs if Vay current deposition is used
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            WarpX::fill_guards = amrex::IntVect(1);
         }
     }
 
@@ -2442,8 +2458,8 @@ WarpX::getPMLdirections() const
     {
         for( int i = 0; i < static_cast<int>(dirsWithPML.size()) / 2; ++i )
         {
-            dirsWithPML.at( 2u*i      ) = bool(do_pml_Lo[i]);
-            dirsWithPML.at( 2u*i + 1u ) = bool(do_pml_Hi[i]);
+            dirsWithPML.at( 2u*i      ) = bool(do_pml_Lo[0][i]); // on level 0
+            dirsWithPML.at( 2u*i + 1u ) = bool(do_pml_Hi[0][i]); // on level 0
         }
     }
     return dirsWithPML;
