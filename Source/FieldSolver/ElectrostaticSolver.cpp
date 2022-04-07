@@ -327,8 +327,11 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         // In the presence of EB or RZ: the solver assumes that the beam is
         // propagating along  one of the axes of the grid, i.e. that only *one*
         // of the components of `beta` is non-negligible.
-        MLEBNodeFDLaplacian linop( {Geom(lev)}, {boxArray(lev)},
-            {DistributionMap(lev)}, info, {&WarpX::fieldEBFactory(lev)});
+        MLEBNodeFDLaplacian linop( {Geom(lev)}, {boxArray(lev)}, {DistributionMap(lev)}, info
+#if defined(AMREX_USE_EB)
+            , {&WarpX::fieldEBFactory(lev)}
+#endif
+        );
 
         // Note: this assumes that the beam is propagating along
         // one of the axes of the grid, i.e. that only *one* of the
