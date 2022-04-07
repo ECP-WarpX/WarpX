@@ -65,8 +65,7 @@ def test_extra_pid(caplog):
     run.control.add_checker(check_particle_nums)
 
     # Run the main WARP loop
-    while run.control.check_criteria():
-        mwxrun.simulation.step(DIAG_STEPS)
+    run.control.run()
 
     #######################################################################
     # Cleanup and final output                                            #

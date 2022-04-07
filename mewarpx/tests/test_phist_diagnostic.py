@@ -64,8 +64,7 @@ def test_particle_hist_diag():
     run.init_warpx()
 
     # Run the main WARP loop
-    while run.control.check_criteria():
-        mwxrun.simulation.step()
+    run.control.run()
 
     #######################################################################
     # Check histogram results against reference                           #

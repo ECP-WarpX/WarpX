@@ -16,8 +16,8 @@ class CheckPointDiagnostic(WarpXDiagnostic):
                  name=init_restart_util.DEFAULT_CHECKPOINT_NAME,
                  clear_old_checkpoints=True, **kwargs):
         """
-        This class is a wrapper for creating checkpoints from which
-        to restart a simulation from. Adding flux diagnostic data to
+        This class is a wrapper for creating checkpoints from which a
+        simulation can be restarted. Adding flux diagnostic data to
         checkpoints are supported, but since this class has to be initialized
         before the simulation and flux diagnostics are initialized after
         the simulation, the user is responsible for adding the ``flux_diag``
@@ -50,7 +50,8 @@ class CheckPointDiagnostic(WarpXDiagnostic):
         # note that WarpX diagnostics (including checkpoints) are output
         # after the "afterstep" functions, therefore we install this function
         # before steps and add 1 to the diag_steps above
-        callbacks.installbeforestep(self.checkpoint_manager)
+        if self.checkpoint_steps != mwxrun.simulation.max_steps:
+            callbacks.installbeforestep(self.regular_checkpoint_manager)
 
     def add_checkpoint(self):
         diagnostic = picmi.Checkpoint(
@@ -61,35 +62,38 @@ class CheckPointDiagnostic(WarpXDiagnostic):
 
         mwxrun.simulation.add_diagnostic(diagnostic)
 
-    def checkpoint_manager(self):
+    def regular_checkpoint_manager(self):
+        """Function to handle checkpoints dumped on regular timesteps (not
+        during an interrupt event)."""
+        # skip the first step
+        if self.check_timestep() and mwxrun.get_it() != 1:
+            self.checkpoint_manager(mwxrun.get_it() - 1)
+
+    def checkpoint_manager(self, timestep):
         """Function executed on checkpoint steps to perform various tasks
         related to checkpoint management. These include copying the flux
         diagnostic data needed for a restart as well as deleting old
         checkpoints.
         """
-        # only the root processor should execute this function but not on the
-        # first step
-        if not self.check_timestep() or mwxrun.me != 0 or mwxrun.get_it() == 1:
-            return
-
         # Save a copy of flux diagnostics, if present, to load when restarting.
-        if (
-            self.flux_diag is not None
-            and self.flux_diag.last_run_step == mwxrun.get_it() - 1
-        ):
-            # We use the unorthodox file extension .ckpt (for checkpoint) so
-            # that we can continue to blindly move all .dpkl files from EFS
-            # to S3 when running on AWS
-            dst = os.path.join(
-                self.write_dir, f"{self.name}{(mwxrun.get_it() - 1):06d}",
-                "fluxdata.ckpt"
-            )
-            self.flux_diag.save(filepath=dst)
-        else:
-            logger.warning(
-                "Flux diagnostic data will not be saved with checkpoint and "
-                "therefore won't be available at restart."
-            )
+        if self.flux_diag is not None:
+            # If the timeseries were not updated on timestep, do so now.
+            if self.flux_diag.last_run_step != timestep:
+                self.flux_diag.update_ts_dict()
+                self.flux_diag.last_run_step = mwxrun.get_it()
+                if mwxrun.me == 0:
+                    self.flux_diag.update_fullhist_dict()
+
+            if mwxrun.me == 0:
+                # We use the unorthodox file extension .ckpt (for checkpoint)
+                # so that we can continue to blindly move all .dpkl files from
+                # EFS to S3 when running on AWS
+                dst = os.path.join(
+                    self.write_dir,
+                    f"{self.name}{self.flux_diag.last_run_step:06d}",
+                    "fluxdata.ckpt"
+                )
+                self.flux_diag.save(filepath=dst)
 
         if self.clear_old_checkpoints:
             init_restart_util.clean_old_checkpoints(

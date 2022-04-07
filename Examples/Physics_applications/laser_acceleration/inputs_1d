@@ -70,3 +70,15 @@ diagnostics.diags_names = diag1
 diag1.intervals = 100
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+
+# Reduced Diagnostics
+warpx.reduced_diags_names               = FP
+
+FP.type = FieldProbe
+FP.intervals = 10
+FP.integrate = 0
+FP.probe_geometry = Line
+FP.z_probe = -56e-6
+FP.z1_probe = 12e-6
+FP.resolution = 100
+FP.do_moving_window_FP = 1

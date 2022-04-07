@@ -3,11 +3,6 @@ This facilitates a central place to grab lots of simulation information for our
 use.
 
 SETUP order:
-    - Before importing other mewarpx modules::
-
-        from mewarpx import util as mwxutil
-        mwxutil.init_libwarpx(ndim=ndim, rz=rz)
-
     - Import other mewarpx modules
     - Use ``from mewarpx.mwxrun import mwxrun`` to import the class holding
       all the simulation information, defined here.
@@ -19,7 +14,6 @@ SETUP order:
         mwxrun.mwxrun.init_run()
 
     - Initialize any other mewarpx objects
-    - Perform run with ``sim.step()``
 """
 import atexit
 import ctypes
@@ -36,7 +30,6 @@ import mewarpx
 from mewarpx.utils_store import init_restart_util
 from mewarpx.utils_store import mwxconstants as constants
 from mewarpx.utils_store import parallel_util, profileparser
-from mewarpx.utils_store.util import compute_step
 
 logger = logging.getLogger(__name__)
 
@@ -402,7 +395,7 @@ class MEWarpXRun(object):
         except RuntimeError:
             if self.restart:
                 logger.error(
-                    "init_restart_util returned success for restarting from"
+                    "init_restart_util returned success for restarting from "
                     f"a checkpoint starting with {checkpoint_prefix} "
                     "but there was an error initializing WarpX!"
                 )
@@ -448,14 +441,6 @@ class MEWarpXRun(object):
             shutil.rmtree("diags")
 
         self.initialized = True
-
-    def step(self, sim_control, interval=None):
-        self.step_interval = compute_step(self.simulation, interval)
-        while sim_control.check_criteria():
-            self.simulation.step(self.step_interval)
-
-        # create file to signal that simulation ran to completion
-        sim_control.write_results()
 
     def get_domain_area(self):
         """Return float of simulation domain area in X & Y directions or R

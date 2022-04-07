@@ -391,8 +391,15 @@ WarpX::OneStep_nosub (Real cur_time)
 
     ExecutePythonCallback("afterdeposition");
 
-    // Synchronize J and rho
-    SyncCurrent();
+    // Synchronize J and rho.
+    // With Vay current deposition, the current deposited at this point is not yet
+    // the actual current J. This is computed later in WarpX::PushPSATD, by calling
+    // WarpX::PSATDVayDeposition. The function SyncCurrent is called after that,
+    // instead of here, so that we synchronize the correct current.
+    if (WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay)
+    {
+        SyncCurrent();
+    }
     SyncRho();
 
     // At this point, J is up-to-date inside the domain, and E and B are
@@ -502,7 +509,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // Initialize multi-J loop:
 
         // 1) Prepare E,B,F,G fields in spectral space
-        PSATDForwardTransformEB();
+        PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
         if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
         if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
 
@@ -518,7 +525,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Filter, exchange boundary, and interpolate across levels
             SyncRho();
             // Forward FFT of rho_new
-            PSATDForwardTransformRho(0, 1);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
         }
 
         // 4) Deposit J at relative time -dt with time step dt
@@ -565,7 +572,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
                 // Filter, exchange boundary, and interpolate across levels
                 SyncRho();
                 // Forward FFT of rho_new
-                PSATDForwardTransformRho(0, 1);
+                PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
             }
 
             // Advance E,B,F,G fields in time and update the average fields
@@ -575,7 +582,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // (the relative time reached here coincides with an integer full time step)
             if (i_depose == n_depose-1)
             {
-                PSATDBackwardTransformEB();
+                PSATDBackwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
                 if (WarpX::do_dive_cleaning) PSATDBackwardTransformF();
                 if (WarpX::do_divb_cleaning) PSATDBackwardTransformG();
             }
@@ -586,7 +593,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         {
             // We summed the integral of the field over 2*dt
             PSATDScaleAverageFields(1._rt / (2._rt*dt[0]));
-            PSATDBackwardTransformEBavg();
+            PSATDBackwardTransformEBavg(Efield_avg_fp, Bfield_avg_fp, Efield_avg_cp, Bfield_avg_cp);
         }
 
         // Evolve fields in PML
@@ -667,12 +674,12 @@ WarpX::OneStep_sub1 (Real curtime)
 
     // i) Push particles and fields on the fine patch (first fine step)
     PushParticlesandDepose(fine_lev, curtime, DtType::FirstHalf);
-    RestrictCurrentFromFineToCoarsePatch(fine_lev);
-    RestrictRhoFromFineToCoarsePatch(fine_lev);
+    RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
+    RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
     ApplyFilterandSumBoundaryJ(current_fp, current_cp, fine_lev, PatchType::fine);
     NodalSyncJ(current_fp, current_cp, fine_lev, PatchType::fine);
-    ApplyFilterandSumBoundaryRho(fine_lev, PatchType::fine, 0, 2*ncomps);
-    NodalSyncRho(fine_lev, PatchType::fine, 0, 2);
+    ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, 2*ncomps);
+    NodalSyncRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, 2);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
@@ -699,7 +706,7 @@ WarpX::OneStep_sub1 (Real curtime)
     PushParticlesandDepose(coarse_lev, curtime, DtType::Full);
     StoreCurrent(coarse_lev);
     AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, coarse_lev);
-    AddRhoFromFineLevelandSumBoundary(coarse_lev, 0, ncomps);
+    AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, coarse_lev, 0, ncomps);
 
     EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
@@ -725,12 +732,12 @@ WarpX::OneStep_sub1 (Real curtime)
 
     // iv) Push particles and fields on the fine patch (second fine step)
     PushParticlesandDepose(fine_lev, curtime+dt[fine_lev], DtType::SecondHalf);
-    RestrictCurrentFromFineToCoarsePatch(fine_lev);
-    RestrictRhoFromFineToCoarsePatch(fine_lev);
+    RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
+    RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
     ApplyFilterandSumBoundaryJ(current_fp, current_cp, fine_lev, PatchType::fine);
     NodalSyncJ(current_fp, current_cp, fine_lev, PatchType::fine);
-    ApplyFilterandSumBoundaryRho(fine_lev, PatchType::fine, 0, ncomps);
-    NodalSyncRho(fine_lev, PatchType::fine, 0, 2);
+    ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, ncomps);
+    NodalSyncRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, 2);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
@@ -756,7 +763,7 @@ WarpX::OneStep_sub1 (Real curtime)
     // by only half a coarse step (second half)
     RestoreCurrent(coarse_lev);
     AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, coarse_lev);
-    AddRhoFromFineLevelandSumBoundary(coarse_lev, ncomps, ncomps);
+    AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, coarse_lev, ncomps, ncomps);
 
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev]);
     FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver);

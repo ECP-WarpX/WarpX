@@ -70,31 +70,6 @@ def check_version(script_version, script_physics_version):
         )
 
 
-def compute_step(simulation, interval=None):
-    """Function to compute the appropriate number of simulations steps to
-    take at a time based on the diagnostic interval provided and the period
-    for output set in (native WarpX) simulation diagnostics.
-    """
-    diag_periods = []
-    for diag in simulation.diagnostics:
-        diag_periods.append(diag.period)
-
-    step_interval = None
-    if interval:
-        step_interval = interval
-    elif (interval is None) and (len(diag_periods) > 0):
-        step_interval = max(diag_periods)
-    else:
-        step_interval = simulation.max_steps
-
-    for period in diag_periods:
-        if step_interval % period != 0:
-            warnings.warn(f'Diagnostic interval {step_interval} not divisible '
-                          f'by the minimun diagnostic period {period}! Extra '
-                          f'diagnostic data may be outputted!')
-    return step_interval
-
-
 def get_velocities(num_samples, T, m, emission_type='thermionic',
                    transverse_fac=1.0, rseed=None):
     """Generate array of random [vx, vy, vz] for cathode-emitted electrons.

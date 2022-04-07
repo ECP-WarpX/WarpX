@@ -64,8 +64,7 @@ def test_embedded_cylinder():
     run.init_warpx()
 
     # Run the main WARP loop
-    while run.control.check_criteria():
-        mwxrun.simulation.step()
+    run.control.run()
 
     #######################################################################
     # Check phi results against reference data                            #
@@ -129,8 +128,7 @@ def test_embedded_rectangle():
     run.init_warpx()
 
     # Run the main WARP loop
-    while run.control.check_criteria():
-        mwxrun.simulation.step()
+    run.control.run()
 
     #######################################################################
     # Check phi results against reference data                            #
@@ -200,8 +198,7 @@ def test_two_embedded_cylinders():
     run.init_warpx()
 
     # Run the main WARP loop
-    while run.control.check_criteria():
-        mwxrun.simulation.step()
+    run.control.run()
 
     #######################################################################
     # Check phi results against reference data                            #
@@ -288,8 +285,7 @@ def test_two_embedded_cylinders_scraping():
     run.init_warpx()
 
     # Run the main WARP loop
-    while run.control.check_criteria():
-        mwxrun.simulation.step()
+    run.control.run()
 
     #######################################################################
     # Check flux on each cylinder                                         #

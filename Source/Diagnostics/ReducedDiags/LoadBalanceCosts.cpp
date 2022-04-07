@@ -7,6 +7,7 @@
 #include "LoadBalanceCosts.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Particles/MultiParticleContainer.H"
 #include "Utils/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
@@ -30,8 +31,38 @@
 #include <iomanip>
 #include <istream>
 #include <memory>
+#include <utility>
 
 using namespace amrex;
+
+namespace
+{
+    amrex::Long
+    countBoxMacroParticles (amrex::MFIter const & mfi, int const lev)
+    {
+        int gid = mfi.index();
+        int tid = mfi.LocalTileIndex();
+        auto box_index = std::make_pair(gid, tid);
+
+        auto & warpx = WarpX::GetInstance();
+        MultiParticleContainer const & mpc = warpx.GetPartContainer();
+        int const nSpecies = mpc.nSpecies();
+
+        amrex::Long num_macro_particles = 0;
+        for (int i_s = 0; i_s < nSpecies; ++i_s)
+        {
+            WarpXParticleContainer const & pc = mpc.GetParticleContainer(i_s);
+            auto const & plev  = pc.GetParticles(lev);
+
+            auto const & ptile = plev.at(box_index);
+            auto const & aos   = ptile.GetArrayOfStructs();
+            auto const np = aos.numParticles();
+            num_macro_particles += np;
+        }
+
+        return num_macro_particles;
+    }
+}
 
 // constructor
 LoadBalanceCosts::LoadBalanceCosts (std::string rd_name)
@@ -112,9 +143,12 @@ void LoadBalanceCosts::ComputeDiags (int step)
 #else
             m_data[shift_m_data + mfi.index()*m_nDataFields + 5] = 0.;
 #endif
+            m_data[shift_m_data + mfi.index()*m_nDataFields + 6] = tbx.d_numPts(); // note: difference to volume
+            m_data[shift_m_data + mfi.index()*m_nDataFields + 7] = countBoxMacroParticles(mfi, lev);
 #ifdef AMREX_USE_GPU
-            m_data[shift_m_data + mfi.index()*m_nDataFields + 6] = amrex::Gpu::Device::deviceId();
+            m_data[shift_m_data + mfi.index()*m_nDataFields + 8] = amrex::Gpu::Device::deviceId();
 #endif
+            // ...
         }
 
         // we looped through all the boxes on level lev, update the shift index
@@ -187,13 +221,13 @@ void LoadBalanceCosts::ComputeDiags (int step)
     }
 
     /* m_data now contains up-to-date values for:
-     *  [[cost, proc, lev, i_low, j_low, k_low(, gpu_ID [if GPU run]) ] of box 0 at level 0,
-     *   [cost, proc, lev, i_low, j_low, k_low(, gpu_ID [if GPU run]) ] of box 1 at level 0,
-     *   [cost, proc, lev, i_low, j_low, k_low(, gpu_ID [if GPU run]) ] of box 2 at level 0,
+     *  [[cost, proc, lev, i_low, j_low, k_low, num_cells, num_macro_particles(, gpu_ID [if GPU run]) ] of box 0 at level 0,
+     *   [cost, proc, lev, i_low, j_low, k_low, num_cells, num_macro_particles(, gpu_ID [if GPU run]) ] of box 1 at level 0,
+     *   [cost, proc, lev, i_low, j_low, k_low, num_cells, num_macro_particles(, gpu_ID [if GPU run]) ] of box 2 at level 0,
      *   ...
-     *   [cost, proc, lev, i_low, j_low, k_low(, gpu_ID [if GPU run]) ] of box 0 at level 1,
-     *   [cost, proc, lev, i_low, j_low, k_low(, gpu_ID [if GPU run]) ] of box 1 at level 1,
-     *   [cost, proc, lev, i_low, j_low, k_low(, gpu_ID [if GPU run]) ] of box 2 at level 1,
+     *   [cost, proc, lev, i_low, j_low, k_low num_cells, num_macro_particles(, gpu_ID [if GPU run]) ] of box 0 at level 1,
+     *   [cost, proc, lev, i_low, j_low, k_low, num_cells, num_macro_particles(, gpu_ID [if GPU run]) ] of box 1 at level 1,
+     *   [cost, proc, lev, i_low, j_low, k_low, num_cells, num_macro_particles(, gpu_ID [if GPU run]) ] of box 2 at level 1,
      *   ...]
      * and m_data_string contains:
      *  [hostname of box 0 at level 0,
@@ -257,7 +291,8 @@ void LoadBalanceCosts::WriteToFile (int step) const
         std::ofstream ofstmp(fileTmpName, std::ofstream::out);
 
         // write header row
-        // for each box on each level we saved 7 data fields: [cost, proc, lev, i_low, j_low, k_low, hostname])
+        // for each box on each level we saved 9(10) data fields:
+        //   [cost, proc, lev, i_low, j_low, k_low, num_cells, num_macro_particles(, gpu_ID_box), hostname]
         // nDataFieldsToWrite = below accounts for the Real data fields (m_nDataFields), then 1 string output to write
         int nDataFieldsToWrite = m_nDataFields + 1;
 
@@ -281,15 +316,16 @@ void LoadBalanceCosts::WriteToFile (int step) const
             ofstmp << "[" << c++ << "]j_low_box_" + std::to_string(boxNumber) + "()";
             ofstmp << m_sep;
             ofstmp << "[" << c++ << "]k_low_box_" + std::to_string(boxNumber) + "()";
+            ofstmp << m_sep;
+            ofstmp << "[" << c++ << "]num_cells_" + std::to_string(boxNumber) + "()";
+            ofstmp << m_sep;
+            ofstmp << "[" << c++ << "]num_macro_particles_" + std::to_string(boxNumber) + "()";
 #ifdef AMREX_USE_GPU
             ofstmp << m_sep;
             ofstmp << "[" << c++ << "]gpu_ID_box_" + std::to_string(boxNumber) + "()";
-            ofstmp << m_sep;
-            ofstmp << "[" << c++ << "]hostname_box_" + std::to_string(boxNumber) + "()";
-#else
-            ofstmp << m_sep;
-            ofstmp << "[" << c++ << "]hostname_box_" + std::to_string(boxNumber) + "()";
 #endif
+            ofstmp << m_sep;
+            ofstmp << "[" << c++ << "]hostname_box_" + std::to_string(boxNumber) + "()";
         }
         ofstmp << std::endl;
 

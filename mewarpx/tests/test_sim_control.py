@@ -41,6 +41,7 @@ def test_write_results():
         NZ=NZ,
         DT=DT,
         TOTAL_TIMESTEPS=STEPS,
+        DIAG_STEPS=STEPS
     )
 
     run.setup_run(
@@ -57,7 +58,7 @@ def test_write_results():
         return f"The dimensions of this run were: {NX} x {NZ}"
 
     run.control.set_write_func(results_contents)
-    mwxrun.step(run.control)
+    run.control.run()
 
     results_path = os.path.join(WarpXDiagnostic.DIAG_DIR, "results.txt")
 
