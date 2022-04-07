@@ -107,10 +107,6 @@ class SimData:
         jmax = j.astype(int).max()//j_blocking_factor
         kmax = k.astype(int).max()//k_blocking_factor
 
-        i_is_int = all([el.is_integer() for el in i/i_blocking_factor])
-        j_is_int = all([el.is_integer() for el in j/j_blocking_factor])
-        k_is_int = all([el.is_integer() for el in k/k_blocking_factor])
-
         for key in self.keys:
             row = np.where(key == steps)[0][0]
             costs = data[row, 0::n_data_fields].astype(float)

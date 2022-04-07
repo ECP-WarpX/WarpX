@@ -1273,8 +1273,8 @@ private:
     static int do_similar_dm_pml;
     bool do_pml_dive_cleaning; // default set in WarpX.cpp
     bool do_pml_divb_cleaning; // default set in WarpX.cpp
-    amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
-    amrex::IntVect do_pml_Hi = amrex::IntVect::TheZeroVector();
+    amrex::Vector<amrex::IntVect> do_pml_Lo;
+    amrex::Vector<amrex::IntVect> do_pml_Hi;
     amrex::Vector<std::unique_ptr<PML> > pml;
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
@@ -1467,6 +1467,15 @@ public:
     * \brief Do the eight-ways extension
     */
     void ComputeEightWaysExtensions();
+    /**
+    * \brief Whenever an unstable cell cannot be extended we increase its area to be the minimal for stability.
+    *        This is the method Benkler-Chavannes-Kuster method and it is less accurate than the regular ECT but it
+    *        still works better than staircasing. (see https://ieeexplore.ieee.org/document/1638381)
+    *
+    * @param idim Integer indicating the dimension (x->0, y->1, z->2) for which the BCK correction is done
+    *
+    */
+    void ApplyBCKCorrection(const int idim);
 
 private:
     void ScrapeParticles ();

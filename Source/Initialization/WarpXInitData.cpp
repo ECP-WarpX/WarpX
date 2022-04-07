@@ -451,24 +451,21 @@ WarpX::InitFromScratch ()
 void
 WarpX::InitPML ()
 {
-
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML) {
             do_pml = 1;
-            do_pml_Lo[idim] = 1;
+            do_pml_Lo[0][idim] = 1; // on level 0
         }
         if (WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML) {
             do_pml = 1;
-            do_pml_Hi[idim] = 1;
+            do_pml_Hi[0][idim] = 1; // on level 0
         }
     }
     if (finest_level > 0) do_pml = 1;
     if (do_pml)
     {
-        amrex::IntVect do_pml_Lo_corrected = do_pml_Lo;
-
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-        do_pml_Lo_corrected[0] = 0; // no PML at r=0, in cylindrical geometry
+        do_pml_Lo[0][0] = 0; // no PML at r=0, in cylindrical geometry
         pml_rz[0] = std::make_unique<PML_RZ>(0, boxArray(0), DistributionMap(0), &Geom(0), pml_ncell, do_pml_in_domain);
 #else
         pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
@@ -478,28 +475,28 @@ WarpX::InitPML ()
                              do_multi_J,
                              do_pml_dive_cleaning, do_pml_divb_cleaning,
                              guard_cells.ng_FieldSolver.max(),
-                             do_pml_Lo_corrected, do_pml_Hi);
+                             do_pml_Lo[0], do_pml_Hi[0]);
 #endif
 
         for (int lev = 1; lev <= finest_level; ++lev)
         {
-            amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
-            amrex::IntVect do_pml_Hi_MR = amrex::IntVect::TheUnitVector();
+            do_pml_Lo[lev] = amrex::IntVect::TheUnitVector();
+            do_pml_Hi[lev] = amrex::IntVect::TheUnitVector();
             // check if fine patch edges co-incide with domain boundary
             amrex::Box levelBox = boxArray(lev).minimalBox();
             // Domain box at level, lev
             amrex::Box DomainBox = Geom(lev).Domain();
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                 if (levelBox.smallEnd(idim) == DomainBox.smallEnd(idim))
-                    do_pml_Lo_MR[idim] = do_pml_Lo[idim];
+                    do_pml_Lo[lev][idim] = do_pml_Lo[0][idim];
                 if (levelBox.bigEnd(idim) == DomainBox.bigEnd(idim))
-                    do_pml_Hi_MR[idim] = do_pml_Hi[idim];
+                    do_pml_Hi[lev][idim] = do_pml_Hi[0][idim];
             }
 
 #ifdef WARPX_DIM_RZ
             //In cylindrical geometry, if the edge of the patch is at r=0, do not add PML
             if ((max_level > 0) && (fine_tag_lo[0]==0.)) {
-                do_pml_Lo_MR[0] = 0;
+                do_pml_Lo[lev][0] = 0;
             }
 #endif
             pml[lev] = std::make_unique<PML>(lev, boxArray(lev), DistributionMap(lev),
@@ -509,7 +506,7 @@ WarpX::InitPML ()
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
                                    do_multi_J, do_pml_dive_cleaning, do_pml_divb_cleaning,
                                    guard_cells.ng_FieldSolver.max(),
-                                   do_pml_Lo_MR, do_pml_Hi_MR);
+                                   do_pml_Lo[lev], do_pml_Hi[lev]);
         }
     }
 }
@@ -696,6 +693,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         if (WarpX::do_current_centering)
         {
             current_fp_nodal[lev][i]->setVal(0.0);
+        }
+
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            current_fp_vay[lev][i]->setVal(0.0);
         }
 
         if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {

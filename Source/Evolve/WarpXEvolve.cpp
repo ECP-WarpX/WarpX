@@ -391,8 +391,15 @@ WarpX::OneStep_nosub (Real cur_time)
 
     ExecutePythonCallback("afterdeposition");
 
-    // Synchronize J and rho
-    SyncCurrent();
+    // Synchronize J and rho.
+    // With Vay current deposition, the current deposited at this point is not yet
+    // the actual current J. This is computed later in WarpX::PushPSATD, by calling
+    // WarpX::PSATDVayDeposition. The function SyncCurrent is called after that,
+    // instead of here, so that we synchronize the correct current.
+    if (WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay)
+    {
+        SyncCurrent();
+    }
     SyncRho();
 
     // At this point, J is up-to-date inside the domain, and E and B are
