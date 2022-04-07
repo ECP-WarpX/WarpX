@@ -366,8 +366,8 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     ba.coarsen(m_crse_ratio);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     int ngrow = 1;
-    m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap,
-                                     m_cellcenter_varnames.size(), ngrow);
+    int ncomps = static_cast<int>(m_cellcenter_varnames.size());
+    m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap, ncomps, ngrow);
 
 }
 
@@ -394,9 +394,10 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     {
         // coarsening ratio is not provided since the source MultiFab, m_cell_centered_data
         // is coarsened based on the user-defined m_crse_ratio
+        int nvars = static_cast<int>(m_varnames.size());
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
                   m_cell_centered_data[lev].get(), lev,
-                  m_varnames.size(), m_num_buffers, m_varnames);
+                  nvars, m_num_buffers, m_varnames);
     }
 
     // Define all cell-centered functors required to compute cell-centere data
