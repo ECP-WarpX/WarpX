@@ -52,11 +52,14 @@ struct LatticeElementFinder
         amrex::Real const * zcenters_arr = zcenters.data();
         int * indices_arr = indices.data();
 
+        amrex::Real zmin = m_zmin;
+        amrex::Real dz = m_dz;
+
         amrex::ParallelFor( m_nz,
             [=] AMREX_GPU_DEVICE (int iz) {
 
                 // Get the location of the grid node
-                amrex::Real const z_node = m_zmin + iz*m_dz;
+                amrex::Real const z_node = zmin + iz*dz;
 
                 // Check if any elements overlap the grid cell, and if so, store its index
                 // For now, this assumes that there is no overlap among elements of the same type
