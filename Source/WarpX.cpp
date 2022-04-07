@@ -335,6 +335,10 @@ WarpX::WarpX ()
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     pml_rz.resize(nlevs_max);
 #endif
+
+    do_pml_Lo.resize(nlevs_max);
+    do_pml_Hi.resize(nlevs_max);
+
     costs.resize(nlevs_max);
     load_balance_efficiency.resize(nlevs_max);
 
@@ -2436,8 +2440,8 @@ WarpX::getPMLdirections() const
     {
         for( int i = 0; i < static_cast<int>(dirsWithPML.size()) / 2; ++i )
         {
-            dirsWithPML.at( 2u*i      ) = bool(do_pml_Lo[i]);
-            dirsWithPML.at( 2u*i + 1u ) = bool(do_pml_Hi[i]);
+            dirsWithPML.at( 2u*i      ) = bool(do_pml_Lo[0][i]); // on level 0
+            dirsWithPML.at( 2u*i + 1u ) = bool(do_pml_Hi[0][i]); // on level 0
         }
     }
     return dirsWithPML;

@@ -1273,8 +1273,8 @@ private:
     static int do_similar_dm_pml;
     bool do_pml_dive_cleaning; // default set in WarpX.cpp
     bool do_pml_divb_cleaning; // default set in WarpX.cpp
-    amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
-    amrex::IntVect do_pml_Hi = amrex::IntVect::TheZeroVector();
+    amrex::Vector<amrex::IntVect> do_pml_Lo;
+    amrex::Vector<amrex::IntVect> do_pml_Hi;
     amrex::Vector<std::unique_ptr<PML> > pml;
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
