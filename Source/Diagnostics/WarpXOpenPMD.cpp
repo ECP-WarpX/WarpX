@@ -303,7 +303,6 @@ namespace detail
     getFieldComponentLabels (bool is_theta_mode)
     {
         using vs = std::vector< std::string >;
-// #if defined(WARPX_DIM_RZ)
         if (is_theta_mode) {
             // if we write individual modes
             vs const fieldComponents{"r", "t", "z"};
