@@ -203,15 +203,15 @@ private:
       std::string comp_name,
       std::string field_name,
       amrex::MultiFab const& mf,
-      bool var_in_theta_mode,
-      bool do_transpose=false
+      bool var_in_theta_mode
   ) const;
 
   void GetMeshCompNames (
       int meshLevel,
       const std::string& varname,
       std::string& field_name,
-      std::string& comp_name
+      std::string& comp_name,
+      bool is_theta_mode
   ) const;
 
   /** This function sets up the entries for storing the particle positions and global IDs
