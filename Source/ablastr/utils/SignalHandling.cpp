@@ -125,6 +125,9 @@ SignalHandling::InitSignalHandling ()
             signal_active |= signal_conf_requests[signal_request][signal_number];
         }
         if (signal_active) {
+            // at least one signal action is configured
+            m_any_signal_action_active = true;
+
             if (amrex::ParallelDescriptor::MyProc() == 0) {
                 sa.sa_handler = &SignalHandling::SignalSetFlag;
             } else {
@@ -133,12 +136,6 @@ SignalHandling::InitSignalHandling ()
             int result = sigaction(signal_number, &sa, nullptr);
             ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(result == 0,
                                                "Failed to install signal handler for a configured signal");
-        }
-    }
-
-    for (int signal_number = 0; signal_number < NUM_SIGNALS; ++signal_number) {
-        for (int signal_request = 0; signal_request < SIGNAL_REQUESTS_SIZE; ++signal_request) {
-            m_any_signal_action_active |= signal_conf_requests[signal_request][signal_number];
         }
     }
 #endif
