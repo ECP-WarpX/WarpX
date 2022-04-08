@@ -674,21 +674,21 @@ public:
     void UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab const& src);
 
     // Fill boundary cells including coarse/fine boundaries
-    void FillBoundaryB   (amrex::IntVect ng, const bool sync_nodal_points = false);
-    void FillBoundaryE   (amrex::IntVect ng, const bool sync_nodal_points = false);
+    void FillBoundaryB   (amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryE   (amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryB_avg   (amrex::IntVect ng);
     void FillBoundaryE_avg   (amrex::IntVect ng);
 
-    void FillBoundaryF   (amrex::IntVect ng, const bool sync_nodal_points = false);
-    void FillBoundaryG   (amrex::IntVect ng, const bool sync_nodal_points = false);
+    void FillBoundaryF   (amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryG   (amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryAux (amrex::IntVect ng);
-    void FillBoundaryE   (int lev, amrex::IntVect ng, const bool sync_nodal_points = false);
-    void FillBoundaryB   (int lev, amrex::IntVect ng, const bool sync_nodal_points = false);
+    void FillBoundaryE   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryB   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryE_avg   (int lev, amrex::IntVect ng);
     void FillBoundaryB_avg   (int lev, amrex::IntVect ng);
 
-    void FillBoundaryF   (int lev, amrex::IntVect ng, const bool sync_nodal_points = false);
-    void FillBoundaryG   (int lev, amrex::IntVect ng, const bool sync_nodal_points = false);
+    void FillBoundaryF   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryG   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
 
     void SyncCurrent ();
@@ -973,10 +973,10 @@ private:
     ///
     void EvolveEM(int numsteps);
 
-    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool sync_nodal_points = false);
-    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool sync_nodal_points = false);
-    void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng, const bool sync_nodal_points = false);
-    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng, const bool sync_nodal_points = false);
+    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng, const bool nodal_sync = false);
 
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
@@ -1358,6 +1358,9 @@ private:
     amrex::RealVect fine_tag_hi;
 
     bool is_synchronized = true;
+
+    // Synchronization of nodal points
+    const bool sync_nodal_points = true;
 
     guardCellManager guard_cells;
 
