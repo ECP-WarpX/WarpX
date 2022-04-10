@@ -5,6 +5,7 @@
 
 #include "MultiDiagnostics_fwd.H"
 
+#include <AMReX_DistributionMapping.H>
 #include <AMReX_Vector.H>
 
 #include <memory>
@@ -30,14 +31,21 @@ public:
     /** \brief Called only at the last iteration. Loop over each diag and if m_dump_last_timestep
      *         is true, compute diags and flush with force_flush=true. */
     void FilterComputePackFlushLastTimestep (int step);
+    /** Redistribute parallel data structures during load balance
+     *
+     * \param[in] lev level to remake
+     * \param[in] dm new distribution mapping
+     */
+    void RemakeLevel (int const lev, amrex::DistributionMapping const & dm);
+    /** Start a new iteration, i.e., dump has not been done yet. */
+    void NewIteration ();
+private:
     /** \brief Loop over diags in all diags and call their InitializeFieldFunctors.
                Called when a new partitioning is generated at level, lev.
       * \param[in] lev level at this the field functors are initialized.
       */
     void InitializeFieldFunctors (int lev);
-    /** Start a new iteration, i.e., dump has not been done yet. */
-    void NewIteration ();
-private:
+
     /** Vector of pointers to all diagnostics */
     amrex::Vector<std::unique_ptr<Diagnostics> > alldiags;
     int ndiags = 0; /**< number of different diagnostics */

@@ -6,6 +6,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpXRegrid.H"
 #include "WarpX.H"
 
 #include "Diagnostics/MultiDiagnostics.H"
@@ -128,6 +129,8 @@ WarpX::LoadBalance ()
 
         loadBalancedAnyLevel = loadBalancedAnyLevel || doLoadBalance;
     }
+
+    // redistribute particle containers & buffers
     if (loadBalancedAnyLevel)
     {
         mypc->Redistribute();
@@ -137,23 +140,10 @@ WarpX::LoadBalance ()
         m_particle_boundary_buffer->redistribute();
 
         // diagnostics & reduced diagnostics
-        // not yet needed:
-        //multi_diags->LoadBalance();
+        //multi_diags->LoadBalance(); // no particle containers in full diags yet
         reduced_diags->LoadBalance();
     }
 #endif
-}
-
-
-template <typename MultiFabType> void
-RemakeMultiFab (std::unique_ptr<MultiFabType>& mf, const DistributionMapping& dm,
-                const bool redistribute)
-{
-    if (mf == nullptr) return;
-    const IntVect& ng = mf->nGrowVect();
-    auto pmf = std::make_unique<MultiFabType>(mf->boxArray(), dm, mf->nComp(), ng);
-    if (redistribute) pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng);
-    mf = std::move(pmf);
 }
 
 void
@@ -166,37 +156,37 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         // Fine patch
         for (int idim=0; idim < 3; ++idim)
         {
-            RemakeMultiFab(Bfield_fp[lev][idim], dm, true);
-            RemakeMultiFab(Efield_fp[lev][idim], dm, true);
-            RemakeMultiFab(current_fp[lev][idim], dm, false);
-            RemakeMultiFab(current_store[lev][idim], dm, false);
+            RemakeMultiFab(*Bfield_fp[lev][idim], dm, true);
+            RemakeMultiFab(*Efield_fp[lev][idim], dm, true);
+            RemakeMultiFab(*current_fp[lev][idim], dm, false);
+            RemakeMultiFab(*current_store[lev][idim], dm, false);
 
 #ifdef AMREX_USE_EB
             if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
                 WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT ||
                 WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC){
-                RemakeMultiFab(m_edge_lengths[lev][idim], dm, false);
-                RemakeMultiFab(m_face_areas[lev][idim], dm, false);
+                RemakeMultiFab(*m_edge_lengths[lev][idim], dm, false);
+                RemakeMultiFab(*m_face_areas[lev][idim], dm, false);
                 if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
-                    RemakeMultiFab(Venl[lev][idim], dm, false);
-                    RemakeMultiFab(m_flag_info_face[lev][idim], dm, false);
-                    RemakeMultiFab(m_flag_ext_face[lev][idim], dm, false);
-                    RemakeMultiFab(m_area_mod[lev][idim], dm, false);
-                    RemakeMultiFab(ECTRhofield[lev][idim], dm, false);
+                    RemakeMultiFab(*Venl[lev][idim], dm, false);
+                    RemakeMultiFab(*m_flag_info_face[lev][idim], dm, false);
+                    RemakeMultiFab(*m_flag_ext_face[lev][idim], dm, false);
+                    RemakeMultiFab(*m_area_mod[lev][idim], dm, false);
+                    RemakeMultiFab(*ECTRhofield[lev][idim], dm, false);
                     m_borrowing[lev][idim] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bfield_fp[lev][idim]->ixType().toIntVect()), dm);
                 }
             }
 #endif
         }
 
-        RemakeMultiFab(F_fp[lev], dm, true);
-        RemakeMultiFab(rho_fp[lev], dm, false);
+        RemakeMultiFab(*F_fp[lev], dm, true);
+        RemakeMultiFab(*rho_fp[lev], dm, false);
         // phi_fp should be redistributed since we use the solution from
         // the last step as the initial guess for the next solve
-        RemakeMultiFab(phi_fp[lev], dm, true);
+        RemakeMultiFab(*phi_fp[lev], dm, true);
 
 #ifdef AMREX_USE_EB
-        RemakeMultiFab(m_distance_to_eb[lev], dm, false);
+        RemakeMultiFab(*m_distance_to_eb[lev], dm, false);
 
         int max_guard = guard_cells.ng_FieldSolver.max();
         m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
@@ -252,8 +242,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         } else {
             for (int idim=0; idim < 3; ++idim)
             {
-                RemakeMultiFab(Bfield_aux[lev][idim], dm, false);
-                RemakeMultiFab(Efield_aux[lev][idim], dm, false);
+                RemakeMultiFab(*Bfield_aux[lev][idim], dm, false);
+                RemakeMultiFab(*Efield_aux[lev][idim], dm, false);
             }
         }
 
@@ -261,12 +251,12 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         if (lev > 0) {
             for (int idim=0; idim < 3; ++idim)
             {
-                RemakeMultiFab(Bfield_cp[lev][idim], dm, true);
-                RemakeMultiFab(Efield_cp[lev][idim], dm, true);
-                RemakeMultiFab(current_cp[lev][idim], dm, false);
+                RemakeMultiFab(*Bfield_cp[lev][idim], dm, true);
+                RemakeMultiFab(*Efield_cp[lev][idim], dm, true);
+                RemakeMultiFab(*current_cp[lev][idim], dm, false);
             }
-            RemakeMultiFab(F_cp[lev], dm, true);
-            RemakeMultiFab(rho_cp[lev], dm, false);
+            RemakeMultiFab(*F_cp[lev], dm, true);
+            RemakeMultiFab(*rho_cp[lev], dm, false);
 
 #ifdef WARPX_USE_PSATD
             if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
@@ -306,14 +296,14 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         if (lev > 0 && (n_field_gather_buffer > 0 || n_current_deposition_buffer > 0)) {
             for (int idim=0; idim < 3; ++idim)
             {
-                RemakeMultiFab(Bfield_cax[lev][idim], dm, false);
-                RemakeMultiFab(Efield_cax[lev][idim], dm, false);
-                RemakeMultiFab(current_buf[lev][idim], dm, false);
+                RemakeMultiFab(*Bfield_cax[lev][idim], dm, false);
+                RemakeMultiFab(*Efield_cax[lev][idim], dm, false);
+                RemakeMultiFab(*current_buf[lev][idim], dm, false);
             }
-            RemakeMultiFab(charge_buf[lev], dm, false);
+            RemakeMultiFab(*charge_buf[lev], dm, false);
             // we can avoid redistributing these since we immediately re-build the values via BuildBufferMasks()
-            RemakeMultiFab(current_buffer_masks[lev], dm, false);
-            RemakeMultiFab(gather_buffer_masks[lev], dm, false);
+            RemakeMultiFab(*current_buffer_masks[lev], dm, false);
+            RemakeMultiFab(*gather_buffer_masks[lev], dm, false);
 
             if (current_buffer_masks[lev] || gather_buffer_masks[lev])
                 BuildBufferMasks();
@@ -337,8 +327,10 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         amrex::Abort("RemakeLevel: to be implemented");
     }
 
+    // Remake MultiFabs in full diagnostics
+    multi_diags->RemakeLevel(lev, dm);
     // Re-initialize diagnostic functors that stores pointers to the user-requested fields at level, lev.
-    multi_diags->InitializeFieldFunctors( lev );
+    //multi_diags->InitializeFieldFunctors( lev ); // now in RemakeLevel
 
     // Reduced diagnostics
     // not needed yet

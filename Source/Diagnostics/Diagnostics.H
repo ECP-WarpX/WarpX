@@ -9,6 +9,7 @@
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
 
+#include <AMReX_DistributionMapping.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
@@ -62,6 +63,12 @@ public:
     virtual void Flush (int i_buffer) = 0;
     /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
     void InitData ();
+    /** Redistribute parallel data structures during load balance
+     *
+     * \param[in] lev level to remake
+     * @param[in] dm new distribution mapping
+     */
+    void RemakeLevel (int const lev, amrex::DistributionMapping const & dm);
     /** Initialize functors that store pointers to the fields requested by the user.
      *
      * Derived classes MUST implement this function, and it must allocate m_all_field_functors
