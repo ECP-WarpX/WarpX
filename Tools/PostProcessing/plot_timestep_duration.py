@@ -50,7 +50,7 @@ def plot_timestep_duration(time_data, name):
 
     plt.tight_layout()
 
-    plt.savefig(fig_name, transparent=True, dpi=300)
+    plt.savefig(fig_name, transparent=False, dpi=300)
     print("...done!")
     
     
@@ -75,7 +75,7 @@ def plot_cumulative_duration(time_data, name):
 
     plt.tight_layout()
 
-    plt.savefig(name + "_cumulative_duration.png", transparent=True, dpi=300)
+    plt.savefig(name + "_cumulative_duration.png", transparent=False, dpi=300)
     print("...done!")    
 
 output_log_file_name = sys.argv[1]
