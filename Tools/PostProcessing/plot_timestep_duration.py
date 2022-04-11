@@ -78,7 +78,7 @@ def plot_cumulative_duration(time_data, name):
     plt.tight_layout()
 
     plt.savefig(name + "_cumulative_duration.png", transparent=False, dpi=300)
-    print("...done!")    
+    print("...done!")
 
 
 output_log_file_name = sys.argv[1]
