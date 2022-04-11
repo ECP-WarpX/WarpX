@@ -181,9 +181,9 @@ class Assembly(object):
             )
             # logger.info(f"{self.name} scraped {buffer_count} {species.name}")
 
-            # if there are no particles in the buffer return early
+            # if there are no particles in the buffer continue to next species
             if buffer_count == 0:
-                return
+                continue
 
             # get the timesteps at which particles were scraped
             comp_steps = mwxrun.sim_ext.get_particle_boundary_buffer(

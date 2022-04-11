@@ -1,5 +1,13 @@
 Version, Physics version, Date,        List of changes
-8.0.0, 2, In progress, "
+8.0.1, 2, In progress, "
+
+**Bugfixes**:
+
+- Particle scraping had an early ``return`` instead of ``continue`` if there
+  were no particles of a given species in the scraped particle buffer.
+
+"
+8.0.0, 2, 4/7/2022, "
 
 **API Changes**:
 
