@@ -1072,9 +1072,7 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
             }
             MultiFab::Add(*J_fp[lev][idim], mf, 0, 0, J_fp[lev+1][idim]->nComp(), 0);
         }
-        NodalSyncJ(J_fp, J_cp, lev+1, PatchType::coarse);
     }
-    NodalSyncJ(J_fp, J_cp, lev, PatchType::fine);
 }
 
 void WarpX::RestrictRhoFromFineToCoarsePatch (
@@ -1208,10 +1206,7 @@ void WarpX::AddRhoFromFineLevelandSumBoundary (
             WarpXSumGuardCells(*(charge_cp[lev+1]), period, ng_depos_rho, icomp, ncomp);
         }
         MultiFab::Add(*charge_fp[lev], mf, 0, icomp, ncomp, 0);
-        NodalSyncRho(charge_fp, charge_cp, lev+1, PatchType::coarse, icomp, ncomp);
     }
-
-    NodalSyncRho(charge_fp, charge_cp, lev, PatchType::fine, icomp, ncomp);
 }
 
 void WarpX::NodalSyncJ (
