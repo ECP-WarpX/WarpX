@@ -16,4 +16,3 @@ the script can be used as follows:
 The script generates two pictures: `log_file_ts_duration.png`, which shows the duration
 of each timestep in seconds as a function of the timestep number, and `_ts_cumulative_duration.png`,
 which depicts the total duration of the simulation as a function of the timestep number.
-
