@@ -80,8 +80,8 @@ def plot_cumulative_duration(time_data, name):
 
     plt.savefig(name + "_cumulative_duration.png", transparent=False, dpi=300)
     print("...done!")
-    
-    
+
+
 def do_plot_timestep_duration():
     parser = argparse.ArgumentParser(description='Generates plots of timestep duration from WarpX standard output logs')
     parser.add_argument('file_name', metavar='file_name', type=str, nargs=1,
@@ -97,4 +97,3 @@ def do_plot_timestep_duration():
 
 if __name__ == "__main__":
     do_plot_timestep_duration()
-
