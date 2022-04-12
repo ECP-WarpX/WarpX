@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import numba
 import numpy as np
 from pywarpx import callbacks, picmi
+import scipy.interpolate
+import scipy.ndimage
 import scipy.stats
 import skimage.measure
 
@@ -212,7 +214,7 @@ class FixedNumberInjector(Injector):
         """Sets up user-specified injection with fixed timestep and weights.
 
         Arguments:
-            emitter (:class:`mewarpx.emission.Emitter`): Emitter object that
+            emitter (:class:`mewarpx.emission.BaseEmitter`): Emitter object that
                 will specify positions and velocities of particles to inject.
             species (picmi.Species): Premade species to inject particles of.
             npart (int): Number of particles to inject total
@@ -611,12 +613,16 @@ class PlasmaInjector(Injector):
         self.injectoffset = injectoffset
         self.rseed = rseed
 
-        self._calc_plasma_density(
-            plasma_density=plasma_density,
-            ionization_frac=ionization_frac,
-            P_neutral=P_neutral,
-            T_neutral=T_neutral,
-        )
+        # Don't calculate plasma density if seeding with arbitrary plasma density
+        if isinstance(self.emitter, ArbitraryDistributionVolumeEmitter):
+            self.plasma_density = None
+        else:
+            self._calc_plasma_density(
+                plasma_density=plasma_density,
+                ionization_frac=ionization_frac,
+                P_neutral=P_neutral,
+                T_neutral=T_neutral,
+            )
 
         self.name = name
         if self.name is None:
@@ -645,6 +651,10 @@ class PlasmaInjector(Injector):
                 f"{self.plasma_density:.4g} m^-2, area "
                 f"{self.emitter.area:.4g} m^2."
             )
+        # give placeholder weight which will be overwritten for
+        # ArbitraryDistributionVolumeEmitter
+        elif isinstance(self.emitter, ArbitraryDistributionVolumeEmitter):
+            self.weight = 0
         # Volume emission
         else:
             self.weight = (
@@ -848,6 +858,7 @@ class BaseEmitter(object):
             'vx': vx, 'vy': vy, 'vz': vz,
             'w': np.ones_like(x) * w
         }
+
         particle_dict.update(kwargs)
 
         return particle_dict
@@ -1826,6 +1837,7 @@ class ArbitraryEmitter2D(Emitter):
         fig.tight_layout()
         fig.savefig(f"{self.conductor.name}_contour_plot.png")
 
+
 class VolumeEmitter(BaseEmitter):
 
     """Parent class for volumetric particle injection coordinates.
@@ -1929,7 +1941,8 @@ class VolumeEmitter(BaseEmitter):
 
         x_coords = self._get_x_coords(npart)
         v_coords = mwxutil.get_velocities(
-            npart, self.T, m=m, emission_type='random', rseed=rseedv)
+            npart, self.T, m=m, emission_type='random', rseed=rseedv
+        )
 
         if rseed is not None:
             np.random.set_state(nprstate)
@@ -2049,3 +2062,111 @@ class XGaussZSinDistributionVolumeEmitter(VolumeEmitter):
         )
 
         return np.array([xpos, ypos, zpos]).T
+
+
+class ArbitraryDistributionVolumeEmitter(VolumeEmitter):
+
+    """Varies density based on given particle density array. NPPC for each
+    species must be an integer greater than or equal to 1. Can only be used
+    with FixedNumberInjector."""
+
+    geoms = ["XZ"]
+
+    def __init__(self, d_grid, *args, **kwargs):
+        """
+        Arguments:
+            d_grid (np.ndarray): array of particle densities given in cm^-3
+        """
+        super(ArbitraryDistributionVolumeEmitter, self).__init__(
+            *args, **kwargs)
+
+        # interpolate density onto simulation grid and integrate
+        interp_dgrid = self._interpolate_grid(d_grid)
+        self.d_grid = (interp_dgrid * mwxrun.dx * mwxrun.dz
+                       * (mwxrun.ymax - mwxrun.ymin)
+                       * 1e6).ravel()
+        self.add_wfn(self._weight_function)
+
+    @staticmethod
+    def _interpolate_grid(input_grid):
+        """Takes a grid (2d array) as an input and interpolates the values on
+        to the current simulation grid.
+
+        Arguments:
+            input_grid (np.ndarray): 2d array of any shape representing a
+                2d grid of plasma densities
+
+        Returns:
+            output_grid (np.ndarray): 2d array of current simulation dimensions
+                interpolated values from input_grid
+        """
+
+        input_shape = input_grid.shape
+        input_x = np.linspace(0.5, input_shape[0] - 0.5, input_shape[0])
+        input_z = np.linspace(0.5, input_shape[1] - 0.5, input_shape[1])
+        input_zz, input_xx = np.meshgrid(input_z, input_x)
+        input_coord = np.column_stack([input_xx.flatten(), input_zz.flatten()])
+
+        output_xx = input_xx * mwxrun.nx/input_shape[0]
+        output_zz = input_zz * mwxrun.nz/input_shape[1]
+
+        output_grid = scipy.interpolate.griddata(
+            input_coord, input_grid.flatten(), (output_xx, output_zz)
+        )
+        return output_grid
+
+    def _get_x_coords(self, npart):
+        """Uniformly samples particles in each grid cell, so each cell has the
+        same number of particles."""
+        nppc = npart / (mwxrun.nx * mwxrun.nz)
+
+        if not nppc.is_integer() or nppc < 1:
+            raise ValueError(f"When using ArbitraryDistributionVolumeEmitter, "
+                             f"number of particles per cell per species must "
+                             f"be an integer greater than or equal to 1. "
+                             f"Currently it is {nppc}.")
+
+        random_dx = np.random.uniform(-mwxrun.dx / 2, mwxrun.dx / 2, npart)
+        random_dz = np.random.uniform(-mwxrun.dz / 2, mwxrun.dz / 2, npart)
+
+        x = np.linspace(self.bounds[0, 0] + mwxrun.dx/2, self.bounds[0, 1] - mwxrun.dx/2, mwxrun.nx)
+        z = np.linspace(self.bounds[2, 0] + mwxrun.dz/2, self.bounds[2, 1] - mwxrun.dz/2, mwxrun.nz)
+        zz, xx = np.meshgrid(z, x)
+        xx = np.tile(xx.ravel(), int(nppc)) + random_dx
+        zz = np.tile(zz.ravel(), int(nppc)) + random_dz
+        yy = np.zeros_like(xx)
+
+        return np.array([xx, yy, zz]).T
+
+    def _weight_function(self, particle_dict):
+        """Calculates the weight of each particle based on their position and
+        the given seed density grid.
+
+        Arguments:
+            particle_dict (dict): Contains lists, each with length equal to the
+                number of particles
+
+        Returns:
+            w (np.ndarray): flattened array of particle weights
+        """
+
+        # create a bin for each grid cell
+        x_bin = np.linspace(mwxrun.xmin, mwxrun.xmax, mwxrun.nx + 1)
+        z_bin = np.linspace(mwxrun.zmin, mwxrun.zmax, mwxrun.nz + 1)
+
+        # bin particles based on position
+        ret = scipy.stats.binned_statistic_2d(
+            particle_dict["x"], particle_dict["z"], None, "count",
+            bins=[x_bin, z_bin], expand_binnumbers=True
+        )
+        bin_counts = ret.statistic.flatten()
+
+        # calculate weight per particle per cell
+        w_grid = np.divide(self.d_grid, bin_counts,
+                           out=np.zeros_like(self.d_grid),
+                           where=bin_counts != 0)
+
+        # apply particle weights to each particle
+        w = w_grid[(ret.binnumber[0, :] - 1) * mwxrun.nz + ret.binnumber[1, :] - 1]
+
+        return w

@@ -2,17 +2,15 @@
 import collections
 import os
 
-from matplotlib.pyplot import plot
 import numpy as np
 import pandas
 import pytest
 from pywarpx import picmi
 
-from mewarpx import assemblies, emission, mespecies
+from mewarpx import assemblies, diags, emission, mespecies
 from mewarpx.mwxrun import mwxrun
 from mewarpx.setups_store import diode_setup
 from mewarpx.utils_store import testing_util
-import mewarpx.utils_store.mwxconstants as constants
 
 
 def test_thermionic_emission():
@@ -67,7 +65,7 @@ def test_thermionic_emission():
     net_rho_grid = mwxrun.get_gathered_rho_grid(include_ghosts=False)[:, :, 0]
     # np.save('thermionic_emission.npy', net_rho_grid)
     ref_path = os.path.join(testing_util.test_dir,
-                            "thermionic_emission",
+                            "emission",
                             "thermionic_emission.npy")
     ref_rho_grid = np.load(ref_path)
 
@@ -127,7 +125,7 @@ def test_thermionic_emission_with_Schottky():
     net_rho_grid = mwxrun.get_gathered_rho_grid(include_ghosts=False)[:, :, 0]
     # np.save('thermionic_emission_Schottky.npy', net_rho_grid)
     ref_path = os.path.join(testing_util.test_dir,
-                            "thermionic_emission",
+                            "emission",
                             "thermionic_emission_Schottky.npy")
     ref_rho_grid = np.load(ref_path)
 
@@ -213,7 +211,7 @@ def test_thermionic_emission_disc_rz():
     net_rho_grid = mwxrun.get_gathered_rho_grid(include_ghosts=False)[:, :, 0]
     # np.save("thermionic_emission_disc_rz.npy", net_rho_grid)
     ref_path = os.path.join(testing_util.test_dir,
-                            "thermionic_emission",
+                            "emission",
                             "thermionic_emission_disc_rz.npy")
     ref_rho_grid = np.load(ref_path)
 
@@ -672,3 +670,76 @@ def test_plasma_injector_fixedT2():
             df[label_base + key + '_std'] = np.std(val)
 
     assert testing_util.test_df_vs_ref(testname=name, df=df, margin=0.3)
+
+
+def test_arbitrary_distribution_emitter():
+    name = "arbitrary_distribution_emitter"
+    # Include a random run number to allow parallel runs to not collide.  Using
+    # python randint prevents collisions due to numpy rseed below
+    testing_util.initialize_testingdir(name)
+
+    # Initialize each run with consistent, randomly-chosen, rseed. Use a random
+    # seed instead for initial dataframe generation.
+    # np.random.seed(11874889)
+
+    NX = NZ = 512
+    NPPC = 10
+
+    run = diode_setup.DiodeRun_V1(
+        GEOM_STR='XZ', PERIOD=0.8e-06 * NX, D_CA=0.8e-06 * NZ, DT=1e-12,
+        TOTAL_TIMESTEPS=1, DIAG_STEPS=1
+    )
+
+    run.setup_run(init_inert_gas=True, init_scraper=False, init_injectors=False)
+
+    z = np.arange(0, NZ) + 0.5
+    x = np.arange(0, NX) + 0.5
+
+    zz, xx = np.meshgrid(z, x)
+
+    plasma_density = np.pi/2 * 1e13 * (
+        np.sin(np.pi / NX * xx) * np.sin(np.pi / NZ * zz))
+
+    emitter = emission.ArbitraryDistributionVolumeEmitter(
+        d_grid=plasma_density,
+        T=1550, zmin=0, zmax=run.D_CA,
+    )
+
+    emission.PlasmaInjector(
+        emitter=emitter, species1=run.electrons, species2=run.ions,
+        npart=NX*NZ*NPPC
+    )
+
+    diags.FieldDiagnostic(
+        diag_steps=1, style='roelof', save_pdf=False,
+        plot=True,
+    )
+
+    diags.TextDiag(
+        diag_steps=1, preset_string='perfdebug'
+    )
+
+    run.init_warpx()
+    mwxrun.simulation.step(2)
+
+    electron_density = np.load(os.path.join(
+        os.curdir, "diags", "fields",
+        "electrons_particle_density_0000000002.npy"
+    ))
+    electron_xavg = np.mean(electron_density, axis=0)
+    electron_zavg = np.mean(electron_density, axis=1)
+
+    ion_density = np.load(os.path.join(
+        os.curdir, "diags", "fields",
+        "ar_ions_particle_density_0000000002.npy"
+    ))
+    ion_xavg = np.mean(ion_density, axis=0)
+    ion_zavg = np.mean(ion_density, axis=1)
+
+    sin_xavg = np.mean(plasma_density, axis=0)
+    sin_zavg = np.mean(plasma_density, axis=1)
+
+    assert np.allclose(electron_xavg[10:502], sin_xavg[10:502], rtol=0.06)
+    assert np.allclose(electron_zavg[10:502], sin_zavg[10:502], rtol=0.06)
+    assert np.allclose(ion_xavg[10:502], sin_xavg[10:502], rtol=0.06)
+    assert np.allclose(ion_zavg[10:502], sin_zavg[10:502], rtol=0.06)

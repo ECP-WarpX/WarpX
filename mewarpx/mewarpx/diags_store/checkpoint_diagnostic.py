@@ -75,7 +75,7 @@ class CheckPointDiagnostic(WarpXDiagnostic):
         diagnostic data needed for a restart as well as deleting old
         checkpoints.
         """
-        # Save a copy of flux diagnostics, if present, to load when restarting.
+       # Save a copy of flux diagnostics, if present, to load when restarting.
         if self.flux_diag is not None:
             # If the timeseries were not updated on timestep, do so now.
             if self.flux_diag.last_run_step != timestep:
@@ -95,7 +95,7 @@ class CheckPointDiagnostic(WarpXDiagnostic):
                 )
                 self.flux_diag.save(filepath=dst)
 
-        if self.clear_old_checkpoints:
+        if self.clear_old_checkpoints and mwxrun.me == 0:
             init_restart_util.clean_old_checkpoints(
                 checkpoint_prefix=self.name, num_to_keep=1
             )

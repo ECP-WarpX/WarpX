@@ -75,7 +75,7 @@ class SimControl(WarpXDiagnostic):
         # Install checkpointing if required
         if self.checkpoint:
             if dump_period is None:
-                dump_period = self.total_steps
+                dump_period = total_steps
             else:
                 dump_period = self.diag_steps*dump_period
             self.checkpoint_diag = CheckPointDiagnostic(dump_period, **kwargs)

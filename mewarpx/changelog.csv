@@ -1,5 +1,14 @@
 Version, Physics version, Date,        List of changes
-8.0.1, 2, In progress, "
+8.1.0, 2, In progress, "
+
+**Features**:
+
+- Added
+  :class:`mewarpx.emission.ArbitraryDistributionVolumeEmitter` to seed
+  simulation with an arbitrary plasma density distribution.
+
+"
+8.0.1, 2, 4/11/2022, "
 
 **Bugfixes**:
 
