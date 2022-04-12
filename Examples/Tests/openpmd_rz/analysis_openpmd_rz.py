@@ -10,7 +10,10 @@ ii = series.iterations[20]
 
 assert len(ii.meshes) == 7, 'improper number of meshes'
 
+# select j_t
 jt = ii.meshes['j']['t']
+
+# this is in C (Python) order; r is the fastest varying index
 (Nm, Nz, Nr) = jt.shape
 
 assert Nm == 3, 'Wrong number of angular modes stored or possible incorrect ordering when flushed'
