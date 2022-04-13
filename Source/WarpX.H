@@ -510,7 +510,7 @@ public:
 
     /** \brief Move the moving window
      * \param step Time step
-     * \param move_j whether the current is shifted or not
+     * \param move_j whether the current (and the charge, if allocated) is shifted or not
      */
     int  MoveWindow (const int step, bool move_j);
 
@@ -581,8 +581,8 @@ public:
      * when FieldBoundaryType is set to damped. Vector version.
      */
     void DampFieldsInGuards (const int lev,
-                             std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                             std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
+                             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
 
     /**
      * \brief Private function for spectral solver
@@ -963,6 +963,11 @@ private:
     // Singleton is used when the code is run from python
     static WarpX* m_instance;
 
+    //! Check and clear signal flags and asynchronously broadcast them from process 0
+    static void CheckSignals ();
+    //! Complete the asynchronous broadcast of signal flags, and initiate a checkpoint if requested
+    void HandleSignals ();
+
     ///
     /// Advance the simulation by numsteps steps, electromagnetic case.
     ///
@@ -996,28 +1001,51 @@ private:
      */
     void OneStep_multiJ (const amrex::Real t);
 
-    void RestrictCurrentFromFineToCoarsePatch (int lev);
+    void RestrictCurrentFromFineToCoarsePatch (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const int lev);
     void AddCurrentFromFineLevelandSumBoundary (
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-        int lev);
-    void StoreCurrent (int lev);
-    void RestoreCurrent (int lev);
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const int lev);
+    void StoreCurrent (const int lev);
+    void RestoreCurrent (const int lev);
     void ApplyFilterandSumBoundaryJ (
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-        int lev,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const int lev,
         PatchType patch_type);
     void NodalSyncJ (
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-        int lev,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const int lev,
         PatchType patch_type);
 
-    void RestrictRhoFromFineToCoarsePatch (int lev);
-    void ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp);
-    void AddRhoFromFineLevelandSumBoundary (int lev, int icomp, int ncomp);
-    void NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp);
+    void RestrictRhoFromFineToCoarsePatch (
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const int lev);
+    void ApplyFilterandSumBoundaryRho (
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const int lev,
+        PatchType patch_type,
+        const int icomp,
+        const int ncomp);
+    void AddRhoFromFineLevelandSumBoundary (
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const int lev,
+        const int icomp,
+        const int ncomp);
+    void NodalSyncRho (
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const int lev,
+        PatchType patch_type,
+        const int icomp,
+        const int ncomp);
 
     void ReadParameters ();
 
@@ -1245,8 +1273,8 @@ private:
     static int do_similar_dm_pml;
     bool do_pml_dive_cleaning; // default set in WarpX.cpp
     bool do_pml_divb_cleaning; // default set in WarpX.cpp
-    amrex::IntVect do_pml_Lo = amrex::IntVect::TheZeroVector();
-    amrex::IntVect do_pml_Hi = amrex::IntVect::TheZeroVector();
+    amrex::Vector<amrex::IntVect> do_pml_Lo;
+    amrex::Vector<amrex::IntVect> do_pml_Hi;
     amrex::Vector<std::unique_ptr<PML> > pml;
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
@@ -1439,6 +1467,15 @@ public:
     * \brief Do the eight-ways extension
     */
     void ComputeEightWaysExtensions();
+    /**
+    * \brief Whenever an unstable cell cannot be extended we increase its area to be the minimal for stability.
+    *        This is the method Benkler-Chavannes-Kuster method and it is less accurate than the regular ECT but it
+    *        still works better than staircasing. (see https://ieeexplore.ieee.org/document/1638381)
+    *
+    * @param idim Integer indicating the dimension (x->0, y->1, z->2) for which the BCK correction is done
+    *
+    */
+    void ApplyBCKCorrection(const int idim);
 
 private:
     void ScrapeParticles ();
@@ -1449,19 +1486,58 @@ private:
 
     /**
      * \brief Forward FFT of E,B on all mesh refinement levels
+     *
+     * \param E_fp Vector of three-dimensional arrays (for each level)
+     *             storing the fine patch electric field to be transformed
+     * \param B_fp Vector of three-dimensional arrays (for each level)
+     *             storing the fine patch magnetic field to be transformed
+     * \param E_cp Vector of three-dimensional arrays (for each level)
+     *             storing the coarse patch electric field to be transformed
+     * \param B_cp Vector of three-dimensional arrays (for each level)
+     *             storing the coarse patch magnetic field to be transformed
      */
-    void PSATDForwardTransformEB ();
+    void PSATDForwardTransformEB (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
 
     /**
      * \brief Backward FFT of E,B on all mesh refinement levels,
      *        with field damping in the guard cells (if needed)
+     *
+     * \param E_fp Vector of three-dimensional arrays (for each level)
+     *             storing the fine patch electric field to be transformed
+     * \param B_fp Vector of three-dimensional arrays (for each level)
+     *             storing the fine patch magnetic field to be transformed
+     * \param E_cp Vector of three-dimensional arrays (for each level)
+     *             storing the coarse patch electric field to be transformed
+     * \param B_cp Vector of three-dimensional arrays (for each level)
+     *             storing the coarse patch magnetic field to be transformed
      */
-    void PSATDBackwardTransformEB ();
+    void PSATDBackwardTransformEB (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp);
 
     /**
      * \brief Backward FFT of averaged E,B on all mesh refinement levels
+     *
+     * \param E_avg_fp Vector of three-dimensional arrays (for each level)
+     *                 storing the fine patch averaged electric field to be transformed
+     * \param B_avg_fp Vector of three-dimensional arrays (for each level)
+     *                 storing the fine patch averaged magnetic field to be transformed
+     * \param E_avg_cp Vector of three-dimensional arrays (for each level)
+     *                 storing the coarse patch averaged electric field to be transformed
+     * \param B_avg_cp Vector of three-dimensional arrays (for each level)
+     *                 storing the coarse patch averaged magnetic field to be transformed
      */
-    void PSATDBackwardTransformEBavg ();
+    void PSATDBackwardTransformEBavg (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_cp);
 
     /**
      * \brief Forward FFT of J on all mesh refinement levels,
@@ -1473,22 +1549,34 @@ private:
      *             storing the coarse patch current to be transformed
      */
     void PSATDForwardTransformJ (
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
 
     /**
      * \brief Backward FFT of J on all mesh refinement levels
+     *
+     * \param J_fp Vector of three-dimensional arrays (for each level)
+     *             storing the fine patch current to be transformed
+     * \param J_cp Vector of three-dimensional arrays (for each level)
+     *             storing the coarse patch current to be transformed
      */
-    void PSATDBackwardTransformJ ();
+    void PSATDBackwardTransformJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
 
     /**
      * \brief Forward FFT of rho on all mesh refinement levels,
      *        with k-space filtering (if needed)
      *
+     * \param charge_fp Vector (for each level) storing the fine patch charge to be transformed
+     * \param charge_cp Vector (for each level) storing the coarse patch charge to be transformed
      * \param[in] icomp index of fourth component (0 for rho_old, 1 for rho_new)
      * \param[in] dcomp index of spectral component (0 for rho_old, 1 for rho_new)
      */
-    void PSATDForwardTransformRho (const int icomp, const int dcomp);
+    void PSATDForwardTransformRho (
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const int icomp, const int dcomp);
 
     /**
      * \brief Copy rho_new to rho_old in spectral space

@@ -86,8 +86,9 @@ FullDiagnostics::ReadParameters ()
     std::vector<std::string> intervals_string_vec = {"0"};
     pp_diag_name.getarr("intervals", intervals_string_vec);
     m_intervals = IntervalsParser(intervals_string_vec);
-    bool raw_specified = pp_diag_name.query("plot_raw_fields", m_plot_raw_fields);
-    raw_specified += pp_diag_name.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
+    bool plot_raw_fields_specified = pp_diag_name.query("plot_raw_fields", m_plot_raw_fields);
+    bool plot_raw_fields_guards_specified = pp_diag_name.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
+    bool raw_specified = plot_raw_fields_specified || plot_raw_fields_guards_specified;
 
 #ifdef WARPX_DIM_RZ
     pp_diag_name.query("dump_rz_modes", m_dump_rz_modes);
@@ -633,7 +634,8 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         std::string varname = m_pfield_varnames[pcomp];
         for (int ispec=0; ispec<int(m_pfield_species.size()); ispec++) {
             m_all_field_functors[lev][nvar + pcomp * nspec + ispec] = std::make_unique<ParticleReductionFunctor>(nullptr,
-                    lev, m_crse_ratio, m_pfield_strings[varname], m_pfield_species_index[ispec]);
+                    lev, m_crse_ratio, m_pfield_strings[varname], m_pfield_species_index[ispec],
+                    m_pfield_dofilter[varname], m_pfield_filter_strings[varname]);
         }
     }
     AddRZModesToDiags( lev );
