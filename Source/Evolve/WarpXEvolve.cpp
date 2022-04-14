@@ -467,7 +467,9 @@ WarpX::OneStep_nosub (Real cur_time)
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
-        FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
+        // Synchronize B field on nodal points
+        NodalSync(Bfield_fp, Bfield_cp);
 
         if (do_pml) {
             FillBoundaryF(guard_cells.ng_alloc_F);
@@ -773,8 +775,6 @@ WarpX::OneStep_sub1 (Real curtime)
     FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
     EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::SecondHalf);
-    FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-
     EvolveF(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::SecondHalf);
 
     if (do_pml) {
@@ -791,6 +791,9 @@ WarpX::OneStep_sub1 (Real curtime)
     }
     if ( safe_guard_cells )
         FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
+
+    // Synchronize B field on nodal points
+    NodalSync(Bfield_fp, Bfield_cp);
 
     if (do_pml) NodalSyncPML();
 }
