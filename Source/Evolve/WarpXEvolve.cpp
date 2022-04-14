@@ -792,9 +792,9 @@ WarpX::OneStep_sub1 (Real curtime)
     if ( safe_guard_cells )
         FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 
-    // Synchronize B field on nodal points
+    // Synchronize nodal points at the end of the time step
     NodalSync(Bfield_fp, Bfield_cp);
-
+    if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
     if (do_pml) NodalSyncPML();
 }
 
