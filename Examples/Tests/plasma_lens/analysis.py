@@ -60,7 +60,11 @@ def applylens(x0, vx0, vz0, gamma, lens_length, lens_strength):
     return x1, vx1
 
 clight = c
-vel_z = eval(ds.parameters.get('my_constants.vel_z'))
+try:
+    vel_z = eval(ds.parameters.get('my_constants.vel_z'))
+except TypeError:
+    # vel_z is not saved in my_constants with the PICMI version
+    vel_z = 0.5*c
 
 plasma_lens_period = float(ds.parameters.get('particles.repeated_plasma_lens_period'))
 plasma_lens_starts = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_starts').split()]

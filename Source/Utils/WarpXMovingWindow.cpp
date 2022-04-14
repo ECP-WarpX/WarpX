@@ -236,7 +236,6 @@ WarpX::MoveWindow (const int step, bool move_j)
                     amrex::MultiFab* pml_F = pml[lev]->GetF_cp();
                     shiftMF(*pml_F, geom[lev-1], num_shift_crse, dir, lev);
                 }
-                shiftMF(*rho_cp[lev], geom[lev-1], num_shift_crse, dir, lev);
             }
         }
 
