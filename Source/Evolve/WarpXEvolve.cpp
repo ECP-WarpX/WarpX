@@ -335,6 +335,9 @@ WarpX::Evolve (int numsteps)
         }
         multi_diags->FilterComputePackFlush( step );
 
+        // execute afterdiagnostic callbacks
+        ExecutePythonCallback("afterdiagnostics");
+
         // inputs: unused parameters (e.g. typos) check after step 1 has finished
         if (!early_params_checked) {
             amrex::Print() << "\n"; // better: conditional \n based on return value
