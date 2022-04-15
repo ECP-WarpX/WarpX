@@ -2594,11 +2594,14 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr() + offset;
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr() + offset;
 
-    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
     int do_copy = ( (WarpX::do_back_transformed_diagnostics
                      && do_back_transformed_diagnostics
                      && a_dt_type!=DtType::SecondHalf)
                   || (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf)) );
+    CopyParticleAttribs copyAttribs;
+    if (do_copy) {
+        copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
+    }
 
     int* AMREX_RESTRICT ion_lev = nullptr;
     if (do_field_ionization) {
