@@ -341,12 +341,14 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
             1._rt-beta_solver[1]*beta_solver[1],
             1._rt-beta_solver[2]*beta_solver[2])});
 
+#if defined(AMREX_USE_EB)
         // if the EB potential only depends on time, the potential can be passed
         // as a float instead of a callable
         if (field_boundary_handler.phi_EB_only_t) {
             linop.setEBDirichlet(field_boundary_handler.potential_eb_t(gett_new(0)));
         }
         else linop.setEBDirichlet(field_boundary_handler.getPhiEB(gett_new(0)));
+#endif
 #else
         // In the absence of EB and RZ: use a more generic solver
         // that can handle beams propagating in any direction
