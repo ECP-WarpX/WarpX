@@ -292,6 +292,10 @@ WarpX::WarpX ()
     Efield_avg_fp.resize(nlevs_max);
     Bfield_avg_fp.resize(nlevs_max);
 
+    // Same as Bfield_fp/Efield_fp for reading external field data
+    Bfield_fp_external.resize(1);
+    Efield_fp_external.resize(1);
+
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
     m_distance_to_eb.resize(nlevs_max);
@@ -1776,6 +1780,20 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     current_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,jx_nodal_flag),dm,ncomps,ngJ,tag("current_fp[x]"));
     current_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_fp[y]"));
     current_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_fp[z]"));
+
+    // Same as Bfield_fp/Efield_fp for reading external field data
+    if (WarpX::B_ext_grid_s=="read_B_from_file" && lev==0)
+    {
+        Bfield_fp_external[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_fp[x]"));
+        Bfield_fp_external[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngEB,tag("Bfield_fp[y]"));
+        Bfield_fp_external[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngEB,tag("Bfield_fp[z]"));
+    }
+    if (WarpX::E_ext_grid_s=="read_E_from_file" && lev==0)
+    {
+        Efield_fp_external[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp[x]"));
+        Efield_fp_external[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp[y]"));
+        Efield_fp_external[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp[z]"));
+    }
 
     if (do_current_centering)
     {
