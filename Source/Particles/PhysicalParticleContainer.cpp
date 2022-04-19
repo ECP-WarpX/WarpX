@@ -1595,7 +1595,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 }
 #endif
 
-                Real weight = dens * scale_fac * dt * num_ppc_real / pcounts[index];
+                Real weight = dens * scale_fac * dt;
 #ifdef WARPX_DIM_RZ
                 // The particle weight is proportional to the user-specified
                 // flux (denoted as `dens` here) and the emission surface within
