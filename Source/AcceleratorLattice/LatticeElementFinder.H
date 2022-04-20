@@ -14,7 +14,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_GpuContainers.H>
 
-struct AcceleratorLattice;
+class AcceleratorLattice;
 struct LatticeElementFinderDevice;
 
 // The top layer needs to be saved in the AcceleratorLattice class in a Layout.
