@@ -206,11 +206,24 @@ private:
       bool var_in_theta_mode
   ) const;
 
+  /** Get Component Names from WarpX name
+   *
+   * Get component names of a field for openPMD-api book-keeping
+   * Level is reflected as _lvl<meshLevel>
+   *
+   * @param[in] meshLevel     level of mesh
+   * @param[in] varname       name from WarpX
+   * @param[out] field_name   field name for openPMD-api output
+   * @param[in] comp_name     comp name for openPMD-api output
+   * @param[in] is_theta_mode indicate if this field will be output with theta
+   *                          modes (instead of a reconstructed 2D slice)
+   */
   void GetMeshCompNames (
       int meshLevel,
       const std::string& varname,
       std::string& field_name,
-      std::string& comp_name
+      std::string& comp_name,
+      bool is_theta_mode
   ) const;
 
   /** This function sets up the entries for storing the particle positions and global IDs
