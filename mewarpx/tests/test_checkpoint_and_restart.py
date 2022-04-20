@@ -100,7 +100,8 @@ def test_create_checkpoints_with_fluxdiag():
     run.init_injectors()
 
     checkpoint = CheckPointDiagnostic(
-        DIAG_STEPS, CHECKPOINT_NAME, clear_old_checkpoints=True
+        DIAG_STEPS, CHECKPOINT_NAME, clear_old_checkpoints=True,
+        num_to_keep=2
     )
 
     run.init_runinfo()
@@ -120,7 +121,7 @@ def test_create_checkpoints_with_fluxdiag():
     for name in checkpoint_names:
         print(f"Looking for checkpoint file 'diags/{name}'...")
         assert os.path.isdir(os.path.join("diags", name))
-    assert os.path.isfile("diags/checkpoint000004/fluxdata.ckpt")
+        assert os.path.isfile(f"diags/{name}/fluxdata.ckpt")
 
 
 @pytest.mark.parametrize("force, files_exist",
