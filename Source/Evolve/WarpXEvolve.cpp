@@ -820,7 +820,7 @@ WarpX::OneStep_sub1 (Real curtime)
     NodalSync(Bfield_fp, Bfield_cp);
     if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
     if (do_pml) NodalSyncPML();
-    
+
     if(istep[0]+1==end_fine_patch_step){
         SyncCurrent();
         SyncRho();
