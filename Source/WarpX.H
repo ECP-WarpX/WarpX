@@ -904,8 +904,8 @@ public:
     //! Tagging cells for refinement
     virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
 
-    // Accelerator lattice elements
-    std::unique_ptr<AcceleratorLattice> m_accelerator_lattice;
+    // Return the accelerator lattice instance defined at the given refinement level
+    const AcceleratorLattice& get_accelerator_lattice (int lev) {return *(m_accelerator_lattice[lev]);}
 
 protected:
 
@@ -1387,6 +1387,9 @@ private:
 
     //! particle buffer for scraped particles on the boundaries
     std::unique_ptr<ParticleBoundaryBuffer> m_particle_boundary_buffer;
+
+    // Accelerator lattice elements
+    amrex::Vector< std::unique_ptr<AcceleratorLattice> > m_accelerator_lattice;
 
     //
     // Embedded Boundary

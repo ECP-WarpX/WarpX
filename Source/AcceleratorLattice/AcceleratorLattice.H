@@ -7,6 +7,7 @@
 #ifndef WARPX_ACCELERATORLATTICE_ACCELERATORLATTICE_H_
 #define WARPX_ACCELERATORLATTICE_ACCELERATORLATTICE_H_
 
+#include "LatticeElementFinder.H"
 #include "LatticeElements/HardEdgedQuadrupole.H"
 
 /* \brief AcceleratorLattice contains the lattice elements
@@ -17,10 +18,16 @@ public:
 
     AcceleratorLattice ();
 
+    int m_level;
     bool m_lattice_defined = false;
 
+    void InitElementFinder (int const lev, amrex::BoxArray const & ba, amrex::DistributionMapping const & dm);
+    void UpdateElementFinder ();
+
+    std::unique_ptr<amrex::LayoutData<LatticeElementFinder>> m_element_finder;
+    LatticeElementFinderDevice Get_Finder_Device (WarpXParIter const& a_pti, int const a_offset) const;
+
     std::unique_ptr<HardEdgedQuadrupole> h_quad;
-    HardEdgedQuadrupole *d_quad = nullptr;
 
 };
 

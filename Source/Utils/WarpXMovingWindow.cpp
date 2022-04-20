@@ -291,6 +291,11 @@ WarpX::MoveWindow (const int step, bool move_j)
         }
     }
 
+    // Update the accelerator lattice location indexing
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        m_accelerator_lattice[lev]->UpdateElementFinder();
+    }
+
     return num_shift_base;
 }
 

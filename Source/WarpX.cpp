@@ -346,8 +346,6 @@ WarpX::WarpX ()
         m_macroscopic_properties = std::make_unique<MacroscopicProperties>();
     }
 
-    m_accelerator_lattice = std::make_unique<AcceleratorLattice>();
-
     // Set default values for particle and cell weights for costs update;
     // Default values listed here for the case AMREX_USE_GPU are determined
     // from single-GPU tests on Summit.
@@ -424,6 +422,9 @@ WarpX::WarpX ()
             use_fdtd_nci_corr == 0,
             "The NCI corrector should only be used with Esirkepov deposition");
     }
+
+    m_accelerator_lattice.resize(nlevs_max);
+
 }
 
 WarpX::~WarpX ()
@@ -1648,6 +1649,10 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 
     AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
                   guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F, guard_cells.ng_alloc_G, aux_is_nodal);
+
+    m_accelerator_lattice[lev] = std::make_unique<AcceleratorLattice>();
+    m_accelerator_lattice[lev]->InitElementFinder(lev, ba, dm);
+
 }
 
 void

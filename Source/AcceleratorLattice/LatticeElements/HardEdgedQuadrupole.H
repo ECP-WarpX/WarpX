@@ -15,6 +15,8 @@
 
 #include <string>
 
+class HardEdgedQuadrupoleDevice;
+
 struct HardEdgedQuadrupole
 {
 
@@ -27,13 +29,28 @@ struct HardEdgedQuadrupole
     amrex::Gpu::DeviceVector<amrex::Real> d_zs;
     amrex::Gpu::DeviceVector<amrex::Real> d_ze;
     amrex::Gpu::DeviceVector<amrex::Real> d_zcenters;
-    amrex::Real* AMREX_RESTRICT d_zs_arr;
-    amrex::Real* AMREX_RESTRICT d_ze_arr;
 
     amrex::Gpu::DeviceVector<amrex::Real> d_dEdx;
     amrex::Gpu::DeviceVector<amrex::Real> d_dBdx;
-    amrex::Real* AMREX_RESTRICT d_dEdx_arr;
-    amrex::Real* AMREX_RESTRICT d_dBdx_arr;
+
+    HardEdgedQuadrupoleDevice GetDevice () const;
+
+
+};
+
+struct HardEdgedQuadrupoleDevice
+{
+
+    void InitHardEdgedQuadrupoleDevice (HardEdgedQuadrupole const& h_quad);
+
+    int nelements = 0;
+
+    const amrex::Real* AMREX_RESTRICT d_zs_arr;
+    const amrex::Real* AMREX_RESTRICT d_ze_arr;
+    const amrex::Real* AMREX_RESTRICT d_zcenters_arr;
+
+    const amrex::Real* AMREX_RESTRICT d_dEdx_arr;
+    const amrex::Real* AMREX_RESTRICT d_dBdx_arr;
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void get_field (const int ielement,
@@ -47,7 +64,7 @@ struct HardEdgedQuadrupole
                     amrex::ParticleReal& Ex,
                     amrex::ParticleReal& Ey,
                     amrex::ParticleReal& Bx,
-                    amrex::ParticleReal& By)
+                    amrex::ParticleReal& By) const
     {
 
         amrex::Real const frac = hard_edged_fraction(z, ux, uy, uz, dt, d_zs_arr[ielement], d_ze_arr[ielement]);

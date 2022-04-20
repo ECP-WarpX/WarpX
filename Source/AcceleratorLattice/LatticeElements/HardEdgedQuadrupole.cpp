@@ -48,9 +48,6 @@ HardEdgedQuadrupole::HardEdgedQuadrupole ()
     d_ze.resize(zcenters.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, zcenters.begin(), zcenters.end(), d_zcenters.begin());
 
-    d_zs_arr = d_zs.data();
-    d_ze_arr = d_ze.data();
-
     // This is specific to the element type
     amrex::Vector<amrex::Real> dEdx;
     if (queryArrWithParser(pp_element_name, "dEdx", dEdx)) {
@@ -73,8 +70,30 @@ HardEdgedQuadrupole::HardEdgedQuadrupole ()
     d_dBdx.resize(dBdx.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, dBdx.begin(), dBdx.end(), d_dBdx.begin());
 
-    d_dEdx_arr = d_dEdx.data();
-    d_dBdx_arr = d_dBdx.data();
+}
+
+HardEdgedQuadrupoleDevice
+HardEdgedQuadrupole::GetDevice() const
+{
+    HardEdgedQuadrupoleDevice result;
+    result.InitHardEdgedQuadrupoleDevice(*this);
+    return result;
+}
+
+void
+HardEdgedQuadrupoleDevice::InitHardEdgedQuadrupoleDevice (HardEdgedQuadrupole const& h_quad)
+{
+
+    nelements = h_quad.nelements;
+
+    if (nelements == 0) return;
+
+    d_zs_arr = h_quad.d_zs.data();
+    d_ze_arr = h_quad.d_ze.data();
+    d_zcenters_arr = h_quad.d_zcenters.data();
+
+    d_dEdx_arr = h_quad.d_dEdx.data();
+    d_dBdx_arr = h_quad.d_dBdx.data();
 
 }
 

@@ -10,18 +10,41 @@
 AcceleratorLattice::AcceleratorLattice ()
 {
 
-    h_quad.reset(new HardEdgedQuadrupole());
+    h_quad = std::make_unique<HardEdgedQuadrupole>();
     if (h_quad->nelements > 0) {
         m_lattice_defined = true;
-#ifdef AMREX_USE_GPU
-        d_quad = static_cast<HardEdgedQuadrupole*>
-            (amrex::The_Arena()->alloc(sizeof(HardEdgedQuadrupole)));
-        amrex::Gpu::htod_memcpy_async(d_quad, h_quad.get(), sizeof(HardEdgedQuadrupole));
-#else
-        d_quad = h_quad.get();
-#endif
-
     }
 
+}
+
+void
+AcceleratorLattice::InitElementFinder (int const lev, amrex::BoxArray const & ba, amrex::DistributionMapping const & dm)
+{
+    if (m_lattice_defined) {
+        m_element_finder = std::make_unique<amrex::LayoutData<LatticeElementFinder>>(ba, dm);
+        for (amrex::MFIter mfi(*m_element_finder); mfi.isValid(); ++mfi)
+        {
+            (*m_element_finder)[mfi].InitElementFinder(lev, mfi, *this);
+        }
+        UpdateElementFinder();
+    }
+}
+
+void
+AcceleratorLattice::UpdateElementFinder ()
+{
+    if (m_lattice_defined) {
+        for (amrex::MFIter mfi(*m_element_finder); mfi.isValid(); ++mfi)
+        {
+            (*m_element_finder)[mfi].UpdateIndices(*this);
+        }
+    }
+}
+
+LatticeElementFinderDevice
+AcceleratorLattice::Get_Finder_Device(WarpXParIter const& a_pti, int const a_offset) const
+{
+    LatticeElementFinder & finder = (*m_element_finder)[a_pti];
+    return finder.Get_Finder_Device(a_pti, a_offset, *this);
 }
 
