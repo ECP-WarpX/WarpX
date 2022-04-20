@@ -89,7 +89,7 @@ void
 WarpX::PrintDtDxDyDz ()
 {
     int Finelev;
-    //Use max_level before finest_level is initialised, max_level corresponds to the maximum level value allowed and not the current maximum level
+    //Use max_level until finest_level is initialised, max_level corresponds to the maximum level value allowed and not the current maximum level
     if (!FinelevInit_flag) Finelev = max_level;
     else Finelev = AmrMesh::finestLevel();
     for (int lev=0; lev <= Finelev; lev++) {
