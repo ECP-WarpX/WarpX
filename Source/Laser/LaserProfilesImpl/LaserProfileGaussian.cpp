@@ -124,6 +124,10 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     Complex prefactor =
         m_common_params.e_max * amrex::exp( I * oscillation_phase );
 
+    // Reduce amplitude if the laser is stretched (due to STC or phi2)
+    // in order to keep the same energy as an unstretched laser
+    prefactor = prefactor / amrex::sqrt(stretch_factor);
+
     // Because diffract_factor is a complex, the code below takes into
     // account the impact of the dimensionality on both the Gouy phase
     // and the amplitude of the laser
