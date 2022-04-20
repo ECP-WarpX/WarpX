@@ -15,7 +15,7 @@
 
 #include <string>
 
-class HardEdgedQuadrupoleDevice;
+struct HardEdgedQuadrupoleDevice;
 
 struct HardEdgedQuadrupole
 {

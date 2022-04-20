@@ -14,8 +14,8 @@
 #include <AMReX_REAL.H>
 #include <AMReX_GpuContainers.H>
 
-class AcceleratorLattice;
-class LatticeElementFinderDevice;
+struct AcceleratorLattice;
+struct LatticeElementFinderDevice;
 
 // The top layer needs to be saved in the AcceleratorLattice class in a Layout.
 // This gives a place to store the index array device pointers.
