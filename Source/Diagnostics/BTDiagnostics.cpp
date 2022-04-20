@@ -142,6 +142,10 @@ BTDiagnostics::ReadParameters ()
         m_crse_ratio == amrex::IntVect(1),
         "Only support for coarsening ratio of 1 in all directions is included for BTD\n"
         );
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        warpx.Geom(0).ProbHi(WARPX_ZINDEX) <= 0._rt,
+        " The geometry.prob_hi of the boosted-frame domain in the moving window direction must be ==0.\n"
+        );
 
     // Read list of back-transform diag parameters requested by the user //
     amrex::ParmParse pp_diag_name(m_diag_name);
@@ -420,7 +424,7 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     // Fill vector of cell-center functors for all field-components, namely,
     // Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho are included in the
     // cell-center functors for BackTransform Diags
-    for (int comp=0, n=m_cell_center_functors[lev].size(); comp<n; comp++){
+    for (int comp=0, n=m_cell_center_functors.at(lev).size(); comp<n; comp++){
         if        ( m_cellcenter_varnames[comp] == "Ex" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Ey" ){
@@ -501,7 +505,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
     // Call m_cell_center_functors->operator
     for (int lev = 0; lev < nmax_lev; ++lev) {
         int icomp_dst = 0;
-        for (int icomp = 0, n=m_cell_center_functors[0].size(); icomp<n; ++icomp) {
+        for (int icomp = 0, n=m_cell_center_functors.at(lev).size(); icomp<n; ++icomp) {
             // Call all the cell-center functors in m_cell_center_functors.
             // Each of them computes cell-centered data for a field and
             // stores it in cell-centered MultiFab, m_cell_centered_data[lev].
@@ -541,6 +545,10 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                         }
                         DefineFieldBufferMultiFab(i_buffer, lev);
                     }
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                        m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
+                        m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir),
+                        "z-slice in lab-frame is outside the buffer domain physical extent. ");
                 }
                 m_all_field_functors[lev][i]->PrepareFunctorData (
                                              i_buffer, ZSliceInDomain,
@@ -616,10 +624,14 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
             } else {
                 cellsize = dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
             }
-            amrex::Real buffer_lo = m_prob_domain_lab[i_buffer].lo(idim)
-                                    + (buffer_ba.getCellCenteredBox(0).smallEnd(idim) ) * cellsize;
-            amrex::Real buffer_hi = m_prob_domain_lab[i_buffer].lo(idim) +
-                                          (buffer_ba.getCellCenteredBox( buffer_ba.size()-1 ).bigEnd(idim) + 1) * cellsize;
+            amrex::Real buffer_lo = m_snapshot_domain_lab[i_buffer].lo(idim)
+                                    + ( buffer_ba.getCellCenteredBox(0).smallEnd(idim)
+                                      - m_snapshot_box[i_buffer].smallEnd(idim)
+                                      ) * cellsize;
+            amrex::Real buffer_hi = m_snapshot_domain_lab[i_buffer].lo(idim)
+                                    + ( buffer_ba.getCellCenteredBox( buffer_ba.size()-1 ).bigEnd(idim)
+                                      - m_snapshot_box[i_buffer].smallEnd(idim)
+                                      + 1 ) * cellsize;
             m_buffer_domain_lab[i_buffer].setLo(idim, buffer_lo);
             m_buffer_domain_lab[i_buffer].setHi(idim, buffer_hi);
         }
@@ -1080,33 +1092,43 @@ BTDiagnostics::PrepareParticleDataForOutput()
                 bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
                 if (ZSliceInDomain) {
                     if ( m_totalParticles_in_buffer[i_buffer][i] == 0) {
-                        amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
-                        particle_buffer_box.setSmall(m_moving_window_dir,
-                                       m_buffer_box[i_buffer].smallEnd(m_moving_window_dir)-1);
-                        particle_buffer_box.setBig(m_moving_window_dir,
-                                       m_buffer_box[i_buffer].bigEnd(m_moving_window_dir)+1);
-                        amrex::BoxArray buffer_ba( particle_buffer_box );
-                        //amrex::BoxArray buffer_ba( particle_buffer_box );
-                        buffer_ba.maxSize(m_max_box_size);
-                        amrex::DistributionMapping buffer_dmap(buffer_ba);
-                        m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
-                        m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);
-                        amrex::IntVect particle_DomBox_lo = m_snapshot_box[i_buffer].smallEnd();
-                        amrex::IntVect particle_DomBox_hi = m_snapshot_box[i_buffer].bigEnd();
-                        int zmin = std::max(0, particle_DomBox_lo[m_moving_window_dir] );
-                        particle_DomBox_lo[m_moving_window_dir] = zmin;
-                        amrex::Box ParticleBox(particle_DomBox_lo, particle_DomBox_hi);
-                        int num_cells = particle_DomBox_hi[m_moving_window_dir] - zmin + 1;
-                        amrex::IntVect ref_ratio = amrex::IntVect(1);
-                        amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
-                                             num_cells * dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
-                        amrex::RealBox ParticleRealBox = m_snapshot_domain_lab[i_buffer];
-                        ParticleRealBox.setLo(m_moving_window_dir, new_lo);
-                        amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
-                        amrex::Geometry geom;
-                        geom.define(ParticleBox, &ParticleRealBox, amrex::CoordSys::cartesian,
-                                    BTdiag_periodicity.data() );
-                        m_particles_buffer[i_buffer][i]->SetParticleGeometry(lev, geom);
+                        if (m_do_back_transformed_fields) {
+                            // use the same Box, BoxArray, and Geometry as fields for particles
+                            amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
+                            amrex::BoxArray buffer_ba( particle_buffer_box );
+                            buffer_ba.maxSize(m_max_box_size);
+                            amrex::DistributionMapping buffer_dmap(buffer_ba);
+                            m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
+                            m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);
+                            m_particles_buffer[i_buffer][i]->SetParticleGeometry(lev, m_geom_snapshot[i_buffer][lev]);
+                        } else {
+                            amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
+                            particle_buffer_box.setSmall(m_moving_window_dir,
+                                           m_buffer_box[i_buffer].smallEnd(m_moving_window_dir)-1);
+                            particle_buffer_box.setBig(m_moving_window_dir,
+                                           m_buffer_box[i_buffer].bigEnd(m_moving_window_dir)+1);
+                            amrex::BoxArray buffer_ba( particle_buffer_box );
+                            buffer_ba.maxSize(m_max_box_size);
+                            amrex::DistributionMapping buffer_dmap(buffer_ba);
+                            m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
+                            m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);
+                            amrex::IntVect particle_DomBox_lo = m_snapshot_box[i_buffer].smallEnd();
+                            amrex::IntVect particle_DomBox_hi = m_snapshot_box[i_buffer].bigEnd();
+                            int zmin = std::max(0, particle_DomBox_lo[m_moving_window_dir] );
+                            particle_DomBox_lo[m_moving_window_dir] = zmin;
+                            amrex::Box ParticleBox(particle_DomBox_lo, particle_DomBox_hi);
+                            int num_cells = particle_DomBox_hi[m_moving_window_dir] - zmin + 1;
+                            amrex::IntVect ref_ratio = amrex::IntVect(1);
+                            amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
+                                                 num_cells * dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+                            amrex::RealBox ParticleRealBox = m_snapshot_domain_lab[i_buffer];
+                            ParticleRealBox.setLo(m_moving_window_dir, new_lo);
+                            amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
+                            amrex::Geometry geom;
+                            geom.define(ParticleBox, &ParticleRealBox, amrex::CoordSys::cartesian,
+                                        BTdiag_periodicity.data() );
+                            m_particles_buffer[i_buffer][i]->SetParticleGeometry(lev, geom);
+                        }
                     }
                 }
                 m_all_particle_functors[i]->PrepareFunctorData (
