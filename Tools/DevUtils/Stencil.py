@@ -47,8 +47,8 @@ def get_Fornberg_coeffs(order, staggered):
             prod = prod * (m+k) / (4*k)
         coeffs[0] = 4 * m * prod**2
         for n in range(1, m+1):
-            coeffs[n] = - ((2*n-3) * (m+1-n)) \
-                        / ((2*n-1) * (m-1+n)) * coeffs[n-1]
+            coeffs[n] = - (((2*n-3) * (m+1-n))
+                        / ((2*n-1) * (m-1+n)) * coeffs[n-1])
     else:
         coeffs[0] = -2.
         for n in range(1, m+1):
@@ -87,11 +87,11 @@ def modified_k(kx, dx, order, staggered):
     # Array of values of sin
     # (first axis corresponds to k and second axis to n)
     if staggered:
-        sin_kn = np.sin(kx[:,np.newaxis]*(n[np.newaxis,:]-0.5) * dx) \
-                 / ((n[np.newaxis,:]-0.5) * dx)
+        sin_kn = (np.sin(kx[:,np.newaxis]*(n[np.newaxis,:]-0.5) * dx)
+                 / ((n[np.newaxis,:]-0.5) * dx))
     else:
-        sin_kn = np.sin(kx[:,np.newaxis]*n[np.newaxis,:] * dx) \
-                 / (n[np.newaxis,:] * dx)
+        sin_kn = (np.sin(kx[:,np.newaxis]*n[np.newaxis,:] * dx)
+                 / (n[np.newaxis,:] * dx))
 
     # Modified k
     k_mod = np.tensordot(sin_kn, coeffs[1:], axes=(-1,-1))
