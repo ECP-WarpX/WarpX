@@ -44,8 +44,8 @@ class SimControl(WarpXDiagnostic):
         """
         if total_steps < 1:
             raise AssertionError("total_steps must be >= 1")
-        # need the -1 below due to how WarpX counts steps
-        mwxrun.simulation.max_steps = int(total_steps - 1)
+        # ensure that simulation runs through last step specified
+        mwxrun.simulation.max_steps = int(total_steps)
 
         self.crit_list = []
         self.crit_args_list = []

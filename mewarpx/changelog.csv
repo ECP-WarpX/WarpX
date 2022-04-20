@@ -1,5 +1,13 @@
 Version, Physics version, Date,        List of changes
-8.1.0, 2, In progress, "
+8.1.1, 2, In progress, "
+
+**Bugfixes**:
+
+- Removed decrementing `mwxrun.simulation.max_steps` so that simulation
+     runs through the last step rather than stopping before the last step.
+
+"
+8.1.0, 2, 4/18/2022, "
 
 **Features**:
 
