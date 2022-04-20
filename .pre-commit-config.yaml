@@ -18,7 +18,7 @@ exclude: '^share/openPMD/thirdParty'
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.2.0
     hooks:
     - id: trailing-whitespace
       args: [--markdown-linebreak-ext=md]
@@ -67,7 +67,7 @@ repos:
 
 # Autoremoves unused Python imports
 - repo: https://github.com/hadialqattan/pycln
-  rev: v1.2.5
+  rev: v1.3.1
   hooks:
   - id: pycln
     name: pycln (python)

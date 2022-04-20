@@ -44,8 +44,8 @@ class SimControl(WarpXDiagnostic):
         """
         if total_steps < 1:
             raise AssertionError("total_steps must be >= 1")
-        # need the -1 below due to how WarpX counts steps
-        mwxrun.simulation.max_steps = int(total_steps - 1)
+        # ensure that simulation runs through last step specified
+        mwxrun.simulation.max_steps = int(total_steps)
 
         self.crit_list = []
         self.crit_args_list = []
@@ -148,6 +148,10 @@ class SimControl(WarpXDiagnostic):
         """Executes the WarpX loop."""
         mwxrun.simulation.step()
 
+        # create fluxdiag checkpoint file if checkpointing is installed
+        if self.checkpoint:
+            self.checkpoint_diag.checkpoint_manager(force_run=True)
+
         # check if the simulation completed the total number of steps
         if mwxrun.get_it() >= mwxrun.simulation.max_steps:
             self.sim_done = True
@@ -156,7 +160,3 @@ class SimControl(WarpXDiagnostic):
         if self.sim_done:
             # create file to signal that simulation ran to completion
             self.write_results()
-        else:
-            # create fluxdiag checkpoint file if simulation was interrupted
-            if self.checkpoint:
-                self.checkpoint_diag.checkpoint_manager(mwxrun.get_it())
