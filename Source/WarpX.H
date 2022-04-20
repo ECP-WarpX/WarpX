@@ -510,7 +510,7 @@ public:
 
     /** \brief Move the moving window
      * \param step Time step
-     * \param move_j whether the current is shifted or not
+     * \param move_j whether the current (and the charge, if allocated) is shifted or not
      */
     int  MoveWindow (const int step, bool move_j);
 
