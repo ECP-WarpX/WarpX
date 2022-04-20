@@ -647,7 +647,7 @@ WarpX::ReadParameters ()
             if(has_max_step && end_fine_patch_defined && do_subcycling==0){
                 auto ss = std::stringstream{};
                 if(max_step>=end_fine_patch_step){
-                    ss << "When the fine patch is removed, the max step will be " << end_fine_patch_step + std::floor(0.5*(max_step-end_fine_patch_step)) ;
+                    ss << "When the fine patch is removed, the max step will be " << end_fine_patch_step + std::floor(0.5*(max_step-end_fine_patch_step)) << ", users are advised to use stop time instead";
                     this->RecordWarning("Mesh Refinement", ss.str(), WarnPriority::high);
                 }
             }

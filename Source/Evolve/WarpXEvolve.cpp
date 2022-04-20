@@ -383,9 +383,10 @@ WarpX::OneStep_nosub (Real cur_time)
         const int coarse_lev = 0;
         regrid(coarse_lev, cur_time);
         mypc->Redistribute();
-        Print() << "Remove the patch" << '\n';
-        warpx.ComputeDt()  ;
+        warpx.ComputeDt();
         PrintDtDxDyDz ();
+        Print() << Utils::TextMsg::Info(
+                    "Remove the patch");
     }
 
     ExecutePythonCallback("particlescraper");
@@ -806,7 +807,8 @@ WarpX::OneStep_sub1 (Real curtime)
         SyncRho();
         regrid(coarse_lev, curtime);
         mypc->Redistribute();
-        Print() << "Remove the patch" << '\n';
+                Print() << Utils::TextMsg::Info(
+                    "Remove the patch");
         do_subcycling=0;
     }
 }

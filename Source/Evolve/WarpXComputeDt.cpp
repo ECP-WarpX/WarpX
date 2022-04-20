@@ -15,6 +15,7 @@
 #endif
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX.H>
 #include <AMReX_Geometry.H>
@@ -32,9 +33,9 @@ void
 WarpX::ComputeDt ()
 {
     int Finelev;
+    //Use max_level before finest_level is initialised, max_level corresponds to the maximum level value allowed and not the current maximum level
     if (!FinelevInit_flag) Finelev = max_level;
     else Finelev = AmrMesh::finestLevel();
-    // Determine
     const amrex::Real* dx = geom[Finelev].CellSize();
     amrex::Real deltat = 0.;
 
@@ -68,13 +69,12 @@ WarpX::ComputeDt ()
             amrex::Abort("ComputeDt: Unknown algorithm");
         }
     }
+        dt.resize(0);
+        dt.resize(max_level+1,deltat);
 
-    dt.resize(0);
-    dt.resize(Finelev+1,deltat);
 
     if (do_subcycling) {
         for (int lev = Finelev-1; lev >= 0; --lev) {
-            dt[lev] = dt[lev+1] * refRatio(lev)[0];
         }
     }
 
@@ -89,20 +89,23 @@ void
 WarpX::PrintDtDxDyDz ()
 {
     int Finelev;
+    //Use max_level before finest_level is initialised, max_level corresponds to the maximum level value allowed and not the current maximum level
     if (!FinelevInit_flag) Finelev = max_level;
     else Finelev = AmrMesh::finestLevel();
     for (int lev=0; lev <= Finelev; lev++) {
+        auto ss = std::stringstream{};
         const amrex::Real* dx_lev = geom[lev].CellSize();
-        amrex::Print() << "Level " << lev << ": dt = " << dt[lev]
+        ss <<"Level" << lev << ": dt=" << dt[lev]
 #if defined(WARPX_DIM_1D_Z)
                        << " ; dz = " << dx_lev[0] << '\n';
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                        << " ; dx = " << dx_lev[0]
-                       << " ; dz = " << dx_lev[1] << '\n';
+                       << " ; dz = " << dx_lev[1] <<'\n';
 #elif defined(WARPX_DIM_3D)
                        << " ; dx = " << dx_lev[0]
                        << " ; dy = " << dx_lev[1]
                        << " ; dz = " << dx_lev[2] << '\n';
 #endif
+        amrex::Print() << Utils::TextMsg::Info(ss.str());
     }
 }

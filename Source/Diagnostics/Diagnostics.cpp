@@ -453,7 +453,7 @@ Diagnostics::FilterComputePackFlush (int step, bool force_flush)
     const auto finest_level = warpx.finestLevel();
 
     for (auto& buf : m_mf_output){
-        if(buf.size() > finest_level+1) buf.pop_back();
+        if(buf.size() > finest_level+1) buf.resize(finest_level+1);
     }
 
 
