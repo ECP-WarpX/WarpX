@@ -367,7 +367,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             }, true);
         } else {
             PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
-            tmp.copyParticles(*pinned_pc);
+            tmp.copyParticles(*pinned_pc, true);
         }
         // real_names contains a list of all particle attributes.
         // real_flags & int_flags are 1 or 0, whether quantity is dumped or not.

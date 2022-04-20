@@ -71,10 +71,12 @@ diag1.intervals = 200
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_protons
 
-diag1.particle_fields_to_plot = z uz zuz
+diag1.particle_fields_to_plot = z uz uz_filt zuz
 diag1.particle_fields_species = electrons protons photons
 diag1.particle_fields.z(x,y,z,ux,uy,uz) = z
 diag1.particle_fields.uz(x,y,z,ux,uy,uz) = uz
+diag1.particle_fields.uz_filt(x,y,z,ux,uy,uz) = uz
+diag1.particle_fields.uz_filt.filter(x,y,z,ux,uy,uz) = (uz < 0)
 diag1.particle_fields.zuz(x,y,z,ux,uy,uz) = z * uz
 
 openpmd.format = openpmd
@@ -83,8 +85,10 @@ openpmd.intervals = 200
 openpmd.diag_type = Full
 openpmd.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_protons
 
-openpmd.particle_fields_to_plot = z uz zuz
+openpmd.particle_fields_to_plot = z uz uz_filt zuz
 openpmd.particle_fields_species = electrons protons photons
 openpmd.particle_fields.z(x,y,z,ux,uy,uz) = z
 openpmd.particle_fields.uz(x,y,z,ux,uy,uz) = uz
+openpmd.particle_fields.uz_filt(x,y,z,ux,uy,uz) = uz
+openpmd.particle_fields.uz_filt.filter(x,y,z,ux,uy,uz) = (uz < 0)
 openpmd.particle_fields.zuz(x,y,z,ux,uy,uz) = z * uz

@@ -261,48 +261,55 @@ namespace detail
      *
      * This will be returned in C order. This is inverse of the Fortran order
      * of the index labels for the AMReX FArrayBox.
+     *
+     * @param var_in_theta_mode indicate if this field will be output with theta
+     *                          modes (instead of a reconstructed 2D slice)
      */
     inline std::vector< std::string >
-    getFieldAxisLabels ()
+    getFieldAxisLabels ([[maybe_unused]] bool const var_in_theta_mode)
     {
         using vs = std::vector< std::string >;
 
         // Fortran order of the index labels for the AMReX FArrayBox
 #if defined(WARPX_DIM_1D_Z)
-        vs const axisLabels{"z"};
+        vs const axisLabels{"z"};  // z varies fastest in memory
 #elif defined(WARPX_DIM_XZ)
-        vs const axisLabels{"x", "z"};
+        vs const axisLabels{"x", "z"};  // x varies fastest in memory
 #elif defined(WARPX_DIM_RZ)
-        // if we are start to write individual modes
-        vs const axisLabels{"r", "z"};
+        // when we write individual modes of a field (default)
+        vs const circAxisLabels{"r", "z"};  // r varies fastest in memory
         // if we just write reconstructed 2D fields at theta=0
-        //vs const axisLabels{"x", "z"};
+        vs const cartAxisLabels{"x", "z"};  // x varies fastest in memory
+
+        vs const axisLabels = var_in_theta_mode ? circAxisLabels : cartAxisLabels;
 #elif defined(WARPX_DIM_3D)
-        vs const axisLabels{"x", "y", "z"};
+        vs const axisLabels{"x", "y", "z"};  // x varies fastest in memory
 #else
 #   error Unknown WarpX dimensionality.
 #endif
-
         // revert to C order (fastest varying index last)
         return {axisLabels.rbegin(), axisLabels.rend()};
     }
 
     /** Return the component names of a mesh
+     *
+     * @param var_in_theta_mode indicate if this field will be output with theta
+     *                          modes (instead of a reconstructed 2D slice)
      */
     inline std::vector< std::string >
-    getFieldComponentLabels ()
+    getFieldComponentLabels (bool const var_in_theta_mode)
     {
         using vs = std::vector< std::string >;
-#if defined(WARPX_DIM_RZ)
-        // if we are start to write individual modes
-        vs const fieldComponents{"r", "t", "z"};
-        // if we just write reconstructed fields at theta=0
-        //vs const fieldComponents{"x", "y", "z"};
-#else
-        // note: 1D3V and 2D3V simulations still have 3 components for the fields
-        vs const fieldComponents{"x", "y", "z"};
-#endif
-        return fieldComponents;
+        if (var_in_theta_mode) {
+            // if we write individual modes
+            vs const fieldComponents{"r", "t", "z"};
+            return fieldComponents;
+        } else {
+            // if we just write reconstructed fields at theta=0 or are Cartesian
+            // note: 1D3V and 2D3V simulations still have 3 components for the fields
+            vs const fieldComponents{"x", "y", "z"};
+            return fieldComponents;
+        }
     }
 
     /** Get the openPMD physical dimensionality of a record
@@ -619,7 +626,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
           tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
           tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
           tmp.SetParticleDistributionMap(0, pinned_pc->ParticleDistributionMap(0));
-          tmp.copyParticles(*pinned_pc);
+          tmp.copyParticles(*pinned_pc, true);
       }
 
     // real_names contains a list of all real particle attributes.
@@ -1169,37 +1176,28 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
 {
     auto mesh_comp = mesh[comp_name];
     amrex::Box const & global_box = full_geom.Domain();
-#if defined(WARPX_DIM_RZ)
-    bool reverse = false;
-    auto global_size = getVec(global_box.size(), reverse );
-    auto & warpx = WarpX::GetInstance();
-    if (var_in_theta_mode) {
-            global_size.emplace(global_size.begin(), warpx.ncomps);
-    }
-    // - Grid spacing
-    std::vector<double> const grid_spacing = getVec(full_geom.CellSize(), reverse);
-    // - Global offset
-    std::vector<double> const global_offset = getVec(full_geom.ProbLo(), reverse);
-#else
-    amrex::ignore_unused(var_in_theta_mode);
-    auto global_size = getReversedVec(global_box.size());
+    auto global_size = getReversedVec(global_box.size() );
     // - Grid spacing
     std::vector<double> const grid_spacing = getReversedVec(full_geom.CellSize());
     // - Global offset
     std::vector<double> const global_offset = getReversedVec(full_geom.ProbLo());
+#if defined(WARPX_DIM_RZ)
+    auto & warpx = WarpX::GetInstance();
+    if (var_in_theta_mode) {
+            global_size.emplace(global_size.begin(), warpx.ncomps);
+    }
 #endif
     // - AxisLabels
-    std::vector<std::string> axis_labels = detail::getFieldAxisLabels();
+    std::vector<std::string> axis_labels = detail::getFieldAxisLabels(var_in_theta_mode);
 
     // Prepare the type of dataset that will be written
     openPMD::Datatype const datatype = openPMD::determineDatatype<amrex::Real>();
     auto const dataset = openPMD::Dataset(datatype, global_size);
-
     mesh.setDataOrder(openPMD::Mesh::DataOrder::C);
-#if defined(WARPX_DIM_RZ)
-    mesh.setGeometry("thetaMode");
-    mesh.setGeometryParameters("m=" + std::to_string(WarpX::n_rz_azimuthal_modes) + ";imag=+");
-#endif
+    if (var_in_theta_mode) {
+        mesh.setGeometry("thetaMode");
+        mesh.setGeometryParameters("m=" + std::to_string(WarpX::n_rz_azimuthal_modes) + ";imag=+");
+    }
     mesh.setAxisLabels(axis_labels);
     mesh.setGridSpacing(grid_spacing);
     mesh.setGridGlobalOffset(global_offset);
@@ -1208,26 +1206,16 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
 
     detail::setOpenPMDUnit( mesh, field_name );
     auto relative_cell_pos = utils::getRelativeCellPosition(mf);     // AMReX Fortran index order
-#ifndef WARPX_DIM_RZ
     std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
-#endif
     mesh_comp.setPosition( relative_cell_pos );
 }
 
-/*
- * Get component names of a field for openPMD-api book-keeping
- * Level is reflected as _lvl<meshLevel>
- *
- * @param meshLevel [IN]:    level of mesh
- * @param varname [IN]:      name from WarpX
- * @param field_name [OUT]:  field name for openPMD-api output
- * @param comp_name [OUT]:   comp name for openPMD-api output
- */
 void
 WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
                                     const std::string& varname,
                                     std::string& field_name,
-                                    std::string& comp_name) const
+                                    std::string& comp_name,
+                                    bool var_in_theta_mode) const
 {
     if (varname.size() >= 2u ) {
         std::string const varname_1st = varname.substr(0u, 1u); // 1st character
@@ -1235,7 +1223,7 @@ WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
 
         // Check if this field is a vector. If so, then extract the field name
         std::vector< std::string > const vector_fields = {"E", "B", "j"};
-        std::vector< std::string > const field_components = detail::getFieldComponentLabels();
+        std::vector< std::string > const field_components = detail::getFieldComponentLabels(var_in_theta_mode);
         for( std::string const& vector_field : vector_fields ) {
             for( std::string const& component : field_components ) {
                 if( vector_field.compare( varname_1st ) == 0 &&
@@ -1296,31 +1284,6 @@ GetFieldNameModeInt (const std::string& varname)
     }
 }
 
-/** Transpose diagnostic data from WarpX/AMReX/Fortran order to openPMD (RZ) / C order
- * NOTE : duplicates chunk in memory and is NOT optimized
- *
- * @param[in] varname pointer to the data to be transposed
- * @param[out] local_data pointer to the place to store transpoed copy of the chunk
- * @param[out] local_box reference to chunk `amrex::Box` for chunk_size information
- */
-void
-transposeChunk(std::shared_ptr<amrex::Real> data,  amrex::Real const* local_data, amrex::Box const& local_box)
-{
-WARPX_PROFILE("WarpXOpenPMDPlot::transposeChunk");
-    auto data_ptr = data.get();
-    auto chunk_size = local_box.size();
-    auto Nx = chunk_size[0];
-    auto Nz = chunk_size[1];
-
-    for (int ii = 0; ii < local_box.numPts(); ii++) {
-        int row = ii%Nx;
-        int col = ii/Nx;
-        int transposed_ii = col + row * Nz;
-        data_ptr[transposed_ii] = local_data[ii];
-    }
-}
-
-
 /** Write Field with all mesh levels
  *
  */
@@ -1369,18 +1332,17 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
             SetupFields(meshes, full_geom);
 
         amrex::Box const & global_box = full_geom.Domain();
-        auto const global_size = getReversedVec(global_box.size());
 
         int const ncomp = mf[lev].nComp();
         for ( int icomp=0; icomp<ncomp; icomp++ ) {
             std::string const & varname = varnames[icomp];
 
             auto [varname_no_mode, mode_index] = GetFieldNameModeInt(varname);
-            bool var_in_theta_mode = mode_index != -1;
+            bool var_in_theta_mode = mode_index != -1; // thetaMode or reconstructed Cartesian 2D slice
             std::string field_name = varname_no_mode;
             std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
             // assume fields are scalar unless they match the following match of known vector fields
-            GetMeshCompNames( lev, varname_no_mode, field_name, comp_name );
+            GetMeshCompNames( lev, varname_no_mode, field_name, comp_name, var_in_theta_mode );
             if ( first_write_to_iteration )
             {
                 if (comp_name == openPMD::MeshRecordComponent::SCALAR) {
@@ -1401,7 +1363,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                                         comp_name,
                                         field_name,
                                         mf[lev],
-                                        var_in_theta_mode);
+                                        var_in_theta_mode );
                     }
                 }
             }
@@ -1416,7 +1378,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
             std::string field_name(varname_no_mode);
             std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
             // assume fields are scalar unless they match the following match of known vector fields
-            GetMeshCompNames( lev, varname_no_mode, field_name, comp_name );
+            GetMeshCompNames( lev, varname_no_mode, field_name, comp_name, var_in_theta_mode );
 
             auto mesh = meshes[field_name];
             auto mesh_comp = mesh[comp_name];
@@ -1430,20 +1392,13 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 
                 // Determine the offset and size of this chunk
                 amrex::IntVect const box_offset = local_box.smallEnd() - global_box.smallEnd();
-#if defined(WARPX_DIM_RZ)
-                auto chunk_offset = getVec( box_offset);
-                auto chunk_size = getVec( local_box.size());
-#else
                 auto chunk_offset = getReversedVec( box_offset );
                 auto chunk_size = getReversedVec( local_box.size() );
-#endif
 
-#if defined(WARPX_DIM_RZ)
                 if (var_in_theta_mode) {
                     chunk_offset.emplace(chunk_offset.begin(), mode_index);
                     chunk_size.emplace(chunk_size.begin(), 1);
                 }
-#endif
 
                 // we avoid relying on managed memory by copying explicitly to host
                 //   remove the copies and "streamSynchronize" if you like to pass
@@ -1459,20 +1414,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 #endif
                 {
                     amrex::Real const *local_data = fab.dataPtr(icomp);
-#ifdef WARPX_DIM_RZ
-
-                    amrex::BaseFab<amrex::Real> tmp_fab(local_box, 1);
-                    std::shared_ptr<amrex::Real> data(tmp_fab.release());
-                    // transpose data for RZ openPMD ordering, this is currently NOT optimized
-                    transposeChunk(data, local_data, local_box);
-
-                    mesh_comp.storeChunk(data,
-                                         chunk_offset, chunk_size);
-#else
                     mesh_comp.storeChunk(openPMD::shareRaw(local_data),
                                          chunk_offset, chunk_size);
-
-#endif
                 }
             }
         } // icomp store loop

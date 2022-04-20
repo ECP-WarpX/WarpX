@@ -366,8 +366,8 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     ba.coarsen(m_crse_ratio);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     int ngrow = 1;
-    m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap,
-                                     m_cellcenter_varnames.size(), ngrow);
+    int ncomps = static_cast<int>(m_cellcenter_varnames.size());
+    m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap, ncomps, ngrow);
 
 }
 
@@ -394,9 +394,10 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     {
         // coarsening ratio is not provided since the source MultiFab, m_cell_centered_data
         // is coarsened based on the user-defined m_crse_ratio
+        int nvars = static_cast<int>(m_varnames.size());
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
                   m_cell_centered_data[lev].get(), lev,
-                  m_varnames.size(), m_num_buffers, m_varnames);
+                  nvars, m_num_buffers, m_varnames);
     }
 
     // Define all cell-centered functors required to compute cell-centere data
@@ -708,6 +709,10 @@ BTDiagnostics::Flush (int i_buffer)
     bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
+
+    // Redistribute particles in the lab frame box arrays that correspond to the buffer
+    RedistributeParticleBuffer(i_buffer);
+
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
@@ -727,6 +732,13 @@ BTDiagnostics::Flush (int i_buffer)
         UpdateTotalParticlesFlushed(i_buffer);
         ResetTotalParticlesInBuffer(i_buffer);
         ClearParticleBuffer(i_buffer);
+    }
+}
+
+void BTDiagnostics::RedistributeParticleBuffer (const int i_buffer)
+{
+    for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
+        m_particles_buffer[i_buffer][isp]->Redistribute();
     }
 }
 
