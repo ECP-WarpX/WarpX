@@ -9,6 +9,9 @@ module load cudatoolkit
 # optional: just an additional text editor
 # module load nano  # TODO: request from support
 
+# optional: for QED support with detailed tables
+module load boost/1.78.0-gnu
+
 # optional: for openPMD and PSATD+RZ support
 module load cray-hdf5-parallel/1.12.0.7
 export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
