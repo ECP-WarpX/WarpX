@@ -1782,6 +1782,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     current_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_fp[z]"));
 
     // Same as Bfield_fp/Efield_fp for reading external field data
+    ParmParse pp_warpx("warpx");
+    pp_warpx.query("B_ext_grid_init_style", WarpX::B_ext_grid_s);
+    pp_warpx.query("E_ext_grid_init_style", WarpX::E_ext_grid_s);
     if (WarpX::B_ext_grid_s=="read_B_from_file" && lev==0)
     {
         Bfield_fp_external[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_fp_external[x]"));

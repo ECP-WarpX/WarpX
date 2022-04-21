@@ -71,6 +71,8 @@
 
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 
+#include <openPMD/openPMD.hpp>
+
 using namespace amrex;
 
 void
@@ -867,6 +869,18 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        }
     }
 
+    // Reading external fields from data file
+    if (B_ext_grid_s=="read_B_from_file" && lev==0) {
+        std::string read_B_from_path="./";
+        pp_warpx.query("read_B_from_path", read_B_from_path);
+        ReadExternalFieldsFromFile(B_ext_grid_s,read_B_from_path);
+    }
+    if (E_ext_grid_s=="read_E_from_file" && lev==0) {
+        std::string read_E_from_path="./";
+        pp_warpx.query("read_E_from_path", read_E_from_path);
+        ReadExternalFieldsFromFile(E_ext_grid_s,read_E_from_path);
+    }
+
     if (F_fp[lev]) {
         F_fp[lev]->setVal(0.0);
     }
@@ -1199,4 +1213,26 @@ void WarpX::InitializeEBGridData (int lev)
 #else
     amrex::ignore_unused(lev);
 #endif
+}
+
+void
+WarpX::ReadExternalFieldsFromFile (std::string ext_grid_s, std::string read_from_path)
+{
+    auto series = openPMD::Series(read_from_path, openPMD::Access::READ_ONLY);
+    auto i = series.iterations[1];
+    if (ext_grid_s=="read_B_from_file") {
+        auto B = i.meshes["B"];
+        auto B_r = B["r"];
+        auto B_z = B["z"];
+        std::shared_ptr<double> r_data = B_r.loadChunk< double >();
+        std::shared_ptr<double> z_data = B_z.loadChunk< double >();
+    }
+    if (ext_grid_s=="read_E_from_file")
+        auto E = i.meshes["E"];
+        auto E_r = E["r"];
+        auto E_z = E["z"];
+        std::shared_ptr<double> r_data = E_r.loadChunk< double >();
+        std::shared_ptr<double> z_data = E_z.loadChunk< double >();
+    }
+    series.flush();
 }
