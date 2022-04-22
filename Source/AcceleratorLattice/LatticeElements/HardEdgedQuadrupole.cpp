@@ -45,7 +45,7 @@ HardEdgedQuadrupole::HardEdgedQuadrupole ()
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, zs.begin(), zs.end(), d_zs.begin());
     d_ze.resize(ze.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, ze.begin(), ze.end(), d_ze.begin());
-    d_ze.resize(zcenters.size());
+    d_zcenters.resize(zcenters.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, zcenters.begin(), zcenters.end(), d_zcenters.begin());
 
     // This is specific to the element type
