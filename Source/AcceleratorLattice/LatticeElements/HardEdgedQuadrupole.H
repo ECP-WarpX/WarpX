@@ -7,6 +7,7 @@
 #ifndef WARPX_ACCELERATORLATTICE_LATTICEELEMENTS_HARDEDGEDQUADRUPOLE_H_
 #define WARPX_ACCELERATORLATTICE_LATTICEELEMENTS_HARDEDGEDQUADRUPOLE_H_
 
+#include "LatticeElementBase.H"
 #include "HardEdged_K.H"
 
 #include <AMReX_REAL.H>
@@ -18,17 +19,12 @@
 struct HardEdgedQuadrupoleDevice;
 
 struct HardEdgedQuadrupole
+    : LatticeElementBase
 {
 
     HardEdgedQuadrupole ();
 
     ~HardEdgedQuadrupole () = default;
-
-    int nelements = 0;
-
-    amrex::Gpu::DeviceVector<amrex::Real> d_zs;
-    amrex::Gpu::DeviceVector<amrex::Real> d_ze;
-    amrex::Gpu::DeviceVector<amrex::Real> d_zcenters;
 
     amrex::Gpu::DeviceVector<amrex::Real> d_dEdx;
     amrex::Gpu::DeviceVector<amrex::Real> d_dBdx;
