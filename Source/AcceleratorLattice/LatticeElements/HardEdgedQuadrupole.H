@@ -43,7 +43,6 @@ struct HardEdgedQuadrupoleDevice
 
     const amrex::Real* AMREX_RESTRICT d_zs_arr;
     const amrex::Real* AMREX_RESTRICT d_ze_arr;
-    const amrex::Real* AMREX_RESTRICT d_zcenters_arr;
 
     const amrex::Real* AMREX_RESTRICT d_dEdx_arr;
     const amrex::Real* AMREX_RESTRICT d_dBdx_arr;

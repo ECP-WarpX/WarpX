@@ -64,7 +64,6 @@ HardEdgedQuadrupoleDevice::InitHardEdgedQuadrupoleDevice (HardEdgedQuadrupole co
 
     d_zs_arr = h_quad.d_zs.data();
     d_ze_arr = h_quad.d_ze.data();
-    d_zcenters_arr = h_quad.d_zcenters.data();
 
     d_dEdx_arr = h_quad.d_dEdx.data();
     d_dBdx_arr = h_quad.d_dBdx.data();

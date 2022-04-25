@@ -59,7 +59,7 @@ LatticeElementFinder::UpdateQuadIndex(AcceleratorLattice const& accelerator_latt
     HardEdgedQuadrupole const *h_quad = accelerator_lattice.h_quad.get();
 
     if (h_quad) {
-        setup_lattice_indices(h_quad->d_zcenters, d_quad_indices);
+        setup_lattice_indices(h_quad->d_zs, h_quad->d_ze, d_quad_indices);
     }
 }
 

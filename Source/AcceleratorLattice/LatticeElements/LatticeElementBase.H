@@ -25,7 +25,6 @@ struct LatticeElementBase
 
     amrex::Gpu::DeviceVector<amrex::Real> d_zs;
     amrex::Gpu::DeviceVector<amrex::Real> d_ze;
-    amrex::Gpu::DeviceVector<amrex::Real> d_zcenters;
 
 };
 

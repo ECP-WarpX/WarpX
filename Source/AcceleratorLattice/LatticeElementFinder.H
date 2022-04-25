@@ -40,14 +40,16 @@ struct LatticeElementFinder
     void UpdateIndices (AcceleratorLattice const& accelerator_lattice);
     void UpdateQuadIndex (AcceleratorLattice const& accelerator_lattice);
 
-    void setup_lattice_indices (amrex::Gpu::DeviceVector<amrex::Real> const & zcenters,
+    void setup_lattice_indices (amrex::Gpu::DeviceVector<amrex::Real> const & zs,
+                                amrex::Gpu::DeviceVector<amrex::Real> const & ze,
                                 amrex::Gpu::DeviceVector<int> & indices)
     {
 
         using namespace amrex::literals;
 
-        int nelements = static_cast<int>(zcenters.size());
-        amrex::Real const * zcenters_arr = zcenters.data();
+        int nelements = static_cast<int>(zs.size());
+        amrex::Real const * zs_arr = zs.data();
+        amrex::Real const * ze_arr = ze.data();
         int * indices_arr = indices.data();
 
         amrex::Real zmin = m_zmin;
@@ -62,9 +64,22 @@ struct LatticeElementFinder
                 // Check if any elements overlap the grid cell, and if so, store its index
                 // For now, this assumes that there is no overlap among elements of the same type
                 for (int ie = 0 ; ie < nelements ; ie++) {
-                    if (zcenters_arr[ie] <= z_node && z_node < zcenters_arr[ie+1]) {
+                    amrex::Real zcenter_left, zcenter_right;
+                    if (ie == 0) {
+                        zcenter_left = std::numeric_limits<amrex::Real>::lowest();
+                    } else {
+                        zcenter_left = 0.5_rt*(ze_arr[ie-1] + zs_arr[ie]);
+                    }
+                    if (ie < nelements - 1) {
+                        zcenter_right = 0.5_rt*(ze_arr[ie] + zs_arr[ie+1]);
+                    } else {
+                        zcenter_right = std::numeric_limits<amrex::Real>::max();
+                    }
+
+                    if (zcenter_left <= z_node && z_node < zcenter_right) {
                         indices_arr[iz] = ie;
                     }
+
                 }
             }
         );
