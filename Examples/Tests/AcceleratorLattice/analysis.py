@@ -18,7 +18,6 @@ The motion is slow enough that relativistic effects are ignored.
 import os
 import sys
 
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.constants import c, e, m_e
 import yt
@@ -73,7 +72,6 @@ for i in range(len(quad_starts)):
     dt = (z_lens - zz)/vz
     xx = xx + dt*vx
     xx, vx = applylens(xx, vx, vz, gamma, quad_lengths[i], quad_strengths_E[i])
-    dt = quad_lengths[i]/vz
     ux = gamma*vx
     zz = z_lens + quad_lengths[i]
 
