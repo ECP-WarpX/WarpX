@@ -100,4 +100,3 @@ LatticeElementFinderDevice::InitLatticeElementFinderDevice (WarpXParIter const& 
     }
 
 }
-

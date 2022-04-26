@@ -69,4 +69,3 @@ HardEdgedQuadrupoleDevice::InitHardEdgedQuadrupoleDevice (HardEdgedQuadrupole co
     d_dBdx_arr = h_quad.d_dBdx.data();
 
 }
-

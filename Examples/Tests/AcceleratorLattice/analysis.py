@@ -18,10 +18,10 @@ The motion is slow enough that relativistic effects are ignored.
 import os
 import sys
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.constants import c, e, m_e
 import yt
-import matplotlib.pyplot as plt
 
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')

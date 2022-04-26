@@ -47,4 +47,3 @@ AcceleratorLattice::Get_Finder_Device(WarpXParIter const& a_pti, int const a_off
     LatticeElementFinder & finder = (*m_element_finder)[a_pti];
     return finder.Get_Finder_Device(a_pti, a_offset, *this);
 }
-
