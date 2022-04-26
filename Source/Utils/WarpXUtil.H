@@ -328,6 +328,9 @@ void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
                        const int start_ix = amrex::ParmParse::FIRST,
                        const int num_val = amrex::ParmParse::LAST);
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::ParticleReal>& val,
+                       const int start_ix = amrex::ParmParse::FIRST,
+                       const int num_val = amrex::ParmParse::LAST);
 void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val);
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
                        const int start_ix = amrex::ParmParse::FIRST,

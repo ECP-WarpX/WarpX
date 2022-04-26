@@ -377,7 +377,7 @@ void PhysicalParticleContainer::InitData ()
 }
 
 void PhysicalParticleContainer::MapParticletoBoostedFrame (
-    Real& x, Real& y, Real& z, Real& ux, Real& uy, Real& uz)
+    ParticleReal& x, ParticleReal& y, ParticleReal& z, ParticleReal& ux, ParticleReal& uy, ParticleReal& uz)
 {
     // Map the particles from the lab frame to the boosted frame.
     // This boosts the particle to the lab frame and calculates
@@ -386,28 +386,28 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
 
     // For now, start with the assumption that this will only happen
     // at the start of the simulation.
-    const Real t_lab = 0._rt;
+    const ParticleReal t_lab = 0._prt;
 
-    const Real uz_boost = WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
+    const ParticleReal uz_boost = WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
 
     // tpr is the particle's time in the boosted frame
-    Real tpr = WarpX::gamma_boost*t_lab - uz_boost*z/(PhysConst::c*PhysConst::c);
+    ParticleReal tpr = WarpX::gamma_boost*t_lab - uz_boost*z/(PhysConst::c*PhysConst::c);
 
     // The particle's transformed location in the boosted frame
-    Real xpr = x;
-    Real ypr = y;
-    Real zpr = WarpX::gamma_boost*z - uz_boost*t_lab;
+    ParticleReal xpr = x;
+    ParticleReal ypr = y;
+    ParticleReal zpr = WarpX::gamma_boost*z - uz_boost*t_lab;
 
     // transform u and gamma to the boosted frame
-    Real gamma_lab = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)/(PhysConst::c*PhysConst::c));
+    ParticleReal gamma_lab = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)/(PhysConst::c*PhysConst::c));
     // ux = ux;
     // uy = uy;
     uz = WarpX::gamma_boost*uz - uz_boost*gamma_lab;
-    Real gammapr = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)/(PhysConst::c*PhysConst::c));
+    ParticleReal gammapr = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)/(PhysConst::c*PhysConst::c));
 
-    Real vxpr = ux/gammapr;
-    Real vypr = uy/gammapr;
-    Real vzpr = uz/gammapr;
+    ParticleReal vxpr = ux/gammapr;
+    ParticleReal vypr = uy/gammapr;
+    ParticleReal vzpr = uz/gammapr;
 
     if (do_backward_propagation){
         uz = -uz;
@@ -622,9 +622,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
 void
 PhysicalParticleContainer::CheckAndAddParticle (
-    Real x, Real y, Real z,
-    Real ux, Real uy, Real uz,
-    Real weight,
+    ParticleReal x, ParticleReal y, ParticleReal z,
+    ParticleReal ux, ParticleReal uy, ParticleReal uz,
+    ParticleReal weight,
     Gpu::HostVector<ParticleReal>& particle_x,
     Gpu::HostVector<ParticleReal>& particle_y,
     Gpu::HostVector<ParticleReal>& particle_z,
@@ -2359,22 +2359,22 @@ PhysicalParticleContainer::GetParticleSlice (
                 const auto GetPosition = GetParticlePosition(pti);
 
                 auto& attribs = pti.GetAttribs();
-                Real* const AMREX_RESTRICT wpnew = attribs[PIdx::w].dataPtr();
-                Real* const AMREX_RESTRICT uxpnew = attribs[PIdx::ux].dataPtr();
-                Real* const AMREX_RESTRICT uypnew = attribs[PIdx::uy].dataPtr();
-                Real* const AMREX_RESTRICT uzpnew = attribs[PIdx::uz].dataPtr();
+                ParticleReal* const AMREX_RESTRICT wpnew = attribs[PIdx::w].dataPtr();
+                ParticleReal* const AMREX_RESTRICT uxpnew = attribs[PIdx::ux].dataPtr();
+                ParticleReal* const AMREX_RESTRICT uypnew = attribs[PIdx::uy].dataPtr();
+                ParticleReal* const AMREX_RESTRICT uzpnew = attribs[PIdx::uz].dataPtr();
 
-                Real* const AMREX_RESTRICT
+                ParticleReal* const AMREX_RESTRICT
                   xpold = tmp_particle_data[lev][index][TmpIdx::xold].dataPtr();
-                Real* const AMREX_RESTRICT
+                ParticleReal* const AMREX_RESTRICT
                   ypold = tmp_particle_data[lev][index][TmpIdx::yold].dataPtr();
-                Real* const AMREX_RESTRICT
+                ParticleReal* const AMREX_RESTRICT
                   zpold = tmp_particle_data[lev][index][TmpIdx::zold].dataPtr();
-                Real* const AMREX_RESTRICT
+                ParticleReal* const AMREX_RESTRICT
                   uxpold = tmp_particle_data[lev][index][TmpIdx::uxold].dataPtr();
-                Real* const AMREX_RESTRICT
+                ParticleReal* const AMREX_RESTRICT
                   uypold = tmp_particle_data[lev][index][TmpIdx::uyold].dataPtr();
-                Real* const AMREX_RESTRICT
+                ParticleReal* const AMREX_RESTRICT
                   uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr();
 
                 const long np = pti.numParticles();
@@ -2414,19 +2414,19 @@ PhysicalParticleContainer::GetParticleSlice (
                 amrex::Real betaboost = WarpX::beta_boost;
                 amrex::Real Phys_c = PhysConst::c;
 
-                Real* const AMREX_RESTRICT diag_wp =
+                ParticleReal* const AMREX_RESTRICT diag_wp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::w).data();
-                Real* const AMREX_RESTRICT diag_xp =
+                ParticleReal* const AMREX_RESTRICT diag_xp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::x).data();
-                Real* const AMREX_RESTRICT diag_yp =
+                ParticleReal* const AMREX_RESTRICT diag_yp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::y).data();
-                Real* const AMREX_RESTRICT diag_zp =
+                ParticleReal* const AMREX_RESTRICT diag_zp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::z).data();
-                Real* const AMREX_RESTRICT diag_uxp =
+                ParticleReal* const AMREX_RESTRICT diag_uxp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::ux).data();
-                Real* const AMREX_RESTRICT diag_uyp =
+                ParticleReal* const AMREX_RESTRICT diag_uyp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::uy).data();
-                Real* const AMREX_RESTRICT diag_uzp =
+                ParticleReal* const AMREX_RESTRICT diag_uzp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::uz).data();
 
                 // Copy particle data to diagnostic particle array on the GPU

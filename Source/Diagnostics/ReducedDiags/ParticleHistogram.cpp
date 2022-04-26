@@ -181,8 +181,8 @@ void ParticleHistogram::ComputeDiags (int step)
 
     // zero-out old data on the host
     std::fill(m_data.begin(), m_data.end(), amrex::Real(0.0));
-    amrex::Gpu::DeviceVector< amrex::Real > d_data( m_data.size(), 0.0 );
-    amrex::Real* const AMREX_RESTRICT dptr_data = d_data.dataPtr();
+    amrex::Gpu::DeviceVector< amrex::ParticleReal > d_data( m_data.size(), 0.0 );
+    amrex::ParticleReal* const AMREX_RESTRICT dptr_data = d_data.dataPtr();
 
     int const nlevs = std::max(0, myspc.finestLevel()+1);
     for (int lev = 0; lev < nlevs; ++lev) {
@@ -195,10 +195,10 @@ void ParticleHistogram::ComputeDiags (int step)
                 auto const GetPosition = GetParticlePosition(pti);
 
                 auto & attribs = pti.GetAttribs();
-                Real* const AMREX_RESTRICT d_w = attribs[PIdx::w].dataPtr();
-                Real* const AMREX_RESTRICT d_ux = attribs[PIdx::ux].dataPtr();
-                Real* const AMREX_RESTRICT d_uy = attribs[PIdx::uy].dataPtr();
-                Real* const AMREX_RESTRICT d_uz = attribs[PIdx::uz].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_w = attribs[PIdx::w].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_ux = attribs[PIdx::ux].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_uy = attribs[PIdx::uy].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_uz = attribs[PIdx::uz].dataPtr();
 
                 long const np = pti.numParticles();
 
@@ -229,7 +229,7 @@ void ParticleHistogram::ComputeDiags (int step)
                     //        letting each thread compute its own histogram and
                     //        then we reduce the histograms after the loop
                     if ( is_unity_particle_weight ) {
-                        amrex::HostDevice::Atomic::Add(&dptr_data[bin], 1.0_rt);
+                        amrex::HostDevice::Atomic::Add(&dptr_data[bin], 1.0_prt);
                     } else {
                         amrex::HostDevice::Atomic::Add(&dptr_data[bin], w);
                     }

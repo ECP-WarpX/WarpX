@@ -478,6 +478,21 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
     }
 }
 
+void
+getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::ParticleReal>& val,
+                    const int start_ix, const int num_val)
+{
+    // Create parser objects and apply them to the values provided by the user.
+    std::vector<std::string> tmp_str_arr;
+    a_pp.getarr(str, tmp_str_arr, start_ix, num_val);
+
+    int const n = static_cast<int>(tmp_str_arr.size());
+    val.resize(n);
+    for (int i=0 ; i < n ; i++) {
+        val[i] = static_cast<amrex::Real>(parseStringtoReal(tmp_str_arr[i]));
+    }
+}
+
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
     amrex::Real rval;
     const int result = queryWithParser(a_pp, str, rval);
