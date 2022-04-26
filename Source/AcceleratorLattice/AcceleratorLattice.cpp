@@ -26,24 +26,24 @@ AcceleratorLattice::InitElementFinder (int const lev, amrex::BoxArray const & ba
         {
             (*m_element_finder)[mfi].InitElementFinder(lev, mfi, *this);
         }
-        UpdateElementFinder();
+        UpdateElementFinder(lev);
     }
 }
 
 void
-AcceleratorLattice::UpdateElementFinder ()
+AcceleratorLattice::UpdateElementFinder (int const lev)
 {
     if (m_lattice_defined) {
         for (amrex::MFIter mfi(*m_element_finder); mfi.isValid(); ++mfi)
         {
-            (*m_element_finder)[mfi].UpdateIndices(*this);
+            (*m_element_finder)[mfi].UpdateIndices(lev, mfi, *this);
         }
     }
 }
 
 LatticeElementFinderDevice
-AcceleratorLattice::Get_Finder_Device(WarpXParIter const& a_pti, int const a_offset) const
+AcceleratorLattice::GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset) const
 {
     LatticeElementFinder & finder = (*m_element_finder)[a_pti];
-    return finder.Get_Finder_Device(a_pti, a_offset, *this);
+    return finder.GetFinderDeviceInstance(a_pti, a_offset, *this);
 }

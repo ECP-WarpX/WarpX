@@ -22,10 +22,10 @@ public:
     bool m_lattice_defined = false;
 
     void InitElementFinder (int const lev, amrex::BoxArray const & ba, amrex::DistributionMapping const & dm);
-    void UpdateElementFinder ();
+    void UpdateElementFinder (int const lev);
 
     std::unique_ptr<amrex::LayoutData<LatticeElementFinder>> m_element_finder;
-    LatticeElementFinderDevice Get_Finder_Device (WarpXParIter const& a_pti, int const a_offset) const;
+    LatticeElementFinderDevice GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset) const;
 
     std::unique_ptr<HardEdgedQuadrupole> h_quad;
 

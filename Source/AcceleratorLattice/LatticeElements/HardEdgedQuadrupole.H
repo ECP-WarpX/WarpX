@@ -29,7 +29,7 @@ struct HardEdgedQuadrupole
     amrex::Gpu::DeviceVector<amrex::Real> d_dEdx;
     amrex::Gpu::DeviceVector<amrex::Real> d_dBdx;
 
-    HardEdgedQuadrupoleDevice GetDevice () const;
+    HardEdgedQuadrupoleDevice GetDeviceInstance () const;
 
 
 };

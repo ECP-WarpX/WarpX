@@ -25,20 +25,18 @@ struct LatticeElementFinder
 
     void InitElementFinder (int const lev, amrex::MFIter const& a_mfi,
                             AcceleratorLattice const& accelerator_lattice);
+    void AllocateIndices (AcceleratorLattice const& accelerator_lattice);
+    void UpdateIndices (int const lev, amrex::MFIter const& a_mfi,
+                        AcceleratorLattice const& accelerator_lattice);
 
     int m_nz;
     amrex::Real m_zmin;
     amrex::Real m_dz;
 
-    LatticeElementFinderDevice Get_Finder_Device (WarpXParIter const& a_pti, int const a_offset,
-                                                  AcceleratorLattice const& accelerator_lattice);
+    LatticeElementFinderDevice GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset,
+                                                        AcceleratorLattice const& accelerator_lattice);
 
     amrex::Gpu::DeviceVector<int> d_quad_indices;
-
-    void AllocateQuadIndex (AcceleratorLattice const& accelerator_lattice);
-
-    void UpdateIndices (AcceleratorLattice const& accelerator_lattice);
-    void UpdateQuadIndex (AcceleratorLattice const& accelerator_lattice);
 
     void setup_lattice_indices (amrex::Gpu::DeviceVector<amrex::Real> const & zs,
                                 amrex::Gpu::DeviceVector<amrex::Real> const & ze,

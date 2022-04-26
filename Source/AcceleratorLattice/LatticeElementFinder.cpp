@@ -23,49 +23,44 @@ LatticeElementFinder::InitElementFinder (int const lev, amrex::MFIter const& a_m
     amrex::Box box = a_mfi.tilebox();
     m_nz = box.size()[WARPX_ZINDEX];
 
-    m_zmin = WarpX::LowerCorner(box, lev, 0._rt)[2];
     m_dz = WarpX::CellSize(lev)[2];
 
-    AllocateQuadIndex(accelerator_lattice);
+    AllocateIndices(accelerator_lattice);
 
-    UpdateIndices(accelerator_lattice);
+    UpdateIndices(lev, a_mfi, accelerator_lattice);
 
 }
 
 void
-LatticeElementFinder::UpdateIndices (AcceleratorLattice const& accelerator_lattice)
+LatticeElementFinder::AllocateIndices (AcceleratorLattice const& accelerator_lattice)
 {
-    UpdateQuadIndex(accelerator_lattice);
-}
+    // Allocate the space for the indices for each element type.
+    // Note that this uses m_nz since the information is saved per node.
 
-void
-LatticeElementFinder::AllocateQuadIndex(AcceleratorLattice const& accelerator_lattice)
-{
-    // Grab pointers to lattice elements
     HardEdgedQuadrupole const *h_quad = accelerator_lattice.h_quad.get();
-
     if (h_quad) {
-        // Allocate the space for the indices.
-        // Note that this uses m_nz since the information is saved per cell
-        // The "-1" is the flag that no elements at that location
-        d_quad_indices.resize(m_nz, -1);
+        d_quad_indices.resize(m_nz);
     }
+
 }
 
 void
-LatticeElementFinder::UpdateQuadIndex(AcceleratorLattice const& accelerator_lattice)
+LatticeElementFinder::UpdateIndices (int const lev, amrex::MFIter const& a_mfi,
+                                     AcceleratorLattice const& accelerator_lattice)
 {
-    // Grab pointers to lattice elements
-    HardEdgedQuadrupole const *h_quad = accelerator_lattice.h_quad.get();
+    // Update the location of the index grid.
+    amrex::Box box = a_mfi.tilebox();
+    m_zmin = WarpX::LowerCorner(box, lev, 0._rt)[2];
 
+    HardEdgedQuadrupole const *h_quad = accelerator_lattice.h_quad.get();
     if (h_quad) {
         setup_lattice_indices(h_quad->d_zs, h_quad->d_ze, d_quad_indices);
     }
 }
 
 LatticeElementFinderDevice
-LatticeElementFinder::Get_Finder_Device (WarpXParIter const& a_pti, int const a_offset,
-                                         AcceleratorLattice const& accelerator_lattice)
+LatticeElementFinder::GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset,
+                                              AcceleratorLattice const& accelerator_lattice)
 {
     LatticeElementFinderDevice result;
     result.InitLatticeElementFinderDevice(a_pti, a_offset, accelerator_lattice, *this);
@@ -95,7 +90,7 @@ LatticeElementFinderDevice::InitLatticeElementFinderDevice (WarpXParIter const& 
 
     HardEdgedQuadrupole const *h_quad = accelerator_lattice.h_quad.get();
     if (h_quad) {
-        d_quad = h_quad->GetDevice();
+        d_quad = h_quad->GetDeviceInstance();
         d_quad_indices_arr = h_finder.d_quad_indices.data();
     }
 

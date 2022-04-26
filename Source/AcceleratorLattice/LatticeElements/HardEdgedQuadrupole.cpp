@@ -47,7 +47,7 @@ HardEdgedQuadrupole::HardEdgedQuadrupole ()
 }
 
 HardEdgedQuadrupoleDevice
-HardEdgedQuadrupole::GetDevice() const
+HardEdgedQuadrupole::GetDeviceInstance () const
 {
     HardEdgedQuadrupoleDevice result;
     result.InitHardEdgedQuadrupoleDevice(*this);
