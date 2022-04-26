@@ -620,6 +620,17 @@ class LibWarpX():
             # --- The -3 is because components 1 to 3 are velocities
             attr[:,self.get_particle_comp_index(species_name, key)-3] = vals
 
+        # convert particle attributes to correct type
+        numpy_ParticleReal = f"f{self.libwarpx_so.warpx_ParticleReal_size()}"
+
+        x = x.astype(numpy_ParticleReal)
+        y = y.astype(numpy_ParticleReal)
+        z = z.astype(numpy_ParticleReal)
+        ux = ux.astype(numpy_ParticleReal)
+        uy = uy.astype(numpy_ParticleReal)
+        uz = uz.astype(numpy_ParticleReal)
+        attr = attr.astype(numpy_ParticleReal)
+
         self.libwarpx_so.warpx_addNParticles(
             ctypes.c_char_p(species_name.encode('utf-8')), x.size,
             x, y, z, ux, uy, uz, nattr, attr, unique_particles
