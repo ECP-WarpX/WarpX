@@ -1,9 +1,9 @@
 max_step = 50
-amr.n_cell = 8 8 32
+amr.n_cell = 16 16 8
 amr.max_level = 0
 geometry.dims = 3
-geometry.prob_lo     = -0.2 -0.2 0.
-geometry.prob_hi     = +0.2 +0.2 1.6
+geometry.prob_lo     = -0.2 -0.2 -0.1
+geometry.prob_hi     = +0.2 +0.2 +0.1
 
 warpx.const_dt = 1e-9
 warpx.do_electrostatic = labframe
@@ -11,6 +11,10 @@ warpx.do_electrostatic = labframe
 # Boundary condition
 boundary.field_lo = pec pec pec
 boundary.field_hi = pec pec pec
+
+warpx.do_moving_window = 1
+warpx.moving_window_dir = z
+warpx.moving_window_v = 0.1 # in units of the speed of light
 
 # Order of particle shape factors
 algo.particle_shape = 1
