@@ -859,6 +859,9 @@ public:
          const char field,
          const int lev);
 
+    void ReadExternalFieldsFromFile (std::string ext_grid_s, std::string read_from_path,
+        amrex::MultiFab const& F1, amrex::MultiFab const& F2, amrex::MultiFab const& F3);
+
     /**
      * \brief
      * This function initializes and calculates grid quantities used along with

@@ -870,15 +870,18 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 
     // Reading external fields from data file
-    if (B_ext_grid_s=="read_B_from_file" && lev==0) {
+    if (B_ext_grid_s=="read_b_from_file" && lev==0) {
+std::cout << "@@@@@@@@@@@@" << "\n";
         std::string read_B_from_path="./";
         pp_warpx.query("read_B_from_path", read_B_from_path);
-        ReadExternalFieldsFromFile(B_ext_grid_s,read_B_from_path);
+        ReadExternalFieldsFromFile(B_ext_grid_s,read_B_from_path,
+            *Bfield_fp[lev][0],*Bfield_fp[lev][1],*Bfield_fp[lev][2]);
     }
-    if (E_ext_grid_s=="read_E_from_file" && lev==0) {
+    if (E_ext_grid_s=="read_e_from_file" && lev==0) {
         std::string read_E_from_path="./";
         pp_warpx.query("read_E_from_path", read_E_from_path);
-        ReadExternalFieldsFromFile(E_ext_grid_s,read_E_from_path);
+        ReadExternalFieldsFromFile(E_ext_grid_s,read_E_from_path,
+            *Efield_fp[lev][0],*Efield_fp[lev][1],*Efield_fp[lev][2]);
     }
 
     if (F_fp[lev]) {
@@ -1216,23 +1219,71 @@ void WarpX::InitializeEBGridData (int lev)
 }
 
 void
-WarpX::ReadExternalFieldsFromFile (std::string ext_grid_s, std::string read_from_path)
+WarpX::ReadExternalFieldsFromFile (std::string ext_grid_s, std::string read_from_path,
+amrex::MultiFab const& F1, amrex::MultiFab const& F2, amrex::MultiFab const& F3)
 {
     auto series = openPMD::Series(read_from_path, openPMD::Access::READ_ONLY);
-    auto i = series.iterations[1];
-    if (ext_grid_s=="read_B_from_file") {
-        auto B = i.meshes["B"];
-        auto B_r = B["r"];
-        auto B_z = B["z"];
-        std::shared_ptr<double> r_data = B_r.loadChunk< double >();
-        std::shared_ptr<double> z_data = B_z.loadChunk< double >();
-    }
-    if (ext_grid_s=="read_E_from_file")
+    auto i = series.iterations.begin()->second;
+
+    // Loop over boxes.
+    for (amrex::MFIter mfi(F1); mfi.isValid(); ++mfi)
+    {
+
+        auto box = mfi.validbox();
+        auto lo = lbound(box);
+        auto hi = ubound(box);
+        auto & warpx = WarpX::GetInstance();
+        amrex::Geometry const & geom = warpx.Geom(0);
+        const amrex::RealBox& real_box = geom.ProbDomain();
+        const auto dx = geom.CellSizeArray();
+
+        // Get physical low and high coordniates of this box.
+        // Then the external field read must cover these coordinates.
+        amrex::Real x_lo, y_lo, z_lo, x_hi, y_hi, z_hi;
+        x_lo = real_box.lo(0) + lo.x*dx[0];
+        y_lo = real_box.lo(1) + lo.y*dx[1];
+        z_lo = real_box.lo(2) + lo.z*dx[2];
+        x_hi = real_box.lo(0) + hi.x*dx[0];
+        y_hi = real_box.lo(1) + hi.y*dx[1];
+        z_hi = real_box.lo(2) + hi.z*dx[2];
+
         auto E = i.meshes["E"];
-        auto E_r = E["r"];
-        auto E_z = E["z"];
-        std::shared_ptr<double> r_data = E_r.loadChunk< double >();
-        std::shared_ptr<double> z_data = E_z.loadChunk< double >();
+        auto E_x = E["x"];
+        auto offset = E.gridGlobalOffset();
+        auto extent = E_x.getExtent();
+        double unit = E_x.unitSI();
+        auto d = E.gridSpacing<double>();
+
+        unsigned long const ix_lo = int( floor( (x_lo-offset[0])/d[0] ) );
+        unsigned long const ix_hi = int( floor( (x_hi-offset[0])/d[0] ) ) + 1;
+        unsigned long const iy_lo = int( floor( (y_lo-offset[1])/d[1] ) );
+        unsigned long const iy_hi = int( floor( (y_hi-offset[1])/d[1] ) ) + 1;
+        unsigned long const iz_lo = int( floor( (z_lo-offset[2])/d[2] ) );
+        unsigned long const iz_hi = int( floor( (z_hi-offset[2])/d[2] ) ) + 1;
+
+        openPMD::Offset chunk_offset = {ix_lo, iy_lo, iz_lo};
+        openPMD::Extent chunk_extent = {ix_hi-ix_lo+1, iy_hi-iy_lo+1, ix_hi-iz_lo+1};
+        auto Ex_chunk_data = E_x.loadChunk<double>(chunk_offset, chunk_extent);
+        series.flush();
+//
+//        //// Obtain Array4 from FArrayBox.
+//        //auto arr = Bx.array(mfi);
+
     }
-    series.flush();
+
+    //if (ext_grid_s=="read_B_from_file") {
+    //    auto B = i.meshes["B"];
+    //    auto B_r = B["r"];
+    //    auto B_z = B["z"];
+    //    std::shared_ptr<double> r_data = B_r.loadChunk< double >();
+    //    std::shared_ptr<double> z_data = B_z.loadChunk< double >();
+    //}
+    //if (ext_grid_s=="read_E_from_file") {
+    //    auto E = i.meshes["E"];
+    //    auto E_r = E["r"];
+    //    auto E_z = E["z"];
+    //    std::shared_ptr<double> r_data = E_r.loadChunk< double >();
+    //    std::shared_ptr<double> z_data = E_z.loadChunk< double >();
+    //}
+    //series.flush();
 }
