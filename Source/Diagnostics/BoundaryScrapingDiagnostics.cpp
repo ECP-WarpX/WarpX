@@ -1,4 +1,4 @@
-/* Copyright 2021 Revathi Jambunathan
+/* Copyright 2022 Remi Lehe
  *
  * This file is part of WarpX.
  *
@@ -42,4 +42,15 @@ BoundaryScrapingDiagnostics::BoundaryScrapingDiagnostics (int i, std::string nam
     : Diagnostics(i, name)
 {
     ReadParameters();
+}
+
+void
+BoundaryScrapingDiagnostics::ReadParameters ()
+{
+    BaseReadParameters();
+
+    // Modify some of the quantities that were initialized by default
+    // in the function `BaseReadParameters`
+    m_varnames_fields = {}; // No fields in boundary scraping diagnostics
+
 }
