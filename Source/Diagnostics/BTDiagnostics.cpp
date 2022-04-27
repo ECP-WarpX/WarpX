@@ -16,6 +16,7 @@
 #include "Parallelization/WarpXCommUtil.H"
 #include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
 #include "Utils/CoarsenIO.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
@@ -120,23 +121,23 @@ BTDiagnostics::ReadParameters ()
     BaseReadParameters();
     auto & warpx = WarpX::GetInstance();
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.gamma_boost > 1.0_rt,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.gamma_boost > 1.0_rt,
         "gamma_boost must be > 1 to use the back-transformed diagnostics");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.boost_direction[2] == 1,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.boost_direction[2] == 1,
         "The back transformed diagnostics currently only works if the boost is in the z-direction");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.do_moving_window,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.do_moving_window,
            "The moving window should be on if using the boosted frame diagnostic.");
     // The next two asserts could be relaxed with respect to check to current step
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.end_moving_window_step < 0,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.end_moving_window_step < 0,
         "The moving window must not stop when using the boosted frame diagnostic.");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.start_moving_window_step == 0,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.start_moving_window_step == 0,
         "The moving window must start at step zero for the boosted frame diagnostic.");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.moving_window_dir == WARPX_ZINDEX,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.moving_window_dir == WARPX_ZINDEX,
            "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd",
         "<diag>.format must be plotfile or openpmd for back transformed diagnostics");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_crse_ratio == amrex::IntVect(1),
         "Only support for coarsening ratio of 1 in all directions is included for BTD\n"
         );
@@ -149,7 +150,7 @@ BTDiagnostics::ReadParameters ()
     pp_diag_name.query("do_back_transformed_fields", m_do_back_transformed_fields);
     pp_diag_name.query("do_back_transformed_particles", m_do_back_transformed_particles);
     AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_back_transformed_fields, " fields must be turned on for the new back-transformed diagnostics");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_back_transformed_fields, " fields must be turned on for the new back-transformed diagnostics");
     if (m_do_back_transformed_fields == false) m_varnames.clear();
 
     getWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
@@ -162,7 +163,7 @@ BTDiagnostics::ReadParameters ()
         m_dt_snapshots_lab = m_dz_snapshots_lab/PhysConst::c;
         snapshot_interval_is_specified = true;
     }
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
 
     if (queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
@@ -266,7 +267,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
         // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
         if ( hi[idim] <= lo[idim] ) {
              hi[idim]  = lo[idim] + 1;
-             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 m_crse_ratio[idim]==1, "coarsening ratio in reduced dimension must be 1."
              );
         }
@@ -365,8 +366,8 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     ba.coarsen(m_crse_ratio);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     int ngrow = 1;
-    m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap,
-                                     m_cellcenter_varnames.size(), ngrow);
+    int ncomps = static_cast<int>(m_cellcenter_varnames.size());
+    m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap, ncomps, ngrow);
 
 }
 
@@ -393,9 +394,10 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     {
         // coarsening ratio is not provided since the source MultiFab, m_cell_centered_data
         // is coarsened based on the user-defined m_crse_ratio
+        int nvars = static_cast<int>(m_varnames.size());
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
                   m_cell_centered_data[lev].get(), lev,
-                  m_varnames.size(), m_num_buffers, m_varnames);
+                  nvars, m_num_buffers, m_varnames);
     }
 
     // Define all cell-centered functors required to compute cell-centere data
@@ -504,7 +506,6 @@ BTDiagnostics::PrepareFieldDataForOutput ()
     }
 
     int num_BT_functors = 1;
-
     for (int lev = 0; lev < nlev_output; ++lev)
     {
         for (int i = 0; i < num_BT_functors; ++i)
@@ -708,6 +709,10 @@ BTDiagnostics::Flush (int i_buffer)
     bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
+
+    // Redistribute particles in the lab frame box arrays that correspond to the buffer
+    RedistributeParticleBuffer(i_buffer);
+
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
@@ -730,6 +735,13 @@ BTDiagnostics::Flush (int i_buffer)
     }
 }
 
+void BTDiagnostics::RedistributeParticleBuffer (const int i_buffer)
+{
+    for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
+        m_particles_buffer[i_buffer][isp]->Redistribute();
+    }
+}
+
 void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
 {
     // Make sure all MPI ranks wrote their files and closed it
@@ -740,6 +752,12 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
 
     auto & warpx = WarpX::GetInstance();
     const amrex::Vector<int> iteration = warpx.getistep();
+    // number of digits for plotfile containing multifab data (Cell_D_XXXXX)
+    // the digits here are "multifab ids" (independent of the step) and thus always small
+    const int amrex_fabfile_digits = 5;
+    // number of digits for plotfile containing particle data (DATA_XXXXX)
+    // the digits here are fab ids that the particles belong to (independent of the step) and thus always small
+    const int amrex_partfile_digits = 5;
     if (amrex::ParallelContext::IOProcessorSub()) {
         // Path to final snapshot plotfiles
         std::string snapshot_path = amrex::Concatenate(m_file_prefix, i_snapshot, m_file_min_digits);
@@ -785,10 +803,13 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             std::string recent_Buffer_FabFilename = recent_Buffer_Level0_path + "/"
                                                   + Buffer_FabHeader.FabName(0);
             // Existing snapshot Fab Header Filename
+            // Cell_D_<number> is padded with 5 zeros as that is the default AMReX output
+            // The number is the multifab ID here.
             std::string snapshot_FabHeaderFilename = snapshot_Level0_path + "/Cell_H";
-            std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_",m_buffer_flush_counter[i_snapshot], m_file_min_digits);
+            std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_", m_buffer_flush_counter[i_snapshot], amrex_fabfile_digits);
             // Name of the newly appended fab in the snapshot
-            std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_",m_buffer_flush_counter[i_snapshot],m_file_min_digits);
+            // Cell_D_<number> is padded with 5 zeros as that is the default AMReX output
+            std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_", m_buffer_flush_counter[i_snapshot], amrex_fabfile_digits);
 
             if ( m_buffer_flush_counter[i_snapshot] == 0) {
                 std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
@@ -820,10 +841,12 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                                                      m_output_species_names[i]);
             BufferSpeciesHeader.ReadHeader();
             // only one box is flushed out at a time
+            // DATA_<number> is padded with 5 zeros as that is the default AMReX output for plotfile
+            // The number is the ID of the multifab that the particles belong to.
             std::string recent_ParticleDataFilename = amrex::Concatenate(
                 recent_species_prefix + "/Level_0/DATA_",
                 BufferSpeciesHeader.m_which_data[0][0],
-                m_file_min_digits);
+                amrex_partfile_digits);
             // Path to snapshot particle files
             std::string snapshot_species_path = snapshot_path + "/" + m_output_species_names[i];
             std::string snapshot_species_Level0path = snapshot_species_path + "/Level_0";
@@ -832,7 +855,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             std::string snapshot_ParticleDataFilename = amrex::Concatenate(
                 snapshot_species_Level0path + "/DATA_",
                 m_buffer_flush_counter[i_snapshot],
-                m_file_min_digits);
+                amrex_partfile_digits);
 
             if (m_buffer_flush_counter[i_snapshot] == 0) {
                 BufferSpeciesHeader.set_DataIndex(0,0,m_buffer_flush_counter[i_snapshot]);
@@ -1027,7 +1050,6 @@ BTDiagnostics::InitializeParticleBuffer ()
 void
 BTDiagnostics::PrepareParticleDataForOutput()
 {
-
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev < nlev_output; ++lev) {
         for (int i = 0; i < m_all_particle_functors.size(); ++i)

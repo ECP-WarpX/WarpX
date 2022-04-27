@@ -32,6 +32,7 @@
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/IonizationEnergiesTable.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -257,16 +258,15 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false
-    WarpXUtilMsg::AlwaysAssert(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !(do_classical_radiation_reaction &&
         !(AmIA<PhysicalSpecies::electron>() ||
         AmIA<PhysicalSpecies::positron>() )),
-        "ERROR: can't enable classical radiation reaction for non lepton species '"
-        + species_name + "'."
-    );
+        "can't enable classical radiation reaction for non lepton species '"
+            + species_name + "'.");
 
     //Only Boris pusher is compatible with radiation reaction
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !(do_classical_radiation_reaction &&
         WarpX::particle_pusher_algo != ParticlePusherAlgo::Boris),
         "Radiation reaction can be enabled only if Boris pusher is used");
@@ -341,18 +341,6 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     bool flag = false;
     pp_boundary.query("reflect_all_velocities", flag);
     m_boundary_conditions.Set_reflect_all_velocities(flag);
-
-    // Get Galilean velocity
-    ParmParse pp_psatd("psatd");
-    bool use_default_v_galilean = false;
-    pp_psatd.query("use_default_v_galilean", use_default_v_galilean);
-    if (use_default_v_galilean) {
-        m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (WarpX::gamma_boost * WarpX::gamma_boost));
-    } else {
-        queryArrWithParser(pp_psatd, "v_galilean", m_v_galilean, 0, 3);
-    }
-    // Scale the Galilean velocity by the speed of light
-    for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
 }
 
@@ -535,7 +523,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 #ifdef WARPX_USE_OPENPMD
     //TODO: Make changes for read/write in multiple MPI ranks
     if (ParallelDescriptor::IOProcessor()) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(plasma_injector,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(plasma_injector,
                                          "AddPlasmaFromFile: plasma injector not initialized.\n");
         // take ownership of the series and close it when done
         auto series = std::move(plasma_injector->m_openpmd_input_series);
@@ -896,8 +884,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        WarpXUtilMsg::AlwaysAssert(static_cast<Long>(pid + max_new_particles) < LastParticleID,
-                                   "ERROR: overflow on particle id numbers");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            static_cast<Long>(pid + max_new_particles) < LastParticleID,
+            "ERROR: overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
 
@@ -1427,8 +1416,9 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        WarpXUtilMsg::AlwaysAssert(static_cast<Long>(pid + max_new_particles) < LastParticleID,
-                                   "ERROR: overflow on particle id numbers");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            static_cast<Long>(pid + max_new_particles) < LastParticleID,
+            "overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
 
@@ -1605,7 +1595,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 }
 #endif
 
-                Real weight = dens * scale_fac * dt * num_ppc_real / pcounts[index];
+                Real weight = dens * scale_fac * dt;
 #ifdef WARPX_DIM_RZ
                 // The particle weight is proportional to the user-specified
                 // flux (denoted as `dens` here) and the emission surface within
@@ -1862,10 +1852,12 @@ PhysicalParticleContainer::Evolve (int lev,
 
                 WARPX_PROFILE_VAR_STOP(blp_fg);
 
-                //
                 // Current Deposition
-                //
-                if (! skip_deposition) {
+                if (skip_deposition == false)
+                {
+                    // Deposit at t_{n+1/2}
+                    amrex::Real relative_time = -0.5_rt * dt;
+
                     int* AMREX_RESTRICT ion_lev;
                     if (do_field_ionization){
                         ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
@@ -1875,12 +1867,14 @@ PhysicalParticleContainer::Evolve (int lev,
                     // Deposit inside domains
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                    0, np_current, thread_num,
-                                   lev, lev, dt, -0.5_rt); // Deposit current at t_{n+1/2}
-                    if (has_buffer){
+                                   lev, lev, dt, relative_time);
+
+                    if (has_buffer)
+                    {
                         // Deposit in buffers
                         DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                        np_current, np-np_current, thread_num,
-                                       lev, lev-1, dt, -0.5_rt);  // Deposit current at t_{n+1/2}
+                                       lev, lev-1, dt, relative_time);
                     }
                 } // end of "if do_electrostatic == ElectrostaticSolverAlgo::None"
             } // end of "if do_not_push"
@@ -2221,7 +2215,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const auto getExternalEB = GetExternalEBField(pti);
 
-            const auto& xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box,m_v_galilean,lev);
+            const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
 
             const Dim3 lo = lbound(box);
 
@@ -2546,7 +2540,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                    amrex::Real dt, ScaleFields scaleFields,
                                    DtType a_dt_type)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
                                      (gather_lev==(lev  )),
                                      "Gather buffers only work for lev-1");
     // If no particles, do not do anything
@@ -2574,14 +2568,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const auto getExternalEB = GetExternalEBField(pti, offset);
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
-    Real cur_time = WarpX::GetInstance().gett_new(lev);
-    const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
-    Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift ={
-        m_v_galilean[0]*time_shift,
-        m_v_galilean[1]*time_shift,
-        m_v_galilean[2]*time_shift };
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, gather_lev);
+    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev, 0._rt);
 
     const Dim3 lo = lbound(box);
 
@@ -2611,11 +2598,14 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr() + offset;
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr() + offset;
 
-    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
     int do_copy = ( (WarpX::do_back_transformed_diagnostics
                      && do_back_transformed_diagnostics
                      && a_dt_type!=DtType::SecondHalf)
                   || (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf)) );
+    CopyParticleAttribs copyAttribs;
+    if (do_copy) {
+        copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
+    }
 
     int* AMREX_RESTRICT ion_lev = nullptr;
     if (do_field_ionization) {
@@ -2795,7 +2785,6 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
     WARPX_PROFILE("PhysicalParticleContainer::getIonizationFunc()");
 
     return IonizationFilterFunc(pti, lev, ngEB, Ex, Ey, Ez, Bx, By, Bz,
-                                m_v_galilean,
                                 ionization_energies.dataPtr(),
                                 adk_prefactor.dataPtr(),
                                 adk_exp_prefactor.dataPtr(),
@@ -2822,7 +2811,7 @@ void PhysicalParticleContainer::resample (const int timestep)
     WARPX_PROFILE_VAR_START(blp_resample_actual);
     if (m_resampler.triggered(timestep, global_numparts))
     {
-        amrex::Print() << "Resampling " << species_name << ".\n";
+        amrex::Print() << Utils::TextMsg::Info("Resampling " + species_name);
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)

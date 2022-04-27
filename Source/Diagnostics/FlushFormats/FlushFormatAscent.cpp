@@ -1,6 +1,7 @@
 #include "FlushFormatAscent.H"
 
 #include "WarpX.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
@@ -96,7 +97,7 @@ FlushFormatAscent::WriteParticles(const amrex::Vector<ParticleDiag>& particle_di
             for (; rvn_it != real_comps_map.end(); ++rvn_it)
                 if (rvn_it->second == j)
                     break;
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 rvn_it != real_comps_map.end(),
                 "Ascent: SoA real attribute not found");
             std::string varname = rvn_it->first;

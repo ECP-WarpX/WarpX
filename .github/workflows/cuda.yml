@@ -106,11 +106,11 @@ jobs:
         which nvcc || echo "nvcc not in PATH!"
 
         git clone https://github.com/AMReX-Codes/amrex.git ../amrex
-        cd amrex && git checkout --detach 6bbcbbb7829902e9038bee8c28be09800b22aab2 && cd -
+        cd amrex && git checkout --detach 329f81b889a6ece31c67b1b70f207d6c6b2463b6 && cd -
         make COMP=gcc QED=FALSE USE_MPI=TRUE USE_GPU=TRUE USE_OMP=FALSE USE_PSATD=TRUE USE_CCACHE=TRUE -j 2
 
-  build_nvhpc21-9-nvcc:
-    name: NVHPC@21.9 NVCC/NVC++ Release [tests]
+  build_nvhpc21-11-nvcc:
+    name: NVHPC@21.11 NVCC/NVC++ Release [tests]
     runs-on: ubuntu-20.04
     if: github.event.pull_request.draft == false
     env:
@@ -139,7 +139,7 @@ jobs:
     - name: Build & Install
       run: |
         source /etc/profile.d/modules.sh
-        module load /opt/nvidia/hpc_sdk/modulefiles/nvhpc/21.9
+        module load /opt/nvidia/hpc_sdk/modulefiles/nvhpc/21.11
         which nvcc || echo "nvcc not in PATH!"
         which nvc++ || echo "nvc++ not in PATH!"
         which nvc || echo "nvc not in PATH!"

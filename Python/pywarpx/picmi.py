@@ -21,7 +21,7 @@ picmistandard.register_codename(codename)
 
 # dictionary to map field boundary conditions from picmistandard to WarpX
 BC_map = {
-    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped', 'none':'none'
+    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped', 'none':'none', None:'none'
 }
 
 class constants:
@@ -360,9 +360,9 @@ class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
         species.multiple_particles_pos_x = self.x
         species.multiple_particles_pos_y = self.y
         species.multiple_particles_pos_z = self.z
-        species.multiple_particles_vel_x = self.ux/constants.c
-        species.multiple_particles_vel_y = self.uy/constants.c
-        species.multiple_particles_vel_z = self.uz/constants.c
+        species.multiple_particles_vel_x = np.array(self.ux)/constants.c
+        species.multiple_particles_vel_y = np.array(self.uy)/constants.c
+        species.multiple_particles_vel_z = np.array(self.uz)/constants.c
         species.multiple_particles_weight = self.weight
         if density_scale is not None:
             species.multiple_particles_weight = self.weight*density_scale
@@ -437,15 +437,15 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
 
         assert self.lower_bound[0] >= 0., Exception('Lower radial boundary must be >= 0.')
-        assert self.bc_rmin != 'periodic' and self.bc_rmax != 'periodic', Exception('Radial boundaries can not be periodic')
+        assert self.lower_boundary_conditions[0] != 'periodic' and self.upper_boundary_conditions[0] != 'periodic', Exception('Radial boundaries can not be periodic')
 
         pywarpx.warpx.n_rz_azimuthal_modes = self.n_azimuthal_modes
 
         # Boundary conditions
-        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_rmin, self.bc_zmin]]
-        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_rmax, self.bc_zmax]]
-        pywarpx.boundary.particle_lo = [self.bc_rmin_particles, self.bc_zmin_particles]
-        pywarpx.boundary.particle_hi = [self.bc_rmax_particles, self.bc_zmax_particles]
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in self.lower_boundary_conditions]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
+        pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
+        pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -499,10 +499,10 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         pywarpx.amr.blocking_factor_x = self.blocking_factor_x
 
         # Boundary conditions
-        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin]]
-        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax]]
-        pywarpx.boundary.particle_lo = [self.bc_xmin_particles]
-        pywarpx.boundary.particle_hi = [self.bc_xmax_particles]
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in self.lower_boundary_conditions]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
+        pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
+        pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -556,10 +556,10 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
 
         # Boundary conditions
-        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin, self.bc_ymin]]
-        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax, self.bc_ymax]]
-        pywarpx.boundary.particle_lo = [self.bc_xmin_particles, self.bc_ymin_particles]
-        pywarpx.boundary.particle_hi = [self.bc_xmax_particles, self.bc_ymax_particles]
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in self.lower_boundary_conditions]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
+        pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
+        pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -621,14 +621,10 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         pywarpx.amr.blocking_factor_z = self.blocking_factor_z
 
         # Boundary conditions
-        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin, self.bc_ymin, self.bc_zmin]]
-        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax, self.bc_ymax, self.bc_zmax]]
-        pywarpx.boundary.particle_lo = [
-            self.bc_xmin_particles, self.bc_ymin_particles, self.bc_zmin_particles
-        ]
-        pywarpx.boundary.particle_hi = [
-            self.bc_xmax_particles, self.bc_ymax_particles, self.bc_zmax_particles
-        ]
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in self.lower_boundary_conditions]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
+        pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
+        pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -757,6 +753,7 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
         self.laser.polarization = self.polarization_direction  # The main polarization vector
         self.laser.profile_waist = self.waist  # The waist of the laser (in meters)
         self.laser.profile_duration = self.duration  # The duration of the laser (in seconds)
+        self.laser.direction = self.propagation_direction
         self.laser.zeta = self.zeta
         self.laser.beta = self.beta
         self.laser.phi2 = self.phi2
@@ -779,6 +776,7 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
         self.laser.wavelength = self.wavelength  # The wavelength of the laser (in meters)
         self.laser.e_max = self.Emax  # Maximum amplitude of the laser field (in V/m)
         self.laser.polarization = self.polarization_direction  # The main polarization vector
+        self.laser.direction = self.propagation_direction
         self.laser.do_continuous_injection = self.fill_in
 
         if self.mangle_dict is None:
@@ -955,6 +953,38 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
             pywarpx.warpx.__setattr__('eb_potential(x,y,z,t)', expression)
 
 
+class PlasmaLens(picmistandard.base._ClassWithInit):
+    """
+    Custom class to setup a plasma lens lattice.
+    The applied fields are dependent on the transverse position
+      - Ex = x*stengths_E
+      - Ey = y*stengths_E
+      - Bx = +y*stengths_B
+      - By = -x*stengths_B
+    """
+    def __init__(self, period, starts, lengths, strengths_E=None, strengths_B=None, **kw):
+        self.period = period
+        self.starts = starts
+        self.lengths = lengths
+        self.strengths_E = strengths_E
+        self.strengths_B = strengths_B
+
+        assert (self.strengths_E is not None) or (self.strengths_B is not None),\
+               Exception('One of strengths_E or strengths_B must be supplied')
+
+        self.handle_init(kw)
+
+    def initialize_inputs(self):
+
+        pywarpx.particles.E_ext_particle_init_style = 'repeated_plasma_lens'
+        pywarpx.particles.B_ext_particle_init_style = 'repeated_plasma_lens'
+        pywarpx.particles.repeated_plasma_lens_period = self.period
+        pywarpx.particles.repeated_plasma_lens_starts = self.starts
+        pywarpx.particles.repeated_plasma_lens_lengths = self.lengths
+        pywarpx.particles.repeated_plasma_lens_strengths_E = self.strengths_E
+        pywarpx.particles.repeated_plasma_lens_strengths_B = self.strengths_B
+
+
 class Simulation(picmistandard.PICMI_Simulation):
 
     # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
@@ -984,6 +1014,9 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
+
+        self.break_signals = kw.pop('warpx_break_signals', None)
+        self.checkpoint_signals = kw.pop('warpx_checkpoint_signals', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -1022,6 +1055,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 
         pywarpx.amr.check_input = self.amr_check_input
+
+        pywarpx.warpx.break_signals = self.break_signals
+        pywarpx.warpx.checkpoint_signals = self.checkpoint_signals
 
         particle_shape = self.particle_shape
         for s in self.species:
@@ -1144,44 +1180,45 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
 
-        for dataname in self.data_list:
-            if dataname == 'E':
-                fields_to_plot.add('Ex')
-                fields_to_plot.add('Ey')
-                fields_to_plot.add('Ez')
-            elif dataname == 'B':
-                fields_to_plot.add('Bx')
-                fields_to_plot.add('By')
-                fields_to_plot.add('Bz')
-            elif dataname == 'J':
-                fields_to_plot.add('jx')
-                fields_to_plot.add('jy')
-                fields_to_plot.add('jz')
-            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
-                fields_to_plot.add(dataname)
-            elif dataname in ['Jx', 'Jy', 'Jz']:
-                fields_to_plot.add(dataname.lower())
-            elif dataname.startswith('rho_'):
-                # Adds rho_species diagnostic
-                fields_to_plot.add(dataname)
-            elif dataname == 'dive':
-                fields_to_plot.add('divE')
-            elif dataname == 'divb':
-                fields_to_plot.add('divB')
-            elif dataname == 'raw_fields':
-                self.plot_raw_fields = 1
-            elif dataname == 'raw_fields_guards':
-                self.plot_raw_fields_guards = 1
-            elif dataname == 'finepatch':
-                self.plot_finepatch = 1
-            elif dataname == 'crsepatch':
-                self.plot_crsepatch = 1
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'E':
+                    fields_to_plot.add('Ex')
+                    fields_to_plot.add('Ey')
+                    fields_to_plot.add('Ez')
+                elif dataname == 'B':
+                    fields_to_plot.add('Bx')
+                    fields_to_plot.add('By')
+                    fields_to_plot.add('Bz')
+                elif dataname == 'J':
+                    fields_to_plot.add('jx')
+                    fields_to_plot.add('jy')
+                    fields_to_plot.add('jz')
+                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+                    fields_to_plot.add(dataname)
+                elif dataname in ['Jx', 'Jy', 'Jz']:
+                    fields_to_plot.add(dataname.lower())
+                elif dataname.startswith('rho_'):
+                    # Adds rho_species diagnostic
+                    fields_to_plot.add(dataname)
+                elif dataname == 'dive':
+                    fields_to_plot.add('divE')
+                elif dataname == 'divb':
+                    fields_to_plot.add('divB')
+                elif dataname == 'raw_fields':
+                    self.plot_raw_fields = 1
+                elif dataname == 'raw_fields_guards':
+                    self.plot_raw_fields_guards = 1
+                elif dataname == 'finepatch':
+                    self.plot_finepatch = 1
+                elif dataname == 'crsepatch':
+                    self.plot_crsepatch = 1
 
-        # --- Convert the set to a sorted list so that the order
-        # --- is the same on all processors.
-        fields_to_plot = list(fields_to_plot)
-        fields_to_plot.sort()
-        self.diagnostic.fields_to_plot = fields_to_plot
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            fields_to_plot = list(fields_to_plot)
+            fields_to_plot.sort()
+            self.diagnostic.fields_to_plot = fields_to_plot
 
         self.diagnostic.plot_raw_fields = self.plot_raw_fields
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
@@ -1279,30 +1316,31 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()
 
-        for dataname in self.data_list:
-            if dataname == 'position':
-                # --- The positions are alway written out anyway
-                pass
-            elif dataname == 'momentum':
-                variables.add('ux')
-                variables.add('uy')
-                variables.add('uz')
-            elif dataname == 'weighting':
-                variables.add('w')
-            elif dataname == 'fields':
-                variables.add('Ex')
-                variables.add('Ey')
-                variables.add('Ez')
-                variables.add('Bx')
-                variables.add('By')
-                variables.add('Bz')
-            elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
-                variables.add(dataname)
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'position':
+                    # --- The positions are alway written out anyway
+                    pass
+                elif dataname == 'momentum':
+                    variables.add('ux')
+                    variables.add('uy')
+                    variables.add('uz')
+                elif dataname == 'weighting':
+                    variables.add('w')
+                elif dataname == 'fields':
+                    variables.add('Ex')
+                    variables.add('Ey')
+                    variables.add('Ez')
+                    variables.add('Bx')
+                    variables.add('By')
+                    variables.add('Bz')
+                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
+                    variables.add(dataname)
 
-        # --- Convert the set to a sorted list so that the order
-        # --- is the same on all processors.
-        variables = list(variables)
-        variables.sort()
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            variables = list(variables)
+            variables.sort()
 
         if np.iterable(self.species):
             species_list = self.species
@@ -1399,32 +1437,33 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
 
-        for dataname in self.data_list:
-            if dataname == 'E':
-                fields_to_plot.add('Ex')
-                fields_to_plot.add('Ey')
-                fields_to_plot.add('Ez')
-            elif dataname == 'B':
-                fields_to_plot.add('Bx')
-                fields_to_plot.add('By')
-                fields_to_plot.add('Bz')
-            elif dataname == 'J':
-                fields_to_plot.add('jx')
-                fields_to_plot.add('jy')
-                fields_to_plot.add('jz')
-            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho']:
-                fields_to_plot.add(dataname)
-            elif dataname in ['Jx', 'Jy', 'Jz']:
-                fields_to_plot.add(dataname.lower())
-            elif dataname.startswith('rho_'):
-                # Adds rho_species diagnostic
-                fields_to_plot.add(dataname)
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'E':
+                    fields_to_plot.add('Ex')
+                    fields_to_plot.add('Ey')
+                    fields_to_plot.add('Ez')
+                elif dataname == 'B':
+                    fields_to_plot.add('Bx')
+                    fields_to_plot.add('By')
+                    fields_to_plot.add('Bz')
+                elif dataname == 'J':
+                    fields_to_plot.add('jx')
+                    fields_to_plot.add('jy')
+                    fields_to_plot.add('jz')
+                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho']:
+                    fields_to_plot.add(dataname)
+                elif dataname in ['Jx', 'Jy', 'Jz']:
+                    fields_to_plot.add(dataname.lower())
+                elif dataname.startswith('rho_'):
+                    # Adds rho_species diagnostic
+                    fields_to_plot.add(dataname)
 
-        # --- Convert the set to a sorted list so that the order
-        # --- is the same on all processors.
-        fields_to_plot = list(fields_to_plot)
-        fields_to_plot.sort()
-        self.diagnostic.fields_to_plot = fields_to_plot
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            fields_to_plot = list(fields_to_plot)
+            fields_to_plot.sort()
+            self.diagnostic.fields_to_plot = fields_to_plot
 
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
