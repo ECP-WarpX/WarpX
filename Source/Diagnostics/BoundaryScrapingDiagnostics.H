@@ -12,12 +12,12 @@
 #include <string>
 
 class
-BTDiagnostics final : public Diagnostics
+BoundaryScrapingDiagnostics final : public Diagnostics
 {
 public:
-    BTDiagnostics (int i, std::string name);
+    BoundaryScrapingDiagnostics (int i, std::string name);
 private:
-    /** Read relevant parameters for BTD */
+    /** Read relevant parameters for BoundaryScraping */
     void ReadParameters ();
     /** \brief Flush particles to file. */
     void Flush (int i_buffer) override;
@@ -153,7 +153,7 @@ private:
      *  the respective levels. This geometry will be used to integrate all
      *  the buffers that were dumped out with partial field data
      *  in the back-transformed frame at a particle snapshot, t_lab.
-     *  WriteToFile() for BTD will include this additional geometry information
+     *  WriteToFile() for BoundaryScraping will include this additional geometry information
      *  to guide the integration process.
      */
     amrex::Vector< amrex::Vector <amrex::Geometry> > m_geom_snapshot;
