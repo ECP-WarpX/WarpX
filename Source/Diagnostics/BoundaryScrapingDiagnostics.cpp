@@ -16,4 +16,3 @@ BoundaryScrapingDiagnostics::BoundaryScrapingDiagnostics (int i, std::string nam
 {
     ReadParameters();
 }
-
