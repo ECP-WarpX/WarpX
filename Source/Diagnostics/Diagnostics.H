@@ -152,6 +152,8 @@ protected:
     amrex::Vector< std::string > m_pfield_varnames;
     /** Names of species for which to output average particle fields */
     std::vector< std::string > m_pfield_species;
+    /** Whether to do averaging for each of the particle properties */
+    std::vector< int > m_pfield_do_average;
     /** Species indices corresponding to elements of m_pfield_varnames */
     std::vector< int > m_pfield_species_index;
     /** Map connecting particle field variable names to the corresponding parser strings */

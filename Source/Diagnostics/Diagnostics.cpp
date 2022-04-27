@@ -117,6 +117,9 @@ Diagnostics::BaseReadParameters ()
     bool do_parser_filter;
     amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
+        bool do_average = true;
+        pp_diag_pfield.query((var + ".do_average").c_str(), do_average);
+        m_pfield_do_average.push_back(do_average);
         Store_parserString(pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)").c_str(), parser_str);
         if (parser_str != "") {
             m_pfield_strings.insert({var, parser_str});
