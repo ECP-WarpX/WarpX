@@ -478,6 +478,7 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
     }
 }
 
+#if defined(BL_USE_FLOAT) != defined(AMREX_SINGLE_PRECISION_PARTICLES)
 void
 getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::ParticleReal>& val,
                     const int start_ix, const int num_val)
@@ -492,6 +493,7 @@ getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vec
         val[i] = static_cast<amrex::Real>(parseStringtoReal(tmp_str_arr[i]));
     }
 }
+#endif
 
 int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
     amrex::Real rval;

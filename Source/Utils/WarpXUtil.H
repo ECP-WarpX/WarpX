@@ -328,9 +328,11 @@ void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
                        const int start_ix = amrex::ParmParse::FIRST,
                        const int num_val = amrex::ParmParse::LAST);
+#if defined(BL_USE_FLOAT) != defined(AMREX_SINGLE_PRECISION_PARTICLES)
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::ParticleReal>& val,
                        const int start_ix = amrex::ParmParse::FIRST,
                        const int num_val = amrex::ParmParse::LAST);
+#endif
 void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val);
 void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
                        const int start_ix = amrex::ParmParse::FIRST,

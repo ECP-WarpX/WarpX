@@ -42,6 +42,7 @@ void UpdatePosition(amrex::Real& x, amrex::Real& y, amrex::Real& z,
     z += uz * inv_gamma * dt;
 }
 
+#if defined(BL_USE_FLOAT) != defined(AMREX_SINGLE_PRECISION_PARTICLES)
 /** \brief Push the particle's positions over one timestep,
  *    given the value of its momenta `ux`, `uy`, `uz` */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -68,5 +69,6 @@ void UpdatePosition(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::Parti
 #endif
     z += uz * inv_gamma * dt;
 }
+#endif // defined(BL_USE_FLOAT) != defined(AMREX_SINGLE_PRECISION_PARTICLES)
 
 #endif // WARPX_PARTICLES_PUSHER_UPDATEPOSITION_H_
