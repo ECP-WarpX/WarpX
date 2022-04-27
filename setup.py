@@ -101,7 +101,7 @@ class CMakeBuild(build_ext):
             '-DWarpX_EB:BOOL=' + WARPX_EB,
             '-DWarpX_OPENPMD:BOOL=' + WARPX_OPENPMD,
             '-DWarpX_PRECISION=' + WARPX_PRECISION,
-            '-DWarpX_PARTICLE_PRECISION=' + WARPX_PARTICLE_PRECISION
+            '-DWarpX_PARTICLE_PRECISION=' + WARPX_PARTICLE_PRECISION,
             '-DWarpX_PSATD:BOOL=' + WARPX_PSATD,
             '-DWarpX_QED:BOOL=' + WARPX_QED,
             '-DWarpX_QED_TABLE_GEN:BOOL=' + WARPX_QED_TABLE_GEN,
