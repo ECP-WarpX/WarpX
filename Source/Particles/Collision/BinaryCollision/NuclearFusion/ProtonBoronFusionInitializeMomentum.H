@@ -87,16 +87,10 @@ namespace {
         constexpr amrex::ParticleReal E_rest_abe = (m_alpha + m_beryllium)*c_sq;
 
         // These constexprs underflow in single precision because we use SI units, which can cause
-        // compilation to fail or generate a warning. Nuclear fusion module does not currently work
-        // with single precision anyways so this #ifdef is here to make sure that compilation
-        // always succeeds with single precision.
-#ifdef AMREX_SINGLE_PRECISION_PARTICLES
-        constexpr amrex::ParticleReal ma_sq = std::numeric_limits<amrex::ParticleReal>::min();
-        constexpr amrex::ParticleReal mBe_sq = std::numeric_limits<amrex::ParticleReal>::min();
-#else
-        constexpr amrex::ParticleReal ma_sq = m_alpha*m_alpha;
-        constexpr amrex::ParticleReal mBe_sq = m_beryllium*m_beryllium;
-#endif
+        // compilation to fail or generate a warning, so we're explicitly setting them as double.
+        // Note that nuclear fusion module does not currently work with single precision anyways.
+        constexpr double ma_sq = m_alpha*m_alpha;
+        constexpr double mBe_sq = m_beryllium*m_beryllium;
 
         // Normalized momentum of colliding particles (proton and boron)
         const amrex::ParticleReal u1x = soa_1.m_rdata[PIdx::ux][idx_1];
