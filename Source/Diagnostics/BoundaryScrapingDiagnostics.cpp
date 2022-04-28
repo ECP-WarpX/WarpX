@@ -55,11 +55,10 @@ BoundaryScrapingDiagnostics::ReadParameters ()
     // Modify some of the quantities that were initialized by default
     // in the function `BaseReadParameters`
     m_varnames_fields = {}; // No fields in boundary scraping diagnostics
-}
 
-void
-BoundaryScrapingDiagnostics::Flush (int /*i_buffer*/)
-{
+    // Number of buffers = 1 for BoundaryScrapingDiagnostics.
+    // (buffers are used in BTDiagnostics, and correspond to different snapshots)
+    m_num_buffers = 1;
 }
 
 void
@@ -67,24 +66,58 @@ BoundaryScrapingDiagnostics::InitializeFieldFunctors (int /*lev*/)
 {
 }
 
-bool
-BoundaryScrapingDiagnostics::DoComputeAndPack (int /*step*/, bool /*force_flush*/)
-{
-    return true;
-}
-
-bool
-BoundaryScrapingDiagnostics::DoDump (int /*step*/, int /*i_buffer*/, bool /*force_flush*/)
-{
-    return true;
-}
-
 void
 BoundaryScrapingDiagnostics::InitializeBufferData (int /*i_buffer*/, int /*lev*/)
 {
+    // This function is usually used for field output
+    // Nothing to do here for boundary scraping output, since it only outputs particles
 }
 
 void
 BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
 {
+    auto & warpx = WarpX::GetInstance();
+    const MultiParticleContainer& mpc = warpx.GetPartContainer();
+
+    // If the user does not specify any species, dump all species
+    if (m_output_species_names.empty()) {
+        m_output_species_names = mpc.GetSpeciesNames();
+    }
+
+    // Initialize one ParticleDiag per species requested
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        for (auto const& species : m_output_species_names){
+            const int idx = mpc.getSpeciesID(species);
+            m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species, mpc.GetParticleContainerPtr(idx)));
+        }
+    }
+}
+
+bool
+BoundaryScrapingDiagnostics::DoComputeAndPack (int /*step*/, bool /*force_flush*/)
+{
+
+    return false;
+}
+
+bool
+BoundaryScrapingDiagnostics::DoDump (int /*step*/, int /*i_buffer*/, bool force_flush)
+{
+    if (force_flush) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void
+BoundaryScrapingDiagnostics::Flush (int i_buffer)
+{
+    amrex::Print() << ">>> Flushing boundary scraping." << std::endl;
+    auto & warpx = WarpX::GetInstance();
+
+    m_flush_format->WriteToFile(
+        m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
+        warpx.gett_new(0), m_output_species[i_buffer], nlev_output, m_file_prefix,
+        m_file_min_digits, false, false);
 }

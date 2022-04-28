@@ -48,3 +48,4 @@ diag1.intervals = 1
 diag1.fields_to_plot = Ex
 
 diag2.diag_type = BoundaryScraping
+diag2.format = openpmd
