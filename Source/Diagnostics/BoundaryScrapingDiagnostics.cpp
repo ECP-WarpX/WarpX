@@ -6,7 +6,10 @@
  */
 
 #include "BoundaryScrapingDiagnostics.H"
+#include "ComputeDiagFunctors/BackTransformFunctor.H"
+#include "ComputeDiagFunctors/CellCenterFunctor.H"
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "ComputeDiagFunctors/RhoFunctor.H"
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "Parallelization/WarpXCommUtil.H"
@@ -52,5 +55,36 @@ BoundaryScrapingDiagnostics::ReadParameters ()
     // Modify some of the quantities that were initialized by default
     // in the function `BaseReadParameters`
     m_varnames_fields = {}; // No fields in boundary scraping diagnostics
+}
 
+void
+BoundaryScrapingDiagnostics::Flush (int /*i_buffer*/)
+{
+}
+
+void
+BoundaryScrapingDiagnostics::InitializeFieldFunctors (int /*lev*/)
+{
+}
+
+bool
+BoundaryScrapingDiagnostics::DoComputeAndPack (int /*step*/, bool /*force_flush*/)
+{
+    return true;
+}
+
+bool
+BoundaryScrapingDiagnostics::DoDump (int /*step*/, int /*i_buffer*/, bool /*force_flush*/)
+{
+    return true;
+}
+
+void
+BoundaryScrapingDiagnostics::InitializeBufferData (int /*i_buffer*/, int /*lev*/)
+{
+}
+
+void
+BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
+{
 }
