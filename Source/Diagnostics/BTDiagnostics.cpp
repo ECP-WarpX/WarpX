@@ -774,7 +774,7 @@ BTDiagnostics::Flush (int i_buffer)
         isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
 
- 
+
     for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
         // Buffer particle container reset to include geometry, dmap, Boxarray, and refratio
         // so that particles from finest level can also be selected and transformed
