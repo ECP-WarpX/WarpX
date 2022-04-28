@@ -1130,7 +1130,6 @@ BTDiagnostics::PrepareParticleDataForOutput()
                             amrex::BoxArray buffer_ba( particle_buffer_box );
                             buffer_ba.maxSize(m_max_box_size);
                             amrex::DistributionMapping buffer_dmap(buffer_ba);
-//                            m_particles_buffer[i_buffer][i]->SetParGDB(m_geom_snapshot[i_buffer][lev], buffer_dmap, buffer_ba);
                             m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
                             m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);
                             m_particles_buffer[i_buffer][i]->SetParticleGeometry(lev, m_geom_snapshot[i_buffer][lev]);
