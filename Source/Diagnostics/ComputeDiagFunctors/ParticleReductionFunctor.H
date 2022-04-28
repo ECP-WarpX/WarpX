@@ -26,6 +26,7 @@ public:
      * \param[in] fn_str parser string that describes the function to apply to particles
      *            and then average over each cell
      * \param[in] ispec index of the species over which to calculate the average
+     * \param[in] do_average Whether to do an average or a sum of the function
      * \param[in] do_filter Whether to apply a filter function to particles before averaging
      * \param[in] filter_str Parser string for filter function to apply before averaging
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
