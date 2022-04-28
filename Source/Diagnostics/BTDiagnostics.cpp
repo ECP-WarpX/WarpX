@@ -143,7 +143,7 @@ BTDiagnostics::ReadParameters ()
         "Only support for coarsening ratio of 1 in all directions is included for BTD\n"
         );
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        warpx.Geom(0).ProbHi(WARPX_ZINDEX) <= 0._rt,
+        warpx.Geom(0).ProbHi(WARPX_ZINDEX) == 0._rt,
         " The geometry.prob_hi of the boosted-frame domain in the moving window direction must be ==0.\n"
         );
 
@@ -545,6 +545,11 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                         }
                         DefineFieldBufferMultiFab(i_buffer, lev);
                     }
+                    if ( m_current_z_lab[i_buffer] < m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) ||
+                        m_current_z_lab[i_buffer] > m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir) )
+                   {
+                       amrex::Print() << " current zlab " << m_current_z_lab[i_buffer] << " lo : " << m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) << " hi " << m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir) << "\n";
+                   }
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                         m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
                         m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir),
@@ -739,6 +744,26 @@ BTDiagnostics::Flush (int i_buffer)
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
 
+    amrex::Vector<amrex::BoxArray> vba;
+    amrex::Vector<amrex::DistributionMapping> vdmap;
+    amrex::Vector<amrex::Geometry> vgeom;
+    amrex::Vector<amrex::IntVect> vrefratio;
+    if (m_particles_buffer.at(i_buffer).size() > 0) {
+        int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
+        for (int lev = 0 ; lev < nlevels; ++lev) {
+            // Store BoxArray, dmap, geometry, and refratio for every level
+            vba.push_back(m_particles_buffer[i_buffer][0]->ParticleBoxArray(lev));
+            vdmap.push_back(m_particles_buffer[i_buffer][0]->ParticleDistributionMap(lev));
+            vgeom.push_back(m_particles_buffer[i_buffer][0]->ParticleGeom(lev));
+            if (lev < nlevels - 1) {
+                vrefratio.push_back(m_particles_buffer[i_buffer][0]->GetParGDB()->refRatio(lev));
+            }
+        }
+        for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
+            // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
+            m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba[0]);
+        }
+    }
     // Redistribute particles in the lab frame box arrays that correspond to the buffer
     RedistributeParticleBuffer(i_buffer);
 
@@ -748,6 +773,13 @@ BTDiagnostics::Flush (int i_buffer)
         m_plot_raw_fields, m_plot_raw_fields_guards,
         isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
+
+ 
+    for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
+        // Buffer particle container reset to include geometry, dmap, Boxarray, and refratio
+        // so that particles from finest level can also be selected and transformed
+        m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom, vdmap, vba, vrefratio);
+    }
 
     if (m_format == "plotfile") {
         MergeBuffersForPlotfile(i_buffer);
@@ -1098,6 +1130,7 @@ BTDiagnostics::PrepareParticleDataForOutput()
                             amrex::BoxArray buffer_ba( particle_buffer_box );
                             buffer_ba.maxSize(m_max_box_size);
                             amrex::DistributionMapping buffer_dmap(buffer_ba);
+//                            m_particles_buffer[i_buffer][i]->SetParGDB(m_geom_snapshot[i_buffer][lev], buffer_dmap, buffer_ba);
                             m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
                             m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);
                             m_particles_buffer[i_buffer][i]->SetParticleGeometry(lev, m_geom_snapshot[i_buffer][lev]);
