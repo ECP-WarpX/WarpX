@@ -178,17 +178,15 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, const
         sigma_star_cumsum_fac[idim].m_hi = hi[idim]+1;
     }
 
-    v_sigma = v_sigma_sb;
-
     Array<Real,AMREX_SPACEDIM> fac;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         fac[idim] = 4.0_rt*PhysConst::c/(dx[idim]*static_cast<Real>(delta[idim]*delta[idim]));
     }
 
     if (regdomain.ok()) { // The union of the regular grids is a single box
-        define_single(regdomain, ncell, fac, v_sigma);
+        define_single(regdomain, ncell, fac, v_sigma_sb);
     } else {
-        define_multiple(box, grids, ncell, fac, v_sigma);
+        define_multiple(box, grids, ncell, fac, v_sigma_sb);
     }
 }
 
