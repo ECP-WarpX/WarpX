@@ -59,7 +59,7 @@ namespace
     static void FillLo (Sigma& sigma, Sigma& sigma_cumsum,
                         Sigma& sigma_star, Sigma& sigma_star_cumsum,
                         const int olo, const int ohi, const int glo, Real fac,
-                        amrex::Real v_sigma)
+                        const amrex::Real v_sigma)
     {
         const int slo = sigma.m_lo;
         const int sslo = sigma_star.m_lo;
@@ -88,7 +88,7 @@ namespace
     static void FillHi (Sigma& sigma, Sigma& sigma_cumsum,
                         Sigma& sigma_star, Sigma& sigma_star_cumsum,
                         const int olo, const int ohi, const int ghi, Real fac,
-                        amrex::Real v_sigma)
+                        const amrex::Real v_sigma)
     {
         const int slo = sigma.m_lo;
         const int sslo = sigma_star.m_lo;
@@ -141,7 +141,7 @@ namespace
 
 
 SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, const IntVect& ncell,
-                    const IntVect& delta, const amrex::Box& regdomain, amrex::Real v_sigma_sb)
+                    const IntVect& delta, const amrex::Box& regdomain, const amrex::Real v_sigma_sb)
 {
     BL_ASSERT(box.cellCentered());
 
@@ -192,7 +192,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, const
 
 void SigmaBox::define_single (const Box& regdomain, const IntVect& ncell,
                               const Array<Real,AMREX_SPACEDIM>& fac,
-                              amrex::Real v_sigma_sb)
+                              const amrex::Real v_sigma_sb)
 {
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         const int slo = sigma[idim].lo();
@@ -234,7 +234,7 @@ void SigmaBox::define_single (const Box& regdomain, const IntVect& ncell,
 }
 
 void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const IntVect& ncell,
-                                const Array<Real,AMREX_SPACEDIM>& fac, amrex::Real v_sigma_sb)
+                                const Array<Real,AMREX_SPACEDIM>& fac, const amrex::Real v_sigma_sb)
 {
     const std::vector<std::pair<int,Box> >& isects = grids.intersections(box, false, ncell);
 
@@ -495,7 +495,7 @@ SigmaBox::ComputePMLFactorsE (const Real* a_dx, Real dt)
 MultiSigmaBox::MultiSigmaBox (const BoxArray& ba, const DistributionMapping& dm,
                               const BoxArray& grid_ba, const Real* dx,
                               const IntVect& ncell, const IntVect& delta,
-                              const amrex::Box& regular_domain, amrex::Real v_sigma_sb)
+                              const amrex::Box& regular_domain, const amrex::Real v_sigma_sb)
     : FabArray<SigmaBox>(ba,dm,1,0,MFInfo(),
                          SigmaBoxFactory(grid_ba,dx,ncell,delta, regular_domain, v_sigma_sb))
 {}
@@ -539,10 +539,11 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
           int do_moving_window, int /*pml_has_particles*/, int do_pml_in_domain,
           const bool do_multi_J,
           const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
-          int max_guard_EB, amrex::Real v_sigma_sb,
+          int max_guard_EB, const amrex::Real v_sigma_sb,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
     : m_dive_cleaning(do_pml_dive_cleaning),
       m_divb_cleaning(do_pml_divb_cleaning),
+      m_v_sigma_sb(v_sigma_sb),
       m_geom(geom),
       m_cgeom(cgeom)
 {
@@ -717,7 +718,6 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     }
 
     Box single_domain_box = is_single_box_domain ? domain0 : Box();
-    amrex::Real m_v_sigma_sb = v_sigma_sb;
     // Empty box (i.e., Box()) means it's not a single box domain.
     sigba_fp = std::make_unique<MultiSigmaBox>(ba, dm, grid_ba_reduced, geom->CellSize(),
                                                IntVect(ncell), IntVect(delta), single_domain_box, m_v_sigma_sb);

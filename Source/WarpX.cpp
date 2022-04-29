@@ -855,6 +855,8 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_similar_dm_pml", do_similar_dm_pml);
         v_particle_pml = PhysConst::c;
         pp_warpx.query("v_particle_pml", v_particle_pml);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v_particle_pml > 0.7_rt, 
+            "input value for the velocity warpx.v_particle_pml of the macroparticle must be positive.");
 
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
         // false for FDTD solver, true for PSATD solver.
