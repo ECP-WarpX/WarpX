@@ -96,6 +96,10 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
             PinnedMemoryParticleContainer& eb_buffer = particle_buffer.getParticleBuffer(species_name, AMREX_SPACEDIM*2);
             m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species_name, nullptr, &eb_buffer));
         }
+        m_totalParticles_flushed_already[i_buffer].resize(m_output_species_names.size());
+        for (int i_species=0; i_species++; i_species<m_output_species_names.size()) {
+            m_totalParticles_flushed_already[i_buffer][i_species] = 0;
+        }
     }
 }
 
@@ -119,11 +123,20 @@ BoundaryScrapingDiagnostics::DoDump (int /*step*/, int /*i_buffer*/, bool force_
 void
 BoundaryScrapingDiagnostics::Flush (int i_buffer)
 {
-    amrex::Print() << ">>> Flushing boundary scraping." << std::endl;
     auto & warpx = WarpX::GetInstance();
 
+    // This is not a backtransform diagnostics, but we still set the flag `isBTD`
+    // This enables:
+    //   - writing the data that was accumulated in a PinnedMemoryParticleContainer
+    //   - writing repeatedly to the same file
+    bool const isBTD = true;
+    // TODO: Change once we repeatedly call this function throughout the simulation
+    bool const isLastBTD = true;
+    const amrex::Geometry& geom = warpx.Geom(0); // For compatibility with `WriteToFile` ; not used
+    
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        warpx.gett_new(0), m_output_species[i_buffer], nlev_output, m_file_prefix,
-        m_file_min_digits, false, false);
+        0., m_output_species[i_buffer], nlev_output, m_file_prefix,
+        m_file_min_digits, false, false, isBTD, i_buffer, geom,
+        isLastBTD, m_totalParticles_flushed_already[i_buffer]);
 }
