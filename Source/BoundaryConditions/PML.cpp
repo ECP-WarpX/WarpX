@@ -306,7 +306,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
                 FillLo(sigma[idim], sigma_cumsum[idim],
                        sigma_star[idim], sigma_star_cumsum[idim],
                        looverlap.smallEnd(idim), looverlap.bigEnd(idim),
-                       grid_box.smallEnd(idim), fac[idim], v_sigma);
+                       grid_box.smallEnd(idim), fac[idim], v_sigma_sb);
             }
 
             Box hibox = amrex::adjCellHi(grid_box, idim, ncell[idim]);
@@ -353,7 +353,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
                 FillLo(sigma[idim], sigma_cumsum[idim],
                        sigma_star[idim],  sigma_star_cumsum[idim],
                        looverlap.smallEnd(idim), looverlap.bigEnd(idim),
-                       grid_box.smallEnd(idim), fac[idim], v_sigma);
+                       grid_box.smallEnd(idim), fac[idim], v_sigma_sb);
             }
 
             Box hibox = amrex::adjCellHi(grid_box, idim, ncell[idim]);
@@ -400,7 +400,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
                 FillLo(sigma[idim], sigma_cumsum[idim],
                        sigma_star[idim], sigma_star_cumsum[idim],
                        looverlap.smallEnd(idim), looverlap.bigEnd(idim),
-                       grid_box.smallEnd(idim), fac[idim], v_sigma);
+                       grid_box.smallEnd(idim), fac[idim], v_sigma_sb);
             }
 
             const Box& hibox = amrex::adjCellHi(grid_box, idim, ncell[idim]);
@@ -409,7 +409,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
                 FillHi(sigma[idim], sigma_cumsum[idim],
                        sigma_star[idim], sigma_star_cumsum[idim],
                        hioverlap.smallEnd(idim), hioverlap.bigEnd(idim),
-                       grid_box.bigEnd(idim), fac[idim], v_sigma);
+                       grid_box.bigEnd(idim), fac[idim], v_sigma_sb);
             }
 
             if (!looverlap.ok() && !hioverlap.ok()) {
