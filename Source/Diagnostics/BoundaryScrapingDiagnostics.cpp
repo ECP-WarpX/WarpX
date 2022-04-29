@@ -133,7 +133,7 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
     // TODO: Change once we repeatedly call this function throughout the simulation
     bool const isLastBTD = true;
     const amrex::Geometry& geom = warpx.Geom(0); // For compatibility with `WriteToFile` ; not used
-    
+
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         0., m_output_species[i_buffer], nlev_output, m_file_prefix,
