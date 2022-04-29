@@ -170,6 +170,18 @@ BTDiagnostics::ReadParameters ()
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
     }
 
+
+    amrex::Vector< std::string > BTD_varnames_supported = {"Ex", "Ey", "Ez",
+                                                           "Bx", "By", "Bz",
+                                                           "jx", "jy", "jz", "rho"};
+
+    for (const auto& var : m_varnames) {
+        if ( ! WarpXUtilStr::is_in(BTD_varnames_supported, var) ) {
+            amrex::Abort("Input error: field variable " + var + " in " + m_diag_name +
+                         ".fields_to_plot is not supported for BackTransformed diagnostics. Currently supported field variables for BackTransformed diagnostics include Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho");
+        }
+    }
+
 }
 
 bool

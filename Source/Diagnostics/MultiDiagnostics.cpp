@@ -22,7 +22,11 @@ MultiDiagnostics::MultiDiagnostics ()
         if ( diags_types[i] == DiagTypes::Full ){
             alldiags[i] = std::make_unique<FullDiagnostics>(i, diags_names[i]);
         } else if ( diags_types[i] == DiagTypes::BackTransformed ){
+#ifdef WARPX_DIM_RZ
+            amrex::Abort("Backtransformed diagnostics is currently not supported for RZ");
+#else
             alldiags[i] = std::make_unique<BTDiagnostics>(i, diags_names[i]);
+#endif
         } else {
             amrex::Abort("Unknown diagnostic type");
         }
