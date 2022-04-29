@@ -9,6 +9,7 @@
 
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/PinnedMemoryParticleContainer.H"
 
 #include <vector>
 
@@ -18,7 +19,7 @@
 class ParticleBoundaryBuffer
 {
 public:
-    using BufferType = typename WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator>;
+    using BufferType = PinnedMemoryParticleContainer;
 
     ParticleBoundaryBuffer ();
 

@@ -14,6 +14,7 @@
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "Parallelization/WarpXCommUtil.H"
 #include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
+#include "Particles/ParticleBoundaryBuffer.H"
 #include "Utils/CoarsenIO.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
@@ -84,11 +85,16 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
         m_output_species_names = mpc.GetSpeciesNames();
     }
 
+    // Extract reference to the particle buffer
+    ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();
+
     // Initialize one ParticleDiag per species requested
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        for (auto const& species : m_output_species_names){
-            const int idx = mpc.getSpeciesID(species);
-            m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species, mpc.GetParticleContainerPtr(idx)));
+        for (auto const& species_name : m_output_species_names){
+            // `particle_buffer` contains buffers for all boundaries
+            // here we select the one for the EB (index: AMREX_SPACEDIM*2)
+            ParticleBoundaryBuffer::BufferType& eb_buffer = particle_buffer.getParticleBuffer(species_name, AMREX_SPACEDIM*2);
+            m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species_name, nullptr, &eb_buffer));
         }
     }
 }

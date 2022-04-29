@@ -18,7 +18,7 @@ class
 ComputeParticleDiagFunctor
 {
 public:
-    using ParticleContainer = typename amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
+    using ParticleContainer = WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator>;
 
     ComputeParticleDiagFunctor( ) {}
     /** Virtual Destructor to handle clean destruction of derived classes */
