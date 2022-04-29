@@ -194,7 +194,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, const
 
 void SigmaBox::define_single (const Box& regdomain, const IntVect& ncell,
                               const Array<Real,AMREX_SPACEDIM>& fac,
-                              amrex::Real v_sigma)
+                              amrex::Real v_sigma_sb)
 {
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         const int slo = sigma[idim].lo();
@@ -208,7 +208,7 @@ void SigmaBox::define_single (const Box& regdomain, const IntVect& ncell,
         if (ohi >= olo) {
             FillLo(sigma[idim], sigma_cumsum[idim],
                    sigma_star[idim], sigma_star_cumsum[idim],
-                   olo, ohi, dlo, fac[idim], v_sigma);
+                   olo, ohi, dlo, fac[idim], v_sigma_sb);
         }
 
 #if (AMREX_SPACEDIM != 1)
@@ -228,7 +228,7 @@ void SigmaBox::define_single (const Box& regdomain, const IntVect& ncell,
         if (ohi >= olo) {
             FillHi(sigma[idim], sigma_cumsum[idim],
                    sigma_star[idim], sigma_star_cumsum[idim],
-                   olo, ohi, dhi, fac[idim], v_sigma);
+                   olo, ohi, dhi, fac[idim], v_sigma_sb);
         }
     }
 
@@ -236,7 +236,7 @@ void SigmaBox::define_single (const Box& regdomain, const IntVect& ncell,
 }
 
 void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const IntVect& ncell,
-                                const Array<Real,AMREX_SPACEDIM>& fac, amrex::Real v_sigma)
+                                const Array<Real,AMREX_SPACEDIM>& fac, amrex::Real v_sigma_sb)
 {
     const std::vector<std::pair<int,Box> >& isects = grids.intersections(box, false, ncell);
 
@@ -319,7 +319,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
                 FillHi(sigma[idim], sigma_cumsum[idim],
                        sigma_star[idim],  sigma_star_cumsum[idim],
                        hioverlap.smallEnd(idim), hioverlap.bigEnd(idim),
-                       grid_box.bigEnd(idim), fac[idim], v_sigma);
+                       grid_box.bigEnd(idim), fac[idim], v_sigma_sb);
             }
 
             if (!looverlap.ok() && !hioverlap.ok()) {
@@ -362,7 +362,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
                 FillHi(sigma[idim], sigma_cumsum[idim],
                        sigma_star[idim], sigma_star_cumsum[idim],
                        hioverlap.smallEnd(idim), hioverlap.bigEnd(idim),
-                       grid_box.bigEnd(idim), fac[idim], v_sigma);
+                       grid_box.bigEnd(idim), fac[idim], v_sigma_sb);
             }
 
             if (!looverlap.ok() && !hioverlap.ok()) {
