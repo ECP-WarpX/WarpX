@@ -182,6 +182,12 @@ BTDiagnostics::ReadParameters ()
         }
     }
 
+
+    if (pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames) ) {
+        amrex::Abort("particle_fields_to_plot is currently not supported for BackTransformed Diagnostics");
+    }
+    
+
 }
 
 bool

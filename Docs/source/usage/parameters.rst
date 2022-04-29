@@ -2006,6 +2006,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
    Note that these averages do not respect the particle shape factor, and instead use nearest-grid point interpolation.
    Default is none.
    Parser functions for these field names are specified by ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)``.
+   Also, note that this option is only available for ``<diag_name>.diag_type = Full``
 
 * ``<diag_name>.particle_fields_species`` (list of `strings`, optional)
          Species for which to calculate ``particle_fields_to_plot``.
