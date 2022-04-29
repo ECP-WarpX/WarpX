@@ -6,39 +6,15 @@
  */
 
 #include "BoundaryScrapingDiagnostics.H"
-#include "ComputeDiagFunctors/BackTransformFunctor.H"
-#include "ComputeDiagFunctors/CellCenterFunctor.H"
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
-#include "ComputeDiagFunctors/RhoFunctor.H"
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
-#include "Parallelization/WarpXCommUtil.H"
-#include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
 #include "Particles/ParticleBoundaryBuffer.H"
-#include "Utils/CoarsenIO.H"
-#include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
-#include <AMReX_Algorithm.H>
-#include <AMReX_BLassert.H>
-#include <AMReX_BoxArray.H>
-#include <AMReX_Config.H>
-#include <AMReX_CoordSys.H>
-#include <AMReX_DistributionMapping.H>
-#include <AMReX_FileSystem.H>
-#include <AMReX_ParallelContext.H>
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_ParmParse.H>
-#include <AMReX_Utility.H>
 
-#include <algorithm>
-#include <cmath>
-#include <cstdio>
-#include <memory>
-#include <vector>
+#include <string>
 
 using namespace amrex::literals;
 
@@ -96,8 +72,9 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
             PinnedMemoryParticleContainer& eb_buffer = particle_buffer.getParticleBuffer(species_name, AMREX_SPACEDIM*2);
             m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species_name, nullptr, &eb_buffer));
         }
-        m_totalParticles_flushed_already[i_buffer].resize(m_output_species_names.size());
-        for (int i_species=0; i_species++; i_species<m_output_species_names.size()) {
+        int const n_species = m_output_species_names.size();
+        m_totalParticles_flushed_already[i_buffer].resize(n_species);
+        for (int i_species=0; i_species<n_species; i_species++) {
             m_totalParticles_flushed_already[i_buffer][i_species] = 0;
         }
     }
