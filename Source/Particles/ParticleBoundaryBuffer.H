@@ -19,8 +19,6 @@
 class ParticleBoundaryBuffer
 {
 public:
-    using BufferType = PinnedMemoryParticleContainer;
-
     ParticleBoundaryBuffer ();
 
     int numSpecies() const { return getSpeciesNames().size(); }
@@ -46,7 +44,7 @@ public:
 
     int getNumParticlesInContainer(const std::string species_name, int boundary);
 
-    BufferType& getParticleBuffer(const std::string species_name, int boundary);
+    PinnedMemoryParticleContainer& getParticleBuffer(const std::string species_name, int boundary);
 
     static constexpr int numBoundaries () {
         return AMREX_SPACEDIM*2
@@ -58,7 +56,7 @@ public:
 
 private:
     // over boundary, then number of species
-    std::vector<std::vector<BufferType> > m_particle_containers;
+    std::vector<std::vector<PinnedMemoryParticleContainer> > m_particle_containers;
 
     // over boundary, then number of species
     std::vector<std::vector<int> > m_do_boundary_buffer;
