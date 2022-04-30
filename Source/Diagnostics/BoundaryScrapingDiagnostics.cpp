@@ -69,8 +69,8 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
         for (auto const& species_name : m_output_species_names){
             // `particle_buffer` contains buffers for all boundaries
             // here we select the one for the EB (index: AMREX_SPACEDIM*2)
-            PinnedMemoryParticleContainer& eb_buffer = particle_buffer.getParticleBuffer(species_name, AMREX_SPACEDIM*2);
-            m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species_name, nullptr, &eb_buffer));
+            PinnedMemoryParticleContainer* eb_buffer = particle_buffer.getParticleBufferPointer(species_name, AMREX_SPACEDIM*2);
+            m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species_name, nullptr, eb_buffer));
         }
         int const n_species = m_output_species_names.size();
         m_totalParticles_flushed_already[i_buffer].resize(n_species);

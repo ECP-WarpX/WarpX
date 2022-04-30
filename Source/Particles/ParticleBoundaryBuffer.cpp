@@ -287,3 +287,16 @@ ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int bo
 
     return buffer[index];
 }
+
+WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator> *
+ParticleBoundaryBuffer::getParticleBufferPointer(const std::string species_name, int boundary) {
+
+    auto& buffer = m_particle_containers[boundary];
+    auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_boundary_buffer[boundary][index],
+                                     "Attempted to get particle buffer for boundary "
+                                     + std::to_string(boundary) + ", which is not used!");
+    return &buffer[index];
+}
+
