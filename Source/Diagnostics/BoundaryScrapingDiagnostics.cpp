@@ -62,7 +62,7 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
     }
 
     // Initialize one ParticleDiag per species requested
-    ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();    
+    ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for (auto const& species_name : m_output_species_names){
             // `particle_buffer` contains buffers for all boundaries

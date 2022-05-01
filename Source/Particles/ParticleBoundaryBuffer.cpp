@@ -299,4 +299,3 @@ ParticleBoundaryBuffer::getParticleBufferPointer(const std::string species_name,
                                      + std::to_string(boundary) + ", which is not used!");
     return &buffer[index];
 }
-

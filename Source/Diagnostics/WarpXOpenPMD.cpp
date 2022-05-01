@@ -631,7 +631,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
           int_flags.resize( tmp.NumIntComps(), 1 );
           int_names.resize( tmp.NumIntComps());
           int_names[ tmp.NumIntComps()-1 ] = "timestamp";
-          
+
           tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
           tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
           tmp.SetParticleDistributionMap(0, pinned_pc->ParticleDistributionMap(0));
