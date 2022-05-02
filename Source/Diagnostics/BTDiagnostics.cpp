@@ -182,7 +182,7 @@ BTDiagnostics::ReadParameters ()
 
     bool particle_fields_to_plot_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(particle_fields_to_plot_specified, "particle_fields_to_plot is currently not supported for BackTransformed Diagnostics");
-    
+
 
 }
 
