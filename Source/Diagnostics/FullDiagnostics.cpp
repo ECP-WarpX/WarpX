@@ -631,11 +631,10 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
     }
     // Add functors for average particle data for each species
     for (int pcomp=0; pcomp<int(m_pfield_varnames.size()); pcomp++) {
-        std::string varname = m_pfield_varnames[pcomp];
         for (int ispec=0; ispec<int(m_pfield_species.size()); ispec++) {
             m_all_field_functors[lev][nvar + pcomp * nspec + ispec] = std::make_unique<ParticleReductionFunctor>(nullptr,
-                    lev, m_crse_ratio, m_pfield_strings[varname], m_pfield_species_index[ispec], m_pfield_do_average[pcomp],
-                    m_pfield_dofilter[varname], m_pfield_filter_strings[varname]);
+                    lev, m_crse_ratio, m_pfield_strings[pcomp], m_pfield_species_index[ispec], m_pfield_do_average[pcomp],
+                    m_pfield_dofilter[pcomp], m_pfield_filter_strings[pcomp]);
         }
     }
     AddRZModesToDiags( lev );
