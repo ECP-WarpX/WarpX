@@ -208,8 +208,6 @@ private:
     bool m_dive_cleaning;
     bool m_divb_cleaning;
 
-    amrex::Real m_v_sigma_sb;
-    
     const amrex::Geometry* m_geom;
     const amrex::Geometry* m_cgeom;
 

@@ -543,7 +543,6 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
     : m_dive_cleaning(do_pml_dive_cleaning),
       m_divb_cleaning(do_pml_divb_cleaning),
-      m_v_sigma_sb(v_sigma_sb),
       m_geom(geom),
       m_cgeom(cgeom)
 {
@@ -720,7 +719,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     Box single_domain_box = is_single_box_domain ? domain0 : Box();
     // Empty box (i.e., Box()) means it's not a single box domain.
     sigba_fp = std::make_unique<MultiSigmaBox>(ba, dm, grid_ba_reduced, geom->CellSize(),
-                                               IntVect(ncell), IntVect(delta), single_domain_box, m_v_sigma_sb);
+                                               IntVect(ncell), IntVect(delta), single_domain_box, v_sigma_sb);
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
@@ -843,7 +842,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
         single_domain_box = is_single_box_domain ? cdomain : Box();
         sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba_reduced, cgeom->CellSize(),
-                                                   cncells, cdelta, single_domain_box, m_v_sigma_sb);
+                                                   cncells, cdelta, single_domain_box, v_sigma_sb);
 
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
