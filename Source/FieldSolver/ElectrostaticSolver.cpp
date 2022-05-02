@@ -371,7 +371,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         MLEBNodeFDLaplacian linop( {Geom(lev)}, {boxArray(lev)}, {DistributionMap(lev)}, info, {&WarpX::fieldEBFactory(lev)});
 
 #ifdef WARPX_DIM_RZ
-            linop.setSigma(0._rt, 1._rt);
+            linop.setSigma({0._rt, 1._rt});
 #else
             // Note: this assumes that the beam is propagating along
             // one of the axes of the grid, i.e. that only *one* of the Cartesian
