@@ -49,8 +49,8 @@ export CRAY_ACCEL_TARGET=nvidia80
 export AMREX_CUDA_ARCH=8.0
 
 # compiler environment hints
-export CC=$(which gcc)
-export CXX=$(which g++)
-export FC=$(which gfortran)
+export CC=cc
+export CXX=CC
+export FC=ftn
 export CUDACXX=$(which nvcc)
-export CUDAHOSTCXX=$(which g++)
+export CUDAHOSTCXX=CC
