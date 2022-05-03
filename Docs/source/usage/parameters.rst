@@ -1871,9 +1871,10 @@ Diagnostics and output
 In-situ visualization
 ^^^^^^^^^^^^^^^^^^^^^
 
-WarpX has three types of diagnostics:
+WarpX has four types of diagnostics:
 ``FullDiagnostics`` consist in dumps of fields and particles at given iterations,
-``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame, and
+``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame,
+``BoundaryScrapingDiagnostics`` are used to collect the particles that are absorbed at the boundary, throughout the simulation, and
 ``ReducedDiags`` allow the user to compute some reduced quantity (particle temperature, max of a field) and write a small amount of data to text files.
 Similar to what is done for physical species, WarpX has a class Diagnostics that allows users to initialize different diagnostics, each of them with different fields, resolution and period.
 This currently applies to standard diagnostics, but should be extended to back-transformed diagnostics and reduced diagnostics (and others) in a near future.
@@ -2150,7 +2151,7 @@ BackTransformed Diagnostics (with support for Plotfile/openPMD output)
 Back-Transformed Diagnostics (legacy output)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame, and
+``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame
 
 * ``warpx.do_back_transformed_diagnostics`` (`0` or `1`)
     Whether to use the **back-transformed diagnostics** (i.e. diagnostics that
@@ -2221,6 +2222,17 @@ Back-Transformed Diagnostics (legacy output)
     copied from the full back-transformed diagnostic to the reduced
     slice diagnostic if there are within the user-defined width from
     the slice region defined by ``slice.dom_lo`` and ``slice.dom_hi``.
+
+Boundary scraping diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``BoundaryScrapingDiagnostics`` are used to collect the particles that are absorbed at the embedded boundary, throughout the simulation.
+(Note that this diagnostics does not save any field ; it only saves particles.)
+Currently, the only supported output format is openPMD, so the user needs to set ``format=openpmd``. In addition, the user needs
+to set ``save_particles_at_eb=1`` for each of the species that are to be saved in this diagnostic.
+
+In addition to their usual attributes, the saved particles have an additional integer attribute ``timestamp``, which
+indicates the PIC iteration at which each particle was absorbed at the boundary.
 
 .. _running-cpp-parameters-diagnostics-reduced:
 

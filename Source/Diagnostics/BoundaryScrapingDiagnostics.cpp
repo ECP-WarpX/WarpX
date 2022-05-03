@@ -36,11 +36,29 @@ BoundaryScrapingDiagnostics::ReadParameters ()
     // Number of buffers = 1 for BoundaryScrapingDiagnostics.
     // (buffers are used in BTDiagnostics, and correspond to different snapshots)
     m_num_buffers = 1;
+
+    // Do a few checks
+#ifndef AMREX_USE_EB
+    amrex::Abort("You need to compile WarpX with EB, in order to use BoundaryScrapingDiagnostic.");
+#endif
+    // Check that particle saving at EB has been activated
+    bool particle_saving_activated = true;
+    for (auto const& species_name : m_output_species_names){
+        amrex::ParmParse pp(species_name);
+        // TODO
+    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( particle_saving_activated,
+    "You need to set `save_particles_at_eb=1` for each species, in order to use BoundaryScrapingDiagnostic.");
+    // Check that the output format is openPMD
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_format == "openpmd",
+    "You need to set `format=openpmd` for the BoundaryScrapingDiagnostic.");
 }
 
 void
 BoundaryScrapingDiagnostics::InitializeFieldFunctors (int /*lev*/)
 {
+    // This function is usually used for field output
+    // Nothing to do here for boundary scraping output, since it only outputs particles
 }
 
 void
@@ -86,7 +104,6 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
 bool
 BoundaryScrapingDiagnostics::DoComputeAndPack (int /*step*/, bool /*force_flush*/)
 {
-
     return false;
 }
 
@@ -119,4 +136,6 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
         0., m_output_species[i_buffer], nlev_output, m_file_prefix,
         m_file_min_digits, false, false, isBTD, i_buffer, geom,
         isLastBTD, m_totalParticles_flushed_already[i_buffer]);
+
+    // TODO: Clear particle buffers
 }
