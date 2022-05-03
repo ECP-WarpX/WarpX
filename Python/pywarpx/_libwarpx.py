@@ -627,13 +627,13 @@ class LibWarpX():
 
         # Iff x/y/z/ux/uy/uz are not numpy arrays of the correct dtype, new
         # array copies are made with the correct dtype
-        x = x.astype(self._numpy_particlereal_dtype)
-        y = y.astype(self._numpy_particlereal_dtype)
-        z = z.astype(self._numpy_particlereal_dtype)
-        ux = ux.astype(self._numpy_particlereal_dtype)
-        uy = uy.astype(self._numpy_particlereal_dtype)
-        uz = uz.astype(self._numpy_particlereal_dtype)
-        attr = attr.astype(self._numpy_particlereal_dtype)
+        x = x.astype(self._numpy_particlereal_dtype, copy=False)
+        y = y.astype(self._numpy_particlereal_dtype, copy=False)
+        z = z.astype(self._numpy_particlereal_dtype, copy=False)
+        ux = ux.astype(self._numpy_particlereal_dtype, copy=False)
+        uy = uy.astype(self._numpy_particlereal_dtype, copy=False)
+        uz = uz.astype(self._numpy_particlereal_dtype, copy=False)
+        attr = attr.astype(self._numpy_particlereal_dtype, copy=False)
 
         self.libwarpx_so.warpx_addNParticles(
             ctypes.c_char_p(species_name.encode('utf-8')), x.size,
