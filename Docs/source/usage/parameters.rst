@@ -1988,7 +1988,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
-    Possible scalar fields: ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe.
+    Possible scalar fields: ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe. Also, note that for ``<diag_name>.diag_type = BackTransformed``, the only scalar field currently supported is ``rho``.
     Possible vector field components in Cartesian geometry: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz``.
     Possible vector field components in RZ geometry: ``Er`` ``Et`` ``Ez`` ``Br`` ``Bt`` ``Bz`` ``jr`` ``jt`` ``jz``.
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``,
@@ -2006,6 +2006,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
    Note that these averages do not respect the particle shape factor, and instead use nearest-grid point interpolation.
    Default is none.
    Parser functions for these field names are specified by ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)``.
+   Also, note that this option is only available for ``<diag_name>.diag_type = Full``
 
 * ``<diag_name>.particle_fields_species`` (list of `strings`, optional)
          Species for which to calculate ``particle_fields_to_plot``.
@@ -2115,7 +2116,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 BackTransformed Diagnostics (with support for Plotfile/openPMD output)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Additional options for this diagnostic include:
+``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Note that this diagnostic is not currently supported for RZ.  Additional options for this diagnostic include:
 
 * ``<diag_name>.num_snapshots_lab`` (`integer`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
