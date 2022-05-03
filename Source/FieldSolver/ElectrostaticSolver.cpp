@@ -333,6 +333,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         }
         // Define the linear operator (Poisson operator)
         MLEBNodeFDLaplacian linop( {geom_scaled[lev]}, {boxArray(lev)}, {DistributionMap(lev)}, info );
+        linop.setSigma({0._rt, 1._rt});
 #else
         // Set the value of beta
         amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
@@ -370,7 +371,9 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         // With embedded boundary: extract EB info
         MLEBNodeFDLaplacian linop( {Geom(lev)}, {boxArray(lev)}, {DistributionMap(lev)}, info, {&WarpX::fieldEBFactory(lev)});
 
-#ifndef WARPX_DIM_RZ
+#ifdef WARPX_DIM_RZ
+            linop.setSigma({0._rt, 1._rt});
+#else
             // Note: this assumes that the beam is propagating along
             // one of the axes of the grid, i.e. that only *one* of the Cartesian
             // components of `beta` is non-negligible.

@@ -438,6 +438,7 @@ public:
     const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) {return *Bfield_avg_cp[lev][direction];}
 
     bool DoPML () const {return do_pml;}
+
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     const PML_RZ* getPMLRZ() {return pml_rz[0].get();}
 #endif
@@ -1279,6 +1280,7 @@ private:
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
 #endif
+    amrex::Real v_particle_pml;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
     amrex::Real current_injection_position = 0;

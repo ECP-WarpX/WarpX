@@ -19,6 +19,7 @@ class
 ComputeParticleDiagFunctor
 {
 public:
+
     ComputeParticleDiagFunctor( ) {}
     /** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~ComputeParticleDiagFunctor() = default;
