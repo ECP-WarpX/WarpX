@@ -860,7 +860,7 @@ public:
          const int lev);
 
     void ReadExternalFieldsFromFile (std::string ext_grid_s, std::string read_from_path,
-        amrex::MultiFab const& F1, amrex::MultiFab const& F2, amrex::MultiFab const& F3);
+        amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz);
 
     /**
      * \brief

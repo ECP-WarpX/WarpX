@@ -871,17 +871,16 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
     // Reading external fields from data file
     if (B_ext_grid_s=="read_b_from_file" && lev==0) {
-std::cout << "@@@@@@@@@@@@" << "\n";
         std::string read_B_from_path="./";
         pp_warpx.query("read_B_from_path", read_B_from_path);
         ReadExternalFieldsFromFile(B_ext_grid_s,read_B_from_path,
-            *Bfield_fp[lev][0],*Bfield_fp[lev][1],*Bfield_fp[lev][2]);
+            Bfield_fp_external[lev][0].get(),Bfield_fp_external[lev][1].get(),Bfield_fp_external[lev][2].get());
     }
     if (E_ext_grid_s=="read_e_from_file" && lev==0) {
         std::string read_E_from_path="./";
         pp_warpx.query("read_E_from_path", read_E_from_path);
         ReadExternalFieldsFromFile(E_ext_grid_s,read_E_from_path,
-            *Efield_fp[lev][0],*Efield_fp[lev][1],*Efield_fp[lev][2]);
+            Efield_fp_external[lev][0].get(),Efield_fp_external[lev][1].get(),Efield_fp_external[lev][2].get());
     }
 
     if (F_fp[lev]) {
@@ -1220,32 +1219,73 @@ void WarpX::InitializeEBGridData (int lev)
 
 void
 WarpX::ReadExternalFieldsFromFile (std::string ext_grid_s, std::string read_from_path,
-amrex::MultiFab const& F1, amrex::MultiFab const& F2, amrex::MultiFab const& F3)
+MultiFab *mfx, MultiFab *mfy, MultiFab *mfz)
 {
     auto series = openPMD::Series(read_from_path, openPMD::Access::READ_ONLY);
     auto i = series.iterations.begin()->second;
 
+    amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
+    amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
+    amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
+
+    auto & warpx = WarpX::GetInstance();
+    amrex::Geometry const & geom = warpx.Geom(0);
+    const amrex::RealBox& real_box = geom.ProbDomain();
+    const auto dx = geom.CellSizeArray();
+
     // Loop over boxes.
-    for (amrex::MFIter mfi(F1); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
+
+        const amrex::Box& tbx = mfi.tilebox(x_nodal_flag, mfx->nGrowVect());
+        const amrex::Box& tby = mfi.tilebox(y_nodal_flag, mfy->nGrowVect());
+        const amrex::Box& tbz = mfi.tilebox(z_nodal_flag, mfz->nGrowVect());
 
         auto box = mfi.validbox();
         auto lo = lbound(box);
         auto hi = ubound(box);
-        auto & warpx = WarpX::GetInstance();
-        amrex::Geometry const & geom = warpx.Geom(0);
-        const amrex::RealBox& real_box = geom.ProbDomain();
-        const auto dx = geom.CellSizeArray();
+
+        auto const& mfxfab = mfx->array(mfi);
+        auto const& mfyfab = mfy->array(mfi);
+        auto const& mfzfab = mfz->array(mfi);
 
         // Get physical low and high coordniates of this box.
         // Then the external field read must cover these coordinates.
         amrex::Real x_lo, y_lo, z_lo, x_hi, y_hi, z_hi;
-        x_lo = real_box.lo(0) + lo.x*dx[0];
-        y_lo = real_box.lo(1) + lo.y*dx[1];
-        z_lo = real_box.lo(2) + lo.z*dx[2];
-        x_hi = real_box.lo(0) + hi.x*dx[0];
-        y_hi = real_box.lo(1) + hi.y*dx[1];
-        z_hi = real_box.lo(2) + hi.z*dx[2];
+        if ( box.type(0)==1 ) {
+            x_lo = real_box.lo(0) + lo.x*dx[0];
+            x_hi = real_box.lo(0) + hi.x*dx[0];
+        } else {
+            x_lo = real_box.lo(0) + lo.x*dx[0] + 0.5*dx[0];
+            x_hi = real_box.lo(0) + hi.x*dx[0] + 0.5*dx[0];
+        }
+        if ( box.type(1)==1 ) {
+            y_lo = real_box.lo(1) + lo.y*dx[1];
+            y_hi = real_box.lo(1) + hi.y*dx[1];
+        } else {
+            y_lo = real_box.lo(1) + lo.y*dx[1] + 0.5*dx[1];
+            y_hi = real_box.lo(1) + hi.y*dx[1] + 0.5*dx[1];
+        }
+        if ( box.type(2)==1 ) {
+            z_lo = real_box.lo(2) + lo.z*dx[2];
+            z_hi = real_box.lo(2) + hi.z*dx[2];
+        } else {
+            z_lo = real_box.lo(2) + lo.z*dx[2] + 0.5*dx[2];
+            z_hi = real_box.lo(2) + hi.z*dx[2] + 0.5*dx[2];
+        }
+
+std::cout << "box.type: " << box.type(0) << " " << box.type(1) << " " << box.type(2) << "\n";
+
+std::cout << "lo: " << lo.x << " " << lo.y << " " << lo.z << "\n";
+std::cout << "hi: " << hi.x << " " << hi.y << " " << hi.z << "\n";
+
+std::cout << "real_box.lo: " << real_box.lo(0) << " " << real_box.lo(1) << " " << real_box.lo(2) << "\n";
+std::cout << "real_box.hi: " << real_box.hi(0) << " " << real_box.hi(1) << " " << real_box.hi(2) << "\n";
+
+std::cout << "x,y,z_lo: " << x_lo << " " << y_lo << " " << z_lo << "\n";
+std::cout << "x,y,z_hi: " << x_hi << " " << y_hi << " " << z_hi << "\n";
+
+std::cout << "dx: " << dx[0] << " " << dx[1] << " " << dx[2] << "\n";
 
         auto E = i.meshes["E"];
         auto E_x = E["x"];
@@ -1254,36 +1294,127 @@ amrex::MultiFab const& F1, amrex::MultiFab const& F2, amrex::MultiFab const& F3)
         double unit = E_x.unitSI();
         auto d = E.gridSpacing<double>();
 
-        unsigned long const ix_lo = int( floor( (x_lo-offset[0])/d[0] ) );
-        unsigned long const ix_hi = int( floor( (x_hi-offset[0])/d[0] ) ) + 1;
-        unsigned long const iy_lo = int( floor( (y_lo-offset[1])/d[1] ) );
-        unsigned long const iy_hi = int( floor( (y_hi-offset[1])/d[1] ) ) + 1;
-        unsigned long const iz_lo = int( floor( (z_lo-offset[2])/d[2] ) );
-        unsigned long const iz_hi = int( floor( (z_hi-offset[2])/d[2] ) ) + 1;
+std::cout << "offset: " << offset[0] << " " << offset[1] << " " << offset[2] << "\n";
+std::cout << "extent: " << extent[0] << " " << extent[1] << " " << extent[2] << "\n";
+
+        unsigned long const ix_lo = floor( std::abs(x_lo-offset[0])/d[0] );
+        unsigned long const ix_hi = floor( std::abs(x_hi-offset[0])/d[0] );
+        unsigned long const iy_lo = floor( std::abs(y_lo-offset[1])/d[1] );
+        unsigned long const iy_hi = floor( std::abs(y_hi-offset[1])/d[1] );
+        unsigned long const iz_lo = floor( std::abs(z_lo-offset[2])/d[2] );
+        unsigned long const iz_hi = floor( std::abs(z_hi-offset[2])/d[2] );
+
+std::cout << "ix,y,z_lo: " << ix_lo << " " << iy_lo << " " << iz_lo << "\n";
+std::cout << "ix,y,z_hi: " << ix_hi << " " << iy_hi << " " << iz_hi << "\n";
+std::cout << "d: " << d[0] << " " << d[1] << " " << d[2] << "\n";
+std::cout << "ix_hi-ix_lo: " << ix_hi-ix_lo << " " << iy_hi-iy_lo << " " << iz_hi-iz_lo << "\n";
 
         openPMD::Offset chunk_offset = {ix_lo, iy_lo, iz_lo};
-        openPMD::Extent chunk_extent = {ix_hi-ix_lo+1, iy_hi-iy_lo+1, ix_hi-iz_lo+1};
+        openPMD::Extent chunk_extent = {ix_hi-ix_lo, iy_hi-iy_lo, ix_hi-iz_lo};
+
+        std::cout << "offset[]+extent[]*d[]: "
+                  << offset[0]+extent[0]*d[0] << " "
+                  << offset[1]+extent[1]*d[1] << " "
+                  << offset[2]+extent[2]*d[2] << "\n";
+        std::cout << "d: " << d[0] << " " << d[1] << " " << d[2] << "\n";
         auto Ex_chunk_data = E_x.loadChunk<double>(chunk_offset, chunk_extent);
         series.flush();
-//
-//        //// Obtain Array4 from FArrayBox.
-//        //auto arr = Bx.array(mfi);
+
+        //// Obtain Array4 from FArrayBox.
+        //auto arr = F1.array(mfi);
+
+        amrex::ParallelFor (tbx, tby, tbz,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+
+                amrex::Real x, y, z;
+
+                if ( box.type(0)==1 ) { x = real_box.lo(0) + i*dx[0]; }
+                else { x = real_box.lo(0) + i*dx[0] + 0.5*dx[0]; }
+                if ( box.type(1)==1 ) { y = real_box.lo(1) + j*dx[1]; }
+                else { y = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
+                if ( box.type(2)==1 ) { z = real_box.lo(2) + k*dx[2]; }
+                else { z = real_box.lo(2) + k*dx[2] + 0.5*dx[2]; }
+
+                int ix = floor( std::abs(x-offset[0])/d[0] );
+                int iy = floor( std::abs(y-offset[1])/d[1] );
+                int iz = floor( std::abs(z-offset[2])/d[2] );
+                amrex::Real xx, yy, zz, ddx, ddy, ddz;
+                xx = offset[0] + ix*d[0];
+                yy = offset[1] + iy*d[1];
+                zz = offset[2] + iz*d[2];
+                ddx = (xx-x)/d[0];
+                ddy = (yy-y)/d[1];
+                ddz = (zz-z)/d[2];
+                int ext_1  = chunk_extent[1];
+                int ext_12 = chunk_extent[1]*chunk_extent[2];
+
+                //mfxfab(i,j,k) = Ex_chunk_data[(iz  )+(iy  )*ext_1+(ix  )*ext_12]*(1.0-ddx)*(1.0-ddy)*(1.0-ddz) +
+                //                Ex_chunk_data[(iz  )+(iy  )*ext_1+(ix+1)*ext_12]*(    ddx)*(1.0-ddy)*(1.0-ddz) +
+                //                Ex_chunk_data[(iz  )+(iy+1)*ext_1+(ix  )*ext_12]*(1.0-ddx)*(    ddy)*(1.0-ddz) +
+                //                Ex_chunk_data[(iz+1)+(iy  )*ext_1+(ix  )*ext_12]*(1.0-ddx)*(1.0-ddy)*(    ddz) +
+                //                Ex_chunk_data[(iz  )+(iy+1)*ext_1+(ix+1)*ext_12]*(    ddx)*(    ddy)*(1.0-ddz) +
+                //                Ex_chunk_data[(iz+1)+(iy  )*ext_1+(ix+1)*ext_12]*(    ddx)*(1.0-ddy)*(    ddz) +
+                //                Ex_chunk_data[(iz+1)+(iy+1)*ext_1+(ix  )*ext_12]*(1.0-ddx)*(    ddy)*(    ddz) +
+                //                Ex_chunk_data[(iz+1)+(iy+1)*ext_1+(ix+1)*ext_12]*(    ddx)*(    ddy)*(    ddz);
+
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+            }
+        );
+
+//        /// Loops over indices.
+//        for (int i = lo.x; i <= hi.x; ++i) {
+//            if ( box.type(0)==1 ) {
+//                x = real_box.lo(0) + i*dx[0];
+//            } else {
+//                x = real_box.lo(0) + i*dx[0] + 0.5*dx[0];
+//            }
+//        for (int j = lo.y; j <= hi.y; ++j) {
+//            if ( box.type(1)==1 ) {
+//                y = real_box.lo(1) + j*dx[1];
+//            } else {
+//                y = real_box.lo(1) + j*dx[1] + 0.5*dx[1];
+//            }
+//        for (int k = lo.z; k <= hi.z; ++k) {
+//            if ( box.type(2)==1 ) {
+//                z = real_box.lo(2) + k*dx[2];
+//            } else {
+//                z = real_box.lo(2) + k*dx[2] + 0.5*dx[2];
+//            }
+//            int ix = floor( std::abs(x-offset[0])/d[0] );
+//            int iy = floor( std::abs(y-offset[1])/d[1] );
+//            int iz = floor( std::abs(z-offset[2])/d[2] );
+//            amrex::Real xx, yy, zz, ddx, ddy, ddz;
+//            xx = offset[0] + ix*d[0];
+//            yy = offset[1] + iy*d[1];
+//            zz = offset[2] + iz*d[2];
+//            ddx = (xx-x)/d[0];
+//            ddy = (yy-y)/d[1];
+//            ddz = (zz-z)/d[2];
+//            //arr(i,j,k) = Ex_chunk_data(ix  ,iy  ,iz  )*(1.0-ddx)*(1.0-ddy)*(1.0-ddz) +
+//            //             Ex_chunk_data(ix+1,iy  ,iz  )*(    ddx)*(1.0-ddy)*(1.0-ddz) +
+//            //             Ex_chunk_data(ix  ,iy+1,iz  )*(1.0-ddx)*(    ddy)*(1.0-ddz) +
+//            //             Ex_chunk_data(ix  ,iy  ,iz+1)*(1.0-ddx)*(1.0-ddy)*(    ddz) +
+//            //             Ex_chunk_data(ix+1,iy+1,iz  )*(    ddx)*(    ddy)*(1.0-ddz) +
+//            //             Ex_chunk_data(ix+1,iy  ,iz+1)*(    ddx)*(1.0-ddy)*(    ddz) +
+//            //             Ex_chunk_data(ix  ,iy+1,iz+1)*(1.0-ddx)*(    ddy)*(    ddz) +
+//            //             Ex_chunk_data(ix+1,iy+1,iz+1)*(    ddx)*(    ddy)*(    ddz);
+//            int ext_1  = chunk_extent[1];
+//            int ext_12 = chunk_extent[1]*chunk_extent[2];
+//            mfxfab(i,j,k) = Ex_chunk_data[(iz  )+(iy  )*ext_1+(ix  )*ext_12]*(1.0-ddx)*(1.0-ddy)*(1.0-ddz) +
+//                            Ex_chunk_data[(iz  )+(iy  )*ext_1+(ix+1)*ext_12]*(    ddx)*(1.0-ddy)*(1.0-ddz) +
+//                            Ex_chunk_data[(iz  )+(iy+1)*ext_1+(ix  )*ext_12]*(1.0-ddx)*(    ddy)*(1.0-ddz) +
+//                            Ex_chunk_data[(iz+1)+(iy  )*ext_1+(ix  )*ext_12]*(1.0-ddx)*(1.0-ddy)*(    ddz) +
+//                            Ex_chunk_data[(iz  )+(iy+1)*ext_1+(ix+1)*ext_12]*(    ddx)*(    ddy)*(1.0-ddz) +
+//                            Ex_chunk_data[(iz+1)+(iy  )*ext_1+(ix+1)*ext_12]*(    ddx)*(1.0-ddy)*(    ddz) +
+//                            Ex_chunk_data[(iz+1)+(iy+1)*ext_1+(ix  )*ext_12]*(1.0-ddx)*(    ddy)*(    ddz) +
+//                            Ex_chunk_data[(iz+1)+(iy+1)*ext_1+(ix+1)*ext_12]*(    ddx)*(    ddy)*(    ddz);
+//        }
+//        }
+//        }
 
     }
 
-    //if (ext_grid_s=="read_B_from_file") {
-    //    auto B = i.meshes["B"];
-    //    auto B_r = B["r"];
-    //    auto B_z = B["z"];
-    //    std::shared_ptr<double> r_data = B_r.loadChunk< double >();
-    //    std::shared_ptr<double> z_data = B_z.loadChunk< double >();
-    //}
-    //if (ext_grid_s=="read_E_from_file") {
-    //    auto E = i.meshes["E"];
-    //    auto E_r = E["r"];
-    //    auto E_z = E["z"];
-    //    std::shared_ptr<double> r_data = E_r.loadChunk< double >();
-    //    std::shared_ptr<double> z_data = E_z.loadChunk< double >();
-    //}
-    //series.flush();
 }
