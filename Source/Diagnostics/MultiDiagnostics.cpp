@@ -28,7 +28,7 @@ MultiDiagnostics::MultiDiagnostics ()
             amrex::Abort(Utils::TextMsg::Err("BackTransformed diagnostics is currently not supported for RZ"));
 #else
             alldiags[i] = std::make_unique<BTDiagnostics>(i, diags_names[i]);
-#endif          
+#endif
         } else if ( diags_types[i] == DiagTypes::BoundaryScraping ){
             alldiags[i] = std::make_unique<BoundaryScrapingDiagnostics>(i, diags_names[i]);
         } else {
