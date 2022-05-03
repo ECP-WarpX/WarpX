@@ -67,6 +67,8 @@
 #include <string>
 #include <vector>
 
+#include <openPMD/openPMD.hpp>
+
 enum struct PatchType : int
 {
     fine,
@@ -859,8 +861,8 @@ public:
          const char field,
          const int lev);
 
-    void ReadExternalFieldsFromFile (std::string ext_grid_s, std::string read_from_path,
-        amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz);
+    void ReadExternalFieldsFromFile (std::string read_from_path, amrex::MultiFab* mf,
+        std::string F_name, std::string F_componet);
 
     /**
      * \brief
