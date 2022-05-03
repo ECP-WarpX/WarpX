@@ -32,7 +32,8 @@ BoundaryScrapingDiagnostics::ReadParameters ()
     // Modify some of the quantities that were initialized by default
     // in the function `BaseReadParameters`
     m_varnames_fields = {}; // No fields in boundary scraping diagnostics
-
+    m_varnames = {}; // No fields in boundary scraping diagnostics
+    
     // Number of buffers = 1 for BoundaryScrapingDiagnostics.
     // (buffers are used in BTDiagnostics, and correspond to different snapshots)
     m_num_buffers = 1;

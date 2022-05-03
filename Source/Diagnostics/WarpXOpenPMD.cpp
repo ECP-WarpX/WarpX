@@ -1328,6 +1328,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
         series_iteration.setTime( time );
     }
 
+    // If there are no fields to be written, interrupt the function here
+    if ( varnames.size()==0 ) return;
+    
     // loop over levels up to output_levels
     //   note: this is usually the finestLevel, not the maxLevel
     for (int lev=0; lev < output_levels; lev++) {
