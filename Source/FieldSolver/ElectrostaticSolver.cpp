@@ -292,7 +292,6 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     LPInfo info;
 
     for (int lev=0; lev<=finest_level; lev++) {
-
         // Set the value of beta
         amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
 #if defined(WARPX_DIM_1D_Z)
@@ -336,10 +335,14 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         // Note: this assumes that the beam is propagating along
         // one of the axes of the grid, i.e. that only *one* of the
         // components of `beta` is non-negligible.
+#if defined(WARPX_DIM_RZ)
+        linop.setSigma({0., 1._rt-beta_solver[1]*beta_solver[1]});
+#else
         linop.setSigma({AMREX_D_DECL(
             1._rt-beta_solver[0]*beta_solver[0],
             1._rt-beta_solver[1]*beta_solver[1],
             1._rt-beta_solver[2]*beta_solver[2])});
+#endif
 
 #if defined(AMREX_USE_EB)
         // if the EB potential only depends on time, the potential can be passed

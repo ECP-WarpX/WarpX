@@ -21,6 +21,7 @@
 
 namespace ablastr::utils {
 
+bool SignalHandling::m_any_signal_action_active = false;
 std::atomic<bool> SignalHandling::signal_received_flags[NUM_SIGNALS];
 bool SignalHandling::signal_conf_requests[SIGNAL_REQUESTS_SIZE][NUM_SIGNALS];
 bool SignalHandling::signal_actions_requested[SIGNAL_REQUESTS_SIZE];
@@ -29,7 +30,7 @@ MPI_Request SignalHandling::signal_mpi_ibcast_request;
 #endif
 
 int
-SignalHandling::parseSignalNameToNumber(const std::string &str)
+SignalHandling::parseSignalNameToNumber (const std::string &str)
 {
     amrex::IParser signals_parser(str);
 
@@ -111,7 +112,7 @@ SignalHandling::parseSignalNameToNumber(const std::string &str)
 }
 
 void
-SignalHandling::InitSignalHandling()
+SignalHandling::InitSignalHandling ()
 {
 #if defined(__linux__) || defined(__APPLE__)
     struct sigaction sa;
@@ -124,6 +125,9 @@ SignalHandling::InitSignalHandling()
             signal_active |= signal_conf_requests[signal_request][signal_number];
         }
         if (signal_active) {
+            // at least one signal action is configured
+            m_any_signal_action_active = true;
+
             if (amrex::ParallelDescriptor::MyProc() == 0) {
                 sa.sa_handler = &SignalHandling::SignalSetFlag;
             } else {
@@ -138,8 +142,13 @@ SignalHandling::InitSignalHandling()
 }
 
 void
-SignalHandling::CheckSignals()
+SignalHandling::CheckSignals ()
 {
+    // Is any signal handling action configured?
+    // If not, we can skip all handling and the MPI communication as well.
+    if (!m_any_signal_action_active)
+        return;
+
     // We assume that signals will definitely be delivered to rank 0,
     // and may be delivered to other ranks as well. For coordination,
     // we process them according to when they're received by rank 0.
@@ -162,21 +171,29 @@ SignalHandling::CheckSignals()
 
 #if defined(AMREX_USE_MPI)
     auto comm = amrex::ParallelDescriptor::Communicator();
+    // Due to a bug in Cray's MPICH 8.1.13 implementation (CUDA builds on Perlmutter@NERSC in 2022),
+    // we cannot use the MPI_CXX_BOOL C++ datatype here. See WarpX PR #3029 and NERSC INC0183281
+    static_assert(sizeof(bool) == 1, "We communicate bools as 1 byte-sized type in MPI");
     BL_MPI_REQUIRE(MPI_Ibcast(signal_actions_requested, SIGNAL_REQUESTS_SIZE,
-                              MPI_CXX_BOOL, 0, comm,&signal_mpi_ibcast_request));
+                              MPI_BYTE, 0, comm,&signal_mpi_ibcast_request));
 #endif
 }
 
 void
-SignalHandling::WaitSignals()
+SignalHandling::WaitSignals ()
 {
+    // Is any signal handling action configured?
+    // If not, we can skip all handling and the MPI communication as well.
+    if (!m_any_signal_action_active)
+        return;
+
 #if defined(AMREX_USE_MPI)
     BL_MPI_REQUIRE(MPI_Wait(&signal_mpi_ibcast_request, MPI_STATUS_IGNORE));
 #endif
 }
 
 bool
-SignalHandling::TestAndResetActionRequestFlag(int action_to_test)
+SignalHandling::TestAndResetActionRequestFlag (int action_to_test)
 {
     bool retval = signal_actions_requested[action_to_test];
     signal_actions_requested[action_to_test] = false;
@@ -184,7 +201,7 @@ SignalHandling::TestAndResetActionRequestFlag(int action_to_test)
 }
 
 void
-SignalHandling::SignalSetFlag(int signal_number)
+SignalHandling::SignalSetFlag (int signal_number)
 {
     signal_received_flags[signal_number] = true;
 }

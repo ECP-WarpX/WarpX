@@ -518,6 +518,8 @@ WarpX::PushPSATD ()
     {
         PSATDVayDeposition();
         PSATDBackwardTransformJ(current_fp, current_cp);
+        SyncCurrent();
+        PSATDForwardTransformJ(current_fp, current_cp);
     }
 
 #ifdef WARPX_DIM_RZ

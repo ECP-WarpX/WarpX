@@ -84,6 +84,9 @@ We only prefix it to request a node for the compilation (``runNode``), so we can
    # PICMI build
    cd $HOME/src/warpx
 
+   # install or update dependencies
+   python3 -m pip install -r requirements.txt
+
    # compile parallel PICMI interfaces in 3D, 2D, 1D and RZ
    runNode WARPX_MPI=ON WARPX_COMPUTE=CUDA WARPX_PSATD=ON BUILD_PARALLEL=32 python3 -m pip install --force-reinstall --no-deps -v .
 
