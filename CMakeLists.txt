@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.18.0)
-project(WarpX VERSION 22.03)
+project(WarpX VERSION 22.05)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -142,7 +142,7 @@ endif()
 #
 # collect all objects for compilation
 add_library(WarpX OBJECT)
-add_library(ablastr OBJECT)
+add_library(ablastr)
 
 # ABLASTR library
 set(_BUILDINFO_SRC ablastr)

@@ -475,7 +475,7 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
 void
 MultiParticleContainer::DepositCurrent (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-    const amrex::Real dt, const amrex::Real relative_t)
+    const amrex::Real dt, const amrex::Real relative_time)
 {
     // Reset the J arrays
     for (int lev = 0; lev < J.size(); ++lev)
@@ -488,7 +488,7 @@ MultiParticleContainer::DepositCurrent (
     // Call the deposition kernel for each species
     for (auto& pc : allcontainers)
     {
-        pc->DepositCurrent(J, dt, relative_t);
+        pc->DepositCurrent(J, dt, relative_time);
     }
 
 #ifdef WARPX_DIM_RZ
@@ -502,7 +502,7 @@ MultiParticleContainer::DepositCurrent (
 void
 MultiParticleContainer::DepositCharge (
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-    const amrex::Real relative_t)
+    const amrex::Real relative_time)
 {
     // Reset the rho array
     for (int lev = 0; lev < rho.size(); ++lev)
@@ -511,7 +511,7 @@ MultiParticleContainer::DepositCharge (
     }
 
     // Push the particles in time, if needed
-    if (relative_t != 0.) PushX(relative_t);
+    if (relative_time != 0.) PushX(relative_time);
 
     // Call the deposition kernel for each species
     for (auto& pc : allcontainers)
@@ -525,7 +525,7 @@ MultiParticleContainer::DepositCharge (
     }
 
     // Push the particles back in time
-    if (relative_t != 0.) PushX(-relative_t);
+    if (relative_time != 0.) PushX(-relative_time);
 
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev < rho.size(); ++lev)
@@ -1537,8 +1537,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
             auto Transform = PairGenerationTransformFunc(pair_gen_functor,
                                                          pti, lev, Ex.nGrowVect(),
                                                          Ex[pti], Ey[pti], Ez[pti],
-                                                         Bx[pti], By[pti], Bz[pti],
-                                                         pc_source->get_v_galilean());
+                                                         Bx[pti], By[pti], Bz[pti]);
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);
             auto& dst_ele_tile = pc_product_ele->ParticlesAt(lev, pti);
@@ -1616,8 +1615,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                   m_shr_p_qs_engine->build_phot_em_functor(),
                   pti, lev, Ex.nGrowVect(),
                   Ex[pti], Ey[pti], Ez[pti],
-                  Bx[pti], By[pti], Bz[pti],
-                  pc_source->get_v_galilean());
+                  Bx[pti], By[pti], Bz[pti]);
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);
             auto& dst_tile = pc_product_phot->ParticlesAt(lev, pti);

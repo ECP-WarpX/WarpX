@@ -610,8 +610,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
 
 /**
  * \brief Arbitrary-order interpolation function used to center a given MultiFab between two grids
- * with different staggerings. With the FDTD solver, this performs simple linear interpolation.
- * With the PSATD solver, this performs arbitrary-order interpolation based on the Fornberg coefficients.
+ * with different staggerings. The arbitrary-order interpolation is based on the Fornberg coefficients.
  * The result is stored in the output array \c dst_arr.
  *
  * \param[in] j index along x of the output array
@@ -628,7 +627,6 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
  * \param[in] stencil_coeffs_y array of ordered Fornberg coefficients for finite-order centering stencil along y
  * \param[in] stencil_coeffs_z array of ordered Fornberg coefficients for finite-order centering stencil along z
  */
-template< bool IS_PSATD = false >
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp (const int j,
                    const int k,
@@ -656,14 +654,8 @@ void warpx_interp (const int j,
     // Avoid compiler warnings
 #if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(nox, noy, stencil_coeffs_x, stencil_coeffs_y);
-#endif
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::ignore_unused(noy, stencil_coeffs_y);
-#endif
-
-    // Avoid compiler warnings
-#ifndef WARPX_USE_PSATD
-    amrex::ignore_unused(stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 #endif
 
     // If dst_nodal = true , we are centering from a staggered grid to a nodal grid
@@ -693,7 +685,7 @@ void warpx_interp (const int j,
 
 #if   defined(WARPX_DIM_1D_Z)
     const int noj = noz;
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const int noj = nox;
     const int nok = noz;
 #elif defined(WARPX_DIM_3D)
@@ -707,7 +699,7 @@ void warpx_interp (const int j,
 #if   defined(WARPX_DIM_1D_Z)
     constexpr amrex::Real wk = 1.0_rt;
     constexpr amrex::Real wl = 1.0_rt;
-#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const amrex::Real wk = (interp_k) ? 0.5_rt : 1.0_rt;
     constexpr amrex::Real wl = 1.0_rt;
 #elif defined(WARPX_DIM_3D)
@@ -720,7 +712,7 @@ void warpx_interp (const int j,
     const int jmax = (interp_j) ? j + noj/2 + shift - 1 : j;
 
     // Min and max for interpolation loop along k
-#if   defined(WARPX_DIM_1D_Z)
+#if defined(WARPX_DIM_1D_Z)
     // k = 0 always
     const int kmin = k;
     const int kmax = k;
@@ -730,7 +722,7 @@ void warpx_interp (const int j,
 #endif
 
     // Min and max for interpolation loop along l
-#if   (AMREX_SPACEDIM <= 2)
+#if (AMREX_SPACEDIM <= 2)
     // l = 0 always
     const int lmin = l;
     const int lmax = l;
@@ -785,59 +777,38 @@ void warpx_interp (const int j,
 
     amrex::Real res = 0.0_rt;
 
-    if( !IS_PSATD ) // FDTD (linear interpolation)
-    {
-        for (int ll = 0; ll <= nl; ll++)
-        {
-            for (int kk = 0; kk <= nk; kk++)
-            {
-                for (int jj = 0; jj <= nj; jj++)
-                {
-                    res += src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
-                }
-            }
-        }
+    amrex::Real cj = 1.0_rt;
+    amrex::Real ck = 1.0_rt;
+    amrex::Real cl = 1.0_rt;
 
-    }
-
-    else // PSATD (finite-order interpolation)
-    {
 #if defined(WARPX_DIM_1D_Z)
-        amrex::ignore_unused(stencil_coeffs_z);
-        amrex::Abort("PSATD not implemented in 1D");
-#endif
-
-#if (AMREX_SPACEDIM >= 2) // 1D not implemented for PSATD
-        amrex::Real cj = 1.0_rt;
-        amrex::Real ck = 1.0_rt;
-        amrex::Real cl = 1.0_rt;
-
-        amrex::Real const* scj = stencil_coeffs_x;
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::Real const* sck = stencil_coeffs_z;
+    amrex::Real const* scj = stencil_coeffs_z;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    amrex::Real const* scj = stencil_coeffs_x;
+    amrex::Real const* sck = stencil_coeffs_z;
 #elif defined(WARPX_DIM_3D)
-        amrex::Real const* sck = stencil_coeffs_y;
-        amrex::Real const* scl = stencil_coeffs_z;
+    amrex::Real const* scj = stencil_coeffs_x;
+    amrex::Real const* sck = stencil_coeffs_y;
+    amrex::Real const* scl = stencil_coeffs_z;
 #endif
 
-        for (int ll = 0; ll <= nl; ll++)
-        {
+    for (int ll = 0; ll <= nl; ll++)
+    {
 #if defined(WARPX_DIM_3D)
-            if (interp_l) cl = scl[ll];
+        if (interp_l) cl = scl[ll];
 #endif
-            for (int kk = 0; kk <= nk; kk++)
+        for (int kk = 0; kk <= nk; kk++)
+        {
+#if (AMREX_SPACEDIM >= 2)
+            if (interp_k) ck = sck[kk];
+#endif
+            for (int jj = 0; jj <= nj; jj++)
             {
-                if (interp_k) ck = sck[kk];
+                if (interp_j) cj = scj[jj];
 
-                for (int jj = 0; jj <= nj; jj++)
-                {
-                    if (interp_j) cj = scj[jj];
-
-                    res += cj * ck * cl * src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
-                }
+                res += cj * ck * cl * src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
             }
         }
-#endif //1D
     }
 
     dst_arr(j,k,l) = wj * wk * wl * res;

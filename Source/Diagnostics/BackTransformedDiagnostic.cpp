@@ -10,6 +10,7 @@
 #include "Parallelization/WarpXCommUtil.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
 #include <AMReX_Array4.H>
@@ -577,7 +578,9 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
       m_particle_slice_width_lab_(particle_slice_width_lab)
 {
 
-
+#ifdef WARPX_DIM_RZ
+    amrex::Abort(Utils::TextMsg::Err("BackTransformed diagnostics is currently not supported with RZ"));
+#endif
     WARPX_PROFILE("BackTransformedDiagnostic::BackTransformedDiagnostic");
 
     AMREX_ALWAYS_ASSERT(WarpX::do_back_transformed_fields or

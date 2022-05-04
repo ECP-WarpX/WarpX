@@ -170,6 +170,20 @@ BTDiagnostics::ReadParameters ()
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
     }
 
+
+    amrex::Vector< std::string > BTD_varnames_supported = {"Ex", "Ey", "Ez",
+                                                           "Bx", "By", "Bz",
+                                                           "jx", "jy", "jz", "rho"};
+
+    for (const auto& var : m_varnames) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (WarpXUtilStr::is_in(BTD_varnames_supported, var )), "Input error: field variable " + var + " in " + m_diag_name
+        + ".fields_to_plot is not supported for BackTransformed diagnostics. Currently supported field variables for BackTransformed diagnostics include Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho");
+    }
+
+    bool particle_fields_to_plot_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!particle_fields_to_plot_specified, "particle_fields_to_plot is currently not supported for BackTransformed Diagnostics");
+
+
 }
 
 bool
@@ -366,8 +380,8 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     ba.coarsen(m_crse_ratio);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     int ngrow = 1;
-    m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap,
-                                     m_cellcenter_varnames.size(), ngrow);
+    int ncomps = static_cast<int>(m_cellcenter_varnames.size());
+    m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap, ncomps, ngrow);
 
 }
 
@@ -394,9 +408,10 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     {
         // coarsening ratio is not provided since the source MultiFab, m_cell_centered_data
         // is coarsened based on the user-defined m_crse_ratio
+        int nvars = static_cast<int>(m_varnames.size());
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
                   m_cell_centered_data[lev].get(), lev,
-                  m_varnames.size(), m_num_buffers, m_varnames);
+                  nvars, m_num_buffers, m_varnames);
     }
 
     // Define all cell-centered functors required to compute cell-centere data
@@ -505,7 +520,6 @@ BTDiagnostics::PrepareFieldDataForOutput ()
     }
 
     int num_BT_functors = 1;
-
     for (int lev = 0; lev < nlev_output; ++lev)
     {
         for (int i = 0; i < num_BT_functors; ++i)
@@ -709,6 +723,10 @@ BTDiagnostics::Flush (int i_buffer)
     bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
+
+    // Redistribute particles in the lab frame box arrays that correspond to the buffer
+    RedistributeParticleBuffer(i_buffer);
+
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
@@ -731,6 +749,13 @@ BTDiagnostics::Flush (int i_buffer)
     }
 }
 
+void BTDiagnostics::RedistributeParticleBuffer (const int i_buffer)
+{
+    for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
+        m_particles_buffer[i_buffer][isp]->Redistribute();
+    }
+}
+
 void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
 {
     // Make sure all MPI ranks wrote their files and closed it
@@ -741,6 +766,12 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
 
     auto & warpx = WarpX::GetInstance();
     const amrex::Vector<int> iteration = warpx.getistep();
+    // number of digits for plotfile containing multifab data (Cell_D_XXXXX)
+    // the digits here are "multifab ids" (independent of the step) and thus always small
+    const int amrex_fabfile_digits = 5;
+    // number of digits for plotfile containing particle data (DATA_XXXXX)
+    // the digits here are fab ids that the particles belong to (independent of the step) and thus always small
+    const int amrex_partfile_digits = 5;
     if (amrex::ParallelContext::IOProcessorSub()) {
         // Path to final snapshot plotfiles
         std::string snapshot_path = amrex::Concatenate(m_file_prefix, i_snapshot, m_file_min_digits);
@@ -786,10 +817,13 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             std::string recent_Buffer_FabFilename = recent_Buffer_Level0_path + "/"
                                                   + Buffer_FabHeader.FabName(0);
             // Existing snapshot Fab Header Filename
+            // Cell_D_<number> is padded with 5 zeros as that is the default AMReX output
+            // The number is the multifab ID here.
             std::string snapshot_FabHeaderFilename = snapshot_Level0_path + "/Cell_H";
-            std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_",m_buffer_flush_counter[i_snapshot], m_file_min_digits);
+            std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_", m_buffer_flush_counter[i_snapshot], amrex_fabfile_digits);
             // Name of the newly appended fab in the snapshot
-            std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_",m_buffer_flush_counter[i_snapshot],m_file_min_digits);
+            // Cell_D_<number> is padded with 5 zeros as that is the default AMReX output
+            std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_", m_buffer_flush_counter[i_snapshot], amrex_fabfile_digits);
 
             if ( m_buffer_flush_counter[i_snapshot] == 0) {
                 std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
@@ -821,10 +855,12 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                                                      m_output_species_names[i]);
             BufferSpeciesHeader.ReadHeader();
             // only one box is flushed out at a time
+            // DATA_<number> is padded with 5 zeros as that is the default AMReX output for plotfile
+            // The number is the ID of the multifab that the particles belong to.
             std::string recent_ParticleDataFilename = amrex::Concatenate(
                 recent_species_prefix + "/Level_0/DATA_",
                 BufferSpeciesHeader.m_which_data[0][0],
-                m_file_min_digits);
+                amrex_partfile_digits);
             // Path to snapshot particle files
             std::string snapshot_species_path = snapshot_path + "/" + m_output_species_names[i];
             std::string snapshot_species_Level0path = snapshot_species_path + "/Level_0";
@@ -833,7 +869,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             std::string snapshot_ParticleDataFilename = amrex::Concatenate(
                 snapshot_species_Level0path + "/DATA_",
                 m_buffer_flush_counter[i_snapshot],
-                m_file_min_digits);
+                amrex_partfile_digits);
 
             if (m_buffer_flush_counter[i_snapshot] == 0) {
                 BufferSpeciesHeader.set_DataIndex(0,0,m_buffer_flush_counter[i_snapshot]);
@@ -1014,7 +1050,7 @@ BTDiagnostics::InitializeParticleBuffer ()
         for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
             m_totalParticles_flushed_already[i][isp] = 0;
             m_totalParticles_in_buffer[i][isp] = 0;
-            m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(&WarpX::GetInstance());
+            m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(WarpX::GetInstance().GetParGDB());
             const int idx = mpc.getSpeciesID(m_output_species_names[isp]);
             m_output_species[i].push_back(ParticleDiag(m_diag_name,
                                                        m_output_species_names[isp],
@@ -1028,7 +1064,6 @@ BTDiagnostics::InitializeParticleBuffer ()
 void
 BTDiagnostics::PrepareParticleDataForOutput()
 {
-
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev < nlev_output; ++lev) {
         for (int i = 0; i < m_all_particle_functors.size(); ++i)
