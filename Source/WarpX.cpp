@@ -1290,10 +1290,10 @@ WarpX::ReadParameters ()
         if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
 
             // The comoving PSATD algorithm is not implemented nor tested with Esirkepov current deposition
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v_comoving_is_zero, 
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v_comoving_is_zero,
                 "Esirkepov current deposition cannot be used with the comoving PSATD algorithm");
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v_galilean_is_zero, 
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v_galilean_is_zero,
                 "Esirkepov current deposition cannot be used with the Galilean algorithm."");
         }
 
