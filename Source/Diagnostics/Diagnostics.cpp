@@ -274,9 +274,6 @@ Diagnostics::InitData ()
     // initialize member variables and arrays specific to each derived class
     // (FullDiagnostics, BTDiagnostics, etc.)
     DerivedInitData();
-    amrex::ParmParse pp_geometry("geometry");
-    std::string dims;
-    pp_geometry.get("dims", dims);
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         // loop over all levels
         // This includes full diagnostics and BTD as well as cell-center functors for BTD.
