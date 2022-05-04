@@ -281,11 +281,7 @@ Diagnostics::InitData ()
         // the corresponding functor is also initialized for all the levels
         for (int lev = 0; lev < nmax_lev; ++lev) {
             // allocate and initialize m_all_field_functors depending on diag type
-            if (dims == "RZ" and m_format == "openpmd") {
-                InitializeFieldFunctorsRZopenPMD(lev);
-            } else {
-                InitializeFieldFunctors(lev);
-            }
+            InitializeFieldFunctors(lev);
         }
         // loop over the levels selected for output
         // This includes all the levels for full diagnostics
