@@ -23,9 +23,9 @@
 import os
 import sys
 
-import yt
-from openpmd_viewer import OpenPMDTimeSeries
 import numpy as np
+from openpmd_viewer import OpenPMDTimeSeries
+import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -44,7 +44,7 @@ assert(error==tolerance)
 
 # Check that all the removed particles are properly recorded
 # by making sure that, at each iteration, the sum of the number of
-# remaining particles and scraped particles is equal to the 
+# remaining particles and scraped particles is equal to the
 # original number of particles
 ts_full = OpenPMDTimeSeries('./diags/diag2/')
 ts_scraping = OpenPMDTimeSeries('./diags/diag3/')
