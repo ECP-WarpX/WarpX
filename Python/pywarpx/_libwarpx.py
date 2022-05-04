@@ -633,7 +633,6 @@ class LibWarpX():
         ux = ux.astype(self._numpy_particlereal_dtype, copy=False)
         uy = uy.astype(self._numpy_particlereal_dtype, copy=False)
         uz = uz.astype(self._numpy_particlereal_dtype, copy=False)
-        attr = attr.astype(self._numpy_particlereal_dtype, copy=False)
 
         self.libwarpx_so.warpx_addNParticles(
             ctypes.c_char_p(species_name.encode('utf-8')), x.size,
