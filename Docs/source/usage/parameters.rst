@@ -2051,7 +2051,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``<diag_name>.particle_fields.<field_name>.extra_attributes`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``, optional)
     Names of user-defined particle attributes that may appear in the parser string ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)``.
-    Either real or integer attributes may be used in the parser, but the code will use the real attribute if a real and an integer attribute share a name.
+    Either real or integer attributes may be used in the parser, though integers will be cast to reals first.
 
 * ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)`` (parser `string`, optional)
     Parser function returning a boolean for whether to include a particle in the diagnostic.
@@ -2061,7 +2061,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``<diag_name>.particle_fields.<field_name>.filter_extra_attributes`` (list `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``, optional)
     Names of user-defined particle attributes that may appear in the parser string ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)``.
-    Either real or integer attributes may be used in the parser, but the code will pick the real attribute if a real and an integer attribute share a name.
+    Either real or integer attributes may be used in the parser.
 
 * ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
     By default, the fields written in the plot files are averaged on the cell centers.
@@ -2133,7 +2133,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``<diag_name>.<species_name>.plot_filter_function_extra_attributes`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``) optional
     Names of user-defined particle attributes that may appear in ``<diag_name>.<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)``.
-    Either real or integer attributes may be used in the parser, but the code will pick the real attribute if a real and an integer attribute share a name.
+    Either real or integer attributes may be used in the parser, though integers will be cast to reals.
 
 * ``amrex.async_out`` (`0` or `1`) optional (default `0`)
     Whether to use asynchronous IO when writing plotfiles. This only has an effect
@@ -2566,7 +2566,7 @@ Reduced Diagnostics
 
         * ``<reduced_diags_name>.histogram_extra_attributes`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``, optional)
             Names of user-defined particle attributes that may appear in the parser string ``<reduced_diags_name>.histogram_function(t,x,y,z,ux,uy,uz)``.
-            Either real or integer attributes may be used in the parser, but the code will use the real attribute if a real and an integer attribute share a name.
+            Either real or integer attributes may be used in the parser, though integers will be cast to reals.
 
         * ``<reduced_diags_name>.bin_number`` (`int` > 0)
             This is the number of bins used for the histogram.
@@ -2615,7 +2615,7 @@ Reduced Diagnostics
 
         * ``<reduced_diags_name>.filter_extra_attributes`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``) optional
              Names of user-defined particle attributes that may appear in the parser string ``<reduced_diags_name>.filter_function(t,x,y,z,ux,uy,uz)``.
-             Either real or integer attributes may be used in the parser, but the code will use the real attribute if a real and an integer attribute share a name.
+             Either real or integer attributes may be used in the parser, though integers will be cast to reals.
 
         The output columns are
         values of the 1st bin, the 2nd bin, ..., the nth bin.
