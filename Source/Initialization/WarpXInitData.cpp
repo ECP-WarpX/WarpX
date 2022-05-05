@@ -69,9 +69,9 @@
 #include <vector>
 #include <sstream>
 
-#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
-
 #include <openPMD/openPMD.hpp>
+
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 
 using namespace amrex;
 
@@ -1224,7 +1224,7 @@ WarpX::ReadExternalFieldsFromFile (std::string read_from_path, MultiFab* mf,
 std::string F_name, std::string F_componet)
 {
 
-    auto & warpx = WarpX::GetInstance();
+    auto& warpx = WarpX::GetInstance();
     amrex::Geometry const& geom = warpx.Geom(0);
     const amrex::RealBox& real_box = geom.ProbDomain();
     const auto dx = geom.CellSizeArray();
@@ -1235,32 +1235,29 @@ std::string F_name, std::string F_componet)
     {
 
         auto series = openPMD::Series(read_from_path, openPMD::Access::READ_ONLY);
-        auto i = series.iterations.begin()->second;
-        auto F = i.meshes[F_name];
+        auto iseries = series.iterations.begin()->second;
+        auto F = iseries.meshes[F_name];
         auto offset = F.gridGlobalOffset();
         auto d = F.gridSpacing<double>();
         auto FE = F[F_componet];
         auto extent = FE.getExtent();
         double unit = FE.unitSI();
 
-        const amrex::Box& tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
+std::cout << "extent: " << extent[0] << " " << extent[1] << " " << extent[2] << "\n";
 
         auto box = mfi.validbox();
         auto lo = lbound(box);
         auto hi = ubound(box);
-
-        auto const& mffab = mf->array(mfi);
-
         const amrex::RealBox& real_box = geom.ProbDomain();
         const auto dx = geom.CellSizeArray();
 
         // Get physical low and high coordniates of this box.
         // Then the external field read must cover these coordinates.
         amrex::Real x_lo, y_lo, z_lo, x_hi, y_hi, z_hi;
-        if ( box.type(0)==1 ) {
+        if ( box.type(0)==1 ) { // If nodal
             x_lo = real_box.lo(0) + lo.x*dx[0];
             x_hi = real_box.lo(0) + hi.x*dx[0];
-        } else {
+        } else { // else cell-centered
             x_lo = real_box.lo(0) + lo.x*dx[0] + 0.5*dx[0];
             x_hi = real_box.lo(0) + hi.x*dx[0] + 0.5*dx[0];
         }
@@ -1279,6 +1276,7 @@ std::string F_name, std::string F_componet)
             z_hi = real_box.lo(2) + hi.z*dx[2] + 0.5*dx[2];
         }
 
+        // Find the index range needed in the data file.
         unsigned long const ix_lo = floor( std::abs(x_lo-offset[0])/d[0] );
         unsigned long const ix_hi = floor( std::abs(x_hi-offset[0])/d[0] );
         unsigned long const iy_lo = floor( std::abs(y_lo-offset[1])/d[1] );
@@ -1287,37 +1285,56 @@ std::string F_name, std::string F_componet)
         unsigned long const iz_hi = floor( std::abs(z_hi-offset[2])/d[2] );
 
         openPMD::Offset chunk_offset = {ix_lo, iy_lo, iz_lo};
-        openPMD::Extent chunk_extent = {ix_hi-ix_lo, iy_hi-iy_lo, ix_hi-iz_lo};
-
+        openPMD::Extent chunk_extent = {ix_hi-ix_lo, iy_hi-iy_lo, iz_hi-iz_lo};
+std::cout << "chunk_offset: " << chunk_offset[0] << " " << chunk_offset[1] << " " << chunk_offset[2] << "\n";
+std::cout << "chunk_extent: " << chunk_extent[0] << " " << chunk_extent[1] << " " << chunk_extent[2] << "\n";
         auto FE_chunk_data = FE.loadChunk<double>(chunk_offset, chunk_extent);
         series.flush();
         auto FE_data = FE_chunk_data.get();
 
+        const amrex::Box& tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
+        auto const& mffab = mf->array(mfi);
+
+        // Start ParallelFor
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 
+                // Physical coordinates of the grid point
                 amrex::Real x, y, z;
 
-                if ( box.type(0)==1 ) { x = real_box.lo(0) + i*dx[0]; }
+                if ( box.type(0)==1 )
+                     { x = real_box.lo(0) + i*dx[0]; }
                 else { x = real_box.lo(0) + i*dx[0] + 0.5*dx[0]; }
-                if ( box.type(1)==1 ) { y = real_box.lo(1) + j*dx[1]; }
+                if ( box.type(1)==1 )
+                     { y = real_box.lo(1) + j*dx[1]; }
                 else { y = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
-                if ( box.type(2)==1 ) { z = real_box.lo(2) + k*dx[2]; }
+                if ( box.type(2)==1 )
+                     { z = real_box.lo(2) + k*dx[2]; }
                 else { z = real_box.lo(2) + k*dx[2] + 0.5*dx[2]; }
 
+                // Get index of the external field array
                 int ix = floor( std::abs(x-offset[0])/d[0] );
                 int iy = floor( std::abs(y-offset[1])/d[1] );
                 int iz = floor( std::abs(z-offset[2])/d[2] );
+
+                // Get coordinates of external grid point
                 amrex::Real xx, yy, zz, ddx, ddy, ddz;
                 xx = offset[0] + ix*d[0];
                 yy = offset[1] + iy*d[1];
                 zz = offset[2] + iz*d[2];
-                ddx = (xx-x)/d[0];
-                ddy = (yy-y)/d[1];
-                ddz = (zz-z)/d[2];
+
+                // Get portion ratio for linear interpolatioin
+                ddx = std::abs(x-xx)/d[0];
+                ddy = std::abs(y-yy)/d[1];
+                ddz = std::abs(z-zz)/d[2];
+
+                ix = ix - chunk_offset[0];
+                iy = iy - chunk_offset[1];
+                iz = iz - chunk_offset[2];
+std::cout << ix << " " << iy << " " << iz << "\n";
                 int ext_1  = chunk_extent[1];
                 int ext_12 = chunk_extent[1]*chunk_extent[2];
-
+                // Assign the values through linear interpolation
                 mffab(i,j,k) = FE_data[(iz  )+(iy  )*ext_1+(ix  )*ext_12]*(1.0-ddx)*(1.0-ddy)*(1.0-ddz) +
                                FE_data[(iz  )+(iy  )*ext_1+(ix+1)*ext_12]*(    ddx)*(1.0-ddy)*(1.0-ddz) +
                                FE_data[(iz  )+(iy+1)*ext_1+(ix  )*ext_12]*(1.0-ddx)*(    ddy)*(1.0-ddz) +
@@ -1327,10 +1344,21 @@ std::string F_name, std::string F_componet)
                                FE_data[(iz+1)+(iy+1)*ext_1+(ix  )*ext_12]*(1.0-ddx)*(    ddy)*(    ddz) +
                                FE_data[(iz+1)+(iy+1)*ext_1+(ix+1)*ext_12]*(    ddx)*(    ddy)*(    ddz);
 
+//                int ext_0  = chunk_extent[0];
+//                int ext_01 = chunk_extent[0]*chunk_extent[1];
+//                // Assign the values through linear interpolation
+//                mffab(i,j,k) = FE_data[(ix  )+(iy  )*ext_0+(iz  )*ext_01]*(1.0-ddx)*(1.0-ddy)*(1.0-ddz) +
+//                               FE_data[(ix  )+(iy  )*ext_0+(iz+1)*ext_01]*(    ddx)*(1.0-ddy)*(1.0-ddz) +
+//                               FE_data[(ix  )+(iy+1)*ext_0+(iz  )*ext_01]*(1.0-ddx)*(    ddy)*(1.0-ddz) +
+//                               FE_data[(ix+1)+(iy  )*ext_0+(iz  )*ext_01]*(1.0-ddx)*(1.0-ddy)*(    ddz) +
+//                               FE_data[(ix  )+(iy+1)*ext_0+(iz+1)*ext_01]*(    ddx)*(    ddy)*(1.0-ddz) +
+//                               FE_data[(ix+1)+(iy  )*ext_0+(iz+1)*ext_01]*(    ddx)*(1.0-ddy)*(    ddz) +
+//                               FE_data[(ix+1)+(iy+1)*ext_0+(iz  )*ext_01]*(1.0-ddx)*(    ddy)*(    ddz) +
+//                               FE_data[(ix+1)+(iy+1)*ext_0+(iz+1)*ext_01]*(    ddx)*(    ddy)*(    ddz);
+
             }
-        );
+        ); // End ParallelFor
 
-    }
+    } // End loop over boxes.
 
-}
-
+} // End function WarpX::ReadExternalFieldsFromFile
