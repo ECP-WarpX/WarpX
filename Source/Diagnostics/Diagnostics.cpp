@@ -55,10 +55,19 @@ Diagnostics::BaseReadParameters ()
     pp_diag_name.query("format", m_format);
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
+    amrex::ParmParse pp_geometry("geometry");
+    std::string dims;
+    pp_geometry.get("dims", dims);
+
     // Query list of grid fields to write to output
     bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames_fields);
     if (!varnames_specified){
-        m_varnames_fields = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
+        if( dims == "RZ" and m_format == "openpmd" ) {
+            m_varnames_fields = {"Er", "Et", "Ez", "Br", "Bt", "Bz", "jr", "jt", "jz"};
+        }
+        else {
+            m_varnames_fields = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
+        }
     }
 
     // Sanity check if user requests to plot phi
@@ -105,6 +114,8 @@ Diagnostics::BaseReadParameters ()
 
     // Get parser strings for particle fields and generate map of parsers
     std::string parser_str;
+    std::string filter_parser_str = "";
+    bool do_parser_filter;
     amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
         Store_parserString(pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)").c_str(), parser_str);
@@ -116,6 +127,12 @@ Diagnostics::BaseReadParameters ()
         );
 
         m_pfield_strings.insert({var, parser_str});
+
+        // Look for and record filter functions. If one is not found, the empty string will be
+        // stored as the filter string, and will be ignored.
+        do_parser_filter = pp_diag_pfield.query((var + ".filter(x,y,z,ux,uy,uz)").c_str(), filter_parser_str);
+        m_pfield_dofilter.insert({var, do_parser_filter});
+        m_pfield_filter_strings.insert({var, filter_parser_str});
     }
 
     // Names of all species in the simulation
@@ -262,12 +279,19 @@ Diagnostics::InitData ()
     // initialize member variables and arrays specific to each derived class
     // (FullDiagnostics, BTDiagnostics, etc.)
     DerivedInitData();
-    // loop over all buffers
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         // loop over all levels
+        // This includes full diagnostics and BTD as well as cell-center functors for BTD.
+        // Note that the cell-centered data for BTD is computed for all levels and hence
+        // the corresponding functor is also initialized for all the levels
         for (int lev = 0; lev < nmax_lev; ++lev) {
             // allocate and initialize m_all_field_functors depending on diag type
             InitializeFieldFunctors(lev);
+        }
+        // loop over the levels selected for output
+        // This includes all the levels for full diagnostics
+        // and only the coarse level (mother grid) for BTD
+        for (int lev = 0; lev < nlev_output; ++lev) {
             // Initialize buffer data required for particle and/or fields
             InitializeBufferData(i_buffer, lev);
         }
