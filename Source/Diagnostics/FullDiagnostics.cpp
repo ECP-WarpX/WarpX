@@ -563,6 +563,14 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
 void
 FullDiagnostics::InitializeFieldFunctors (int lev)
 {
+#ifdef WARPX_DIM_RZ
+    // For RZ, with openPMD, we need a special initialization instead
+    if (m_format == "openpmd") {
+        InitializeFieldFunctorsRZopenPMD(lev);
+        return; // We skip the rest of this function
+    }
+#endif
+
     auto & warpx = WarpX::GetInstance();
 
     // Clear any pre-existing vector to release stored data.
