@@ -925,6 +925,10 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
     """
     def __init__(self, implicit_function=None, stl_file=None, stl_scale=None, stl_center=None, stl_reverse_normal=None,
                  potential=None, **kw):
+
+        assert stl_file is None or implicit_function is None, Exception('Only one between implicit_function and '
+                                                                            'stl_file can be specified')
+
         self.implicit_function = implicit_function
         self.stl_file = stl_file
 
