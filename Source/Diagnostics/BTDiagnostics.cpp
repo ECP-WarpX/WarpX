@@ -170,6 +170,20 @@ BTDiagnostics::ReadParameters ()
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
     }
 
+
+    amrex::Vector< std::string > BTD_varnames_supported = {"Ex", "Ey", "Ez",
+                                                           "Bx", "By", "Bz",
+                                                           "jx", "jy", "jz", "rho"};
+
+    for (const auto& var : m_varnames) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (WarpXUtilStr::is_in(BTD_varnames_supported, var )), "Input error: field variable " + var + " in " + m_diag_name
+        + ".fields_to_plot is not supported for BackTransformed diagnostics. Currently supported field variables for BackTransformed diagnostics include Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho");
+    }
+
+    bool particle_fields_to_plot_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!particle_fields_to_plot_specified, "particle_fields_to_plot is currently not supported for BackTransformed Diagnostics");
+
+
 }
 
 bool
@@ -1036,7 +1050,7 @@ BTDiagnostics::InitializeParticleBuffer ()
         for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
             m_totalParticles_flushed_already[i][isp] = 0;
             m_totalParticles_in_buffer[i][isp] = 0;
-            m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(&WarpX::GetInstance());
+            m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(WarpX::GetInstance().GetParGDB());
             const int idx = mpc.getSpeciesID(m_output_species_names[isp]);
             m_output_species[i].push_back(ParticleDiag(m_diag_name,
                                                        m_output_species_names[isp],

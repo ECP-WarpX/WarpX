@@ -77,26 +77,20 @@ namespace {
         // cf. JEFF-3.3 radioactive decay data library (2017)
         constexpr amrex::ParticleReal E_decay = 0.0918984_prt*mev_to_joule;
 
-        constexpr amrex::ParticleReal m_alpha = PhysConst::m_p * 3.97369_prt;
-        constexpr amrex::ParticleReal m_beryllium = PhysConst::m_p * 7.94748_prt;
+        // The constexprs ma_sq and mBe_sq underflow in single precision because we use SI units,
+        // which can cause compilation to fail or generate a warning, so we're explicitly setting
+        // them as double. Note that nuclear fusion module does not currently work with single
+        // precision anyways.
+        constexpr double m_alpha = PhysConst::m_p * 3.97369_prt;
+        constexpr double m_beryllium = PhysConst::m_p * 7.94748_prt;
+        constexpr double ma_sq = m_alpha*m_alpha;
+        constexpr double mBe_sq = m_beryllium*m_beryllium;
         constexpr amrex::ParticleReal c_sq = PhysConst::c * PhysConst::c;
         constexpr amrex::ParticleReal inv_csq = 1._prt / ( c_sq );
         // Rest energy of proton+boron
         const amrex::ParticleReal E_rest_pb = (m1 + m2)*c_sq;
         // Rest energy of alpha+beryllium
         constexpr amrex::ParticleReal E_rest_abe = (m_alpha + m_beryllium)*c_sq;
-
-        // These constexprs underflow in single precision because we use SI units and sometimes the
-        // code won't compile. Nuclear fusion module does not currently work with single precision
-        // anyways so these #ifdef are just here to make sure that the code always compiles with
-        // single precision.
-#ifdef AMREX_SINGLE_PRECISION_PARTICLES
-        const amrex::ParticleReal ma_sq = m_alpha*m_alpha;
-        const amrex::ParticleReal mBe_sq = m_beryllium*m_beryllium;
-#else
-        constexpr amrex::ParticleReal ma_sq = m_alpha*m_alpha;
-        constexpr amrex::ParticleReal mBe_sq = m_beryllium*m_beryllium;
-#endif
 
         // Normalized momentum of colliding particles (proton and boron)
         const amrex::ParticleReal u1x = soa_1.m_rdata[PIdx::ux][idx_1];

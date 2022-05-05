@@ -601,22 +601,25 @@ LaserParticleContainer::Evolve (int lev,
                                   amplitude_E.dataPtr(), dt);
             WARPX_PROFILE_VAR_STOP(blp_pp);
 
-            //
             // Current Deposition
-            //
-            // Deposit inside domains
-            if (! skip_deposition ) {
+            if (skip_deposition == false)
+            {
+                // Deposit at t_{n+1/2}
+                amrex::Real relative_time = -0.5_rt * dt;
+
                 int* ion_lev = nullptr;
+                // Deposit inside domains
                 DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                0, np_current, thread_num,
-                               lev, lev, dt, -0.5_rt); // Deposit current at t_{n+1/2}
+                               lev, lev, dt, relative_time);
 
-                bool has_buffer = cjx;
-                if (has_buffer){
+                const bool has_buffer = cjx;
+                if (has_buffer)
+                {
                     // Deposit in buffers
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                    np_current, np-np_current, thread_num,
-                                   lev, lev-1, dt, -0.5_rt); // Deposit current at t_{n+1/2}
+                                   lev, lev-1, dt, relative_time);
                 }
             }
 
