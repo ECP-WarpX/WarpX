@@ -51,8 +51,6 @@ namespace {
     }
 }
 
-PlasmaInjector::PlasmaInjector () = default;
-
 PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     : species_id(ispecies), species_name(name)
 {

@@ -39,8 +39,6 @@ Diagnostics::Diagnostics (int i, std::string name)
 {
 }
 
-Diagnostics::~Diagnostics () = default;
-
 bool
 Diagnostics::BaseReadParameters ()
 {
