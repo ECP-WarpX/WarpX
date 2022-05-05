@@ -2125,13 +2125,13 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     :math:`\gamma v/c`, where
     :math:`\gamma` is the Lorentz factor,
     :math:`v/c` is the particle velocity normalized by the speed of light.
-    Real or integer user-defined particle attributes can also be used as arguments if listed in ``<diag_name>.<species_name>.plot_filter_function_extra_attributes``.
+    Real or integer user-defined particle attributes can also be used as arguments if listed in ``<diag_name>.<species_name>.plot_filter_extra_attributes``.
     The argument list in the parameter name will stay the same if additional attributes are used.
     E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
     positions `x` greater than `0`, and those having velocity `uz` less than 10,
     will be dumped.
 
-* ``<diag_name>.<species_name>.plot_filter_function_extra_attributes`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``) optional
+* ``<diag_name>.<species_name>.plot_filter_extra_attributes`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``) optional
     Names of user-defined particle attributes that may appear in ``<diag_name>.<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)``.
     Either real or integer attributes may be used in the parser, though integers will be cast to reals.
 
