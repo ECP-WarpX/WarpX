@@ -1357,6 +1357,7 @@ std::cout << ix << " " << iy << " " << iz << "\n";
 //                               FE_data[(ix+1)+(iy+1)*ext_0+(iz+1)*ext_01]*(    ddx)*(    ddy)*(    ddz);
 
             }
+
         ); // End ParallelFor
 
     } // End loop over boxes.
