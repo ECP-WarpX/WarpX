@@ -1213,22 +1213,6 @@ WarpX::ReadParameters ()
         pp_psatd.query("current_correction", current_correction);
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
 
-<<<<<<< HEAD
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            fft_periodic_single_box || !current_correction,
-            "Current correction does not guarantee charge conservation with"
-            " local FFTs over guard cells: set psatd.periodic_single_box_fft=1 too,"
-            " in order to guarantee charge conservation"
-        );
-
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            fft_periodic_single_box || WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay,
-            "Vay current deposition does not guarantee charge conservation with"
-            " local FFTs over guard cells: set psatd.periodic_single_box_fft=1 too,"
-            " in order to guarantee charge conservation"
-
-        );
-=======
         if (WarpX::current_correction == true)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1242,7 +1226,6 @@ WarpX::ReadParameters ()
                 fft_periodic_single_box == false,
                 "Option algo.current_deposition=vay must be used with psatd.periodic_single_box_fft=0.");
         }
->>>>>>> upstream/development
 
         // Auxiliary: boosted_frame = true if warpx.gamma_boost is set in the inputs
         amrex::ParmParse pp_warpx("warpx");
