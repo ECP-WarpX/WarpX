@@ -13,6 +13,7 @@ from .Bucket import Bucket
 from .Collisions import collisions, collisions_list
 from .Constants import my_constants
 from .Diagnostics import diagnostics
+from .EB import eb
 from .Geometry import geometry
 from .Interpolation import interpolation
 from .Langmuirwave import langmuirwave
@@ -38,6 +39,7 @@ class WarpX(Bucket):
         argv += langmuirwave.attrlist()
         argv += interpolation.attrlist()
         argv += psatd.attrlist()
+        argv += eb.attrlist()
 
         # --- Search through species_names and add any predefined particle objects in the list.
         particles_list_names = [p.instancename for p in particles_list]

@@ -923,15 +923,27 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
                  when the solver is electrostatic. Optional, defaults to 0.
      Parameters used in the expressions should be given as additional keyword arguments.
     """
-    def __init__(self, implicit_function, potential=None, **kw):
+    def __init__(self, implicit_function=None, stl_file=None, stl_scale=None, stl_center=None, stl_reverse_normal=None,
+                 potential=None, **kw):
         self.implicit_function = implicit_function
+        self.stl_file = stl_file
+
+        if stl_file is None:
+            assert stl_scale is None, Exception('EB can be scaled only when using an stl file')
+            assert stl_center is None, Exception('EB can be translated only when using an stl file')
+            assert stl_reverse_normal is None, Exception('EB can be reversed only when using an stl file')
+
+        self.stl_scale = stl_scale
+        self.stl_center = stl_center
+        self.stl_reverse_normal = stl_reverse_normal
+
         self.potential = potential
 
         # Handle keyword arguments used in expressions
         self.user_defined_kw = {}
         for k in list(kw.keys()):
-            if (re.search(r'\b%s\b'%k, implicit_function) or
-                (potential is not None and re.search(r'\b%s\b'%k, potential))):
+            if (implicit_function is not None and re.search(r'\b%s\b'%k, implicit_function) or
+               (potential is not None and re.search(r'\b%s\b'%k, potential))):
                 self.user_defined_kw[k] = kw[k]
                 del kw[k]
 
@@ -944,8 +956,16 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         # defined in my_constants with the same name but different value.
         self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
-        expression = pywarpx.my_constants.mangle_expression(self.implicit_function, self.mangle_dict)
-        pywarpx.warpx.eb_implicit_function = expression
+        if self.implicit_function is not None:
+            expression = pywarpx.my_constants.mangle_expression(self.implicit_function, self.mangle_dict)
+            pywarpx.warpx.eb_implicit_function = expression
+
+        if self.stl_file is not None:
+            pywarpx.eb.geom_type = "stl"
+            pywarpx.eb.stl_file = self.stl_file
+            pywarpx.eb.stl_scale = self.stl_scale
+            pywarpx.eb.stl_center = self.stl_center
+            pywarpx.eb.stl_reverse_normal = self.stl_reverse_normal
 
         if self.potential is not None:
             assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
