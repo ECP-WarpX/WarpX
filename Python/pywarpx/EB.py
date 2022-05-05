@@ -1,4 +1,4 @@
-# Copyright 2021 Roelof Groenewald
+# Copyright 2022 Lorenzo Giacomel
 #
 # This file is part of WarpX.
 #

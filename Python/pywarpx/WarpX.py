@@ -1,5 +1,5 @@
-# Copyright 2016-2020 Andrew Myers, David Grote, Maxence Thevenet
-# Remi Lehe
+# Copyright 2016-2022 Andrew Myers, David Grote, Maxence Thevenet
+# Remi Lehe, Lorenzo Giacomel
 #
 # This file is part of WarpX.
 #

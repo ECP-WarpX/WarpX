@@ -1,5 +1,5 @@
 # Copyright 2018-2020 Andrew Myers, David Grote, Ligia Diana Amorim
-# Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+# Maxence Thevenet, Remi Lehe, Revathi Jambunathan, Lorenzo Giacomel
 #
 #
 # This file is part of WarpX.
