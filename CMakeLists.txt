@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.18.0)
-project(WarpX VERSION 22.04)
+project(WarpX VERSION 22.05)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -105,6 +105,13 @@ set_default_build_type("Release")
 # (also know as "link-time optimization" or "whole program optimization")
 option(WarpX_IPO                                "Compile WarpX with interprocedural optimization (will take more time)" OFF)
 
+# note: we could skip this if we solely build WarpX_APP, but if we build a
+# shared WarpX library or a third party, like ImpactX, uses ablastr in a
+# shared library (e.g., for Python bindings), then we need relocatable code.
+option(ABLASTR_POSITION_INDEPENDENT_CODE
+    "Build ABLASTR with position independent code" ${WarpX_LIB})
+mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
+
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
 
@@ -168,9 +175,21 @@ if(WarpX_LIB)
     set(_BUILDINFO_SRC shared)
     list(APPEND _ALL_TARGETS shared)
 
-    set_target_properties(WarpX ablastr shared PROPERTIES
+    set_target_properties(WarpX shared PROPERTIES
         POSITION_INDEPENDENT_CODE ON
         WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
+    set(ABLASTR_POSITION_INDEPENDENT_CODE ON CACHE BOOL
+        "Build ABLASTR with position independent code" FORCE)
+endif()
+
+# ABLASTR library (static or shared)
+set_target_properties(ablastr PROPERTIES
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
+)
+if(ABLASTR_POSITION_INDEPENDENT_CODE)
+    set_target_properties(ablastr PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
     )
 endif()
 

@@ -853,6 +853,13 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
         pp_warpx.query("do_similar_dm_pml", do_similar_dm_pml);
+        // Read `v_particle_pml` in units of the speed of light
+        v_particle_pml = 1._rt;
+        pp_warpx.query("v_particle_pml", v_particle_pml);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(0._rt < v_particle_pml && v_particle_pml <= 1._rt,
+            "Input value for the velocity warpx.v_particle_pml of the macroparticle must be in (0,1] (in units of c).");
+        // Scale by the speed of light
+        v_particle_pml = v_particle_pml * PhysConst::c;
 
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
         // false for FDTD solver, true for PSATD solver.
