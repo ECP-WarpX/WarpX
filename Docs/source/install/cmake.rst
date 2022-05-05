@@ -100,6 +100,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_QED``                 **ON**/OFF                                   QED support (requires PICSAR)
 ``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation support (requires PICSAR and Boost)
 ``WarpX_SENSEI``              ON/**OFF**                                   SENSEI in situ visualization
+``WarpX_EXTRA_PARSER_ARGS``   **0** (positive integer)                     Maximum number of user-defined particle attributes to use in some parser functions
 ============================= ============================================ =========================================================
 
 WarpX can be configured in further detail with options from AMReX, which are documented in the AMReX manual:
@@ -271,6 +272,7 @@ Environment Variable          Default & Values                             Descr
 ``WARPX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WARPX_QED``                 **ON**/OFF                                   PICSAR QED (requires PICSAR)
 ``WARPX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation (requires PICSAR and Boost)
+``WARPX_EXTRA_PARSER_ARGS``   **0** (positive integer)                     Maximum number of user-defined particle attributes to use in some parser functions
 ``BUILD_PARALLEL``            ``2``                                        Number of threads to use for parallel builds
 ``BUILD_SHARED_LIBS``         ON/**OFF**                                   Build shared libraries for dependencies
 ``HDF5_USE_STATIC_LIBRARIES`` ON/**OFF**                                   Prefer static libraries for HDF5 dependency (openPMD)
