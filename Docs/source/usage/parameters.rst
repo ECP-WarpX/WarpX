@@ -2044,22 +2044,22 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
    where :math:`w_i` is the particle weight, :math:`f()` is the parser function, and :math:`(x_i,y_i,z_i)` are particle positions in units of a meter. The sums are over all particles of type ``<species>`` in a cell (ignoring the particle shape factor) that satisfy ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)``.
    When ``<diag_name>.particle_fields.<field_name>.do_average`` is `0`, the division by the sum over particle weights is not done.
-   The function and filter may include user-defined particle attributes if they are listed in ``<diag_name>.particle_fields.field_name.extra_attributes``.
+   The function and filter may include user-defined particle attributes if they are listed in ``<diag_name>.particle_fields.field_name.extra_args``.
    The argument list in the parameter name will stay the same if additional attributes are used.
    In 1D or 2D, the particle coordinates will follow the WarpX convention. :math:`(u_{x,i},u_{y,i},u_{z,i})` are components of the particle four-velocity. :math:`u = \gamma v/c`, :math:`\gamma` is the Lorentz factor, :math:`v` is the particle velocity, and :math:`c` is the speed of light.
 
 
-* ``<diag_name>.particle_fields.<field_name>.extra_attributes`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``, optional)
+* ``<diag_name>.particle_fields.<field_name>.extra_args`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``, optional)
     Names of user-defined particle attributes that may appear in the parser string ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)``.
     Either real or integer attributes may be used in the parser, though integers will be cast to reals first.
 
 * ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)`` (parser `string`, optional)
     Parser function returning a boolean for whether to include a particle in the diagnostic.
     If not specified, all particles will be included (see above).
-    The function arguments are the same as above, and user-defined particle attributes may be included if they are listed in ``<diag_name>.particle_fields.<field_name>.filter_extra_attributes``.
+    The function arguments are the same as above, and user-defined particle attributes may be included if they are listed in ``<diag_name>.particle_fields.<field_name>.filter_extra_args``.
     The argument list in the parameter name will stay the same if additional attributes are used.
 
-* ``<diag_name>.particle_fields.<field_name>.filter_extra_attributes`` (list `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``, optional)
+* ``<diag_name>.particle_fields.<field_name>.filter_extra_args`` (list `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``, optional)
     Names of user-defined particle attributes that may appear in the parser string ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)``.
     Either real or integer attributes may be used in the parser.
 
@@ -2125,13 +2125,13 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     :math:`\gamma v/c`, where
     :math:`\gamma` is the Lorentz factor,
     :math:`v/c` is the particle velocity normalized by the speed of light.
-    Real or integer user-defined particle attributes can also be used as arguments if listed in ``<diag_name>.<species_name>.plot_filter_extra_attributes``.
+    Real or integer user-defined particle attributes can also be used as arguments if listed in ``<diag_name>.<species_name>.plot_filter_function_extra_args``.
     The argument list in the parameter name will stay the same if additional attributes are used.
     E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
     positions `x` greater than `0`, and those having velocity `uz` less than 10,
     will be dumped.
 
-* ``<diag_name>.<species_name>.plot_filter_extra_attributes`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``) optional
+* ``<diag_name>.<species_name>.plot_filter_function_extra_args`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``) optional
     Names of user-defined particle attributes that may appear in ``<diag_name>.<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)``.
     Either real or integer attributes may be used in the parser, though integers will be cast to reals.
 
@@ -2552,7 +2552,7 @@ Reduced Diagnostics
             :math:`\gamma v/c`, where
             :math:`\gamma` is the Lorentz factor,
             :math:`v/c` is the particle velocity normalized by the speed of light.
-            Real or integer user-defined particle attributes may also be used if they are listed in ``<reduced_diags_name>.histogram_extra_attributes``.
+            Real or integer user-defined particle attributes may also be used if they are listed in ``<reduced_diags_name>.histogram_function_extra_args``.
             The argument list in the parameter name will stay the same if additional attributes are used.
             E.g.
             ``x`` produces the position (density) distribution in `x`.
@@ -2564,7 +2564,7 @@ Reduced Diagnostics
             in that bin,
             :math:`w_i` denotes the weight of the ith particle.
 
-        * ``<reduced_diags_name>.histogram_extra_attributes`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``, optional)
+        * ``<reduced_diags_name>.histogram_function_extra_args`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``, optional)
             Names of user-defined particle attributes that may appear in the parser string ``<reduced_diags_name>.histogram_function(t,x,y,z,ux,uy,uz)``.
             Either real or integer attributes may be used in the parser, though integers will be cast to reals.
 
@@ -2607,13 +2607,13 @@ Reduced Diagnostics
             :math:`\gamma v/c`, where
             :math:`\gamma` is the Lorentz factor,
             :math:`v/c` is the particle velocity normalized by the speed of light.
-            Real or integer user-defined particle attributes may also be used if they are listed in ``<reduced_diags_name>.filter_extra_attributes`` (see below).
+            Real or integer user-defined particle attributes may also be used if they are listed in ``<reduced_diags_name>.filter_function_extra_args`` (see below).
             The argument list in the parameter name will stay the same if additional attributes are used.
             E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
             positions `x` greater than `0`, and those having velocity `uz` less than 10,
             will be taken into account when calculating the histogram.
 
-        * ``<reduced_diags_name>.filter_extra_attributes`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``) optional
+        * ``<reduced_diags_name>.filter_function_extra_args`` (list of `strings`, length ``<= WarpX_EXTRA_PARSER_ARGS``) optional
              Names of user-defined particle attributes that may appear in the parser string ``<reduced_diags_name>.filter_function(t,x,y,z,ux,uy,uz)``.
              Either real or integer attributes may be used in the parser, though integers will be cast to reals.
 
