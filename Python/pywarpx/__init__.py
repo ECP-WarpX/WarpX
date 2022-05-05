@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Andrew Myers, David Grote, Lorenzo Giacomel
+# Copyright 2016-2022 Andrew Myers, David Grote, Lorenzo Giacomel
 #
 # This file is part of WarpX.
 #

@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Andrew Myers, David Grote, Ligia Diana Amorim
+# Copyright 2018-2022 Andrew Myers, David Grote, Ligia Diana Amorim
 # Maxence Thevenet, Remi Lehe, Revathi Jambunathan, Lorenzo Giacomel
 #
 #
