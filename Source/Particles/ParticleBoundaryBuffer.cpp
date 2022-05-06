@@ -11,6 +11,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Gather/ScalarFieldGather.H"
 #include "Utils/TextMsg.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX_Geometry.H>
 #include <AMReX_ParmParse.H>
@@ -151,6 +152,8 @@ void ParticleBoundaryBuffer::clearParticles () {
 void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                                               const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
 {
+    WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles");
+
     using PIter = amrex::ParConstIter<0,0,PIdx::nattribs>;
     const auto& warpx_instance = WarpX::GetInstance();
     const amrex::Geometry& geom = warpx_instance.Geom(0);
@@ -203,6 +206,8 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
     }
 
 #ifdef AMREX_USE_EB
+    WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::EB");
+
     auto& buffer = m_particle_containers[m_particle_containers.size()-1];
     for (int i = 0; i < numSpecies(); ++i)
     {

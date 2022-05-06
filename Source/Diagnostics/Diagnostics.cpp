@@ -274,9 +274,6 @@ Diagnostics::InitData ()
     // initialize member variables and arrays specific to each derived class
     // (FullDiagnostics, BTDiagnostics, etc.)
     DerivedInitData();
-    amrex::ParmParse pp_geometry("geometry");
-    std::string dims;
-    pp_geometry.get("dims", dims);
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         // loop over all levels
         // This includes full diagnostics and BTD as well as cell-center functors for BTD.
@@ -284,11 +281,7 @@ Diagnostics::InitData ()
         // the corresponding functor is also initialized for all the levels
         for (int lev = 0; lev < nmax_lev; ++lev) {
             // allocate and initialize m_all_field_functors depending on diag type
-            if (dims == "RZ" and m_format == "openpmd") {
-                InitializeFieldFunctorsRZopenPMD(lev);
-            } else {
-                InitializeFieldFunctors(lev);
-            }
+            InitializeFieldFunctors(lev);
         }
         // loop over the levels selected for output
         // This includes all the levels for full diagnostics
