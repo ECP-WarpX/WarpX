@@ -10,7 +10,7 @@ from .Boundary import boundary
 from .Collisions import collisions
 from .Constants import my_constants
 from .Diagnostics import diagnostics
-from .EB import eb
+from .EB2 import eb2
 from .Geometry import geometry
 from .Interpolation import interpolation
 from .Langmuirwave import langmuirwave

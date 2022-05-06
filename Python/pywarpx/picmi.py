@@ -965,11 +965,11 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
             pywarpx.warpx.eb_implicit_function = expression
 
         if self.stl_file is not None:
-            pywarpx.eb.geom_type = "stl"
-            pywarpx.eb.stl_file = self.stl_file
-            pywarpx.eb.stl_scale = self.stl_scale
-            pywarpx.eb.stl_center = self.stl_center
-            pywarpx.eb.stl_reverse_normal = self.stl_reverse_normal
+            pywarpx.eb2.geom_type = "stl"
+            pywarpx.eb2.stl_file = self.stl_file
+            pywarpx.eb2.stl_scale = self.stl_scale
+            pywarpx.eb2.stl_center = self.stl_center
+            pywarpx.eb2.stl_reverse_normal = self.stl_reverse_normal
 
         if self.potential is not None:
             assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
