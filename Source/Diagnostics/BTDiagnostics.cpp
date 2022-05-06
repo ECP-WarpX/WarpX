@@ -233,8 +233,9 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
 {
     auto & warpx = WarpX::GetInstance();
     // Lab-frame time for the i^th snapshot
-    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab;
-
+    amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
+    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab
+        + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
 
     // Compute lab-frame co-ordinates that correspond to the simulation domain
     // at level, lev, and time, m_t_lab[i_buffer] for each ith buffer.
