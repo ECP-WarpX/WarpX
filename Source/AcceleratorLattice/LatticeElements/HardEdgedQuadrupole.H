@@ -52,17 +52,14 @@ struct HardEdgedQuadrupoleDevice
                     const amrex::ParticleReal x,
                     const amrex::ParticleReal y,
                     const amrex::ParticleReal z,
-                    const amrex::ParticleReal ux,
-                    const amrex::ParticleReal uy,
-                    const amrex::ParticleReal uz,
-                    const amrex::ParticleReal dt,
+                    const amrex::ParticleReal zpvdt,
                     amrex::ParticleReal& Ex,
                     amrex::ParticleReal& Ey,
                     amrex::ParticleReal& Bx,
                     amrex::ParticleReal& By) const
     {
 
-        amrex::Real const frac = hard_edged_fraction(z, ux, uy, uz, dt, d_zs_arr[ielement], d_ze_arr[ielement]);
+        amrex::Real const frac = hard_edged_fraction(z, zpvdt, d_zs_arr[ielement], d_ze_arr[ielement]);
 
         amrex::Real dEdx = frac*d_dEdx_arr[ielement];
         amrex::Real dBdx = frac*d_dBdx_arr[ielement];

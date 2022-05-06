@@ -33,6 +33,10 @@ struct LatticeElementFinder
     amrex::Real m_zmin;
     amrex::Real m_dz;
 
+    amrex::Real m_gamma_boost;
+    amrex::Real m_uz_boost;
+    amrex::Real m_time;
+
     LatticeElementFinderDevice GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset,
                                                         AcceleratorLattice const& accelerator_lattice);
 
@@ -50,14 +54,23 @@ struct LatticeElementFinder
         amrex::Real const * ze_arr = ze.data();
         int * indices_arr = indices.data();
 
-        amrex::Real zmin = m_zmin;
-        amrex::Real dz = m_dz;
+        amrex::Real const zmin = m_zmin;
+        amrex::Real const dz = m_dz;
+
+        amrex::Real const gamma_boost = m_gamma_boost;
+        amrex::Real const uz_boost = m_uz_boost;
+        amrex::Real const time = m_time;
 
         amrex::ParallelFor( m_nz,
             [=] AMREX_GPU_DEVICE (int iz) {
 
                 // Get the location of the grid node
-                amrex::Real const z_node = zmin + iz*dz;
+                amrex::Real z_node = zmin + iz*dz;
+
+                if (gamma_boost > 1._rt) {
+                    // Transform to lab frame
+                    z_node = gamma_boost*z_node + uz_boost*time;
+                }
 
                 // Check if any elements overlap the grid cell, and if so, store its index
                 // For now, this assumes that there is no overlap among elements of the same type
@@ -124,13 +137,20 @@ struct LatticeElementFinderDevice
         amrex::ParticleReal x, y, z;
         m_get_position(i, x, y, z);
 
+        // Find location of partice in the indices grid
+        // (which is in the boosted frame)
+        const int iz = static_cast<int>((z - m_zmin)/m_dz);
+
         constexpr amrex::Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
+        amrex::ParticleReal const gamma = std::sqrt(1._rt + (m_ux[i]*m_ux[i] + m_uy[i]*m_uy[i] + m_uz[i]*m_uz[i])*inv_c2);
+        amrex::ParticleReal const vzp = m_uz[i]/gamma;
+
+        amrex::ParticleReal zpvdt = z + vzp*m_dt;
 
         if (m_gamma_boost > 1._rt) {
             z = m_gamma_boost*z + m_uz_boost*m_time;
+            zpvdt = m_gamma_boost*zpvdt + m_uz_boost*(m_time + m_dt);
         }
-
-        const int iz = static_cast<int>((z - m_zmin)/m_dz);
 
         amrex::Real Ex_sum = 0._rt;
         amrex::Real Ey_sum = 0._rt;
@@ -143,7 +163,7 @@ struct LatticeElementFinderDevice
             if (d_quad_indices_arr[iz] > -1) {
                 int ielement = d_quad_indices_arr[iz];
                 amrex::Real Ex, Ey, Bx, By;
-                d_quad.get_field(ielement, x, y, z, m_ux[i], m_uy[i], m_uz[i], m_dt, Ex, Ey, Bx, By);
+                d_quad.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
                 Ex_sum += Ex;
                 Ey_sum += Ey;
                 Bx_sum += Bx;

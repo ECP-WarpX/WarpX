@@ -25,6 +25,9 @@ LatticeElementFinder::InitElementFinder (int const lev, amrex::MFIter const& a_m
 
     m_dz = WarpX::CellSize(lev)[2];
 
+    m_gamma_boost = WarpX::gamma_boost;
+    m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._rt)*PhysConst::c;
+
     AllocateIndices(accelerator_lattice);
 
     UpdateIndices(lev, a_mfi, accelerator_lattice);
@@ -48,9 +51,12 @@ void
 LatticeElementFinder::UpdateIndices (int const lev, amrex::MFIter const& a_mfi,
                                      AcceleratorLattice const& accelerator_lattice)
 {
+    auto& warpx = WarpX::GetInstance();
+
     // Update the location of the index grid.
     amrex::Box box = a_mfi.tilebox();
     m_zmin = WarpX::LowerCorner(box, lev, 0._rt)[2];
+    m_time = warpx.gett_new(lev);
 
     HardEdgedQuadrupole const *h_quad = accelerator_lattice.h_quad.get();
     if (h_quad) {
@@ -87,10 +93,10 @@ LatticeElementFinderDevice::InitLatticeElementFinderDevice (WarpXParIter const& 
 
     m_gamma_boost = WarpX::gamma_boost;
     m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._rt)*PhysConst::c;
-    m_time = warpx.gett_new(a_pti.GetLevel());
 
     m_zmin = h_finder.m_zmin;
     m_dz = h_finder.m_dz;
+    m_time = h_finder.m_time;
 
     HardEdgedQuadrupole const *h_quad = accelerator_lattice.h_quad.get();
     if (h_quad) {
