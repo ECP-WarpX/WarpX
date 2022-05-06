@@ -30,11 +30,19 @@ filename = sys.argv[1]
 ds = yt.load( filename )
 ad = ds.all_data()
 
+gamma_boost = float(ds.parameters.get('warpx.gamma_boost', 1.))
+uz_boost = np.sqrt(gamma_boost*gamma_boost - 1.)*c
+
 # Fetch the final particle position
 xx_sim = ad['electron', 'particle_position_x'].v[0]
 zz_sim = ad['electron', 'particle_position_z'].v[0]
 ux_sim = ad['electron', 'particle_momentum_x'].v[0]/m_e
-uz_sim = ad['electron', 'particle_momentum_z'].v[0]/m_e
+
+if gamma_boost > 1.:
+    # The simulation data is in the boosted frame.
+    # Transform the z position to the lab frame.
+    time = ds.current_time.value
+    zz_sim = gamma_boost*zz_sim + uz_boost*time;
 
 # Fetch the quadrupole lattice data
 quad_starts = np.array([float(x) for x in ds.parameters.get('quad.zstarts').split()])
