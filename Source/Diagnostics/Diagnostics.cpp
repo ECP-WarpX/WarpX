@@ -39,6 +39,9 @@ Diagnostics::Diagnostics (int i, std::string name)
 {
 }
 
+Diagnostics::~Diagnostics ()
+{}
+
 bool
 Diagnostics::BaseReadParameters ()
 {
