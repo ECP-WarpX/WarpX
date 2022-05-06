@@ -243,9 +243,9 @@ public:
     //! and #current_centering_noz
     static bool do_current_centering;
 
-    //! If true, a correction is applied to the current in Fourier space, so that the continuity
-    //! equation is satisfied
-    bool current_correction = false;
+    //! If true, a correction is applied to the current in Fourier space,
+    //  to satisfy the continuity equation and charge conservation
+    bool current_correction;
 
     //! If true, the PSATD update equation for E contains both J and rho
     //! (default is false for standard PSATD and true for Galilean PSATD)

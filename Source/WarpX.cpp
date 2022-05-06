@@ -1204,22 +1204,25 @@ WarpX::ReadParameters ()
             queryWithParser(pp_psatd, "noz", noz_fft);
         }
 
-
         if (!fft_periodic_single_box) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nox_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(noy_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(noz_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
         }
 
+        // Current correction activated by default, unless a charge-conserving
+        // current deposition (Esirkepov, Vay) or the div(E) cleaning scheme
+        // are used
+        current_correction = true;
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
+            WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay ||
+            WarpX::do_dive_cleaning)
+        {
+            current_correction = false;
+        }
+
         pp_psatd.query("current_correction", current_correction);
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
-
-        if (WarpX::current_correction == true)
-        {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                fft_periodic_single_box == true,
-                "Option psatd.current_correction=1 must be used with psatd.periodic_single_box_fft=1.");
-        }
 
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
