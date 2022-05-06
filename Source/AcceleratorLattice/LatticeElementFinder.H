@@ -93,6 +93,10 @@ struct LatticeElementFinderDevice
                                     AcceleratorLattice const& accelerator_lattice,
                                     LatticeElementFinder const & h_finder);
 
+    amrex::Real m_gamma_boost;
+    amrex::Real m_uz_boost;
+    amrex::Real m_time;
+
     amrex::Real m_zmin;
     amrex::Real m_dz;
     amrex::Real m_dt;
@@ -109,28 +113,62 @@ struct LatticeElementFinderDevice
     void operator () (const long i,
                       amrex::ParticleReal& field_Ex,
                       amrex::ParticleReal& field_Ey,
-                      amrex::ParticleReal& /*field_Ez*/,
+                      amrex::ParticleReal& field_Ez,
                       amrex::ParticleReal& field_Bx,
                       amrex::ParticleReal& field_By,
-                      amrex::ParticleReal& /*field_Bz*/) const noexcept
+                      amrex::ParticleReal& field_Bz) const noexcept
     {
+
+        using namespace amrex::literals;
 
         amrex::ParticleReal x, y, z;
         m_get_position(i, x, y, z);
 
+        constexpr amrex::Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
+
+        if (m_gamma_boost > 1._rt) {
+            z = m_gamma_boost*z + m_uz_boost*m_time;
+        }
+
         const int iz = static_cast<int>((z - m_zmin)/m_dz);
+
+        amrex::Real Ex_sum = 0._rt;
+        amrex::Real Ey_sum = 0._rt;
+        amrex::Real Ez_sum = 0._rt;
+        amrex::Real Bx_sum = 0._rt;
+        amrex::Real By_sum = 0._rt;
+        amrex::Real Bz_sum = 0._rt;
 
         if (d_quad.nelements > 0) {
             if (d_quad_indices_arr[iz] > -1) {
                 int ielement = d_quad_indices_arr[iz];
                 amrex::Real Ex, Ey, Bx, By;
                 d_quad.get_field(ielement, x, y, z, m_ux[i], m_uy[i], m_uz[i], m_dt, Ex, Ey, Bx, By);
-                field_Ex += Ex;
-                field_Ey += Ey;
-                field_Bx += Bx;
-                field_By += By;
+                Ex_sum += Ex;
+                Ey_sum += Ey;
+                Bx_sum += Bx;
+                By_sum += By;
             }
         }
+
+        if (m_gamma_boost > 1._rt) {
+            // Transform the fields to the boosted frame
+            const amrex::Real Ex_boost = m_gamma_boost*Ex_sum - m_uz_boost*By_sum;
+            const amrex::Real Ey_boost = m_gamma_boost*Ey_sum + m_uz_boost*Bx_sum;
+            const amrex::Real Bx_boost = m_gamma_boost*Bx_sum + m_uz_boost*Ey_sum*inv_c2;
+            const amrex::Real By_boost = m_gamma_boost*By_sum - m_uz_boost*Ex_sum*inv_c2;
+            Ex_sum = Ex_boost;
+            Ey_sum = Ey_boost;
+            Bx_sum = Bx_boost;
+            By_sum = By_boost;
+        }
+
+        field_Ex += Ex_sum;
+        field_Ey += Ey_sum;
+        field_Ez += Ez_sum;
+        field_Bx += Bx_sum;
+        field_By += By_sum;
+        field_Bz += Bz_sum;
 
     }
 

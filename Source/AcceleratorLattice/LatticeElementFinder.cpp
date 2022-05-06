@@ -85,6 +85,10 @@ LatticeElementFinderDevice::InitLatticeElementFinderDevice (WarpXParIter const& 
     m_uz = attribs[PIdx::uz].dataPtr() + a_offset;
     m_dt = warpx.getdt(lev);
 
+    m_gamma_boost = WarpX::gamma_boost;
+    m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._rt)*PhysConst::c;
+    m_time = warpx.gett_new(a_pti.GetLevel());
+
     m_zmin = h_finder.m_zmin;
     m_dz = h_finder.m_dz;
 
