@@ -101,7 +101,13 @@ class WarpX(Bucket):
 
         with open(filename, 'w') as ff:
 
+            prefix_old = ''
             for arg in argv:
+                dot_found = (arg.find('.') >= 0)
+                prefix_new = arg[0:arg.find('.')] if dot_found else arg[0:arg.find('=')].rstrip()
+                if prefix_new != prefix_old:
+                    ff.write(f'# {prefix_new}\n')
+                    prefix_old = prefix_new
                 ff.write(f'{arg}\n')
 
 warpx = WarpX('warpx')
