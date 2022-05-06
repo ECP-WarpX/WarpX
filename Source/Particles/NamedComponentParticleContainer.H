@@ -18,6 +18,7 @@ public:
 
     NamedComponentParticleContainer ( NamedComponentParticleContainer && ) = default;
     NamedComponentParticleContainer& operator= ( NamedComponentParticleContainer && ) = default;
+
 };
 
 #endif

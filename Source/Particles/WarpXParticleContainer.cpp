@@ -81,7 +81,7 @@ WarpXParIter::WarpXParIter (ContainerType& pc, int level, MFItInfo& info)
 }
 
 WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
-    : ParticleContainer<0,0,PIdx::nattribs>(amr_core->GetParGDB())
+    : NamedComponentParticleContainer<0,0,PIdx::nattribs,0,DefaultAllocator>(amr_core->GetParGDB())
     , species_id(ispecies)
 {
     SetParticleSize();

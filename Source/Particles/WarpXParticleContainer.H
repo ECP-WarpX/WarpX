@@ -22,6 +22,7 @@
 #    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
 #include "MultiParticleContainer_fwd.H"
+#include "NamedComponentParticleContainer.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_FArrayBox.H>
@@ -111,7 +112,7 @@ public:
  * derived classes, e.g., Evolve) or actual functions (e.g. CurrentDeposition).
  */
 class WarpXParticleContainer
-    : public amrex::ParticleContainer<0,0,PIdx::nattribs>
+    : public NamedComponentParticleContainer<0,0,PIdx::nattribs,0,amrex::DefaultAllocator>
 {
 public:
     friend MultiParticleContainer;
