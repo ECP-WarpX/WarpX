@@ -9,10 +9,9 @@
 
 #include <AMReX_ParIter.H>
 
-/*
 using PinnedMemoryParticleContainer = amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
-*/
 
+/*
 class PinnedMemoryParticleContainer : public NamedComponentParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>
 {
 public:
@@ -23,5 +22,6 @@ public:
     PinnedMemoryParticleContainer ( PinnedMemoryParticleContainer && ) = default;
     PinnedMemoryParticleContainer& operator= ( PinnedMemoryParticleContainer && ) = default;
 };
+*/
 
 #endif
