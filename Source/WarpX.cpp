@@ -1307,11 +1307,6 @@ WarpX::ReadParameters ()
             "Vay current deposition not implemented for Galilean algorithms"
         );
 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (!current_correction) || v_galilean_is_zero || (!fft_do_time_averaging),
-            "Current correction not implemented for averaged Galilean algorithm"
-        );
-
 #   ifdef WARPX_DIM_RZ
         update_with_rho = true;  // Must be true for RZ PSATD
 #   else
