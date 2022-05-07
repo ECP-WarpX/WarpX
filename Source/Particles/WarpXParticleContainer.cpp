@@ -87,15 +87,6 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     SetParticleSize();
     ReadParameters();
 
-    // build up the map of string names to particle component numbers
-    particle_comps["w"]  = PIdx::w;
-    particle_comps["ux"] = PIdx::ux;
-    particle_comps["uy"] = PIdx::uy;
-    particle_comps["uz"] = PIdx::uz;
-#ifdef WARPX_DIM_RZ
-    particle_comps["theta"] = PIdx::theta;
-#endif
-
     // Initialize temporary local arrays for charge/current deposition
     int num_threads = 1;
 #ifdef AMREX_USE_OMP
