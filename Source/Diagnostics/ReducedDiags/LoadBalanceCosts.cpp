@@ -179,7 +179,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
 
     // get the string lengths on IO proc
     ParallelDescriptor::Gather(&length, 1,                     // send
-                               &m_data_string_recvcount[0], 1, // receive
+                               m_data_string_recvcount.data(), 1, // receive
                                ParallelDescriptor::IOProcessorNumber());
 
     // determine total length of collected strings for root, and set displacements;
@@ -205,7 +205,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
     // collect the hostnames; m_data_string_recvbuf will provide mapping from rank-->hostname
     ParallelDescriptor::Gatherv(&hostname[0],              /* hostname ID */
                                 length,                    /* length of hostname */
-                                &m_data_string_recvbuf[0], /* write data into string buffer */
+                                m_data_string_recvbuf.data(), /* write data into string buffer */
                                 m_data_string_recvcount,   /* how many messages to receive */
                                 m_data_string_disp,        /* starting position in recv buffer to place received msg */
                                 ParallelDescriptor::IOProcessorNumber());
