@@ -105,6 +105,8 @@ class WarpX(Bucket):
 
             prefix_old = ''
             for arg in argv:
+                # This prints the name of the input group (prefix) as a header
+                # before each group to make the input file more human readable
                 prefix_new = re.split(' |\.', arg)[0]
                 if prefix_new != prefix_old:
                     ff.write(f'# {prefix_new}\n')
