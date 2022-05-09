@@ -5,6 +5,7 @@
 #
 # License: BSD-3-Clause-LBNL
 
+import re
 from . import Particles
 from .Algo import algo
 from .Amr import amr
@@ -103,8 +104,7 @@ class WarpX(Bucket):
 
             prefix_old = ''
             for arg in argv:
-                dot_found = (arg.find('.') >= 0)
-                prefix_new = arg[0:arg.find('.')] if dot_found else arg[0:arg.find('=')].rstrip()
+                prefix_new = re.split(' |\.', arg)[0]
                 if prefix_new != prefix_old:
                     ff.write(f'# {prefix_new}\n')
                     prefix_old = prefix_new
