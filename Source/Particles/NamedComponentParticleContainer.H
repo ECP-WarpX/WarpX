@@ -8,6 +8,20 @@
 #include <AMReX_ParIter.H>
 #include "Utils/TextMsg.H"
 
+
+struct PIdx
+{
+    enum { // Particle Attributes stored in amrex::ParticleContainer's struct of array
+        w = 0,  // weight
+        ux, uy, uz,
+#ifdef WARPX_DIM_RZ
+theta, // RZ needs all three position components
+#endif
+nattribs
+    };
+};
+
+
 template <int T_NStructReal, int T_NStructInt, int T_NArrayReal, int T_NArrayInt, template<class> class Allocator>
 class NamedComponentParticleContainer :
 public amrex::ParticleContainer<T_NStructReal, T_NStructInt, T_NArrayReal, T_NArrayInt, Allocator>
