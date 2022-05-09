@@ -637,7 +637,12 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
     m_LabFrameDiags_.resize(N_snapshots+N_slice_snapshots);
 
     for (int i = 0; i < N_snapshots; ++i) {
-        Real t_lab = i * m_dt_snapshots_lab_;
+        // steps + initial box shift
+        Real const zmax_boost = geom.ProbHi(AMREX_SPACEDIM-1);
+        Real const t_lab =
+            i * m_dt_snapshots_lab_ +
+            m_gamma_boost_ * m_beta_boost_ * zmax_boost/PhysConst::c;
+
         // Get simulation domain physical coordinates (in boosted frame).
         RealBox prob_domain_lab = geom.ProbDomain();
         // Replace z bounds by lab-frame coordinates
@@ -714,7 +719,12 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
         Box stmp(slice_lo,slice_hi);
         Box slicediag_box = stmp;
 
-        Real t_slice_lab = i * m_dt_slice_snapshots_lab_ ;
+        // steps + initial box shift
+        Real const zmax_boost = geom.ProbHi(AMREX_SPACEDIM-1);
+        Real const t_slice_lab =
+            i * m_dt_slice_snapshots_lab_ +
+            m_gamma_boost_ * m_beta_boost_ * zmax_boost/PhysConst::c;
+
         RealBox prob_domain_lab = geom.ProbDomain();
         // replace z bounds by lab-frame coordinates
         prob_domain_lab.setLo(WARPX_ZINDEX, zmin_lab + v_window_lab * t_slice_lab);
