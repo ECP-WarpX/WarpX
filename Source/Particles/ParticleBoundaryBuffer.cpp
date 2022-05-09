@@ -168,7 +168,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
             for (int i = 0; i < numSpecies(); ++i)
             {
                 if (!m_do_boundary_buffer[2*idim+iside][i]) continue;
-                const auto& pc = mypc.GetParticleContainer(i);
+                WarpXParticleContainer& pc = mypc.GetParticleContainer(i);
                 if (!buffer[i].isDefined())
                 {
                     buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
@@ -273,7 +273,7 @@ int ParticleBoundaryBuffer::getNumParticlesInContainer(
     else return 0;
 }
 
-WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator> &
+PinnedMemoryParticleContainer &
 ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];
@@ -288,7 +288,7 @@ ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int bo
     return buffer[index];
 }
 
-WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator> *
+PinnedMemoryParticleContainer *
 ParticleBoundaryBuffer::getParticleBufferPointer(const std::string species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];

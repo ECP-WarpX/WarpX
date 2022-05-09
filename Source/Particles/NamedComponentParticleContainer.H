@@ -8,7 +8,6 @@
 #include <AMReX_ParIter.H>
 #include "Utils/TextMsg.H"
 
-
 struct PIdx
 {
     enum { // Particle Attributes stored in amrex::ParticleContainer's struct of array
@@ -21,15 +20,14 @@ nattribs
     };
 };
 
-
-template <int T_NStructReal, int T_NStructInt, int T_NArrayReal, int T_NArrayInt, template<class> class Allocator>
+template <template<class> class Allocator>
 class NamedComponentParticleContainer :
-public amrex::ParticleContainer<T_NStructReal, T_NStructInt, T_NArrayReal, T_NArrayInt, Allocator>
+public amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>
 {
 public:
-    NamedComponentParticleContainer () : amrex::ParticleContainer<T_NStructReal, T_NStructInt, T_NArrayReal, T_NArrayInt, Allocator>() {}
+    NamedComponentParticleContainer () : amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>() {}
     NamedComponentParticleContainer (amrex::AmrParGDB* amr_pgdb)
-    : amrex::ParticleContainer<T_NStructReal, T_NStructInt, T_NArrayReal, T_NArrayInt, Allocator>(amr_pgdb) {
+    : amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>(amr_pgdb) {
 
         // build up the map of string names to particle component numbers
         particle_comps["w"]  = PIdx::w;
@@ -46,10 +44,13 @@ public:
     NamedComponentParticleContainer ( NamedComponentParticleContainer && ) = default;
     NamedComponentParticleContainer& operator= ( NamedComponentParticleContainer && ) = default;
 
-    using amrex::ParticleContainer<T_NStructReal, T_NStructInt, T_NArrayReal, T_NArrayInt>::NumRealComps;
-    using amrex::ParticleContainer<T_NStructReal, T_NStructInt, T_NArrayReal, T_NArrayInt>::NumIntComps;
-    using amrex::ParticleContainer<T_NStructReal, T_NStructInt, T_NArrayReal, T_NArrayInt>::AddRealComp;
-    using amrex::ParticleContainer<T_NStructReal, T_NStructInt, T_NArrayReal, T_NArrayInt>::AddIntComp;
+    NamedComponentParticleContainer( amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator> && pc )
+    : amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>(std::move(pc)) {}
+
+    using amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::NumRealComps;
+    using amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::NumIntComps;
+    using amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::AddRealComp;
+    using amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::AddIntComp;
 
     void AddRealComp (const std::string& name, bool comm=true)
     {
@@ -75,6 +76,21 @@ public:
             amrex::Print() << Utils::TextMsg::Info(
                 name + " already exists in particle_icomps, not adding.");
         }
+    }
+
+    /** Create an empty particle container
+     *
+     * This creates a new AMReX particle container type with same compile-time
+     * and run-time attributes. But, it can change its allocator. This is
+     * helpful when creating temporary particle buffers for filter operations
+     * and device-to-host copies.
+     */
+    template <template<class> class NewAllocator=amrex::DefaultAllocator>
+    NamedComponentParticleContainer<NewAllocator>
+    make_alike () {
+        NamedComponentParticleContainer<NewAllocator> tmp;
+
+        return tmp;
     }
 
     std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
