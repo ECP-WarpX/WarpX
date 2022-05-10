@@ -6,6 +6,9 @@
  */
 
 #include "WarpX.H"
+
+#include "Utils/TextMsg.H"
+
 #include <AMReX_Scan.H>
 #include <AMReX_iMultiFab.H>
 #include <AMReX_MultiFab.H>
@@ -113,22 +116,24 @@ ComputeSStab(const int i, const int j, const int k,
              const amrex::Real dx, const amrex::Real dy, const amrex::Real dz,
              const int dim){
 
+    using namespace amrex::literals;
+
     if(dim == 0) {
-        return 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
-                               lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
+        return 0.5_rt * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
+                                  lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
     }else if(dim == 1){
 #ifdef WARPX_DIM_XZ
-        return 0.5 * std::max({lx(i, j, k) * dz, lx(i, j + 1, k) * dz,
-                               lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+        return 0.5_rt * std::max({lx(i, j, k) * dz, lx(i, j + 1, k) * dz,
+                                  lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
 #elif defined(WARPX_DIM_3D)
-        return 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
-                               lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+        return 0.5_rt * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
+                                  lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
 #else
         amrex::Abort("ComputeSStab: Only implemented in 2D3V and 3D3V");
 #endif
     }else if(dim == 2){
-        return 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
-                               ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
+        return 0.5_rt * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
+                                  ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
     }
 
     amrex::Abort("ComputeSStab: dim must be 0, 1 or 2");
@@ -141,6 +146,7 @@ amrex::Array1D<int, 0, 2>
 WarpX::CountExtFaces() {
     amrex::Array1D<int, 0, 2> sums{0, 0, 0};
 #ifdef AMREX_USE_EB
+#ifndef WARPX_DIM_RZ
 
 #ifdef WARPX_DIM_XZ
     // In 2D we change the extrema of the for loop so that we only have the case idim=1
@@ -167,53 +173,80 @@ WarpX::CountExtFaces() {
 
     amrex::ParallelDescriptor::ReduceIntSum(&(sums(0)), AMREX_SPACEDIM);
 #endif
+#endif
     return sums;
 }
-
 
 void
 WarpX::ComputeFaceExtensions(){
 #ifdef AMREX_USE_EB
-    if(WarpX::verbose) {
-        amrex::Array1D<int, 0, 2> N_ext_faces = CountExtFaces();
-        amrex::Print() << "Faces to be extended in x:\t" << N_ext_faces(0) << std::endl;
-        amrex::Print() << "Faces to be extended in y:\t" << N_ext_faces(1) << std::endl;
-        amrex::Print() << "Faces to be extended in z:\t" << N_ext_faces(2) << std::endl;
-    }
+    amrex::Array1D<int, 0, 2> N_ext_faces = CountExtFaces();
+    WarpX::RecordWarning("Embedded Boundary",
+            "Faces to be extended in x:\t" + std::to_string(N_ext_faces(0)) + "\n"
+            +"Faces to be extended in y:\t" + std::to_string(N_ext_faces(1)) + "\n"
+            +"Faces to be extended in z:\t" + std::to_string(N_ext_faces(2)),
+            WarnPriority::low
+    );
 
     InitBorrowing();
     ComputeOneWayExtensions();
 
-    if(WarpX::verbose) {
-        amrex::Array1D<int, 0, 2> N_ext_faces_after_one_way = CountExtFaces();
-        amrex::Print() << "Faces to be extended after one way extension in x:\t" <<
-                       N_ext_faces_after_one_way(0) << std::endl;
-        amrex::Print() << "Faces to be extended after one way extension in y:\t" <<
-                       N_ext_faces_after_one_way(1) << std::endl;
-        amrex::Print() << "Faces to be extended after one way extension in z:\t" <<
-                       N_ext_faces_after_one_way(2) << std::endl;
-    }
+    amrex::Array1D<int, 0, 2> N_ext_faces_after_one_way = CountExtFaces();
+    WarpX::RecordWarning("Embedded Boundary",
+            "Faces to be extended after one way extension in x:\t"
+            + std::to_string(N_ext_faces_after_one_way(0)) + "\n"
+            +"Faces to be extended after one way extension in y:\t"
+            + std::to_string(N_ext_faces_after_one_way(1)) + "\n"
+            +"Faces to be extended after one way extension in z:\t"
+            + std::to_string(N_ext_faces_after_one_way(2)),
+            WarnPriority::low
+    );
 
     ComputeEightWaysExtensions();
     ShrinkBorrowing();
 
     amrex::Array1D<int, 0, 2> N_ext_faces_after_eight_ways = CountExtFaces();
-    if(WarpX::verbose) {
-        amrex::Print() << "Faces to be extended after eight ways extension in x:\t" <<
-                       N_ext_faces_after_eight_ways(0) << std::endl;
-        amrex::Print() << "Faces to be extended after eight ways extension in y:\t" <<
-                       N_ext_faces_after_eight_ways(1) << std::endl;
-        amrex::Print() << "Faces to be extended after eight ways extension ins z:\t" <<
-                       N_ext_faces_after_eight_ways(2) << std::endl;
-    }
+    WarpX::RecordWarning("Embedded Boundary",
+            "Faces to be extended after eight ways extension in x:\t"
+            + std::to_string(N_ext_faces_after_eight_ways(0)) + "\n"
+            +"Faces to be extended after eight ways extension in y:\t"
+            + std::to_string(N_ext_faces_after_eight_ways(1)) + "\n"
+            +"Faces to be extended after eight ways extension in z:\t"
+            + std::to_string(N_ext_faces_after_eight_ways(2)),
+            WarnPriority::low
+    );
+
+    bool using_bck = false;
+
+    // If any cell could not be extended we use the BCK method to stabilize them
+#if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_RZ)
     if (N_ext_faces_after_eight_ways(0) > 0) {
-        amrex::Abort("Some x faces could not be extended");
+        ApplyBCKCorrection(0);
+        using_bck = true;
     }
+#endif
+
     if (N_ext_faces_after_eight_ways(1) > 0) {
-        amrex::Abort("Some y faces could not be extended");
+        ApplyBCKCorrection(1);
+        using_bck = true;
     }
+
+#if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_RZ)
     if (N_ext_faces_after_eight_ways(2) > 0) {
-        amrex::Abort("Some z faces could not be extended");
+        ApplyBCKCorrection(2);
+        using_bck = true;
+    }
+#endif
+
+    if(using_bck) {
+        WarpX::RecordWarning("Embedded Boundary",
+                             "Some faces could not be stabilized with the ECT and the BCK correction was used.\n"
+                             "The BCK correction will be used for:\n"
+                             "-" + std::to_string(N_ext_faces_after_eight_ways(0)) + " x-faces\n"
+                             + "-" + std::to_string(N_ext_faces_after_eight_ways(1)) + " y-faces\n"
+                             + "-" + std::to_string(N_ext_faces_after_eight_ways(2)) + " z-faces\n",
+                             WarnPriority::low
+        );
     }
 #endif
 }
@@ -369,6 +402,7 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
 void
 WarpX::ComputeOneWayExtensions() {
 #ifdef AMREX_USE_EB
+#ifndef WARPX_DIM_RZ
     auto const eb_fact = fieldEBFactory(maxLevel());
 
     auto const &cell_size = CellSize(maxLevel());
@@ -484,12 +518,14 @@ WarpX::ComputeOneWayExtensions() {
     }
 
 #endif
+#endif
 }
 
 
 void
 WarpX::ComputeEightWaysExtensions() {
 #ifdef AMREX_USE_EB
+#ifndef WARPX_DIM_RZ
     auto const &cell_size = CellSize(maxLevel());
 
     const amrex::Real dx = cell_size[0];
@@ -640,8 +676,41 @@ WarpX::ComputeEightWaysExtensions() {
         }
     }
 #endif
+#endif
 }
 
+void
+WarpX::ApplyBCKCorrection(const int idim) {
+#if defined(AMREX_USE_EB) and !defined(WARPX_DIM_RZ)
+    const std::array<amrex::Real,3> &cell_size = CellSize(maxLevel());
+
+    const amrex::Real dx = cell_size[0];
+    const amrex::Real dy = cell_size[1];
+    const amrex::Real dz = cell_size[2];
+
+    for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+
+        const amrex::Box &box = mfi.tilebox();
+        const amrex::Array4<int> &flag_ext_face = m_flag_ext_face[maxLevel()][idim]->array(mfi);
+        const amrex::Array4<int> &flag_info_face = m_flag_info_face[maxLevel()][idim]->array(mfi);
+        const amrex::Array4<amrex::Real> &S = m_face_areas[maxLevel()][idim]->array(mfi);
+        const amrex::Array4<amrex::Real> &lx = m_face_areas[maxLevel()][0]->array(mfi);
+        const amrex::Array4<amrex::Real> &ly = m_face_areas[maxLevel()][1]->array(mfi);
+        const amrex::Array4<amrex::Real> &lz = m_face_areas[maxLevel()][2]->array(mfi);
+
+        amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+            if (flag_ext_face(i, j, k)) {
+                // Modify the area according to the BCK algorithm
+                S(i, j, k) = ComputeSStab(i, j, k, lx, ly, lz, dx, dy, dz, idim);
+                // Update the face info so that the solver doesn't think that this face is being extended
+                flag_info_face(i, j, k) = -1;
+            }
+        });
+    }
+#else
+    amrex::ignore_unused(idim);
+#endif
+}
 
 void
 WarpX::ShrinkBorrowing() {

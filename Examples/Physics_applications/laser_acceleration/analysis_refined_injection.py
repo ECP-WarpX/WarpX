@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019 Andrew Myers
 #
@@ -11,9 +11,12 @@
 # the actual number of electrons at step 200 to the expected value
 import os
 import sys
+
 import yt
+
 yt.funcs.mylog.setLevel(50)
 import numpy as np
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 

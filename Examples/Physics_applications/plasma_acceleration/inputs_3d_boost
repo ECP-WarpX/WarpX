@@ -6,9 +6,9 @@ amr.n_cell = 32 32 256
 amr.max_grid_size = 64
 amr.blocking_factor = 32
 amr.max_level = 0
-geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.prob_lo     = -0.00015 -0.00015 -0.00012
-geometry.prob_hi     = 0.00015 0.00015 1.e-06
+geometry.dims = 3
+geometry.prob_lo = -0.00015 -0.00015 -0.00012
+geometry.prob_hi = 0.00015 0.00015 1.e-06
 
 #################################
 ####### Boundary condition ######

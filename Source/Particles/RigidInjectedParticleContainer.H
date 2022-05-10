@@ -87,7 +87,7 @@ public:
                          amrex::FArrayBox const * bxfab,
                          amrex::FArrayBox const * byfab,
                          amrex::FArrayBox const * bzfab,
-                         const amrex::IntVect ngE, const int /*e_is_nodal*/,
+                         const amrex::IntVect ngEB, const int /*e_is_nodal*/,
                          const long offset,
                          const long np_to_push,
                          int lev, int gather_lev,

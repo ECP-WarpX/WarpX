@@ -13,6 +13,7 @@
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/ParticleBoundaries_K.H"
 #include "Utils/CoarsenMR.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -71,7 +72,7 @@ FieldProbeParticleContainer::AddNParticles (int lev,
                                             amrex::Vector<amrex::ParticleReal> const & y,
                                             amrex::Vector<amrex::ParticleReal> const & z)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "AddNParticles: only lev=0 is supported yet.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "AddNParticles: only lev=0 is supported yet.");
     AMREX_ALWAYS_ASSERT(x.size() == y.size());
     AMREX_ALWAYS_ASSERT(x.size() == z.size());
 
@@ -101,15 +102,14 @@ FieldProbeParticleContainer::AddNParticles (int lev,
         ParticleType p;
         p.id() = ParticleType::NextID();
         p.cpu() = ParallelDescriptor::MyProc();
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         p.pos(0) = x[i];
         p.pos(1) = y[i];
         p.pos(2) = z[i];
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         amrex::ignore_unused(y) ;
         p.pos(0) = x[i];
-        p.pos(1) = 0;
-        p.pos(2) = z[i];
+        p.pos(1) = z[i];
 #endif
         // write position, cpu id, and particle id to particle
         pinned_tile.push_back(p);

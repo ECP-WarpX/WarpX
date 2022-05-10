@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2021 David Grote
 #
@@ -15,11 +15,13 @@ The final positions are compared to the analytic solutions.
 The motion is slow enough that relativistic effects are ignored.
 """
 
-import sys
 import os
-import yt
+import sys
+
 import numpy as np
-from scipy.constants import e, m_e, c
+from scipy.constants import c, e, m_e
+import yt
+
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -58,7 +60,11 @@ def applylens(x0, vx0, vz0, gamma, lens_length, lens_strength):
     return x1, vx1
 
 clight = c
-vel_z = eval(ds.parameters.get('my_constants.vel_z'))
+try:
+    vel_z = eval(ds.parameters.get('my_constants.vel_z'))
+except TypeError:
+    # vel_z is not saved in my_constants with the PICMI version
+    vel_z = 0.5*c
 
 plasma_lens_period = float(ds.parameters.get('particles.repeated_plasma_lens_period'))
 plasma_lens_starts = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_starts').split()]

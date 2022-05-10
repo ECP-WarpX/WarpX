@@ -1,4 +1,7 @@
+#!/usr/bin/env python3
+
 from pywarpx import picmi
+
 #from warp import picmi
 
 constants = picmi.constants
@@ -8,7 +11,7 @@ nz = 64
 zmin = -200.e-6
 zmax = +200.e-6
 
-moving_window_velocity = [0., 0., constants.c]
+moving_window_velocity = [constants.c]
 
 number_per_cell_each_dim = [10]
 

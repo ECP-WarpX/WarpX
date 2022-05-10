@@ -8,8 +8,11 @@
 #ifndef WARPX_UTILS_H_
 #define WARPX_UTILS_H_
 
+#include <AMReX_BoxArray.H>
+#include <AMReX_DistributionMapping.H>
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_LayoutData.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
@@ -35,10 +38,20 @@ void ConvertLabParamsToBoost();
  */
 void ReadBCParams ();
 
-/**
- * \brief Ensures that the blocks are setup correctly for the RZ spectral solver
+/** Check the warpx.dims matches the binary name
  */
-void CheckGriddingForRZSpectral();
+void CheckDims ();
+
+/** Check the warpx.dims matches the binary name & set up RZ gridding
+ *
+ * Ensures that the blocks are setup correctly for the RZ spectral solver
+ * When using the RZ spectral solver, the Hankel transform cannot be
+ * divided among multiple blocks. Each block must extend over the
+ * entire radial extent.
+ * The grid can be divided up along z, but the number of blocks
+ * must be >= the number of processors.
+ */
+void CheckGriddingForRZSpectral ();
 
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin,
                amrex::Real zmax);
@@ -183,14 +196,14 @@ void getCellCoordinates (int i, int j, int k,
                          amrex::Real &x, amrex::Real &y, amrex::Real &z)
 {
     using namespace amrex::literals;
-    x = domain_lo[0] + i*dx[0] + (1._rt - mf_type[0]) * dx[0]*0.5;
-#if (AMREX_SPACEDIM==2)
+    x = domain_lo[0] + i*dx[0] + (1._rt - mf_type[0]) * dx[0]*0.5_rt;
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::ignore_unused(j);
     y = 0._rt;
-    z = domain_lo[1] + k*dx[1] + (1._rt - mf_type[1]) * dx[1]*0.5;
+    z = domain_lo[1] + k*dx[1] + (1._rt - mf_type[1]) * dx[1]*0.5_rt;
 #else
-    y = domain_lo[1] + j*dx[1] + (1._rt - mf_type[1]) * dx[1]*0.5;
-    z = domain_lo[2] + k*dx[2] + (1._rt - mf_type[2]) * dx[2]*0.5;
+    y = domain_lo[1] + j*dx[1] + (1._rt - mf_type[1]) * dx[1]*0.5_rt;
+    z = domain_lo[2] + k*dx[2] + (1._rt - mf_type[2]) * dx[2]*0.5_rt;
 #endif
 }
 
@@ -320,17 +333,6 @@ void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std
                        const int start_ix = amrex::ParmParse::FIRST,
                        const int num_val = amrex::ParmParse::LAST);
 
-namespace WarpXUtilMsg{
-
-/** \brief If is_expression_true is false, this function prints msg and calls amrex::abort()
- *
- * @param[in] is_expression_true
- * @param[in] msg the string to be printed if is_expression_true is false (default value is "ERROR!")
- */
-void AlwaysAssert(bool is_expression_true, const std::string& msg);
-
-}
-
 namespace WarpXUtilStr
 {
     /** Return true if elem is in vect, false otherwise
@@ -385,6 +387,31 @@ namespace WarpXUtilStr
         return cont;
     }
 
+    /** \brief This function performs automatic text wrapping on a string,
+     *  returning an array of strings each not exceeding the maximum line length
+     *  (unless the text contains a word exceeding the maximum line length).
+     *
+     * @param[in] text the string containing the text to be wrapped
+     * @param[in] max_line_length the maximum line length
+     * @return an std::vector containing the lines of the wrapped text
+     */
+    std::vector<std::string> automatic_text_wrap(
+        const std::string& text, const int max_line_length);
+
+}
+
+namespace WarpXUtilLoadBalance
+{
+    /** \brief We only want to update the cost data if the grids we are working on
+     *  are the main grids, i.e. not the PML grids. This function returns whether
+     *   this is the case or not.
+     * @param[in] cost pointer to the cost data
+     * @param[in] ba the grids to check
+     * @param[in] dm the dmap to check
+     * @return consistent whether the grids are consistent or not.
+     */
+    bool doCosts (const amrex::LayoutData<amrex::Real>* cost, const amrex::BoxArray ba,
+                  const amrex::DistributionMapping& dm);
 }
 
 #endif //WARPX_UTILS_H_

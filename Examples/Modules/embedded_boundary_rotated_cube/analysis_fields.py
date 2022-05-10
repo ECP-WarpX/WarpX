@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2021 Lorenzo Giacomel
 #
@@ -7,10 +7,13 @@
 # License: BSD-3-Clause-LBNL
 
 
-import yt
-import os, sys
-from scipy.constants import mu_0, pi, c
+import os
+import sys
+
 import numpy as np
+from scipy.constants import c, mu_0, pi
+import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -31,11 +34,11 @@ lo = [-0.8, -0.8, -0.8]
 m = 0
 n = 1
 p = 1
-Lx = 1.06
-Ly = 1.06
-Lz = 1.06
+Lx = 1
+Ly = 1
+Lz = 1
 h_2 = (m * pi / Lx) ** 2 + (n * pi / Ly) ** 2 + (p * pi / Lz) ** 2
-theta = np.pi/8
+theta = np.pi/6
 
 # Open the right plot file
 filename = sys.argv[1]

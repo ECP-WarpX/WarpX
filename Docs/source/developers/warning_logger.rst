@@ -137,7 +137,7 @@ For instance, the following inputfile
    amr.max_grid_size = 64
    amr.blocking_factor = 32
    amr.max_level = 0
-   geometry.coord_sys   = 0                  # 0: Cartesian
+   geometry.dims = 2
    geometry.prob_lo     = -20.e-6   -20.e-6    # physical domain
    geometry.prob_hi     =  20.e-6    20.e-6
 
@@ -150,7 +150,7 @@ For instance, the following inputfile
    #################################
    ############ NUMERICS ###########
    #################################
-   warpx.serialize_ics = 1
+   warpx.serialize_initial_conditions = 1
    warpx.verbose = 1
    warpx.cfl = 1.0
    warpx.use_filter = 0

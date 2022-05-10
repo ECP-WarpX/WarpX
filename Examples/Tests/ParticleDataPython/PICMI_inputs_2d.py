@@ -1,8 +1,9 @@
-from pywarpx import picmi
-import numpy as np
-
+#!/usr/bin/env python3
 import argparse
 import sys
+
+import numpy as np
+from pywarpx import callbacks, picmi
 
 # Create the parser and add the argument
 parser = argparse.ArgumentParser()
@@ -34,7 +35,6 @@ xmin = 0
 xmax = 0.03
 ymin = 0
 ymax = 0.03
-
 
 ##########################
 # numerics components
@@ -104,25 +104,27 @@ sim.initialize_warpx()
 # python particle data access
 ##########################
 
-from pywarpx import _libwarpx, callbacks
+# set numpy random seed so that the particle properties generated
+# below will be reproducible from run to run
+np.random.seed(30025025)
 
-_libwarpx.add_real_comp('electrons', 'newPid')
+sim.extension.add_real_comp('electrons', 'newPid')
 
-my_id = _libwarpx.libwarpx.warpx_getMyProc()
+my_id = sim.extension.getMyProc()
 
 def add_particles():
 
     nps = 10 * (my_id + 1)
-    x = np.random.rand(nps) * 0.03
+    x = np.linspace(0.005, 0.025, nps)
     y = np.zeros(nps)
-    z = np.random.random(nps) * 0.03
+    z = np.linspace(0.005, 0.025, nps)
     ux = np.random.normal(loc=0, scale=1e3, size=nps)
     uy = np.random.normal(loc=0, scale=1e3, size=nps)
     uz = np.random.normal(loc=0, scale=1e3, size=nps)
     w = np.ones(nps) * 2.0
     newPid = 5.0
 
-    _libwarpx.add_particles(
+    sim.extension.add_particles(
         species_name='electrons', x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
         w=w, newPid=newPid, unique_particles=args.unique
     )
@@ -140,11 +142,11 @@ sim.step(max_steps - 1)
 # are properly set
 ##########################
 
-assert (_libwarpx.get_particle_count('electrons') == 270 / (2 - args.unique))
-assert (_libwarpx.get_particle_comp_index('electrons', 'w') == 0)
-assert (_libwarpx.get_particle_comp_index('electrons', 'newPid') == 4)
+assert (sim.extension.get_particle_count('electrons') == 270 / (2 - args.unique))
+assert (sim.extension.get_particle_comp_index('electrons', 'w') == 0)
+assert (sim.extension.get_particle_comp_index('electrons', 'newPid') == 4)
 
-new_pid_vals = _libwarpx.get_particle_arrays(
+new_pid_vals = sim.extension.get_particle_arrays(
     'electrons', 'newPid', 0
 )
 for vals in new_pid_vals:

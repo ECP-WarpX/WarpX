@@ -15,6 +15,7 @@
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Filter/NCIGodfreyFilter.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -49,6 +50,9 @@ guardCellManager::Init (
     const int do_electrostatic,
     const int do_multi_J,
     const bool fft_do_time_averaging,
+    const bool do_pml,
+    const int do_pml_in_domain,
+    const int pml_ncell,
     const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
     // When using subcycling, the particles on the fine level perform two pushes
@@ -96,7 +100,7 @@ guardCellManager::Init (
     // the fine grid by a number of cells equal to the ref_ratio in the moving
     // window direction.
     if (do_moving_window) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
             "The number of grow cells for the moving window currently assumes 2 levels max.");
         const int nlevs = ref_ratios.size()+1;
         int max_r = (nlevs > 1) ? ref_ratios[0][moving_window_dir] : 2;
@@ -200,6 +204,16 @@ guardCellManager::Init (
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
 #elif defined(WARPX_DIM_1D_Z)
         IntVect ngFFT = IntVect(ngFFt_z);
+#endif
+
+#ifdef WARPX_DIM_RZ
+        if (do_pml) {
+            if (!do_pml_in_domain) {
+                ngFFT[0] = std::max(ngFFT[0], pml_ncell);
+            }
+        }
+#else
+       amrex::ignore_unused(do_pml, do_pml_in_domain, pml_ncell);
 #endif
 
         // All boxes should have the same number of guard cells, to avoid temporary parallel copies:

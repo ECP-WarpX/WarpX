@@ -1,12 +1,14 @@
 CEXE_sources += SpectralBaseAlgorithm.cpp
 CEXE_sources += PsatdAlgorithm.cpp
-CEXE_sources += PMLPsatdAlgorithm.cpp
-CEXE_sources += ComovingPsatdAlgorithm.cpp
+CEXE_sources += PsatdAlgorithmJLinearInTime.cpp
+CEXE_sources += PsatdAlgorithmPml.cpp
+CEXE_sources += PsatdAlgorithmComoving.cpp
 
 ifeq ($(USE_RZ),TRUE)
   CEXE_sources += SpectralBaseAlgorithmRZ.cpp
   CEXE_sources += PsatdAlgorithmRZ.cpp
-  CEXE_sources += GalileanPsatdAlgorithmRZ.cpp
+  CEXE_sources += PsatdAlgorithmGalileanRZ.cpp
+  CEXE_sources += PsatdAlgorithmPmlRZ.cpp
 endif
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver/SpectralSolver/SpectralAlgorithms

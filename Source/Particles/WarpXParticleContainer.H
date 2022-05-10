@@ -15,6 +15,7 @@
 #include "Evolve/WarpXDtType.H"
 #include "Particles/ParticleBoundaries.H"
 #include "SpeciesPhysicalProperties.H"
+#include "Utils/TextMsg.H"
 
 #ifdef WARPX_QED
 #    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
@@ -41,6 +42,8 @@
 #include <memory>
 #include <string>
 #include <utility>
+
+using namespace amrex::literals;
 
 namespace ParticleStringNames
 {
@@ -175,17 +178,14 @@ public:
      *
      * \param[in,out] J vector of current densities (one three-dimensional array of pointers
      *                to MultiFabs per mesh refinement level)
-     * \param[in] dt: Time step for particle level (is used when temporarily
-     *                modifying the particle positions, either within the
-     *                Esirkepov or when `relative_t` is different than 0
-     * \param[in] relative_t: Time at which to deposit J, relative to the time
-     *                of the current positions of the particles (expressed as
-     *                a fraction of dt). When different than 0, the particle
-     *                position will be temporarily modified to match the
-     *                time of the deposition.
+     * \param[in] dt Time step for particle level
+     * \param[in] relative_time Time at which to deposit J, relative to the time of the
+     *                          current positions of the particles. When different than 0,
+     *                          the particle position will be temporarily modified to match
+     *                          the time of the deposition.
      */
     void DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                         const amrex::Real dt, const amrex::Real relative_t);
+                         const amrex::Real dt, const amrex::Real relative_time);
 
     /**
      * \brief Deposit charge density.
@@ -206,7 +206,7 @@ public:
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
     virtual void DepositCharge (WarpXParIter& pti,
-                               RealVector& wp,
+                               RealVector const & wp,
                                const int * const ion_lev,
                                amrex::MultiFab* rho,
                                int icomp,
@@ -245,7 +245,7 @@ public:
     virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
 
     // Inject a continuous flux of particles from a defined plane
-    virtual void ContinuousFluxInjection(amrex::Real /*dt*/) {}
+    virtual void ContinuousFluxInjection(amrex::Real /*t*/, amrex::Real /*dt*/) {}
 
     ///
     /// This returns the total charge for all the particles in this ParticleContainer.
@@ -300,7 +300,8 @@ public:
             particle_runtime_comps[name] = NumRealComps() - PIdx::nattribs;
             AddRealComp(comm);
         } else {
-            amrex::Print() << name << " already exists in particle_comps, not adding. \n";
+            amrex::Print() << Utils::TextMsg::Info(
+                name + " already exists in particle_comps, not adding.");
         }
     }
 
@@ -312,11 +313,19 @@ public:
             particle_runtime_icomps[name] = NumIntComps() - 0;
             AddIntComp(comm);
         } else {
-            amrex::Print() << name << " already exists in particle_icomps, not adding. \n";
+            amrex::Print() << Utils::TextMsg::Info(
+                name + " already exists in particle_icomps, not adding.");
         }
     }
 
     int doBackTransformedDiagnostics () const { return do_back_transformed_diagnostics; }
+    /** Whether back-transformed diagnostics need to be performed for a particular species.
+     *
+     * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
+     */
+    void SetDoBackTransformedParticles(const bool do_back_transformed_particles) {
+        m_do_back_transformed_particles = do_back_transformed_particles;
+    }
 
     std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
     std::map<std::string, int> getParticleiComps () const noexcept { return particle_icomps;}
@@ -353,8 +362,6 @@ public:
     */
     std::string getSpeciesTypeName () const {return species::get_name(physical_species);}
 
-    amrex::Vector<amrex::Real> get_v_galilean () {return m_v_galilean;}
-
     /**
      * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer only.
      * Empty body is here because making the method purely virtual would mean that we need to
@@ -372,7 +379,6 @@ public:
      void defineAllParticleTiles () noexcept;
 
 protected:
-    amrex::Vector<amrex::Real> m_v_galilean = amrex::Vector<amrex::Real>(3, amrex::Real(0.));
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
     std::map<std::string, int> particle_runtime_comps;
@@ -417,6 +423,8 @@ protected:
     int do_resampling = 0;
 
     int do_back_transformed_diagnostics = 1;
+    /** Whether back-transformed diagnostics is turned on for the corresponding species.*/
+    bool m_do_back_transformed_particles = false;
 
 #ifdef WARPX_QED
     //Species can receive a shared pointer to a QED engine (species for
@@ -445,6 +453,7 @@ public:
                                        TmpIdx::nattribs>;
     using TmpParticles = amrex::Vector<std::map<PairIndex, TmpParticleTile> >;
 
+    TmpParticles getTmpParticleData () const noexcept {return tmp_particle_data;}
 protected:
     TmpParticles tmp_particle_data;
 

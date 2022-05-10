@@ -1,0 +1,22 @@
+# please set your project account
+#export proj=<yourProject>
+
+# required dependencies
+module load ccache
+module load CMake
+module load GCC
+module load CUDA/11.3
+module load OpenMPI
+module load FFTW
+module load HDF5
+module load Python
+
+# JUWELS' job scheduler may not map ranks to GPUs,
+# so we give a hint to AMReX about the node layout.
+# This is usually done in Make.<supercomputing center> files in AMReX
+# but there is no such file for JSC yet.
+export GPUS_PER_SOCKET=2
+export GPUS_PER_NODE=4
+
+# optimize CUDA compilation for V100 (7.0) or for A100 (8.0)
+export AMREX_CUDA_ARCH=8.0

@@ -1,5 +1,6 @@
 #include "MacroscopicProperties.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
@@ -116,14 +117,14 @@ MacroscopicProperties::ReadParameters ()
 void
 MacroscopicProperties::InitData ()
 {
-    amrex::Print() << "we are in init data of macro \n";
+    amrex::Print() << Utils::TextMsg::Info("we are in init data of macro");
     auto & warpx = WarpX::GetInstance();
 
     // Get BoxArray and DistributionMap of warpx instance.
     int lev = 0;
     amrex::BoxArray ba = warpx.boxArray(lev);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
-    const amrex::IntVect ng_EB_alloc = warpx.getngE();
+    const amrex::IntVect ng_EB_alloc = warpx.getngEB();
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
     m_sigma_mf = std::make_unique<amrex::MultiFab>(ba, dmap, 1, ng_EB_alloc);
@@ -150,6 +151,12 @@ MacroscopicProperties::InitData ()
         InitializeMacroMultiFabUsingParser(m_eps_mf.get(), m_epsilon_parser->compile<3>(), lev);
 
     }
+    // In the Maxwell solver, `epsilon` is used in the denominator.
+    // Therefore, it needs to be strictly positive
+    bool const local=true;
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_eps_mf->min(0,0,local) > 0,
+    "WarpX encountered zero or negative values for the relative permittivity `epsilon`. Please check the initialization of `epsilon`.");
+
     // Initialize mu
     if (m_mu_s == "constant") {
 

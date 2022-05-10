@@ -1,6 +1,7 @@
 #include "FlushFormatAscent.H"
 
 #include "WarpX.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
@@ -17,7 +18,8 @@ FlushFormatAscent::WriteToFile (
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, int /*file_min_digits*/, bool plot_raw_fields,
     bool plot_raw_fields_guards,
-    bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/, bool /*isLastBTDFlush*/) const
+    bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
+    bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
 {
 #ifdef AMREX_USE_ASCENT
     WARPX_PROFILE("FlushFormatAscent::WriteToFile()");
@@ -95,7 +97,7 @@ FlushFormatAscent::WriteParticles(const amrex::Vector<ParticleDiag>& particle_di
             for (; rvn_it != real_comps_map.end(); ++rvn_it)
                 if (rvn_it->second == j)
                     break;
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 rvn_it != real_comps_map.end(),
                 "Ascent: SoA real attribute not found");
             std::string varname = rvn_it->first;

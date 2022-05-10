@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # --- Simple example of Langmuir oscillations in a uniform plasma
 # --- in two dimensions
 

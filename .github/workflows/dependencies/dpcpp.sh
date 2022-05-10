@@ -21,6 +21,7 @@ df -h
 # https://github.com/ECP-WarpX/WarpX/pull/1566#issuecomment-790934878
 sudo apt-get install -y --no-install-recommends \
     build-essential \
+    ccache          \
     cmake           \
     intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl-devel \
     g++ gfortran    \
