@@ -330,7 +330,9 @@ def expected_alpha_weight_com(E_com, proton_density, boron_density, dV, dt):
     assert(np.all(E_com>=0))
     ## Case E_com == 0 is handled manually to avoid division by zero
     conditions = [E_com == 0, E_com > 0]
-    choices = [0., pb_cross_section(E_com)*compute_relative_v_com(E_com)]
+    ## Necessary to avoid division by 0 warning when pb_cross_section is evaluated
+    E_com_never_zero = np.clip(E_com, 1.e-15, None)
+    choices = [0., pb_cross_section(E_com_never_zero)*compute_relative_v_com(E_com_never_zero)]
     sigma_times_vrel = np.select(conditions, choices)
     ## Factor 3 is here because each fusion reaction produces 3 alphas
     return 3.*proton_density*boron_density*sigma_times_vrel*barn_to_square_meter*dV*dt
