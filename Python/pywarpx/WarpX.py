@@ -109,6 +109,8 @@ class WarpX(Bucket):
                 # before each group to make the input file more human readable
                 prefix_new = re.split(' |\.', arg)[0]
                 if prefix_new != prefix_old:
+                    if prefix_old != '':
+                        ff.write('\n')
                     ff.write(f'# {prefix_new}\n')
                     prefix_old = prefix_new
                 ff.write(f'{arg}\n')
