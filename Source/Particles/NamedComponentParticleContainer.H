@@ -56,6 +56,24 @@ public:
     particle_runtime_comps(p_rcomps),
     particle_runtime_icomps(p_ricomps) {}
 
+    /** Create an empty particle container
+     *
+     * This creates a new NamedComponentParticleContainer with same compile-time
+     * and run-time attributes. But, it can change its allocator.
+     */
+    template <template<class> class NewAllocator=amrex::DefaultAllocator>
+    NamedComponentParticleContainer<NewAllocator>
+    make_alike () {
+        auto tmp = NamedComponentParticleContainer<NewAllocator>(
+            amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::template make_alike<NewAllocator>(),
+            particle_comps,
+            particle_icomps,
+            particle_runtime_comps,
+            particle_runtime_icomps);
+
+        return tmp;
+    }
+
     using amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::NumRealComps;
     using amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::NumIntComps;
     using amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::AddRealComp;

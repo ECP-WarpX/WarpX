@@ -171,13 +171,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 WarpXParticleContainer& pc = mypc.GetParticleContainer(i);
                 if (!buffer[i].isDefined())
                 {
-                    buffer[i] = PinnedMemoryParticleContainer(
-                        pc.make_alike<amrex::PinnedArenaAllocator>(),
-                        pc.getParticleComps(),
-                        pc.getParticleiComps(),
-                        pc.getParticleRuntimeComps(),
-                        pc.getParticleRuntimeiComps()
-                     );
+                    buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
                     buffer[i].AddIntComp("timestamp", false);
                 }
                 auto& species_buffer = buffer[i];
@@ -221,7 +215,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         if (!buffer[i].isDefined())
         {
             buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
-            buffer[i].AddIntComp(false);  // for timestamp
+            buffer[i].AddIntComp("timestamp", false);
         }
         auto& species_buffer = buffer[i];
         for (int lev = 0; lev < pc.numLevels(); ++lev)
