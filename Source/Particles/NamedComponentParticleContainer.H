@@ -63,7 +63,7 @@ public:
      */
     template <template<class> class NewAllocator=amrex::DefaultAllocator>
     NamedComponentParticleContainer<NewAllocator>
-    make_alike () {
+    make_alike () const {
         auto tmp = NamedComponentParticleContainer<NewAllocator>(
             amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::template make_alike<NewAllocator>(),
             particle_comps,
