@@ -298,12 +298,26 @@ def astrophysical_factor(E):
                astrophysical_factor_highE(E)]
     return np.select(conditions, choices)
 
+def pb_cross_section_buck_fit(E):
+    ## E is in MeV
+    ## Returns cross section in b using a power law fit of the data presented in Buck et al.,
+    ## Nuclear Physics A, 398(2), 189-202 (1983) in the range E > 3.5 MeV.
+    E_start_fit = 3.5
+    ## Cross section at E = E_start_fit = 3.5 MeV
+    cross_section_start_fit = 0.2168440845211521
+    slope_fit = -2.661840717596765
+    return cross_section_start_fit*(E/E_start_fit)**slope_fit
+
 def pb_cross_section(E):
     ## E is in keV
     ## Returns cross section in b using the fits described in W.M. Nevins and R. Swain,
-    ## Nuclear Fusion, 40, 865 (2000)
+    ## Nuclear Fusion, 40, 865 (2000) for E < 3.5 MeV and a power law fit of the data presented in
+    ## Buck et al., Nuclear Physics A, 398(2), 189-202 (1983) for E > 3.5 MeV.
     E_MeV = E/1.e3
-    return astrophysical_factor(E)/E_MeV * np.exp(-np.sqrt(E_Gamow_MeV / E_MeV))
+    conditions = [E <= 3500, E > 3500]
+    choices = [astrophysical_factor(E)/E_MeV * np.exp(-np.sqrt(E_Gamow_MeV / E_MeV)),
+               pb_cross_section_buck_fit(E_MeV)]
+    return np.select(conditions, choices)
 
 def E_com_to_p_sq_com(m1, m2, E):
     ## E is the total (kinetic+mass) energy of a two particle (with mass m1 and m2) system in
