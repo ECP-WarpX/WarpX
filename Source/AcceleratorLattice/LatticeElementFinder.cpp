@@ -7,6 +7,7 @@
 #include "WarpX.H"
 #include "LatticeElementFinder.H"
 #include "LatticeElements/HardEdgedQuadrupole.H"
+#include "LatticeElements/HardEdgedPlasmaLens.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
@@ -45,6 +46,11 @@ LatticeElementFinder::AllocateIndices (AcceleratorLattice const& accelerator_lat
         d_quad_indices.resize(m_nz);
     }
 
+    HardEdgedPlasmaLens const *h_plasmalens = accelerator_lattice.h_plasmalens.get();
+    if (h_plasmalens) {
+        d_plasmalens_indices.resize(m_nz);
+    }
+
 }
 
 void
@@ -61,6 +67,11 @@ LatticeElementFinder::UpdateIndices (int const lev, amrex::MFIter const& a_mfi,
     HardEdgedQuadrupole const *h_quad = accelerator_lattice.h_quad.get();
     if (h_quad) {
         setup_lattice_indices(h_quad->d_zs, h_quad->d_ze, d_quad_indices);
+    }
+
+    HardEdgedPlasmaLens const *h_plasmalens = accelerator_lattice.h_plasmalens.get();
+    if (h_plasmalens) {
+        setup_lattice_indices(h_plasmalens->d_zs, h_plasmalens->d_ze, d_plasmalens_indices);
     }
 }
 
@@ -102,6 +113,12 @@ LatticeElementFinderDevice::InitLatticeElementFinderDevice (WarpXParIter const& 
     if (h_quad) {
         d_quad = h_quad->GetDeviceInstance();
         d_quad_indices_arr = h_finder.d_quad_indices.data();
+    }
+
+    HardEdgedPlasmaLens const *h_plasmalens = accelerator_lattice.h_plasmalens.get();
+    if (h_plasmalens) {
+        d_plasmalens = h_plasmalens->GetDeviceInstance();
+        d_plasmalens_indices_arr = h_finder.d_plasmalens_indices.data();
     }
 
 }

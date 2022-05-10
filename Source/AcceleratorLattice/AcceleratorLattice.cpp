@@ -6,12 +6,18 @@
  */
 #include "AcceleratorLattice.H"
 #include "LatticeElements/HardEdgedQuadrupole.H"
+#include "LatticeElements/HardEdgedPlasmaLens.H"
 
 AcceleratorLattice::AcceleratorLattice ()
 {
 
     h_quad = std::make_unique<HardEdgedQuadrupole>();
     if (h_quad->nelements > 0) {
+        m_lattice_defined = true;
+    }
+
+    h_plasmalens = std::make_unique<HardEdgedPlasmaLens>();
+    if (h_plasmalens->nelements > 0) {
         m_lattice_defined = true;
     }
 

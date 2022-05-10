@@ -9,6 +9,7 @@
 
 #include "LatticeElementFinder.H"
 #include "LatticeElements/HardEdgedQuadrupole.H"
+#include "LatticeElements/HardEdgedPlasmaLens.H"
 
 /* \brief AcceleratorLattice contains the lattice elements
  */
@@ -28,6 +29,7 @@ public:
     LatticeElementFinderDevice GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset) const;
 
     std::unique_ptr<HardEdgedQuadrupole> h_quad;
+    std::unique_ptr<HardEdgedPlasmaLens> h_plasmalens;
 
 };
 

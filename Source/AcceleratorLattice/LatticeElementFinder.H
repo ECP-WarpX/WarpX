@@ -8,6 +8,7 @@
 #define WARPX_ACCELERATORLATTICE_LATTICEELEMENTS_LATTICEELEMENTFINDER_H_
 
 #include "LatticeElements/HardEdgedQuadrupole.H"
+#include "LatticeElements/HardEdgedPlasmaLens.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 
@@ -41,6 +42,7 @@ struct LatticeElementFinder
                                                         AcceleratorLattice const& accelerator_lattice);
 
     amrex::Gpu::DeviceVector<int> d_quad_indices;
+    amrex::Gpu::DeviceVector<int> d_plasmalens_indices;
 
     void setup_lattice_indices (amrex::Gpu::DeviceVector<amrex::Real> const & zs,
                                 amrex::Gpu::DeviceVector<amrex::Real> const & ze,
@@ -122,6 +124,9 @@ struct LatticeElementFinderDevice
     HardEdgedQuadrupoleDevice d_quad;
     int const* d_quad_indices_arr = nullptr;
 
+    HardEdgedPlasmaLensDevice d_plasmalens;
+    int const* d_plasmalens_indices_arr = nullptr;
+
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator () (const long i,
                       amrex::ParticleReal& field_Ex,
@@ -164,6 +169,18 @@ struct LatticeElementFinderDevice
                 int ielement = d_quad_indices_arr[iz];
                 amrex::Real Ex, Ey, Bx, By;
                 d_quad.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
+                Ex_sum += Ex;
+                Ey_sum += Ey;
+                Bx_sum += Bx;
+                By_sum += By;
+            }
+        }
+
+        if (d_plasmalens.nelements > 0) {
+            if (d_plasmalens_indices_arr[iz] > -1) {
+                int ielement = d_plasmalens_indices_arr[iz];
+                amrex::Real Ex, Ey, Bx, By;
+                d_plasmalens.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
                 Ex_sum += Ex;
                 Ey_sum += Ey;
                 Bx_sum += Bx;
