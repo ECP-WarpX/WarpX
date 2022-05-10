@@ -566,10 +566,10 @@ def check_initial_energy2(data):
         ## Tolerance is quite high below because we don't have a lot of alphas to produce good
         ## statistics and an event like alpha1 emitted exactly in direction of proton & alpha2
         ## emitted exactly in direction opposite to Beryllium is somewhat rare.
-        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, rtol=1.e-1))
-        assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, rtol=1.e-1))
-        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, rtol=1.e-1))
-        assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, rtol=1.e-1))
+        assert(is_close(np.amax(energy_alpha2_simulation), max_energy_alpha23, rtol=2.5e-1))
+        assert(is_close(np.amin(energy_alpha2_simulation), min_energy_alpha23, rtol=2.5e-1))
+        assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, rtol=2.5e-1))
+        assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, rtol=2.5e-1))
 
 def check_xy_isotropy(data):
     ## Checks that the alpha particles are emitted isotropically in x and y
@@ -632,7 +632,7 @@ def check_thermal_alpha_yield(data):
                                                  dV_total, dt)
     alpha_weight_simulation = np.sum(data["alpha_w_end"])
 
-    assert(is_close(alpha_weight_theory, alpha_weight_simulation, rtol = 2.e-2))
+    assert(is_close(alpha_weight_theory, alpha_weight_simulation, rtol = 2.e-1))
 
 def boron_remains(data):
     ## Checks whether there remains boron macroparticles at the end of the test
@@ -661,7 +661,7 @@ def specific_check2(data):
     check_initial_energy2(data)
 
 def specific_check3(data):
-    check_isotropy(data, relative_tolerance = 7.e-2)
+    check_isotropy(data, relative_tolerance = 1.e-1)
     check_thermal_alpha_yield(data)
 
 def specific_check4(data):
