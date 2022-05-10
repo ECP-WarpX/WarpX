@@ -211,7 +211,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
     auto& buffer = m_particle_containers[m_particle_containers.size()-1];
     for (int i = 0; i < numSpecies(); ++i)
     {
-        const auto& pc = mypc.GetParticleContainer(i);
+        auto& pc = mypc.GetParticleContainer(i);
         if (!buffer[i].isDefined())
         {
             buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
