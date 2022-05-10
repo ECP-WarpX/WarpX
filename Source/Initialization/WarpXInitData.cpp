@@ -1243,9 +1243,7 @@ std::string F_name, std::string F_componet)
         auto extent = FE.getExtent();
         double unit = FE.unitSI();
 
-std::cout << "extent: " << extent[0] << " " << extent[1] << " " << extent[2] << "\n";
-
-        auto box = mfi.validbox();
+        auto box = mfi.growntilebox();
         auto lo = lbound(box);
         auto hi = ubound(box);
         const amrex::RealBox& real_box = geom.ProbDomain();
@@ -1286,8 +1284,6 @@ std::cout << "extent: " << extent[0] << " " << extent[1] << " " << extent[2] << 
 
         openPMD::Offset chunk_offset = {ix_lo, iy_lo, iz_lo};
         openPMD::Extent chunk_extent = {ix_hi-ix_lo, iy_hi-iy_lo, iz_hi-iz_lo};
-std::cout << "chunk_offset: " << chunk_offset[0] << " " << chunk_offset[1] << " " << chunk_offset[2] << "\n";
-std::cout << "chunk_extent: " << chunk_extent[0] << " " << chunk_extent[1] << " " << chunk_extent[2] << "\n";
         auto FE_chunk_data = FE.loadChunk<double>(chunk_offset, chunk_extent);
         series.flush();
         auto FE_data = FE_chunk_data.get();
@@ -1331,7 +1327,7 @@ std::cout << "chunk_extent: " << chunk_extent[0] << " " << chunk_extent[1] << " 
                 ix = ix - chunk_offset[0];
                 iy = iy - chunk_offset[1];
                 iz = iz - chunk_offset[2];
-std::cout << ix << " " << iy << " " << iz << "\n";
+
                 int ext_1  = chunk_extent[1];
                 int ext_12 = chunk_extent[1]*chunk_extent[2];
                 // Assign the values through linear interpolation
@@ -1343,18 +1339,6 @@ std::cout << ix << " " << iy << " " << iz << "\n";
                                FE_data[(iz+1)+(iy  )*ext_1+(ix+1)*ext_12]*(    ddx)*(1.0-ddy)*(    ddz) +
                                FE_data[(iz+1)+(iy+1)*ext_1+(ix  )*ext_12]*(1.0-ddx)*(    ddy)*(    ddz) +
                                FE_data[(iz+1)+(iy+1)*ext_1+(ix+1)*ext_12]*(    ddx)*(    ddy)*(    ddz);
-
-//                int ext_0  = chunk_extent[0];
-//                int ext_01 = chunk_extent[0]*chunk_extent[1];
-//                // Assign the values through linear interpolation
-//                mffab(i,j,k) = FE_data[(ix  )+(iy  )*ext_0+(iz  )*ext_01]*(1.0-ddx)*(1.0-ddy)*(1.0-ddz) +
-//                               FE_data[(ix  )+(iy  )*ext_0+(iz+1)*ext_01]*(    ddx)*(1.0-ddy)*(1.0-ddz) +
-//                               FE_data[(ix  )+(iy+1)*ext_0+(iz  )*ext_01]*(1.0-ddx)*(    ddy)*(1.0-ddz) +
-//                               FE_data[(ix+1)+(iy  )*ext_0+(iz  )*ext_01]*(1.0-ddx)*(1.0-ddy)*(    ddz) +
-//                               FE_data[(ix  )+(iy+1)*ext_0+(iz+1)*ext_01]*(    ddx)*(    ddy)*(1.0-ddz) +
-//                               FE_data[(ix+1)+(iy  )*ext_0+(iz+1)*ext_01]*(    ddx)*(1.0-ddy)*(    ddz) +
-//                               FE_data[(ix+1)+(iy+1)*ext_0+(iz  )*ext_01]*(1.0-ddx)*(    ddy)*(    ddz) +
-//                               FE_data[(ix+1)+(iy+1)*ext_0+(iz+1)*ext_01]*(    ddx)*(    ddy)*(    ddz);
 
             }
 
