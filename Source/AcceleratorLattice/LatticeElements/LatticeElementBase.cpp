@@ -18,7 +18,7 @@ LatticeElementBase::LatticeElementBase (std::string const& element_name)
     using namespace amrex::literals;
 
     m_element_name = element_name;
-    amrex::ParmParse pp_element_name(m_element_name);
+    amrex::ParmParse pp_element_name("lattice." + m_element_name);
 
     amrex::Vector<amrex::Real> zs;
     amrex::Vector<amrex::Real> ze;

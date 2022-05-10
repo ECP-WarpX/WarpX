@@ -21,7 +21,7 @@ HardEdgedQuadrupole::HardEdgedQuadrupole ()
 
     if (nelements == 0) return;
 
-    amrex::ParmParse pp_element_name(m_element_name);
+    amrex::ParmParse pp_element_name("lattice." + m_element_name);
 
     amrex::Vector<amrex::Real> dEdx;
     if (queryArrWithParser(pp_element_name, "dEdx", dEdx)) {

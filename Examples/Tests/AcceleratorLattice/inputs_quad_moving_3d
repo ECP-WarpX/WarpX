@@ -27,9 +27,9 @@ electron.single_particle_pos = 0.05 0.0 0.0
 electron.single_particle_vel = 0.0 0.0 0.1  # gamma*beta
 electron.single_particle_weight = 1.0
 
-quad.zstarts = 0.2 1.0
-quad.zends = 0.4 1.4
-quad.dEdx = 1.e4 -1.e4
+lattice.quad.zstarts = 0.2 1.0
+lattice.quad.zends = 0.4 1.4
+lattice.quad.dEdx = 1.e4 -1.e4
 
 # Diagnostics
 diagnostics.diags_names = diag1
