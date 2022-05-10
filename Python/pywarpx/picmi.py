@@ -917,8 +917,14 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
     """
     Custom class to handle set up of embedded boundaries specific to WarpX.
     If embedded boundary initialization is added to picmistandard this can be
-    changed to inherit that functionality.
+    changed to inherit that functionality. The geometry can be specified either as
+    an implicit function or as an STL file (ASCII or binary). In the latter case the
+    geometry specified in the STL file can be scaled, translated and inverted.
     - implicit_function: Analytic expression describing the embedded boundary
+    - stl_file: STL file containing the embedded boundary geometry
+    - stl_scale: factor by which the STL geometry is scaled
+    - stl_center: vector by which the STL geometry is translated
+    - stl_reverse_normal: if True inverts the orientation of the STL geometry
     - potential: Analytic expression defining the potential. Can only be specified
                  when the solver is electrostatic. Optional, defaults to 0.
      Parameters used in the expressions should be given as additional keyword arguments.
