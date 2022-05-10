@@ -178,7 +178,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         pc.getParticleRuntimeComps(),
                         pc.getParticleRuntimeiComps()
                      );
-                    buffer[i].AddIntComp("timestamp");
+                    buffer[i].AddIntComp("timestamp", false);
                 }
                 auto& species_buffer = buffer[i];
                 for (int lev = 0; lev < pc.numLevels(); ++lev)
