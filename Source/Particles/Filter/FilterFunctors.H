@@ -7,6 +7,7 @@
 #ifndef FILTERFUNCTORS_H
 #define FILTERFUNCTORS_H
 
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXConst.H"
@@ -93,10 +94,10 @@ struct ParserFilter
 {
     /** constructor
      * \param a_is_active whether the test is active
-     * \param a_filter_parser parser taking t, x, y, z, ux, uy, and uz, and returning a boolean for selected particle
+     * \param a_filter_parser parser taking t, x, y, z, ux, uy, and uz, plus EXTRA_PARSER_ARGS user-defined particle attributes and returning a boolean for selected particle
      * \param a_mass mass of the particle species
      */
-    ParserFilter(bool a_is_active, amrex::ParserExecutor<7> const& a_filter_parser,
+    ParserFilter(bool a_is_active, amrex::ParserExecutor<ParticleDiag::m_nvars> const& a_filter_parser,
                  amrex::Real a_mass)
         : m_is_active(a_is_active), m_function_partparser(a_filter_parser), m_mass(a_mass)
     {
@@ -132,8 +133,8 @@ private:
     /** Whether this diagnostics is activated. Select all particles if false */
     const bool m_is_active;
 public:
-    /** Parser function with 7 input variables, t,x,y,z,ux,uy,uz */
-    amrex::ParserExecutor<7> const m_function_partparser;
+    /** Parser function with m_nvars_parser input variables. Arguments: t,x,y,z,ux,uy,uz plus user-defined attributes*/
+    amrex::ParserExecutor<ParticleDiag::m_nvars> const m_function_partparser;
     /** Store physical time. */
     amrex::ParticleReal m_t;
     /** Mass of particle species */
