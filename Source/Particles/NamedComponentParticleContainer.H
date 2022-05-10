@@ -44,8 +44,17 @@ public:
     NamedComponentParticleContainer ( NamedComponentParticleContainer && ) = default;
     NamedComponentParticleContainer& operator= ( NamedComponentParticleContainer && ) = default;
 
-    NamedComponentParticleContainer( amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator> && pc )
-    : amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>(std::move(pc)) {}
+    NamedComponentParticleContainer(
+        amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator> && pc,
+        std::map<std::string, int> p_comps,
+        std::map<std::string, int> p_icomps,
+        std::map<std::string, int> p_rcomps,
+        std::map<std::string, int> p_ricomps)
+    : amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>(std::move(pc)),
+    particle_comps(p_comps),
+    particle_icomps(p_icomps),
+    particle_runtime_comps(p_rcomps),
+    particle_runtime_icomps(p_ricomps) {}
 
     using amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::NumRealComps;
     using amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::NumIntComps;
@@ -76,21 +85,6 @@ public:
             amrex::Print() << Utils::TextMsg::Info(
                 name + " already exists in particle_icomps, not adding.");
         }
-    }
-
-    /** Create an empty particle container
-     *
-     * This creates a new AMReX particle container type with same compile-time
-     * and run-time attributes. But, it can change its allocator. This is
-     * helpful when creating temporary particle buffers for filter operations
-     * and device-to-host copies.
-     */
-    template <template<class> class NewAllocator=amrex::DefaultAllocator>
-    NamedComponentParticleContainer<NewAllocator>
-    make_alike () {
-        NamedComponentParticleContainer<NewAllocator> tmp;
-
-        return tmp;
     }
 
     std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
