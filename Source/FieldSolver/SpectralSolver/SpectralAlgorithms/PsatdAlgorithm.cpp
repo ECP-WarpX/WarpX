@@ -104,7 +104,7 @@ PsatdAlgorithm::PsatdAlgorithm(
     }
     if (time_averaging && !update_with_rho)
     {
-        amrex::Abort("PSATD: warpx.time_averaging = 1 implemented only with psatd.update_with_rho = 1");
+        amrex::Abort("PSATD: psatd.do_time_averaging = 1 implemented only with psatd.update_with_rho = 1");
     }
 }
 
