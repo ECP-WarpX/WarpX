@@ -2,6 +2,7 @@
 #define NamedComponentParticleContainer_H_
 
 #include <AMReX.H>
+#include <AMReX_AmrParGDB.H>
 #include <AMReX_Particles.H>
 #include "Utils/TextMsg.H"
 
