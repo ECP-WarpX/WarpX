@@ -142,10 +142,6 @@ BTDiagnostics::ReadParameters ()
         m_crse_ratio == amrex::IntVect(1),
         "Only support for coarsening ratio of 1 in all directions is included for BTD\n"
         );
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        warpx.Geom(0).ProbHi(WARPX_ZINDEX) == 0._rt,
-        " The geometry.prob_hi of the boosted-frame domain in the moving window direction must be ==0.\n"
-        );
 
     // Read list of back-transform diag parameters requested by the user //
     amrex::ParmParse pp_diag_name(m_diag_name);
