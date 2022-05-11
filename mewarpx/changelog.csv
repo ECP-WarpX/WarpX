@@ -1,5 +1,13 @@
 Version, Physics version, Date,        List of changes
-8.1.1, 2, In progress, "
+8.2.0, 2, In progress, "
+
+**Features**:
+
+- Added :class:`mewarpx.utils_store.json_util.MEWarpXEncoder` to encode a
+        runinfo object into a JSON string.
+- Changed runinfo to be saved as JSON file instead of dpkl file.
+
+8.1.1, 2, 5/9/2022, "
 
 **API Changes**:
 

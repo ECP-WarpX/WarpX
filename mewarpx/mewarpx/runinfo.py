@@ -12,12 +12,12 @@ import os
 import platform
 import subprocess
 
-import dill
 import numpy as np
 from pywarpx import callbacks
 
 import mewarpx
 from mewarpx.mwxrun import mwxrun
+from mewarpx.utils_store import json_util
 import mewarpx.utils_store.util as mwxutil
 
 logger = logging.getLogger(__name__)
@@ -358,18 +358,19 @@ class RunInfo(SimInfo):
                     f'Failed to retrieve docker information with error {e}'
                 )
 
-    def save(self, diagdir='diags', filename='runinfo.dpkl'):
-        """Save run info as a pickle file into the diagnostics directory.
-        ``dill`` generally handles more diverse objects than ``pickle``, and
-        has historically avoided unpickleable objects in similar situations.
+    def save(self, diagdir='diags', filename='runinfo.json'):
+        """Save run info as a JSON file into the diagnostics directory.
+        JSON objects are generic and can be loaded regardless of MEWarpX
+        version (8.2.0+ only) or Python version, unlike ``Pickle`` objects.
 
         Arguments:
             diagdir (str): Folder to save to, default 'diags'
-            filename (str): File to save to, default 'runinfo.dpkl'
+            filename (str): File to save to, default 'runinfo.json'
         """
         if mwxrun.me == 0:
             filepath = os.path.join(diagdir, filename)
             if not os.path.isdir(diagdir):
                 mwxutil.mkdir_p(diagdir)
-            with open(filepath, 'w+b') as pfile:
-                dill.dump(self, pfile)
+            with open(filepath, 'w+') as out_file:
+                raw_json = json_util.MEWarpXEncoder(indent=4).encode(self.__dict__)
+                out_file.write(raw_json)
