@@ -2,10 +2,7 @@
 #define NamedComponentParticleContainer_H_
 
 #include <AMReX.H>
-#include <AMReX_Vector.H>
-#include <AMReX_AmrParticles.H>
 #include <AMReX_Particles.H>
-#include <AMReX_ParIter.H>
 #include "Utils/TextMsg.H"
 
 struct PIdx
@@ -14,21 +11,26 @@ struct PIdx
         w = 0,  // weight
         ux, uy, uz,
 #ifdef WARPX_DIM_RZ
-theta, // RZ needs all three position components
+        theta, // RZ needs all three position components
 #endif
-nattribs
+        nattribs
     };
 };
 
+/** Particle Container class that allows to add/access particle components
+ *  with a name (string) instead of doing so with an integer index.
+ *
+ *  This is done by storing maps that give the index of the component
+ *  that corresponds to a given string.
+ */
 template <template<class> class Allocator>
 class NamedComponentParticleContainer :
-public amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>
+public amrex::ParticleContainer<0,0,PIdx::nattribs,0,Allocator>
 {
 public:
-    NamedComponentParticleContainer () : amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>() {}
+    NamedComponentParticleContainer () : amrex::ParticleContainer<0,0,PIdx::nattribs,0,Allocator>() {}
     NamedComponentParticleContainer (amrex::AmrParGDB* amr_pgdb)
-    : amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>(amr_pgdb) {
-
+    : amrex::ParticleContainer<0,0,PIdx::nattribs,0,Allocator>(amr_pgdb) {
         // build up the map of string names to particle component numbers
         particle_comps["w"]  = PIdx::w;
         particle_comps["ux"] = PIdx::ux;
@@ -37,35 +39,40 @@ public:
     #ifdef WARPX_DIM_RZ
         particle_comps["theta"] = PIdx::theta;
     #endif
-
     }
     virtual ~NamedComponentParticleContainer() {}
 
-    NamedComponentParticleContainer ( NamedComponentParticleContainer && ) = default;
-    NamedComponentParticleContainer& operator= ( NamedComponentParticleContainer && ) = default;
-
+    /** Construct a NamedComponentParticleContainer from a regular
+      * amrex::ParticleContainer, and additional name-to-index maps */
     NamedComponentParticleContainer(
-        amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator> && pc,
+        amrex::ParticleContainer<0,0,PIdx::nattribs,0,Allocator> && pc,
         std::map<std::string, int> p_comps,
         std::map<std::string, int> p_icomps,
         std::map<std::string, int> p_rcomps,
         std::map<std::string, int> p_ricomps)
-    : amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>(std::move(pc)),
+    : amrex::ParticleContainer<0,0,PIdx::nattribs,0,Allocator>(std::move(pc)),
     particle_comps(p_comps),
     particle_icomps(p_icomps),
     particle_runtime_comps(p_rcomps),
     particle_runtime_icomps(p_ricomps) {}
 
+    /* Move operators */
+    NamedComponentParticleContainer ( NamedComponentParticleContainer && ) = default;
+    NamedComponentParticleContainer& operator= ( NamedComponentParticleContainer && ) = default;
+
     /** Create an empty particle container
      *
      * This creates a new NamedComponentParticleContainer with same compile-time
-     * and run-time attributes. But, it can change its allocator.
+     * and run-time attributes. But it can change its allocator.
+     *
+     * This function overloads the corresponding function from the parent
+     * class (amrex::ParticleContainer)
      */
     template <template<class> class NewAllocator=amrex::DefaultAllocator>
     NamedComponentParticleContainer<NewAllocator>
     make_alike () const {
         auto tmp = NamedComponentParticleContainer<NewAllocator>(
-            amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::template make_alike<NewAllocator>(),
+            amrex::ParticleContainer<0,0,PIdx::nattribs,0,Allocator>::template make_alike<NewAllocator>(),
             particle_comps,
             particle_icomps,
             particle_runtime_comps,
@@ -74,10 +81,10 @@ public:
         return tmp;
     }
 
-    using amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::NumRealComps;
-    using amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::NumIntComps;
-    using amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::AddRealComp;
-    using amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>::AddIntComp;
+    using amrex::ParticleContainer<0,0,PIdx::nattribs,0,Allocator>::NumRealComps;
+    using amrex::ParticleContainer<0,0,PIdx::nattribs,0,Allocator>::NumIntComps;
+    using amrex::ParticleContainer<0,0,PIdx::nattribs,0,Allocator>::AddRealComp;
+    using amrex::ParticleContainer<0,0,PIdx::nattribs,0,Allocator>::AddIntComp;
 
     void AddRealComp (const std::string& name, bool comm=true)
     {
