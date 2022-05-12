@@ -274,7 +274,7 @@ WarpX::UpdateAuxilaryDataSameType ()
     //Emulate MR : coarsen the _fp from level 0 to get the _cp from level 0 
     for (int lev = 0; lev <= 0; ++lev)
     {
-       
+
         // B field
         const IntVect& refinement_ratio = refRatio(lev-1);
 
