@@ -214,6 +214,7 @@ void ConvertLabParamsToBoost()
  */
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax){
     WARPX_PROFILE("WarpXUtil::NullifyMF()");
+    int const ncomp = mf.nComp();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -235,8 +236,8 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
         if ( (zmax>zmin_box && zmin<=zmax_box) ){
             Array4<Real> arr = mf[mfi].array();
             // Set field to 0 between zmin and zmax
-            ParallelFor(bx,
-                [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept{
+            ParallelFor(bx, ncomp,
+                [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept{
 #if defined(WARPX_DIM_3D)
                     const Real z_gridpoint = zmin_box+(k-lo_ind)*dz;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -245,7 +246,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
                     const Real z_gridpoint = zmin_box+(i-lo_ind)*dz;
 #endif
                     if ( (z_gridpoint >= zmin) && (z_gridpoint < zmax) ) {
-                        arr(i,j,k) = 0.;
+                        arr(i,j,k,n) = 0.;
                     }
                 }
             );
