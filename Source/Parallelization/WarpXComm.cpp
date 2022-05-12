@@ -272,36 +272,35 @@ void
 WarpX::UpdateAuxilaryDataSameType ()
 {
     //Emulate MR : coarsen the _fp from level 0 to get the _cp from level 0 
-    if (lev == 0)
+    for (int lev = 0; lev <= 0; ++lev)
     {
        
         // B field
         const IntVect& refinement_ratio = refRatio(lev-1);
 
-        std::array<const MultiFab*,3> fine { Bfield_fp[lev][0].get(),
+        std::array<const MultiFab*,3> fine_B { Bfield_fp[lev][0].get(),
                                              Bfield_fp[lev][1].get(),
                                              Bfield_fp[lev][2].get() };
-        std::array<      MultiFab*,3> crse { Bfield_cp[lev][0].get(),
+        std::array<      MultiFab*,3> crse_B { Bfield_cp[lev][0].get(),
                                              Bfield_cp[lev][1].get(),
                                              Bfield_cp[lev][2].get() };
 
-        CoarsenMR::Coarsen( *crse[0], *fine[0], refinement_ratio );
-        CoarsenMR::Coarsen( *crse[1], *fine[1], refinement_ratio );
-        CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
+        CoarsenMR::Coarsen( *crse_B[0], *fine_B[0], refinement_ratio );
+        CoarsenMR::Coarsen( *crse_B[1], *fine_B[1], refinement_ratio );
+        CoarsenMR::Coarsen( *crse_B[2], *fine_B[2], refinement_ratio );
 
         // E field
-        const IntVect& refinement_ratio = refRatio(lev-1);
 
-        std::array<const MultiFab*,3> fine { Efield_fp[lev][0].get(),
+        std::array<const MultiFab*,3> fine_E { Efield_fp[lev][0].get(),
                                              Efield_fp[lev][1].get(),
                                              Efield_fp[lev][2].get() };
-        std::array<      MultiFab*,3> crse { Efield_cp[lev][0].get(),
+        std::array<      MultiFab*,3> crse_E { Efield_cp[lev][0].get(),
                                              Efield_cp[lev][1].get(),
                                              Efield_cp[lev][2].get() };
 
-        CoarsenMR::Coarsen( *crse[0], *fine[0], refinement_ratio );
-        CoarsenMR::Coarsen( *crse[1], *fine[1], refinement_ratio );
-        CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
+        CoarsenMR::Coarsen( *crse_E[0], *fine_E[0], refinement_ratio );
+        CoarsenMR::Coarsen( *crse_E[1], *fine_E[1], refinement_ratio );
+        CoarsenMR::Coarsen( *crse_E[2], *fine_E[2], refinement_ratio );
 
     }
 
