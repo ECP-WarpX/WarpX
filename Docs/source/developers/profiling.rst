@@ -121,7 +121,7 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
 .. code-block:: bash
 
    #!/bin/bash -l
-  
+
    # Copyright 2021 Axel Huebl, Kevin Gott
    #
    # This file is part of WarpX.
@@ -194,7 +194,7 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
 .. note::
 
     If everything went well, the user will obtain as many output files named "profiling_<number>.nsys-rep" as active GPU's which will allow the user to       analyze each of those GPU's perforamces with Nsight system.
-    
+
 .. warning::
 
     The last line of the sbatch file has to match the data of your input files.
@@ -228,7 +228,7 @@ Summit Example
    Sep 10th, 2021 (OLCFHELP-3580):
    The Nsight-Compute (``nsys``) version installed on Summit does not record details of GPU kernels.
    This is reported to Nvidia and OLCF.
-   
+
 
 
 Details
