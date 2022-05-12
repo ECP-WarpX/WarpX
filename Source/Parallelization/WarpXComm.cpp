@@ -271,10 +271,10 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 void
 WarpX::UpdateAuxilaryDataSameType ()
 {
-    //Emulate MR : coarsen the _fp from level 0 to get the _cp from level 0 
+    //Emulate MR : coarsen the _fp from level 0 to get the _cp from level 0
     if (lev == 0)
     {
-       
+
         // B field
         const IntVect& refinement_ratio = refRatio(lev-1);
 
