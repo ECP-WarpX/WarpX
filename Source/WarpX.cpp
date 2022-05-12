@@ -2033,8 +2033,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     //
     // The coarse patch
     //
-    if (lev > 0)
-    {
+
         BoxArray cba = ba;
         cba.coarsen(refRatio(lev-1));
         std::array<Real,3> cdx = CellSize(lev-1);
@@ -2129,7 +2128,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             m_fdtd_solver_cp[lev] = std::make_unique<FiniteDifferenceSolver>(maxwell_solver_id, cdx,
                                                                              do_nodal);
         }
-    }
 
     //
     // Copy of the coarse aux
