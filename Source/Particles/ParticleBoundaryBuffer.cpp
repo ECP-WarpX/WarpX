@@ -15,6 +15,8 @@
 
 #include <AMReX_Geometry.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Reduce.H>
+#include <AMReX_Tuple.H>
 #include <AMReX.H>
 
 struct IsOutsideDomainBoundary {
@@ -161,8 +163,6 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
     auto plo = geom.ProbLoArray();
     auto phi = geom.ProbHiArray();
 
-    int *pre_count = static_cast<int*>(amrex::The_Managed_Arena()->alloc(sizeof(size_t)));
-
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
         if (geom.isPeriodic(idim)) continue;
@@ -197,27 +197,24 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 
                         const auto ptile_data = ptile.getConstParticleTileData();
 
+                        amrex::ReduceOps<amrex::ReduceOpSum> reduce_op;
+                        amrex::ReduceData<int> reduce_data(reduce_op);
                         {
                           WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::count_out_of_bounds");
-                          *pre_count = 0;
-                          amrex::ParallelForRNG(np, [=] AMREX_GPU_HOST_DEVICE(const int ip, amrex::RandomEngine const& rng) {
-                              if (predicate(ptile_data, ip, rng)) {
-                                amrex::Gpu::Atomic::AddNoRet(pre_count, 1);
-                              }
-                            });
-                          amrex::Gpu::synchronize();
+                          amrex::RandomEngine rng{};
+                          reduce_op.eval(np, reduce_data, [=] AMREX_GPU_HOST_DEVICE (int ip)
+                                         { return predicate(ptile_data, ip, rng) ? 1 : 0; });
                         }
 
                         auto dst_index = ptile_buffer.numParticles();
                         {
                           WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::resize");
-                          ptile_buffer.resize(dst_index + *pre_count);
+                          ptile_buffer.resize(dst_index + amrex::get<0>(reduce_data.value()));
                         }
                         {
                           WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterAndTransform");
                           int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
                           int timestep = warpx_instance.getistep(0);
-
 
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
                                                              predicate,
@@ -275,21 +272,18 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 
                 const auto ptile_data = ptile.getConstParticleTileData();
 
+                amrex::ReduceOps<amrex::ReduceOpSum> reduce_op;
+                amrex::ReduceData<int> reduce_data(reduce_op);
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::count_out_of_boundsEB");
-                  *pre_count = 0;
-                  amrex::ParallelFor(np, [=] AMREX_GPU_HOST_DEVICE(const int ip) {
-                      if (predicate(ptile_data, ip)) {
-                        amrex::Gpu::Atomic::AddNoRet(pre_count, 1);
-                      }
-                    });
-                  amrex::Gpu::synchronize();
+                  reduce_op.eval(np, reduce_data, [=] AMREX_GPU_HOST_DEVICE (int ip)
+                                 { return predicate(ptile_data, ip) ? 1 : 0; });
                 }
 
                 auto dst_index = ptile_buffer.numParticles();
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::resize_eb");
-                  ptile_buffer.resize(dst_index + *pre_count);
+                  ptile_buffer.resize(dst_index + amrex::get<0>(reduce_data.value()));
                 }
 
                 int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
@@ -305,8 +299,6 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 #else
     amrex::ignore_unused(distance_to_eb);
 #endif
-
-    amrex::The_Managed_Arena()->free(pre_count);
 }
 
 int ParticleBoundaryBuffer::getNumParticlesInContainer(
