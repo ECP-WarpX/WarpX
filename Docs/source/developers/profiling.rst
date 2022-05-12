@@ -120,6 +120,46 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
 
 .. code-block:: bash
 
+   #!/bin/bash -l
+  
+   # Copyright 2021 Axel Huebl, Kevin Gott
+   #
+   # This file is part of WarpX.
+   #
+   # License: BSD-3-Clause-LBNL
+
+   #SBATCH -t 01:00:00
+   #SBATCH -N 1
+   #SBATCH -J WarpX
+   ##    note: <project name> #must end on _g
+   #SBATCH -A  <project name>
+   #for <project name> LBNL/AMP users: for large runs, comment in
+   #S BATCH -q early_science
+   #SBATCH -C gpu
+   #SBATCH -c 32
+   #SBATCH --ntasks-per-node=4
+   #SBATCH --gpus-per-task=1
+   #SBATCH --gpu-bind=single:1
+   #SBATCH -o WarpX.o%j
+   #SBATCH -e WarpX.e%j
+
+   # ============
+   # -N =                 nodes
+   # -n =                 tasks (MPI ranks, usually = G)
+   # -G =                 GPUs (full Perlmutter node, 4)
+   # -c =                 CPU per task (128 total threads on CPU, 32 per GPU)
+   #
+   # --ntasks-per-node=   number of tasks (MPI ranks) per node (full node, 4)
+   # --gpus-per-task=     number of GPUs per task (MPI rank) (full node, 4)
+   # --gpus-per-node=     number of GPUs per node (full node, 4)
+   #
+   # --gpu-bind=single:1  sets only one GPU to be visible to each MPI rank
+   #                         (quiets AMReX init warnings)
+   #
+   # Recommend using --ntasks-per-node=4, --gpus-per-task=1 and --gpu-bind=single:1,
+   # as they are fixed values and allow for easy scaling with less adjustments.
+   #
+   # ============
    # GPU-aware MPI
    export MPICH_GPU_SUPPORT_ENABLED=1
    # 1 OpenMP thread
@@ -151,6 +191,13 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
    This version does not record all trace information.
    You need to use the one directly shipped with the NVHPC base system, version 2021.4.1, located in ``/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/compilers/bin/nsys``.
 
+.. note::
+
+    If everything went well, the user will obtain as many output files named "profiling_<number>.nsys-rep" as active GPU's which will allow the user to       analyze each of those GPU's perforamces with Nsight system.
+    
+.. warning::
+
+    The last line of the sbatch file has to match the data of your input files.
 
 Summit Example
 """"""""""""""
@@ -181,6 +228,8 @@ Summit Example
    Sep 10th, 2021 (OLCFHELP-3580):
    The Nsight-Compute (``nsys``) version installed on Summit does not record details of GPU kernels.
    This is reported to Nvidia and OLCF.
+   
+
 
 Details
 """""""
