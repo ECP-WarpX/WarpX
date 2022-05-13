@@ -10,14 +10,15 @@ as well as the start and end time steps between which the growth rate is
 computed.
 """
 
-import argparse
 import glob
-import matplotlib.pyplot as plt
-import numpy as np
 import os
 import re
+
+import matplotlib.pyplot as plt
+import numpy as np
 import scipy.constants
 import yt
+
 yt.funcs.mylog.setLevel(50)
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 
