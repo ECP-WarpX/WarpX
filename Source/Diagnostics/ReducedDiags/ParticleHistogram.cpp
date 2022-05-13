@@ -215,11 +215,12 @@ void ParticleHistogram::ComputeDiags (int step)
 
                     // don't count a particle if it is filtered out
                     if (do_parser_filter)
-                        if (!fun_filterparser(t, x, y, z, ux, uy, uz))
+                         if (!fun_filterparser(t, (amrex::Real)x, (amrex::Real)y, (amrex::Real)z,
+                                              (amrex::Real)ux, (amrex::Real)uy, (amrex::Real)uz))
                             return;
                     // continue function if particle is not filtered out
-                    auto const f = fun_partparser(t, x, y, z, ux, uy, uz);
-
+                    auto const f = fun_partparser(t, (amrex::Real)x, (amrex::Real)y, (amrex::Real)z,
+                                                  (amrex::Real)ux, (amrex::Real)uy, (amrex::Real)uz);
                     // determine particle bin
                     int const bin = int(Math::floor((f-bin_min)/bin_size));
                     if ( bin<0 || bin>=num_bins ) return; // discard if out-of-range
