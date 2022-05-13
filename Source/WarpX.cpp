@@ -1222,6 +1222,21 @@ WarpX::ReadParameters ()
         }
 
         pp_psatd.query("current_correction", current_correction);
+
+        if (current_correction == false &&
+            current_deposition_algo != CurrentDepositionAlgo::Esirkepov &&
+            current_deposition_algo != CurrentDepositionAlgo::Vay)
+        {
+            RecordWarning(
+                "Algorithms",
+                "The chosen current deposition algorithm does not guarantee"
+                " charge conservation, and no additional current correction"
+                " algorithm is activated in order to compensate for that."
+                " Lack of charge conservation may negatively affect the"
+                " results of the simulation.",
+                WarnPriority::low);
+        }
+
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
 
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
