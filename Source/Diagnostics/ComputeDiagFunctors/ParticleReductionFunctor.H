@@ -33,7 +33,7 @@ public:
      */
     ParticleReductionFunctor(const amrex::MultiFab * const mf_src, const int lev,
                        const amrex::IntVect crse_ratio, const std::string fn_str,
-                       const int ispec, const int do_average,
+                       const int ispec, const bool do_average,
                        const bool do_filter, const std::string filter_str,
                        const int ncomp=1);
 
@@ -47,7 +47,7 @@ public:
 private:
     int const m_lev; /**< level on which mf_src is defined */
     int const m_ispec; /**< index of species to average over */
-    int const m_do_average; /**< Whether to calculate the average of the data */
+    bool const m_do_average; /**< Whether to calculate the average of the data */
     bool const m_do_filter; /**< whether to apply #m_filter_fn */
     /** Parser function to be averaged by the functor. Arguments: x, y, z, ux, uy, uz */
     std::unique_ptr<amrex::Parser> m_map_fn_parser;
