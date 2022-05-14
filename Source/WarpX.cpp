@@ -2632,7 +2632,7 @@ WarpX::BuildBufferMasksInBox ( int lev, const amrex::Box tbx, amrex::IArrayBox &
 
                 if (x > fine_tag_lo[0] && x < fine_tag_hi[0]){
                    if (y > fine_tag_lo[1] && y < fine_tag_hi[1]){
-                      if (z > fine_tag_lo[2] && z < fine_tag_hi[2]){ 
+                      if (z > fine_tag_lo[2] && z < fine_tag_hi[2]){
                          setnull = true;
                       }
                    }
