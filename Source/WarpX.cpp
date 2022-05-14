@@ -2035,8 +2035,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     //
 
         BoxArray cba = ba;
-        cba.coarsen(refRatio(lev-1));
-        std::array<Real,3> cdx = CellSize(lev-1);
+    //    cba.coarsen(refRatio(lev-1));
+    //    std::array<Real,3> cdx = CellSize(lev-1);
+
+        cba.coarsen(refRatio(lev));
+        std::array<Real,3> cdx = CellSize(lev);
 
         // Create the MultiFabs for B
         Bfield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_cp[x]"));
@@ -2128,6 +2131,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             m_fdtd_solver_cp[lev] = std::make_unique<FiniteDifferenceSolver>(maxwell_solver_id, cdx,
                                                                              do_nodal);
         }
+
+    //gather buffer for lev = 0 : emulated MR
+    gather_buffer_masks[lev] = std::make_unique<iMultiFab>(ba, dm, ncomps, 1 );
 
     //
     // Copy of the coarse aux
@@ -2509,12 +2515,16 @@ WarpX::getCosts (int lev)
 void
 WarpX::BuildBufferMasks ()
 {
-    for (int lev = 1; lev <= maxLevel(); ++lev)
+    for (int lev = 0; lev <= maxLevel(); ++lev)
     {
         for (int ipass = 0; ipass < 2; ++ipass)
         {
             int ngbuffer = (ipass == 0) ? n_current_deposition_buffer : n_field_gather_buffer;
             iMultiFab* bmasks = (ipass == 0) ? current_buffer_masks[lev].get() : gather_buffer_masks[lev].get();
+//            std::cout << "ngbuffer = " << ngbuffer << ", and bmasks = " << bmasks <<std::endl;
+//            std::cout << "n_current_deposition_buffer = " << n_current_deposition_buffer << ", and n_field_gather_buffer = " << n_field_gather_buffer <<std::endl;
+//            std::cout << "current_buffer_masks[lev].get() = " << current_buffer_masks[lev].get() << ", gather_buffer_masks[lev].get() " << gather_buffer_masks[lev].get() <<std::endl;
+//            std::cout << "current_buffer_masks[lev+1].get() = " << current_buffer_masks[lev+1].get() << ", gather_buffer_masks[lev+1].get() " << gather_buffer_masks[lev+1].get() <<std::endl;
             if (bmasks)
             {
                 const IntVect ngtmp = ngbuffer + bmasks->nGrowVect();
@@ -2532,7 +2542,7 @@ WarpX::BuildBufferMasks ()
                 for (MFIter mfi(*bmasks, true); mfi.isValid(); ++mfi)
                 {
                     const Box tbx = mfi.growntilebox();
-                    BuildBufferMasksInBox( tbx, (*bmasks)[mfi], tmp[mfi], ngbuffer );
+                    BuildBufferMasksInBox( lev, tbx, (*bmasks)[mfi], tmp[mfi], ngbuffer );
                 }
             }
         }
@@ -2548,23 +2558,40 @@ WarpX::BuildBufferMasks ()
  * \param ng          Number of guard cells
  */
 void
-WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
+WarpX::BuildBufferMasksInBox ( int lev, const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
                                const amrex::IArrayBox &guard_mask, const int ng )
 {
+
+    ParmParse pp_warpx("warpx");
+    Vector<Real> f_lo, f_hi;
+    getArrWithParser(pp_warpx, "fine_tag_lo", f_lo);
+    getArrWithParser(pp_warpx, "fine_tag_hi", f_hi);
+    fine_tag_lo = RealVect{f_lo};
+    fine_tag_hi = RealVect{f_hi};
+
+    const auto problo = Geom(lev).ProbLoArray();
+    const auto probhi = Geom(lev).ProbHiArray();
+    const auto dx = Geom(lev).CellSizeArray();
+
     bool setnull;
     const amrex::Dim3 lo = amrex::lbound( tbx );
     const amrex::Dim3 hi = amrex::ubound( tbx );
     Array4<int> msk = buffer_mask.array();
     Array4<int const> gmsk = guard_mask.array();
+
 #if defined(WARPX_DIM_1D_Z)
     int k = lo.z;
     int j = lo.y;
     for (int i = lo.x; i <= hi.x; ++i) {
         setnull = false;
-        // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
-        for (int ii = i-ng; ii <= i+ng; ++ii) {
-            if ( gmsk(ii,j,k) == 0 ) setnull = true;
-        }
+
+        amrex::Real x;
+
+        //WarpXUtilAlgo::getCellCoordinates(i, j, k, mfx_stag, problo, dx, x, y, z);
+        x = problo[0] + (i + 0.5)*dx[0];
+
+        if (x > fine_tag_lo[0] && x < fine_tag_hi[0]) setnull = true;
+
         if ( setnull ) msk(i,j,k) = 0;
         else           msk(i,j,k) = 1;
     }
@@ -2573,12 +2600,19 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
     for     (int j = lo.y; j <= hi.y; ++j) {
         for (int i = lo.x; i <= hi.x; ++i) {
             setnull = false;
-            // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
-            for     (int jj = j-ng; jj <= j+ng; ++jj) {
-                for (int ii = i-ng; ii <= i+ng; ++ii) {
-                    if ( gmsk(ii,jj,k) == 0 ) setnull = true;
-                }
+
+            amrex::Real x,y;
+
+            //WarpXUtilAlgo::getCellCoordinates(i, j, k, mfx_stag, problo, dx, x, y, z);
+            x = problo[0] + (i + 0.5)*dx[0];
+            y = problo[1] + (j + 0.5)*dx[1];
+
+            if (x > fine_tag_lo[0] && x < fine_tag_hi[0]){
+               if (y > fine_tag_lo[1] && y < fine_tag_hi[1]){
+                   setnull = true;
+               }
             }
+
             if ( setnull ) msk(i,j,k) = 0;
             else           msk(i,j,k) = 1;
         }
@@ -2588,20 +2622,77 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
         for     (int j = lo.y; j <= hi.y; ++j) {
             for (int i = lo.x; i <= hi.x; ++i) {
                 setnull = false;
-                // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
-                for         (int kk = k-ng; kk <= k+ng; ++kk) {
-                    for     (int jj = j-ng; jj <= j+ng; ++jj) {
-                        for (int ii = i-ng; ii <= i+ng; ++ii) {
-                            if ( gmsk(ii,jj,kk) == 0 ) setnull = true;
-                        }
-                    }
-                }
+
+                amrex::Real x, y, z;
+
+                //WarpXUtilAlgo::getCellCoordinates(i, j, k, mfx_stag, problo, dx, x, y, z);
+                x = problo[0] + (i + 0.5)*dx[0];
+                y = problo[1] + (j + 0.5)*dx[1];
+                z = problo[2] + (k + 0.5)*dx[2];
+
+                if (x > fine_tag_lo[0] && x < fine_tag_hi[0]){
+                   if (y > fine_tag_lo[1] && y < fine_tag_hi[1]){
+                      if (z > fine_tag_lo[2] && z < fine_tag_hi[2]){ 
+                         setnull = true;
+                      }
+                   }
+                 }
+
                 if ( setnull ) msk(i,j,k) = 0;
                 else           msk(i,j,k) = 1;
+
+                //if(msk(i,j,k) == 0)std::cout << " 3D mask : (x,y,z) = ("<< x << ", "<< y << ", "<< z <<". msk (" << i << ", " << j << ", "<< k << ") = " << msk(i,j,k) << std::endl;
             }
         }
     }
 #endif
+
+//#if defined(WARPX_DIM_1D_Z)
+//    int k = lo.z;
+//    int j = lo.y;
+//    for (int i = lo.x; i <= hi.x; ++i) {
+//        setnull = false;
+//        // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
+//        for (int ii = i-ng; ii <= i+ng; ++ii) {
+//            if ( gmsk(ii,j,k) == 0 ) setnull = true;
+//        }
+//        if ( setnull ) msk(i,j,k) = 0;
+//        else           msk(i,j,k) = 1;
+//    }
+//#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+//    int k = lo.z;
+//    for     (int j = lo.y; j <= hi.y; ++j) {
+//        for (int i = lo.x; i <= hi.x; ++i) {
+//            setnull = false;
+//            // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
+//            for     (int jj = j-ng; jj <= j+ng; ++jj) {
+//                for (int ii = i-ng; ii <= i+ng; ++ii) {
+//                    if ( gmsk(ii,jj,k) == 0 ) setnull = true;
+//                }
+//            }
+//            if ( setnull ) msk(i,j,k) = 0;
+//            else           msk(i,j,k) = 1;
+//        }
+//    }
+//#elif defined(WARPX_DIM_3D)
+//    for         (int k = lo.z; k <= hi.z; ++k) {
+//        for     (int j = lo.y; j <= hi.y; ++j) {
+//            for (int i = lo.x; i <= hi.x; ++i) {
+//                setnull = false;
+//                // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
+//                for         (int kk = k-ng; kk <= k+ng; ++kk) {
+//                    for     (int jj = j-ng; jj <= j+ng; ++jj) {
+//                        for (int ii = i-ng; ii <= i+ng; ++ii) {
+//                            if ( gmsk(ii,jj,kk) == 0 ) setnull = true;
+//                        }
+//                    }
+//                }
+//                if ( setnull ) msk(i,j,k) = 0;
+//                else           msk(i,j,k) = 1;
+//            }
+//        }
+//    }
+//#endif
 }
 
 amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_order, const bool nodal)
