@@ -276,7 +276,8 @@ WarpX::UpdateAuxilaryDataSameType ()
     {
 
         // B field
-        const IntVect& refinement_ratio = refRatio(lev-1);
+        const IntVect& refinement_ratio = refRatio(lev);
+        //const IntVect& refinement_ratio = refRatio(lev-1);
 
         std::array<const MultiFab*,3> fine_B { Bfield_fp[lev][0].get(),
                                              Bfield_fp[lev][1].get(),
