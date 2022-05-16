@@ -113,6 +113,7 @@ class WarpX(Bucket):
                         ff.write('\n')
                     ff.write(f'# {prefix_new}\n')
                     prefix_old = prefix_new
+
                 ff.write(f'{arg}\n')
 
 warpx = WarpX('warpx')
