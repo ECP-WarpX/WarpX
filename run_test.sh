@@ -62,6 +62,7 @@ rm -rf py-venv
 python3 -m venv py-venv
 source py-venv/bin/activate
 python3 -m pip install --upgrade pip setuptools wheel
+python3 -m pip install --upgrade cmake
 # setuptools/mp4py work-around, see
 #   https://github.com/mpi4py/mpi4py/pull/159
 #   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
@@ -70,7 +71,7 @@ python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
 
 # Clone AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout --detach 22.05 && cd -
+cd amrex && git checkout --detach 3ca867b8cce86b9892b45ff78df8630500dc3bb4 && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 

@@ -188,10 +188,12 @@ primary_domain = 'cpp'
 # Tell sphinx what the pygments highlight language should be.
 highlight_language = 'cpp'
 
-# Download AMReX Doxygen Tagfile to interlink Doxygen docs
+# Download AMReX & openPMD-api Doxygen Tagfile to interlink Doxygen docs
 url = 'https://amrex-codes.github.io/amrex/docs_xml/doxygen/amrex-doxygen-web.tag.xml'
 urllib.request.urlretrieve(url, '../amrex-doxygen-web.tag.xml')
 
+url = 'https://openpmd-api.readthedocs.io/en/latest/_static/doxyhtml/openpmd-api-doxygen-web.tag.xml'
+urllib.request.urlretrieve(url, '../openpmd-api-doxygen-web.tag.xml')
 
 # Build Doxygen
 subprocess.call('cd ../; doxygen;'

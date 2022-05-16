@@ -106,7 +106,7 @@ PsatdAlgorithm::PsatdAlgorithm(
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !time_averaging || update_with_rho,
-        "PSATD: warpx.time_averaging = 1 implemented only with psatd.update_with_rho = 1"
+        "PSATD: psatd.time_averaging = 1 implemented only with psatd.update_with_rho = 1"
     );
 }
 
