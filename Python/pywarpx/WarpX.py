@@ -5,6 +5,8 @@
 #
 # License: BSD-3-Clause-LBNL
 
+import re
+
 from . import Particles
 from .Algo import algo
 from .Amr import amr
@@ -103,7 +105,17 @@ class WarpX(Bucket):
 
         with open(filename, 'w') as ff:
 
+            prefix_old = ''
             for arg in argv:
+                # This prints the name of the input group (prefix) as a header
+                # before each group to make the input file more human readable
+                prefix_new = re.split(' |\.', arg)[0]
+                if prefix_new != prefix_old:
+                    if prefix_old != '':
+                        ff.write('\n')
+                    ff.write(f'# {prefix_new}\n')
+                    prefix_old = prefix_new
+
                 ff.write(f'{arg}\n')
 
 warpx = WarpX('warpx')
