@@ -921,15 +921,15 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
     an implicit function or as an STL file (ASCII or binary). In the latter case the
     geometry specified in the STL file can be scaled, translated and inverted.
     - implicit_function: Analytic expression describing the embedded boundary
-    - stl_file: STL file containing the embedded boundary geometry
-    - stl_scale: factor by which the STL geometry is scaled
-    - stl_center: vector by which the STL geometry is translated
+    - stl_file: STL file path (string), file contains the embedded boundary geometry
+    - stl_scale: factor by which the STL geometry is scaled (pure number)
+    - stl_center: vector by which the STL geometry is translated (in meters)
     - stl_reverse_normal: if True inverts the orientation of the STL geometry
     - potential: Analytic expression defining the potential. Can only be specified
                  when the solver is electrostatic. Optional, defaults to 0.
      Parameters used in the expressions should be given as additional keyword arguments.
     """
-    def __init__(self, implicit_function=None, stl_file=None, stl_scale=None, stl_center=None, stl_reverse_normal=None,
+    def __init__(self, implicit_function=None, stl_file=None, stl_scale=None, stl_center=None, stl_reverse_normal=False,
                  potential=None, **kw):
 
         assert stl_file is None or implicit_function is None, Exception('Only one between implicit_function and '
@@ -939,9 +939,9 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         self.stl_file = stl_file
 
         if stl_file is None:
-            assert stl_scale is None, Exception('EB can be scaled only when using an stl file')
-            assert stl_center is None, Exception('EB can be translated only when using an stl file')
-            assert stl_reverse_normal is None, Exception('EB can be reversed only when using an stl file')
+            assert stl_scale is None, Exception('EB can only be scaled only when using an stl file')
+            assert stl_center is None, Exception('EB can only be translated only when using an stl file')
+            assert stl_reverse_normal is False, Exception('EB can only be reversed only when using an stl file')
 
         self.stl_scale = stl_scale
         self.stl_center = stl_center
