@@ -29,7 +29,7 @@ MultiDiagnostics::MultiDiagnostics ()
             alldiags[i] = std::make_unique<BTDiagnostics>(i, diags_names[i]);
 #endif
         } else {
-            amrex::Abort("Unknown diagnostic type");
+            amrex::Abort(Utils::TextMsg::Err("Unknown diagnostic type"));
         }
     }
 }

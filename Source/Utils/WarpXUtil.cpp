@@ -366,7 +366,7 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
         ++it;
     }
     for (auto const& s : symbols) {
-        amrex::Abort("makeParser::Unknown symbol "+s);
+        amrex::Abort(Utils::TextMsg::Err("makeParser::Unknown symbol "+s));
     }
     return parser;
 }
@@ -638,9 +638,15 @@ void ReadBCParams ()
     ParmParse pp_warpx("warpx");
     ParmParse pp_algo("algo");
     int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
-    if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
-        amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
-    }
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_geometry.queryarr("is_periodic", geom_periodicity),
+        "geometry.is_periodic is not supported. Please use `boundary.field_lo`,"
+        " `boundary.field_hi` to specifiy field boundary conditions and"
+        " 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle"
+        " boundary conditions."
+    );
+
     // particle boundary may not be explicitly specified for some applications
     bool particle_boundary_specified = false;
     ParmParse pp_boundary("boundary");
@@ -684,12 +690,15 @@ void ReadBCParams ()
                 WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
             }
         }
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ||
-                WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC) {
-                amrex::Abort(" PEC boundary not implemented for PSATD, yet!");
-            }
-        }
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (maxwell_solver_id != MaxwellSolverAlgo::PSATD) ||
+            (
+                WarpX::field_boundary_lo[idim] != FieldBoundaryType::PEC &&
+                WarpX::field_boundary_hi[idim] != FieldBoundaryType::PEC
+            ),
+            "PEC boundary not implemented for PSATD, yet!"
+        );
     }
 
     // Appending periodicity information to input so that it can be used by amrex

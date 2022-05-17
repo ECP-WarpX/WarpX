@@ -6,6 +6,7 @@
  */
 #include "PsatdAlgorithm.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpX_Complex.H"
 
@@ -93,19 +94,20 @@ PsatdAlgorithm::PsatdAlgorithm(
         InitializeSpectralCoefficientsAveraging(spectral_kspace, dm, dt);
     }
 
-    if (dive_cleaning && m_is_galilean)
-    {
-        amrex::Abort("warpx.do_dive_cleaning = 1 not implemented for Galilean PSATD algorithms");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !dive_cleaning || !m_is_galilean,
+        "warpx.do_dive_cleaning = 1 not implemented for Galilean PSATD algorithms"
+    );
 
-    if (divb_cleaning && m_is_galilean)
-    {
-        amrex::Abort("warpx.do_divb_cleaning = 1 not implemented for Galilean PSATD algorithms");
-    }
-    if (time_averaging && !update_with_rho)
-    {
-        amrex::Abort("PSATD: psatd.do_time_averaging = 1 implemented only with psatd.update_with_rho = 1");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !divb_cleaning || !m_is_galilean,
+        "warpx.do_divb_cleaning = 1 not implemented for Galilean PSATD algorithms"
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !time_averaging || update_with_rho,
+        "PSATD: psatd.time_averaging = 1 implemented only with psatd.update_with_rho = 1"
+    );
 }
 
 void

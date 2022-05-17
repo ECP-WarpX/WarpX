@@ -8,6 +8,7 @@
 #include "FieldIO.H"
 
 #include "Utils/CoarsenIO.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX.H>
 #include <AMReX_IntVect.H>
@@ -221,6 +222,6 @@ AverageAndPackScalarField (MultiFab& mf_avg,
         // - Fully nodal
         CoarsenIO::Coarsen( mf_avg, *scalar_total, dcomp, 0, 1, ngrow );
     } else {
-        amrex::Abort("Unknown staggering.");
+        amrex::Abort(Utils::TextMsg::Err("Unknown staggering."));
     }
 }

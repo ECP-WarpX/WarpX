@@ -224,9 +224,10 @@ FlushFormatCheckpoint::WriteDMaps (const std::string& dir, int nlev) const
 
             DMFile.flush();
             DMFile.close();
-            if (!DMFile.good()) {
-                amrex::Abort("FlushFormatCheckpoint::WriteDMaps: problem writing DMFile");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                DMFile.good(),
+                "FlushFormatCheckpoint::WriteDMaps: problem writing DMFile"
+            );
         }
     }
 }
