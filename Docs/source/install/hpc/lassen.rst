@@ -50,19 +50,19 @@ And since Lassen does not yet provide a module for them, install ADIOS2, BLAS++ 
    # ADIOS2
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
    rm -rf src/adios2-lassen-build
-   cmake -S src/adios2 -B src/adios2-lassen-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/adios2-2.7.1
+   cmake -S src/adios2 -B src/adios2-lassen-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_SST=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/adios2-2.7.1
    cmake --build src/adios2-lassen-build --target install -j 16
 
    # BLAS++ (for PSATD+RZ)
    git clone https://bitbucket.org/icl/blaspp.git src/blaspp
    rm -rf src/blaspp-lassen-build
-   cmake -S src/blaspp -B src/blaspp-lassen-build -Duse_openmp=ON -Dgpu_backend=CUDA -Duse_cmake_find_blas=ON -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/blaspp-master
+   cmake -S src/blaspp -B src/blaspp-lassen-build -Duse_openmp=ON -Dgpu_backend=CUDA -Duse_cmake_find_blas=ON -DBLA_VENDOR=IBMESSL -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/blaspp-master
    cmake --build src/blaspp-lassen-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
    git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-lassen-build
-   cmake -S src/lapackpp -B src/lapackpp-lassen-build -Duse_cmake_find_lapack=ON -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/lapackpp-master
+   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-lassen-build -Duse_cmake_find_lapack=ON -DBLA_VENDOR=IBMESSL -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/lapackpp-master -DLAPACK_LIBRARIES=/usr/lib64/liblapack.so
    cmake --build src/lapackpp-lassen-build --target install --parallel 16
 
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
