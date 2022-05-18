@@ -226,7 +226,10 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
        return cs_mf;
 
     }
-    amrex::Abort("Should not hit this return statement.");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+       false, "Should not hit this return statement.");
+
     return smf;
 }
 

@@ -13,6 +13,7 @@
 #else
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
@@ -91,7 +92,7 @@ void FiniteDifferenceSolver::EvolveB (
 #endif
 #endif
     } else {
-        amrex::Abort("EvolveB: Unknown algorithm");
+        amrex::Abort(Utils::TextMsg::Err("EvolveB: Unknown algorithm"));
     }
 }
 
@@ -210,7 +211,8 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 #ifdef AMREX_USE_EB
 
 #if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
-    amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+    amrex::Abort(Utils::TextMsg::Err(
+        "EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V"));
 #endif
 
     amrex::LayoutData<amrex::Real> *cost = WarpX::getCosts(lev);

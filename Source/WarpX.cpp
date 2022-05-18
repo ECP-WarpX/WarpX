@@ -856,7 +856,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_similar_dm_pml", do_similar_dm_pml);
         // Read `v_particle_pml` in units of the speed of light
         v_particle_pml = 1._rt;
-        pp_warpx.query("v_particle_pml", v_particle_pml);
+        queryWithParser(pp_warpx, "v_particle_pml", v_particle_pml);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(0._rt < v_particle_pml && v_particle_pml <= 1._rt,
             "Input value for the velocity warpx.v_particle_pml of the macroparticle must be in (0,1] (in units of c).");
         // Scale by the speed of light
@@ -1573,6 +1573,14 @@ WarpX::MakeNewLevelFromScratch (int lev, Real time, const BoxArray& new_grids,
 {
     AllocLevelData(lev, new_grids, new_dmap);
     InitLevelData(lev, time);
+}
+
+// This is a virtual function.
+void
+WarpX::MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::BoxArray& /*ba*/,
+                                         const amrex::DistributionMapping& /*dm*/)
+{
+    amrex::Abort(Utils::TextMsg::Err("MakeNewLevelFromCoarse: To be implemented"));
 }
 
 void

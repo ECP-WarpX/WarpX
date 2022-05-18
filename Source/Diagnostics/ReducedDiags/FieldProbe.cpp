@@ -117,7 +117,8 @@ FieldProbe::FieldProbe (std::string rd_name)
     else if (m_probe_geometry_str == "Plane")
     {
 #if defined(WARPX_DIM_1D_Z)
-        amrex::Abort("ERROR: Plane probe should be used in a 2D or 3D simulation only");
+        amrex::Abort(Utils::TextMsg::Err(
+            "ERROR: Plane probe should be used in a 2D or 3D simulation only"));
 #endif
         m_probe_geometry = DetectorGeometry::Plane;
         y_probe = 0._rt;
@@ -141,10 +142,10 @@ FieldProbe::FieldProbe (std::string rd_name)
     }
     else
     {
-        std::string err_str = "ERROR: Invalid probe geometry '";
-        err_str.append(m_probe_geometry_str);
-        err_str.append("'. Valid geometries are Point, Line or Plane.");
-        amrex::Abort(err_str);
+        amrex::Abort(Utils::TextMsg::Err(
+            "ERROR: Invalid probe geometry '" + m_probe_geometry_str
+            + "'. Valid geometries are Point, Line or Plane."
+        ));
     }
     pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
@@ -334,7 +335,8 @@ void FieldProbe::InitData ()
     }
     else
     {
-    amrex::Abort("ERROR: Invalid probe geometry. Valid geometries are Point, Line, and Plane.");
+        amrex::Abort(Utils::TextMsg::Err(
+            "Invalid probe geometry. Valid geometries are Point, Line, and Plane."));
     }
 }
 
