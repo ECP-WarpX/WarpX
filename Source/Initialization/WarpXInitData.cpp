@@ -1148,12 +1148,15 @@ void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
     {
         const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
         const amrex::IntVect gc = mf.nGrowVect();
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc),
-            "MultiFab " + std::to_string(mf.tags()[1]) + ":" +
-            " the number of guard cells " + std::to_string(gc) +
-            " is larger than or equal to the number of valid cells " +
-            std::to_string(vc) + ", please reduce the number of guard cells" +
-            " or increase the grid size by changing domain decomposition.");
+
+        std::stringstream ss_msg;
+        ss_msg << "MultiFab " << mf.tags()[1].c_str() << ":" <<
+            " the number of guard cells " << gc <<
+            " is larger than or equal to the number of valid cells "
+            << vc << ", please reduce the number of guard cells" <<
+             " or increase the grid size by changing domain decomposition."
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.c_str());
     }
 }
 
