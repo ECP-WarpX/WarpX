@@ -208,7 +208,7 @@ void ParticleHistogram::ComputeDiags (int step)
                 {
                     amrex::ParticleReal x, y, z;
                     GetPosition(i, x, y, z);
-                    auto const w  = d_w[i];
+                    auto const w  = (amrex::Real)d_w[i];
                     auto const ux = d_ux[i] / PhysConst::c;
                     auto const uy = d_uy[i] / PhysConst::c;
                     auto const uz = d_uz[i] / PhysConst::c;
