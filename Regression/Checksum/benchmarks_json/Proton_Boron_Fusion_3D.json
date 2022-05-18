@@ -8,7 +8,7 @@
     "particle_position_x": 451548.4668627233,
     "particle_position_y": 454219.46394945635,
     "particle_position_z": 965720.6512622377,
-    "particle_weight": 1.914052108579029e-27
+    "particle_weight": 1.901985265518397e-27
   },
   "alpha2": {
     "particle_cpu": 55182.0,
@@ -19,7 +19,7 @@
     "particle_position_x": 409884.3281214832,
     "particle_position_y": 415308.64218359225,
     "particle_position_z": 876153.8579307995,
-    "particle_weight": 1.925257867888498e+19
+    "particle_weight": 1.935290757330618e+19
   },
   "alpha3": {
     "particle_cpu": 6636.0,
@@ -99,7 +99,7 @@
     "particle_weight": 1023.9999999999999
   },
   "lev=0": {
-    "rho": 3.28126202190889e+19
+    "rho": 0.000000000000000e+00
   },
   "proton1": {
     "particle_cpu": 5120000.0,
