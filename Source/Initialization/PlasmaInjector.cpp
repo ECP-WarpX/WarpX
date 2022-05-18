@@ -166,7 +166,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         species_is_specified ||
         (injection_style == "external_file"),
         "Need to specify at least one of species_type or mass"
-    )
+    );
 
     num_particles_per_cell_each_dim.assign(3, 0);
 
