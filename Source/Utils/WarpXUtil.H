@@ -283,7 +283,39 @@ int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, T& va
         Store_parserString(a_pp, str, str_val);
 
         auto parser = makeParser(str_val, {});
-        val = (T) parser.eval();
+
+        if (std::is_same<T, int>::value) {
+
+            val = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+        }
+        else {
+            val = static_cast<T>(parser.compileHost<0>()());
+        }
+    }
+    // return the same output as amrex::ParmParse::query
+    return is_specified;
+}
+
+template <typename T>
+int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<T>& val)
+{
+    // call amrex::ParmParse::query, check if the user specified str.
+    std::vector<std::string> tmp_str_arr;
+    int is_specified = a_pp.queryarr(str, tmp_str_arr);
+    if (is_specified)
+    {
+        // If so, create parser objects and apply them to the values provided by the user.
+        int const n = static_cast<int>(tmp_str_arr.size());
+        val.resize(n);
+        for (int i=0 ; i < n ; i++) {
+            auto parser = makeParser(tmp_str_arr[i], {});
+            if (std::is_same<T, int>::value) {
+                val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+            }
+            else {
+                val[i] = static_cast<T>(parser.compileHost<0>()());
+            }
+        }
     }
     // return the same output as amrex::ParmParse::query
     return is_specified;
@@ -303,7 +335,12 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
         val.resize(n);
         for (int i=0 ; i < n ; i++) {
             auto parser = makeParser(tmp_str_arr[i], {});
-            val[i] = (T) parser.eval();
+            if (std::is_same<T, int>::value) {
+                val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+            }
+            else {
+                val[i] = static_cast<T>(parser.compileHost<0>()());
+            }
         }
     }
     // return the same output as amrex::ParmParse::query
@@ -345,7 +382,12 @@ void getWithParser (const amrex::ParmParse& a_pp, char const * const str, T& val
     Store_parserString(a_pp, str, str_val);
 
     auto parser = makeParser(str_val, {});
-    val = (T) parser.eval();
+    if (std::is_same<T, int>::value) {
+        val = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+    }
+    else {
+        val = static_cast<T>(parser.compileHost<0>()());
+    }
 }
 
 template <typename T>
@@ -359,7 +401,12 @@ void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std
     val.resize(n);
     for (int i=0 ; i < n ; i++) {
         auto parser = makeParser(tmp_str_arr[i], {});
-        val[i] = (T) parser.eval();
+        if (std::is_same<T, int>::value) {
+            val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+        }
+        else {
+            val[i] = static_cast<T>(parser.compileHost<0>()());
+        }
     }
 }
 
@@ -390,7 +437,12 @@ void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std
     val.resize(n);
     for (int i=0 ; i < n ; i++) {
         auto parser = makeParser(tmp_str_arr[i], {});
-        val[i] = (T) parser.eval();
+        if (std::is_same<T, int>::value) {
+            val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+        }
+        else {
+            val[i] = static_cast<T>(parser.compileHost<0>()());
+        }
     }
 }
 
