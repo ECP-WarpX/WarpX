@@ -169,12 +169,6 @@ HankelTransform::HankelTransform (int const hankel_order,
         M = invM;
         amrex::Vector<int64_t> ipiv(m_nr);
         lapack::getrf(m_nk, m_nr, M.dataPtr(), m_nk, ipiv.dataPtr());
-        for (int ir=0 ; ir < m_nr ; ir++) {
-            for (int ik=0 ; ik < m_nk ; ik++) {
-                int const ii = ik + ir*m_nk;
-                fprintf(stderr, "M[ii] %.18e \n", M[ii]);
-            }
-        }
         lapack::getri(m_nr, M.dataPtr(), m_nr, ipiv.dataPtr());
 
     }

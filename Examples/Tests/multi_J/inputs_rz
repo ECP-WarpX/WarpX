@@ -1,53 +1,51 @@
 # Iterations
-max_step = 1
-
-warpx.random_seed = 2
+max_step = 50
 
 # Domain
-amr.n_cell = 32 32
+amr.n_cell = 64 128
 amr.max_level = 0
-warpx.numprocs = 1 1
+warpx.numprocs = 1 2
 
 # Geometry
 geometry.dims = RZ
 geometry.prob_lo =   0    -220e-6
 geometry.prob_hi = 200e-6   10e-6
-boundary.field_lo = none periodic
-boundary.field_hi = none periodic
+boundary.field_lo = none damped
+boundary.field_hi = none damped
 
 # Algorithms
-#algo.current_deposition = direct
-#algo.charge_deposition = standard
-#algo.field_gathering = energy-conserving
+algo.current_deposition = direct
+algo.charge_deposition = standard
+algo.field_gathering = energy-conserving
 algo.maxwell_solver = psatd
-#algo.particle_pusher = vay
-algo.particle_shape = 1
+algo.particle_pusher = vay
+algo.particle_shape = 3
 
 # Numerics
-#warpx.do_moving_window = 0
-#warpx.moving_window_dir = z
-#warpx.moving_window_v = 1.
+warpx.do_moving_window = 1
+warpx.moving_window_dir = z
+warpx.moving_window_v = 1.
 warpx.n_rz_azimuthal_modes = 1
-warpx.use_filter = 0
+warpx.use_filter = 1
 warpx.verbose = 1
 
 warpx.cfl = 1.
 #warpx.gamma_boost = 1.
 #warpx.boost_direction = z
 
-warpx.do_dive_cleaning = 0
-warpx.do_divb_cleaning = 0
-warpx.do_multi_J = 0
+warpx.do_dive_cleaning = 1
+warpx.do_divb_cleaning = 1
+warpx.do_multi_J = 1
 warpx.do_multi_J_n_depositions = 2
-#psatd.do_time_averaging = 0
+psatd.do_time_averaging = 1
 
 # PSATD
-psatd.update_with_rho = 0
+psatd.update_with_rho = 1
 #psatd.v_galilean = 0. 0. -0.9373391857121336
 
 # Particles
 
-particles.species_names = driver #driver_back #plasma_e #plasma_p
+particles.species_names = driver driver_back plasma_e plasma_p
 particles.use_fdtd_nci_corr = 0
 particles.rigid_injected_species = driver
 
@@ -59,15 +57,15 @@ driver.z_rms = 20.1e-6
 driver.x_m = 0.
 driver.y_m = 0.
 driver.z_m = -80e-6
-driver.npart = 20
+driver.npart = 1000000
 driver.q_tot = -1e-9
 driver.momentum_distribution_type = "gaussian"
 driver.ux_m = 0.
 driver.uy_m = 0.
 driver.uz_m = 2000.
-driver.ux_th = 0.
+driver.ux_th = 4.
 driver.uy_th = 4.
-driver.uz_th = 0*20.
+driver.uz_th = 20.
 driver.zinject_plane = 2e-3
 driver.rigid_advance = true
 driver.initialize_self_fields = 0
@@ -115,5 +113,5 @@ plasma_p.do_continuous_injection = 1
 diagnostics.diags_names = diag1
 diag1.intervals = 50
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho #rho_driver rho_plasma_e rho_plasma_p
-#diag1.species = driver plasma_e plasma_p
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_driver rho_plasma_e rho_plasma_p
+diag1.species = driver plasma_e plasma_p
