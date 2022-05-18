@@ -50,6 +50,12 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      amrex::Array4<amrex::Real const> const& bx_arr,
                      amrex::Array4<amrex::Real const> const& by_arr,
                      amrex::Array4<amrex::Real const> const& bz_arr,
+                     amrex::Array4<amrex::Real const> const& ex_arr_ext,
+                     amrex::Array4<amrex::Real const> const& ey_arr_ext,
+                     amrex::Array4<amrex::Real const> const& ez_arr_ext,
+                     amrex::Array4<amrex::Real const> const& bx_arr_ext,
+                     amrex::Array4<amrex::Real const> const& by_arr_ext,
+                     amrex::Array4<amrex::Real const> const& bz_arr_ext,
                      const amrex::IndexType ex_type,
                      const amrex::IndexType ey_type,
                      const amrex::IndexType ez_type,
@@ -361,8 +367,14 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<=depos_order; iy++){
             for (int ix=0; ix<= depos_order - galerkin_interpolation; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+                Exp += sx_ex[ix]*sy_ex[iy]*sz_ex[iz]*
+                    ( ex_arr(lo.x+j_ex+ix, lo.y+k_ex+iy, lo.z+l_ex+iz) +
+                  ex_arr_ext(lo.x+j_ex+ix, lo.y+k_ex+iy, lo.z+l_ex+iz) );
+#else
                 Exp += sx_ex[ix]*sy_ex[iy]*sz_ex[iz]*
                     ex_arr(lo.x+j_ex+ix, lo.y+k_ex+iy, lo.z+l_ex+iz);
+#endif
             }
         }
     }
@@ -370,8 +382,14 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<= depos_order - galerkin_interpolation; iy++){
             for (int ix=0; ix<=depos_order; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+                Eyp += sx_ey[ix]*sy_ey[iy]*sz_ey[iz]*
+                    ( ey_arr(lo.x+j_ey+ix, lo.y+k_ey+iy, lo.z+l_ey+iz) +
+                  ey_arr_ext(lo.x+j_ey+ix, lo.y+k_ey+iy, lo.z+l_ey+iz) );
+#else
                 Eyp += sx_ey[ix]*sy_ey[iy]*sz_ey[iz]*
                     ey_arr(lo.x+j_ey+ix, lo.y+k_ey+iy, lo.z+l_ey+iz);
+#endif
             }
         }
     }
@@ -379,8 +397,14 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     for (int iz=0; iz<= depos_order - galerkin_interpolation; iz++){
         for (int iy=0; iy<=depos_order; iy++){
             for (int ix=0; ix<=depos_order; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+                Ezp += sx_ez[ix]*sy_ez[iy]*sz_ez[iz]*
+                    ( ez_arr(lo.x+j_ez+ix, lo.y+k_ez+iy, lo.z+l_ez+iz) +
+                  ez_arr_ext(lo.x+j_ez+ix, lo.y+k_ez+iy, lo.z+l_ez+iz) );
+#else
                 Ezp += sx_ez[ix]*sy_ez[iy]*sz_ez[iz]*
                     ez_arr(lo.x+j_ez+ix, lo.y+k_ez+iy, lo.z+l_ez+iz);
+#endif
             }
         }
     }
@@ -388,8 +412,14 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<= depos_order - galerkin_interpolation; iy++){
             for (int ix=0; ix<= depos_order - galerkin_interpolation; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+                Bzp += sx_bz[ix]*sy_bz[iy]*sz_bz[iz]*
+                    ( bz_arr(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz) +
+                  bz_arr_ext(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz) );
+#else
                 Bzp += sx_bz[ix]*sy_bz[iy]*sz_bz[iz]*
                     bz_arr(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz);
+#endif
             }
         }
     }
@@ -397,8 +427,14 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     for (int iz=0; iz<= depos_order - galerkin_interpolation; iz++){
         for (int iy=0; iy<=depos_order; iy++){
             for (int ix=0; ix<= depos_order - galerkin_interpolation; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+                Byp += sx_by[ix]*sy_by[iy]*sz_by[iz]*
+                    ( by_arr(lo.x+j_by+ix, lo.y+k_by+iy, lo.z+l_by+iz) +
+                  by_arr_ext(lo.x+j_by+ix, lo.y+k_by+iy, lo.z+l_by+iz) );
+#else
                 Byp += sx_by[ix]*sy_by[iy]*sz_by[iz]*
                     by_arr(lo.x+j_by+ix, lo.y+k_by+iy, lo.z+l_by+iz);
+#endif
             }
         }
     }
@@ -406,8 +442,14 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     for (int iz=0; iz<= depos_order - galerkin_interpolation; iz++){
         for (int iy=0; iy<= depos_order - galerkin_interpolation; iy++){
             for (int ix=0; ix<=depos_order; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+                Bxp += sx_bx[ix]*sy_bx[iy]*sz_bx[iz]*
+                    ( bx_arr(lo.x+j_bx+ix, lo.y+k_bx+iy, lo.z+l_bx+iz) +
+                  bx_arr_ext(lo.x+j_bx+ix, lo.y+k_bx+iy, lo.z+l_bx+iz) );
+#else
                 Bxp += sx_bx[ix]*sy_bx[iy]*sz_bx[iz]*
                     bx_arr(lo.x+j_bx+ix, lo.y+k_bx+iy, lo.z+l_bx+iz);
+#endif
             }
         }
     }
@@ -443,6 +485,12 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
                     amrex::FArrayBox const * const bxfab,
                     amrex::FArrayBox const * const byfab,
                     amrex::FArrayBox const * const bzfab,
+                    amrex::FArrayBox const * const exfab_ext,
+                    amrex::FArrayBox const * const eyfab_ext,
+                    amrex::FArrayBox const * const ezfab_ext,
+                    amrex::FArrayBox const * const bxfab_ext,
+                    amrex::FArrayBox const * const byfab_ext,
+                    amrex::FArrayBox const * const bzfab_ext,
                     const long np_to_gather,
                     const std::array<amrex::Real, 3>& dx,
                     const std::array<amrex::Real, 3> xyzmin,
@@ -459,6 +507,13 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
     amrex::Array4<const amrex::Real> const& bx_arr = bxfab->array();
     amrex::Array4<const amrex::Real> const& by_arr = byfab->array();
     amrex::Array4<const amrex::Real> const& bz_arr = bzfab->array();
+
+    amrex::Array4<const amrex::Real> const& ex_arr_ext = exfab_ext->array();
+    amrex::Array4<const amrex::Real> const& ey_arr_ext = eyfab_ext->array();
+    amrex::Array4<const amrex::Real> const& ez_arr_ext = ezfab_ext->array();
+    amrex::Array4<const amrex::Real> const& bx_arr_ext = bxfab_ext->array();
+    amrex::Array4<const amrex::Real> const& by_arr_ext = byfab_ext->array();
+    amrex::Array4<const amrex::Real> const& bz_arr_ext = bzfab_ext->array();
 
     amrex::IndexType const ex_type = exfab->box().ixType();
     amrex::IndexType const ey_type = eyfab->box().ixType();
@@ -480,6 +535,7 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
             doGatherShapeN<depos_order, lower_in_v>(
                 xp, yp, zp, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip],
                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                ex_arr_ext, ey_arr_ext, ez_arr_ext, bx_arr_ext, by_arr_ext, bz_arr_ext,
                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
@@ -519,6 +575,12 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      amrex::Array4<amrex::Real const> const& bx_arr,
                      amrex::Array4<amrex::Real const> const& by_arr,
                      amrex::Array4<amrex::Real const> const& bz_arr,
+                     amrex::Array4<amrex::Real const> const& ex_arr_ext,
+                     amrex::Array4<amrex::Real const> const& ey_arr_ext,
+                     amrex::Array4<amrex::Real const> const& ez_arr_ext,
+                     amrex::Array4<amrex::Real const> const& bx_arr_ext,
+                     amrex::Array4<amrex::Real const> const& by_arr_ext,
+                     amrex::Array4<amrex::Real const> const& bz_arr_ext,
                      const amrex::IndexType ex_type,
                      const amrex::IndexType ey_type,
                      const amrex::IndexType ez_type,
@@ -536,16 +598,19 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         if (nox == 1) {
             doGatherShapeN<1,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_arr_ext, ey_arr_ext, ez_arr_ext, bx_arr_ext, by_arr_ext, bz_arr_ext,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 2) {
             doGatherShapeN<2,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_arr_ext, ey_arr_ext, ez_arr_ext, bx_arr_ext, by_arr_ext, bz_arr_ext,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
             doGatherShapeN<3,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_arr_ext, ey_arr_ext, ez_arr_ext, bx_arr_ext, by_arr_ext, bz_arr_ext,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
@@ -553,16 +618,19 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         if (nox == 1) {
             doGatherShapeN<1,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_arr_ext, ey_arr_ext, ez_arr_ext, bx_arr_ext, by_arr_ext, bz_arr_ext,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 2) {
             doGatherShapeN<2,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_arr_ext, ey_arr_ext, ez_arr_ext, bx_arr_ext, by_arr_ext, bz_arr_ext,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
             doGatherShapeN<3,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_arr_ext, ey_arr_ext, ez_arr_ext, bx_arr_ext, by_arr_ext, bz_arr_ext,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }

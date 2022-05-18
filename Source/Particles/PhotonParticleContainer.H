@@ -47,6 +47,12 @@ public:
                          const amrex::MultiFab& Bx,
                          const amrex::MultiFab& By,
                          const amrex::MultiFab& Bz,
+                         const amrex::MultiFab& Ex_ext,
+                         const amrex::MultiFab& Ey_ext,
+                         const amrex::MultiFab& Ez_ext,
+                         const amrex::MultiFab& Bx_ext,
+                         const amrex::MultiFab& By_ext,
+                         const amrex::MultiFab& Bz_ext,
                          amrex::MultiFab& jx,
                          amrex::MultiFab& jy,
                          amrex::MultiFab& jz,
@@ -88,8 +94,13 @@ public:
                         const amrex::MultiFab& /*Ez*/,
                         const amrex::MultiFab& /*Bx*/,
                         const amrex::MultiFab& /*By*/,
-                        const amrex::MultiFab& /*Bz*/) override {}
-
+                        const amrex::MultiFab& /*Bz*/,
+                        const amrex::MultiFab& /*Ex_ext*/,
+                        const amrex::MultiFab& /*Ey_ext*/,
+                        const amrex::MultiFab& /*Ez_ext*/,
+                        const amrex::MultiFab& /*Bx_ext*/,
+                        const amrex::MultiFab& /*By_ext*/,
+                        const amrex::MultiFab& /*Bz_ext*/) override {}
 
     // DepositCharge should do nothing for photons
     virtual void DepositCharge (WarpXParIter& /*pti*/,

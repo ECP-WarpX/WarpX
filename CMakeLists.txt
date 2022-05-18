@@ -291,6 +291,10 @@ if(WarpX_GPUCLOCK)
     target_compile_definitions(ablastr PUBLIC WARPX_USE_GPUCLOCK)
 endif()
 
+if(WarpX_EXTERNAL_FIELD)
+    target_compile_definitions(ablastr PUBLIC WARPX_EXTERNAL_FIELD)
+endif()
+
 if(WarpX_OPENPMD)
     target_compile_definitions(ablastr PUBLIC WARPX_USE_OPENPMD)
 endif()

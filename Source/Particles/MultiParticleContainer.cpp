@@ -416,6 +416,8 @@ void
 MultiParticleContainer::Evolve (int lev,
                                 const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                 const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                                const MultiFab& Ex_ext, const MultiFab& Ey_ext, const MultiFab& Ez_ext,
+                                const MultiFab& Bx_ext, const MultiFab& By_ext, const MultiFab& Bz_ext,
                                 MultiFab& jx, MultiFab& jy, MultiFab& jz,
                                 MultiFab* cjx,  MultiFab* cjy, MultiFab* cjz,
                                 MultiFab* rho, MultiFab* crho,
@@ -434,7 +436,7 @@ MultiParticleContainer::Evolve (int lev,
         if (crho) crho->setVal(0.0);
     }
     for (auto& pc : allcontainers) {
-        pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
+        pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, Ex_ext, Ey_ext, Ez_ext, Bx_ext, By_ext, Bz_ext, jx, jy, jz, cjx, cjy, cjz,
                    rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition);
     }
 }
@@ -450,10 +452,12 @@ MultiParticleContainer::PushX (Real dt)
 void
 MultiParticleContainer::PushP (int lev, Real dt,
                                const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
-                               const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz)
+                               const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                               const MultiFab& Ex_ext, const MultiFab& Ey_ext, const MultiFab& Ez_ext,
+                               const MultiFab& Bx_ext, const MultiFab& By_ext, const MultiFab& Bz_ext)
 {
     for (auto& pc : allcontainers) {
-        pc->PushP(lev, dt, Ex, Ey, Ez, Bx, By, Bz);
+        pc->PushP(lev, dt, Ex, Ey, Ez, Bx, By, Bz, Ex_ext, Ey_ext, Ez_ext, Bx_ext, By_ext, Bz_ext);
     }
 }
 
