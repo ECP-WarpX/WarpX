@@ -38,7 +38,8 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
                                         const bool do_multi_J,
                                         const bool dive_cleaning,
                                         const bool divb_cleaning,
-                                        const bool pml)
+                                        const bool pml,
+                                        const bool pml_rz)
 {
     // TODO Use these to allocate rho_old, rho_new, F, and G only when needed
     amrex::ignore_unused(update_with_rho);
@@ -73,6 +74,13 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
             Jy_new = c++;
             Jz_new = c++;
         }
+
+        if (pml_rz)
+        {
+            Er_pml = c++; Et_pml = c++;
+            Br_pml = c++; Bt_pml = c++;
+        }
+
     }
     else // PML
     {
@@ -196,22 +204,22 @@ SpectralFieldData::~SpectralFieldData()
 void
 SpectralFieldData::ForwardTransform (const int lev,
                                      const MultiFab& mf, const int field_index,
-                                     const int i_comp, const IntVect& stag)
+                                     const int i_comp)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
     bool do_costs = WarpXUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space
 #if (AMREX_SPACEDIM >= 2)
-    const bool is_nodal_x = (stag[0] == amrex::IndexType::NODE) ? true : false;
+    const bool is_nodal_x = mf.is_nodal(0);
 #endif
 #if defined(WARPX_DIM_3D)
-    const bool is_nodal_y = (stag[1] == amrex::IndexType::NODE) ? true : false;
-    const bool is_nodal_z = (stag[2] == amrex::IndexType::NODE) ? true : false;
+    const bool is_nodal_y = mf.is_nodal(1);
+    const bool is_nodal_z = mf.is_nodal(2);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    const bool is_nodal_z = (stag[1] == amrex::IndexType::NODE) ? true : false;
+    const bool is_nodal_z = mf.is_nodal(1);
 #elif defined(WARPX_DIM_1D_Z)
-    const bool is_nodal_z = (stag[0] == amrex::IndexType::NODE) ? true : false;
+    const bool is_nodal_z = mf.is_nodal(0);
 #endif
 
     // Loop over boxes

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2019 Jean-Luc Vay, Maxence Thevenet, Remi Lehe
+# Copyright 2019-2022 Jean-Luc Vay, Maxence Thevenet, Remi Lehe, Axel Huebl
 #
 #
 # This file is part of WarpX.
@@ -13,17 +13,15 @@
 # $$ E_x = \epsilon \,\frac{m_e c^2 k_x}{q_e}\sin(k_x x)\cos(k_y y)\cos(k_z z)\sin( \omega_p t)$$
 # $$ E_y = \epsilon \,\frac{m_e c^2 k_y}{q_e}\cos(k_x x)\sin(k_y y)\cos(k_z z)\sin( \omega_p t)$$
 # $$ E_z = \epsilon \,\frac{m_e c^2 k_z}{q_e}\cos(k_x x)\cos(k_y y)\sin(k_z z)\sin( \omega_p t)$$
+import os
 import re
 import sys
 
-import matplotlib
-
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import yt
 
 yt.funcs.mylog.setLevel(50)
-import os
 
 import numpy as np
 from scipy.constants import c, e, epsilon_0, m_e
@@ -105,54 +103,70 @@ for field in ['particle_momentum_x',
     assert (species, field) not in ds.field_list
 
 t0 = ds.current_time.to_value()
-data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
-                                    dims=ds.domain_dimensions)
+data = ds.covering_grid(level = 0, left_edge = ds.domain_left_edge, dims = ds.domain_dimensions)
+edge = np.array([(ds.domain_left_edge[2]).item(), (ds.domain_right_edge[2]).item(), \
+                 (ds.domain_left_edge[0]).item(), (ds.domain_right_edge[0]).item()])
 
 # Check the validity of the fields
 error_rel = 0
 for field in ['Ex', 'Ey', 'Ez']:
     E_sim = data[('mesh',field)].to_ndarray()
-
     E_th = get_theoretical_field(field, t0)
     max_error = abs(E_sim-E_th).max()/abs(E_th).max()
     print('%s: Max error: %.2e' %(field,max_error))
     error_rel = max( error_rel, max_error )
 
 # Plot the last field from the loop (Ez at iteration 40)
-plt.subplot2grid( (1,2), (0,0) )
-plt.imshow( E_sim[:,:,Ncell[2]//2] )
-plt.colorbar()
-plt.title('Ez, last iteration\n(simulation)')
-plt.subplot2grid( (1,2), (0,1) )
-plt.imshow( E_th[:,:,Ncell[2]//2] )
-plt.colorbar()
-plt.title('Ez, last iteration\n(theory)')
-plt.tight_layout()
-plt.savefig('langmuir_multi_analysis.png')
+fig, (ax1, ax2) = plt.subplots(1, 2, dpi = 100)
+# First plot (slice at y=0)
+E_plot = E_sim[:,Ncell[1]//2+1,:]
+vmin = E_plot.min()
+vmax = E_plot.max()
+cax1 = make_axes_locatable(ax1).append_axes('right', size = '5%', pad = '5%')
+im1 = ax1.imshow(E_plot, origin = 'lower', extent = edge, vmin = vmin, vmax = vmax)
+cb1 = fig.colorbar(im1, cax = cax1)
+ax1.set_xlabel(r'$z$')
+ax1.set_ylabel(r'$x$')
+ax1.set_title(r'$E_z$ (sim)')
+# Second plot (slice at y=0)
+E_plot = E_th[:,Ncell[1]//2+1,:]
+vmin = E_plot.min()
+vmax = E_plot.max()
+cax2 = make_axes_locatable(ax2).append_axes('right', size = '5%', pad = '5%')
+im2 = ax2.imshow(E_plot, origin = 'lower', extent = edge, vmin = vmin, vmax = vmax)
+cb2 = fig.colorbar(im2, cax = cax2)
+ax2.set_xlabel(r'$z$')
+ax2.set_ylabel(r'$x$')
+ax2.set_title(r'$E_z$ (theory)')
+# Save figure
+fig.tight_layout()
+fig.savefig('Langmuir_multi_analysis.png', dpi = 200)
 
-tolerance_rel = 0.15
+tolerance_rel = 5e-2
 
 print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
 
-# Check relative L-infinity spatial norm of rho/epsilon_0 - div(E) when
-# current correction (psatd.do_current_correction=1) is applied or when
-# Vay current deposition (algo.current_deposition=vay) is used
+# Check relative L-infinity spatial norm of rho/epsilon_0 - div(E)
+# with current correction (and periodic single box option) or with Vay current deposition
+if current_correction:
+    tolerance = 1e-9
+elif vay_deposition:
+    tolerance = 1e-3
 if current_correction or vay_deposition:
     rho  = data[('boxlib','rho')].to_ndarray()
     divE = data[('boxlib','divE')].to_ndarray()
     error_rel = np.amax( np.abs( divE - rho/epsilon_0 ) ) / np.amax( np.abs( rho/epsilon_0 ) )
-    tolerance = 1.e-9
     print("Check charge conservation:")
     print("error_rel = {}".format(error_rel))
     print("tolerance = {}".format(tolerance))
     assert( error_rel < tolerance )
 
 if div_cleaning:
-    ds_old = yt.load('Langmuir_multi_psatd_div_cleaning_plt00038')
-    ds_mid = yt.load('Langmuir_multi_psatd_div_cleaning_plt00039')
+    ds_old = yt.load('Langmuir_multi_psatd_div_cleaning_plt000038')
+    ds_mid = yt.load('Langmuir_multi_psatd_div_cleaning_plt000039')
     ds_new = yt.load(fn) # this is the last plotfile
 
     ad_old = ds_old.covering_grid(level = 0, left_edge = ds_old.domain_left_edge, dims = ds_old.domain_dimensions)

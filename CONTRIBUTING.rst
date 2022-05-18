@@ -113,7 +113,7 @@ Periodically commit your changes with
 The commit message (between quotation marks) is super important in order to follow the developments during code-review and identify bugs.
 A typical format is:
 
-.. code-block::
+.. code-block:: text
 
    This is a short, 40-character title
 
@@ -195,6 +195,9 @@ for your changes.
 Once your code is ready with documentation and automated test, congratulations!
 You can create the PR (or remove the ``[WIP]`` tag if you already created it).
 Reviewers will interact with you if they have comments/questions.
+
+
+.. _developers-contributing-style-conventions:
 
 Style and conventions
 ---------------------

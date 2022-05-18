@@ -30,7 +30,7 @@ algo.current_deposition = esirkepov
 # Order of particle shape factors
 algo.particle_shape = 3
 
-warpx.serialize_ics = 1
+warpx.serialize_initial_conditions = 1
 warpx.cfl = 1.0
 warpx.do_subcycling = 1
 

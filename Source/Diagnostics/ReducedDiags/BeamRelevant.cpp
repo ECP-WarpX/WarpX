@@ -254,9 +254,8 @@ void BeamRelevant::ComputeDiags (int step)
 
         if (w_sum < std::numeric_limits<Real>::min() )
         {
-            for (int i = 0; i < static_cast<int>(m_data.size()); ++i){
-                m_data[i] = 0.0_rt;
-            }
+            for (auto& item: m_data) item = 0.0_rt;
+
             return;
         }
 

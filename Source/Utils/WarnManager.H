@@ -80,19 +80,6 @@ namespace Utils
         private:
 
         /**
-        * \brief This function generates the header of the warning messages list
-        *
-        * @param[in] when a string to mark when the warnings are printed out (it appears in the warning list)
-        * @param[in] line_size maximum line length to be used in formatting warning list
-        * @param[in] is_global flag: true if the header is for a global warning list, false otherwise
-        * @return a string containing the header of the warning list
-        */
-        std::string get_header(
-            const std::string& when,
-            const int line_size,
-            const bool is_global) const;
-
-        /**
         * \brief This function generates a string for a single entry of the warning list
         * for a MessageWithCounter struct (i.e., a warning message paired with a counter storing
         * how many times the warning has been raised)
@@ -115,6 +102,19 @@ namespace Utils
             const MsgLogger::MsgWithCounterAndRanks& msg_with_counter_and_ranks) const;
 
         /**
+        * \brief This function generates the header of the warning messages list
+        *
+        * @param[in] when a string to mark when the warnings are printed out (it appears in the warning list)
+        * @param[in] line_size maximum line length to be used in formatting warning list
+        * @param[in] is_global flag: true if the header is for a global warning list, false otherwise
+        * @return a string containing the header of the warning list
+        */
+        static std::string get_header(
+            const std::string& when,
+            const int line_size,
+            const bool is_global);
+
+        /**
         * \brief This function formats each line of a warning message text
         *
         * @param[in] msg the warning message text
@@ -122,10 +122,10 @@ namespace Utils
         * @param[in] tab_size tabulation size to be used in formatting warning list
         * @return a string containing the formatted warning message text
         */
-        std::string msg_formatter(
+        static std::string msg_formatter(
             const std::string& msg,
             const int line_size,
-            const int tab_size) const;
+            const int tab_size);
 
         int m_rank = 0 /*! MPI rank (appears in the warning list)*/;
         std::unique_ptr<MsgLogger::Logger> m_p_logger /*! The Logger stores all the warning messages*/;

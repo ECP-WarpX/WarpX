@@ -14,6 +14,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
@@ -69,11 +70,11 @@ public:
 
         if (m_fusion_type == NuclearFusionType::ProtonBoron)
         {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 product_species_name.size() == 1,
                 "ERROR: Proton-boron must contain exactly one product species");
             auto& product_species = mypc->GetParticleContainerFromName(product_species_name[0]);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 product_species.AmIA<PhysicalSpecies::helium>(),
                 "ERROR: Product species of proton-boron fusion must be of type helium");
         }
@@ -131,7 +132,8 @@ public:
     void operator() (
         index_type const I1s, index_type const I1e,
         index_type const I2s, index_type const I2e,
-        index_type* I1,       index_type* I2,
+        index_type const* AMREX_RESTRICT I1,
+        index_type const* AMREX_RESTRICT I2,
         SoaData_type soa_1, SoaData_type soa_2,
         GetParticlePosition /*get_position_1*/, GetParticlePosition /*get_position_2*/,
         amrex::ParticleReal const  /*q1*/, amrex::ParticleReal const  /*q2*/,

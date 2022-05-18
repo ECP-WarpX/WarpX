@@ -69,13 +69,22 @@ Uniform plasma
 Capacitive discharge
 --------------------
 
-The Monte-Carlo collision (MCC) model can be used to simulate capacitive discharges between parallel plates. The implementation has been tested against the benchmark results from Turner et. al. in `Phys. Plasmas 20, 013507, 2013 <https://aip.scitation.org/doi/abs/10.1063/1.4775084>`_. The figure below shows a comparison of the ion density as calculated in WarpX (in June 2021) compared to the literature results (which can be found `here <https://aip.scitation.org/doi/suppl/10.1063/1.4775084>`__). An input file with parameters for the 1st case is given below except the total simulation steps have been reduced.
+The Monte-Carlo collision (MCC) model can be used to simulate electron and ion collisions with a neutral background gas. In particular this can be used to study capacitive discharges between parallel plates. The implementation has been tested against the benchmark results from Turner et al. in `Phys. Plasmas 20, 013507, 2013 <https://aip.scitation.org/doi/abs/10.1063/1.4775084>`_. The figure below shows a comparison of the ion density as calculated in WarpX (in June 2021) compared to the literature results (which can be found `here <https://aip.scitation.org/doi/suppl/10.1063/1.4775084>`__).
 
 .. figure:: https://user-images.githubusercontent.com/40245517/123883650-4f614680-d8fe-11eb-9302-92a282191e8f.png
    :alt: MCC benchmark against Turner et. al. (2013).
    :width: 80%
 
-* :download:`test case 1 <../../../Examples/Physics_applications/capacitive_discharge/inputs_2d>`
+An input file to reproduce the benchmark calculations is linked below.
+To run a given case ``-n``, from 1 to 4, execute:
+
+   .. code-block:: bash
+
+      python3 PICMI_inputs_1d.py -n 1
+
+Once the simulation completes an output file ``avg_ion_density.npy`` will be created which can be compared to the literature results as in the plot above. Running case 1 on 4 processors takes roughly 20 minutes to complete.
+
+* :download:`input file <../../../Examples/Physics_applications/capacitive_discharge/PICMI_inputs_1d.py>`
 
 .. note::
 
@@ -91,7 +100,7 @@ Test cases
 
 PICMI (Python) test cases included that can be used as a reference:
 
-* :download:`Gaussian beam <../../../Examples//Modules/gaussian_beam/PICMI_inputs_gaussian_beam.py>`
+* :download:`Gaussian beam <../../../Examples/Modules/gaussian_beam/PICMI_inputs_gaussian_beam.py>`
 * :download:`Langmuir plasma wave test in 3d <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir_rt.py>`
 * :download:`Langmuir plasma wave test in RZ <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir_rz_multimode_analyze.py>`
 * :download:`Langmuir plasma wave test in 2D <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir2d.py>`

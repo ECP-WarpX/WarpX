@@ -20,7 +20,7 @@ warpx.cfl = .999
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0 # in units of the speed of light
-warpx.serialize_ics = 1
+warpx.serialize_initial_conditions = 1
 
 # Order of particle shape factors
 algo.particle_shape = 1
@@ -59,6 +59,7 @@ btd_openpmd.num_snapshots_lab = 2
 btd_openpmd.dt_snapshots_lab = 1.8679589331096515e-13
 btd_openpmd.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
 btd_openpmd.format = openpmd
+btd_openpmd.openpmd_backend = h5
 btd_openpmd.buffer_size = 32
 
 btd_pltfile.diag_type = BackTransformed
@@ -66,7 +67,7 @@ btd_pltfile.do_back_transformed_fields = 1
 btd_pltfile.num_snapshots_lab = 2
 btd_pltfile.dt_snapshots_lab = 1.8679589331096515e-13
 btd_pltfile.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-btd_pltfile.format = openpmd
+btd_pltfile.format = plotfile
 btd_pltfile.buffer_size = 32
 
 # old BTD diagnostics

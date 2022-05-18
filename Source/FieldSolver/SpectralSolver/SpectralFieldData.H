@@ -50,13 +50,16 @@ class SpectralFieldIndex
          *                            div(B) = 0 law (new field G in the update equations)
          * \param[in] pml             whether the indices are used to access spectral data
          *                            for the PML spectral solver
+         * \param[in] pml_rz          whether the indices are used to access spectral data
+         *                            for the RZ PML spectral solver
          */
         SpectralFieldIndex (const bool update_with_rho,
                             const bool time_averaging,
                             const bool do_multi_J,
                             const bool dive_cleaning,
                             const bool divb_cleaning,
-                            const bool pml);
+                            const bool pml,
+                            const bool pml_rz = false);
 
         /**
          * \brief Default constructor
@@ -97,6 +100,9 @@ class SpectralFieldIndex
     // PML with div(E) and/or div(B) cleaning
     int Exx = -1, Eyy = -1, Ezz = -1, Bxx = -1, Byy = -1, Bzz = -1;
     int Fx  = -1, Fy  = -1, Fz  = -1, Gx  = -1, Gy  = -1, Gz  = -1;
+
+    // PML RZ
+    int Er_pml = -1, Et_pml = -1, Br_pml = -1, Bt_pml = -1;
 };
 
 /** \brief Class that stores the fields in spectral space, and performs the
@@ -118,13 +124,7 @@ class SpectralFieldData
 
         void ForwardTransform (const int lev,
                                const amrex::MultiFab& mf, const int field_index,
-                               const int i_comp, const amrex::IntVect& stag);
-        AMREX_FORCE_INLINE
-        void ForwardTransform (const int lev,
-                               const amrex::MultiFab& mf, const int field_index, const int i_comp)
-        {
-            ForwardTransform(lev, mf, field_index, i_comp, mf.ixType().toIntVect());
-        }
+                               const int i_comp);
 
         void BackwardTransform (const int lev, amrex::MultiFab& mf, const int field_index,
                                 const int i_comp, const amrex::IntVect& fill_guards);

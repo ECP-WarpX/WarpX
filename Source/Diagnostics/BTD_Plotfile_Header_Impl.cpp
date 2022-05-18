@@ -6,6 +6,7 @@
  */
 #include "BTD_Plotfile_Header_Impl.H"
 
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -36,7 +37,9 @@ BTDPlotfileHeaderImpl::ReadHeaderData ()
     iss.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     iss.open(m_Header_path.c_str(), std::ios::in);
-    if(!iss) amrex::Abort("Failed to load BTD MultiFabHeader");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        iss,"Failed to load BTD MultiFabHeader"
+    );
 
     iss.seekg(0, std::ios::end);
     fileLength = static_cast<std::streamoff>(iss.tellg());
@@ -108,7 +111,7 @@ void
 BTDPlotfileHeaderImpl::WriteHeader ()
 {
     if ( amrex::FileExists(m_Header_path) ) {
-        amrex::Print() << " removing this file : " << m_Header_path << "\n";
+        amrex::Print() << Utils::TextMsg::Info(" removing this file : " + m_Header_path);
         amrex::FileSystem::Remove(m_Header_path);
     }
     std::ofstream HeaderFile;
@@ -190,7 +193,9 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
     iss.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     iss.open(m_Header_path.c_str(), std::ios::in);
-    if(!iss) amrex::Abort("Failed to load BTD MultiFabHeader");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        iss, "Failed to load BTD MultiFabHeader"
+    );
 
     iss.seekg(0, std::ios::end);
     fileLength = static_cast<std::streamoff>(iss.tellg());
@@ -257,7 +262,7 @@ void
 BTDMultiFabHeaderImpl::WriteMultiFabHeader ()
 {
     if ( amrex::FileExists(m_Header_path) ) {
-        amrex::Print() << " removing this file : " << m_Header_path << "\n";
+        amrex::Print() << Utils::TextMsg::Info(" removing this file : " + m_Header_path);
         amrex::FileSystem::Remove(m_Header_path);
     }
     std::ofstream FabHeaderFile;

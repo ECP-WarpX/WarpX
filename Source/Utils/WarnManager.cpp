@@ -8,6 +8,9 @@
 #include "WarnManager.H"
 
 #include "MsgLogger/MsgLogger.H"
+#include "WarpXUtil.H"
+
+#include <ablastr/utils/TextMsg.H>
 
 #include <AMReX_ParallelDescriptor.H>
 
@@ -17,10 +20,10 @@
 using namespace Utils;
 using namespace Utils::MsgLogger;
 
-WarnManager::WarnManager(){
-    m_rank = amrex::ParallelDescriptor::MyProc();
-    m_p_logger = std::make_unique<Logger>();
-}
+WarnManager::WarnManager():
+    m_rank{amrex::ParallelDescriptor::MyProc()},
+    m_p_logger{std::make_unique<Logger>()}
+{}
 
 void WarnManager::record_warning(
             std::string topic,
@@ -38,9 +41,9 @@ std::string WarnManager::print_local_warnings(const std::string& when) const
 
     std::stringstream ss;
 
-    ss << "\n" << get_header(when, warn_line_size, false);
+    ss << "\n" << WarnManager::get_header(when, warn_line_size, false);
 
-    if(all_warnings.size() == 0){
+    if(all_warnings.empty()){
         ss << "* No recorded warnings.\n";
     }
     else{
@@ -69,9 +72,9 @@ std::string WarnManager::print_global_warnings(const std::string& when) const
 
     std::stringstream ss;
 
-    ss << "\n" << get_header(when, warn_line_size, true);
+    ss << "\n" << WarnManager::get_header(when, warn_line_size, true);
 
-    if(all_warnings.size() == 0){
+    if(all_warnings.empty()){
         ss << "* No recorded warnings.\n";
     }
     else{
@@ -106,7 +109,7 @@ void WarnManager::debug_read_warnings_from_input(amrex::ParmParse& params)
 
         int all_involved = 0;
         pp_warn.query("all_involved", all_involved);
-        if(all_involved){
+        if(all_involved != 0){
             this->record_warning(topic, msg, priority);
         }
         else{
@@ -119,30 +122,6 @@ void WarnManager::debug_read_warnings_from_input(amrex::ParmParse& params)
         }
     }
 
-}
-
-std::string WarnManager::get_header(
-    const std::string& when,
-    const int line_size,
-    const bool is_global) const
-{
-    const std::string warn_header{"**** WARNINGS "};
-
-    std::stringstream ss;
-
-    ss << warn_header <<
-        std::string(line_size - static_cast<int>(warn_header.length()), '*') << "\n" ;
-
-    if(is_global){
-        ss << "* GLOBAL warning list  after " << " [ " <<  when << " ]\n*\n";
-    }
-    else{
-        auto const mpi_rank = amrex::ParallelDescriptor::MyProc();
-        ss << "* LOCAL" << " ( rank # " << mpi_rank << " ) "
-            << " warning list  after " <<  when << "\n*\n";
-    }
-
-    return ss.str();
 }
 
 std::string WarnManager::print_warn_msg(
@@ -187,7 +166,31 @@ std::string WarnManager::print_warn_msg(
     else{
         raised_by += "ALL\n";
     }
-    ss << msg_formatter(raised_by, warn_line_size, warn_tab_size);
+    ss << WarnManager::msg_formatter(raised_by, warn_line_size, warn_tab_size);
+
+    return ss.str();
+}
+
+std::string WarnManager::get_header(
+    const std::string& when,
+    const int line_size,
+    const bool is_global)
+{
+    const std::string warn_header{"**** WARNINGS "};
+
+    std::stringstream ss;
+
+    ss << warn_header <<
+        std::string(line_size - static_cast<int>(warn_header.length()), '*') << "\n" ;
+
+    if(is_global){
+        ss << "* GLOBAL warning list  after " << " [ " <<  when << " ]\n*\n";
+    }
+    else{
+        auto const mpi_rank = amrex::ParallelDescriptor::MyProc();
+        ss << "* LOCAL" << " ( rank # " << mpi_rank << " ) "
+            << " warning list  after " <<  when << "\n*\n";
+    }
 
     return ss.str();
 }
@@ -196,44 +199,17 @@ std::string
 WarnManager::msg_formatter(
         const std::string& msg,
         const int line_size,
-        const int tab_size) const
+        const int tab_size)
 {
     const auto prefix = "*" + std::string(tab_size, ' ');
     const auto prefix_length = static_cast<int>(prefix.length());
 
+    const auto wrapped_text = ablastr::utils::automatic_text_wrap(
+        msg, line_size-prefix_length);
+
     std::stringstream ss_out;
-    std::stringstream ss_msg{msg};
-
-    std::string line;
-    std::string word;
-
-    while(std::getline(ss_msg, line,'\n')){
-        ss_out << prefix;
-
-        std::stringstream ss_line{line};
-        int counter = prefix_length;
-
-        while (ss_line >> word){
-            const auto wlen = static_cast<int>(word.length());
-
-            if(counter == prefix_length){
-                ss_out << word;
-                counter += wlen;
-            }
-            else{
-                if (counter + wlen < line_size){
-                    ss_out << " " << word;
-                    counter += (wlen+1);
-                }
-                else{
-                    ss_out << "\n" << prefix << word;
-                    counter = prefix_length + wlen;
-                }
-            }
-        }
-
-        ss_out << '\n';
-    }
+    for (const auto& line : wrapped_text)
+        ss_out << prefix << line << "\n";
 
     return ss_out.str();
 }

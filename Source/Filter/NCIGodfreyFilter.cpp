@@ -7,6 +7,7 @@
 #include "NCIGodfreyFilter.H"
 
 #include "Utils/NCIGodfreyTables.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -48,17 +49,17 @@ void NCIGodfreyFilter::ComputeStencils(){
 
     // Sanity checks: filter length shoulz be 5 in z
 #if  defined(WARPX_DIM_3D)
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         slen.z==5,"ERROR: NCI filter requires 5 points in z");
 #else
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         slen.y==5,"ERROR: NCI filter requires 5 points in z");
 #endif
     // Interpolate coefficients from the table, and store into prestencil.
     auto index = static_cast<int>(tab_length*m_cdtodz);
     index = min(index, tab_length-2);
     index = max(index, 0);
-    Real weight_right = m_cdtodz - index/tab_length;
+    Real const weight_right = m_cdtodz - amrex::Real(index)/amrex::Real(tab_length);
     Real prestencil[4];
 
     // read prestencil coefficients from table (the stencil is computed from
@@ -69,12 +70,12 @@ void NCIGodfreyFilter::ComputeStencils(){
             // If gather from staggered grid, use coefficients for Galerkin gather
             if        (m_coeff_set == godfrey_coeff_set::Ex_Ey_Bz){
                 // Set of coefficients for Ex, Ey and Bz
-                prestencil[i] = (1-weight_right)*table_nci_godfrey_galerkin_Ex_Ey_Bz[index  ][i] +
-                                    weight_right*table_nci_godfrey_galerkin_Ex_Ey_Bz[index+1][i];
+                prestencil[i] = (1_rt-weight_right)*table_nci_godfrey_galerkin_Ex_Ey_Bz[index  ][i] +
+                                   weight_right    *table_nci_godfrey_galerkin_Ex_Ey_Bz[index+1][i];
             } else if (m_coeff_set == godfrey_coeff_set::Bx_By_Ez){
                 // Set of coefficients for Bx, By and Ez
-                prestencil[i] = (1-weight_right)*table_nci_godfrey_galerkin_Bx_By_Ez[index  ][i] +
-                                    weight_right*table_nci_godfrey_galerkin_Bx_By_Ez[index+1][i];
+                prestencil[i] = (1_rt-weight_right)*table_nci_godfrey_galerkin_Bx_By_Ez[index  ][i] +
+                                   weight_right    *table_nci_godfrey_galerkin_Bx_By_Ez[index+1][i];
             } else {
                 amrex::Abort("m_coeff_set must be godfrey_coeff_set::Ex_Ey_Bz or godfrey_coeff_set::Bx_By_Ez");
             }
@@ -84,12 +85,12 @@ void NCIGodfreyFilter::ComputeStencils(){
             // If gather from node-centered grid, use coefficients for momentum-conserving gather
             if        (m_coeff_set == godfrey_coeff_set::Ex_Ey_Bz){
                 // Set of coefficients for Ex, Ey and Bz
-                prestencil[i] = (1-weight_right)*table_nci_godfrey_momentum_Ex_Ey_Bz[index  ][i] +
-                                    weight_right*table_nci_godfrey_momentum_Ex_Ey_Bz[index+1][i];
+                prestencil[i] = (1_rt-weight_right)*table_nci_godfrey_momentum_Ex_Ey_Bz[index  ][i] +
+                                   weight_right    *table_nci_godfrey_momentum_Ex_Ey_Bz[index+1][i];
             } else if (m_coeff_set == godfrey_coeff_set::Bx_By_Ez) {
                 // Set of coefficients for Bx, By and Ez
-                prestencil[i] = (1-weight_right)*table_nci_godfrey_momentum_Bx_By_Ez[index  ][i] +
-                                    weight_right*table_nci_godfrey_momentum_Bx_By_Ez[index+1][i];
+                prestencil[i] = (1_rt-weight_right)*table_nci_godfrey_momentum_Bx_By_Ez[index  ][i] +
+                                   weight_right    *table_nci_godfrey_momentum_Bx_By_Ez[index+1][i];
             } else {
                 amrex::Abort("m_coeff_set must be godfrey_coeff_set::Ex_Ey_Bz or godfrey_coeff_set::Bx_By_Ez");
             }

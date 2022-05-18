@@ -1,7 +1,10 @@
+amr.max_level = 1
+warpx.fine_tag_lo = 0.0  -0.5
+warpx.fine_tag_hi = 0.25  0.0
+
 max_step = 37
 
 amr.n_cell = 64 64
-amr.max_level = 0
 amr.blocking_factor = 8
 amr.max_grid_size = 128
 
@@ -38,7 +41,13 @@ electron.momentum_function_uy(x,y,z) = "if(x*x+y*y>0.0, -1.0*y/sqrt(x*x+y*y), 0.
 electron.momentum_function_uz(x,y,z) = "0"
 electron.do_not_deposit = 1
 
-diagnostics.diags_names = diag1
+diagnostics.diags_names = diag1 diag2
+
 diag1.intervals = 1
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex
+
+diag2.intervals = 1
+diag2.diag_type = Full
+diag2.fields_to_plot = Er
+diag2.format = openpmd

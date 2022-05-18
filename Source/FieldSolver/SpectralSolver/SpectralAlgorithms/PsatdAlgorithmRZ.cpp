@@ -413,23 +413,12 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 }
 
 void
-PsatdAlgorithmRZ::CurrentCorrection (const int lev,
-                                     SpectralFieldDataRZ& field_data,
-                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                     const std::unique_ptr<amrex::MultiFab>& rho)
+PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 {
     // Profiling
     WARPX_PROFILE( "PsatdAlgorithmRZ::CurrentCorrection" );
 
     const SpectralFieldIndex& Idx = m_spectral_index;
-
-    // Forward Fourier transform of J and rho
-    field_data.ForwardTransform( lev,
-                                 *current[0], Idx.Jx,
-                                 *current[1], Idx.Jy);
-    field_data.ForwardTransform( lev, *current[2], Idx.Jz, 0);
-    field_data.ForwardTransform( lev, *rho, Idx.rho_old, 0 );
-    field_data.ForwardTransform( lev, *rho, Idx.rho_new, 1 );
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -487,19 +476,10 @@ PsatdAlgorithmRZ::CurrentCorrection (const int lev,
             }
         });
     }
-
-    // Backward Fourier transform of J
-    field_data.BackwardTransform( lev,
-                                  *current[0], Idx.Jx,
-                                  *current[1], Idx.Jy);
-    field_data.BackwardTransform( lev,
-                                  *current[2], Idx.Jz, 0 );
 }
 
 void
-PsatdAlgorithmRZ::VayDeposition (const int /* lev */,
-                                 SpectralFieldDataRZ& /*field_data*/,
-                                 std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
+PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
     amrex::Abort("Vay deposition not implemented in RZ geometry");
 }

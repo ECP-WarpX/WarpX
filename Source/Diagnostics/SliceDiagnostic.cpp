@@ -8,6 +8,7 @@
 #include "SliceDiagnostic.H"
 
 #include "WarpX.H"
+#include "Utils/TextMsg.H"
 #include "Parallelization/WarpXCommUtil.H"
 
 #include <AMReX.H>
@@ -66,10 +67,10 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
 
     Vector<int> slice_ncells(AMREX_SPACEDIM);
     int nghost = 1;
-    int nlevels = dom_geom.size();
+    auto nlevels = static_cast<int>(dom_geom.size());
     int ncomp = (mf).nComp();
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nlevels==1,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( nlevels==1,
        "Slice diagnostics does not work with mesh refinement yet (TO DO).");
 
     const auto conversionType = (mf).ixType();
@@ -225,7 +226,10 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
        return cs_mf;
 
     }
-    amrex::Abort("Should not hit this return statement.");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+       false, "Should not hit this return statement.");
+
     return smf;
 }
 

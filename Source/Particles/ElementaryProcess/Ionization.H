@@ -63,14 +63,13 @@ struct IonizationFilterFunc
 
     amrex::Dim3 m_lo;
 
-    IonizationFilterFunc (const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,
+    IonizationFilterFunc (const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
                           amrex::FArrayBox const& exfab,
                           amrex::FArrayBox const& eyfab,
                           amrex::FArrayBox const& ezfab,
                           amrex::FArrayBox const& bxfab,
                           amrex::FArrayBox const& byfab,
                           amrex::FArrayBox const& bzfab,
-                          amrex::Vector<amrex::Real> v_galilean,
                           const amrex::Real* const AMREX_RESTRICT a_ionization_energies,
                           const amrex::Real* const AMREX_RESTRICT a_adk_prefactor,
                           const amrex::Real* const AMREX_RESTRICT a_adk_exp_prefactor,

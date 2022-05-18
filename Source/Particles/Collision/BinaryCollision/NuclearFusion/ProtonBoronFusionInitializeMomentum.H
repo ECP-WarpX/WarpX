@@ -77,26 +77,20 @@ namespace {
         // cf. JEFF-3.3 radioactive decay data library (2017)
         constexpr amrex::ParticleReal E_decay = 0.0918984_prt*mev_to_joule;
 
-        constexpr amrex::ParticleReal m_alpha = PhysConst::m_p * 3.97369_prt;
-        constexpr amrex::ParticleReal m_beryllium = PhysConst::m_p * 7.94748_prt;
+        // The constexprs ma_sq and mBe_sq underflow in single precision because we use SI units,
+        // which can cause compilation to fail or generate a warning, so we're explicitly setting
+        // them as double. Note that nuclear fusion module does not currently work with single
+        // precision anyways.
+        constexpr double m_alpha = PhysConst::m_p * 3.97369_prt;
+        constexpr double m_beryllium = PhysConst::m_p * 7.94748_prt;
+        constexpr double ma_sq = m_alpha*m_alpha;
+        constexpr double mBe_sq = m_beryllium*m_beryllium;
         constexpr amrex::ParticleReal c_sq = PhysConst::c * PhysConst::c;
         constexpr amrex::ParticleReal inv_csq = 1._prt / ( c_sq );
         // Rest energy of proton+boron
         const amrex::ParticleReal E_rest_pb = (m1 + m2)*c_sq;
         // Rest energy of alpha+beryllium
         constexpr amrex::ParticleReal E_rest_abe = (m_alpha + m_beryllium)*c_sq;
-
-        // These constexprs underflow in single precision because we use SI units and sometimes the
-        // code won't compile. Nuclear fusion module does not currently work with single precision
-        // anyways so these #ifdef are just here to make sure that the code always compiles with
-        // single precision.
-#ifdef AMREX_SINGLE_PRECISION_PARTICLES
-        const amrex::ParticleReal ma_sq = m_alpha*m_alpha;
-        const amrex::ParticleReal mBe_sq = m_beryllium*m_beryllium;
-#else
-        constexpr amrex::ParticleReal ma_sq = m_alpha*m_alpha;
-        constexpr amrex::ParticleReal mBe_sq = m_beryllium*m_beryllium;
-#endif
 
         // Normalized momentum of colliding particles (proton and boron)
         const amrex::ParticleReal u1x = soa_1.m_rdata[PIdx::ux][idx_1];
@@ -118,9 +112,10 @@ namespace {
         const amrex::ParticleReal p2y = u2y * m2;
         const amrex::ParticleReal p2z = u2z * m2;
         // Square norm of the total (sum between the two particles) momenta in the lab frame
-        const amrex::ParticleReal p_total_sq =  std::pow(p1x+p2x, 2) +
-                                                std::pow(p1y+p2y, 2) +
-                                                std::pow(p1z+p2z, 2);
+        auto constexpr pow2 = [](double const x) { return x*x; };
+        const amrex::ParticleReal p_total_sq =  pow2(p1x+p2x) +
+                                                pow2(p1y+p2y) +
+                                                pow2(p1z+p2z);
 
         // Total energy of proton+boron in the lab frame
         const amrex::ParticleReal E_lab = (m1 * g1 + m2 * g2) * c_sq;
@@ -135,14 +130,15 @@ namespace {
         // mass of the other elements is the atomic mass, that includes the electrons mass), it is
         // probably more robust to subtract the rest masses and to add the fusion energy to the
         // total kinetic energy.
-        const amrex::ParticleReal E_star_f_sq = std::pow(std::sqrt(E_star_sq)
-                                                         - E_rest_pb + E_rest_abe + E_fusion, 2);
+        const amrex::ParticleReal E_star_f_sq = pow2(std::sqrt(E_star_sq)
+                                                         - E_rest_pb + E_rest_abe + E_fusion);
 
         // Square of the norm of the momentum of Beryllium or alpha in the center of mass frame
         // Formula obtained by inverting E^2 = p^2*c^2 + m^2*c^4 in the COM frame for each particle
+        auto constexpr pow3 = [](double const x) { return x*x*x; };
         const amrex::ParticleReal p_star_f_sq =
             E_star_f_sq*0.25_prt*inv_csq - (ma_sq + mBe_sq)*c_sq*0.5_prt +
-            std::pow(c_sq, 3)*0.25_prt*std::pow(ma_sq - mBe_sq, 2)/E_star_f_sq;
+            pow3(c_sq)*0.25_prt * pow2(ma_sq - mBe_sq) / E_star_f_sq;
 
         // Compute momentum of first alpha in the center of mass frame, assuming isotropic
         // distribution

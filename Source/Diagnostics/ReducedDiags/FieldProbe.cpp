@@ -8,8 +8,11 @@
 #include "FieldProbe.H"
 #include "FieldProbeParticleContainer.H"
 #include "Particles/Gather/FieldGather.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Pusher/UpdatePosition.H"
 
 #include "Utils/IntervalsParser.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
@@ -49,7 +52,7 @@ FieldProbe::FieldProbe (std::string rd_name)
 
     // RZ coordinate is not working
 #if (defined WARPX_DIM_RZ)
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "FieldProbe reduced diagnostics does not work for RZ coordinate.");
 #endif
 
@@ -82,48 +85,82 @@ FieldProbe::FieldProbe (std::string rd_name)
     if (m_probe_geometry_str == "Point")
     {
         m_probe_geometry = DetectorGeometry::Point;
+        x_probe = 0._rt;
+        y_probe = 0._rt;
+#if !defined(WARPX_DIM_1D_Z)
         getWithParser(pp_rd_name, "x_probe", x_probe);
+#endif
+#if defined(WARPX_DIM_3D)
         getWithParser(pp_rd_name, "y_probe", y_probe);
+#endif
         getWithParser(pp_rd_name, "z_probe", z_probe);
     }
     else if (m_probe_geometry_str == "Line")
     {
         m_probe_geometry = DetectorGeometry::Line;
+        x_probe = 0._rt;
+        x1_probe = 0._rt;
+        y_probe = 0._rt;
+        y1_probe = 0._rt;
+#if !defined(WARPX_DIM_1D_Z)
         getWithParser(pp_rd_name, "x_probe", x_probe);
-        getWithParser(pp_rd_name, "y_probe", y_probe);
-        getWithParser(pp_rd_name, "z_probe", z_probe);
         getWithParser(pp_rd_name, "x1_probe", x1_probe);
+#endif
+#if defined(WARPX_DIM_3D)
+        getWithParser(pp_rd_name, "y_probe", y_probe);
         getWithParser(pp_rd_name, "y1_probe", y1_probe);
+#endif
+        getWithParser(pp_rd_name, "z_probe", z_probe);
         getWithParser(pp_rd_name, "z1_probe", z1_probe);
         getWithParser(pp_rd_name, "resolution", m_resolution);
     }
     else if (m_probe_geometry_str == "Plane")
     {
+#if defined(WARPX_DIM_1D_Z)
+        amrex::Abort(Utils::TextMsg::Err(
+            "ERROR: Plane probe should be used in a 2D or 3D simulation only"));
+#endif
         m_probe_geometry = DetectorGeometry::Plane;
-        getWithParser(pp_rd_name, "x_probe", x_probe);
+        y_probe = 0._rt;
+        target_normal_x = 0._rt;
+        target_normal_y = 1._rt;
+        target_normal_z = 0._rt;
+        target_up_y = 0._rt;
+#if defined(WARPX_DIM_3D)
         getWithParser(pp_rd_name, "y_probe", y_probe);
-        getWithParser(pp_rd_name, "z_probe", z_probe);
         getWithParser(pp_rd_name, "target_normal_x", target_normal_x);
         getWithParser(pp_rd_name, "target_normal_y", target_normal_y);
         getWithParser(pp_rd_name, "target_normal_z", target_normal_z);
-        getWithParser(pp_rd_name, "target_up_x", target_up_x);
         getWithParser(pp_rd_name, "target_up_y", target_up_y);
+#endif
+        getWithParser(pp_rd_name, "x_probe", x_probe);
+        getWithParser(pp_rd_name, "z_probe", z_probe);
+        getWithParser(pp_rd_name, "target_up_x", target_up_x);
         getWithParser(pp_rd_name, "target_up_z", target_up_z);
         getWithParser(pp_rd_name, "detector_radius", detector_radius);
         getWithParser(pp_rd_name, "resolution", m_resolution);
     }
     else
     {
-        std::string err_str = "ERROR: Invalid probe geometry '";
-        err_str.append(m_probe_geometry_str);
-        err_str.append("'. Valid geometries are Point, Line or Plane.");
-        amrex::Abort(err_str);
+        amrex::Abort(Utils::TextMsg::Err(
+            "ERROR: Invalid probe geometry '" + m_probe_geometry_str
+            + "'. Valid geometries are Point, Line or Plane."
+        ));
     }
     pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
     pp_rd_name.query("interp_order", interp_order);
+    pp_rd_name.query("do_moving_window_FP", do_moving_window_FP);
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
+    if (WarpX::gamma_boost > 1.0_rt)
+    {
+        WarpX::GetInstance().RecordWarning(
+            "Boosted Frame Invalid",
+            "The FieldProbe Diagnostic will not record lab-frame, but boosted frame data.",
+            WarnPriority::low);
+    }
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
                                      "Field probe interp_order should be less than or equal to algo.particle_shape");
     if (ParallelDescriptor::IOProcessor())
     {
@@ -298,7 +335,8 @@ void FieldProbe::InitData ()
     }
     else
     {
-    amrex::Abort("ERROR: Invalid probe geometry. Valid geometries are point (0) and line (1).");
+        amrex::Abort(Utils::TextMsg::Err(
+            "Invalid probe geometry. Valid geometries are Point, Line, and Plane."));
     }
 }
 
@@ -352,6 +390,18 @@ void FieldProbe::ComputeDiags (int step)
     {
         const amrex::Geometry& gm = warpx.Geom(lev);
         const auto prob_lo = gm.ProbLo();
+        amrex::Real const dt = WarpX::GetInstance().getdt(lev);
+        // Calculates particle movement in moving window sims
+        amrex::Real move_dist = 0.0;
+        bool const update_particles_moving_window =
+            do_moving_window_FP &&
+            step > warpx.start_moving_window_step &&
+            step <= warpx.end_moving_window_step;
+        if (update_particles_moving_window)
+        {
+            int step_diff = step - m_last_compute_step;
+            move_dist = dt*warpx.moving_window_v*step_diff;
+        }
 
         // get MultiFab data at lev
         const amrex::MultiFab &Ex = warpx.getEfield(lev, 0);
@@ -393,8 +443,30 @@ void FieldProbe::ComputeDiags (int step)
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
             const auto getPosition = GetParticlePosition(pti);
-            auto const np = pti.numParticles();
+            auto setPosition = SetParticlePosition(pti);
 
+            auto const np = pti.numParticles();
+            if (update_particles_moving_window)
+            {
+                const auto temp_warpx_moving_window = warpx.moving_window_dir;
+                amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+                {
+                    amrex::ParticleReal xp, yp, zp;
+                    getPosition(ip, xp, yp, zp);
+                    if (temp_warpx_moving_window == 0)
+                    {
+                        setPosition(ip, xp+move_dist, yp, zp);
+                    }
+                    if (temp_warpx_moving_window == 1)
+                    {
+                        setPosition(ip, xp, yp+move_dist, zp);
+                    }
+                    if (temp_warpx_moving_window == WARPX_ZINDEX)
+                    {
+                        setPosition(ip, xp, yp, zp+move_dist);
+                    }
+                });
+            }
             if( ProbeInDomain() )
             {
                 const auto cell_size = gm.CellSizeArray();
@@ -433,8 +505,7 @@ void FieldProbe::ComputeDiags (int step)
                 ParticleReal* const AMREX_RESTRICT part_Bz = attribs[FieldProbePIdx::Bz].dataPtr();
                 ParticleReal* const AMREX_RESTRICT part_S = attribs[FieldProbePIdx::S].dataPtr();
 
-                amrex::Vector<amrex::Real> v_galilean{amrex::Vector<amrex::Real>(3, amrex::Real(0.))};
-                const auto &xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box, v_galilean, lev);
+                const auto &xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
                 const std::array<Real, 3> &dx = WarpX::CellSize(lev);
 
                 const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
@@ -446,7 +517,6 @@ void FieldProbe::ComputeDiags (int step)
                 const int temp_interp_order = interp_order;
                 const bool temp_raw_fields = raw_fields;
                 const bool temp_field_probe_integrate = m_field_probe_integrate;
-                amrex::Real const dt = WarpX::GetInstance().getdt(lev);
 
                 // Interpolating to the probe positions for each particle
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
@@ -454,8 +524,8 @@ void FieldProbe::ComputeDiags (int step)
                     amrex::ParticleReal xp, yp, zp;
                     getPosition(ip, xp, yp, zp);
 
-                    amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
-                    amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
+                    amrex::ParticleReal Exp = 0._prt, Eyp = 0._prt, Ezp = 0._prt;
+                    amrex::ParticleReal Bxp = 0._prt, Byp = 0._prt, Bzp = 0._prt;
 
                     // first gather E and B to the particle positions
                     if (temp_raw_fields)
@@ -480,7 +550,7 @@ void FieldProbe::ComputeDiags (int step)
                         Ezp * Bxp - Exp * Bzp,
                         Exp * Byp - Eyp * Bxp
                     };
-                    amrex::ParticleReal const S = (1._rt / PhysConst::mu0)  * sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
+                    amrex::ParticleReal const S = (1._prt / PhysConst::mu0)  * std::sqrt(sraw[0] * sraw[0] + sraw[1] * sraw[1] + sraw[2] * sraw[2]);
 
                     /*
                      * Determine whether or not to integrate field data.
@@ -581,6 +651,7 @@ void FieldProbe::ComputeDiags (int step)
     }// end loop over refinement levels
     // make sure data is in m_data on the IOProcessor
     // TODO: In the future, we want to use a parallel I/O method instead (plotfiles or openPMD)
+    m_last_compute_step = step;
 } // end void FieldProbe::ComputeDiags
 
 void FieldProbe::WriteToFile (int step) const
