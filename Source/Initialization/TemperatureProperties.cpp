@@ -44,8 +44,9 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
 
         if (mom_dist_s == "maxwell_boltzmann" && theta > 0.01) {
             WarpX::GetInstance().RecordWarning(
-                "Maxwell-Boltzmann distribution has errors greater than 1%"+
-                " for temperature parameter theta > 0.01. (theta = " +
+                "Temperature",
+                std::string{"Maxwell-Boltzmann distribution has errors greater than 1%"} +
+                std::string{" for temperature parameter theta > 0.01. (theta = "} +
                 std::to_string(theta) + " given)");
         }
 

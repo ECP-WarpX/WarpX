@@ -1154,9 +1154,8 @@ void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
             " the number of guard cells " << gc <<
             " is larger than or equal to the number of valid cells "
             << vc << ", please reduce the number of guard cells" <<
-             " or increase the grid size by changing domain decomposition."
-
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.c_str());
+             " or increase the grid size by changing domain decomposition.";
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.str());
     }
 }
 

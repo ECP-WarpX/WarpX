@@ -37,7 +37,6 @@ VelocityProperties::VelocityProperties (amrex::ParmParse& pp) {
         m_dir = 2;
     }
     else {
-        vel_dir_s = stringstream.str();
         amrex::Abort(Utils::TextMsg::Err(
             "Cannot interpret <s_name>.bulk_vel_dir input '" + vel_dir_s +
             "'. Please enter +/- x, y, or z with no whitespace between the sign and"+
