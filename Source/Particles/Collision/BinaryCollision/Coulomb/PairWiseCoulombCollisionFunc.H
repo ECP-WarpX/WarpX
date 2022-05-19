@@ -85,7 +85,7 @@ public:
             ElasticCollisionPerez(
                     I1s, I1e, I2s, I2e, I1, I2,
                     soa_1, soa_2,
-                    q1, q2, m1, m2, amrex::ParticleReal(-1.0), amrex::ParticleReal(-1.0),
+                    q1, q2, m1, m2, -1.0_prt, -1.0_prt,
                     dt, m_CoulombLog, dV, engine );
         }
 

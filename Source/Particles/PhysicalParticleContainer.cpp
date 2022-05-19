@@ -137,6 +137,15 @@ namespace
         return z0;
     }
 
+    struct PDim3 {
+        ParticleReal x, y, z;
+        PDim3(const PDim3&) = default;
+        PDim3(const amrex::XDim3& a) : x(a.x), y(a.y), z(a.z) {}
+
+        PDim3& operator=(const PDim3&) = default;
+        PDim3& operator=(const amrex::XDim3 &a) { x = a.x; y = a.y; z = a.z; return *this; }
+    };
+
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     XDim3 getCellCoords (const GpuArray<Real, AMREX_SPACEDIM>& lo_corner,
                          const GpuArray<Real, AMREX_SPACEDIM>& dx,
@@ -1496,17 +1505,19 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 const XDim3 r =
                     inj_pos->getPositionUnitBox(i_part, lrrfac, engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
+                auto ppos = PDim3(pos);
 
                 // inj_mom would typically be InjectorMomentumGaussianFlux
                 XDim3 u;
                 u = inj_mom->getMomentum(pos.x, pos.y, pos.z, engine);
+                auto pu = PDim3(u);
 
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
 
                 const amrex::Real t_fract = amrex::Random(engine)*dt;
-                UpdatePosition(pos.x, pos.y, pos.z, u.x, u.y, u.z, t_fract);
+                UpdatePosition(ppos.x, ppos.y, ppos.z, pu.x, pu.y, pu.z, t_fract);
 
 #if defined(WARPX_DIM_3D)
                 if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
