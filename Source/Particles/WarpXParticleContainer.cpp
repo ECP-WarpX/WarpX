@@ -572,9 +572,10 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                        const int * const ion_lev,
                                        amrex::MultiFab* rho, int icomp,
                                        const long offset, const long np_to_depose,
-                                       int thread_num, int lev, int depos_lev)
+                                       int thread_num, int lev, int depos_lev,
+                                       bool deposit_on_demand)
 {
-    if (do_not_deposit) return;
+    if (do_not_deposit && !deposit_on_demand) return;
 
     WarpX& warpx = WarpX::GetInstance();
 

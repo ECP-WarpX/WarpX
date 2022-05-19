@@ -101,7 +101,8 @@ public:
                                 const long /*np_to_depose*/,
                                 int /*thread_num*/,
                                 int /*lev*/,
-                                int /*depos_lev*/) override {}
+                                int /*depos_lev*/,
+                                bool /*deposit_on_demand*/) override {}
 
     // DepositCurrent should do nothing for photons
     virtual void DepositCurrent (WarpXParIter& /*pti*/,

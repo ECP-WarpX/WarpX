@@ -214,7 +214,8 @@ public:
                                const long np_to_depose,
                                int thread_num,
                                int lev,
-                               int depos_lev);
+                               int depos_lev,
+                               bool deposit_on_demand = false);
 
     virtual void DepositCurrent (WarpXParIter& pti,
                                 RealVector const & wp,
