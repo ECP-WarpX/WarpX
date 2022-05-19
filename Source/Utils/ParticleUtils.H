@@ -8,6 +8,7 @@
 #define WARPX_PARTICLE_UTILS_H_
 
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX_DenseBins.H>
 #include <AMReX_Particles.H>
@@ -32,6 +33,49 @@ namespace ParticleUtils {
                              WarpXParticleContainer::ParticleTileType const& ptile);
 
     /**
+     * \brief Return (relativistic) particle energy given velocity and mass.
+     *
+     * @param[in] v2 square of particle speed ( v dot v)
+     * @param[in] mass particle mass
+     * @param[out] energy particle energy in eV
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_INLINE
+    void getEnergy ( amrex::ParticleReal const v2, amrex::ParticleReal const mass,
+                     amrex::ParticleReal& gamma, amrex::ParticleReal& energy )
+    {
+        using std::sqrt;
+        using namespace amrex::literals;
+
+        // Compute c^2 since it is used repeatedly
+        constexpr auto c2 = PhysConst::c * PhysConst::c;
+
+        gamma = sqrt(1.0_prt + v2 / c2);
+        energy = mass * c2 * (gamma - 1.0_prt) / PhysConst::q_e;
+    }
+
+    /**
+     * \brief Return angles used to rotate the given particle velocity vector
+     * such that v' = (0, 0, |v|).
+     *
+     * @param[in] vx, vy, vz velocity components
+     * @param[out] theta, phi rotation angles to align velocity with the z-axis
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_INLINE
+    void getRotationAngles ( amrex::ParticleReal const vx, amrex::ParticleReal const vy,
+                             amrex::ParticleReal const vz, amrex::ParticleReal& theta,
+                             amrex::ParticleReal& phi )
+    {
+        using std::atan;
+        using std::cos;
+        using std::sin;
+
+        // rotation to yz plane
+        theta = atan(-vy / vx);
+        // rotation to z axis
+        phi = atan((vx * cos(theta) - vy * sin(theta)) / vz );
+    }
+
+    /**
      * \brief Generate random unit vector in 3 dimensions
      * https://mathworld.wolfram.com/SpherePointPicking.html
      *
@@ -41,7 +85,7 @@ namespace ParticleUtils {
      * @param[in] engine the random-engine
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    void getRandomVector ( amrex::Real& x, amrex::Real& y, amrex::Real& z,
+    void getRandomVector ( amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
                         amrex::RandomEngine const& engine )
     {
         using std::sqrt;
@@ -58,7 +102,8 @@ namespace ParticleUtils {
 
 
     /** \brief Function to perform scattering of a particle that results in a
-     * random velocity vector with given magnitude. This is used in collision events.
+     * random velocity vector with given magnitude. This is used in isotropic
+     * collision events.
      *
      * @param[in/out] ux, uy, uz colliding particle's velocity
      * @param[in] vp velocity magnitude of the colliding particle after collision.

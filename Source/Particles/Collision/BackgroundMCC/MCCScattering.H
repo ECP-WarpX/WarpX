@@ -54,6 +54,120 @@ void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
 }
 
 
+/** \brief Function to perform elastic scattering of a particle in the
+ * stationary frame of the target. The particle velocity is rotated so that it
+ * is travelling only in the z'-direction. The Wentzel-Moliere model is used to
+ * determine the scattering angle in the primed frame. The particle velocity is
+ * then updated and rotated back to the unprimed frame.
+ * See Fernandez-Varea et al. https://doi.org/10.1016/0168-583X(93)95827-R and
+ * the PhD thesis of Chul-Hyun Lim, 2007, Berkeley, "The interaction of
+ * energetic charged particles with gas and boundaries in the particle
+ * simulation of plasmas".
+ *
+ * @param[in,out] ux,uy,uz colliding particle's velocity
+ * @param[in] uCOM_x,uCOM_y,uCOM_z velocity of the center of momentum frame.
+ * @param[in] engine random number generator.
+ */
+AMREX_GPU_HOST_DEVICE AMREX_INLINE
+void ElasticScatteringWentzel ( amrex::ParticleReal& vx, amrex::ParticleReal& vy,
+                         amrex::ParticleReal& vz, amrex::ParticleReal const E_coll,
+                         amrex::Real const screening_prefactor,
+                         amrex::Real const Z,
+                         amrex::ParticleReal const m,
+                         amrex::ParticleReal const M,
+                         amrex::RandomEngine const& engine,
+                         amrex::Real cos_chi=1 )
+{
+    using std::sqrt;
+    using std::acos;
+    using std::sin;
+    using std::cos;
+    using namespace amrex::literals;
+
+    // calculate the appropriate angles to rotate to the scattering frame
+    amrex::Real theta, phi;
+    ParticleUtils::getRotationAngles(vx, vy, vz, theta, phi);
+
+    // precalculate often used values
+    constexpr auto c2 = PhysConst::c * PhysConst::c;
+    const auto mc2 = m * c2;
+    const auto Mc2 = M * c2;
+    const auto sin_theta = sin(theta);
+    const auto cos_theta = cos(theta);
+    const auto sin_phi = sin(phi);
+    const auto cos_phi = cos(phi);
+
+    // calculate the particle momentum and velocity
+    const auto E_kin = E_coll * PhysConst::q_e; // convert from eV to Joule
+    const auto E_total = E_kin + mc2;
+    const auto pc2 = E_kin * (E_kin + 2.0_prt*mc2);
+    auto beta = sqrt(pc2) / E_total;
+
+    // sample a scattering angle if one was not given - the default value of
+    // cos_chi is 1 which triggers a random scattering angle to be selected;
+    // since cos(chi) = 1 corresponds to no scattering, there should be no
+    // reason to call this function with the intent of scattering through chi=0
+    if (cos_chi == 1) {
+        // at small energies the scattering model becomes isotropic so we can save
+        // some computation here
+        if (E_coll < 0.01_prt) {
+            cos_chi = 2.0_rt * amrex::Random(engine) - 1.0_rt;
+        }
+        else {
+            // calculate the full screening parameter (using eq. 32 of Fernandez-Varea et al.)
+            const auto A = screening_prefactor * c2 / pc2 * (1.13_prt
+                 + 3.76_prt * PhysConst::alpha * PhysConst::alpha * Z * Z / (beta * beta)
+            );
+
+            // draw a scattering angle (see eq. 2.16 of Lim, 2007)
+            cos_chi = (2.0_prt * A + 1.0_prt
+                + 2.0_prt * A * (A + 1.0_prt) / (amrex::Random(engine) - A - 1.0_prt)
+            );
+        }
+    }
+    const auto sin_chi = sin(acos(cos_chi));
+    const auto sin_chi2 = sin_chi * sin_chi;
+
+    // calculate remaining projectile energy after collision using eq. 2.8 and 2.9 of Lim, 2007
+    amrex::Real E_kin_final;
+    if (M > 1e5_prt * m) {
+        E_kin_final = E_kin - (
+            (E_total * sin_chi2 + Mc2 - cos_chi * sqrt(Mc2*Mc2 - mc2*mc2*sin_chi2)) * pc2
+            / ( (E_kin + mc2 + Mc2)*(E_kin + mc2 + Mc2) - pc2 * cos_chi * cos_chi)
+        );
+    } else {
+        E_kin_final = E_kin - (
+            (E_total * sin_chi2 + Mc2 * (1.0_prt - cos_chi)) * pc2
+            / ( (E_kin + Mc2)*(E_kin + Mc2) - pc2 * cos_chi * cos_chi)
+        );
+    }
+
+    // safety check in case the chosen angle leads to a negative (non-physical)
+    // final kinetic energy
+    if (E_kin_final < 0.0_prt) E_kin_final = 0.0_prt;
+
+    // get the new momentum magnitude
+    const auto pc = sqrt(E_kin_final * (E_kin_final + 2.0_prt*mc2));
+    beta = pc / (E_kin_final + mc2);
+    const auto gamma = sqrt(1.0_prt + beta*beta);
+
+    // get the scattered velocity vector in the scattering frame
+    vx = pc * sin_chi / (PhysConst::c * gamma * m);
+    vy = 0.0_prt;
+    vz = pc * cos_chi / (PhysConst::c * gamma * m);
+
+    // choose random angle to rotate velocity around z-axis
+    phi = amrex::Random(engine) * 2.0_rt * MathConst::pi;
+    vx = vx * cos(phi);
+    vy = vx * sin(phi);
+
+    // now rotate the velocity back to the original target frame
+    vx = vx * cos_theta * cos_phi + vy * sin_theta - vz * cos_theta * sin_phi;
+    vy = -vx * sin_theta * cos_phi + vy * cos_theta - vz * sin_theta * sin_phi;
+    vz = -vx * sin_phi + vz * cos_phi;
+}
+
+
 /** Function to perform back scattering of a particle in the lab frame.
  *
  * The particle velocity is transformed to the COM frame where it is
@@ -78,7 +192,9 @@ void BackScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
 }
 
 
-/** Function to perform charge exchange of an ion with a neutral particle.
+/** Function to perform charge exchange of an ion with a neutral particle of
+ *  the same type. This is a special case of back scattering in which the
+ *  projectile and target have the same mass.
  *
  * @param[in,out] ux,uy,uz colliding particle's velocity
  * @param[in] ua_x,ua_y,ua_z velocity of the neutral particle.

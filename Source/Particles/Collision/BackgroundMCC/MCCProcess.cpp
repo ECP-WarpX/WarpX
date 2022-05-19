@@ -81,6 +81,8 @@ MCCProcess::parseProcessType(const std::string& scattering_process)
 {
     if (scattering_process == "elastic") {
         return MCCProcessType::ELASTIC;
+    } else if (scattering_process == "elastic_wentzel") {
+        return MCCProcessType::ELASTIC_WENTZEL;
     } else if (scattering_process == "back") {
         return MCCProcessType::BACK;
     } else if (scattering_process == "charge_exchange") {

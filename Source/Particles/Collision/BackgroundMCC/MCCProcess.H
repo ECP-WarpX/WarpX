@@ -15,6 +15,7 @@
 enum class MCCProcessType {
     INVALID,
     ELASTIC,
+    ELASTIC_WENTZEL,
     BACK,
     CHARGE_EXCHANGE,
     EXCITATION,

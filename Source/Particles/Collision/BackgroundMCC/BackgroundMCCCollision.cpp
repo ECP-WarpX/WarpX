@@ -230,15 +230,31 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, Mult
         }
         // if no neutral species mass was specified and ionization is not
         // included assume that the collisions will be with neutrals of the
-        // same mass as the colliding species (like with ion-neutral collisions)
+        // same mass as the colliding species (as in ion-neutral collisions)
         else if (m_background_mass == -1) {
             m_background_mass = species1.getMass();
         }
 
+        // calculate screening parameters in case the Wentzel-Moliere model
+        // for elastic scattering is used to determine the scattering angle
+        // see Fernandez-Varea et al. https://doi.org/10.1016/0168-583X(93)95827-R
+        m_background_Z = m_background_mass / PhysConst::m_u;
+        if (m_background_Z < 1.0_rt) m_background_Z = 1.0_rt;
+        // get the Thomas-Fermi screening radius (eq. 22)
+        const auto screening_radius = (
+            0.885_rt * std::pow(m_background_Z, -1.0_rt/3.0_rt) * PhysConst::a0
+        );
+        // get the screening parameter prefactor (eq. 32)
+        m_screening_prefactor = (
+            0.25_rt * PhysConst::hbar * PhysConst::hbar
+            / (screening_radius * screening_radius)
+        );
+
         amrex::Print() << Utils::TextMsg::Info(
-            "Setting up collisions for " + m_species_names[0] + " with total "
-            + "collision probability: "
-            + std::to_string(m_total_collision_prob) + " "
+            "Setting up collisions for " + m_species_names[0] + " with:\n"
+            + "    total non-ionization collision probability: "
+            + std::to_string(m_total_collision_prob)
+            + "\n    total ionization collision probability: "
             + std::to_string(m_total_collision_prob_ioniz)
         );
 
@@ -330,9 +346,11 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               amrex::Real n_a = n_a_func(x, y, z, t);
                               amrex::Real T_a = T_a_func(x, y, z, t);
 
-                              amrex::Real vel_std, v_coll, v_coll2, E_coll, sigma_E, nu_i = 0;
-                              amrex::Real col_select = amrex::Random(engine);
+                              amrex::ParticleReal vel_std, v_coll, v_coll2;
+                              amrex::ParticleReal gamma, E_coll, sigma_E, nu_i = 0;
+                              amrex::ParticleReal col_select = amrex::Random(engine);
                               amrex::ParticleReal ua_x, ua_y, ua_z;
+                              amrex::ParticleReal vx, vy, vz;
                               amrex::ParticleReal uCOM_x, uCOM_y, uCOM_z;
 
                               // get velocities of gas particles from a Maxwellian distribution
@@ -341,11 +359,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               ua_y = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
                               ua_z = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
 
-                              // calculate the center of momentum velocity
-                              uCOM_x = (mass1 * ux[ip] + mass_a * ua_x) / (mass1 + mass_a);
-                              uCOM_y = (mass1 * uy[ip] + mass_a * ua_y) / (mass1 + mass_a);
-                              uCOM_z = (mass1 * uz[ip] + mass_a * ua_z) / (mass1 + mass_a);
-
+                              /*
                               // calculate relative velocity of collision and collision energy if
                               // the colliding particle is an ion. For electron collisions we
                               // cannot use the relative velocity since that allows the
@@ -353,10 +367,11 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               // is insufficient to cause excitation but not in the COM frame -
                               // for energy to balance this situation requires the neutral to
                               // lose energy during the collision which we don't currently
-                              // account for.
+                              // account for since the full excitation energy is subtracted
+                              // from the electron energy.
                               if (mass_a / mass1 > 1e3) {
                                   v_coll2 = ux[ip]*ux[ip] + uy[ip]*uy[ip] + uz[ip]*uz[ip];
-                                  E_coll = 0.5_rt * mass1 * v_coll2 / PhysConst::q_e;
+                                  ParticleUtils::getEnergy(v_coll2, mass1, E_coll);
                               }
                               else {
                                   v_coll2 = (
@@ -369,7 +384,20 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                             / PhysConst::q_e
                                             );
                               }
+                              */
+
+                              // we assume the target particle is not relativistic (in
+                              // the lab frame) and therefore we can transform the projectile
+                              // velocity to a frame in which the target is stationary with
+                              // a simple Galilean boost
+                              vx = ux[ip] - ua_x;
+                              vy = uy[ip] - ua_y;
+                              vz = uz[ip] - ua_z;
+                              v_coll2 = (vx*vx + vy*vy + vz*vz);
                               v_coll = sqrt(v_coll2);
+
+                              // calculate the (relativistic) collision energy in eV
+                              ParticleUtils::getEnergy(v_coll2, mass1, gamma, E_coll);
 
                               // loop through all collision pathways
                               for (int i = 0; i < process_count; i++) {
@@ -386,26 +414,60 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                   if (col_select > nu_i) continue;
 
                                   if (scattering_process.m_type == MCCProcessType::ELASTIC) {
+                                      // calculate the center of momentum velocity
+                                      uCOM_x = (mass1 * ux[ip] + mass_a * ua_x) / (mass1 + mass_a);
+                                      uCOM_y = (mass1 * uy[ip] + mass_a * ua_y) / (mass1 + mass_a);
+                                      uCOM_z = (mass1 * uz[ip] + mass_a * ua_z) / (mass1 + mass_a);
                                       ElasticScattering(
                                                         ux[ip], uy[ip], uz[ip], uCOM_x, uCOM_y, uCOM_z, engine
                                                         );
+                                      vx = ux[ip] - ua_x;
+                                      vy = uy[ip] - ua_y;
+                                      vz = uz[ip] - ua_z;
                                   }
-                                  else if (scattering_process.m_type == MCCProcessType::BACK) {
-                                      BackScattering(
-                                                     ux[ip], uy[ip], uz[ip], uCOM_x, uCOM_y, uCOM_z
-                                                     );
-                                  }
-                                  else if (scattering_process.m_type == MCCProcessType::CHARGE_EXCHANGE) {
-                                      ChargeExchange(ux[ip], uy[ip], uz[ip], ua_x, ua_y, ua_z);
+                                  else if (scattering_process.m_type == MCCProcessType::ELASTIC_WENTZEL) {
+                                      ElasticScatteringWentzel(
+                                        vx, vy, vz, E_coll,
+                                        m_screening_prefactor, m_background_Z,
+                                        mass1, mass_a, engine
+                                      );
                                   }
                                   else if (scattering_process.m_type == MCCProcessType::EXCITATION) {
+                                      ElasticScatteringWentzel(
+                                        vx, vy, vz, E_coll-scattering_process.m_energy_penalty,
+                                        m_screening_prefactor, m_background_Z,
+                                        mass1, mass_a, engine
+                                      );
+                                      /*
                                       // get the new velocity magnitude
                                       amrex::Real vp = sqrt(
                                                             2.0_rt / mass1 * PhysConst::q_e
                                                             * (E_coll - scattering_process.m_energy_penalty)
                                                             );
-                                      ParticleUtils::RandomizeVelocity(ux[ip], uy[ip], uz[ip], vp, engine);
+                                      ParticleUtils::RandomizeVelocity(ux[ip], uy[ip], uz[ip], vp, engine);*/
                                   }
+                                  else if (scattering_process.m_type == MCCProcessType::BACK) {
+                                      // elastic scattering through pi degrees
+                                      ElasticScatteringWentzel(
+                                        vx, vy, vz, E_coll,
+                                        m_screening_prefactor, m_background_Z,
+                                        mass1, mass_a, engine, -1.0_rt
+                                      );
+                                  }
+                                  else if (scattering_process.m_type == MCCProcessType::CHARGE_EXCHANGE) {
+                                      // swap projectile velocity for neutral velocity - this is a special
+                                      // case of back scattering where the projectile and target have the
+                                      // same mass
+                                      // TODO: allow relativistic heavy particles
+                                      vx = 0.0_prt;
+                                      vy = 0.0_prt;
+                                      vz = 0.0_prt;
+                                  }
+
+                                  // update particle velocity with new components in labframe
+                                  ux[ip] = vx + ua_x;
+                                  uy[ip] = vy + ua_y;
+                                  uz[ip] = vz + ua_z;
                                   break;
                               }
                           }

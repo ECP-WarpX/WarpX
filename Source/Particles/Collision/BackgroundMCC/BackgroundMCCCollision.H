@@ -82,6 +82,10 @@ private:
     amrex::Real m_nu_max;
     amrex::Real m_nu_max_ioniz;
 
+    // quantities needed for the Wentzel elastic scattering model
+    amrex::Real m_background_Z;
+    amrex::Real m_screening_prefactor;
+
     amrex::Parser m_background_density_parser;
     amrex::Parser m_background_temperature_parser;
 
