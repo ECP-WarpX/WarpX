@@ -119,8 +119,10 @@ extern "C" {
      *
      * @param[in] species_name specifying the name of the species to deposit
      * @param[in] lev mesh refinement level
+     * @param[in] deposit_on_demand controls whether the species' charge
+     *            density should be deposited regardless of do_not_deposit being set
      */
-    void warpx_depositChargeDensity (const char* species_name, int lev);
+    void warpx_depositChargeDensity (const char* species_name, int lev, bool deposit_on_demand);
 
   void warpx_ComputeDt ();
   void warpx_MoveWindow (int step, bool move_j);

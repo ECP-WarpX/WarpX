@@ -1062,7 +1062,7 @@ class LibWarpX():
         '''
         self.libwarpx_so.warpx_clearParticleBoundaryBuffer()
 
-    def depositChargeDensity(self, species_name, level, clear_rho=True, sync_rho=True):
+    def depositChargeDensity(self, species_name, level, clear_rho=True, sync_rho=True, deposit_on_demand=False):
         '''
 
         Deposit the specified species' charge density in rho_fp in order to
@@ -1082,7 +1082,7 @@ class LibWarpX():
             from . import fields
             fields.RhoFPWrapper(level, True)[...] = 0.0
         self.libwarpx_so.warpx_depositChargeDensity(
-            ctypes.c_char_p(species_name.encode('utf-8')), level
+            ctypes.c_char_p(species_name.encode('utf-8')), level, deposit_on_demand
         )
         if sync_rho:
             self.libwarpx_so.warpx_SyncRho()

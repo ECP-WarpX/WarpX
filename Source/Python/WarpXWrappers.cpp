@@ -615,7 +615,7 @@ namespace
         particle_buffers.clearParticles();
     }
 
-    void warpx_depositChargeDensity (const char* char_species_name, int lev) {
+    void warpx_depositChargeDensity (const char* char_species_name, int lev, bool deposit_on_demand) {
         // this function is used to deposit a given species' charge density
         // in the rho_fp multifab which can then be accessed from python via
         // pywarpx.fields.RhoFPWrapper()
@@ -636,7 +636,7 @@ namespace
         {
             const long np = pti.numParticles();
             auto& wp = pti.GetAttribs(PIdx::w);
-            myspc.DepositCharge(pti, wp, nullptr, rho_fp, 0, 0, np, 0, lev, lev);
+            myspc.DepositCharge(pti, wp, nullptr, rho_fp, 0, 0, np, 0, lev, lev, deposit_on_demand);
         }
 #ifdef WARPX_DIM_RZ
         warpx.ApplyInverseVolumeScalingToChargeDensity(rho_fp, lev);
