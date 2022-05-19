@@ -1031,7 +1031,7 @@ WarpX::ReadParameters ()
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay ||
-            maxLevel() > 0,
+            maxLevel() <= 0,
             "Vay deposition not implemented with mesh refinement");
 
         field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
