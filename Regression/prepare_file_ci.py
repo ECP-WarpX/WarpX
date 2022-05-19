@@ -84,6 +84,9 @@ if ci_num_make_jobs is not None:
 # Prevent emails from being sent
 text = re.sub( 'sendEmailWhenFail = 1', 'sendEmailWhenFail = 0', text )
 
+# Remove Python test (does not compile)
+text = re.sub( '\[Python_Langmuir\]\n(.+\n)*', '', text)
+
 # Select the tests to be run
 # --------------------------
 
