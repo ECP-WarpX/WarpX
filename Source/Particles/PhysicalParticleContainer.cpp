@@ -139,10 +139,15 @@ namespace
 
     struct PDim3 {
         ParticleReal x, y, z;
+
+        AMREX_GPU_HOST_DEVICE
         PDim3(const PDim3&) = default;
+        AMREX_GPU_HOST_DEVICE
         PDim3(const amrex::XDim3& a) : x(a.x), y(a.y), z(a.z) {}
 
+        AMREX_GPU_HOST_DEVICE
         PDim3& operator=(const PDim3&) = default;
+        AMREX_GPU_HOST_DEVICE
         PDim3& operator=(const amrex::XDim3 &a) { x = a.x; y = a.y; z = a.z; return *this; }
     };
 
