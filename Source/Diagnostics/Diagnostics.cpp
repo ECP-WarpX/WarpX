@@ -126,7 +126,7 @@ Diagnostics::BaseReadParameters ()
             + m_diag_name + ".particle_fields." + var + " in file"
         );
 
-        m_pfield_strings.insert({var, parser_str});
+        m_pfield_strings.push_back(parser_str);
 
         // Look for and record filter functions. If one is not found, the empty string will be
         // stored as the filter string, and will be ignored.
