@@ -35,6 +35,7 @@ pywarpx.egg-info/
 ##########
 Docs/amrex-doxygen-web.tag.xml
 Docs/warpx-doxygen-web.tag.xml
+Docs/openpmd-api-doxygen-web.tag.xml
 Docs/doxyhtml/
 Docs/doxyxml/
 Docs/source/_static/

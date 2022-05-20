@@ -9,6 +9,6 @@
 
 #include <AMReX_ParIter.H>
 
-using PinnedMemoryParticleContainer = typename amrex::AmrParticleContainer<0,0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
+using PinnedMemoryParticleContainer = WarpXParticleContainer::ContainerLike<amrex::PinnedArenaAllocator>;
 
 #endif

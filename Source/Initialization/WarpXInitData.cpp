@@ -475,6 +475,7 @@ WarpX::InitPML ()
                              do_multi_J,
                              do_pml_dive_cleaning, do_pml_divb_cleaning,
                              guard_cells.ng_FieldSolver.max(),
+                             v_particle_pml,
                              do_pml_Lo[0], do_pml_Hi[0]);
 #endif
 
@@ -506,6 +507,7 @@ WarpX::InitPML ()
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
                                    do_multi_J, do_pml_dive_cleaning, do_pml_divb_cleaning,
                                    guard_cells.ng_FieldSolver.max(),
+                                   v_particle_pml,
                                    do_pml_Lo[lev], do_pml_Hi[lev]);
         }
     }

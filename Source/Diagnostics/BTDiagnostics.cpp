@@ -170,6 +170,20 @@ BTDiagnostics::ReadParameters ()
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
     }
 
+
+    amrex::Vector< std::string > BTD_varnames_supported = {"Ex", "Ey", "Ez",
+                                                           "Bx", "By", "Bz",
+                                                           "jx", "jy", "jz", "rho"};
+
+    for (const auto& var : m_varnames) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (WarpXUtilStr::is_in(BTD_varnames_supported, var )), "Input error: field variable " + var + " in " + m_diag_name
+        + ".fields_to_plot is not supported for BackTransformed diagnostics. Currently supported field variables for BackTransformed diagnostics include Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho");
+    }
+
+    bool particle_fields_to_plot_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!particle_fields_to_plot_specified, "particle_fields_to_plot is currently not supported for BackTransformed Diagnostics");
+
+
 }
 
 bool
@@ -219,8 +233,9 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
 {
     auto & warpx = WarpX::GetInstance();
     // Lab-frame time for the i^th snapshot
-    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab;
-
+    amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
+    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab
+        + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
 
     // Compute lab-frame co-ordinates that correspond to the simulation domain
     // at level, lev, and time, m_t_lab[i_buffer] for each ith buffer.
@@ -798,7 +813,10 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             // Read the header file to get the fab on disk string
             BTDMultiFabHeaderImpl Buffer_FabHeader(recent_Buffer_FabHeaderFilename);
             Buffer_FabHeader.ReadMultiFabHeader();
-            if (Buffer_FabHeader.ba_size() > 1) amrex::Abort("BTD Buffer has more than one fabs.");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                Buffer_FabHeader.ba_size() <= 1,
+                "BTD Buffer has more than one fabs."
+            );
             // Every buffer that is flushed only has a single fab.
             std::string recent_Buffer_FabFilename = recent_Buffer_Level0_path + "/"
                                                   + Buffer_FabHeader.FabName(0);
@@ -1036,7 +1054,7 @@ BTDiagnostics::InitializeParticleBuffer ()
         for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
             m_totalParticles_flushed_already[i][isp] = 0;
             m_totalParticles_in_buffer[i][isp] = 0;
-            m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(&WarpX::GetInstance());
+            m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(WarpX::GetInstance().GetParGDB());
             const int idx = mpc.getSpeciesID(m_output_species_names[isp]);
             m_output_species[i].push_back(ParticleDiag(m_diag_name,
                                                        m_output_species_names[isp],
