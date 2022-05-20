@@ -448,6 +448,7 @@ namespace
 
         *num_tiles = myspc.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
 
         auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*)));
         int i = 0;
@@ -471,6 +472,7 @@ namespace
 
         *num_tiles = myspc.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
 
         auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(amrex::ParticleReal*)));
         int i = 0;
@@ -535,6 +537,7 @@ namespace
 
         *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
 
         auto data = static_cast<int**>(malloc(*num_tiles*sizeof(int*)));
         int i = 0;
@@ -558,6 +561,7 @@ namespace
 
         *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
 
         auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(amrex::ParticleReal*)));
         int i = 0;
@@ -579,6 +583,7 @@ namespace
 
         *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
 
         auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*)));
         int i = 0;
