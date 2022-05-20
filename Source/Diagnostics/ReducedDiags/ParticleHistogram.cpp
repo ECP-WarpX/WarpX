@@ -12,6 +12,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
@@ -86,7 +87,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     } else if ( norm_string == "area_to_unity" ) {
         m_norm = NormalizationType::area_to_unity;
     } else {
-        Abort("Unknown ParticleHistogram normalization type.");
+        Abort(Utils::TextMsg::Err(
+            "Unknown ParticleHistogram normalization type."));
     }
 
     // get MultiParticleContainer class object
@@ -102,7 +104,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     }
     // if m_selected_species_id is not modified
     if ( m_selected_species_id == -1 ){
-        Abort("Unknown species for ParticleHistogram reduced diagnostic.");
+        Abort(Utils::TextMsg::Err(
+            "Unknown species for ParticleHistogram reduced diagnostic."));
     }
 
     // Read optional filter

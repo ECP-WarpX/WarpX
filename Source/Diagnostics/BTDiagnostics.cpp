@@ -813,7 +813,10 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             // Read the header file to get the fab on disk string
             BTDMultiFabHeaderImpl Buffer_FabHeader(recent_Buffer_FabHeaderFilename);
             Buffer_FabHeader.ReadMultiFabHeader();
-            if (Buffer_FabHeader.ba_size() > 1) amrex::Abort("BTD Buffer has more than one fabs.");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                Buffer_FabHeader.ba_size() <= 1,
+                "BTD Buffer has more than one fabs."
+            );
             // Every buffer that is flushed only has a single fab.
             std::string recent_Buffer_FabFilename = recent_Buffer_Level0_path + "/"
                                                   + Buffer_FabHeader.FabName(0);

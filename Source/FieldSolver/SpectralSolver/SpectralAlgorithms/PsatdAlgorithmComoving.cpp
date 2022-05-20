@@ -1,5 +1,6 @@
 #include "PsatdAlgorithmComoving.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpX_Complex.H"
 
@@ -500,7 +501,8 @@ void PsatdAlgorithmComoving::CurrentCorrection (SpectralFieldData& field_data)
 void
 PsatdAlgorithmComoving::VayDeposition (SpectralFieldData& /*field_data*/)
 {
-    amrex::Abort("Vay deposition not implemented for comoving PSATD");
+    amrex::Abort(Utils::TextMsg::Err(
+        "Vay deposition not implemented for comoving PSATD"));
 }
 
 #endif // WARPX_USE_PSATD

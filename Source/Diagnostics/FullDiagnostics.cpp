@@ -113,10 +113,11 @@ FullDiagnostics::BackwardCompatibility ()
 {
     amrex::ParmParse pp_diag_name(m_diag_name);
     std::vector<std::string> backward_strings;
-    if (pp_diag_name.queryarr("period", backward_strings)){
-        amrex::Abort("<diag_name>.period is no longer a valid option. "
-                     "Please use the renamed option <diag_name>.intervals instead.");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_diag_name.queryarr("period", backward_strings),
+        "<diag_name>.period is no longer a valid option. "
+        "Please use the renamed option <diag_name>.intervals instead."
+    );
 }
 
 void
@@ -627,7 +628,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio);
         }
         else {
-            amrex::Abort("Error: " + m_varnames[comp] + " is not a known field output type");
+            amrex::Abort(Utils::TextMsg::Err(m_varnames[comp] + " is not a known field output type"));
         }
     }
     // Add functors for average particle data for each species
