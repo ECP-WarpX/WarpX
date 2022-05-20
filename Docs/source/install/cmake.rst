@@ -199,6 +199,7 @@ PICMI Python Bindings
    .. code-block:: bash
 
       python3 -m pip install -U pip setuptools wheel
+      python3 -m pip install -U cmake
 
 For PICMI Python bindings, configure WarpX to produce a library and call our ``pip_install`` *CMake target*:
 
