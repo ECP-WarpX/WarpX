@@ -25,7 +25,7 @@ HardEdgedQuadrupole::HardEdgedQuadrupole ()
 
     amrex::Vector<amrex::Real> dEdx;
     if (queryArrWithParser(pp_element_name, "dEdx", dEdx)) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(nelements == dEdx.size(),
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nelements == dEdx.size(),
                      "quad: dEdx must have the same length and the zstarts and zends");
     } else {
         dEdx.resize(nelements, 0._rt);
@@ -33,7 +33,7 @@ HardEdgedQuadrupole::HardEdgedQuadrupole ()
 
     amrex::Vector<amrex::Real> dBdx;
     if (queryArrWithParser(pp_element_name, "dBdx", dBdx)) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(nelements == dBdx.size(),
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nelements == dBdx.size(),
                      "quad: dBdx must have the same length and the zstarts and zends");
     } else {
         dBdx.resize(nelements, 0._rt);

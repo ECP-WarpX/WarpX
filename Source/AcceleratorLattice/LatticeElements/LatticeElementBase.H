@@ -19,6 +19,10 @@ struct LatticeElementBase
 
     ~LatticeElementBase () = default;
 
+    void
+    CheckElementCorrectness (amrex::Vector<amrex::Real> const & zs,
+                             amrex::Vector<amrex::Real> const & ze);
+
     std::string m_element_name;
 
     int nelements = 0;

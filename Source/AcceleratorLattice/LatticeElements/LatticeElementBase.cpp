@@ -30,12 +30,36 @@ LatticeElementBase::LatticeElementBase (std::string const& element_name)
 
     if (nelements == 0) return;
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(zs.size() == ze.size(),
-                 "quad: zstarts must have the same length and zends");
+    CheckElementCorrectness(zs, ze);
 
     d_zs.resize(zs.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, zs.begin(), zs.end(), d_zs.begin());
     d_ze.resize(ze.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, ze.begin(), ze.end(), d_ze.begin());
 
+}
+
+void
+LatticeElementBase::CheckElementCorrectness (amrex::Vector<amrex::Real> const & zs, amrex::Vector<amrex::Real> const & ze)
+{
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(zs.size() == ze.size(),
+                 m_element_name + ": zstarts must have the same length and zends");
+
+    // Make sure that elements have ze > zs
+    for (int i = 0 ; i < static_cast<int>(zs.size()) ; i++) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ze[i] > zs[i],
+            m_element_name + ": the zends must be greater than the zstarts, but for element "
+              + std::to_string(i) + ", ze=" + std::to_string(ze[i]) +
+              " is not greater than zs=" + std::to_string(zs[i]) + ".");
+    }
+
+    // Make sure that the elements are in increasing order
+    for (int i = 1 ; i < static_cast<int>(zs.size()) ; i++) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(zs[i] > ze[i-1],
+            m_element_name + ": the elements must not overlap, but for element "
+              + std::to_string(i) + ", zs=" + std::to_string(zs[i]) + " is not greater than ze="
+              + std::to_string(ze[i-1]) + " of the previous element.");
+    }
+    
 }
