@@ -1274,6 +1274,9 @@ Laser initialization
 External fields
 ---------------
 
+Grid initialization
+^^^^^^^^^^^^^^^^^^^
+
 * ``warpx.B_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
     magnetic field. The "default" style initializes the
@@ -1330,6 +1333,9 @@ External fields
     the field solver. In particular, do not use any other boundary condition
     than periodic.
 
+Applied to Particles
+^^^^^^^^^^^^^^^^^^^^
+
 * ``particles.E_ext_particle_init_style`` & ``particles.B_ext_particle_init_style`` (string) optional (default "none")
     These parameters determine the type of the external electric and
     magnetic fields respectively that are applied directly to the particles at every timestep.
@@ -1382,6 +1388,55 @@ External fields
       The fields are of the form :math:`E_x = \mathrm{strength} \cdot x`, :math:`E_y = \mathrm{strength} \cdot y`,
       and :math:`E_z = 0`, and
       :math:`B_x = \mathrm{strength} \cdot y`, :math:`B_y = -\mathrm{strength} \cdot x`, and :math:`B_z = 0`.
+
+Accelerator Lattice
+^^^^^^^^^^^^^^^^^^^
+
+Several accelerator lattice elements can be defined as described below.
+The elements are defined relative to the `z` axis and must be listed in increasing order in z.
+Note that elements of the same type cannot overlap each other.
+
+Hard edged quadrupole
++++++++++++++++++++++
+
+This applies a quadrupole field that is uniform within the `z` extent of the elemnt with a sharp cut off at the ends.
+This uses residence corrections, with the field scaled by the amount of time within the element for particles entering
+or leaving it, to increase the accuracy.
+
+* ``lattice.quad.zstarts`` (list of `floats`)
+    The starts of the quadrupoles along the `z` axis, in the lab frame in meters.
+
+* ``lattice.quad.zends`` (list of `floats`)
+    The ends of the quadrupoles along the `z` axis, in the lab frame in meters.
+
+* ``lattice.quad.dEdx`` (list of `floats`)
+    The transverse electric field gradient of the quadrupoles, in volts/meter.
+    The field applied to the particles with be `Ex = dEdx*x` and `Ey = -dEdx*y`.
+
+* ``lattice.quad.dBdx`` (list of `floats`)
+    The transverse magnetic field gradient of the quadrupoles, in Tesla/meter.
+    The field applied to the particles with be `Bx = dBdx*y` and `By = dBdx*x`.
+
+Hard edged plasma lens
+++++++++++++++++++++++
+
+This applies an radially directed plasma lens field that is uniform within the `z` extent of the elemnt with a sharp cut off at the ends.
+This uses residence corrections, with the field scaled by the amount of time within the element for particles entering
+or leaving it, to increase the accuracy.
+
+* ``lattice.plasmalens.zstarts`` (list of `floats`)
+    The starts of the lens along the `z` axis, in the lab frame in meters.
+
+* ``lattice.plasmalens.zends`` (list of `floats`)
+    The ends of the lens along the `z` axis, in the lab frame in meters.
+
+* ``lattice.plasmalens.dEdx`` (list of `floats`)
+    The transverse electric field gradient of the lens, in volts/meter.
+    The field applied to the particles with be `Ex = dEdx*x` and `Ey = dEdx*y`.
+
+* ``lattice.plasmalens.dBdx`` (list of `floats`)
+    The transverse magnetic field gradient of the lens, in Tesla/meter.
+    The field applied to the particles with be `Bx = dBdx*y` and `By = -dBdx*x`.
 
 .. _running-cpp-parameters-collision:
 
