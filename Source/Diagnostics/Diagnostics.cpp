@@ -105,7 +105,7 @@ Diagnostics::BaseReadParameters ()
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_pfield_varnames.size() == 0,
-        "Input error: cannot use particle_fields_to_plot not implemented for RZ"
+        "Input error: cannot use particle_fields_to_plot with RZ"
     );
 #endif
 
@@ -120,8 +120,8 @@ Diagnostics::BaseReadParameters ()
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             parser_str != "",
-            "Input error: cannot find parser string for " + var + "."
-            + m_diag_name + ".particle_fields." + var + " in file"
+            "Input error: cannot find parser string for " + var + " in file. "
+            + m_diag_name + ".particle_fields." + var + "(x,y,z,ux,uy,uz) is required"
         );
 
         m_pfield_strings.insert({var, parser_str});
