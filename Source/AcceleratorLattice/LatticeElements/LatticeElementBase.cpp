@@ -61,5 +61,5 @@ LatticeElementBase::CheckElementCorrectness (amrex::Vector<amrex::Real> const & 
               + std::to_string(i) + ", zs=" + std::to_string(zs[i]) + " is not greater than ze="
               + std::to_string(ze[i-1]) + " of the previous element.");
     }
-    
+
 }
