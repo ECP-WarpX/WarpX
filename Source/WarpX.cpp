@@ -1575,6 +1575,14 @@ WarpX::MakeNewLevelFromScratch (int lev, Real time, const BoxArray& new_grids,
     InitLevelData(lev, time);
 }
 
+// This is a virtual function.
+void
+WarpX::MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::BoxArray& /*ba*/,
+                                         const amrex::DistributionMapping& /*dm*/)
+{
+    amrex::Abort(Utils::TextMsg::Err("MakeNewLevelFromCoarse: To be implemented"));
+}
+
 void
 WarpX::ClearLevel (int lev)
 {

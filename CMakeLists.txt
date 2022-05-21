@@ -423,7 +423,7 @@ if(WarpX_LIB)
         ${CMAKE_COMMAND} -E rm -f ${WarpX_BINARY_DIR}/pywarpx*whl
         COMMAND
             ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-                python3 -m pip wheel -v --no-build-isolation --use-feature=in-tree-build ${WarpX_SOURCE_DIR}
+                python3 -m pip wheel -v --no-build-isolation ${WarpX_SOURCE_DIR}
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS

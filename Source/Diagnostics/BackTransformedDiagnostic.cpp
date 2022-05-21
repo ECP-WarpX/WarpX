@@ -8,6 +8,7 @@
 #include "BackTransformedDiagnostic.H"
 
 #include "Parallelization/WarpXCommUtil.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/TextMsg.H"
@@ -69,9 +70,10 @@ namespace
     void output_create (const std::string& file_path) {
         WARPX_PROFILE("output_create");
         hid_t file = H5Fcreate(file_path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-        if (file < 0) {
-            amrex::Abort("Error: could not create file at " + file_path);
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            file >=0,
+            "Error: could not create file at " + file_path
+        )
         H5Fclose(file);
     }
 
@@ -172,11 +174,11 @@ namespace
         hid_t dataset = H5Dcreate(file, field_path.c_str(), H5T_IEEE_F64LE,
                                   grid_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-        if (dataset < 0)
-        {
-            amrex::Abort("Error: could not create dataset. H5 returned "
-                         + std::to_string(dataset) + "\n");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            dataset >=0,
+            "Error: could not create dataset. H5 returned "
+            + std::to_string(dataset))
+        );
 
         // Close resources.
         H5Dclose(dataset);
@@ -234,11 +236,11 @@ namespace
         new_size[0] = dims[0] + num_to_add;
         status = H5Dset_extent (dataset, new_size);
 
-        if (status < 0)
-        {
-            amrex::Abort("Error: set extent filed on dataset "
-                         + std::to_string(dataset) + "\n");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            status >= 0,
+            "Error: set extent filed on dataset "
+            + std::to_string(dataset)
+        );
 
         // Close resources.
         H5Sclose(filespace);
@@ -277,11 +279,11 @@ namespace
         hid_t dataset = H5Dopen (file, field_path.c_str(), H5P_DEFAULT);
 
         // Make sure the dataset is there.
-        if (dataset < 0)
-        {
-            amrex::Abort("Error on rank " + std::to_string(mpi_rank) +
-                         ". Count not find dataset " + field_path + "\n");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            dataset >= 0,
+            "Error on rank " + std::to_string(mpi_rank)
+            +". Count not find dataset " + field_path
+        );
 
         hid_t filespace = H5Dget_space (dataset);
 
@@ -300,21 +302,21 @@ namespace
             status = H5Sselect_hyperslab (filespace, H5S_SELECT_SET, offset, NULL,
                                           dims, NULL);
 
-            if (status < 0)
-            {
-                amrex::Abort("Error on rank " + std::to_string(ParallelDescriptor::MyProc()) +
-                             " could not select hyperslab.\n");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                status >= 0,
+                "Error on rank " + std::to_string(ParallelDescriptor::MyProc())
+                +" could not select hyperslab."
+            );
 
             /* Write the data to the extended portion of dataset  */
             status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memspace,
                               filespace, collective_plist, data_ptr);
 
-            if (status < 0)
-            {
-                amrex::Abort("Error on rank " + std::to_string(ParallelDescriptor::MyProc()) +
-                             " could not write hyperslab.\n");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                status >= 0,
+                "Error on rank " + std::to_string(ParallelDescriptor::MyProc())
+                +" could not write hyperslab."
+            );
 
             status = H5Sclose (memspace);
         }
@@ -363,11 +365,11 @@ namespace
         hid_t dataset = H5Dcreate2 (file, field_path.c_str(), H5T_NATIVE_DOUBLE, dataspace,
                                     H5P_DEFAULT, prop, H5P_DEFAULT);
 
-        if (dataset < 0)
-        {
-            amrex::Abort("Error: could not create dataset. H5 returned "
-                         + std::to_string(dataset) + "\n");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            dataset >= 0,
+            "Error: could not create dataset. H5 returned "
+            + std::to_string(dataset)
+        );
 
         // Close resources.
         H5Dclose(dataset);
@@ -403,11 +405,11 @@ namespace
         hid_t dataset = H5Dopen(file, field_path.c_str(), H5P_DEFAULT);
 
         // Make sure the dataset is there.
-        if (dataset < 0)
-        {
-            amrex::Abort("Error on rank " + std::to_string(mpi_rank) +
-                         ". Count not find dataset " + field_path + "\n");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            dataset >= 0,
+            "Error on rank " + std::to_string(mpi_rank)
+            +". Count not find dataset " + field_path
+        );
 
         // Grab the dataspace of the field dataset from file.
         hid_t file_dataspace = H5Dget_space(dataset);
@@ -471,20 +473,20 @@ namespace
             // Select the hyperslab matching this fab.
             status = H5Sselect_hyperslab(file_dataspace, H5S_SELECT_SET,
                                          slab_offsets, NULL, slab_dims, NULL);
-            if (status < 0)
-            {
-                amrex::Abort("Error on rank " + std::to_string(mpi_rank) +
-                             " could not select hyperslab.\n");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                status >= 0,
+                "Error on rank " + std::to_string(mpi_rank)
+                +" could not select hyperslab.\n"
+            );
 
             // Write this pencil.
             status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, slab_dataspace,
                               file_dataspace, collective_plist, transposed_data.data());
-            if (status < 0)
-            {
-                amrex::Abort("Error on rank " + std::to_string(mpi_rank) +
-                             " could not write hyperslab.\n");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                status >= 0,
+                "Error on rank " + std::to_string(mpi_rank)
+                +" could not write hyperslab."
+            );
 
             H5Sclose(slab_dataspace);
             write_count++;

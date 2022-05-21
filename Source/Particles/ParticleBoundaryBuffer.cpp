@@ -15,6 +15,9 @@
 
 #include <AMReX_Geometry.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Reduce.H>
+#include <AMReX_Tuple.H>
+#include <AMReX.H>
 
 struct IsOutsideDomainBoundary {
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_plo;
@@ -23,7 +26,7 @@ struct IsOutsideDomainBoundary {
     int m_iside;
 
     template <typename SrcData>
-    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     int operator() (const SrcData& src,
                     int ip, const amrex::RandomEngine& /*engine*/) const noexcept
     {
@@ -159,6 +162,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
     const amrex::Geometry& geom = warpx_instance.Geom(0);
     auto plo = geom.ProbLoArray();
     auto phi = geom.ProbHiArray();
+
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
         if (geom.isPeriodic(idim)) continue;
@@ -189,16 +193,34 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         auto np = ptile.numParticles();
                         if (np == 0) continue;
 
-                        auto dst_index = ptile_buffer.numParticles();
-                        ptile_buffer.resize(dst_index + np);
+                        auto predicate = IsOutsideDomainBoundary{plo, phi, idim, iside};
 
-                        int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
-                        int timestep = warpx_instance.getistep(0);
-                        auto count = amrex::filterAndTransformParticles(ptile_buffer, ptile,
-                                             IsOutsideDomainBoundary{plo, phi, idim, iside},
-                                                CopyAndTimestamp{timestamp_index, timestep},
-                                                                              0, dst_index);
-                        ptile_buffer.resize(dst_index + count);
+                        const auto ptile_data = ptile.getConstParticleTileData();
+
+                        amrex::ReduceOps<amrex::ReduceOpSum> reduce_op;
+                        amrex::ReduceData<int> reduce_data(reduce_op);
+                        {
+                          WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::count_out_of_bounds");
+                          amrex::RandomEngine rng{};
+                          reduce_op.eval(np, reduce_data, [=] AMREX_GPU_HOST_DEVICE (int ip)
+                                         { return predicate(ptile_data, ip, rng) ? 1 : 0; });
+                        }
+
+                        auto dst_index = ptile_buffer.numParticles();
+                        {
+                          WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::resize");
+                          ptile_buffer.resize(dst_index + amrex::get<0>(reduce_data.value()));
+                        }
+                        {
+                          WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterAndTransform");
+                          int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
+                          int timestep = warpx_instance.getistep(0);
+
+                          amrex::filterAndTransformParticles(ptile_buffer, ptile,
+                                                             predicate,
+                                                             CopyAndTimestamp{timestamp_index, timestep},
+                                                             0, dst_index);
+                        }
                     }
                 }
             }
@@ -235,26 +257,42 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 auto np = ptile.numParticles();
                 if (np == 0) continue;
 
+                using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+                auto predicate = [=] AMREX_GPU_HOST_DEVICE (const SrcData& /*src*/, const int ip)
+                /* NVCC 11.3.109 chokes in C++17 on this: noexcept */
+                  {
+                    amrex::ParticleReal xp, yp, zp;
+                    getPosition(ip, xp, yp, zp);
+
+                    amrex::Real phi_value  = doGatherScalarFieldNodal(
+                                                                      xp, yp, zp, phiarr, dxi, plo
+                                                                      );
+                    return phi_value < 0.0 ? 1 : 0;
+                  };
+
+                const auto ptile_data = ptile.getConstParticleTileData();
+
+                amrex::ReduceOps<amrex::ReduceOpSum> reduce_op;
+                amrex::ReduceData<int> reduce_data(reduce_op);
+                {
+                  WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::count_out_of_boundsEB");
+                  reduce_op.eval(np, reduce_data, [=] AMREX_GPU_HOST_DEVICE (int ip)
+                                 { return predicate(ptile_data, ip) ? 1 : 0; });
+                }
+
                 auto dst_index = ptile_buffer.numParticles();
-                ptile_buffer.resize(dst_index + np);
+                {
+                  WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::resize_eb");
+                  ptile_buffer.resize(dst_index + amrex::get<0>(reduce_data.value()));
+                }
 
                 int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
                 int timestep = warpx_instance.getistep(0);
-                using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
-                auto count = amrex::filterAndTransformParticles(ptile_buffer, ptile,
-                    [=] AMREX_GPU_HOST_DEVICE (const SrcData& /*src*/, const int ip)
-                    /* NVCC 11.3.109 chokes in C++17 on this: noexcept */
-                    {
-                        amrex::ParticleReal xp, yp, zp;
-                        getPosition(ip, xp, yp, zp);
-
-                        amrex::Real phi_value  = doGatherScalarFieldNodal(
-                            xp, yp, zp, phiarr, dxi, plo
-                        );
-                        return phi_value < 0.0 ? 1 : 0;
-                    },
-                    CopyAndTimestamp{timestamp_index, timestep}, 0, dst_index);
-                ptile_buffer.resize(dst_index + count);
+                {
+                  WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
+                  amrex::filterAndTransformParticles(ptile_buffer, ptile, predicate,
+                                                     CopyAndTimestamp{timestamp_index, timestep}, 0, dst_index);
+                }
             }
         }
     }
