@@ -298,6 +298,21 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
     return is_specified;
 }
 
+/** Similar to amrex::ParmParse::query, but also supports math expressions for the value.
+ *
+ * amrex::ParmParse::query reads a name and a value from the input file. This function does the
+ * same, and applies the amrex::Parser to the value, so the user has the choice to specify a value or
+ * a math expression (including user-defined constants).
+ * Works for amrex::Real numbers and integers.
+ *
+ * \param[in] a_pp amrex::ParmParse object
+ * \param[in] str name of the parameter to read
+ * \param[out] val where the value queried and parsed is stored, either a scalar or vector
+ * \param[in] start_ix start index in the list of inputs values (optional with arrays, default is
+ * amrex::ParmParse::FIRST for starting with the first input value)
+ * \param[in] num_val number of input values to use (optional with arrays, default is
+ * amrex::ParmParse::LAST for reading until the last input value)
+ */
 template <typename T>
 int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<T>& val,
                         const int start_ix, const int num_val)
@@ -323,22 +338,6 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
     // return the same output as amrex::ParmParse::query
     return is_specified;
 }
-
-/** Similar to amrex::ParmParse::query, but also supports math expressions for the value.
- *
- * amrex::ParmParse::query reads a name and a value from the input file. This function does the
- * same, and applies the amrex::Parser to the value, so the user has the choice to specify a value or
- * a math expression (including user-defined constants).
- * Works for amrex::Real numbers and integers.
- *
- * \param[in] a_pp amrex::ParmParse object
- * \param[in] str name of the parameter to read
- * \param[out] val where the value queried and parsed is stored, either a scalar or vector
- * \param[in] start_ix start index in the list of inputs values (optional with arrays, default is
- * amrex::ParmParse::FIRST for starting with the first input value)
- * \param[in] num_val number of input values to use (optional with arrays, default is
- * amrex::ParmParse::LAST for reading until the last input value)
- */
 
 /** Similar to amrex::ParmParse::get, but also supports math expressions for the value.
  *
