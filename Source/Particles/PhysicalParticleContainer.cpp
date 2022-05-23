@@ -1517,27 +1517,27 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 u = inj_mom->getMomentum(pos.x, pos.y, pos.z, engine);
                 auto pu = PDim3(u);
 
-                u.x *= PhysConst::c;
-                u.y *= PhysConst::c;
-                u.z *= PhysConst::c;
+                pu.x *= PhysConst::c;
+                pu.y *= PhysConst::c;
+                pu.z *= PhysConst::c;
 
                 const amrex::Real t_fract = amrex::Random(engine)*dt;
                 UpdatePosition(ppos.x, ppos.y, ppos.z, pu.x, pu.y, pu.z, t_fract);
 
 #if defined(WARPX_DIM_3D)
-                if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
+                if (!tile_realbox.contains(XDim3{ppos.x,ppos.y,ppos.z})) {
                     p.id() = -1;
                     continue;
                 }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
-                if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
+                if (!tile_realbox.contains(XDim3{ppos.x,ppos.z,0.0_prt})) {
                     p.id() = -1;
                     continue;
                 }
 #else
                 amrex::ignore_unused(j,k);
-                if (!tile_realbox.contains(XDim3{pos.z,0.0_rt,0.0_rt})) {
+                if (!tile_realbox.contains(XDim3{ppos.z,0.0_prt,0.0_prt})) {
                     p.id() = -1;
                     continue;
                 }
@@ -1545,8 +1545,8 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
                 // Save the x and y values to use in the insideBounds checks.
                 // This is needed with WARPX_DIM_RZ since x and y are modified.
-                Real xb = pos.x;
-                Real yb = pos.y;
+                Real xb = ppos.x;
+                Real yb = ppos.y;
 
 #ifdef WARPX_DIM_RZ
                 // Replace the x and y, setting an angle theta.
@@ -1555,25 +1555,25 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 if (nmodes == 1) {
                     // With only 1 mode, the angle doesn't matter so
                     // choose it randomly.
-                    theta = 2._rt*MathConst::pi*amrex::Random(engine);
+                    theta = 2._prt*MathConst::pi*amrex::Random(engine);
                 } else {
-                    theta = 2._rt*MathConst::pi*r.y;
+                    theta = 2._prt*MathConst::pi*r.y;
                 }
                 Real const cos_theta = std::cos(theta);
                 Real const sin_theta = std::sin(theta);
                 // Rotate the position
-                pos.x = xb*cos_theta;
-                pos.y = xb*sin_theta;
+                ppos.x = xb*cos_theta;
+                ppos.y = xb*sin_theta;
                 if (loc_flux_normal_axis != 2) {
                     // Rotate the momentum
                     // This because, when the flux direction is e.g. "r"
                     // the `inj_mom` objects generates a v*Gaussian distribution
                     // along the Cartesian "x" directionm by default. This
                     // needs to be rotated along "r".
-                    Real ur = u.x;
-                    Real ut = u.y;
-                    u.x = cos_theta*ur - sin_theta*ut;
-                    u.y = sin_theta*ur + cos_theta*ut;
+                    Real ur = pu.x;
+                    Real ut = pu.y;
+                    pu.x = cos_theta*ur - sin_theta*ut;
+                    pu.y = sin_theta*ur + cos_theta*ut;
                 }
 #endif
 
@@ -1582,12 +1582,12 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // xmin, xmax, ymin, ymax, zmin, zmax, go to
                 // the next generated particle.
 
-                if (!inj_pos->insideBounds(xb, yb, pos.z)) {
+                if (!inj_pos->insideBounds(xb, yb, ppos.z)) {
                     p.id() = -1;
                     continue;
                 }
 
-                Real dens = inj_rho->getDensity(pos.x, pos.y, pos.z);
+                Real dens = inj_rho->getDensity(ppos.x, ppos.y, ppos.z);
 
                 // Remove particle if density below threshold
                 if ( dens < density_min ){
@@ -1625,28 +1625,28 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                     } else {
                          // This is not correct since it might shift the particle
                          // out of the local grid
-                         pos.x = std::sqrt(xb*rmax);
+                         ppos.x = std::sqrt(xb*rmax);
                          weight *= dx[0];
                     }
                 }
 #endif
                 pa[PIdx::w ][ip] = weight;
-                pa[PIdx::ux][ip] = u.x;
-                pa[PIdx::uy][ip] = u.y;
-                pa[PIdx::uz][ip] = u.z;
+                pa[PIdx::ux][ip] = pu.x;
+                pa[PIdx::uy][ip] = pu.y;
+                pa[PIdx::uz][ip] = pu.z;
 
 #if defined(WARPX_DIM_3D)
-                p.pos(0) = pos.x;
-                p.pos(1) = pos.y;
-                p.pos(2) = pos.z;
+                p.pos(0) = ppos.x;
+                p.pos(1) = ppos.y;
+                p.pos(2) = ppos.z;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 #ifdef WARPX_DIM_RZ
                 pa[PIdx::theta][ip] = theta;
 #endif
                 p.pos(0) = xb;
-                p.pos(1) = pos.z;
+                p.pos(1) = ppos.z;
 #else
-                p.pos(0) = pos.z;
+                p.pos(0) = ppos.z;
 #endif
             }
         });
