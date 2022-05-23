@@ -35,7 +35,7 @@
 using namespace amrex::literals;
 
 Diagnostics::Diagnostics (int i, std::string name)
-    : m_diag_name(name), m_diag_index(i)
+    : m_diag_name(std::move(name)), m_diag_index(i)
 {
 }
 
@@ -97,7 +97,7 @@ Diagnostics::BaseReadParameters ()
             m_varnames_fields.end());
     }
 
-    // Get names of particle quantities to average at each grid point
+    // Get names of particle field diagnostic quantities to calculate at each grid point
     const bool pfield_varnames_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
     if (!pfield_varnames_specified){
         m_pfield_varnames = {};
@@ -105,10 +105,9 @@ Diagnostics::BaseReadParameters ()
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_pfield_varnames.size() == 0,
-        "Input error: cannot use particle_fields_to_plot not implemented for RZ"
+        "Input error: cannot use particle_fields_to_plot with RZ"
     );
 #endif
-
 
     // Get parser strings for particle fields and generate map of parsers
     std::string parser_str;
@@ -116,21 +115,24 @@ Diagnostics::BaseReadParameters ()
     bool do_parser_filter;
     amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
+        bool do_average = true;
+        pp_diag_pfield.query((var + ".do_average").c_str(), do_average);
+        m_pfield_do_average.push_back(do_average);
         Store_parserString(pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)").c_str(), parser_str);
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             parser_str != "",
-            "Input error: cannot find parser string for " + var + "."
-            + m_diag_name + ".particle_fields." + var + " in file"
+            "Input error: cannot find parser string for " + var + " in file. "
+            + m_diag_name + ".particle_fields." + var + "(x,y,z,ux,uy,uz) is required"
         );
 
-        m_pfield_strings.insert({var, parser_str});
+        m_pfield_strings.push_back(parser_str);
 
         // Look for and record filter functions. If one is not found, the empty string will be
         // stored as the filter string, and will be ignored.
         do_parser_filter = pp_diag_pfield.query((var + ".filter(x,y,z,ux,uy,uz)").c_str(), filter_parser_str);
-        m_pfield_dofilter.insert({var, do_parser_filter});
-        m_pfield_filter_strings.insert({var, filter_parser_str});
+        m_pfield_dofilter.push_back(do_parser_filter);
+        m_pfield_filter_strings.push_back(filter_parser_str);
     }
 
     // Names of all species in the simulation
