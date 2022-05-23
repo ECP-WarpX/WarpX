@@ -32,7 +32,6 @@ AcceleratorLattice::InitElementFinder (int const lev, amrex::BoxArray const & ba
         {
             (*m_element_finder)[mfi].InitElementFinder(lev, mfi, *this);
         }
-        UpdateElementFinder(lev);
     }
 }
 
