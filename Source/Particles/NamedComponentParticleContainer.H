@@ -16,15 +16,17 @@
 #include <map>
 #include <string>
 
+/** Particle Attributes stored in amrex::ParticleContainer's struct of array
+ */
 struct PIdx
 {
-    enum { // Particle Attributes stored in amrex::ParticleContainer's struct of array
-        w = 0,  // weight
+    enum {
+        w = 0,      ///< weight
         ux, uy, uz,
 #ifdef WARPX_DIM_RZ
-        theta, // RZ needs all three position components
+        theta,      ///< RZ needs all three position components
 #endif
-        nattribs
+        nattribs    ///< number of attributes
     };
 };
 
