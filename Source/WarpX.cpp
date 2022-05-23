@@ -438,9 +438,9 @@ WarpX::~WarpX ()
 
 void
 WarpX::RecordWarning(
-        std::string topic,
-        std::string text,
-        WarnPriority priority)
+        const std::string& topic,
+        const std::string& text,
+        const WarnPriority& priority)
 {
     WARPX_PROFILE("WarpX::RecordWarning");
 

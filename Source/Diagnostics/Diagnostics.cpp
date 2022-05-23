@@ -35,7 +35,7 @@
 using namespace amrex::literals;
 
 Diagnostics::Diagnostics (int i, std::string name)
-    : m_diag_name(name), m_diag_index(i)
+    : m_diag_name(std::move(name)), m_diag_index(i)
 {
 }
 
