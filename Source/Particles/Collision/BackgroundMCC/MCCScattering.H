@@ -76,13 +76,22 @@ void ElasticScatteringWentzel ( amrex::ParticleReal& vx, amrex::ParticleReal& vy
                          amrex::ParticleReal const m,
                          amrex::ParticleReal const M,
                          amrex::RandomEngine const& engine,
-                         amrex::Real cos_chi=1 )
+                         amrex::Real cos_chi=1.0_rt )
 {
     using std::sqrt;
     using std::acos;
     using std::sin;
     using std::cos;
     using namespace amrex::literals;
+
+    // special case of backscattering with equal masses;
+    // return early to avoid unnecessary calculations
+    if (M == m && cos_chi == -1.0_rt) {
+        vx = 0.0_prt;
+        vy = 0.0_prt;
+        vz = 0.0_prt;
+        return;
+    }
 
     // calculate the appropriate angles to rotate to the scattering frame
     amrex::Real theta, phi;
@@ -110,7 +119,7 @@ void ElasticScatteringWentzel ( amrex::ParticleReal& vx, amrex::ParticleReal& vy
     if (cos_chi == 1) {
         // at small energies the scattering model becomes isotropic so we can save
         // some computation here
-        if (E_coll < 0.01_prt) {
+        if (E_coll < 1.0_prt) {
             cos_chi = 2.0_rt * amrex::Random(engine) - 1.0_rt;
         }
         else {
@@ -130,21 +139,23 @@ void ElasticScatteringWentzel ( amrex::ParticleReal& vx, amrex::ParticleReal& vy
 
     // calculate remaining projectile energy after collision using eq. 2.8 and 2.9 of Lim, 2007
     amrex::Real E_kin_final;
-    if (M > 1e5_prt * m) {
+    if (M < 1e3_prt * m) {
         E_kin_final = E_kin - (
             (E_total * sin_chi2 + Mc2 - cos_chi * sqrt(Mc2*Mc2 - mc2*mc2*sin_chi2)) * pc2
-            / ( (E_kin + mc2 + Mc2)*(E_kin + mc2 + Mc2) - pc2 * cos_chi * cos_chi)
+            / ( (E_kin + mc2 + Mc2)*(E_kin + mc2 + Mc2) - pc2 * cos_chi * cos_chi )
         );
     } else {
         E_kin_final = E_kin - (
             (E_total * sin_chi2 + Mc2 * (1.0_prt - cos_chi)) * pc2
-            / ( (E_kin + Mc2)*(E_kin + Mc2) - pc2 * cos_chi * cos_chi)
+            / ( (E_kin + Mc2)*(E_kin + Mc2) - pc2 * cos_chi * cos_chi )
         );
+
+        // E_kin_final = E_kin;
     }
 
     // safety check in case the chosen angle leads to a negative (non-physical)
     // final kinetic energy
-    if (E_kin_final < 0.0_prt) E_kin_final = 0.0_prt;
+    // if (E_kin_final < 0.0_prt) E_kin_final = 0.0_prt;
 
     // get the new momentum magnitude
     const auto pc = sqrt(E_kin_final * (E_kin_final + 2.0_prt*mc2));
@@ -152,19 +163,19 @@ void ElasticScatteringWentzel ( amrex::ParticleReal& vx, amrex::ParticleReal& vy
     const auto gamma = sqrt(1.0_prt + beta*beta);
 
     // get the scattered velocity vector in the scattering frame
-    vx = pc * sin_chi / (PhysConst::c * gamma * m);
-    vy = 0.0_prt;
-    vz = pc * cos_chi / (PhysConst::c * gamma * m);
+    auto ux = pc * sin_chi / (PhysConst::c * gamma * m);
+    auto uy = 0.0_prt;
+    auto uz = pc * cos_chi / (PhysConst::c * gamma * m);
 
     // choose random angle to rotate velocity around z-axis
-    phi = amrex::Random(engine) * 2.0_rt * MathConst::pi;
-    vx = vx * cos(phi);
-    vy = vx * sin(phi);
+    const auto omega = amrex::Random(engine) * 2.0_rt * MathConst::pi;
+    uy = ux * sin(omega);
+    ux = ux * cos(omega);
 
     // now rotate the velocity back to the original target frame
-    vx = vx * cos_theta * cos_phi + vy * sin_theta - vz * cos_theta * sin_phi;
-    vy = -vx * sin_theta * cos_phi + vy * cos_theta - vz * sin_theta * sin_phi;
-    vz = -vx * sin_phi + vz * cos_phi;
+    vx = ux * cos_theta * cos_phi + uy * sin_theta - uz * cos_theta * sin_phi;
+    vy = -ux * sin_theta * cos_phi + uy * cos_theta - uz * sin_theta * sin_phi;
+    vz = -ux * sin_phi + uz * cos_phi;
 }
 
 

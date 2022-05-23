@@ -358,7 +358,6 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               ua_x = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
                               ua_y = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
                               ua_z = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
-
                               /*
                               // calculate relative velocity of collision and collision energy if
                               // the colliding particle is an ion. For electron collisions we
@@ -371,7 +370,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               // from the electron energy.
                               if (mass_a / mass1 > 1e3) {
                                   v_coll2 = ux[ip]*ux[ip] + uy[ip]*uy[ip] + uz[ip]*uz[ip];
-                                  ParticleUtils::getEnergy(v_coll2, mass1, E_coll);
+                                  ParticleUtils::getEnergy(v_coll2, mass1, gamma, E_coll);
                               }
                               else {
                                   v_coll2 = (
@@ -384,8 +383,8 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                             / PhysConst::q_e
                                             );
                               }
+                              v_coll = sqrt(v_coll2);
                               */
-
                               // we assume the target particle is not relativistic (in
                               // the lab frame) and therefore we can transform the projectile
                               // velocity to a frame in which the target is stationary with
@@ -397,8 +396,23 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               v_coll = sqrt(v_coll2);
 
                               // calculate the (relativistic) collision energy in eV
-                              ParticleUtils::getEnergy(v_coll2, mass1, gamma, E_coll);
-
+                              // using the proper mass in the COM frame
+                              ParticleUtils::getCollisionEnergy(v_coll2, mass1, mass_a, gamma, E_coll);
+                              /*
+                              if (mass_a == mass1) {
+                                    amrex::Print() << " " << E_coll << std::endl;
+                                    E_coll = (
+                                        0.5_rt * mass1 * mass_a / (mass1 + mass_a) * v_coll2
+                                        / PhysConst::q_e
+                                    );
+                                    amrex::Print() << "    " << E_coll << std::endl;
+                              }
+                              if (mass_a > mass1) {
+                                    amrex::Print() << " " << E_coll << std::endl;
+                                    ParticleUtils::getEnergy(v_coll2, mass1, gamma, E_coll);
+                                    amrex::Print() << "    " << E_coll << std::endl;
+                              }
+                              */
                               // loop through all collision pathways
                               for (int i = 0; i < process_count; i++) {
                                   auto const& scattering_process = *(scattering_processes + i);
@@ -439,29 +453,26 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                         mass1, mass_a, engine
                                       );
                                       /*
+                                      amrex::Print() << "   " << sqrt(vx*vx + vy*vy + vz*vz) << std::endl;
                                       // get the new velocity magnitude
                                       amrex::Real vp = sqrt(
                                                             2.0_rt / mass1 * PhysConst::q_e
                                                             * (E_coll - scattering_process.m_energy_penalty)
                                                             );
-                                      ParticleUtils::RandomizeVelocity(ux[ip], uy[ip], uz[ip], vp, engine);*/
+                                      amrex::Print() << vp << std::endl;
+                                      ParticleUtils::RandomizeVelocity(ux[ip], uy[ip], uz[ip], vp, engine);
+                                      vx = ux[ip] - ua_x;
+                                      vy = uy[ip] - ua_y;
+                                      vz = uz[ip] - ua_z;*/
                                   }
-                                  else if (scattering_process.m_type == MCCProcessType::BACK) {
+                                  else if (scattering_process.m_type == MCCProcessType::BACK
+                                           || scattering_process.m_type == MCCProcessType::CHARGE_EXCHANGE) {
                                       // elastic scattering through pi degrees
                                       ElasticScatteringWentzel(
                                         vx, vy, vz, E_coll,
                                         m_screening_prefactor, m_background_Z,
                                         mass1, mass_a, engine, -1.0_rt
                                       );
-                                  }
-                                  else if (scattering_process.m_type == MCCProcessType::CHARGE_EXCHANGE) {
-                                      // swap projectile velocity for neutral velocity - this is a special
-                                      // case of back scattering where the projectile and target have the
-                                      // same mass
-                                      // TODO: allow relativistic heavy particles
-                                      vx = 0.0_prt;
-                                      vy = 0.0_prt;
-                                      vz = 0.0_prt;
                                   }
 
                                   // update particle velocity with new components in labframe

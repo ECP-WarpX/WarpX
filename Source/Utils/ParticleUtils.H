@@ -54,6 +54,34 @@ namespace ParticleUtils {
     }
 
     /**
+     * \brief Return (relativistic) collision energy assuming the target (with
+     * mass M) is stationary and the projectile is approaching with the
+     * the given velocity and mass m.
+     *
+     * @param[in] v2 square of particle speed ( v dot v)
+     * @param[in] m, M mass of projectile and target, respectively
+     * @param[out] energy particle energy in eV
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_INLINE
+    void getCollisionEnergy ( amrex::ParticleReal const v2, amrex::ParticleReal const m,
+                     amrex::ParticleReal const M, amrex::ParticleReal& gamma,
+                     amrex::ParticleReal& energy )
+    {
+        using std::sqrt;
+        using namespace amrex::literals;
+
+        // Compute c^2 since it is used repeatedly
+        constexpr auto c2 = PhysConst::c * PhysConst::c;
+
+        const auto beta = v2 / c2;
+        gamma = sqrt(1.0_prt + beta);
+        const auto m_tot = M + gamma*m;
+        energy = (
+            sqrt(m_tot*m_tot - gamma*gamma*m*m*beta)*c2 - m*c2 - M*c2
+        ) / PhysConst::q_e;
+    }
+
+    /**
      * \brief Return angles used to rotate the given particle velocity vector
      * such that v' = (0, 0, |v|).
      *
