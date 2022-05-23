@@ -43,6 +43,8 @@
 #include <string>
 #include <utility>
 
+using namespace amrex::literals;
+
 namespace ParticleStringNames
 {
     const std::map<std::string, int> to_index = {
@@ -176,17 +178,14 @@ public:
      *
      * \param[in,out] J vector of current densities (one three-dimensional array of pointers
      *                to MultiFabs per mesh refinement level)
-     * \param[in] dt: Time step for particle level (is used when temporarily
-     *                modifying the particle positions, either within the
-     *                Esirkepov or when `relative_t` is different than 0
-     * \param[in] relative_t: Time at which to deposit J, relative to the time
-     *                of the current positions of the particles (expressed as
-     *                a fraction of dt). When different than 0, the particle
-     *                position will be temporarily modified to match the
-     *                time of the deposition.
+     * \param[in] dt Time step for particle level
+     * \param[in] relative_time Time at which to deposit J, relative to the time of the
+     *                          current positions of the particles. When different than 0,
+     *                          the particle position will be temporarily modified to match
+     *                          the time of the deposition.
      */
     void DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                         const amrex::Real dt, const amrex::Real relative_t);
+                         const amrex::Real dt, const amrex::Real relative_time);
 
     /**
      * \brief Deposit charge density.
@@ -363,8 +362,6 @@ public:
     */
     std::string getSpeciesTypeName () const {return species::get_name(physical_species);}
 
-    amrex::Vector<amrex::Real> get_v_galilean () {return m_v_galilean;}
-
     /**
      * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer only.
      * Empty body is here because making the method purely virtual would mean that we need to
@@ -382,7 +379,6 @@ public:
      void defineAllParticleTiles () noexcept;
 
 protected:
-    amrex::Vector<amrex::Real> m_v_galilean = amrex::Vector<amrex::Real>(3, amrex::Real(0.));
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
     std::map<std::string, int> particle_runtime_comps;

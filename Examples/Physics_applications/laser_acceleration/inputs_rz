@@ -88,6 +88,5 @@ diagnostics.diags_names = diag1
 diag1.intervals = 10
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-diag1.dump_rz_modes = 1
 diag1.electrons.variables = w ux uy uz
 diag1.beam.variables = w ux uy uz

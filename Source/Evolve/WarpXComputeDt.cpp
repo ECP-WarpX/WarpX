@@ -13,6 +13,7 @@
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 
@@ -62,7 +63,8 @@ WarpX::ComputeDt ()
             deltat = cfl * CartesianCKCAlgorithm::ComputeMaxDt(dx);
 #endif
         } else {
-            amrex::Abort("ComputeDt: Unknown algorithm");
+            amrex::Abort(Utils::TextMsg::Err(
+                "ComputeDt: Unknown algorithm"));
         }
     }
 

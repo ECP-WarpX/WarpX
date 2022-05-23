@@ -226,7 +226,10 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
        return cs_mf;
 
     }
-    amrex::Abort("Should not hit this return statement.");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+       false, "Should not hit this return statement.");
+
     return smf;
 }
 
@@ -323,11 +326,11 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
             }
             else {
                 slice_lo[idim] = static_cast<int>(
-                                  round( (slice_cc_nd_box.lo(idim)
+                                  std::round( (slice_cc_nd_box.lo(idim)
                                   - (real_box.lo(idim) ) )
                                   / dom_geom[0].CellSize(idim)) );
                 slice_lo2[idim] = static_cast<int>(
-                                  ceil((slice_cc_nd_box.lo(idim)
+                                  std::ceil((slice_cc_nd_box.lo(idim)
                                   - (real_box.lo(idim) ) )
                                   / dom_geom[0].CellSize(idim) ) );
             }

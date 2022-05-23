@@ -1,5 +1,5 @@
-# Copyright 2018-2020 Andrew Myers, David Grote, Ligia Diana Amorim
-# Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+# Copyright 2018-2022 Andrew Myers, David Grote, Ligia Diana Amorim
+# Maxence Thevenet, Remi Lehe, Revathi Jambunathan, Lorenzo Giacomel
 #
 #
 # This file is part of WarpX.
@@ -360,9 +360,9 @@ class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
         species.multiple_particles_pos_x = self.x
         species.multiple_particles_pos_y = self.y
         species.multiple_particles_pos_z = self.z
-        species.multiple_particles_vel_x = self.ux/constants.c
-        species.multiple_particles_vel_y = self.uy/constants.c
-        species.multiple_particles_vel_z = self.uz/constants.c
+        species.multiple_particles_vel_x = np.array(self.ux)/constants.c
+        species.multiple_particles_vel_y = np.array(self.uy)/constants.c
+        species.multiple_particles_vel_z = np.array(self.uz)/constants.c
         species.multiple_particles_weight = self.weight
         if density_scale is not None:
             species.multiple_particles_weight = self.weight*density_scale
@@ -753,6 +753,7 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
         self.laser.polarization = self.polarization_direction  # The main polarization vector
         self.laser.profile_waist = self.waist  # The waist of the laser (in meters)
         self.laser.profile_duration = self.duration  # The duration of the laser (in seconds)
+        self.laser.direction = self.propagation_direction
         self.laser.zeta = self.zeta
         self.laser.beta = self.beta
         self.laser.phi2 = self.phi2
@@ -775,6 +776,7 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
         self.laser.wavelength = self.wavelength  # The wavelength of the laser (in meters)
         self.laser.e_max = self.Emax  # Maximum amplitude of the laser field (in V/m)
         self.laser.polarization = self.polarization_direction  # The main polarization vector
+        self.laser.direction = self.propagation_direction
         self.laser.do_continuous_injection = self.fill_in
 
         if self.mangle_dict is None:
@@ -915,21 +917,43 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
     """
     Custom class to handle set up of embedded boundaries specific to WarpX.
     If embedded boundary initialization is added to picmistandard this can be
-    changed to inherit that functionality.
+    changed to inherit that functionality. The geometry can be specified either as
+    an implicit function or as an STL file (ASCII or binary). In the latter case the
+    geometry specified in the STL file can be scaled, translated and inverted.
     - implicit_function: Analytic expression describing the embedded boundary
+    - stl_file: STL file path (string), file contains the embedded boundary geometry
+    - stl_scale: factor by which the STL geometry is scaled (pure number)
+    - stl_center: vector by which the STL geometry is translated (in meters)
+    - stl_reverse_normal: if True inverts the orientation of the STL geometry
     - potential: Analytic expression defining the potential. Can only be specified
                  when the solver is electrostatic. Optional, defaults to 0.
      Parameters used in the expressions should be given as additional keyword arguments.
     """
-    def __init__(self, implicit_function, potential=None, **kw):
+    def __init__(self, implicit_function=None, stl_file=None, stl_scale=None, stl_center=None, stl_reverse_normal=False,
+                 potential=None, **kw):
+
+        assert stl_file is None or implicit_function is None, Exception('Only one between implicit_function and '
+                                                                            'stl_file can be specified')
+
         self.implicit_function = implicit_function
+        self.stl_file = stl_file
+
+        if stl_file is None:
+            assert stl_scale is None, Exception('EB can only be scaled only when using an stl file')
+            assert stl_center is None, Exception('EB can only be translated only when using an stl file')
+            assert stl_reverse_normal is False, Exception('EB can only be reversed only when using an stl file')
+
+        self.stl_scale = stl_scale
+        self.stl_center = stl_center
+        self.stl_reverse_normal = stl_reverse_normal
+
         self.potential = potential
 
         # Handle keyword arguments used in expressions
         self.user_defined_kw = {}
         for k in list(kw.keys()):
-            if (re.search(r'\b%s\b'%k, implicit_function) or
-                (potential is not None and re.search(r'\b%s\b'%k, potential))):
+            if (implicit_function is not None and re.search(r'\b%s\b'%k, implicit_function) or
+               (potential is not None and re.search(r'\b%s\b'%k, potential))):
                 self.user_defined_kw[k] = kw[k]
                 del kw[k]
 
@@ -942,13 +966,53 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         # defined in my_constants with the same name but different value.
         self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
-        expression = pywarpx.my_constants.mangle_expression(self.implicit_function, self.mangle_dict)
-        pywarpx.warpx.eb_implicit_function = expression
+        if self.implicit_function is not None:
+            expression = pywarpx.my_constants.mangle_expression(self.implicit_function, self.mangle_dict)
+            pywarpx.warpx.eb_implicit_function = expression
+
+        if self.stl_file is not None:
+            pywarpx.eb2.geom_type = "stl"
+            pywarpx.eb2.stl_file = self.stl_file
+            pywarpx.eb2.stl_scale = self.stl_scale
+            pywarpx.eb2.stl_center = self.stl_center
+            pywarpx.eb2.stl_reverse_normal = self.stl_reverse_normal
 
         if self.potential is not None:
             assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
             expression = pywarpx.my_constants.mangle_expression(self.potential, self.mangle_dict)
             pywarpx.warpx.__setattr__('eb_potential(x,y,z,t)', expression)
+
+
+class PlasmaLens(picmistandard.base._ClassWithInit):
+    """
+    Custom class to setup a plasma lens lattice.
+    The applied fields are dependent on the transverse position
+      - Ex = x*stengths_E
+      - Ey = y*stengths_E
+      - Bx = +y*stengths_B
+      - By = -x*stengths_B
+    """
+    def __init__(self, period, starts, lengths, strengths_E=None, strengths_B=None, **kw):
+        self.period = period
+        self.starts = starts
+        self.lengths = lengths
+        self.strengths_E = strengths_E
+        self.strengths_B = strengths_B
+
+        assert (self.strengths_E is not None) or (self.strengths_B is not None),\
+               Exception('One of strengths_E or strengths_B must be supplied')
+
+        self.handle_init(kw)
+
+    def initialize_inputs(self):
+
+        pywarpx.particles.E_ext_particle_init_style = 'repeated_plasma_lens'
+        pywarpx.particles.B_ext_particle_init_style = 'repeated_plasma_lens'
+        pywarpx.particles.repeated_plasma_lens_period = self.period
+        pywarpx.particles.repeated_plasma_lens_starts = self.starts
+        pywarpx.particles.repeated_plasma_lens_lengths = self.lengths
+        pywarpx.particles.repeated_plasma_lens_strengths_E = self.strengths_E
+        pywarpx.particles.repeated_plasma_lens_strengths_B = self.strengths_B
 
 
 class Simulation(picmistandard.PICMI_Simulation):
@@ -980,6 +1044,9 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
+
+        self.break_signals = kw.pop('warpx_break_signals', None)
+        self.checkpoint_signals = kw.pop('warpx_checkpoint_signals', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -1018,6 +1085,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 
         pywarpx.amr.check_input = self.amr_check_input
+
+        pywarpx.warpx.break_signals = self.break_signals
+        pywarpx.warpx.checkpoint_signals = self.checkpoint_signals
 
         particle_shape = self.particle_shape
         for s in self.species:

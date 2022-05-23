@@ -35,13 +35,11 @@
 using namespace amrex::literals;
 
 Diagnostics::Diagnostics (int i, std::string name)
-    : m_diag_name(name), m_diag_index(i)
+    : m_diag_name(std::move(name)), m_diag_index(i)
 {
 }
 
-Diagnostics::~Diagnostics ()
-{
-}
+Diagnostics::~Diagnostics () = default;
 
 bool
 Diagnostics::BaseReadParameters ()
@@ -55,10 +53,19 @@ Diagnostics::BaseReadParameters ()
     pp_diag_name.query("format", m_format);
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
+    amrex::ParmParse pp_geometry("geometry");
+    std::string dims;
+    pp_geometry.get("dims", dims);
+
     // Query list of grid fields to write to output
     bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames_fields);
     if (!varnames_specified){
-        m_varnames_fields = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
+        if( dims == "RZ" and m_format == "openpmd" ) {
+            m_varnames_fields = {"Er", "Et", "Ez", "Br", "Bt", "Bz", "jr", "jt", "jz"};
+        }
+        else {
+            m_varnames_fields = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
+        }
     }
 
     // Sanity check if user requests to plot phi
@@ -90,30 +97,42 @@ Diagnostics::BaseReadParameters ()
             m_varnames_fields.end());
     }
 
-    // Get names of particle quantities to average at each grid point
+    // Get names of particle field diagnostic quantities to calculate at each grid point
     const bool pfield_varnames_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
     if (!pfield_varnames_specified){
         m_pfield_varnames = {};
     }
 #ifdef WARPX_DIM_RZ
-    if (m_pfield_varnames.size() != 0) {
-        amrex::Abort("Input error: cannot use particle_fields_to_plot not implemented for RZ");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_pfield_varnames.size() == 0,
+        "Input error: cannot use particle_fields_to_plot with RZ"
+    );
 #endif
-
 
     // Get parser strings for particle fields and generate map of parsers
     std::string parser_str;
+    std::string filter_parser_str = "";
+    bool do_parser_filter;
     amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
+        bool do_average = true;
+        pp_diag_pfield.query((var + ".do_average").c_str(), do_average);
+        m_pfield_do_average.push_back(do_average);
         Store_parserString(pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)").c_str(), parser_str);
-        if (parser_str != "") {
-            m_pfield_strings.insert({var, parser_str});
-        }
-        else {
-            amrex::Abort("Input error: cannot find parser string for " + var + "." +
-                         m_diag_name + ".particle_fields." + var + " in file");
-        }
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            parser_str != "",
+            "Input error: cannot find parser string for " + var + " in file. "
+            + m_diag_name + ".particle_fields." + var + "(x,y,z,ux,uy,uz) is required"
+        );
+
+        m_pfield_strings.push_back(parser_str);
+
+        // Look for and record filter functions. If one is not found, the empty string will be
+        // stored as the filter string, and will be ignored.
+        do_parser_filter = pp_diag_pfield.query((var + ".filter(x,y,z,ux,uy,uz)").c_str(), filter_parser_str);
+        m_pfield_dofilter.push_back(do_parser_filter);
+        m_pfield_filter_strings.push_back(filter_parser_str);
     }
 
     // Names of all species in the simulation
@@ -141,10 +160,11 @@ Diagnostics::BaseReadParameters ()
             }
         }
         // If species name was misspelled, abort with error message
-        if (p_species_name_is_wrong) {
-            amrex::Abort("Input error: string " + species + " in " + m_diag_name +
-                         ".particle_fields_species does not match any species");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !p_species_name_is_wrong,
+            "Input error: string " + species + " in " + m_diag_name
+            + ".particle_fields_species does not match any species"
+        );
     }
 
     m_varnames = m_varnames_fields;
@@ -228,10 +248,11 @@ Diagnostics::BaseReadParameters ()
                 }
             }
             // If species name was misspelled, abort with error message
-            if (species_name_is_wrong) {
-                amrex::Abort("Input error: string " + var + " in " + m_diag_name +
-                             ".fields_to_plot does not match any species");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                !species_name_is_wrong,
+                "Input error: string " + var + " in " + m_diag_name
+                + ".fields_to_plot does not match any species"
+            );
         }
     }
 
@@ -258,7 +279,6 @@ Diagnostics::InitData ()
     // initialize member variables and arrays specific to each derived class
     // (FullDiagnostics, BTDiagnostics, etc.)
     DerivedInitData();
-    // loop over all buffers
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         // loop over all levels
         // This includes full diagnostics and BTD as well as cell-center functors for BTD.
@@ -289,9 +309,10 @@ Diagnostics::InitData ()
     }
 
     if (write_species == 0) {
-        if (m_format == "checkpoint"){
-            amrex::Abort("For checkpoint format, write_species flag must be 1.");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            m_format != "checkpoint",
+            "For checkpoint format, write_species flag must be 1."
+        );
         // if user-defined value for write_species == 0, then clear species vector
         for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
             m_output_species.at(i_buffer).clear();
@@ -357,16 +378,19 @@ Diagnostics::InitBaseData ()
             dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
             m_diag_name);
 #else
-        amrex::Abort("To use SENSEI in situ, compile with USE_SENSEI=TRUE");
+        amrex::Abort(Utils::TextMsg::Err(
+            "To use SENSEI in situ, compile with USE_SENSEI=TRUE"));
 #endif
     } else if (m_format == "openpmd"){
 #ifdef WARPX_USE_OPENPMD
         m_flush_format = std::make_unique<FlushFormatOpenPMD>(m_diag_name);
 #else
-        amrex::Abort("To use openpmd output format, need to compile with USE_OPENPMD=TRUE");
+        amrex::Abort(Utils::TextMsg::Err(
+            "To use openpmd output format, need to compile with USE_OPENPMD=TRUE"));
 #endif
     } else {
-        amrex::Abort("unknown output format");
+        amrex::Abort(Utils::TextMsg::Err(
+            "unknown output format"));
     }
 
     // allocate vector of buffers then allocate vector of levels for each buffer
