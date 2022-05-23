@@ -2,6 +2,7 @@
 
 #include "Diagnostics/BTDiagnostics.H"
 #include "Diagnostics/FullDiagnostics.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX.H>
@@ -22,9 +23,13 @@ MultiDiagnostics::MultiDiagnostics ()
         if ( diags_types[i] == DiagTypes::Full ){
             alldiags[i] = std::make_unique<FullDiagnostics>(i, diags_names[i]);
         } else if ( diags_types[i] == DiagTypes::BackTransformed ){
+#ifdef WARPX_DIM_RZ
+            amrex::Abort(Utils::TextMsg::Err("BackTransformed diagnostics is currently not supported for RZ"));
+#else
             alldiags[i] = std::make_unique<BTDiagnostics>(i, diags_names[i]);
+#endif
         } else {
-            amrex::Abort("Unknown diagnostic type");
+            amrex::Abort(Utils::TextMsg::Err("Unknown diagnostic type"));
         }
     }
 }

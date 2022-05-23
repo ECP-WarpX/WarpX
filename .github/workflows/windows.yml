@@ -37,6 +37,7 @@ jobs:
         cmake --build build --config Debug --parallel 2
 
         python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install --upgrade cmake
         $env:PYWARPX_LIB_DIR="$(Get-Location | Foreach-Object { $_.Path })\build\lib\Debug\"
         python3 -m pip install . -vv --no-build-isolation
 
@@ -81,6 +82,7 @@ jobs:
         cmake --build build --config Release --parallel 2
 
         python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install --upgrade cmake
         set "PYWARPX_LIB_DIR=%cd%\build\lib\"
         python3 -m pip install . -vv --no-build-isolation
 
