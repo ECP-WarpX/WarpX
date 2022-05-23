@@ -46,13 +46,6 @@ class PhysicalParticleContainer
 {
 public:
 
-    enum PhysicalParticleType{
-        electron,
-        positron,
-        photon,
-        other
-    };
-
     PhysicalParticleContainer (amrex::AmrCore* amr_core,
                                int ispecies,
                                const std::string& name);
