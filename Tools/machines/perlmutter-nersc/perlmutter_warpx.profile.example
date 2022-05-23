@@ -3,7 +3,6 @@
 
 # required dependencies
 module load cmake/3.22.0
-module swap PrgEnv-nvidia PrgEnv-gnu
 module load cudatoolkit
 
 # optional: just an additional text editor
