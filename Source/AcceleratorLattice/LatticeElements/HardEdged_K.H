@@ -12,6 +12,16 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
 
+/**
+ * \brief Calculate the residence correction, the fraction of the time step the particle
+ * spends inside of the hard edge lattice element
+ *
+ * @param[in] z the current location of the particle
+ * @param[in] zpvdt the estimated future location of the particle, z + v*dt
+ * @param[in] zs the start of the lattice element
+ * @param[in] ze the end of the lattice element
+ * @param[out] the fraction is returned
+ */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real hard_edged_fraction(const amrex::Real z,
                                 const amrex::Real zpvdt,

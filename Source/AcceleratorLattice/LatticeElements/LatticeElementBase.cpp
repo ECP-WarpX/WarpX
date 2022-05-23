@@ -54,10 +54,10 @@ LatticeElementBase::CheckElementCorrectness (amrex::Vector<amrex::Real> const & 
               " is not greater than zs=" + std::to_string(zs[i]) + ".");
     }
 
-    // Make sure that the elements are in increasing order
+    // Make sure that the elements are in increasing order and do not overlap
     for (int i = 1 ; i < static_cast<int>(zs.size()) ; i++) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(zs[i] > ze[i-1],
-            m_element_name + ": the elements must not overlap, but for element "
+            m_element_name + ": the elements must be in increasing order and must not overlap, but for element "
               + std::to_string(i) + ", zs=" + std::to_string(zs[i]) + " is not greater than ze="
               + std::to_string(ze[i-1]) + " of the previous element.");
     }

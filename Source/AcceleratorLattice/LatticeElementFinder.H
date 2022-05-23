@@ -18,32 +18,73 @@
 class AcceleratorLattice;
 struct LatticeElementFinderDevice;
 
-// The top layer needs to be saved in the AcceleratorLattice class in a Layout.
-// This gives a place to store the index array device pointers.
+// Instances of the LatticeElementFinder class are saved in the AcceleratorLattice class
+// as the objects in a LayoutData.
+// The LatticeElementFinder handles the lookup needed to find the lattice elements at
+// particle locations.
 
 struct LatticeElementFinder
 {
 
+    /**
+     * \brief Initialize the element finder at the level and grid
+     *
+     * @param[in] lev the refinement level
+     * @param[in] a_mfi specifies the grid where the finder is defined
+     * @param[in] accelerator_lattice a reference to the accelerator lattice at the refinement level
+     */
     void InitElementFinder (int const lev, amrex::MFIter const& a_mfi,
                             AcceleratorLattice const& accelerator_lattice);
+
+    /**
+     * \brief Allocate the index lookup tables for each element type
+     *
+     * @param[in] accelerator_lattice a reference to the accelerator lattice at the refinement level
+     */
     void AllocateIndices (AcceleratorLattice const& accelerator_lattice);
+
+    /**
+     * \brief Update the index lookup tables for each element type, filling in the values
+     *
+     * @param[in] lev the refinement level
+     * @param[in] a_mfi specifies the grid where the finder is defined
+     * @param[in] accelerator_lattice a reference to the accelerator lattice at the refinement level
+     */
     void UpdateIndices (int const lev, amrex::MFIter const& a_mfi,
                         AcceleratorLattice const& accelerator_lattice);
 
+    /* Define the location and size of the index lookup table */
     int m_nz;
     amrex::Real m_zmin;
     amrex::Real m_dz;
 
+    /* Parameters needed for the Lorentz transforms into and out of the boosted frame */
     amrex::Real m_gamma_boost;
     amrex::Real m_uz_boost;
     amrex::Real m_time;
 
+    /**
+     * \brief Get the device level instance associated with this instance
+     *
+     * @param[in] a_pti specifies the grid where the finder is defined
+     * @param[in] a_offset particle index offset needed to access particle info
+     * @param[in] accelerator_lattice a reference to the accelerator lattice at the refinement level
+     */
     LatticeElementFinderDevice GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset,
                                                         AcceleratorLattice const& accelerator_lattice);
 
+    /* The index lookup tables for each lattice element type */
     amrex::Gpu::DeviceVector<int> d_quad_indices;
     amrex::Gpu::DeviceVector<int> d_plasmalens_indices;
 
+    /**
+     * \brief Fill in the index lookup tables
+     * This loops over the grid (in z) and finds the lattice element closest to each grid point
+     *
+     * @param[in] zs list of the starts of the lattice elements
+     * @param[in] ze list of the ends of the lattice elements
+     * @param[in] indices the index lookup table to be filled in
+     */
     void setup_lattice_indices (amrex::Gpu::DeviceVector<amrex::Real> const & zs,
                                 amrex::Gpu::DeviceVector<amrex::Real> const & ze,
                                 amrex::Gpu::DeviceVector<int> & indices)
@@ -74,9 +115,11 @@ struct LatticeElementFinder
                     z_node = gamma_boost*z_node + uz_boost*time;
                 }
 
-                // Check if any elements overlap the grid cell, and if so, store its index
-                // For now, this assumes that there is no overlap among elements of the same type
+                // Find the index to the element that is closest to the grid cell.
+                // For now, this assumes that there is no overlap among elements of the same type.
                 for (int ie = 0 ; ie < nelements ; ie++) {
+                    // Find the mid points between element ie and the ones before and after it.
+                    // The first and last element need special handling.
                     amrex::Real zcenter_left, zcenter_right;
                     if (ie == 0) {
                         zcenter_left = std::numeric_limits<amrex::Real>::lowest();
@@ -100,33 +143,55 @@ struct LatticeElementFinder
 
 };
 
+/**
+ * \brief The lattice element finder class that can be trivially copied to the device.
+ * This only has simple data and pointers.
+ */
 struct LatticeElementFinderDevice
 {
 
+    /**
+     * \brief Initialize the data needed to do the lookups
+     *
+     * @param[in] a_pti specifies the grid where the finder is defined
+     * @param[in] a_offset particle index offset needed to access particle info
+     * @param[in] accelerator_lattice a reference to the accelerator lattice at the refinement level
+     * @param[in] The host level instance of the element finder that this is associated with
+     */
     void
     InitLatticeElementFinderDevice (WarpXParIter const& a_pti, int const a_offset,
                                     AcceleratorLattice const& accelerator_lattice,
                                     LatticeElementFinder const & h_finder);
 
-    amrex::Real m_gamma_boost;
-    amrex::Real m_uz_boost;
-    amrex::Real m_time;
-
+    /* Size and location of the index lookup table */
     amrex::Real m_zmin;
     amrex::Real m_dz;
     amrex::Real m_dt;
+
+    /* Parameters needed for the Lorentz transforms into and out of the boosted frame */
+    amrex::Real m_gamma_boost;
+    amrex::Real m_uz_boost;
+    amrex::Real m_time;
 
     GetParticlePosition m_get_position;
     const amrex::ParticleReal* AMREX_RESTRICT m_ux = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uy = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uz = nullptr;
 
+    /* Device level instances for each lattice element type */
     HardEdgedQuadrupoleDevice d_quad;
-    int const* d_quad_indices_arr = nullptr;
-
     HardEdgedPlasmaLensDevice d_plasmalens;
+
+    /* Device level index lookup tables for each element type */
+    int const* d_quad_indices_arr = nullptr;
     int const* d_plasmalens_indices_arr = nullptr;
 
+    /**
+     * \brief Gather the field for the particle from the lattice elements
+     *
+     * @param[in] i the particle index
+     * @param[out] field_Ex, ..., the gathered E and B fields
+     */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator () (const long i,
                       amrex::ParticleReal& field_Ex,
@@ -152,6 +217,7 @@ struct LatticeElementFinderDevice
 
         amrex::ParticleReal zpvdt = z + vzp*m_dt;
 
+        // The position passed to the get_field methods needs to be in the lab frame.
         if (m_gamma_boost > 1._rt) {
             z = m_gamma_boost*z + m_uz_boost*m_time;
             zpvdt = m_gamma_boost*zpvdt + m_uz_boost*(m_time + m_dt);
@@ -189,6 +255,7 @@ struct LatticeElementFinderDevice
         }
 
         if (m_gamma_boost > 1._rt) {
+            // The fields returned from get_field is in the lab frame
             // Transform the fields to the boosted frame
             const amrex::Real Ex_boost = m_gamma_boost*Ex_sum - m_uz_boost*By_sum;
             const amrex::Real Ey_boost = m_gamma_boost*Ey_sum + m_uz_boost*Bx_sum;

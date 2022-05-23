@@ -15,10 +15,22 @@
 struct LatticeElementBase
 {
 
+    /**
+     * \brief LatticeElementBase constructor
+     * This gets the input z extent of the element and check for its correctness
+     *
+     * @param[in] element_name the name of the element type
+     */
     LatticeElementBase (std::string const& element_name);
 
     ~LatticeElementBase () = default;
 
+    /**
+     * \brief Check the correctness of the user input z extents of the elements
+     *
+     * @param[in] zs the z starts of the elements
+     * @param[in] ze the z ends of the elements
+     */
     void
     CheckElementCorrectness (amrex::Vector<amrex::Real> const & zs,
                              amrex::Vector<amrex::Real> const & ze);
@@ -27,6 +39,8 @@ struct LatticeElementBase
 
     int nelements = 0;
 
+    // The device level copy of the data.
+    // Note that the data is not needed at the host level.
     amrex::Gpu::DeviceVector<amrex::Real> d_zs;
     amrex::Gpu::DeviceVector<amrex::Real> d_ze;
 

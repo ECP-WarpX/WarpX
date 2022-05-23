@@ -60,6 +60,8 @@ LatticeElementFinder::UpdateIndices (int const lev, amrex::MFIter const& a_mfi,
     auto& warpx = WarpX::GetInstance();
 
     // Update the location of the index grid.
+    // Note that the current box is used since the box may have been updated since
+    // the initialization in InitElementFinder.
     amrex::Box box = a_mfi.tilebox();
     m_zmin = WarpX::LowerCorner(box, lev, 0._rt)[2];
     m_time = warpx.gett_new(lev);

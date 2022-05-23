@@ -11,6 +11,8 @@
 AcceleratorLattice::AcceleratorLattice ()
 {
 
+    /* Get the inputs for and initialize all of the lattice element types */
+
     h_quad = std::make_unique<HardEdgedQuadrupole>();
     if (h_quad->nelements > 0) {
         m_lattice_defined = true;
