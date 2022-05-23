@@ -1595,7 +1595,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 }
 #endif
 
-                Real weight = dens * scale_fac * dt * num_ppc_real / pcounts[index];
+                Real weight = dens * scale_fac * dt;
 #ifdef WARPX_DIM_RZ
                 // The particle weight is proportional to the user-specified
                 // flux (denoted as `dens` here) and the emission surface within
@@ -1852,10 +1852,12 @@ PhysicalParticleContainer::Evolve (int lev,
 
                 WARPX_PROFILE_VAR_STOP(blp_fg);
 
-                //
                 // Current Deposition
-                //
-                if (! skip_deposition) {
+                if (skip_deposition == false)
+                {
+                    // Deposit at t_{n+1/2}
+                    amrex::Real relative_time = -0.5_rt * dt;
+
                     int* AMREX_RESTRICT ion_lev;
                     if (do_field_ionization){
                         ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
@@ -1865,12 +1867,14 @@ PhysicalParticleContainer::Evolve (int lev,
                     // Deposit inside domains
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                    0, np_current, thread_num,
-                                   lev, lev, dt, -0.5_rt); // Deposit current at t_{n+1/2}
-                    if (has_buffer){
+                                   lev, lev, dt, relative_time);
+
+                    if (has_buffer)
+                    {
                         // Deposit in buffers
                         DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                        np_current, np-np_current, thread_num,
-                                       lev, lev-1, dt, -0.5_rt);  // Deposit current at t_{n+1/2}
+                                       lev, lev-1, dt, relative_time);
                     }
                 } // end of "if do_electrostatic == ElectrostaticSolverAlgo::None"
             } // end of "if do_not_push"
@@ -2594,11 +2598,14 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr() + offset;
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr() + offset;
 
-    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
     int do_copy = ( (WarpX::do_back_transformed_diagnostics
                      && do_back_transformed_diagnostics
                      && a_dt_type!=DtType::SecondHalf)
                   || (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf)) );
+    CopyParticleAttribs copyAttribs;
+    if (do_copy) {
+        copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
+    }
 
     int* AMREX_RESTRICT ion_lev = nullptr;
     if (do_field_ionization) {

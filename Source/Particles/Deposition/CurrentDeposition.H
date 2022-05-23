@@ -35,11 +35,11 @@ using namespace amrex::literals;
                          ion_lev is a null pointer.
  * \param jx_fab,jy_fab,jz_fab FArrayBox of current density, either full array or tile.
  * \param np_to_depose Number of particles for which current is deposited.
- * \param relative_t   Time at which to deposit J, relative to the time of
- *                     the current positions of the particles (expressed in
- *                     physical units). When different than 0, the particle
- *                     position will be temporarily modified to match the
- *                     time of the deposition.
+ * \param dt           Time step for particle level
+ * \param relative_time Time at which to deposit J, relative to the time of the
+ *                      current positions of the particles. When different than 0,
+ *                      the particle position will be temporarily modified to match
+ *                      the time of the deposition.
  * \param dx           3D cell size
  * \param xyzmin       Physical lower bounds of domain.
  * \param lo           Index lower bounds of domain.
@@ -59,7 +59,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
                         amrex::FArrayBox& jy_fab,
                         amrex::FArrayBox& jz_fab,
                         const long np_to_depose,
-                        const amrex::Real relative_t,
+                        const amrex::Real relative_time,
                         const std::array<amrex::Real,3>& dx,
                         const std::array<amrex::Real,3>& xyzmin,
                         const amrex::Dim3 lo,
@@ -148,8 +148,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 #if defined(WARPX_DIM_RZ)
             // In RZ, wqx is actually wqr, and wqy is wqtheta
             // Convert to cylinderical at the mid point
-            const amrex::Real xpmid = xp + relative_t*vx;
-            const amrex::Real ypmid = yp + relative_t*vy;
+            const amrex::Real xpmid = xp + relative_time*vx;
+            const amrex::Real ypmid = yp + relative_time*vy;
             const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);
             amrex::Real costheta;
             amrex::Real sintheta;
@@ -178,7 +178,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // Keep these double to avoid bug in single precision
             const double xmid = (rpmid - xmin)*dxi;
 #else
-            const double xmid = ((xp - xmin) + relative_t*vx)*dxi;
+            const double xmid = ((xp - xmin) + relative_time*vx)*dxi;
 #endif
             // j_j[xyz] leftmost grid point in x that the particle touches for the centering of each current
             // sx_j[xyz] shape factor along x for the centering of each current
@@ -214,7 +214,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 #if defined(WARPX_DIM_3D)
             // y direction
             // Keep these double to avoid bug in single precision
-            const double ymid = ( (yp - ymin) + relative_t*vy )*dyi;
+            const double ymid = ((yp - ymin) + relative_time*vy)*dyi;
             double sy_node[depos_order + 1] = {0.};
             double sy_cell[depos_order + 1] = {0.};
             int k_node = 0;
@@ -241,7 +241,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 
             // z direction
             // Keep these double to avoid bug in single precision
-            const double zmid = ((zp - zmin) + relative_t*vz)*dzi;
+            const double zmid = ((zp - zmin) + relative_time*vz)*dzi;
             double sz_node[depos_order + 1] = {0.};
             double sz_cell[depos_order + 1] = {0.};
             int l_node = 0;
@@ -348,6 +348,10 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
  * \param Jx_arr,Jy_arr,Jz_arr Array4 of current density, either full array or tile.
  * \param np_to_depose Number of particles for which current is deposited.
  * \param dt           Time step for particle level
+ * \param[in] relative_time Time at which to deposit J, relative to the time of the
+ *                          current positions of the particles. When different than 0,
+ *                          the particle position will be temporarily modified to match
+ *                          the time of the deposition.
  * \param dx           3D cell size
  * \param xyzmin       Physical lower bounds of domain.
  * \param lo           Index lower bounds of domain.
@@ -368,6 +372,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                                   const amrex::Array4<amrex::Real>& Jz_arr,
                                   const long np_to_depose,
                                   const amrex::Real dt,
+                                  const amrex::Real relative_time,
                                   const std::array<amrex::Real,3>& dx,
                                   const std::array<amrex::Real, 3> xyzmin,
                                   const amrex::Dim3 lo,
@@ -391,19 +396,14 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #if !defined(WARPX_DIM_1D_Z)
     Real const dxi = 1.0_rt / dx[0];
 #endif
-#if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z)
-    Real const dtsdx0 = dt*dxi;
-#endif
 #if !defined(WARPX_DIM_1D_Z)
     Real const xmin = xyzmin[0];
 #endif
 #if defined(WARPX_DIM_3D)
     Real const dyi = 1.0_rt / dx[1];
-    Real const dtsdy0 = dt*dyi;
     Real const ymin = xyzmin[1];
 #endif
     Real const dzi = 1.0_rt / dx[2];
-    Real const dtsdz0 = dt*dzi;
     Real const zmin = xyzmin[2];
 
 #if defined(WARPX_DIM_3D)
@@ -469,17 +469,19 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 
             // computes current and old position in grid units
 #if defined(WARPX_DIM_RZ)
-            Real const xp_mid = xp - 0.5_rt * dt*uxp[ip]*gaminv;
-            Real const yp_mid = yp - 0.5_rt * dt*uyp[ip]*gaminv;
-            Real const xp_old = xp - dt*uxp[ip]*gaminv;
-            Real const yp_old = yp - dt*uyp[ip]*gaminv;
-            Real const rp_new = std::sqrt(xp*xp + yp*yp);
+            Real const xp_new = xp + (relative_time + 0.5_rt*dt)*uxp[ip]*gaminv;
+            Real const yp_new = yp + (relative_time + 0.5_rt*dt)*uyp[ip]*gaminv;
+            Real const xp_mid = xp_new - 0.5_rt*dt*uxp[ip]*gaminv;
+            Real const yp_mid = yp_new - 0.5_rt*dt*uyp[ip]*gaminv;
+            Real const xp_old = xp_new - dt*uxp[ip]*gaminv;
+            Real const yp_old = yp_new - dt*uyp[ip]*gaminv;
+            Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
             Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid);
             Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
             Real costheta_new, sintheta_new;
             if (rp_new > 0._rt) {
-                costheta_new = xp/rp_new;
-                sintheta_new = yp/rp_new;
+                costheta_new = xp_new/rp_new;
+                sintheta_new = yp_new/rp_new;
             } else {
                 costheta_new = 1._rt;
                 sintheta_new = 0._rt;
@@ -507,20 +509,20 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             double const x_new = (rp_new - xmin)*dxi;
             double const x_old = (rp_old - xmin)*dxi;
 #else
-            // Keep these double to avoid bug in single precision
 #if !defined(WARPX_DIM_1D_Z)
-            double const x_new = (xp - xmin)*dxi;
-            double const x_old = x_new - dtsdx0*uxp[ip]*gaminv;
+            // Keep these double to avoid bug in single precision
+            double const x_new = (xp - xmin + (relative_time + 0.5_rt*dt)*uxp[ip]*gaminv)*dxi;
+            double const x_old = x_new - dt*dxi*uxp[ip]*gaminv;
 #endif
 #endif
 #if defined(WARPX_DIM_3D)
             // Keep these double to avoid bug in single precision
-            double const y_new = (yp - ymin)*dyi;
-            double const y_old = y_new - dtsdy0*uyp[ip]*gaminv;
+            double const y_new = (yp - ymin + (relative_time + 0.5_rt*dt)*uyp[ip]*gaminv)*dyi;
+            double const y_old = y_new - dt*dyi*uyp[ip]*gaminv;
 #endif
             // Keep these double to avoid bug in single precision
-            double const z_new = (zp - zmin)*dzi;
-            double const z_old = z_new - dtsdz0*uzp[ip]*gaminv;
+            double const z_new = (zp - zmin + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv)*dzi;
+            double const z_old = z_new - dt*dzi*uzp[ip]*gaminv;
 
 #if defined(WARPX_DIM_RZ)
             Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
@@ -724,6 +726,10 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
  * \param[in,out] jx_fab,jy_fab,jz_fab FArrayBox of current density, either full array or tile
  * \param[in] np_to_depose Number of particles for which current is deposited
  * \param[in] dt           Time step for particle level
+ * \param[in] relative_time Time at which to deposit J, relative to the time of the
+ *                          current positions of the particles. When different than 0,
+ *                          the particle position will be temporarily modified to match
+ *                          the time of the deposition.
  * \param[in] dx           3D cell size
  * \param[in] xyzmin       3D lower bounds of physical domain
  * \param[in] lo           Dimension-agnostic lower bounds of index domain
@@ -745,6 +751,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
                             amrex::FArrayBox& jz_fab,
                             const long np_to_depose,
                             const amrex::Real dt,
+                            const amrex::Real relative_time,
                             const std::array<amrex::Real,3>& dx,
                             const std::array<amrex::Real,3>& xyzmin,
                             const amrex::Dim3 lo,
@@ -756,14 +763,14 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 #if defined(WARPX_DIM_RZ)
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab,
-        np_to_depose, dt, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
+        np_to_depose, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
     amrex::Abort("Vay deposition not implemented in RZ geometry");
 #endif
 
 #if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab,
-        np_to_depose, dt, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
+        np_to_depose, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
     amrex::Abort("Vay deposition not implemented in cartesian 1D geometry");
 #endif
 
@@ -847,6 +854,11 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         const amrex::Real vy = uyp[ip] * invgam;
         const amrex::Real vz = uzp[ip] * invgam;
 
+        // Modify the particle position to match the time of the deposition
+        xp += relative_time * vx;
+        yp += relative_time * vy;
+        zp += relative_time * vz;
+
         // Particle current densities
 #if defined(WARPX_DIM_XZ)
         const amrex::Real wqy = wq * vy * invvol;
@@ -854,16 +866,16 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 
         // Current and old particle positions in grid units
         // Keep these double to avoid bug in single precision.
-        double const x_new = (xp - xmin) * dxi;
-        double const x_old = x_new - vx * dt * dxi;
+        double const x_new = (xp - xmin + 0.5_rt*dt*vx) * dxi;
+        double const x_old = (xp - xmin - 0.5_rt*dt*vx) * dxi;
 #if defined(WARPX_DIM_3D)
         // Keep these double to avoid bug in single precision.
-        double const y_new = (yp - ymin) * dyi;
-        double const y_old = y_new - vy * dt * dyi;
+        double const y_new = (yp - ymin + 0.5_rt*dt*vy) * dyi;
+        double const y_old = (yp - ymin - 0.5_rt*dt*vy) * dyi;
 #endif
         // Keep these double to avoid bug in single precision.
-        double const z_new = (zp - zmin) * dzi;
-        double const z_old = z_new - vz * dt * dzi;
+        double const z_new = (zp - zmin + 0.5_rt*dt*vz) * dzi;
+        double const z_old = (zp - zmin - 0.5_rt*dt*vz) * dzi;
 
         // Shape factor arrays for current and old positions (nodal)
         // Keep these double to avoid bug in single precision.

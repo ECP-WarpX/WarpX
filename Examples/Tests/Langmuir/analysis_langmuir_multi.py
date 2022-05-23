@@ -142,7 +142,7 @@ ax2.set_title(r'$E_z$ (theory)')
 fig.tight_layout()
 fig.savefig('Langmuir_multi_analysis.png', dpi = 200)
 
-tolerance_rel = 0.15
+tolerance_rel = 5e-2
 
 print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
