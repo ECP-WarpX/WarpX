@@ -31,8 +31,6 @@ jobs:
         WARPX_CI_REGULAR_CARTESIAN_2D: 'TRUE'
       cartesian3d:
         WARPX_CI_REGULAR_CARTESIAN_3D: 'TRUE'
-      python:
-        WARPX_CI_PYTHON_MAIN: 'TRUE'
       single_precision:
         WARPX_CI_SINGLE_PRECISION: 'TRUE'
       rz_or_nompi:
@@ -100,7 +98,7 @@ jobs:
           -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
         python3 -m pip install --upgrade openpmd-api
       fi
-      if [[ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" || "${WARPX_CI_PYTHON_MAIN:-FALSE}" == "TRUE" ]]; then
+      if [[ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]]; then
         cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git \
           -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
           -DCMAKE_CXX_STANDARD=17                       \
