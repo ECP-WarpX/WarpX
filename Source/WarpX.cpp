@@ -2134,6 +2134,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     //gather buffer for lev = 0 : emulated MR
     gather_buffer_masks[lev] = std::make_unique<iMultiFab>(ba, dm, ncomps, 1 );
+    current_buffer_masks[lev] = std::make_unique<iMultiFab>(ba, dm, ncomps, 1);
+    current_buffer_masks[lev]->setVal(1);
 
     //
     // Copy of the coarse aux
@@ -2517,7 +2519,7 @@ WarpX::BuildBufferMasks ()
 {
     for (int lev = 0; lev <= maxLevel(); ++lev)
     {
-        for (int ipass = 0; ipass < 2; ++ipass)
+        for (int ipass = 1; ipass < 2; ++ipass)
         {
             int ngbuffer = (ipass == 0) ? n_current_deposition_buffer : n_field_gather_buffer;
             iMultiFab* bmasks = (ipass == 0) ? current_buffer_masks[lev].get() : gather_buffer_masks[lev].get();
@@ -2592,8 +2594,8 @@ WarpX::BuildBufferMasksInBox ( int lev, const amrex::Box tbx, amrex::IArrayBox &
 
         if (x > fine_tag_lo[0] && x < fine_tag_hi[0]) setnull = true;
 
-        if ( setnull ) msk(i,j,k) = 0;
-        else           msk(i,j,k) = 1;
+        if ( setnull ) msk(i,j,k) = 1;
+        else           msk(i,j,k) = 0;
     }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     int k = lo.z;
@@ -2613,8 +2615,8 @@ WarpX::BuildBufferMasksInBox ( int lev, const amrex::Box tbx, amrex::IArrayBox &
                }
             }
 
-            if ( setnull ) msk(i,j,k) = 0;
-            else           msk(i,j,k) = 1;
+            if ( setnull ) msk(i,j,k) = 1;
+            else           msk(i,j,k) = 0;
         }
     }
 #elif defined(WARPX_DIM_3D)
@@ -2638,10 +2640,11 @@ WarpX::BuildBufferMasksInBox ( int lev, const amrex::Box tbx, amrex::IArrayBox &
                    }
                  }
 
-                if ( setnull ) msk(i,j,k) = 0;
-                else           msk(i,j,k) = 1;
+                if ( setnull ) msk(i,j,k) = 1;
+                else           msk(i,j,k) = 0;
 
-                //if(msk(i,j,k) == 0)std::cout << " 3D mask : (x,y,z) = ("<< x << ", "<< y << ", "<< z <<". msk (" << i << ", " << j << ", "<< k << ") = " << msk(i,j,k) << std::endl;
+                //std::cout << " 3D mask : (x,y,z) = ("<< x << ", "<< y << ", "<< z <<". msk (" << i << ", " << j << ", "<< k << ") = " << msk(i,j,k) << std::endl;
+                //if(msk(i,j,k) == 1)std::cout << " 3D mask : (x,y,z) = ("<< x << ", "<< y << ", "<< z <<". msk (" << i << ", " << j << ", "<< k << ") = " << msk(i,j,k) << std::endl;
             }
         }
     }

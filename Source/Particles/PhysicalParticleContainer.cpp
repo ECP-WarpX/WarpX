@@ -1782,6 +1782,7 @@ PhysicalParticleContainer::Evolve (int lev,
             }
 
             const long np_current = (cjx) ? nfine_current : np;
+            std::cout << " np_current = " << nfine_current << ", np = " << np << std::endl;
 
             if (rho && ! skip_deposition) {
                 // Deposit charge before particle push, in component 0 of MultiFab rho.
@@ -1795,13 +1796,14 @@ PhysicalParticleContainer::Evolve (int lev,
                               np_current, thread_num, lev, lev);
                 if (has_buffer){
                     DepositCharge(pti, wp, ion_lev, crho, 0, np_current,
-                                  np-np_current, thread_num, lev, lev-1);
+                                  np-np_current, thread_num, lev, lev);
                 }
             }
 
             if (! do_not_push)
             {
                 const long np_gather = (cEx) ? nfine_gather : np;
+                //const long np_gather = nfine_gather;
 
                 int e_is_nodal = Ex.is_nodal() and Ey.is_nodal() and Ez.is_nodal();
 
@@ -1816,7 +1818,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
                 if (np_gather < np)
                 {
-                    const IntVect& ref_ratio = WarpX::RefRatio(lev-1);
+                    const IntVect& ref_ratio = WarpX::RefRatio(lev);
                     const Box& cbox = amrex::coarsen(box,ref_ratio);
 
                     // Data on the grid
@@ -1843,11 +1845,12 @@ PhysicalParticleContainer::Evolve (int lev,
 
                     // Field gather and push for particles in gather buffers
                     e_is_nodal = cEx->is_nodal() and cEy->is_nodal() and cEz->is_nodal();
+                std::cout << " Here nfine_gather = " << nfine_gather << ", np = " << np << std::endl;
                     PushPX(pti, cexfab, ceyfab, cezfab,
                            cbxfab, cbyfab, cbzfab,
                            cEx->nGrowVect(), e_is_nodal,
                            nfine_gather, np-nfine_gather,
-                           lev, lev-1, dt, ScaleFields(false), a_dt_type);
+                           lev, lev, dt, ScaleFields(false), a_dt_type);
                 }
 
                 WARPX_PROFILE_VAR_STOP(blp_fg);
@@ -1864,18 +1867,22 @@ PhysicalParticleContainer::Evolve (int lev,
                     } else {
                         ion_lev = nullptr;
                     }
+                std::cout << "1 Here np_current = " << np_current << ", np = " << np << std::endl;
                     // Deposit inside domains
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                    0, np_current, thread_num,
                                    lev, lev, dt, relative_time);
+                std::cout << "2 Here np_current = " << np_current << ", np = " << np << std::endl;
 
                     if (has_buffer)
                     {
+                std::cout << "3 Here np_current = " << np_current << ", np = " << np << std::endl;
                         // Deposit in buffers
                         DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                        np_current, np-np_current, thread_num,
-                                       lev, lev-1, dt, relative_time);
+                                       lev, lev, dt, relative_time);
                     }
+                std::cout << "4 Here np_current = " << np_current << ", np = " << np << std::endl;
                 } // end of "if do_electrostatic == ElectrostaticSolverAlgo::None"
             } // end of "if do_not_push"
 

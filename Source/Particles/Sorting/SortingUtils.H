@@ -119,6 +119,7 @@ class fillBufferFlag
             // Find the value of the buffer flag in this cell and
             // store it at the corresponding particle position in the array `inexflag`
             m_inexflag_ptr[i] = m_buffer_mask(iv);
+            //if(m_buffer_mask(iv) == 1 ) std::cout << "iv = " << iv << ", m_inexflag_ptr[" << i << "] = " << m_inexflag_ptr[i] << std::endl;
         }
 
     private:
