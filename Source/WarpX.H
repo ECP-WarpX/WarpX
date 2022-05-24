@@ -1186,7 +1186,6 @@ private:
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_cumsum;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_vay;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
@@ -1478,12 +1477,6 @@ public:
     *
     */
     void ApplyBCKCorrection(const int idim);
-
-    /**
-     * \brief Compute cumulative sums of the preliminary current D
-     *        deposited according to the Vay deposition scheme
-     */
-    void PSATDComputeCurrentPartialSums ();
 
     /**
      * \brief Subtract the average of the cumulative sums of the preliminary current D

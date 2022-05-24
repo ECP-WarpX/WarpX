@@ -700,7 +700,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
             current_fp_vay[lev][i]->setVal(0.0);
-            current_fp_cumsum[lev][i]->setVal(0.0);
         }
 
         if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {

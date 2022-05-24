@@ -314,7 +314,6 @@ WarpX::WarpX ()
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
         current_fp_vay.resize(nlevs_max);
-        current_fp_cumsum.resize(nlevs_max);
     }
 
     F_cp.resize(nlevs_max);
@@ -1606,7 +1605,6 @@ WarpX::ClearLevel (int lev)
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
             current_fp_vay[lev][i].reset();
-            current_fp_cumsum[lev][i].reset();
         }
 
         current_cp[lev][i].reset();
@@ -1843,13 +1841,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             dm, ncomps, ngJ, tag("current_fp_vay[y]"));
         current_fp_vay[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
             dm, ncomps, ngJ, tag("current_fp_vay[z]"));
-
-        current_fp_cumsum[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_cumsum[x]"));
-        current_fp_cumsum[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_cumsum[y]"));
-        current_fp_cumsum[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_cumsum[z]"));
     }
 
     Bfield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_fp[x]"));
