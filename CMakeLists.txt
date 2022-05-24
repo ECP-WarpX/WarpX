@@ -418,12 +418,21 @@ if(WarpX_LIB)
     set(PYINSTALLOPTIONS "" CACHE STRING
         "Additional parameters to pass to `pip install`")
 
+    # add a prefix to custom targets so we do not collide if used as a subproject
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+        set(_WarpX_CUSTOM_TARGET_PREFIX_DEFAULT "")
+    else()
+        set(_WarpX_CUSTOM_TARGET_PREFIX_DEFAULT "warpx_")
+    endif()
+    set(WarpX_CUSTOM_TARGET_PREFIX "${_WarpX_CUSTOM_TARGET_PREFIX_DEFAULT}"
+            CACHE STRING "Prefix for custom targets")
+
     # build the wheel by re-using the shared library we build
-    add_custom_target(pip_wheel
+    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_wheel
         ${CMAKE_COMMAND} -E rm -f ${WarpX_BINARY_DIR}/pywarpx*whl
         COMMAND
             ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-                python3 -m pip wheel -v --no-build-isolation --use-feature=in-tree-build ${WarpX_SOURCE_DIR}
+                python3 -m pip wheel -v --no-build-isolation ${WarpX_SOURCE_DIR}
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
@@ -431,7 +440,7 @@ if(WarpX_LIB)
     )
 
     # this will also upgrade/downgrade dependencies, e.g., when the version of picmistandard changes
-    add_custom_target(pip_install_requirements
+    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
         python3 -m pip install ${PYINSTALLOPTIONS} -r ${WarpX_SOURCE_DIR}/requirements.txt
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
@@ -440,13 +449,13 @@ if(WarpX_LIB)
     # We force-install because in development, it is likely that the version of
     # the package does not change, but the code did change. We need --no-deps,
     # because otherwise pip would also force reinstall all dependencies.
-    add_custom_target(pip_install
+    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install
         ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
             python3 -m pip install --force-reinstall --no-deps ${PYINSTALLOPTIONS} ${WarpX_BINARY_DIR}/pywarpx*whl
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
-            shared pip_wheel pip_install_requirements
+            shared ${WarpX_CUSTOM_TARGET_PREFIX}pip_wheel ${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
     )
 endif()
 

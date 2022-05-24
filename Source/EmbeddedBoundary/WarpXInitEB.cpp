@@ -8,6 +8,7 @@
 #include "WarpX.H"
 
 #ifdef AMREX_USE_EB
+#  include "Utils/TextMsg.H"
 #  include "Utils/WarpXUtil.H"
 
 #  include <AMReX.H>
@@ -128,7 +129,8 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
 #elif defined(WARPX_DIM_3D)
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
 #else
-        amrex::Abort("ComputeEdgeLengths: Only implemented in 2D3V and 3D3V");
+        amrex::Abort(Utils::TextMsg::Err(
+            "ComputeEdgeLengths: Only implemented in 2D3V and 3D3V"));
 #endif
             amrex::Box box = mfi.tilebox(edge_lengths[idim]->ixType().toIntVect(),
                                          edge_lengths[idim]->nGrowVect());
@@ -153,7 +155,8 @@ WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ed
 #elif defined(WARPX_DIM_3D)
                 auto const &edge_cent = edge_centroid[idim]->const_array(mfi);
 #else
-                amrex::Abort("ComputeEdgeLengths: Only implemented in 2D3V and 3D3V");
+                amrex::Abort(Utils::TextMsg::Err(
+                    "ComputeEdgeLengths: Only implemented in 2D3V and 3D3V"));
 #endif
                 amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     if (edge_cent(i, j, k) == amrex::Real(-1.0)) {
@@ -189,7 +192,8 @@ WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face
 #elif defined(WARPX_DIM_3D)
     auto const &area_frac = eb_fact.getAreaFrac();
 #else
-    amrex::Abort("ComputeFaceAreas: Only implemented in 2D3V and 3D3V");
+    amrex::Abort(Utils::TextMsg::Err(
+        "ComputeFaceAreas: Only implemented in 2D3V and 3D3V"));
 #endif
 
 #ifdef WARPX_DIM_XZ
@@ -203,7 +207,8 @@ WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face
 #elif defined(WARPX_DIM_3D)
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
-        amrex::Abort("ComputeFaceAreas: Only implemented in 2D3V and 3D3V");
+        amrex::Abort(Utils::TextMsg::Err(
+            "ComputeFaceAreas: Only implemented in 2D3V and 3D3V"));
 #endif
             amrex::Box box = mfi.tilebox(face_areas[idim]->ixType().toIntVect(),
                                          face_areas[idim]->nGrowVect());
@@ -225,7 +230,8 @@ WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face
 #elif defined(WARPX_DIM_3D)
                 auto const &face = area_frac[idim]->const_array(mfi);
 #else
-                amrex::Abort("ComputeFaceAreas: Only implemented in 2D3V and 3D3V");
+                amrex::Abort(Utils::TextMsg::Err(
+                    "ComputeFaceAreas: Only implemented in 2D3V and 3D3V"));
 #endif
                 amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     face_areas_dim(i, j, k) = face(i, j, k);
@@ -250,7 +256,8 @@ WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengt
 #elif defined(WARPX_DIM_3D)
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
 #else
-        amrex::Abort("ScaleEdges: Only implemented in 2D3V and 3D3V");
+        amrex::Abort(Utils::TextMsg::Err(
+            "ScaleEdges: Only implemented in 2D3V and 3D3V"));
 #endif
             const amrex::Box& box = mfi.tilebox(edge_lengths[idim]->ixType().toIntVect(),
                                                 edge_lengths[idim]->nGrowVect() );
@@ -278,7 +285,8 @@ WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
 #elif defined(WARPX_DIM_3D)
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
-        amrex::Abort("ScaleAreas: Only implemented in 2D3V and 3D3V");
+        amrex::Abort(Utils::TextMsg::Err(
+            "ScaleAreas: Only implemented in 2D3V and 3D3V"));
 #endif
             const amrex::Box& box = mfi.tilebox(face_areas[idim]->ixType().toIntVect(),
                                                 face_areas[idim]->nGrowVect() );
@@ -293,7 +301,8 @@ WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
                 full_area = cell_size[0]*cell_size[1];
             }
 #else
-            amrex::Abort("ScaleAreas: Only implemented in 2D3V and 3D3V");
+            amrex::Abort(Utils::TextMsg::Err(
+                "ScaleAreas: Only implemented in 2D3V and 3D3V"));
 #endif
             auto const &face_areas_dim = face_areas[idim]->array(mfi);
 
@@ -322,7 +331,8 @@ WarpX::MarkCells(){
     // In 2D we change the extrema of the for loop so that we only have the case idim=1
     for (int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
 #else
-    amrex::Abort("MarkCells: Only implemented in 2D3V and 3D3V");
+    amrex::Abort(Utils::TextMsg::Err(
+        "MarkCells: Only implemented in 2D3V and 3D3V"));
 #endif
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
             //amrex::Box const &box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
@@ -356,7 +366,8 @@ WarpX::MarkCells(){
                     S_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                              lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
 #else
-                    amrex::Abort("MarkCells: Only implemented in 2D3V and 3D3V");
+                    amrex::Abort(Utils::TextMsg::Err(
+                        "MarkCells: Only implemented in 2D3V and 3D3V"));
 #endif
                 }else {
                     S_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,

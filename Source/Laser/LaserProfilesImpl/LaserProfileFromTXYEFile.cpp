@@ -262,7 +262,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::find_left_right_time_indices(amrex
         const auto t_min = m_params.t_coords.front();
         const auto t_max = m_params.t_coords.back();
         const auto temp_idx_t_right = static_cast<int>(
-            ceil( (m_params.nt-1)*(t-t_min)/(t_max-t_min)));
+            std::ceil( (m_params.nt-1)*(t-t_min)/(t_max-t_min)));
         idx_t_right = max(min(temp_idx_t_right, m_params.nt-1),1);
     }
     else{
@@ -370,7 +370,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
 #endif
         //Find indices and coordinates along x
         const int temp_idx_x_right = static_cast<int>(
-            ceil((tmp_nx-1)*(Xp[i]- tmp_x_min)/(tmp_x_max-tmp_x_min)));
+            std::ceil((tmp_nx-1)*(Xp[i]- tmp_x_min)/(tmp_x_max-tmp_x_min)));
         const int idx_x_right =
             max(min(temp_idx_x_right,tmp_nx-1),static_cast<int>(1));
         const int idx_x_left = idx_x_right - 1;
@@ -382,7 +382,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
 #if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
         //Find indices and coordinates along y
         const int temp_idx_y_right = static_cast<int>(
-            ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
+            std::ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
         const int idx_y_right =
             max(min(temp_idx_y_right,tmp_ny-1),static_cast<int>(1));
         const int idx_y_left = idx_y_right - 1;
