@@ -88,11 +88,7 @@ public:
         std::map<std::string, int> p_icomps,
         std::map<std::string, int> p_rcomps,
         std::map<std::string, int> p_ricomps)
-<<<<<<< HEAD
-    : amrex::ParticleContainer<0, 0, PIdx::nattribs, 0, Allocator>(std::move(pc)),
-=======
     : amrex::ParticleContainer<0,0,PIdx::nattribs,0,T_Allocator>(std::move(pc)),
->>>>>>> development
     particle_comps(p_comps),
     particle_icomps(p_icomps),
     particle_runtime_comps(p_rcomps),
