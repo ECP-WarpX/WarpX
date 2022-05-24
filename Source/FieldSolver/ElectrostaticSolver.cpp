@@ -301,6 +301,9 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #else
             {{ beta[0], beta[1], beta[2] }};
 #endif
+
+#if !(defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ))
+        // Determine whether to use semi-coarsening
         Array<Real,AMREX_SPACEDIM> dx_scaled
             {AMREX_D_DECL(Geom(lev).CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
                           Geom(lev).CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
@@ -321,6 +324,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
             info.setMaxSemicoarseningLevel(max_semicoarsening_level);
             info.setSemicoarseningDirection(semicoarsening_direction);
         }
+#endif
 
 #if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
         // In the presence of EB or RZ: the solver assumes that the beam is
