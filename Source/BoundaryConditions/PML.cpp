@@ -832,8 +832,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         if (m_divb_cleaning)
         {
             // TODO Shall we define a separate guard cells parameter ngG?
-            const amrex::IntVect& G_nodal_flag = (do_centered) ? amrex::IntVect::TheNodeVector()
-                                                               : amrex::IntVect::TheCellVector();
+            const amrex::IntVect& G_nodal_flag = amrex::IntVect::TheCellVector();
             pml_G_cp = std::make_unique<MultiFab>(amrex::convert(cba, G_nodal_flag), cdm, 3, ngf);
             pml_G_cp->setVal(0.0);
         }
