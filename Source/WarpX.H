@@ -16,12 +16,14 @@
 #include "Diagnostics/BackTransformedDiagnostic_fwd.H"
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
-#include "Evolve/WarpXDtType.H"
-#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
-#include "FieldSolver/ElectrostaticSolver.H"
+#include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
+#include "Filter/NCIGodfreyFilter_fwd.H"
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
+#include "Particles/MultiParticleContainer_fwd.H"
+#include "Particles/WarpXParticleContainer_fwd.H"
+#include "Utils/WarnManager_fwd.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
@@ -30,14 +32,12 @@
 #       include "FieldSolver/SpectralSolver/SpectralSolver_fwd.H"
 #   endif
 #endif
+#include "Evolve/WarpXDtType.H"
+#include "FieldSolver/ElectrostaticSolver.H"
 #include "Filter/BilinearFilter.H"
-#include "Filter/NCIGodfreyFilter_fwd.H"
 #include "Parallelization/GuardCellManager.H"
-#include "Particles/MultiParticleContainer_fwd.H"
-#include "Particles/WarpXParticleContainer_fwd.H"
 #include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/IntervalsParser.H"
-#include "Utils/WarnManager_fwd.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
@@ -122,9 +122,9 @@ public:
      * @param[in] priority priority of the warning message ("medium" by default)
      */
     void RecordWarning(
-        std::string topic,
-        std::string text,
-        WarnPriority priority = WarnPriority::medium);
+        const std::string& topic,
+        const std::string& text,
+        const WarnPriority& priority = WarnPriority::medium);
 
     /**
      * \brief This function prints all the warning messages collected on the present MPI rank

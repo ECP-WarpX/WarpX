@@ -15,6 +15,7 @@
 #include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #ifdef WARPX_USE_PSATD
@@ -441,9 +442,9 @@ WarpX::~WarpX ()
 
 void
 WarpX::RecordWarning(
-        std::string topic,
-        std::string text,
-        WarnPriority priority)
+        const std::string& topic,
+        const std::string& text,
+        const WarnPriority& priority)
 {
     WARPX_PROFILE("WarpX::RecordWarning");
 

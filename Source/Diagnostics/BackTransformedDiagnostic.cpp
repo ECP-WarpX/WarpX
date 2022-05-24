@@ -812,7 +812,7 @@ void BackTransformedDiagnostic::Flush (const Geometry& /*geom*/)
                 // Loop over species to be dumped to BFD
                 for (int j = 0; j < mypc.nSpeciesBackTransformedDiagnostics(); ++j) {
                     // Get species name
-                    std::string species_name =
+                    const std::string& species_name =
                         species_names[mypc.mapSpeciesBackTransformedDiagnostics(j)];
 #ifdef WARPX_USE_HDF5
                     // Dump species data
@@ -999,7 +999,7 @@ writeLabFrameData (const MultiFab* cell_centered_data,
                 // Loop over species to be dumped to BFD
                 for (int j = 0; j < mypc.nSpeciesBackTransformedDiagnostics(); ++j) {
                     // Get species name
-                    const std::string species_name = species_names[
+                    const std::string& species_name = species_names[
                                       mypc.mapSpeciesBackTransformedDiagnostics(j)];
 #ifdef WARPX_USE_HDF5
                     // Write data to disk (HDF5)
@@ -1203,7 +1203,7 @@ LabFrameSnapShot (Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
    m_diag_domain_lab_ = diag_domain_lab;
    m_buff_box_ = diag_box;
    m_ncomp_to_dump_ = ncomp_to_dump;
-   m_mesh_field_names_ = mesh_field_names;
+   m_mesh_field_names_ = std::move(mesh_field_names);
    m_file_num = file_num_in;
    m_current_z_lab = 0.0;
    m_current_z_boost = 0.0;
@@ -1297,7 +1297,7 @@ createLabFrameDirectories() {
         // Loop over species to be dumped to BFD
         for(int i = 0; i < mypc.nSpeciesBackTransformedDiagnostics(); ++i) {
             // Get species name
-            std::string species_name =
+            const std::string& species_name =
                 species_names[mypc.mapSpeciesBackTransformedDiagnostics(i)];
             const std::string fullpath = m_file_name + "/" + species_name;
             if (!UtilCreateDirectory(fullpath, 0755))
@@ -1377,7 +1377,7 @@ LabFrameSlice(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
     m_diag_domain_lab_ = diag_domain_lab;
     m_buff_box_ = diag_box;
     m_ncomp_to_dump_ = ncomp_to_dump;
-    m_mesh_field_names_ = mesh_field_names;
+    m_mesh_field_names_ = std::move(mesh_field_names);
     m_file_num = file_num_in;
     m_current_z_lab = 0.0;
     m_current_z_boost = 0.0;

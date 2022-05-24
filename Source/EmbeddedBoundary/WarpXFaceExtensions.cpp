@@ -7,6 +7,8 @@
 
 #include "WarpX.H"
 
+#include "WarpXFaceInfoBox.H"
+
 #include "Utils/TextMsg.H"
 
 #include <AMReX_Scan.H>

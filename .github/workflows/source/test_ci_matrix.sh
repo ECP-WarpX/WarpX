@@ -19,8 +19,6 @@ WARPX_CI_REGULAR_CARTESIAN_2D=TRUE python prepare_file_ci.py
 grep "\[" ci-tests.ini >>  ci_matrix_elements.txt
 WARPX_CI_REGULAR_CARTESIAN_3D=TRUE python prepare_file_ci.py
 grep "\[" ci-tests.ini >>  ci_matrix_elements.txt
-WARPX_CI_PYTHON_MAIN=TRUE       python prepare_file_ci.py
-grep "\[" ci-tests.ini >> ci_matrix_elements.txt
 WARPX_CI_SINGLE_PRECISION=TRUE  python prepare_file_ci.py
 grep "\[" ci-tests.ini >> ci_matrix_elements.txt
 WARPX_CI_RZ_OR_NOMPI=TRUE      python prepare_file_ci.py

@@ -326,11 +326,11 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
             }
             else {
                 slice_lo[idim] = static_cast<int>(
-                                  round( (slice_cc_nd_box.lo(idim)
+                                  std::round( (slice_cc_nd_box.lo(idim)
                                   - (real_box.lo(idim) ) )
                                   / dom_geom[0].CellSize(idim)) );
                 slice_lo2[idim] = static_cast<int>(
-                                  ceil((slice_cc_nd_box.lo(idim)
+                                  std::ceil((slice_cc_nd_box.lo(idim)
                                   - (real_box.lo(idim) ) )
                                   / dom_geom[0].CellSize(idim) ) );
             }
