@@ -149,13 +149,16 @@ void ElasticScatteringWentzel ( amrex::ParticleReal& vx, amrex::ParticleReal& vy
             (E_total * sin_chi2 + Mc2 * (1.0_prt - cos_chi)) * pc2
             / ( (E_kin + Mc2)*(E_kin + Mc2) - pc2 * cos_chi * cos_chi )
         );
-
-        // E_kin_final = E_kin;
     }
 
-    // safety check in case the chosen angle leads to a negative (non-physical)
-    // final kinetic energy
-    // if (E_kin_final < 0.0_prt) E_kin_final = 0.0_prt;
+    // safety check: it has been observed that E_kin_final is sometimes a small
+    // negative number when it should be 0; presumably due to numerical errors
+    if (E_kin_final < 0.0_prt) {
+        vx = 0.0_prt;
+        vy = 0.0_prt;
+        vz = 0.0_prt;
+        return;
+    }
 
     // get the new momentum magnitude
     const auto pc = sqrt(E_kin_final * (E_kin_final + 2.0_prt*mc2));
@@ -173,7 +176,7 @@ void ElasticScatteringWentzel ( amrex::ParticleReal& vx, amrex::ParticleReal& vy
     ux = ux * cos(omega);
 
     // now rotate the velocity back to the original target frame
-    vx = ux * cos_theta * cos_phi + uy * sin_theta - uz * cos_theta * sin_phi;
+    vx = ux * cos_theta * cos_phi + uy * sin_theta + uz * cos_theta * sin_phi;
     vy = -ux * sin_theta * cos_phi + uy * cos_theta - uz * sin_theta * sin_phi;
     vz = -ux * sin_phi + uz * cos_phi;
 }
