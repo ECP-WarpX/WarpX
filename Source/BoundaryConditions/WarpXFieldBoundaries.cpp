@@ -4,20 +4,15 @@
 #include "Evolve/WarpXDtType.H"
 #include "WarpX_PEC.H"
 
-#include <AMReX_REAL.H>
-#include <AMReX_Vector.H>
-#include <AMReX_Print.H>
-#include <array>
-#include <memory>
-
 #include <AMReX.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_IntVect.H>
-#include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+#include <AMReX_Print.H>
 
 #include <algorithm>
+#include <array>
 #include <memory>
 using namespace amrex::literals;
 using namespace amrex;

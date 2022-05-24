@@ -48,7 +48,7 @@ repos:
 
 # Changes tabs to spaces
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.1.13
+  rev: v1.1.14
   hooks:
   - id: remove-tabs
     exclude: 'Make.WarpX|Make.package|Makefile|GNUmake'

@@ -2,10 +2,12 @@
 import collections
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas
 import pytest
 from pywarpx import picmi
+import scipy
 
 from mewarpx import assemblies, diags, emission, mespecies
 from mewarpx.mwxrun import mwxrun
@@ -692,12 +694,20 @@ def test_arbitrary_distribution_emitter():
 
     run.setup_run(init_inert_gas=True, init_scraper=False, init_injectors=False)
 
-    z = np.arange(0, NZ) + 0.5
-    x = np.arange(0, NX) + 0.5
+    # generate scaled down plasma density used for seeding
+    z = np.linspace(0.5, NZ - 0.5, 256)
+    x = np.linspace(0.5, NX - 0.5, 256)
 
     zz, xx = np.meshgrid(z, x)
 
     plasma_density = np.pi/2 * 1e13 * (
+        np.sin(np.pi / NX * xx) * np.sin(np.pi / NZ * zz))
+
+    # generate full resolution plasma density used as test's reference
+    z = np.linspace(0, NZ, NZ + 1)
+    x = np.linspace(0, NX, NX + 1)
+    zz, xx = np.meshgrid(z, x)
+    ref_plasma_density = np.pi/2 * 1e13 * (
         np.sin(np.pi / NX * xx) * np.sin(np.pi / NZ * zz))
 
     emitter = emission.ArbitraryDistributionVolumeEmitter(
@@ -736,8 +746,8 @@ def test_arbitrary_distribution_emitter():
     ion_xavg = np.mean(ion_density, axis=0)
     ion_zavg = np.mean(ion_density, axis=1)
 
-    sin_xavg = np.mean(plasma_density, axis=0)
-    sin_zavg = np.mean(plasma_density, axis=1)
+    sin_xavg = np.mean(ref_plasma_density, axis=0)
+    sin_zavg = np.mean(ref_plasma_density, axis=1)
 
     assert np.allclose(electron_xavg[10:502], sin_xavg[10:502], rtol=0.06)
     assert np.allclose(electron_zavg[10:502], sin_zavg[10:502], rtol=0.06)

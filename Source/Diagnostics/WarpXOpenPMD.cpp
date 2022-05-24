@@ -16,6 +16,8 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <ablastr/particles/IndexHandling.H>
+
 #include <AMReX.H>
 #include <AMReX_ArrayOfStructs.H>
 #include <AMReX_BLassert.H>
@@ -525,7 +527,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
 #else
-        amrex::Abort("openPMD-api not built with MPI support!");
+        amrex::Abort(Utils::TextMsg::Err("openPMD-api not built with MPI support!"));
 #endif
     } else {
         m_Series = std::make_unique<openPMD::Series>(filepath, access, m_OpenPMDoptions);
@@ -807,7 +809,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                         [](uint64_t const *p) { delete[] p; }
                 );
                 for (auto i = 0; i < numParticleOnTile; i++) {
-                    ids.get()[i] = WarpXUtilIO::localIDtoGlobal(aos[i].id(), aos[i].cpu());
+                    ids.get()[i] = ablastr::particles::localIDtoGlobal(aos[i].id(), aos[i].cpu());
                 }
                 auto const scalar = openPMD::RecordComponent::SCALAR;
                 currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
