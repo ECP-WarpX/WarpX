@@ -340,7 +340,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         // one of the axes of the grid, i.e. that only *one* of the
         // components of `beta` is non-negligible.
 #if defined(WARPX_DIM_RZ)
-        linop.setSigma({0., 1._rt-beta_solver[1]*beta_solver[1]});
+        linop.setSigma({0._rt, 1._rt-beta_solver[1]*beta_solver[1]});
 #else
         linop.setSigma({AMREX_D_DECL(
             1._rt-beta_solver[0]*beta_solver[0],
