@@ -45,19 +45,28 @@ if gamma_boost > 1.:
     zz_sim = gamma_boost*zz_sim + uz_boost*time;
 
 # Fetch the quadrupole lattice data
-lattice_elements = ds.parameters.get('lattice.elements').split()
 quad_starts = []
 quad_lengths = []
 quad_strengths_E = []
 z_location = 0.
-for element in lattice_elements:
-    element_type = ds.parameters.get(f'{element}.type')
-    length = float(ds.parameters.get(f'{element}.ds'))
-    if element_type == 'quad':
-        quad_starts.append(z_location)
-        quad_lengths.append(length)
-        quad_strengths_E.append(float(ds.parameters.get(f'{element}.dEdx')))
-    z_location += length
+def read_lattice(rootname, z_location):
+    lattice_elements = ds.parameters.get(f'{rootname}.elements').split()
+    for element in lattice_elements:
+        element_type = ds.parameters.get(f'{element}.type')
+        if element_type == 'drift':
+            length = float(ds.parameters.get(f'{element}.ds'))
+            z_location += length
+        elif element_type == 'quad':
+            length = float(ds.parameters.get(f'{element}.ds'))
+            quad_starts.append(z_location)
+            quad_lengths.append(length)
+            quad_strengths_E.append(float(ds.parameters.get(f'{element}.dEdx')))
+            z_location += length
+        elif element_type == 'lattice':
+            z_location = read_lattice(element, z_location)
+    return z_location
+
+read_lattice('lattice', z_location)
 
 # Fetch the initial position of the particle
 x0 = [float(x) for x in ds.parameters.get('electron.single_particle_pos').split()]

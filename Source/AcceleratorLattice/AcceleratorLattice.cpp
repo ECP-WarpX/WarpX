@@ -52,6 +52,9 @@ AcceleratorLattice::ReadLattice (std::string const & root_name, amrex::Real & z_
         else if (element_type == "plasmalens") {
             h_plasmalens.AddElement(pp_element, z_location);
         }
+        else if (element_type == "lattice") {
+            ReadLattice(element_name, z_location);
+        }
         else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                 "ERROR: Unknown accelerator lattice element type " + element_type);
