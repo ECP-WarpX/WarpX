@@ -72,13 +72,23 @@ if 'particles.repeated_plasma_lens_period' in ds.parameters:
     plasma_lens_lengths = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_lengths').split()]
     plasma_lens_strengths_E = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths_E').split()]
     plasma_lens_strengths_B = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths_B').split()]
-elif 'lattice.plasmalens.zstarts' in ds.parameters:
+elif 'lattice.elements' in ds.parameters:
+    lattice_elements = ds.parameters.get('lattice.elements').split()
+    plasma_lens_zstarts = []
+    plasma_lens_lengths = []
+    plasma_lens_strengths_E = []
+    z_location = 0.
+    for element in lattice_elements:
+        element_type = ds.parameters.get(f'{element}.type')
+        length = float(ds.parameters.get(f'{element}.ds'))
+        if element_type == 'plasmalens':
+            plasma_lens_zstarts.append(z_location)
+            plasma_lens_lengths.append(length)
+            plasma_lens_strengths_E.append(float(ds.parameters.get(f'{element}.dEdx')))
+        z_location += length
+
     plasma_lens_period = 0.5
-    plasma_lens_zstarts = np.array([float(x) for x in ds.parameters.get('lattice.plasmalens.zstarts').split()])
-    plasma_lens_zends = np.array([float(x) for x in ds.parameters.get('lattice.plasmalens.zends').split()])
     plasma_lens_starts = plasma_lens_zstarts - plasma_lens_period*np.arange(len(plasma_lens_zstarts))
-    plasma_lens_lengths = plasma_lens_zends - plasma_lens_zstarts
-    plasma_lens_strengths_E = [eval(x) for x in ds.parameters.get('lattice.plasmalens.dEdx').split()]
     plasma_lens_strengths_B = np.zeros(len(plasma_lens_zstarts))
 
 

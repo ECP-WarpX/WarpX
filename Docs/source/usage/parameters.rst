@@ -1393,50 +1393,48 @@ Accelerator Lattice
 ^^^^^^^^^^^^^^^^^^^
 
 Several accelerator lattice elements can be defined as described below.
-The elements are defined relative to the `z` axis and must be listed in increasing order in z.
+The elements are defined relative to the `z` axis and in the lab frame. They are described using a simplified MAD like syntax.
 Note that elements of the same type cannot overlap each other.
 
-Hard edged quadrupole
-+++++++++++++++++++++
+* ``lattice.elements`` (``list of strings``) optional (default: no elements)
+    A list of names (one name per lattice element), in the order that they
+    appear in the lattice.
 
-This applies a quadrupole field that is uniform within the `z` extent of the elemnt with a sharp cut off at the ends.
-This uses residence corrections, with the field scaled by the amount of time within the element for particles entering
-or leaving it, to increase the accuracy.
+* ``<element_name>.type`` (``string``)
+    Indicates the element type for this lattice element. This should be one of:
 
-* ``lattice.quad.zstarts`` (list of `floats`)
-    The starts of the quadrupoles along the `z` axis, in the lab frame in meters.
+        * ``drift`` for free drift. This requires this additional parameter:
 
-* ``lattice.quad.zends`` (list of `floats`)
-    The ends of the quadrupoles along the `z` axis, in the lab frame in meters.
+            * ``<element_name>.ds`` (``float``, in meters) the segment length
 
-* ``lattice.quad.dEdx`` (list of `floats`)
-    The transverse electric field gradient of the quadrupoles, in volts/meter.
-    The field applied to the particles with be `Ex = dEdx*x` and `Ey = -dEdx*y`.
+        * ``quad`` for a hard edged quadrupole.
+          This applies a quadrupole field that is uniform within the `z` extent of the elemnt with a sharp cut off at the ends.
+          This uses residence corrections, with the field scaled by the amount of time within the element for particles entering
+          or leaving it, to increase the accuracy.
+          This requires these additional parameters:
 
-* ``lattice.quad.dBdx`` (list of `floats`)
-    The transverse magnetic field gradient of the quadrupoles, in Tesla/meter.
-    The field applied to the particles with be `Bx = dBdx*y` and `By = dBdx*x`.
+            * ``<element_name>.ds`` (``float``, in meters) the segment length
 
-Hard edged plasma lens
-++++++++++++++++++++++
+            * ``<element_name>.dEdx`` (``float``, in volts/meter^2) optional (default: 0.) the electric quadrupole field gradient
+              The field applied to the particles will be `Ex = dEdx*x` and `Ey = -dEdx*y`.
 
-This applies an radially directed plasma lens field that is uniform within the `z` extent of the elemnt with a sharp cut off at the ends.
-This uses residence corrections, with the field scaled by the amount of time within the element for particles entering
-or leaving it, to increase the accuracy.
+            * ``<element_name>.dBdx`` (``float``, in Tesla/meter) optional (default: 0.) the magnetic quadrupole field gradient
+              The field applied to the particles will be `Bx = dBdx*y` and `By = dBdx*x`.
 
-* ``lattice.plasmalens.zstarts`` (list of `floats`)
-    The starts of the lens along the `z` axis, in the lab frame in meters.
+        * ``plasmalens`` for a field modeling a plasma lens
+          This applies an radially directed plasma lens field that is uniform within the `z` extent of the elemnt with
+          a sharp cut off at the ends.
+          This uses residence corrections, with the field scaled by the amount of time within the element for particles entering
+          or leaving it, to increase the accuracy.
+          This requires these additional parameters:
 
-* ``lattice.plasmalens.zends`` (list of `floats`)
-    The ends of the lens along the `z` axis, in the lab frame in meters.
+            * ``<element_name>.ds`` (``float``, in meters) the segment length
 
-* ``lattice.plasmalens.dEdx`` (list of `floats`)
-    The transverse electric field gradient of the lens, in volts/meter.
-    The field applied to the particles with be `Ex = dEdx*x` and `Ey = dEdx*y`.
+            * ``<element_name>.dEdx`` (``float``, in volts/meter^2) optional (default: 0.) the electric quadrupole field gradient
+              The field applied to the particles will be `Ex = dEdx*x` and `Ey = dEdx*y`.
 
-* ``lattice.plasmalens.dBdx`` (list of `floats`)
-    The transverse magnetic field gradient of the lens, in Tesla/meter.
-    The field applied to the particles with be `Bx = dBdx*y` and `By = -dBdx*x`.
+            * ``<element_name>.dBdx`` (``float``, in Tesla/meter) optional (default: 0.) the magnetic quadrupole field gradient
+              The field applied to the particles will be `Bx = dBdx*y` and `By = -dBdx*x`.
 
 .. _running-cpp-parameters-collision:
 

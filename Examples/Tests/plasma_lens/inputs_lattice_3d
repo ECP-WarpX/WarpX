@@ -40,6 +40,36 @@ lattice.plasmalens.zstarts = 0.1 0.61 1.12 1.63
 lattice.plasmalens.zends   = 0.2 0.72 1.24 1.76
 lattice.plasmalens.dEdx = 600000. 800000. 600000. 200000.
 
+lattice.elements = drift1 plasmalens1 drift2 plasmalens2 drift3 plasmalens3 drift4 plasmalens4
+
+drift1.type = drift
+drift1.ds = 0.1
+
+plasmalens1.type = plasmalens
+plasmalens1.ds = 0.1
+plasmalens1.dEdx = 600000.
+
+drift2.type = drift
+drift2.ds = 0.41
+
+plasmalens2.type = plasmalens
+plasmalens2.ds = 0.11
+plasmalens2.dEdx = 800000.
+
+drift3.type = drift
+drift3.ds = 0.4
+
+plasmalens3.type = plasmalens
+plasmalens3.ds = 0.12
+plasmalens3.dEdx = 600000.
+
+drift4.type = drift
+drift4.ds = 0.39
+
+plasmalens4.type = plasmalens
+plasmalens4.ds = 0.13
+plasmalens4.dEdx = 200000.
+
 # Diagnostics
 diagnostics.diags_names = diag1
 diag1.intervals = 84

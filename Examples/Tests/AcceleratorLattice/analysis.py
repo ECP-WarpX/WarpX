@@ -45,10 +45,19 @@ if gamma_boost > 1.:
     zz_sim = gamma_boost*zz_sim + uz_boost*time;
 
 # Fetch the quadrupole lattice data
-quad_starts = np.array([float(x) for x in ds.parameters.get('lattice.quad.zstarts').split()])
-quad_ends   = np.array([float(x) for x in ds.parameters.get('lattice.quad.zends').split()])
-quad_lengths = quad_ends - quad_starts
-quad_strengths_E = np.array([eval(x) for x in ds.parameters.get('lattice.quad.dEdx').split()])
+lattice_elements = ds.parameters.get('lattice.elements').split()
+quad_starts = []
+quad_lengths = []
+quad_strengths_E = []
+z_location = 0.
+for element in lattice_elements:
+    element_type = ds.parameters.get(f'{element}.type')
+    length = float(ds.parameters.get(f'{element}.ds'))
+    if element_type == 'quad':
+        quad_starts.append(z_location)
+        quad_lengths.append(length)
+        quad_strengths_E.append(float(ds.parameters.get(f'{element}.dEdx')))
+    z_location += length
 
 # Fetch the initial position of the particle
 x0 = [float(x) for x in ds.parameters.get('electron.single_particle_pos').split()]

@@ -8,6 +8,7 @@
 #define WARPX_ACCELERATORLATTICE_ACCELERATORLATTICE_H_
 
 #include "LatticeElementFinder.H"
+#include "LatticeElements/Drift.H"
 #include "LatticeElements/HardEdgedQuadrupole.H"
 #include "LatticeElements/HardEdgedPlasmaLens.H"
 
@@ -18,6 +19,15 @@ class AcceleratorLattice
 public:
 
     AcceleratorLattice ();
+
+    /**
+     * \brief Read in the MAD like lattice description
+     *
+     * @param[in] root_name base name for the input variables
+     * @param[in] z_location starting z location for the lattice
+     */
+    void
+    ReadLattice (std::string const & root_name, amrex::Real & z_location);
 
     /* Refinement level at which this accelerator lattice is defined */
     int m_level;
@@ -56,8 +66,9 @@ public:
     LatticeElementFinderDevice GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset) const;
 
     /* All of the available lattice element types */
-    std::unique_ptr<HardEdgedQuadrupole> h_quad;
-    std::unique_ptr<HardEdgedPlasmaLens> h_plasmalens;
+    Drift h_drift;
+    HardEdgedQuadrupole h_quad;
+    HardEdgedPlasmaLens h_plasmalens;
 
 };
 

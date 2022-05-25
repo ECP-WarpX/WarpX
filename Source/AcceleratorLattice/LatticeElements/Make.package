@@ -1,4 +1,5 @@
 CEXE_sources += LatticeElementBase.cpp
+CEXE_sources += Drift.cpp
 CEXE_sources += HardEdgedQuadrupole.cpp
 CEXE_sources += HardEdgedPlasmaLens.cpp
 

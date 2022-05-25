@@ -23,9 +23,21 @@ electron.single_particle_pos = 0.05 0.0 0.0
 electron.single_particle_vel = 0.0 0.0 0.1  # gamma*beta
 electron.single_particle_weight = 1.0
 
-lattice.quad.zstarts = 0.2 1.0
-lattice.quad.zends = 0.4 1.4
-lattice.quad.dEdx = 1.e4 -1.e4
+lattice.elements = drift1 quad1 drift2 quad2
+
+drift1.type = drift
+drift1.ds = 0.2
+
+quad1.type = quad
+quad1.ds = 0.2
+quad1.dEdx = 1.e4
+
+drift2.type = drift
+drift2.ds = 0.6
+
+quad2.type = quad
+quad2.ds = 0.4
+quad2.dEdx = -1.e4
 
 # Diagnostics
 diagnostics.diags_names = diag1

@@ -5,24 +5,58 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "AcceleratorLattice.H"
+#include "LatticeElements/Drift.H"
 #include "LatticeElements/HardEdgedQuadrupole.H"
 #include "LatticeElements/HardEdgedPlasmaLens.H"
+
+#include <AMReX_REAL.H>
 
 AcceleratorLattice::AcceleratorLattice ()
 {
 
+    using namespace amrex::literals;
+
     /* Get the inputs for and initialize all of the lattice element types */
+    amrex::Real z_location = 0._rt;
+    ReadLattice("lattice", z_location);
 
-    h_quad = std::make_unique<HardEdgedQuadrupole>();
-    if (h_quad->nelements > 0) {
+    h_quad.WriteToDevice();
+    h_plasmalens.WriteToDevice();
+}
+
+void
+AcceleratorLattice::ReadLattice (std::string const & root_name, amrex::Real & z_location)
+{
+    amrex::ParmParse pp_lattice(root_name);
+    std::vector<std::string> lattice_elements;
+    pp_lattice.queryarr("elements", lattice_elements);
+
+    if (!lattice_elements.empty()) {
         m_lattice_defined = true;
     }
 
-    h_plasmalens = std::make_unique<HardEdgedPlasmaLens>();
-    if (h_plasmalens->nelements > 0) {
-        m_lattice_defined = true;
-    }
+    // Loop through lattice elements
+    for (std::string const & element_name : lattice_elements) {
+        // Check the element type
+        amrex::ParmParse pp_element(element_name);
+        std::string element_type;
+        pp_element.get("type", element_type);
 
+        // Initialize the corresponding element according to its type
+        if (element_type == "drift") {
+            h_drift.AddElement(pp_element, z_location);
+        }
+        else if (element_type == "quad") {
+            h_quad.AddElement(pp_element, z_location);
+        }
+        else if (element_type == "plasmalens") {
+            h_plasmalens.AddElement(pp_element, z_location);
+        }
+        else {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                "ERROR: Unknown accelerator lattice element type " + element_type);
+        }
+    }
 }
 
 void

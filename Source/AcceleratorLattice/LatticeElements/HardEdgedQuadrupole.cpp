@@ -16,34 +16,33 @@
 HardEdgedQuadrupole::HardEdgedQuadrupole ()
     : LatticeElementBase("quad")
 {
+}
 
+void
+HardEdgedQuadrupole::AddElement (amrex::ParmParse & pp_element, amrex::Real & z_location)
+{
     using namespace amrex::literals;
 
-    if (nelements == 0) return;
+    AddElementBase(pp_element, z_location);
 
-    amrex::ParmParse pp_element_name("lattice." + m_element_name);
+    amrex::Real dEdx = 0._rt;
+    amrex::Real dBdx = 0._rt;
+    pp_element.query("dEdx", dEdx);
+    pp_element.query("dBdx", dBdx);
 
-    amrex::Vector<amrex::Real> dEdx;
-    if (queryArrWithParser(pp_element_name, "dEdx", dEdx)) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nelements == dEdx.size(),
-                     "quad: dEdx must have the same length and the zstarts and zends");
-    } else {
-        dEdx.resize(nelements, 0._rt);
-    }
+    h_dEdx.push_back(dEdx);
+    h_dBdx.push_back(dBdx);
+}
 
-    amrex::Vector<amrex::Real> dBdx;
-    if (queryArrWithParser(pp_element_name, "dBdx", dBdx)) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nelements == dBdx.size(),
-                     "quad: dBdx must have the same length and the zstarts and zends");
-    } else {
-        dBdx.resize(nelements, 0._rt);
-    }
+void
+HardEdgedQuadrupole::WriteToDevice ()
+{
+    WriteToDeviceBase();
 
-    d_dEdx.resize(dEdx.size());
-    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, dEdx.begin(), dEdx.end(), d_dEdx.begin());
-    d_dBdx.resize(dBdx.size());
-    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, dBdx.begin(), dBdx.end(), d_dBdx.begin());
-
+    d_dEdx.resize(h_dEdx.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_dEdx.begin(), h_dEdx.end(), d_dEdx.begin());
+    d_dBdx.resize(h_dBdx.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_dBdx.begin(), h_dBdx.end(), d_dBdx.begin());
 }
 
 HardEdgedQuadrupoleDevice
