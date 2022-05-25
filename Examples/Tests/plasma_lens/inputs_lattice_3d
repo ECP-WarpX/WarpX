@@ -36,10 +36,6 @@ electrons.multiple_particles_vel_y = 0. 0.
 electrons.multiple_particles_vel_z = vel_z/clight vel_z/clight
 electrons.multiple_particles_weight = 1. 1.
 
-lattice.plasmalens.zstarts = 0.1 0.61 1.12 1.63
-lattice.plasmalens.zends   = 0.2 0.72 1.24 1.76
-lattice.plasmalens.dEdx = 600000. 800000. 600000. 200000.
-
 lattice.elements = drift1 plasmalens1 drift2 plasmalens2 drift3 plasmalens3 drift4 plasmalens4
 
 drift1.type = drift
