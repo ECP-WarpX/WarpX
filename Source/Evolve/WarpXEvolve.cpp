@@ -758,7 +758,8 @@ WarpX::OneStep_sub1 (Real curtime)
     AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, coarse_lev, ncomps, ncomps);
 
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev]);
-    FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+    FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver,
+                  WarpX::sync_nodal_points);
 
     EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::SecondHalf);
     EvolveF(fine_lev, PatchType::coarse, dt[fine_lev], DtType::SecondHalf);
@@ -770,12 +771,15 @@ WarpX::OneStep_sub1 (Real curtime)
         FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_alloc_EB);
     }
 
-    FillBoundaryB(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+    FillBoundaryB(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver,
+                  WarpX::sync_nodal_points);
 
-    FillBoundaryF(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolverF, WarpX::sync_nodal_points);
+    FillBoundaryF(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolverF,
+                  WarpX::sync_nodal_points);
 
     EvolveE(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
-    FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+    FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver,
+                  WarpX::sync_nodal_points);
 
     EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::SecondHalf);
     EvolveF(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::SecondHalf);
@@ -785,19 +789,21 @@ WarpX::OneStep_sub1 (Real curtime)
             // Exchange guard cells of PMLs only (0 cells are exchanged for the
             // regular B field MultiFab). This is required as B and F have just been
             // evolved.
-            FillBoundaryB(coarse_lev, PatchType::fine, IntVect::TheZeroVector());
-            FillBoundaryF(coarse_lev, PatchType::fine, IntVect::TheZeroVector());
+            FillBoundaryB(coarse_lev, PatchType::fine, IntVect::TheZeroVector(),
+                          WarpX::sync_nodal_points);
+            FillBoundaryF(coarse_lev, PatchType::fine, IntVect::TheZeroVector(),
+                          WarpX::sync_nodal_points);
         }
         DampPML(coarse_lev, PatchType::fine);
         if ( safe_guard_cells )
-            FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
+            FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver,
+                          WarpX::sync_nodal_points);
     }
     if ( safe_guard_cells )
-        FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
+        FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver,
+                      WarpX::sync_nodal_points);
 
     // Synchronize nodal points at the end of the time step
-    NodalSync(Bfield_fp, Bfield_cp);
-    if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
     if (do_pml) NodalSyncPML();
 }
 
