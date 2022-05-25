@@ -153,4 +153,24 @@ if(TOOLS_QED_GENERATOR)
 
 endif()
 
+if(TOOLS_QED_GENERATOR)
+
+    set(qed_reader_name "qed_table_reader")
+    set(qed_reader_src  "Source/QedTableReader.cpp")
+
+    add_executable(${qed_reader_name} ${qed_reader_src})
+
+    target_link_libraries(${qed_reader_name} PRIVATE PXRMP_QED)
+    target_link_libraries(${qed_reader_name} PRIVATE QedToolsArgParser)
+
+    target_compile_features(${qed_reader_name} PUBLIC cxx_std_17)
+    set_target_properties(${qed_reader_name} PROPERTIES CXX_EXTENSIONS OFF)
+
+    set_target_properties(${qed_reader_name} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/)
+
+    message(STATUS "QED lookup tables generator: ${qed_reader_name} (${qed_reader_src})")
+
+endif()
+
 #____________________________________________________________________________________________________________

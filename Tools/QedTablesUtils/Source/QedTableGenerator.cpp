@@ -1,3 +1,4 @@
+#include "QedTableCommons.H"
 #include "ArgParser/QedTablesArgParser.H"
 
 #include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
@@ -10,9 +11,7 @@
 #include <iostream>
 #include <string>
 #include <type_traits>
-#include <tuple>
 #include <utility>
-#include <variant>
 #include <vector>
 
 using namespace ArgParser;
@@ -46,15 +45,6 @@ template <typename RealType>
 void GenerateTableBW (const ParsedArgs& args, const string& outfile_name);
 template <typename RealType>
 void GenerateTableQS (const ParsedArgs& args, const string& outfile_name);
-
-bool IsDoublePrecision(const string& mode);
-
-template <typename ContainerType, typename ElementType>
-bool Contains (const ContainerType& container, const ElementType& el);
-
-void AbortWithMessage(const string& msg);
-
-void SuccessExit();
 
 int main (int argc, char** argv)
 {
@@ -245,35 +235,4 @@ void GenerateTableQS (const ParsedArgs& args, const string& outfile_name)
     of.close();
 
     cout << "    Done! \n";
-}
-
-bool IsDoublePrecision(const string& mode)
-{
-    if (mode == "DP"s)
-        return true;
-    else if (mode == "SP")
-        return false;
-    else
-        AbortWithMessage("'--mode' must be eiter 'DP' or 'SP'");
-
-    return true;
-}
-
-template <typename ContainerType, typename ElementType>
-bool Contains (const ContainerType& container, const ElementType& el)
-{
-    return container.find(el) != std::end(container);
-}
-
-void AbortWithMessage(const std::string& msg)
-{
-    cout << "### ABORT : " << msg << std::endl;
-    cout << "___________________________" << endl;
-    exit(1);
-}
-
-void SuccessExit()
-{
-    cout << "___________________________" << endl;
-    exit(0);
 }
