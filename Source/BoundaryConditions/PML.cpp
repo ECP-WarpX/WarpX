@@ -17,6 +17,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 #include "Parallelization/WarpXCommUtil.H"
 
