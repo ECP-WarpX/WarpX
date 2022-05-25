@@ -1,7 +1,9 @@
-#include "QedTablesArgParser.H"
+#include "ArgParser/QedTablesArgParser.H"
 
 #include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
 #include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables_generator.hpp>
+#include <picsar_qed/physics/quantum_sync/quantum_sync_engine_tables.hpp>
+#include <picsar_qed/physics/quantum_sync/quantum_sync_engine_tables_generator.hpp>
 #include <picsar_qed/utils/serialization.hpp>
 
 #include <fstream>
@@ -18,6 +20,7 @@ using namespace std;
 
 namespace pxr_sr = picsar::multi_physics::utils::serialization;
 namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
+namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
 
 const auto line_commands = vector<ArgParser::Key>{
     {"-h"                  , ArgType::NoArg  , "Prints all command line arguments"},
@@ -32,6 +35,7 @@ const auto line_commands = vector<ArgParser::Key>{
     {"--pair_frac_how_many", ArgType::Integer, "number of frac points in the pair production table (BW only)"},
     {"--em_chi_min"        , ArgType::Double , "minimum chi for the photon emission table (QS only)"},
     {"--em_chi_max"        , ArgType::Double , "maximum chi for the photon emission production table (QS only)"},
+    {"--em_frac_min"       , ArgType::Double , "minimum frac for the photon emission production table (QS only)"},
     {"--em_chi_how_many"   , ArgType::Integer, "number of chi points in the photon emission table (QS only)"},
     {"--em_frac_how_many"  , ArgType::Integer, "number of frac points in the photon emission table (QS only)"},
     {"-o"                  , ArgType::String , "filename to save the lookup table"}
@@ -45,8 +49,6 @@ void GenerateTableQS (const ParsedArgs& args, const string& outfile_name);
 
 bool IsDoublePrecision(const string& mode);
 
-void PrintHelp (const vector<ArgParser::Key>& ll);
-
 template <typename ContainerType, typename ElementType>
 bool Contains (const ContainerType& container, const ElementType& el);
 
@@ -57,7 +59,7 @@ void SuccessExit();
 int main (int argc, char** argv)
 {
     cout << "### QED Table Generator ###" << endl;
-    const auto args_map = parse_args(line_commands, argc, argv);
+    const auto args_map = ParseArgs(line_commands, argc, argv);
 
     if (args_map.empty() || Contains(args_map, "-h")){
         PrintHelp(line_commands);
@@ -179,7 +181,70 @@ void GenerateTableBW (const ParsedArgs& args, const string& outfile_name)
 template<typename RealType>
 void GenerateTableQS (const ParsedArgs& args, const string& outfile_name)
 {
+    cout << "    Generating QS table " <<
+        (is_same<RealType, double>::value ? "(double "s : "(single "s) << " precision)\n"s;
 
+    if (!Contains(args, "--dndt_chi_min")      || !Contains(args, "--dndt_chi_max") ||
+        !Contains(args, "--dndt_how_many")     || !Contains(args, "--em_chi_min")   ||
+        !Contains(args, "--em_chi_max")        || !Contains(args, "--em_frac_min")  ||
+        !Contains(args, "--em_chi_how_many")   || !Contains(args, "--em_frac_how_many"))
+            AbortWithMessage("All the QS table arguments must be provided (check with -h)");
+
+    const auto dndt_table_params =
+        pxr_qs::dndt_lookup_table_params<RealType>{
+            static_cast<RealType>(GetVal<double>(args.at("--dndt_chi_min"))),
+            static_cast<RealType>(GetVal<double>(args.at("--dndt_chi_max"))),
+            GetVal<int>(args.at("--dndt_how_many"))
+        };
+
+    const auto phot_em_table_params =
+        pxr_qs::photon_emission_lookup_table_params<RealType>{
+            static_cast<RealType>(GetVal<double>(args.at("--em_chi_min"))),
+            static_cast<RealType>(GetVal<double>(args.at("--em_chi_max"))),
+            static_cast<RealType>(GetVal<double>(args.at("--em_frac_min"))),
+            GetVal<int>(args.at("--em_chi_how_many")),
+            GetVal<int>(args.at("--em_frac_how_many"))
+        };
+
+    std::cout << "    Params: \n";
+    std::cout << "    - dndt_chi_min           : " <<  dndt_table_params.chi_part_min << "\n";
+    std::cout << "    - dndt_chi_max           : " <<  dndt_table_params.chi_part_max << "\n";
+    std::cout << "    - dndt_how_many          : " <<  dndt_table_params.chi_part_how_many << "\n";
+    std::cout << "    - phot_em_chi_min        : " <<  phot_em_table_params.chi_part_min << "\n";
+    std::cout << "    - phot_em_chi_max        : " <<  phot_em_table_params.chi_part_max << "\n";
+    std::cout << "    - phot_em_frac_min       : " <<  phot_em_table_params.frac_min << "\n";
+    std::cout << "    - phot_em_chi_how_many   : " <<  phot_em_table_params.chi_part_how_many << "\n";
+    std::cout << "    - phot_em_frac_how_many  : " <<  phot_em_table_params.frac_how_many  << "\n";
+    std::cout << "    ----------------------- " << "\n\n";
+
+    auto dndt_table =
+        pxr_qs::dndt_lookup_table<RealType, vector<RealType>>{
+            dndt_table_params};
+
+    auto phot_em_table =
+        pxr_qs::photon_emission_lookup_table<RealType, vector<RealType>>{
+            phot_em_table_params};
+
+    dndt_table.generate(true); //Progress bar is displayed
+    phot_em_table.generate(true); //Progress bar is displayed
+
+    const auto data_dndt = dndt_table.serialize();
+    const auto data_phot_em = phot_em_table.serialize();
+
+    const uint64_t size_first = data_dndt.size();
+
+    vector<char> res{};
+    pxr_sr::put_in(size_first, res);
+    for (const auto& tmp : data_dndt)
+        pxr_sr::put_in(tmp, res);
+    for (const auto& tmp : data_phot_em)
+        pxr_sr::put_in(tmp, res);
+
+    auto of = std::ofstream{outfile_name, std::ios_base::binary};
+    of.write(res.data(), res.size());
+    of.close();
+
+    cout << "    Done! \n";
 }
 
 bool IsDoublePrecision(const string& mode)
@@ -192,29 +257,6 @@ bool IsDoublePrecision(const string& mode)
         AbortWithMessage("'--mode' must be eiter 'DP' or 'SP'");
 
     return true;
-}
-
-void PrintHelp (const vector<ArgParser::Key>& cmd_list)
-{
-    cout << "Command line options: " << endl;
-
-    for (const auto& el : cmd_list){
-        const auto type = get<1>(el);
-        string stype = "[??????]";
-        if (type == ArgType::NoArg)
-            stype = "[NO ARG]";
-        else if (type == ArgType::String)
-            stype = "[STRING]";
-        else if (type == ArgType::Double)
-            stype = "[DOUBLE]";
-        else if (type == ArgType::Integer)
-            stype = "[INTEGR]";
-
-        cout << get<0>(el) <<
-        " " << stype << " " <<
-        get<2>(el) << endl;
-    }
-
 }
 
 template <typename ContainerType, typename ElementType>

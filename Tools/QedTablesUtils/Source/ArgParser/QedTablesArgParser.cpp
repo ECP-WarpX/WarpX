@@ -59,7 +59,7 @@ ReadArg(const ArgType arg_type, vector<string>::iterator& it)
 }
 
 ParsedArgs
-ArgParser::parse_args (const std::vector<Key>& keys, const int argc, char const* const* argv)
+ArgParser::ParseArgs (const std::vector<Key>& keys, const int argc, char const* const* argv)
 {
     auto parsed_args = ParsedArgs{};
 
@@ -80,4 +80,29 @@ ArgParser::parse_args (const std::vector<Key>& keys, const int argc, char const*
     }
 
     return parsed_args;
+}
+
+void
+ArgParser::PrintHelp (const vector<ArgParser::Key>& cmd_list)
+{
+    cout << "Command line options: " << endl;
+
+    for (const auto& el : cmd_list){
+        const auto type = get<1>(el);
+        string stype = "[??????]";
+        if (type == ArgType::NoArg)
+            stype = "[NO ARG]";
+        else if (type == ArgType::String)
+            stype = "[STRING]";
+        else if (type == ArgType::Double)
+            stype = "[DOUBLE]";
+        else if (type == ArgType::Integer)
+            stype = "[INTEGR]";
+
+        cout << get<0>(el)
+            << " " << stype
+            << " " << get<2>(el)
+            << endl;
+    }
+
 }
