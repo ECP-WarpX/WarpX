@@ -1,7 +1,13 @@
 #include "QedTablesArgParser.H"
 
+#include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
+#include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables_generator.hpp>
+#include <picsar_qed/utils/serialization.hpp>
+
+#include <fstream>
 #include <iostream>
 #include <string>
+#include <type_traits>
 #include <tuple>
 #include <utility>
 #include <variant>
@@ -9,6 +15,9 @@
 
 using namespace ArgParser;
 using namespace std;
+
+namespace pxr_sr = picsar::multi_physics::utils::serialization;
+namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
 
 const auto line_commands = vector<ArgParser::Key>{
     {"-h"                  , ArgType::NoArg  , "Prints all command line arguments"},
@@ -29,8 +38,10 @@ const auto line_commands = vector<ArgParser::Key>{
 };
 
 void GenerateTable (const ParsedArgs& args);
-void GenerateTableBW (const ParsedArgs& args);
-void GenerateTableQS (const ParsedArgs& args);
+template <typename RealType>
+void GenerateTableBW (const ParsedArgs& args, const string& outfile_name);
+template <typename RealType>
+void GenerateTableQS (const ParsedArgs& args, const string& outfile_name);
 
 bool IsDoublePrecision(const string& mode);
 
@@ -64,22 +75,111 @@ void GenerateTable (const ParsedArgs& args)
     if (!Contains(args, "--table"))
         AbortWithMessage("'--table' argument must be provided");
 
-    if (GetVal<string>(args.at("--table")) == "BW"s)
-        GenerateTableBW(args);
-    else if (GetVal<string>(args.at("--table")) == "QS"s)
-        GenerateTableQS(args);
+    if (!Contains(args, "--mode"))
+        AbortWithMessage("'--mode' argument must be provided");
+
+    if (!Contains(args, "-o"))
+        AbortWithMessage("'-o' argument must be provided");
+
+    const auto which_table = GetVal<string>(args.at("--table"));
+    const auto mode = GetVal<string>(args.at("--mode"));
+    const auto outfile_name = GetVal<string>(args.at("-o"));
+
+    bool use_double = false;
+
+    if (mode == "DP"s)
+        use_double = true;
+    else if (mode == "SP"s)
+        use_double = false;
+    else
+        AbortWithMessage("'--mode' must be eiter 'DP' or 'SP'");
+
+    if (which_table == "BW"s){
+        if (use_double)
+            GenerateTableBW<double>(args, outfile_name);
+        else
+            GenerateTableBW<float>(args, outfile_name);
+    }
+    else if (which_table == "QS"s)
+        if (use_double)
+            GenerateTableQS<double>(args, outfile_name);
+        else
+            GenerateTableQS<float>(args, outfile_name);
     else
         AbortWithMessage("'--table' must be eiter 'QS' or 'BW'");
 }
 
-void GenerateTableBW (const ParsedArgs& args)
+template<typename RealType>
+void GenerateTableBW (const ParsedArgs& args, const string& outfile_name)
 {
-    const auto is_double = IsDoublePrecision(GetVal<string>(args.at("--mode")));
+    cout << "    Generating BW table " <<
+        (is_same<RealType, double>::value ? "(double "s : "(single "s) << " precision)\n"s;
+
+    if (!Contains(args, "--dndt_chi_min")      || !Contains(args, "--dndt_chi_max") ||
+        !Contains(args, "--dndt_how_many")     || !Contains(args, "--pair_chi_min") ||
+        !Contains(args, "--pair_chi_max")      || !Contains(args, "--pair_chi_how_many") ||
+        !Contains(args, "--pair_frac_how_many"))
+            AbortWithMessage("All the BW table arguments must be provided (check with -h)");
+
+    const auto dndt_table_params =
+        pxr_bw::dndt_lookup_table_params<RealType>{
+            static_cast<RealType>(GetVal<double>(args.at("--dndt_chi_min"))),
+            static_cast<RealType>(GetVal<double>(args.at("--dndt_chi_max"))),
+            GetVal<int>(args.at("--dndt_how_many"))
+        };
+
+    const auto pair_prod_table_params =
+        pxr_bw::pair_prod_lookup_table_params<RealType>{
+            static_cast<RealType>(GetVal<double>(args.at("--pair_chi_min"))),
+            static_cast<RealType>(GetVal<double>(args.at("--pair_chi_max"))),
+            GetVal<int>(args.at("--pair_chi_how_many")),
+            GetVal<int>(args.at("--pair_frac_how_many"))
+        };
+
+    std::cout << "    Params: \n";
+    std::cout << "    - dndt_chi_min        : " <<  dndt_table_params.chi_phot_min << "\n";
+    std::cout << "    - dndt_chi_max        : " <<  dndt_table_params.chi_phot_max << "\n";
+    std::cout << "    - dndt_how_many       : " <<  dndt_table_params.chi_phot_how_many << "\n";
+    std::cout << "    - pair_chi_min        : " <<  pair_prod_table_params.chi_phot_min << "\n";
+    std::cout << "    - pair_chi_max        : " <<  pair_prod_table_params.chi_phot_max << "\n";
+    std::cout << "    - pair_chi_how_many   : " <<  pair_prod_table_params.chi_phot_how_many << "\n";
+    std::cout << "    - pair_frac_how_many  : " <<  pair_prod_table_params.frac_how_many  << "\n";
+    std::cout << "    ----------------------- " << "\n\n";
+
+    auto dndt_table =
+        pxr_bw::dndt_lookup_table<RealType, vector<RealType>>{
+            dndt_table_params};
+
+    auto pair_prod_table =
+        pxr_bw::pair_prod_lookup_table<RealType, vector<RealType>>{
+            pair_prod_table_params};
+
+    dndt_table.generate(true); //Progress bar is displayed
+    pair_prod_table.generate(true); //Progress bar is displayed
+
+    const auto data_dndt = dndt_table.serialize();
+    const auto data_pair_prod = pair_prod_table.serialize();
+
+    const uint64_t size_first = data_dndt.size();
+
+    vector<char> res{};
+    pxr_sr::put_in(size_first, res);
+    for (const auto& tmp : data_dndt)
+        pxr_sr::put_in(tmp, res);
+    for (const auto& tmp : data_pair_prod)
+        pxr_sr::put_in(tmp, res);
+
+    auto of = std::ofstream{outfile_name, std::ios_base::binary};
+    of.write(res.data(), res.size());
+    of.close();
+
+    cout << "    Done! \n";
 }
 
-void GenerateTableQS (const ParsedArgs& args)
+template<typename RealType>
+void GenerateTableQS (const ParsedArgs& args, const string& outfile_name)
 {
-    const auto is_double = IsDoublePrecision(GetVal<string>(args.at("--mode")));
+
 }
 
 bool IsDoublePrecision(const string& mode)
