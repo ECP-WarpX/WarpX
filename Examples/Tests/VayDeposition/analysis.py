@@ -6,12 +6,12 @@
 #
 # License: BSD-3-Clause-LBNL
 
-import numpy as np
 import os
 import sys
-import yt
 
+import numpy as np
 from scipy.constants import epsilon_0
+import yt
 
 yt.funcs.mylog.setLevel(50)
 
