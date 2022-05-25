@@ -419,13 +419,14 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
             const amrex::Dim3 lo = amrex::lbound(bx);
             const amrex::Dim3 hi = amrex::ubound(bx);
             const int nx = hi.x - lo.x + 1;
+            const amrex::Real facx = dx[0] / static_cast<amrex::Real>(nx);
 
             // Subtract average of cumulative sum along x only
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
             {
                 for (int ii = lo.x; ii <= hi.x; ++ii)
                 {
-                    Jx_arr(i,j,k) -= (nx-ii) * Dx_arr(ii,j,k) * dx[0] / static_cast<amrex::Real>(nx);
+                    Jx_arr(i,j,k) -= (nx-ii) * Dx_arr(ii,j,k) * facx;
                 }
             });
         }
@@ -442,13 +443,14 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
             const amrex::Dim3 lo = amrex::lbound(bx);
             const amrex::Dim3 hi = amrex::ubound(bx);
             const int ny = hi.y - lo.y + 1;
+            const amrex::Real facy = dx[1] / static_cast<amrex::Real>(ny);
 
             // Subtract average of cumulative sum along y only
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
             {
                 for (int jj = lo.y; jj <= hi.y; ++jj)
                 {
-                    Jy_arr(i,j,k) -= (ny-jj) * Dy_arr(i,jj,k) * dx[1] / static_cast<amrex::Real>(ny);
+                    Jy_arr(i,j,k) -= (ny-jj) * Dy_arr(i,jj,k) * facy;
                 }
             });
         }
@@ -469,6 +471,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 #elif defined (WARPX_DIM_3D)
             const int nz = hi.z - lo.z + 1;
 #endif
+            const amrex::Real facz = dx[2] / static_cast<amrex::Real>(nz);
 
             // Subtract average of cumulative sum along z only
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
@@ -477,13 +480,13 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
                 // z direction is in the second component
                 for (int jj = lo.y; jj <= hi.y; ++jj)
                 {
-                    Jz_arr(i,j,k) -= (nz-jj) * Dz_arr(i,jj,k) * dx[2] / static_cast<amrex::Real>(nz);
+                    Jz_arr(i,j,k) -= (nz-jj) * Dz_arr(i,jj,k) * facz;
                 }
 #elif defined (WARPX_DIM_3D)
                 // z direction is in the third component
                 for (int kk = lo.z; kk <= hi.z; ++kk)
                 {
-                    Jz_arr(i,j,k) -= (nz-kk) * Dz_arr(i,j,kk) * dx[2] / static_cast<amrex::Real>(nz);
+                    Jz_arr(i,j,k) -= (nz-kk) * Dz_arr(i,j,kk) * facz;
                 }
 #endif
             });
