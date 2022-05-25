@@ -13,7 +13,7 @@ The classes for each element type are in the subdirectory LatticeElements.
 ## Host and device classes
 
 The LatticeElementFinder and each of the element types have two classes, one
-that lives on the host and one that can be trivially copied to the device. 
+that lives on the host and one that can be trivially copied to the device.
 This dual structure is needed because of the complex data structures
 describing both the accelerator elements and the index lookup tables. The
 host level classes manage the data structures, reading in and setting up the
@@ -35,5 +35,3 @@ A number of places need to be touched when adding a new element types. The
 best method is to look for every place where the "quad" element is referenced
 and duplicate the code for the new element type. Changes will only be needed
 within the AcceleratorLattice directory.  
-
-
