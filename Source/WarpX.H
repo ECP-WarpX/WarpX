@@ -43,7 +43,7 @@
 #include <AMReX_Array.H>
 #include <AMReX_Config.H>
 #ifdef AMREX_USE_EB
-#   include "AMReX_EBFabFactory.H"
+#   include <AMReX_EBFabFactory.H>
 #endif
 #include <AMReX_GpuContainers.H>
 #include <AMReX_IntVect.H>
@@ -760,7 +760,7 @@ public:
      */
     const amrex::IntVect get_numprocs() const {return numprocs;}
 
-    ElectrostaticSolver::BoundaryHandler field_boundary_handler;
+    ElectrostaticSolver::PoissonBoundaryHandler m_poisson_boundary_handler;
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddBoundaryField ();
     void AddSpaceChargeField (WarpXParticleContainer& pc);
