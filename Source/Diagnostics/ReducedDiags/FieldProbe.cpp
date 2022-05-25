@@ -545,7 +545,7 @@ void FieldProbe::ComputeDiags (int step)
                                    temp_interp_order, false);
 
                     //Calculate the Poynting Vector S
-                    amrex::Real const sraw[3]{
+                    amrex::ParticleReal const sraw[3]{
                         Exp * Bzp - Ezp * Byp,
                         Ezp * Bxp - Exp * Bzp,
                         Exp * Byp - Eyp * Bxp

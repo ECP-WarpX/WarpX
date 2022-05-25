@@ -175,7 +175,7 @@ public:
             return 0;
 
         const auto is_out = pxr_bw::evolve_optical_depth<
-            amrex::Real,
+            amrex::ParticleReal,
             BW_dndt_table_view,
             pxr_p::unit_system::SI>(
                 energy, chi_phot, dt, opt_depth, m_table_view);
