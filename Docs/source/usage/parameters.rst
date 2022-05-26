@@ -1417,8 +1417,8 @@ WarpX provides several particle collions models, using varying degrees of approx
     between which the collision will be considered.
     The number of provided ``<collision_name>.species`` should match
     the number of collision names, i.e. ``collisions.collision_names``.
-    If using ``background_mcc`` type this should be the name of the species for
-    which collisions will be included. Only one species name should be given.
+    If using ``background_mcc`` or ``background_stopping`` type this should be the name of the species for which collisions will be included.
+    Only one species name should be given.
 
 * ``<collision_name>.CoulombLog`` (`float`) optional
     Only for ``pairwisecoulomb``. A provided fixed Coulomb logarithm of the
