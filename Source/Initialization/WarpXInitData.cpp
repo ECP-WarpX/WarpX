@@ -1221,7 +1221,7 @@ void WarpX::InitializeEBGridData (int lev)
 
 void
 WarpX::ReadExternalFieldsFromFile (std::string read_from_path, MultiFab* mf,
-std::string F_name, std::string F_componet)
+std::string F_name, std::string F_component)
 {
 
     auto& warpx = WarpX::GetInstance();
@@ -1239,7 +1239,7 @@ std::string F_name, std::string F_componet)
         auto F = iseries.meshes[F_name];
         auto offset = F.gridGlobalOffset();
         auto d = F.gridSpacing<double>();
-        auto FE = F[F_componet];
+        auto FE = F[F_component];
         auto extent = FE.getExtent();
         double unit = FE.unitSI();
 
@@ -1309,9 +1309,9 @@ std::string F_name, std::string F_componet)
                 else { z = real_box.lo(2) + k*dx[2] + 0.5*dx[2]; }
 
                 // Get index of the external field array
-                int ix = floor( std::abs(x-offset[0])/d[0] );
-                int iy = floor( std::abs(y-offset[1])/d[1] );
-                int iz = floor( std::abs(z-offset[2])/d[2] );
+                int ix = floor( (x-offset[0])/d[0] );
+                int iy = floor( (y-offset[1])/d[1] );
+                int iz = floor( (z-offset[2])/d[2] );
 
                 // Get coordinates of external grid point
                 amrex::Real xx, yy, zz, ddx, ddy, ddz;
@@ -1324,13 +1324,24 @@ std::string F_name, std::string F_componet)
                 ddy = std::abs(y-yy)/d[1];
                 ddz = std::abs(z-zz)/d[2];
 
+std::cout << "@_@ i,j,k: " << i << "," << j << "," << k << std::endl;
+std::cout << "@_@ x,y,z: " << x << "," << y << "," << z << std::endl;
+std::cout << "@_@ offset: " << offset[0] << "," << offset[1] << "," << offset[2] << std::endl;
+std::cout << "@_@ d: " << d[0] << "," << d[1] << "," << d[2] << std::endl;
+std::cout << "@_@ xx,yy,zz: " << xx << "," << yy << "," << zz << std::endl;
+std::cout << "@_@ x-xx,y-yy,z-zz: " << x-xx << "," << y-yy << "," << z-zz << std::endl;
+std::cout << "@_@ ddx,ddy,ddz: " << ddx << "," << ddy << "," << ddz << std::endl;
+std::cout << "@_@ ix,iy,iz: " << ix << "," << iy << "," << iz << std::endl;
+
                 ix = ix - chunk_offset[0];
                 iy = iy - chunk_offset[1];
                 iz = iz - chunk_offset[2];
 
+std::cout << "@_@ ix,iy,iz: " << ix << "," << iy << "," << iz << std::endl;
+
+                // Assign the values through linear interpolation
                 int ext_1  = chunk_extent[1];
                 int ext_12 = chunk_extent[1]*chunk_extent[2];
-                // Assign the values through linear interpolation
                 mffab(i,j,k) = FE_data[(iz  )+(iy  )*ext_1+(ix  )*ext_12]*(1.0-ddx)*(1.0-ddy)*(1.0-ddz) +
                                FE_data[(iz  )+(iy  )*ext_1+(ix+1)*ext_12]*(    ddx)*(1.0-ddy)*(1.0-ddz) +
                                FE_data[(iz  )+(iy+1)*ext_1+(ix  )*ext_12]*(1.0-ddx)*(    ddy)*(1.0-ddz) +
