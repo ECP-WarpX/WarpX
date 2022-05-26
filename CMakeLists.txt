@@ -365,7 +365,7 @@ configure_file(
 # Installs ####################################################################
 #
 # headers, libraries and executables
-set(WarpX_INSTALL_TARGET_NAMES)
+set(WarpX_INSTALL_TARGET_NAMES ablastr)
 if(WarpX_APP)
     list(APPEND WarpX_INSTALL_TARGET_NAMES app)
 endif()
