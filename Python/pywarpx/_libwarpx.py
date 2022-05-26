@@ -1076,6 +1076,9 @@ class LibWarpX():
             clear_rho      : If True, zero out rho_fp before deposition.
             sync_rho       : If True, perform MPI exchange and properly set boundary
                              cells for rho_fp.
+            deposit_on_demand: If True, calculate and deposit for the specified
+                               species, regardless of whether it has been configured
+                               as do_no_deposit (i.e. for non-interacting particles)
 
         '''
         if clear_rho:
