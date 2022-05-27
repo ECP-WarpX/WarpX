@@ -553,87 +553,88 @@ void
 WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
                   const bool isBTD, const bool isLastBTDFlush, const amrex::Vector<int>& totalParticlesFlushedAlready)
 {
-    WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
+  WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
 
-    for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
+  for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
 
-        WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-        PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
-        PinnedMemoryParticleContainer tmp;
-        if (! isBTD) {
-            tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
-        } else {
-            tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
-        }
-        // names of amrex::Real and int particle attributes in SoA data
-        amrex::Vector<std::string> real_names;
-        amrex::Vector<std::string> int_names;
-        amrex::Vector<int> int_flags;
-        amrex::Vector<int> real_flags;
+    WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
+    PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
+    PinnedMemoryParticleContainer tmp;
+    if (! isBTD) {
+        tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
+    } else {
+        tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
+    }
+    // names of amrex::Real and int particle attributes in SoA data
+    amrex::Vector<std::string> real_names;
+    amrex::Vector<std::string> int_names;
+    amrex::Vector<int> int_flags;
+    amrex::Vector<int> real_flags;
 
-        // see openPMD ED-PIC extension for namings
-        // note: an underscore separates the record name from its component
-        //       for non-scalar records
-        real_names.push_back("weighting");
-        real_names.push_back("momentum_x");
-        real_names.push_back("momentum_y");
-        real_names.push_back("momentum_z");
+    // see openPMD ED-PIC extension for namings
+    // note: an underscore separates the record name from its component
+    //       for non-scalar records
+    real_names.push_back("weighting");
+    real_names.push_back("momentum_x");
+    real_names.push_back("momentum_y");
+    real_names.push_back("momentum_z");
 #ifdef WARPX_DIM_RZ
-        real_names.push_back("theta");
+    real_names.push_back("theta");
 #endif
-        // get the names of the real comps
-        real_names.resize(tmp.NumRealComps());
-        auto runtime_rnames = tmp.getParticleRuntimeComps();
-        for (auto const& x : runtime_rnames)
-        {
-          real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
-        }
-        // plot any "extra" fields by default
-        real_flags = particle_diags[i].plot_flags;
-        real_flags.resize(tmp.NumRealComps(), 1);
-        // and the names
-        int_names.resize(tmp.NumIntComps());
-        auto runtime_inames = tmp.getParticleRuntimeiComps();
-        for (auto const& x : runtime_inames)
-        {
-          int_names[x.second+0] = detail::snakeToCamel(x.first);
-        }
-        // plot by default
-        int_flags.resize(tmp.NumIntComps(), 1);
+    // get the names of the real comps
+    real_names.resize(tmp.NumRealComps());
+    auto runtime_rnames = tmp.getParticleRuntimeComps();
+    for (auto const& x : runtime_rnames)
+    {
+      real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
+    }
+    // plot any "extra" fields by default
+    real_flags = particle_diags[i].plot_flags;
+    real_flags.resize(tmp.NumRealComps(), 1);
+    // and the names
+    int_names.resize(tmp.NumIntComps());
+    auto runtime_inames = tmp.getParticleRuntimeiComps();
+    for (auto const& x : runtime_inames)
+    {
+      int_names[x.second+0] = detail::snakeToCamel(x.first);
+    }
+    // plot by default
+    int_flags.resize(tmp.NumIntComps(), 1);
 
 
-        pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
-        RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
+      pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
+      RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                        particle_diags[i].m_random_fraction);
-        UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
+      UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                          particle_diags[i].m_uniform_stride);
-        ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
+      ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
                                  compileParser<ParticleDiag::m_nvars>
                                      (particle_diags[i].m_particle_filter_parser.get()),
                                  pc->getMass());
-        parser_filter.m_units = InputUnits::SI;
-        GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
+      parser_filter.m_units = InputUnits::SI;
+      GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                            particle_diags[i].m_diag_domain);
 
-        if (! isBTD) {
-            using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
-            tmp.copyParticles(*pc,
-                            [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
-                {
-                  const SuperParticleType& p = src.getSuperParticle(ip);
-                  return random_filter(p, engine) * uniform_filter(p, engine)
-                         * parser_filter(p, engine) * geometry_filter(p, engine);
-                }, true);
-        } else if (isBTD) {
-            tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
-            tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
-            tmp.SetParticleDistributionMap(0, pinned_pc->ParticleDistributionMap(0));
-            tmp.copyParticles(*pinned_pc, true);
-        }
+      if (! isBTD) {
+          using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+          tmp.copyParticles(*pc,
+                          [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+              {
+                const SuperParticleType& p = src.getSuperParticle(ip);
+                return random_filter(p, engine) * uniform_filter(p, engine)
+                       * parser_filter(p, engine) * geometry_filter(p, engine);
+              }, true);
+      } else if (isBTD) {
+          tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
+          tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
+          tmp.SetParticleDistributionMap(0, pinned_pc->ParticleDistributionMap(0));
+          tmp.copyParticles(*pinned_pc, true);
+      }
 
-        // real_names contains a list of all real particle attributes.
-        // real_flags is 1 or 0, whether quantity is dumped or not.
-        if (isBTD) {
+    // real_names contains a list of all real particle attributes.
+    // real_flags is 1 or 0, whether quantity is dumped or not.
+    {
+      if (isBTD) {
           DumpToFile(&tmp,
              particle_diags[i].getSpeciesName(),
              m_CurrentStep,
@@ -644,7 +645,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
              isBTD, isLastBTDFlush,
              totalParticlesFlushedAlready[i]
           );
-        } else {
+      } else {
           DumpToFile(&tmp,
              particle_diags[i].getSpeciesName(),
              m_CurrentStep,
@@ -655,11 +656,12 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
              isBTD, isLastBTDFlush,
              0
           );
-        }
-
-        // Convert momentum back to WarpX units
-        pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
+      }
     }
+
+    // Convert momentum back to WarpX units
+    pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
+  }
 }
 
 void
