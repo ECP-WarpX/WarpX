@@ -42,14 +42,18 @@ BoundaryScrapingDiagnostics::ReadParameters ()
 #ifndef AMREX_USE_EB
     amrex::Abort("You need to compile WarpX with EB, in order to use BoundaryScrapingDiagnostic.");
 #endif
-    // Check that particle saving at EB has been activated
+
+    // Check that saving at EB has been activated for each requested species
     bool particle_saving_activated = true;
     for (auto const& species_name : m_output_species_names){
         amrex::ParmParse pp(species_name);
-        // TODO
+        bool save_particles_at_eb;
+        pp_species.query("save_particles_at_eb", save_particles_at_eb);
+        if (save_particles_at_eb == false) particle_saving_activated = false;
     }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( particle_saving_activated,
     "You need to set `save_particles_at_eb=1` for each species, in order to use BoundaryScrapingDiagnostic.");
+
     // Check that the output format is openPMD
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_format == "openpmd",
     "You need to set `format=openpmd` for the BoundaryScrapingDiagnostic.");
@@ -59,14 +63,16 @@ void
 BoundaryScrapingDiagnostics::InitializeFieldFunctors (int /*lev*/)
 {
     // This function is usually used for field output
-    // Nothing to do here for boundary scraping output, since it only outputs particles
+    // Nothing to do here for boundary scraping output,
+    // since it only outputs particles
 }
 
 void
 BoundaryScrapingDiagnostics::InitializeBufferData (int /*i_buffer*/, int /*lev*/)
 {
     // This function is usually used for field output
-    // Nothing to do here for boundary scraping output, since it only outputs particles
+    // Nothing to do here for boundary scraping output,
+    // since it only outputs particles
 }
 
 void
@@ -128,7 +134,9 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
     //   - writing the data that was accumulated in a PinnedMemoryParticleContainer
     //   - writing repeatedly to the same file
     bool const isBTD = true;
-    // TODO: Change once we repeatedly call this function throughout the simulation
+    // For now, because this function is currently only called at the very end
+    // of the simulation for BoundaryScrapingDiagnostics, we always set `isLastBTD`.
+    // This tells WarpX to write all the metadata (and not purely the particle data)
     bool const isLastBTD = true;
     const amrex::Geometry& geom = warpx.Geom(0); // For compatibility with `WriteToFile` ; not used
 
@@ -138,5 +146,4 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
         m_file_min_digits, false, false, isBTD, i_buffer, geom,
         isLastBTD, m_totalParticles_flushed_already[i_buffer]);
 
-    // TODO: Clear particle buffers
 }
