@@ -48,7 +48,7 @@ BoundaryScrapingDiagnostics::ReadParameters ()
     for (auto const& species_name : m_output_species_names){
         amrex::ParmParse pp(species_name);
         bool save_particles_at_eb;
-        pp_species.query("save_particles_at_eb", save_particles_at_eb);
+        pp.query("save_particles_at_eb", save_particles_at_eb);
         if (save_particles_at_eb == false) particle_saving_activated = false;
     }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( particle_saving_activated,
