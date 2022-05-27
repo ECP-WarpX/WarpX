@@ -1221,6 +1221,10 @@ WarpX::ReadParameters ()
             current_correction = false;
         }
 
+        // TODO Remove this default when current correction will
+        // be implemented for the multi-J algorithm as well.
+        if (do_multi_J) current_correction = false;
+
         pp_psatd.query("current_correction", current_correction);
 
         if (current_correction == false &&
