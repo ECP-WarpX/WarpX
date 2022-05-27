@@ -586,7 +586,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     auto runtime_rnames = tmp.getParticleRuntimeComps();
     for (auto const& x : runtime_rnames)
     {
-      real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
+        real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
     }
     // plot any "extra" fields by default
     real_flags = particle_diags[i].plot_flags;
@@ -596,7 +596,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     auto runtime_inames = tmp.getParticleRuntimeiComps();
     for (auto const& x : runtime_inames)
     {
-      int_names[x.second+0] = detail::snakeToCamel(x.first);
+        int_names[x.second+0] = detail::snakeToCamel(x.first);
     }
     // plot by default
     int_flags.resize(tmp.NumIntComps(), 1);
@@ -618,12 +618,12 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       if (! isBTD) {
           using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
           tmp.copyParticles(*pc,
-                          [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
-              {
-                const SuperParticleType& p = src.getSuperParticle(ip);
-                return random_filter(p, engine) * uniform_filter(p, engine)
-                       * parser_filter(p, engine) * geometry_filter(p, engine);
-              }, true);
+                            [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+          {
+              const SuperParticleType& p = src.getSuperParticle(ip);
+              return random_filter(p, engine) * uniform_filter(p, engine)
+                     * parser_filter(p, engine) * geometry_filter(p, engine);
+          }, true);
       } else if (isBTD) {
           tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
           tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
@@ -633,6 +633,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 
     // real_names contains a list of all real particle attributes.
     // real_flags is 1 or 0, whether quantity is dumped or not.
+
     {
       if (isBTD) {
           DumpToFile(&tmp,
