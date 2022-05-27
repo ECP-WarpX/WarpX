@@ -91,9 +91,9 @@ struct GetExternalEBField
                 lab_time = m_gamma_boost*m_time + m_uz_boost*z*inv_c2;
                 z = m_gamma_boost*z + m_uz_boost*m_time;
             }
-            Ex = m_Exfield_partparser(x, y, z, lab_time);
-            Ey = m_Eyfield_partparser(x, y, z, lab_time);
-            Ez = m_Ezfield_partparser(x, y, z, lab_time);
+            Ex = m_Exfield_partparser((amrex::Real) x, (amrex::Real) y, (amrex::Real) z, lab_time);
+            Ey = m_Eyfield_partparser((amrex::Real) x, (amrex::Real) y, (amrex::Real) z, lab_time);
+            Ez = m_Ezfield_partparser((amrex::Real) x, (amrex::Real) y, (amrex::Real) z, lab_time);
         }
 
         if (m_Btype == Constant)

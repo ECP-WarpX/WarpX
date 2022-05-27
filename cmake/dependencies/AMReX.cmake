@@ -55,9 +55,13 @@ macro(find_amrex)
 
         if(WarpX_PRECISION STREQUAL "DOUBLE")
             set(AMReX_PRECISION "DOUBLE" CACHE INTERNAL "")
-            set(AMReX_PARTICLES_PRECISION "DOUBLE" CACHE INTERNAL "")
         else()
             set(AMReX_PRECISION "SINGLE" CACHE INTERNAL "")
+        endif()
+
+        if(WarpX_PARTICLE_PRECISION STREQUAL "DOUBLE")
+            set(AMReX_PARTICLES_PRECISION "DOUBLE" CACHE INTERNAL "")
+        else()
             set(AMReX_PARTICLES_PRECISION "SINGLE" CACHE INTERNAL "")
         endif()
 
@@ -221,7 +225,7 @@ macro(find_amrex)
         else()
             set(COMPONENT_SENSEI)
         endif()
-        set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PRECISION})
+        set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PARTICLE_PRECISION})
 
         find_package(AMReX 22.05 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")

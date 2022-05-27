@@ -62,12 +62,11 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
-#include <sstream>
 
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 
@@ -118,6 +117,20 @@ WarpX::PrintMainPICparameters ()
     amrex::Print() << "-------------------------------------------------------------------------------\n";
     amrex::Print() << "--------------------------- MAIN EM PIC PARAMETERS ----------------------------\n";
     amrex::Print() << "-------------------------------------------------------------------------------\n";
+
+    // print warpx build information
+    if constexpr (std::is_same<Real, float>::value) {
+      amrex::Print() << "Precision:            | SINGLE" << "\n";
+    }
+    else {
+      amrex::Print() << "Precision:            | DOUBLE" << "\n";
+    }
+    if constexpr (std::is_same<ParticleReal, float>::value) {
+      amrex::Print() << "Particle precision:   | SINGLE" << "\n";
+    }
+    else {
+      amrex::Print() << "Particle precision:   | DOUBLE" << "\n";
+    }
 
     // Print geometry dimensionality
     amrex::ParmParse pp_geometry("geometry");
@@ -333,6 +346,17 @@ WarpX::PrintMainPICparameters ()
 }
 
 void
+WarpX::WriteUsedInputsFile (std::string const & filename) const
+{
+    amrex::Print() << "For full input parameters, see the file: " << filename << "\n\n";
+
+    std::ofstream jobInfoFile;
+    jobInfoFile.open(filename.c_str(), std::ios::out);
+    ParmParse::dumpTable(jobInfoFile, true);
+    jobInfoFile.close();
+}
+
+void
 WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
@@ -386,6 +410,7 @@ WarpX::InitData ()
     CheckGuardCells();
 
     PrintMainPICparameters();
+    WriteUsedInputsFile();
 
     if (restart_chkfile.empty())
     {
