@@ -58,7 +58,7 @@ namespace ParticleUtils {
      * mass M) is stationary and the projectile is approaching with the
      * the given velocity and mass m.
      *
-     * @param[in] v2 square of particle speed ( v dot v)
+     * @param[in] v2 square of particle speed gamma^2 * ( v dot v)
      * @param[in] m, M mass of projectile and target, respectively
      * @param[out] energy particle energy in eV
      */
@@ -91,16 +91,40 @@ namespace ParticleUtils {
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     void getRotationAngles ( amrex::ParticleReal const vx, amrex::ParticleReal const vy,
                              amrex::ParticleReal const vz, amrex::ParticleReal& theta,
-                             amrex::ParticleReal& phi )
+                             amrex::ParticleReal& phi, int& sign )
     {
         using std::atan;
         using std::cos;
         using std::sin;
 
+        sign = (vz > 0) ? 1 : -1;
+
         // rotation to yz plane
         theta = atan(-vy / vx);
         // rotation to z axis
         phi = atan((vx * cos(theta) - vy * sin(theta)) / vz );
+    }
+
+    /**
+     * \brief Perform a Lorentz transformation of the given velocity
+     * to a frame moving relative to the present one.
+     *
+     * @param ...
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_INLINE
+    void doLorentzTransform ( amrex::ParticleReal& vx, amrex::ParticleReal& vy,
+                              amrex::ParticleReal& vz, amrex::ParticleReal const Ux,
+                              amrex::ParticleReal const Uy, amrex::ParticleReal const Uz )
+    {
+        // Seeing as a Lorentz transformation is more compute intensive than a
+        // Galilean transform we will only do the former if gamma > 1.01
+        //if (gamma < 1.01_prt) {
+        vx -= Ux;
+        vy -= Uy;
+        vz -= Uz;
+        //} else {
+        //  amrex::Print() << "should do the lorentz transform" << std::endl;
+        //}
     }
 
     /**
