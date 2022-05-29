@@ -56,7 +56,7 @@ namespace ParticleUtils {
     /**
      * \brief Return (relativistic) collision energy assuming the target (with
      * mass M) is stationary and the projectile is approaching with the
-     * the given velocity and mass m.
+     * the given speed and mass m.
      *
      * @param[in] v2 square of particle speed gamma^2 * ( v dot v)
      * @param[in] m, M mass of projectile and target, respectively
@@ -73,12 +73,12 @@ namespace ParticleUtils {
         // Compute c^2 since it is used repeatedly
         constexpr auto c2 = PhysConst::c * PhysConst::c;
 
-        const auto beta = v2 / c2;
-        gamma = sqrt(1.0_prt + beta);
+        const auto beta2 = v2 / c2;
+        gamma = sqrt(1.0_prt + beta2);
         const auto m_tot = M + gamma*m;
         energy = (
-            sqrt(m_tot*m_tot - gamma*gamma*m*m*beta)*c2 - m*c2 - M*c2
-        ) / PhysConst::q_e;
+            sqrt(m_tot*m_tot - gamma*gamma*m*m*beta2) - m - M
+        ) * c2 / PhysConst::q_e;
     }
 
     /**
@@ -107,24 +107,22 @@ namespace ParticleUtils {
 
     /**
      * \brief Perform a Lorentz transformation of the given velocity
-     * to a frame moving relative to the present one.
+     * to a frame moving with velocity (0, 0, Vz) relative to the present one.
      *
-     * @param ...
+     * @param[in/out] ux,uy,uz components of velocity vector in the current frame
+     * @param[in] Vz speed of the new frame relative to the current one
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    void doLorentzTransform ( amrex::ParticleReal& vx, amrex::ParticleReal& vy,
-                              amrex::ParticleReal& vz, amrex::ParticleReal const Ux,
-                              amrex::ParticleReal const Uy, amrex::ParticleReal const Uz )
+    void doLorentzTransform ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
+                              amrex::ParticleReal& uz, amrex::ParticleReal const Vz )
     {
-        // Seeing as a Lorentz transformation is more compute intensive than a
-        // Galilean transform we will only do the former if gamma > 1.01
-        //if (gamma < 1.01_prt) {
-        vx -= Ux;
-        vy -= Uy;
-        vz -= Uz;
-        //} else {
-        //  amrex::Print() << "should do the lorentz transform" << std::endl;
-        //}
+        constexpr auto c2 = PhysConst::c * PhysConst::c;
+        const auto lorentz_fac = sqrt(1.0_prt - Vz*Vz/c2);
+        const auto time_fac = (1.0_prt - uz*Vz/c2);
+
+        ux = lorentz_fac * ux / time_fac;
+        uy = lorentz_fac * uy / time_fac;
+        uz = (uz - Vz) / time_fac;
     }
 
     /**
@@ -159,6 +157,7 @@ namespace ParticleUtils {
      *
      * @param[in/out] ux, uy, uz colliding particle's velocity
      * @param[in] vp velocity magnitude of the colliding particle after collision.
+     * @param[in] engine the random-engine
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     void RandomizeVelocity ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
