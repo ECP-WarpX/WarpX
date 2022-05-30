@@ -7,9 +7,8 @@
 
 #include "MsgLogger.H"
 
-#include "Utils/TextMsg.H"
-
-#include <ablastr/utils/Serialization.H>
+#include "ablastr/utils/TextMsg.H"
+#include "ablastr/utils/Serialization.H"
 
 #ifdef AMREX_USE_MPI
 #   include <AMReX_ParallelDescriptor.H>
@@ -22,6 +21,7 @@
 
 namespace abl_msg_logger = ablastr::utils::msg_logger;
 namespace abl_ser = ablastr::utils::serialization;
+namespace abl_utils = ablastr::utils;
 
 using namespace abl_msg_logger;
 
@@ -118,7 +118,7 @@ Priority abl_msg_logger::StringToPriority(const std::string& priority_string)
     else if (priority_string == "low")
         return Priority::low;
     else
-        amrex::Abort(Utils::TextMsg::Err(
+        amrex::Abort(abl_utils::TextMsg::Err(
             "Priority string '" + priority_string + "' not recognized"));
 
     //this silences a "non-void function does not return a value in all control paths" warning
