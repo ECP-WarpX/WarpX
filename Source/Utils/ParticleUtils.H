@@ -41,16 +41,14 @@ namespace ParticleUtils {
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     void getEnergy ( amrex::ParticleReal const v2, amrex::ParticleReal const mass,
-                     amrex::ParticleReal& gamma, amrex::ParticleReal& energy )
+                     amrex::ParticleReal& energy )
     {
         using std::sqrt;
         using namespace amrex::literals;
 
         // Compute c^2 since it is used repeatedly
         constexpr auto c2 = PhysConst::c * PhysConst::c;
-
-        gamma = sqrt(1.0_prt + v2 / c2);
-        energy = mass * c2 * (gamma - 1.0_prt) / PhysConst::q_e;
+        energy = mass * c2 * (sqrt(1.0_prt + v2 / c2) - 1.0_prt) / PhysConst::q_e;
     }
 
     /**

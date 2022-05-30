@@ -367,16 +367,14 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               amrex::Real n_a = n_a_func(x, y, z, t);
                               amrex::Real T_a = T_a_func(x, y, z, t);
 
-                              amrex::ParticleReal vel_std, v_coll, v_coll2;
+                              amrex::ParticleReal v_coll, v_coll2;
                               amrex::ParticleReal gamma, E_coll, sigma_E, nu_i = 0;
-                              amrex::ParticleReal col_select = amrex::Random(engine);
                               amrex::ParticleReal ua_x, ua_y, ua_z, vx, vy, vz;
                               amrex::ParticleReal uCOM_z, theta, phi;
+                              amrex::ParticleReal col_select = amrex::Random(engine);
 
                               // get velocities of gas particles from a Maxwellian distribution
-                              // unless the neutral mass is much greater than the projectile mass
-                              // in which case we use a stationary target
-                              vel_std = sqrt(PhysConst::kb * T_a / M);
+                              auto const vel_std = sqrt(PhysConst::kb * T_a / M);
                               ua_x = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
                               ua_y = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
                               ua_z = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
@@ -436,7 +434,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                   // subtract any energy penalty of the collision from the
                                   // projectile energy
                                   if (scattering_process.m_energy_penalty != 0.0_prt) {
-                                      ParticleUtils::getEnergy(v_coll2, m, gamma, E_coll);
+                                      ParticleUtils::getEnergy(v_coll2, m, E_coll);
                                       E_coll = (E_coll - scattering_process.m_energy_penalty) * PhysConst::q_e;
                                       v_coll = sqrt(E_coll * (E_coll + 2.0_prt*mc2) / c2) / m;
                                       gamma = sqrt(1.0_prt + v_coll*v_coll/c2);

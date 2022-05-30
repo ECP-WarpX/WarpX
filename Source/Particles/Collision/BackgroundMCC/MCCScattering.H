@@ -21,24 +21,6 @@
  * in the MCC handling.
  */
 
-/** \brief Function to perform isotropic elastic scattering of a particle. A
- * hard sphere collision is assumed independent of the projectile velocity.
- *
- * @param[in,out] ux,uy,uz colliding particle's velocity
- * @param[in] engine random number generator.
- */
-AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void IsotropicScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
-                           amrex::ParticleReal& uz, amrex::RandomEngine const& engine )
-{
-    using std::sqrt;
-
-    // istropically scatter the particle
-    amrex::Real const mag = sqrt(ux*ux + uy*uy + uz*uz);
-    ParticleUtils::RandomizeVelocity(ux, uy, uz, mag, engine);
-}
-
-
 /** \brief Function to perform elastic scattering of a particle in the
  * stationary frame of the target. The particle velocity is assumed to have
  * been rotated so that it is travelling only in the z'-direction. The
@@ -154,7 +136,7 @@ public:
 
         // get references to the particle to get its position
         const auto& p = ptd.getSuperParticle(i);
-        ParticleReal x, y, z, gamma, E_coll;
+        ParticleReal x, y, z, E_coll;
         get_particle_position(p, x, y, z);
 
         // calculate neutral density at particle location
@@ -167,7 +149,7 @@ public:
 
         // calculate kinetic energy
         const ParticleReal v_coll2 = ux*ux + uy*uy + uz*uz;
-        ParticleUtils::getEnergy(v_coll2, m_mass, gamma, E_coll);
+        ParticleUtils::getEnergy(v_coll2, m_mass, E_coll);
         const ParticleReal v_coll = sqrt(v_coll2);
 
         // get collision cross-section
@@ -246,7 +228,7 @@ public:
 
         // get references to the particle to get its position
         const auto& p = src.getSuperParticle(i_src);
-        ParticleReal x, y, z, gamma, E_coll;
+        ParticleReal x, y, z, E_coll;
         get_particle_position(p, x, y, z);
 
         // calculate standard deviation in neutral velocity distribution using
@@ -268,7 +250,7 @@ public:
 
         // calculate kinetic energy
         const ParticleReal v_coll2 = ux*ux + uy*uy + uz*uz;
-        ParticleUtils::getEnergy(v_coll2, m_mass1, gamma, E_coll);
+        ParticleUtils::getEnergy(v_coll2, m_mass1, E_coll);
 
         // each electron gets half the energy (could change this later)
         amrex::Real E_out = (E_coll - m_energy_cost) / 2.0_prt * PhysConst::q_e;
@@ -278,8 +260,8 @@ public:
         const auto mc2 = m_mass1*c2;
 
         amrex::Real vp = sqrt(E_out * (E_out + 2.0_prt*mc2) / c2) / m_mass1;
-        gamma = 1.0_prt / sqrt(1.0_prt - vp*vp / c2);
-        vp *= gamma;
+        // velocity is actually saved as gamma * v
+        vp *= 1.0_prt / sqrt(1.0_prt - vp*vp / c2);
 
         // isotropically scatter electrons
         ParticleUtils::RandomizeVelocity(ux, uy, uz, vp, engine);
