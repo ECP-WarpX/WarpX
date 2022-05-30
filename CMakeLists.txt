@@ -51,9 +51,6 @@ set_ccache()
 # temporary build directories
 set_default_build_dirs()
 
-# install directories
-set_default_install_dirs()
-
 
 # Options and Variants ########################################################
 #
@@ -364,6 +361,9 @@ configure_file(
 
 # Installs ####################################################################
 #
+# default installation directories
+set_default_install_dirs()
+
 # headers, libraries and executables
 set(WarpX_INSTALL_TARGET_NAMES ablastr)
 if(WarpX_APP)
