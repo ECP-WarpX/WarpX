@@ -3,3 +3,5 @@ target_sources(ablastr
     TextMsg.cpp
     SignalHandling.cpp
 )
+
+add_subdirectory(msg_logger)

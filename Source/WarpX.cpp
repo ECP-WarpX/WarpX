@@ -32,7 +32,6 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Utils/TextMsg.H"
-#include "Utils/MsgLogger/MsgLogger.H"
 #include "Utils/WarnManager.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -40,6 +39,7 @@
 #include "Utils/WarpXUtil.H"
 
 #include <ablastr/utils/SignalHandling.H>
+#include <ablastr/utils/msg_logger/MsgLogger.H>
 
 #ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -81,6 +81,8 @@
 #include <utility>
 
 using namespace amrex;
+
+namespace abl_msg_logger = ablastr::utils::msg_logger;
 
 Vector<Real> WarpX::E_external_grid(3, 0.0);
 Vector<Real> WarpX::B_external_grid(3, 0.0);
@@ -445,18 +447,18 @@ WarpX::RecordWarning(
 {
     WARPX_PROFILE("WarpX::RecordWarning");
 
-    auto msg_priority = Utils::MsgLogger::Priority::high;
+    auto msg_priority = abl_msg_logger::Priority::high;
     if(priority == WarnPriority::low)
-        msg_priority = Utils::MsgLogger::Priority::low;
+        msg_priority = abl_msg_logger::Priority::low;
     else if(priority == WarnPriority::medium)
-        msg_priority = Utils::MsgLogger::Priority::medium;
+        msg_priority = abl_msg_logger::Priority::medium;
 
     if(m_always_warn_immediately){
 
         amrex::Warning(
             Utils::TextMsg::Warn(
                 "["
-                + std::string(Utils::MsgLogger::PriorityToString(msg_priority))
+                + std::string(abl_msg_logger::PriorityToString(msg_priority))
                 + "]["
                 + topic
                 + "] "
@@ -472,16 +474,16 @@ WarpX::RecordWarning(
 
     if(m_abort_on_warning_threshold){
 
-        auto abort_priority = Utils::MsgLogger::Priority::high;
+        auto abort_priority = abl_msg_logger::Priority::high;
         if(m_abort_on_warning_threshold == WarnPriority::low)
-            abort_priority = Utils::MsgLogger::Priority::low;
+            abort_priority = abl_msg_logger::Priority::low;
         else if(m_abort_on_warning_threshold == WarnPriority::medium)
-            abort_priority = Utils::MsgLogger::Priority::medium;
+            abort_priority = abl_msg_logger::Priority::medium;
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             msg_priority < abort_priority,
             "A warning with priority '"
-            + Utils::MsgLogger::PriorityToString(msg_priority)
+            + abl_msg_logger::PriorityToString(msg_priority)
             + "' has been raised."
         );
     }

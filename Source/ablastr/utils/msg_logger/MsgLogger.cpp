@@ -20,8 +20,10 @@
 #include <sstream>
 #include <numeric>
 
-using namespace Utils::MsgLogger;
+namespace abl_msg_logger = ablastr::utils::msg_logger;
 namespace abl_ser = ablastr::utils::serialization;
+
+using namespace abl_msg_logger;
 
 #ifdef AMREX_USE_MPI
 // Helper functions used only in this source file
@@ -97,7 +99,7 @@ namespace
 }
 #endif
 
-std::string Utils::MsgLogger::PriorityToString(const Priority& priority)
+std::string abl_msg_logger::PriorityToString(const Priority& priority)
 {
     if(priority == Priority::high)
         return "high";
@@ -107,7 +109,7 @@ std::string Utils::MsgLogger::PriorityToString(const Priority& priority)
         return "low";
 }
 
-Priority Utils::MsgLogger::StringToPriority(const std::string& priority_string)
+Priority abl_msg_logger::StringToPriority(const std::string& priority_string)
 {
     if(priority_string == "high")
         return Priority::high;
