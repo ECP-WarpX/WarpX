@@ -88,14 +88,10 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
 
         # Set up the computation matrix in order to solve A*phi = rho
         A = np.zeros((self.nsolve, self.nsolve))
-        kk = 0
-        for ii in range(self.nsolve):
-            for jj in range(self.nsolve):
-
-                if ii == jj:
-                    A[ii, jj] = -2.0
-                elif ii == jj - 1 or ii == jj + 1:
-                    A[ii, jj] = 1.0
+        idx = np.arange(self.nsolve)
+        A[idx, idx] = -2.0
+        A[idx[1:], idx[:-1]] = 1.0
+        A[idx[:-1], idx[1:]] = 1.0
 
         A[0, 1] = 0.0
         A[-1, -2] = 0.0

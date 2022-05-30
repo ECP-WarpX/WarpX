@@ -74,9 +74,7 @@ namespace ParticleUtils {
         const auto beta2 = v2 / c2;
         gamma = sqrt(1.0_prt + beta2);
         const auto m_tot = M + gamma*m;
-        energy = (
-            sqrt(m_tot*m_tot - gamma*gamma*m*m*beta2) - m - M
-        ) * c2 / PhysConst::q_e;
+        energy = (sqrt(m_tot*m_tot - m*m*beta2) - m - M) * c2 / PhysConst::q_e;
     }
 
     /**

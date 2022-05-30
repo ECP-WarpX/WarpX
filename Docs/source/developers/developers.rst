@@ -15,6 +15,7 @@ Implementation Details
    diagnostics
    moving_window
    qed
+   collisions
    portability
    warning_logger
    python
