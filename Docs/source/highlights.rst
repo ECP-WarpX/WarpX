@@ -19,6 +19,16 @@ Scientific works in laser-plasma and beam-plasma acceleration.
   *preprint*. under review, 2022.
   `arXiv:2205.12083 <https://arxiv.org/abs/2205.12083>`__
 
+- Levy D, Andriyash IA, Haessler S, Ouille M, Kaur J, Flacco A, Kroupp E, Malka V, Lopez-Martens R.
+  **Low-divergence MeV-class proton beams from kHz-driven laser-solid interactions**.
+  *preprint*. under review, 2021.
+  `arXiv:2112.12581 <https://arxiv.org/abs/2112.12581>`__
+
+- Miao B, Shrock JE, Feder L, Hollinger RC, Morrison J, Nedbailo R, Picksley A, Song H, Wang S, Rocca JJ, Milchberg HM.
+  **Multi-GeV electron bunches from an all-optical laser wakefield accelerator**.
+  *preprint*. under review, 2021.
+  `arXiv:2112.03489 <https://arxiv.org/abs/2112.03489>`__
+
 - Mirani F, Calzolari D, Formenti A, Passoni M.
   **Superintense laser-driven photon activation analysis**.
   Nature Communications Physics volume **4**.185, 2021
