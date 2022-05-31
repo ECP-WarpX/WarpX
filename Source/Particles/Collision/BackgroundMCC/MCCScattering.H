@@ -43,6 +43,11 @@ void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
                          amrex::ParticleReal const Z,
                          amrex::RandomEngine const& engine )
 {
+    using std::cos;
+    using std::sin;
+    using std::sqrt;
+    using namespace amrex::literals;
+
     amrex::Real cos_chi;
     // calculate the particle momentum
     auto const beta = uz/PhysConst::c;
@@ -51,7 +56,7 @@ void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
     // in such a situation and a scattering angle was not given we can save
     // some compution
     if (beta < 0.05_prt) {
-        cos_chi = 2.0_rt * amrex::Random(engine) - 1.0_rt;
+        cos_chi = 2.0_prt * amrex::Random(engine) - 1.0_prt;
     }
     // sample a scattering angle if one was not given
     else {
@@ -72,7 +77,7 @@ void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
     uz = uz * cos_chi;
 
     // choose random angle to rotate velocity around z-axis
-    const auto omega = amrex::Random(engine) * 2.0_rt * MathConst::pi;
+    const auto omega = amrex::Random(engine) * 2.0_prt * MathConst::pi;
     uy = ux * sin(omega);
     ux = ux * cos(omega);
 }
