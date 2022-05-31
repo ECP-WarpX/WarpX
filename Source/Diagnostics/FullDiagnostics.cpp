@@ -307,7 +307,8 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             }
         }
         else {
-            amrex::Abort("Error: " + m_varnames_fields[comp] + " is not a known field output type in RZ geometry");
+            amrex::Abort(Utils::TextMsg::Err(
+                "Error: " + m_varnames_fields[comp] + " is not a known field output type in RZ geometry"));
         }
     }
     // Sum the number of components in input vector m_all_field_functors

@@ -1019,22 +1019,21 @@ WarpX::ReadParameters ()
         charge_deposition_algo = GetAlgorithmInteger(pp_algo, "charge_deposition");
         particle_pusher_algo = GetAlgorithmInteger(pp_algo, "particle_pusher");
 
-        if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov && do_current_centering)
-        {
-            amrex::Abort("\nCurrent centering (nodal deposition) cannot be used with Esirkepov deposition."
-                         "\nPlease set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            current_deposition_algo != CurrentDepositionAlgo::Esirkepov ||
+            !do_current_centering,
+            "Current centering (nodal deposition) cannot be used with Esirkepov deposition."
+            "Please set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
 
-        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay && do_current_centering)
-        {
-            amrex::Abort("\nVay deposition not implemented with current centering");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay ||
+            !do_current_centering,
+            "Vay deposition not implemented with current centering");
 
-        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay
-            && maxLevel() > 0)
-        {
-            amrex::Abort("\nVay deposition not implemented with mesh refinement");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay ||
+            maxLevel() <= 0,
+            "Vay deposition not implemented with mesh refinement");
 
         field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {

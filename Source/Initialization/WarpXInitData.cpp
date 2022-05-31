@@ -767,7 +767,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (B_ext_grid_s == "parse_b_ext_grid_function") {
 
 #ifdef WARPX_DIM_RZ
-       amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
+       amrex::Abort(Utils::TextMsg::Err(
+           "E and B parser for external fields does not work with RZ -- TO DO"));
 #endif
        Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
                                                     str_Bx_ext_grid_function);
@@ -824,7 +825,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (E_ext_grid_s == "parse_e_ext_grid_function") {
 
 #ifdef WARPX_DIM_RZ
-       amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
+       amrex::Abort(Utils::TextMsg::Err(
+           "E and B parser for external fields does not work with RZ -- TO DO"));
 #endif
        Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
                                                     str_Ex_ext_grid_function);
@@ -1171,20 +1173,14 @@ void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
     {
         const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
         const amrex::IntVect gc = mf.nGrowVect();
-        if (vc.allGT(gc) == false)
-        {
-            std::stringstream ss;
-            ss << "\nMultiFab "
-               << mf.tags()[1]
-               << ":\nthe number of guard cells "
-               << gc
-               << " is larger than or equal to the number of valid cells "
-               << vc
-               << ",\nplease reduce the number of guard cells"
-               << " or increase the grid size by changing domain decomposition";
-            amrex::Abort(ss.str());
 
-        }
+        std::stringstream ss_msg;
+        ss_msg << "MultiFab " << mf.tags()[1].c_str() << ":" <<
+            " the number of guard cells " << gc <<
+            " is larger than or equal to the number of valid cells "
+            << vc << ", please reduce the number of guard cells" <<
+             " or increase the grid size by changing domain decomposition.";
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.str());
     }
 }
 
