@@ -10,6 +10,7 @@
 
 #include "BinaryCollisionUtils.H"
 
+#include "Particles/Collision/BinaryCollision/NuclearFusion/DeuteriumTritiumFusionInitializeMomentum.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/ProtonBoronFusionInitializeMomentum.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/MultiParticleContainer.H"
@@ -208,6 +209,10 @@ public:
 
                 // Initialize the product particles' momentum, using a function depending on the
                 // specific collision type
+                if (t_collision_type == CollisionType::DeuteriumTritiumFusion)
+                {
+                    // TODO DeuteriumTritiumFusionInitializeMomentum
+                }
                 if (t_collision_type == CollisionType::ProtonBoronFusion)
                 {
                     const index_type product_start_index = products_np_data[0] + 2*p_offsets[i]*
