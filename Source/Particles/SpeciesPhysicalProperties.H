@@ -192,9 +192,9 @@ namespace species
             return "hydrogen3";
         case PhysicalSpecies::helium:
             return "helium";
-        case PhysicalSpecies::helium:
+        case PhysicalSpecies::helium3:
             return "helium3";
-        case PhysicalSpecies::helium:
+        case PhysicalSpecies::helium4:
             return "helium4";
         case PhysicalSpecies::boron:
             return "boron";
