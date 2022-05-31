@@ -453,7 +453,7 @@ LaserParticleContainer::InitData (int lev)
     BoxArray plane_ba { Box {IntVect(0), IntVect(0)} };
 #endif
 
-    amrex::Vector<amrex::Real> particle_x, particle_y, particle_z, particle_w;
+    amrex::Vector<amrex::ParticleReal> particle_x, particle_y, particle_z, particle_w;
 
     const DistributionMapping plane_dm {plane_ba, nprocs};
     const Vector<int>& procmap = plane_dm.ProcessorMap();
@@ -506,9 +506,9 @@ LaserParticleContainer::InitData (int lev)
         }
     }
     const int np = particle_z.size();
-    amrex::Vector<amrex::Real> particle_ux(np, 0.0);
-    amrex::Vector<amrex::Real> particle_uy(np, 0.0);
-    amrex::Vector<amrex::Real> particle_uz(np, 0.0);
+    amrex::Vector<amrex::ParticleReal> particle_ux(np, 0.0);
+    amrex::Vector<amrex::ParticleReal> particle_uy(np, 0.0);
+    amrex::Vector<amrex::ParticleReal> particle_uz(np, 0.0);
 
     if (Verbose()) amrex::Print() << Utils::TextMsg::Info("Adding laser particles");
     // Add particles on level 0. They will be redistributed afterwards

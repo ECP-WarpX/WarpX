@@ -7,10 +7,10 @@
 
 #include "WarnManager.H"
 
-#include "MsgLogger/MsgLogger.H"
 #include "WarpXUtil.H"
 
 #include <ablastr/utils/TextMsg.H>
+#include <ablastr/utils/msg_logger/MsgLogger.H>
 
 #include <AMReX_ParallelDescriptor.H>
 
@@ -18,19 +18,20 @@
 #include <sstream>
 
 using namespace Utils;
-using namespace Utils::MsgLogger;
+
+namespace abl_msg_logger = ablastr::utils::msg_logger;
 
 WarnManager::WarnManager():
     m_rank{amrex::ParallelDescriptor::MyProc()},
-    m_p_logger{std::make_unique<Logger>()}
+    m_p_logger{std::make_unique<abl_msg_logger::Logger>()}
 {}
 
 void WarnManager::record_warning(
             std::string topic,
             std::string text,
-            Priority priority)
+            abl_msg_logger::Priority priority)
 {
-    m_p_logger->record_msg(Msg{topic, text, priority});
+    m_p_logger->record_msg(abl_msg_logger::Msg{topic, text, priority});
 }
 
 std::string WarnManager::print_local_warnings(const std::string& when) const
@@ -105,7 +106,8 @@ void WarnManager::debug_read_warnings_from_input(amrex::ParmParse& params)
 
         std::string spriority;
         pp_warn.query("priority", spriority);
-        Priority priority = StringToPriority(spriority);
+        abl_msg_logger::Priority priority =
+            abl_msg_logger::StringToPriority(spriority);
 
         int all_involved = 0;
         pp_warn.query("all_involved", all_involved);
@@ -125,15 +127,15 @@ void WarnManager::debug_read_warnings_from_input(amrex::ParmParse& params)
 }
 
 std::string WarnManager::print_warn_msg(
-    const MsgLogger::MsgWithCounter& msg_with_counter) const
+    const abl_msg_logger::MsgWithCounter& msg_with_counter) const
 {
     std::stringstream ss;
     ss << "* --> ";
-    if (msg_with_counter.msg.priority == MsgLogger::Priority::high)
+    if (msg_with_counter.msg.priority == abl_msg_logger::Priority::high)
         ss << "[!!!]";
-    else if (msg_with_counter.msg.priority == MsgLogger::Priority::medium)
+    else if (msg_with_counter.msg.priority == abl_msg_logger::Priority::medium)
         ss << "[!! ]";
-    else if (msg_with_counter.msg.priority == MsgLogger::Priority::low)
+    else if (msg_with_counter.msg.priority == abl_msg_logger::Priority::low)
         ss << "[!  ]";
     else
         ss << "[???]";
@@ -153,7 +155,7 @@ std::string WarnManager::print_warn_msg(
 }
 
 std::string WarnManager::print_warn_msg(
-    const MsgLogger::MsgWithCounterAndRanks& msg_with_counter_and_ranks) const
+    const abl_msg_logger::MsgWithCounterAndRanks& msg_with_counter_and_ranks) const
 {
     std::stringstream ss;
     ss << this->print_warn_msg(msg_with_counter_and_ranks.msg_with_counter);

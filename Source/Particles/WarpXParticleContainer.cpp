@@ -81,20 +81,11 @@ WarpXParIter::WarpXParIter (ContainerType& pc, int level, MFItInfo& info)
 }
 
 WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
-    : ParticleContainer<0,0,PIdx::nattribs>(amr_core->GetParGDB())
+    : NamedComponentParticleContainer<DefaultAllocator>(amr_core->GetParGDB())
     , species_id(ispecies)
 {
     SetParticleSize();
     ReadParameters();
-
-    // build up the map of string names to particle component numbers
-    particle_comps["w"]  = PIdx::w;
-    particle_comps["ux"] = PIdx::ux;
-    particle_comps["uy"] = PIdx::uy;
-    particle_comps["uz"] = PIdx::uz;
-#ifdef WARPX_DIM_RZ
-    particle_comps["theta"] = PIdx::theta;
-#endif
 
     // Initialize temporary local arrays for charge/current deposition
     int num_threads = 1;
@@ -790,8 +781,8 @@ Real WarpXParticleContainer::sumParticleCharge(bool local) {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             auto& wp = pti.GetAttribs(PIdx::w);
-            for (const auto& tt : wp) {
-                total_charge += tt;
+            for (unsigned long i = 0; i < wp.size(); i++) {
+                total_charge += wp[i];
             }
         }
     }

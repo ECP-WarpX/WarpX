@@ -5,6 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PsatdAlgorithmRZ.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -54,17 +55,20 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
 
     if (time_averaging && !do_multi_J)
     {
-        amrex::Abort("RZ PSATD: psatd.do_time_averaging = 1 implemented only with warpx.do_multi_J = 1");
+        amrex::Abort(Utils::TextMsg::Err(
+            "RZ PSATD: psatd.do_time_averaging = 1 implemented only with warpx.do_multi_J = 1"));
     }
 
     if (dive_cleaning && !do_multi_J)
     {
-        amrex::Abort("RZ PSATD: warpx.do_dive_cleaning = 1 implemented only with warpx.do_multi_J = 1");
+        amrex::Abort(Utils::TextMsg::Err(
+            "RZ PSATD: warpx.do_dive_cleaning = 1 implemented only with warpx.do_multi_J = 1"));
     }
 
     if (divb_cleaning && !do_multi_J)
     {
-        amrex::Abort("RZ PSATD: warpx.do_divb_cleaning = 1 implemented only with warpx.do_multi_J = 1");
+        amrex::Abort(Utils::TextMsg::Err(
+            "RZ PSATD: warpx.do_divb_cleaning = 1 implemented only with warpx.do_multi_J = 1"));
     }
 }
 
@@ -481,5 +485,6 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 void
 PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    amrex::Abort("Vay deposition not implemented in RZ geometry");
+    amrex::Abort(Utils::TextMsg::Err(
+        "Vay deposition not implemented in RZ geometry"));
 }

@@ -273,26 +273,6 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    int const max_iters,
                    int const verbosity) const
 {
-#ifdef WARPX_DIM_RZ
-    // Create a new geometry with the z coordinate scaled by gamma
-    amrex::Real const gamma = std::sqrt(1._rt/(1._rt - beta[2]*beta[2]));
-
-    amrex::Vector<amrex::Geometry> geom_scaled(max_level + 1);
-    for (int lev = 0; lev <= max_level; ++lev) {
-        const amrex::Geometry & geom_lev = Geom(lev);
-        const amrex::Real* current_lo = geom_lev.ProbLo();
-        const amrex::Real* current_hi = geom_lev.ProbHi();
-        amrex::Real scaled_lo[AMREX_SPACEDIM];
-        amrex::Real scaled_hi[AMREX_SPACEDIM];
-        scaled_lo[0] = current_lo[0];
-        scaled_hi[0] = current_hi[0];
-        scaled_lo[1] = current_lo[1]*gamma;
-        scaled_hi[1] = current_hi[1]*gamma;
-        amrex::RealBox rb = RealBox(scaled_lo, scaled_hi);
-        geom_scaled[lev].define(geom_lev.Domain(), &rb);
-    }
-#endif
-
     // scale rho appropriately; also determine if rho is zero everywhere
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev < rho.size(); lev++){
@@ -312,29 +292,6 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     LPInfo info;
 
     for (int lev=0; lev<=finest_level; lev++) {
-
-#ifndef AMREX_USE_EB
-#ifdef WARPX_DIM_RZ
-        Real const dx = geom_scaled[lev].CellSize(0);
-        Real const dz_scaled = geom_scaled[lev].CellSize(1);
-        int max_semicoarsening_level = 0;
-        int semicoarsening_direction = -1;
-        if (dz_scaled > dx) {
-            semicoarsening_direction = 1;
-            max_semicoarsening_level = static_cast<int>(std::log2(dz_scaled/dx));
-        } else if (dz_scaled < dx) {
-            semicoarsening_direction = 0;
-            max_semicoarsening_level = static_cast<int>(std::log2(dx/dz_scaled));
-        }
-        if (max_semicoarsening_level > 0) {
-            info.setSemicoarsening(true);
-            info.setMaxSemicoarseningLevel(max_semicoarsening_level);
-            info.setSemicoarseningDirection(semicoarsening_direction);
-        }
-        // Define the linear operator (Poisson operator)
-        MLEBNodeFDLaplacian linop( {geom_scaled[lev]}, {boxArray(lev)}, {DistributionMap(lev)}, info );
-        linop.setSigma({0._rt, 1._rt});
-#else
         // Set the value of beta
         amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
 #if defined(WARPX_DIM_1D_Z)
@@ -344,6 +301,9 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #else
             {{ beta[0], beta[1], beta[2] }};
 #endif
+
+#if !(defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ))
+        // Determine whether to use semi-coarsening
         Array<Real,AMREX_SPACEDIM> dx_scaled
             {AMREX_D_DECL(Geom(lev).CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
                           Geom(lev).CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
@@ -364,30 +324,44 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
             info.setMaxSemicoarseningLevel(max_semicoarsening_level);
             info.setSemicoarseningDirection(semicoarsening_direction);
         }
-        MLNodeTensorLaplacian linop( {Geom(lev)}, {boxArray(lev)}, {DistributionMap(lev)}, info );
-        linop.setBeta( beta_solver );
-#endif
-#else
-        // With embedded boundary: extract EB info
-        MLEBNodeFDLaplacian linop( {Geom(lev)}, {boxArray(lev)}, {DistributionMap(lev)}, info, {&WarpX::fieldEBFactory(lev)});
-
-#ifdef WARPX_DIM_RZ
-            linop.setSigma({0._rt, 1._rt});
-#else
-            // Note: this assumes that the beam is propagating along
-            // one of the axes of the grid, i.e. that only *one* of the Cartesian
-            // components of `beta` is non-negligible.
-            linop.setSigma({AMREX_D_DECL(
-                1._rt-beta[0]*beta[0], 1._rt-beta[1]*beta[1], 1._rt-beta[2]*beta[2])});
 #endif
 
+#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
+        // In the presence of EB or RZ: the solver assumes that the beam is
+        // propagating along  one of the axes of the grid, i.e. that only *one*
+        // of the components of `beta` is non-negligible.
+        MLEBNodeFDLaplacian linop( {Geom(lev)}, {boxArray(lev)}, {DistributionMap(lev)}, info
+#if defined(AMREX_USE_EB)
+            , {&WarpX::fieldEBFactory(lev)}
+#endif
+        );
+
+        // Note: this assumes that the beam is propagating along
+        // one of the axes of the grid, i.e. that only *one* of the
+        // components of `beta` is non-negligible.
+#if defined(WARPX_DIM_RZ)
+        linop.setSigma({0._rt, 1._rt-beta_solver[1]*beta_solver[1]});
+#else
+        linop.setSigma({AMREX_D_DECL(
+            1._rt-beta_solver[0]*beta_solver[0],
+            1._rt-beta_solver[1]*beta_solver[1],
+            1._rt-beta_solver[2]*beta_solver[2])});
+#endif
+
+#if defined(AMREX_USE_EB)
         // if the EB potential only depends on time, the potential can be passed
         // as a float instead of a callable
         if (field_boundary_handler.phi_EB_only_t) {
             linop.setEBDirichlet(field_boundary_handler.potential_eb_t(gett_new(0)));
         }
         else linop.setEBDirichlet(field_boundary_handler.getPhiEB(gett_new(0)));
-
+#endif
+#else
+        // In the absence of EB and RZ: use a more generic solver
+        // that can handle beams propagating in any direction
+        MLNodeTensorLaplacian linop( {Geom(lev)}, {boxArray(lev)},
+            {DistributionMap(lev)}, info );
+        linop.setBeta( beta_solver );
 #endif
 
         // Solve the Poisson equation

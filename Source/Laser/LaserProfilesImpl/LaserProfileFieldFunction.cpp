@@ -6,6 +6,7 @@
  */
 #include "Laser/LaserProfiles.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpX_Complex.H"
 #include "Utils/WarpXUtil.H"
 
@@ -47,9 +48,12 @@ WarpXLaserProfiles::FieldFunctionLaserProfile::init (
             ++it;
         }
     }
-    for (auto const& s : symbols) { // make sure there no unknown symbols
-        amrex::Abort("Laser Profile: Unknown symbol "+s);
-    }
+
+    std::stringstream ss;
+    for (auto const& s : symbols) ss << " " << s;
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(symbols.empty(),
+        "Laser Profile: Unknown symbols " + ss.str());
+
 }
 
 void

@@ -55,9 +55,13 @@ macro(find_amrex)
 
         if(WarpX_PRECISION STREQUAL "DOUBLE")
             set(AMReX_PRECISION "DOUBLE" CACHE INTERNAL "")
-            set(AMReX_PARTICLES_PRECISION "DOUBLE" CACHE INTERNAL "")
         else()
             set(AMReX_PRECISION "SINGLE" CACHE INTERNAL "")
+        endif()
+
+        if(WarpX_PARTICLE_PRECISION STREQUAL "DOUBLE")
+            set(AMReX_PARTICLES_PRECISION "DOUBLE" CACHE INTERNAL "")
+        else()
             set(AMReX_PARTICLES_PRECISION "SINGLE" CACHE INTERNAL "")
         endif()
 
@@ -221,7 +225,7 @@ macro(find_amrex)
         else()
             set(COMPONENT_SENSEI)
         endif()
-        set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PRECISION})
+        set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PARTICLE_PRECISION})
 
         find_package(AMReX 22.05 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
@@ -237,7 +241,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "843a7dff266273a0f5b7b9f6cc9233a278f41fe1"
+set(WarpX_amrex_branch "5d88558d2aeff93855a5c46ec8be1a7ef8545f70"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

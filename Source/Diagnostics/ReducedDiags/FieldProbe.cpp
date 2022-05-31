@@ -545,7 +545,7 @@ void FieldProbe::ComputeDiags (int step)
                                    temp_interp_order, false);
 
                     //Calculate the Poynting Vector S
-                    amrex::Real const sraw[3]{
+                    amrex::ParticleReal const sraw[3]{
                         Exp * Bzp - Ezp * Byp,
                         Ezp * Bxp - Exp * Bzp,
                         Exp * Byp - Eyp * Bxp
@@ -617,13 +617,17 @@ void FieldProbe::ComputeDiags (int step)
             if (amrex::ParallelDescriptor::IOProcessor()) {
                 length_vector.resize(mpisize, 0);
             }
-            localsize.resize(1,0);
-            localsize[0] = m_data.size();
+            localsize.resize(1, m_data.size());
 
+#ifdef AMREX_USE_MPI
             // gather size of m_data from each processor
             amrex::ParallelDescriptor::Gather(localsize.data(), 1,
                                               length_vector.data(), 1,
                                               amrex::ParallelDescriptor::IOProcessorNumber());
+#else
+            // work-around for https://github.com/AMReX-Codes/amrex/pull/2793
+            length_vector[0] = localsize[0];
+#endif
 
             // IO processor sums values from length_array to get size of total output array.
             /* displs records the size of each m_data as well as previous displs. This array

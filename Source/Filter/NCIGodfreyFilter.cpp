@@ -38,7 +38,8 @@ NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdto
     slen = {1,5,1};
 #else
     amrex::ignore_unused(coeff_set, cdtodz, nodal_gather);
-    amrex::Abort("NCIGodfreyFilter not implemented in 1D!");
+    amrex::Abort(Utils::TextMsg::Err(
+        "NCIGodfreyFilter not implemented in 1D!"));
 #endif
 }
 
@@ -77,7 +78,8 @@ void NCIGodfreyFilter::ComputeStencils(){
                 prestencil[i] = (1_rt-weight_right)*table_nci_godfrey_galerkin_Bx_By_Ez[index  ][i] +
                                    weight_right    *table_nci_godfrey_galerkin_Bx_By_Ez[index+1][i];
             } else {
-                amrex::Abort("m_coeff_set must be godfrey_coeff_set::Ex_Ey_Bz or godfrey_coeff_set::Bx_By_Ez");
+                amrex::Abort(Utils::TextMsg::Err(
+                    "m_coeff_set must be godfrey_coeff_set::Ex_Ey_Bz or godfrey_coeff_set::Bx_By_Ez"));
             }
         }
         else
@@ -92,7 +94,8 @@ void NCIGodfreyFilter::ComputeStencils(){
                 prestencil[i] = (1_rt-weight_right)*table_nci_godfrey_momentum_Bx_By_Ez[index  ][i] +
                                    weight_right    *table_nci_godfrey_momentum_Bx_By_Ez[index+1][i];
             } else {
-                amrex::Abort("m_coeff_set must be godfrey_coeff_set::Ex_Ey_Bz or godfrey_coeff_set::Bx_By_Ez");
+                amrex::Abort(Utils::TextMsg::Err(
+                    "m_coeff_set must be godfrey_coeff_set::Ex_Ey_Bz or godfrey_coeff_set::Bx_By_Ez"));
             }
         }
     }
@@ -135,6 +138,6 @@ void NCIGodfreyFilter::ComputeStencils(){
 
     Gpu::synchronize();
 #else
-    amrex::Abort("NCIGodfreyFilter not implemented in 1D!");
+    amrex::Abort(Utils::TextMsg::Err("NCIGodfreyFilter not implemented in 1D!"));
 #endif
 }
