@@ -18,7 +18,7 @@
 #include <string>
 
 enum struct PhysicalSpecies{unspecified=0, electron, positron, photon, neutron,
-    hydrogen, deuterium, tritium, helium, helium3, helium4, boron, boron10,
+    hydrogen, hydrogen2, hydrogen3, helium, helium3, helium4, boron, boron10,
     boron11, carbon, nitrogen, oxygen, argon, copper, xenon};
 
 namespace species
@@ -34,22 +34,20 @@ namespace species
             return PhysicalSpecies::positron;
         if( species=="photon" )
             return PhysicalSpecies::photon;
-        if( species=="photon" )
-            return PhysicalSpecies::photon;
-        if( species=="hydrogen" )
+        if( species=="neutron" )
+            return PhysicalSpecies::neutron;
+        if( (species=="hydrogen") || (species=="proton") )
             return PhysicalSpecies::hydrogen;
-        if( species=="proton" )
-            return PhysicalSpecies::hydrogen;
-        if( species=="deuterium" )
-            return PhysicalSpecies::deuterium;
-        if( species=="tritium" )
-            return PhysicalSpecies::tritium;
+        if( (species=="hydrogen2") || (species=="deuterium") )
+            return PhysicalSpecies::hydrogen2;
+        if (species=="hydrogen3") || (species=="tritium") )
+            return PhysicalSpecies::hydrogen3;
         if( species=="helium" )
             return PhysicalSpecies::helium;
         if( species=="helium3" )
             return PhysicalSpecies::helium3;
         if( species=="helium4" )
-            return PhysicalSpecies::helium3;
+            return PhysicalSpecies::helium4;
         if( species=="alpha" )
             return PhysicalSpecies::helium;
         if( species=="boron" )
@@ -90,9 +88,9 @@ namespace species
             return 0.;
         case PhysicalSpecies::hydrogen:
             return PhysConst::q_e;
-        case PhysicalSpecies::deuterium:
+        case PhysicalSpecies::hydrogen2:
             return PhysConst::q_e;
-        case PhysicalSpecies::tritium:
+        case PhysicalSpecies::hydrogen3:
             return PhysConst::q_e;
         case PhysicalSpecies::helium:
             return PhysConst::q_e * amrex::Real(2.0);
@@ -140,12 +138,10 @@ namespace species
             return PhysConst::m_p * amrex::Real(1.0013784193052508);
         case PhysicalSpecies::hydrogen:
             return PhysConst::m_p;
-        case PhysicalSpecies::hydrogen:
-            return PhysConst::m_p;
-        case PhysicalSpecies::deuterium:
-            return PhysConst::m_p * amrex::Real(1.9990075013626882);
-        case PhysicalSpecies::tritium:
-            return PhysConst::m_p * amrex::Real(2.9937170341239963);
+        case PhysicalSpecies::hydrogen2:
+            return PhysConst::m_p * amrex::Real(1.99901);
+        case PhysicalSpecies::hydrogen3:
+            return PhysConst::m_p * amrex::Real(2.99372);
         case PhysicalSpecies::helium:
             return PhysConst::m_p * amrex::Real(3.97369);
         case PhysicalSpecies::helium3:
@@ -190,12 +186,16 @@ namespace species
             return "photon";
         case PhysicalSpecies::hydrogen:
             return "hydrogen";
-        case PhysicalSpecies::deuterium:
-            return "deuterium";
-        case PhysicalSpecies::tritium:
-            return "tritium";
+        case PhysicalSpecies::hydrogen2:
+            return "hydrogen2";
+        case PhysicalSpecies::hydrogen3:
+            return "hydrogen3";
         case PhysicalSpecies::helium:
             return "helium";
+        case PhysicalSpecies::helium:
+            return "helium3";
+        case PhysicalSpecies::helium:
+            return "helium4";
         case PhysicalSpecies::boron:
             return "boron";
         case PhysicalSpecies::boron10:
