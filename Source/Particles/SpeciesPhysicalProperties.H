@@ -42,14 +42,12 @@ namespace species
             return PhysicalSpecies::hydrogen2;
         if (species=="hydrogen3") || (species=="tritium") )
             return PhysicalSpecies::hydrogen3;
-        if( species=="helium" )
+        if( (species=="helium") || (species=="alpha") )
             return PhysicalSpecies::helium;
         if( species=="helium3" )
             return PhysicalSpecies::helium3;
         if( species=="helium4" )
             return PhysicalSpecies::helium4;
-        if( species=="alpha" )
-            return PhysicalSpecies::helium;
         if( species=="boron" )
             return PhysicalSpecies::boron;
         if( species=="boron10" )

@@ -573,7 +573,12 @@ Particle initialization
 
 * ``<species_name>.species_type`` (`string`) optional (default `unspecified`)
     Type of physical species.
-    Currently, the accepted species are ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"`` (or equivalently ``"proton"``), ``"helium"`` (or equivalently ``"alpha"``), ``"boron"``, ``"carbon"``, ``"oxygen"``, ``"nitrogen"``, ``"argon"``, ``"copper"`` and ``"xenon"``.
+    Currently, the accepted species are ``"electron"``, ``"positron"``, ``"photon"``,
+    ``"neutron"``, ``"hydrogen"`` (or equivalently ``"proton"``), ``"deuterium"``
+    (or equivalently ``"hydrogen2"``), ``"tritium"`` (or equivalently ``"hydrogen3"``),
+    ``"helium"`` (or equivalently ``"alpha"``), ``"helium3"``, ``"helium4"``,
+    ``"boron"``, ``"boron10"``, ``"boron11"``, ``"carbon"``, ``"oxygen"``,
+    ``"nitrogen"``, ``"argon"``, ``"copper"`` and ``"xenon"``.
     Either this or both ``mass`` and ``charge`` have to be specified.
 
 * ``<species_name>.charge`` (`float`) optional (default `NaN`)
