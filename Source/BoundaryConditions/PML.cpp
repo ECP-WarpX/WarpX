@@ -825,7 +825,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
         if (m_dive_cleaning)
         {
-            const amrex::IntVect& F_nodal_flag = amrex::IntVect::TheNodeVector();
+            const amrex::IntVect& F_nodal_flag =
+                (do_centered) ? amrex::IntVect::TheCellVector() : amrex::IntVect::TheNodeVector();
             pml_F_cp = std::make_unique<MultiFab>(amrex::convert(cba, F_nodal_flag), cdm, 3, ngf);
             pml_F_cp->setVal(0.0);
         }
