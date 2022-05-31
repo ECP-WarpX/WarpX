@@ -947,7 +947,8 @@ protected:
     //! DistributionMapping and fill with interpolated coarse level
     //! data.  Called by AmrCore::regrid.
     virtual void MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::BoxArray& /*ba*/,
-                                         const amrex::DistributionMapping& /*dm*/) final;
+                                         const amrex::DistributionMapping& /*dm*/) final
+        { amrex::Abort("MakeNewLevelFromCoarse: To be implemented"); }
 
     //! Remake an existing level using provided BoxArray and
     //! DistributionMapping and fill with existing fine and coarse

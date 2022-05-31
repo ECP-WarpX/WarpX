@@ -6,7 +6,6 @@
  */
 #include "PsatdAlgorithmJLinearInTime.H"
 
-#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpX_Complex.H"
 

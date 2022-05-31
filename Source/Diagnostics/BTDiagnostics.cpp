@@ -233,9 +233,8 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
 {
     auto & warpx = WarpX::GetInstance();
     // Lab-frame time for the i^th snapshot
-    amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
-    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab
-        + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
+    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab;
+
 
     // Compute lab-frame co-ordinates that correspond to the simulation domain
     // at level, lev, and time, m_t_lab[i_buffer] for each ith buffer.
@@ -813,10 +812,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             // Read the header file to get the fab on disk string
             BTDMultiFabHeaderImpl Buffer_FabHeader(recent_Buffer_FabHeaderFilename);
             Buffer_FabHeader.ReadMultiFabHeader();
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                Buffer_FabHeader.ba_size() <= 1,
-                "BTD Buffer has more than one fabs."
-            );
+            if (Buffer_FabHeader.ba_size() > 1) amrex::Abort("BTD Buffer has more than one fabs.");
             // Every buffer that is flushed only has a single fab.
             std::string recent_Buffer_FabFilename = recent_Buffer_Level0_path + "/"
                                                   + Buffer_FabHeader.FabName(0);

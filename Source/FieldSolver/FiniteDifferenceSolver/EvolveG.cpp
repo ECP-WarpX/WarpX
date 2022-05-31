@@ -14,7 +14,6 @@
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
-#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
@@ -61,7 +60,7 @@ void FiniteDifferenceSolver::EvolveG (
     }
     else
     {
-        amrex::Abort(Utils::TextMsg::Err("EvolveG: unknown FDTD algorithm"));
+        amrex::Abort("EvolveG: unknown FDTD algorithm");
     }
 #endif
 }

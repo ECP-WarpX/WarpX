@@ -39,7 +39,9 @@ Diagnostics::Diagnostics (int i, std::string name)
 {
 }
 
-Diagnostics::~Diagnostics () = default;
+Diagnostics::~Diagnostics ()
+{
+}
 
 bool
 Diagnostics::BaseReadParameters ()
@@ -103,10 +105,9 @@ Diagnostics::BaseReadParameters ()
         m_pfield_varnames = {};
     }
 #ifdef WARPX_DIM_RZ
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_pfield_varnames.size() == 0,
-        "Input error: cannot use particle_fields_to_plot not implemented for RZ"
-    );
+    if (m_pfield_varnames.size() != 0) {
+        amrex::Abort("Input error: cannot use particle_fields_to_plot not implemented for RZ");
+    }
 #endif
 
 
@@ -117,15 +118,13 @@ Diagnostics::BaseReadParameters ()
     amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
         Store_parserString(pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)").c_str(), parser_str);
-
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            parser_str != "",
-            "Input error: cannot find parser string for " + var + "."
-            + m_diag_name + ".particle_fields." + var + " in file"
-        );
-
-        m_pfield_strings.insert({var, parser_str});
-
+        if (parser_str != "") {
+            m_pfield_strings.insert({var, parser_str});
+        }
+        else {
+            amrex::Abort("Input error: cannot find parser string for " + var + "." +
+                         m_diag_name + ".particle_fields." + var + " in file");
+        }
         // Look for and record filter functions. If one is not found, the empty string will be
         // stored as the filter string, and will be ignored.
         do_parser_filter = pp_diag_pfield.query((var + ".filter(x,y,z,ux,uy,uz)").c_str(), filter_parser_str);
@@ -158,11 +157,10 @@ Diagnostics::BaseReadParameters ()
             }
         }
         // If species name was misspelled, abort with error message
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            !p_species_name_is_wrong,
-            "Input error: string " + species + " in " + m_diag_name
-            + ".particle_fields_species does not match any species"
-        );
+        if (p_species_name_is_wrong) {
+            amrex::Abort("Input error: string " + species + " in " + m_diag_name +
+                         ".particle_fields_species does not match any species");
+        }
     }
 
     m_varnames = m_varnames_fields;
@@ -246,11 +244,10 @@ Diagnostics::BaseReadParameters ()
                 }
             }
             // If species name was misspelled, abort with error message
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                !species_name_is_wrong,
-                "Input error: string " + var + " in " + m_diag_name
-                + ".fields_to_plot does not match any species"
-            );
+            if (species_name_is_wrong) {
+                amrex::Abort("Input error: string " + var + " in " + m_diag_name +
+                             ".fields_to_plot does not match any species");
+            }
         }
     }
 
@@ -307,10 +304,9 @@ Diagnostics::InitData ()
     }
 
     if (write_species == 0) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            m_format != "checkpoint",
-            "For checkpoint format, write_species flag must be 1."
-        );
+        if (m_format == "checkpoint"){
+            amrex::Abort("For checkpoint format, write_species flag must be 1.");
+        }
         // if user-defined value for write_species == 0, then clear species vector
         for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
             m_output_species.at(i_buffer).clear();
@@ -376,19 +372,16 @@ Diagnostics::InitBaseData ()
             dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
             m_diag_name);
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "To use SENSEI in situ, compile with USE_SENSEI=TRUE"));
+        amrex::Abort("To use SENSEI in situ, compile with USE_SENSEI=TRUE");
 #endif
     } else if (m_format == "openpmd"){
 #ifdef WARPX_USE_OPENPMD
         m_flush_format = std::make_unique<FlushFormatOpenPMD>(m_diag_name);
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "To use openpmd output format, need to compile with USE_OPENPMD=TRUE"));
+        amrex::Abort("To use openpmd output format, need to compile with USE_OPENPMD=TRUE");
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err(
-            "unknown output format"));
+        amrex::Abort("unknown output format");
     }
 
     // allocate vector of buffers then allocate vector of levels for each buffer

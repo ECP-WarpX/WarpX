@@ -37,9 +37,7 @@ BTDPlotfileHeaderImpl::ReadHeaderData ()
     iss.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     iss.open(m_Header_path.c_str(), std::ios::in);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        iss,"Failed to load BTD MultiFabHeader"
-    );
+    if(!iss) amrex::Abort("Failed to load BTD MultiFabHeader");
 
     iss.seekg(0, std::ios::end);
     fileLength = static_cast<std::streamoff>(iss.tellg());
@@ -193,9 +191,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
     iss.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     iss.open(m_Header_path.c_str(), std::ios::in);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        iss, "Failed to load BTD MultiFabHeader"
-    );
+    if(!iss) amrex::Abort("Failed to load BTD MultiFabHeader");
 
     iss.seekg(0, std::ios::end);
     fileLength = static_cast<std::streamoff>(iss.tellg());

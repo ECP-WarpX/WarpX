@@ -1,22 +1,5 @@
 Version, Physics version, Date,        List of changes
-8.3.0, 2, In progress, "
-
-**Features**:
-
-- Added
-  :class:`mewarpx.utils_store.plasma_density_oracle.PlasmaDensityOracle` to
-  predict particle densities at a given time point based on 3 input data points.
-- Added :class:`mewarpx.utils_store.oracle_control.OracleControl`
-        as a wrapper to automate calling
-  :class:`mewarpx.utils_store.plasma_density_oracle.PlasmaDensityOracle`
-  by automatically determining the best parameters for it.
-
-**Other changes**:
-
-- Merge ``upstream/development`` (git hash ``3c2d0ee``) into memaster.
-
-"
-8.2.0, 2, 5/17/2022, "
+8.2.0, 2, In progress, "
 
 **Features**:
 
@@ -24,7 +7,6 @@ Version, Physics version, Date,        List of changes
         runinfo object into a JSON string.
 - Changed runinfo to be saved as JSON file instead of dpkl file.
 
-"
 8.1.1, 2, 5/9/2022, "
 
 **API Changes**:

@@ -107,8 +107,7 @@ ablastr::utils::automatic_text_wrap (
                 }
                 else{
                     wrapped_text_lines.push_back(ss_line_out.str());
-                    ss_line_out.str("");
-                    ss_line_out << word;
+                    ss_line_out = std::stringstream{word};
                     counter = wlen;
                 }
             }

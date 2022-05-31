@@ -29,12 +29,13 @@ FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
     m_insitu_bridge->setEnabled(true);
     m_insitu_bridge->setConfig(m_insitu_config);
     m_insitu_bridge->setPinMesh(m_insitu_pin_mesh);
+    if (!m_amr_mesh || m_insitu_bridge->initialize())
+    {
+        amrex::ErrorStream() << "FlushFormtSensei::FlushFormatSensei : "
+            "Failed to initialize the in situ bridge." << std::endl;
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_amr_mesh && !m_insitu_bridge->initialize(),
-        "FlushFormtSensei::FlushFormatSensei : "
-        "Failed to initialize the in situ bridge."
-    );
+        amrex::Abort();
+    }
     m_insitu_bridge->setFrequency(1);
 #endif
 }
@@ -78,11 +79,13 @@ FlushFormatSensei::WriteToFile (
         iteration[0], time, m_amr_mesh,{mf_ptr}, {varnames},
         particles, {}, {}, {{"u",{0,1,2}}}, {});
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !didUpdate,
-        "FlushFormatSensei::WriteToFile : "
-        "Failed to update the in situ bridge."
-    );
+    if (didUpdate)
+    {
+        amrex::ErrorStream() << "FlushFormatSensei::WriteToFile : "
+            "Failed to update the in situ bridge." << std::endl;
+
+        amrex::Abort();
+    }
 #endif
 }
 
@@ -92,9 +95,9 @@ FlushFormatSensei::WriteParticles (
 {
     amrex::ignore_unused(particle_diags);
 #ifdef AMREX_USE_SENSEI_INSITU
-    amrex::Abort(Utils::TextMsg::Err(
-        "FlushFormatSensei::WriteParticles : "
-        "Not yet implemented."
-    ));
+    amrex::ErrorStream() << "FlushFormatSensei::WriteParticles : "
+        "Not yet implemented." << std::endl;
+
+    amrex::Abort();
 #endif
 }

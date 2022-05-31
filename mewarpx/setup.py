@@ -6,12 +6,12 @@ import os
 import setuptools
 
 requires = [
-    "numpy<1.22",
+    "numpy==1.20", # numba v0.54 requires numpy < 1.21.0
     "scipy",
     "psutil",
     "pandas",
     "yt",
-    "numba==0.55.1",
+    "numba",
     "scikit-image",
     "dill",
     # added on 10/25/21 due to an issue with rendering LaTex in pulse waveform
@@ -77,9 +77,7 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts': [
-            "profile_parser = mewarpx.utils_store.profileparser:entry",
-            "predict_plasma_density = mewarpx.utils_store.plasma_density_oracle:entry",
-            "prediction_control = mewarpx.utils_store.oracle_control:entry"
+            "profile_parser = mewarpx.utils_store.profileparser:entry"
         ]
     },
     #

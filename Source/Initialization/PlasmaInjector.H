@@ -41,7 +41,7 @@ class PlasmaInjector
 
 public:
 
-    PlasmaInjector () = default;
+    PlasmaInjector ();
 
     PlasmaInjector (int ispecies, const std::string& name);
 

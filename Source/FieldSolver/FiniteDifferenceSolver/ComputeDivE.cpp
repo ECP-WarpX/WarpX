@@ -6,7 +6,6 @@
  */
 #include "FiniteDifferenceSolver.H"
 
-#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #ifndef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
@@ -65,7 +64,7 @@ void FiniteDifferenceSolver::ComputeDivE (
 
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err("ComputeDivE: Unknown algorithm"));
+        amrex::Abort("ComputeDivE: Unknown algorithm");
     }
 
 }

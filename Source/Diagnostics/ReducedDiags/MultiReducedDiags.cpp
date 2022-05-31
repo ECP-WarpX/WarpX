@@ -21,7 +21,6 @@
 #include "ParticleNumber.H"
 #include "RhoMaximum.H"
 #include "Utils/IntervalsParser.H"
-#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
@@ -73,10 +72,8 @@ MultiReducedDiags::MultiReducedDiags ()
             std::string rd_type;
             pp_rd_name.get("type", rd_type);
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                reduced_diags_dictionary.count(rd_type) != 0,
-                rd_type + " is not a valid type for reduced diagnostic " + rd_name
-            );
+            if(reduced_diags_dictionary.count(rd_type) == 0)
+                Abort(rd_type + " is not a valid type for reduced diagnostic " + rd_name);
 
             return reduced_diags_dictionary.at(rd_type)(rd_name);
         });

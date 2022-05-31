@@ -16,7 +16,6 @@ INSTALL_CMD="python3 -m pip install --no-build-isolation "
 # internal warnings
 # https://github.com/Nike-Inc/gimme-aws-creds/issues/158
 python3 -m pip install --upgrade pip
-python3 -m pip install --upgrade wheel
 python3 -m pip install --upgrade setuptools keyring keyrings.alt
 
 # Build dependency of cmake
@@ -29,7 +28,7 @@ ${INSTALL_CMD} llvmlite
 
 # The builds of scipy and h5py on aarch64 depends on having these already installed
 ${INSTALL_CMD} cython
-${INSTALL_CMD} oldest-supported-numpy
+${INSTALL_CMD} numpy
 ${INSTALL_CMD} pkgconfig
 
 ${INSTALL_CMD} numba

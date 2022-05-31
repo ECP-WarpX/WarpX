@@ -5,8 +5,6 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PsatdAlgorithmGalileanRZ.H"
-
-#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -364,6 +362,5 @@ PsatdAlgorithmGalileanRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 void
 PsatdAlgorithmGalileanRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented in RZ geometry"));
+    amrex::Abort("Vay deposition not implemented in RZ geometry");
 }

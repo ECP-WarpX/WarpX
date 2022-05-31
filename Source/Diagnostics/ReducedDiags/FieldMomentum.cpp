@@ -9,7 +9,6 @@
 
 #include "Utils/CoarsenIO.H"
 #include "Utils/IntervalsParser.H"
-#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
@@ -43,8 +42,7 @@ FieldMomentum::FieldMomentum (std::string rd_name)
 {
     // RZ coordinate is not working
 #if (defined WARPX_DIM_RZ)
-        amrex::Abort(Utils::TextMsg::Err(
-            "FieldMomentum reduced diagnostics not implemented in RZ geometry"));
+        amrex::Abort("FieldMomentum reduced diagnostics not implemented in RZ geometry");
 #endif
 
     // Read number of levels
