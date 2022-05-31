@@ -14,6 +14,7 @@
 
 #include <AMReX.H>
 
+#include <set>
 #include <string>
 
 using namespace amrex::literals;
@@ -40,24 +41,40 @@ BoundaryScrapingDiagnostics::ReadParameters ()
 
     // Do a few checks
 #ifndef AMREX_USE_EB
-    amrex::Abort("You need to compile WarpX with EB, in order to use BoundaryScrapingDiagnostic.");
+    amrex::Abort("You need to compile WarpX with Embedded Boundary (EB) support, in order to use BoundaryScrapingDiagnostic: -DWarpX_EB=ON");
+#endif
+#ifndef WARPX_USE_OPENPMD
+    amrex::Abort("You need to compile WarpX with openPMD support, in order to use BoundaryScrapingDiagnostic: -DWarpX_OPENPMD=ON");
 #endif
 
     // Check that saving at EB has been activated for each requested species
-    bool particle_saving_activated = true;
+    std::set<std::string> particle_saving_activated;
     for (auto const& species_name : m_output_species_names){
         amrex::ParmParse pp(species_name);
         bool save_particles_at_eb;
         pp.query("save_particles_at_eb", save_particles_at_eb);
-        if (save_particles_at_eb == false) particle_saving_activated = false;
+        if (save_particles_at_eb == false) particle_saving_activated.insert(species_name);
     }
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( particle_saving_activated,
-    "You need to set `save_particles_at_eb=1` for each species, in order to use BoundaryScrapingDiagnostic.");
+    std::string error_string = "You need to set "
+        "you need to set:\n";
+    for (auto const& species_name : particle_saving_activated){
+        error_string
+            .append("  ")
+            .append(species_name)
+            .append("save_particles_at_eb=1\n");
+    }
+    error_string.append("in order to use for the BoundaryScrapingDiagnostic.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        particle_saving_activated.size() == 0u,
+        error_string);
 
     // Check that the output format is openPMD
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_format == "openpmd",
-    std::string("You need to set `") + m_diag_name +
-    std::string(".format=openpmd` for the BoundaryScrapingDiagnostic."));
+    error_string = std::string("You need to set `")
+        .append(m_diag_name)
+        .append(".format=openpmd` for the BoundaryScrapingDiagnostic.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_format == "openpmd",
+        error_string);
 }
 
 void
