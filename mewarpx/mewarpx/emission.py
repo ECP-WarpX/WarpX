@@ -2067,8 +2067,7 @@ class XGaussZSinDistributionVolumeEmitter(VolumeEmitter):
 class ArbitraryDistributionVolumeEmitter(VolumeEmitter):
 
     """Varies density based on given particle density array. NPPC for each
-    species must be an integer greater than or equal to 1. Can only be used
-    with FixedNumberInjector."""
+    species must be an integer greater than or equal to 1."""
 
     geoms = ["XZ"]
 
@@ -2100,15 +2099,21 @@ class ArbitraryDistributionVolumeEmitter(VolumeEmitter):
             output_grid (np.ndarray): 2d array of current simulation dimensions
                 interpolated values from input_grid
         """
-
         input_shape = input_grid.shape
-        input_x = np.linspace(0.5, input_shape[0] - 0.5, input_shape[0])
-        input_z = np.linspace(0.5, input_shape[1] - 0.5, input_shape[1])
+        # pad edges with current edge values by 1 to avoid NaN when interpolating
+        input_x = np.linspace(-0.5, input_shape[0] + 0.5, input_shape[0] + 2)
+        input_z = np.linspace(-0.5, input_shape[1] + 0.5, input_shape[1] + 2)
+        input_grid = np.pad(input_grid, (1,), "linear_ramp")
+
         input_zz, input_xx = np.meshgrid(input_z, input_x)
+
+        input_xx = input_xx * mwxrun.nx/input_shape[0]
+        input_zz = input_zz * mwxrun.nz/input_shape[1]
         input_coord = np.column_stack([input_xx.flatten(), input_zz.flatten()])
 
-        output_xx = input_xx * mwxrun.nx/input_shape[0]
-        output_zz = input_zz * mwxrun.nz/input_shape[1]
+        output_x = np.linspace(0.5, mwxrun.nx - 0.5, mwxrun.nx)
+        output_z = np.linspace(0.5, mwxrun.nz - 0.5, mwxrun.nz)
+        output_zz, output_xx = np.meshgrid(output_z, output_x)
 
         output_grid = scipy.interpolate.griddata(
             input_coord, input_grid.flatten(), (output_xx, output_zz)

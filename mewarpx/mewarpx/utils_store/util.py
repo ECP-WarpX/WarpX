@@ -389,7 +389,6 @@ def interpolate_from_grid(coords, grid):
         lower_node[idx] = np.floor(x_grid).astype(int)
         weights[idx] = 1.0 - (x_grid - lower_node[idx])
 
-
     fpos = np.zeros(n)
     if mwxrun.dim == 1:
         fpos += grid[lower_node[0]] * weights[0]
@@ -402,3 +401,15 @@ def interpolate_from_grid(coords, grid):
     elif mwxrun.dim == 3:
         raise NotImplementedError("XYZ interpolation not implemented yet.")
     return fpos
+
+
+def mwx_round(x, base=1):
+    """Rounding function that allows rounding around a base value.
+    Arguments:
+        x (float): value to round
+        base (float): base number to round around
+
+    Returns:
+        val (Union[int, float]): rounded value
+    """
+    return base * np.round(x / base)
