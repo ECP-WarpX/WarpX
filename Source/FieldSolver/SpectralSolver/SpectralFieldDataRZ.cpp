@@ -7,6 +7,7 @@
 #include "SpectralFieldDataRZ.H"
 
 #include "WarpX.H"
+#include "Utils/WarpXUtil.H"
 
 using amrex::operator""_rt;
 

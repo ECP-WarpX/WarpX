@@ -214,6 +214,7 @@ void ConvertLabParamsToBoost()
  */
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax){
     WARPX_PROFILE("WarpXUtil::NullifyMF()");
+    int const ncomp = mf.nComp();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -235,8 +236,8 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
         if ( (zmax>zmin_box && zmin<=zmax_box) ){
             Array4<Real> arr = mf[mfi].array();
             // Set field to 0 between zmin and zmax
-            ParallelFor(bx,
-                [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept{
+            ParallelFor(bx, ncomp,
+                [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept{
 #if defined(WARPX_DIM_3D)
                     const Real z_gridpoint = zmin_box+(k-lo_ind)*dz;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -245,7 +246,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
                     const Real z_gridpoint = zmin_box+(i-lo_ind)*dz;
 #endif
                     if ( (z_gridpoint >= zmin) && (z_gridpoint < zmax) ) {
-                        arr(i,j,k) = 0.;
+                        arr(i,j,k,n) = 0.;
                     }
                 }
             );
@@ -365,7 +366,7 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
         ++it;
     }
     for (auto const& s : symbols) {
-        amrex::Abort("makeParser::Unknown symbol "+s);
+        amrex::Abort(Utils::TextMsg::Err("makeParser::Unknown symbol "+s));
     }
     return parser;
 }
@@ -385,135 +386,6 @@ parseStringtoInt(std::string str, std::string name)
     auto const rval = static_cast<amrex::Real>(parseStringtoReal(str));
     int ival = safeCastToInt(std::round(rval), name);
     return ival;
-}
-
-// Overloads for float/double instead of amrex::Real to allow makeParser() to query for
-// my_constants as double even in single precision mode
-// Always parsing in double precision avoids potential overflows that may occur when parsing user's
-// expressions because of the limited range of exponentials in single precision
-int
-queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val)
-{
-    // call amrex::ParmParse::query, check if the user specified str.
-    std::string tmp_str;
-    int is_specified = a_pp.query(str, tmp_str);
-    if (is_specified)
-    {
-        // If so, create a parser object and apply it to the value provided by the user.
-        std::string str_val;
-        Store_parserString(a_pp, str, str_val);
-        val = static_cast<float>(parseStringtoReal(str_val));
-    }
-    // return the same output as amrex::ParmParse::query
-    return is_specified;
-}
-
-void
-getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val)
-{
-    // If so, create a parser object and apply it to the value provided by the user.
-    std::string str_val;
-    Store_parserString(a_pp, str, str_val);
-    val = static_cast<float>(parseStringtoReal(str_val));
-}
-
-int
-queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val)
-{
-    // call amrex::ParmParse::query, check if the user specified str.
-    std::string tmp_str;
-    int is_specified = a_pp.query(str, tmp_str);
-    if (is_specified)
-    {
-        // If so, create a parser object and apply it to the value provided by the user.
-        std::string str_val;
-        Store_parserString(a_pp, str, str_val);
-        val = parseStringtoReal(str_val);
-    }
-    // return the same output as amrex::ParmParse::query
-    return is_specified;
-}
-
-void
-getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val)
-{
-    // If so, create a parser object and apply it to the value provided by the user.
-    std::string str_val;
-    Store_parserString(a_pp, str, str_val);
-    val = parseStringtoReal(str_val);
-}
-
-int
-queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
-                    const int start_ix, const int num_val)
-{
-    // call amrex::ParmParse::query, check if the user specified str.
-    std::vector<std::string> tmp_str_arr;
-    int is_specified = a_pp.queryarr(str, tmp_str_arr, start_ix, num_val);
-    if (is_specified)
-    {
-        // If so, create parser objects and apply them to the values provided by the user.
-        int const n = static_cast<int>(tmp_str_arr.size());
-        val.resize(n);
-        for (int i=0 ; i < n ; i++) {
-            val[i] = static_cast<amrex::Real>(parseStringtoReal(tmp_str_arr[i]));
-        }
-    }
-    // return the same output as amrex::ParmParse::query
-    return is_specified;
-}
-
-void
-getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
-                    const int start_ix, const int num_val)
-{
-    // Create parser objects and apply them to the values provided by the user.
-    std::vector<std::string> tmp_str_arr;
-    a_pp.getarr(str, tmp_str_arr, start_ix, num_val);
-
-    int const n = static_cast<int>(tmp_str_arr.size());
-    val.resize(n);
-    for (int i=0 ; i < n ; i++) {
-        val[i] = static_cast<amrex::Real>(parseStringtoReal(tmp_str_arr[i]));
-    }
-}
-
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
-    amrex::Real rval;
-    const int result = queryWithParser(a_pp, str, rval);
-    if (result) {
-        val = safeCastToInt(std::round(rval), str);
-    }
-    return result;
-}
-
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val) {
-    amrex::Real rval;
-    getWithParser(a_pp, str, rval);
-    val = safeCastToInt(std::round(rval), str);
-}
-
-int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
-                        const int start_ix, const int num_val) {
-    std::vector<amrex::Real> rval;
-    const int result = queryArrWithParser(a_pp, str, rval, start_ix, num_val);
-    if (result) {
-        val.resize(rval.size());
-        for (unsigned long i = 0 ; i < val.size() ; i++) {
-            val[i] = safeCastToInt(std::round(rval[i]), str);
-        }
-    }
-    return result;
-}
-
-void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
-                       const int start_ix, const int num_val) {
-    std::vector<amrex::Real> rval;
-    getArrWithParser(a_pp, str, rval, start_ix, num_val);
-    val.resize(rval.size());
-    for (unsigned long i = 0 ; i < val.size() ; i++) {
-        val[i] = safeCastToInt(std::round(rval[i]), str);
-    }
 }
 
 void CheckDims ()
@@ -637,9 +509,15 @@ void ReadBCParams ()
     ParmParse pp_warpx("warpx");
     ParmParse pp_algo("algo");
     int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
-    if (pp_geometry.queryarr("is_periodic", geom_periodicity)) {
-        amrex::Abort("geometry.is_periodic is not supported. Please use `boundary.field_lo`, `boundary.field_hi` to specifiy field boundary conditions and 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle boundary conditions.");
-    }
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_geometry.queryarr("is_periodic", geom_periodicity),
+        "geometry.is_periodic is not supported. Please use `boundary.field_lo`,"
+        " `boundary.field_hi` to specifiy field boundary conditions and"
+        " 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle"
+        " boundary conditions."
+    );
+
     // particle boundary may not be explicitly specified for some applications
     bool particle_boundary_specified = false;
     ParmParse pp_boundary("boundary");
@@ -683,12 +561,15 @@ void ReadBCParams ()
                 WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
             }
         }
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ||
-                WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC) {
-                amrex::Abort(" PEC boundary not implemented for PSATD, yet!");
-            }
-        }
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (maxwell_solver_id != MaxwellSolverAlgo::PSATD) ||
+            (
+                WarpX::field_boundary_lo[idim] != FieldBoundaryType::PEC &&
+                WarpX::field_boundary_hi[idim] != FieldBoundaryType::PEC
+            ),
+            "PEC boundary not implemented for PSATD, yet!"
+        );
     }
 
     // Appending periodicity information to input so that it can be used by amrex

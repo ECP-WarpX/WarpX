@@ -117,7 +117,8 @@ FieldProbe::FieldProbe (std::string rd_name)
     else if (m_probe_geometry_str == "Plane")
     {
 #if defined(WARPX_DIM_1D_Z)
-        amrex::Abort("ERROR: Plane probe should be used in a 2D or 3D simulation only");
+        amrex::Abort(Utils::TextMsg::Err(
+            "ERROR: Plane probe should be used in a 2D or 3D simulation only"));
 #endif
         m_probe_geometry = DetectorGeometry::Plane;
         y_probe = 0._rt;
@@ -141,10 +142,10 @@ FieldProbe::FieldProbe (std::string rd_name)
     }
     else
     {
-        std::string err_str = "ERROR: Invalid probe geometry '";
-        err_str.append(m_probe_geometry_str);
-        err_str.append("'. Valid geometries are Point, Line or Plane.");
-        amrex::Abort(err_str);
+        amrex::Abort(Utils::TextMsg::Err(
+            "ERROR: Invalid probe geometry '" + m_probe_geometry_str
+            + "'. Valid geometries are Point, Line or Plane."
+        ));
     }
     pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
@@ -334,7 +335,8 @@ void FieldProbe::InitData ()
     }
     else
     {
-    amrex::Abort("ERROR: Invalid probe geometry. Valid geometries are Point, Line, and Plane.");
+        amrex::Abort(Utils::TextMsg::Err(
+            "Invalid probe geometry. Valid geometries are Point, Line, and Plane."));
     }
 }
 
@@ -543,7 +545,7 @@ void FieldProbe::ComputeDiags (int step)
                                    temp_interp_order, false);
 
                     //Calculate the Poynting Vector S
-                    amrex::Real const sraw[3]{
+                    amrex::ParticleReal const sraw[3]{
                         Exp * Bzp - Ezp * Byp,
                         Ezp * Bxp - Exp * Bzp,
                         Exp * Byp - Eyp * Bxp
@@ -615,13 +617,17 @@ void FieldProbe::ComputeDiags (int step)
             if (amrex::ParallelDescriptor::IOProcessor()) {
                 length_vector.resize(mpisize, 0);
             }
-            localsize.resize(1,0);
-            localsize[0] = m_data.size();
+            localsize.resize(1, m_data.size());
 
+#ifdef AMREX_USE_MPI
             // gather size of m_data from each processor
             amrex::ParallelDescriptor::Gather(localsize.data(), 1,
                                               length_vector.data(), 1,
                                               amrex::ParallelDescriptor::IOProcessorNumber());
+#else
+            // work-around for https://github.com/AMReX-Codes/amrex/pull/2793
+            length_vector[0] = localsize[0];
+#endif
 
             // IO processor sums values from length_array to get size of total output array.
             /* displs records the size of each m_data as well as previous displs. This array

@@ -1,3 +1,5 @@
+.. _acknowledge_warpx:
+
 Acknowledge WarpX
 =================
 
@@ -32,6 +34,8 @@ Please add the following sentence to your publications, it helps contributors ke
   Primary WarpX contributors are with LBNL, LLNL, CEA-LIDYL, SLAC, DESY, CERN, and Modern Electron.
   We acknowledge all WarpX contributors.
 
+.. _acknowledge_warpx_ref:
+
 Latest WarpX reference
 **********************
 
@@ -41,14 +45,18 @@ If your project leads to a scientific publication, please consider citing the pa
   **Porting WarpX to GPU-accelerated platforms**. *Parallel Computing*. 2021 Sep, 108:102833.
   https://doi.org/10.1016/j.parco.2021.102833
 
+.. _acknowledge_warpx_all_refs:
+
 Prior WarpX references
 ----------------------
 
 If your project uses the specific algorithms, please consider citing the respective publications in addition.
 
 - Fedeli L, Zaim N, Sainte-Marie A, Thevenet M, Huebl A, Myers A, Vay J-L, Vincenti H.
-  **PICSAR-QED: a Monte Carlo module to simulate Strong-Field Quantum Electrodynamics in Particle-In-Cell codes for exascale architectures**. *New Journal of Physics*. in-press, 2022.
-  https://arxiv.org/abs/2110.00256
+  **PICSAR-QED: a Monte Carlo module to simulate Strong-Field Quantum Electrodynamics in Particle-In-Cell codes for exascale architectures**.
+  *New Journal of Physics* **24** 025009, 2022.
+  `arXiv:2110.00256 <https://arxiv.org/abs/2110.00256>`__,
+  `DOI:10.1088/1367-2630/ac4ef1 <https://doi.org/10.1088/1367-2630/ac4ef1>
 
 - Zoni E, Lehe R, Shapoval O, Belkin D, Zaim N, Fedeli L, Vincenti H, Vay J-L.
   **A Hybrid Nodal-Staggered Pseudo-Spectral Electromagnetic Particle-In-Cell Method with Finite-Order Centering**. under review, 2022.

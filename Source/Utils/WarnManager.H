@@ -10,7 +10,7 @@
 
 #include "WarnManager_fwd.H"
 
-#include "MsgLogger/MsgLogger_fwd.H"
+#include <ablastr/utils/msg_logger/MsgLogger_fwd.H>
 
 #include <AMReX_ParmParse.H>
 
@@ -44,7 +44,7 @@ namespace Utils
         void record_warning(
             std::string topic,
             std::string text,
-            MsgLogger::Priority priority);
+            ablastr::utils::msg_logger::Priority priority);
 
         /**
         * \brief This function prints all the warning messages collected on the present MPI rank
@@ -88,7 +88,7 @@ namespace Utils
         * @return a string containing the warning message
         */
         std::string print_warn_msg(
-            const MsgLogger::MsgWithCounter& msg_with_counter) const;
+            const ablastr::utils::msg_logger::MsgWithCounter& msg_with_counter) const;
 
         /**
         * \brief This function generates a string for a single entry of the warning list
@@ -99,7 +99,7 @@ namespace Utils
         * @return a string containing the warning message
         */
         std::string print_warn_msg(
-            const MsgLogger::MsgWithCounterAndRanks& msg_with_counter_and_ranks) const;
+            const ablastr::utils::msg_logger::MsgWithCounterAndRanks& msg_with_counter_and_ranks) const;
 
         /**
         * \brief This function generates the header of the warning messages list
@@ -128,7 +128,7 @@ namespace Utils
             const int tab_size);
 
         int m_rank = 0 /*! MPI rank (appears in the warning list)*/;
-        std::unique_ptr<MsgLogger::Logger> m_p_logger /*! The Logger stores all the warning messages*/;
+        std::unique_ptr<ablastr::utils::msg_logger::Logger> m_p_logger /*! The Logger stores all the warning messages*/;
     };
 }
 

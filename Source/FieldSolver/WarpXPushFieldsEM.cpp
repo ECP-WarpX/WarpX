@@ -487,7 +487,8 @@ void
 WarpX::PushPSATD ()
 {
 #ifndef WARPX_USE_PSATD
-    amrex::Abort("PushFieldsEM: PSATD solver selected but not built");
+    amrex::Abort(Utils::TextMsg::Err(
+        "PushFieldsEM: PSATD solver selected but not built"));
 #else
 
     PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
@@ -778,22 +779,28 @@ void
 WarpX::MacroscopicEvolveE (int lev, amrex::Real a_dt) {
 
     WARPX_PROFILE("WarpX::MacroscopicEvolveE()");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        lev == 0,
+        "Macroscopic EvolveE is not implemented for lev>0, yet."
+    );
+
     MacroscopicEvolveE(lev, PatchType::fine, a_dt);
-    if (lev > 0) {
-        amrex::Abort("Macroscopic EvolveE is not implemented for lev>0, yet.");
-    }
 }
 
 void
 WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
-    if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->MacroscopicEvolveE( Efield_fp[lev], Bfield_fp[lev],
-                                             current_fp[lev], m_edge_lengths[lev],
-                                             a_dt, m_macroscopic_properties);
-    }
-    else {
-        amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
-    }
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        patch_type == PatchType::fine,
+        "Macroscopic EvolveE is not implemented for lev>0, yet."
+    );
+
+    m_fdtd_solver_fp[lev]->MacroscopicEvolveE(
+        Efield_fp[lev], Bfield_fp[lev],
+        current_fp[lev], m_edge_lengths[lev],
+        a_dt, m_macroscopic_properties);
+
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveEPML(

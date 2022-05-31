@@ -113,10 +113,11 @@ FullDiagnostics::BackwardCompatibility ()
 {
     amrex::ParmParse pp_diag_name(m_diag_name);
     std::vector<std::string> backward_strings;
-    if (pp_diag_name.queryarr("period", backward_strings)){
-        amrex::Abort("<diag_name>.period is no longer a valid option. "
-                     "Please use the renamed option <diag_name>.intervals instead.");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_diag_name.queryarr("period", backward_strings),
+        "<diag_name>.period is no longer a valid option. "
+        "Please use the renamed option <diag_name>.intervals instead."
+    );
 }
 
 void
@@ -306,7 +307,8 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             }
         }
         else {
-            amrex::Abort("Error: " + m_varnames_fields[comp] + " is not a known field output type in RZ geometry");
+            amrex::Abort(Utils::TextMsg::Err(
+                "Error: " + m_varnames_fields[comp] + " is not a known field output type in RZ geometry"));
         }
     }
     // Sum the number of components in input vector m_all_field_functors
@@ -468,10 +470,10 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
          // To ensure that the diagnostic lo and hi are within the domain defined at level, lev.
         diag_dom.setLo(idim, std::max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
         diag_dom.setHi(idim, std::min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
-        if ( fabs(warpx.Geom(lev).ProbLo(idim) - diag_dom.lo(idim))
+        if ( std::fabs(warpx.Geom(lev).ProbLo(idim) - diag_dom.lo(idim))
                                >  warpx.Geom(lev).CellSize(idim) )
              use_warpxba = false;
-        if ( fabs(warpx.Geom(lev).ProbHi(idim) - diag_dom.hi(idim))
+        if ( std::fabs(warpx.Geom(lev).ProbHi(idim) - diag_dom.hi(idim))
                                > warpx.Geom(lev).CellSize(idim) )
              use_warpxba = false;
 
@@ -492,11 +494,11 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
         amrex::IntVect hi(1);
         for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
             // lo index with same cell-size as simulation at level, lev.
-            lo[idim] = std::max( static_cast<int>( floor (
+            lo[idim] = std::max( static_cast<int>( std::floor (
                           ( diag_dom.lo(idim) - warpx.Geom(lev).ProbLo(idim)) /
                             warpx.Geom(lev).CellSize(idim)) ), 0 );
             // hi index with same cell-size as simulation at level, lev.
-            hi[idim] = std::max( static_cast<int> ( ceil (
+            hi[idim] = std::max( static_cast<int> ( std::ceil (
                           ( diag_dom.hi(idim) - warpx.Geom(lev).ProbLo(idim)) /
                             warpx.Geom(lev).CellSize(idim) ) ), 0) - 1 ;
             // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
@@ -627,16 +629,15 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio);
         }
         else {
-            amrex::Abort("Error: " + m_varnames[comp] + " is not a known field output type");
+            amrex::Abort(Utils::TextMsg::Err(m_varnames[comp] + " is not a known field output type"));
         }
     }
     // Add functors for average particle data for each species
     for (int pcomp=0; pcomp<int(m_pfield_varnames.size()); pcomp++) {
-        std::string varname = m_pfield_varnames[pcomp];
         for (int ispec=0; ispec<int(m_pfield_species.size()); ispec++) {
             m_all_field_functors[lev][nvar + pcomp * nspec + ispec] = std::make_unique<ParticleReductionFunctor>(nullptr,
-                    lev, m_crse_ratio, m_pfield_strings[varname], m_pfield_species_index[ispec],
-                    m_pfield_dofilter[varname], m_pfield_filter_strings[varname]);
+                    lev, m_crse_ratio, m_pfield_strings[pcomp], m_pfield_species_index[ispec], m_pfield_do_average[pcomp],
+                    m_pfield_dofilter[pcomp], m_pfield_filter_strings[pcomp]);
         }
     }
     AddRZModesToDiags( lev );

@@ -233,8 +233,9 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
 {
     auto & warpx = WarpX::GetInstance();
     // Lab-frame time for the i^th snapshot
-    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab;
-
+    amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
+    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab
+        + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
 
     // Compute lab-frame co-ordinates that correspond to the simulation domain
     // at level, lev, and time, m_t_lab[i_buffer] for each ith buffer.
@@ -266,13 +267,13 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     amrex::IntVect hi(1);
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         // lo index with same cell-size as simulation at level, lev.
-        const int lo_index = static_cast<int>( floor(
+        const int lo_index = static_cast<int>( std::floor(
                 ( diag_dom.lo(idim) - warpx.Geom(lev).ProbLo(idim) ) /
                   warpx.Geom(lev).CellSize(idim) ) );
         // Taking max of (0,lo_index) because lo_index must always be >=0
         lo[idim] = std::max( 0, lo_index );
         // hi index with same cell-size as simulation at level, lev.
-        const int hi_index =  static_cast<int>( ceil(
+        const int hi_index =  static_cast<int>( std::ceil(
                 ( diag_dom.hi(idim) - warpx.Geom(lev).ProbLo(idim) ) /
                   warpx.Geom(lev).CellSize(idim) ) );
         // Taking max of (0,hi_index) because hi_index must always be >=0
@@ -338,14 +339,14 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     amrex::IntVect ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
     // Number of lab-frame cells in z-direction at level, lev
-    const int num_zcells_lab = static_cast<int>( floor (
+    const int num_zcells_lab = static_cast<int>( std::floor (
                                    ( zmax_buffer_lab - zmin_buffer_lab)
                                    / dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir])                               ) );
     // Take the max of 0 and num_zcells_lab
     int Nz_lab = std::max( 0, num_zcells_lab );
 #if (AMREX_SPACEDIM >= 2)
     // Number of lab-frame cells in x-direction at level, lev
-    const int num_xcells_lab = static_cast<int>( floor (
+    const int num_xcells_lab = static_cast<int>( std::floor (
                                   ( diag_dom.hi(0) - diag_dom.lo(0) )
                                   / warpx.Geom(lev).CellSize(0)
                               ) );
@@ -354,7 +355,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
 #endif
 #if defined(WARPX_DIM_3D)
     // Number of lab-frame cells in the y-direction at level, lev
-    const int num_ycells_lab = static_cast<int>( floor (
+    const int num_ycells_lab = static_cast<int>( std::floor (
                                    ( diag_dom.hi(1) - diag_dom.lo(1) )
                                    / warpx.Geom(lev).CellSize(1)
                                ) );
@@ -652,7 +653,7 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
         // for the ith snapshot
         // estimating the maximum number of buffer multifabs needed to obtain the
         // full lab-frame snapshot
-        m_max_buffer_multifabs[i_buffer] = static_cast<int>( ceil (
+        m_max_buffer_multifabs[i_buffer] = static_cast<int>( std::ceil (
             amrex::Real(m_snapshot_ncells_lab[i_buffer][m_moving_window_dir]) /
             amrex::Real(m_buffer_size) ) );
         // number of cells in z is modified since each buffer multifab always
@@ -812,7 +813,10 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             // Read the header file to get the fab on disk string
             BTDMultiFabHeaderImpl Buffer_FabHeader(recent_Buffer_FabHeaderFilename);
             Buffer_FabHeader.ReadMultiFabHeader();
-            if (Buffer_FabHeader.ba_size() > 1) amrex::Abort("BTD Buffer has more than one fabs.");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                Buffer_FabHeader.ba_size() <= 1,
+                "BTD Buffer has more than one fabs."
+            );
             // Every buffer that is flushed only has a single fab.
             std::string recent_Buffer_FabFilename = recent_Buffer_Level0_path + "/"
                                                   + Buffer_FabHeader.FabName(0);
