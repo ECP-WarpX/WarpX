@@ -11,11 +11,18 @@
 
 #include <string>
 
+/** collect the particles that are absorbed at the embedded boundary, throughout the simulation
+ */
 class
 BoundaryScrapingDiagnostics final : public Diagnostics
 {
 public:
 
+    /** Constructor
+     *
+     * @param i ...
+     * @param name ...
+     */
     BoundaryScrapingDiagnostics (int i, std::string name);
 
 private:

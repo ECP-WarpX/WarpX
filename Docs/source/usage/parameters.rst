@@ -2232,13 +2232,13 @@ Back-Transformed Diagnostics (legacy output)
     slice diagnostic if there are within the user-defined width from
     the slice region defined by ``slice.dom_lo`` and ``slice.dom_hi``.
 
-Boundary scraping diagnostics
+Boundary Scraping Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``BoundaryScrapingDiagnostics`` are used to collect the particles that are absorbed at the embedded boundary, throughout the simulation.
 (Note that this diagnostics does not save any field ; it only saves particles.)
-Currently, the only supported output format is openPMD, so the user needs to set ``format=openpmd``. In addition, the user needs
-to set ``save_particles_at_eb=1`` for each of the species that are to be saved in this diagnostic.
+Currently, the only supported output format is openPMD, so the user needs to set ``<diag>.format=openpmd``. In addition, the user needs
+to set ``<species>.save_particles_at_eb=1`` for each of the species that are to be saved in this diagnostic.
 
 In addition to their usual attributes, the saved particles have an additional integer attribute ``timestamp``, which
 indicates the PIC iteration at which each particle was absorbed at the boundary.

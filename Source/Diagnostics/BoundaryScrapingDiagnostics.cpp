@@ -56,7 +56,8 @@ BoundaryScrapingDiagnostics::ReadParameters ()
 
     // Check that the output format is openPMD
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_format == "openpmd",
-    "You need to set `format=openpmd` for the BoundaryScrapingDiagnostic.");
+    std:string("You need to set `") + m_diag_name +
+    std::string(".format=openpmd` for the BoundaryScrapingDiagnostic."));
 }
 
 void
