@@ -619,15 +619,10 @@ void FieldProbe::ComputeDiags (int step)
             }
             localsize.resize(1, m_data.size());
 
-#ifdef AMREX_USE_MPI
             // gather size of m_data from each processor
             amrex::ParallelDescriptor::Gather(localsize.data(), 1,
                                               length_vector.data(), 1,
                                               amrex::ParallelDescriptor::IOProcessorNumber());
-#else
-            // work-around for https://github.com/AMReX-Codes/amrex/pull/2793
-            length_vector[0] = localsize[0];
-#endif
 
             // IO processor sums values from length_array to get size of total output array.
             /* displs records the size of each m_data as well as previous displs. This array
