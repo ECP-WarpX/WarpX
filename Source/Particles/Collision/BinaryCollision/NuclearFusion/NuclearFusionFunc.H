@@ -68,6 +68,19 @@ public:
         amrex::Vector<std::string> product_species_name;
         pp_collision_name.getarr("product_species", product_species_name);
 
+        if (m_fusion_type == NuclearFusionType::DeuteriumTritium)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                product_species_name.size() == 2,
+                "ERROR: Deuterium-tritium must contain exactly two product species");
+            auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
+            auto& product_species2 = mypc->GetParticleContainerFromName(product_species_name[1]);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (product_species.AmIA<PhysicalSpecies::helium4>() && product_species.AmIA<PhysicalSpecies::neutron>())
+                ||
+                (product_species.AmIA<PhysicalSpecies::neutron>() && product_species.AmIA<PhysicalSpecies::helium4>()),
+                "ERROR: Product species of deuterium-tritium fusion must be of type neutron and helium4");
+        }
         if (m_fusion_type == NuclearFusionType::ProtonBoron)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
