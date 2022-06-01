@@ -545,7 +545,7 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
 PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& grid_dm,
           const Geometry* geom, const Geometry* cgeom,
           int ncell, int delta, amrex::IntVect ref_ratio,
-          Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
+          Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_centered,
           int do_moving_window, int /*pml_has_particles*/, int do_pml_in_domain,
           const bool do_multi_J,
           const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
@@ -608,9 +608,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
         // Increase the number of guard cells, in order to fit the extent
         // of the stencil for the spectral solver
-        int ngFFt_x = do_nodal ? nox_fft : nox_fft/2;
-        int ngFFt_y = do_nodal ? noy_fft : noy_fft/2;
-        int ngFFt_z = do_nodal ? noz_fft : noz_fft/2;
+        int ngFFt_x = do_centered ? nox_fft : nox_fft/2;
+        int ngFFt_y = do_centered ? noy_fft : noy_fft/2;
+        int ngFFt_z = do_centered ? noz_fft : noz_fft/2;
 
         ParmParse pp_psatd("psatd");
         queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
@@ -712,7 +712,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
     if (m_dive_cleaning)
     {
-        const amrex::IntVect& F_nodal_flag = amrex::IntVect::TheNodeVector();
+        const amrex::IntVect& F_nodal_flag =
+            (do_centered) ? amrex::IntVect::TheCellVector() : amrex::IntVect::TheNodeVector();
         pml_F_fp = std::make_unique<MultiFab>(amrex::convert(ba, F_nodal_flag), dm, 3, ngf);
         pml_F_fp->setVal(0.0);
     }
@@ -720,8 +721,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     if (m_divb_cleaning)
     {
         // TODO Shall we define a separate guard cells parameter ngG?
-        const amrex::IntVect& G_nodal_flag = (do_nodal) ? amrex::IntVect::TheNodeVector()
-                                                        : amrex::IntVect::TheCellVector();
+        const amrex::IntVect& G_nodal_flag = amrex::IntVect::TheCellVector();
         pml_G_fp = std::make_unique<MultiFab>(amrex::convert(ba, G_nodal_flag), dm, 3, ngf);
         pml_G_fp->setVal(0.0);
     }
@@ -753,7 +753,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, fill_guards, v_galilean_zero,
+            nox_fft, noy_fft, noz_fft, do_centered, fill_guards, v_galilean_zero,
             v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
             fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif
@@ -825,7 +825,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
         if (m_dive_cleaning)
         {
-            const amrex::IntVect& F_nodal_flag = amrex::IntVect::TheNodeVector();
+            const amrex::IntVect& F_nodal_flag =
+                (do_centered) ? amrex::IntVect::TheCellVector() : amrex::IntVect::TheNodeVector();
             pml_F_cp = std::make_unique<MultiFab>(amrex::convert(cba, F_nodal_flag), cdm, 3, ngf);
             pml_F_cp->setVal(0.0);
         }
@@ -833,8 +834,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         if (m_divb_cleaning)
         {
             // TODO Shall we define a separate guard cells parameter ngG?
-            const amrex::IntVect& G_nodal_flag = (do_nodal) ? amrex::IntVect::TheNodeVector()
-                                                            : amrex::IntVect::TheCellVector();
+            const amrex::IntVect& G_nodal_flag = amrex::IntVect::TheCellVector();
             pml_G_cp = std::make_unique<MultiFab>(amrex::convert(cba, G_nodal_flag), cdm, 3, ngf);
             pml_G_cp->setVal(0.0);
         }
@@ -873,7 +873,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
-                nox_fft, noy_fft, noz_fft, do_nodal, fill_guards, v_galilean_zero,
+                nox_fft, noy_fft, noz_fft, do_centered, fill_guards, v_galilean_zero,
                 v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
                 fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
 #endif

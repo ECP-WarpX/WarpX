@@ -408,8 +408,8 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, 0.5_rt*dt);
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
-        if (WarpX::do_nodal==1) {
-          amrex::Abort("The Esirkepov algorithm cannot be used with a nodal grid.");
+        if (WarpX::do_centered==1) {
+          amrex::Abort("The Esirkepov algorithm cannot be used with a cell-centered grid.");
         }
     }
 
@@ -445,21 +445,27 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             doVayDepositionShapeN<1>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                jx_fab, jy_fab, jz_fab,
+                jx->ixType().toIntVect(), jy->ixType().toIntVect(), jz->ixType().toIntVect(),
+                np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
                 WarpX::n_rz_azimuthal_modes, cost,
                 WarpX::load_balance_costs_update_algo);
         } else if (WarpX::nox == 2){
             doVayDepositionShapeN<2>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                jx_fab, jy_fab, jz_fab,
+                jx->ixType().toIntVect(), jy->ixType().toIntVect(), jz->ixType().toIntVect(),
+                np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
                 WarpX::n_rz_azimuthal_modes, cost,
                 WarpX::load_balance_costs_update_algo);
         } else if (WarpX::nox == 3){
             doVayDepositionShapeN<3>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                jx_fab, jy_fab, jz_fab,
+                jx->ixType().toIntVect(), jy->ixType().toIntVect(), jz->ixType().toIntVect(),
+                np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
                 WarpX::n_rz_azimuthal_modes, cost,
                 WarpX::load_balance_costs_update_algo);
         }
@@ -707,16 +713,17 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     const auto& dm = m_gdb->DistributionMap(lev);
     BoxArray nba = ba;
 
-    bool is_PSATD_RZ = false;
-#ifdef WARPX_DIM_RZ
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
-        is_PSATD_RZ = true;
-#endif
-    if( !is_PSATD_RZ )
+    WarpX& warpx = WarpX::GetInstance();
+
+    // Call surroundingNodes() only if the rho MultiFab is NOT cell-centered
+    // (the index type of rho does not change between fine and coarse patch,
+    // so checking only on rho_fp should be fine)
+    if (warpx.m_rho_nodal_flag != amrex::IntVect::TheCellVector())
+    {
         nba.surroundingNodes();
+    }
 
     // Number of guard cells for local deposition of rho
-    WarpX& warpx = WarpX::GetInstance();
     const int ng_rho = warpx.get_ng_depos_rho().max();
 
     auto rho = std::make_unique<MultiFab>(nba,dm,WarpX::ncomps,ng_rho);

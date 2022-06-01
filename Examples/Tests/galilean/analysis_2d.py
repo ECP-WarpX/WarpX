@@ -50,11 +50,11 @@ if (averaged):
     tolerance_rel = 1e-6
 elif (not dims_RZ and not current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
-    energyE_ref = 35657.99361677053
+    energyE_ref = 127630.78661668337
     tolerance_rel = 1e-8
 elif (not dims_RZ and current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.)):
-    energyE_ref = 35024.02751955393
+    energyE_ref = 67857.47786682092
     tolerance_rel = 2e-8
 elif (dims_RZ and not current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))

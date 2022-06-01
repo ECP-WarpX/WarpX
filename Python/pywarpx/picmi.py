@@ -669,7 +669,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         self.grid.initialize_inputs()
 
         pywarpx.warpx.pml_ncell = self.pml_ncell
-        pywarpx.warpx.do_nodal = self.l_nodal
+        pywarpx.warpx.do_centered = self.l_nodal
 
         if self.method == 'PSATD':
             pywarpx.psatd.periodic_single_box_fft = self.psatd_periodic_single_box_fft

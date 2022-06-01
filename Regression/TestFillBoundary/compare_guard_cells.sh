@@ -167,7 +167,7 @@ for NCI_CORR in 0 1; do
                                                        amr.max_level=$MAXLEV \
                                                        warpx.do_dive_cleaning=$DIVE \
                                                        warpx.do_subcycling=$SUBCYCLING \
-                                                       warpx.do_nodal=$NODAL \
+                                                       warpx.do_centered=$NODAL \
                                                        algo.field_gathering=$GATHER \
                                                        warpx.safe_guard_cells=$SAFE_GUARD_CELLS \
                                                        >  ./OUTPUT/$WHICH/$RUNNAME.txt \

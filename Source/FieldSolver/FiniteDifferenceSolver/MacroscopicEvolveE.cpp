@@ -51,8 +51,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         "currently macro E-push does not work for RZ"));
 #else
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !m_do_nodal, "macro E-push does not work for nodal");
-
+        !m_do_centered, "macro E-push does not work for cell-centered grids");
 
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 

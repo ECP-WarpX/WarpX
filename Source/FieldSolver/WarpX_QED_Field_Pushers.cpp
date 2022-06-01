@@ -46,9 +46,9 @@ void
 WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> a_dt)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        WarpX::do_nodal != 0,
+        WarpX::do_centered != 0,
         "Error: The Hybrid QED method is "
-        "currently only compatible with the nodal scheme."
+        "currently only compatible with the cell-centered scheme."
     );
     for (int lev = 0; lev <= finest_level; ++lev) {
         Hybrid_QED_Push(lev, a_dt[lev]);

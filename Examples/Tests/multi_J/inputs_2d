@@ -24,7 +24,7 @@ algo.particle_shape = 3
 
 # Numerics
 warpx.cfl = 3.19
-warpx.do_nodal = 1
+warpx.do_centered = 1
 warpx.use_filter = 1
 warpx.verbose = 1
 

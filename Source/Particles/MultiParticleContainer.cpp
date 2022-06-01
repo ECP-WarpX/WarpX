@@ -1308,9 +1308,9 @@ MultiParticleContainer::doQEDSchwinger ()
 
     auto & warpx = WarpX::GetInstance();
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_nodal ||
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_centered ||
        warpx.field_gathering_algo == GatheringAlgo::MomentumConserving,
-          "ERROR: Schwinger process only implemented for warpx.do_nodal = 1"
+          "ERROR: Schwinger process only implemented for warpx.do_centered = 1"
                                  "or algo.field_gathering = momentum-conserving");
 
     constexpr int level_0 = 0;

@@ -369,8 +369,10 @@ public:
     //! and current onto the lower refinement level instead of the refinement patch itself
     static int n_current_deposition_buffer;
 
-    //! If true, all fields are evaluated on a nodal grid and all MultiFabs have a nodal index type
-    static bool do_nodal;
+    /**
+     * \brief Control whether all MultiFabs should be cell-centered
+     */
+    static bool do_centered;
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;

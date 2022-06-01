@@ -197,7 +197,7 @@ IntVect WarpX::filter_npass_each_dir(1);
 int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
-bool WarpX::do_nodal = false;
+bool WarpX::do_centered = false;
 amrex::IntVect m_rho_nodal_flag;
 
 int WarpX::do_similar_dm_pml = 1;
@@ -959,9 +959,9 @@ WarpX::ReadParameters ()
 
         pp_warpx.query("do_dynamic_scheduling", do_dynamic_scheduling);
 
-        pp_warpx.query("do_nodal", do_nodal);
+        pp_warpx.query("do_centered", do_centered);
         // Use same shape factors in all directions, for gathering
-        if (do_nodal) galerkin_interpolation = false;
+        if (do_centered) galerkin_interpolation = false;
 
 #ifdef WARPX_DIM_RZ
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
@@ -971,10 +971,10 @@ WarpX::ReadParameters ()
 #endif
 
         // If true, the current is deposited on a nodal grid and centered onto a staggered grid.
-        // Setting warpx.do_current_centering = 1 makes sense only if warpx.do_nodal = 0. Instead,
-        // if warpx.do_nodal = 1, Maxwell's equations are solved on a nodal grid and the current
-        // should not be centered onto a staggered grid.
-        if (WarpX::do_nodal == 0)
+        // Setting warpx.do_current_centering = 1 makes sense only if warpx.do_centered = 0. Instead,
+        // if warpx.do_centered = 1, Maxwell's equations are solved on a cell-centered grid
+        // and the current should not be centered onto a staggered grid.
+        if (WarpX::do_centered == 0)
         {
             pp_warpx.query("do_current_centering", do_current_centering);
         }
@@ -1008,9 +1008,9 @@ WarpX::ReadParameters ()
         }
 
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-            // Force do_nodal=true (that is, not staggered) and
+            // Force do_centered = true (that is, cell-centered) and
             // use same shape factors in all directions, for gathering
-            do_nodal = true;
+            do_centered = true;
             galerkin_interpolation = false;
         }
 #endif
@@ -1125,12 +1125,12 @@ WarpX::ReadParameters ()
         pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
 
         // Read order of finite-order centering of fields (staggered to nodal).
-        // Read this only if warpx.do_nodal = 0. Instead, if warpx.do_nodal = 1,
-        // Maxwell's equations are solved on a nodal grid and the electromagnetic
-        // forces are gathered from a nodal grid, hence the fields do not need to
-        // be centered onto a nodal grid.
+        // Read this only if warpx.do_centered=0. Instead, if warpx.do_centered=1,
+        // Maxwell's equations are solved on a cell-centered grid and the electromagnetic
+        // forces are gathered from a cell-centered grid, hence the fields do not need to
+        // be centered onto a cell-centered grid.
         if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
-            WarpX::do_nodal == 0)
+            WarpX::do_centered == 0)
         {
             queryWithParser(pp_interpolation, "field_centering_nox", field_centering_nox);
             queryWithParser(pp_interpolation, "field_centering_noy", field_centering_noy);
@@ -1146,8 +1146,8 @@ WarpX::ReadParameters ()
         }
 
         // Finite-order centering is not implemented with mesh refinement
-        // (note that when WarpX::do_nodal = 1 finite-order centering is not used anyways)
-        if (maxLevel() > 0 && WarpX::do_nodal == 0)
+        // (note that when WarpX::do_centered=1 finite-order centering is not used anyways)
+        if (maxLevel() > 0 && WarpX::do_centered == 0)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
@@ -1155,7 +1155,7 @@ WarpX::ReadParameters ()
         }
 
         if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
-            WarpX::do_nodal == 0)
+            WarpX::do_centered == 0)
         {
             AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
                                           device_field_centering_stencil_coeffs_y,
@@ -1449,6 +1449,7 @@ WarpX::BackwardCompatibility ()
 
     ParmParse pp_warpx("warpx");
     std::vector<std::string> backward_strings;
+
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_warpx.queryarr("fields_to_plot", backward_strings),
         "warpx.fields_to_plot is not supported anymore. "
@@ -1465,6 +1466,12 @@ WarpX::BackwardCompatibility ()
         !pp_warpx.query("plot_crsepatch", backward_int),
         "warpx.plot_crsepatch is not supported anymore. "
         "Please use the new syntax for diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+       !pp_warpx.query("do_nodal", backward_bool),
+        "warpx.do_nodal is not supported anymore. "
+        "Please use warpx.do_centered instead."
     );
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1659,7 +1666,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         dx,
         do_subcycling,
         WarpX::use_fdtd_nci_corr,
-        do_nodal,
+        do_centered,
         do_moving_window,
         moving_window_dir,
         WarpX::nox,
@@ -1762,18 +1769,19 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     G_nodal_flag = amrex::IntVect::TheCellVector();
 
     // Overwrite nodal flags if necessary
-    if (do_nodal) {
-        Ex_nodal_flag  = IntVect::TheNodeVector();
-        Ey_nodal_flag  = IntVect::TheNodeVector();
-        Ez_nodal_flag  = IntVect::TheNodeVector();
-        Bx_nodal_flag  = IntVect::TheNodeVector();
-        By_nodal_flag  = IntVect::TheNodeVector();
-        Bz_nodal_flag  = IntVect::TheNodeVector();
-        jx_nodal_flag  = IntVect::TheNodeVector();
-        jy_nodal_flag  = IntVect::TheNodeVector();
-        jz_nodal_flag  = IntVect::TheNodeVector();
-        rho_nodal_flag = IntVect::TheNodeVector();
-        G_nodal_flag = amrex::IntVect::TheNodeVector();
+    if (do_centered) {
+        Ex_nodal_flag  = IntVect::TheCellVector();
+        Ey_nodal_flag  = IntVect::TheCellVector();
+        Ez_nodal_flag  = IntVect::TheCellVector();
+        Bx_nodal_flag  = IntVect::TheCellVector();
+        By_nodal_flag  = IntVect::TheCellVector();
+        Bz_nodal_flag  = IntVect::TheCellVector();
+        jx_nodal_flag  = IntVect::TheCellVector();
+        jy_nodal_flag  = IntVect::TheCellVector();
+        jz_nodal_flag  = IntVect::TheCellVector();
+        rho_nodal_flag = IntVect::TheCellVector();
+        F_nodal_flag = amrex::IntVect::TheCellVector();
+        G_nodal_flag = amrex::IntVect::TheCellVector();
     }
 #ifdef WARPX_DIM_RZ
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
@@ -1993,13 +2001,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #endif
     } // MaxwellSolverAlgo::PSATD
     else {
-        m_fdtd_solver_fp[lev] = std::make_unique<FiniteDifferenceSolver>(maxwell_solver_id, dx, do_nodal);
+        m_fdtd_solver_fp[lev] = std::make_unique<FiniteDifferenceSolver>(maxwell_solver_id, dx, do_centered);
     }
 
     //
     // The Aux patch (i.e., the full solution)
     //
-    if (aux_is_nodal and !do_nodal)
+    if (aux_is_nodal and !do_centered)
     {
         // Create aux multifabs on Nodal Box Array
         BoxArray const nba = amrex::convert(ba,IntVect::TheNodeVector());
@@ -2087,12 +2095,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
         if (do_divb_cleaning)
         {
-            if (do_nodal)
+            if (do_centered)
             {
                 G_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba, IntVect::TheUnitVector()),
                                                        dm, ncomps, ngG.max(), tag("G_cp"));
             }
-            else // do_nodal = 0
+            else // do_centered = 0
             {
                 G_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba, IntVect::TheZeroVector()),
                                                        dm, ncomps, ngG.max(), tag("G_cp"));
@@ -2137,7 +2145,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         } // MaxwellSolverAlgo::PSATD
         else {
             m_fdtd_solver_cp[lev] = std::make_unique<FiniteDifferenceSolver>(maxwell_solver_id, cdx,
-                                                                             do_nodal);
+                                                                             do_centered);
         }
     }
 
@@ -2224,7 +2232,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   dm,
                                                   n_rz_azimuthal_modes,
                                                   noz_fft,
-                                                  do_nodal,
+                                                  do_centered,
                                                   m_v_galilean,
                                                   dx_vect,
                                                   solver_dt,
@@ -2277,7 +2285,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 nox_fft,
                                                 noy_fft,
                                                 noz_fft,
-                                                do_nodal,
+                                                do_centered,
                                                 WarpX::fill_guards,
                                                 m_v_galilean,
                                                 m_v_comoving,
@@ -2378,8 +2386,8 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
-        "ComputeDivB not implemented with do_nodal."
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_centered,
+        "ComputeDivB not implemented with do_centered."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 
     Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
@@ -2416,8 +2424,8 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx, IntVect const ngrow)
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
-        "ComputeDivB not implemented with do_nodal."
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_centered,
+        "ComputeDivB not implemented with do_centered."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 
     Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
