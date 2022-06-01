@@ -46,13 +46,6 @@ class PhysicalParticleContainer
 {
 public:
 
-    enum PhysicalParticleType{
-        electron,
-        positron,
-        photon,
-        other
-    };
-
     PhysicalParticleContainer (amrex::AmrCore* amr_core,
                                int ispecies,
                                const std::string& name);
@@ -200,8 +193,8 @@ public:
     */
     void AddPlasmaFlux (amrex::Real dt);
 
-    void MapParticletoBoostedFrame (amrex::Real& x, amrex::Real& y, amrex::Real& z,
-                                    amrex::Real& ux, amrex::Real& uy, amrex::Real& uz);
+    void MapParticletoBoostedFrame (amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
+                                    amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz);
 
     void AddGaussianBeam (
         const amrex::Real x_m, const amrex::Real y_m, const amrex::Real z_m,
@@ -217,9 +210,9 @@ public:
                             amrex::ParticleReal z_shift);
 
     void CheckAndAddParticle (
-        amrex::Real x, amrex::Real y, amrex::Real z,
-        amrex::Real ux, amrex::Real uy, amrex::Real uz,
-        amrex::Real weight,
+        amrex::ParticleReal x, amrex::ParticleReal y, amrex::ParticleReal z,
+        amrex::ParticleReal ux, amrex::ParticleReal uy, amrex::ParticleReal uz,
+        amrex::ParticleReal weight,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_x,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_y,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_z,

@@ -5,12 +5,11 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_MSG_LOGGER_FWD_H
-#define WARPX_MSG_LOGGER_FWD_H
+#ifndef ABLASTR_MSG_LOGGER_FWD_H
+#define ABLASTR_MSG_LOGGER_FWD_H
 
-namespace Utils{
-namespace MsgLogger{
-
+namespace ablastr::utils::msg_logger
+{
     enum class Priority;
 
     struct Msg;
@@ -19,6 +18,5 @@ namespace MsgLogger{
 
     class Logger;
 }
-}
 
-#endif //WARPX_MSG_LOGGER_FWD_H
+#endif //ABLASTR_MSG_LOGGER_FWD_H
