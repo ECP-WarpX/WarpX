@@ -17,6 +17,8 @@
 #include "WarpXWrappers.H"
 #include "WarpX_py.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_ArrayOfStructs.H>
 #include <AMReX_Box.H>
@@ -626,8 +628,9 @@ namespace
         auto * rho_fp = warpx.get_pointer_rho_fp(lev);
 
         if (rho_fp == nullptr) {
-            warpx.RecordWarning(
-                "WarpXWrappers", "rho_fp is not allocated", WarnPriority::low
+            ablastr::warn_manager::WMRecordWarning(
+                "WarpXWrappers", "rho_fp is not allocated",
+                ablastr::warn_manager::WarnPriority::low
             );
             return;
         }

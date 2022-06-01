@@ -34,6 +34,7 @@
 #include "Utils/WarpXUtil.H"
 
 #include <ablastr/utils/SignalHandling.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_Array.H>
@@ -342,7 +343,10 @@ WarpX::Evolve (int numsteps)
         if (!early_params_checked) {
             amrex::Print() << "\n"; // better: conditional \n based on return value
             amrex::ParmParse().QueryUnusedInputs();
-            this->PrintGlobalWarnings("FIRST STEP"); //Print the warning list right after the first step.
+
+            //Print the warning list right after the first step.
+            amrex::Print() <<
+                ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("FIRST STEP");
             early_params_checked = true;
         }
 

@@ -10,10 +10,13 @@
 
 #include "ablastr/utils/msg_logger/MsgLogger_fwd.H"
 
+#include <AMReX_ParmParse.H>
+
 #include <memory>
+#include <optional>
 #include <string>
 
-namespace ablastr::warning_logger
+namespace ablastr::warn_manager
 {
 
     /** WarnPriority is recorded together with warning messages. It influences
@@ -59,7 +62,7 @@ namespace ablastr::warning_logger
         static WarnManager& GetInstance();
 
         /**
-        * \brief This function records a warning message.
+        * \brief This function records a warning message (recording a warning message is thread-safe)
         *
         * @param[in] topic a string to identify the topic of the warning (e.g., "parallelization", "pbc", "particles"...)
         * @param[in] text the text of the warning message
@@ -68,7 +71,7 @@ namespace ablastr::warning_logger
         void RecordWarning(
             std::string topic,
             std::string text,
-            WarnPriority priority);
+            WarnPriority priority = WarnPriority::medium);
 
         /**
         * \brief This function prints all the warning messages collected on the present MPI rank
@@ -91,12 +94,41 @@ namespace ablastr::warning_logger
             const std::string& when) const;
 
         /**
+        * \brief Setter for the m_always_warn_immediately
+        *
+        * @param[in] always_warn_immediately new value of the m_always_warn_immediately flag
+        */
+        void SetAlwaysWarnImmediately(bool always_warn_immediately);
+
+        /**
+        * \brief Getter for the m_always_warn_immediately
+        *
+        * @return the m_always_warn_immediately flag
+        */
+        bool GetAlwaysWarnImmediatelyFlag() const;
+
+        /**
+        * \brief Setter for the m_abort_on_warning_threshold flag
+        * (pass std::nullopt in order to never abort)
+        *
+        * @param[in] abort_threshold new value of the m_abort_on_warning_threshold flag
+        */
+        void SetAbortThreshold(std::optional<WarnPriority> abort_threshold);
+
+        /**
+        * \brief Getter for the m_abort_on_warning_threshold flag
+        *
+        * @return the m_abort_on_warning_threshold flag
+        */
+        std::optional<WarnPriority> GetAbortThreshold() const;
+
+        /**
         * \brief This function reads warning messages from the inputfile. It is intended for
         * debug&testing purposes
         *
         * @param[in, out] params the inputfile parser
         */
-        //void debug_read_warnings_from_input(amrex::ParmParse& params);
+        void debug_read_warnings_from_input(amrex::ParmParse& params);
 
         static const int warn_line_size = 80 /*! Maximum line length to be used in formatting warning list*/;
         static const int warn_tab_size = 5 /*! Tabulation size to be used in formatting warning list*/;
@@ -158,7 +190,29 @@ namespace ablastr::warning_logger
 
         int m_rank = 0 /*! MPI rank (appears in the warning list)*/;
         std::unique_ptr<ablastr::utils::msg_logger::Logger> m_p_logger /*! The Logger stores all the warning messages*/;
+        bool m_always_warn_immediately = false /*! Flag to control if the warning logger has to emit a warning message as soon as a warning is recorded*/;
+        std::optional<WarnPriority> m_abort_on_warning_threshold = std::nullopt /*! Threshold to abort immediately on a warning message*/;
     };
+
+    /**
+    * \brief Helper function to abbreviate the call to get a WarnManager instance
+    *
+    * @return the instance of the WarnManager class
+    */
+    WarnManager& GetWMInstance();
+
+    /**
+    * \brief Helper function to abbreviate the call to WarnManager::GetInstance().RecordWarning
+    * (recording a warning message is thread-safe)
+    *
+    * @param[in] topic a string to identify the topic of the warning (e.g., "parallelization", "pbc", "particles"...)
+    * @param[in] text the text of the warning message
+    * @param[in] priority priority of the warning message ("medium" by default)
+    */
+    void WMRecordWarning(
+        std::string topic,
+        std::string text,
+        WarnPriority priority = WarnPriority::medium);
 }
 
 #endif //ABLASTR_WARN_MANAGER_H_

@@ -32,14 +32,13 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarnManager.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
 #include <ablastr/utils/SignalHandling.H>
-#include <ablastr/utils/msg_logger/MsgLogger.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -76,13 +75,12 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <optional>
 #include <random>
 #include <string>
 #include <utility>
 
 using namespace amrex;
-
-namespace abl_msg_logger = ablastr::utils::msg_logger;
 
 Vector<Real> WarpX::E_external_grid(3, 0.0);
 Vector<Real> WarpX::B_external_grid(3, 0.0);
@@ -229,8 +227,6 @@ WarpX::ResetInstance ()
 WarpX::WarpX ()
 {
     m_instance = this;
-
-    m_p_warn_manager = std::make_unique<Utils::WarnManager>();
 
     ReadParameters();
 
@@ -440,72 +436,6 @@ WarpX::~WarpX ()
 }
 
 void
-WarpX::RecordWarning(
-        const std::string& topic,
-        const std::string& text,
-        const WarnPriority& priority)
-{
-    WARPX_PROFILE("WarpX::RecordWarning");
-
-    auto msg_priority = abl_msg_logger::Priority::high;
-    if(priority == WarnPriority::low)
-        msg_priority = abl_msg_logger::Priority::low;
-    else if(priority == WarnPriority::medium)
-        msg_priority = abl_msg_logger::Priority::medium;
-
-    if(m_always_warn_immediately){
-
-        amrex::Warning(
-            Utils::TextMsg::Warn(
-                "["
-                + std::string(abl_msg_logger::PriorityToString(msg_priority))
-                + "]["
-                + topic
-                + "] "
-                + text));
-    }
-
-#ifdef AMREX_USE_OMP
-    #pragma omp critical
-#endif
-    {
-        m_p_warn_manager->record_warning(topic, text, msg_priority);
-    }
-
-    if(m_abort_on_warning_threshold){
-
-        auto abort_priority = abl_msg_logger::Priority::high;
-        if(m_abort_on_warning_threshold == WarnPriority::low)
-            abort_priority = abl_msg_logger::Priority::low;
-        else if(m_abort_on_warning_threshold == WarnPriority::medium)
-            abort_priority = abl_msg_logger::Priority::medium;
-
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            msg_priority < abort_priority,
-            "A warning with priority '"
-            + abl_msg_logger::PriorityToString(msg_priority)
-            + "' has been raised."
-        );
-    }
-}
-
-void
-WarpX::PrintLocalWarnings(const std::string& when)
-{
-    WARPX_PROFILE("WarpX::PrintLocalWarnings");
-    const std::string warn_string = m_p_warn_manager->print_local_warnings(when);
-    amrex::AllPrint() << warn_string;
-}
-
-void
-WarpX::PrintGlobalWarnings(const std::string& when)
-{
-    WARPX_PROFILE("WarpX::PrintGlobalWarnings");
-    const std::string warn_string = m_p_warn_manager->print_global_warnings(when);
-    amrex::Print() << warn_string;
-}
-
-void
 WarpX::ReadParameters ()
 {
     // Ensure that geometry.dims is set properly.
@@ -534,24 +464,28 @@ WarpX::ReadParameters ()
 
         //"Synthetic" warning messages may be injected in the Warning Manager via
         // inputfile for debug&testing purposes.
-        m_p_warn_manager->debug_read_warnings_from_input(pp_warpx);
+        ablastr::warn_manager::GetWMInstance().debug_read_warnings_from_input(pp_warpx);
 
         // Set the flag to control if WarpX has to emit a warning message as soon as a warning is recorded
-        pp_warpx.query("always_warn_immediately", m_always_warn_immediately);
+        bool always_warn_immediately = false;
+        pp_warpx.query("always_warn_immediately", always_warn_immediately);
+        ablastr::warn_manager::GetWMInstance().SetAlwaysWarnImmediately(always_warn_immediately);
 
         // Set the WarnPriority threshold to decide if WarpX has to abort when a warning is recorded
         if(std::string str_abort_on_warning_threshold = "";
             pp_warpx.query("abort_on_warning_threshold", str_abort_on_warning_threshold)){
+            std::optional<ablastr::warn_manager::WarnPriority> abort_on_warning_threshold = std::nullopt;
             if (str_abort_on_warning_threshold == "high")
-                m_abort_on_warning_threshold = WarnPriority::high;
+                abort_on_warning_threshold = ablastr::warn_manager::WarnPriority::high;
             else if (str_abort_on_warning_threshold == "medium" )
-                m_abort_on_warning_threshold = WarnPriority::medium;
+                abort_on_warning_threshold = ablastr::warn_manager::WarnPriority::medium;
             else if (str_abort_on_warning_threshold == "low")
-                m_abort_on_warning_threshold = WarnPriority::low;
+                abort_on_warning_threshold = ablastr::warn_manager::WarnPriority::low;
             else {
                 Abort(Utils::TextMsg::Err(str_abort_on_warning_threshold
                     +"is not a valid option for warpx.abort_on_warning_threshold (use: low, medium or high)"));
             }
+            ablastr::warn_manager::GetWMInstance().SetAbortThreshold(abort_on_warning_threshold);
         }
 
         std::vector<int> numprocs_in;
@@ -809,7 +743,7 @@ WarpX::ReadParameters ()
 #ifdef AMREX_USE_FLOAT
         if (do_single_precision_comms) {
             do_single_precision_comms = 0;
-            this->RecordWarning(
+            ablastr::warn_manager::WMRecordWarning(
                 "comms",
                 "Overwrote warpx.do_single_precision_comms to be 0, since WarpX was built in single precision.",
                 WarnPriority::low);
@@ -1092,7 +1026,7 @@ WarpX::ReadParameters ()
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
             {
-                this->RecordWarning("Particles",
+                ablastr::warn_manager::WMRecordWarning("Particles",
                     "When algo.particle_shape > 1,"
                     "some numerical artifact will be present at the interface between coarse and fine patch."
                     "We recommend setting algo.particle_shape = 1 in order to avoid this issue");
@@ -1546,25 +1480,25 @@ WarpX::BackwardCompatibility ()
     ParmParse pp_particles("particles");
     int nspecies;
     if (pp_particles.query("nspecies", nspecies)){
-        this->RecordWarning("Species",
+        ablastr::warn_manager::WMRecordWarning("Species",
             "particles.nspecies is ignored. Just use particles.species_names please.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
     }
 
     ParmParse pp_collisions("collisions");
     int ncollisions;
     if (pp_collisions.query("ncollisions", ncollisions)){
-        this->RecordWarning("Collisions",
+        ablastr::warn_manager::WMRecordWarning("Collisions",
             "collisions.ncollisions is ignored. Just use particles.collision_names please.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
     }
 
     ParmParse pp_lasers("lasers");
     int nlasers;
     if (pp_lasers.query("nlasers", nlasers)){
-        this->RecordWarning("Laser",
+        ablastr::warn_manager::WMRecordWarning("Laser",
             "lasers.nlasers is ignored. Just use lasers.names please.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
     }
 }
 

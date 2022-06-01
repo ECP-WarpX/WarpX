@@ -17,6 +17,8 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX_Array.H>
 #include <AMReX_Config.H>
 #include <AMReX_MFIter.H>
@@ -154,10 +156,10 @@ FieldProbe::FieldProbe (std::string rd_name)
 
     if (WarpX::gamma_boost > 1.0_rt)
     {
-        WarpX::GetInstance().RecordWarning(
+        ablastr::warn_manager::WMRecordWarning(
             "Boosted Frame Invalid",
             "The FieldProbe Diagnostic will not record lab-frame, but boosted frame data.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
     }
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,

@@ -6,7 +6,6 @@ target_sources(WarpX
     IntervalsParser.cpp
     ParticleUtils.cpp
     RelativeCellPosition.cpp
-    WarnManager.cpp
     WarpXAlgorithmSelection.cpp
     WarpXMovingWindow.cpp
     WarpXTagging.cpp

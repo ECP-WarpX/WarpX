@@ -16,7 +16,27 @@
 #include <sstream>
 
 namespace abl_msg_logger = ablastr::utils::msg_logger;
-using namespace ablastr::warning_logger;
+using namespace ablastr::warn_manager;
+
+namespace
+{
+    WarnPriority MapPriorityToWarnPriority (
+        const abl_msg_logger::Priority& priority)
+    {
+        using namespace abl_msg_logger;
+        if (priority == Priority::low)
+            return WarnPriority::low;
+        else if (priority == Priority::medium)
+            return WarnPriority::medium;
+        else if (priority == Priority::high)
+            return WarnPriority::high;
+        else
+            ablastr::utils::TextMsg::Err(
+                "Parsing Priority to WarnPriority has failed");
+
+        return WarnPriority::high;
+    }
+}
 
 WarnManager& WarnManager::GetInstance() {
     static auto warn_manager = WarnManager{};
@@ -39,11 +59,39 @@ void WarnManager::RecordWarning(
     else if(priority == WarnPriority::medium)
         msg_priority = abl_msg_logger::Priority::medium;
 
+    if(m_always_warn_immediately){
+
+        amrex::Warning(
+            ablastr::utils::TextMsg::Warn(
+                "["
+                + std::string(abl_msg_logger::PriorityToString(msg_priority))
+                + "]["
+                + topic
+                + "] "
+                + text));
+    }
+
 #ifdef AMREX_USE_OMP
     #pragma omp critical
 #endif
     {
         m_p_logger->record_msg(abl_msg_logger::Msg{topic, text, msg_priority});
+    }
+
+    if(m_abort_on_warning_threshold){
+
+        auto abort_priority = abl_msg_logger::Priority::high;
+        if(m_abort_on_warning_threshold == WarnPriority::low)
+            abort_priority = abl_msg_logger::Priority::low;
+        else if(m_abort_on_warning_threshold == WarnPriority::medium)
+            abort_priority = abl_msg_logger::Priority::medium;
+
+        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(
+            msg_priority < abort_priority,
+            "A warning with priority '"
+            + abl_msg_logger::PriorityToString(msg_priority)
+            + "' has been raised."
+        );
     }
 }
 
@@ -103,7 +151,27 @@ std::string WarnManager::PrintGlobalWarnings(const std::string& when) const
     return ss.str();
 }
 
-/*void WarnManager::debug_read_warnings_from_input(amrex::ParmParse& params)
+void WarnManager::SetAlwaysWarnImmediately(bool always_warn_immediately)
+{
+    m_always_warn_immediately = always_warn_immediately;
+}
+
+bool WarnManager::GetAlwaysWarnImmediatelyFlag() const
+{
+    return m_always_warn_immediately;
+}
+
+void WarnManager::SetAbortThreshold(std::optional<WarnPriority> abort_threshold)
+{
+    m_abort_on_warning_threshold = abort_threshold;
+}
+
+std::optional<WarnPriority> WarnManager::GetAbortThreshold() const
+{
+    return m_abort_on_warning_threshold;
+}
+
+void WarnManager::debug_read_warnings_from_input(amrex::ParmParse& params)
 {
     std::vector<std::string> warnings;
     params.queryarr("test_warnings", warnings);
@@ -119,25 +187,25 @@ std::string WarnManager::PrintGlobalWarnings(const std::string& when) const
 
         std::string spriority;
         pp_warn.query("priority", spriority);
-        abl_msg_logger::Priority priority =
-            abl_msg_logger::StringToPriority(spriority);
+        const auto wpriority = MapPriorityToWarnPriority(
+            abl_msg_logger::StringToPriority(spriority));
 
         int all_involved = 0;
         pp_warn.query("all_involved", all_involved);
         if(all_involved != 0){
-            this->record_warning(topic, msg, priority);
+            this->RecordWarning(topic, msg, wpriority);
         }
         else{
             std::vector<int> who_involved;
             pp_warn.queryarr("who_involved", who_involved);
             if(std::find (who_involved.begin(), who_involved.end(), m_rank)
                 != who_involved.end()){
-                this->record_warning(topic, msg, priority);
+                this->RecordWarning(topic, msg, wpriority);
             }
         }
     }
 
-}*/
+}
 
 std::string WarnManager::PrintWarnMsg(
     const abl_msg_logger::MsgWithCounter& msg_with_counter) const
@@ -227,4 +295,18 @@ WarnManager::MsgFormatter(
         ss_out << prefix << line << "\n";
 
     return ss_out.str();
+}
+
+WarnManager& ablastr::warn_manager::GetWMInstance()
+{
+    return WarnManager::GetInstance();
+}
+
+void ablastr::warn_manager::WMRecordWarning(
+    std::string topic,
+    std::string text,
+    WarnPriority priority)
+{
+    WarnManager::GetInstance().RecordWarning(
+        topic, text, priority);
 }
