@@ -746,7 +746,7 @@ WarpX::ReadParameters ()
             ablastr::warn_manager::WMRecordWarning(
                 "comms",
                 "Overwrote warpx.do_single_precision_comms to be 0, since WarpX was built in single precision.",
-                WarnPriority::low);
+                ablastr::warn_manager::WarnPriority::low);
         }
 #endif
 
