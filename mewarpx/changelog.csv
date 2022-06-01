@@ -11,12 +11,16 @@ Version, Physics version, Date,        List of changes
   :class:`mewarpx.utils_store.plasma_density_oracle.PlasmaDensityOracle`
   by automatically determining the best parameters for it.
 
+"
+8.2.1, 2, 5/31/2022, "
+
 **Other changes**:
 
-- Merge ``upstream/development`` (git hash ``3c2d0ee``) into memaster.
+- Merge ``upstream/development`` (git hash ``30b8500``) into memaster.
 
 "
-8.2.0, 2, 5/17/2022, "
+8.2.0, 2, 5/11/2022, "
+
 
 **Features**:
 

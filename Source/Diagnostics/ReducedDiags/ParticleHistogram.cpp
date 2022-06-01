@@ -198,10 +198,10 @@ void ParticleHistogram::ComputeDiags (int step)
                 auto const GetPosition = GetParticlePosition(pti);
 
                 auto & attribs = pti.GetAttribs();
-                Real* const AMREX_RESTRICT d_w = attribs[PIdx::w].dataPtr();
-                Real* const AMREX_RESTRICT d_ux = attribs[PIdx::ux].dataPtr();
-                Real* const AMREX_RESTRICT d_uy = attribs[PIdx::uy].dataPtr();
-                Real* const AMREX_RESTRICT d_uz = attribs[PIdx::uz].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_w = attribs[PIdx::w].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_ux = attribs[PIdx::ux].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_uy = attribs[PIdx::uy].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_uz = attribs[PIdx::uz].dataPtr();
 
                 long const np = pti.numParticles();
 
@@ -211,7 +211,7 @@ void ParticleHistogram::ComputeDiags (int step)
                 {
                     amrex::ParticleReal x, y, z;
                     GetPosition(i, x, y, z);
-                    auto const w  = d_w[i];
+                    auto const w  = (amrex::Real)d_w[i];
                     auto const ux = d_ux[i] / PhysConst::c;
                     auto const uy = d_uy[i] / PhysConst::c;
                     auto const uz = d_uz[i] / PhysConst::c;
@@ -222,7 +222,6 @@ void ParticleHistogram::ComputeDiags (int step)
                             return;
                     // continue function if particle is not filtered out
                     auto const f = fun_partparser(t, x, y, z, ux, uy, uz);
-
                     // determine particle bin
                     int const bin = int(Math::floor((f-bin_min)/bin_size));
                     if ( bin<0 || bin>=num_bins ) return; // discard if out-of-range

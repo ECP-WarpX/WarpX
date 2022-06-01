@@ -16,7 +16,7 @@ import sys
 
 import numpy as np
 import openpmd_api as io
-from scipy.constants import c
+from scipy.constants import c, e
 from scipy.constants import epsilon_0 as eps0
 from scipy.constants import m_e, m_p
 from scipy.constants import mu_0 as mu0
@@ -79,6 +79,7 @@ def do_analysis(single_precision = False):
     values_yt['electrons: uzavg'] = uzavg / wavg_adj
     values_yt['electrons: zuzavg'] = zuzavg / wavg_adj
     values_yt['electrons: uzavg_filt'] = uzavg_filt / wavg_filt_adj
+    values_yt['electrons: jz'] = e*uzavg
 
     # protons
     x = ad['protons', 'particle_position_x'].to_ndarray()
@@ -113,6 +114,7 @@ def do_analysis(single_precision = False):
     values_yt['protons: uzavg'] = uzavg / wavg_adj
     values_yt['protons: zuzavg'] = zuzavg / wavg_adj
     values_yt['protons: uzavg_filt'] = uzavg_filt / wavg_filt_adj
+    values_yt['protons: jz'] = e*uzavg
 
     # Photons (momentum in units of m_e c)
     x = ad['photons', 'particle_position_x'].to_ndarray()
@@ -147,6 +149,7 @@ def do_analysis(single_precision = False):
     values_yt['photons: uzavg'] = uzavg / wavg_adj
     values_yt['photons: zuzavg'] = zuzavg / wavg_adj
     values_yt['photons: uzavg_filt'] = uzavg_filt / wavg_filt_adj
+    values_yt['photons: jz'] = e*uzavg
 
 
     values_rd = dict()
@@ -167,6 +170,10 @@ def do_analysis(single_precision = False):
     values_rd['protons: uzavg_filt'] = ad0[('boxlib','uz_filt_protons')]
     values_rd['photons: uzavg_filt'] = ad0[('boxlib','uz_filt_photons')]
 
+    values_rd['electrons: jz'] = ad0[('boxlib','jz_electrons')]
+    values_rd['protons: jz'] = ad0[('boxlib','jz_protons')]
+    values_rd['photons: jz'] = ad0[('boxlib','jz_photons')]
+
     values_opmd = dict()
     # Load reduced particle diagnostic data from OPMD output
     values_opmd['electrons: zavg'] = opmd_i.meshes['z_electrons'][io.Mesh_Record_Component.SCALAR].load_chunk()
@@ -184,6 +191,11 @@ def do_analysis(single_precision = False):
     values_opmd['electrons: uzavg_filt'] = opmd_i.meshes['uz_filt_electrons'][io.Mesh_Record_Component.SCALAR].load_chunk()
     values_opmd['protons: uzavg_filt'] = opmd_i.meshes['uz_filt_protons'][io.Mesh_Record_Component.SCALAR].load_chunk()
     values_opmd['photons: uzavg_filt'] = opmd_i.meshes['uz_filt_photons'][io.Mesh_Record_Component.SCALAR].load_chunk()
+
+    values_opmd['electrons: jz'] = opmd_i.meshes['j_electrons']['z'].load_chunk()
+    values_opmd['protons: jz'] = opmd_i.meshes['j_protons']['z'].load_chunk()
+    values_opmd['photons: jz'] = opmd_i.meshes['j_photons']['z'].load_chunk()
+
     opmd.flush()
     del opmd
 

@@ -137,6 +137,20 @@ namespace
         return z0;
     }
 
+    struct PDim3 {
+        ParticleReal x, y, z;
+
+        AMREX_GPU_HOST_DEVICE
+        PDim3(const PDim3&) = default;
+        AMREX_GPU_HOST_DEVICE
+        PDim3(const amrex::XDim3& a) : x(a.x), y(a.y), z(a.z) {}
+
+        AMREX_GPU_HOST_DEVICE
+        PDim3& operator=(const PDim3&) = default;
+        AMREX_GPU_HOST_DEVICE
+        PDim3& operator=(const amrex::XDim3 &a) { x = a.x; y = a.y; z = a.z; return *this; }
+    };
+
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     XDim3 getCellCoords (const GpuArray<Real, AMREX_SPACEDIM>& lo_corner,
                          const GpuArray<Real, AMREX_SPACEDIM>& dx,
@@ -377,7 +391,7 @@ void PhysicalParticleContainer::InitData ()
 }
 
 void PhysicalParticleContainer::MapParticletoBoostedFrame (
-    Real& x, Real& y, Real& z, Real& ux, Real& uy, Real& uz)
+    ParticleReal& x, ParticleReal& y, ParticleReal& z, ParticleReal& ux, ParticleReal& uy, ParticleReal& uz)
 {
     // Map the particles from the lab frame to the boosted frame.
     // This boosts the particle to the lab frame and calculates
@@ -386,28 +400,28 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
 
     // For now, start with the assumption that this will only happen
     // at the start of the simulation.
-    const Real t_lab = 0._rt;
+    const ParticleReal t_lab = 0._prt;
 
-    const Real uz_boost = WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
+    const ParticleReal uz_boost = WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
 
     // tpr is the particle's time in the boosted frame
-    Real tpr = WarpX::gamma_boost*t_lab - uz_boost*z/(PhysConst::c*PhysConst::c);
+    ParticleReal tpr = WarpX::gamma_boost*t_lab - uz_boost*z/(PhysConst::c*PhysConst::c);
 
     // The particle's transformed location in the boosted frame
-    Real xpr = x;
-    Real ypr = y;
-    Real zpr = WarpX::gamma_boost*z - uz_boost*t_lab;
+    ParticleReal xpr = x;
+    ParticleReal ypr = y;
+    ParticleReal zpr = WarpX::gamma_boost*z - uz_boost*t_lab;
 
     // transform u and gamma to the boosted frame
-    Real gamma_lab = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)/(PhysConst::c*PhysConst::c));
+    ParticleReal gamma_lab = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)/(PhysConst::c*PhysConst::c));
     // ux = ux;
     // uy = uy;
     uz = WarpX::gamma_boost*uz - uz_boost*gamma_lab;
-    Real gammapr = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)/(PhysConst::c*PhysConst::c));
+    ParticleReal gammapr = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)/(PhysConst::c*PhysConst::c));
 
-    Real vxpr = ux/gammapr;
-    Real vypr = uy/gammapr;
-    Real vzpr = uz/gammapr;
+    ParticleReal vxpr = ux/gammapr;
+    ParticleReal vypr = uy/gammapr;
+    ParticleReal vzpr = uz/gammapr;
 
     if (do_backward_propagation){
         uz = -uz;
@@ -622,9 +636,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
 void
 PhysicalParticleContainer::CheckAndAddParticle (
-    Real x, Real y, Real z,
-    Real ux, Real uy, Real uz,
-    Real weight,
+    ParticleReal x, ParticleReal y, ParticleReal z,
+    ParticleReal ux, ParticleReal uy, ParticleReal uz,
+    ParticleReal weight,
     Gpu::HostVector<ParticleReal>& particle_x,
     Gpu::HostVector<ParticleReal>& particle_y,
     Gpu::HostVector<ParticleReal>& particle_z,
@@ -1496,32 +1510,34 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 const XDim3 r =
                     inj_pos->getPositionUnitBox(i_part, lrrfac, engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
+                auto ppos = PDim3(pos);
 
                 // inj_mom would typically be InjectorMomentumGaussianFlux
                 XDim3 u;
                 u = inj_mom->getMomentum(pos.x, pos.y, pos.z, engine);
+                auto pu = PDim3(u);
 
-                u.x *= PhysConst::c;
-                u.y *= PhysConst::c;
-                u.z *= PhysConst::c;
+                pu.x *= PhysConst::c;
+                pu.y *= PhysConst::c;
+                pu.z *= PhysConst::c;
 
                 const amrex::Real t_fract = amrex::Random(engine)*dt;
-                UpdatePosition(pos.x, pos.y, pos.z, u.x, u.y, u.z, t_fract);
+                UpdatePosition(ppos.x, ppos.y, ppos.z, pu.x, pu.y, pu.z, t_fract);
 
 #if defined(WARPX_DIM_3D)
-                if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
+                if (!tile_realbox.contains(XDim3{ppos.x,ppos.y,ppos.z})) {
                     p.id() = -1;
                     continue;
                 }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
-                if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
+                if (!tile_realbox.contains(XDim3{ppos.x,ppos.z,0.0_prt})) {
                     p.id() = -1;
                     continue;
                 }
 #else
                 amrex::ignore_unused(j,k);
-                if (!tile_realbox.contains(XDim3{pos.z,0.0_rt,0.0_rt})) {
+                if (!tile_realbox.contains(XDim3{ppos.z,0.0_prt,0.0_prt})) {
                     p.id() = -1;
                     continue;
                 }
@@ -1529,8 +1545,8 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
                 // Save the x and y values to use in the insideBounds checks.
                 // This is needed with WARPX_DIM_RZ since x and y are modified.
-                Real xb = pos.x;
-                Real yb = pos.y;
+                Real xb = ppos.x;
+                Real yb = ppos.y;
 
 #ifdef WARPX_DIM_RZ
                 // Replace the x and y, setting an angle theta.
@@ -1539,25 +1555,25 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 if (nmodes == 1) {
                     // With only 1 mode, the angle doesn't matter so
                     // choose it randomly.
-                    theta = 2._rt*MathConst::pi*amrex::Random(engine);
+                    theta = 2._prt*MathConst::pi*amrex::Random(engine);
                 } else {
-                    theta = 2._rt*MathConst::pi*r.y;
+                    theta = 2._prt*MathConst::pi*r.y;
                 }
                 Real const cos_theta = std::cos(theta);
                 Real const sin_theta = std::sin(theta);
                 // Rotate the position
-                pos.x = xb*cos_theta;
-                pos.y = xb*sin_theta;
+                ppos.x = xb*cos_theta;
+                ppos.y = xb*sin_theta;
                 if (loc_flux_normal_axis != 2) {
                     // Rotate the momentum
                     // This because, when the flux direction is e.g. "r"
                     // the `inj_mom` objects generates a v*Gaussian distribution
                     // along the Cartesian "x" directionm by default. This
                     // needs to be rotated along "r".
-                    Real ur = u.x;
-                    Real ut = u.y;
-                    u.x = cos_theta*ur - sin_theta*ut;
-                    u.y = sin_theta*ur + cos_theta*ut;
+                    Real ur = pu.x;
+                    Real ut = pu.y;
+                    pu.x = cos_theta*ur - sin_theta*ut;
+                    pu.y = sin_theta*ur + cos_theta*ut;
                 }
 #endif
 
@@ -1566,12 +1582,12 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // xmin, xmax, ymin, ymax, zmin, zmax, go to
                 // the next generated particle.
 
-                if (!inj_pos->insideBounds(xb, yb, pos.z)) {
+                if (!inj_pos->insideBounds(xb, yb, ppos.z)) {
                     p.id() = -1;
                     continue;
                 }
 
-                Real dens = inj_rho->getDensity(pos.x, pos.y, pos.z);
+                Real dens = inj_rho->getDensity(ppos.x, ppos.y, ppos.z);
 
                 // Remove particle if density below threshold
                 if ( dens < density_min ){
@@ -1609,28 +1625,28 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                     } else {
                          // This is not correct since it might shift the particle
                          // out of the local grid
-                         pos.x = std::sqrt(xb*rmax);
+                         ppos.x = std::sqrt(xb*rmax);
                          weight *= dx[0];
                     }
                 }
 #endif
                 pa[PIdx::w ][ip] = weight;
-                pa[PIdx::ux][ip] = u.x;
-                pa[PIdx::uy][ip] = u.y;
-                pa[PIdx::uz][ip] = u.z;
+                pa[PIdx::ux][ip] = pu.x;
+                pa[PIdx::uy][ip] = pu.y;
+                pa[PIdx::uz][ip] = pu.z;
 
 #if defined(WARPX_DIM_3D)
-                p.pos(0) = pos.x;
-                p.pos(1) = pos.y;
-                p.pos(2) = pos.z;
+                p.pos(0) = ppos.x;
+                p.pos(1) = ppos.y;
+                p.pos(2) = ppos.z;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 #ifdef WARPX_DIM_RZ
                 pa[PIdx::theta][ip] = theta;
 #endif
                 p.pos(0) = xb;
-                p.pos(1) = pos.z;
+                p.pos(1) = ppos.z;
 #else
-                p.pos(0) = pos.z;
+                p.pos(0) = ppos.z;
 #endif
             }
         });
@@ -2363,22 +2379,22 @@ PhysicalParticleContainer::GetParticleSlice (
                 const auto GetPosition = GetParticlePosition(pti);
 
                 auto& attribs = pti.GetAttribs();
-                Real* const AMREX_RESTRICT wpnew = attribs[PIdx::w].dataPtr();
-                Real* const AMREX_RESTRICT uxpnew = attribs[PIdx::ux].dataPtr();
-                Real* const AMREX_RESTRICT uypnew = attribs[PIdx::uy].dataPtr();
-                Real* const AMREX_RESTRICT uzpnew = attribs[PIdx::uz].dataPtr();
+                ParticleReal* const AMREX_RESTRICT wpnew = attribs[PIdx::w].dataPtr();
+                ParticleReal* const AMREX_RESTRICT uxpnew = attribs[PIdx::ux].dataPtr();
+                ParticleReal* const AMREX_RESTRICT uypnew = attribs[PIdx::uy].dataPtr();
+                ParticleReal* const AMREX_RESTRICT uzpnew = attribs[PIdx::uz].dataPtr();
 
-                Real* const AMREX_RESTRICT
+                ParticleReal* const AMREX_RESTRICT
                   xpold = tmp_particle_data[lev][index][TmpIdx::xold].dataPtr();
-                Real* const AMREX_RESTRICT
+                ParticleReal* const AMREX_RESTRICT
                   ypold = tmp_particle_data[lev][index][TmpIdx::yold].dataPtr();
-                Real* const AMREX_RESTRICT
+                ParticleReal* const AMREX_RESTRICT
                   zpold = tmp_particle_data[lev][index][TmpIdx::zold].dataPtr();
-                Real* const AMREX_RESTRICT
+                ParticleReal* const AMREX_RESTRICT
                   uxpold = tmp_particle_data[lev][index][TmpIdx::uxold].dataPtr();
-                Real* const AMREX_RESTRICT
+                ParticleReal* const AMREX_RESTRICT
                   uypold = tmp_particle_data[lev][index][TmpIdx::uyold].dataPtr();
-                Real* const AMREX_RESTRICT
+                ParticleReal* const AMREX_RESTRICT
                   uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr();
 
                 const long np = pti.numParticles();
@@ -2418,19 +2434,19 @@ PhysicalParticleContainer::GetParticleSlice (
                 amrex::Real betaboost = WarpX::beta_boost;
                 amrex::Real Phys_c = PhysConst::c;
 
-                Real* const AMREX_RESTRICT diag_wp =
+                ParticleReal* const AMREX_RESTRICT diag_wp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::w).data();
-                Real* const AMREX_RESTRICT diag_xp =
+                ParticleReal* const AMREX_RESTRICT diag_xp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::x).data();
-                Real* const AMREX_RESTRICT diag_yp =
+                ParticleReal* const AMREX_RESTRICT diag_yp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::y).data();
-                Real* const AMREX_RESTRICT diag_zp =
+                ParticleReal* const AMREX_RESTRICT diag_zp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::z).data();
-                Real* const AMREX_RESTRICT diag_uxp =
+                ParticleReal* const AMREX_RESTRICT diag_uxp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::ux).data();
-                Real* const AMREX_RESTRICT diag_uyp =
+                ParticleReal* const AMREX_RESTRICT diag_uyp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::uy).data();
-                Real* const AMREX_RESTRICT diag_uzp =
+                ParticleReal* const AMREX_RESTRICT diag_uzp =
                 diagnostic_particles[lev][index].GetRealData(DiagIdx::uz).data();
 
                 // Copy particle data to diagnostic particle array on the GPU

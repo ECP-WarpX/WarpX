@@ -92,3 +92,15 @@ On an :ref:`HPC system <install-hpc>`, you would instead submit the :ref:`job sc
    .. code-block:: bash
 
       mpirun -np 4 ./warpx <input_file> max_step=10 warpx.numprocs=1 2 2
+
+5. Outputs
+----------
+
+By default, WarpX will write a status update to the terminal (``stdout``).
+On :ref:`HPC systems <install-hpc>`, we usually store a copy of this in a file called ``outputs.txt``.
+
+We also store by default an exact copy of all explicitly and implicitly used inputs parameters in a file called ``warpx_used_inputs``.
+This is important for reproducibility, since as we wrote in the previous paragraph, the options in the input file can be extended and overwritten from the command line.
+
+:ref:`Further configured diagnostics <running-cpp-parameters-diagnostics>` are explained in the next sections.
+By default, they are written to a subdirectory in ``diags/`` and can use various :ref:`output formats <dataanalysis-formats>`.
