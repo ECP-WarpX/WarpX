@@ -54,13 +54,16 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
             const int norder_x,
             const int norder_y,
             const int norder_z,
+            const int norder_loc_x,
+            const int norder_loc_y,
+            const int norder_loc_z,
             const bool nodal,
             const amrex::IntVect& fill_guards,
             const amrex::Real dt,
             const bool time_averaging,
             const bool dive_cleaning,
-            const bool divb_cleaning);
-
+            const bool divb_cleaning,
+            const bool do_asymmetrical_psatd);
         /**
          * \brief Updates the E and B fields in spectral space, according to the multi-J PSATD equations
          *
@@ -122,12 +125,20 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
         SpectralRealCoefficients X1_coef, X2_coef, X3_coef, X5_coef, X6_coef;
 
         SpectralFieldIndex m_spectral_index;
+        // Centered modified finite-order k vectors (used to lower order of current deposition)
+        KVectorComponent modified_kx_q_vec_centered;
 
+#if defined(WARPX_DIM_3D)
+        KVectorComponent modified_ky_q_vec_centered;
+
+#endif
+        KVectorComponent modified_kz_q_vec_centered;
         // Other member variables
         amrex::Real m_dt;
         bool m_time_averaging;
         bool m_dive_cleaning;
         bool m_divb_cleaning;
+        bool m_asymmetrical_psatd;
 };
 #endif // WARPX_USE_PSATD
 #endif // WARPX_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_

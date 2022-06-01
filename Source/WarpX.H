@@ -263,12 +263,18 @@ public:
     //! Solve additional Maxwell equation for G in order to control errors in magnetic Gauss' law
     static bool do_divb_cleaning;
 
+    static bool do_asymmetrical_psatd;
+
     //! Order of the particle shape factors (splines) along x
     static int nox;
     //! Order of the particle shape factors (splines) along y
     static int noy;
     //! Order of the particle shape factors (splines) along z
     static int noz;
+
+    static int nox_cur_loc;
+    static int noy_cur_loc;
+    static int noz_cur_loc;
 
     //! Order of finite centering of fields (from staggered grid to nodal grid), along x
     static int field_centering_nox;
@@ -1379,6 +1385,10 @@ private:
     int nox_fft = 16;
     int noy_fft = 16;
     int noz_fft = 16;
+
+    int nox_loc_fft = 8;
+    int noy_loc_fft = 8;
+    int noz_loc_fft = 8;
 
     //! Domain decomposition on Level 0
     amrex::IntVect numprocs{0};

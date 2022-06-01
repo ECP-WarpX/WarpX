@@ -33,19 +33,32 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     const int norder_x,
     const int norder_y,
     const int norder_z,
+    const int norder_loc_x,
+    const int norder_loc_y,
+    const int norder_loc_z,
     const bool nodal,
     const amrex::IntVect& fill_guards,
     const amrex::Real dt,
     const bool time_averaging,
     const bool dive_cleaning,
-    const bool divb_cleaning)
+    const bool divb_cleaning,
+    const bool asymmetrical_psatd)
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
     m_spectral_index(spectral_index),
+
+    modified_kx_q_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_loc_x, true)),
+#if defined(WARPX_DIM_3D)
+    modified_ky_q_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_loc_y, true)),
+    modified_kz_q_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_loc_z, true)),
+#else
+    modified_kz_q_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_loc_z, true)),
+#endif
     m_dt(dt),
     m_time_averaging(time_averaging),
     m_dive_cleaning(dive_cleaning),
-    m_divb_cleaning(divb_cleaning)
+    m_divb_cleaning(divb_cleaning),
+    m_asymmetrical_psatd(asymmetrical_psatd)
 {
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -74,6 +87,7 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
+    const bool asymmetrical_psatd = m_asymmetrical_psatd;
     const amrex::Real dt = m_dt;
 
     const SpectralFieldIndex& Idx = m_spectral_index;
@@ -103,10 +117,14 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
 
         // Extract pointers for the k vectors
         const amrex::Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* modified_kx_q_arr = modified_kx_q_vec_centered[mfi].dataPtr();
+
 #if defined(WARPX_DIM_3D)
         const amrex::Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* modified_ky_q_arr = modified_ky_q_vec_centered[mfi].dataPtr();
 #endif
         const amrex::Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* modified_kz_q_arr = modified_kz_q_vec_centered[mfi].dataPtr();
 
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -142,6 +160,17 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
             constexpr amrex::Real ky = 0._rt;
             const     amrex::Real kz = modified_kz_arr[j];
 #endif
+
+              // k_q vector values (used for current locality) //oshapoval
+            const amrex::Real kx_q = modified_kx_q_arr[i];
+#if defined(WARPX_DIM_3D)
+            const amrex::Real ky_q = modified_ky_q_arr[j];
+            const amrex::Real kz_q = modified_kz_q_arr[k];
+#else
+            constexpr amrex::Real ky_q = 0._rt;
+            const     amrex::Real kz_q = modified_kz_q_arr[j];
+#endif
+
             // Physical constants and imaginary unit
             constexpr amrex::Real c2 = PhysConst::c * PhysConst::c;
             constexpr amrex::Real ep0 = PhysConst::ep0;
@@ -157,19 +186,34 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
             const amrex::Real X4 = - S_ck / PhysConst::ep0;
 
             // Update equations for E in the formulation with rho
+            if (asymmetrical_psatd)
+            {
+              fields(i,j,k,Idx.Ex) = C * Ex_old
+                  + I * c2 * S_ck * (ky_q * Bz_old - kz_q * By_old)
+                  + X4 * Jx_old - I * (X2 * rho_new - X3 * rho_old) * kx_q - X1 * (Jx_new - Jx_old) / dt;
 
-            fields(i,j,k,Idx.Ex) = C * Ex_old
-                + I * c2 * S_ck * (ky * Bz_old - kz * By_old)
-                + X4 * Jx_old - I * (X2 * rho_new - X3 * rho_old) * kx - X1 * (Jx_new - Jx_old) / dt;
+              fields(i,j,k,Idx.Ey) = C * Ey_old
+                  + I * c2 * S_ck * (kz_q* Bx_old - kx_q * Bz_old)
+                  + X4 * Jy_old - I * (X2 * rho_new - X3 * rho_old) * ky_q - X1 * (Jy_new - Jy_old) / dt;
 
-            fields(i,j,k,Idx.Ey) = C * Ey_old
-                + I * c2 * S_ck * (kz * Bx_old - kx * Bz_old)
-                + X4 * Jy_old - I * (X2 * rho_new - X3 * rho_old) * ky - X1 * (Jy_new - Jy_old) / dt;
+              fields(i,j,k,Idx.Ez) = C * Ez_old
+                  + I * c2 * S_ck * (kx_q * By_old - ky_q * Bx_old)
+                  + X4 * Jz_old - I * (X2 * rho_new - X3 * rho_old) * kz_q - X1 * (Jz_new - Jz_old) / dt;
+            }
+            else
+            {
+              fields(i,j,k,Idx.Ex) = C * Ex_old
+                  + I * c2 * S_ck * (ky * Bz_old - kz * By_old)
+                  + X4 * Jx_old - I * (X2 * rho_new - X3 * rho_old) * kx - X1 * (Jx_new - Jx_old) / dt;
 
-            fields(i,j,k,Idx.Ez) = C * Ez_old
-                + I * c2 * S_ck * (kx * By_old - ky * Bx_old)
-                + X4 * Jz_old - I * (X2 * rho_new - X3 * rho_old) * kz - X1 * (Jz_new - Jz_old) / dt;
+              fields(i,j,k,Idx.Ey) = C * Ey_old
+                  + I * c2 * S_ck * (kz * Bx_old - kx * Bz_old)
+                  + X4 * Jy_old - I * (X2 * rho_new - X3 * rho_old) * ky - X1 * (Jy_new - Jy_old) / dt;
 
+              fields(i,j,k,Idx.Ez) = C * Ez_old
+                  + I * c2 * S_ck * (kx * By_old - ky * Bx_old)
+                  + X4 * Jz_old - I * (X2 * rho_new - X3 * rho_old) * kz - X1 * (Jz_new - Jz_old) / dt;
+            }
             // Update equations for B
 
             fields(i,j,k,Idx.Bx) = C * Bx_old

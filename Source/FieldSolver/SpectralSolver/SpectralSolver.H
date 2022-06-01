@@ -71,8 +71,9 @@ class SpectralSolver
                         const amrex::BoxArray& realspace_ba,
                         const amrex::DistributionMapping& dm,
                         const int norder_x, const int norder_y,
-                        const int norder_z, const bool nodal,
-                        const amrex::IntVect& fill_guards,
+                        const int norder_z, const int norder_loc_x,
+                        const int norder_loc_y, const int norder_loc_z,
+                        const bool nodal, const amrex::IntVect& fill_guards,
                         const amrex::Vector<amrex::Real>& v_galilean,
                         const amrex::Vector<amrex::Real>& v_comoving,
                         const amrex::RealVect dx,
@@ -83,7 +84,8 @@ class SpectralSolver
                         const bool fft_do_time_averaging,
                         const bool do_multi_J,
                         const bool dive_cleaning,
-                        const bool divb_cleaning);
+                        const bool divb_cleaning,
+                        const bool asymmetrical_psatd);
 
         /**
          * \brief Transform the component i_comp of the MultiFab mf to Fourier space,

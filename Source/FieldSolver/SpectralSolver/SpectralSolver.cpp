@@ -23,8 +23,9 @@ SpectralSolver::SpectralSolver(
                 const amrex::BoxArray& realspace_ba,
                 const amrex::DistributionMapping& dm,
                 const int norder_x, const int norder_y,
-                const int norder_z, const bool nodal,
-                const amrex::IntVect& fill_guards,
+                const int norder_z, const int norder_loc_x,
+                const int norder_loc_y, const int norder_loc_z,
+                const bool nodal, const amrex::IntVect& fill_guards,
                 const amrex::Vector<amrex::Real>& v_galilean,
                 const amrex::Vector<amrex::Real>& v_comoving,
                 const amrex::RealVect dx, const amrex::Real dt,
@@ -33,7 +34,8 @@ SpectralSolver::SpectralSolver(
                 const bool fft_do_time_averaging,
                 const bool do_multi_J,
                 const bool dive_cleaning,
-                const bool divb_cleaning)
+                const bool divb_cleaning,
+                const bool asymmetrical_psatd)
 {
     // Initialize all structures using the same distribution mapping dm
 
@@ -68,8 +70,10 @@ SpectralSolver::SpectralSolver(
             if (do_multi_J)
             {
                 algorithm = std::make_unique<PsatdAlgorithmJLinearInTime>(
-                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
-                    fill_guards, dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
+                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z,
+                    norder_loc_x, norder_loc_y, norder_loc_z, nodal,
+                    fill_guards, dt, fft_do_time_averaging, dive_cleaning, divb_cleaning,
+                    asymmetrical_psatd);
             }
             else // standard, Galilean, averaged Galilean
             {

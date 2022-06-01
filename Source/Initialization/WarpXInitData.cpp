@@ -470,10 +470,12 @@ WarpX::InitPML ()
 #else
         pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
-                             dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
+                             dt[0], nox_fft, noy_fft, noz_fft,
+                             nox_loc_fft, noy_loc_fft, noz_loc_fft, do_nodal,
                              do_moving_window, pml_has_particles, do_pml_in_domain,
                              do_multi_J,
                              do_pml_dive_cleaning, do_pml_divb_cleaning,
+                             do_asymmetrical_psatd,
                              guard_cells.ng_FieldSolver.max(),
                              v_particle_pml,
                              do_pml_Lo[0], do_pml_Hi[0]);
@@ -503,9 +505,11 @@ WarpX::InitPML ()
             pml[lev] = std::make_unique<PML>(lev, boxArray(lev), DistributionMap(lev),
                                    &Geom(lev), &Geom(lev-1),
                                    pml_ncell, pml_delta, refRatio(lev-1),
-                                   dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
+                                   dt[lev], nox_fft, noy_fft, noz_fft,
+                                   nox_loc_fft, noy_loc_fft, noz_loc_fft, do_nodal,
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
                                    do_multi_J, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   do_asymmetrical_psatd,
                                    guard_cells.ng_FieldSolver.max(),
                                    v_particle_pml,
                                    do_pml_Lo[lev], do_pml_Hi[lev]);

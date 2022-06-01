@@ -535,10 +535,12 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
 PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& grid_dm,
           const Geometry* geom, const Geometry* cgeom,
           int ncell, int delta, amrex::IntVect ref_ratio,
-          Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
+          Real dt, int nox_fft, int noy_fft, int noz_fft,
+          int nox_loc_fft, int noy_loc_fft, int noz_loc_fft, bool do_nodal,
           int do_moving_window, int /*pml_has_particles*/, int do_pml_in_domain,
           const bool do_multi_J,
           const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
+          const bool do_asymmetrical_psatd,
           int max_guard_EB, const amrex::Real v_sigma_sb,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
     : m_dive_cleaning(do_pml_dive_cleaning),
@@ -743,9 +745,10 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, fill_guards, v_galilean_zero,
-            v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
-            fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
+            nox_fft, noy_fft, noz_fft, nox_loc_fft, noy_loc_fft, noz_loc_fft,
+            do_nodal, fill_guards, v_galilean_zero, v_comoving_zero, dx, dt,
+            in_pml, periodic_single_box, update_with_rho, fft_do_time_averaging,
+            do_multi_J, m_dive_cleaning, m_divb_cleaning, do_asymmetrical_psatd);
 #endif
     }
 
@@ -863,9 +866,10 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
-                nox_fft, noy_fft, noz_fft, do_nodal, fill_guards, v_galilean_zero,
-                v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
-                fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
+                nox_fft, noy_fft, noz_fft, nox_loc_fft, noy_loc_fft, noz_loc_fft,
+                do_nodal, fill_guards, v_galilean_zero, v_comoving_zero,
+                cdx, dt, in_pml, periodic_single_box, update_with_rho, fft_do_time_averaging,
+                do_multi_J, m_dive_cleaning, m_divb_cleaning, do_asymmetrical_psatd);
 #endif
         }
     }

@@ -129,10 +129,12 @@ public:
          const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
          const amrex::Geometry* geom, const amrex::Geometry* cgeom,
          int ncell, int delta, amrex::IntVect ref_ratio,
-         amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
+         amrex::Real dt, int nox_fft, int noy_fft, int noz_fft,
+         int nox_loc_fft, int noy_loc_fft, int noz_loc_fft, bool do_nodal,
          int do_moving_window, int pml_has_particles, int do_pml_in_domain,
          const bool do_multi_J,
          const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
+         const bool do_asymmetrical_psatd,
          int max_guard_EB, amrex::Real v_sigma_sb,
          const amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
          const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
