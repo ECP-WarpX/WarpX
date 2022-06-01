@@ -3,7 +3,7 @@
 
 # required dependencies
 module load cmake/3.22.0
-module swap PrgEnv-nvidia PrgEnv-gnu
+module load PrgEnv-gnu
 module load cudatoolkit
 
 # optional: just an additional text editor
@@ -47,6 +47,11 @@ export CRAY_ACCEL_TARGET=nvidia80
 
 # optimize CUDA compilation for A100
 export AMREX_CUDA_ARCH=8.0
+
+# optimize CPU microarchitecture for AMD EPYC 3rd Gen (Milan/Zen3)
+# note: the cc/CC/ftn wrappers below add those
+#export CXXFLAGS="-march=znver3"
+#export CFLAGS="-march=znver3"
 
 # compiler environment hints
 export CC=cc

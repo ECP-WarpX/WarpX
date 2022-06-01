@@ -89,7 +89,8 @@ namespace AnyFFT
             result = cufftExecZ2D(fft_plan.m_plan, fft_plan.m_complex_array, fft_plan.m_real_array);
 #endif
         } else {
-            amrex::Abort("direction must be AnyFFT::direction::R2C or AnyFFT::direction::C2R");
+            amrex::Abort(Utils::TextMsg::Err(
+                "direction must be AnyFFT::direction::R2C or AnyFFT::direction::C2R"));
         }
         if ( result != CUFFT_SUCCESS ) {
             amrex::Print() << Utils::TextMsg::Err(

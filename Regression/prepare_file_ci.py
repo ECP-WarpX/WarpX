@@ -20,7 +20,6 @@ ci_regular_cartesian_1d = os.environ.get('WARPX_CI_REGULAR_CARTESIAN_1D') == 'TR
 ci_regular_cartesian_2d = os.environ.get('WARPX_CI_REGULAR_CARTESIAN_2D') == 'TRUE'
 ci_regular_cartesian_3d = os.environ.get('WARPX_CI_REGULAR_CARTESIAN_3D') == 'TRUE'
 ci_psatd = os.environ.get('WARPX_CI_PSATD', 'TRUE') == 'TRUE'
-ci_python_main = os.environ.get('WARPX_CI_PYTHON_MAIN') == 'TRUE'
 ci_single_precision = os.environ.get('WARPX_CI_SINGLE_PRECISION') == 'TRUE'
 ci_rz_or_nompi = os.environ.get('WARPX_CI_RZ_OR_NOMPI') == 'TRUE'
 ci_qed = os.environ.get('WARPX_CI_QED') == 'TRUE'
@@ -85,12 +84,6 @@ if ci_num_make_jobs is not None:
 # Prevent emails from being sent
 text = re.sub( 'sendEmailWhenFail = 1', 'sendEmailWhenFail = 0', text )
 
-# Remove Python test (does not compile)
-text = re.sub( '\[Python_Langmuir\]\n(.+\n)*', '', text)
-
-# Remove Langmuir_x/y/z test (too long; not that useful)
-text = re.sub( '\[Langmuir_[xyz]\]\n(.+\n)*', '', text)
-
 # Select the tests to be run
 # --------------------------
 
@@ -117,7 +110,6 @@ def select_tests(blocks, match_string_list, do_test):
 if ci_regular_cartesian_1d:
     test_blocks = select_tests(test_blocks, ['dim = 1'], True)
     test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
-    test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], False)
@@ -126,7 +118,6 @@ if ci_regular_cartesian_1d:
 if ci_regular_cartesian_2d:
     test_blocks = select_tests(test_blocks, ['dim = 2'], True)
     test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
-    test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], False)
@@ -134,21 +125,15 @@ if ci_regular_cartesian_2d:
 
 if ci_regular_cartesian_3d:
     test_blocks = select_tests(test_blocks, ['dim = 3'], True)
-    test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
     test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], False)
-    test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)
-
-if ci_python_main:
-    test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], True)
     test_blocks = select_tests(test_blocks, ['USE_EB=TRUE'], False)
 
 if ci_single_precision:
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], True)
 
 if ci_rz_or_nompi:
-    test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
     block1 = select_tests(test_blocks, ['USE_RZ=TRUE'], True)
     block2 = select_tests(test_blocks, ['useMPI = 0'], True)
     test_blocks = block1 + block2

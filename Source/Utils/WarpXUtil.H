@@ -76,29 +76,6 @@ namespace WarpXUtilIO{
  */
 bool WriteBinaryDataOnFile(std::string filename, const amrex::Vector<char>& data);
 
-/** A helper function to derive a globally unique particle ID
- *
- * @param[in] id  AMReX particle ID (on local cpu/rank), AoS .id
- * @param[in] cpu AMReX particle CPU (rank) at creation of the particle, AoS .cpu
- * @return global particle ID that is unique and permanent in the whole simulation
- */
-constexpr uint64_t
-localIDtoGlobal(int const id, int const cpu)
-{
-    static_assert(sizeof(int) * 2u <= sizeof(uint64_t),
-                  "int size might cause collisions in global IDs");
-    // implementation:
-    //   - we cast both 32-bit (or smaller) ints to a 64bit unsigned int
-    //   - this will leave half of the "upper range" bits in the 64bit unsigned int zeroed out
-    //     because the corresponding (extended) value range was not part of the value range in
-    //     the int representation
-    //   - we bit-shift the cpu into the upper half of zero bits in the 64 bit unsigned int
-    //     (imagine this step as "adding a per-cpu/rank offset to the local integers")
-    //   - then we add this offset
-    //     note: the add is expressed as bitwise OR (|) since this saves us from writing
-    //           brackets for operator precedence between + and <<
-    return uint64_t(id) | uint64_t(cpu) << 32u;
-}
 }
 
 namespace WarpXUtilAlgo{
@@ -270,8 +247,56 @@ amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
  * \param[in] str name of the parameter to read
  * \param[out] val where the value queried and parsed is stored, either a scalar or vector
  */
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
+template <typename T>
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, T& val)
+{
+    // call amrex::ParmParse::query, check if the user specified str.
+    std::string tmp_str;
+    int is_specified = a_pp.query(str, tmp_str);
+    if (is_specified)
+    {
+        // If so, create a parser object and apply it to the value provided by the user.
+        std::string str_val;
+        Store_parserString(a_pp, str, str_val);
+
+        auto parser = makeParser(str_val, {});
+
+        if (std::is_same<T, int>::value) {
+
+            val = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+        }
+        else {
+            val = static_cast<T>(parser.compileHost<0>()());
+        }
+    }
+    // return the same output as amrex::ParmParse::query
+    return is_specified;
+}
+
+template <typename T>
+int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<T>& val)
+{
+    // call amrex::ParmParse::query, check if the user specified str.
+    std::vector<std::string> tmp_str_arr;
+    int is_specified = a_pp.queryarr(str, tmp_str_arr);
+    if (is_specified)
+    {
+        // If so, create parser objects and apply them to the values provided by the user.
+        int const n = static_cast<int>(tmp_str_arr.size());
+        val.resize(n);
+        for (int i=0 ; i < n ; i++) {
+            auto parser = makeParser(tmp_str_arr[i], {});
+            if (std::is_same<T, int>::value) {
+                val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+            }
+            else {
+                val[i] = static_cast<T>(parser.compileHost<0>()());
+            }
+        }
+    }
+    // return the same output as amrex::ParmParse::query
+    return is_specified;
+}
 
 /** Similar to amrex::ParmParse::query, but also supports math expressions for the value.
  *
@@ -288,13 +313,31 @@ int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, doubl
  * \param[in] num_val number of input values to use (optional with arrays, default is
  * amrex::ParmParse::LAST for reading until the last input value)
  */
-int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
-                        const int start_ix = amrex::ParmParse::FIRST,
-                        const int num_val = amrex::ParmParse::LAST);
-int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val);
-int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
-                        const int start_ix = amrex::ParmParse::FIRST,
-                        const int num_val = amrex::ParmParse::LAST);
+template <typename T>
+int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<T>& val,
+                        const int start_ix, const int num_val)
+{
+    // call amrex::ParmParse::query, check if the user specified str.
+    std::vector<std::string> tmp_str_arr;
+    int is_specified = a_pp.queryarr(str, tmp_str_arr, start_ix, num_val);
+    if (is_specified)
+    {
+        // If so, create parser objects and apply them to the values provided by the user.
+        int const n = static_cast<int>(tmp_str_arr.size());
+        val.resize(n);
+        for (int i=0 ; i < n ; i++) {
+            auto parser = makeParser(tmp_str_arr[i], {});
+            if (std::is_same<T, int>::value) {
+                val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+            }
+            else {
+                val[i] = static_cast<T>(parser.compileHost<0>()());
+            }
+        }
+    }
+    // return the same output as amrex::ParmParse::query
+    return is_specified;
+}
 
 /** Similar to amrex::ParmParse::get, but also supports math expressions for the value.
  *
@@ -307,8 +350,41 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
  * \param[in] str name of the parameter to read
  * \param[out] val where the value queried and parsed is stored
  */
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, float& val);
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double& val);
+template <typename T>
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, T& val)
+{
+    // If so, create a parser object and apply it to the value provided by the user.
+    std::string str_val;
+    Store_parserString(a_pp, str, str_val);
+
+    auto parser = makeParser(str_val, {});
+    if (std::is_same<T, int>::value) {
+        val = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+    }
+    else {
+        val = static_cast<T>(parser.compileHost<0>()());
+    }
+}
+
+template <typename T>
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<T>& val)
+{
+    // Create parser objects and apply them to the values provided by the user.
+    std::vector<std::string> tmp_str_arr;
+    a_pp.getarr(str, tmp_str_arr);
+
+    int const n = static_cast<int>(tmp_str_arr.size());
+    val.resize(n);
+    for (int i=0 ; i < n ; i++) {
+        auto parser = makeParser(tmp_str_arr[i], {});
+        if (std::is_same<T, int>::value) {
+            val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+        }
+        else {
+            val[i] = static_cast<T>(parser.compileHost<0>()());
+        }
+    }
+}
 
 /** Similar to amrex::ParmParse::get, but also supports math expressions for the value.
  *
@@ -325,13 +401,26 @@ void getWithParser (const amrex::ParmParse& a_pp, char const * const str, double
  * \param[in] num_val number of input values to use (optional with arrays, default is
  * amrex::ParmParse::LAST for reading until the last input value)
  */
-void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<amrex::Real>& val,
-                       const int start_ix = amrex::ParmParse::FIRST,
-                       const int num_val = amrex::ParmParse::LAST);
-void getWithParser (const amrex::ParmParse& a_pp, char const * const str, int& val);
-void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<int>& val,
-                       const int start_ix = amrex::ParmParse::FIRST,
-                       const int num_val = amrex::ParmParse::LAST);
+template <typename T>
+void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<T>& val,
+                       const int start_ix, const int num_val)
+{
+    // Create parser objects and apply them to the values provided by the user.
+    std::vector<std::string> tmp_str_arr;
+    a_pp.getarr(str, tmp_str_arr, start_ix, num_val);
+
+    int const n = static_cast<int>(tmp_str_arr.size());
+    val.resize(n);
+    for (int i=0 ; i < n ; i++) {
+        auto parser = makeParser(tmp_str_arr[i], {});
+        if (std::is_same<T, int>::value) {
+            val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+        }
+        else {
+            val[i] = static_cast<T>(parser.compileHost<0>()());
+        }
+    }
+}
 
 namespace WarpXUtilStr
 {

@@ -15,6 +15,7 @@
 #include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #ifdef WARPX_USE_PSATD
@@ -31,7 +32,6 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Utils/TextMsg.H"
-#include "Utils/MsgLogger/MsgLogger.H"
 #include "Utils/WarnManager.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -39,6 +39,7 @@
 #include "Utils/WarpXUtil.H"
 
 #include <ablastr/utils/SignalHandling.H>
+#include <ablastr/utils/msg_logger/MsgLogger.H>
 
 #ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -80,6 +81,8 @@
 #include <utility>
 
 using namespace amrex;
+
+namespace abl_msg_logger = ablastr::utils::msg_logger;
 
 Vector<Real> WarpX::E_external_grid(3, 0.0);
 Vector<Real> WarpX::B_external_grid(3, 0.0);
@@ -439,24 +442,24 @@ WarpX::~WarpX ()
 
 void
 WarpX::RecordWarning(
-        std::string topic,
-        std::string text,
-        WarnPriority priority)
+        const std::string& topic,
+        const std::string& text,
+        const WarnPriority& priority)
 {
     WARPX_PROFILE("WarpX::RecordWarning");
 
-    auto msg_priority = Utils::MsgLogger::Priority::high;
+    auto msg_priority = abl_msg_logger::Priority::high;
     if(priority == WarnPriority::low)
-        msg_priority = Utils::MsgLogger::Priority::low;
+        msg_priority = abl_msg_logger::Priority::low;
     else if(priority == WarnPriority::medium)
-        msg_priority = Utils::MsgLogger::Priority::medium;
+        msg_priority = abl_msg_logger::Priority::medium;
 
     if(m_always_warn_immediately){
 
         amrex::Warning(
             Utils::TextMsg::Warn(
                 "["
-                + std::string(Utils::MsgLogger::PriorityToString(msg_priority))
+                + std::string(abl_msg_logger::PriorityToString(msg_priority))
                 + "]["
                 + topic
                 + "] "
@@ -472,16 +475,16 @@ WarpX::RecordWarning(
 
     if(m_abort_on_warning_threshold){
 
-        auto abort_priority = Utils::MsgLogger::Priority::high;
+        auto abort_priority = abl_msg_logger::Priority::high;
         if(m_abort_on_warning_threshold == WarnPriority::low)
-            abort_priority = Utils::MsgLogger::Priority::low;
+            abort_priority = abl_msg_logger::Priority::low;
         else if(m_abort_on_warning_threshold == WarnPriority::medium)
-            abort_priority = Utils::MsgLogger::Priority::medium;
+            abort_priority = abl_msg_logger::Priority::medium;
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             msg_priority < abort_priority,
             "A warning with priority '"
-            + Utils::MsgLogger::PriorityToString(msg_priority)
+            + abl_msg_logger::PriorityToString(msg_priority)
             + "' has been raised."
         );
     }
@@ -1021,22 +1024,21 @@ WarpX::ReadParameters ()
         charge_deposition_algo = GetAlgorithmInteger(pp_algo, "charge_deposition");
         particle_pusher_algo = GetAlgorithmInteger(pp_algo, "particle_pusher");
 
-        if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov && do_current_centering)
-        {
-            amrex::Abort("\nCurrent centering (nodal deposition) cannot be used with Esirkepov deposition."
-                         "\nPlease set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            current_deposition_algo != CurrentDepositionAlgo::Esirkepov ||
+            !do_current_centering,
+            "Current centering (nodal deposition) cannot be used with Esirkepov deposition."
+            "Please set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
 
-        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay && do_current_centering)
-        {
-            amrex::Abort("\nVay deposition not implemented with current centering");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay ||
+            !do_current_centering,
+            "Vay deposition not implemented with current centering");
 
-        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay
-            && maxLevel() > 0)
-        {
-            amrex::Abort("\nVay deposition not implemented with mesh refinement");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay ||
+            maxLevel() <= 0,
+            "Vay deposition not implemented with mesh refinement");
 
         field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
@@ -1599,6 +1601,14 @@ WarpX::MakeNewLevelFromScratch (int lev, Real time, const BoxArray& new_grids,
 {
     AllocLevelData(lev, new_grids, new_dmap);
     InitLevelData(lev, time);
+}
+
+// This is a virtual function.
+void
+WarpX::MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::BoxArray& /*ba*/,
+                                         const amrex::DistributionMapping& /*dm*/)
+{
+    amrex::Abort(Utils::TextMsg::Err("MakeNewLevelFromCoarse: To be implemented"));
 }
 
 void
