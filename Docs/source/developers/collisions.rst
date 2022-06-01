@@ -16,52 +16,58 @@ The MCC implementation assumes that the background neutral particles are **therm
 
     .. math:: E_{coll} = \sqrt{(\gamma mc^2 + Mc^2)^2 - (mv)^2} - (mc^2 + Mc^2)
 
-where :math:`v` is the speed of the particle as tracked in WarpX (so really :math:`\gamma` times the particle speed), :math:`m` and :math:`M` are the rest masses of the simulation and background species, respectively. The Lorentz factor is defined in the usual way, :math:`\gamma = \sqrt{1 + v^2/c^2}`. The collision cross-sections for all scattering processes are evaluated at the energy as calculated above.
+where :math:`v` is the speed of the particle as tracked in WarpX (really :math:`\gamma` times the particle speed), :math:`m` and :math:`M` are the rest masses of the simulation and background species, respectively. The Lorentz factor is defined in the usual way, :math:`\gamma = \sqrt{1 + v^2/c^2}`. The collision cross-sections for all scattering processes are evaluated at the energy as calculated above.
 
 Once a particle is selected for a specific collision process, that process determines how the particle is scattered as outlined below.
 
 Charge exchange
 ^^^^^^^^^^^^^^^
 
-This is the simplest scattering process. Under charge exchange the simulation particle's velocity is simply replaced with the sampled velocity of the neutral particle. Charge exchange normally has a cooling effect on the ions in the simulation by exchanging energetic ions for lower energy neutrals.
+This is the simplest scattering process. Under charge exchange the simulation particle's velocity is simply replaced with the sampled velocity of the neutral particle. Charge exchange usually has a cooling effect on the ions in the simulation by exchanging energetic ions for lower energy neutrals.
 
 Elastic scattering
 ^^^^^^^^^^^^^^^^^^
 
-This scattering process as well as the ones below that relate to it, are all performed in the center-of-momentum (COM) frame. To this end the particle velocity is rotated to a primed coordinate system such that its velocity is along the z' axis. This is achieved by rotating :math:`\tan(\theta) = -\frac{v_y}{v_x}` degrees onto the yz plane followed by a :math:`\tan(\phi) = \frac{v_x\cos(\theta) - v_y\sin(\theta)}{v_z}` rotation around the y-axis (see function ``ParticleUtils::getRotationAngles()``). Note that this rotation is not actually necessary to calculate since we know the result will give :math:`\vec{v}' = (0, 0, v)`, but it is necessary to store the angles in order to do the reverse rotation later. The Lorentz transformation to the COM frame is then simple to do since the particle velocity is aligned with the relative motion between the inertial frames:
-
-    .. math:: u_{z} = \frac{u - v_{COM}}{1 - \frac{uv_{COM}}{c^2}}
-
-where :math:`v_{COM} = mv/(\gamma m + M)` is the speed of the COM frame. Also note that since WarpX stores the particle velocity components multiplied by the Lorentz factor, it is necessary to divide by that factor before doing the Lorentz transformation. The particle velocity in this "collision" frame is then scattered by the appropriate angle based on the scattering model used. The Wentzel-Moliere model described in `Fernandez-Varea et al. (1992) <https://doi.org/10.1016/0168-583X(93)95827-R>`_ and `Lim (2007) <https://search.library.berkeley.edu/permalink/01UCS_BER/s4lks2/cdi_proquest_miscellaneous_35689087>`_ has been implemented to determine the elastic scattering angle as a function of collision energy. This model reduces to an isotropic model at low impact energy but favors small angle scattering at high energy as can be seen in the histogram below.
-
-.. figure:: https://user-images.githubusercontent.com/40245517/169352031-9d66b9d9-c5ac-40a4-9d51-133b658c5cf6.png
-   :alt: Wentzel-Moliere model
-   :width: 80%
-
-After the direction of the velocity vector has been appropriately changed, it is transformed back to the lab frame through a series of inverse transformations. Firstly, a Lorentz transform is done with relative velocity :math:`-v_{COM}` (see function ``ParticleUtils::doLorentzTransform()``), followed by the reverse rotation to realign the coordinate system with the lab frame. This is achieved via
+This scattering process as well as the ones below that relate to it, are all performed in the center-of-momentum (COM) frame. Designating the COM velocity of the particle as :math:`\vec{u}` and its labframe velocity as :math:`\vec{v}`, the transformation from lab frame to COM frame is done with a general Lorentz boost (see function ``ParticleUtils::doLorentzTransform()``):
 
     .. math::
-        \vec{v} = \begin{bmatrix}
-                \cos(\theta)\cos(\phi) & -\sin(\phi) & -\sin(\theta)\cos(\phi) \\
-                \cos(\theta)\sin(\phi) & \cos(\phi) & -\sin(\theta)\sin(\phi) \\
-                \sin(\theta) & 0 & \cos(\theta)
-            \end{bmatrix} \begin{bmatrix}
+            \begin{bmatrix}
+                \gamma_u c \\
                 u_x \\
                 u_y \\
                 u_z
             \end{bmatrix}
+         = \begin{bmatrix}
+                \gamma & -\gamma\beta_x & -\gamma\beta_y & -\gamma\beta_z \\
+                -\gamma\beta_x & 1+(\gamma-1)\frac{\beta_x^2}{\beta^2} & (\gamma-1)\frac{\beta_x\beta_y}{\beta^2} & (\gamma-1)\frac{\beta_x\beta_z}{\beta^2} \\
+                -\gamma\beta_y & (\gamma-1)\frac{\beta_x\beta_y}{\beta^2} & 1 +(\gamma-1)\frac{\beta_y^2}{\beta^2} & (\gamma-1)\frac{\beta_y\beta_z}{\beta^2} \\
+                -\gamma\beta_z & (\gamma-1)\frac{\beta_x\beta_z}{\beta^2} & (\gamma-1)\frac{\beta_y\beta_z}{\beta^2} & 1+(\gamma-1)\frac{\beta_z^2}{\beta^2} \\
+            \end{bmatrix} \begin{bmatrix}
+                \gamma_v c \\
+                v_x \\
+                v_y \\
+                v_z
+            \end{bmatrix}
 
-Lastly, the reverse Galilean transformation is done using the starting neutral velocity to get back to the lab frame.
+where :math:`\gamma` is the Lorentz factor of the relative speed between the lab frame and the COM frame, :math:`\beta_i = v^{COM}_i/c` is the i'th component of the relative velocity between the lab frame and the COM frame with
+
+    .. math::
+        v^{COM}_i = m v_i / (\gamma_v m + M)
+
+The particle velocity in the COM frame is then isotropically scattered using the function ``ParticleUtils::RandomizeVelocity()``. After the direction of the velocity vector has been appropriately changed, it is transformed back to the lab frame with the reversed Lorentz transform as was done above followed by the reverse Galilean transformation using the starting neutral velocity.
 
 Back scattering
 ^^^^^^^^^^^^^^^
 
-The process is the same as for elastic scattering above expect the scattering angle is fixed at :math:`\pi`.
+The process is the same as for elastic scattering above expect the scattering angle is fixed at :math:`\pi`, meaning the particle velocity in the COM frame is updated to :math:`-\vec{u}`.
 
 Excitation
 ^^^^^^^^^^
 
 The process is also the same as for elastic scattering except the excitation energy cost is subtracted from the particle energy. This is done by reducing the velocity before a scattering angle is chosen.
+
+Particle cooling due to elastic collisions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is straight forward to determine the energy a projectile loses during an elastic collision with another body, as a function of scattering angle, through energy and momentum conservation. See for example `Lim (2007) <https://search.library.berkeley.edu/permalink/01UCS_BER/s4lks2/cdi_proquest_miscellaneous_35689087>`_ for a derivation. The result is that given a projectile with mass :math:`m`, a target with mass :math:`M`, a scattering angle :math:`\theta`, and collision energy :math:`E`, the post collision energy of the projectile is given by
 

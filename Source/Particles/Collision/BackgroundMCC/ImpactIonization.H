@@ -17,71 +17,8 @@
 
 /** @file
  *
- * This file contains the implementation of the scattering processes available
- * in the MCC handling.
+ * This file contains filter and transform functor for impact ionization
  */
-
-/** \brief Function to perform elastic scattering of a particle in the
- * stationary frame of the target. The particle velocity is assumed to have
- * been rotated so that it is travelling only in the z'-direction. The
- * Wentzel-Moliere model is used to determine the scattering angle in this
- * primed frame.
- * See Fernandez-Varea et al. https://doi.org/10.1016/0168-583X(93)95827-R and
- * the PhD thesis of Chul-Hyun Lim, 2007, Berkeley, "The interaction of
- * energetic charged particles with gas and boundaries in the particle
- * simulation of plasmas".
- *
- * @param[in,out] ux,uy,uz colliding particle's velocity
- * @param[in] uCOM_x,uCOM_y,uCOM_z velocity of the center of momentum frame.
- * @param[in] engine random number generator.
- */
-AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void ElasticScattering ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
-                         amrex::ParticleReal& uz,
-                         amrex::ParticleReal const m,
-                         amrex::ParticleReal const A_prefactor,
-                         amrex::ParticleReal const Z,
-                         amrex::RandomEngine const& engine )
-{
-    using std::cos;
-    using std::sin;
-    using std::sqrt;
-    using namespace amrex::literals;
-
-    amrex::Real cos_chi;
-    // calculate the particle momentum
-    auto const beta = uz/PhysConst::c;
-
-    // at small energies the Wentzel model gives isotropic scattering; if we are
-    // in such a situation and a scattering angle was not given we can save
-    // some compution
-    if (beta < 0.05_prt) {
-        cos_chi = 2.0_prt * amrex::Random(engine) - 1.0_prt;
-    }
-    // sample a scattering angle if one was not given
-    else {
-        // calculate the full screening parameter (using eq. 32 of Fernandez-Varea et al.)
-        auto const A = A_prefactor / m*m*uz*uz / (1.0_prt - beta*beta)
-          * (1.13_prt + 3.76_prt * PhysConst::alpha * PhysConst::alpha
-             * Z * Z / (beta*beta)
-        );
-        // draw a scattering angle from the inverted cummulative
-        // distribution function (see eq. 2.16 of Lim, 2007)
-        cos_chi = (2.0_prt * A + 1.0_prt
-            + 2.0_prt * A * (A + 1.0_prt) / (amrex::Random(engine) - A - 1.0_prt)
-        );
-    }
-
-    // get the new velocity components in the rotated frame
-    ux = uz * sqrt(1.0_prt - cos_chi*cos_chi);
-    uz = uz * cos_chi;
-
-    // choose random angle to rotate velocity around z-axis
-    const auto omega = amrex::Random(engine) * 2.0_prt * MathConst::pi;
-    uy = ux * sin(omega);
-    ux = ux * cos(omega);
-}
-
 
 /**
  * \brief Filter functor for impact ionization
@@ -141,7 +78,8 @@ public:
 
         // get references to the particle to get its position
         const auto& p = ptd.getSuperParticle(i);
-        ParticleReal x, y, z, E_coll;
+        ParticleReal x, y, z;
+        Real E_coll;
         get_particle_position(p, x, y, z);
 
         // calculate neutral density at particle location
@@ -233,7 +171,8 @@ public:
 
         // get references to the particle to get its position
         const auto& p = src.getSuperParticle(i_src);
-        ParticleReal x, y, z, E_coll;
+        ParticleReal x, y, z;
+        Real E_coll;
         get_particle_position(p, x, y, z);
 
         // calculate standard deviation in neutral velocity distribution using
@@ -258,15 +197,13 @@ public:
         ParticleUtils::getEnergy(v_coll2, m_mass1, E_coll);
 
         // each electron gets half the energy (could change this later)
-        amrex::Real E_out = (E_coll - m_energy_cost) / 2.0_prt * PhysConst::q_e;
+        amrex::Real E_out = (E_coll - m_energy_cost) / 2.0_rt * PhysConst::q_e;
 
         // precalculate often used value
         constexpr auto c2 = PhysConst::c * PhysConst::c;
         const auto mc2 = m_mass1*c2;
 
         amrex::Real vp = sqrt(E_out * (E_out + 2.0_prt*mc2) / c2) / m_mass1;
-        // velocity is actually saved as gamma * v
-        vp *= 1.0_prt / sqrt(1.0_prt - vp*vp / c2);
 
         // isotropically scatter electrons
         ParticleUtils::RandomizeVelocity(ux, uy, uz, vp, engine);

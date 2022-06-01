@@ -40,8 +40,8 @@ namespace ParticleUtils {
      * @param[out] energy particle energy in eV
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    void getEnergy ( amrex::ParticleReal const v2, amrex::ParticleReal const mass,
-                     amrex::ParticleReal& energy )
+    void getEnergy ( amrex::ParticleReal const v2, amrex::Real const mass,
+                     amrex::Real& energy )
     {
         using std::sqrt;
         using namespace amrex::literals;
@@ -61,9 +61,9 @@ namespace ParticleUtils {
      * @param[out] energy particle energy in eV
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    void getCollisionEnergy ( amrex::ParticleReal const v2, amrex::ParticleReal const m,
-                     amrex::ParticleReal const M, amrex::ParticleReal& gamma,
-                     amrex::ParticleReal& energy )
+    void getCollisionEnergy ( amrex::ParticleReal const v2, amrex::Real const m,
+                     amrex::Real const M, amrex::Real& gamma,
+                     amrex::Real& energy )
     {
         using std::sqrt;
         using namespace amrex::literals;
@@ -71,54 +71,52 @@ namespace ParticleUtils {
         // Compute c^2 since it is used repeatedly
         constexpr auto c2 = PhysConst::c * PhysConst::c;
 
-        const auto beta2 = v2 / c2;
+        auto const beta2 = v2 / c2;
         gamma = sqrt(1.0_prt + beta2);
-        const auto m_tot = M + gamma*m;
+        auto const m_tot = M + gamma*m;
         energy = (sqrt(m_tot*m_tot - m*m*beta2) - m - M) * c2 / PhysConst::q_e;
     }
 
     /**
-     * \brief Return angles used to rotate the given particle velocity vector
-     * such that v' = (0, 0, |v|).
-     *
-     * @param[in] vx, vy, vz velocity components
-     * @param[out] theta, phi rotation angles to align velocity with the z-axis
-     */
-    AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    void getRotationAngles ( amrex::ParticleReal const vx, amrex::ParticleReal const vy,
-                             amrex::ParticleReal const vz, amrex::ParticleReal& theta,
-                             amrex::ParticleReal& phi, int& sign )
-    {
-        using std::atan;
-        using std::cos;
-        using std::sin;
-
-        sign = (vz > 0) ? 1 : -1;
-
-        // rotation to yz plane
-        theta = atan(-vy / vx);
-        // rotation to z axis
-        phi = atan((vx * cos(theta) - vy * sin(theta)) / vz );
-    }
-
-    /**
      * \brief Perform a Lorentz transformation of the given velocity
-     * to a frame moving with velocity (0, 0, Vz) relative to the present one.
+     * to a frame moving with velocity (Vx, Vy, Vz) relative to the present one.
      *
-     * @param[in/out] ux,uy,uz components of velocity vector in the current frame
-     * @param[in] Vz speed of the new frame relative to the current one
+     * @param[in/out] ux,uy,uz components of velocity vector in the current
+                      frame - importantly these quantities are gamma * velocity
+     * @param[in] Vx,Vy,Vz velocity of the new frame relative to the current one,
+                      NOT gamma*velocity!
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     void doLorentzTransform ( amrex::ParticleReal& ux, amrex::ParticleReal& uy,
-                              amrex::ParticleReal& uz, amrex::ParticleReal const Vz )
+                              amrex::ParticleReal& uz,
+                              amrex::ParticleReal const Vx, amrex::ParticleReal const Vy,
+                              amrex::ParticleReal const Vz )
     {
+        // precompute repeatedly used quantities
         constexpr auto c2 = PhysConst::c * PhysConst::c;
-        const auto lorentz_fac = sqrt(1.0_prt - Vz*Vz/c2);
-        const auto time_fac = (1.0_prt - uz*Vz/c2);
+        const auto V2 = (Vx*Vx + Vy*Vy + Vz*Vz);
+        const auto gamma_V = 1.0_prt / sqrt(1.0_prt - V2 / c2);
+        const auto gamma_u = sqrt(1.0_prt + (ux*ux + uy*uy + uz*uz) / c2);
 
-        ux = lorentz_fac * ux / time_fac;
-        uy = lorentz_fac * uy / time_fac;
-        uz = (uz - Vz) / time_fac;
+        // copy velocity vector values
+        const auto vx = ux;
+        const auto vy = uy;
+        const auto vz = uz;
+
+        ux = vx * (1.0_prt + (gamma_V - 1.0_prt) * Vx*Vx/V2)
+             + vy * (gamma_V - 1.0_prt) * Vx*Vy/V2
+             + vz * (gamma_V - 1.0_prt) * Vx*Vz/V2
+             - gamma_V * Vx * gamma_u;
+
+        uy = vy * (1.0_prt + (gamma_V - 1.0_prt) * Vy*Vy/V2)
+             + vx * (gamma_V - 1.0_prt) * Vx*Vy/V2
+             + vz * (gamma_V - 1.0_prt) * Vy*Vz/V2
+             - gamma_V * Vy * gamma_u;
+
+        uz = vz * (1.0_prt + (gamma_V - 1.0_prt) * Vz*Vz/V2)
+             + vx * (gamma_V - 1.0_prt) * Vx*Vz/V2
+             + vy * (gamma_V - 1.0_prt) * Vy*Vz/V2
+             - gamma_V * Vz * gamma_u;
     }
 
     /**

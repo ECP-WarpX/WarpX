@@ -5,7 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "BackgroundMCCCollision.H"
-#include "MCCScattering.H"
+#include "ImpactIonization.H"
 #include "Particles/ParticleCreation/FilterCopyTransform.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Utils/TextMsg.H"
@@ -249,21 +249,6 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, Mult
             m_background_mass = species1.getMass();
         }
 
-        // calculate screening parameters in case the Wentzel-Moliere model
-        // for elastic scattering is used to determine the scattering angle
-        // see Fernandez-Varea et al. https://doi.org/10.1016/0168-583X(93)95827-R
-        m_background_Z = m_background_mass / PhysConst::m_u;
-        if (m_background_Z < 1.0_rt) m_background_Z = 1.0_rt;
-        // get the Thomas-Fermi screening radius (eq. 22)
-        const auto screening_radius = (
-            0.885_rt * std::pow(m_background_Z, -1.0_rt/3.0_rt) * PhysConst::a0
-        );
-        // get the screening parameter prefactor (eq. 32)
-        m_screening_prefactor = (
-            0.25_rt * PhysConst::hbar * PhysConst::hbar
-            / (screening_radius * screening_radius)
-        );
-
         amrex::Print() << Utils::TextMsg::Info(
             "Setting up collisions for " + m_species_names[0] + " with:\n"
             + "     total non-ionization collision probability: "
@@ -330,20 +315,16 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
     auto scattering_processes = m_scattering_processes_exe.data();
     int const process_count   = m_scattering_processes_exe.size();
 
-    const auto total_collision_prob = m_total_collision_prob;
-    const auto nu_max = m_nu_max;
+    auto const total_collision_prob = m_total_collision_prob;
+    auto const nu_max = m_nu_max;
 
-    // get projectile mass
-    const auto m = m_mass1;
-    // get mass mass
-    const auto M = m_background_mass;
-    const auto Z = m_background_Z;
-
-    const auto A_prefactor = m_screening_prefactor;
+    // store projectile and target masses
+    auto const m = m_mass1;
+    auto const M = m_background_mass;
 
     // precalculate often used value
     constexpr auto c2 = PhysConst::c * PhysConst::c;
-    const auto mc2 = m*c2;
+    auto const mc2 = m*c2;
 
     // we need particle positions in order to calculate the local density
     // and temperature
@@ -367,11 +348,11 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               amrex::Real n_a = n_a_func(x, y, z, t);
                               amrex::Real T_a = T_a_func(x, y, z, t);
 
-                              amrex::ParticleReal v_coll, v_coll2;
-                              amrex::ParticleReal gamma, E_coll, sigma_E, nu_i = 0;
+                              amrex::Real v_coll, v_coll2, sigma_E, nu_i = 0;
+                              amrex::Real gamma, E_coll;
                               amrex::ParticleReal ua_x, ua_y, ua_z, vx, vy, vz;
-                              amrex::ParticleReal uCOM_z, theta, phi;
-                              amrex::ParticleReal col_select = amrex::Random(engine);
+                              amrex::ParticleReal uCOM_x, uCOM_y, uCOM_z;
+                              amrex::Real col_select = amrex::Random(engine);
 
                               // get velocities of gas particles from a Maxwellian distribution
                               auto const vel_std = sqrt(PhysConst::kb * T_a / M);
@@ -391,8 +372,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               v_coll2 = (vx*vx + vy*vy + vz*vz);
                               v_coll = sqrt(v_coll2);
 
-                              // calculate the (relativistic) collision energy in eV
-                              // using the proper mass in the COM frame
+                              // calculate the collision energy in eV
                               ParticleUtils::getCollisionEnergy(v_coll2, m, M, gamma, E_coll);
 
                               // loop through all collision pathways
@@ -421,59 +401,45 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 
                                   // At this point the given particle has been chosen for a collision
                                   // and so we perform the needed calculations to transform to the
-                                  // "collision" frame i.e. a rotated COM frame where the projectile
-                                  // velocity is in the z' direction. This frame is used since the
-                                  // Wentzel model gives a scattering angle relative to the current
-                                  // velocity direction of the particle. It also greatly reduces
-                                  // the number of calculations needed for the Lorentz transformation.
-                                  int sign;
-                                  ParticleUtils::getRotationAngles(vx, vy, vz, theta, phi, sign);
-                                  vx = 0.0_prt;
-                                  vy = 0.0_prt;
+                                  // COM frame.
+                                  uCOM_x = m * vx / (gamma * m + M);
+                                  uCOM_y = m * vy / (gamma * m + M);
+                                  uCOM_z = m * vz / (gamma * m + M);
 
                                   // subtract any energy penalty of the collision from the
                                   // projectile energy
-                                  if (scattering_process.m_energy_penalty != 0.0_prt) {
+                                  if (scattering_process.m_energy_penalty > 0.0_rt) {
                                       ParticleUtils::getEnergy(v_coll2, m, E_coll);
                                       E_coll = (E_coll - scattering_process.m_energy_penalty) * PhysConst::q_e;
-                                      v_coll = sqrt(E_coll * (E_coll + 2.0_prt*mc2) / c2) / m;
-                                      gamma = sqrt(1.0_prt + v_coll*v_coll/c2);
+                                      auto scale_fac = sqrt(E_coll * (E_coll + 2.0_prt*mc2) / c2) / m / v_coll;
+                                      vx *= scale_fac;
+                                      vy *= scale_fac;
+                                      vz *= scale_fac;
                                   }
-                                  vz = sign*v_coll / gamma;
 
-                                  uCOM_z = gamma * m * vz / (gamma * m + M);
-                                  ParticleUtils::doLorentzTransform(vx, vy, vz, uCOM_z);
+                                  // transform to COM frame
+                                  ParticleUtils::doLorentzTransform(vx, vy, vz, uCOM_x, uCOM_y, uCOM_z);
 
                                   if ((scattering_process.m_type == MCCProcessType::ELASTIC)
                                       || (scattering_process.m_type == MCCProcessType::EXCITATION)) {
-                                      ElasticScattering(
-                                          vx, vy, vz, m, A_prefactor, Z, engine
+                                      ParticleUtils::RandomizeVelocity(
+                                          vx, vy, vz, sqrt(vx*vx + vy*vy + vz*vz), engine
                                       );
                                   }
                                   else if (scattering_process.m_type == MCCProcessType::BACK) {
                                       // elastic scattering with cos(chi) = -1 (i.e. 180 degrees)
+                                      vx *= -1.0_prt;
+                                      vy *= -1.0_prt;
                                       vz *= -1.0_prt;
                                   }
 
-                                  ParticleUtils::doLorentzTransform(vx, vy, vz, -uCOM_z);
-
-                                  gamma = 1.0_prt / sqrt(1.0_prt - (vx*vx + vy*vy + vz*vz) / c2);
-
-                                  // now rotate the velocity back to the original collision frame
-                                  // (where the target was stationary)
-                                  const auto sin_theta = sin(theta);
-                                  const auto cos_theta = cos(theta);
-                                  const auto sin_phi = sin(phi);
-                                  const auto cos_phi = cos(phi);
-
-                                  ux[ip] = gamma * (vx*cos_theta*cos_phi + vy*sin_theta + vz*cos_theta*sin_phi);
-                                  uy[ip] = gamma * (-vx*sin_theta*cos_phi + vy*cos_theta - vz*sin_theta*sin_phi);
-                                  uz[ip] = gamma * (-vx*sin_phi + vz*cos_phi);
+                                  // transform back to scattering frame
+                                  ParticleUtils::doLorentzTransform(vx, vy, vz, -uCOM_x, -uCOM_y, -uCOM_z);
 
                                   // update particle velocity with new components in labframe
-                                  ux[ip] += ua_x;
-                                  uy[ip] += ua_y;
-                                  uz[ip] += ua_z;
+                                  ux[ip] = vx + ua_x;
+                                  uy[ip] = vy + ua_y;
+                                  uz[ip] = vz + ua_z;
                                   break;
                               }
                           }
