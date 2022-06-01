@@ -34,7 +34,10 @@
     "z_protons": 16384.033099655062,
     "zuz_electrons": 249.21866257663567,
     "zuz_photons": 1421.2299499750397,
-    "zuz_protons": 0.1413707636804275
+    "zuz_protons": 0.1413707636804275,
+    "jz_electrons": 2.727187061636408e-06,
+    "jz_photons": 1.575251344184201e-05,
+    "jz_protons": 1.084534315089607e-09
   },
   "photons": {
     "particle_cpu": 16384.0,

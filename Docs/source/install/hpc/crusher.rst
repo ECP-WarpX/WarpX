@@ -86,3 +86,19 @@ Post-Processing
 For post-processing, most users use Python via OLCFs's `Jupyter service <https://jupyter.olcf.ornl.gov>`__ (`Docs <https://docs.olcf.ornl.gov/services_and_applications/jupyter/index.html>`__).
 
 Please follow the same guidance as for :ref:`OLCF Summit post-processing <post-processing-summit>`.
+
+.. _known-crusher-issues:
+
+Known System Issues
+-------------------
+
+.. warning::
+
+   May 16th, 2022 (OLCFHELP-6888):
+   There is a caching bug in Libfrabric that causes WarpX simulations to occasionally hang on Crusher on more than 1 node.
+
+   As a work-around, please export the following environment variable in your job scripts unti the issue is fixed:
+
+   .. code-block:: bash
+
+      export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching

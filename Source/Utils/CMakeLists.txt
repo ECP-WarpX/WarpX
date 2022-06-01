@@ -14,8 +14,6 @@ target_sources(WarpX
     WarpXVersion.cpp
 )
 
-add_subdirectory(MsgLogger)
-
 target_sources(ablastr
   PRIVATE
     MPIInitHelpers.cpp
