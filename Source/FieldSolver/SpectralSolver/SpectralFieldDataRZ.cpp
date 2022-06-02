@@ -6,6 +6,7 @@
  */
 #include "SpectralFieldDataRZ.H"
 
+#include "WarpX.H"
 #include "Utils/WarpXUtil.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
