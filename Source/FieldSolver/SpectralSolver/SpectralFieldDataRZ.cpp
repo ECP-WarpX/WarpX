@@ -9,6 +9,8 @@
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 using amrex::operator""_rt;
 
 /* \brief Initialize fields in spectral space, and FFT plans
@@ -88,8 +90,8 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
         result = cufftPlanMany(&forward_plan[mfi], 1, fft_length, inembed, istride, idist,
                                onembed, ostride, odist, cufft_type, batch);
         if (result != CUFFT_SUCCESS) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "cufftPlanMany failed!", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "cufftPlanMany failed!", ablastr::warn_manager::WarnPriority::high);
         }
         // The backward plane is the same as the forward since the direction is passed when executed.
 #elif defined(AMREX_USE_HIP)
@@ -117,8 +119,9 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
                                     grid_size[0], // number of transforms
                                     description);
         if (result != rocfft_status_success) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "rocfft_plan_create failed!\n", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "rocfft_plan_create failed!\n",
+                ablastr::warn_manager::WarnPriority::high);
         }
 
         result = rocfft_plan_create(&(backward_plan[mfi]),
@@ -133,14 +136,16 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
                                     grid_size[0], // number of transforms
                                     description);
         if (result != rocfft_status_success) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "rocfft_plan_create failed!\n", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "rocfft_plan_create failed!\n",
+                ablastr::warn_manager::WarnPriority::high);
         }
 
         result = rocfft_plan_description_destroy(description);
         if (result != rocfft_status_success) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "rocfft_plan_description_destroy failed!\n", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "rocfft_plan_description_destroy failed!\n",
+                ablastr::warn_manager::WarnPriority::high);
         }
 #else
         // Create FFTW plans.
@@ -246,8 +251,9 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
                               reinterpret_cast<AnyFFT::Complex*>(tmpSpectralField[mfi].dataPtr(mode)), // Complex *out
                               CUFFT_FORWARD);
         if (result != CUFFT_SUCCESS) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "forward transform using cufftExecZ2Z failed!", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "forward transform using cufftExecZ2Z failed!",
+                ablastr::warn_manager::WarnPriority::high);
         }
     }
 #elif defined(AMREX_USE_HIP)
@@ -264,8 +270,9 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
         void* out_array[] = {(void*)(tmpSpectralField[mfi].dataPtr(mode))};
         result = rocfft_execute(forward_plan[mfi], in_array, out_array, execinfo);
         if (result != rocfft_status_success) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "forward transform using rocfft_execute failed!", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "forward transform using rocfft_execute failed!",
+                ablastr::warn_manager::WarnPriority::high);
         }
     }
 
@@ -357,8 +364,9 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
                               reinterpret_cast<AnyFFT::Complex*>(tempHTransformed[mfi].dataPtr(mode)), // Complex *out
                               CUFFT_INVERSE);
         if (result != CUFFT_SUCCESS) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "backwardtransform using cufftExecZ2Z failed!", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "backwardtransform using cufftExecZ2Z failed!",
+                ablastr::warn_manager::WarnPriority::high);
         }
     }
 #elif defined(AMREX_USE_HIP)
@@ -375,8 +383,9 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
         void* out_array[] = {(void*)(tempHTransformed[mfi].dataPtr(mode))};
         result = rocfft_execute(backward_plan[mfi], in_array, out_array, execinfo);
         if (result != rocfft_status_success) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "forward transform using rocfft_execute failed!", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "forward transform using rocfft_execute failed!",
+                ablastr::warn_manager::WarnPriority::high);
         }
     }
 
