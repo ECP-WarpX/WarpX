@@ -1205,22 +1205,44 @@ WarpX::ReadParameters ()
             queryWithParser(pp_psatd, "noz", noz_fft);
         }
 
-
         if (!fft_periodic_single_box) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nox_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(noy_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(noz_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
         }
 
-        pp_psatd.query("current_correction", current_correction);
-        pp_psatd.query("do_time_averaging", fft_do_time_averaging);
-
-        if (WarpX::current_correction == true)
+        // Current correction activated by default, unless a charge-conserving
+        // current deposition (Esirkepov, Vay) or the div(E) cleaning scheme
+        // are used
+        current_correction = true;
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
+            WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay ||
+            WarpX::do_dive_cleaning)
         {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                fft_periodic_single_box == true,
-                "Option psatd.current_correction=1 must be used with psatd.periodic_single_box_fft=1.");
+            current_correction = false;
         }
+
+        // TODO Remove this default when current correction will
+        // be implemented for the multi-J algorithm as well.
+        if (do_multi_J) current_correction = false;
+
+        pp_psatd.query("current_correction", current_correction);
+
+        if (current_correction == false &&
+            current_deposition_algo != CurrentDepositionAlgo::Esirkepov &&
+            current_deposition_algo != CurrentDepositionAlgo::Vay)
+        {
+            RecordWarning(
+                "Algorithms",
+                "The chosen current deposition algorithm does not guarantee"
+                " charge conservation, and no additional current correction"
+                " algorithm is activated in order to compensate for that."
+                " Lack of charge conservation may negatively affect the"
+                " results of the simulation.",
+                WarnPriority::low);
+        }
+
+        pp_psatd.query("do_time_averaging", fft_do_time_averaging);
 
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
@@ -1303,11 +1325,6 @@ WarpX::ReadParameters ()
             (current_deposition_algo != CurrentDepositionAlgo::Vay) ||
             v_galilean_is_zero,
             "Vay current deposition not implemented for Galilean algorithms"
-        );
-
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (!current_correction) || v_galilean_is_zero || (!fft_do_time_averaging),
-            "Current correction not implemented for averaged Galilean algorithm"
         );
 
 #   ifdef WARPX_DIM_RZ
