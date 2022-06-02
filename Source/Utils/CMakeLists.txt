@@ -4,6 +4,7 @@ target_sources(WarpX
     CoarsenMR.cpp
     Interpolate.cpp
     IntervalsParser.cpp
+    MPIInitHelpers.cpp
     ParticleUtils.cpp
     RelativeCellPosition.cpp
     WarnManager.cpp
@@ -12,9 +13,4 @@ target_sources(WarpX
     WarpXTagging.cpp
     WarpXUtil.cpp
     WarpXVersion.cpp
-)
-
-target_sources(ablastr
-  PRIVATE
-    MPIInitHelpers.cpp
 )
