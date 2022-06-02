@@ -230,8 +230,6 @@ Summit Example
    The Nsight-Compute (``nsys``) version installed on Summit does not record details of GPU kernels.
    This is reported to Nvidia and OLCF.
 
-
-
 Details
 """""""
 
