@@ -193,7 +193,8 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
 
 .. note::
 
-    If everything went well, the user will obtain as many output files named "profiling_<number>.nsys-rep" as active GPU's which will allow the user to       analyze each of those GPU's perforamces with Nsight system.
+    If everything went well, the user will obtain as many output files named ``profiling_<number>.nsys-rep`` as active MPI ranks, which will allow the user to analyze each MPI rank's performance trace with the Nsight System graphical user interface (GUI).
+    In WarpX, every MPI rank is associated with one GPU.
 
 .. warning::
 
