@@ -29,6 +29,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
 #ifdef AMREX_USE_SENSEI_INSITU
@@ -1099,7 +1101,8 @@ WarpX::PerformanceHints ()
             << "  More information:\n"
             << "  https://warpx.readthedocs.io/en/latest/running_cpp/parallelization.html\n";
 
-        WarpX::GetInstance().RecordWarning("Performance", warnMsg.str(), WarnPriority::high);
+        ablastr::warn_manager::WMRecordWarning(
+          "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
     }
 
     // TODO: warn if some ranks have disproportionally more work than all others
@@ -1194,9 +1197,9 @@ void WarpX::InitializeEBGridData (int lev)
 
         if ((nox > 1 or noy > 1 or noz > 1) and flag_eb_on)
         {
-            this->RecordWarning("Particles",
-                                "when algo.particle_shape > 1, numerical artifacts will be present when\n"
-                                "particles are close to embedded boundaries");
+            ablastr::warn_manager::WMRecordWarning("Particles",
+              "when algo.particle_shape > 1, numerical artifacts will be present when\n"
+              "particles are close to embedded boundaries");
         }
 
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||

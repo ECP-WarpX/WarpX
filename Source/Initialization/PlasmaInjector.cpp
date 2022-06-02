@@ -20,6 +20,8 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Config.H>
@@ -144,7 +146,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     bool mass_is_specified = queryWithParser(pp_species_name, "mass", mass);
 
     if ( charge_is_specified && species_is_specified ){
-        WarpX::GetInstance().RecordWarning("Species",
+        ablastr::warn_manager::WMRecordWarning("Species",
             "Both '" + species_name +  ".charge' and " +
                 species_name + ".species_type' are specified.\n" +
                 species_name + ".charge' will take precedence.\n");
@@ -158,7 +160,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     );
 
     if ( mass_is_specified && species_is_specified ){
-        WarpX::GetInstance().RecordWarning("Species",
+        ablastr::warn_manager::WMRecordWarning("Species",
             "Both '" + species_name +  ".mass' and " +
                 species_name + ".species_type' are specified.\n" +
                 species_name + ".mass' will take precedence.\n");
@@ -400,13 +402,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 "'" + ps_name + ".species_type' in your input file!\n");
 
             if (charge_is_specified) {
-                WarpX::GetInstance().RecordWarning("Species",
+                ablastr::warn_manager::WMRecordWarning("Species",
                     "Both '" + ps_name + ".charge' and '" +
                         ps_name + ".injection_file' specify a charge.\n'" +
                         ps_name + ".charge' will take precedence.\n");
             }
             else if (species_is_specified) {
-                WarpX::GetInstance().RecordWarning("Species",
+                ablastr::warn_manager::WMRecordWarning("Species",
                     "Both '" + ps_name + ".species_type' and '" +
                         ps_name + ".injection_file' specify a charge.\n'" +
                         ps_name + ".species_type' will take precedence.\n");
@@ -419,13 +421,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 charge = p_q * charge_unit;
             }
             if (mass_is_specified) {
-                WarpX::GetInstance().RecordWarning("Species",
+                ablastr::warn_manager::WMRecordWarning("Species",
                     "Both '" + ps_name + ".mass' and '" +
                         ps_name + ".injection_file' specify a charge.\n'" +
                         ps_name + ".mass' will take precedence.\n");
             }
             else if (species_is_specified) {
-                WarpX::GetInstance().RecordWarning("Species",
+                ablastr::warn_manager::WMRecordWarning("Species",
                     "Both '" + ps_name + ".species_type' and '" +
                         ps_name + ".injection_file' specify a mass.\n'" +
                         ps_name + ".species_type' will take precedence.\n");
