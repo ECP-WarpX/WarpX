@@ -735,7 +735,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
-        amrex::ignore_unused(lev, dt, do_multi_J);
+        amrex::ignore_unused(lev, dt, do_multi_J, do_asymmetrical_psatd,
+                             nox_loc_fft, noy_loc_fft, noz_loc_fft);
 #   if(AMREX_SPACEDIM!=3)
         amrex::ignore_unused(noy_fft);
 #   endif
