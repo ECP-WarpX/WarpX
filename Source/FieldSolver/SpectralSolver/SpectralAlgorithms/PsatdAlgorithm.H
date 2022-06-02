@@ -129,15 +129,10 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
 
         // Centered modified finite-order k vectors
         KVectorComponent modified_kx_vec_centered;
-        KVectorComponent modified_kx_q_vec_centered;
-
 #if defined(WARPX_DIM_3D)
         KVectorComponent modified_ky_vec_centered;
-        KVectorComponent modified_ky_q_vec_centered;
-        
 #endif
         KVectorComponent modified_kz_vec_centered;
-        KVectorComponent modified_kz_q_vec_centered;
 
         // Other member variables
         amrex::Vector<amrex::Real> m_v_galilean;
