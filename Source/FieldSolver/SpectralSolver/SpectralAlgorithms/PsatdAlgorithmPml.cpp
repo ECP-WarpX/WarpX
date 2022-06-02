@@ -8,6 +8,7 @@
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpX_Complex.H"
 
@@ -404,13 +405,15 @@ void PsatdAlgorithmPml::InitializeSpectralCoefficients (
 void
 PsatdAlgorithmPml::CurrentCorrection (SpectralFieldData& /*field_data*/)
 {
-    amrex::Abort("Current correction not implemented for PML PSATD");
+    amrex::Abort(Utils::TextMsg::Err(
+        "Current correction not implemented for PML PSATD"));
 }
 
 void
 PsatdAlgorithmPml::VayDeposition (SpectralFieldData& /*field_data*/)
 {
-    amrex::Abort("Vay deposition not implemented for PML PSATD");
+    amrex::Abort(Utils::TextMsg::Err(
+        "Vay deposition not implemented for PML PSATD"));
 }
 
 #endif // WARPX_USE_PSATD

@@ -261,7 +261,21 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
 #else
     const Real p_pos[1] = {m_updated_position[2]};
 #endif
-    if ( injection_box.contains(p_pos) ){
+#if defined(WARPX_DIM_RZ)
+    // In RZ, check if laser enters the box only along Z. This is needed
+    // because the Cartesian check below (injection_box.contains(p_pos))
+    // would fail in RZ, due to the fact that such a check verifies that
+    // p_pos is strictly contained within injection_box and this is not
+    // the case for the R coordinate of the laser antenna in RZ (since
+    // that equals 0 and thus coincides with the low end of the injection
+    // box along R, which also equals 0).
+    const bool is_contained = (injection_box.lo(1) < p_pos[1] &&
+                               p_pos[1] < injection_box.hi(1));
+#else
+    const bool is_contained = injection_box.contains(p_pos);
+#endif
+    if (is_contained)
+    {
         // Update laser_injection_box with current value
         m_laser_injection_box = injection_box;
         // Inject laser particles. LaserParticleContainer::InitData
@@ -439,7 +453,7 @@ LaserParticleContainer::InitData (int lev)
     BoxArray plane_ba { Box {IntVect(0), IntVect(0)} };
 #endif
 
-    amrex::Vector<amrex::Real> particle_x, particle_y, particle_z, particle_w;
+    amrex::Vector<amrex::ParticleReal> particle_x, particle_y, particle_z, particle_w;
 
     const DistributionMapping plane_dm {plane_ba, nprocs};
     const Vector<int>& procmap = plane_dm.ProcessorMap();
@@ -492,9 +506,9 @@ LaserParticleContainer::InitData (int lev)
         }
     }
     const int np = particle_z.size();
-    amrex::Vector<amrex::Real> particle_ux(np, 0.0);
-    amrex::Vector<amrex::Real> particle_uy(np, 0.0);
-    amrex::Vector<amrex::Real> particle_uz(np, 0.0);
+    amrex::Vector<amrex::ParticleReal> particle_ux(np, 0.0);
+    amrex::Vector<amrex::ParticleReal> particle_uy(np, 0.0);
+    amrex::Vector<amrex::ParticleReal> particle_uz(np, 0.0);
 
     if (Verbose()) amrex::Print() << Utils::TextMsg::Info("Adding laser particles");
     // Add particles on level 0. They will be redistributed afterwards

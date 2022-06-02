@@ -106,7 +106,8 @@ void UpdateMomentumPerezElastic (
                ( m1*g1s*m2*g2s/(p1sm*p1sm*inv_c2) + T_R(1.0) );
 
         // Compute the minimal impact parameter
-        T_R bmin = amrex::max(PhysConst::hbar*MathConst::pi/p1sm,b0);
+        constexpr T_R hbar_pi = static_cast<T_R>(PhysConst::hbar*MathConst::pi);
+        const T_R bmin = amrex::max(hbar_pi/p1sm, b0);
 
         // Compute the Coulomb log lnLmd
         lnLmd = amrex::max( T_R(2.0),
