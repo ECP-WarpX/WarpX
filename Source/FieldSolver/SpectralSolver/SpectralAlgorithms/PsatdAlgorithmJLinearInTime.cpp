@@ -48,12 +48,12 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
     m_spectral_index(spectral_index),
 
-    modified_kx_q_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_loc_x, true)),
+    modified_kx_loc_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_loc_x, true)),
 #if defined(WARPX_DIM_3D)
-    modified_ky_q_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_loc_y, true)),
-    modified_kz_q_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_loc_z, true)),
+    modified_ky_loc_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_loc_y, true)),
+    modified_kz_loc_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_loc_z, true)),
 #else
-    modified_kz_q_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_loc_z, true)),
+    modified_kz_loc_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_loc_z, true)),
 #endif
     m_dt(dt),
     m_time_averaging(time_averaging),
@@ -70,7 +70,7 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     X2_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     X3_coef = SpectralRealCoefficients(ba, dm, 1, 0);
 
-    InitializeSpectralCoefficients(spectral_kspace, dm, dt);
+    InitializeSpectralCoefficients(spectral_kspace, dm, dt, asymmetrical_psatd);
 
     // Allocate these coefficients only with time averaging
     if (time_averaging)
@@ -118,14 +118,14 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
 
         // Extract pointers for the k vectors
         const amrex::Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
-        const amrex::Real* modified_kx_q_arr = modified_kx_q_vec_centered[mfi].dataPtr();
+        const amrex::Real* modified_kx_loc_arr = modified_kx_loc_vec_centered[mfi].dataPtr();
 
 #if defined(WARPX_DIM_3D)
         const amrex::Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
-        const amrex::Real* modified_ky_q_arr = modified_ky_q_vec_centered[mfi].dataPtr();
+        const amrex::Real* modified_ky_loc_arr = modified_ky_loc_vec_centered[mfi].dataPtr();
 #endif
         const amrex::Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
-        const amrex::Real* modified_kz_q_arr = modified_kz_q_vec_centered[mfi].dataPtr();
+        const amrex::Real* modified_kz_loc_arr = modified_kz_loc_vec_centered[mfi].dataPtr();
 
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -162,14 +162,14 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
             const     amrex::Real kz = modified_kz_arr[j];
 #endif
 
-              // k_q vector values (used for current locality) //oshapoval
-            const amrex::Real kx_q = modified_kx_q_arr[i];
+              // k_loc vector values
+            const amrex::Real kx_loc = modified_kx_loc_arr[i];
 #if defined(WARPX_DIM_3D)
-            const amrex::Real ky_q = modified_ky_q_arr[j];
-            const amrex::Real kz_q = modified_kz_q_arr[k];
+            const amrex::Real ky_loc = modified_ky_loc_arr[j];
+            const amrex::Real kz_loc = modified_kz_loc_arr[k];
 #else
-            constexpr amrex::Real ky_q = 0._rt;
-            const     amrex::Real kz_q = modified_kz_q_arr[j];
+            constexpr amrex::Real ky_loc = 0._rt;
+            const     amrex::Real kz_loc = modified_kz_loc_arr[j];
 #endif
 
             // Physical constants and imaginary unit
@@ -190,16 +190,16 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
             if (asymmetrical_psatd)
             {
               fields(i,j,k,Idx.Ex) = C * Ex_old
-                  + I * c2 * S_ck * (ky_q * Bz_old - kz_q * By_old)
-                  + X4 * Jx_old - I * (X2 * rho_new - X3 * rho_old) * kx_q - X1 * (Jx_new - Jx_old) / dt;
+                  + I * c2 * S_ck * (ky_loc * Bz_old - kz_loc * By_old)
+                  + X4 * Jx_old - I * (X2 * rho_new - X3 * rho_old) * kx - X1 * (Jx_new - Jx_old) / dt;
 
               fields(i,j,k,Idx.Ey) = C * Ey_old
-                  + I * c2 * S_ck * (kz_q* Bx_old - kx_q * Bz_old)
-                  + X4 * Jy_old - I * (X2 * rho_new - X3 * rho_old) * ky_q - X1 * (Jy_new - Jy_old) / dt;
+                  + I * c2 * S_ck * (kz_loc* Bx_old - kx_loc * Bz_old)
+                  + X4 * Jy_old - I * (X2 * rho_new - X3 * rho_old) * ky - X1 * (Jy_new - Jy_old) / dt;
 
               fields(i,j,k,Idx.Ez) = C * Ez_old
-                  + I * c2 * S_ck * (kx_q * By_old - ky_q * Bx_old)
-                  + X4 * Jz_old - I * (X2 * rho_new - X3 * rho_old) * kz_q - X1 * (Jz_new - Jz_old) / dt;
+                  + I * c2 * S_ck * (kx_loc * By_old - ky_loc * Bx_old)
+                  + X4 * Jz_old - I * (X2 * rho_new - X3 * rho_old) * kz - X1 * (Jz_new - Jz_old) / dt;
             }
             else
             {
@@ -229,7 +229,7 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
                 - I * S_ck * (kx * Ey_old - ky * Ex_old) + I * X1 * (kx * Jy_old - ky * Jx_old)
                 + I * X2/c2 * (kx * (Jy_new - Jy_old) - ky * (Jx_new - Jx_old));
 
-            if (dive_cleaning)
+            if (dive_cleaning && !asymmetrical_psatd)
             {
                 const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
                 const Complex k_dot_J  = kx * Jx_old + ky * Jy_old + kz * Jz_old;
@@ -242,7 +242,19 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
                 fields(i,j,k,Idx.F) = C * F_old + S_ck * (I * k_dot_E - rho_old * inv_ep0)
                     - X1 * ((rho_new - rho_old) / dt + I * k_dot_J) - I * X2/c2 * k_dot_dJ;
             }
+            if (dive_cleaning && asymmetrical_psatd)
+            {
+                const Complex kloc_dot_E  = kx_loc * Ex_old + ky_loc * Ey_old + kz_loc * Ez_old;
+                const Complex kloc_dot_J  = kx_loc * Jx_old + ky_loc * Jy_old + kz_loc * Jz_old;
+                const Complex kloc_dot_dJ = kx_loc * (Jx_new - Jx_old) + ky_loc * (Jy_new - Jy_old) + kz_loc * (Jz_new - Jz_old);
 
+                fields(i,j,k,Idx.Ex) += I * c2 * S_ck * F_old * kx;
+                fields(i,j,k,Idx.Ey) += I * c2 * S_ck * F_old * ky;
+                fields(i,j,k,Idx.Ez) += I * c2 * S_ck * F_old * kz;
+
+                fields(i,j,k,Idx.F) = C * F_old + S_ck * (I * kloc_dot_E - rho_old * inv_ep0)
+                    - X1 * ((rho_new - rho_old) / dt + I * kloc_dot_J) - I * X2/c2 * kloc_dot_dJ;
+            }
             if (divb_cleaning)
             {
                 const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
@@ -308,7 +320,8 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
 void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
-    const amrex::Real dt)
+    const amrex::Real dt,
+    const bool asymmetrical_psatd)
 {
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -319,10 +332,13 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
 
         // Extract pointers for the k vectors
         const amrex::Real* kx_s = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* kx_loc = modified_kx_loc_vec_centered[mfi].dataPtr();
 #if defined(WARPX_DIM_3D)
         const amrex::Real* ky_s = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* ky_loc = modified_ky_loc_vec_centered[mfi].dataPtr();
 #endif
         const amrex::Real* kz_s = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* kz_loc = modified_kz_loc_vec_centered[mfi].dataPtr();
 
         // Coefficients always allocated
         amrex::Array4<amrex::Real> C = C_coef[mfi].array();
@@ -335,13 +351,28 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Calculate norm of k vector
-            const amrex::Real knorm_s = std::sqrt(
+            amrex::Real knorm_s;
+
+            if (asymmetrical_psatd)
+            {
+                knorm_s = std::sqrt(
+                kx_s[i] * kx_loc[i] +
+#if defined(WARPX_DIM_3D)
+                ky_s[j] * ky_loc[j] + kz_s[k] * kz_loc[k]);
+#else
+                kz_s[j] * kz_loc[j]);
+#endif
+            }
+            else
+            {
+                knorm_s = std::sqrt(
                 std::pow(kx_s[i], 2) +
 #if defined(WARPX_DIM_3D)
                 std::pow(ky_s[j], 2) + std::pow(kz_s[k], 2));
 #else
                 std::pow(kz_s[j], 2));
 #endif
+            }
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
             constexpr amrex::Real ep0 = PhysConst::ep0;

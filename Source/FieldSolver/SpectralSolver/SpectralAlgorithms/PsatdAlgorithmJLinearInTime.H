@@ -81,7 +81,8 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
         void InitializeSpectralCoefficients (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
-            const amrex::Real dt);
+            const amrex::Real dt,
+            const bool asymmetrical_psatd);
 
         /**
          * \brief Initialize additional coefficients used in \c pushSpectralFields to update E,B,
@@ -126,13 +127,13 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
 
         SpectralFieldIndex m_spectral_index;
         // Centered modified finite-order k vectors (used to lower order of current deposition)
-        KVectorComponent modified_kx_q_vec_centered;
+        KVectorComponent modified_kx_loc_vec_centered;
 
 #if defined(WARPX_DIM_3D)
-        KVectorComponent modified_ky_q_vec_centered;
+        KVectorComponent modified_ky_loc_vec_centered;
 
 #endif
-        KVectorComponent modified_kz_q_vec_centered;
+        KVectorComponent modified_kz_loc_vec_centered;
         // Other member variables
         amrex::Real m_dt;
         bool m_time_averaging;

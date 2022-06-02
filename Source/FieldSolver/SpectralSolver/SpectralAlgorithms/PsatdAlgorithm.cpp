@@ -50,16 +50,12 @@ PsatdAlgorithm::PsatdAlgorithm(
     // these are computed always with the assumption of centered grids
     // (argument nodal = true), for both nodal and staggered simulations
     modified_kx_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_x, true)),
-    //modified_kx_q_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_loc_x, true)),
 
 #if defined(WARPX_DIM_3D)
     modified_ky_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_y, true)),
     modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_z, true)),
-    //modified_ky_q_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_loc_y, true)),
-    //modified_kz_q_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_loc_z, true)),
 #else
     modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, true)),
-    //modified_kz_q_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_loc_z, true)),
 #endif
     m_v_galilean(v_galilean),
     m_dt(dt),
@@ -172,15 +168,12 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
         // Extract pointers for the k vectors
         const amrex::Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
-        //const amrex::Real* modified_kx_q_arr = modified_kx_q_vec_centered[mfi].dataPtr();
 
 #if defined(WARPX_DIM_3D)
         const amrex::Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
-        //const amrex::Real* modified_ky_q_arr = modified_ky_q_vec_centered[mfi].dataPtr();
 
 #endif
         const amrex::Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
-        //const amrex::Real* modified_kz_q_arr = modified_kz_q_vec_centered[mfi].dataPtr();
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -214,29 +207,15 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
             // k vector values
             const amrex::Real kx = modified_kx_arr[i];
-            //const amrex::Real kx_q = modified_kx_q_arr[i];
-            //const amrex::Real kx_r = kx*kx/kx_q;
-
 
 #if defined(WARPX_DIM_3D)
             const amrex::Real ky = modified_ky_arr[j];
-            //const amrex::Real ky_q = modified_ky_q_arr[j];
-            //const amrex::Real ky_r = ky*ky/ky_q
-
 
             const amrex::Real kz = modified_kz_arr[k];
-            //const amrex::Real kz_q = modified_kz_q_arr[k];
-            //const amrex::Real kz_r = kz*kz/kz_q
 #else
             constexpr amrex::Real ky = 0._rt;
-            //constexpr amrex::Real ky_q = 0._rt;
-            //constexpr amrex::Real ky_r = 0._rt;
-
 
             const     amrex::Real kz = modified_kz_arr[j];
-            //const     amrex::Real kz_q = modified_kz_q_arr[j];
-            //const     amrex::Real kz_r = kz*kz/kz_q;
-
 
 #endif
             // Physical constants and imaginary unit
@@ -276,12 +255,9 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
             else {
 
-                //Complex kq_dot_J = kx_q * Jx + ky_q * Jy + kz_q * Jz;
                 Complex k_dot_J = kx * Jx + ky * Jy + kz * Jz;
-                //Complex kr_dot_J = kx_r * Jx + ky_r * Jy + kz_r * Jz;
 
                 Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
-                //Complex kq_dot_E = kx_q * Ex_old + ky_q * Ey_old + kz_q * Ez_old;
 
                 fields(i,j,k,Idx.Ex) = T2 * C * Ex_old
                                        + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
