@@ -14,7 +14,7 @@
 #include <string>
 
 enum struct PhysicalSpecies{
-    unspecified=0, electron, positron, muon, antimuon, photon, hydrogen, protium, deuterium, tritium, proton,
+    unspecified=0, electron, positron, muon, antimuon, photon, neutron, hydrogen, protium, deuterium, tritium, proton,
     helium, helium3, helium4, alpha, lithium, lithium6, lithium7, beryllium, boron, boron10, boron11, carbon,
     carbon12, carbon13, nitrogen, nitrogen14, nitrogen15, oxygen, oxygen16, oxygen17, oxygen18, fluorine,
     neon, neon20, neon21, neon22, aluminium, argon, copper, xenon, gold};
