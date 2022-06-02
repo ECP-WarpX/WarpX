@@ -46,7 +46,7 @@ public:
     */
     ImpactIonizationFilterFunc(
         MCCProcess const& mcc_process,
-        amrex::Real const mass,
+        double const mass,
         amrex::Real const total_collision_prob,
         amrex::Real const nu_max,
         amrex::ParserExecutor<4> const& n_a_func,
@@ -79,7 +79,7 @@ public:
         // get references to the particle to get its position
         const auto& p = ptd.getSuperParticle(i);
         ParticleReal x, y, z;
-        Real E_coll;
+        double E_coll;
         get_particle_position(p, x, y, z);
 
         // calculate neutral density at particle location
@@ -107,7 +107,7 @@ public:
 
 private:
     MCCProcess::Executor m_mcc_process;
-    amrex::Real m_mass;
+    double m_mass;
     amrex::Real m_total_collision_prob = 0;
     amrex::Real m_nu_max;
     amrex::ParserExecutor<4> m_n_a_func;
@@ -141,7 +141,7 @@ public:
     * @param[in] t the current simulation time
     */
     ImpactIonizationTransformFunc(
-        amrex::Real energy_cost, amrex::Real mass1, amrex::Real sqrt_kb_m,
+        amrex::Real energy_cost, double mass1, amrex::Real sqrt_kb_m,
         amrex::ParserExecutor<4> const& T_a_func, amrex::Real t
     ) :  m_energy_cost(energy_cost), m_mass1(mass1),
          m_sqrt_kb_m(sqrt_kb_m), m_T_a_func(T_a_func), m_t(t) { }
@@ -172,7 +172,7 @@ public:
         // get references to the particle to get its position
         const auto& p = src.getSuperParticle(i_src);
         ParticleReal x, y, z;
-        Real E_coll;
+        double E_coll;
         get_particle_position(p, x, y, z);
 
         // calculate standard deviation in neutral velocity distribution using
@@ -217,7 +217,7 @@ public:
 
 private:
     amrex::Real m_energy_cost;
-    amrex::Real m_mass1;
+    double m_mass1;
     amrex::Real m_sqrt_kb_m;
     amrex::ParserExecutor<4> m_T_a_func;
     amrex::Real m_t;

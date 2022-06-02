@@ -34,14 +34,16 @@ namespace ParticleUtils {
 
     /**
      * \brief Return (relativistic) particle energy given velocity and mass.
+     * Note the use of `double` since this calculation is prone to error with
+     * single precision.
      *
      * @param[in] v2 square of particle speed ( v dot v)
      * @param[in] mass particle mass
      * @param[out] energy particle energy in eV
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    void getEnergy ( amrex::ParticleReal const v2, amrex::Real const mass,
-                     amrex::Real& energy )
+    void getEnergy ( amrex::ParticleReal const v2, double const mass,
+                     double& energy )
     {
         using std::sqrt;
         using namespace amrex::literals;
@@ -54,16 +56,17 @@ namespace ParticleUtils {
     /**
      * \brief Return (relativistic) collision energy assuming the target (with
      * mass M) is stationary and the projectile is approaching with the
-     * the given speed and mass m.
+     * the given speed and mass m. Note the use of `double` since this
+     * calculation is prone to error with single precision.
      *
      * @param[in] v2 square of particle speed gamma^2 * ( v dot v)
      * @param[in] m, M mass of projectile and target, respectively
      * @param[out] energy particle energy in eV
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    void getCollisionEnergy ( amrex::ParticleReal const v2, amrex::Real const m,
-                     amrex::Real const M, amrex::Real& gamma,
-                     amrex::Real& energy )
+    void getCollisionEnergy ( amrex::ParticleReal const v2, double const m,
+                     double const M, double& gamma,
+                     double& energy )
     {
         using std::sqrt;
         using namespace amrex::literals;

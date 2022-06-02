@@ -349,7 +349,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               amrex::Real T_a = T_a_func(x, y, z, t);
 
                               amrex::Real v_coll, v_coll2, sigma_E, nu_i = 0;
-                              amrex::Real gamma, E_coll;
+                              double gamma, E_coll;
                               amrex::ParticleReal ua_x, ua_y, ua_z, vx, vy, vz;
                               amrex::ParticleReal uCOM_x, uCOM_y, uCOM_z;
                               amrex::Real col_select = amrex::Random(engine);
