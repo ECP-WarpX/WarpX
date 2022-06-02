@@ -78,3 +78,15 @@ If your project uses the specific algorithms, please consider citing the respect
 - Vay JL, Almgren A, Bell J, Ge L, Grote DP, Hogan M, Kononenko O, Lehe R, Myers A, Ng C, Park J, Ryne R, Shapoval O, Thevenet M, Zhang W.
   **Warp-X: A new exascale computing platform for beam–plasma simulations**. *Nuclear Instruments and Methods in Physics Research Section A: Accelerators, Spectrometers, Detectors and Associated Equipment*. 2018 Nov, 909(12) Pages 476-479.
   `DOI: 10.1016/j.nima.2018.01.035 <https://doi.org/10.1016/j.nima.2018.01.035>`__
+
+- Kirchen M, Lehe R, Jalas S, Shapoval O, Vay JL, Maier AR.
+  **Scalable spectral solver in Galilean coordinates for eliminating the numerical Cherenkov instability in particle-in-cell simulations of streaming plasmas**. *Physical Review E*. 2020 July, 102(1-1):013202.
+  `DOI: 10.1103/PhysRevE.102.013202 <https://doi.org/10.1103/PhysRevE.102.013202>`__
+
+- Shapoval O, Vay JL, Vincenti H.
+  **Two-step perfectly matched layer for arbitrary-order pseudo-spectral analytical time-domain methods**. *Computer Physics Communications*. 2019 Feb, 235, pages 102-110.
+  `DOI: 10.1016/j.cpc.2018.09.015 <https://doi.org/10.1016/j.cpc.2018.09.015>`__
+
+- Lehe R, Kirchen M, Godfrey BB, Maier AR, Vay JL.
+  **Elimination of numerical Cherenkov instability in flowing-plasma particle-in-cell simulations by using galilean coordinates**. *Physical Review E*. 2016 Nov, 94:053305.
+  `DOI: 10.1103/PhysRevE.94.053305 <https://doi.org/10.1103/PhysRevE.94.053305>`__
