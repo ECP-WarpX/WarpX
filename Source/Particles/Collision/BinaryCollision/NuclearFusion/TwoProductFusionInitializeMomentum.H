@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef DEUTERIUM_TRITIUM_FUSION_INITIALIZE_MOMENTUM_H
-#define DEUTERIUM_TRITIUM_FUSION_INITIALIZE_MOMENTUM_H
+#ifndef TWO_PRODUCT_FUSION_INITIALIZE_MOMENTUM_H
+#define TWO_PRODUCT_FUSION_INITIALIZE_MOMENTUM_H
 
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/ParticleUtils.H"
@@ -27,12 +27,14 @@ namespace {
     using index_type = ParticleBins::index_type;
 
     /**
-     * \brief This function initializes the momentum of the particles produced from
-     * deuterium-tritium fusion.
+     * \brief This function initializes the momentum of the product particles,
+     * in a fusion event where only two products are produced.
+     * (In this case, conservation of energy and momentum determines
+     * the amplitude of the momentum of the particles exactly.)
+     * We assume that the emission of the product is isotropic in the center-of-mass frame
      *
-     * @param[in] soa_1 struct of array data of the first colliding species (can be either deuterium
-     * or tritium)
-     * @param[in] soa_2 struct of array data of the second colliding species (can be either deuterium
+     * @param[in] soa_1 struct of array data of the first colliding species
+     * @param[in] soa_2 struct of array data of the second colliding species
      * or tritium)
      * @param[out] ...
      * @param[in] idx_1 index of first colliding macroparticle
@@ -43,7 +45,7 @@ namespace {
      * @param[in] engine the random engine
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    void DeuteriumTritiumFusionInitializeMomentum (
+    void TwoProductFusionInitializeMomentum (
                             const SoaData_type& soa_1, const SoaData_type& soa_2,
                             SoaData_type& soa_alpha,
                             const index_type& idx_1, const index_type& idx_2,
@@ -51,14 +53,10 @@ namespace {
                             const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
                             const amrex::RandomEngine& engine)
     {
-        // General notations in this function:
-        //     x_sq denotes the square of x
-        //     x_star denotes the value of x in the proton+boron center of mass frame
-        //     x_Bestar denotes the value of x in the Beryllium rest frame
 
         using namespace amrex::literals;
     }
 
 }
 
-#endif // DEUTERIUM_TRITIUM_FUSION_INITIALIZE_MOMENTUM_H
+#endif // TWO_PRODUCT_FUSION_INITIALIZE_MOMENTUM_H

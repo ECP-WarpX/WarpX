@@ -10,7 +10,7 @@
 
 #include "BinaryCollisionUtils.H"
 
-#include "Particles/Collision/BinaryCollision/NuclearFusion/DeuteriumTritiumFusionInitializeMomentum.H"
+#include "Particles/Collision/BinaryCollision/NuclearFusion/TwoProductFusionInitializeMomentum.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/ProtonBoronFusionInitializeMomentum.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/MultiParticleContainer.H"
@@ -78,6 +78,7 @@ public:
      *             reaches 0.
      * @param[in] m1 mass of the first colliding particle species
      * @param[in] m2 mass of the second colliding particle species
+     * @param[in] products_mass array storing the mass of product particles
      * @param[in] p_mask a mask that is 1 if binary collision has resulted in particle creation
      *            event, 0 otherwise.
      * @param[in] products_np array storing the number of existing product particles in that tile
@@ -103,6 +104,7 @@ public:
                     ParticleTileType** AMREX_RESTRICT tile_products,
                     ParticleType* particle_ptr_1, ParticleType*  particle_ptr_2,
                     const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
+                    const amrex::Vector<amrex::ParticleReal>& products_mass,
                     const index_type* AMREX_RESTRICT p_mask,
                     const amrex::Vector<index_type>& products_np,
                     const SmartCopy* AMREX_RESTRICT copy_species1,
@@ -209,10 +211,6 @@ public:
 
                 // Initialize the product particles' momentum, using a function depending on the
                 // specific collision type
-                if (t_collision_type == CollisionType::DeuteriumTritiumFusion)
-                {
-                    // TODO DeuteriumTritiumFusionInitializeMomentum
-                }
                 if (t_collision_type == CollisionType::ProtonBoronFusion)
                 {
                     const index_type product_start_index = products_np_data[0] + 2*p_offsets[i]*
@@ -221,6 +219,22 @@ public:
                                                         p_pair_indices_1[i], p_pair_indices_2[i],
                                                         product_start_index, m1, m2, engine);
                 }
+                else
+                {
+                    // TODO: Assert that there are exactly 2 products
+
+                    amrex::ParticleReal fusion_energy = 0;
+                    if (t_collision_type == CollisionType::DeuteriumTritiumFusion) {
+                        fusion_energy = 17.6e6 * PhysConst::q_e; // 17.6 MeV
+                    }
+/*                    TwoProductFusionInitializeMomentum(soa_1, soa_2,
+                        soa_products_data[0], soa_products_data[1],
+                        p_pair_indices_1[i], p_pair_indices_2[i],
+                        products_np_data[0] + 2*p_offsets[i]*p_num_products_device[0],
+                        products_np_data[1] + 2*p_offsets[i]*p_num_products_device[1],
+                        m1, m2, fusion_energy, engine); */
+                }
+
             }
         });
 
@@ -265,6 +279,7 @@ public:
                     ParticleTileType** /*tile_products*/,
                     ParticleType* /*particle_ptr_1*/, ParticleType* /*particle_ptr_2*/,
                     const amrex::ParticleReal& /*m1*/, const amrex::ParticleReal& /*m2*/,
+                    const amrex::Vector<amrex::ParticleReal>& /*products_mass*/,
                     const index_type* /*p_mask*/, const amrex::Vector<index_type>& /*products_np*/,
                     const SmartCopy* /*copy_species1*/, const SmartCopy* /*copy_species2*/,
                     const index_type* /*p_pair_indices_1*/, const index_type* /*p_pair_indices_2*/,
