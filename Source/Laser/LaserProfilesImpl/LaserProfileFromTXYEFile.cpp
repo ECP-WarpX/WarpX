@@ -9,7 +9,8 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpX_Complex.H"
-#include "WarpX.H"
+
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -47,10 +48,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
 {
     if (!std::numeric_limits< double >::is_iec559)
     {
-        WarpX::GetInstance().RecordWarning("Laser",
+        ablastr::warn_manager::WMRecordWarning("Laser",
             "(Double does not comply with IEEE 754: bad"
             "things will happen parsing the X, Y and T profiles for the laser!)",
-            WarnPriority::high);
+            ablastr::warn_manager::WarnPriority::high);
     }
 
     // Parse the TXYE file
@@ -429,7 +430,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         // TODO: implement WARPX_DIM_1D_Z
         amrex::ignore_unused(x_0, x_1, tmp_e_max, p_E_data, tmp_idx_first_time,
                              t_left, t_right, Xp, Yp, t, idx_x_left);
-        amrex::Abort("WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for the current geometry");
+        amrex::Abort(Utils::TextMsg::Err(
+            "WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for the current geometry"));
 #endif
         }
     );
@@ -531,7 +533,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
         // TODO: implement WARPX_DIM_1D_Z
         amrex::ignore_unused(idx_x_left, idx_t_left, idx_t_right, tmp_e_max,
                              p_E_data, tmp_idx_first_time, t_left, t_right, t);
-        amrex::Abort("WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for the current geometry");
+        amrex::Abort(Utils::TextMsg::Err(
+            "WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for the current geometry"));
 #endif
         }
     );

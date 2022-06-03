@@ -17,6 +17,8 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX_Array.H>
 #include <AMReX_Config.H>
 #include <AMReX_MFIter.H>
@@ -154,10 +156,10 @@ FieldProbe::FieldProbe (std::string rd_name)
 
     if (WarpX::gamma_boost > 1.0_rt)
     {
-        WarpX::GetInstance().RecordWarning(
+        ablastr::warn_manager::WMRecordWarning(
             "Boosted Frame Invalid",
             "The FieldProbe Diagnostic will not record lab-frame, but boosted frame data.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
     }
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
@@ -545,7 +547,7 @@ void FieldProbe::ComputeDiags (int step)
                                    temp_interp_order, false);
 
                     //Calculate the Poynting Vector S
-                    amrex::Real const sraw[3]{
+                    amrex::ParticleReal const sraw[3]{
                         Exp * Bzp - Ezp * Byp,
                         Ezp * Bxp - Exp * Bzp,
                         Exp * Byp - Eyp * Bxp
@@ -617,8 +619,7 @@ void FieldProbe::ComputeDiags (int step)
             if (amrex::ParallelDescriptor::IOProcessor()) {
                 length_vector.resize(mpisize, 0);
             }
-            localsize.resize(1,0);
-            localsize[0] = m_data.size();
+            localsize.resize(1, m_data.size());
 
             // gather size of m_data from each processor
             amrex::ParallelDescriptor::Gather(localsize.data(), 1,

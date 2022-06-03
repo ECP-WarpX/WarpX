@@ -5,16 +5,15 @@
  * License: BSD-3-Clause-LBNL
  */
 
+#include "WarpXFaceInfoBox.H"
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
-#include "WarpXFaceInfoBox.H"
-
-#include "Utils/TextMsg.H"
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX_Scan.H>
 #include <AMReX_iMultiFab.H>
 #include <AMReX_MultiFab.H>
-
 
 /**
 * \brief Get the value of arr in the neighbor (i_n, j_n) on the plane with normal 'dim'.
@@ -156,7 +155,8 @@ WarpX::CountExtFaces() {
 #elif defined(WARPX_DIM_3D)
         for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
-        amrex::Abort("CountExtFaces: Only implemented in 2D3V and 3D3V");
+        amrex::Abort(Utils::TextMsg::Err(
+            "CountExtFaces: Only implemented in 2D3V and 3D3V"));
 #endif
         amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
         amrex::ReduceData<int> reduce_data(reduce_ops);
@@ -183,39 +183,39 @@ void
 WarpX::ComputeFaceExtensions(){
 #ifdef AMREX_USE_EB
     amrex::Array1D<int, 0, 2> N_ext_faces = CountExtFaces();
-    WarpX::RecordWarning("Embedded Boundary",
+    ablastr::warn_manager::WMRecordWarning("Embedded Boundary",
             "Faces to be extended in x:\t" + std::to_string(N_ext_faces(0)) + "\n"
             +"Faces to be extended in y:\t" + std::to_string(N_ext_faces(1)) + "\n"
             +"Faces to be extended in z:\t" + std::to_string(N_ext_faces(2)),
-            WarnPriority::low
+            ablastr::warn_manager::WarnPriority::low
     );
 
     InitBorrowing();
     ComputeOneWayExtensions();
 
     amrex::Array1D<int, 0, 2> N_ext_faces_after_one_way = CountExtFaces();
-    WarpX::RecordWarning("Embedded Boundary",
+    ablastr::warn_manager::WMRecordWarning("Embedded Boundary",
             "Faces to be extended after one way extension in x:\t"
             + std::to_string(N_ext_faces_after_one_way(0)) + "\n"
             +"Faces to be extended after one way extension in y:\t"
             + std::to_string(N_ext_faces_after_one_way(1)) + "\n"
             +"Faces to be extended after one way extension in z:\t"
             + std::to_string(N_ext_faces_after_one_way(2)),
-            WarnPriority::low
+            ablastr::warn_manager::WarnPriority::low
     );
 
     ComputeEightWaysExtensions();
     ShrinkBorrowing();
 
     amrex::Array1D<int, 0, 2> N_ext_faces_after_eight_ways = CountExtFaces();
-    WarpX::RecordWarning("Embedded Boundary",
+    ablastr::warn_manager::WMRecordWarning("Embedded Boundary",
             "Faces to be extended after eight ways extension in x:\t"
             + std::to_string(N_ext_faces_after_eight_ways(0)) + "\n"
             +"Faces to be extended after eight ways extension in y:\t"
             + std::to_string(N_ext_faces_after_eight_ways(1)) + "\n"
             +"Faces to be extended after eight ways extension in z:\t"
             + std::to_string(N_ext_faces_after_eight_ways(2)),
-            WarnPriority::low
+            ablastr::warn_manager::WarnPriority::low
     );
 
     bool using_bck = false;
@@ -241,13 +241,13 @@ WarpX::ComputeFaceExtensions(){
 #endif
 
     if(using_bck) {
-        WarpX::RecordWarning("Embedded Boundary",
+        ablastr::warn_manager::WMRecordWarning("Embedded Boundary",
                              "Some faces could not be stabilized with the ECT and the BCK correction was used.\n"
                              "The BCK correction will be used for:\n"
                              "-" + std::to_string(N_ext_faces_after_eight_ways(0)) + " x-faces\n"
                              + "-" + std::to_string(N_ext_faces_after_eight_ways(1)) + " y-faces\n"
                              + "-" + std::to_string(N_ext_faces_after_eight_ways(2)) + " z-faces\n",
-                             WarnPriority::low
+                            ablastr::warn_manager::WarnPriority::low
         );
     }
 #endif
@@ -420,7 +420,8 @@ WarpX::ComputeOneWayExtensions() {
 #elif defined(WARPX_DIM_3D)
         for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
-        amrex::Abort("ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V");
+        amrex::Abort(Utils::TextMsg::Err(
+            "ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V"));
 #endif
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
 
@@ -541,7 +542,8 @@ WarpX::ComputeEightWaysExtensions() {
 #elif defined(WARPX_DIM_3D)
         for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
-        amrex::Abort("ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V");
+        amrex::Abort(Utils::TextMsg::Err(
+            "ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V"));
 #endif
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
 

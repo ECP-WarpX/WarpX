@@ -30,14 +30,22 @@
 class Diagnostics
 {
 public:
+    /** Constructor
+     *
+     * @param i index of diagnostics in MultiDiagnostics::alldiags
+     * @param name diagnostics name in the inputs file
+     */
     Diagnostics (int i, std::string name);
+
     /** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~Diagnostics ();
+
     /** Pack (stack) all fields in the cell-centered output MultiFab m_mf_output.
      *
      * Fields are computed (e.g., cell-centered or back-transformed)
        on-the-fly using a functor. */
     void ComputeAndPack ();
+
     /** \brief Flush particle and field buffers to file using the FlushFormat member variable.
      *
      * This function should belong to class Diagnostics and not be virtual, as it flushes

@@ -19,6 +19,8 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Config.H>
@@ -338,7 +340,7 @@ Diagnostics::InitData ()
             std::string warnMsg = "For full diagnostics on a reduced domain, particle I/O is not ";
             warnMsg += "supported, yet! Therefore, particle I/O is disabled for this diagnostics: ";
             warnMsg += m_diag_name;
-            WarpX::GetInstance().RecordWarning("Diagnostics", warnMsg);
+            ablastr::warn_manager::WMRecordWarning("Diagnostics", warnMsg);
         }
     }
 }

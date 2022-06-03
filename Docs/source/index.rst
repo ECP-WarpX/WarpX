@@ -51,6 +51,7 @@ We also have a `discussion page <https://github.com/ECP-WarpX/WarpX/discussions>
 
    coc
    acknowledge_us
+   highlights
 
 Installation
 ------------

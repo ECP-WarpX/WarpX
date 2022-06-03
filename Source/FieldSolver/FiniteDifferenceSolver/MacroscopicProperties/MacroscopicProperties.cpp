@@ -4,6 +4,8 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX_Array4.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_Config.H>
@@ -53,7 +55,7 @@ MacroscopicProperties::ReadParameters ()
         std::stringstream warnMsg;
         warnMsg << "Material conductivity is not specified. Using default vacuum value of " <<
             m_sigma << " in the simulation.";
-        WarpX::GetInstance().RecordWarning("Macroscopic properties",
+        ablastr::warn_manager::WMRecordWarning("Macroscopic properties",
             warnMsg.str());
     }
     // initialization of sigma (conductivity) with parser
@@ -76,7 +78,7 @@ MacroscopicProperties::ReadParameters ()
         std::stringstream warnMsg;
         warnMsg << "Material permittivity is not specified. Using default vacuum value of " <<
             m_epsilon << " in the simulation.";
-        WarpX::GetInstance().RecordWarning("Macroscopic properties",
+        ablastr::warn_manager::WMRecordWarning("Macroscopic properties",
             warnMsg.str());
     }
 
@@ -101,7 +103,7 @@ MacroscopicProperties::ReadParameters ()
         std::stringstream warnMsg;
         warnMsg << "Material permittivity is not specified. Using default vacuum value of " <<
             m_mu << " in the simulation.";
-        WarpX::GetInstance().RecordWarning("Macroscopic properties",
+        ablastr::warn_manager::WMRecordWarning("Macroscopic properties",
             warnMsg.str());
     }
 
