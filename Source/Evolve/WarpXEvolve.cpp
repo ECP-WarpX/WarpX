@@ -606,12 +606,6 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
         }
 
-        if (WarpX::current_correction)
-        {
-            amrex::Abort(Utils::TextMsg::Err(
-                "Current correction not implemented for multi-J algorithm."));
-        }
-
         // Advance E,B,F,G fields in time and update the average fields
         PSATDPushSpectralFields();
 
