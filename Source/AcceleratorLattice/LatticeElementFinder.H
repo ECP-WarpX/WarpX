@@ -212,10 +212,10 @@ struct LatticeElementFinderDevice
         const int iz = static_cast<int>((z - m_zmin)/m_dz);
 
         constexpr amrex::Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
-        amrex::ParticleReal const gamma = std::sqrt(1._rt + (m_ux[i]*m_ux[i] + m_uy[i]*m_uy[i] + m_uz[i]*m_uz[i])*inv_c2);
-        amrex::ParticleReal const vzp = m_uz[i]/gamma;
+        amrex::Real const gamma = std::sqrt(1._rt + (m_ux[i]*m_ux[i] + m_uy[i]*m_uy[i] + m_uz[i]*m_uz[i])*inv_c2);
+        amrex::Real const vzp = m_uz[i]/gamma;
 
-        amrex::ParticleReal zpvdt = z + vzp*m_dt;
+        amrex::Real zpvdt = z + vzp*m_dt;
 
         // The position passed to the get_field methods needs to be in the lab frame.
         if (m_gamma_boost > 1._rt) {
@@ -223,17 +223,17 @@ struct LatticeElementFinderDevice
             zpvdt = m_gamma_boost*zpvdt + m_uz_boost*(m_time + m_dt);
         }
 
-        amrex::Real Ex_sum = 0._rt;
-        amrex::Real Ey_sum = 0._rt;
-        amrex::Real Ez_sum = 0._rt;
-        amrex::Real Bx_sum = 0._rt;
-        amrex::Real By_sum = 0._rt;
-        amrex::Real Bz_sum = 0._rt;
+        amrex::ParticleReal Ex_sum = 0._rt;
+        amrex::ParticleReal Ey_sum = 0._rt;
+        amrex::ParticleReal Ez_sum = 0._rt;
+        amrex::ParticleReal Bx_sum = 0._rt;
+        amrex::ParticleReal By_sum = 0._rt;
+        amrex::ParticleReal Bz_sum = 0._rt;
 
         if (d_quad.nelements > 0) {
             if (d_quad_indices_arr[iz] > -1) {
                 int ielement = d_quad_indices_arr[iz];
-                amrex::Real Ex, Ey, Bx, By;
+                amrex::ParticleReal Ex, Ey, Bx, By;
                 d_quad.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
                 Ex_sum += Ex;
                 Ey_sum += Ey;
@@ -245,7 +245,7 @@ struct LatticeElementFinderDevice
         if (d_plasmalens.nelements > 0) {
             if (d_plasmalens_indices_arr[iz] > -1) {
                 int ielement = d_plasmalens_indices_arr[iz];
-                amrex::Real Ex, Ey, Bx, By;
+                amrex::ParticleReal Ex, Ey, Bx, By;
                 d_plasmalens.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
                 Ex_sum += Ex;
                 Ey_sum += Ey;
@@ -257,10 +257,10 @@ struct LatticeElementFinderDevice
         if (m_gamma_boost > 1._rt) {
             // The fields returned from get_field is in the lab frame
             // Transform the fields to the boosted frame
-            const amrex::Real Ex_boost = m_gamma_boost*Ex_sum - m_uz_boost*By_sum;
-            const amrex::Real Ey_boost = m_gamma_boost*Ey_sum + m_uz_boost*Bx_sum;
-            const amrex::Real Bx_boost = m_gamma_boost*Bx_sum + m_uz_boost*Ey_sum*inv_c2;
-            const amrex::Real By_boost = m_gamma_boost*By_sum - m_uz_boost*Ex_sum*inv_c2;
+            const amrex::ParticleReal Ex_boost = m_gamma_boost*Ex_sum - m_uz_boost*By_sum;
+            const amrex::ParticleReal Ey_boost = m_gamma_boost*Ey_sum + m_uz_boost*Bx_sum;
+            const amrex::ParticleReal Bx_boost = m_gamma_boost*Bx_sum + m_uz_boost*Ey_sum*inv_c2;
+            const amrex::ParticleReal By_boost = m_gamma_boost*By_sum - m_uz_boost*Ex_sum*inv_c2;
             Ex_sum = Ex_boost;
             Ey_sum = Ey_boost;
             Bx_sum = Bx_boost;
