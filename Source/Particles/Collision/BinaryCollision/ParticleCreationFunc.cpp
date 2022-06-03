@@ -42,7 +42,7 @@ ParticleCreationFunc::ParticleCreationFunc (const std::string collision_name,
 #ifndef AMREX_USE_GPU
             // On CPU, the device vector can be filled immediatly
             m_num_products_device.push_back(1);
-            m_num_products_device.push_back(1);  
+            m_num_products_device.push_back(1);
 #endif
         }
         // TODO: Raise error otherwise
