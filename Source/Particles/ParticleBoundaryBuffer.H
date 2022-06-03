@@ -46,6 +46,8 @@ public:
 
     PinnedMemoryParticleContainer& getParticleBuffer(const std::string species_name, int boundary);
 
+    PinnedMemoryParticleContainer* getParticleBufferPointer(const std::string species_name, int boundary);
+
     static constexpr int numBoundaries () {
         return AMREX_SPACEDIM*2
 #ifdef AMREX_USE_EB
