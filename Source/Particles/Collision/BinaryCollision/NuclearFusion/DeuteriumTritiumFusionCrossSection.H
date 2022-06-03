@@ -18,7 +18,7 @@
  * \brief Computes the total deuterium-tritium fusion cross section, using
  * the analytical fits given in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
  *
- * @param[in] E_kin_star the kinetic energy of the deuterium-tritium pair in its center of mass frame, in keV.
+ * @param[in] E_kin_star the kinetic energy of the deuterium-tritium pair in its center of mass frame, in SI units.
  * @return The total cross section in SI units (square meters).
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -37,8 +37,8 @@ amrex::ParticleReal DeuteriumTritiumFusionCrossSection (const amrex::ParticleRea
     constexpr amrex::ParticleReal m_D = 1.99901 * PhysConst::m_p;
     constexpr amrex::ParticleReal m_T = 2.99372 * PhysConst::m_p;
     constexpr amrex::ParticleReal m_reduced = m_D*m_T / (m_D + m_T);
-    constexpr amrex::ParticleReal B_G = MathConst::pi * PhysConst::alpha * 2 * 3
-         * std::sqrt( 2*m_reduced*PhysConst::c*PhysConst::c / (1.e3*PhysConst::q_e) );
+    amrex::ParticleReal B_G = MathConst::pi * PhysConst::alpha * 2._prt * 3._prt
+         * std::sqrt( 2._prt*m_reduced*PhysConst::c*PhysConst::c / (1.e3_prt*PhysConst::q_e) );
 
     // Compute astrophysical_factor
     // (See Eq. 9 and Table IV in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)
