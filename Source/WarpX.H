@@ -1423,6 +1423,12 @@ public:
     */
     void ApplyBCKCorrection(const int idim);
 
+    /**
+     * \brief Subtract the average of the cumulative sums of the preliminary current D
+     *        from the current J (computed from D according to the Vay deposition scheme)
+     */
+    void PSATDSubtractCurrentPartialSumsAvg ();
+
 private:
     void ScrapeParticles ();
 
