@@ -586,9 +586,92 @@ PsatdAlgorithmJLinearInTime::VayDeposition (SpectralFieldData& field_data)
     // Profiling
     BL_PROFILE("PsatdAlgorithmJLinearInTime::VayDeposition()");
 
-    amrex::ignore_unused(field_data);
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented for multi-J PSATD algorithm"));
+    const SpectralFieldIndex& Idx = m_spectral_index;
+
+    // Loop over boxes
+    for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi)
+    {
+        const amrex::Box& bx = field_data.fields[mfi].box();
+
+        // Extract arrays for the fields to be updated
+        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+
+        // Extract pointers for the modified k vectors
+        const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
+#if defined(WARPX_DIM_3D)
+        const amrex::Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
+#endif
+        const amrex::Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
+
+        // Loop over indices within one box
+        ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            // Shortcuts for the values of D at 1/4 and 3/4 of the time step
+            const Complex Dx_one = fields(i,j,k,Idx.Jx);
+            const Complex Dx_two = fields(i,j,k,Idx.Jx_new);
+#if defined(WARPX_DIM_3D)
+            const Complex Dy_one = fields(i,j,k,Idx.Jy);
+            const Complex Dy_two = fields(i,j,k,Idx.Jy_new);
+#endif
+            const Complex Dz_one = fields(i,j,k,Idx.Jz);
+            const Complex Dz_two = fields(i,j,k,Idx.Jz_new);
+
+            // Imaginary unit
+            constexpr Complex I = Complex{0._rt, 1._rt};
+
+            // Modified k vector values
+            const amrex::Real kx_mod = modified_kx_arr[i];
+#if defined(WARPX_DIM_3D)
+            const amrex::Real ky_mod = modified_ky_arr[j];
+            const amrex::Real kz_mod = modified_kz_arr[k];
+#else
+            const amrex::Real kz_mod = modified_kz_arr[j];
+#endif
+
+            // Compute Jx at 1/4 of the time step
+            if (kx_mod != 0._rt) fields(i,j,k,Idx.Jx    ) = I * Dx_one / kx_mod;
+            else                 fields(i,j,k,Idx.Jx    ) = 0._rt;
+            // Compute Jx at 3/4 of the time step
+            if (kx_mod != 0._rt) fields(i,j,k,Idx.Jx_new) = I * Dx_two / kx_mod;
+            else                 fields(i,j,k,Idx.Jx_new) = 0._rt;
+
+#if defined(WARPX_DIM_3D)
+            // Compute Jy at 1/4 of the time step
+            if (ky_mod != 0._rt) fields(i,j,k,Idx.Jy)     = I * Dy_one / ky_mod;
+            else                 fields(i,j,k,Idx.Jy)     = 0._rt;
+            // Compute Jy at 3/4 of the time step
+            if (ky_mod != 0._rt) fields(i,j,k,Idx.Jy_new) = I * Dy_two / ky_mod;
+            else                 fields(i,j,k,Idx.Jy_new) = 0._rt;
+#endif
+
+            // Compute Jz at 1/4 of the time step
+            if (kz_mod != 0._rt) fields(i,j,k,Idx.Jz    ) = I * Dz_one / kz_mod;
+            else                 fields(i,j,k,Idx.Jz    ) = 0._rt;
+            // Compute Jz at 3/4 of the time step
+            if (kz_mod != 0._rt) fields(i,j,k,Idx.Jz_new) = I * Dz_two / kz_mod;
+            else                 fields(i,j,k,Idx.Jz_new) = 0._rt;
+
+            // Temporary shortcuts for J at 1/4 of the time step
+            const Complex Jx_one = fields(i,j,k,Idx.Jx);
+            const Complex Jy_one = fields(i,j,k,Idx.Jy);
+            const Complex Jz_one = fields(i,j,k,Idx.Jz);
+
+            // Temporary shortcuts for J at 3/4 of the time step
+            const Complex Jx_two = fields(i,j,k,Idx.Jx_new);
+            const Complex Jy_two = fields(i,j,k,Idx.Jy_new);
+            const Complex Jz_two = fields(i,j,k,Idx.Jz_new);
+
+            // Compute old J (time n)
+            fields(i,j,k,Idx.Jx) = 1.5_rt*Jx_one - 0.5_rt*Jx_two;
+            fields(i,j,k,Idx.Jy) = 1.5_rt*Jy_one - 0.5_rt*Jy_two;
+            fields(i,j,k,Idx.Jz) = 1.5_rt*Jz_one - 0.5_rt*Jz_two;
+
+            // Compute new J (time n+1)
+            fields(i,j,k,Idx.Jx_new) = 1.5_rt*Jx_two - 0.5_rt*Jx_one;
+            fields(i,j,k,Idx.Jy_new) = 1.5_rt*Jy_two - 0.5_rt*Jy_one;
+            fields(i,j,k,Idx.Jz_new) = 1.5_rt*Jz_two - 0.5_rt*Jz_one;
+        });
+    }
 }
 
 #endif // WARPX_USE_PSATD
