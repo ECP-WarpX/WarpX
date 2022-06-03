@@ -1384,7 +1384,6 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_slice;
 
     bool fft_periodic_single_box = false;
-
     int nox_fft = 16;
     int noy_fft = 16;
     int noz_fft = 16;
