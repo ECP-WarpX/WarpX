@@ -63,7 +63,7 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
             const bool time_averaging,
             const bool dive_cleaning,
             const bool divb_cleaning,
-            const bool do_asymmetrical_psatd);
+            const bool do_asymmetrical);
         /**
          * \brief Updates the E and B fields in spectral space, according to the multi-J PSATD equations
          *
@@ -82,7 +82,7 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const amrex::Real dt,
-            const bool asymmetrical_psatd);
+            const bool asymmetrical);
 
         /**
          * \brief Initialize additional coefficients used in \c pushSpectralFields to update E,B,
@@ -139,7 +139,7 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
         bool m_time_averaging;
         bool m_dive_cleaning;
         bool m_divb_cleaning;
-        bool m_asymmetrical_psatd;
+        bool m_asymmetrical;
 };
 #endif // WARPX_USE_PSATD
 #endif // WARPX_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_

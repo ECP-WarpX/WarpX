@@ -35,7 +35,7 @@ SpectralSolver::SpectralSolver(
                 const bool do_multi_J,
                 const bool dive_cleaning,
                 const bool divb_cleaning,
-                const bool asymmetrical_psatd)
+                const bool asymmetrical)
 {
     // Initialize all structures using the same distribution mapping dm
 
@@ -73,7 +73,7 @@ SpectralSolver::SpectralSolver(
                     k_space, dm, m_spectral_index, norder_x, norder_y, norder_z,
                     norder_loc_x, norder_loc_y, norder_loc_z, nodal,
                     fill_guards, dt, fft_do_time_averaging, dive_cleaning, divb_cleaning,
-                    asymmetrical_psatd);
+                    asymmetrical);
             }
             else // standard, Galilean, averaged Galilean
             {

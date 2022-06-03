@@ -85,7 +85,7 @@ class SpectralSolver
                         const bool do_multi_J,
                         const bool dive_cleaning,
                         const bool divb_cleaning,
-                        const bool asymmetrical_psatd);
+                        const bool asymmetrical);
 
         /**
          * \brief Transform the component i_comp of the MultiFab mf to Fourier space,

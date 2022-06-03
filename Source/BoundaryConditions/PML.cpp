@@ -550,7 +550,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
           bool do_nodal, int do_moving_window,
           int /*pml_has_particles*/, int do_pml_in_domain, const bool do_multi_J,
           const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
-          const bool do_asymmetrical_psatd,
+          const bool do_asymmetrical,
           int max_guard_EB, const amrex::Real v_sigma_sb,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
     : m_dive_cleaning(do_pml_dive_cleaning),
@@ -735,7 +735,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
-        amrex::ignore_unused(lev, dt, do_multi_J, do_asymmetrical_psatd,
+        amrex::ignore_unused(lev, dt, do_multi_J, do_asymmetrical,
                              nox_loc_fft, noy_loc_fft, noz_loc_fft);
 #   if(AMREX_SPACEDIM!=3)
         amrex::ignore_unused(noy_fft);
@@ -759,7 +759,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             nox_fft, noy_fft, noz_fft, nox_loc_fft, noy_loc_fft, noz_loc_fft,
             do_nodal, fill_guards, v_galilean_zero, v_comoving_zero, dx, dt,
             in_pml, periodic_single_box, update_with_rho, fft_do_time_averaging,
-            do_multi_J, m_dive_cleaning, m_divb_cleaning, do_asymmetrical_psatd);
+            do_multi_J, m_dive_cleaning, m_divb_cleaning, do_asymmetrical);
 #endif
     }
 
@@ -880,7 +880,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
                 nox_fft, noy_fft, noz_fft, nox_loc_fft, noy_loc_fft, noz_loc_fft,
                 do_nodal, fill_guards, v_galilean_zero, v_comoving_zero,
                 cdx, dt, in_pml, periodic_single_box, update_with_rho, fft_do_time_averaging,
-                do_multi_J, m_dive_cleaning, m_divb_cleaning, do_asymmetrical_psatd);
+                do_multi_J, m_dive_cleaning, m_divb_cleaning, do_asymmetrical);
 #endif
         }
     }

@@ -263,7 +263,7 @@ public:
     //! Solve additional Maxwell equation for G in order to control errors in magnetic Gauss' law
     static bool do_divb_cleaning;
 
-    static bool do_asymmetrical_psatd;
+    static bool do_asymmetrical;
 
     //! Order of the particle shape factors (splines) along x
     static int nox;

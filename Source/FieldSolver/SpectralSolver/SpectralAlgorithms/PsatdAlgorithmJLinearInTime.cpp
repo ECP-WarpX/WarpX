@@ -43,7 +43,7 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     const bool time_averaging,
     const bool dive_cleaning,
     const bool divb_cleaning,
-    const bool asymmetrical_psatd)
+    const bool asymmetrical)
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
     m_spectral_index(spectral_index),
@@ -58,14 +58,13 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     m_time_averaging(time_averaging),
     m_dive_cleaning(dive_cleaning),
     m_divb_cleaning(divb_cleaning),
-    m_asymmetrical_psatd(asymmetrical_psatd)
+    m_asymmetrical(asymmetrical)
 {
 #if !defined(WARPX_DIM_3D)
     amrex::ignore_unused(norder_loc_y);
 #endif
 
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
-    amrex::Print()<< "norder_loc_x = " << norder_loc_x <<"\n";
     // Always allocate these coefficients
     C_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     S_ck_coef = SpectralRealCoefficients(ba, dm, 1, 0);
@@ -73,7 +72,7 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     X2_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     X3_coef = SpectralRealCoefficients(ba, dm, 1, 0);
 
-    InitializeSpectralCoefficients(spectral_kspace, dm, dt, asymmetrical_psatd);
+    InitializeSpectralCoefficients(spectral_kspace, dm, dt, asymmetrical);
 
     // Allocate these coefficients only with time averaging
     if (time_averaging)
@@ -91,7 +90,7 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
-    const bool asymmetrical_psatd = m_asymmetrical_psatd;
+    const bool asymmetrical = m_asymmetrical;
     const amrex::Real dt = m_dt;
 
     const SpectralFieldIndex& Idx = m_spectral_index;
@@ -190,7 +189,7 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
             const amrex::Real X4 = - S_ck / PhysConst::ep0;
 
             // Update equations for E in the formulation with rho
-            if (asymmetrical_psatd)
+            if (asymmetrical)
             {
               fields(i,j,k,Idx.Ex) = C * Ex_old
                   + I * c2 * S_ck * (ky_loc * Bz_old - kz_loc * By_old)
@@ -232,7 +231,7 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
                 - I * S_ck * (kx * Ey_old - ky * Ex_old) + I * X1 * (kx * Jy_old - ky * Jx_old)
                 + I * X2/c2 * (kx * (Jy_new - Jy_old) - ky * (Jx_new - Jx_old));
 
-            if (dive_cleaning && !asymmetrical_psatd)
+            if (dive_cleaning && !asymmetrical)
             {
                 const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
                 const Complex k_dot_J  = kx * Jx_old + ky * Jy_old + kz * Jz_old;
@@ -245,7 +244,7 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
                 fields(i,j,k,Idx.F) = C * F_old + S_ck * (I * k_dot_E - rho_old * inv_ep0)
                     - X1 * ((rho_new - rho_old) / dt + I * k_dot_J) - I * X2/c2 * k_dot_dJ;
             }
-            if (dive_cleaning && asymmetrical_psatd)
+            if (dive_cleaning && asymmetrical)
             {
                 const Complex kloc_dot_E  = kx_loc * Ex_old + ky_loc * Ey_old + kz_loc * Ez_old;
                 const Complex kloc_dot_J  = kx_loc * Jx_old + ky_loc * Jy_old + kz_loc * Jz_old;
@@ -324,7 +323,7 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const amrex::Real dt,
-    const bool asymmetrical_psatd)
+    const bool asymmetrical)
 {
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -356,7 +355,7 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
             // Calculate norm of k vector
             amrex::Real knorm_s;
 
-            if (asymmetrical_psatd)
+            if (asymmetrical)
             {
                 knorm_s = std::sqrt(
                 kx_s[i] * kx_loc[i] +

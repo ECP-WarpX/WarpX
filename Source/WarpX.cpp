@@ -125,7 +125,7 @@ short WarpX::maxwell_solver_id;
 short WarpX::load_balance_costs_update_algo;
 bool WarpX::do_dive_cleaning = false;
 bool WarpX::do_divb_cleaning = false;
-bool WarpX::do_asymmetrical_psatd = false;
+bool WarpX::do_asymmetrical = false;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
@@ -643,8 +643,6 @@ WarpX::ReadParameters ()
         {
             getWithParser(pp_warpx, "do_multi_J_n_depositions", do_multi_J_n_depositions);
         }
-        pp_warpx.query("do_asymmetrical_psatd", do_asymmetrical_psatd);
-
         pp_warpx.query("use_hybrid_QED", use_hybrid_QED);
         pp_warpx.query("safe_guard_cells", safe_guard_cells);
         std::vector<std::string> override_sync_intervals_string_vec = {"1"};
@@ -1183,6 +1181,8 @@ WarpX::ReadParameters ()
     {
         ParmParse pp_psatd("psatd");
         pp_psatd.query("periodic_single_box_fft", fft_periodic_single_box);
+
+        pp_psatd.query("do_asymmetrical", do_asymmetrical);
 
         std::string nox_str;
         std::string noy_str;
@@ -2337,7 +2337,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 do_multi_J,
                                                 do_dive_cleaning,
                                                 do_divb_cleaning,
-                                                do_asymmetrical_psatd);
+                                                do_asymmetrical);
     spectral_solver[lev] = std::move(pss);
 }
 #   endif
