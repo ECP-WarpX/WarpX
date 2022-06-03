@@ -47,7 +47,6 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
     m_spectral_index(spectral_index),
-
     modified_kx_loc_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_loc_x, true)),
 #if defined(WARPX_DIM_3D)
     modified_ky_loc_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_loc_y, true)),
@@ -61,6 +60,10 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     m_divb_cleaning(divb_cleaning),
     m_asymmetrical_psatd(asymmetrical_psatd)
 {
+#if !defined(WARPX_DIM_3D)
+    amrex::ignore_unused(norder_loc_y);
+#endif
+
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
     // Always allocate these coefficients
