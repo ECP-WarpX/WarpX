@@ -225,14 +225,15 @@ public:
 
                     amrex::ParticleReal fusion_energy = 0;
                     if (t_collision_type == CollisionType::DeuteriumTritiumFusion) {
-                        fusion_energy = 17.6e6 * PhysConst::q_e; // 17.6 MeV
+                        fusion_energy = 17.6e6_prt * PhysConst::q_e; // 17.6 MeV
                     }
-/*                    TwoProductFusionInitializeMomentum(soa_1, soa_2,
+                    // TODO: Add exception for other collision types
+                    TwoProductFusionInitializeMomentum(soa_1, soa_2,
                         soa_products_data[0], soa_products_data[1],
                         p_pair_indices_1[i], p_pair_indices_2[i],
                         products_np_data[0] + 2*p_offsets[i]*p_num_products_device[0],
                         products_np_data[1] + 2*p_offsets[i]*p_num_products_device[1],
-                        m1, m2, fusion_energy, engine); */
+                        m1, m2, products_mass[0], products_mass[1], fusion_energy, engine);
                 }
 
             }
