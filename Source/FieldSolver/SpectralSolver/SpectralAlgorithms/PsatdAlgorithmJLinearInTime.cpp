@@ -47,12 +47,12 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
     m_spectral_index(spectral_index),
-    modified_kx_loc_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_loc_x, true)),
+    modified_kx_loc_vec(spectral_kspace.getModifiedKComponent(dm, 0, norder_loc_x, nodal)),
 #if defined(WARPX_DIM_3D)
-    modified_ky_loc_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_loc_y, true)),
-    modified_kz_loc_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_loc_z, true)),
+    modified_ky_loc_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_loc_y, nodal)),
+    modified_kz_loc_vec(spectral_kspace.getModifiedKComponent(dm, 2, norder_loc_z, nodal)),
 #else
-    modified_kz_loc_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_loc_z, true)),
+    modified_kz_loc_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_loc_z, nodal)),
 #endif
     m_dt(dt),
     m_time_averaging(time_averaging),
@@ -65,7 +65,7 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
 #endif
 
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
-
+    amrex::Print()<< "norder_loc_x = " << norder_loc_x <<"\n";
     // Always allocate these coefficients
     C_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     S_ck_coef = SpectralRealCoefficients(ba, dm, 1, 0);
@@ -121,14 +121,14 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
 
         // Extract pointers for the k vectors
         const amrex::Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
-        const amrex::Real* modified_kx_loc_arr = modified_kx_loc_vec_centered[mfi].dataPtr();
+        const amrex::Real* modified_kx_loc_arr = modified_kx_loc_vec[mfi].dataPtr();
 
 #if defined(WARPX_DIM_3D)
         const amrex::Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
-        const amrex::Real* modified_ky_loc_arr = modified_ky_loc_vec_centered[mfi].dataPtr();
+        const amrex::Real* modified_ky_loc_arr = modified_ky_loc_vec[mfi].dataPtr();
 #endif
         const amrex::Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
-        const amrex::Real* modified_kz_loc_arr = modified_kz_loc_vec_centered[mfi].dataPtr();
+        const amrex::Real* modified_kz_loc_arr = modified_kz_loc_vec[mfi].dataPtr();
 
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -335,13 +335,13 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
 
         // Extract pointers for the k vectors
         const amrex::Real* kx_s = modified_kx_vec[mfi].dataPtr();
-        const amrex::Real* kx_loc = modified_kx_loc_vec_centered[mfi].dataPtr();
+        const amrex::Real* kx_loc = modified_kx_loc_vec[mfi].dataPtr();
 #if defined(WARPX_DIM_3D)
         const amrex::Real* ky_s = modified_ky_vec[mfi].dataPtr();
-        const amrex::Real* ky_loc = modified_ky_loc_vec_centered[mfi].dataPtr();
+        const amrex::Real* ky_loc = modified_ky_loc_vec[mfi].dataPtr();
 #endif
         const amrex::Real* kz_s = modified_kz_vec[mfi].dataPtr();
-        const amrex::Real* kz_loc = modified_kz_loc_vec_centered[mfi].dataPtr();
+        const amrex::Real* kz_loc = modified_kz_loc_vec[mfi].dataPtr();
 
         // Coefficients always allocated
         amrex::Array4<amrex::Real> C = C_coef[mfi].array();

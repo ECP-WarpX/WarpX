@@ -127,13 +127,13 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
 
         SpectralFieldIndex m_spectral_index;
         // Centered modified finite-order k vectors (used to lower order of current deposition)
-        KVectorComponent modified_kx_loc_vec_centered;
+        KVectorComponent modified_kx_loc_vec;
 
 #if defined(WARPX_DIM_3D)
-        KVectorComponent modified_ky_loc_vec_centered;
+        KVectorComponent modified_ky_loc_vec;
 
 #endif
-        KVectorComponent modified_kz_loc_vec_centered;
+        KVectorComponent modified_kz_loc_vec;
         // Other member variables
         amrex::Real m_dt;
         bool m_time_averaging;
