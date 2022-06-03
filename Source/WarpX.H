@@ -1384,13 +1384,14 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_slice;
 
     bool fft_periodic_single_box = false;
+
     int nox_fft = 16;
     int noy_fft = 16;
     int noz_fft = 16;
 
-    int nox_loc_fft = 8;
-    int noy_loc_fft = 8;
-    int noz_loc_fft = 8;
+    int nox_loc_fft = 16;
+    int noy_loc_fft = 16;
+    int noz_loc_fft = 16;
 
     //! Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
