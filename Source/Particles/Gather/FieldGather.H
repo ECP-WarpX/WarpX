@@ -386,6 +386,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
             }
         }
     }
+
 #endif
 }
 
