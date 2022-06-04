@@ -272,10 +272,6 @@ public:
     //! Order of the particle shape factors (splines) along z
     static int noz;
 
-    static int nox_cur_loc;
-    static int noy_cur_loc;
-    static int noz_cur_loc;
-
     //! Order of finite centering of fields (from staggered grid to nodal grid), along x
     static int field_centering_nox;
     //! Order of finite centering of fields (from staggered grid to nodal grid), along y
