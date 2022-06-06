@@ -17,6 +17,7 @@
 #include "WarpX.H"
 
 #include <ablastr/particles/IndexHandling.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_ArrayOfStructs.H>
@@ -463,7 +464,7 @@ void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix, int file_m
         if (m_CurrentStep >= ts) {
             // note m_Series is reset in Init(), so using m_Series->iterations.contains(ts) is only able to check the
             // last written step in m_Series's life time, but not other earlier written steps by other m_Series
-            WarpX::GetInstance().RecordWarning("Diagnostics",
+            ablastr::warn_manager::WMRecordWarning("Diagnostics",
                     " Warning from openPMD writer: Already written iteration:"
                     + std::to_string(ts)
                 );
@@ -556,8 +557,15 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
 
   for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
+
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-    auto tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
+    PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
+    PinnedMemoryParticleContainer tmp;
+    if (! isBTD) {
+        tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
+    } else {
+        tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
+    }
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;
@@ -568,40 +576,34 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     // note: an underscore separates the record name from its component
     //       for non-scalar records
     real_names.push_back("weighting");
-
     real_names.push_back("momentum_x");
     real_names.push_back("momentum_y");
     real_names.push_back("momentum_z");
-
 #ifdef WARPX_DIM_RZ
     real_names.push_back("theta");
 #endif
-
     // get the names of the real comps
-    real_names.resize(pc->NumRealComps());
-    auto runtime_rnames = pc->getParticleRuntimeComps();
+    real_names.resize(tmp.NumRealComps());
+    auto runtime_rnames = tmp.getParticleRuntimeComps();
     for (auto const& x : runtime_rnames)
     {
         real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
     }
-
     // plot any "extra" fields by default
     real_flags = particle_diags[i].plot_flags;
-    real_flags.resize(pc->NumRealComps(), 1);
-
+    real_flags.resize(tmp.NumRealComps(), 1);
     // and the names
-    int_names.resize(pc->NumIntComps());
-    auto runtime_inames = pc->getParticleRuntimeiComps();
+    int_names.resize(tmp.NumIntComps());
+    auto runtime_inames = tmp.getParticleRuntimeiComps();
     for (auto const& x : runtime_inames)
     {
         int_names[x.second+0] = detail::snakeToCamel(x.first);
     }
-
     // plot by default
-    int_flags.resize(pc->NumIntComps(), 1);
+    int_flags.resize(tmp.NumIntComps(), 1);
+
 
       pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
-
       RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                        particle_diags[i].m_random_fraction);
       UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
@@ -624,7 +626,6 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
                      * parser_filter(p, engine) * geometry_filter(p, engine);
           }, true);
       } else if (isBTD) {
-          PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
           tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
           tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
           tmp.SetParticleDistributionMap(0, pinned_pc->ParticleDistributionMap(0));
@@ -1320,6 +1321,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
         // lets see whether full_geom varies from geom[0]   xgeom[1]
         series_iteration.setTime( time );
     }
+
+    // If there are no fields to be written, interrupt the function here
+    if ( varnames.size()==0 ) return;
 
     // loop over levels up to output_levels
     //   note: this is usually the finestLevel, not the maxLevel

@@ -4,6 +4,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_ParmParse.H>
@@ -44,7 +46,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
            ( openPMD::IterationEncoding::groupBased != encoding ) )
       {
         std::string warnMsg = diag_name+" Unable to support BTD with streaming. Using GroupBased ";
-        WarpX::GetInstance().RecordWarning("Diagnostics", warnMsg);
+        ablastr::warn_manager::WMRecordWarning("Diagnostics", warnMsg);
         encoding = openPMD::IterationEncoding::groupBased;
       }
     }

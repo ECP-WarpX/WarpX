@@ -172,7 +172,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
             for (int i = 0; i < numSpecies(); ++i)
             {
                 if (!m_do_boundary_buffer[2*idim+iside][i]) continue;
-                const auto& pc = mypc.GetParticleContainer(i);
+                const WarpXParticleContainer& pc = mypc.GetParticleContainer(i);
                 if (!buffer[i].isDefined())
                 {
                     buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
@@ -324,4 +324,16 @@ ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int bo
                                      "Tried to get a buffer that is not defined!");
 
     return buffer[index];
+}
+
+PinnedMemoryParticleContainer *
+ParticleBoundaryBuffer::getParticleBufferPointer(const std::string species_name, int boundary) {
+
+    auto& buffer = m_particle_containers[boundary];
+    auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_boundary_buffer[boundary][index],
+                                     "Attempted to get particle buffer for boundary "
+                                     + std::to_string(boundary) + ", which is not used!");
+    return &buffer[index];
 }

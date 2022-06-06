@@ -675,6 +675,7 @@ def test_plasma_injector_fixedT2():
 
 
 def test_arbitrary_distribution_emitter():
+    """Seeds the simulation with a parabolic cylinder distribution"""
     name = "arbitrary_distribution_emitter"
     # Include a random run number to allow parallel runs to not collide.  Using
     # python randint prevents collisions due to numpy rseed below
@@ -682,7 +683,7 @@ def test_arbitrary_distribution_emitter():
 
     # Initialize each run with consistent, randomly-chosen, rseed. Use a random
     # seed instead for initial dataframe generation.
-    # np.random.seed(11874889)
+    np.random.seed(11874889)
 
     NX = NZ = 512
     NPPC = 10
@@ -700,15 +701,13 @@ def test_arbitrary_distribution_emitter():
 
     zz, xx = np.meshgrid(z, x)
 
-    plasma_density = np.pi/2 * 1e13 * (
-        np.sin(np.pi / NX * xx) * np.sin(np.pi / NZ * zz))
+    plasma_density = 0.5e13 * (-1 / (256**2) * (128 * zz  + (xx - 256)**2) + 2)
 
     # generate full resolution plasma density used as test's reference
     z = np.linspace(0, NZ, NZ + 1)
     x = np.linspace(0, NX, NX + 1)
     zz, xx = np.meshgrid(z, x)
-    ref_plasma_density = np.pi/2 * 1e13 * (
-        np.sin(np.pi / NX * xx) * np.sin(np.pi / NZ * zz))
+    ref_plasma_density = 0.5e13 * (-1 / (256**2) * (128 * zz  + (xx - 256)**2) + 2)
 
     emitter = emission.ArbitraryDistributionVolumeEmitter(
         d_grid=plasma_density,
@@ -746,10 +745,77 @@ def test_arbitrary_distribution_emitter():
     ion_xavg = np.mean(ion_density, axis=0)
     ion_zavg = np.mean(ion_density, axis=1)
 
-    sin_xavg = np.mean(ref_plasma_density, axis=0)
-    sin_zavg = np.mean(ref_plasma_density, axis=1)
+    ref_xavg = np.mean(ref_plasma_density, axis=0)
+    ref_zavg = np.mean(ref_plasma_density, axis=1)
 
-    assert np.allclose(electron_xavg[10:502], sin_xavg[10:502], rtol=0.06)
-    assert np.allclose(electron_zavg[10:502], sin_zavg[10:502], rtol=0.06)
-    assert np.allclose(ion_xavg[10:502], sin_xavg[10:502], rtol=0.06)
-    assert np.allclose(ion_zavg[10:502], sin_zavg[10:502], rtol=0.06)
+    slices = np.s_[2:-2]
+
+    assert np.allclose(electron_xavg[slices], ref_xavg[slices], rtol=0.02)
+    assert np.allclose(electron_zavg[slices], ref_zavg[slices], rtol=0.02)
+    assert np.allclose(ion_xavg[slices], ref_xavg[slices], rtol=0.02)
+    assert np.allclose(ion_zavg[slices], ref_zavg[slices], rtol=0.02)
+
+    # compare with previous results of seed over whole domain
+
+    prev_electron_density = np.load(os.path.join(
+       testing_util.test_dir, "emission",
+       "arbitrary_distribution_emitter",
+       "electrons_particle_density_0000000002.npy"
+    ))
+    prev_ion_density = np.load(os.path.join(
+       testing_util.test_dir, "emission",
+       "arbitrary_distribution_emitter",
+       "ar_ions_particle_density_0000000002.npy"
+    ))
+
+    assert np.allclose(electron_density, prev_electron_density)
+    assert np.allclose(ion_density, prev_ion_density)
+
+
+def test_patchy_vacuum_diode():
+    name = "patchy_vacuum_thermionic_diode"
+    # Include a random run number to allow parallel runs to not collide. Using
+    # python randint prevents collisions due to numpy rseed below
+    testing_util.initialize_testingdir(name)
+
+    # Initialize each run with consistent, randomly-chosen, rseed.
+    np.random.seed(12171467)
+
+    import sys
+    sys.path.append(testing_util.example_dir)
+
+    from thermionic_diode_patchy_cathode import PatchyVacuumTEC
+
+    run = PatchyVacuumTEC(
+        V_ANODE_CATHODE=12.5, TOTAL_TIMESTEPS=1000, SAVE=False, DIAG_STEPS=500,
+        #USE_SCHOTTKY=True,
+    )
+    run.NPPC = 2
+    run.setup_run()
+    run.run_sim()
+
+    key = ('scrape', 'anode', 'electrons')
+    J_diode = run.run.fluxdiag.ts_dict[key].get_averagevalue_by_key('J')
+    assert np.isclose(J_diode, 2.8021, atol=1e-4)
+
+    key = ('inject', 'cathode', 'electrons')
+    J_diode = run.run.fluxdiag.ts_dict[key].get_averagevalue_by_key('J')
+    assert np.isclose(J_diode, -2.8114, atol=1e-4)
+
+    # check electrostatic potential and electron charge density
+    ref_path = os.path.join(testing_util.test_dir, "emission", "patchy_cathode")
+    potential = np.load(os.path.join(
+        os.curdir, "diags", "fields",
+        "Electrostatic_potential_0000001000.npy"
+    ))
+    ref_potential = np.load(
+        os.path.join(ref_path, "Electrostatic_potential.npy"))
+    assert np.allclose(potential, ref_potential)
+
+    electron_density = np.load(os.path.join(
+        os.curdir, "diags", "fields",
+        "electrons_particle_density_0000001000.npy"
+    ))
+    ref_electron_density = np.load(
+        os.path.join(ref_path, "electrons_particle_density.npy"))
+    assert np.allclose(electron_density, ref_electron_density)

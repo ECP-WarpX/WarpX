@@ -12,7 +12,6 @@ import numba
 import numpy as np
 from pywarpx import callbacks, picmi
 import scipy.interpolate
-import scipy.ndimage
 import scipy.stats
 import skimage.measure
 
@@ -1197,6 +1196,88 @@ class ZPlaneEmitter(Emitter):
         return normals
 
 
+class ZPlanePatchyEmitter(object):
+    """Injection for a patchy cathode."""
+
+    geoms = ['XZ']
+
+    def __init__(self, patchy_cathode, transverse_fac=1.0, **kwargs):
+        """Initialize an emitter for a planar patchy cathode.
+
+        Arguments:
+            patchy_cathode (:class:`mewarpx.assemblies.PatchyCathode`): Patchy
+                cathode object, used to obtain work functions, patch size and z
+                coordinate/direction.
+            transverse_fac (float): Scale the transverse energy distribution by
+                this factor. Default 1. See
+                :func:`mewarpx.utils_store.util.get_velocities` for details.
+            kwargs (dict): Any other keyword arguments supported by the
+                Emitter constructor (such as "emission_type").
+        """
+        self.patchy_cathode = patchy_cathode
+
+        # The tricky part here is that we need to calculate the appropriate
+        # size for each patch set knowing that the domain is not necessarily
+        # an even integer multiple of the patch size. Note that the
+        # PatchyCathode is hard coded to have a high WF patch start at x=0.
+        patch_num = abs(mwxrun.xmax) / self.patchy_cathode.patch_size
+        full_patches = np.floor(patch_num)
+        if full_patches % 2.0:
+            high_wf_patches = (full_patches + 1.0) / 2.0
+        else:
+            high_wf_patches = full_patches / 2.0 + (patch_num - full_patches)
+
+        patch_num = abs(mwxrun.xmin) / self.patchy_cathode.patch_size
+        full_patches = np.floor(patch_num)
+        if full_patches % 2.0:
+            high_wf_patches += (
+                (full_patches - 1.0) / 2.0 + (patch_num - full_patches)
+            )
+        else:
+            high_wf_patches += full_patches / 2.0
+
+        high_wf_length = high_wf_patches * self.patchy_cathode.patch_size
+        low_wf_length = mwxrun.xmax - mwxrun.xmin - high_wf_length
+
+        # Default initialization for the two sets of patches
+        self.high_wf = ZPlanePatchSet(
+            conductor=self.patchy_cathode.cathode_list[0],
+            xmin=-high_wf_length/2.0, xmax=high_wf_length/2.0, **kwargs
+        )
+        self.low_wf = ZPlanePatchSet(
+            conductor=self.patchy_cathode.cathode_list[1],
+            xmin=-low_wf_length/2.0, xmax=low_wf_length/2.0, **kwargs
+        )
+
+
+class ZPlanePatchSet(ZPlaneEmitter):
+    """Emitter for a set of single WF patches. This is meant to be used by the
+    ``ZPlanePatchyEmitter``, not directly."""
+
+    def _get_xv_coords(self, npart, m, rseed):
+        """Get particle coordinates given particle number.
+
+        See parent class function for details.
+        """
+        x, y, z, vx, vy, vz = super()._get_xv_coords(npart, m, rseed)
+
+        # move x to be centered on conductor.x_start (assumes
+        # ``ZPlanePatchyEmitter`` set the emitter up centered at x=0)
+        x += self.conductor.x_start
+
+        point = self.conductor.x_start + self.conductor.patch_size
+        while point < mwxrun.xmax:
+            x[np.where(x > point)] += self.conductor.patch_size
+            point += 2.0*self.conductor.patch_size
+
+        point = self.conductor.x_start
+        while point > mwxrun.xmin:
+            x[np.where(x < point)] -= self.conductor.patch_size
+            point -= 2.0*self.conductor.patch_size
+
+        return x, y, z, vx, vy, vz
+
+
 class XPlaneEmitter(Emitter):
     """Injection for a planar cathode emitting from the simulation side."""
 
@@ -2103,7 +2184,7 @@ class ArbitraryDistributionVolumeEmitter(VolumeEmitter):
         # pad edges with current edge values by 1 to avoid NaN when interpolating
         input_x = np.linspace(-0.5, input_shape[0] + 0.5, input_shape[0] + 2)
         input_z = np.linspace(-0.5, input_shape[1] + 0.5, input_shape[1] + 2)
-        input_grid = np.pad(input_grid, (1,), "linear_ramp")
+        input_grid = np.pad(input_grid, (1,), "reflect", reflect_type="odd")
 
         input_zz, input_xx = np.meshgrid(input_z, input_x)
 

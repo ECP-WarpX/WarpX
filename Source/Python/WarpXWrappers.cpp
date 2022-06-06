@@ -18,6 +18,8 @@
 #include "WarpXWrappers.H"
 #include "WarpX_py.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_ArrayOfStructs.H>
 #include <AMReX_Box.H>
@@ -447,15 +449,12 @@ namespace
         const std::string species_name(char_species_name);
         auto & myspc = mypc.GetParticleContainerFromName(species_name);
 
-        int i = 0;
-        for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
+        *num_tiles = myspc.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
 
         auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*)));
-        i = 0;
+        int i = 0;
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {
             auto& aos = pti.GetArrayOfStructs();
             data[i] = (amrex::ParticleReal*) aos.data();
@@ -474,15 +473,12 @@ namespace
 
         int comp = warpx_getParticleCompIndex(char_species_name, char_comp_name);
 
-        int i = 0;
-        for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
+        *num_tiles = myspc.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
 
         auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(amrex::ParticleReal*)));
-        i = 0;
+        int i = 0;
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {
             auto& soa = pti.GetStructOfArrays();
             data[i] = (amrex::ParticleReal*) soa.GetRealData(comp).dataPtr();
@@ -542,15 +538,12 @@ namespace
 
         const int comp = particle_buffer.NumIntComps() - 1;
 
-        int i = 0;
-        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
+        *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
 
         auto data = static_cast<int**>(malloc(*num_tiles*sizeof(int*)));
-        i = 0;
+        int i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
             auto& soa = pti.GetStructOfArrays();
             data[i] = (int*) soa.GetIntData(comp).dataPtr();
@@ -569,15 +562,12 @@ namespace
 
         const int comp = warpx_getParticleCompIndex(species_name, comp_name);
 
-        int i = 0;
-        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
+        *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
 
         auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(amrex::ParticleReal*)));
-        i = 0;
+        int i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
             auto& soa = pti.GetStructOfArrays();
             data[i] = (amrex::ParticleReal*) soa.GetRealData(comp).dataPtr();
@@ -594,15 +584,12 @@ namespace
         auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
         auto& particle_buffer = particle_buffers.getParticleBuffer(species_name, boundary);
 
-        int i = 0;
-        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
+        *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
 
         auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*)));
-        i = 0;
+        int i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
             auto& aos = pti.GetArrayOfStructs();
             data[i] = (amrex::ParticleReal*) aos.data();
@@ -627,8 +614,9 @@ namespace
         auto * rho_fp = warpx.get_pointer_rho_fp(lev);
 
         if (rho_fp == nullptr) {
-            warpx.RecordWarning(
-                "WarpXWrappers", "rho_fp is not allocated", WarnPriority::low
+            ablastr::warn_manager::WMRecordWarning(
+                "WarpXWrappers", "rho_fp is not allocated",
+                ablastr::warn_manager::WarnPriority::low
             );
             return;
         }
@@ -767,8 +755,11 @@ namespace
     }
 
     void warpx_calcSchottkyWeight(const char* char_species_name,
-        const amrex::ParticleReal pre_fac, const int lev)
+        const double pre_fac, const int lev)
     {
+        using std::sqrt;
+        using std::exp;
+
         // get the particle container for the species of interest
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         const std::string species_name(char_species_name);
@@ -824,14 +815,14 @@ namespace
 
                 // calculate the dot product of the electric field with the
                 // normal vector tied to the particle
-                amrex::Real normal_field = (
+                double const normal_field = (
                     Ex_p * norm_x[ip] + Ey_p * norm_y[ip] + Ez_p * norm_z[ip]
                 );
 
                 // increase the particle weight by the Schottky enhancement
                 // factor if needed
                 w[ip] *= ((normal_field < 0.0) ?
-                    std::exp(pre_fac * std::sqrt(-normal_field)) : 1.0
+                    exp(pre_fac * sqrt(-normal_field)) : 1.0
                 );
             });
         }
