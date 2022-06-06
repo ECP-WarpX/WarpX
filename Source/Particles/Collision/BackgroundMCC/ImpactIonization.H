@@ -17,7 +17,7 @@
 
 /** @file
  *
- * This file contains filter and transform functor for impact ionization
+ * This file contains filter and transform functors for impact ionization
  */
 
 /**
@@ -35,6 +35,9 @@ public:
     * for an ionization event. If the particle passes this stage the collision
     * cross-section is calculated given its energy and another random number
     * is used to determine whether it actually collides.
+    * Note that the mass and energy quantities have to be stored as doubles to
+    * ensure accurate energy calculations (otherwise errors occur with single
+    * or mixed precision builds of WarpX).
     *
     * @param[in] mcc_process an MCCProcess object associated with the ionization
     * @param[in] mass colliding particle's mass (could also assume electron)
@@ -131,6 +134,9 @@ public:
     * ionization is passed to the constructor as well as the mass of the
     * colliding species and the standard deviation of the ion velocity
     * (normalized temperature).
+    * Note that the mass and energy quantities have to be stored as doubles to
+    * ensure accurate energy calculations (otherwise errors occur with single
+    * or mixed precision builds of WarpX).
     *
     * @param[in] energy_cost energy cost of ionization
     * @param[in] mass1 mass of the colliding species
