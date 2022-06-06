@@ -753,3 +753,52 @@ def test_arbitrary_distribution_emitter():
     assert np.allclose(electron_zavg[10:502], sin_zavg[10:502], rtol=0.06)
     assert np.allclose(ion_xavg[10:502], sin_xavg[10:502], rtol=0.06)
     assert np.allclose(ion_zavg[10:502], sin_zavg[10:502], rtol=0.06)
+
+
+def test_patchy_vacuum_diode():
+    name = "patchy_vacuum_thermionic_diode"
+    # Include a random run number to allow parallel runs to not collide. Using
+    # python randint prevents collisions due to numpy rseed below
+    testing_util.initialize_testingdir(name)
+
+    # Initialize each run with consistent, randomly-chosen, rseed.
+    np.random.seed(12171467)
+
+    import sys
+    sys.path.append(testing_util.example_dir)
+
+    from thermionic_diode_patchy_cathode import PatchyVacuumTEC
+
+    run = PatchyVacuumTEC(
+        V_ANODE_CATHODE=12.5, TOTAL_TIMESTEPS=1000, SAVE=False, DIAG_STEPS=500,
+        #USE_SCHOTTKY=True,
+    )
+    run.NPPC = 2
+    run.setup_run()
+    run.run_sim()
+
+    key = ('scrape', 'anode', 'electrons')
+    J_diode = run.run.fluxdiag.ts_dict[key].get_averagevalue_by_key('J')
+    assert np.isclose(J_diode, 2.8021, atol=1e-4)
+
+    key = ('inject', 'cathode', 'electrons')
+    J_diode = run.run.fluxdiag.ts_dict[key].get_averagevalue_by_key('J')
+    assert np.isclose(J_diode, -2.8114, atol=1e-4)
+
+    # check electrostatic potential and electron charge density
+    ref_path = os.path.join(testing_util.test_dir, "emission", "patchy_cathode")
+    potential = np.load(os.path.join(
+        os.curdir, "diags", "fields",
+        "Electrostatic_potential_0000001000.npy"
+    ))
+    ref_potential = np.load(
+        os.path.join(ref_path, "Electrostatic_potential.npy"))
+    assert np.allclose(potential, ref_potential)
+
+    electron_density = np.load(os.path.join(
+        os.curdir, "diags", "fields",
+        "electrons_particle_density_0000001000.npy"
+    ))
+    ref_electron_density = np.load(
+        os.path.join(ref_path, "electrons_particle_density.npy"))
+    assert np.allclose(electron_density, ref_electron_density)

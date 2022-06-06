@@ -316,6 +316,111 @@ class Cathode(ZPlane):
         self.scraper_label = 'z_lo'
 
 
+class PatchyCathode(object):
+    """A basic wrapper to define a semi-infinite plane for a patchy cathode.
+    Special aspects of the patchy cathode involve instantiation of two assembly
+    objects for the low and high work-function patches of the cathode and
+    setting a spatially varying boundary potential. Installing such a spatially
+    varying boundary potential is simplified by using an embedded boundary
+    rather than the domain boundary since WarpX does not yet support spatially
+    varying boundary conditions on domain boundaries (as of 6/3/2022, and
+    implementing it could hurt performance with constant potentials unless it
+    is carefully done). Simplified assemblies similar to ``Rectangle`` is used.
+    """
+    geoms = ['XZ']
+
+    def __init__(self, V, T, phi_bar, delta_phi, patch_size,
+                 read_scraped_particles=True):
+        """Arguments:
+
+        V (float): Cathode fermi-level - phi_bar (far field vacuum level).
+        T (float): Temperature of the cathode in Kelvin.
+        phi_bar (float): Average work-function.
+        delta_phi (float): Difference between max and min work-function values.
+        patch_size (float): Patch size in meters.
+         """
+
+        self.patch_size = patch_size
+        self.delta_phi = delta_phi
+
+        # the patchy cathode extends 1.5 cell width into the domain
+        # if the boundary falls on a cell edge, the calculation fails
+        self.z_max = mwxrun.zmin + 0.5*mwxrun.dz
+        self.z_min = mwxrun.zmin - 0.5*mwxrun.dz
+
+        # build the two patch segments of the cathode
+        self.high_wf_patch = ZPlanePatchSet(
+            V-delta_phi/2.0, T=T, WF=phi_bar+delta_phi/2.0,
+            name='cathode_high_wf', patch_size=patch_size, x_start=0.0,
+            z=self.z_max
+        )
+        self.low_wf_patch = ZPlanePatchSet(
+            V+delta_phi/2.0, T=T, WF=phi_bar-delta_phi/2.0,
+            name='cathode_low_wf', patch_size=patch_size, x_start=patch_size,
+            z=self.z_max
+        )
+        self.cathode_list = [self.high_wf_patch, self.low_wf_patch]
+
+        # Negative means outside of object
+        self.implicit_function = (
+            f"-max(max(x-{mwxrun.xmax},{mwxrun.xmin}-x),"
+            f"max(z-{self.z_max},{self.z_min}-z))"
+        )
+        self.scraper_label = 'eb'
+        # set the boundary potential - note that this expression assumes
+        # that the higher WF patch starts at x=0 (continuing to the right)
+        self.V = (f"({V}+"
+            f"{delta_phi}*(fmod(ceil((abs(x/{patch_size}+0.5)+0.5)),2)-0.5))"
+        )
+        # actually write the implicit function and potential to WarpX input
+        Assembly._install_in_simulation(self)
+        # the below is just to make the potential plots look nicer - have a
+        # strip of V values behind the cathode instead of (V+delta_phi/2.0)
+        mwxrun.grid.potential_zmin = V
+
+
+class ZPlanePatchSet(ZPlane):
+    """A rectangle-like assembly that only scrapes on strips of width
+    ``patch_size``, with the same distance between neighboring strips,
+    positioned such that a strip starts at ``x_start``."""
+
+    def __init__(self, V, T, WF, name, patch_size, x_start, z):
+        """Same arguments as ZPlane, with the following additions:
+
+            patch_size (float): Width of strip to scrape from and distance
+                between strips.
+            x_start (float): x-position where a strip starts.
+            z (float): z-position of the front face of the cathode.
+        """
+        ZPlane.__init__(self, z=z, zsign=-1, V=V, T=T, WF=WF, name=name)
+
+        self.scraper_label = 'eb'
+        self.patch_size = patch_size
+        self.x_start = x_start
+
+    # The main functionality of ZPlanePatchSet is to implement the ``isinside``
+    # function that will pick out particles scraped on this set of patches
+    def isinside(self, X, Y, Z):
+        """
+        Determines whether the given coordinates are inside the assembly.
+
+        Arguments:
+            X (np.ndarray): array of x coordinates.
+            Y (np.ndarray): array of y coordinates.
+            Z (np.ndarray): array of z coordinates.
+
+        Returns:
+            result (np.ndarray): array of values corresponding to the input
+                coordinates where all points inside the assembly are 1, and
+                others are 0.
+        """
+        X_in_bounds = ((X - self.x_start) // self.patch_size) % 2
+        Z_in_bounds = np.where(Z <= self.z, 1, 0)
+        result = np.where(X_in_bounds + Z_in_bounds > 1, 1, 0)
+
+        return result
+
+
 class Anode(ZPlane):
     """A basic wrapper to define a semi-infinite plane for the anode."""
 
@@ -370,19 +475,20 @@ class InfCylinderY(Assembly):
 
     def isinside(self, X, Y, Z, aura=0):
         """
-        Calculates which grid tiles are within the cylinder.
+        Determines whether the given coordinates are inside the assembly.
 
         Arguments:
-            X (np.ndarray): array of x coordinates of flattened grid.
-            Y (np.ndarray): array of y coordinates of flattened grid.
-            Z (np.ndarray): array of z coordinates of flattened grid.
+            X (np.ndarray): array of x coordinates.
+            Y (np.ndarray): array of y coordinates.
+            Z (np.ndarray): array of z coordinates.
             aura (float): extra space around the conductor that is considered
                 inside. Useful for small, thin conductors that don't overlap any
                 grid points. In units of meters.
 
         Returns:
-            result (np.ndarray): array of flattened grid where all tiles
-                inside the cylinder are 1, and other tiles are 0.
+            result (np.ndarray): array of values corresponding to the input
+                coordinates where all points inside the assembly are 1, and
+                others are 0.
         """
         dist_to_center = (X - self.center_x)**2 + (Z - self.center_z)**2
         boundary = (self.radius + aura)**2
@@ -620,8 +726,8 @@ class Rectangle(Assembly):
 
         # Negative means outside of object
         self.implicit_function = (
-            f"-max(max(x-({self.xmax}),({self.xmin})-x),"
-            f"max(z-({self.zmax}),({self.zmin})-z))"
+            f"-max(max(x-{self.xmax},{self.xmin}-x),"
+            f"max(z-{self.zmax},{self.zmin}-z))"
         )
         self.scraper_label = 'eb'
 
@@ -738,19 +844,20 @@ class Rectangle(Assembly):
 
     def isinside(self, X, Y, Z, aura=0):
         """
-        Calculates which grid tiles are within the rectangle.
+        Determines whether the given coordinates are inside the assembly.
 
         Arguments:
-            X (np.ndarray): array of x coordinates of flattened grid.
-            Y (np.ndarray): array of y coordinates of flattened grid.
-            Z (np.ndarray): array of z coordinates of flattened grid.
+            X (np.ndarray): array of x coordinates.
+            Y (np.ndarray): array of y coordinates.
+            Z (np.ndarray): array of z coordinates.
             aura (float): extra space around the conductor that is considered
                 inside. Useful for small, thin conductors that don't overlap any
                 grid points. In units of meters.
 
         Returns:
-            result (np.ndarray): array of flattened grid where all tiles
-                inside the rectangle are 1, and other tiles are 0.
+            result (np.ndarray): array of values corresponding to the input
+                coordinates where all points inside the assembly are 1, and
+                others are 0.
         """
 
         X_in_bounds = np.where(

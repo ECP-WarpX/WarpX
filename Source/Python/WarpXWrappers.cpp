@@ -755,8 +755,11 @@ namespace
     }
 
     void warpx_calcSchottkyWeight(const char* char_species_name,
-        const amrex::ParticleReal pre_fac, const int lev)
+        const double pre_fac, const int lev)
     {
+        using std::sqrt;
+        using std::exp;
+
         // get the particle container for the species of interest
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         const std::string species_name(char_species_name);
@@ -812,14 +815,14 @@ namespace
 
                 // calculate the dot product of the electric field with the
                 // normal vector tied to the particle
-                amrex::Real normal_field = (
+                double const normal_field = (
                     Ex_p * norm_x[ip] + Ey_p * norm_y[ip] + Ez_p * norm_z[ip]
                 );
 
                 // increase the particle weight by the Schottky enhancement
                 // factor if needed
                 w[ip] *= ((normal_field < 0.0) ?
-                    std::exp(pre_fac * std::sqrt(-normal_field)) : 1.0
+                    exp(pre_fac * sqrt(-normal_field)) : 1.0
                 );
             });
         }

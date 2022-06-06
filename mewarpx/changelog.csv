@@ -1,5 +1,20 @@
 Version, Physics version, Date,        List of changes
-8.3.0, 2, In progress, "
+8.4.0, 2, In progress, "
+
+**Features**:
+
+- Added support for patchy cathodes. This includes
+  :class:`mewarpx.assemblies.PatchyCathode` to install a planar patchy
+  cathode in a simulation (XZ) and :class:`mewarpx.emission.ZPlanePatchyEmitter`
+  to handle proper positioning of electrons based on which patch they are
+  emitted from. These two control classes create instances of
+  :class:`mewarpx.assemblies.ZPlanePatchSet` and
+  :class:`mewarpx.emission.ZPlanePatchSet` in order to handle scraping and
+  injection. Also added example script, ``thermionic_diode_patchy_cathode.py``
+  for reference of how to install a patchy cathode.
+
+"
+8.3.0, 2, 6/1/2022, "
 
 **Features**:
 

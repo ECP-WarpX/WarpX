@@ -252,8 +252,7 @@ extern "C" {
       const int lev);
 
   void warpx_calcSchottkyWeight(
-      const char* char_species_name, const amrex::ParticleReal pre_fac,
-      const int lev);
+      const char* char_species_name, const double pre_fac, const int lev);
 
 #ifdef __cplusplus
 }
