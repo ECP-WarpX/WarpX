@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_MSG_LOGGER_H_
-#define WARPX_MSG_LOGGER_H_
+#ifndef ABLASTR_MSG_LOGGER_H_
+#define ABLASTR_MSG_LOGGER_H_
 
 #include <AMReX.H>
 
@@ -16,9 +16,8 @@
 #include <utility>
 #include <vector>
 
-namespace Utils{
-namespace MsgLogger{
-
+namespace ablastr::utils::msg_logger
+{
     /** Priority is recorded together with messages. It influences
     * the display order and the appearance of a message.
     */
@@ -287,6 +286,5 @@ namespace MsgLogger{
         std::map<Msg, std::int64_t> m_messages /*! This stores a map to associate warning messages with the corresponding counters*/;
     };
 }
-}
 
-#endif //WARPX_MSG_LOGGER_H_
+#endif //ABLASTR_MSG_LOGGER_H_

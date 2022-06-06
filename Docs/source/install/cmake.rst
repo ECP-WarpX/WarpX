@@ -95,6 +95,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_MPI_THREAD_MULTIPLE`` **ON**/OFF                                   MPI thread-multiple support, i.e. for ``async_io``
 ``WarpX_OPENPMD``             **ON**/OFF                                   openPMD I/O (HDF5, ADIOS)
 ``WarpX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
+``WarpX_PARTICLE_PRECISION``  SINGLE/**DOUBLE**                            Particle floating point precision (single/double), defaults to WarpX_PRECISION value if not set
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WarpX_QED``                 **ON**/OFF                                   QED support (requires PICSAR)
 ``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation support (requires PICSAR and Boost)
@@ -266,6 +267,7 @@ Environment Variable          Default & Values                             Descr
 ``WARPX_MPI``                 ON/**OFF**                                   Multi-node support (message-passing)
 ``WARPX_OPENPMD``             **ON**/OFF                                   openPMD I/O (HDF5, ADIOS)
 ``WARPX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
+``WARPX_PARTICLE_PRECISION``  SINGLE/**DOUBLE**                            Particle floating point precision (single/double), defaults to WarpX_PRECISION value if not set
 ``WARPX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WARPX_QED``                 **ON**/OFF                                   PICSAR QED (requires PICSAR)
 ``WARPX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation (requires PICSAR and Boost)

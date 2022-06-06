@@ -48,7 +48,7 @@ repos:
 
 # Changes tabs to spaces
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.1.14
+  rev: v1.2.0
   hooks:
   - id: remove-tabs
     exclude: 'Make.WarpX|Make.package|Makefile|GNUmake'
@@ -67,7 +67,7 @@ repos:
 
 # Autoremoves unused Python imports
 - repo: https://github.com/hadialqattan/pycln
-  rev: v1.3.2
+  rev: v1.3.3
   hooks:
   - id: pycln
     name: pycln (python)

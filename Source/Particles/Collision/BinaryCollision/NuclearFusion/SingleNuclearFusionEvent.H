@@ -58,10 +58,10 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
                                const amrex::Real& dt, const amrex::Real& dV, const int& pair_index,
                                index_type* AMREX_RESTRICT p_mask,
                                amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
-                               const amrex::Real& fusion_multiplier,
+                               const amrex::ParticleReal& fusion_multiplier,
                                const int& multiplier_ratio,
-                               const amrex::Real& probability_threshold,
-                               const amrex::Real& probability_target_value,
+                               const amrex::ParticleReal& probability_threshold,
+                               const amrex::ParticleReal& probability_target_value,
                                const NuclearFusionType& fusion_type,
                                const amrex::RandomEngine& engine)
 {

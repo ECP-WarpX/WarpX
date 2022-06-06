@@ -29,6 +29,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
 #ifdef AMREX_USE_SENSEI_INSITU
@@ -62,12 +64,11 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
-#include <sstream>
 
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 
@@ -118,6 +119,20 @@ WarpX::PrintMainPICparameters ()
     amrex::Print() << "-------------------------------------------------------------------------------\n";
     amrex::Print() << "--------------------------- MAIN EM PIC PARAMETERS ----------------------------\n";
     amrex::Print() << "-------------------------------------------------------------------------------\n";
+
+    // print warpx build information
+    if constexpr (std::is_same<Real, float>::value) {
+      amrex::Print() << "Precision:            | SINGLE" << "\n";
+    }
+    else {
+      amrex::Print() << "Precision:            | DOUBLE" << "\n";
+    }
+    if constexpr (std::is_same<ParticleReal, float>::value) {
+      amrex::Print() << "Particle precision:   | SINGLE" << "\n";
+    }
+    else {
+      amrex::Print() << "Particle precision:   | DOUBLE" << "\n";
+    }
 
     // Print geometry dimensionality
     amrex::ParmParse pp_geometry("geometry");
@@ -333,6 +348,17 @@ WarpX::PrintMainPICparameters ()
 }
 
 void
+WarpX::WriteUsedInputsFile (std::string const & filename) const
+{
+    amrex::Print() << "For full input parameters, see the file: " << filename << "\n\n";
+
+    std::ofstream jobInfoFile;
+    jobInfoFile.open(filename.c_str(), std::ios::out);
+    ParmParse::dumpTable(jobInfoFile, true);
+    jobInfoFile.close();
+}
+
+void
 WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
@@ -386,6 +412,7 @@ WarpX::InitData ()
     CheckGuardCells();
 
     PrintMainPICparameters();
+    WriteUsedInputsFile();
 
     if (restart_chkfile.empty())
     {
@@ -742,7 +769,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (B_ext_grid_s == "parse_b_ext_grid_function") {
 
 #ifdef WARPX_DIM_RZ
-       amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
+       amrex::Abort(Utils::TextMsg::Err(
+           "E and B parser for external fields does not work with RZ -- TO DO"));
 #endif
        Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
                                                     str_Bx_ext_grid_function);
@@ -799,7 +827,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (E_ext_grid_s == "parse_e_ext_grid_function") {
 
 #ifdef WARPX_DIM_RZ
-       amrex::Abort("E and B parser for external fields does not work with RZ -- TO DO");
+       amrex::Abort(Utils::TextMsg::Err(
+           "E and B parser for external fields does not work with RZ -- TO DO"));
 #endif
        Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
                                                     str_Ex_ext_grid_function);
@@ -1072,7 +1101,8 @@ WarpX::PerformanceHints ()
             << "  More information:\n"
             << "  https://warpx.readthedocs.io/en/latest/running_cpp/parallelization.html\n";
 
-        WarpX::GetInstance().RecordWarning("Performance", warnMsg.str(), WarnPriority::high);
+        ablastr::warn_manager::WMRecordWarning(
+          "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
     }
 
     // TODO: warn if some ranks have disproportionally more work than all others
@@ -1146,20 +1176,14 @@ void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
     {
         const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
         const amrex::IntVect gc = mf.nGrowVect();
-        if (vc.allGT(gc) == false)
-        {
-            std::stringstream ss;
-            ss << "\nMultiFab "
-               << mf.tags()[1]
-               << ":\nthe number of guard cells "
-               << gc
-               << " is larger than or equal to the number of valid cells "
-               << vc
-               << ",\nplease reduce the number of guard cells"
-               << " or increase the grid size by changing domain decomposition";
-            amrex::Abort(ss.str());
 
-        }
+        std::stringstream ss_msg;
+        ss_msg << "MultiFab " << mf.tags()[1].c_str() << ":" <<
+            " the number of guard cells " << gc <<
+            " is larger than or equal to the number of valid cells "
+            << vc << ", please reduce the number of guard cells" <<
+             " or increase the grid size by changing domain decomposition.";
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.str());
     }
 }
 
@@ -1173,9 +1197,9 @@ void WarpX::InitializeEBGridData (int lev)
 
         if ((nox > 1 or noy > 1 or noz > 1) and flag_eb_on)
         {
-            this->RecordWarning("Particles",
-                                "when algo.particle_shape > 1, numerical artifacts will be present when\n"
-                                "particles are close to embedded boundaries");
+            ablastr::warn_manager::WMRecordWarning("Particles",
+              "when algo.particle_shape > 1, numerical artifacts will be present when\n"
+              "particles are close to embedded boundaries");
         }
 
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||

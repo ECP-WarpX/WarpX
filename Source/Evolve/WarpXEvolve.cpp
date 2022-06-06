@@ -34,6 +34,7 @@
 #include "Utils/WarpXUtil.H"
 
 #include <ablastr/utils/SignalHandling.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_Array.H>
@@ -342,7 +343,10 @@ WarpX::Evolve (int numsteps)
         if (!early_params_checked) {
             amrex::Print() << "\n"; // better: conditional \n based on return value
             amrex::ParmParse().QueryUnusedInputs();
-            this->PrintGlobalWarnings("FIRST STEP"); //Print the warning list right after the first step.
+
+            //Print the warning list right after the first step.
+            amrex::Print() <<
+                ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("FIRST STEP");
             early_params_checked = true;
         }
 
@@ -570,6 +574,12 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             SyncRho();
             // Forward FFT of rho_new
             PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
+        }
+
+        if (WarpX::current_correction)
+        {
+            amrex::Abort(Utils::TextMsg::Err(
+                "Current correction not implemented for multi-J algorithm."));
         }
 
         // Advance E,B,F,G fields in time and update the average fields
