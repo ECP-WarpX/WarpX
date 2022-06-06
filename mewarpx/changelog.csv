@@ -1,5 +1,5 @@
 Version, Physics version, Date,        List of changes
-8.4.0, 2, In progress, "
+8.4.0, 2, 6/6/2022, "
 
 **Features**:
 
@@ -12,6 +12,20 @@ Version, Physics version, Date,        List of changes
   :class:`mewarpx.emission.ZPlanePatchSet` in order to handle scraping and
   injection. Also added example script, ``thermionic_diode_patchy_cathode.py``
   for reference of how to install a patchy cathode.
+
+**Bugfixes**:
+
+- Fixed padding of seed density grid for
+  :class:`mewarpx.emission.ArbitraryDistributionVolumeEmitter` so that
+  it pads by 1 using linear extrapolation rather than a fixed value of 0.
+
+**Other Changes**:
+
+- Changed test for :class:`mewarpx.emission.ArbitraryDistributionVolumeEmitter`
+  to seed with a skewed parabolic cylinder distribution. This test is better
+  at catching errors near the simulation edges than the previous sin
+  distribution test.
+- Merge WarpX release 22.06 (git hash ``c654097``) into ``memaster``.
 
 "
 8.3.0, 2, 6/1/2022, "
@@ -35,7 +49,6 @@ Version, Physics version, Date,        List of changes
 
 "
 8.2.0, 2, 5/11/2022, "
-
 
 **Features**:
 

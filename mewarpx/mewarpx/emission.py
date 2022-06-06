@@ -12,7 +12,6 @@ import numba
 import numpy as np
 from pywarpx import callbacks, picmi
 import scipy.interpolate
-import scipy.ndimage
 import scipy.stats
 import skimage.measure
 
@@ -2185,7 +2184,7 @@ class ArbitraryDistributionVolumeEmitter(VolumeEmitter):
         # pad edges with current edge values by 1 to avoid NaN when interpolating
         input_x = np.linspace(-0.5, input_shape[0] + 0.5, input_shape[0] + 2)
         input_z = np.linspace(-0.5, input_shape[1] + 0.5, input_shape[1] + 2)
-        input_grid = np.pad(input_grid, (1,), "linear_ramp")
+        input_grid = np.pad(input_grid, (1,), "reflect", reflect_type="odd")
 
         input_zz, input_xx = np.meshgrid(input_z, input_x)
 
