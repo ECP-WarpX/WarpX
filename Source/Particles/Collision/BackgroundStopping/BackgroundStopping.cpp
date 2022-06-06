@@ -84,6 +84,9 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiPar
     amrex::Real species_mass = species.getMass();
     amrex::Real species_charge = species.getCharge();
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(species_mass > 0., "Error: With background stopping, the species mass must be > 0");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(species_charge != 0., "Error: With background stopping, the species charge must be nonzero");
+
     BackgroundStoppingType background_type = m_background_type;
 
     // Loop over refinement levels
@@ -156,6 +159,9 @@ void BackgroundStopping::doBackgroundStoppingOnElectronsWithinTile (WarpXParIter
             amrex::Real const n_e = n_e_func(x, y, z, t);
             amrex::Real const T_e = T_e_func(x, y, z, t)*PhysConst::kb;
 
+            AMREX_ASSERT(n_e > 0.);
+            AMREX_ASSERT(T_e > 0.);
+
             // This implements the equation 14.12 from Introduction to Plasma Physics,
             // Goldston and Rutherford, the slowing down of beam ions due to collisions with electrons.
             // The equation is written as dV/dt = -alpha*V, and integrated to
@@ -174,6 +180,8 @@ void BackgroundStopping::doBackgroundStoppingOnElectronsWithinTile (WarpXParIter
             amrex::Real const lambdadb = vth/wp;
             amrex::Real const lambdadb3 = lambdadb*lambdadb*lambdadb;
             amrex::Real const loglambda = log((12._rt*pi/Zb)*(n_e*lambdadb3));
+
+            AMREX_ASSERT(loglambda > 0.);
 
             amrex::Real const pi32 = pi*sqrt(pi);
             amrex::Real const q2 = species_charge*species_charge;
@@ -226,6 +234,9 @@ void BackgroundStopping::doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti
             amrex::Real const n_i = n_i_func(x, y, z, t);
             amrex::Real const T_i = T_i_func(x, y, z, t)*PhysConst::kb;
 
+            AMREX_ASSERT(n_i > 0.);
+            AMREX_ASSERT(T_i > 0.);
+
             // This implements the equation 14.20 from Introduction to Plasma Physics,
             // Goldston and Rutherford, the slowing down of beam ions due to collisions with electrons.
             // The equation is written with energy, W, as dW/dt = -alpha/W**0.5, and integrated to
@@ -246,6 +257,8 @@ void BackgroundStopping::doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti
             amrex::Real const lambdadb = vth/wp;
             amrex::Real const lambdadb3 = lambdadb*lambdadb*lambdadb;
             amrex::Real const loglambda = log((12._rt*pi/Zb)*(n_i*lambdadb3));
+
+            AMREX_ASSERT(loglambda > 0.);
 
             amrex::Real const alpha = sqrt(2._rt)*n_i*qi2*qb2*sqrt(species_mass)*loglambda/(8._rt*pi*ep02*mass_i);
 
