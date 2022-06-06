@@ -18,6 +18,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Parallelization/WarpXCommUtil.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
 #include <AMReX_BLassert.H>
@@ -284,8 +286,9 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     bool always_use_bnorm = (max_norm_b > 0);
     if (!always_use_bnorm) {
         if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
-        WarpX::GetInstance().RecordWarning(
-            "ElectrostaticSolver", "Max norm of rho is 0", WarnPriority::low
+        ablastr::warn_manager::WMRecordWarning(
+            "ElectrostaticSolver", "Max norm of rho is 0",
+            ablastr::warn_manager::WarnPriority::low
         );
     }
 
