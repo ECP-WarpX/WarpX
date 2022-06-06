@@ -1,4 +1,4 @@
-.. _developers-collisions:
+.. _theory-collisions:
 
 Collisions
 ==========
@@ -14,9 +14,11 @@ The so-called null collision strategy is used in order to minimize the computati
 
 The MCC implementation assumes that the background neutral particles are **thermal**, and are moving at non-relativistic velocities in the lab frame. For each simulation particle considered for a collision, a velocity vector for a neutral particle is randomly chosen. The particle velocity is then boosted to the stationary frame of the neutral through a Galilean transformation. The energy of the collision is calculated using the particle utility function, ``ParticleUtils::getCollisionEnergy()``, as
 
-    .. math:: E_{coll} = \sqrt{(\gamma mc^2 + Mc^2)^2 - (mv)^2} - (mc^2 + Mc^2)
+    .. math::
 
-where :math:`v` is the speed of the particle as tracked in WarpX (really :math:`\gamma` times the particle speed), :math:`m` and :math:`M` are the rest masses of the simulation and background species, respectively. The Lorentz factor is defined in the usual way, :math:`\gamma = \sqrt{1 + v^2/c^2}`. The collision cross-sections for all scattering processes are evaluated at the energy as calculated above.
+        E_{coll} = \sqrt{(\gamma mc^2 + Mc^2)^2 - (mu)^2} - (mc^2 + Mc^2)
+
+where :math:`u` is the speed of the particle as tracked in WarpX (i.e. :math:`u = \gamma v` with :math:`v` the particle speed), while :math:`m` and :math:`M` are the rest masses of the simulation and background species, respectively. The Lorentz factor is defined in the usual way, :math:`\gamma = \sqrt{1 + u^2/c^2}`. The collision cross-sections for all scattering processes are evaluated at the energy as calculated above.
 
 Once a particle is selected for a specific collision process, that process determines how the particle is scattered as outlined below.
 
@@ -28,14 +30,14 @@ This is the simplest scattering process. Under charge exchange the simulation pa
 Elastic scattering
 ^^^^^^^^^^^^^^^^^^
 
-This scattering process as well as the ones below that relate to it, are all performed in the center-of-momentum (COM) frame. Designating the COM velocity of the particle as :math:`\vec{u}` and its labframe velocity as :math:`\vec{v}`, the transformation from lab frame to COM frame is done with a general Lorentz boost (see function ``ParticleUtils::doLorentzTransform()``):
+This scattering process as well as the ones below that relate to it, are all performed in the center-of-momentum (COM) frame. Designating the COM velocity of the particle as :math:`\vec{u}_c` and its labframe velocity as :math:`\vec{u}_l`, the transformation from lab frame to COM frame is done with a general Lorentz boost (see function ``ParticleUtils::doLorentzTransform()``):
 
     .. math::
             \begin{bmatrix}
-                \gamma_u c \\
-                u_x \\
-                u_y \\
-                u_z
+                \gamma_c c \\
+                u_{cx} \\
+                u_{cy} \\
+                u_{cz}
             \end{bmatrix}
          = \begin{bmatrix}
                 \gamma & -\gamma\beta_x & -\gamma\beta_y & -\gamma\beta_z \\
@@ -43,23 +45,24 @@ This scattering process as well as the ones below that relate to it, are all per
                 -\gamma\beta_y & (\gamma-1)\frac{\beta_x\beta_y}{\beta^2} & 1 +(\gamma-1)\frac{\beta_y^2}{\beta^2} & (\gamma-1)\frac{\beta_y\beta_z}{\beta^2} \\
                 -\gamma\beta_z & (\gamma-1)\frac{\beta_x\beta_z}{\beta^2} & (\gamma-1)\frac{\beta_y\beta_z}{\beta^2} & 1+(\gamma-1)\frac{\beta_z^2}{\beta^2} \\
             \end{bmatrix} \begin{bmatrix}
-                \gamma_v c \\
-                v_x \\
-                v_y \\
-                v_z
+                \gamma_l c \\
+                u_{lx} \\
+                u_{ly} \\
+                u_{lz}
             \end{bmatrix}
 
 where :math:`\gamma` is the Lorentz factor of the relative speed between the lab frame and the COM frame, :math:`\beta_i = v^{COM}_i/c` is the i'th component of the relative velocity between the lab frame and the COM frame with
 
     .. math::
-        v^{COM}_i = m v_i / (\gamma_v m + M)
+
+        \vec{v}^{COM} = \frac{m \vec{u_c}}{\gamma_u m + M}
 
 The particle velocity in the COM frame is then isotropically scattered using the function ``ParticleUtils::RandomizeVelocity()``. After the direction of the velocity vector has been appropriately changed, it is transformed back to the lab frame with the reversed Lorentz transform as was done above followed by the reverse Galilean transformation using the starting neutral velocity.
 
 Back scattering
 ^^^^^^^^^^^^^^^
 
-The process is the same as for elastic scattering above expect the scattering angle is fixed at :math:`\pi`, meaning the particle velocity in the COM frame is updated to :math:`-\vec{u}`.
+The process is the same as for elastic scattering above expect the scattering angle is fixed at :math:`\pi`, meaning the particle velocity in the COM frame is updated to :math:`-\vec{u}_c`.
 
 Excitation
 ^^^^^^^^^^
@@ -71,7 +74,12 @@ Particle cooling due to elastic collisions
 
 It is straight forward to determine the energy a projectile loses during an elastic collision with another body, as a function of scattering angle, through energy and momentum conservation. See for example `Lim (2007) <https://search.library.berkeley.edu/permalink/01UCS_BER/s4lks2/cdi_proquest_miscellaneous_35689087>`_ for a derivation. The result is that given a projectile with mass :math:`m`, a target with mass :math:`M`, a scattering angle :math:`\theta`, and collision energy :math:`E`, the post collision energy of the projectile is given by
 
-    .. math:: E_{final} = E - [(E + mc^2)\sin^2\theta + Mc^2 - \cos(\theta)\sqrt{M^2c^4 - m^2c^4\sin^2\theta}] \\ \times\frac{E(E+2mc^2)}{(E+mc^2+Mc^2)^2 - E(E+2mc^2)\cos^2\theta}
+    .. math::
+
+       \begin{aligned}
+       E_{final} = E - &[(E + mc^2)\sin^2\theta + Mc^2 - \cos(\theta)\sqrt{M^2c^4 - m^2c^4\sin^2\theta}] \\
+       &\times \frac{E(E+2mc^2)}{(E+mc^2+Mc^2)^2 - E(E+2mc^2)\cos^2\theta}
+       \end{aligned}
 
 The impact of incorporating relativistic effects in the MCC routine can be seen in the plots below where high energy collisions are considered with both a classical and relativistic implementation of MCC. It is observed that the classical version of MCC reproduces the classical limit of the above equation but especially for ions, this result differs substantially from the fully relativistic result.
 
