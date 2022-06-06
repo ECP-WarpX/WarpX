@@ -17,6 +17,7 @@
 #include "WarpX.H"
 
 #include <ablastr/particles/IndexHandling.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_ArrayOfStructs.H>
@@ -463,7 +464,7 @@ void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix, int file_m
         if (m_CurrentStep >= ts) {
             // note m_Series is reset in Init(), so using m_Series->iterations.contains(ts) is only able to check the
             // last written step in m_Series's life time, but not other earlier written steps by other m_Series
-            WarpX::GetInstance().RecordWarning("Diagnostics",
+            ablastr::warn_manager::WMRecordWarning("Diagnostics",
                     " Warning from openPMD writer: Already written iteration:"
                     + std::to_string(ts)
                 );

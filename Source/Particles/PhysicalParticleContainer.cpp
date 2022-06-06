@@ -39,6 +39,8 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
 #include <AMReX_Array.H>
@@ -578,7 +580,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                 ss << "Both '" << ps_name << ".q_tot' and '"
                         << ps_name << ".injection_file' specify a total charge.\n'"
                         << ps_name << ".q_tot' will take precedence.";
-                WarpX::GetInstance().RecordWarning("Species", ss.str());
+                ablastr::warn_manager::WMRecordWarning("Species", ss.str());
             }
         }
         // ED-PIC extension?
@@ -617,9 +619,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         }
         auto const np = particle_z.size();
         if (np < npart) {
-            WarpX::GetInstance().RecordWarning("Species",
+            ablastr::warn_manager::WMRecordWarning("Species",
                 "Simulation box doesn't cover all particles",
-                WarnPriority::high);
+                ablastr::warn_manager::WarnPriority::high);
         }
     } // IO Processor
     auto const np = particle_z.size();
@@ -2727,7 +2729,7 @@ PhysicalParticleContainer::InitIonizationModule ()
     if (!do_field_ionization) return;
     ParmParse pp_species_name(species_name);
     if (charge != PhysConst::q_e){
-        WarpX::GetInstance().RecordWarning("Species",
+        ablastr::warn_manager::WMRecordWarning("Species",
             "charge != q_e for ionizable species '" +
             species_name + "':" +
             "overriding user value and setting charge = q_e.");
