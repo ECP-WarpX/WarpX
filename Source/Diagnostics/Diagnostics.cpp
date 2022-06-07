@@ -12,13 +12,13 @@
 #include "FlushFormats/FlushFormatPlotfile.H"
 #include "FlushFormats/FlushFormatSensei.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
@@ -442,7 +442,7 @@ Diagnostics::ComputeAndPack ()
 
             // needed for contour plots of rho, i.e. ascent/sensei
             if (m_format == "sensei" || m_format == "ascent") {
-                WarpXCommUtil::FillBoundary(m_mf_output[i_buffer][lev], warpx.Geom(lev).periodicity());
+                ablastr::utils::communication::FillBoundary(m_mf_output[i_buffer][lev], warpx.Geom(lev).periodicity());
             }
         }
         // Call Particle functor
