@@ -34,25 +34,25 @@ namespace {
      * the amplitude of the momentum of the particles exactly.)
      * We assume that the emission of the product is isotropic in the center-of-mass frame
      *
-     * @param[in] soa_1 struct of array data of the first colliding species
-     * @param[in] soa_2 struct of array data of the second colliding species
+     * @param[in] soa1_in struct of array data of the first colliding species
+     * @param[in] soa2_in struct of array data of the second colliding species
      * or tritium)
      * @param[out] ...
-     * @param[in] idx_1 index of first colliding macroparticle
-     * @param[in] idx_2 index of second colliding macroparticle
+     * @param[in] idx1_in index of first colliding macroparticle
+     * @param[in] idx2_in index of second colliding macroparticle
      * @param[in]...
-     * @param[in] m1 mass of first colliding species
-     * @param[in] m2 mass of second colliding species
+     * @param[in] m1_in mass of first colliding species
+     * @param[in] m2_in mass of second colliding species
      * @param[in] engine the random engine
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     void TwoProductFusionInitializeMomentum (
-                            const SoaData_type& soa_1, const SoaData_type& soa_2,
-                            SoaData_type& soa_product1, SoaData_type& soa_product2,
-                            const index_type& idx_1, const index_type& idx_2,
-                            const index_type& idx_product1_start, const index_type& idx_product2_start,
-                            const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
-                            const amrex::ParticleReal& mp1, const amrex::ParticleReal& mp2,
+                            const SoaData_type& soa1_in, const SoaData_type& soa2_in,
+                            SoaData_type& soa1_out, SoaData_type& soa2_out,
+                            const index_type& idx1_in, const index_type& idx2_in,
+                            const index_type& idx1_out_start, const index_type& idx2_out_start,
+                            const amrex::ParticleReal& m1_in, const amrex::ParticleReal& m2_in,
+                            const amrex::ParticleReal& m1_out, const amrex::ParticleReal& m2_out,
                             const amrex::ParticleReal& E_fusion,
                             const amrex::RandomEngine& engine)
     {
@@ -62,31 +62,31 @@ namespace {
         amrex::ParticleReal ux2_out = 0.0, uy2_out = 0.0, uz2_out = 0.0;
 
         TwoProductFusionComputeProductMomenta(
-            soa_1.m_rdata[PIdx::ux][idx_1],
-            soa_1.m_rdata[PIdx::uy][idx_1],
-            soa_1.m_rdata[PIdx::uz][idx_1], m1,
-            soa_2.m_rdata[PIdx::ux][idx_2],
-            soa_2.m_rdata[PIdx::uy][idx_2],
-            soa_2.m_rdata[PIdx::uz][idx_2], m2,
-            ux1_out, uy1_out, uz1_out, mp1,
-            uy2_out, uy2_out, uz2_out, mp2,
+            soa1_in.m_rdata[PIdx::ux][idx1_in],
+            soa1_in.m_rdata[PIdx::uy][idx1_in],
+            soa1_in.m_rdata[PIdx::uz][idx1_in], m1_in,
+            soa2_in.m_rdata[PIdx::ux][idx2_in],
+            soa2_in.m_rdata[PIdx::uy][idx2_in],
+            soa2_in.m_rdata[PIdx::uz][idx2_in], m2_in,
+            ux1_out, uy1_out, uz1_out, m1_out,
+            uy2_out, uy2_out, uz2_out, m2_out,
             E_fusion,
             engine);
 
         // Fill momentum of product species (note that we actually
         // create 4 products, 2 at the position of each incident particle)
-        soa_product1.m_rdata[PIdx::ux][idx_product1_start] = ux1_out;
-        soa_product1.m_rdata[PIdx::uy][idx_product1_start] = uy1_out;
-        soa_product1.m_rdata[PIdx::uz][idx_product1_start] = uz1_out;
-        soa_product1.m_rdata[PIdx::ux][idx_product1_start + 1] = ux1_out;
-        soa_product1.m_rdata[PIdx::uy][idx_product1_start + 1] = uy1_out;
-        soa_product1.m_rdata[PIdx::uz][idx_product1_start + 1] = uz1_out;
-        soa_product2.m_rdata[PIdx::ux][idx_product2_start] = ux2_out;
-        soa_product2.m_rdata[PIdx::uy][idx_product2_start] = uy2_out;
-        soa_product2.m_rdata[PIdx::uz][idx_product2_start] = uz2_out;
-        soa_product2.m_rdata[PIdx::ux][idx_product2_start + 1] = ux2_out;
-        soa_product2.m_rdata[PIdx::uy][idx_product2_start + 1] = uy2_out;
-        soa_product2.m_rdata[PIdx::uz][idx_product2_start + 1] = uz2_out;
+        soa1_out.m_rdata[PIdx::ux][idx1_out_start] = ux1_out;
+        soa1_out.m_rdata[PIdx::uy][idx1_out_start] = uy1_out;
+        soa1_out.m_rdata[PIdx::uz][idx1_out_start] = uz1_out;
+        soa1_out.m_rdata[PIdx::ux][idx1_out_start + 1] = ux1_out;
+        soa1_out.m_rdata[PIdx::uy][idx1_out_start + 1] = uy1_out;
+        soa1_out.m_rdata[PIdx::uz][idx1_out_start + 1] = uz1_out;
+        soa2_out.m_rdata[PIdx::ux][idx2_out_start] = ux2_out;
+        soa2_out.m_rdata[PIdx::uy][idx2_out_start] = uy2_out;
+        soa2_out.m_rdata[PIdx::uz][idx2_out_start] = uz2_out;
+        soa2_out.m_rdata[PIdx::ux][idx2_out_start + 1] = ux2_out;
+        soa2_out.m_rdata[PIdx::uy][idx2_out_start + 1] = uy2_out;
+        soa2_out.m_rdata[PIdx::uz][idx2_out_start + 1] = uz2_out;
     }
 }
 
