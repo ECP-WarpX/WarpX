@@ -442,7 +442,8 @@ Diagnostics::ComputeAndPack ()
 
             // needed for contour plots of rho, i.e. ascent/sensei
             if (m_format == "sensei" || m_format == "ascent") {
-                ablastr::utils::communication::FillBoundary(m_mf_output[i_buffer][lev], warpx.Geom(lev).periodicity());
+                ablastr::utils::communication::FillBoundary(m_mf_output[i_buffer][lev], WarpX::do_single_precision_comms,
+                                                            warpx.Geom(lev).periodicity());
             }
         }
         // Call Particle functor

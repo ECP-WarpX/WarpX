@@ -512,7 +512,8 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         AMREX_ALWAYS_ASSERT( icomp_dst == m_cellcenter_varnames.size() );
         // fill boundary call is required to average_down (flatten) data to
         // the coarsest level.
-        ablastr::utils::communication::FillBoundary(*m_cell_centered_data[lev], warpx.Geom(lev).periodicity());
+        ablastr::utils::communication::FillBoundary(*m_cell_centered_data[lev], WarpX::do_single_precision_comms,
+                                                    warpx.Geom(lev).periodicity());
     }
     // Flattening out MF over levels
 

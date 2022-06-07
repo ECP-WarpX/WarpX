@@ -675,7 +675,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 
         // Exchange guard cells
         if (local == false) {
-            ablastr::utils::communication::SumBoundary(*rho[lev], m_gdb->Geom(lev).periodicity());
+            ablastr::utils::communication::SumBoundary(*rho[lev], WarpX::do_single_precision_comms, m_gdb->Geom(lev).periodicity());
         }
     }
 
@@ -692,10 +692,12 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
             coarsened_fine_data.setVal(0.0);
 
             CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], m_gdb->refRatio(lev) );
-            ablastr::utils::communication::ParallelAdd(*rho[lev], coarsened_fine_data, 0, 0, rho[lev]->nComp(),
-                                       amrex::IntVect::TheZeroVector(),
-                                       amrex::IntVect::TheZeroVector(),
-                                       m_gdb->Geom(lev).periodicity());
+            ablastr::utils::communication::ParallelAdd(*rho[lev], coarsened_fine_data, 0, 0,
+                                                       rho[lev]->nComp(),
+                                                       amrex::IntVect::TheZeroVector(),
+                                                       amrex::IntVect::TheZeroVector(),
+                                                       WarpX::do_single_precision_comms,
+                                                       m_gdb->Geom(lev).periodicity());
         }
     }
 }
@@ -756,7 +758,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
 #endif
 
-    if (local == false) { ablastr::utils::communication::SumBoundary(*rho, gm.periodicity()); }
+    if (local == false) { ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity()); }
 
     return rho;
 }

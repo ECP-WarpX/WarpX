@@ -792,7 +792,9 @@ void BackTransformedDiagnostic::Flush (const Geometry& /*geom*/)
                 tmp.setVal(0.0);
 
                 ablastr::utils::communication::ParallelCopy(tmp, *lf_diags->m_data_buffer_, 0, 0, ncomp,
-                                            IntVect(AMREX_D_DECL(0, 0, 0)), IntVect(AMREX_D_DECL(0, 0, 0)));
+                                                            IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                            IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                            WarpX::do_single_precision_comms);
 
 #ifdef WARPX_USE_HDF5
                 for (int comp = 0; comp < ncomp; ++comp) {
@@ -948,7 +950,9 @@ writeLabFrameData (const MultiFab* cell_centered_data,
              // tmp_slice_ptr which has the dmap of the
              // data_buffer that stores the back-transformed data.
             ablastr::utils::communication::ParallelCopy(*tmp_slice_ptr, *slice, 0, 0, ncomp,
-                                         IntVect(AMREX_D_DECL(0, 0, 0)), IntVect(AMREX_D_DECL(0, 0, 0)));
+                                                        IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                        IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                        WarpX::do_single_precision_comms);
              lf_diags->AddDataToBuffer(*tmp_slice_ptr, i_lab,
                                                map_actual_fields_to_dump);
              tmp_slice_ptr = nullptr;

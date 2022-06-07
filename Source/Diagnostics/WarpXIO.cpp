@@ -382,7 +382,7 @@ WarpX::GetCellCenteredData() {
         const std::unique_ptr<MultiFab>& charge_density = mypc->GetChargeDensity(lev);
         AverageAndPackScalarField( *cc[lev], *charge_density, dmap[lev], dcomp, ng );
 
-        ablastr::utils::communication::FillBoundary(*cc[lev], geom[lev].periodicity());
+        ablastr::utils::communication::FillBoundary(*cc[lev], WarpX::do_single_precision_comms, geom[lev].periodicity());
     }
 
     for (int lev = finest_level; lev > 0; --lev)
