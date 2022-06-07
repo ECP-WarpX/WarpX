@@ -145,18 +145,24 @@ public:
 #ifdef AMREX_USE_GPU
         amrex::Gpu::DeviceVector<SoaData_type> device_soa_products(m_num_product_species);
         amrex::Gpu::DeviceVector<index_type> device_products_np(m_num_product_species);
+        amrex::Gpu::DeviceVector<amrex::ParticleReal> device_products_mass(m_num_product_species);
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, soa_products.begin(),
                               soa_products.end(),
                               device_soa_products.begin());
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, products_np.begin(),
                               products_np.end(),
                               device_products_np.begin());
+       amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, products_mass.begin(),
+                              products_mass.end(),
+                              device_products_mass.begin());
         amrex::Gpu::streamSynchronize();
         SoaData_type* AMREX_RESTRICT soa_products_data = device_soa_products.data();
         const index_type* AMREX_RESTRICT products_np_data = device_products_np.data();
+        const amrex::Real* AMREX_RESTRICT products_mass_data = device_products_mass.data();
 #else
         SoaData_type* AMREX_RESTRICT soa_products_data = soa_products.data();
         const index_type* AMREX_RESTRICT products_np_data = products_np.data();
+        const amrex::Real* AMREX_RESTRICT products_mass_data = products_mass.data();
 #endif
 
         const int t_num_product_species = m_num_product_species;
@@ -233,7 +239,7 @@ public:
                         p_pair_indices_1[i], p_pair_indices_2[i],
                         products_np_data[0] + 2*p_offsets[i]*p_num_products_device[0],
                         products_np_data[1] + 2*p_offsets[i]*p_num_products_device[1],
-                        m1, m2, products_mass[0], products_mass[1], fusion_energy, engine);
+                        m1, m2, products_mass_data[0], products_mass_data[1], fusion_energy, engine);
                 }
 
             }
