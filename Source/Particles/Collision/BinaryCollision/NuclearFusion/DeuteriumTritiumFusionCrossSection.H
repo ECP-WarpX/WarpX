@@ -36,7 +36,7 @@ amrex::ParticleReal DeuteriumTritiumFusionCrossSection (const amrex::ParticleRea
     // (See Eq. 3 in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)
     constexpr amrex::ParticleReal m_D = 1.99901 * PhysConst::m_p;
     constexpr amrex::ParticleReal m_T = 2.99372 * PhysConst::m_p;
-    constexpr amrex::ParticleReal m_reduced = m_D*m_T / (m_D + m_T);
+    constexpr amrex::ParticleReal m_reduced = m_D / (1._prt + m_D/m_T);
     amrex::ParticleReal B_G = MathConst::pi * PhysConst::alpha * 2._prt * 3._prt
          * std::sqrt( 2._prt*m_reduced*PhysConst::c*PhysConst::c * joule_to_keV );
 
