@@ -93,7 +93,8 @@ void FillBoundary (amrex::MultiFab& mf, const amrex::Periodicity& period)
 
 void FillBoundary (amrex::MultiFab&          mf,
                    amrex::IntVect            ng,
-                   const amrex::Periodicity& period)
+                   const amrex::Periodicity& period,
+                   const bool                nodal_sync)
 {
     BL_PROFILE("WarpXCommUtil::FillBoundary");
 
@@ -106,13 +107,22 @@ void FillBoundary (amrex::MultiFab&          mf,
 
         mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
 
-        mf_tmp.FillBoundary(ng, period);
+        if (nodal_sync) {
+            mf_tmp.FillBoundaryAndSync(0, mf.nComp(), ng, period);
+        } else {
+            mf_tmp.FillBoundary(ng, period);
+        }
 
         mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
     }
     else
     {
-        mf.FillBoundary(ng, period);
+
+        if (nodal_sync) {
+            mf.FillBoundaryAndSync(0, mf.nComp(), ng, period);
+        } else {
+            mf.FillBoundary(ng, period);
+        }
     }
 }
 
