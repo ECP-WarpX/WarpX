@@ -575,8 +575,8 @@ int k_old = 0;
 #if !defined(WARPX_DIM_1D_Z)
             
             if (depos_order > 1){
-                i_new = (depos_order%2==0) ? static_cast<int>(x_new-0.5_rt) : static_cast<int>(x_new-1);
-                i_old = (depos_order%2==0) ? static_cast<int>(x_old-0.5_rt) : static_cast<int>(x_old-1);
+                i_new = (depos_order%2==0) ? static_cast<int>(x_new+0.5_rt)-1_rt : static_cast<int>(x_new)-1_rt;
+                i_old = (depos_order%2==0) ? static_cast<int>(x_old+0.5_rt)-1_rt : static_cast<int>(x_old)-1_rt;
             }
             else {
                 i_new = (depos_order%2==0) ? static_cast<int>(x_new+0.5_rt) : static_cast<int>(x_new);
@@ -585,8 +585,8 @@ int k_old = 0;
 #endif
 #if defined(WARPX_DIM_3D)
             if constexpr (depos_order > 1){
-                j_new = (depos_order%2==0) ? static_cast<int>(y_new-0.5_rt) : static_cast<int>(y_new-1);
-                j_old = (depos_order%2==0) ? static_cast<int>(y_old-0.5_rt) : static_cast<int>(y_old-1);
+                j_new = (depos_order%2==0) ? static_cast<int>(y_new+0.5_rt)-1_rt : static_cast<int>(y_new)-1_rt;
+                j_old = (depos_order%2==0) ? static_cast<int>(y_old+0.5_rt)-1 : static_cast<int>(y_old)-1_rt;
             }
             else {
                 j_new = (depos_order%2==0) ? static_cast<int>(y_new+0.5_rt) : static_cast<int>(y_new);
@@ -594,13 +594,14 @@ int k_old = 0;
             }
 #endif
             if (depos_order > 1){
-                const int k_new = (depos_order%2==0) ? static_cast<int>(z_new-0.5_rt) : static_cast<int>(z_new-1);
-                const int k_old = (depos_order%2==0) ? static_cast<int>(z_old-0.5_rt) : static_cast<int>(z_old-1);
+                k_new = (depos_order%2==0) ? static_cast<int>(z_new+0.5_rt)-1_rt : static_cast<int>(z_new)-1_rt;
+                k_old = (depos_order%2==0) ? static_cast<int>(z_old+0.5_rt)-1_rt : static_cast<int>(z_old)-1_rt;
             }
             else {
                 k_new = (depos_order%2==0) ? static_cast<int>(z_new+0.5_rt) : static_cast<int>(z_new);
                 k_old = static_cast<int>(z_old);
             }
+
 
             // computes min/max positions of current contributions
 #if !defined(WARPX_DIM_1D_Z)
@@ -629,9 +630,9 @@ int k_old = 0;
                     for (int i=0; i<=depos_order+1; i++) {
                         if (i < dil) continue;
                         if (i > depos_order+1-diu) continue;
-                        sdxi += wqx*(compute_shifted_shape_factor(x_old,i,i_new) - compute_shape_factor(x_new,i+1))*(
-                            one_third*(compute_shape_factor(y_new,j+1)*compute_shape_factor(z_new,k+1) + compute_shifted_shape_factor(y_old,j,j_new)*compute_shifted_shape_factor(z_old,k,k_new))
-                           +one_sixth*(compute_shape_factor(y_new,j+1)*compute_shifted_shape_factor(z_old,k,k_new) + compute_shifted_shape_factor(y_old,j,j_new)*compute_shape_factor(z_new,k+1)));
+                        sdxi += wqx*(compute_shifted_shape_factor(x_old,i,i_new) - compute_shape_factor(x_new,i-1))*(
+                            one_third*(compute_shape_factor(y_new,j-1)*compute_shape_factor(z_new,k-1) + compute_shifted_shape_factor(y_old,j,j_new)*compute_shifted_shape_factor(z_old,k,k_new))
+                           +one_sixth*(compute_shape_factor(y_new,j-1)*compute_shifted_shape_factor(z_old,k,k_new) + compute_shifted_shape_factor(y_old,j,j_new)*compute_shape_factor(z_new,k-1)));
                         amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxi);
                     }
                 }
@@ -646,9 +647,9 @@ int k_old = 0;
                     for (int j=0; j<=depos_order+1; j++) {
                         if (j < djl) continue;
                         if (j > depos_order+1-dju) continue;
-                        sdyj += wqy*(compute_shifted_shape_factor(y_old,j,j_new) - compute_shape_factor(y_new,j+1))*(
-                            one_third*(compute_shape_factor(x_new,i+1)*compute_shape_factor(z_new,k+1) + compute_shifted_shape_factor(x_old,i,i_new)*compute_shifted_shape_factor(z_old,k,k_new))
-                           +one_sixth*(compute_shape_factor(x_new,i+1)*compute_shape_factor(z_new,k+1) + compute_shifted_shape_factor(x_old,i,i_new)*compute_shape_factor(z_new,k+1)));
+                        sdyj += wqy*(compute_shifted_shape_factor(y_old,j,j_new) - compute_shape_factor(y_new,j-1))*(
+                            one_third*(compute_shape_factor(x_new,i-1)*compute_shape_factor(z_new,k-1) + compute_shifted_shape_factor(x_old,i,i_new)*compute_shifted_shape_factor(z_old,k,k_new))
+                           +one_sixth*(compute_shape_factor(x_new,i-1)*compute_shape_factor(z_new,k-1) + compute_shifted_shape_factor(x_old,i,i_new)*compute_shape_factor(z_new,k-1)));
                         amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdyj);
                     }
                 }
@@ -663,9 +664,9 @@ int k_old = 0;
                     for (int k=0; k<=depos_order+1; k++) {
                         if (k < dkl) continue;
                         if (k > depos_order+1-dku) continue;
-                        sdzk += wqz*(compute_shifted_shape_factor(z_old,k,k_new) - compute_shape_factor(z_new,k+1))*(
-                            one_third*(compute_shape_factor(x_new,i+1)*compute_shape_factor(y_new,j+1) + compute_shifted_shape_factor(x_old,i,i_new)*compute_shifted_shape_factor(y_old,j,j_new))
-                           +one_sixth*(compute_shape_factor(x_new,i+1)*compute_shifted_shape_factor(y_old,j,j_new) + compute_shifted_shape_factor(x_old,i,i_new)*compute_shape_factor(y_new,j+1)));
+                        sdzk += wqz*(compute_shifted_shape_factor(z_old,k,k_new) - compute_shape_factor(z_new,k-1))*(
+                            one_third*(compute_shape_factor(x_new,i-1)*compute_shape_factor(y_new,j-1) + compute_shifted_shape_factor(x_old,i,i_new)*compute_shifted_shape_factor(y_old,j,j_new))
+                           +one_sixth*(compute_shape_factor(x_new,i-1)*compute_shifted_shape_factor(y_old,j,j_new) + compute_shifted_shape_factor(x_old,i,i_new)*compute_shape_factor(y_new,j-1)));
                         amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdzk);
                     }
                 }
@@ -680,7 +681,7 @@ int k_old = 0;
                 for (int i=0; i<=depos_order+1; i++) {
                     if (i < dil) continue;
                     if (i > depos_order+1-diu) continue;
-                    sdxi += wqx*(compute_shifted_shape_factor(x_old,i,i_new) - compute_shape_factor(x_new,i+1))*0.5_rt*(compute_shape_factor(z_new,k+1) + compute_shifted_shape_factor(z_old,k,k_new));
+                    sdxi += wqx*(compute_shifted_shape_factor(x_old,i,i_new) - compute_shape_factor(x_new,i-1))*0.5_rt*(compute_shape_factor(z_new,k-1) + compute_shifted_shape_factor(z_old,k,k_new));
                     amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdxi);
 #if defined(WARPX_DIM_RZ)
                     Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
@@ -701,8 +702,8 @@ int k_old = 0;
                     if (i < dil) continue;
                     if (i > depos_order+2-diu) continue;
                     Real const sdyj = wq*vy*invvol*(
-                        one_third*(compute_shape_factor(x_new,i+1)*compute_shape_factor(z_new,k+1) + compute_shifted_shape_factor(x_old,i,i_new)*compute_shifted_shape_factor(z_old,k,k_new))
-                       +one_sixth*(compute_shape_factor(x_new,i+1)*compute_shifted_shape_factor(z_old,k,k_new) + compute_shifted_shape_factor(x_old,i,i_new)*compute_shape_factor(z_new,k+1)));
+                        one_third*(compute_shape_factor(x_new,i-1)*compute_shape_factor(z_new,k-1) + compute_shifted_shape_factor(x_old,i,i_new)*compute_shifted_shape_factor(z_old,k,k_new))
+                       +one_sixth*(compute_shape_factor(x_new,i-1)*compute_shifted_shape_factor(z_old,k,k_new) + compute_shifted_shape_factor(x_old,i,i_new)*compute_shape_factor(z_new,k-1)));
                     amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdyj);
 #if defined(WARPX_DIM_RZ)
                     Complex xy_new = xy_new0;
@@ -713,7 +714,7 @@ int k_old = 0;
                         // The factor 2 comes from the normalization of the modes
                         // The minus sign comes from the different convention with respect to Davidson et al.
                         const Complex djt_cmplx = -2._rt * I*(i_new-1 + i + xmin*dxi)*wq*invdtdx/(amrex::Real)imode
-                                                  *(Complex(compute_shape_factor(x_new,i+1)*compute_shape_factor(z_new,k+1), 0._rt)*(xy_new - xy_mid)
+                                                  *(Complex(compute_shape_factor(x_new,i-1)*compute_shape_factor(z_new,k-1), 0._rt)*(xy_new - xy_mid)
                                                   + Complex(compute_shifted_shape_factor(x_old,i,i_new)*compute_shifted_shape_factor(z_old,k,k_new), 0._rt)*(xy_mid - xy_old));
                         amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 2*imode-1), djt_cmplx.real());
                         amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 2*imode), djt_cmplx.imag());
@@ -731,7 +732,7 @@ int k_old = 0;
                 for (int k=0; k<=depos_order+1; k++) {
                     if (k < dkl) continue;
                     if (k > depos_order+1-dku) continue;
-                    sdzk += wqz*(compute_shifted_shape_factor(z_old,k,k_new) - compute_shape_factor(z_new,k+1))*0.5_rt*compute_shape_factor(x_new,i+1) + compute_shifted_shape_factor(x_old,i,i_new)F);
+                    sdzk += wqz*(compute_shifted_shape_factor(z_old,k,k_new) - compute_shape_factor(z_new,k-1))*0.5_rt*compute_shape_factor(x_new,i-1) + compute_shifted_shape_factor(x_old,i,i_new)F);
                     amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdzk);
 #if defined(WARPX_DIM_RZ)
                     Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
@@ -751,21 +752,21 @@ int k_old = 0;
                 if (k < dkl) continue;
                 if (k > depos_order+2-dku) continue;
                 amrex::Real sdxi = 0._rt;
-                sdxi += wq*vx*invvol*0.5_rt*(compute_shifted_shape_factor(z_old,k,k_new) + compute_shape_factor(z_new,k+1));
+                sdxi += wq*vx*invvol*0.5_rt*(compute_shifted_shape_factor(z_old,k,k_new) + compute_shape_factor(z_new,k-1));
                 amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k_new-1+k, 0, 0, 0), sdxi);
             }
             for (int k=0; k<=depos_order+2; k++) {
                 if (k < dkl) continue;
                 if (k > depos_order+2-dku) continue;
                 amrex::Real sdyj = 0._rt;
-                sdyj += wq*vy*invvol*0.5_rt*(compute_shifted_shape_factor(z_old,k,k_new) + compute_shape_factor(z_new,k+1));
+                sdyj += wq*vy*invvol*0.5_rt*(compute_shifted_shape_factor(z_old,k,k_new) + compute_shape_factor(z_new,k-1));
                 amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k_new-1+k, 0, 0, 0), sdyj);
             }
             for (int k=0; k<=depos_order+1; k++) {
                 if (k < dkl) continue;
                 if (k > depos_order+1-dku) continue;
                 amrex::Real sdzk = 0._rt;
-                sdzk += wqz*(compute_shifted_shape_factor(z_old,k,k_new) - compute_shape_factor(z_new,k+1));
+                sdzk += wqz*(compute_shifted_shape_factor(z_old,k,k_new) - compute_shape_factor(z_new,k-1));
                 amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+k_new-1+k, 0, 0, 0), sdzk);
             }
 #endif

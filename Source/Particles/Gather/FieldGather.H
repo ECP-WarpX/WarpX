@@ -112,14 +112,14 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 
     int j_cell = 0;
     if (depos_order > 1){
-            j_cell = (depos_order%2==0) ? static_cast<int>(x-1_rt) : static_cast<int>(x-1.5_rt);
+            j_cell = (depos_order%2==0) ? static_cast<int>(x)-1_rt : static_cast<int>(x-0.5_rt)-1_rt;
         } else {
             j_cell = (depos_order%2==0) ? static_cast<int>(x) : static_cast<int>(x-0.5_rt);
         }
 
     int j_cell_v = 0;
         if (depos_order-galerkin_interpolation > 1){
-            j_cell_v = (depos_order%2==0) ? static_cast<int>(x-1_rt) : static_cast<int>(x-1.5_rt);
+            j_cell_v = (depos_order%2==0) ? static_cast<int>(x)-1_rt : static_cast<int>(x-0.5_rt)-1_rt;
         } else {
             j_cell_v = (depos_order%2==0) ? static_cast<int>(x) : static_cast<int>(x-0.5_rt);
         }
@@ -145,14 +145,14 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 
     int k_cell = 0;
     if (depos_order > 1){
-            k_cell = (depos_order%2==0) ? static_cast<int>(y-1_rt) : static_cast<int>(y-1.5_rt);
+            k_cell = (depos_order%2==0) ? static_cast<int>(y)-1_rt : static_cast<int>(y-0.5_rt)-1_rt;
         } else {
             k_cell = (depos_order%2==0) ? static_cast<int>(y) : static_cast<int>(y-0.5_rt);
         }
 
     int k_cell_v = 0;
         if (depos_order-galerkin_interpolation > 1){
-            k_cell_v = (depos_order%2==0) ? static_cast<int>(y-1_rt) : static_cast<int>(y-1.5_rt);
+            k_cell_v = (depos_order%2==0) ? static_cast<int>(y)-1_rt : static_cast<int>(y-0.5_rt)-1_rt;
         } else {
             k_cell_v = (depos_order%2==0) ? static_cast<int>(y) : static_cast<int>(y-0.5_rt);
         }
@@ -171,14 +171,14 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 
     int l_cell = 0;
     if (depos_order > 1){
-            l_cell = (depos_order%2==0) ? static_cast<int>(z-1_rt) : static_cast<int>(z-1.5_rt);
+            l_cell = (depos_order%2==0) ? static_cast<int>(z)-1_rt : static_cast<int>(z-0.5_rt)-1_rt;
         } else {
             l_cell = (depos_order%2==0) ? static_cast<int>(z) : static_cast<int>(z-0.5_rt);
         }
 
     int l_cell_v = 0;
         if (depos_order - galerkin_interpolation > 1){
-            l_cell_v = (depos_order%2==0) ? static_cast<int>(z-1_rt) : static_cast<int>(z-1.5_rt);
+            l_cell_v = (depos_order%2==0) ? static_cast<int>(z)-1_rt : static_cast<int>(z-0.5_rt)-1_rt;
         } else {
             l_cell_v = (depos_order%2==0) ? static_cast<int>(z) : static_cast<int>(z-0.5_rt);
         }

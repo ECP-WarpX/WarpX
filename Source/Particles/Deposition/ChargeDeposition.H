@@ -134,7 +134,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 
             int i = 0;
             if (depos_order > 1){
-                i = (depos_order%2==0) ? static_cast<int>(x-0.5_rt) : static_cast<int>(x-1_rt);
+                i = (depos_order%2==0) ? static_cast<int>(x+0.5_rt)-1_rt : static_cast<int>(x)-1_rt;
             } else {
                 i = (depos_order%2==0) ? static_cast<int>(x+0.5_rt) : static_cast<int>(x);
             }
@@ -146,7 +146,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 
             int j = 0;
             if (depos_order > 1){
-                j = (depos_order%2==0) ? static_cast<int>(y-0.5_rt) : static_cast<int>(y-1_rt);
+                j = (depos_order%2==0) ? static_cast<int>(y+0.5_rt)-1_rt : static_cast<int>(y)-1_rt;
             } else {
                 j = (depos_order%2==0) ? static_cast<int>(y+0.5_rt) : static_cast<int>(y);
             }
@@ -157,7 +157,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 
             int k = 0;
             if (depos_order > 1){
-                k = (depos_order%2==0) ? static_cast<int>(z-0.5_rt) : static_cast<int>(z-1_rt);
+                k = (depos_order%2==0) ? static_cast<int>(z+0.5_rt)-1_rt : static_cast<int>(z)-1_rt;
             } else {
                 k = (depos_order%2==0) ? static_cast<int>(z+0.5_rt) : static_cast<int>(z);
             }
