@@ -16,9 +16,12 @@ The MCC implementation assumes that the background neutral particles are **therm
 
     .. math::
 
-        E_{coll} = \sqrt{(\gamma mc^2 + Mc^2)^2 - (mu)^2} - (mc^2 + Mc^2)
+       \begin{aligned}
+        E_{coll} &= \sqrt{(\gamma mc^2 + Mc^2)^2 - (mu)^2} - (mc^2 + Mc^2) \\
+                 &= \frac{2Mmu^2}{M + m + \sqrt{M^2+m^2+2\gamma mM}}\frac{1}{\gamma + 1}
+       \end{aligned}
 
-where :math:`u` is the speed of the particle as tracked in WarpX (i.e. :math:`u = \gamma v` with :math:`v` the particle speed), while :math:`m` and :math:`M` are the rest masses of the simulation and background species, respectively. The Lorentz factor is defined in the usual way, :math:`\gamma = \sqrt{1 + u^2/c^2}`. The collision cross-sections for all scattering processes are evaluated at the energy as calculated above.
+where :math:`u` is the speed of the particle as tracked in WarpX (i.e. :math:`u = \gamma v` with :math:`v` the particle speed), while :math:`m` and :math:`M` are the rest masses of the simulation and background species, respectively. The Lorentz factor is defined in the usual way, :math:`\gamma = \sqrt{1 + u^2/c^2}`. Note that if :math:`\gamma\to1` the above expression clearly reduces to the classical equation :math:`E_{coll} = \frac{1}{2}\frac{Mm}{M+m} u^2`. The collision cross-sections for all scattering processes are evaluated at the energy as calculated above.
 
 Once a particle is selected for a specific collision process, that process determines how the particle is scattered as outlined below.
 

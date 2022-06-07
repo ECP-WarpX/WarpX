@@ -94,15 +94,14 @@ public:
         const ParticleReal uz = ptd.m_rdata[PIdx::uz][i];
 
         // calculate kinetic energy
-        const ParticleReal v_coll2 = ux*ux + uy*uy + uz*uz;
-        ParticleUtils::getEnergy(v_coll2, m_mass, E_coll);
-        const ParticleReal v_coll = sqrt(v_coll2);
+        const ParticleReal u_coll2 = ux*ux + uy*uy + uz*uz;
+        ParticleUtils::getEnergy(u_coll2, m_mass, E_coll);
 
         // get collision cross-section
         const Real sigma_E = m_mcc_process.getCrossSection(E_coll);
 
         // calculate normalized collision frequency
-        const Real nu_i = n_a * sigma_E * v_coll / m_nu_max;
+        const Real nu_i = n_a * sigma_E * sqrt(u_coll2) / m_nu_max;
 
         // check if this collision should be performed
         return (Random(engine) <= nu_i);
@@ -199,8 +198,8 @@ public:
         auto& i_uz = dst2.m_rdata[PIdx::uz][i_dst2];
 
         // calculate kinetic energy
-        const ParticleReal v_coll2 = ux*ux + uy*uy + uz*uz;
-        ParticleUtils::getEnergy(v_coll2, m_mass1, E_coll);
+        const ParticleReal u_coll2 = ux*ux + uy*uy + uz*uz;
+        ParticleUtils::getEnergy(u_coll2, m_mass1, E_coll);
 
         // each electron gets half the energy (could change this later)
         amrex::Real E_out = (E_coll - m_energy_cost) / 2.0_rt * PhysConst::q_e;
@@ -209,11 +208,11 @@ public:
         constexpr auto c2 = PhysConst::c * PhysConst::c;
         const auto mc2 = m_mass1*c2;
 
-        amrex::Real vp = sqrt(E_out * (E_out + 2.0_prt*mc2) / c2) / m_mass1;
+        amrex::Real up = sqrt(E_out * (E_out + 2.0_prt*mc2) / c2) / m_mass1;
 
         // isotropically scatter electrons
-        ParticleUtils::RandomizeVelocity(ux, uy, uz, vp, engine);
-        ParticleUtils::RandomizeVelocity(e_ux, e_uy, e_uz, vp, engine);
+        ParticleUtils::RandomizeVelocity(ux, uy, uz, up, engine);
+        ParticleUtils::RandomizeVelocity(e_ux, e_uy, e_uz, up, engine);
 
         // get velocities for the ion from a Maxwellian distribution
         i_ux = ion_vel_std * RandomNormal(0_prt, 1.0_prt, engine);

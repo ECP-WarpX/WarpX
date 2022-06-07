@@ -48,9 +48,8 @@ namespace ParticleUtils {
         using std::sqrt;
         using namespace amrex::literals;
 
-        // Compute c^2 since it is used repeatedly
         constexpr auto c2 = PhysConst::c * PhysConst::c;
-        energy = mass * u2 / (sqrt(1.0_prt + u2 / c2) + 1.0_prt) / PhysConst::q_e;
+        energy = mass * u2 / (sqrt(1.0_rt + u2 / c2) + 1.0_rt) / PhysConst::q_e;
     }
 
     /**
@@ -65,19 +64,18 @@ namespace ParticleUtils {
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     void getCollisionEnergy ( amrex::ParticleReal const u2, double const m,
-                     double const M, double& gamma,
-                     double& energy )
+                              double const M, double& gamma, double& energy )
     {
         using std::sqrt;
         using namespace amrex::literals;
 
-        // Compute c^2 since it is used repeatedly
         constexpr auto c2 = PhysConst::c * PhysConst::c;
 
-        auto const beta2 = u2 / c2;
-        gamma = sqrt(1.0_prt + beta2);
-        auto const m_tot = M + gamma*m;
-        energy = (sqrt(m_tot*m_tot - m*m*beta2) - m - M) * c2 / PhysConst::q_e;
+        gamma = sqrt(1.0_rt + u2 / c2);
+        energy = (
+            2.0_rt * m * M * u2 / (gamma + 1.0_rt)
+            / (M + m + sqrt(m*m + M*M + 2.0_rt * m * M * gamma))
+        ) / PhysConst::q_e;
     }
 
     /**
