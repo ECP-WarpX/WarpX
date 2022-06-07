@@ -16,6 +16,8 @@ constants = picmi.constants
 
 
 class PoissonSolver1D(picmi.ElectrostaticSolver):
+    """This can be removed and the MLMG solver used once
+       https://github.com/ECP-WarpX/WarpX/issues/3123 is addressed."""
 
     def __init__(self, grid, **kwargs):
         """Direct solver for the Poisson equation using superLU. This solver is
