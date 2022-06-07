@@ -4,7 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpXCommUtil.H"
+#include "Communication.H"
 
 #include <AMReX.H>
 #include <AMReX_BaseFab.H>
@@ -13,7 +13,8 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_iMultiFab.H>
 
-namespace WarpXCommUtil {
+namespace ablastr::utils::communication
+{
 
 void ParallelCopy (amrex::MultiFab&            dst,
                    const amrex::MultiFab&      src,
@@ -25,9 +26,9 @@ void ParallelCopy (amrex::MultiFab&            dst,
                    const amrex::Periodicity&   period,
                    amrex::FabArrayBase::CpOp   op)
 {
-    BL_PROFILE("WarpXCommUtil::ParallelCopy");
+    BL_PROFILE("ablastr::utils::communication::ParallelCopy");
 
-    using WarpXCommUtil::comm_float_type;
+    using ablastr::utils::communication::comm_float_type;
 
     if (WarpX::do_single_precision_comms)
     {
@@ -64,13 +65,13 @@ void ParallelAdd (amrex::MultiFab&            dst,
                   const amrex::IntVect&       dst_nghost,
                   const amrex::Periodicity&   period)
 {
-    WarpXCommUtil::ParallelCopy(dst, src, src_comp, dst_comp, num_comp, src_nghost, dst_nghost, period,
+    ablastr::utils::communication::ParallelCopy(dst, src, src_comp, dst_comp, num_comp, src_nghost, dst_nghost, period,
                                 amrex::FabArrayBase::ADD);
 }
 
 void FillBoundary (amrex::MultiFab& mf, const amrex::Periodicity& period)
 {
-    BL_PROFILE("WarpXCommUtil::FillBoundary");
+    BL_PROFILE("ablastr::utils::communication::FillBoundary");
 
     if (WarpX::do_single_precision_comms)
     {
@@ -96,7 +97,7 @@ void FillBoundary (amrex::MultiFab&          mf,
                    const amrex::Periodicity& period,
                    const bool                nodal_sync)
 {
-    BL_PROFILE("WarpXCommUtil::FillBoundary");
+    BL_PROFILE("ablastr::utils::communication::FillBoundary");
 
     if (WarpX::do_single_precision_comms)
     {
@@ -128,7 +129,7 @@ void FillBoundary (amrex::MultiFab&          mf,
 
 void FillBoundary (amrex::iMultiFab& imf, const amrex::Periodicity& period)
 {
-    BL_PROFILE("WarpXCommUtil::FillBoundary");
+    BL_PROFILE("ablastr::utils::communication::FillBoundary");
 
     imf.FillBoundary(period);
 }
@@ -137,7 +138,7 @@ void FillBoundary (amrex::iMultiFab&         imf,
                    amrex::IntVect            ng,
                    const amrex::Periodicity& period)
 {
-    BL_PROFILE("WarpXCommUtil::FillBoundary");
+    BL_PROFILE("ablastr::utils::communication::FillBoundary");
     imf.FillBoundary(ng, period);
 }
 
@@ -145,13 +146,13 @@ void
 FillBoundary (amrex::Vector<amrex::MultiFab*> const& mf, const amrex::Periodicity& period)
 {
     for (auto x : mf) {
-        WarpXCommUtil::FillBoundary(*x, period);
+        ablastr::utils::communication::FillBoundary(*x, period);
     }
 }
 
 void SumBoundary (amrex::MultiFab& mf, const amrex::Periodicity& period)
 {
-    BL_PROFILE("WarpXCommUtil::SumBoundary");
+    BL_PROFILE("ablastr::utils::communication::SumBoundary");
 
     if (WarpX::do_single_precision_comms)
     {
@@ -178,7 +179,7 @@ void SumBoundary (amrex::MultiFab&          mf,
                   amrex::IntVect            ng,
                   const amrex::Periodicity& period)
 {
-    BL_PROFILE("WarpXCommUtil::SumBoundary");
+    BL_PROFILE("ablastr::utils::communication::SumBoundary");
 
     if (WarpX::do_single_precision_comms)
     {
@@ -205,7 +206,7 @@ void SumBoundary (amrex::MultiFab&          mf,
                   amrex::IntVect            dst_ng,
                   const amrex::Periodicity& period)
 {
-    BL_PROFILE("WarpXCommUtil::SumBoundary");
+    BL_PROFILE("ablastr::utils::communication::SumBoundary");
 
     if (WarpX::do_single_precision_comms)
     {
@@ -250,4 +251,4 @@ void OverrideSync (amrex::MultiFab&          mf,
     }
 }
 
-}
+} // namespace ablastr::utils::communication

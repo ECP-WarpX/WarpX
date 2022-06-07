@@ -1,11 +1,11 @@
-/* Copyright 2019 Andrew Myers
+/* Copyright 2019-2022 Andrew Myers
  *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_COMMUTIL_H_
-#define WARPX_COMMUTIL_H_
+#ifndef ABLASTR_UTILS_COMMUNICATION_H_
+#define ABLASTR_UTILS_COMMUNICATION_H_
 
 #include <AMReX_FabArray.H>
 #include <AMReX_Gpu.H>
@@ -16,7 +16,7 @@
 
 #include "WarpX.H"
 
-namespace WarpXCommUtil
+namespace ablastr::utils::communication
 {
 
 using comm_float_type = float;
@@ -92,4 +92,4 @@ void OverrideSync (amrex::MultiFab&          mf,
                    const amrex::Periodicity& period = amrex::Periodicity::NonPeriodic());
 }
 
-#endif
+#endif // ABLASTR_UTILS_COMMUNICATION_H_
