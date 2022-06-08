@@ -37,6 +37,34 @@ We recommend to store the above lines in a file, such as ``$HOME/lassen_warpx.pr
 
    source $HOME/lassen_warpx.profile
 
+And since Lassen does not yet provide a module for them, install ADIOS2, BLAS++ and LAPACK++:
+
+.. code-block:: bash
+
+   # c-blosc (I/O compression)
+   git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
+   rm -rf src/c-blosc-lassen-build
+   cmake -S src/c-blosc -B src/c-blosc-lassen-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/c-blosc-1.21.1
+   cmake --build src/c-blosc-lassen-build --target install --parallel 16
+
+   # ADIOS2
+   git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
+   rm -rf src/adios2-lassen-build
+   cmake -S src/adios2 -B src/adios2-lassen-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_SST=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/adios2-2.7.1
+   cmake --build src/adios2-lassen-build --target install -j 16
+
+   # BLAS++ (for PSATD+RZ)
+   git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+   rm -rf src/blaspp-lassen-build
+   cmake -S src/blaspp -B src/blaspp-lassen-build -Duse_openmp=ON -Dgpu_backend=CUDA -Duse_cmake_find_blas=ON -DBLA_VENDOR=IBMESSL -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/blaspp-master
+   cmake --build src/blaspp-lassen-build --target install --parallel 16
+
+   # LAPACK++ (for PSATD+RZ)
+   git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+   rm -rf src/lapackpp-lassen-build
+   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-lassen-build -Duse_cmake_find_lapack=ON -DBLA_VENDOR=IBMESSL -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/lapackpp-master -DLAPACK_LIBRARIES=/usr/lib64/liblapack.so
+   cmake --build src/lapackpp-lassen-build --target install --parallel 16
+
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
 
 .. code-block:: bash
@@ -88,3 +116,20 @@ regime), the following set of parameters provided good performance:
   node)
 
 * **Two `128x128x128` grids per GPU**, or **one `128x128x256` grid per GPU**.
+
+
+.. _building-lassen-issues:
+
+Known System Issues
+-------------------
+
+.. warning::
+
+   Feb 17th, 2022 (INC0278922):
+   The implementation of AllGatherv in IBM's MPI optimization library "libcollectives" is broken and leads to HDF5 crashes for multi-node runs.
+
+   Our batch script templates above `apply this work-around <https://github.com/ECP-WarpX/WarpX/pull/2874>`__ *before* the call to ``jsrun``, which avoids the broken routines from IBM and trades them for an OpenMPI implementation of collectives:
+
+   .. code-block:: bash
+
+      export OMPI_MCA_coll_ibm_skip_allgatherv=true

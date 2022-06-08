@@ -5,6 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PsatdAlgorithmRZ.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -54,17 +55,20 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
 
     if (time_averaging && !do_multi_J)
     {
-        amrex::Abort("RZ PSATD: psatd.do_time_averaging = 1 implemented only with warpx.do_multi_J = 1");
+        amrex::Abort(Utils::TextMsg::Err(
+            "RZ PSATD: psatd.do_time_averaging = 1 implemented only with warpx.do_multi_J = 1"));
     }
 
     if (dive_cleaning && !do_multi_J)
     {
-        amrex::Abort("RZ PSATD: warpx.do_dive_cleaning = 1 implemented only with warpx.do_multi_J = 1");
+        amrex::Abort(Utils::TextMsg::Err(
+            "RZ PSATD: warpx.do_dive_cleaning = 1 implemented only with warpx.do_multi_J = 1"));
     }
 
     if (divb_cleaning && !do_multi_J)
     {
-        amrex::Abort("RZ PSATD: warpx.do_divb_cleaning = 1 implemented only with warpx.do_multi_J = 1");
+        amrex::Abort(Utils::TextMsg::Err(
+            "RZ PSATD: warpx.do_divb_cleaning = 1 implemented only with warpx.do_multi_J = 1"));
     }
 }
 
@@ -413,23 +417,12 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 }
 
 void
-PsatdAlgorithmRZ::CurrentCorrection (const int lev,
-                                     SpectralFieldDataRZ& field_data,
-                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                     const std::unique_ptr<amrex::MultiFab>& rho)
+PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 {
     // Profiling
     WARPX_PROFILE( "PsatdAlgorithmRZ::CurrentCorrection" );
 
     const SpectralFieldIndex& Idx = m_spectral_index;
-
-    // Forward Fourier transform of J and rho
-    field_data.ForwardTransform( lev,
-                                 *current[0], Idx.Jx,
-                                 *current[1], Idx.Jy);
-    field_data.ForwardTransform( lev, *current[2], Idx.Jz, 0);
-    field_data.ForwardTransform( lev, *rho, Idx.rho_old, 0 );
-    field_data.ForwardTransform( lev, *rho, Idx.rho_new, 1 );
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -487,19 +480,11 @@ PsatdAlgorithmRZ::CurrentCorrection (const int lev,
             }
         });
     }
-
-    // Backward Fourier transform of J
-    field_data.BackwardTransform( lev,
-                                  *current[0], Idx.Jx,
-                                  *current[1], Idx.Jy);
-    field_data.BackwardTransform( lev,
-                                  *current[2], Idx.Jz, 0 );
 }
 
 void
-PsatdAlgorithmRZ::VayDeposition (const int /* lev */,
-                                 SpectralFieldDataRZ& /*field_data*/,
-                                 std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
+PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    amrex::Abort("Vay deposition not implemented in RZ geometry");
+    amrex::Abort(Utils::TextMsg::Err(
+        "Vay deposition not implemented in RZ geometry"));
 }

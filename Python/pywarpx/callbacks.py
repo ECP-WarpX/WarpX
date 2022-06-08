@@ -29,6 +29,7 @@ Functions can be called at the following times:
  - afterdeposition <installafterdeposition>: after particle deposition (for charge and/or current)
  - beforestep <installbeforestep>: before the time step
  - afterstep <installafterstep>: after the time step
+ - afterdiagnostics <installafterdiagnostics>: after diagnostic output
  - particlescraper <installparticlescraper>: just after the particle boundary conditions are applied
                                              but before lost particles are processed
  - particleloader <installparticleloader>: at the time that the standard particle loader is called
@@ -250,6 +251,8 @@ class CallbackFunctions(object):
 
 # --- Now create the actual instances.
 _afterinit = CallbackFunctions('afterinit')
+_beforecollisions = CallbackFunctions('beforecollisions')
+_aftercollisions = CallbackFunctions('aftercollisions')
 _beforeEsolve = CallbackFunctions('beforeEsolve')
 _poissonsolver = CallbackFunctions('poissonsolver')
 _afterEsolve = CallbackFunctions('afterEsolve')
@@ -259,6 +262,7 @@ _particlescraper = CallbackFunctions('particlescraper')
 _particleloader = CallbackFunctions('particleloader')
 _beforestep = CallbackFunctions('beforestep')
 _afterstep = CallbackFunctions('afterstep')
+_afterdiagnostics = CallbackFunctions('afterdiagnostics')
 _afterrestart = CallbackFunctions('afterrestart',lcallonce=1)
 _particleinjection = CallbackFunctions('particleinjection')
 _appliedfields = CallbackFunctions('appliedfields')
@@ -277,6 +281,7 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
               _particlescraper,
               _particleloader,
               _beforestep,_afterstep,
+              _afterdiagnostics,
               _afterrestart,
               _particleinjection,
               _appliedfields]:
@@ -312,6 +317,34 @@ def uninstallafterinit(f):
 def isinstalledafterinit(f):
     "Checks if the function is called after a init"
     return _afterinit.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def callfrombeforecollisions(f):
+    installbeforecollisions(f)
+    return f
+def installbeforecollisions(f):
+    "Adds a function to the list of functions called before collisions"
+    _beforecollisions.installfuncinlist(f)
+def uninstallbeforecollisions(f):
+    "Removes the function from the list of functions called before collisions"
+    _beforecollisions.uninstallfuncinlist(f)
+def isinstalledbeforecollisions(f):
+    "Checks if the function is called before collisions"
+    return _beforecollisions.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def callfromaftercollisions(f):
+    installaftercollisions(f)
+    return f
+def installaftercollisions(f):
+    "Adds a function to the list of functions called after collisions"
+    _aftercollisions.installfuncinlist(f)
+def uninstallaftercollisions(f):
+    "Removes the function from the list of functions called after collisions"
+    _aftercollisions.uninstallfuncinlist(f)
+def isinstalledaftercollisions(f):
+    "Checks if the function is called after collisions"
+    return _aftercollisions.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
 def callfrombeforeEsolve(f):
@@ -440,6 +473,20 @@ def uninstallafterstep(f):
 def isinstalledafterstep(f):
     "Checks if the function is called after a step"
     return _afterstep.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def callfromafterdiagnostics(f):
+    installafterdiagnostics(f)
+    return f
+def installafterdiagnostics(f):
+    "Adds a function to the list of functions called after diagnostic output"
+    _afterdiagnostics.installfuncinlist(f)
+def uninstallafterdiagnostics(f):
+    "Removes the function from the list of functions called after diagnostic output"
+    _afterdiagnostics.uninstallfuncinlist(f)
+def isinstalledafterdiagnostics(f):
+    "Checks if the function is called after diagnostic output"
+    return _afterdiagnostics.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
 def callfromafterrestart(f):

@@ -9,6 +9,7 @@
 
 #include "Utils/CoarsenIO.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
 #include <AMReX_Algorithm.H>
@@ -44,7 +45,7 @@ FieldMaximum::FieldMaximum (std::string rd_name)
 {
     // RZ coordinate is not working
 #if (defined WARPX_DIM_RZ)
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "FieldMaximum reduced diagnostics does not work for RZ coordinate.");
 #endif
 

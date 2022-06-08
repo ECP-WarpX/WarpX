@@ -38,9 +38,9 @@ jobs:
     env:
       CXX: g++
       CC: gcc
-      CMAKE_PREFIX_PATH: /ascent/install-debug/lib/cmake/
+      CMAKE_PREFIX_PATH: /ascent/install/lib/cmake/
     container:
-      image: alpinedav/ascent:ascent-ubuntu-18_2021-11-02-sha458045
+      image: alpinedav/ascent:0.8.0
     steps:
     - uses: actions/checkout@v2
     - name: Configure

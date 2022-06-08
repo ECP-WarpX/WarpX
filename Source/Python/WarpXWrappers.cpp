@@ -17,6 +17,8 @@
 #include "WarpXWrappers.H"
 #include "WarpX_py.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_ArrayOfStructs.H>
 #include <AMReX_Box.H>
@@ -38,7 +40,7 @@
 
 namespace
 {
-    amrex::Real** getMultiFabPointers(const amrex::MultiFab& mf, int *num_boxes, int *ncomps, int **ngrowvect, int **shapes)
+    amrex::Real** getMultiFabPointers (amrex::MultiFab& mf, int *num_boxes, int *ncomps, int **ngrowvect, int **shapes)
     {
         *ncomps = mf.nComp();
         *num_boxes = mf.local_size();
@@ -57,7 +59,7 @@ namespace
 #endif
         for ( amrex::MFIter mfi(mf, false); mfi.isValid(); ++mfi ) {
             int i = mfi.LocalIndex();
-            data[i] = (amrex::Real*) mf[mfi].dataPtr();
+            data[i] = mf[mfi].dataPtr();
             for (int j = 0; j < AMREX_SPACEDIM; ++j) {
                 (*shapes)[shapesize*i+j] = mf[mfi].box().length(j);
             }
@@ -65,7 +67,7 @@ namespace
         }
         return data;
     }
-    int* getMultiFabLoVects(const amrex::MultiFab& mf, int *num_boxes, int **ngrowvect)
+    int* getMultiFabLoVects (const amrex::MultiFab& mf, int *num_boxes, int **ngrowvect)
     {
         int shapesize = AMREX_SPACEDIM;
         *ngrowvect = static_cast<int*>(malloc(sizeof(int)*shapesize));
@@ -73,7 +75,7 @@ namespace
             (*ngrowvect)[j] = mf.nGrow(j);
         }
         *num_boxes = mf.local_size();
-        int *loVects = (int*) malloc((*num_boxes)*AMREX_SPACEDIM * sizeof(int));
+        auto loVects = static_cast<int*>(malloc((*num_boxes)*AMREX_SPACEDIM * sizeof(int)));
 
         int i = 0;
         for ( amrex::MFIter mfi(mf, false); mfi.isValid(); ++mfi, ++i ) {
@@ -90,7 +92,7 @@ namespace
     {
         if (mf == nullptr) return nullptr;
         const amrex::IntVect nodal_flag( mf->ixType().toIntVect() );
-        int *nodal_flag_data = (int*) malloc(AMREX_SPACEDIM * sizeof(int));
+        auto *nodal_flag_data = static_cast<int*>(malloc(AMREX_SPACEDIM * sizeof(int)));
 
         constexpr int NODE = amrex::IndexType::NODE;
 
@@ -240,11 +242,12 @@ namespace
         return dx[dir];
     }
 
-    long warpx_getNumParticles(const char* char_species_name) {
+    long warpx_getNumParticles(const char* char_species_name, const bool local) {
         const auto & mypc = WarpX::GetInstance().GetPartContainer();
         const std::string species_name(char_species_name);
         auto & myspc = mypc.GetParticleContainerFromName(species_name);
-        return myspc.TotalNumberOfParticles();
+        // the first argument below is to only count valid particles
+        return myspc.TotalNumberOfParticles(true, local);
     }
 
 #define WARPX_GET_FIELD(FIELD, GETTER) \
@@ -445,15 +448,12 @@ namespace
         const std::string species_name(char_species_name);
         auto & myspc = mypc.GetParticleContainerFromName(species_name);
 
+        *num_tiles = myspc.numLocalTilesAtLevel(lev);
+        *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
+
+        auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*)));
         int i = 0;
-        for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
-        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
-
-        amrex::ParticleReal** data = (amrex::ParticleReal**) malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*));
-        i = 0;
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {
             auto& aos = pti.GetArrayOfStructs();
             data[i] = (amrex::ParticleReal*) aos.data();
@@ -472,15 +472,12 @@ namespace
 
         int comp = warpx_getParticleCompIndex(char_species_name, char_comp_name);
 
+        *num_tiles = myspc.numLocalTilesAtLevel(lev);
+        *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
+
+        auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(amrex::ParticleReal*)));
         int i = 0;
-        for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
-        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
-
-        amrex::ParticleReal** data = (amrex::ParticleReal**) malloc(*num_tiles*sizeof(amrex::ParticleReal*));
-        i = 0;
         for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {
             auto& soa = pti.GetStructOfArrays();
             data[i] = (amrex::ParticleReal*) soa.GetRealData(comp).dataPtr();
@@ -540,15 +537,12 @@ namespace
 
         const int comp = particle_buffer.NumIntComps() - 1;
 
+        *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
+        *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
+
+        auto data = static_cast<int**>(malloc(*num_tiles*sizeof(int*)));
         int i = 0;
-        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
-        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
-
-        int** data = (int**) malloc(*num_tiles*sizeof(int*));
-        i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
             auto& soa = pti.GetStructOfArrays();
             data[i] = (int*) soa.GetIntData(comp).dataPtr();
@@ -567,15 +561,12 @@ namespace
 
         const int comp = warpx_getParticleCompIndex(species_name, comp_name);
 
+        *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
+        *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
+
+        auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(amrex::ParticleReal*)));
         int i = 0;
-        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
-        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
-
-        amrex::ParticleReal** data = (amrex::ParticleReal**) malloc(*num_tiles*sizeof(amrex::ParticleReal*));
-        i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
             auto& soa = pti.GetStructOfArrays();
             data[i] = (amrex::ParticleReal*) soa.GetRealData(comp).dataPtr();
@@ -592,15 +583,12 @@ namespace
         auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
         auto& particle_buffer = particle_buffers.getParticleBuffer(species_name, boundary);
 
+        *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
+        *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
+        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
+
+        auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*)));
         int i = 0;
-        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {}
-
-        // *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *num_tiles = i;
-        *particles_per_tile = (int*) malloc(*num_tiles*sizeof(int));
-
-        amrex::ParticleReal** data = (amrex::ParticleReal**) malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*));
-        i = 0;
         for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
             auto& aos = pti.GetArrayOfStructs();
             data[i] = (amrex::ParticleReal*) aos.data();
@@ -625,8 +613,9 @@ namespace
         auto * rho_fp = warpx.get_pointer_rho_fp(lev);
 
         if (rho_fp == nullptr) {
-            warpx.RecordWarning(
-                "WarpXWrappers", "rho_fp is not allocated", WarnPriority::low
+            ablastr::warn_manager::WMRecordWarning(
+                "WarpXWrappers", "rho_fp is not allocated",
+                ablastr::warn_manager::WarnPriority::low
             );
             return;
         }
@@ -644,28 +633,28 @@ namespace
 
     void warpx_ComputeDt () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.ComputeDt ();
+        warpx.ComputeDt();
     }
     void warpx_MoveWindow (int step,bool move_j) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.MoveWindow (step, move_j);
+        warpx.MoveWindow(step, move_j);
     }
 
     void warpx_EvolveE (amrex::Real dt) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.EvolveE (dt);
+        warpx.EvolveE(dt);
     }
     void warpx_EvolveB (amrex::Real dt, DtType a_dt_type) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.EvolveB (dt, a_dt_type);
+        warpx.EvolveB(dt, a_dt_type);
     }
     void warpx_FillBoundaryE () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.FillBoundaryE (warpx.getngE());
+        warpx.FillBoundaryE(warpx.getngEB());
     }
     void warpx_FillBoundaryB () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.FillBoundaryB (warpx.getngE());
+        warpx.FillBoundaryB(warpx.getngEB());
     }
     void warpx_SyncRho () {
         WarpX& warpx = WarpX::GetInstance();
@@ -673,50 +662,50 @@ namespace
     }
     void warpx_SyncCurrent () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.SyncCurrent ();
+        warpx.SyncCurrent();
     }
     void warpx_UpdateAuxilaryData () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.UpdateAuxilaryData ();
+        warpx.UpdateAuxilaryData();
     }
     void warpx_PushParticlesandDepose (amrex::Real cur_time) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.PushParticlesandDepose (cur_time);
+        warpx.PushParticlesandDepose(cur_time);
     }
 
     int warpx_getistep (int lev) {
         WarpX& warpx = WarpX::GetInstance();
-        return warpx.getistep (lev);
+        return warpx.getistep(lev);
     }
     void warpx_setistep (int lev, int ii) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.setistep (lev, ii);
+        warpx.setistep(lev, ii);
     }
     amrex::Real warpx_gett_new (int lev) {
         WarpX& warpx = WarpX::GetInstance();
-        return warpx.gett_new (lev);
+        return warpx.gett_new(lev);
     }
     void warpx_sett_new (int lev, amrex::Real time) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.sett_new (lev, time);
+        warpx.sett_new(lev, time);
     }
     amrex::Real warpx_getdt (int lev) {
         WarpX& warpx = WarpX::GetInstance();
-        return warpx.getdt (lev);
+        return warpx.getdt(lev);
     }
 
     int warpx_maxStep () {
         WarpX& warpx = WarpX::GetInstance();
-        return warpx.maxStep ();
+        return warpx.maxStep();
     }
     amrex::Real warpx_stopTime () {
         WarpX& warpx = WarpX::GetInstance();
-        return warpx.stopTime ();
+        return warpx.stopTime();
     }
 
     int warpx_finestLevel () {
         WarpX& warpx = WarpX::GetInstance();
-        return warpx.finestLevel ();
+        return warpx.finestLevel();
     }
 
     int warpx_getMyProc () {

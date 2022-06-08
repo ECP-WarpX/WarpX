@@ -11,10 +11,11 @@ class SimData:
     """
     Structure for easy access to load costs reduced diagnostics
     """
-    def __init__(self, directory, prange):
+    def __init__(self, directory, prange, is_3D):
         """
         Set data-containing dir, data range; load data
         """
+        self.is_3D = is_3D
         self._get_costs_reduced_diagnostics(directory, prange)
 
     def __call__(self, i):
@@ -69,19 +70,22 @@ class SimData:
             unique_headers=[''.join([l for l in w if not l.isdigit()])
                             for w in h.split()][2::]
 
-        # Either 7 or 8 depending if GPU
-        n_data_fields = 7 if (len(set(unique_headers)) - 2)%7 == 0 else 8
+        # Either 9 or 10 depending if GPU
+        n_data_fields = 9 if len(set(unique_headers))%9 == 0 else 10
         f.close()
 
         # From data header, data layout is:
         #     [step, time,
         #      cost_box_0, proc_box_0, lev_box_0, i_low_box_0, j_low_box_0,
-        #           k_low_box_0(, gpu_ID_box_0 if GPU run), hostname_box_0
+        #           k_low_box_0, num_cells_0, num_macro_particles_0,
+        #           (, gpu_ID_box_0 if GPU run), hostname_box_0,
         #      cost_box_1, proc_box_1, lev_box_1, i_low_box_1, j_low_box_1,
-        #           k_low_box_1(, gpu_ID_box_1 if GPU run), hostname_box_1
+        #           k_low_box_1, num_cells_1, num_macro_particles_1,
+        #           (, gpu_ID_box_1 if GPU run), hostname_box_1
         #      ...
         #      cost_box_n, proc_box_n, lev_box_n, i_low_box_n, j_low_box_n,
-        #           k_low_box_n(, gpu_ID_box_n if GPU run), hostname_box_n
+        #           k_low_box_n, num_cells_n, num_macro_particles_n,
+        #           (, gpu_ID_box_n if GPU run), hostname_box_n
         i, j, k = (data[0,3::n_data_fields],
                    data[0,4::n_data_fields],
                    data[0,5::n_data_fields])
@@ -90,19 +94,18 @@ class SimData:
         j_blocks = np.diff(np.array(sorted(j.astype(int))))
         k_blocks = np.diff(np.array(sorted(k.astype(int))))
 
-        i_blocking_factor = i_blocks[i_blocks != 0].min()
-        j_blocking_factor = j_blocks[j_blocks != 0].min()
-        k_blocking_factor = k_blocks[k_blocks != 0].min()
+        i_non_zero = i_blocks[i_blocks != 0]
+        j_non_zero = j_blocks[j_blocks != 0]
+        k_non_zero = k_blocks[k_blocks != 0]
+
+        #                   only one block in a dir - or smalles block size
+        i_blocking_factor = 1 if len(i_non_zero) == 0 else i_non_zero.min()
+        j_blocking_factor = 1 if len(j_non_zero) == 0 else j_non_zero.min()
+        k_blocking_factor = 1 if len(k_non_zero) == 0 else k_non_zero.min()
 
         imax = i.astype(int).max()//i_blocking_factor
         jmax = j.astype(int).max()//j_blocking_factor
         kmax = k.astype(int).max()//k_blocking_factor
-
-        i_is_int = all([el.is_integer() for el in i/i_blocking_factor])
-        j_is_int = all([el.is_integer() for el in j/j_blocking_factor])
-        k_is_int = all([el.is_integer() for el in k/k_blocking_factor])
-
-        is_3D = i_is_int and j_is_int and k_is_int
 
         for key in self.keys:
             row = np.where(key == steps)[0][0]
@@ -113,8 +116,8 @@ class SimData:
             kcoords = k.astype(int)//k_blocking_factor
 
             # Fill in cost array
-            shape = (kmax+1, jmax+1, imax+1)[:2+is_3D]
-            coords = [coord[:2+is_3D] for coord in zip(kcoords, jcoords, icoords)]
+            shape = (kmax+1, jmax+1, imax+1)[:2+self.is_3D]
+            coords = [coord[:2+self.is_3D] for coord in zip(kcoords, jcoords, icoords)]
 
             cost_arr = np.full(shape, 0.0)
             rank_arr = np.full(shape, -1)
@@ -131,7 +134,7 @@ class SimData:
                 edges =   list(rank_arr[corner[0]:pos[0]+1, pos[1], pos[2]]) \
                         + list(rank_arr[pos[0], corner[1]:pos[1]+1, pos[2]]) \
                         + list(rank_arr[pos[0], pos[1], corner[2]:pos[2]+1]) \
-                        if is_3D else                                        \
+                        if self.is_3D else                                   \
                           list(rank_arr[corner[0]:pos[0]+1, pos[1]])         \
                         + list(rank_arr[pos[0], corner[1]:pos[1]+1])
                 if visited[pos] or not set(edges).issubset(set([prev, -1])): return
@@ -163,3 +166,4 @@ class SimData:
             self.data_fields[key]['lb_efficiency_min'] = efficiencies.min()
             self.data_fields[key]['t'] = times[row]
             self.data_fields[key]['step'] = steps[row]
+            # ...

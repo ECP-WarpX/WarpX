@@ -82,8 +82,7 @@ public:
      * Constructor does nothing because optical depth initialization
      * does not require control parameters or lookup tables.
      */
-    BreitWheelerGetOpticalDepth ()
-    {}
+    BreitWheelerGetOpticalDepth () = default;
 
     /**
      * () operator is just a thin wrapper around a very simple function to
@@ -112,7 +111,7 @@ public:
     /**
      * Default constructor: it leaves the functor in a non-initialized state.
      */
-    BreitWheelerEvolveOpticalDepth (){}
+    BreitWheelerEvolveOpticalDepth () = default;
 
 
     /**
@@ -176,7 +175,7 @@ public:
             return 0;
 
         const auto is_out = pxr_bw::evolve_optical_depth<
-            amrex::Real,
+            amrex::ParticleReal,
             BW_dndt_table_view,
             pxr_p::unit_system::SI>(
                 energy, chi_phot, dt, opt_depth, m_table_view);
@@ -200,7 +199,7 @@ public:
     /**
      * Default constructor: it leaves the functor in a non-initialized state.
      */
-    BreitWheelerGeneratePairs (){}
+    BreitWheelerGeneratePairs () = default;
 
     /**
      * Constructor acquires pointers to control parameters and
@@ -297,7 +296,7 @@ public:
     /**
      * Constructor requires no arguments.
      */
-    BreitWheelerEngine ();
+    BreitWheelerEngine () = default;
 
     /**
      * Builds the functor to initialize the optical depth

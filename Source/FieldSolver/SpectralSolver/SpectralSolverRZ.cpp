@@ -4,9 +4,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "SpectralAlgorithms/GalileanPsatdAlgorithmRZ.H"
+#include "SpectralAlgorithms/PsatdAlgorithmGalileanRZ.H"
 #include "SpectralAlgorithms/PsatdAlgorithmRZ.H"
-#include "SpectralAlgorithms/PMLPsatdAlgorithmRZ.H"
+#include "SpectralAlgorithms/PsatdAlgorithmPmlRZ.H"
 #include "SpectralKSpaceRZ.H"
 #include "SpectralSolverRZ.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -53,7 +53,7 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
     if (with_pml) {
-            PML_algorithm = std::make_unique<PMLPsatdAlgorithmRZ>(
+            PML_algorithm = std::make_unique<PsatdAlgorithmPmlRZ>(
                 k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, nodal, dt);
     }
     if (v_galilean[2] == 0) {
@@ -63,7 +63,7 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
             update_with_rho, fft_do_time_averaging, do_multi_J, dive_cleaning, divb_cleaning);
     } else {
         // Otherwise: use the Galilean algorithm
-        algorithm = std::make_unique<GalileanPsatdAlgorithmRZ>(
+        algorithm = std::make_unique<PsatdAlgorithmGalileanRZ>(
             k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, nodal, v_galilean, dt, update_with_rho);
     }
 
@@ -149,20 +149,15 @@ SpectralSolverRZ::ComputeSpectralDivE (const int lev,
  * defined in the base class SpectralBaseAlgorithmRZ and possibly overridden
  * by its derived classes (e.g. PsatdAlgorithmRZ), from
  * objects of class SpectralSolverRZ through the private unique pointer \c algorithm
- *
- * \param[in,out] current two-dimensional array of unique pointers to MultiFab
- *                        storing the three components of the current density
- * \param[in]     rho     unique pointer to MultiFab storing the charge density
  */
 void
-SpectralSolverRZ::CurrentCorrection (const int lev,
-                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                     const std::unique_ptr<amrex::MultiFab>& rho) {
-    algorithm->CurrentCorrection(lev, field_data, current, rho);
+SpectralSolverRZ::CurrentCorrection ()
+{
+    algorithm->CurrentCorrection(field_data);
 }
 
 void
-SpectralSolverRZ::VayDeposition (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+SpectralSolverRZ::VayDeposition ()
 {
-    algorithm->VayDeposition(lev, field_data, current);
+    algorithm->VayDeposition(field_data);
 }

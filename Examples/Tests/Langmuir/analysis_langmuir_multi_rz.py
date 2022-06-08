@@ -140,17 +140,17 @@ if current_correction:
 dim = "rz"
 species_name = "electrons"
 
-parser_filter_fn = "diags/diag_parser_filter00080"
+parser_filter_fn = "diags/diag_parser_filter000080"
 parser_filter_expression = "(py-pz < 0) * (r<10e-6) * (z > 0)"
 post_processing_utils.check_particle_filter(fn, parser_filter_fn, parser_filter_expression,
                                             dim, species_name)
 
-uniform_filter_fn = "diags/diag_uniform_filter00080"
+uniform_filter_fn = "diags/diag_uniform_filter000080"
 uniform_filter_expression = "ids%3 == 0"
 post_processing_utils.check_particle_filter(fn, uniform_filter_fn, uniform_filter_expression,
                                             dim, species_name)
 
-random_filter_fn = "diags/diag_random_filter00080"
+random_filter_fn = "diags/diag_random_filter000080"
 random_fraction = 0.66
 post_processing_utils.check_random_filter(fn, random_filter_fn, random_fraction,
                                           dim, species_name)

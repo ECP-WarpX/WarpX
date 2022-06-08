@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2020 Axel Huebl
+# Copyright 2020-2022 Axel Huebl
 #
 # This file is part of WarpX.
 #
@@ -17,6 +17,14 @@
 #BSUB -J WarpX
 #BSUB -o WarpXo.%J
 #BSUB -e WarpXe.%J
+
+# Work-around OpenMPI bug with chunked HDF5
+#   https://github.com/open-mpi/ompi/issues/7795
+export OMPI_MCA_io=ompio
+
+# Work-around for broken IBM "libcollectives" MPI_Allgatherv
+#   https://github.com/ECP-WarpX/WarpX/pull/2874
+export OMPI_MCA_coll_ibm_skip_allgatherv=true
 
 export OMP_NUM_THREADS=1
 jsrun -r 4 -a 1 -g 1 -c 7 -l GPU-CPU -d packed -b rs -M "-gpu" <path/to/executable> <input file> > output.txt

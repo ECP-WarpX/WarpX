@@ -73,9 +73,14 @@ struct Compute_shape_factor
         
         else{
             amrex::Abort("Unknown particle shape selected in Compute_shape_factor");
+<<<<<<< HEAD
             amrex::ignore_unused(xmid);
             return 0;
+=======
+            amrex::ignore_unused(sx, xmid);
+>>>>>>> mainline/development
         }
+        return 0;
     }
 };
 
@@ -146,6 +151,7 @@ struct Compute_shifted_shape_factor
             amrex::ignore_unused(i_new);
             return 0;
         }
+        return 0;
     }
 };
 

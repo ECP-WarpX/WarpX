@@ -86,13 +86,18 @@ class SpectralSolver
                         const bool divb_cleaning);
 
         /**
-         * \brief Transform the component `i_comp` of MultiFab `mf`
-         *  to spectral space, and store the corresponding result internally
-         *  (in the spectral field specified by `field_index`) */
-        void ForwardTransform( const int lev,
+         * \brief Transform the component i_comp of the MultiFab mf to Fourier space,
+         * and store the result internally (in the spectral field specified by field_index)
+         *
+         * \param[in] lev mesh refinement level
+         * \param[in] mf MultiFab that is transformed to Fourier space (component i_comp)
+         * \param[in] field_index index of the spectral field that stores the FFT result
+         * \param[in] i_comp component of the MultiFab mf that is transformed to Fourier space
+         */
+        void ForwardTransform (const int lev,
                                const amrex::MultiFab& mf,
                                const int field_index,
-                               const int i_comp=0 );
+                               const int i_comp = 0);
 
         /**
          * \brief Transform spectral field specified by `field_index` back to
@@ -121,18 +126,12 @@ class SpectralSolver
         /**
          * \brief Public interface to call the virtual function \c CurrentCorrection,
          * defined in the base class SpectralBaseAlgorithm and possibly overridden
-         * by its derived classes (e.g. PsatdAlgorithm, GalileanAlgorithm), from
+         * by its derived classes (e.g. PsatdAlgorithm, PsatdAlgorithmComoving, etc.), from
          * objects of class SpectralSolver through the private unique pointer \c algorithm
-         *
-         * \param[in]     lev     The mesh refinement level
-         * \param[in,out] current three-dimensional array of unique pointers to MultiFab
-         *                        storing the three components of the current density
-         * \param[in]     rho     unique pointer to MultiFab storing the charge density
          */
-        void CurrentCorrection ( const int lev,
-                                 std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                 const std::unique_ptr<amrex::MultiFab>& rho ) {
-            algorithm->CurrentCorrection( lev, field_data, current, rho );
+        void CurrentCorrection ()
+        {
+            algorithm->CurrentCorrection(field_data);
         }
 
         /**
@@ -145,9 +144,9 @@ class SpectralSolver
          * \param[in,out] current Array of unique pointers to \c MultiFab storing
          *                        the three components of the current density
          */
-        void VayDeposition (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+        void VayDeposition ()
         {
-            algorithm->VayDeposition(lev, field_data, current);
+            algorithm->VayDeposition(field_data);
         }
 
         /**

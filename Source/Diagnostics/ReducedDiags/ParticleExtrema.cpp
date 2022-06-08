@@ -398,17 +398,12 @@ void ParticleExtrema::ComputeDiags (int step)
             const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
             const int nox = WarpX::nox;
             const bool galerkin_interpolation = WarpX::galerkin_interpolation;
-            const amrex::IntVect ngE = warpx.getngE();
-            amrex::Vector<amrex::Real> v_galilean = myspc.get_v_galilean();
-            const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
+            const amrex::IntVect ngEB = warpx.getngEB();
 
             // loop over refinement levels
             for (int lev = 0; lev <= level_number; ++lev)
             {
                 // define variables in preparation for field gathering
-                const amrex::Real cur_time = WarpX::GetInstance().gett_new(lev);
-                const amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-                const amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
                 const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
                 const GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
                 const MultiFab & Ex = warpx.getEfield(lev,0);
@@ -432,9 +427,9 @@ void ParticleExtrema::ComputeDiags (int step)
 
                     // define variables in preparation for field gathering
                     amrex::Box box = pti.tilebox();
-                    box.grow(ngE);
+                    box.grow(ngEB);
                     const Dim3 lo = amrex::lbound(box);
-                    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, lev);
+                    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
                     const GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
                     const auto& ex_arr = Ex[pti].array();
                     const auto& ey_arr = Ey[pti].array();
