@@ -111,4 +111,10 @@ if(WarpX_QED)
         ON "WarpX_QED" OFF)
 
     find_picsar()
+
+    # Enable QED tools
+    if (WarpX_QED_TOOLS)
+        add_subdirectory(Tools/QedTablesUtils)
+    endif()
+
 endif()
