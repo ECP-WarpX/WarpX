@@ -158,11 +158,11 @@ public:
         amrex::Gpu::streamSynchronize();
         SoaData_type* AMREX_RESTRICT soa_products_data = device_soa_products.data();
         const index_type* AMREX_RESTRICT products_np_data = device_products_np.data();
-        const amrex::Real* AMREX_RESTRICT products_mass_data = device_products_mass.data();
+        const amrex::ParticleReal* AMREX_RESTRICT products_mass_data = device_products_mass.data();
 #else
         SoaData_type* AMREX_RESTRICT soa_products_data = soa_products.data();
         const index_type* AMREX_RESTRICT products_np_data = products_np.data();
-        const amrex::Real* AMREX_RESTRICT products_mass_data = products_mass.data();
+        const amrex::ParticleReal* AMREX_RESTRICT products_mass_data = products_mass.data();
 #endif
 
         const int t_num_product_species = m_num_product_species;
