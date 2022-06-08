@@ -84,26 +84,23 @@ namespace {
         // precision anyways.
         constexpr double m_alpha = PhysConst::m_p * 3.97369_prt;
         constexpr double m_beryllium = PhysConst::m_p * 7.94748_prt;
-        constexpr double ma_sq = m_alpha*m_alpha;
         constexpr double mBe_sq = m_beryllium*m_beryllium;
         constexpr amrex::ParticleReal c_sq = PhysConst::c * PhysConst::c;
-        constexpr amrex::ParticleReal inv_csq = 1._prt / ( c_sq );
-
+        
         // Compute the resulting momenta of the alpha and beryllium particles
         // produced in the fusion reaction
         amrex::ParticleReal ux_alpha1 = 0.0, uy_alpha1 = 0.0, uz_alpha1 = 0.0;
         amrex::ParticleReal ux_Be = 0.0, uy_Be = 0.0, uz_Be = 0.0;
         TwoProductFusionComputeProductMomenta (
-            soa1_in.m_rdata[PIdx::ux][idx1_in],
-            soa1_in.m_rdata[PIdx::uy][idx1_in],
-            soa1_in.m_rdata[PIdx::uz][idx1_in], m1,
-            soa2_in.m_rdata[PIdx::ux][idx2_in],
-            soa2_in.m_rdata[PIdx::uy][idx2_in],
-            soa2_in.m_rdata[PIdx::uz][idx2_in], m2,
+            soa_1.m_rdata[PIdx::ux][idx_1],
+            soa_1.m_rdata[PIdx::uy][idx_1],
+            soa_1.m_rdata[PIdx::uz][idx_1], m1,
+            soa_2.m_rdata[PIdx::ux][idx_2],
+            soa_2.m_rdata[PIdx::uy][idx_2],
+            soa_2.m_rdata[PIdx::uz][idx_2], m2,
             ux_alpha1, uy_alpha1, uz_alpha1, m_alpha,
             ux_Be, uy_Be, uz_Be, m_beryllium,
-            const amrex::ParticleReal& E_fusion,
-            const amrex::RandomEngine& engine )
+            E_fusion, engine);
 
         // Compute momentum of beryllium in lab frame
         const amrex::ParticleReal px_Be = m_beryllium * ux_Be;
