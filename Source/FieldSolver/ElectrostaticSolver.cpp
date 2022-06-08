@@ -16,8 +16,8 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Parallelization/WarpXCommUtil.H"
 
+#include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX_Array.H>
@@ -395,7 +395,9 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
             // Copy from phi[lev] to phi_cp (in parallel)
             const amrex::IntVect& ng = IntVect::TheUnitVector();
             const amrex::Periodicity& crse_period = Geom(lev).periodicity();
-            WarpXCommUtil::ParallelCopy(phi_cp, *phi[lev], 0, 0, 1, ng, ng, crse_period);
+            ablastr::utils::communication::ParallelCopy(phi_cp, *phi[lev], 0, 0, 1, ng, ng,
+                                                        WarpX::do_single_precision_comms,
+                                                        crse_period);
 
             // Local interpolation from phi_cp to phi[lev+1]
 #ifdef AMREX_USE_OMP

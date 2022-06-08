@@ -4,7 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpXCommUtil.H"
+#include "Communication.H"
 
 #include <AMReX.H>
 #include <AMReX_BaseFab.H>
@@ -13,23 +13,19 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_iMultiFab.H>
 
-namespace WarpXCommUtil {
-
-void ParallelCopy (amrex::MultiFab&            dst,
-                   const amrex::MultiFab&      src,
-                   int                         src_comp,
-                   int                         dst_comp,
-                   int                         num_comp,
-                   const amrex::IntVect&       src_nghost,
-                   const amrex::IntVect&       dst_nghost,
-                   const amrex::Periodicity&   period,
-                   amrex::FabArrayBase::CpOp   op)
+namespace ablastr::utils::communication
 {
-    BL_PROFILE("WarpXCommUtil::ParallelCopy");
 
-    using WarpXCommUtil::comm_float_type;
+void ParallelCopy(amrex::MultiFab &dst, const amrex::MultiFab &src, int src_comp, int dst_comp, int num_comp,
+                  const amrex::IntVect &src_nghost, const amrex::IntVect &dst_nghost,
+                  bool do_single_precision_comms, const amrex::Periodicity &period,
+                  amrex::FabArrayBase::CpOp op)
+{
+    BL_PROFILE("ablastr::utils::communication::ParallelCopy");
 
-    if (WarpX::do_single_precision_comms)
+    using ablastr::utils::communication::comm_float_type;
+
+    if (do_single_precision_comms)
     {
         amrex::FabArray<amrex::BaseFab<comm_float_type> > src_tmp(src.boxArray(),
                                                                   src.DistributionMap(),
@@ -55,24 +51,19 @@ void ParallelCopy (amrex::MultiFab&            dst,
     }
 }
 
-void ParallelAdd (amrex::MultiFab&            dst,
-                  const amrex::MultiFab&      src,
-                  int                         src_comp,
-                  int                         dst_comp,
-                  int                         num_comp,
-                  const amrex::IntVect&       src_nghost,
-                  const amrex::IntVect&       dst_nghost,
-                  const amrex::Periodicity&   period)
+void ParallelAdd(amrex::MultiFab &dst, const amrex::MultiFab &src, int src_comp, int dst_comp, int num_comp,
+                 const amrex::IntVect &src_nghost, const amrex::IntVect &dst_nghost,
+                 bool do_single_precision_comms, const amrex::Periodicity &period)
 {
-    WarpXCommUtil::ParallelCopy(dst, src, src_comp, dst_comp, num_comp, src_nghost, dst_nghost, period,
-                                amrex::FabArrayBase::ADD);
+    ablastr::utils::communication::ParallelCopy(dst, src, src_comp, dst_comp, num_comp, src_nghost, dst_nghost,
+                                                do_single_precision_comms, period, amrex::FabArrayBase::ADD);
 }
 
-void FillBoundary (amrex::MultiFab& mf, const amrex::Periodicity& period)
+void FillBoundary (amrex::MultiFab &mf, bool do_single_precision_comms, const amrex::Periodicity &period)
 {
-    BL_PROFILE("WarpXCommUtil::FillBoundary");
+    BL_PROFILE("ablastr::utils::communication::FillBoundary");
 
-    if (WarpX::do_single_precision_comms)
+    if (do_single_precision_comms)
     {
         amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
                                                                  mf.DistributionMap(),
@@ -91,14 +82,15 @@ void FillBoundary (amrex::MultiFab& mf, const amrex::Periodicity& period)
     }
 }
 
-void FillBoundary (amrex::MultiFab&          mf,
-                   amrex::IntVect            ng,
-                   const amrex::Periodicity& period,
-                   const bool                nodal_sync)
+void FillBoundary(amrex::MultiFab &mf,
+                  amrex::IntVect ng,
+                  bool do_single_precision_comms,
+                  const amrex::Periodicity &period,
+                  const bool nodal_sync)
 {
-    BL_PROFILE("WarpXCommUtil::FillBoundary");
+    BL_PROFILE("ablastr::utils::communication::FillBoundary");
 
-    if (WarpX::do_single_precision_comms)
+    if (do_single_precision_comms)
     {
         amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
                                                             mf.DistributionMap(),
@@ -126,9 +118,9 @@ void FillBoundary (amrex::MultiFab&          mf,
     }
 }
 
-void FillBoundary (amrex::iMultiFab& imf, const amrex::Periodicity& period)
+void FillBoundary(amrex::iMultiFab &imf, const amrex::Periodicity &period)
 {
-    BL_PROFILE("WarpXCommUtil::FillBoundary");
+    BL_PROFILE("ablastr::utils::communication::FillBoundary");
 
     imf.FillBoundary(period);
 }
@@ -137,23 +129,24 @@ void FillBoundary (amrex::iMultiFab&         imf,
                    amrex::IntVect            ng,
                    const amrex::Periodicity& period)
 {
-    BL_PROFILE("WarpXCommUtil::FillBoundary");
+    BL_PROFILE("ablastr::utils::communication::FillBoundary");
     imf.FillBoundary(ng, period);
 }
 
 void
-FillBoundary (amrex::Vector<amrex::MultiFab*> const& mf, const amrex::Periodicity& period)
+FillBoundary(amrex::Vector<amrex::MultiFab *> const &mf, bool do_single_precision_comms,
+             const amrex::Periodicity &period)
 {
     for (auto x : mf) {
-        WarpXCommUtil::FillBoundary(*x, period);
+        ablastr::utils::communication::FillBoundary(*x, do_single_precision_comms, period);
     }
 }
 
-void SumBoundary (amrex::MultiFab& mf, const amrex::Periodicity& period)
+void SumBoundary (amrex::MultiFab &mf, bool do_single_precision_comms, const amrex::Periodicity &period)
 {
-    BL_PROFILE("WarpXCommUtil::SumBoundary");
+    BL_PROFILE("ablastr::utils::communication::SumBoundary");
 
-    if (WarpX::do_single_precision_comms)
+    if (do_single_precision_comms)
     {
         amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
                                                                  mf.DistributionMap(),
@@ -172,15 +165,16 @@ void SumBoundary (amrex::MultiFab& mf, const amrex::Periodicity& period)
     }
 }
 
-void SumBoundary (amrex::MultiFab&          mf,
-                  int                       start_comp,
-                  int                       num_comps,
-                  amrex::IntVect            ng,
-                  const amrex::Periodicity& period)
+void SumBoundary(amrex::MultiFab &mf,
+                 int start_comp,
+                 int num_comps,
+                 amrex::IntVect ng,
+                 bool do_single_precision_comms,
+                 const amrex::Periodicity &period)
 {
-    BL_PROFILE("WarpXCommUtil::SumBoundary");
+    BL_PROFILE("ablastr::utils::communication::SumBoundary");
 
-    if (WarpX::do_single_precision_comms)
+    if (do_single_precision_comms)
     {
         amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
                                                                  mf.DistributionMap(),
@@ -198,16 +192,18 @@ void SumBoundary (amrex::MultiFab&          mf,
     }
 }
 
-void SumBoundary (amrex::MultiFab&          mf,
-                  int                       start_comp,
-                  int                       num_comps,
-                  amrex::IntVect            src_ng,
-                  amrex::IntVect            dst_ng,
-                  const amrex::Periodicity& period)
+void
+SumBoundary (amrex::MultiFab &mf,
+             int start_comp,
+             int num_comps,
+             amrex::IntVect src_ng,
+             amrex::IntVect dst_ng,
+             bool do_single_precision_comms,
+             const amrex::Periodicity &period)
 {
-    BL_PROFILE("WarpXCommUtil::SumBoundary");
+    BL_PROFILE("ablastr::utils::communication::SumBoundary");
 
-    if (WarpX::do_single_precision_comms)
+    if (do_single_precision_comms)
     {
         amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
                                                                  mf.DistributionMap(),
@@ -225,12 +221,13 @@ void SumBoundary (amrex::MultiFab&          mf,
     }
 }
 
-void OverrideSync (amrex::MultiFab&          mf,
-                   const amrex::Periodicity& period)
+void OverrideSync (amrex::MultiFab &mf,
+                   bool do_single_precision_comms,
+                   const amrex::Periodicity &period)
 {
     if (mf.ixType().cellCentered()) return;
 
-    if (WarpX::do_single_precision_comms)
+    if (do_single_precision_comms)
     {
         amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
                                                                  mf.DistributionMap(),
@@ -250,4 +247,4 @@ void OverrideSync (amrex::MultiFab&          mf,
     }
 }
 
-}
+} // namespace ablastr::utils::communication
