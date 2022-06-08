@@ -350,7 +350,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
                         compute_shape_factor(j_jy,ix)*compute_shape_factor(l_jy,iz)*wqy);
                     amrex::Gpu::Atomic::AddNoRet(
                         &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0),
-                        compute_shape_factor(j_jz,ix)*compute_shape_factor(l_jz,iz)*wqz); 
+                        compute_shape_factor(j_jz,ix)*compute_shape_factor(l_jz,iz)*wqz);
 #if defined(WARPX_DIM_RZ)
                     Complex xy = xy0; // Note that xy is equal to e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
@@ -627,7 +627,7 @@ int k_new = 0;
 int k_old = 0;
 
 #if !defined(WARPX_DIM_1D_Z)
-            
+
             if (depos_order > 1){
                 i_new = (depos_order%2==0) ? static_cast<int>(x_new+0.5_rt)-1_rt : static_cast<int>(x_new)-1_rt;
                 i_old = (depos_order%2==0) ? static_cast<int>(x_old+0.5_rt)-1_rt : static_cast<int>(x_old)-1_rt;
@@ -1032,7 +1032,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         // sz_new shape factor along z for the centering of each current
         // const int k_new = compute_shape_factor(sz_new, z_new);
         const int k_new = (depos_order%2==0) ? z_new+0.5 : z_new;
- 
+
         // Compute shape factors for old positions
 
         // i_old leftmost grid point in x that the particle touches

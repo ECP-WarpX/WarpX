@@ -38,7 +38,7 @@ struct Compute_shape_factor
             const T xint = xmid - static_cast<int>(xmid);
             if (cell_index==0){
                 return (1.0) - xint;
-            } else if (cell_index == 1){ 
+            } else if (cell_index == 1){
                 return xint;
             } else {
                 return 0;
@@ -70,7 +70,7 @@ struct Compute_shape_factor
                 return 0;
             }
         }
-        
+
         else{
             amrex::Abort("Unknown particle shape selected in Compute_shape_factor");
 <<<<<<< HEAD
@@ -97,7 +97,7 @@ struct Compute_shifted_shape_factor
     template< typename T >
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real operator()(
-        const T x_old, int cell_index, 
+        const T x_old, int cell_index,
         const int i_new) const
     {
 
@@ -135,11 +135,11 @@ struct Compute_shifted_shape_factor
             const T xint = x_old - i;
             if (cell_index == 1+i_shift){
                 return (T(1.0))/(T(6.0))*(T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - xint);
-            } else if (cell_index == 2+i_shift){   
+            } else if (cell_index == 2+i_shift){
                 return (T(2.0))/(T(3.0)) - xint*xint*(T(1.0) - xint/(T(2.0)));
-            } else if (cell_index == 3+i_shift){ 
+            } else if (cell_index == 3+i_shift){
                 return (T(2.0))/(T(3.0)) - (T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - T(0.5)*(T(1.0) - xint));
-            } else if (cell_index == 4+i_shift){ 
+            } else if (cell_index == 4+i_shift){
                 return (T(1.0))/(T(6.0))*xint*xint*xint;
             } else {
                 return 0;

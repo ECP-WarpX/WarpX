@@ -123,7 +123,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         } else {
             j_cell_v = (depos_order%2==0) ? static_cast<int>(x) : static_cast<int>(x-0.5_rt);
         }
-    
+
     //int const j_ex = ((ex_type[0] == NODE) ? j_node_v : j_cell_v);
     int const j_ex=j_cell_v;
     // int const j_ey = ((ey_type[0] == NODE) ? j_node   : j_cell  );
@@ -200,8 +200,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // Gather field on particle Eyp from field on grid ey_arr
     // Gather field on particle Exp from field on grid ex_arr
     // Gather field on particle Bzp from field on grid bz_arr
-    
-    
+
+
     for (int iz=0; iz<=depos_order; iz++){
         Eyp += compute_shape_factor(l_ey,iz) *
             ey_arr(lo.x+l_ey+iz, 0, 0, 0);
