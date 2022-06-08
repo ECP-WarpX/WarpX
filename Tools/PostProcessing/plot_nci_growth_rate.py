@@ -40,7 +40,9 @@ def set_axes(ax, iter_min, iter_max):
     """
     ax.xaxis.set_major_locator(plt.MaxNLocator(5))
     ax.yaxis.set_major_locator(plt.MaxNLocator(5))
-    title = 'Growth Rate (time step {} to {})'.format(iter_min, iter_max)
+    ax.set_xlabel(r'$k_x$ (normalized)')
+    ax.set_ylabel(r'$k_z$ (normalized)')
+    title = 'Growth Rate (between time step {} and {})'.format(iter_min, iter_max)
     ax.set_title(title)
 
 def set_colorbar(cb):
@@ -139,8 +141,6 @@ if __name__ == '__main__':
     dxz = ds_itmin.domain_width / ds_itmin.domain_dimensions
     dx = dxz[0]
     dz = dxz[1]
-    kxmax = np.pi / dx
-    kzmax = np.pi / dz
     Nx = data_itmin.shape[0]
     Nz = data_itmin.shape[1]
 
@@ -156,6 +156,10 @@ if __name__ == '__main__':
     energy = np.loadtxt(os.path.join(path_diags_reduced, diag_name_reduced), usecols=2)
     fig, ax = plt.subplots(dpi=100)
     ax.plot(energy, '-')
+    plt.fill_between(
+        x=np.arange(start=iter_min, stop=iter_max+1, step=1),
+        y1=energy[iter_min:iter_max+1],
+        alpha=0.5)
     ax.set_yscale('log')
     ax.grid()
     ax.set_xlabel(r'Time Steps')
