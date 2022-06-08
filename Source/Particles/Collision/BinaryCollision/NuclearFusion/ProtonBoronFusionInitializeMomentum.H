@@ -86,7 +86,7 @@ namespace {
         constexpr double m_beryllium = PhysConst::m_p * 7.94748_prt;
         constexpr double mBe_sq = m_beryllium*m_beryllium;
         constexpr amrex::ParticleReal c_sq = PhysConst::c * PhysConst::c;
-        
+
         // Compute the resulting momenta of the alpha and beryllium particles
         // produced in the fusion reaction
         amrex::ParticleReal ux_alpha1 = 0.0, uy_alpha1 = 0.0, uz_alpha1 = 0.0;
