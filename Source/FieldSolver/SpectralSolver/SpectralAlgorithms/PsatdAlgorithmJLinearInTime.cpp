@@ -231,43 +231,61 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
                 - I * S_ck * (kx * Ey_old - ky * Ex_old) + I * X1 * (kx * Jy_old - ky * Jx_old)
                 + I * X2/c2 * (kx * (Jy_new - Jy_old) - ky * (Jx_new - Jx_old));
 
-            if (dive_cleaning && !asymmetrical)
+            if (asymmetrical)
             {
-                const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
-                const Complex k_dot_J  = kx * Jx_old + ky * Jy_old + kz * Jz_old;
-                const Complex k_dot_dJ = kx * (Jx_new - Jx_old) + ky * (Jy_new - Jy_old) + kz * (Jz_new - Jz_old);
+                if (dive_cleaning)
+                {
+                    const Complex kloc_dot_E  = kx_loc * Ex_old + ky_loc * Ey_old + kz_loc * Ez_old;
+                    const Complex kloc_dot_J  = kx_loc * Jx_old + ky_loc * Jy_old + kz_loc * Jz_old;
+                    const Complex kloc_dot_dJ = kx_loc * (Jx_new - Jx_old) + ky_loc * (Jy_new - Jy_old) + kz_loc * (Jz_new - Jz_old);
 
-                fields(i,j,k,Idx.Ex) += I * c2 * S_ck * F_old * kx;
-                fields(i,j,k,Idx.Ey) += I * c2 * S_ck * F_old * ky;
-                fields(i,j,k,Idx.Ez) += I * c2 * S_ck * F_old * kz;
+                    fields(i,j,k,Idx.Ex) += I * c2 * S_ck * F_old * kx;
+                    fields(i,j,k,Idx.Ey) += I * c2 * S_ck * F_old * ky;
+                    fields(i,j,k,Idx.Ez) += I * c2 * S_ck * F_old * kz;
 
-                fields(i,j,k,Idx.F) = C * F_old + S_ck * (I * k_dot_E - rho_old * inv_ep0)
-                    - X1 * ((rho_new - rho_old) / dt + I * k_dot_J) - I * X2/c2 * k_dot_dJ;
+                    fields(i,j,k,Idx.F) = C * F_old + S_ck * (I * kloc_dot_E - rho_old * inv_ep0)
+                        - X1 * ((rho_new - rho_old) / dt + I * kloc_dot_J) - I * X2/c2 * kloc_dot_dJ;
+                }
+                if (divb_cleaning)
+                {
+                    const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
+
+                    fields(i,j,k,Idx.Bx) += I * S_ck * G_old * kx_loc;
+                    fields(i,j,k,Idx.By) += I * S_ck * G_old * ky_loc;
+                    fields(i,j,k,Idx.Bz) += I * S_ck * G_old * kz_loc;
+
+                    fields(i,j,k,Idx.G) = C * G_old + I * c2 * S_ck * k_dot_B;
+                }
             }
-            if (dive_cleaning && asymmetrical)
+            else
             {
-                const Complex kloc_dot_E  = kx_loc * Ex_old + ky_loc * Ey_old + kz_loc * Ez_old;
-                const Complex kloc_dot_J  = kx_loc * Jx_old + ky_loc * Jy_old + kz_loc * Jz_old;
-                const Complex kloc_dot_dJ = kx_loc * (Jx_new - Jx_old) + ky_loc * (Jy_new - Jy_old) + kz_loc * (Jz_new - Jz_old);
+                if (dive_cleaning)
+                {
+                    amrex::Print()<< "no asymm & dive_cleaning"<<"\n";
+                    const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
+                    const Complex k_dot_J  = kx * Jx_old + ky * Jy_old + kz * Jz_old;
+                    const Complex k_dot_dJ = kx * (Jx_new - Jx_old) + ky * (Jy_new - Jy_old) + kz * (Jz_new - Jz_old);
 
-                fields(i,j,k,Idx.Ex) += I * c2 * S_ck * F_old * kx;
-                fields(i,j,k,Idx.Ey) += I * c2 * S_ck * F_old * ky;
-                fields(i,j,k,Idx.Ez) += I * c2 * S_ck * F_old * kz;
+                    fields(i,j,k,Idx.Ex) += I * c2 * S_ck * F_old * kx;
+                    fields(i,j,k,Idx.Ey) += I * c2 * S_ck * F_old * ky;
+                    fields(i,j,k,Idx.Ez) += I * c2 * S_ck * F_old * kz;
 
-                fields(i,j,k,Idx.F) = C * F_old + S_ck * (I * kloc_dot_E - rho_old * inv_ep0)
-                    - X1 * ((rho_new - rho_old) / dt + I * kloc_dot_J) - I * X2/c2 * kloc_dot_dJ;
+                    fields(i,j,k,Idx.F) = C * F_old + S_ck * (I * k_dot_E - rho_old * inv_ep0)
+                        - X1 * ((rho_new - rho_old) / dt + I * k_dot_J) - I * X2/c2 * k_dot_dJ;
+                }
+                if (divb_cleaning)
+                {
+                    amrex::Print()<< "no asymm & divb_cleaning"<<"\n";
+
+                    const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
+
+                    fields(i,j,k,Idx.Bx) += I * S_ck * G_old * kx;
+                    fields(i,j,k,Idx.By) += I * S_ck * G_old * ky;
+                    fields(i,j,k,Idx.Bz) += I * S_ck * G_old * kz;
+
+                    fields(i,j,k,Idx.G) = C * G_old + I * c2 * S_ck * k_dot_B;
+                }
             }
-            if (divb_cleaning)
-            {
-                const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
-
-                fields(i,j,k,Idx.Bx) += I * S_ck * G_old * kx;
-                fields(i,j,k,Idx.By) += I * S_ck * G_old * ky;
-                fields(i,j,k,Idx.Bz) += I * S_ck * G_old * kz;
-
-                fields(i,j,k,Idx.G) = C * G_old + I * c2 * S_ck * k_dot_B;
-            }
-
             if (time_averaging)
             {
                 const amrex::Real X5 = X5_arr(i,j,k);
