@@ -63,9 +63,9 @@ namespace {
 
         // Compute Lorentz factor gamma in the lab frame
         const amrex::ParticleReal g1_in = std::sqrt( 1._prt
-            + (u1x_in * u1x_in + u1y_in * u1y_in + u1z_in*u1z_in)*inv_csq );
+            + (u1x_in*u1x_in + u1y_in*u1y_in + u1z_in*u1z_in)*inv_csq );
         const amrex::ParticleReal g2_in = std::sqrt( 1._prt
-            + (u2x_out*u2x_out + u2y_out*u2y_out + u2z_out*u2z_out)*inv_csq );
+            + (u2x_in*u2x_in + u2y_in*u2y_in + u2z_in*u2z_in)*inv_csq );
 
         // Compute momenta
         const amrex::ParticleReal p1x_in = u1x_in * m1_in;
@@ -101,7 +101,7 @@ namespace {
             E_star_f_sq*0.25_prt*inv_csq - (m1_out*m1_out + m2_out*m2_out)*c_sq*0.5_prt +
             pow3(c_sq)*0.25_prt * pow2(m1_out*m1_out - m2_out*m2_out) / E_star_f_sq;
 
-        // Compute momentum of first alpha in the center of mass frame, assuming isotropic
+        // Compute momentum of first product in the center of mass frame, assuming isotropic
         // distribution
         amrex::ParticleReal px_star, py_star, pz_star;
         ParticleUtils::RandomizeVelocity(px_star, py_star, pz_star, std::sqrt(p_star_f_sq),
@@ -141,8 +141,7 @@ namespace {
         const amrex::ParticleReal p2y_out = p1y_in + p2y_in - p1y_out;
         const amrex::ParticleReal p2z_out = p1z_in + p2z_in - p1z_out;
 
-        // Fill momentum of product species (note that we actually
-        // create 4 products, 2 at the position of each incident particle)
+        // Compute the momentum of the product species
         u1x_out = p1x_out/m1_out;
         u1y_out = p1y_out/m1_out;
         u1z_out = p1z_out/m1_out;
