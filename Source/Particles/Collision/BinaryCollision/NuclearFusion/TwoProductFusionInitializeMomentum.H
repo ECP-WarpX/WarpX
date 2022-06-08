@@ -69,7 +69,7 @@ namespace {
             soa2_in.m_rdata[PIdx::uy][idx2_in],
             soa2_in.m_rdata[PIdx::uz][idx2_in], m2_in,
             ux1_out, uy1_out, uz1_out, m1_out,
-            uy2_out, uy2_out, uz2_out, m2_out,
+            ux2_out, uy2_out, uz2_out, m2_out,
             E_fusion,
             engine);
 
