@@ -261,7 +261,6 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
             {
                 if (dive_cleaning)
                 {
-                    amrex::Print()<< "no asymm & dive_cleaning"<<"\n";
                     const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
                     const Complex k_dot_J  = kx * Jx_old + ky * Jy_old + kz * Jz_old;
                     const Complex k_dot_dJ = kx * (Jx_new - Jx_old) + ky * (Jy_new - Jy_old) + kz * (Jz_new - Jz_old);
@@ -275,8 +274,6 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
                 }
                 if (divb_cleaning)
                 {
-                    amrex::Print()<< "no asymm & divb_cleaning"<<"\n";
-
                     const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
 
                     fields(i,j,k,Idx.Bx) += I * S_ck * G_old * kx;
