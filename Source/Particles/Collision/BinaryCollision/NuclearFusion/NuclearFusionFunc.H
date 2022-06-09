@@ -75,7 +75,7 @@ public:
                 "ERROR: Proton-boron must contain exactly one product species");
             auto& product_species = mypc->GetParticleContainerFromName(product_species_name[0]);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                product_species.AmIA<PhysicalSpecies::alpha>(),
+                product_species.AmIA<PhysicalSpecies::helium>(),
                 "ERROR: Product species of proton-boron fusion must be of type alpha");
         }
 
