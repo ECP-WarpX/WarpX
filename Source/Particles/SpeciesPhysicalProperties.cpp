@@ -55,7 +55,7 @@ namespace {
         {"carbon"     , PhysicalSpecies::carbon},
         {"carbon12"   , PhysicalSpecies::carbon12},
         {"carbon13"   , PhysicalSpecies::carbon13},
-        {"carbon14"   , PhysicalSpecies::carbon14},        
+        {"carbon14"   , PhysicalSpecies::carbon14},
         {"nitrogen"   , PhysicalSpecies::nitrogen},
         {"nitrogen14" , PhysicalSpecies::nitrogen14},
         {"nitrogen15" , PhysicalSpecies::nitrogen15},
