@@ -157,3 +157,58 @@ jobs:
       run: |
         export OMP_NUM_THREADS=1
         mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
+
+ build_qed_table_tools:
+    name: Clang QED table tools
+    runs-on: ubuntu-20.04
+    if: github.event.pull_request.draft == false
+    env:
+      # On CI for this test, Ninja is slower than the default:
+      #CMAKE_GENERATOR: Ninja
+      # setuptools/mp4py work-around, see
+      #   https://github.com/mpi4py/mpi4py/pull/159
+      #   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
+      SETUPTOOLS_USE_DISTUTILS: stdlib
+    steps:
+    - uses: actions/checkout@v2
+    - name: install dependencies
+      run: |
+        .github/workflows/dependencies/pyfull.sh
+    - name: CCache Cache
+      uses: actions/cache@v2
+      # - once stored under a key, they become immutable (even if local cache path content changes)
+      # - for a refresh the key has to change, e.g., hash of a tracked file in the key
+      with:
+        path: |
+          ~/.ccache
+          ~/.cache/ccache
+        key: ccache-openmp-pyfull-${{ hashFiles('.github/workflows/ubuntu.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+        restore-keys: |
+          ccache-openmp-pyfull-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
+          ccache-openmp-pyfull-
+    - name: build WarpX & QED tools
+      run: |
+        export CC=$(which clang)
+        export CXX=$(which clang++)
+        cmake -S . -B build_qed        \
+          -DWARPX_MPI=ON               \
+          -DWARPX_QED_TABLE_GEN=ON     \
+          -DWarpX_QED_TOOLS=ON
+
+        cmake --build build_qed -j 6
+
+    - name: run table_generator_tool
+      run: |
+        export OMP_NUM_THREADS=2
+        ./bin/qed_tools/qed_table_generator \
+          --table BW --mode DP --dndt_chi_min 0.01 \
+          --dndt_chi_max 100 --dndt_how_many 64 \
+          --pair_chi_min 0.01 --pair_chi_max 100 \
+          --pair_chi_how_many 64 --pair_frac_how_many 64 \
+          -o bw_table_tool
+        ./bin/qed_tools/qed_table_generator \
+          --table QS --mode DP --dndt_chi_min 0.01 \
+          --dndt_chi_max 100 --dndt_how_many 64 \
+          --em_chi_min 0.01 --em_chi_max 100 \
+          --em_chi_how_many 64 --em_frac_how_many 64 \
+          --em_frac_min 1e-12 -o qs_table_tool
