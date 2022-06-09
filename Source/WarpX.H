@@ -58,6 +58,8 @@
 #include <AMReX_BaseFwd.H>
 #include <AMReX_AmrCoreFwd.H>
 
+#include <AMReX_Graph.H> // kngott/graphviz
+
 #include <array>
 #include <iostream>
 #include <limits>
