@@ -1185,6 +1185,12 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         MultiFab::Add(totpmlmf,pml,2,0,1,0); // Sum the third split component
     }
 
+    // record metrics of this comm op in a graph before and after load balance steps
+    //auto & warpx = WarpX::GetInstance();
+    //auto const & lb_intervals = warpx.load_balance_intervals;
+    //auto const cur_step = warpx.istep[0];
+    //auto & graph = warpx.graph;
+
     // Copy from the sum of PML split field to valid cells of regular grid
     if (do_pml_in_domain){
         // Valid cells of the PML and of the regular grid overlap
@@ -1192,6 +1198,17 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         ablastr::utils::communication::ParallelCopy(reg, totpmlmf, 0, 0, 1, IntVect(0), IntVect(0),
                                                     WarpX::do_single_precision_comms,
                                                     period);
+
+        // record metrics of this comm op in a graph before and after load balance steps
+        /*
+        if (lb_intervals.contains(cur_step+2) || // before LB
+            lb_intervals.contains(cur_step+1)    // after LB
+        )
+        {
+            graph.addParallelCopy("PML-in-domain-comm", "tmpregmf", "totpmlmf", 0.0,
+                                  reg, totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
+            //graph.print_table("comm_data");
+        }*/
     } else {
         // Valid cells of the PML only overlap with guard cells of regular grid
         // (and outermost valid cell of the regular grid, for nodal direction)
@@ -1202,10 +1219,17 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
             ablastr::utils::communication::ParallelCopy(tmpregmf, totpmlmf, 0, 0, 1, IntVect(0), ngr,
                                    WarpX::do_single_precision_comms,
                                                         period);
-            amrex::Graph graph;
-            graph.addParallelCopy("PML-comm", "tmpregmf", "totpmlmf", 0.0,
-                tmpregmf, totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
-            graph.print_table("comm_data");
+
+            // record metrics of this comm op in a graph before and after load balance steps
+            /*
+            if (lb_intervals.contains(cur_step+2) || // before LB
+                lb_intervals.contains(cur_step+1)    // after LB
+            )
+            {
+                graph.addParallelCopy("PML-comm", "tmpregmf", "totpmlmf", 0.0,
+                                      tmpregmf, totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
+                //graph.print_table("comm_data");
+            }*/
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
