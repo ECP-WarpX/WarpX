@@ -109,7 +109,7 @@ namespace {
         {PhysicalSpecies::oxygen17   , "oxygen17"},
         {PhysicalSpecies::oxygen18   , "oxygen18"},
         {PhysicalSpecies::fluorine   , "fluorine"},
-        {PhysicalSpecies::fluorine19 , "fluorine19"},        
+        {PhysicalSpecies::fluorine19 , "fluorine19"},
         {PhysicalSpecies::neon       , "neon"},
         {PhysicalSpecies::neon20     , "neon20"},
         {PhysicalSpecies::neon21     , "neon21"},
