@@ -158,7 +158,7 @@ jobs:
         export OMP_NUM_THREADS=1
         mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
 
- build_qed_table_tools:
+  build_qed_table_tools:
     name: Clang QED table tools
     runs-on: ubuntu-20.04
     if: github.event.pull_request.draft == false
@@ -200,13 +200,13 @@ jobs:
     - name: run table_generator_tool
       run: |
         export OMP_NUM_THREADS=2
-        ./bin/qed_tools/qed_table_generator \
+        ./build_qed/bin/qed_tools/qed_table_generator \
           --table BW --mode DP --dndt_chi_min 0.01 \
           --dndt_chi_max 100 --dndt_how_many 64 \
           --pair_chi_min 0.01 --pair_chi_max 100 \
           --pair_chi_how_many 64 --pair_frac_how_many 64 \
           -o bw_table_tool
-        ./bin/qed_tools/qed_table_generator \
+        ./build_qed/bin/qed_tools/qed_table_generator \
           --table QS --mode DP --dndt_chi_min 0.01 \
           --dndt_chi_max 100 --dndt_how_many 64 \
           --em_chi_min 0.01 --em_chi_max 100 \
