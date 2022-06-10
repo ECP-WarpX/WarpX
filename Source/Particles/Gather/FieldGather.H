@@ -50,12 +50,12 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      amrex::Array4<amrex::Real const> const& bx_arr,
                      amrex::Array4<amrex::Real const> const& by_arr,
                      amrex::Array4<amrex::Real const> const& bz_arr,
-                     const amrex::IndexType ex_type,
-                     const amrex::IndexType ey_type,
-                     const amrex::IndexType ez_type,
-                     const amrex::IndexType bx_type,
-                     const amrex::IndexType by_type,
-                     const amrex::IndexType bz_type,
+                    //  const amrex::IndexType ex_type,
+                    //  const amrex::IndexType ey_type,
+                    //  const amrex::IndexType ez_type,
+                    //  const amrex::IndexType bx_type,
+                    //  const amrex::IndexType by_type,
+                    //  const amrex::IndexType bz_type,
                      const amrex::GpuArray<amrex::Real, 3>& dx,
                      const amrex::GpuArray<amrex::Real, 3>& xyzmin,
                      const amrex::Dim3& lo,
@@ -436,12 +436,12 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
     amrex::Array4<const amrex::Real> const& by_arr = byfab->array();
     amrex::Array4<const amrex::Real> const& bz_arr = bzfab->array();
 
-    amrex::IndexType const ex_type = exfab->box().ixType();
-    amrex::IndexType const ey_type = eyfab->box().ixType();
-    amrex::IndexType const ez_type = ezfab->box().ixType();
-    amrex::IndexType const bx_type = bxfab->box().ixType();
-    amrex::IndexType const by_type = byfab->box().ixType();
-    amrex::IndexType const bz_type = bzfab->box().ixType();
+    // amrex::IndexType const ex_type = exfab->box().ixType();
+    // amrex::IndexType const ey_type = eyfab->box().ixType();
+    // amrex::IndexType const ez_type = ezfab->box().ixType();
+    // amrex::IndexType const bx_type = bxfab->box().ixType();
+    // amrex::IndexType const by_type = byfab->box().ixType();
+    // amrex::IndexType const bz_type = bzfab->box().ixType();
 
     // Loop over particles and gather fields from
     // {e,b}{x,y,z}_arr to {E,B}{xyz}p.
@@ -456,7 +456,7 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
             doGatherShapeN<depos_order, lower_in_v>(
                 xp, yp, zp, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip],
                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                // ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
         );
@@ -495,12 +495,12 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      amrex::Array4<amrex::Real const> const& bx_arr,
                      amrex::Array4<amrex::Real const> const& by_arr,
                      amrex::Array4<amrex::Real const> const& bz_arr,
-                     const amrex::IndexType ex_type,
-                     const amrex::IndexType ey_type,
-                     const amrex::IndexType ez_type,
-                     const amrex::IndexType bx_type,
-                     const amrex::IndexType by_type,
-                     const amrex::IndexType bz_type,
+                    //  const amrex::IndexType ex_type,
+                    //  const amrex::IndexType ey_type,
+                    //  const amrex::IndexType ez_type,
+                    //  const amrex::IndexType bx_type,
+                    //  const amrex::IndexType by_type,
+                    //  const amrex::IndexType bz_type,
                      const amrex::GpuArray<amrex::Real, 3>& dx_arr,
                      const amrex::GpuArray<amrex::Real, 3>& xyzmin_arr,
                      const amrex::Dim3& lo,
@@ -512,34 +512,34 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         if (nox == 1) {
             doGatherShapeN<1,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                // ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 2) {
             doGatherShapeN<2,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                // ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
             doGatherShapeN<3,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                // ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
     } else {
         if (nox == 1) {
             doGatherShapeN<1,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                // ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 2) {
             doGatherShapeN<2,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                // ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
             doGatherShapeN<3,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                // ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
     }
