@@ -105,9 +105,9 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
     amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
     amrex::Array4<amrex::Real> const& jy_arr = jy_fab.array();
     amrex::Array4<amrex::Real> const& jz_arr = jz_fab.array();
-    amrex::IntVect const jx_type = jx_fab.box().type();
-    amrex::IntVect const jy_type = jy_fab.box().type();
-    amrex::IntVect const jz_type = jz_fab.box().type();
+    // amrex::IntVect const jx_type = jx_fab.box().type();
+    // amrex::IntVect const jy_type = jy_fab.box().type();
+    // amrex::IntVect const jz_type = jz_fab.box().type();
 
     // constexpr int zdir = WARPX_ZINDEX;
     // constexpr int NODE = amrex::IndexType::NODE;
