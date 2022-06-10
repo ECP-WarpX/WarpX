@@ -935,7 +935,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 
         int k_new = 0;
         int k_old = 0;
-        
+
         if (depos_order > 1){
                 k_new = (depos_order%2==0) ? static_cast<int>(z_new+0.5_rt)-1_rt : static_cast<int>(z_new)-1_rt;
                 k_old = (depos_order%2==0) ? static_cast<int>(z_old+0.5_rt)-1_rt : static_cast<int>(z_old)-1_rt;
