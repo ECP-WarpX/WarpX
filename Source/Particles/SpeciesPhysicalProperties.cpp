@@ -169,7 +169,7 @@ namespace {
              amrex::Real(3.0160492779) * PhysConst::m_u,
              amrex::Real(1) * PhysConst::q_e}},
         {PhysicalSpecies::helium, Properties{
-             amrex::Real(4.002602) * PhysConst::m_u,
+             PhysConst::m_p * amrex::Real(3.97369),
              amrex::Real(2) * PhysConst::q_e}},
         {PhysicalSpecies::helium3, Properties{
              amrex::Real(3.0160293201) * PhysConst::m_u,
@@ -202,7 +202,7 @@ namespace {
              amrex::Real(10.01293695) * PhysConst::m_u,
              amrex::Real(5) * PhysConst::q_e}},
         {PhysicalSpecies::boron11, Properties{
-             amrex::Real(11.00930536) * PhysConst::m_u,
+             PhysConst::m_p * amrex::Real(10.9298),
              amrex::Real(5) * PhysConst::q_e}},
         {PhysicalSpecies::carbon, Properties{
              amrex::Real(12.0106) * PhysConst::m_u,
