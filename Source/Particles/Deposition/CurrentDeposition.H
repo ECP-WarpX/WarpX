@@ -563,7 +563,7 @@ int k_old = 0;
                 sz_compute[k-1]=compute_shape_factor(z_new,k-1);
                 sz_compute_shifted[k]=compute_shifted_shape_factor(z_old,k,k_new);
             }
-            
+
 
             for (int k=0; k<=depos_order+2; k++) {
                 if (k < dkl) continue;
@@ -588,7 +588,7 @@ int k_old = 0;
             for (int k=0; k<=depos_order+2; k++) {
                 if (k < dkl) continue;
                 if (k > depos_order+2-dku) continue;
-                
+
                 for (int i=0; i<=depos_order+2; i++) {
                     if (i < dil) continue;
                     if (i > depos_order+2-diu) continue;
