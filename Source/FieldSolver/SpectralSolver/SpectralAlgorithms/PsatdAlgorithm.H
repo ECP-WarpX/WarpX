@@ -116,6 +116,11 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          */
         virtual void VayDeposition (SpectralFieldData& field_data) override final;
 
+        /**
+         * TODO
+         */
+        virtual void VayDepositionCombineJ (SpectralFieldData& field_data) override final;
+
     private:
 
         // These real and complex coefficients are always allocated

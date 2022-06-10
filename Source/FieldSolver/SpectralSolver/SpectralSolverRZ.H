@@ -110,6 +110,14 @@ class SpectralSolverRZ
         void VayDeposition ();
 
         /**
+         * TODO
+         */
+        void VayDepositionCombineJ ()
+        {
+            algorithm->VayDepositionCombineJ(field_data);
+        }
+
+        /**
          * \brief Copy spectral data from component \c src_comp to component \c dest_comp
          *        of \c field_data.fields
          *

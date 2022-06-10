@@ -539,9 +539,13 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
     }
 
+    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current =
+        (current_deposition_algo == CurrentDepositionAlgo::Vay) ? current_fp_vay
+        : ((do_current_centering) ? current_fp_nodal : current_fp);
+
     // 4) Deposit J at relative time -dt with time step dt
     //    (dt[0] denotes the time step on mesh refinement level 0)
-    auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+    //    TODO Probably not needed for Vay deposition (wrong time)
     mypc->DepositCurrent(current, dt[0], -dt[0]);
     // Filter, exchange boundary, and interpolate across levels
     SyncCurrent();
@@ -559,18 +563,49 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     // Loop over multi-J depositions
     for (int i_depose = 0; i_depose < n_loop; i_depose++)
     {
-        // Move J deposited previously, from new to old
-        PSATDMoveJNewToJOld();
-
         const amrex::Real t_depose = (i_depose-n_depose+1)*sub_dt;
 
-        // Deposit new J at relative time t_depose with time step dt
-        // (dt[0] denotes the time step on mesh refinement level 0)
-        mypc->DepositCurrent(current, dt[0], t_depose);
-        // Filter, exchange boundary, and interpolate across levels
-        SyncCurrent();
-        // Forward FFT of J
-        PSATDForwardTransformJ(current_fp, current_cp);
+        if (current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            // Vay deposition at 1/4 of the time sub-step
+            mypc->DepositCurrent(current, 0.5_rt*sub_dt, t_depose-3._rt/4._rt*sub_dt);
+            PSATDForwardTransformJ(current, current_cp); // spectral index J<x,y,z>_new
+            PSATDVayDeposition();
+            PSATDMoveJNewToJOld(); // spectral index J<x,y,z>
+            PSATDBackwardTransformJ(current_fp, current_cp);
+            PSATDSubtractCurrentPartialSumsAvg();
+            SyncCurrent();
+            PSATDForwardTransformJ(current_fp, current_cp); // spectral index J<x,y,z>_new
+
+            // Vay deposition at 3/4 of the time sub-step
+            PSATDMoveJNewToJOld(); // spectral index J<x,y,z>
+            mypc->DepositCurrent(current, 0.5_rt*sub_dt, t_depose-1._rt/4._rt*sub_dt);
+            PSATDForwardTransformJ(current, current_cp); // spectral index J<x,y,z>_new
+            PSATDVayDeposition();
+            PSATDMoveJNewToJOld(); // spectral index J<x,y,z>
+            PSATDBackwardTransformJ(current_fp, current_cp);
+            PSATDSubtractCurrentPartialSumsAvg();
+            SyncCurrent();
+            PSATDForwardTransformJ(current_fp, current_cp); // spectral index J<x,y,z>_new
+
+            // At this point, in spectral space, J<x,y,z> stores J at 1/4 of the
+            // time sub-step and J<x,y,z>_new stores J at 3/4 of the time sub-step.
+            // After the call to PSATDVayDepositionCombineJ, J<x,y,z> will store J
+            // at the beginning of the time sub-step and J<x,y,z>_new will store J
+            // at the end of the time sub-step.
+            PSATDVayDepositionCombineJ();
+        }
+        else // current deposition schemes other than Vay
+        {
+            // Deposit new J at relative time t_depose with time step dt
+            // (dt[0] denotes the time step on mesh refinement level 0)
+            PSATDMoveJNewToJOld();
+            mypc->DepositCurrent(current, dt[0], t_depose);
+            // Filter, exchange boundary, and interpolate across levels
+            SyncCurrent();
+            // Forward FFT of J
+            PSATDForwardTransformJ(current_fp, current_cp);
+        }
 
         // Deposit mid rho and new rho
         if (WarpX::update_with_rho)

@@ -505,4 +505,11 @@ PsatdAlgorithmComoving::VayDeposition (SpectralFieldData& /*field_data*/)
         "Vay deposition not implemented for comoving PSATD"));
 }
 
+void
+PsatdAlgorithmComoving::VayDepositionCombineJ (SpectralFieldData& /*field_data*/)
+{
+    amrex::Abort(Utils::TextMsg::Err(
+        "Vay deposition not implemented for comoving PSATD"));
+}
+
 #endif // WARPX_USE_PSATD

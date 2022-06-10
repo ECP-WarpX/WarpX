@@ -69,6 +69,11 @@ class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
          */
         virtual void VayDeposition (SpectralFieldData& field_data) override final;
 
+        /**
+         * TODO
+         */
+        virtual void VayDepositionCombineJ (SpectralFieldData& field_data) override final;
+
     private:
 
         // Real and complex spectral coefficients

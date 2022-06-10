@@ -416,4 +416,11 @@ PsatdAlgorithmPml::VayDeposition (SpectralFieldData& /*field_data*/)
         "Vay deposition not implemented for PML PSATD"));
 }
 
+void
+PsatdAlgorithmPml::VayDepositionCombineJ (SpectralFieldData& /*field_data*/)
+{
+    amrex::Abort(Utils::TextMsg::Err(
+        "Vay deposition not implemented for PML PSATD"));
+}
+
 #endif // WARPX_USE_PSATD

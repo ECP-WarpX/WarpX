@@ -67,6 +67,11 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
          */
         virtual void VayDeposition (SpectralFieldData& field_data) override final;
 
+        /**
+         * TODO
+         */
+        virtual void VayDepositionCombineJ (SpectralFieldData& field_data) override final;
+
     private:
         SpectralFieldIndex m_spectral_index;
         SpectralRealCoefficients C_coef, S_ck_coef, inv_k2_coef;

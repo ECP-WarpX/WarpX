@@ -895,4 +895,9 @@ PsatdAlgorithm::VayDeposition (SpectralFieldData& field_data)
     }
 }
 
+void
+PsatdAlgorithm::VayDepositionCombineJ (SpectralFieldData& field_data)
+{
+}
+
 #endif // WARPX_USE_PSATD

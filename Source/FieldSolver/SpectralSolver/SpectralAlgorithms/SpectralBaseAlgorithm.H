@@ -62,6 +62,11 @@ class SpectralBaseAlgorithm
         virtual void VayDeposition (SpectralFieldData& field_data) = 0;
 
         /**
+         * TODO
+         */
+        virtual void VayDepositionCombineJ (SpectralFieldData& field_data) = 0;
+
+        /**
          * \brief Compute spectral divergence of E
          */
         void ComputeSpectralDivE ( const int lev,

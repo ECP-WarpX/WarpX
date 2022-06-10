@@ -49,6 +49,11 @@ class PsatdAlgorithmPmlRZ : public SpectralBaseAlgorithmRZ
          */
         virtual void VayDeposition (SpectralFieldDataRZ& field_data) override final;
 
+        /**
+         * TODO
+         */
+        virtual void VayDepositionCombineJ (SpectralFieldDataRZ& field_data) override final;
+
     private:
 
         SpectralFieldIndex m_spectral_index;

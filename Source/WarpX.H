@@ -1576,6 +1576,11 @@ private:
     void PSATDVayDeposition ();
 
     /**
+     * TODO
+     */
+    void PSATDVayDepositionCombineJ ();
+
+    /**
      * \brief Update all necessary fields in spectral space
      */
     void PSATDPushSpectralFields ();

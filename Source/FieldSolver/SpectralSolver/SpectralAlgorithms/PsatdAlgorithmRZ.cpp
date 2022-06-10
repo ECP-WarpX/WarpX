@@ -488,3 +488,10 @@ PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
     amrex::Abort(Utils::TextMsg::Err(
         "Vay deposition not implemented in RZ geometry"));
 }
+
+void
+PsatdAlgorithmRZ::VayDepositionCombineJ (SpectralFieldDataRZ& /*field_data*/)
+{
+    amrex::Abort(Utils::TextMsg::Err(
+        "Vay deposition not implemented in RZ geometry"));
+}

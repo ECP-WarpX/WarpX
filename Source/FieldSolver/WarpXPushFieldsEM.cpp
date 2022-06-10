@@ -380,6 +380,19 @@ void WarpX::PSATDVayDeposition ()
     }
 }
 
+void WarpX::PSATDVayDepositionCombineJ ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->VayDepositionCombineJ();
+
+        if (spectral_solver_cp[lev])
+        {
+            spectral_solver_cp[lev]->VayDepositionCombineJ();
+        }
+    }
+}
+
 void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 {
     // Subtraction of cumulative sum for Vay deposition

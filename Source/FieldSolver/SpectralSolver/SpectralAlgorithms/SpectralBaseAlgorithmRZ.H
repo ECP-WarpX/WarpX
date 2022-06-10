@@ -54,6 +54,11 @@ class SpectralBaseAlgorithmRZ
          */
         virtual void VayDeposition (SpectralFieldDataRZ& field_data) = 0;
 
+        /**
+         * TODO
+         */
+        virtual void VayDepositionCombineJ (SpectralFieldDataRZ& field_data) = 0;
+
     protected: // Meant to be used in the subclasses
 
         using SpectralRealCoefficients = amrex::FabArray< amrex::BaseFab <amrex::Real> >;
