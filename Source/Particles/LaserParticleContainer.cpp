@@ -126,6 +126,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     }
 
     //Select laser profile
+    std::cout << "using " << laser_type_s << "\n";
     if(laser_profiles_dictionary.count(laser_type_s) == 0){
         amrex::Abort(std::string("Unknown laser type: ").append(laser_type_s));
     }
@@ -834,6 +835,9 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
             // Calculate the velocity according to the amplitude of E
             const Real sign_charge = (pwp[i]>0) ? 1 : -1;
             const Real v_over_c = sign_charge * tmp_mobility * amplitude[i];
+            if (amrex::Math::abs(v_over_c) > 1) {
+                std::cout << "v/c= " << v_over_c << "\n";
+            }
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(amrex::Math::abs(v_over_c) < amrex::Real(1.),
                             "Error: calculated laser particle velocity greater than c."
                             "Make sure the laser wavelength and amplitude are accurately set.");

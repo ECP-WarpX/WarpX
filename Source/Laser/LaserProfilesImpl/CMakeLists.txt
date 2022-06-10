@@ -4,4 +4,5 @@ target_sources(WarpX
     LaserProfileFromTXYEFile.cpp
     LaserProfileGaussian.cpp
     LaserProfileHarris.cpp
+    LaserProfileSpectral.cpp
 )
