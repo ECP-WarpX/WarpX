@@ -30,7 +30,6 @@ struct Compute_shape_factor
     amrex::Real operator()(T xmid, int cell_index) const
     {
         using namespace amrex::literals;
-        //programme principal ecrire si cest pair j=xmid sinon on ajoute 0.5
         if constexpr (depos_order == 0){
             return (1.0);
         }
