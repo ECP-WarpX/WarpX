@@ -1,5 +1,5 @@
 # Copyright 2016-2022 Andrew Myers, David Grote, Maxence Thevenet
-# Remi Lehe, Lorenzo Giacomel
+# Remi Lehe, Lorenzo Giacomel, Ryan Sandberg
 #
 # This file is part of WarpX.
 #
@@ -24,6 +24,7 @@ from .PSATD import psatd
 from .Particles import particles, particles_list
 from ._libwarpx import libwarpx
 
+reduced_diagnostics = Bucket('reduced_diagnostics', _reduced_diagnostics_dict={})
 
 class WarpX(Bucket):
     """
@@ -32,6 +33,7 @@ class WarpX(Bucket):
 
     def create_argv_list(self):
         argv = []
+        warpx.reduced_diags_names = reduced_diagnostics._reduced_diagnostics_dict.keys()
         argv += warpx.attrlist()
         argv += my_constants.attrlist()
         argv += amr.attrlist()
@@ -75,6 +77,10 @@ class WarpX(Bucket):
             argv += diagnostic.attrlist()
             for species_diagnostic in diagnostic._species_dict.values():
                 argv += species_diagnostic.attrlist()
+
+        argv += reduced_diagnostics.attrlist()
+        for r_diagnostic in reduced_diagnostics._reduced_diagnostics_dict.values():
+            argv += r_diagnostic.attrlist()
 
         return argv
 

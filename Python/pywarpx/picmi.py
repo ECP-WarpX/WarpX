@@ -1,5 +1,5 @@
 # Copyright 2018-2022 Andrew Myers, David Grote, Ligia Diana Amorim
-# Maxence Thevenet, Remi Lehe, Revathi Jambunathan, Lorenzo Giacomel
+# Maxence Thevenet, Remi Lehe, Revathi Jambunathan, Lorenzo Giacomel, Ryan Sandberg
 #
 #
 # This file is part of WarpX.
@@ -1022,6 +1022,8 @@ class Simulation(picmistandard.PICMI_Simulation):
     # by Simulation objects to permit multiple WarpX runs simultaneously.
     extension = pywarpx.libwarpx
 
+    reduced_diagnostics = []
+
     def init(self, kw):
 
         self.current_deposition_algo = kw.pop('warpx_current_deposition_algo', None)
@@ -1130,6 +1132,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         for diagnostic in self.diagnostics:
             diagnostic.initialize_inputs()
 
+        for reduced_diagnostic in self.reduced_diagnostics:
+            reduced_diagnostic.initialize_inputs()
+
         if self.amr_restart:
             pywarpx.amr.restart = self.amr_restart
 
@@ -1163,6 +1168,14 @@ class Simulation(picmistandard.PICMI_Simulation):
         if self.warpx_initialized:
             self.warpx_initialized = False
             pywarpx.warpx.finalize()
+
+    def add_reduced_diagnostic(self, r_diagnostic):
+        """
+        Add a reduced diagnostic
+          - r_diagnostic: object
+                One of the reduced_diagnostic objects.
+        """
+        self.reduced_diagnostics.append(r_diagnostic)
 
 
 # ----------------------------
@@ -1391,6 +1404,87 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
             diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
             self.diagnostic._species_dict[specie.name] = diag
 
+# ----------------------------
+# Reduced Diagnostics
+# ----------------------------
+class ReducedDiagnostic(picmistandard.base._ClassWithInit):
+
+    def __init__(self, name, type, intervals, path=None, extension=None, separator=None, **kw):
+
+        self.name = name
+        self.type = type
+        self.intervals = intervals
+        # possible lists = [ParticleEnergy, ParticleMomentum, FieldEnergy, FieldMomentum, FieldMaximum, FieldProbe, 
+                # RhoMaximum, FieldReduction, ParticleNumber, BeamRelevant, LoadBalanceCosts, LoadBalanceEfficiency, ParticleHistogram,
+                # ParticleExtrema]
+        if path is not None:
+            self.path = path
+        else:
+            self.path = './diags/reducedfiles/'
+        if extension is not None:
+            self.extension = extension
+        else:
+            self.extension = 'txt'
+        self.separator = separator
+        
+        self.handle_init(kw)
+    
+    def init(self, kw):
+        if self.type == 'FieldProbe':
+            # need to handle things appropriately
+            raise Exception(f'{self.type} reduced diagnostic not supported')
+        if self.type == 'FieldReduction':
+            self.reduced_function = kw.pop('warpx_reduced_diag_reduced_function')
+            self.reduction_type = kw.pop('warpx_reduced_diag_reduction_type')
+        if self.type == 'BeamRelevant':
+            self.species = kw.pop('warpx_reduced_diag_species')
+        if self.type == 'ParticleHistogram':
+            self.species = kw.pop('warpx_reduced_diag_species')
+            self.histogram_function = kw.pop('warpx_reduced_diag_histogram_function')
+            self.bin_number = kw.pop('warpx_reduced_diag_bin_number')
+            self.bin_max = kw.pop('warpx_reduced_diag_bin_max')
+            self.bin_min = kw.pop('warpx_reduced_diag_bin_min')
+            self.normalization = kw.pop('warpx_reduced_diag_normalization', None)
+            self.filter_function = kw.pop('warpx_reduced_diag_filter_function', None)
+        if self.type == 'ParticleExtrema':
+            self.species = kw.pop('warpx_reduced_diag_species')
+
+    def initialize_inputs(self):
+
+        try:
+            self.reduced_diagnostic = pywarpx.WarpX.reduced_diagnostics._reduced_diagnostics_dict[self.name]
+        except KeyError:
+            self.reduced_diagnostic = pywarpx.Diagnostics.Diagnostic(self.name)
+            pywarpx.WarpX.reduced_diagnostics._reduced_diagnostics_dict[self.name] = self.reduced_diagnostic
+
+        # self.reduced_diagnostic.name = self.name
+        self.reduced_diagnostic.intervals = self.intervals
+        self.reduced_diagnostic.type = self.type
+        self.reduced_diagnostic.path = self.path
+        self.reduced_diagnostic.extension = self.extension
+        if self.separator is None:
+            self.reduced_diagnostic.separator = '" "'
+        else:
+            self.reduced_diagnostic.separator = self.separator
+
+        if self.type == 'FieldProbe':
+            raise Exception(f'{self.type} reduced diagnostic not supported')
+        if self.type == 'FieldReduction':
+            self.reduced_diagnostic.__setattr__('reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)', self.filter_function)
+            self.reduced_diagnostic.reduction_type = self.reduction_type
+        if self.type == 'BeamRelevant':
+            self.reduced_diagnostic.species = self.species
+        if self.type == 'ParticleHistogram':
+            self.reduced_diagnostic.species = self.species
+            self.reduced_diagnostic.histogram_function = self.histogram_function
+            self.reduced_diagnostic.bin_number = self.bin_number
+            self.reduced_diagnostic.bin_max = self.bin_max
+            self.reduced_diagnostic.bin_min = self.bin_min
+            self.reduced_diagnostic.normalization = self.normalization
+            self.reduced_diagnostic.__setattr__('filter_function(t,x,y,z,ux,uy,uz)', self.filter_function)
+            
+        if self.type == 'ParticleExtrema':
+            self.reduced_diagnostic.species = self.species
 # ----------------------------
 # Lab frame diagnostics
 # ----------------------------
