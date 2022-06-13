@@ -1404,10 +1404,11 @@ WarpX provides several particle collions models, using varying degrees of approx
       When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
       since the current implementation of the collision module assumes axisymmetry.
     - ``background_mcc`` for collisions between particles and a neutral background.
-      This is a non-relativistic Monte Carlo treatment for particles colliding
-      with a neutral, uniform background gas. The implementation follows the so-called
+      This is a relativistic Monte Carlo treatment for particles colliding
+      with a neutral background gas. The implementation follows the so-called
       null collision strategy discussed for example in `Birdsall (IEEE Transactions on
       Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/document/106800>`_.
+      See also :ref:`collisions section <theory-collisions>`.
     - ``background_stopping`` for slowing of ions due to collisions with electrons or ions.
       This implements the approximate formulae as derived in Introduction to Plasma Physics,
       from Goldston and Rutherford, section 14.2.
