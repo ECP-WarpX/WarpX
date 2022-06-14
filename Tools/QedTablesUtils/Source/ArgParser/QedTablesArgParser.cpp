@@ -49,7 +49,7 @@ ReadArg(const ArgType arg_type, vector<string>::iterator& it)
     if(arg_type == ArgType::NoArg) return nullopt;
     if(arg_type == ArgType::String) return *(it++);
     if(arg_type == ArgType::Integer) return stoi(*(it++));
-    if(arg_type == ArgType::Double) return stof(*(it++));
+    if(arg_type == ArgType::Double) return stod(*(it++));
 
     ErrMsg("Failed to parse type!"s);
 
