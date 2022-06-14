@@ -25,7 +25,7 @@ const auto line_commands = vector<ArgParser::Key>{
     {"-h"                  , ArgType::NoArg  , "Prints all command line arguments"},
     {"-i"                  , ArgType::String , "Name of the file to open"},
     {"--table"             , ArgType::String , "Either BW (Breit-Wheeler) or QS (Quantum Synchrotron)"},
-    {"--mode"              , ArgType::String,  "Precision of the calculations: either DP (double) or SP (single)"},
+    {"--mode"              , ArgType::String , "Precision of the calculations: either DP (double) or SP (single)"},
     {"-o"                  , ArgType::String , "filename to save the lookup table in human-readable format"}
 };
 
@@ -33,7 +33,26 @@ void ReadTable (const ParsedArgs& args);
 template <typename RealType>
 void ReadTableBW (const string& input_file, const string& outfile_name);
 template <typename RealType>
-void ReadTableQS (const string& input_file, const string& outfile_name);
+void ReadTableQS (
+    const string& input_file, const string& outfile_name);
+
+/*Wrapper class to access protected data*/
+template <typename RealType>
+class bw_pair_production_table_wrapper :
+    public pxr_bw::pair_prod_lookup_table<RealType, std::vector<RealType>>
+{
+    public:
+    void write_table_data(std::ofstream& of) const;
+};
+
+/*Wrapper class to access protected data*/
+template <typename RealType>
+class qs_photon_emission_table_wrapper :
+    public pxr_qs::photon_emission_lookup_table<RealType, std::vector<RealType>>
+{
+    public:
+    void write_table_data(std::ofstream& of) const;
+};
 
 int main (int argc, char** argv)
 {
@@ -131,16 +150,14 @@ void ReadTableBW (const string& input_file, const string& outfile_name)
 
     auto of_pair = ofstream{outfile_name + "_pair"};
     of_pair << std::setprecision(std::numeric_limits<RealType>::digits10 + 1);
-    const auto coord_pair = pair_prod_table.get_all_coordinates();
-    for (const auto& cc : coord_pair ){
-            of_pair << cc[0] << " " << cc[1]
-                << " " << pair_prod_table.interp(cc[0], cc[1]) << "\n";
-    }
+    const auto wrapper = bw_pair_production_table_wrapper<RealType>{pair_prod_table};
+    wrapper.write_table_data(of_pair);
     of_pair.close();
 }
 
 template<typename RealType>
-void ReadTableQS (const string& input_file, const string& outfile_name)
+void ReadTableQS (
+    const string& input_file, const string& outfile_name)
 {
     cout << "    Reading QS table " <<
         (is_same<RealType, double>::value ? "(double "s : "(single "s) << " precision)\n"s;
@@ -177,12 +194,46 @@ void ReadTableQS (const string& input_file, const string& outfile_name)
 
     auto of_phot_em = ofstream{outfile_name + "_phot_em"};
     of_phot_em << std::setprecision(std::numeric_limits<RealType>::digits10 + 1);
-    const auto coord_phot_em = phot_em_table.get_all_coordinates();
-    for (const auto& cc : coord_phot_em ){
-            of_phot_em << cc[0] << " " << cc[1]
-                << " " << phot_em_table.interp(cc[0], cc[1]) << "\n";
-    }
+
+    const auto wrapper = qs_photon_emission_table_wrapper<RealType>{phot_em_table};
+    wrapper.write_table_data(of_phot_em);
     of_phot_em.close();
 
     return;
+}
+
+template <typename RealType>
+void
+bw_pair_production_table_wrapper<RealType>::write_table_data(
+    std::ofstream& of) const
+{
+    const auto how_many_x = this->m_table.get_how_many_x();
+    const auto how_many_y = this->m_table.get_how_many_y();
+    for (int i = 0; i < how_many_x; ++i){
+        for (int j = 0; j < how_many_y; ++j){
+            const auto xcoord = this->m_table.get_x_coord(i);
+            const auto ycoord = this->m_table.get_y_coord(j);
+            const auto val = this->m_table.get_val(i,j);
+             of << std::exp(xcoord) << " " << ycoord*std::exp(xcoord)
+                << " " << val << "\n";
+        }
+    }
+}
+
+template <typename RealType>
+void
+qs_photon_emission_table_wrapper<RealType>::write_table_data(
+    std::ofstream& of) const
+{
+    const auto how_many_x = this->m_table.get_how_many_x();
+    const auto how_many_y = this->m_table.get_how_many_y();
+    for (int i = 0; i < how_many_x; ++i){
+        for (int j = 0; j < how_many_y; ++j){
+            const auto xcoord = this->m_table.get_x_coord(i);
+            const auto ycoord = this->m_table.get_y_coord(j);
+            const auto val = this->m_table.get_val(i,j);
+             of << std::exp(xcoord) << " " << std::exp(ycoord)*std::exp(xcoord)
+                << " " << std::exp(val) << "\n";
+        }
+    }
 }
