@@ -80,7 +80,7 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
             WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
             if (species.initialize_self_fields ||
                 (do_electrostatic == ElectrostaticSolverAlgo::Relativistic)) {
-                AddSpaceChargeField(species); // this
+                AddSpaceChargeField(species);
             }
         }
 
@@ -174,7 +174,6 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     bool const reset = true;
     bool const do_rz_volume_scaling = true;
     pc.DepositCharge(rho, local, reset, do_rz_volume_scaling);
-    // ImpactX: add MPI comms to make deposition non-local
 
     // Get the particle beta vector
     bool const local_average = false; // Average across all MPI ranks
@@ -184,11 +183,11 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     // Compute the potential phi, by solving the Poisson equation
     computePhi( rho, phi, beta, pc.self_fields_required_precision,
                 pc.self_fields_absolute_tolerance, pc.self_fields_max_iters,
-                pc.self_fields_verbosity ); // this
+                pc.self_fields_verbosity );
 
     // Compute the corresponding electric and magnetic field, from the potential phi
-    computeE( Efield_fp, phi, beta ); // modify for ImpactX to be nodal
-    computeB( Bfield_fp, phi, beta ); // modify for ImpactX to be nodal
+    computeE( Efield_fp, phi, beta );
+    computeB( Bfield_fp, phi, beta );
 
 }
 
