@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-import profile
-import sys
-import math
 import numpy as np
-
 from pywarpx import picmi
+
 # Physical constants
 c = picmi.constants.c
 
@@ -54,35 +51,35 @@ PP = picmi.ReducedDiagnostic(name='PP', type='ParticleMomentum',intervals=200)
 PF = picmi.ReducedDiagnostic(name='PF', type='FieldMomentum',intervals=200)
 MF = picmi.ReducedDiagnostic(name='MF', type='FieldMaximum',intervals=200)
 MR = picmi.ReducedDiagnostic(name='MR', type='RhoMaximum',intervals=200)
-FP = picmi.ReducedDiagnostic(name='FP', 
+FP = picmi.ReducedDiagnostic(name='FP',
                                 type='FieldProbe',
-                                intervals=200, 
+                                intervals=200,
                                 #warpx_probe_geometry='Point',
-                                warpx_x_probe = 0.53125, 
-                                warpx_y_probe = 0.53125, 
+                                warpx_x_probe = 0.53125,
+                                warpx_y_probe = 0.53125,
                                 warpx_z_probe = 0.53125)
-FP_integrate = picmi.ReducedDiagnostic(name='FP_integrate', 
+FP_integrate = picmi.ReducedDiagnostic(name='FP_integrate',
                                 type='FieldProbe',
-                                intervals=20, 
+                                intervals=20,
                                 warpx_probe_geometry='Point',
-                                warpx_x_probe = 0.53125, 
-                                warpx_y_probe = 0.53125, 
-                                warpx_z_probe = 0.53125, 
-                                warpx_integrate=1)
-FP_line = picmi.ReducedDiagnostic(name='FP_line', 
-                                type='FieldProbe',
-                                intervals=200, 
-                                warpx_probe_geometry='Line',
-                                warpx_x_probe = 0.53125, 
-                                warpx_y_probe = 0.53125, 
+                                warpx_x_probe = 0.53125,
+                                warpx_y_probe = 0.53125,
                                 warpx_z_probe = 0.53125,
-                                warpx_x1_probe = 0.70225, 
+                                warpx_integrate=1)
+FP_line = picmi.ReducedDiagnostic(name='FP_line',
+                                type='FieldProbe',
+                                intervals=200,
+                                warpx_probe_geometry='Line',
+                                warpx_x_probe = 0.53125,
+                                warpx_y_probe = 0.53125,
+                                warpx_z_probe = 0.53125,
+                                warpx_x1_probe = 0.70225,
                                 warpx_y1_probe = 0.70225,
                                 warpx_z1_probe = 0.70225,
                                 warpx_resolution = 100)
-FP_plane = picmi.ReducedDiagnostic(name='FP_plane', 
+FP_plane = picmi.ReducedDiagnostic(name='FP_plane',
                                 type='FieldProbe',
-                                intervals=200, 
+                                intervals=200,
                                 warpx_probe_geometry='Plane',
                                 warpx_x_probe = 0.5,
                                 warpx_y_probe = 0.5,
@@ -95,19 +92,19 @@ FP_plane = picmi.ReducedDiagnostic(name='FP_plane',
                                 warpx_target_up_z = 0,
                                 warpx_detector_radius = 0.25,
                                 warpx_resolution = 10)
-FR_Max = picmi.ReducedDiagnostic(name='FR_Max', 
+FR_Max = picmi.ReducedDiagnostic(name='FR_Max',
                                 type='FieldReduction',
                                 intervals=200,
                                 warpx_reduction_type='Maximum',
                                 warpx_reduced_function='sqrt(Bx**2 + By**2 + Bz**2)'
                                 )
-FR_Min = picmi.ReducedDiagnostic(name='FR_Min', 
+FR_Min = picmi.ReducedDiagnostic(name='FR_Min',
                                 type='FieldReduction',
                                 intervals=200,
                                 warpx_reduction_type='Minimum',
                                 warpx_reduced_function='x*Ey*Bz'
                                 )
-FR_Integral = picmi.ReducedDiagnostic(name='FR_Integral', 
+FR_Integral = picmi.ReducedDiagnostic(name='FR_Integral',
                                 type='FieldReduction',
                                 intervals=200,
                                 warpx_reduction_type='Integral',

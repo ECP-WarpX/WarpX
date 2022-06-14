@@ -1451,9 +1451,9 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit):
         else:
             self.extension = 'txt'
         self.separator = separator
-        
+
         self.handle_init(kw)
-    
+
     def init(self, kw):
         if self.type == 'FieldProbe':
             self.probe_geometry = kw.pop('warpx_probe_geometry', 'Point')
@@ -1540,8 +1540,8 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit):
             self.reduced_diagnostic.separator = self.separator
 
         if self.type == 'FieldProbe':
-            self.reduced_diagnostic.probe_geometry = self.probe_geometry 
-            self.reduced_diagnostic.x_probe = self.x_probe 
+            self.reduced_diagnostic.probe_geometry = self.probe_geometry
+            self.reduced_diagnostic.x_probe = self.x_probe
             self.reduced_diagnostic.y_probe = self.y_probe
             self.reduced_diagnostic.z_probe = self.z_probe
             if self.probe_geometry == 'Line':
@@ -1587,7 +1587,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit):
             self.reduced_diagnostic.normalization = self.normalization
             filter_expression = pywarpx.my_constants.mangle_expression(self.filter_function, self.mangle_dict)
             self.reduced_diagnostic.__setattr__('filter_function(t,x,y,z,ux,uy,uz)', filter_expression)
-            
+
         if self.type == 'ParticleExtrema':
             self.reduced_diagnostic.species = self.species
 # ----------------------------
