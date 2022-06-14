@@ -39,6 +39,7 @@ class constants:
 picmistandard.register_constants(constants)
 
 class Species(picmistandard.PICMI_Species):
+    species_type = None
     def init(self, kw):
 
         if self.particle_type == 'electron':
@@ -53,6 +54,10 @@ class Species(picmistandard.PICMI_Species):
         elif self.particle_type == 'anti-proton':
             if self.charge is None: self.charge = '-q_e'
             if self.mass is None: self.mass = 'm_p'
+        elif self.particle_type == 'photon':
+            self.species_type = 'photon'
+            self.mass = 0
+            self.charge = 0
         else:
             if self.charge is None and self.charge_state is not None:
                 if self.charge_state == +1.:
@@ -121,25 +126,45 @@ class Species(picmistandard.PICMI_Species):
         if initialize_self_fields is None:
             initialize_self_fields = False
 
-        self.species = pywarpx.Bucket.Bucket(self.name,
-                                             mass = self.mass,
-                                             charge = self.charge,
-                                             injection_style = None,
-                                             initialize_self_fields = int(initialize_self_fields),
-                                             boost_adjust_transverse_positions = self.boost_adjust_transverse_positions,
-                                             self_fields_required_precision = self.self_fields_required_precision,
-                                             self_fields_absolute_tolerance = self.self_fields_absolute_tolerance,
-                                             self_fields_max_iters = self.self_fields_max_iters,
-                                             self_fields_verbosity = self.self_fields_verbosity,
-                                             save_particles_at_xlo = self.save_particles_at_xlo,
-                                             save_particles_at_xhi = self.save_particles_at_xhi,
-                                             save_particles_at_ylo = self.save_particles_at_ylo,
-                                             save_particles_at_yhi = self.save_particles_at_yhi,
-                                             save_particles_at_zlo = self.save_particles_at_zlo,
-                                             save_particles_at_zhi = self.save_particles_at_zhi,
-                                             save_particles_at_eb = self.save_particles_at_eb,
-                                             save_previous_position = self.save_previous_position,
-                                             do_not_deposit = self.do_not_deposit)
+        if self.species_type == 'photon':
+            self.species = pywarpx.Bucket.Bucket(self.name,
+                                                species_type = self.species_type,
+                                                injection_style = None,
+                                                initialize_self_fields = int(initialize_self_fields),
+                                                boost_adjust_transverse_positions = self.boost_adjust_transverse_positions,
+                                                self_fields_required_precision = self.self_fields_required_precision,
+                                                self_fields_absolute_tolerance = self.self_fields_absolute_tolerance,
+                                                self_fields_max_iters = self.self_fields_max_iters,
+                                                self_fields_verbosity = self.self_fields_verbosity,
+                                                save_particles_at_xlo = self.save_particles_at_xlo,
+                                                save_particles_at_xhi = self.save_particles_at_xhi,
+                                                save_particles_at_ylo = self.save_particles_at_ylo,
+                                                save_particles_at_yhi = self.save_particles_at_yhi,
+                                                save_particles_at_zlo = self.save_particles_at_zlo,
+                                                save_particles_at_zhi = self.save_particles_at_zhi,
+                                                save_particles_at_eb = self.save_particles_at_eb,
+                                                save_previous_position = self.save_previous_position,
+                                                do_not_deposit = self.do_not_deposit)
+        else:
+            self.species = pywarpx.Bucket.Bucket(self.name,
+                                                mass = self.mass,
+                                                charge = self.charge,
+                                                injection_style = None,
+                                                initialize_self_fields = int(initialize_self_fields),
+                                                boost_adjust_transverse_positions = self.boost_adjust_transverse_positions,
+                                                self_fields_required_precision = self.self_fields_required_precision,
+                                                self_fields_absolute_tolerance = self.self_fields_absolute_tolerance,
+                                                self_fields_max_iters = self.self_fields_max_iters,
+                                                self_fields_verbosity = self.self_fields_verbosity,
+                                                save_particles_at_xlo = self.save_particles_at_xlo,
+                                                save_particles_at_xhi = self.save_particles_at_xhi,
+                                                save_particles_at_ylo = self.save_particles_at_ylo,
+                                                save_particles_at_yhi = self.save_particles_at_yhi,
+                                                save_particles_at_zlo = self.save_particles_at_zlo,
+                                                save_particles_at_zhi = self.save_particles_at_zhi,
+                                                save_particles_at_eb = self.save_particles_at_eb,
+                                                save_previous_position = self.save_previous_position,
+                                                do_not_deposit = self.do_not_deposit)
 
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
@@ -151,6 +176,9 @@ class Species(picmistandard.PICMI_Species):
         # self.species.add_new_attr("reflection_model_eb(E)", self.reflection_model_eb)
 
         pywarpx.Particles.particles_list.append(self.species)
+        if self.species_type == 'photon':
+            pywarpx.particles.photon_species.append(self.name)
+            # pywarpx.Particles.photon_species.append(self.name)
 
         if self.initial_distribution is not None:
             self.initial_distribution.initialize_inputs(self.species_number, layout, self.species, self.density_scale)
@@ -1414,9 +1442,6 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit):
         self.name = name
         self.type = type
         self.intervals = intervals
-        # possible lists = [ParticleEnergy, ParticleMomentum, FieldEnergy, FieldMomentum, FieldMaximum, FieldProbe, 
-                # RhoMaximum, FieldReduction, ParticleNumber, BeamRelevant, LoadBalanceCosts, LoadBalanceEfficiency, ParticleHistogram,
-                # ParticleExtrema]
         if path is not None:
             self.path = path
         else:
@@ -1431,23 +1456,70 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit):
     
     def init(self, kw):
         if self.type == 'FieldProbe':
-            # need to handle things appropriately
-            raise Exception(f'{self.type} reduced diagnostic not supported')
+            self.probe_geometry = kw.pop('warpx_probe_geometry', 'Point')
+            self.x_probe = kw.pop('warpx_x_probe')
+            self.y_probe = kw.pop('warpx_y_probe')
+            self.z_probe = kw.pop('warpx_z_probe')
+            if self.probe_geometry == 'Line':
+                self.x1_probe = kw.pop('warpx_x1_probe')
+                self.y1_probe = kw.pop('warpx_y1_probe')
+                self.z1_probe = kw.pop('warpx_z1_probe')
+                self.resolution = kw.pop('warpx_resolution')
+            elif self.probe_geometry == 'Plane':
+                self.target_normal_x = kw.pop('warpx_target_normal_x')
+                self.target_normal_y = kw.pop('warpx_target_normal_y')
+                self.target_normal_z = kw.pop('warpx_target_normal_z')
+                self.target_up_x = kw.pop('warpx_target_up_x')
+                self.target_up_y = kw.pop('warpx_target_up_y')
+                self.target_up_z = kw.pop('warpx_target_up_z')
+                self.detector_radius = kw.pop('warpx_detector_radius')
+                self.resolution = kw.pop('warpx_resolution')
+            self.raw_fields = kw.pop('rwarpx_aw_fields', False)
+            self.interp_order = kw.pop('warpx_interp_order', 1)
+            self.integrate = kw.pop('warpx_integrate', False)
+            self.do_moving_window_FP = kw.pop('warpx_moving_window_FP', 0)
         if self.type == 'FieldReduction':
-            self.reduced_function = kw.pop('warpx_reduced_diag_reduced_function')
-            self.reduction_type = kw.pop('warpx_reduced_diag_reduction_type')
+            self.reduced_function = kw.pop('warpx_reduced_function')
+            self.reduction_type = kw.pop('warpx_reduction_type')
         if self.type == 'BeamRelevant':
-            self.species = kw.pop('warpx_reduced_diag_species')
+            self.species = kw.pop('warpx_species')
         if self.type == 'ParticleHistogram':
-            self.species = kw.pop('warpx_reduced_diag_species')
-            self.histogram_function = kw.pop('warpx_reduced_diag_histogram_function')
-            self.bin_number = kw.pop('warpx_reduced_diag_bin_number')
-            self.bin_max = kw.pop('warpx_reduced_diag_bin_max')
-            self.bin_min = kw.pop('warpx_reduced_diag_bin_min')
-            self.normalization = kw.pop('warpx_reduced_diag_normalization', None)
-            self.filter_function = kw.pop('warpx_reduced_diag_filter_function', None)
+            self.species = kw.pop('warpx_species')
+            self.histogram_function = kw.pop('warpx_histogram_function')
+            self.bin_number = kw.pop('warpx_bin_number')
+            self.bin_max = kw.pop('warpx_bin_max')
+            self.bin_min = kw.pop('warpx_bin_min')
+            self.normalization = kw.pop('warpx_normalization', None)
+            self.filter_function = kw.pop('warpx_filter_function', None)
         if self.type == 'ParticleExtrema':
-            self.species = kw.pop('warpx_reduced_diag_species')
+            self.species = kw.pop('warpx_species')
+
+
+        self.user_defined_kw = {}
+        if self.type == 'FieldReduction':
+            if self.reduced_function is not None:
+                # This allows variables to be used in the reduced_function, but
+                # in order not to break other codes, the variables must begin with "warpx_"
+                for k in list(kw.keys()):
+                    if k.startswith('warpx_') and re.search(r'\b%s\b'%k, self.reduced_function):
+                        self.user_defined_kw[k] = kw[k]
+                        del kw[k]
+        if self.type == 'ParticleHistogram':
+            if self.filter_function is not None:
+                # This allows variables to be used in the filter_function, but
+                # in order not to break other codes, the variables must begin with "warpx_"
+                for k in list(kw.keys()):
+                    if k.startswith('warpx_') and re.search(r'\b%s\b'%k, self.filter_function):
+                        self.user_defined_kw[k] = kw[k]
+                        del kw[k]
+            if self.histogram_function is not None:
+                # This allows variables to be used in the histogram_function, but
+                # in order not to break other codes, the variables must begin with "warpx_"
+                for k in list(kw.keys()):
+                    if k.startswith('warpx_') and re.search(r'\b%s\b'%k, self.histogram_function):
+                        self.user_defined_kw[k] = kw[k]
+                        del kw[k]
+        self.mangle_dict = None
 
     def initialize_inputs(self):
 
@@ -1468,20 +1540,53 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit):
             self.reduced_diagnostic.separator = self.separator
 
         if self.type == 'FieldProbe':
-            raise Exception(f'{self.type} reduced diagnostic not supported')
+            self.reduced_diagnostic.probe_geometry = self.probe_geometry 
+            self.reduced_diagnostic.x_probe = self.x_probe 
+            self.reduced_diagnostic.y_probe = self.y_probe
+            self.reduced_diagnostic.z_probe = self.z_probe
+            if self.probe_geometry == 'Line':
+                self.reduced_diagnostic.x1_probe = self.x1_probe
+                self.reduced_diagnostic.y1_probe = self.y1_probe
+                self.reduced_diagnostic.z1_probe = self.z1_probe
+                self.reduced_diagnostic.resolution = self.resolution
+            elif self.probe_geometry == 'Plane':
+                self.reduced_diagnostic.target_normal_x = self.target_normal_x
+                self.reduced_diagnostic.target_normal_y = self.target_normal_y
+                self.reduced_diagnostic.target_normal_z = self.target_normal_z
+                self.reduced_diagnostic.target_up_x = self.target_up_x
+                self.reduced_diagnostic.target_up_y = self.target_up_y
+                self.reduced_diagnostic.target_up_z = self.target_up_z
+                self.reduced_diagnostic.detector_radius = self.detector_radius
+                self.reduced_diagnostic.resolution = self.resolution
+            self.reduced_diagnostic.raw_fields = self.raw_fields
+            self.reduced_diagnostic.interp_order = self.interp_order
+            self.reduced_diagnostic.integrate = self.integrate
+            self.reduced_diagnostic.do_moving_window_FP = self.do_moving_window_FP
+
         if self.type == 'FieldReduction':
-            self.reduced_diagnostic.__setattr__('reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)', self.filter_function)
+            if self.mangle_dict is None:
+                # Only do this once so that the same variables are used in this distribution
+                # is used multiple times
+                self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+            expression = pywarpx.my_constants.mangle_expression(self.reduced_function, self.mangle_dict)
+            self.reduced_diagnostic.__setattr__('reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)', expression)
             self.reduced_diagnostic.reduction_type = self.reduction_type
         if self.type == 'BeamRelevant':
             self.reduced_diagnostic.species = self.species
         if self.type == 'ParticleHistogram':
+            if self.mangle_dict is None:
+                # Only do this once so that the same variables are used in this distribution
+                # is used multiple times
+                self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+            hist_expression = pywarpx.my_constants.mangle_expression(self.histogram_function, self.mangle_dict)
             self.reduced_diagnostic.species = self.species
-            self.reduced_diagnostic.histogram_function = self.histogram_function
+            self.reduced_diagnostic.histogram_function = hist_expression
             self.reduced_diagnostic.bin_number = self.bin_number
             self.reduced_diagnostic.bin_max = self.bin_max
             self.reduced_diagnostic.bin_min = self.bin_min
             self.reduced_diagnostic.normalization = self.normalization
-            self.reduced_diagnostic.__setattr__('filter_function(t,x,y,z,ux,uy,uz)', self.filter_function)
+            filter_expression = pywarpx.my_constants.mangle_expression(self.filter_function, self.mangle_dict)
+            self.reduced_diagnostic.__setattr__('filter_function(t,x,y,z,ux,uy,uz)', filter_expression)
             
         if self.type == 'ParticleExtrema':
             self.reduced_diagnostic.species = self.species

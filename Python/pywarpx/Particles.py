@@ -1,4 +1,5 @@
 # Copyright 2017-2020 Andrew Myers, David Grote
+# 2022 Ryan Sandberg
 #
 # This file is part of WarpX.
 #
@@ -6,7 +7,7 @@
 
 from .Bucket import Bucket
 
-particles = Bucket('particles', species_names=[], rigid_injected_species=[])
+particles = Bucket('particles', species_names=[], photon_species=[],rigid_injected_species=[])
 particles_list = []
 
 electrons = Bucket('electrons')
