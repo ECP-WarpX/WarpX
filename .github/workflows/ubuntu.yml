@@ -225,7 +225,7 @@ jobs:
           qed_bw.save_table_in = "bw_table" \
           qed_qs.lookup_table_mode = "generate" \
           qed_qs.tab_dndt_chi_min = 0.001 \
-          qed_qs.tab_dndt_chi_max = 1000.0 \
+          qed_qs.tab_dndt_chi_max = 100.0 \
           qed_qs.tab_dndt_how_many = 64 \
           qed_qs.tab_em_chi_min = 0.001 \
           qed_qs.tab_em_frac_min = 1.0e-12 \
@@ -233,3 +233,11 @@ jobs:
           qed_qs.tab_em_chi_how_many = 64 \
           qed_qs.tab_em_frac_how_many = 64 \
           qed_qs.save_table_in = "qs_table"
+          ./build_qed/bin/qed_tools/qed_table_reader -i qs_table --table QS --mode DP -o qs_table
+          ./build_qed/bin/qed_tools/qed_table_reader -i qs_table_tool --table QS --mode DP -o qs_table_tool
+          ./build_qed/bin/qed_tools/qed_table_reader -i bw_table --table BW --mode DP -o bw_table
+          ./build_qed/bin/qed_tools/qed_table_reader -i bw_table_tool --table BW --mode DP -o bw_table_tool
+          diff bw_table_dndt bw_table_tool_dndt
+          diff bw_table_pair bw_table_tool_pair
+          diff qs_table_phot_em qs_table_tool_phot_em
+          diff qs_table_dndt qs_table_tool_dndt
