@@ -179,9 +179,9 @@ jobs:
         export CC=$(which clang)
         export CXX=$(which clang++)
         cmake -S . -B build_qed \
-          -DWARPX_MPI=ON \
-          -DWarpX_QED_TOOLS=ON \
-          -DWARPX_QED_TABLE_GEN=ON
+         -DWarpX_MPI=ON \
+         -DWarpX_QED_TOOLS=ON \
+         -DWarpX_QED_TABLE_GEN=ON
         cmake --build build_qed -j 6
 
     - name: run table_generator_tool
