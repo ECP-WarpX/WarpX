@@ -409,13 +409,13 @@ endif()
 #install(EXPORT WarpXTargets
 #    FILE WarpXTargets.cmake
 #    NAMESPACE WarpX::
-#    DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+#    DESTINATION ${WarpX_INSTALL_CMAKEDIR}
 #)
 #install(
 #    FILES
 #        ${WarpX_BINARY_DIR}/WarpXConfig.cmake
 #        ${WarpX_BINARY_DIR}/WarpXConfigVersion.cmake
-#    DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+#    DESTINATION ${WarpX_INSTALL_CMAKEDIR}
 #)
 
 
