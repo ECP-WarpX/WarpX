@@ -213,7 +213,7 @@ jobs:
           --em_chi_how_many 64 --em_frac_how_many 64 \
           --em_frac_min 1e-12 -o qs_table_tool
         ./build_qed/bin/warpx \
-          ../Examples/Modules/qed/quantum_synchrotron/inputs_3d \
+          ./Examples/Modules/qed/quantum_synchrotron/inputs_3d \
           qed_bw.lookup_table_mode = "generate" \
           qed_bw.tab_dndt_chi_min = 0.01 \
           qed_bw.tab_dndt_chi_max = 100.0 \
