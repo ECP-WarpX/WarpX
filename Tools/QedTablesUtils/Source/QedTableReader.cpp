@@ -6,7 +6,9 @@
 #include <picsar_qed/utils/serialization.hpp>
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -121,12 +123,14 @@ void ReadTableBW (const string& input_file, const string& outfile_name)
         AbortWithMessage("Something went wrong with lookup table initialization");
 
     auto of_dndt = ofstream{outfile_name + "_dndt"};
+    of_dndt << std::setprecision(std::numeric_limits<RealType>::digits10 + 1);
     const auto coord_dndt = dndt_table.get_all_coordinates();
     for (const auto& cc : coord_dndt )
         of_dndt << cc << " " << dndt_table.interp(cc) << "\n";
     of_dndt.close();
 
     auto of_pair = ofstream{outfile_name + "_pair"};
+    of_pair << std::setprecision(std::numeric_limits<RealType>::digits10 + 1);
     const auto coord_pair = pair_prod_table.get_all_coordinates();
     for (const auto& cc : coord_pair ){
             of_pair << cc[0] << " " << cc[1]
@@ -165,12 +169,14 @@ void ReadTableQS (const string& input_file, const string& outfile_name)
         AbortWithMessage("Something went wrong with lookup table initialization");
 
     auto of_dndt = ofstream{outfile_name + "_dndt"};
+    of_dndt << std::setprecision(std::numeric_limits<RealType>::digits10 + 1);
     const auto coord_dndt = dndt_table.get_all_coordinates();
     for (const auto& cc : coord_dndt )
         of_dndt << cc << " " << dndt_table.interp(cc) << "\n";
     of_dndt.close();
 
     auto of_phot_em = ofstream{outfile_name + "_phot_em"};
+    of_phot_em << std::setprecision(std::numeric_limits<RealType>::digits10 + 1);
     const auto coord_phot_em = phot_em_table.get_all_coordinates();
     for (const auto& cc : coord_phot_em ){
             of_phot_em << cc[0] << " " << cc[1]
