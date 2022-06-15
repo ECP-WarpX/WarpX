@@ -99,7 +99,7 @@ void BTDiagnostics::DerivedInitData ()
     if (m_output_species_names.size() == 0 and write_species == 1)
         m_output_species_names = mpc.GetSpeciesNames();
 
-    if (m_output_species_names.size() > 0) {
+    if (m_output_species_names.size() > 0 and write_species == 1) {
         m_do_back_transformed_particles = true;
     } else {
         m_do_back_transformed_particles = false;
