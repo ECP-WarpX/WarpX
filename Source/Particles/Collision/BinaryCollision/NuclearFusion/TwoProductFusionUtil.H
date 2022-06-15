@@ -40,9 +40,8 @@ namespace {
      * @param[out] u1x_out normalized momentum of the second product macroparticles along x
      * @param[out] u1y_out normalized momentum of the second product macroparticles along y
      * @param[out] u1z_out normalized momentum of the second product macroparticles along z
-     * @param[in] m2_out mass of the first product macroparticles
-     * @param[in] m2_out mass of the first product macroparticles
-     * @param[in] engine the random engine (used to calculate the angle of emission of the productss)
+     * @param[in] m2_out mass of the second product macroparticles
+     * @param[in] engine the random engine (used to calculate the angle of emission of the products)
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     void TwoProductFusionComputeProductMomenta (
@@ -129,7 +128,7 @@ namespace {
         const amrex::ParticleReal vcz    = (p1z_in+p2z_in) / mass_g;
         const amrex::ParticleReal vc_sq   = vcx*vcx + vcy*vcy + vcz*vcz;
 
-        // Convert momentum of first alpha to lab frame, using equation (13) of F. Perez et al.,
+        // Convert momentum of first product to lab frame, using equation (13) of F. Perez et al.,
         // Phys.Plasmas.19.083104 (2012)
         if ( vc_sq > std::numeric_limits<amrex::ParticleReal>::min() )
         {
