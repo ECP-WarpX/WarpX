@@ -65,7 +65,6 @@ namespace {
     {
         // General notations in this function:
         //     x_sq denotes the square of x
-        //     x_star denotes the value of x in the proton+boron center of mass frame
         //     x_Bestar denotes the value of x in the Beryllium rest frame
 
         using namespace amrex::literals;
