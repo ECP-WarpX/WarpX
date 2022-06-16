@@ -29,17 +29,17 @@ namespace {
      * @param[in] u1y_in normalized momentum of the first colliding macroparticles along y (in m.s^-1)
      * @param[in] u1z_in normalized momentum of the first colliding macroparticles along z (in m.s^-1)
      * @param[in] m1_in mass of the first colliding macroparticles
-     * @param[in] u2x_in normalized momentum of the second colliding macroparticles along x
-     * @param[in] u2y_in normalized momentum of the second colliding macroparticles along y
-     * @param[in] u2z_in normalized momentum of the second colliding macroparticles along z
+     * @param[in] u2x_in normalized momentum of the second colliding macroparticles along x (in m.s^-1)
+     * @param[in] u2y_in normalized momentum of the second colliding macroparticles along y (in m.s^-1)
+     * @param[in] u2z_in normalized momentum of the second colliding macroparticles along z (in m.s^-1)
      * @param[in] m2_in mass of the second colliding macroparticles
      * @param[out] u1x_out normalized momentum of the first product macroparticles along x (in m.s^-1)
      * @param[out] u1y_out normalized momentum of the first product macroparticles along y (in m.s^-1)
      * @param[out] u1z_out normalized momentum of the first product macroparticles along z (in m.s^-1)
      * @param[in] m1_out mass of the first product macroparticles
-     * @param[out] u1x_out normalized momentum of the second product macroparticles along x
-     * @param[out] u1y_out normalized momentum of the second product macroparticles along y
-     * @param[out] u1z_out normalized momentum of the second product macroparticles along z
+     * @param[out] u2x_out normalized momentum of the second product macroparticles along x (in m.s^-1)
+     * @param[out] u2y_out normalized momentum of the second product macroparticles along y (in m.s^-1)
+     * @param[out] u2z_out normalized momentum of the second product macroparticles along z (in m.s^-1)
      * @param[in] m2_out mass of the second product macroparticles
      * @param[in] engine the random engine (used to calculate the angle of emission of the products)
      */
