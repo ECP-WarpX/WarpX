@@ -13,6 +13,7 @@
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
@@ -76,18 +77,14 @@ void FiniteDifferenceSolver::EvolveE (
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee || m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
-#ifdef AMREX_USE_EB
-        if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
-            EvolveRhoCartesianECT(Efield, edge_lengths, face_areas, ECTRhofield, lev);
-        }
-#endif
+
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
         EvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
 #endif
     } else {
-        amrex::Abort("EvolveE: Unknown algorithm");
+        amrex::Abort(Utils::TextMsg::Err("EvolveE: Unknown algorithm"));
     }
 
 }
@@ -176,7 +173,6 @@ void FiniteDifferenceSolver::EvolveECartesian (
                     - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
                     + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
                     - PhysConst::mu0 * jy(i, j, k) );
-
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){

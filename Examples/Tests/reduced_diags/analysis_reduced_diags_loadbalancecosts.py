@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019-2020 Michael Rowan
 #
@@ -17,8 +17,11 @@
 
 # Possible running time: ~ 1 s
 
-import numpy as np
+import os
 import sys
+
+import numpy as np
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -68,5 +71,5 @@ print('load balance efficiency (after load balance): ', efficiency_after)
 # The load balanced case is expcted to be more efficient then non-load balanced case
 assert(efficiency_before < efficiency_after)
 
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn)

@@ -12,14 +12,14 @@ amr.max_grid_size = 32
 amr.max_level = 0
 
 # Geometry
-geometry.coord_sys   = 0                     # 0: Cartesian
+geometry.dims = 2
 geometry.prob_lo     = -20.e-6    -15.e-6    # physical domain
 geometry.prob_hi     =  20.e-6     15.e-6
 
 boundary.field_lo = pec periodic
 boundary.field_hi = pec periodic
 
-warpx.serialize_ics = 1
+warpx.serialize_initial_conditions = 1
 
 # Verbosity
 warpx.verbose = 1

@@ -1,9 +1,16 @@
+/* Copyright 2021 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include "BackTransformFunctor.H"
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
-#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
+
+#include <ablastr/utils/Communication.H>
 
 #include <AMReX_Array4.H>
 #include <AMReX_BoxArray.H>
@@ -44,13 +51,18 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         amrex::Real gamma_boost = warpx.gamma_boost;
         int moving_window_dir = warpx.moving_window_dir;
         amrex::Real beta_boost = std::sqrt( 1._rt - 1._rt/( gamma_boost * gamma_boost) );
-        bool interpolate = true;
+        const bool interpolate = true;
         std::unique_ptr< amrex::MultiFab > slice = nullptr;
         int scomp = 0;
         // Generate slice of the cell-centered multifab containing boosted-frame field-data
         // at current z-boost location for the ith buffer
-        slice =  amrex::get_slice_data (moving_window_dir, m_current_z_boost[i_buffer],
-                     *m_mf_src, geom, scomp, m_mf_src->nComp(), interpolate);
+        slice = amrex::get_slice_data(moving_window_dir,
+                                     m_current_z_boost[i_buffer],
+                                     *m_mf_src,
+                                     geom,
+                                     scomp,
+                                     m_mf_src->nComp(),
+                                     interpolate);
         // Perform in-place Lorentz-transform of all the fields stored in the slice.
         LorentzTransformZ( *slice, gamma_boost, beta_boost);
 
@@ -76,8 +88,10 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         // Parallel copy the lab-frame data from "slice" MultiFab with
         // ncomp=10 and boosted-frame dmap to "tmp_slice_ptr" MultiFab with
         // ncomp=10 and dmap of the destination Multifab, which will store the final data
-        WarpXCommUtil::ParallelCopy(*tmp_slice_ptr, *slice, 0, 0, slice->nComp(),
-                                    IntVect(AMREX_D_DECL(0, 0, 0)), IntVect(AMREX_D_DECL(0, 0, 0)));
+        ablastr::utils::communication::ParallelCopy(*tmp_slice_ptr, *slice, 0, 0, slice->nComp(),
+                                                    IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                    IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                    WarpX::do_single_precision_comms);
         // Now we will cherry pick only the user-defined fields from
         // tmp_slice_ptr to dst_mf
         const int k_lab = m_k_index_zlab[i_buffer];
@@ -102,7 +116,7 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
                 [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
                 {
                     const int icomp = field_map_ptr[n];
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                     dst_arr(i, j, k_lab, n) = src_arr(i, j, k, icomp);
 #else
                     dst_arr(i, k_lab, k, n) = src_arr(i, j, k, icomp);
@@ -119,15 +133,15 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
 
 void
 BackTransformFunctor::PrepareFunctorData (int i_buffer,
-                          bool ZSliceInDomain, amrex::Real current_z_boost,
+                          bool z_slice_in_domain, amrex::Real current_z_boost,
                           amrex::Box buffer_box, const int k_index_zlab,
-                          const int max_box_size )
+                          const int max_box_size, const int snapshot_full)
 {
     m_buffer_box[i_buffer] = buffer_box;
     m_current_z_boost[i_buffer] = current_z_boost;
     m_k_index_zlab[i_buffer] = k_index_zlab;
     m_perform_backtransform[i_buffer] = 0;
-    if (ZSliceInDomain) m_perform_backtransform[i_buffer] = 1;
+    if (z_slice_in_domain == true and snapshot_full == 0) m_perform_backtransform[i_buffer] = 1;
     m_max_box_size = max_box_size;
 }
 

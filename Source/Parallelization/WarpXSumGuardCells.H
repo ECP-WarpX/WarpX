@@ -10,6 +10,8 @@
 
 #include "Utils/WarpXAlgorithmSelection.H"
 
+#include <ablastr/utils/Communication.H>
+
 #include <AMReX_MultiFab.H>
 
 /** \brief Sum the values of `mf`, where the different boxes overlap
@@ -36,7 +38,7 @@ WarpXSumGuardCells(amrex::MultiFab& mf, const amrex::Periodicity& period,
         n_updated_guards = mf.nGrowVect();
     else  // Update only the valid cells
         n_updated_guards = amrex::IntVect::TheZeroVector();
-    WarpXCommUtil::SumBoundary(mf, icomp, ncomp, src_ngrow, n_updated_guards, period);
+    ablastr::utils::communication::SumBoundary(mf, icomp, ncomp, src_ngrow, n_updated_guards, WarpX::do_single_precision_comms, period);
 }
 
 /** \brief Sum the values of `src` where the different boxes overlap
@@ -69,7 +71,7 @@ WarpXSumGuardCells(amrex::MultiFab& dst, amrex::MultiFab& src,
         n_updated_guards = amrex::IntVect::TheZeroVector();
 
     dst.setVal(0., icomp, ncomp, n_updated_guards);
-//    WarpXCommUtil::ParallelAdd(dst, src, 0, icomp, ncomp, src_ngrow, n_updated_guards, period);
+//    ablastr::utils::communication::ParallelAdd(dst, src, 0, icomp, ncomp, src_ngrow, n_updated_guards, period);
     dst.ParallelAdd(src, 0, icomp, ncomp, src_ngrow, n_updated_guards, period);
 }
 

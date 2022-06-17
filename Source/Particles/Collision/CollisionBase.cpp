@@ -22,4 +22,3 @@ CollisionBase::CollisionBase (std::string collision_name)
     queryWithParser(pp_collision_name, "ndt", m_ndt);
 
 }
-

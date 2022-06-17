@@ -6,10 +6,11 @@
  License: BSD-3-Clause-LBNL
  """
 
-from benchmark import Benchmark
-import yt
 import sys
+
+from benchmark import Benchmark
 import numpy as np
+import yt
 
 yt.funcs.mylog.setLevel(50)
 

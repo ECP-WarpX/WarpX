@@ -1,9 +1,13 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
-import yt
-import os, sys
-from scipy.constants import mu_0, pi, c
+import os
+import re
+import sys
+
 import numpy as np
+from scipy.constants import c, mu_0, pi
+import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -38,6 +42,16 @@ filename = sys.argv[1]
 ds = yt.load(filename)
 data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 
+# Parse test name and check whether this use the macroscopic solver
+# (i.e. solving the equation in a dielectric)
+macroscopic = True if re.search( 'macroscopic', filename ) else False
+
+# Calculate frequency of the mode oscillation
+omega = np.sqrt( h_2 ) * c
+if macroscopic:
+    # Relative permittivity used in this test: epsilon_r = 1.5
+    omega *= 1./np.sqrt(1.5)
+
 t = ds.current_time.to_value()
 
 # Compute the analytic solution
@@ -57,8 +71,7 @@ for i in range(ncells[0]):
                                                                     (-Lx/2 <= x < Lx/2) *
                                                                     (-Ly/2 <= y < Ly/2) *
                                                                     (-Lz/2 <= z < Lz/2) *
-                                                                    np.cos(np.sqrt(2) *
-                                                                    np.pi / Lx * c * t))
+                                                                    np.cos(omega * t))
 
             x = i*dx + lo[0]
             y = j*dy + lo[1]
@@ -69,16 +82,16 @@ for i in range(ncells[0]):
                                    (-Lx/2 <= x < Lx/2) *
                                    (-Ly/2 <= y < Ly/2) *
                                    (-Lz/2 <= z < Lz/2) *
-                                   np.cos(np.sqrt(2) * np.pi / Lx * c * t))
+                                   np.cos(omega * t))
 
 rel_tol_err = 1e-1
 
 # Compute relative l^2 error on By
-By_sim = data['By'].to_ndarray()
+By_sim = data[('mesh','By')].to_ndarray()
 rel_err_y = np.sqrt( np.sum(np.square(By_sim - By_th)) / np.sum(np.square(By_th)))
 assert(rel_err_y < rel_tol_err)
 # Compute relative l^2 error on Bz
-Bz_sim = data['Bz'].to_ndarray()
+Bz_sim = data[('mesh','Bz')].to_ndarray()
 rel_err_z = np.sqrt( np.sum(np.square(Bz_sim - Bz_th)) / np.sum(np.square(Bz_th)))
 assert(rel_err_z < rel_tol_err)
 

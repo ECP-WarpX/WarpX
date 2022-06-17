@@ -9,9 +9,9 @@ amr.blocking_factor = 128
 amr.max_level = 0
 psatd.v_galilean = 0. 0. -0.99498743710662
 
-geometry.coord_sys   = 1
-geometry.prob_lo     =  0.  -38.68
-geometry.prob_hi     = 38.68 38.68
+geometry.dims = RZ
+geometry.prob_lo  =    0. -38.68
+geometry.prob_hi  = 38.68  38.68
 boundary.field_lo = none periodic
 boundary.field_hi = none periodic
 

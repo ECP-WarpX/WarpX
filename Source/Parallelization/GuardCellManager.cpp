@@ -15,6 +15,7 @@
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Filter/NCIGodfreyFilter.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -48,7 +49,11 @@ guardCellManager::Init (
     const bool safe_guard_cells,
     const int do_electrostatic,
     const int do_multi_J,
-    const bool fft_do_time_averaging)
+    const bool fft_do_time_averaging,
+    const bool do_pml,
+    const int do_pml_in_domain,
+    const int pml_ncell,
+    const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
     // When using subcycling, the particles on the fine level perform two pushes
     // before being redistributed ; therefore, we need one extra guard cell
@@ -91,24 +96,32 @@ guardCellManager::Init (
     int ngJy = ngy_tmp;
     int ngJz = ngz_tmp;
 
-    // When calling the moving window (with one level of refinement),  we shift
-    // the fine grid by 2 cells ; therefore, we need at least 2 guard cells
-    // on level 1. This may not be necessary for level 0.
+    // When calling the moving window (with one level of refinement), we shift
+    // the fine grid by a number of cells equal to the ref_ratio in the moving
+    // window direction.
     if (do_moving_window) {
-        ngx = std::max(ngx,2);
-        ngy = std::max(ngy,2);
-        ngz = std::max(ngz,2);
-        ngJx = std::max(ngJx,2);
-        ngJy = std::max(ngJy,2);
-        ngJz = std::max(ngJz,2);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
+            "The number of grow cells for the moving window currently assumes 2 levels max.");
+        const int nlevs = ref_ratios.size()+1;
+        int max_r = (nlevs > 1) ? ref_ratios[0][moving_window_dir] : 2;
+
+        ngx = std::max(ngx,max_r);
+        ngy = std::max(ngy,max_r);
+        ngz = std::max(ngz,max_r);
+        ngJx = std::max(ngJx,max_r);
+        ngJy = std::max(ngJy,max_r);
+        ngJz = std::max(ngJz,max_r);
     }
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     ng_alloc_EB = IntVect(ngx,ngy,ngz);
     ng_alloc_J = IntVect(ngJx,ngJy,ngJz);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     ng_alloc_EB = IntVect(ngx,ngz);
     ng_alloc_J = IntVect(ngJx,ngJz);
+#elif defined(WARPX_DIM_1D_Z)
+    ng_alloc_EB = IntVect(ngz);
+    ng_alloc_J = IntVect(ngJz);
 #endif
 
     // TODO Adding one cell for rho should not be necessary, given that the number of guard cells
@@ -185,10 +198,22 @@ guardCellManager::Init (
         queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
         queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+#elif defined(WARPX_DIM_1D_Z)
+        IntVect ngFFT = IntVect(ngFFt_z);
+#endif
+
+#ifdef WARPX_DIM_RZ
+        if (do_pml) {
+            if (!do_pml_in_domain) {
+                ngFFT[0] = std::max(ngFFT[0], pml_ncell);
+            }
+        }
+#else
+       amrex::ignore_unused(do_pml, do_pml_in_domain, pml_ncell);
 #endif
 
         // All boxes should have the same number of guard cells, to avoid temporary parallel copies:
@@ -273,7 +298,7 @@ guardCellManager::Init (
         // If NCI filter, add guard cells in the z direction
         IntVect ng_NCIFilter = IntVect::TheZeroVector();
         if (do_fdtd_nci_corr)
-            ng_NCIFilter[AMREX_SPACEDIM-1] = NCIGodfreyFilter::m_stencil_width;
+            ng_NCIFilter[WARPX_ZINDEX] = NCIGodfreyFilter::m_stencil_width;
         // Note: communications of guard cells for bilinear filter are handled
         // separately.
         ng_FieldGather = ng_FieldGather_noNCI + ng_NCIFilter;

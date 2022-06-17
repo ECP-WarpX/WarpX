@@ -1,4 +1,7 @@
+#!/usr/bin/env python3
+
 from pywarpx import picmi
+
 #from warp import picmi
 
 constants = picmi.constants
@@ -80,4 +83,3 @@ sim.add_diagnostic(part_diag)
 
 # Alternatively, sim.step will run WarpX, controlling it from Python
 sim.step()
-

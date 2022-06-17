@@ -472,74 +472,38 @@ Note that in 2D Cartesian geometry, :math:`D_y` is effectively :math:`J_y` and d
 Field gather
 ------------
 
-The current densities are deposited on the computational grid from
-the particle position and velocities, employing splines of various
-orders (Abe et al. 1986).
+In general, the field is gathered from the mesh onto the macroparticles
+using splines of the same order as for the current deposition :math:`\mathbf{S}=\left(S_{x},S_{y},S_{z}\right)`.
+Three variations are considered:
 
-.. math::
+-  “momentum conserving”: fields are interpolated from the grid nodes
+   to the macroparticles using :math:`\mathbf{S}=\left(S_{nx},S_{ny},S_{nz}\right)`
+   for all field components (if the fields are known at staggered positions,
+   they are first interpolated to the nodes on an auxiliary grid),
 
-   \begin{aligned}
-   \rho & = & \frac{1}{\Delta x \Delta y \Delta z}\sum_nq_nS_n\\
-   \mathbf{J} & = & \frac{1}{\Delta x \Delta y \Delta z}\sum_nq_n\mathbf{v_n}S_n\end{aligned}
+-  “energy conserving (or Galerkin)”: fields are interpolated from
+   the staggered Yee grid to the macroparticles using :math:`\left(S_{nx-1},S_{ny},S_{nz}\right)`
+   for :math:`E_{x}`, :math:`\left(S_{nx},S_{ny-1},S_{nz}\right)` for :math:`E_{y}`,
+   :math:`\left(S_{nx},S_{ny},S_{nz-1}\right)` for :math:`E_{z}`, :math:`\left(S_{nx},S_{ny-1},S_{nz-1}\right)`
+   for :math:`B_{x}`, :math:`\left(S_{nx-1},S_{ny},S_{nz-1}\right)` for :math:`B{}_{y}`
+   and\ :math:`\left(S_{nx-1},S_{ny-1},S_{nz}\right)` for :math:`B_{z}` (if the fields
+   are known at the nodes, they are first interpolated to the staggered
+   positions on an auxiliary grid),
 
-In most applications, it is essential to prevent the accumulation
-of errors resulting from the violation of the discretized Gauss’ Law.
-This is accomplished by providing a method for depositing the current
-from the particles to the grid that preserves the discretized Gauss’
-Law, or by providing a mechanism for “divergence cleaning” (Birdsall and Langdon 1991; Langdon 1992; Marder 1987; Vay and Deutsch 1998; Munz et al. 2000).
-For the former, schemes that allow a deposition of the current that
-is exact when combined with the Yee solver is given in (Villasenor and Buneman 1992)
-for linear splines and in (Esirkepov 2001) for splines of arbitrary order.
+-  “uniform”: fields are interpolated directly form the Yee grid
+   to the macroparticles using :math:`\mathbf{S}=\left(S_{nx},S_{ny},S_{nz}\right)`
+   for all field components (if the fields are known at the nodes, they
+   are first interpolated to the staggered positions on an auxiliary
+   grid).
 
-The NSFDTD formulations given above and in (Pukhov 1999; Vay et al. 2011; Cowan et al. 2013; Lehe et al. 2013)
-apply to the Maxwell-Faraday
-equation, while the discretized Maxwell-Ampere equation uses the FDTD
-formulation. Consequently, the charge conserving algorithms developed
-for current deposition (Villasenor and Buneman 1992; Esirkepov 2001) apply
-readily to those NSFDTD-based formulations. More details concerning
-those implementations, including the expressions for the numerical
-dispersion and Courant condition are given
-in (Pukhov 1999; Vay et al. 2011; Cowan et al. 2013; Lehe et al. 2013).
-
-In the case of the pseudospectral solvers, the current deposition
-algorithm generally does not satisfy the discretized continuity equation
-in Fourier space :math:`\tilde{\rho}^{n+1}=\tilde{\rho}^{n}-i\Delta t\mathbf{k}\cdot\mathbf{\tilde{J}}^{n+1/2}`.
-In this case, a Boris correction (Birdsall and Langdon 1991) can be applied
-in :math:`k` space in the form :math:`\mathbf{\tilde{E}}_{c}^{n+1}=\mathbf{\tilde{E}}^{n+1}-\left(\mathbf{k}\cdot\mathbf{\tilde{E}}^{n+1}+i\tilde{\rho}^{n+1}\right)\mathbf{\hat{k}}/k`,
-where :math:`\mathbf{\tilde{E}}_{c}` is the corrected field. Alternatively, a correction
-to the current can be applied (with some similarity to the current
-deposition presented by Morse and Nielson in their potential-based
-model in (Morse and Nielson 1971)) using :math:`\mathbf{\tilde{J}}_{c}^{n+1/2}=\mathbf{\tilde{J}}^{n+1/2}-\left[\mathbf{k}\cdot\mathbf{\tilde{J}}^{n+1/2}-i\left(\tilde{\rho}^{n+1}-\tilde{\rho}^{n}\right)/\Delta t\right]\mathbf{\hat{k}}/k`,
-where :math:`\mathbf{\tilde{J}}_{c}` is the corrected current. In this case, the transverse
-component of the current is left untouched while the longitudinal
-component is effectively replaced by the one obtained from integration
-of the continuity equation, ensuring that the corrected current satisfies
-the continuity equation. The advantage of correcting the current rather than
-the electric field is that it is more local and thus more compatible with
-domain decomposition of the fields for parallel computation (Jean Luc Vay, Haber, and Godfrey 2013).
-
-Alternatively, an exact current deposition can be written for the pseudospectral solvers, following the geometrical interpretation of existing methods in real space (Morse and Nielson 1971; Villasenor and Buneman 1992; Esirkepov 2001), thereby averaging the currents of the paths following grid lines between positions :math:`(x^n,y^n)` and :math:`(x^{n+1},y^{n+1})`, which is given in 2D (extension to 3D follows readily) for :math:`k\neq0` by (Jean Luc Vay, Haber, and Godfrey 2013):
-
-.. math::
-
-   \begin{aligned}
-   \mathbf{\tilde{J}}^{k\neq0}=\frac{i\mathbf{\tilde{D}}}{\mathbf{k}}
-   \label{Eq_Jdep_1}\end{aligned}
-
-with
-
-.. math::
-
-   \begin{aligned}
-   D_x   =  \frac{1}{2\Delta t}\sum_i q_i
-     [\Gamma(x_i^{n+1},y_i^{n+1})-\Gamma(x_i^{n},y_i^{n+1}) \nonumber\\
-   +\Gamma(x_i^{n+1},y_i^{n})-\Gamma(x_i^{n},y_i^{n})],\\
-   D_y   =  \frac{1}{2\Delta t}\sum_i q_i
-     [\Gamma(x_i^{n+1},y_i^{n+1})-\Gamma(x_i^{n+1},y_i^{n}) \nonumber \\
-   +\Gamma(x_i^{n},y_i^{n+1})-\Gamma(x_i^{n},y_i^{n})],\end{aligned}
-
-where :math:`\Gamma` is the macro-particle form factor.
-The contributions for :math:`k=0` are integrated directly in real space (Jean Luc Vay, Haber, and Godfrey 2013).
+As shown in :raw-latex:`\cite{BirdsallLangdon,HockneyEastwoodBook,LewisJCP1972}`,
+the momentum and energy conserving schemes conserve momentum and energy
+respectively at the limit of infinitesimal time steps and generally
+offer better conservation of the respective quantities for a finite
+time step. The uniform scheme does not conserve momentum nor energy
+in the sense defined for the others but is given for completeness,
+as it has been shown to offer some interesting properties in the modeling
+of relativistically drifting plasmas :raw-latex:`\cite{GodfreyJCP2013}`.
 
 .. _theory-pic-filter:
 

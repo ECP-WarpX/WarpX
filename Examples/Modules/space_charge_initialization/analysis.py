@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019-2020 Axel Huebl, Remi Lehe
 #
@@ -11,14 +11,18 @@ This script checks the space-charge initialization routine, by
 verifying that the space-charge field of a Gaussian beam corresponds to
 the expected theoretical field.
 """
+import os
 import sys
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import yt
 import numpy as np
 import scipy.constants as scc
 from scipy.special import gammainc
+import yt
+
 yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -97,7 +101,7 @@ plt.savefig('Comparison.png')
 def check(E, E_th, label):
     print( 'Relative error in %s: %.3f'%(
             label, abs(E-E_th).max()/E_th.max()))
-    tolerance_rel = 0.1
+    tolerance_rel = 0.165
     print("tolerance_rel: " + str(tolerance_rel))
     assert np.allclose( E, E_th, atol=tolerance_rel*E_th.max() )
 
@@ -106,5 +110,5 @@ check( Ey_array, Ey_th, 'Ey' )
 if ds.dimensionality == 3:
     check( Ez_array, Ez_th, 'Ez' )
 
-test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename, do_particles=0)

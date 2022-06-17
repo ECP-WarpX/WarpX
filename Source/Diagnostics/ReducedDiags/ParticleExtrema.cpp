@@ -185,6 +185,8 @@ void ParticleExtrema::ComputeDiags (int step)
     int const index_z = 2;
 #elif (defined WARPX_DIM_XZ || defined WARPX_DIM_RZ)
     int const index_z = 1;
+#elif (defined WARPX_DIM_1D_Z)
+    int const index_z = 0;
 #endif
 
     // loop over species
@@ -211,6 +213,8 @@ void ParticleExtrema::ComputeDiags (int step)
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::cos(p.rdata(PIdx::theta)); });
         ParallelDescriptor::ReduceRealMin(xmin);
+#elif (defined WARPX_DIM_1D_Z)
+        Real xmin = 0.0_rt;
 #else
         Real xmin = ReduceMin( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
@@ -224,6 +228,8 @@ void ParticleExtrema::ComputeDiags (int step)
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::cos(p.rdata(PIdx::theta)); });
         ParallelDescriptor::ReduceRealMax(xmax);
+#elif (defined WARPX_DIM_1D_Z)
+        Real xmax = 0.0_rt;
 #else
         Real xmax = ReduceMax( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
@@ -237,7 +243,7 @@ void ParticleExtrema::ComputeDiags (int step)
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::sin(p.rdata(PIdx::theta)); });
         ParallelDescriptor::ReduceRealMin(ymin);
-#elif (defined WARPX_DIM_XZ)
+#elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
         Real ymin = 0.0_rt;
 #else
         Real ymin = ReduceMin( myspc,
@@ -252,7 +258,7 @@ void ParticleExtrema::ComputeDiags (int step)
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::sin(p.rdata(PIdx::theta)); });
         ParallelDescriptor::ReduceRealMax(ymax);
-#elif (defined WARPX_DIM_XZ)
+#elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
         Real ymax = 0.0_rt;
 #else
         Real ymax = ReduceMax( myspc,
@@ -378,8 +384,7 @@ void ParticleExtrema::ComputeDiags (int step)
         // compute chimin and chimax
         Real chimin_f = 0.0_rt;
         Real chimax_f = 0.0_rt;
-        GetExternalEField get_externalE;
-        GetExternalBField get_externalB;
+        GetExternalEBField get_externalEB;
 
         if (myspc.DoQED())
         {
@@ -393,17 +398,12 @@ void ParticleExtrema::ComputeDiags (int step)
             const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
             const int nox = WarpX::nox;
             const bool galerkin_interpolation = WarpX::galerkin_interpolation;
-            const amrex::IntVect ngE = warpx.getngE();
-            amrex::Vector<amrex::Real> v_galilean = myspc.get_v_galilean();
-            const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
+            const amrex::IntVect ngEB = warpx.getngEB();
 
             // loop over refinement levels
             for (int lev = 0; lev <= level_number; ++lev)
             {
                 // define variables in preparation for field gathering
-                const amrex::Real cur_time = WarpX::GetInstance().gett_new(lev);
-                const amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-                const amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
                 const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
                 const GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
                 const MultiFab & Ex = warpx.getEfield(lev,0);
@@ -423,14 +423,13 @@ void ParticleExtrema::ComputeDiags (int step)
                     amrex::ParticleReal* const AMREX_RESTRICT uz = pti.GetAttribs()[PIdx::uz].dataPtr();
                     // declare external fields
                     const int offset = 0;
-                    const auto getExternalE = GetExternalEField(pti, offset);
-                    const auto getExternalB = GetExternalBField(pti, offset);
+                    const auto getExternalEB = GetExternalEBField(pti, offset);
 
                     // define variables in preparation for field gathering
                     amrex::Box box = pti.tilebox();
-                    box.grow(ngE);
+                    box.grow(ngEB);
                     const Dim3 lo = amrex::lbound(box);
-                    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, lev);
+                    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
                     const GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
                     const auto& ex_arr = Ex[pti].array();
                     const auto& ey_arr = Ey[pti].array();
@@ -457,8 +456,7 @@ void ParticleExtrema::ComputeDiags (int step)
                         GetPosition(i, xp, yp, zp);
                         ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
                         ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
-                        getExternalE(i, ex, ey, ez);
-                        getExternalB(i, bx, by, bz);
+                        getExternalEB(i, ex, ey, ez, bx, by, bz);
 
                         // gather E and B
                         doGatherShapeN(xp, yp, zp,

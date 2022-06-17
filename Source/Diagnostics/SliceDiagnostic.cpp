@@ -8,7 +8,10 @@
 #include "SliceDiagnostic.H"
 
 #include "WarpX.H"
-#include "Parallelization/WarpXCommUtil.H"
+#include "Utils/TextMsg.H"
+
+#include <ablastr/utils/Communication.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -27,7 +30,6 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_MultiFabUtil.H>
 #include <AMReX_PlotFileUtil.H>
-
 #include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
@@ -35,6 +37,7 @@
 
 #include <cmath>
 #include <memory>
+#include <sstream>
 
 using namespace amrex;
 
@@ -65,10 +68,10 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
 
     Vector<int> slice_ncells(AMREX_SPACEDIM);
     int nghost = 1;
-    int nlevels = dom_geom.size();
+    auto nlevels = static_cast<int>(dom_geom.size());
     int ncomp = (mf).nComp();
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nlevels==1,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( nlevels==1,
        "Slice diagnostics does not work with mesh refinement yet (TO DO).");
 
     const auto conversionType = (mf).ixType();
@@ -124,7 +127,8 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
        }
     }
     if (configuration_dim==1) {
-       amrex::Warning("The slice configuration is 1D and cannot be visualized using yt.");
+      ablastr::warn_manager::WMRecordWarning("Diagnostics",
+         "The slice configuration is 1D and cannot be visualized using yt.");
     }
 
     // Slice generation with index type inheritance //
@@ -144,7 +148,7 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
     // Copy data from domain to slice that has same cell size as that of //
     // the domain mf. src and dst have the same number of ghost cells    //
     amrex::IntVect nghost_vect(AMREX_D_DECL(nghost, nghost, nghost));
-    WarpXCommUtil::ParallelCopy(*smf, mf, 0, 0, ncomp,nghost_vect,nghost_vect);
+    ablastr::utils::communication::ParallelCopy(*smf, mf, 0, 0, ncomp, nghost_vect, nghost_vect, WarpX::do_single_precision_comms);
 
     // inteprolate if required on refined slice //
     if (interpolate == 1 ) {
@@ -223,7 +227,10 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
        return cs_mf;
 
     }
-    amrex::Abort("Should not hit this return statement.");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+       false, "Should not hit this return statement.");
+
     return smf;
 }
 
@@ -278,17 +285,23 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
         // Modify lo if input is out of bounds //
         if ( slice_realbox.lo(idim) < real_box.lo(idim) ) {
             slice_realbox.setLo( idim, real_box.lo(idim));
-            amrex::Print() << " slice lo is out of bounds. " <<
-                              " Modified it in dimension " << idim <<
-                              " to be aligned with the domain box\n";
+            std::stringstream warnMsg;
+            warnMsg << " slice lo is out of bounds. " <<
+                       " Modified it in dimension " << idim <<
+                       " to be aligned with the domain box.";
+            ablastr::warn_manager::WMRecordWarning("Diagnostics",
+               warnMsg.str(), ablastr::warn_manager::WarnPriority::low);
         }
 
         // Modify hi if input in out od bounds //
         if ( slice_realbox.hi(idim) > real_box.hi(idim) ) {
             slice_realbox.setHi( idim, real_box.hi(idim));
-            amrex::Print() << " slice hi is out of bounds." <<
-                              " Modified it in dimension " << idim <<
-                              " to be aligned with the domain box\n";
+            std::stringstream warnMsg;
+            warnMsg << " slice hi is out of bounds. " <<
+                       " Modified it in dimension " << idim <<
+                       " to be aligned with the domain box.";
+            ablastr::warn_manager::WMRecordWarning("Diagnostics",
+               warnMsg.str(), ablastr::warn_manager::WarnPriority::low);
         }
 
         // Factor to ensure index values computation depending on index type //
@@ -314,11 +327,11 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
             }
             else {
                 slice_lo[idim] = static_cast<int>(
-                                  round( (slice_cc_nd_box.lo(idim)
+                                  std::round( (slice_cc_nd_box.lo(idim)
                                   - (real_box.lo(idim) ) )
                                   / dom_geom[0].CellSize(idim)) );
                 slice_lo2[idim] = static_cast<int>(
-                                  ceil((slice_cc_nd_box.lo(idim)
+                                  std::ceil((slice_cc_nd_box.lo(idim)
                                   - (real_box.lo(idim) ) )
                                   / dom_geom[0].CellSize(idim) ) );
             }
@@ -372,11 +385,12 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
                 }
 
                 if ( (hi_new - lo_new) == 0 ){
-                    amrex::Print() << " Diagnostic Warning :: ";
-                    amrex::Print() << " Coarsening ratio  ";
-                    amrex::Print() << slice_cr_ratio[idim] << " in dim "<< idim;
-                    amrex::Print() << "is leading to zero cells for slice.";
-                    amrex::Print() << " Thus reducing cr_ratio by half.\n";
+                   std::stringstream warnMsg;
+                   warnMsg << " Coarsening ratio  " << slice_cr_ratio[idim] << " in dim "<< idim <<
+                     "is leading to zero cells for slice." << " Thus reducing cr_ratio by half.\n";
+
+                     ablastr::warn_manager::WMRecordWarning("Diagnostics",
+                        warnMsg.str());
 
                     slice_cr_ratio[idim] = slice_cr_ratio[idim]/2;
                     modify_cr = true;

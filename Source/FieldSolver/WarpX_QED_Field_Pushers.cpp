@@ -6,6 +6,7 @@
  */
 #include "WarpX.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX_QED_K.H"
@@ -22,7 +23,6 @@
 #include <AMReX_GpuControl.H>
 #include <AMReX_GpuDevice.H>
 #include <AMReX_GpuElixir.H>
-#include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IndexType.H>
@@ -45,17 +45,18 @@ using namespace amrex;
 void
 WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> a_dt)
 {
-    if (WarpX::do_nodal == 0) {
-        amrex::Abort("Error: The Hybrid QED method is "
-            "currently only compatible with the nodal scheme.");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WarpX::do_nodal != 0,
+        "Error: The Hybrid QED method is "
+        "currently only compatible with the nodal scheme."
+    );
     for (int lev = 0; lev <= finest_level; ++lev) {
         Hybrid_QED_Push(lev, a_dt[lev]);
     }
 }
 
 void
-WarpX::Hybrid_QED_Push (int lev, Real a_dt)
+WarpX::Hybrid_QED_Push (int lev, amrex::Real a_dt)
 {
     WARPX_PROFILE("WarpX::Hybrid_QED_Push()");
     Hybrid_QED_Push(lev, PatchType::fine, a_dt);
@@ -66,7 +67,7 @@ WarpX::Hybrid_QED_Push (int lev, Real a_dt)
 }
 
 void
-WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
+WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
 {
     const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
     const std::array<Real,3>& dx_vec= WarpX::CellSize(patch_level);

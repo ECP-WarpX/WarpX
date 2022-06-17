@@ -51,6 +51,7 @@ We also have a `discussion page <https://github.com/ECP-WarpX/WarpX/discussions>
 
    coc
    acknowledge_us
+   highlights
 
 Installation
 ------------
@@ -78,6 +79,7 @@ Usage
    usage/examples
    usage/pwfa
    usage/workflows
+   usage/faq
 
 Data Analysis
 -------------
@@ -110,6 +112,7 @@ Theory
    theory/PML
    theory/boosted_frame
    theory/input_output
+   theory/collisions
 
 Development
 -----------
@@ -123,6 +126,7 @@ Development
    developers/developers
    developers/doxygen
    developers/gnumake
+   developers/faq
 .. good to have in the future:
 ..   developers/repostructure
 
