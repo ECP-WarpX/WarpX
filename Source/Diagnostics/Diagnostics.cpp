@@ -169,16 +169,16 @@ Diagnostics::BaseReadParameters ()
         );
     }
 
+    if (WarpXUtilStr::is_in(m_varnames_fields, "none")){
+        m_varnames_fields.clear();
+    }
+
     m_varnames = m_varnames_fields;
     // Generate names of averaged particle fields and append to m_varnames
     for (int ivar=0; ivar<m_pfield_varnames.size(); ivar++) {
         for (int ispec=0; ispec < int(m_pfield_species.size()); ispec++) {
             m_varnames.push_back(m_pfield_varnames[ivar] + '_' + m_pfield_species[ispec]);
         }
-    }
-
-    if (WarpXUtilStr::is_in(m_varnames, "none")){
-        m_varnames.clear();
     }
 
     // Read user-defined physical extents for the output and store in m_lo and m_hi.
