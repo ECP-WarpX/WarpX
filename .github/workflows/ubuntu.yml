@@ -179,7 +179,7 @@ jobs:
         export CC=$(which clang)
         export CXX=$(which clang++)
         cmake -S . -B build_qed \
-         -DWarpX_APP=OFF \
+         -DWarpX_APP=ON \
          -DWarpX_LIB=OFF \
          -DWarpX_MPI=ON \
          -DWarpX_QED_TOOLS=ON \
