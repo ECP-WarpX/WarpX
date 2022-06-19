@@ -1,7 +1,8 @@
 .. _generate-lookup-tables-with-tools:
 
 Generate QED lookup tables using the standalone tool
-======================
+====================================================
+
 We provide tools to generate and convert into a human-readable format the QED lookup tables.
 Such tools can be compiled with ``cmake`` by setting the flag ``WarpX_QED_TOOLS=ON`` (this
 requires both ``PICSAR`` and ``Boost`` libraries). The tools are compiled alongside the WarpX executable
