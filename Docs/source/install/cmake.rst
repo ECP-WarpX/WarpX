@@ -99,6 +99,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WarpX_QED``                 **ON**/OFF                                   QED support (requires PICSAR)
 ``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation support (requires PICSAR and Boost)
+``WarpX_QED_TOOLS``           ON/**OFF**                                   Build external tool to generate QED lookup tables (requires PICSAR and Boost)
 ``WarpX_SENSEI``              ON/**OFF**                                   SENSEI in situ visualization
 ============================= ============================================ =========================================================
 
