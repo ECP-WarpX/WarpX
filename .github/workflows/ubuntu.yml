@@ -188,4 +188,4 @@ jobs:
 
     - name: run table_generator_tool
       run: |
-        ./github/workflows/scripts/checkQEDTableGenerator.sh
+        ./.github/workflows/scripts/checkQEDTableGenerator.sh
