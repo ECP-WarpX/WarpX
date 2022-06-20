@@ -53,7 +53,6 @@ public:
     virtual void InitData() override;
 
     virtual void RemapParticles();
-    virtual void BoostandRemapParticles();
 
     virtual void Evolve (int lev,
                          const amrex::MultiFab& Ex,
@@ -88,7 +87,7 @@ public:
                          amrex::FArrayBox const * bxfab,
                          amrex::FArrayBox const * byfab,
                          amrex::FArrayBox const * bzfab,
-                         const amrex::IntVect ngE, const int /*e_is_nodal*/,
+                         const amrex::IntVect ngEB, const int /*e_is_nodal*/,
                          const long offset,
                          const long np_to_push,
                          int lev, int gather_lev,
@@ -111,13 +110,10 @@ private:
 
     // User input quantities
     amrex::Real zinject_plane = 0.;
-    bool projected = true; // When true, particle transverse positions are directly projected (without adjusment)
-    bool focused = false; // When true, particle transverse positions are adjusted to account for distance between zinject and z=0
     bool rigid_advance = true; // When true, particles are advance with vzbar before injection
 
     amrex::Real vzbeam_ave_boosted;
 
-    amrex::Vector<int> done_injecting;
     amrex::Vector<amrex::Real> zinject_plane_levels;
 
     // Temporary quantites

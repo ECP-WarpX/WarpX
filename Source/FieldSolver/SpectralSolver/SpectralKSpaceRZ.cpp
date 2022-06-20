@@ -4,6 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "SpectralKSpaceRZ.H"
 
@@ -22,7 +23,7 @@ SpectralKSpaceRZ::SpectralKSpaceRZ (const amrex::BoxArray& realspace_ba,
 {
     dx = realspace_dx;  // Store the cell size as member `dx`
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         realspace_ba.ixType() == amrex::IndexType::TheCellType(),
         "SpectralKSpaceRZ expects a cell-centered box.");
 

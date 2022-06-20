@@ -4,9 +4,10 @@
 #
 # License: BSD-3-Clause-LBNL
 
-import numpy as np
 from glob import glob
 import os
+
+import numpy as np
 
 it = 1
 fn = "./lab_frame_data/" + 'snapshot' + str(it).zfill(5) + "/particle1/"

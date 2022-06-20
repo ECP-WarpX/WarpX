@@ -7,9 +7,13 @@
  */
 #include "BackTransformedDiagnostic.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
+
+#include <ablastr/utils/Communication.H>
 
 #include <AMReX_Array4.H>
 #include <AMReX_BLassert.H>
@@ -64,12 +68,13 @@ namespace
       Creates the HDF5 file in truncate mode and closes it.
       Should be run only by the root process.
     */
-    void output_create(const std::string& file_path) {
+    void output_create (const std::string& file_path) {
         WARPX_PROFILE("output_create");
         hid_t file = H5Fcreate(file_path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-        if (file < 0) {
-            amrex::Abort("Error: could not create file at " + file_path);
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            file >=0,
+            "Error: could not create file at " + file_path
+        )
         H5Fclose(file);
     }
 
@@ -77,7 +82,7 @@ namespace
       Writes a single string attribute to the given group.
       Should only be called by the root process.
     */
-    void write_string_attribute(hid_t& group, const std::string& key, const std::string& val)
+    void write_string_attribute (hid_t& group, const std::string& key, const std::string& val)
     {
         hid_t str_type     = H5Tcopy(H5T_C_S1);
         hid_t scalar_space = H5Screate(H5S_SCALAR);
@@ -97,7 +102,7 @@ namespace
       Writes a single double attribute to the given group.
       Should only be called by the root process.
     */
-    void write_double_attribute(hid_t& group, const std::string& key, const double val)
+    void write_double_attribute (hid_t& group, const std::string& key, const double val)
     {
         hid_t scalar_space = H5Screate(H5S_SCALAR);
 
@@ -113,8 +118,8 @@ namespace
       Opens the output file and writes all of metadata attributes.
       Should be run only by the root process.
     */
-    void output_write_metadata(const std::string& file_path,
-                               const int istep, const Real time, const Real dt)
+    void output_write_metadata (const std::string& file_path,
+                                const int istep, const Real time, const Real dt)
     {
         WARPX_PROFILE("output_write_metadata");
         hid_t file = H5Fopen(file_path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
@@ -149,18 +154,20 @@ namespace
       "/native_fields/(field_name)".
       Should be run only by the root rank.
     */
-    void output_create_field(const std::string& file_path, const std::string& field_path,
-                             const unsigned nx, const unsigned ny, const unsigned nz)
+    void output_create_field (const std::string& file_path, const std::string& field_path,
+                              const unsigned nx, const unsigned ny, const unsigned nz)
     {
         WARPX_PROFILE("output_create_field");
 
         // Open the output.
         hid_t file = H5Fopen(file_path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
         // Create a 3D, nx x ny x nz dataspace.
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         hsize_t dims[3] = {nx, ny, nz};
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         hsize_t dims[3] = {nx, nz};
+#else
+        hsize_t dims[3] = {nz};
 #endif
         hid_t grid_space = H5Screate_simple(AMREX_SPACEDIM, dims, NULL);
 
@@ -168,11 +175,11 @@ namespace
         hid_t dataset = H5Dcreate(file, field_path.c_str(), H5T_IEEE_F64LE,
                                   grid_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-        if (dataset < 0)
-        {
-            amrex::Abort("Error: could not create dataset. H5 returned "
-                         + std::to_string(dataset) + "\n");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            dataset >=0,
+            "Error: could not create dataset. H5 returned "
+            + std::to_string(dataset))
+        );
 
         // Close resources.
         H5Dclose(dataset);
@@ -184,7 +191,7 @@ namespace
       Creates a group associated with a single particle species.
       Should be run by all processes collectively.
     */
-    void output_create_species_group(const std::string& file_path, const std::string& species_name)
+    void output_create_species_group (const std::string& file_path, const std::string& species_name)
     {
         MPI_Comm comm = MPI_COMM_WORLD;
         MPI_Info info = MPI_INFO_NULL;
@@ -209,8 +216,8 @@ namespace
       Resize an extendible dataset, suitable for storing particle data.
       Should be run only by the root rank.
     */
-    long output_resize_particle_field(const std::string& file_path, const std::string& field_path,
-                                      const long num_to_add)
+    long output_resize_particle_field (const std::string& file_path, const std::string& field_path,
+                                       const long num_to_add)
     {
         WARPX_PROFILE("output_resize_particle_field");
 
@@ -230,11 +237,11 @@ namespace
         new_size[0] = dims[0] + num_to_add;
         status = H5Dset_extent (dataset, new_size);
 
-        if (status < 0)
-        {
-            amrex::Abort("Error: set extent filed on dataset "
-                         + std::to_string(dataset) + "\n");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            status >= 0,
+            "Error: set extent filed on dataset "
+            + std::to_string(dataset)
+        );
 
         // Close resources.
         H5Sclose(filespace);
@@ -248,8 +255,8 @@ namespace
       Writes to a dataset that has been extended to the proper size. Suitable for writing particle data.
       Should be run on all ranks collectively.
     */
-    void output_write_particle_field(const std::string& file_path, const std::string& field_path,
-                                     const Real* data_ptr, const long count, const long index)
+    void output_write_particle_field (const std::string& file_path, const std::string& field_path,
+                                      const Real* data_ptr, const long count, const long index)
     {
         WARPX_PROFILE("output_write_particle_field");
 
@@ -273,11 +280,11 @@ namespace
         hid_t dataset = H5Dopen (file, field_path.c_str(), H5P_DEFAULT);
 
         // Make sure the dataset is there.
-        if (dataset < 0)
-        {
-            amrex::Abort("Error on rank " + std::to_string(mpi_rank) +
-                         ". Count not find dataset " + field_path + "\n");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            dataset >= 0,
+            "Error on rank " + std::to_string(mpi_rank)
+            +". Count not find dataset " + field_path
+        );
 
         hid_t filespace = H5Dget_space (dataset);
 
@@ -296,21 +303,21 @@ namespace
             status = H5Sselect_hyperslab (filespace, H5S_SELECT_SET, offset, NULL,
                                           dims, NULL);
 
-            if (status < 0)
-            {
-                amrex::Abort("Error on rank " + std::to_string(ParallelDescriptor::MyProc()) +
-                             " could not select hyperslab.\n");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                status >= 0,
+                "Error on rank " + std::to_string(ParallelDescriptor::MyProc())
+                +" could not select hyperslab."
+            );
 
             /* Write the data to the extended portion of dataset  */
             status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, memspace,
                               filespace, collective_plist, data_ptr);
 
-            if (status < 0)
-            {
-                amrex::Abort("Error on rank " + std::to_string(ParallelDescriptor::MyProc()) +
-                             " could not write hyperslab.\n");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                status >= 0,
+                "Error on rank " + std::to_string(ParallelDescriptor::MyProc())
+                +" could not write hyperslab."
+            );
 
             status = H5Sclose (memspace);
         }
@@ -329,7 +336,7 @@ namespace
       Creates an extendible dataset, suitable for storing particle data.
       Should be run on all ranks collectively.
     */
-    void output_create_particle_field(const std::string& file_path, const std::string& field_path)
+    void output_create_particle_field (const std::string& file_path, const std::string& field_path)
     {
         WARPX_PROFILE("output_create_particle_field");
 
@@ -359,11 +366,11 @@ namespace
         hid_t dataset = H5Dcreate2 (file, field_path.c_str(), H5T_NATIVE_DOUBLE, dataspace,
                                     H5P_DEFAULT, prop, H5P_DEFAULT);
 
-        if (dataset < 0)
-        {
-            amrex::Abort("Error: could not create dataset. H5 returned "
-                         + std::to_string(dataset) + "\n");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            dataset >= 0,
+            "Error: could not create dataset. H5 returned "
+            + std::to_string(dataset)
+        );
 
         // Close resources.
         H5Dclose(dataset);
@@ -376,10 +383,10 @@ namespace
       Write the only component in the multifab to the dataset given by field_name.
       Uses hdf5-parallel.
     */
-    void output_write_field(const std::string& file_path,
-                            const std::string& field_path,
-                            const MultiFab& mf, const int comp,
-                            const int lo_x, const int lo_y, const int lo_z)
+    void output_write_field (const std::string& file_path,
+                             const std::string& field_path,
+                             const MultiFab& mf, const int comp,
+                             const int lo_x, const int lo_y, const int lo_z)
     {
 
         WARPX_PROFILE("output_write_field");
@@ -399,11 +406,11 @@ namespace
         hid_t dataset = H5Dopen(file, field_path.c_str(), H5P_DEFAULT);
 
         // Make sure the dataset is there.
-        if (dataset < 0)
-        {
-            amrex::Abort("Error on rank " + std::to_string(mpi_rank) +
-                         ". Count not find dataset " + field_path + "\n");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            dataset >= 0,
+            "Error on rank " + std::to_string(mpi_rank)
+            +". Count not find dataset " + field_path
+        );
 
         // Grab the dataspace of the field dataset from file.
         hid_t file_dataspace = H5Dget_space(dataset);
@@ -415,17 +422,21 @@ namespace
         // Iterate over Fabs, select matching hyperslab and write.
         hid_t status;
         // slab lo index and shape.
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         hsize_t slab_offsets[3], slab_dims[3];
         int shift[3];
         shift[0] = lo_x;
         shift[1] = lo_y;
         shift[2] = lo_z;
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         hsize_t slab_offsets[2], slab_dims[2];
         int shift[2];
         shift[0] = lo_x;
         shift[1] = lo_z;
+#else
+        hsize_t slab_offsets[1], slab_dims[1];
+        int shift[1];
+        shift[0] = lo_z;
 #endif
         hid_t slab_dataspace;
 
@@ -463,20 +474,20 @@ namespace
             // Select the hyperslab matching this fab.
             status = H5Sselect_hyperslab(file_dataspace, H5S_SELECT_SET,
                                          slab_offsets, NULL, slab_dims, NULL);
-            if (status < 0)
-            {
-                amrex::Abort("Error on rank " + std::to_string(mpi_rank) +
-                             " could not select hyperslab.\n");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                status >= 0,
+                "Error on rank " + std::to_string(mpi_rank)
+                +" could not select hyperslab.\n"
+            );
 
             // Write this pencil.
             status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, slab_dataspace,
                               file_dataspace, collective_plist, transposed_data.data());
-            if (status < 0)
-            {
-                amrex::Abort("Error on rank " + std::to_string(mpi_rank) +
-                             " could not write hyperslab.\n");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                status >= 0,
+                "Error on rank " + std::to_string(mpi_rank)
+                +" could not write hyperslab."
+            );
 
             H5Sclose(slab_dataspace);
             write_count++;
@@ -494,8 +505,8 @@ namespace
 }
 #endif
 
-bool compare_tlab_uptr(const std::unique_ptr<LabFrameDiag>&a,
-                       const std::unique_ptr<LabFrameDiag>&b)
+bool compare_tlab_uptr (const std::unique_ptr<LabFrameDiag>&a,
+                        const std::unique_ptr<LabFrameDiag>&b)
 {
     return a->m_t_lab < b->m_t_lab;
 }
@@ -503,7 +514,7 @@ bool compare_tlab_uptr(const std::unique_ptr<LabFrameDiag>&a,
 namespace
 {
 void
-LorentzTransformZ(MultiFab& data, Real gamma_boost, Real beta_boost)
+LorentzTransformZ (MultiFab& data, Real gamma_boost, Real beta_boost)
 {
     // Loop over tiles/boxes and in-place convert each slice from boosted
     // frame to back-transformed lab frame.
@@ -553,13 +564,13 @@ LorentzTransformZ(MultiFab& data, Real gamma_boost, Real beta_boost)
 }
 
 BackTransformedDiagnostic::
-BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
-                       Real dt_snapshots_lab, int N_snapshots,
-                       Real dt_slice_snapshots_lab, int N_slice_snapshots,
-                       Real gamma_boost, Real t_boost, Real dt_boost,
-                       int boost_direction, const Geometry& geom,
-                       amrex::RealBox& slice_realbox,
-                       amrex::Real particle_slice_width_lab)
+BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
+                           Real dt_snapshots_lab, int N_snapshots,
+                           Real dt_slice_snapshots_lab, int N_slice_snapshots,
+                           Real gamma_boost, Real t_boost, Real dt_boost,
+                           int boost_direction, const Geometry& geom,
+                           amrex::RealBox& slice_realbox,
+                           amrex::Real particle_slice_width_lab)
     : m_gamma_boost_(gamma_boost),
       m_dt_snapshots_lab_(dt_snapshots_lab),
       m_dt_boost_(dt_boost),
@@ -570,7 +581,9 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
       m_particle_slice_width_lab_(particle_slice_width_lab)
 {
 
-
+#ifdef WARPX_DIM_RZ
+    amrex::Abort(Utils::TextMsg::Err("BackTransformed diagnostics is currently not supported with RZ"));
+#endif
     WARPX_PROFILE("BackTransformedDiagnostic::BackTransformedDiagnostic");
 
     AMREX_ALWAYS_ASSERT(WarpX::do_back_transformed_fields or
@@ -582,14 +595,20 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
 
     m_dz_lab_ = PhysConst::c * m_dt_boost_ * m_inv_beta_boost_ * m_inv_gamma_boost_;
     m_inv_dz_lab_ = 1.0_rt / m_dz_lab_;
-    int Nz_lab = static_cast<unsigned>((zmax_lab - zmin_lab) * m_inv_dz_lab_);
+    int Nz_lab = static_cast<int>((zmax_lab - zmin_lab) * m_inv_dz_lab_);
+#if (AMREX_SPACEDIM >= 2)
     int Nx_lab = geom.Domain().length(0);
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
     int Ny_lab = geom.Domain().length(1);
     IntVect prob_ncells_lab = {Nx_lab, Ny_lab, Nz_lab};
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // Ny_lab = 1;
     IntVect prob_ncells_lab = {Nx_lab, Nz_lab};
+#else
+    // Nx_lab = 1;
+    // Ny_lab = 1;
+    IntVect prob_ncells_lab(Nz_lab);
 #endif
     writeMetaData();
 
@@ -598,7 +617,7 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
     ParmParse pp_warpx("warpx");
     bool do_user_fields;
     do_user_fields = pp_warpx.queryarr("back_transformed_diag_fields", user_fields_to_dump);
-    if (pp_warpx.query("buffer_size", m_num_buffer_)) {
+    if (queryWithParser(pp_warpx, "buffer_size", m_num_buffer_)) {
         if (m_max_box_size_ < m_num_buffer_) m_max_box_size_ = m_num_buffer_;
     }
     // If user specifies fields to dump, overwrite ncomp_to_dump,
@@ -607,7 +626,7 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
         map_actual_fields_to_dump.push_back(i);
 
     if (do_user_fields){
-        m_ncomp_to_dump = user_fields_to_dump.size();
+        m_ncomp_to_dump = static_cast<int>(user_fields_to_dump.size());
         map_actual_fields_to_dump.resize(m_ncomp_to_dump);
         m_mesh_field_names.resize(m_ncomp_to_dump);
         for (int i=0; i<m_ncomp_to_dump; i++){
@@ -621,13 +640,18 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
     m_LabFrameDiags_.resize(N_snapshots+N_slice_snapshots);
 
     for (int i = 0; i < N_snapshots; ++i) {
-        Real t_lab = i * m_dt_snapshots_lab_;
+        // steps + initial box shift
+        Real const zmax_boost = geom.ProbHi(AMREX_SPACEDIM-1);
+        Real const t_lab =
+            i * m_dt_snapshots_lab_ +
+            m_gamma_boost_ * m_beta_boost_ * zmax_boost/PhysConst::c;
+
         // Get simulation domain physical coordinates (in boosted frame).
         RealBox prob_domain_lab = geom.ProbDomain();
         // Replace z bounds by lab-frame coordinates
         // x and y bounds are the same for back-transformed lab frame and boosted frame
-        prob_domain_lab.setLo(AMREX_SPACEDIM-1, zmin_lab + v_window_lab * t_lab);
-        prob_domain_lab.setHi(AMREX_SPACEDIM-1, zmax_lab + v_window_lab * t_lab);
+        prob_domain_lab.setLo(WARPX_ZINDEX, zmin_lab + v_window_lab * t_lab);
+        prob_domain_lab.setHi(WARPX_ZINDEX, zmax_lab + v_window_lab * t_lab);
         Box diag_box = geom.Domain();
         m_LabFrameDiags_[i] = std::make_unique<LabFrameSnapShot>(t_lab, t_boost,
                                 m_inv_gamma_boost_, m_inv_beta_boost_, m_dz_lab_,
@@ -639,7 +663,6 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
 
     for (int i = 0; i < N_slice_snapshots; ++i) {
 
-        IntVect slice_ncells_lab ;
 
         // To construct LabFrameSlice(), the location of lo() and hi() of the
         // reduced diag is computed using the user-defined values of the
@@ -650,12 +673,13 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
         const amrex::Real* current_slice_lo = slice_realbox.lo();
         const amrex::Real* current_slice_hi = slice_realbox.hi();
 
-        const amrex::Real zmin_slice_lab = current_slice_lo[AMREX_SPACEDIM-1] /
+        const amrex::Real zmin_slice_lab = current_slice_lo[WARPX_ZINDEX] /
                                           ( (1._rt+m_beta_boost_)*m_gamma_boost_);
-        const amrex::Real zmax_slice_lab = current_slice_hi[AMREX_SPACEDIM-1] /
+        const amrex::Real zmax_slice_lab = current_slice_hi[WARPX_ZINDEX] /
                                           ( (1._rt+m_beta_boost_)*m_gamma_boost_);
         auto Nz_slice_lab = static_cast<int>(
             (zmax_slice_lab - zmin_slice_lab) * m_inv_dz_lab_);
+#if (AMREX_SPACEDIM >= 2)
         auto Nx_slice_lab = static_cast<int>(
             (current_slice_hi[0] - current_slice_lo[0] ) /
             geom.CellSize(0));
@@ -663,7 +687,8 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
         // if the x-dimension is reduced, increase total_cells by 1
         // to be consistent with the number of cells created for the output.
         if (Nx_lab != Nx_slice_lab) Nx_slice_lab++;
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
         auto Ny_slice_lab = static_cast<int>(
             (current_slice_hi[1] - current_slice_lo[1]) /
             geom.CellSize(1));
@@ -671,9 +696,11 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
         // if the y-dimension is reduced, increase total_cells by 1
         // to be consistent with the number of cells created for the output.
         if (Ny_lab != Ny_slice_lab) Ny_slice_lab++;
-        slice_ncells_lab = {Nx_slice_lab, Ny_slice_lab, Nz_slice_lab};
+        amrex::IntVect slice_ncells_lab = {Nx_slice_lab, Ny_slice_lab, Nz_slice_lab};
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        amrex::IntVect slice_ncells_lab = {Nx_slice_lab, Nz_slice_lab};
 #else
-        slice_ncells_lab = {Nx_slice_lab, Nz_slice_lab};
+        amrex::IntVect slice_ncells_lab(Nz_slice_lab);
 #endif
 
         IntVect slice_lo(AMREX_D_DECL(0,0,0));
@@ -695,17 +722,22 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
         Box stmp(slice_lo,slice_hi);
         Box slicediag_box = stmp;
 
-        Real t_slice_lab = i * m_dt_slice_snapshots_lab_ ;
+        // steps + initial box shift
+        Real const zmax_boost = geom.ProbHi(AMREX_SPACEDIM-1);
+        Real const t_slice_lab =
+            i * m_dt_slice_snapshots_lab_ +
+            m_gamma_boost_ * m_beta_boost_ * zmax_boost/PhysConst::c;
+
         RealBox prob_domain_lab = geom.ProbDomain();
         // replace z bounds by lab-frame coordinates
-        prob_domain_lab.setLo(AMREX_SPACEDIM-1, zmin_lab + v_window_lab * t_slice_lab);
-        prob_domain_lab.setHi(AMREX_SPACEDIM-1, zmax_lab + v_window_lab * t_slice_lab);
+        prob_domain_lab.setLo(WARPX_ZINDEX, zmin_lab + v_window_lab * t_slice_lab);
+        prob_domain_lab.setHi(WARPX_ZINDEX, zmax_lab + v_window_lab * t_slice_lab);
         RealBox slice_dom_lab = slice_realbox;
         // replace z bounds of slice in lab-frame coordinates
         // note : x and y bounds are the same for lab and boosted frames
         // initial lab slice extent //
-        slice_dom_lab.setLo(AMREX_SPACEDIM-1, zmin_slice_lab + v_window_lab * t_slice_lab );
-        slice_dom_lab.setHi(AMREX_SPACEDIM-1, zmax_slice_lab +
+        slice_dom_lab.setLo(WARPX_ZINDEX, zmin_slice_lab + v_window_lab * t_slice_lab );
+        slice_dom_lab.setHi(WARPX_ZINDEX, zmax_slice_lab +
                                          v_window_lab * t_slice_lab );
 
         // construct labframeslice
@@ -722,7 +754,7 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
     AMREX_ALWAYS_ASSERT(m_max_box_size_ >= m_num_buffer_);
 }
 
-void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
+void BackTransformedDiagnostic::Flush (const Geometry& /*geom*/)
 {
     WARPX_PROFILE("BackTransformedDiagnostic::Flush");
 
@@ -735,8 +767,8 @@ void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
     // Loop over BFD snapshots
     for (auto& lf_diags : m_LabFrameDiags_) {
 
-        Real zmin_lab = lf_diags->m_prob_domain_lab_.lo(AMREX_SPACEDIM-1);
-        auto i_lab = static_cast<unsigned>(
+        Real zmin_lab = lf_diags->m_prob_domain_lab_.lo(WARPX_ZINDEX);
+        auto i_lab = static_cast<int>(
             (lf_diags->m_current_z_lab - zmin_lab) / m_dz_lab_);
 
         if (lf_diags->m_buff_counter_ != 0) {
@@ -757,8 +789,12 @@ void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
                 const int ncomp = lf_diags->m_data_buffer_->nComp();
 
                 MultiFab tmp(buff_ba, buff_dm, ncomp, 0);
+                tmp.setVal(0.0);
 
-                tmp.ParallelCopy(*lf_diags->m_data_buffer_, 0, 0, ncomp);
+                ablastr::utils::communication::ParallelCopy(tmp, *lf_diags->m_data_buffer_, 0, 0, ncomp,
+                                                            IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                            IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                            WarpX::do_single_precision_comms);
 
 #ifdef WARPX_USE_HDF5
                 for (int comp = 0; comp < ncomp; ++comp) {
@@ -779,7 +815,7 @@ void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
                 // Loop over species to be dumped to BFD
                 for (int j = 0; j < mypc.nSpeciesBackTransformedDiagnostics(); ++j) {
                     // Get species name
-                    std::string species_name =
+                    const std::string& species_name =
                         species_names[mypc.mapSpeciesBackTransformedDiagnostics(j)];
 #ifdef WARPX_USE_HDF5
                     // Dump species data
@@ -810,9 +846,9 @@ void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
 
 void
 BackTransformedDiagnostic::
-writeLabFrameData(const MultiFab* cell_centered_data,
-                  const MultiParticleContainer& mypc,
-                  const Geometry& geom, const Real t_boost, const Real dt) {
+writeLabFrameData (const MultiFab* cell_centered_data,
+                   const MultiParticleContainer& mypc,
+                   const Geometry& geom, const Real t_boost, const Real dt) {
 
     WARPX_PROFILE("BackTransformedDiagnostic::writeLabFrameData");
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
@@ -836,8 +872,8 @@ writeLabFrameData(const MultiFab* cell_centered_data,
                                               m_inv_gamma_boost_,
                                               m_inv_beta_boost_);
 
-        Real diag_zmin_lab = lf_diags->m_diag_domain_lab_.lo(AMREX_SPACEDIM-1);
-        Real diag_zmax_lab = lf_diags->m_diag_domain_lab_.hi(AMREX_SPACEDIM-1);
+        Real diag_zmin_lab = lf_diags->m_diag_domain_lab_.lo(WARPX_ZINDEX);
+        Real diag_zmax_lab = lf_diags->m_diag_domain_lab_.hi(WARPX_ZINDEX);
 
         if ( ( lf_diags->m_current_z_boost < zlo_boost) or
              ( lf_diags->m_current_z_boost > zhi_boost) or
@@ -847,7 +883,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
         // Get z index of data_buffer_ (i.e. in the lab frame) where
         // simulation domain (t', [zmin',zmax']), back-transformed to lab
         // frame, intersects with snapshot.
-        Real dom_zmin_lab = lf_diags->m_prob_domain_lab_.lo(AMREX_SPACEDIM-1);
+        Real dom_zmin_lab = lf_diags->m_prob_domain_lab_.lo(WARPX_ZINDEX);
         auto i_lab = static_cast<unsigned>(
             ( lf_diags->m_current_z_lab - dom_zmin_lab) / m_dz_lab_);
         // If buffer of snapshot i is empty...
@@ -905,6 +941,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
              tmp_slice_ptr = std::make_unique<MultiFab>(slice_ba,
                              lf_diags->m_data_buffer_->DistributionMap(),
                              ncomp, 0);
+             tmp_slice_ptr->setVal(0.0);
 
              // slice is re-used if the t_lab of a diag is equal to
              // that of the previous diag.
@@ -912,7 +949,10 @@ writeLabFrameData(const MultiFab* cell_centered_data,
              // which has the dmap of the domain to
              // tmp_slice_ptr which has the dmap of the
              // data_buffer that stores the back-transformed data.
-             tmp_slice_ptr->ParallelCopy(*slice, 0, 0, ncomp);
+            ablastr::utils::communication::ParallelCopy(*tmp_slice_ptr, *slice, 0, 0, ncomp,
+                                                        IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                        IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                        WarpX::do_single_precision_comms);
              lf_diags->AddDataToBuffer(*tmp_slice_ptr, i_lab,
                                                map_actual_fields_to_dump);
              tmp_slice_ptr = nullptr;
@@ -964,7 +1004,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
                 // Loop over species to be dumped to BFD
                 for (int j = 0; j < mypc.nSpeciesBackTransformedDiagnostics(); ++j) {
                     // Get species name
-                    const std::string species_name = species_names[
+                    const std::string& species_name = species_names[
                                       mypc.mapSpeciesBackTransformedDiagnostics(j)];
 #ifdef WARPX_USE_HDF5
                     // Write data to disk (HDF5)
@@ -994,8 +1034,8 @@ writeLabFrameData(const MultiFab* cell_centered_data,
 #ifdef WARPX_USE_HDF5
 void
 BackTransformedDiagnostic::
-writeParticleDataHDF5(const WarpXParticleContainer::DiagnosticParticleData& pdata,
-                      const std::string& name, const std::string& species_name)
+writeParticleDataHDF5 (const WarpXParticleContainer::DiagnosticParticleData& pdata,
+                       const std::string& name, const std::string& species_name)
 {
     auto np = pdata.GetRealData(DiagIdx::w).size();
 
@@ -1042,8 +1082,8 @@ writeParticleDataHDF5(const WarpXParticleContainer::DiagnosticParticleData& pdat
 
 void
 BackTransformedDiagnostic::
-writeParticleData(const WarpXParticleContainer::DiagnosticParticleData& pdata,
-                  const std::string& name, const int i_lab)
+writeParticleData (const WarpXParticleContainer::DiagnosticParticleData& pdata,
+                   const std::string& name, const int i_lab)
 {
     WARPX_PROFILE("BackTransformedDiagnostic::writeParticleData");
 
@@ -1152,12 +1192,12 @@ writeMetaData ()
 }
 
 LabFrameSnapShot::
-LabFrameSnapShot(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
-                 Real inv_beta_boost_in, Real dz_lab_in, RealBox prob_domain_lab,
-                 IntVect prob_ncells_lab, int ncomp_to_dump,
-                 std::vector<std::string> mesh_field_names,
-                 amrex::RealBox diag_domain_lab, Box diag_box, int file_num_in,
-                 const int max_box_size, const int num_buffer)
+LabFrameSnapShot (Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
+                  Real inv_beta_boost_in, Real dz_lab_in, RealBox prob_domain_lab,
+                  IntVect prob_ncells_lab, int ncomp_to_dump,
+                  std::vector<std::string> mesh_field_names,
+                  amrex::RealBox diag_domain_lab, Box diag_box, int file_num_in,
+                  const int max_box_size, const int num_buffer)
 {
    m_t_lab = t_lab_in;
    m_dz_lab_ = dz_lab_in;
@@ -1168,7 +1208,7 @@ LabFrameSnapShot(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
    m_diag_domain_lab_ = diag_domain_lab;
    m_buff_box_ = diag_box;
    m_ncomp_to_dump_ = ncomp_to_dump;
-   m_mesh_field_names_ = mesh_field_names;
+   m_mesh_field_names_ = std::move(mesh_field_names);
    m_file_num = file_num_in;
    m_current_z_lab = 0.0;
    m_current_z_boost = 0.0;
@@ -1208,13 +1248,17 @@ createLabFrameDirectories() {
             const auto lo = lbound(m_buff_box_);
             for (int comp = 0; comp < m_ncomp_to_dump_; ++comp) {
                 output_create_field(m_file_name, m_mesh_field_names_[comp],
+#if ( AMREX_SPACEDIM >= 2 )
                                     m_prob_ncells_lab_[0],
-#if ( AMREX_SPACEDIM == 3 )
+#else
+                                    1,
+#endif
+#if defined(WARPX_DIM_3D)
                                     m_prob_ncells_lab_[1],
 #else
                                     1,
 #endif
-                                    m_prob_ncells_lab_[AMREX_SPACEDIM-1]+1);
+                                    m_prob_ncells_lab_[WARPX_ZINDEX]+1);
             }
         }
     }
@@ -1258,7 +1302,7 @@ createLabFrameDirectories() {
         // Loop over species to be dumped to BFD
         for(int i = 0; i < mypc.nSpeciesBackTransformedDiagnostics(); ++i) {
             // Get species name
-            std::string species_name =
+            const std::string& species_name =
                 species_names[mypc.mapSpeciesBackTransformedDiagnostics(i)];
             const std::string fullpath = m_file_name + "/" + species_name;
             if (!UtilCreateDirectory(fullpath, 0755))
@@ -1291,23 +1335,23 @@ writeLabFrameHeader() {
         HeaderFile << m_t_lab << "\n";
         // Write domain number of cells
         HeaderFile << m_prob_ncells_lab_[0] << ' '
-#if ( AMREX_SPACEDIM==3 )
+#if defined(WARPX_DIM_3D)
                    << m_prob_ncells_lab_[1] << ' '
 #endif
-                   << m_prob_ncells_lab_[AMREX_SPACEDIM-1] <<'\n';
+                   << m_prob_ncells_lab_[WARPX_ZINDEX] <<'\n';
         // Write domain physical boundaries
         // domain lower bound
         HeaderFile << m_diag_domain_lab_.lo(0) << ' '
-#if ( AMREX_SPACEDIM==3 )
+#if defined(WARPX_DIM_3D)
                    << m_diag_domain_lab_.lo(1) << ' '
 #endif
-                   << m_diag_domain_lab_.lo(AMREX_SPACEDIM-1) <<'\n';
+                   << m_diag_domain_lab_.lo(WARPX_ZINDEX) <<'\n';
         // domain higher bound
         HeaderFile << m_diag_domain_lab_.hi(0) << ' '
-#if ( AMREX_SPACEDIM==3 )
+#if defined(WARPX_DIM_3D)
                    << m_diag_domain_lab_.hi(1) << ' '
 #endif
-                   << m_diag_domain_lab_.hi(AMREX_SPACEDIM-1) <<'\n';
+                   << m_diag_domain_lab_.hi(WARPX_ZINDEX) <<'\n';
         // List of fields dumped to file
         for (int i=0; i<m_ncomp_to_dump_; i++)
         {
@@ -1338,7 +1382,7 @@ LabFrameSlice(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
     m_diag_domain_lab_ = diag_domain_lab;
     m_buff_box_ = diag_box;
     m_ncomp_to_dump_ = ncomp_to_dump;
-    m_mesh_field_names_ = mesh_field_names;
+    m_mesh_field_names_ = std::move(mesh_field_names);
     m_file_num = file_num_in;
     m_current_z_lab = 0.0;
     m_current_z_boost = 0.0;
@@ -1358,7 +1402,7 @@ LabFrameSnapShot::
 AddDataToBuffer( MultiFab& tmp, int k_lab,
                  amrex::Vector<int> const& map_actual_fields_to_dump)
 {
-    const int ncomp_to_dump = map_actual_fields_to_dump.size();
+    const int ncomp_to_dump = static_cast<int>(map_actual_fields_to_dump.size());
     MultiFab& buf = *m_data_buffer_;
 #ifdef AMREX_USE_GPU
     Gpu::DeviceVector<int> d_map_actual_fields_to_dump(ncomp_to_dump);
@@ -1380,10 +1424,12 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
              [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
              {
                  const int icomp = field_map_ptr[n];
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                  buf_arr(i,j,k_lab,n) = tmp_arr(i,j,k,icomp);
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                  buf_arr(i,k_lab,k,n) = tmp_arr(i,j,k,icomp);
+#else
+                 buf_arr(k_lab,j,k,n) = tmp_arr(i,j,k,icomp);
 #endif
              }
          );
@@ -1396,7 +1442,7 @@ LabFrameSlice::
 AddDataToBuffer( MultiFab& tmp, int k_lab,
                  amrex::Vector<int> const& map_actual_fields_to_dump)
 {
-    const int ncomp_to_dump = map_actual_fields_to_dump.size();
+    const int ncomp_to_dump = static_cast<int>(map_actual_fields_to_dump.size());
     MultiFab& buf = *m_data_buffer_;
 #ifdef AMREX_USE_GPU
     Gpu::DeviceVector<int> d_map_actual_fields_to_dump(ncomp_to_dump);
@@ -1417,10 +1463,12 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
            [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
            {
               const int icomp = field_map_ptr[n];
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
               buf_arr(i,j,k_lab,n) = tmp_arr(i,j,k,icomp);
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
               buf_arr(i,k_lab,k,n) = tmp_arr(i,j,k,icomp);
+#else
+              buf_arr(k_lab,j,k,n) = tmp_arr(i,j,k,icomp);
 #endif
            });
     }
@@ -1434,13 +1482,13 @@ AddPartDataToParticleBuffer(
     Vector<WarpXParticleContainer::DiagnosticParticleData> const& tmp_particle_buffer,
     int nspeciesBoostedFrame) {
     for (int isp = 0; isp < nspeciesBoostedFrame; ++isp) {
-        auto np = tmp_particle_buffer[isp].GetRealData(DiagIdx::w).size();
+        auto np = static_cast<int>(tmp_particle_buffer[isp].GetRealData(DiagIdx::w).size());
         if (np == 0) continue;
 
         // allocate size of particle buffer array to np
         // This is a growing array. Each time we add np elements
         // to the existing array which has size = init_size
-        const int init_size = m_particles_buffer_[isp].GetRealData(DiagIdx::w).size();
+        const int init_size = static_cast<int>(m_particles_buffer_[isp].GetRealData(DiagIdx::w).size());
         const int total_size = init_size + np;
         m_particles_buffer_[isp].resize(total_size);
 
@@ -1526,9 +1574,11 @@ AddPartDataToParticleBuffer(
         int* const AMREX_RESTRICT IndexLocation = IndexForPartCopy.dataPtr();
 
         // Compute extent of the reduced domain +/- user-defined physical width
+#if (AMREX_SPACEDIM >= 2)
         Real const xmin = m_diag_domain_lab_.lo(0)-m_particle_slice_dx_lab_;
         Real const xmax = m_diag_domain_lab_.hi(0)+m_particle_slice_dx_lab_;
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
         Real const ymin = m_diag_domain_lab_.lo(1)-m_particle_slice_dx_lab_;
         Real const ymax = m_diag_domain_lab_.hi(1)+m_particle_slice_dx_lab_;
 #endif
@@ -1539,9 +1589,12 @@ AddPartDataToParticleBuffer(
         [=] AMREX_GPU_DEVICE(int i)
         {
             Flag[i] = 0;
+#if (AMREX_SPACEDIM >= 2)
             if ( x_temp[i] >= (xmin) &&
-                 x_temp[i] <= (xmax) ) {
-#if (AMREX_SPACEDIM == 3)
+                 x_temp[i] <= (xmax) )
+#endif
+            {
+#if defined(WARPX_DIM_3D)
                if (y_temp[i] >= (ymin) &&
                    y_temp[i] <= (ymax) )
 #endif
@@ -1555,7 +1608,8 @@ AddPartDataToParticleBuffer(
         // flag values. These location indices are used to copy data
         // from src to dst when the copy-flag is set to 1.
         const int copy_size = amrex::Scan::ExclusiveSum(np, Flag, IndexLocation);
-        const int init_size = m_particles_buffer_[isp].GetRealData(DiagIdx::w).size();
+        const auto init_size = static_cast<int>(
+            m_particles_buffer_[isp].GetRealData(DiagIdx::w).size());
         const int total_reducedDiag_size = copy_size + init_size;
 
         // allocate array size for reduced diagnostic buffer array

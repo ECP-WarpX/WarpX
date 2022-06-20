@@ -38,8 +38,7 @@ struct IonizationFilterFunc
     int m_atomic_number;
 
     GetParticlePosition m_get_position;
-    GetExternalEField m_get_externalE;
-    GetExternalBField m_get_externalB;
+    GetExternalEBField m_get_externalEB;
 
     amrex::Array4<const amrex::Real> m_ex_arr;
     amrex::Array4<const amrex::Real> m_ey_arr;
@@ -64,14 +63,13 @@ struct IonizationFilterFunc
 
     amrex::Dim3 m_lo;
 
-    IonizationFilterFunc (const WarpXParIter& a_pti, int lev, amrex::IntVect ngE,
+    IonizationFilterFunc (const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
                           amrex::FArrayBox const& exfab,
                           amrex::FArrayBox const& eyfab,
                           amrex::FArrayBox const& ezfab,
                           amrex::FArrayBox const& bxfab,
                           amrex::FArrayBox const& byfab,
                           amrex::FArrayBox const& bzfab,
-                          amrex::Array<amrex::Real,3> v_galilean,
                           const amrex::Real* const AMREX_RESTRICT a_ionization_energies,
                           const amrex::Real* const AMREX_RESTRICT a_adk_prefactor,
                           const amrex::Real* const AMREX_RESTRICT a_adk_exp_prefactor,
@@ -97,10 +95,8 @@ struct IonizationFilterFunc
             m_get_position(i, xp, yp, zp);
 
             amrex::ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
-            m_get_externalE(i, ex, ey, ez);
-
             amrex::ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
-            m_get_externalB(i, bx, by, bz);
+            m_get_externalEB(i, ex, ey, ez, bx, by, bz);
 
             doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
                            m_ex_arr, m_ey_arr, m_ez_arr, m_bx_arr, m_by_arr, m_bz_arr,

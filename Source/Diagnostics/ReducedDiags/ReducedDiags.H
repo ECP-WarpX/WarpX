@@ -49,26 +49,36 @@ public:
      * constructor
      * @param[in] rd_name reduced diags names
      */
-    ReducedDiags(std::string rd_name);
+    ReducedDiags (std::string rd_name);
 
     /**
      * Virtual destructor for polymorphism
      */
-    virtual ~ReducedDiags() = default;
+    virtual ~ReducedDiags () = default;
+
+    /**
+     * function to initialize data after amr
+     * levels are initialized.
+     */
+    virtual void InitData ();
+
+    /** Redistribute parallel data structures during load balance
+     */
+    virtual void LoadBalance ();
 
     /**
      * function to compute diags
      *
      * @param[in] step current time step
      */
-    virtual void ComputeDiags(int step) = 0;
+    virtual void ComputeDiags (int step) = 0;
 
     /**
      * write to file function
      *
      * @param[in] step current time step
      */
-    virtual void WriteToFile(int step) const;
+    virtual void WriteToFile (int step) const;
 
     /**
      * This function queries deprecated input parameters and aborts

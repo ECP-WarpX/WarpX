@@ -7,6 +7,7 @@
 #include "NCIGodfreyFilter.H"
 
 #include "Utils/NCIGodfreyTables.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -27,33 +28,39 @@ NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdto
     m_coeff_set = coeff_set;
     m_cdtodz = cdtodz;
     m_nodal_gather = nodal_gather;
+
     // NCI Godfrey filter has fixed size, and is applied along z only.
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     stencil_length_each_dir = {1,1,5};
     slen = {1,1,5};
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     stencil_length_each_dir = {1,5};
     slen = {1,5,1};
+#else
+    amrex::ignore_unused(coeff_set, cdtodz, nodal_gather);
+    amrex::Abort(Utils::TextMsg::Err(
+        "NCIGodfreyFilter not implemented in 1D!"));
 #endif
 }
 
 void NCIGodfreyFilter::ComputeStencils(){
 
+#if (AMREX_SPACEDIM >= 2)
     using namespace warpx::nci_godfrey;
 
     // Sanity checks: filter length shoulz be 5 in z
-#if  (AMREX_SPACEDIM == 3)
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+#if  defined(WARPX_DIM_3D)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         slen.z==5,"ERROR: NCI filter requires 5 points in z");
 #else
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         slen.y==5,"ERROR: NCI filter requires 5 points in z");
 #endif
     // Interpolate coefficients from the table, and store into prestencil.
     auto index = static_cast<int>(tab_length*m_cdtodz);
     index = min(index, tab_length-2);
     index = max(index, 0);
-    Real weight_right = m_cdtodz - index/tab_length;
+    Real const weight_right = m_cdtodz - amrex::Real(index)/amrex::Real(tab_length);
     Real prestencil[4];
 
     // read prestencil coefficients from table (the stencil is computed from
@@ -64,14 +71,15 @@ void NCIGodfreyFilter::ComputeStencils(){
             // If gather from staggered grid, use coefficients for Galerkin gather
             if        (m_coeff_set == godfrey_coeff_set::Ex_Ey_Bz){
                 // Set of coefficients for Ex, Ey and Bz
-                prestencil[i] = (1-weight_right)*table_nci_godfrey_galerkin_Ex_Ey_Bz[index  ][i] +
-                                    weight_right*table_nci_godfrey_galerkin_Ex_Ey_Bz[index+1][i];
+                prestencil[i] = (1_rt-weight_right)*table_nci_godfrey_galerkin_Ex_Ey_Bz[index  ][i] +
+                                   weight_right    *table_nci_godfrey_galerkin_Ex_Ey_Bz[index+1][i];
             } else if (m_coeff_set == godfrey_coeff_set::Bx_By_Ez){
                 // Set of coefficients for Bx, By and Ez
-                prestencil[i] = (1-weight_right)*table_nci_godfrey_galerkin_Bx_By_Ez[index  ][i] +
-                                    weight_right*table_nci_godfrey_galerkin_Bx_By_Ez[index+1][i];
+                prestencil[i] = (1_rt-weight_right)*table_nci_godfrey_galerkin_Bx_By_Ez[index  ][i] +
+                                   weight_right    *table_nci_godfrey_galerkin_Bx_By_Ez[index+1][i];
             } else {
-                amrex::Abort("m_coeff_set must be godfrey_coeff_set::Ex_Ey_Bz or godfrey_coeff_set::Bx_By_Ez");
+                amrex::Abort(Utils::TextMsg::Err(
+                    "m_coeff_set must be godfrey_coeff_set::Ex_Ey_Bz or godfrey_coeff_set::Bx_By_Ez"));
             }
         }
         else
@@ -79,14 +87,15 @@ void NCIGodfreyFilter::ComputeStencils(){
             // If gather from node-centered grid, use coefficients for momentum-conserving gather
             if        (m_coeff_set == godfrey_coeff_set::Ex_Ey_Bz){
                 // Set of coefficients for Ex, Ey and Bz
-                prestencil[i] = (1-weight_right)*table_nci_godfrey_momentum_Ex_Ey_Bz[index  ][i] +
-                                    weight_right*table_nci_godfrey_momentum_Ex_Ey_Bz[index+1][i];
+                prestencil[i] = (1_rt-weight_right)*table_nci_godfrey_momentum_Ex_Ey_Bz[index  ][i] +
+                                   weight_right    *table_nci_godfrey_momentum_Ex_Ey_Bz[index+1][i];
             } else if (m_coeff_set == godfrey_coeff_set::Bx_By_Ez) {
                 // Set of coefficients for Bx, By and Ez
-                prestencil[i] = (1-weight_right)*table_nci_godfrey_momentum_Bx_By_Ez[index  ][i] +
-                                    weight_right*table_nci_godfrey_momentum_Bx_By_Ez[index+1][i];
+                prestencil[i] = (1_rt-weight_right)*table_nci_godfrey_momentum_Bx_By_Ez[index  ][i] +
+                                   weight_right    *table_nci_godfrey_momentum_Bx_By_Ez[index+1][i];
             } else {
-                amrex::Abort("m_coeff_set must be godfrey_coeff_set::Ex_Ey_Bz or godfrey_coeff_set::Bx_By_Ez");
+                amrex::Abort(Utils::TextMsg::Err(
+                    "m_coeff_set must be godfrey_coeff_set::Ex_Ey_Bz or godfrey_coeff_set::Bx_By_Ez"));
             }
         }
     }
@@ -102,7 +111,7 @@ void NCIGodfreyFilter::ComputeStencils(){
     // so only 1 coeff, equal to 1)
     Vector<Real> h_stencil_x(1);
     h_stencil_x[0] = 1._rt;
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     Vector<Real> h_stencil_y(1);
     h_stencil_y[0] = 1._rt;
 #endif
@@ -110,22 +119,25 @@ void NCIGodfreyFilter::ComputeStencils(){
     // Due to the way Filter::DoFilter() is written,
     // coefficient 0 has to be /2
     h_stencil_x[0] /= 2._rt;
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     h_stencil_y[0] /= 2._rt;
 #endif
     h_stencil_z[0] /= 2._rt;
 
     stencil_x.resize(h_stencil_x.size());
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     stencil_y.resize(h_stencil_y.size());
 #endif
     stencil_z.resize(h_stencil_z.size());
 
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_x.begin(),h_stencil_x.end(),stencil_x.begin());
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_y.begin(),h_stencil_y.end(),stencil_y.begin());
 #endif
     Gpu::copyAsync(Gpu::hostToDevice,h_stencil_z.begin(),h_stencil_z.end(),stencil_z.begin());
 
     Gpu::synchronize();
+#else
+    amrex::Abort(Utils::TextMsg::Err("NCIGodfreyFilter not implemented in 1D!"));
+#endif
 }

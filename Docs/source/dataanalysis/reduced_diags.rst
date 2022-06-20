@@ -39,4 +39,3 @@ another Python function is available:
     bin_value[i]
     # 2-D array of the jth bin data at the ith time
     bin_data[i][j]
-

@@ -64,7 +64,7 @@ The package ``warpx`` installs executables and the package ``py-warpx`` includes
 
    # optional:            -mpi ^warpx dims=2 compute=cuda
    spack install py-warpx
-   spack load -r py-warpx
+   spack load py-warpx
 
 See ``spack info warpx`` or ``spack info py-warpx`` and `the official Spack tutorial <https://spack-tutorial.readthedocs.io>`__ for more information.
 

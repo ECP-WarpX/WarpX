@@ -1,9 +1,9 @@
 import os
 import time
-import numpy as np
 
 from libensemble.executors.executor import Executor
-from libensemble.message_numbers import WORKER_DONE, TASK_FAILED
+from libensemble.message_numbers import TASK_FAILED, WORKER_DONE
+import numpy as np
 from read_sim_output import read_sim_output
 from write_sim_input import write_sim_input
 

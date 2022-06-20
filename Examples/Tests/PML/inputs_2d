@@ -12,7 +12,7 @@ amr.max_grid_size = 128
 amr.max_level = 0
 
 # Geometry
-geometry.coord_sys   = 0
+geometry.dims = 2
 geometry.prob_lo     = -30.e-6 -120.e-6
 geometry.prob_hi     =  30.e-6  120.e-6
 
@@ -48,6 +48,9 @@ laser1.profile_focal_distance = 1.e-6  # Focal distance from the antenna (in met
 laser1.wavelength = 2.e-6         # The wavelength of the laser (in meters)
 
 # Diagnostics
-diagnostics.diags_names = diag1
+diagnostics.diags_names = diag1 chk
 diag1.intervals = 50
 diag1.diag_type = Full
+chk.intervals = 150
+chk.diag_type = Full
+chk.format = checkpoint

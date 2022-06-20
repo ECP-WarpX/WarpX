@@ -168,17 +168,28 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
 
                 amrex::Real phi_value  = interp_field_nodal(i, j, k, W, phi);
-                amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
 
-                // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
-                amrex::RealVect pos;
-                pos[0] = xp - normal[0]*phi_value;
-                pos[1] = yp - normal[1]*phi_value;
-                pos[2] = zp - normal[2]*phi_value;
+                if (phi_value < 0.0)
+                {
+                    amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
 
-                DistanceToEB::normalize(normal);
+                    // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
+                    amrex::RealVect pos;
+#if (defined WARPX_DIM_3D)
+                    pos[0] = xp - normal[0]*phi_value;
+                    pos[1] = yp - normal[1]*phi_value;
+                    pos[2] = zp - normal[2]*phi_value;
+#elif (defined WARPX_DIM_XZ)
+                    pos[0] = xp - normal[0]*phi_value;
+                    pos[1] = zp - normal[1]*phi_value;
+#elif (defined WARPX_DIM_RZ)
+                    pos[0] = std::sqrt(xp*xp + yp*yp) - normal[0]*phi_value;
+                    pos[1] = zp - normal[1]*phi_value;
+#elif (defined WARPX_DIM_1D_Z)
+                    pos[0] = zp - normal[0]*phi_value;
+#endif
+                    DistanceToEB::normalize(normal);
 
-                if (phi_value < 0.0) {
                     f(ptd, ip, pos, normal, engine);
                 }
             });
