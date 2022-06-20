@@ -65,16 +65,7 @@ void FillBoundary (amrex::MultiFab &mf, bool do_single_precision_comms, const am
 
     if (do_single_precision_comms)
     {
-        amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
-                                                                 mf.DistributionMap(),
-                                                                 mf.nComp(),
-                                                                 mf.nGrowVect());
-
-        mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
-
-        mf_tmp.FillBoundary(period);
-
-        mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
+        mf.FillBoundary<comm_float_type>(period);
     }
     else
     {
