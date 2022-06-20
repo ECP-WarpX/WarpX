@@ -81,4 +81,3 @@ diff qs_table_dndt qs_table_tool_dndt
     qed_qs.lookup_table_mode = "load" \
     qed_qs.load_table_from = "qs_table_tool"
 
-false
