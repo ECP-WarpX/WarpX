@@ -35,14 +35,11 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
     }
     amrex::IntVect domain_lo = domain_box.smallEnd();
     amrex::IntVect domain_hi = domain_box.bigEnd();
-    // By how many guard cells we grow the boxes as a function of shape factor
-    constexpr int nox_to_ngrow[4] = {0,1,1,2};
-    amrex::IntVect ngrow(AMREX_D_DECL(nox_to_ngrow[WarpX::nox], nox_to_ngrow[WarpX::noy],
-                                      nox_to_ngrow[WarpX::noz]));
+    amrex::IntVect shape_factor(AMREX_D_DECL(WarpX::nox, WarpX::noy, WarpX::noz));
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-    ngrow[1] = nox_to_ngrow[WarpX::noz];
+    shape_factor[1] = WarpX::noz;
 #endif
-    ngrow.max( amrex::IntVect::TheUnitVector() );
+    shape_factor.max( amrex::IntVect::TheUnitVector() );
     amrex::GpuArray<int, 3> fbndry_lo;
     amrex::GpuArray<int, 3> fbndry_hi;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
@@ -65,9 +62,9 @@ PEC::ApplyPECtoEfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield, 
         amrex::Array4<amrex::Real> const& Ez = Efield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        amrex::Box const& tex = mfi.tilebox(Efield[0]->ixType().toIntVect(), ngrow);
-        amrex::Box const& tey = mfi.tilebox(Efield[1]->ixType().toIntVect(), ngrow);
-        amrex::Box const& tez = mfi.tilebox(Efield[2]->ixType().toIntVect(), ngrow);
+        amrex::Box const& tex = mfi.tilebox(Efield[0]->ixType().toIntVect(), shape_factor);
+        amrex::Box const& tey = mfi.tilebox(Efield[1]->ixType().toIntVect(), shape_factor);
+        amrex::Box const& tez = mfi.tilebox(Efield[2]->ixType().toIntVect(), shape_factor);
 
         // loop over cells and update fields
         amrex::ParallelFor(
@@ -119,12 +116,9 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
     }
     amrex::IntVect domain_lo = domain_box.smallEnd();
     amrex::IntVect domain_hi = domain_box.bigEnd();
-    // By how many guard cells we grow the boxes as a function of shape factor
-    constexpr int nox_to_ngrow[4] = {0,1,1,2};
-    amrex::IntVect ngrow(AMREX_D_DECL(nox_to_ngrow[WarpX::nox], nox_to_ngrow[WarpX::noy],
-                                      nox_to_ngrow[WarpX::noz]));
+    amrex::IntVect shape_factor(AMREX_D_DECL(WarpX::nox, WarpX::noy, WarpX::noz));
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-    ngrow[1] = nox_to_ngrow[WarpX::noz];
+    shape_factor[1] = WarpX::noz;
 #endif
     amrex::GpuArray<int, 3> fbndry_lo;
     amrex::GpuArray<int, 3> fbndry_hi;
@@ -150,9 +144,9 @@ PEC::ApplyPECtoBfield (std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield, 
         amrex::Array4<amrex::Real> const& Bz = Bfield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        amrex::Box const& tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect(), ngrow);
-        amrex::Box const& tby = mfi.tilebox(Bfield[1]->ixType().toIntVect(), ngrow);
-        amrex::Box const& tbz = mfi.tilebox(Bfield[2]->ixType().toIntVect(), ngrow);
+        amrex::Box const& tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect(), shape_factor);
+        amrex::Box const& tby = mfi.tilebox(Bfield[1]->ixType().toIntVect(), shape_factor);
+        amrex::Box const& tbz = mfi.tilebox(Bfield[2]->ixType().toIntVect(), shape_factor);
 
         // loop over cells and update fields
         amrex::ParallelFor(
