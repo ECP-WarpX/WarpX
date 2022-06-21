@@ -335,6 +335,56 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 }
 
 /**
+ * \brief Current Deposition for thread thread_num using shared memory
+ * \tparam depos_order deposition order
+ * \param GetPosition  A functor for returning the particle position.
+ * \param wp           Pointer to array of particle weights.
+ * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.
+ * \param ion_lev      Pointer to array of particle ionization level. This is
+                         required to have the charge of each macroparticle
+                         since q is a scalar. For non-ionizable species,
+                         ion_lev is a null pointer.
+ * \param jx_fab,jy_fab,jz_fab FArrayBox of current density, either full array or tile.
+ * \param np_to_depose Number of particles for which current is deposited.
+ * \param dt           Time step for particle level
+ * \param relative_time Time at which to deposit J, relative to the time of the
+ *                      current positions of the particles. When different than 0,
+ *                      the particle position will be temporarily modified to match
+ *                      the time of the deposition.
+ * \param dx           3D cell size
+ * \param xyzmin       Physical lower bounds of domain.
+ * \param lo           Index lower bounds of domain.
+ * \param q            species charge.
+ * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
+ * \param cost  Pointer to (load balancing) cost corresponding to box where present particles deposit current.
+ * \param load_balance_costs_update_algo Selected method for updating load balance costs.
+ */
+template <int depos_order>
+void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
+                        const amrex::ParticleReal * const wp,
+                        const amrex::ParticleReal * const uxp,
+                        const amrex::ParticleReal * const uyp,
+                        const amrex::ParticleReal * const uzp,
+                        const int * const ion_lev,
+                        amrex::FArrayBox& jx_fab,
+                        amrex::FArrayBox& jy_fab,
+                        amrex::FArrayBox& jz_fab,
+                        const long np_to_depose,
+                        const amrex::Real relative_time,
+                        const std::array<amrex::Real,3>& dx,
+                        const std::array<amrex::Real,3>& xyzmin,
+                        const amrex::Dim3 lo,
+                        const amrex::Real q,
+                        const int n_rz_azimuthal_modes,
+                        amrex::Real* cost,
+                        const long load_balance_costs_update_algo,
+                        const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
+                        const amrex::Box& box,
+                        const amrex::Geometry& geom,
+                        const amrex::IntVect& a_tbox_max_size)
+{}
+
+/**
  * \brief Esirkepov Current Deposition for thread thread_num
  *
  * \tparam depos_order  deposition order
