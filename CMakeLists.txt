@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.18.0)
-project(WarpX VERSION 22.05)
+project(WarpX VERSION 22.06)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -409,13 +409,13 @@ endif()
 #install(EXPORT WarpXTargets
 #    FILE WarpXTargets.cmake
 #    NAMESPACE WarpX::
-#    DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+#    DESTINATION ${WarpX_INSTALL_CMAKEDIR}
 #)
 #install(
 #    FILES
 #        ${WarpX_BINARY_DIR}/WarpXConfig.cmake
 #        ${WarpX_BINARY_DIR}/WarpXConfigVersion.cmake
-#    DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+#    DESTINATION ${WarpX_INSTALL_CMAKEDIR}
 #)
 
 

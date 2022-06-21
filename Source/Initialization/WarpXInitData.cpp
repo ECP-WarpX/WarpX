@@ -21,7 +21,6 @@
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/MPIInitHelpers.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -29,6 +28,7 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
+#include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>

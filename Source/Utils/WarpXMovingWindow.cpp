@@ -13,10 +13,11 @@
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Particles/MultiParticleContainer.H"
-#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+
+#include <ablastr/utils/Communication.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -313,7 +314,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
 
     if ( WarpX::safe_guard_cells ) {
         // Fill guard cells.
-        WarpXCommUtil::FillBoundary(tmpmf, geom.periodicity());
+        ablastr::utils::communication::FillBoundary(tmpmf, WarpX::do_single_precision_comms, geom.periodicity());
     } else {
         amrex::IntVect ng_mw = amrex::IntVect::TheUnitVector();
         // Enough guard cells in the MW direction
@@ -321,7 +322,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         // Make sure we don't exceed number of guard cells allocated
         ng_mw = ng_mw.min(ng);
         // Fill guard cells.
-        WarpXCommUtil::FillBoundary(tmpmf, ng_mw, geom.periodicity());
+        ablastr::utils::communication::FillBoundary(tmpmf, ng_mw, WarpX::do_single_precision_comms, geom.periodicity());
     }
 
     // Make a box that covers the region that the window moved into

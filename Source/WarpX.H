@@ -43,7 +43,7 @@
 #include <AMReX_Array.H>
 #include <AMReX_Config.H>
 #ifdef AMREX_USE_EB
-#   include "AMReX_EBFabFactory.H"
+#   include <AMReX_EBFabFactory.H>
 #endif
 #include <AMReX_GpuContainers.H>
 #include <AMReX_IntVect.H>
@@ -627,21 +627,21 @@ public:
     void UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab const& src);
 
     // Fill boundary cells including coarse/fine boundaries
-    void FillBoundaryB   (amrex::IntVect ng);
-    void FillBoundaryE   (amrex::IntVect ng);
+    void FillBoundaryB   (amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryE   (amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryB_avg   (amrex::IntVect ng);
     void FillBoundaryE_avg   (amrex::IntVect ng);
 
-    void FillBoundaryF   (amrex::IntVect ng);
-    void FillBoundaryG   (amrex::IntVect ng);
+    void FillBoundaryF   (amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryG   (amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryAux (amrex::IntVect ng);
-    void FillBoundaryE   (int lev, amrex::IntVect ng);
-    void FillBoundaryB   (int lev, amrex::IntVect ng);
+    void FillBoundaryE   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryB   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryE_avg   (int lev, amrex::IntVect ng);
     void FillBoundaryB_avg   (int lev, amrex::IntVect ng);
 
-    void FillBoundaryF   (int lev, amrex::IntVect ng);
-    void FillBoundaryG   (int lev, amrex::IntVect ng);
+    void FillBoundaryF   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryG   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
 
     void SyncCurrent ();
@@ -760,7 +760,7 @@ public:
      */
     const amrex::IntVect get_numprocs() const {return numprocs;}
 
-    ElectrostaticSolver::BoundaryHandler field_boundary_handler;
+    ElectrostaticSolver::PoissonBoundaryHandler m_poisson_boundary_handler;
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddBoundaryField ();
     void AddSpaceChargeField (WarpXParticleContainer& pc);
@@ -925,10 +925,10 @@ private:
     ///
     void EvolveEM(int numsteps);
 
-    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng);
-    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng);
-    void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng);
-    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng);
+    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng, const bool nodal_sync = false);
 
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
@@ -1305,6 +1305,9 @@ private:
 
     bool is_synchronized = true;
 
+    // Synchronization of nodal points
+    const bool sync_nodal_points = true;
+
     guardCellManager guard_cells;
 
     //Slice Parameters
@@ -1422,6 +1425,12 @@ public:
     *
     */
     void ApplyBCKCorrection(const int idim);
+
+    /**
+     * \brief Subtract the average of the cumulative sums of the preliminary current D
+     *        from the current J (computed from D according to the Vay deposition scheme)
+     */
+    void PSATDSubtractCurrentPartialSumsAvg ();
 
 private:
     void ScrapeParticles ();
