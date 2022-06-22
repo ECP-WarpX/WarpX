@@ -773,25 +773,11 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
         // Lower corner of tile box physical domain
         // Note that this includes guard cells since it is after tilebox.ngrow
-        Real cur_time = warpx.gett_new(lev);
-        Real dt = warpx.getdt(lev);
-        const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
         // Take into account Galilean shift
-        Real time_shift_rho_old = (cur_time - time_of_last_gal_shift);
-        Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
-        amrex::Array<amrex::Real,3> galilean_shift;
-        if (icomp==0){
-            galilean_shift = {
-                m_v_galilean[0]*time_shift_rho_old,
-                m_v_galilean[1]*time_shift_rho_old,
-                m_v_galilean[2]*time_shift_rho_old };
-        } else{
-            galilean_shift = {
-                m_v_galilean[0]*time_shift_rho_new,
-                m_v_galilean[1]*time_shift_rho_new,
-                m_v_galilean[2]*time_shift_rho_new };
-        }
-        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
+        Real dt = warpx.getdt(lev);
+        const amrex::Real time_shift_delta = (icomp == 0 ? 0.0_rt : dt);
+        const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(
+                tilebox, depos_lev, time_shift_delta);
 
         // Indices of the lower bound
         const Dim3 lo = lbound(tilebox);
