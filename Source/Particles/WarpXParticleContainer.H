@@ -130,7 +130,7 @@ public:
 
     virtual void InitData () = 0;
 
-    virtual void InitIonizationModule () {};
+    virtual void InitIonizationModule () {}
 
     /**
      * Evolve is the central WarpXParticleContainer function that advances
