@@ -14,7 +14,6 @@
 #include "Deposition/CurrentDeposition.H"
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
-#include "Parallelization/WarpXCommUtil.H"
 #include "ParticleBoundaries_K.H"
 #include "Utils/CoarsenMR.H"
 #include "Utils/TextMsg.H"
@@ -22,6 +21,8 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+
+#include <ablastr/utils/Communication.H>
 
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
@@ -81,20 +82,11 @@ WarpXParIter::WarpXParIter (ContainerType& pc, int level, MFItInfo& info)
 }
 
 WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
-    : ParticleContainer<0,0,PIdx::nattribs>(amr_core->GetParGDB())
+    : NamedComponentParticleContainer<DefaultAllocator>(amr_core->GetParGDB())
     , species_id(ispecies)
 {
     SetParticleSize();
     ReadParameters();
-
-    // build up the map of string names to particle component numbers
-    particle_comps["w"]  = PIdx::w;
-    particle_comps["ux"] = PIdx::ux;
-    particle_comps["uy"] = PIdx::uy;
-    particle_comps["uz"] = PIdx::uz;
-#ifdef WARPX_DIM_RZ
-    particle_comps["theta"] = PIdx::theta;
-#endif
 
     // Initialize temporary local arrays for charge/current deposition
     int num_threads = 1;
@@ -626,7 +618,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 void
 WarpXParticleContainer::DepositCurrent (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-    const amrex::Real dt, const amrex::Real relative_t)
+    const amrex::Real dt, const amrex::Real relative_time)
 {
     // Loop over the refinement levels
     int const finest_level = J.size() - 1;
@@ -656,7 +648,7 @@ WarpXParticleContainer::DepositCurrent (
 
             DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev,
                            J[lev][0].get(), J[lev][1].get(), J[lev][2].get(),
-                           0, np, thread_num, lev, lev, dt, relative_t/dt);
+                           0, np, thread_num, lev, lev, dt, relative_time);
         }
 #ifdef AMREX_USE_OMP
         }
@@ -958,24 +950,9 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
         // Lower corner of tile box physical domain
         // Note that this includes guard cells since it is after tilebox.ngrow
         // Take into account Galilean shift
-        const amrex::Real cur_time = warpx.gett_new(lev);
         const amrex::Real dt = warpx.getdt(lev);
-        const amrex::Real time_of_last_gal_shift = warpx.time_of_last_gal_shift;
-        const amrex::Real time_shift_rho_old = (cur_time - time_of_last_gal_shift);
-        const amrex::Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
-        amrex::Array<amrex::Real,3> galilean_shift;
-        if (icomp==0){
-            galilean_shift = {
-                              m_v_galilean[0]*time_shift_rho_old,
-                              m_v_galilean[1]*time_shift_rho_old,
-                              m_v_galilean[2]*time_shift_rho_old };
-        } else{
-            galilean_shift = {
-                              m_v_galilean[0]*time_shift_rho_new,
-                              m_v_galilean[1]*time_shift_rho_new,
-                              m_v_galilean[2]*time_shift_rho_new };
-        }
-        const auto& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
+        const amrex::Real time_shift_delta = (icomp == 0 ? 0.0_rt : dt);
+        const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, time_shift_delta);
 
         // pointer to costs data
         amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
@@ -1052,7 +1029,11 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 
         // Exchange guard cells
         if (local == false) {
-            WarpXCommUtil::SumBoundary(*rho[lev], m_gdb->Geom(lev).periodicity());
+            ablastr::utils::communication::SumBoundary(
+                *rho[lev],
+                WarpX::do_single_precision_comms,
+                m_gdb->Geom(lev).periodicity()
+            );
         }
     }
 
@@ -1069,10 +1050,12 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
             coarsened_fine_data.setVal(0.0);
 
             CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], m_gdb->refRatio(lev) );
-            WarpXCommUtil::ParallelAdd(*rho[lev], coarsened_fine_data, 0, 0, rho[lev]->nComp(),
-                                       amrex::IntVect::TheZeroVector(),
-                                       amrex::IntVect::TheZeroVector(),
-                                       m_gdb->Geom(lev).periodicity());
+            ablastr::utils::communication::ParallelAdd(*rho[lev], coarsened_fine_data, 0, 0,
+                                                       rho[lev]->nComp(),
+                                                       amrex::IntVect::TheZeroVector(),
+                                                       amrex::IntVect::TheZeroVector(),
+                                                       WarpX::do_single_precision_comms,
+                                                       m_gdb->Geom(lev).periodicity());
         }
     }
 }
@@ -1133,7 +1116,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
 #endif
 
-    if (local == false) { WarpXCommUtil::SumBoundary(*rho, gm.periodicity()); }
+    if (local == false) { ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity()); }
 
     return rho;
 }

@@ -51,6 +51,7 @@ We also have a `discussion page <https://github.com/ECP-WarpX/WarpX/discussions>
 
    coc
    acknowledge_us
+   highlights
 
 Installation
 ------------
@@ -111,6 +112,7 @@ Theory
    theory/PML
    theory/boosted_frame
    theory/input_output
+   theory/collisions
 
 Development
 -----------

@@ -8,6 +8,7 @@
 #include "ReducedDiags.H"
 
 #include "WarpX.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -82,10 +83,11 @@ void ReducedDiags::BackwardCompatibility ()
 {
     amrex::ParmParse pp_rd_name(m_rd_name);
     std::vector<std::string> backward_strings;
-    if (pp_rd_name.queryarr("frequency", backward_strings)){
-        amrex::Abort("<reduced_diag_name>.frequency is no longer a valid option. "
-                     "Please use the renamed option <reduced_diag_name>.intervals instead.");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_rd_name.queryarr("frequency", backward_strings),
+        "<reduced_diag_name>.frequency is no longer a valid option. "
+        "Please use the renamed option <reduced_diag_name>.intervals instead."
+    );
 }
 
 // write to file function

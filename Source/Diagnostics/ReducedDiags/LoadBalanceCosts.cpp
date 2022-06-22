@@ -7,7 +7,9 @@
 #include "LoadBalanceCosts.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Particles/MultiParticleContainer.H"
 #include "Utils/IntervalsParser.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 
@@ -30,8 +32,38 @@
 #include <iomanip>
 #include <istream>
 #include <memory>
+#include <utility>
 
 using namespace amrex;
+
+namespace
+{
+    amrex::Long
+    countBoxMacroParticles (amrex::MFIter const & mfi, int const lev)
+    {
+        int gid = mfi.index();
+        int tid = mfi.LocalTileIndex();
+        auto box_index = std::make_pair(gid, tid);
+
+        auto & warpx = WarpX::GetInstance();
+        MultiParticleContainer const & mpc = warpx.GetPartContainer();
+        int const nSpecies = mpc.nSpecies();
+
+        amrex::Long num_macro_particles = 0;
+        for (int i_s = 0; i_s < nSpecies; ++i_s)
+        {
+            WarpXParticleContainer const & pc = mpc.GetParticleContainer(i_s);
+            auto const & plev  = pc.GetParticles(lev);
+
+            auto const & ptile = plev.at(box_index);
+            auto const & aos   = ptile.GetArrayOfStructs();
+            auto const np = aos.numParticles();
+            num_macro_particles += np;
+        }
+
+        return num_macro_particles;
+    }
+}
 
 // constructor
 LoadBalanceCosts::LoadBalanceCosts (std::string rd_name)
@@ -112,9 +144,12 @@ void LoadBalanceCosts::ComputeDiags (int step)
 #else
             m_data[shift_m_data + mfi.index()*m_nDataFields + 5] = 0.;
 #endif
+            m_data[shift_m_data + mfi.index()*m_nDataFields + 6] = tbx.d_numPts(); // note: difference to volume
+            m_data[shift_m_data + mfi.index()*m_nDataFields + 7] = countBoxMacroParticles(mfi, lev);
 #ifdef AMREX_USE_GPU
-            m_data[shift_m_data + mfi.index()*m_nDataFields + 6] = amrex::Gpu::Device::deviceId();
+            m_data[shift_m_data + mfi.index()*m_nDataFields + 8] = amrex::Gpu::Device::deviceId();
 #endif
+            // ...
         }
 
         // we looped through all the boxes on level lev, update the shift index
@@ -145,7 +180,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
 
     // get the string lengths on IO proc
     ParallelDescriptor::Gather(&length, 1,                     // send
-                               &m_data_string_recvcount[0], 1, // receive
+                               m_data_string_recvcount.data(), 1, // receive
                                ParallelDescriptor::IOProcessorNumber());
 
     // determine total length of collected strings for root, and set displacements;
@@ -171,7 +206,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
     // collect the hostnames; m_data_string_recvbuf will provide mapping from rank-->hostname
     ParallelDescriptor::Gatherv(&hostname[0],              /* hostname ID */
                                 length,                    /* length of hostname */
-                                &m_data_string_recvbuf[0], /* write data into string buffer */
+                                m_data_string_recvbuf.data(), /* write data into string buffer */
                                 m_data_string_recvcount,   /* how many messages to receive */
                                 m_data_string_disp,        /* starting position in recv buffer to place received msg */
                                 ParallelDescriptor::IOProcessorNumber());
@@ -187,13 +222,13 @@ void LoadBalanceCosts::ComputeDiags (int step)
     }
 
     /* m_data now contains up-to-date values for:
-     *  [[cost, proc, lev, i_low, j_low, k_low(, gpu_ID [if GPU run]) ] of box 0 at level 0,
-     *   [cost, proc, lev, i_low, j_low, k_low(, gpu_ID [if GPU run]) ] of box 1 at level 0,
-     *   [cost, proc, lev, i_low, j_low, k_low(, gpu_ID [if GPU run]) ] of box 2 at level 0,
+     *  [[cost, proc, lev, i_low, j_low, k_low, num_cells, num_macro_particles(, gpu_ID [if GPU run]) ] of box 0 at level 0,
+     *   [cost, proc, lev, i_low, j_low, k_low, num_cells, num_macro_particles(, gpu_ID [if GPU run]) ] of box 1 at level 0,
+     *   [cost, proc, lev, i_low, j_low, k_low, num_cells, num_macro_particles(, gpu_ID [if GPU run]) ] of box 2 at level 0,
      *   ...
-     *   [cost, proc, lev, i_low, j_low, k_low(, gpu_ID [if GPU run]) ] of box 0 at level 1,
-     *   [cost, proc, lev, i_low, j_low, k_low(, gpu_ID [if GPU run]) ] of box 1 at level 1,
-     *   [cost, proc, lev, i_low, j_low, k_low(, gpu_ID [if GPU run]) ] of box 2 at level 1,
+     *   [cost, proc, lev, i_low, j_low, k_low num_cells, num_macro_particles(, gpu_ID [if GPU run]) ] of box 0 at level 1,
+     *   [cost, proc, lev, i_low, j_low, k_low, num_cells, num_macro_particles(, gpu_ID [if GPU run]) ] of box 1 at level 1,
+     *   [cost, proc, lev, i_low, j_low, k_low, num_cells, num_macro_particles(, gpu_ID [if GPU run]) ] of box 2 at level 1,
      *   ...]
      * and m_data_string contains:
      *  [hostname of box 0 at level 0,
@@ -257,7 +292,8 @@ void LoadBalanceCosts::WriteToFile (int step) const
         std::ofstream ofstmp(fileTmpName, std::ofstream::out);
 
         // write header row
-        // for each box on each level we saved 7 data fields: [cost, proc, lev, i_low, j_low, k_low, hostname])
+        // for each box on each level we saved 9(10) data fields:
+        //   [cost, proc, lev, i_low, j_low, k_low, num_cells, num_macro_particles(, gpu_ID_box), hostname]
         // nDataFieldsToWrite = below accounts for the Real data fields (m_nDataFields), then 1 string output to write
         int nDataFieldsToWrite = m_nDataFields + 1;
 
@@ -281,22 +317,23 @@ void LoadBalanceCosts::WriteToFile (int step) const
             ofstmp << "[" << c++ << "]j_low_box_" + std::to_string(boxNumber) + "()";
             ofstmp << m_sep;
             ofstmp << "[" << c++ << "]k_low_box_" + std::to_string(boxNumber) + "()";
+            ofstmp << m_sep;
+            ofstmp << "[" << c++ << "]num_cells_" + std::to_string(boxNumber) + "()";
+            ofstmp << m_sep;
+            ofstmp << "[" << c++ << "]num_macro_particles_" + std::to_string(boxNumber) + "()";
 #ifdef AMREX_USE_GPU
             ofstmp << m_sep;
             ofstmp << "[" << c++ << "]gpu_ID_box_" + std::to_string(boxNumber) + "()";
-            ofstmp << m_sep;
-            ofstmp << "[" << c++ << "]hostname_box_" + std::to_string(boxNumber) + "()";
-#else
-            ofstmp << m_sep;
-            ofstmp << "[" << c++ << "]hostname_box_" + std::to_string(boxNumber) + "()";
 #endif
+            ofstmp << m_sep;
+            ofstmp << "[" << c++ << "]hostname_box_" + std::to_string(boxNumber) + "()";
         }
         ofstmp << std::endl;
 
         // open the data-containing file
         std::string fileDataName = m_path + m_rd_name + "." + m_extension;
         std::ifstream ifs(fileDataName, std::ifstream::in);
-        if(!ifs) Abort("Failed to load balance file");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ifs, "Failed to load balance file");
         ifs.exceptions(std::ios_base::badbit); // | std::ios_base::failbit
 
         // Fill in the tmp costs file with data, padded with NaNs

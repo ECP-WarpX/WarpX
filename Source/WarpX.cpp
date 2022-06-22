@@ -15,6 +15,7 @@
 #include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #ifdef WARPX_USE_PSATD
@@ -31,12 +32,13 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Utils/TextMsg.H"
-#include "Utils/MsgLogger/MsgLogger.H"
-#include "Utils/WarnManager.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
+
+#include <ablastr/utils/SignalHandling.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -73,6 +75,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <optional>
 #include <random>
 #include <string>
 #include <utility>
@@ -227,13 +230,13 @@ WarpX::WarpX ()
 {
     m_instance = this;
 
-    m_p_warn_manager = std::make_unique<Utils::WarnManager>();
-
     ReadParameters();
 
     BackwardCompatibility();
 
     InitEB();
+
+    ablastr::utils::SignalHandling::InitSignalHandling();
 
     // Geometry on all levels has been defined already.
     // No valid BoxArray and DistributionMapping have been defined.
@@ -308,6 +311,11 @@ WarpX::WarpX ()
         current_fp_nodal.resize(nlevs_max);
     }
 
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+    {
+        current_fp_vay.resize(nlevs_max);
+    }
+
     F_cp.resize(nlevs_max);
     G_cp.resize(nlevs_max);
     rho_cp.resize(nlevs_max);
@@ -328,6 +336,10 @@ WarpX::WarpX ()
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     pml_rz.resize(nlevs_max);
 #endif
+
+    do_pml_Lo.resize(nlevs_max);
+    do_pml_Hi.resize(nlevs_max);
+
     costs.resize(nlevs_max);
     load_balance_efficiency.resize(nlevs_max);
 
@@ -426,72 +438,6 @@ WarpX::~WarpX ()
 }
 
 void
-WarpX::RecordWarning(
-        std::string topic,
-        std::string text,
-        WarnPriority priority)
-{
-    WARPX_PROFILE("WarpX::RecordWarning");
-
-    auto msg_priority = Utils::MsgLogger::Priority::high;
-    if(priority == WarnPriority::low)
-        msg_priority = Utils::MsgLogger::Priority::low;
-    else if(priority == WarnPriority::medium)
-        msg_priority = Utils::MsgLogger::Priority::medium;
-
-    if(m_always_warn_immediately){
-
-        amrex::Warning(
-            Utils::TextMsg::Warn(
-                "["
-                + std::string(Utils::MsgLogger::PriorityToString(msg_priority))
-                + "]["
-                + topic
-                + "] "
-                + text));
-    }
-
-#ifdef AMREX_USE_OMP
-    #pragma omp critical
-#endif
-    {
-        m_p_warn_manager->record_warning(topic, text, msg_priority);
-    }
-
-    if(m_abort_on_warning_threshold){
-
-        auto abort_priority = Utils::MsgLogger::Priority::high;
-        if(m_abort_on_warning_threshold == WarnPriority::low)
-            abort_priority = Utils::MsgLogger::Priority::low;
-        else if(m_abort_on_warning_threshold == WarnPriority::medium)
-            abort_priority = Utils::MsgLogger::Priority::medium;
-
-        if (msg_priority >= abort_priority){
-            const auto t_str = "A warning with priority '" +
-                Utils::MsgLogger::PriorityToString(msg_priority) +
-                "' has been raised.";
-            Abort(t_str.c_str());
-        }
-    }
-}
-
-void
-WarpX::PrintLocalWarnings(const std::string& when)
-{
-    WARPX_PROFILE("WarpX::PrintLocalWarnings");
-    const std::string warn_string = m_p_warn_manager->print_local_warnings(when);
-    amrex::AllPrint() << warn_string;
-}
-
-void
-WarpX::PrintGlobalWarnings(const std::string& when)
-{
-    WARPX_PROFILE("WarpX::PrintGlobalWarnings");
-    const std::string warn_string = m_p_warn_manager->print_global_warnings(when);
-    amrex::Print() << warn_string;
-}
-
-void
 WarpX::ReadParameters ()
 {
     // Ensure that geometry.dims is set properly.
@@ -520,25 +466,28 @@ WarpX::ReadParameters ()
 
         //"Synthetic" warning messages may be injected in the Warning Manager via
         // inputfile for debug&testing purposes.
-        m_p_warn_manager->debug_read_warnings_from_input(pp_warpx);
+        ablastr::warn_manager::GetWMInstance().debug_read_warnings_from_input(pp_warpx);
 
         // Set the flag to control if WarpX has to emit a warning message as soon as a warning is recorded
-        pp_warpx.query("always_warn_immediately", m_always_warn_immediately);
+        bool always_warn_immediately = false;
+        pp_warpx.query("always_warn_immediately", always_warn_immediately);
+        ablastr::warn_manager::GetWMInstance().SetAlwaysWarnImmediately(always_warn_immediately);
 
         // Set the WarnPriority threshold to decide if WarpX has to abort when a warning is recorded
         if(std::string str_abort_on_warning_threshold = "";
             pp_warpx.query("abort_on_warning_threshold", str_abort_on_warning_threshold)){
+            std::optional<ablastr::warn_manager::WarnPriority> abort_on_warning_threshold = std::nullopt;
             if (str_abort_on_warning_threshold == "high")
-                m_abort_on_warning_threshold = WarnPriority::high;
+                abort_on_warning_threshold = ablastr::warn_manager::WarnPriority::high;
             else if (str_abort_on_warning_threshold == "medium" )
-                m_abort_on_warning_threshold = WarnPriority::medium;
+                abort_on_warning_threshold = ablastr::warn_manager::WarnPriority::medium;
             else if (str_abort_on_warning_threshold == "low")
-                m_abort_on_warning_threshold = WarnPriority::low;
+                abort_on_warning_threshold = ablastr::warn_manager::WarnPriority::low;
             else {
-                const auto t_str = str_abort_on_warning_threshold +
-                    "is not a valid option for warpx.abort_on_warning_threshold (use: low, medium or high)";
-                Abort(t_str.c_str());
+                Abort(Utils::TextMsg::Err(str_abort_on_warning_threshold
+                    +"is not a valid option for warpx.abort_on_warning_threshold (use: low, medium or high)"));
             }
+            ablastr::warn_manager::GetWMInstance().SetAbortThreshold(abort_on_warning_threshold);
         }
 
         std::vector<int> numprocs_in;
@@ -557,6 +506,50 @@ WarpX::ReadParameters ()
             }
         }
 
+        using ablastr::utils::SignalHandling;
+        std::vector<std::string> signals_in;
+        pp_warpx.queryarr("break_signals", signals_in);
+
+#if defined(__linux__) || defined(__APPLE__)
+        for (const std::string &str : signals_in) {
+            int sig = SignalHandling::parseSignalNameToNumber(str);
+            SignalHandling::signal_conf_requests[SignalHandling::SIGNAL_REQUESTS_BREAK][sig] = true;
+        }
+        signals_in.clear();
+#else
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(signals_in.empty(),
+                                         "Signal handling requested in input, but is not supported on this platform");
+#endif
+
+        bool have_checkpoint_diagnostic = false;
+
+        ParmParse pp("diagnostics");
+        std::vector<std::string> diags_names;
+        pp.queryarr("diags_names", diags_names);
+
+        for (const auto &diag : diags_names) {
+            ParmParse dd(diag);
+            std::string format;
+            dd.query("format", format);
+            if (format == "checkpoint") {
+                have_checkpoint_diagnostic = true;
+                break;
+            }
+        }
+
+        pp_warpx.queryarr("checkpoint_signals", signals_in);
+#if defined(__linux__) || defined(__APPLE__)
+        for (const std::string &str : signals_in) {
+            int sig = SignalHandling::parseSignalNameToNumber(str);
+            SignalHandling::signal_conf_requests[SignalHandling::SIGNAL_REQUESTS_CHECKPOINT][sig] = true;
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(have_checkpoint_diagnostic,
+                                             "Signal handling was requested to checkpoint, but no checkpoint diagnostic is configured");
+        }
+#else
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(signals_in.empty(),
+                                         "Signal handling requested in input, but is not supported on this platform");
+#endif
+
         // set random seed
         std::string random_seed = "default";
         pp_warpx.query("random_seed", random_seed);
@@ -571,7 +564,8 @@ WarpX::ReadParameters ()
                 unsigned long seed = myproc_1 * std::stoul(random_seed);
                 ResetRandomSeed(seed);
             } else {
-                Abort("warpx.random_seed must be \"default\", \"random\" or an integer > 0.");
+                Abort(Utils::TextMsg::Err(
+                    "warpx.random_seed must be \"default\", \"random\" or an integer > 0."));
             }
         }
 
@@ -622,8 +616,7 @@ WarpX::ReadParameters ()
                 moving_window_dir = WARPX_ZINDEX;
             }
             else {
-                const std::string msg = "Unknown moving_window_dir: "+s;
-                amrex::Abort(msg.c_str());
+                amrex::Abort(Utils::TextMsg::Err("Unknown moving_window_dir: "+s));
             }
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(moving_window_dir) == 0,
@@ -651,12 +644,11 @@ WarpX::ReadParameters ()
             queryWithParser(pp_warpx, "num_snapshots_lab", num_snapshots_lab);
 
             // Read either dz_snapshots_lab or dt_snapshots_lab
-            bool snapshot_interval_is_specified = 0;
             Real dz_snapshots_lab = 0;
-            snapshot_interval_is_specified += queryWithParser(pp_warpx, "dt_snapshots_lab", dt_snapshots_lab);
+            bool snapshot_interval_is_specified = queryWithParser(pp_warpx, "dt_snapshots_lab", dt_snapshots_lab);
             if ( queryWithParser(pp_warpx, "dz_snapshots_lab", dz_snapshots_lab) ){
                 dt_snapshots_lab = dz_snapshots_lab/PhysConst::c;
-                snapshot_interval_is_specified = 1;
+                snapshot_interval_is_specified = true;
             }
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 snapshot_interval_is_specified,
@@ -691,14 +683,14 @@ WarpX::ReadParameters ()
         }
         // Parse the input file for domain boundary potentials
         ParmParse pp_boundary("boundary");
-        pp_boundary.query("potential_lo_x", field_boundary_handler.potential_xlo_str);
-        pp_boundary.query("potential_hi_x", field_boundary_handler.potential_xhi_str);
-        pp_boundary.query("potential_lo_y", field_boundary_handler.potential_ylo_str);
-        pp_boundary.query("potential_hi_y", field_boundary_handler.potential_yhi_str);
-        pp_boundary.query("potential_lo_z", field_boundary_handler.potential_zlo_str);
-        pp_boundary.query("potential_hi_z", field_boundary_handler.potential_zhi_str);
-        pp_warpx.query("eb_potential(x,y,z,t)", field_boundary_handler.potential_eb_str);
-        field_boundary_handler.buildParsers();
+        pp_boundary.query("potential_lo_x", m_poisson_boundary_handler.potential_xlo_str);
+        pp_boundary.query("potential_hi_x", m_poisson_boundary_handler.potential_xhi_str);
+        pp_boundary.query("potential_lo_y", m_poisson_boundary_handler.potential_ylo_str);
+        pp_boundary.query("potential_hi_y", m_poisson_boundary_handler.potential_yhi_str);
+        pp_boundary.query("potential_lo_z", m_poisson_boundary_handler.potential_zlo_str);
+        pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
+        pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
+        m_poisson_boundary_handler.buildParsers();
 
         queryWithParser(pp_warpx, "const_dt", const_dt);
 
@@ -734,10 +726,8 @@ WarpX::ReadParameters ()
         {
             // Filter currently not working with FDTD solver in RZ geometry
             // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
-            if (use_filter)
-            {
-                amrex::Abort("Filter currently not working with FDTD solver in RZ geometry");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!use_filter,
+                "Filter currently not working with FDTD solver in RZ geometry");
         }
 #endif
 
@@ -755,8 +745,10 @@ WarpX::ReadParameters ()
 #ifdef AMREX_USE_FLOAT
         if (do_single_precision_comms) {
             do_single_precision_comms = 0;
-            amrex::Warning("\nWARNING: Overwrote warpx.do_single_precision_comms"
-                               " to be 0, since WarpX was built in single precision.");
+            ablastr::warn_manager::WMRecordWarning(
+                "comms",
+                "Overwrote warpx.do_single_precision_comms to be 0, since WarpX was built in single precision.",
+                ablastr::warn_manager::WarnPriority::low);
         }
 #endif
         pp_warpx.query("do_shared_mem_charge_deposition", do_shared_mem_charge_deposition);
@@ -777,21 +769,23 @@ WarpX::ReadParameters ()
         }
 
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if ( ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML &&
-                   WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ) ||
-                 ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML &&
-                   WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller ) )
-            {
-                amrex::Abort("PML and Silver-Mueller boundary conditions cannot be activated at the same time.");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                !(
+                    ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML &&
+                    WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ) ||
+                    ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML &&
+                     WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller )
+                ),
+                "PML and Silver-Mueller boundary conditions cannot be activated at the same time.");
+
 
             if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ||
                 WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller)
             {
                 // SilverMueller is implemented for Yee
-                if (maxwell_solver_id != MaxwellSolverAlgo::Yee) {
-                    amrex::Abort("The Silver-Mueller boundary condition can only be used with the Yee solver.");
-                }
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    maxwell_solver_id == MaxwellSolverAlgo::Yee,
+                    "The Silver-Mueller boundary condition can only be used with the Yee solver.");
             }
         }
 
@@ -801,6 +795,13 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
         pp_warpx.query("do_similar_dm_pml", do_similar_dm_pml);
+        // Read `v_particle_pml` in units of the speed of light
+        v_particle_pml = 1._rt;
+        queryWithParser(pp_warpx, "v_particle_pml", v_particle_pml);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(0._rt < v_particle_pml && v_particle_pml <= 1._rt,
+            "Input value for the velocity warpx.v_particle_pml of the macroparticle must be in (0,1] (in units of c).");
+        // Scale by the speed of light
+        v_particle_pml = v_particle_pml * PhysConst::c;
 
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
         // false for FDTD solver, true for PSATD solver.
@@ -840,17 +841,15 @@ WarpX::ReadParameters ()
         // for both div(E) and div(B) cleaning
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
         {
-            if (do_pml_dive_cleaning != do_pml_divb_cleaning)
-            {
-                std::stringstream ss;
-                ss << "\nwarpx.do_pml_dive_cleaning = "
-                   << do_pml_dive_cleaning
-                   << " and warpx.do_pml_divb_cleaning = "
-                   << do_pml_divb_cleaning
-                   << ":\nthis case is not implemented yet,"
-                   << " please set both parameters to the same value";
-                amrex::Abort(ss.str());
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                do_pml_dive_cleaning == do_pml_divb_cleaning,
+                "warpx.do_pml_dive_cleaning = "
+                + std::to_string(do_pml_dive_cleaning)
+                +" and warpx.do_pml_divb_cleaning = "
+                + std::to_string(do_pml_divb_cleaning)
+                + ": this case is not implemented yet,"
+                + " please set both parameters to the same value"
+            );
         }
 
 #ifdef WARPX_DIM_RZ
@@ -860,9 +859,10 @@ WarpX::ReadParameters ()
             "PML are not implemented in RZ geometry along z; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
 #endif
 
-        if ( (do_pml_j_damping==1)&&(do_pml_in_domain==0) ){
-            amrex::Abort("J-damping can only be done when PML are inside simulation domain (do_pml_in_domain=1)");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (do_pml_j_damping==0)||(do_pml_in_domain==1),
+            "J-damping can only be done when PML are inside simulation domain (do_pml_in_domain=1)"
+        );
 
         {
             // Parameters below control all plotfile diagnostics
@@ -917,25 +917,21 @@ WarpX::ReadParameters ()
             pp_warpx.query("do_current_centering", do_current_centering);
         }
 
-        if ((maxLevel() > 0) && do_current_centering)
-        {
-            amrex::Abort("\nFinite-order centering of currents is not implemented with mesh refinement");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            maxLevel() == 0 || !do_current_centering,
+            "Finite-order centering of currents is not implemented with mesh refinement"
+        );
     }
 
     {
         ParmParse pp_algo("algo");
 #ifdef WARPX_DIM_RZ
-        if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
-                "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( maxwell_solver_id != MaxwellSolverAlgo::CKC,
+            "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
 #endif
 #ifndef WARPX_USE_PSATD
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
-                                              "algo.maxwell_solver = psatd is not supported because WarpX was built without spectral solvers");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( maxwell_solver_id != MaxwellSolverAlgo::PSATD,
+            "algo.maxwell_solver = psatd is not supported because WarpX was built without spectral solvers");
 #endif
 
 #ifdef WARPX_DIM_RZ
@@ -962,6 +958,22 @@ WarpX::ReadParameters ()
         current_deposition_algo = GetAlgorithmInteger(pp_algo, "current_deposition");
         charge_deposition_algo = GetAlgorithmInteger(pp_algo, "charge_deposition");
         particle_pusher_algo = GetAlgorithmInteger(pp_algo, "particle_pusher");
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            current_deposition_algo != CurrentDepositionAlgo::Esirkepov ||
+            !do_current_centering,
+            "Current centering (nodal deposition) cannot be used with Esirkepov deposition."
+            "Please set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay ||
+            !do_current_centering,
+            "Vay deposition not implemented with current centering");
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay ||
+            maxLevel() <= 0,
+            "Vay deposition not implemented with mesh refinement");
 
         field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
@@ -997,30 +1009,28 @@ WarpX::ReadParameters ()
         pp_lasers.queryarr("names", lasers_names);
 
         std::vector<std::string> sort_intervals_string_vec = {"-1"};
+        int particle_shape;
         if (!species_names.empty() || !lasers_names.empty()) {
-            int particle_shape;
-            if (queryWithParser(pp_algo, "particle_shape", particle_shape) == false)
-            {
-                amrex::Abort("\nalgo.particle_shape must be set in the input file:"
-                             "\nplease set algo.particle_shape to 1, 2, or 3");
+            if (queryWithParser(pp_algo, "particle_shape", particle_shape)){
+
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (particle_shape >= 1) && (particle_shape <=3),
+                    "algo.particle_shape can be only 1, 2, or 3"
+                );
+
+                nox = particle_shape;
+                noy = particle_shape;
+                noz = particle_shape;
             }
-            else
-            {
-                if (particle_shape < 1 || particle_shape > 3)
-                {
-                    amrex::Abort("\nalgo.particle_shape can be only 1, 2, or 3");
-                }
-                else
-                {
-                    nox = particle_shape;
-                    noy = particle_shape;
-                    noz = particle_shape;
-                }
+            else{
+                amrex::Abort(Utils::TextMsg::Err(
+                    "algo.particle_shape must be set in the input file:"
+                    " please set algo.particle_shape to 1, 2, or 3"));
             }
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
             {
-                this->RecordWarning("Particles",
+                ablastr::warn_manager::WMRecordWarning("Particles",
                     "When algo.particle_shape > 1,"
                     "some numerical artifact will be present at the interface between coarse and fine patch."
                     "We recommend setting algo.particle_shape = 1 in order to avoid this issue");
@@ -1052,61 +1062,56 @@ WarpX::ReadParameters ()
 
         pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
 
-#ifdef WARPX_USE_PSATD
-
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-
-            // Read order of finite-order centering of fields (staggered to nodal).
-            // Read this only if warpx.do_nodal = 0. Instead, if warpx.do_nodal = 1,
-            // Maxwell's equations are solved on a nodal grid and the electromagnetic
-            // forces are gathered from a nodal grid, hence the fields do not need to
-            // be centered onto a nodal grid.
-            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
-                WarpX::do_nodal == 0)
-            {
-                queryWithParser(pp_interpolation, "field_centering_nox", field_centering_nox);
-                queryWithParser(pp_interpolation, "field_centering_noy", field_centering_noy);
-                queryWithParser(pp_interpolation, "field_centering_noz", field_centering_noz);
-            }
-
-            // Read order of finite-order centering of currents (nodal to staggered)
-            if (WarpX::do_current_centering) {
-                queryWithParser(pp_interpolation, "current_centering_nox", current_centering_nox);
-                queryWithParser(pp_interpolation, "current_centering_noy", current_centering_noy);
-                queryWithParser(pp_interpolation, "current_centering_noz", current_centering_noz);
-            }
-
-            // Finite-order centering is not implemented with mesh refinement
-            // (note that when WarpX::do_nodal = 1 finite-order centering is not used anyways)
-            if (maxLevel() > 0 && WarpX::do_nodal == 0)
-            {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
-                    "High-order centering of fields (order > 2) is not implemented with mesh refinement");
-            }
-
-            if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
-                WarpX::do_nodal == 0)
-            {
-                AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
-                                              device_field_centering_stencil_coeffs_y,
-                                              device_field_centering_stencil_coeffs_z,
-                                              field_centering_nox,
-                                              field_centering_noy,
-                                              field_centering_noz);
-            }
-
-            if (WarpX::do_current_centering)
-            {
-                AllocateCenteringCoefficients(device_current_centering_stencil_coeffs_x,
-                                              device_current_centering_stencil_coeffs_y,
-                                              device_current_centering_stencil_coeffs_z,
-                                              current_centering_nox,
-                                              current_centering_noy,
-                                              current_centering_noz);
-            }
+        // Read order of finite-order centering of fields (staggered to nodal).
+        // Read this only if warpx.do_nodal = 0. Instead, if warpx.do_nodal = 1,
+        // Maxwell's equations are solved on a nodal grid and the electromagnetic
+        // forces are gathered from a nodal grid, hence the fields do not need to
+        // be centered onto a nodal grid.
+        if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
+            WarpX::do_nodal == 0)
+        {
+            queryWithParser(pp_interpolation, "field_centering_nox", field_centering_nox);
+            queryWithParser(pp_interpolation, "field_centering_noy", field_centering_noy);
+            queryWithParser(pp_interpolation, "field_centering_noz", field_centering_noz);
         }
-#endif
+
+        // Read order of finite-order centering of currents (nodal to staggered)
+        if (WarpX::do_current_centering)
+        {
+            queryWithParser(pp_interpolation, "current_centering_nox", current_centering_nox);
+            queryWithParser(pp_interpolation, "current_centering_noy", current_centering_noy);
+            queryWithParser(pp_interpolation, "current_centering_noz", current_centering_noz);
+        }
+
+        // Finite-order centering is not implemented with mesh refinement
+        // (note that when WarpX::do_nodal = 1 finite-order centering is not used anyways)
+        if (maxLevel() > 0 && WarpX::do_nodal == 0)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
+                "High-order centering of fields (order > 2) is not implemented with mesh refinement");
+        }
+
+        if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
+            WarpX::do_nodal == 0)
+        {
+            AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
+                                          device_field_centering_stencil_coeffs_y,
+                                          device_field_centering_stencil_coeffs_z,
+                                          field_centering_nox,
+                                          field_centering_noy,
+                                          field_centering_noz);
+        }
+
+        if (WarpX::do_current_centering)
+        {
+            AllocateCenteringCoefficients(device_current_centering_stencil_coeffs_x,
+                                          device_current_centering_stencil_coeffs_y,
+                                          device_current_centering_stencil_coeffs_z,
+                                          current_centering_nox,
+                                          current_centering_noy,
+                                          current_centering_noz);
+        }
     }
 
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
@@ -1138,24 +1143,51 @@ WarpX::ReadParameters ()
             queryWithParser(pp_psatd, "noz", noz_fft);
         }
 
-
         if (!fft_periodic_single_box) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nox_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(noy_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(noz_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
         }
 
+        // Current correction activated by default, unless a charge-conserving
+        // current deposition (Esirkepov, Vay) or the div(E) cleaning scheme
+        // are used
+        current_correction = true;
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
+            WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay ||
+            WarpX::do_dive_cleaning)
+        {
+            current_correction = false;
+        }
+
+        // TODO Remove this default when current correction will
+        // be implemented for the multi-J algorithm as well.
+        if (do_multi_J) current_correction = false;
+
         pp_psatd.query("current_correction", current_correction);
+
+        if (current_correction == false &&
+            current_deposition_algo != CurrentDepositionAlgo::Esirkepov &&
+            current_deposition_algo != CurrentDepositionAlgo::Vay)
+        {
+            ablastr::warn_manager::WMRecordWarning(
+                "Algorithms",
+                "The chosen current deposition algorithm does not guarantee"
+                " charge conservation, and no additional current correction"
+                " algorithm is activated in order to compensate for that."
+                " Lack of charge conservation may negatively affect the"
+                " results of the simulation.",
+                ablastr::warn_manager::WarnPriority::low);
+        }
+
         pp_psatd.query("do_time_averaging", fft_do_time_averaging);
 
-        if (!fft_periodic_single_box && current_correction)
-            amrex::Abort(
-                    "\nCurrent correction does not guarantee charge conservation with local FFTs over guard cells:\n"
-                    "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
-        if (!fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay))
-            amrex::Abort(
-                    "\nVay current deposition does not guarantee charge conservation with local FFTs over guard cells:\n"
-                    "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                fft_periodic_single_box == false,
+                "Option algo.current_deposition=vay must be used with psatd.periodic_single_box_fft=0.");
+        }
 
         // Auxiliary: boosted_frame = true if warpx.gamma_boost is set in the inputs
         amrex::ParmParse pp_warpx("warpx");
@@ -1164,13 +1196,15 @@ WarpX::ReadParameters ()
         // Check whether the default Galilean velocity should be used
         bool use_default_v_galilean = false;
         pp_psatd.query("use_default_v_galilean", use_default_v_galilean);
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !use_default_v_galilean || boosted_frame,
+            "psatd.use_default_v_galilean = 1 can be used only if warpx.gamma_boost is also set"
+        );
+
         if (use_default_v_galilean == true && boosted_frame == true)
         {
             m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
-        }
-        else if (use_default_v_galilean == true && boosted_frame == false)
-        {
-            amrex::Abort("psatd.use_default_v_galilean = 1 can be used only if warpx.gamma_boost is also set");
         }
         else
         {
@@ -1180,52 +1214,56 @@ WarpX::ReadParameters ()
         // Check whether the default comoving velocity should be used
         bool use_default_v_comoving = false;
         pp_psatd.query("use_default_v_comoving", use_default_v_comoving);
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !use_default_v_comoving || boosted_frame,
+            "psatd.use_default_v_comoving = 1 can be used only if warpx.gamma_boost is also set"
+        );
+
         if (use_default_v_comoving == true && boosted_frame == true)
         {
             m_v_comoving[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
-        }
-        else if (use_default_v_comoving == true && boosted_frame == false)
-        {
-            amrex::Abort("psatd.use_default_v_comoving = 1 can be used only if warpx.gamma_boost is also set");
         }
         else
         {
             queryArrWithParser(pp_psatd, "v_comoving", m_v_comoving, 0, 3);
         }
 
-        // Galilean and comoving algorithms should not be used together
-        if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.)
-        {
-            if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.)
-            {
-                amrex::Abort("Galilean and comoving algorithms should not be used together");
-            }
-        }
-
         // Scale the Galilean/comoving velocity by the speed of light
-        for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
-        for (int i=0; i<3; i++) m_v_comoving[i] *= PhysConst::c;
+        for (auto& vv : m_v_galilean) vv*= PhysConst::c;
+        for (auto& vv : m_v_comoving) vv*= PhysConst::c;
 
-        // The comoving PSATD algorithm is not implemented nor tested with Esirkepov current deposition
+        const auto v_galilean_is_zero =
+            std::all_of(m_v_galilean.begin(), m_v_galilean.end(),
+            [](const auto& val){return val == 0.;});
+
+        const auto v_comoving_is_zero =
+            std::all_of(m_v_comoving.begin(), m_v_comoving.end(),
+            [](const auto& val){return val == 0.;});
+
+
+        // Galilean and comoving algorithms should not be used together
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            v_galilean_is_zero || v_comoving_is_zero,
+            "Galilean and comoving algorithms should not be used together"
+        );
+
+
         if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
-            if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
-                amrex::Abort("Esirkepov current deposition cannot be used with the comoving PSATD algorithm");
-            }
+
+            // The comoving PSATD algorithm is not implemented nor tested with Esirkepov current deposition
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v_comoving_is_zero,
+                "Esirkepov current deposition cannot be used with the comoving PSATD algorithm");
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v_galilean_is_zero,
+                "Esirkepov current deposition cannot be used with the Galilean algorithm.");
         }
 
-        if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
-            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.) {
-                amrex::Abort("Vay current deposition not implemented for Galilean algorithms");
-            }
-        }
-
-        if (current_correction) {
-            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.) {
-                if (fft_do_time_averaging) {
-                    amrex::Abort("Current correction not implemented for averaged Galilean algorithm");
-                }
-            }
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (current_deposition_algo != CurrentDepositionAlgo::Vay) ||
+            v_galilean_is_zero,
+            "Vay current deposition not implemented for Galilean algorithms"
+        );
 
 #   ifdef WARPX_DIM_RZ
         update_with_rho = true;  // Must be true for RZ PSATD
@@ -1242,25 +1280,26 @@ WarpX::ReadParameters ()
         // Overwrite update_with_rho with value set in input file
         pp_psatd.query("update_with_rho", update_with_rho);
 
-        if (do_dive_cleaning == true && update_with_rho == false)
-        {
-            amrex::Abort("warpx.do_dive_cleaning = 1 not implemented with psatd.update_with_rho = 0");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (!do_dive_cleaning) || update_with_rho,
+            "warpx.do_dive_cleaning = 1 not implemented with psatd.update_with_rho = 0"
+        );
 
-        if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
-                "psatd.update_with_rho must be equal to 1 for comoving PSATD");
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            v_comoving_is_zero || update_with_rho,
+            "psatd.update_with_rho must be equal to 1 for comoving PSATD"
+        );
 
         if (do_multi_J)
         {
-            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.)
-            {
-                amrex::Abort("Multi-J algorithm not implemented with Galilean PSATD");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                v_galilean_is_zero,
+                "Multi-J algorithm not implemented with Galilean PSATD"
+            );
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
-                "psatd.update_with_rho must be set to 1 when warpx.do_multi_J = 1");
+                "psatd.update_with_rho must be set to 1 when warpx.do_multi_J = 1"
+            );
         }
 
         for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
@@ -1274,9 +1313,7 @@ WarpX::ReadParameters ()
             }
         }
 
-        // Whether to fill the guard cells with inverse FFTs:
-        // WarpX::fill_guards = amrex::IntVect(0) by default,
-        // except for non-periodic directions with damping.
+        // Fill guard cells with backward FFTs in directions with field damping
         for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
         {
             if (WarpX::field_boundary_lo[dir] == FieldBoundaryType::Damped ||
@@ -1285,14 +1322,21 @@ WarpX::ReadParameters ()
                 WarpX::fill_guards[dir] = 1;
             }
         }
+
+        // Fill guard cells with backward FFTs if Vay current deposition is used
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            WarpX::fill_guards = amrex::IntVect(1);
+        }
     }
 
     if (maxwell_solver_id != MaxwellSolverAlgo::PSATD ) {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Damped ||
-                WarpX::field_boundary_hi[idim] == FieldBoundaryType::Damped ) {
-                    amrex::Abort("FieldBoundaryType::Damped is only supported for PSATD");
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (WarpX::field_boundary_lo[idim] != FieldBoundaryType::Damped) &&
+                (WarpX::field_boundary_hi[idim] != FieldBoundaryType::Damped),
+                "FieldBoundaryType::Damped is only supported for PSATD"
+            );
         }
     }
 
@@ -1344,110 +1388,138 @@ WarpX::BackwardCompatibility ()
     amrex::Real backward_Real;
 
     ParmParse pp_amr("amr");
-    if (pp_amr.query("plot_int", backward_int)){
-        amrex::Abort("amr.plot_int is not supported anymore. Please use the new syntax for diagnostics:\n"
-            "diagnostics.diags_names = my_diag\n"
-            "my_diag.intervals = 10\n"
-            "for output every 10 iterations. See documentation for more information");
-    }
-    if (pp_amr.query("plot_file", backward_str)){
-        amrex::Abort("amr.plot_file is not supported anymore. "
-                     "Please use the new syntax for diagnostics, see documentation.");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_amr.query("plot_int", backward_int),
+        "amr.plot_int is not supported anymore. Please use the new syntax for diagnostics:\n"
+        "diagnostics.diags_names = my_diag\n"
+        "my_diag.intervals = 10\n"
+        "for output every 10 iterations. See documentation for more information"
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_amr.query("plot_file", backward_str),
+        "amr.plot_file is not supported anymore. "
+        "Please use the new syntax for diagnostics, see documentation."
+    );
 
     ParmParse pp_warpx("warpx");
     std::vector<std::string> backward_strings;
-    if (pp_warpx.queryarr("fields_to_plot", backward_strings)){
-        amrex::Abort("warpx.fields_to_plot is not supported anymore. "
-                     "Please use the new syntax for diagnostics, see documentation.");
-    }
-    if (pp_warpx.query("plot_finepatch", backward_int)){
-        amrex::Abort("warpx.plot_finepatch is not supported anymore. "
-                     "Please use the new syntax for diagnostics, see documentation.");
-    }
-    if (pp_warpx.query("plot_crsepatch", backward_int)){
-        amrex::Abort("warpx.plot_crsepatch is not supported anymore. "
-                     "Please use the new syntax for diagnostics, see documentation.");
-    }
-    if (pp_warpx.queryarr("load_balance_int", backward_strings)){
-        amrex::Abort("warpx.load_balance_int is no longer a valid option. "
-                     "Please use the renamed option algo.load_balance_intervals instead.");
-    }
-    if (pp_warpx.queryarr("load_balance_intervals", backward_strings)){
-        amrex::Abort("warpx.load_balance_intervals is no longer a valid option. "
-                     "Please use the renamed option algo.load_balance_intervals instead.");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.queryarr("fields_to_plot", backward_strings),
+        "warpx.fields_to_plot is not supported anymore. "
+        "Please use the new syntax for diagnostics, see documentation."
+    );
 
-    if (pp_warpx.query("load_balance_efficiency_ratio_threshold", backward_Real)){
-        amrex::Abort("warpx.load_balance_efficiency_ratio_threshold is not supported anymore. "
-                     "Please use the renamed option algo.load_balance_efficiency_ratio_threshold.");
-    }
-    if (pp_warpx.query("load_balance_with_sfc", backward_int)){
-        amrex::Abort("warpx.load_balance_with_sfc is not supported anymore. "
-                     "Please use the renamed option algo.load_balance_with_sfc.");
-    }
-    if (pp_warpx.query("load_balance_knapsack_factor", backward_Real)){
-        amrex::Abort("warpx.load_balance_knapsack_factor is not supported anymore. "
-                     "Please use the renamed option algo.load_balance_knapsack_factor.");
-    }
-    if (pp_warpx.queryarr("override_sync_int", backward_strings)){
-        amrex::Abort("warpx.override_sync_int is no longer a valid option. "
-                     "Please use the renamed option warpx.override_sync_intervals instead.");
-    }
-    if (pp_warpx.queryarr("sort_int", backward_strings)){
-        amrex::Abort("warpx.sort_int is no longer a valid option. "
-                     "Please use the renamed option warpx.sort_intervals instead.");
-    }
-    if (pp_warpx.query("use_kspace_filter", backward_int)){
-        amrex::Abort("warpx.use_kspace_filter is not supported anymore. "
-                     "Please use the flag use_filter, see documentation.");
-    }
-    if ( pp_warpx.query("do_pml", backward_int) ) {
-        amrex::Abort( "do_pml is not supported anymore. Please use boundary.field_lo and boundary.field_hi to set the boundary conditions.");
-    }
-    if (pp_warpx.query("serialize_ics", backward_bool)) {
-        amrex::Abort("warpx.serialize_ics is no longer a valid option. "
-                     "Please use the renamed option warpx.serialize_initial_conditions instead.");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("plot_finepatch", backward_int),
+        "warpx.plot_finepatch is not supported anymore. "
+        "Please use the new syntax for diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("plot_crsepatch", backward_int),
+        "warpx.plot_crsepatch is not supported anymore. "
+        "Please use the new syntax for diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.queryarr("load_balance_int", backward_strings),
+        "warpx.load_balance_int is no longer a valid option. "
+        "Please use the renamed option algo.load_balance_intervals instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.queryarr("load_balance_intervals", backward_strings),
+        "warpx.load_balance_intervals is no longer a valid option. "
+        "Please use the renamed option algo.load_balance_intervals instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("load_balance_efficiency_ratio_threshold", backward_Real),
+        "warpx.load_balance_efficiency_ratio_threshold is not supported anymore. "
+        "Please use the renamed option algo.load_balance_efficiency_ratio_threshold."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("load_balance_with_sfc", backward_int),
+        "warpx.load_balance_with_sfc is not supported anymore. "
+        "Please use the renamed option algo.load_balance_with_sfc."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("load_balance_knapsack_factor", backward_Real),
+        "warpx.load_balance_knapsack_factor is not supported anymore. "
+        "Please use the renamed option algo.load_balance_knapsack_factor."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.queryarr("override_sync_int", backward_strings),
+        "warpx.override_sync_int is no longer a valid option. "
+        "Please use the renamed option warpx.override_sync_intervals instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.queryarr("sort_int", backward_strings),
+        "warpx.sort_int is no longer a valid option. "
+        "Please use the renamed option warpx.sort_intervals instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("use_kspace_filter", backward_int),
+        "warpx.use_kspace_filter is not supported anymore. "
+        "Please use the flag use_filter, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_pml", backward_int),
+        "do_pml is not supported anymore. Please use boundary.field_lo and boundary.field_hi"
+        " to set the boundary conditions."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("serialize_ics", backward_bool),
+        "warpx.serialize_ics is no longer a valid option. "
+        "Please use the renamed option warpx.serialize_initial_conditions instead."
+    );
 
     ParmParse pp_interpolation("interpolation");
-    if (pp_interpolation.query("nox", backward_int) ||
-        pp_interpolation.query("noy", backward_int) ||
-        pp_interpolation.query("noz", backward_int))
-    {
-        amrex::Abort("\ninterpolation.nox (as well as .noy, .noz) are not supported anymore:"
-                     "\nplease use the new syntax algo.particle_shape instead");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_interpolation.query("nox", backward_int) &&
+        !pp_interpolation.query("noy", backward_int) &&
+        !pp_interpolation.query("noz", backward_int),
+        "interpolation.nox (as well as .noy, .noz) are not supported anymore."
+        " Please use the new syntax algo.particle_shape instead"
+    );
 
     ParmParse pp_algo("algo");
     int backward_mw_solver;
-    if (pp_algo.query("maxwell_fdtd_solver", backward_mw_solver)){
-        amrex::Abort("algo.maxwell_fdtd_solver is not supported anymore. "
-                     "Please use the renamed option algo.maxwell_solver");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_algo.query("maxwell_fdtd_solver", backward_mw_solver),
+        "algo.maxwell_fdtd_solver is not supported anymore. "
+        "Please use the renamed option algo.maxwell_solver");
 
     ParmParse pp_particles("particles");
     int nspecies;
     if (pp_particles.query("nspecies", nspecies)){
-        this->RecordWarning("Species",
+        ablastr::warn_manager::WMRecordWarning("Species",
             "particles.nspecies is ignored. Just use particles.species_names please.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
     }
 
     ParmParse pp_collisions("collisions");
     int ncollisions;
     if (pp_collisions.query("ncollisions", ncollisions)){
-        this->RecordWarning("Collisions",
+        ablastr::warn_manager::WMRecordWarning("Collisions",
             "collisions.ncollisions is ignored. Just use particles.collision_names please.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
     }
 
     ParmParse pp_lasers("lasers");
     int nlasers;
     if (pp_lasers.query("nlasers", nlasers)){
-        this->RecordWarning("Laser",
+        ablastr::warn_manager::WMRecordWarning("Laser",
             "lasers.nlasers is ignored. Just use lasers.names please.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
     }
 }
 
@@ -1458,6 +1530,14 @@ WarpX::MakeNewLevelFromScratch (int lev, Real time, const BoxArray& new_grids,
 {
     AllocLevelData(lev, new_grids, new_dmap);
     InitLevelData(lev, time);
+}
+
+// This is a virtual function.
+void
+WarpX::MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::BoxArray& /*ba*/,
+                                         const amrex::DistributionMapping& /*dm*/)
+{
+    amrex::Abort(Utils::TextMsg::Err("MakeNewLevelFromCoarse: To be implemented"));
 }
 
 void
@@ -1476,6 +1556,11 @@ WarpX::ClearLevel (int lev)
         if (do_current_centering)
         {
             current_fp_nodal[lev][i].reset();
+        }
+
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            current_fp_vay[lev][i].reset();
         }
 
         current_cp[lev][i].reset();
@@ -1702,6 +1787,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         current_fp_nodal[lev][0] = std::make_unique<MultiFab>(nodal_ba, dm, ncomps, ngJ);
         current_fp_nodal[lev][1] = std::make_unique<MultiFab>(nodal_ba, dm, ncomps, ngJ);
         current_fp_nodal[lev][2] = std::make_unique<MultiFab>(nodal_ba, dm, ncomps, ngJ);
+    }
+
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+    {
+        current_fp_vay[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_vay[x]"));
+        current_fp_vay[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_vay[y]"));
+        current_fp_vay[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_vay[z]"));
     }
 
     Bfield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_fp[x]"));
@@ -2178,11 +2273,18 @@ WarpX::getRealBox(const Box& bx, int lev)
 }
 
 std::array<Real,3>
-WarpX::LowerCorner(const Box& bx, std::array<amrex::Real,3> galilean_shift, int lev)
+WarpX::LowerCorner(const Box& bx, const int lev, const amrex::Real time_shift_delta)
 {
+    auto & warpx = GetInstance();
     RealBox grid_box = getRealBox( bx, lev );
 
     const Real* xyzmin = grid_box.lo();
+
+    amrex::Real cur_time = warpx.gett_new(lev);
+    amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
+    amrex::Array<amrex::Real,3> galilean_shift = { warpx.m_v_galilean[0]*time_shift,
+                                                   warpx.m_v_galilean[1]*time_shift,
+                                                   warpx.m_v_galilean[2]*time_shift };
 
 #if defined(WARPX_DIM_3D)
     return { xyzmin[0] + galilean_shift[0], xyzmin[1] + galilean_shift[1], xyzmin[2] + galilean_shift[2] };
@@ -2196,26 +2298,28 @@ WarpX::LowerCorner(const Box& bx, std::array<amrex::Real,3> galilean_shift, int 
 }
 
 std::array<Real,3>
-WarpX::UpperCorner(const Box& bx, int lev)
+WarpX::UpperCorner(const Box& bx, const int lev, const amrex::Real time_shift_delta)
 {
+    auto & warpx = GetInstance();
     const RealBox grid_box = getRealBox( bx, lev );
-    const Real* xyzmax = grid_box.hi();
-#if defined(WARPX_DIM_3D)
-    return { xyzmax[0], xyzmax[1], xyzmax[2] };
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    return { xyzmax[0], std::numeric_limits<Real>::max(), xyzmax[1] };
-#elif defined(WARPX_DIM_1D_Z)
-    return { std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), xyzmax[0] };
-#endif
-}
 
-std::array<Real,3>
-WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Vector<amrex::Real>& v_galilean, int lev)
-{
-    amrex::Real cur_time = gett_new(lev);
-    amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
-    return WarpX::LowerCorner(bx, galilean_shift, lev);
+    const Real* xyzmax = grid_box.hi();
+
+    amrex::Real cur_time = warpx.gett_new(lev);
+    amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
+    amrex::Array<amrex::Real,3> galilean_shift = { warpx.m_v_galilean[0]*time_shift,
+                                                   warpx.m_v_galilean[1]*time_shift,
+                                                   warpx.m_v_galilean[2]*time_shift };
+
+#if defined(WARPX_DIM_3D)
+    return { xyzmax[0] + galilean_shift[0], xyzmax[1] + galilean_shift[1], xyzmax[2] + galilean_shift[2] };
+
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    return { xyzmax[0] + galilean_shift[0], std::numeric_limits<Real>::max(), xyzmax[1] + galilean_shift[1] };
+
+#elif defined(WARPX_DIM_1D_Z)
+    return { std::numeric_limits<Real>::max(), std::numeric_limits<Real>::max(), xyzmax[0] + galilean_shift[0] };
+#endif
 }
 
 IntVect
@@ -2307,7 +2411,8 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 #ifdef WARPX_USE_PSATD
         spectral_solver_fp[lev]->ComputeSpectralDivE( lev, Efield_aux[lev], divE );
 #else
-        amrex::Abort("ComputeDivE: PSATD requested but not compiled");
+        amrex::Abort(Utils::TextMsg::Err(
+            "ComputeDivE: PSATD requested but not compiled"));
 #endif
     } else {
         m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
@@ -2349,8 +2454,8 @@ WarpX::getPMLdirections() const
     {
         for( int i = 0; i < static_cast<int>(dirsWithPML.size()) / 2; ++i )
         {
-            dirsWithPML.at( 2u*i      ) = bool(do_pml_Lo[i]);
-            dirsWithPML.at( 2u*i + 1u ) = bool(do_pml_Hi[i]);
+            dirsWithPML.at( 2u*i      ) = bool(do_pml_Lo[0][i]); // on level 0
+            dirsWithPML.at( 2u*i + 1u ) = bool(do_pml_Hi[0][i]); // on level 0
         }
     }
     return dirsWithPML;
@@ -2466,7 +2571,49 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
 #endif
 }
 
-#ifdef WARPX_USE_PSATD
+amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_order, const bool nodal)
+{
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
+
+    const int m = n_order / 2;
+    amrex::Vector<amrex::Real> coeffs;
+    coeffs.resize(m);
+
+    // There are closed-form formula for these coefficients, but they result in
+    // an overflow when evaluated numerically. One way to avoid the overflow is
+    // to calculate the coefficients by recurrence.
+
+    // Coefficients for nodal (centered) finite-difference approximation
+    if (nodal == true)
+    {
+       // First coefficient
+       coeffs.at(0) = m * 2. / (m+1);
+       // Other coefficients by recurrence
+       for (int n = 1; n < m; n++)
+       {
+           coeffs.at(n) = - (m-n) * 1. / (m+n+1) * coeffs.at(n-1);
+       }
+    }
+    // Coefficients for staggered finite-difference approximation
+    else
+    {
+       Real prod = 1.;
+       for (int k = 1; k < m+1; k++)
+       {
+           prod *= (m + k) / (4. * k);
+       }
+       // First coefficient
+       coeffs.at(0) = 4 * m * prod * prod;
+       // Other coefficients by recurrence
+       for (int n = 1; n < m; n++)
+       {
+           coeffs.at(n) = - ((2*n-1) * (m-n)) * 1. / ((2*n+1) * (m+n)) * coeffs.at(n-1);
+       }
+    }
+
+    return coeffs;
+}
+
 void WarpX::ReorderFornbergCoefficients (amrex::Vector<amrex::Real>& ordered_coeffs,
                                          amrex::Vector<amrex::Real>& unordered_coeffs,
                                          const int order)
@@ -2536,7 +2683,6 @@ void WarpX::AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>
 
     amrex::Gpu::synchronize();
 }
-#endif
 
 const iMultiFab*
 WarpX::CurrentBufferMasks (int lev)

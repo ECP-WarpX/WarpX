@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Andrew Myers, David Grote
+# Copyright 2016-2022 Andrew Myers, David Grote, Lorenzo Giacomel
 #
 # This file is part of WarpX.
 #
@@ -10,6 +10,7 @@ from .Boundary import boundary
 from .Collisions import collisions
 from .Constants import my_constants
 from .Diagnostics import diagnostics
+from .EB2 import eb2
 from .Geometry import geometry
 from .Interpolation import interpolation
 from .Langmuirwave import langmuirwave

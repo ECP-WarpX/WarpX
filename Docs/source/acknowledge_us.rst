@@ -1,3 +1,5 @@
+.. _acknowledge_warpx:
+
 Acknowledge WarpX
 =================
 
@@ -32,6 +34,8 @@ Please add the following sentence to your publications, it helps contributors ke
   Primary WarpX contributors are with LBNL, LLNL, CEA-LIDYL, SLAC, DESY, CERN, and Modern Electron.
   We acknowledge all WarpX contributors.
 
+.. _acknowledge_warpx_ref:
+
 Latest WarpX reference
 **********************
 
@@ -41,32 +45,48 @@ If your project leads to a scientific publication, please consider citing the pa
   **Porting WarpX to GPU-accelerated platforms**. *Parallel Computing*. 2021 Sep, 108:102833.
   https://doi.org/10.1016/j.parco.2021.102833
 
+.. _acknowledge_warpx_all_refs:
+
 Prior WarpX references
 ----------------------
 
 If your project uses the specific algorithms, please consider citing the respective publications in addition.
 
-- Fedeli L, Zaim N, Sainte-Marie A, Thevenet M, Huebl A, Myers A, Vay J-L, Vincenti H.
-  **PICSAR-QED: a Monte Carlo module to simulate Strong-Field Quantum Electrodynamics in Particle-In-Cell codes for exascale architectures**. *New Journal of Physics*. in-press, 2022.
-  https://arxiv.org/abs/2110.00256
+- Fedeli L, Zaim N, Sainte-Marie A, Thevenet M, Huebl A, Myers A, Vay JL, Vincenti H.
+  **PICSAR-QED: a Monte Carlo module to simulate Strong-Field Quantum Electrodynamics in Particle-In-Cell codes for exascale architectures**.
+  *New Journal of Physics* **24** 025009, 2022.
+  `DOI:10.1088/1367-2630/ac4ef1 <https://doi.org/10.1088/1367-2630/ac4ef1>`__
 
-- Zoni E, Lehe R, Shapoval O, Belkin D, Zaim N, Fedeli L, Vincenti H, Vay J-L.
+- Zoni E, Lehe R, Shapoval O, Belkin D, Zaim N, Fedeli L, Vincenti H, Vay JL.
   **A Hybrid Nodal-Staggered Pseudo-Spectral Electromagnetic Particle-In-Cell Method with Finite-Order Centering**. under review, 2022.
-  https://arxiv.org/abs/2106.12919
+  `arXiv:2106.12919 <https://arxiv.org/abs/2106.12919>`__
 
-- Shapoval O, Lehe R, Thevenet M, Zoni E, Zhao Y, Vay J-L.
+- Shapoval O, Lehe R, Thevenet M, Zoni E, Zhao Y, Vay JL.
   **Overcoming timestep limitations in boosted-frame Particle-In-Cell simulations of plasma-based acceleration**.
   *Phys. Rev. E* Nov 2021, 104:055311.
-  https://doi.org/10.1103/PhysRevE.104.055311
+  `arXiv:2104.13995 <https://arxiv.org/abs/2104.13995>`__,
+  `DOI:10.1103/PhysRevE.104.055311 <https://doi.org/10.1103/PhysRevE.104.055311>`__
 
 - Vay JL, Huebl A, Almgren A, Amorim LD, Bell J, Fedeli L, Ge L, Gott K, Grote DP, Hogan M, Jambunathan R, Lehe R, Myers A, Ng C, Rowan M, Shapoval O, Thevenet M, Vincenti H, Yang E, Zaim N, Zhang W, Zhao Y, Zoni E.
   **Modeling of a chain of three plasma accelerator stages with the WarpX electromagnetic PIC code on GPUs**. *Physics of Plasmas*. 2021 Feb 9, 28(2):023105.
-  https://doi.org/10.1063/5.0028512
+  `DOI:10.1063/5.0028512 <https://doi.org/10.1063/5.0028512>`__
 
 - Rowan ME, Gott KN, Deslippe J, Huebl A, Thevenet M, Lehe R, Vay JL.
   **In-situ assessment of device-side compute work for dynamic load balancing in a GPU-accelerated PIC code**. *PASC '21: Proceedings of the Platform for Advanced Scientific Computing Conference*. 2021 July, 10, pages 1-11.
-  https://doi.org/10.1145/3468267.3470614
+  `DOI:10.1145/3468267.3470614 <https://doi.org/10.1145/3468267.3470614>`__
 
-- Vay JL, Almgren A, Bell J, Ge L, Grote DPHogan M, Kononenko O, Lehe R, Myers A, Ng C, Park J, Ryne R, Shapovala O, Thevene M, Zhang W.
+- Vay JL, Almgren A, Bell J, Ge L, Grote DP, Hogan M, Kononenko O, Lehe R, Myers A, Ng C, Park J, Ryne R, Shapoval O, Thevenet M, Zhang W.
   **Warp-X: A new exascale computing platform for beam–plasma simulations**. *Nuclear Instruments and Methods in Physics Research Section A: Accelerators, Spectrometers, Detectors and Associated Equipment*. 2018 Nov, 909(12) Pages 476-479.
-  https://doi.org/10.1016/j.nima.2018.01.035
+  `DOI: 10.1016/j.nima.2018.01.035 <https://doi.org/10.1016/j.nima.2018.01.035>`__
+
+- Kirchen M, Lehe R, Jalas S, Shapoval O, Vay JL, Maier AR.
+  **Scalable spectral solver in Galilean coordinates for eliminating the numerical Cherenkov instability in particle-in-cell simulations of streaming plasmas**. *Physical Review E*. 2020 July, 102(1-1):013202.
+  `DOI: 10.1103/PhysRevE.102.013202 <https://doi.org/10.1103/PhysRevE.102.013202>`__
+
+- Shapoval O, Vay JL, Vincenti H.
+  **Two-step perfectly matched layer for arbitrary-order pseudo-spectral analytical time-domain methods**. *Computer Physics Communications*. 2019 Feb, 235, pages 102-110.
+  `DOI: 10.1016/j.cpc.2018.09.015 <https://doi.org/10.1016/j.cpc.2018.09.015>`__
+
+- Lehe R, Kirchen M, Godfrey BB, Maier AR, Vay JL.
+  **Elimination of numerical Cherenkov instability in flowing-plasma particle-in-cell simulations by using galilean coordinates**. *Physical Review E*. 2016 Nov, 94:053305.
+  `DOI: 10.1103/PhysRevE.94.053305 <https://doi.org/10.1103/PhysRevE.94.053305>`__

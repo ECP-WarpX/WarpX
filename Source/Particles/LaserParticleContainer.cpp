@@ -18,7 +18,8 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
-#include "WarpX.H"
+
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_BLassert.H>
@@ -117,9 +118,9 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     pp_laser_name.query("min_particles_per_mode", m_min_particles_per_mode);
 
     if (m_e_max == amrex::Real(0.)){
-        WarpX::GetInstance().RecordWarning("Laser",
+        ablastr::warn_manager::WMRecordWarning("Laser",
             m_laser_name + " with zero amplitude disabled.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
         m_enabled = false;
         return; // Disable laser if amplitude is 0
     }
@@ -261,7 +262,21 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
 #else
     const Real p_pos[1] = {m_updated_position[2]};
 #endif
-    if ( injection_box.contains(p_pos) ){
+#if defined(WARPX_DIM_RZ)
+    // In RZ, check if laser enters the box only along Z. This is needed
+    // because the Cartesian check below (injection_box.contains(p_pos))
+    // would fail in RZ, due to the fact that such a check verifies that
+    // p_pos is strictly contained within injection_box and this is not
+    // the case for the R coordinate of the laser antenna in RZ (since
+    // that equals 0 and thus coincides with the low end of the injection
+    // box along R, which also equals 0).
+    const bool is_contained = (injection_box.lo(1) < p_pos[1] &&
+                               p_pos[1] < injection_box.hi(1));
+#else
+    const bool is_contained = injection_box.contains(p_pos);
+#endif
+    if (is_contained)
+    {
         // Update laser_injection_box with current value
         m_laser_injection_box = injection_box;
         // Inject laser particles. LaserParticleContainer::InitData
@@ -314,9 +329,9 @@ LaserParticleContainer::InitData ()
     InitData(maxLevel());
 
     if(!do_continuous_injection && (TotalNumberOfParticles() == 0)){
-        WarpX::GetInstance().RecordWarning("Laser",
+        ablastr::warn_manager::WMRecordWarning("Laser",
             "The antenna is completely out of the simulation box for laser " + m_laser_name,
-            WarnPriority::high);
+            ablastr::warn_manager::WarnPriority::high);
         m_enabled = false; // Disable laser if antenna is completely out of the simulation box
     }
 }
@@ -439,7 +454,7 @@ LaserParticleContainer::InitData (int lev)
     BoxArray plane_ba { Box {IntVect(0), IntVect(0)} };
 #endif
 
-    amrex::Vector<amrex::Real> particle_x, particle_y, particle_z, particle_w;
+    amrex::Vector<amrex::ParticleReal> particle_x, particle_y, particle_z, particle_w;
 
     const DistributionMapping plane_dm {plane_ba, nprocs};
     const Vector<int>& procmap = plane_dm.ProcessorMap();
@@ -492,9 +507,9 @@ LaserParticleContainer::InitData (int lev)
         }
     }
     const int np = particle_z.size();
-    amrex::Vector<amrex::Real> particle_ux(np, 0.0);
-    amrex::Vector<amrex::Real> particle_uy(np, 0.0);
-    amrex::Vector<amrex::Real> particle_uz(np, 0.0);
+    amrex::Vector<amrex::ParticleReal> particle_ux(np, 0.0);
+    amrex::Vector<amrex::ParticleReal> particle_uy(np, 0.0);
+    amrex::Vector<amrex::ParticleReal> particle_uz(np, 0.0);
 
     if (Verbose()) amrex::Print() << Utils::TextMsg::Info("Adding laser particles");
     // Add particles on level 0. They will be redistributed afterwards
@@ -601,22 +616,25 @@ LaserParticleContainer::Evolve (int lev,
                                   amplitude_E.dataPtr(), dt);
             WARPX_PROFILE_VAR_STOP(blp_pp);
 
-            //
             // Current Deposition
-            //
-            // Deposit inside domains
-            if (! skip_deposition ) {
+            if (skip_deposition == false)
+            {
+                // Deposit at t_{n+1/2}
+                amrex::Real relative_time = -0.5_rt * dt;
+
                 int* ion_lev = nullptr;
+                // Deposit inside domains
                 DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                0, np_current, thread_num,
-                               lev, lev, dt, -0.5_rt); // Deposit current at t_{n+1/2}
+                               lev, lev, dt, relative_time);
 
-                bool has_buffer = cjx;
-                if (has_buffer){
+                const bool has_buffer = cjx;
+                if (has_buffer)
+                {
                     // Deposit in buffers
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                    np_current, np-np_current, thread_num,
-                                   lev, lev-1, dt, -0.5_rt); // Deposit current at t_{n+1/2}
+                                   lev, lev-1, dt, relative_time);
                 }
             }
 
