@@ -877,14 +877,14 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // Reading external fields from data file
     if (B_ext_grid_s=="read_b_from_file" && lev==0) {
         std::string read_B_from_path="./";
-        pp_warpx.query("read_B_from_path", read_B_from_path);
+        //pp_warpx.query("read_B_from_path", read_B_from_path);
         ReadExternalFieldsFromFile(read_B_from_path,Bfield_fp_external[lev][0].get(),"B","x");
         ReadExternalFieldsFromFile(read_B_from_path,Bfield_fp_external[lev][1].get(),"B","y");
         ReadExternalFieldsFromFile(read_B_from_path,Bfield_fp_external[lev][2].get(),"B","z");
     }
     if (E_ext_grid_s=="read_e_from_file" && lev==0) {
         std::string read_E_from_path="./";
-        pp_warpx.query("read_E_from_path", read_E_from_path);
+        //pp_warpx.query("read_E_from_path", read_E_from_path);
         ReadExternalFieldsFromFile(read_E_from_path,Efield_fp_external[lev][0].get(),"E","x");
         ReadExternalFieldsFromFile(read_E_from_path,Efield_fp_external[lev][1].get(),"E","y");
         ReadExternalFieldsFromFile(read_E_from_path,Efield_fp_external[lev][2].get(),"E","z");

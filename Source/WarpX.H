@@ -395,9 +395,9 @@ public:
     }
 
 //    amrex::MultiFab * get_pointer_Efield_aux  (int lev, int direction) const { return Efield_aux[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) const { return Bfield_aux[lev][direction].get(); }
+//    amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) const { return Bfield_aux[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Efield_aux  (int lev, int direction) const { return Efield_fp_external[0][direction].get(); }
-//    amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) const { return Bfield_fp_external[0][direction].get(); }
+    amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) const { return Bfield_fp_external[0][direction].get(); }
 
     amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }

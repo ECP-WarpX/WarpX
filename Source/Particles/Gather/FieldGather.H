@@ -416,6 +416,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                 Bzp += sx_bz[ix]*sy_bz[iy]*sz_bz[iz]*
                     ( bz_arr(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz) +
                   bz_arr_ext(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz) );
+std::cout << "@_@: " << bz_arr_ext(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz) << "\n";
 #else
                 Bzp += sx_bz[ix]*sy_bz[iy]*sz_bz[iz]*
                     bz_arr(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz);
