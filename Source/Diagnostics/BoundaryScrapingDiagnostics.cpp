@@ -120,7 +120,7 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
     int const n_species = m_output_species_names.size();
     m_totalParticles_flushed_already[0].resize(n_species);
     for (int i_species=0; i_species<n_species; i_species++) {
-        m_totalParticles_flushed_already[i_buffer][i_species] = 0;
+        m_totalParticles_flushed_already[0][i_species] = 0;
     }
 }
 
