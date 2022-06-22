@@ -35,18 +35,20 @@ BoundaryScrapingDiagnostics::ReadParameters ()
     m_varnames_fields = {}; // No fields in boundary scraping diagnostics
     m_varnames = {}; // No fields in boundary scraping diagnostics
 
-    // Number of buffers = 1 for BoundaryScrapingDiagnostics.
-    // (buffers are used in BTDiagnostics, and correspond to different snapshots)
-    m_num_buffers = 1;
+    // num_buffers corresponds to the number of boundaries
+    // (upper/lower domain boundary in each dimension)
+    // + the EB boundary if available
+    m_num_buffers = AMREX_SPACEDIM*2;
+#ifdef AMREX_USE_EB
+    m_num_buffers += 1;
+#endif
 
     // Do a few checks
-#ifndef AMREX_USE_EB
-    amrex::Abort("You need to compile WarpX with Embedded Boundary (EB) support, in order to use BoundaryScrapingDiagnostic: -DWarpX_EB=ON");
-#endif
 #ifndef WARPX_USE_OPENPMD
     amrex::Abort("You need to compile WarpX with openPMD support, in order to use BoundaryScrapingDiagnostic: -DWarpX_OPENPMD=ON");
 #endif
 
+    // TODO add check for `save_particle_at_xlo`, etc.
     // Check that saving at EB has been activated for each requested species
     std::set<std::string> particle_saving_activated;
     for (auto const& species_name : m_output_species_names){
@@ -108,21 +110,17 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
     ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for (auto const& species_name : m_output_species_names){
-            // `particle_buffer` contains buffers for all boundaries
-            // here we select the one for the EB (index: AMREX_SPACEDIM*2)
             WarpXParticleContainer* pc = &mpc.GetParticleContainerFromName(species_name);
-            PinnedMemoryParticleContainer* eb_buffer = particle_buffer.getParticleBufferPointer(species_name, AMREX_SPACEDIM*2);
-            m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species_name, pc, eb_buffer));
+            PinnedMemoryParticleContainer* bnd_buffer = particle_buffer.getParticleBufferPointer(species_name, i_buffer);
+            m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species_name, pc, bnd_buffer));
         }
     }
     // Initialize total number of particles flushed
-    m_totalParticles_flushed_already.resize(m_num_buffers);
-    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        int const n_species = m_output_species_names.size();
-        m_totalParticles_flushed_already[i_buffer].resize(n_species);
-        for (int i_species=0; i_species<n_species; i_species++) {
-            m_totalParticles_flushed_already[i_buffer][i_species] = 0;
-        }
+    m_totalParticles_flushed_already.resize(1);
+    int const n_species = m_output_species_names.size();
+    m_totalParticles_flushed_already[0].resize(n_species);
+    for (int i_species=0; i_species<n_species; i_species++) {
+        m_totalParticles_flushed_already[i_buffer][i_species] = 0;
     }
 }
 
@@ -162,6 +160,6 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         0., m_output_species[i_buffer], nlev_output, m_file_prefix,
         m_file_min_digits, false, false, isBTD, i_buffer, geom,
-        isLastBTD, m_totalParticles_flushed_already[i_buffer]);
+        isLastBTD, m_totalParticles_flushed_already[0]);
 
 }

@@ -34,8 +34,7 @@ private:
      * (i.e. whether to call Flush)
      *
      * \param[in] step current time step
-     * \param[in] i_buffer used only for BackTransformedDiagnostics.
-     * For BoundaryScrapingDiagnostics, this is always 0
+     * \param[in] i_buffer index of the boundary buffer used (e.g. upper/lower boundary, EB boundary)
      * \param[in] force_flush if true, return true for any step
      */
     bool DoDump (int step, int i_buffer, bool force_flush=false) override;
