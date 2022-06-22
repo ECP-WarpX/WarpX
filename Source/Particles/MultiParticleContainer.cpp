@@ -397,6 +397,29 @@ MultiParticleContainer::AllocData ()
 void
 MultiParticleContainer::InitData ()
 {
+    InitMultiPhysicsModules();
+
+    for (auto& pc : allcontainers) {
+        pc->InitData();
+    }
+    pc_tmp->InitData();
+
+}
+
+void
+MultiParticleContainer::PostRestart ()
+{
+    InitMultiPhysicsModules();
+
+    for (auto& pc : allcontainers) {
+        pc->PostRestart();
+    }
+    pc_tmp->PostRestart();
+}
+
+void
+MultiParticleContainer::InitMultiPhysicsModules ()
+{
     // Init ionization module here instead of in the MultiParticleContainer
     // constructor because dt is required to compute ionization rate pre-factors
     for (auto& pc : allcontainers) {
@@ -410,21 +433,6 @@ MultiParticleContainer::InitData ()
     CheckQEDProductSpecies();
     InitQED();
 #endif
-
-    for (auto& pc : allcontainers) {
-        pc->InitData();
-    }
-    pc_tmp->InitData();
-
-}
-
-void
-MultiParticleContainer::PostRestart ()
-{
-    for (auto& pc : allcontainers) {
-        pc->PostRestart();
-    }
-    pc_tmp->PostRestart();
 }
 
 void
