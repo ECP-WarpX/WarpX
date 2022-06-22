@@ -414,26 +414,6 @@ public:
         amrex::Real t,
         amrex::Real * AMREX_RESTRICT const amplitude) const override final;
 
-    /** \brief Function to fill the amplitude in case of a uniform grid.
-    * This function cannot be private due to restrictions related to
-    * the use of extended __device__ lambda
-    *
-    * \param idx_t_left index of the last time coordinate < t
-    * \param np: number of laser particles
-    * \param Xp: pointer to first component of positions of laser particles
-    * \param Yp: pointer to second component of positions of laser particles
-    * \param t: Current physical time
-    * \param amplitude: pointer to array of field amplitude.
-    */
-    void internal_fill_amplitude_uniform(
-        const int idx_t_left,
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
-        amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const;
-
-
 private:
     /** \brief parse a field file in formatted according to the OpenPMD standard.
     *
@@ -443,13 +423,6 @@ private:
     */
     void parse_spectral_file(std::string spectral_file_name);
 
-    /** \brief Finds left and right time indices corresponding to time t
-    *
-    *
-    * \param t: simulation time
-    */
-    std::pair<int,int> find_left_right_time_indices(amrex::Real t) const;
-
     /**
      * \brief m_params contains all the internal parameters
      * used by this laser profile
@@ -458,51 +431,28 @@ private:
         /** Name of the file containing the spectral data */
         std::string spectral_file_name;
         amrex::Real waist          = std::numeric_limits<amrex::Real>::quiet_NaN();
-        amrex::Real duration       = std::numeric_limits<amrex::Real>::quiet_NaN();
+        // amrex::Real duration       = std::numeric_limits<amrex::Real>::quiet_NaN();
         amrex::Real t_peak         = std::numeric_limits<amrex::Real>::quiet_NaN();
         amrex::Real focal_distance = std::numeric_limits<amrex::Real>::quiet_NaN();
-        amrex::Real zeta           = 0;
-        amrex::Real beta           = 0;
-        amrex::Real phi2           = 0;
-        amrex::Real phi0           = 0;
+        // amrex::Real zeta           = 0;
+        // amrex::Real beta           = 0;
+        // amrex::Real phi2           = 0;
+        // amrex::Real phi0           = 0;
 
-        amrex::Vector<amrex::Real> stc_direction; //! Direction of the spatio-temporal couplings
-        amrex::Real theta_stc; //! Angle between polarization (p_X) and direction of spatiotemporal coupling (stc_direction)
-        /** Flag to store if the grid is uniform */
-        bool is_grid_uniform = false;
-        /** Dimensions of E_data. nt, nx must be >=2.
-         * If DIM=3, ny must be >=2 as well.
-         * If DIM=2, ny must be 1 */
+        // amrex::Vector<amrex::Real> stc_direction; //! Direction of the spatio-temporal couplings
+        // amrex::Real theta_stc; //! Angle between polarization (p_X) and direction of spatiotemporal coupling (stc_direction)
+
+        /** Dimensions of E_data. nt must be >=2.
+         */
         int nt;
         /** Spacing of time grid
          * */
         amrex::Real dt;
         amrex::Real tmin, tmax;
-        /** Vector of temporal coordinates. For a non-uniform grid, it contains
-         * all values of time. For a uniform grid, it contains only the start and stop
-         * times and intermediate times are obtained with nt */
-        amrex::Vector<amrex::Real> t_coords;
-        /** Vector or x coordinates. For a non-uniform grid, it contains all values
-         * of space dimension x. For a uniform grid, it contains only the min and max
-         * x coordinates, and intermediate positions are obtained with nx */
-        amrex::Vector<amrex::Real> h_x_coords;
-        amrex::Gpu::DeviceVector<amrex::Real> d_x_coords;
-        /** Vector or y coordinates. For a non-uniform grid, it contains all values
-         * of space dimension y. For a uniform grid, it contains only the min and max
-         * y coordinates, and intermediate positions are obtained with ny */
-        amrex::Vector<amrex::Real> h_y_coords;
-        amrex::Gpu::DeviceVector<amrex::Real> d_y_coords;
-        /** Size of the timestep range to load */
-        int time_chunk_size;
-        /** Index of the first timestep in memory */
-        int first_time_index;
-        /** Index of the last timestep in memory */
-        int last_time_index;
         /** Field data */
         amrex::Gpu::DeviceVector<Complex> E_data;
         /** This parameter is subtracted to simulation time before interpolating field data in txye file.
         *   If t_delay > 0, the laser is delayed, otherwise it is anticipated. */
-        amrex::Real t_delay = amrex::Real(0.0);
 
     } m_params;
 
