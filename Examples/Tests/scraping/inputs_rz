@@ -40,10 +40,6 @@ electron.momentum_function_ux(x,y,z) = "if(x*x+y*y>0.0, -1.0*x/sqrt(x*x+y*y), 0.
 electron.momentum_function_uy(x,y,z) = "if(x*x+y*y>0.0, -1.0*y/sqrt(x*x+y*y), 0.0)"
 electron.momentum_function_uz(x,y,z) = "0"
 electron.do_not_deposit = 1
-electron.save_particles_at_xlo = 1
-electron.save_particles_at_xhi = 1
-electron.save_particles_at_zlo = 1
-electron.save_particles_at_zhi = 1
 electron.save_particles_at_eb = 1
 
 diagnostics.diags_names = diag1 diag2 diag3
