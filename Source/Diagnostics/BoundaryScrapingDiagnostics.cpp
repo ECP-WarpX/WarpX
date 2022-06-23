@@ -49,7 +49,7 @@ BoundaryScrapingDiagnostics::ReadParameters ()
 #endif
 
     // Check that the output format is openPMD
-    error_string = std::string("You need to set `")
+    std::string error_string = std::string("You need to set `")
         .append(m_diag_name)
         .append(".format=openpmd` for the BoundaryScrapingDiagnostic.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
