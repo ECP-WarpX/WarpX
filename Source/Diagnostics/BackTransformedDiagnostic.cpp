@@ -7,12 +7,13 @@
  */
 #include "BackTransformedDiagnostic.H"
 
-#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
+
+#include <ablastr/utils/Communication.H>
 
 #include <AMReX_Array4.H>
 #include <AMReX_BLassert.H>
@@ -790,8 +791,10 @@ void BackTransformedDiagnostic::Flush (const Geometry& /*geom*/)
                 MultiFab tmp(buff_ba, buff_dm, ncomp, 0);
                 tmp.setVal(0.0);
 
-                WarpXCommUtil::ParallelCopy(tmp, *lf_diags->m_data_buffer_, 0, 0, ncomp,
-                                            IntVect(AMREX_D_DECL(0, 0, 0)), IntVect(AMREX_D_DECL(0, 0, 0)));
+                ablastr::utils::communication::ParallelCopy(tmp, *lf_diags->m_data_buffer_, 0, 0, ncomp,
+                                                            IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                            IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                            WarpX::do_single_precision_comms);
 
 #ifdef WARPX_USE_HDF5
                 for (int comp = 0; comp < ncomp; ++comp) {
@@ -946,8 +949,10 @@ writeLabFrameData (const MultiFab* cell_centered_data,
              // which has the dmap of the domain to
              // tmp_slice_ptr which has the dmap of the
              // data_buffer that stores the back-transformed data.
-             WarpXCommUtil::ParallelCopy(*tmp_slice_ptr, *slice, 0, 0, ncomp,
-                                         IntVect(AMREX_D_DECL(0, 0, 0)), IntVect(AMREX_D_DECL(0, 0, 0)));
+            ablastr::utils::communication::ParallelCopy(*tmp_slice_ptr, *slice, 0, 0, ncomp,
+                                                        IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                        IntVect(AMREX_D_DECL(0, 0, 0)),
+                                                        WarpX::do_single_precision_comms);
              lf_diags->AddDataToBuffer(*tmp_slice_ptr, i_lab,
                                                map_actual_fields_to_dump);
              tmp_slice_ptr = nullptr;

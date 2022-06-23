@@ -8,6 +8,7 @@
 #ifndef PROTON_BORON_FUSION_INITIALIZE_MOMENTUM_H
 #define PROTON_BORON_FUSION_INITIALIZE_MOMENTUM_H
 
+#include "TwoProductFusionUtil.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/ParticleUtils.H"
 #include "Utils/WarpXConst.H"
@@ -64,7 +65,6 @@ namespace {
     {
         // General notations in this function:
         //     x_sq denotes the square of x
-        //     x_star denotes the value of x in the proton+boron center of mass frame
         //     x_Bestar denotes the value of x in the Beryllium rest frame
 
         using namespace amrex::literals;
@@ -83,102 +83,28 @@ namespace {
         // precision anyways.
         constexpr double m_alpha = PhysConst::m_p * 3.97369_prt;
         constexpr double m_beryllium = PhysConst::m_p * 7.94748_prt;
-        constexpr double ma_sq = m_alpha*m_alpha;
         constexpr double mBe_sq = m_beryllium*m_beryllium;
         constexpr amrex::ParticleReal c_sq = PhysConst::c * PhysConst::c;
-        constexpr amrex::ParticleReal inv_csq = 1._prt / ( c_sq );
-        // Rest energy of proton+boron
-        const amrex::ParticleReal E_rest_pb = (m1 + m2)*c_sq;
-        // Rest energy of alpha+beryllium
-        constexpr amrex::ParticleReal E_rest_abe = (m_alpha + m_beryllium)*c_sq;
 
-        // Normalized momentum of colliding particles (proton and boron)
-        const amrex::ParticleReal u1x = soa_1.m_rdata[PIdx::ux][idx_1];
-        const amrex::ParticleReal u1y = soa_1.m_rdata[PIdx::uy][idx_1];
-        const amrex::ParticleReal u1z = soa_1.m_rdata[PIdx::uz][idx_1];
-        const amrex::ParticleReal u2x = soa_2.m_rdata[PIdx::ux][idx_2];
-        const amrex::ParticleReal u2y = soa_2.m_rdata[PIdx::uy][idx_2];
-        const amrex::ParticleReal u2z = soa_2.m_rdata[PIdx::uz][idx_2];
+        // Compute the resulting momenta of the alpha and beryllium particles
+        // produced in the fusion reaction
+        amrex::ParticleReal ux_alpha1 = 0.0, uy_alpha1 = 0.0, uz_alpha1 = 0.0;
+        amrex::ParticleReal ux_Be = 0.0, uy_Be = 0.0, uz_Be = 0.0;
+        TwoProductFusionComputeProductMomenta (
+            soa_1.m_rdata[PIdx::ux][idx_1],
+            soa_1.m_rdata[PIdx::uy][idx_1],
+            soa_1.m_rdata[PIdx::uz][idx_1], m1,
+            soa_2.m_rdata[PIdx::ux][idx_2],
+            soa_2.m_rdata[PIdx::uy][idx_2],
+            soa_2.m_rdata[PIdx::uz][idx_2], m2,
+            ux_alpha1, uy_alpha1, uz_alpha1, m_alpha,
+            ux_Be, uy_Be, uz_Be, m_beryllium,
+            E_fusion, engine);
 
-        // Compute Lorentz factor gamma in the lab frame
-        const amrex::ParticleReal g1 = std::sqrt( 1._prt + (u1x*u1x+u1y*u1y+u1z*u1z)*inv_csq );
-        const amrex::ParticleReal g2 = std::sqrt( 1._prt + (u2x*u2x+u2y*u2y+u2z*u2z)*inv_csq );
-
-        // Compute momenta
-        const amrex::ParticleReal p1x = u1x * m1;
-        const amrex::ParticleReal p1y = u1y * m1;
-        const amrex::ParticleReal p1z = u1z * m1;
-        const amrex::ParticleReal p2x = u2x * m2;
-        const amrex::ParticleReal p2y = u2y * m2;
-        const amrex::ParticleReal p2z = u2z * m2;
-        // Square norm of the total (sum between the two particles) momenta in the lab frame
-        auto constexpr pow2 = [](double const x) { return x*x; };
-        const amrex::ParticleReal p_total_sq =  pow2(p1x+p2x) +
-                                                pow2(p1y+p2y) +
-                                                pow2(p1z+p2z);
-
-        // Total energy of proton+boron in the lab frame
-        const amrex::ParticleReal E_lab = (m1 * g1 + m2 * g2) * c_sq;
-        // Total energy squared of proton+boron in the center of mass frame, calculated using the
-        // Lorentz invariance of the four-momentum norm
-        const amrex::ParticleReal E_star_sq = E_lab*E_lab - c_sq*p_total_sq;
-        // Total energy squared of beryllium+alpha in the center of mass frame
-        // In principle, the term - E_rest_pb + E_rest_abe + E_fusion is not needed and equal to
-        // zero (i.e. the energy liberated during fusion is equal to the mass difference). However,
-        // due to possible inconsistencies in how the mass is defined in the code (e.g. currently,
-        // the mass of hydrogen is the mass of the proton, not including the electron, while the
-        // mass of the other elements is the atomic mass, that includes the electrons mass), it is
-        // probably more robust to subtract the rest masses and to add the fusion energy to the
-        // total kinetic energy.
-        const amrex::ParticleReal E_star_f_sq = pow2(std::sqrt(E_star_sq)
-                                                         - E_rest_pb + E_rest_abe + E_fusion);
-
-        // Square of the norm of the momentum of Beryllium or alpha in the center of mass frame
-        // Formula obtained by inverting E^2 = p^2*c^2 + m^2*c^4 in the COM frame for each particle
-        auto constexpr pow3 = [](double const x) { return x*x*x; };
-        const amrex::ParticleReal p_star_f_sq =
-            E_star_f_sq*0.25_prt*inv_csq - (ma_sq + mBe_sq)*c_sq*0.5_prt +
-            pow3(c_sq)*0.25_prt * pow2(ma_sq - mBe_sq) / E_star_f_sq;
-
-        // Compute momentum of first alpha in the center of mass frame, assuming isotropic
-        // distribution
-        amrex::ParticleReal px_star, py_star, pz_star;
-        ParticleUtils::RandomizeVelocity(px_star, py_star, pz_star, std::sqrt(p_star_f_sq),
-                                         engine);
-
-        // Next step is to convert momentum of first alpha to lab frame
-        amrex::ParticleReal px_alpha1, py_alpha1, pz_alpha1;
-        // Preliminary calculation: compute center of mass velocity vc
-        const amrex::ParticleReal mass_g = m1 * g1 + m2 * g2;
-        const amrex::ParticleReal vcx    = (p1x+p2x) / mass_g;
-        const amrex::ParticleReal vcy    = (p1y+p2y) / mass_g;
-        const amrex::ParticleReal vcz    = (p1z+p2z) / mass_g;
-        const amrex::ParticleReal vc_sq   = vcx*vcx + vcy*vcy + vcz*vcz;
-
-        // Convert momentum of first alpha to lab frame, using equation (13) of F. Perez et al.,
-        // Phys.Plasmas.19.083104 (2012)
-        if ( vc_sq > std::numeric_limits<amrex::ParticleReal>::min() )
-        {
-            const amrex::ParticleReal gc = 1._prt / std::sqrt( 1._prt - vc_sq*inv_csq );
-            const amrex::ParticleReal g_star = std::sqrt(1._prt + p_star_f_sq / (ma_sq*c_sq));
-            const amrex::ParticleReal vcDps = vcx*px_star + vcy*py_star + vcz*pz_star;
-            const amrex::ParticleReal factor0 = (gc-1._prt)/vc_sq;
-            const amrex::ParticleReal factor = factor0*vcDps + m_alpha*g_star*gc;
-            px_alpha1 = px_star + vcx * factor;
-            py_alpha1 = py_star + vcy * factor;
-            pz_alpha1 = pz_star + vcz * factor;
-        }
-        else // If center of mass velocity is zero, we are already in the lab frame
-        {
-            px_alpha1 = px_star;
-            py_alpha1 = py_star;
-            pz_alpha1 = pz_star;
-        }
-
-        // Compute momentum of beryllium in lab frame, using total momentum conservation
-        const amrex::ParticleReal px_Be = p1x + p2x - px_alpha1;
-        const amrex::ParticleReal py_Be = p1y + p2y - py_alpha1;
-        const amrex::ParticleReal pz_Be = p1z + p2z - pz_alpha1;
+        // Compute momentum of beryllium in lab frame
+        const amrex::ParticleReal px_Be = m_beryllium * ux_Be;
+        const amrex::ParticleReal py_Be = m_beryllium * uy_Be;
+        const amrex::ParticleReal pz_Be = m_beryllium * uz_Be;
 
         // Compute momentum norm of second and third alphas in Beryllium rest frame
         // Factor 0.5 is here because each alpha only gets half of the decay energy
@@ -227,12 +153,12 @@ namespace {
         // Fill alpha species momentum data with the computed momentum (note that we actually
         // create 6 alphas, 3 at the position of the proton and 3 at the position of the boron, so
         // each computed momentum is used twice)
-        soa_alpha.m_rdata[PIdx::ux][idx_alpha_start] = px_alpha1/m_alpha;
-        soa_alpha.m_rdata[PIdx::uy][idx_alpha_start] = py_alpha1/m_alpha;
-        soa_alpha.m_rdata[PIdx::uz][idx_alpha_start] = pz_alpha1/m_alpha;
-        soa_alpha.m_rdata[PIdx::ux][idx_alpha_start + 1] = px_alpha1/m_alpha;
-        soa_alpha.m_rdata[PIdx::uy][idx_alpha_start + 1] = py_alpha1/m_alpha;
-        soa_alpha.m_rdata[PIdx::uz][idx_alpha_start + 1] = pz_alpha1/m_alpha;
+        soa_alpha.m_rdata[PIdx::ux][idx_alpha_start] = ux_alpha1;
+        soa_alpha.m_rdata[PIdx::uy][idx_alpha_start] = uy_alpha1;
+        soa_alpha.m_rdata[PIdx::uz][idx_alpha_start] = uz_alpha1;
+        soa_alpha.m_rdata[PIdx::ux][idx_alpha_start + 1] = ux_alpha1;
+        soa_alpha.m_rdata[PIdx::uy][idx_alpha_start + 1] = uy_alpha1;
+        soa_alpha.m_rdata[PIdx::uz][idx_alpha_start + 1] = uz_alpha1;
         soa_alpha.m_rdata[PIdx::ux][idx_alpha_start + 2] = px_alpha2/m_alpha;
         soa_alpha.m_rdata[PIdx::uy][idx_alpha_start + 2] = py_alpha2/m_alpha;
         soa_alpha.m_rdata[PIdx::uz][idx_alpha_start + 2] = pz_alpha2/m_alpha;
