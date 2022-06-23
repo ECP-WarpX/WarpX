@@ -74,7 +74,7 @@ macro(set_default_install_dirs)
     if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
         include(GNUInstallDirs)
         if(NOT CMAKE_INSTALL_CMAKEDIR)
-            set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/WarpX"
+            set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake"
                     CACHE PATH "CMake config package location for installed targets")
             if(WIN32)
                 set(CMAKE_INSTALL_LIBDIR Lib
@@ -83,6 +83,12 @@ macro(set_default_install_dirs)
             endif()
             mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
         endif()
+    endif()
+
+    if(WIN32)
+        set(WarpX_INSTALL_CMAKEDIR "${CMAKE_INSTALL_CMAKEDIR}")
+    else()
+        set(WarpX_INSTALL_CMAKEDIR "${CMAKE_INSTALL_CMAKEDIR}/WarpX")
     endif()
 endmacro()
 
@@ -345,10 +351,7 @@ function(warpx_print_summary)
     message("        bin: ${CMAKE_INSTALL_BINDIR}")
     message("        lib: ${CMAKE_INSTALL_LIBDIR}")
     message("    include: ${CMAKE_INSTALL_INCLUDEDIR}")
-    message("      cmake: ${CMAKE_INSTALL_CMAKEDIR}")
-    if(WarpX_HAVE_PYTHON)
-        message("     python: ${CMAKE_INSTALL_PYTHONDIR}")
-    endif()
+    message("      cmake: ${WarpX_INSTALL_CMAKEDIR}")
     message("")
     set(BLD_TYPE_UNKNOWN "")
     if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR AND

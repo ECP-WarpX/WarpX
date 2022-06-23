@@ -88,7 +88,7 @@ macro(find_amrex)
         endif()
 
         # shared libs, i.e. for Python bindings, need relocatable code
-        if(WarpX_LIB)
+        if(WarpX_LIB OR ABLASTR_POSITION_INDEPENDENT_CODE)
             set(AMReX_PIC ON CACHE INTERNAL "")
         endif()
 
@@ -241,7 +241,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "22.06"
+set(WarpX_amrex_branch "2d931f63cb4d611d0d23d694726889647f8a482d"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 
