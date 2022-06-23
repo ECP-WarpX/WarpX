@@ -2235,10 +2235,11 @@ Back-Transformed Diagnostics (legacy output)
 Boundary Scraping Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``BoundaryScrapingDiagnostics`` are used to collect the particles that are absorbed at the embedded boundary, throughout the simulation.
+``BoundaryScrapingDiagnostics`` are used to collect the particles that are absorbed at the boundaries, throughout the simulation.
 (Note that this diagnostics does not save any field ; it only saves particles.)
 Currently, the only supported output format is openPMD, so the user needs to set ``<diag>.format=openpmd``. In addition, the user needs
-to set ``<species>.save_particles_at_eb=1`` for each of the species that are to be saved in this diagnostic.
+to set ``<species>.save_particles_at_xlo/ylo/zlo``, ``<species>.save_particles_at_xhi/yhi/zhi``, ``<species>.save_particles_at_eb``
+to ``1`` for the species and boundaries that are to be recorded on file.
 
 In addition to their usual attributes, the saved particles have an additional integer attribute ``timestamp``, which
 indicates the PIC iteration at which each particle was absorbed at the boundary.
