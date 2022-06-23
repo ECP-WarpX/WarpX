@@ -564,6 +564,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     if (! isBTD) {
         tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
     } else {
+        if (!pinned_pc->isDefined()) continue; // Skip to the next particle container
         tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
     }
     // names of amrex::Real and int particle attributes in SoA data
