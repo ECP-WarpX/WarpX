@@ -116,11 +116,13 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
         }
     }
     // Initialize total number of particles flushed
-    m_totalParticles_flushed_already.resize(1);
-    int const n_species = m_output_species_names.size();
-    m_totalParticles_flushed_already[0].resize(n_species);
-    for (int i_species=0; i_species<n_species; i_species++) {
-        m_totalParticles_flushed_already[0][i_species] = 0;
+    m_totalParticles_flushed_already.resize(m_num_buffers);
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        int const n_species = m_output_species_names.size();
+        m_totalParticles_flushed_already[i_buffer].resize(n_species);
+        for (int i_species=0; i_species<n_species; i_species++) {
+            m_totalParticles_flushed_already[i_buffer][i_species] = 0;
+        }
     }
 }
 
@@ -159,7 +161,7 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         0., m_output_species[i_buffer], nlev_output, m_file_prefix,
-        m_file_min_digits, false, false, isBTD, 0, geom,
-        isLastBTD, m_totalParticles_flushed_already[0]);
+        m_file_min_digits, false, false, isBTD, i_buffer, geom,
+        isLastBTD, m_totalParticles_flushed_already[i_buffer]);
 
 }
