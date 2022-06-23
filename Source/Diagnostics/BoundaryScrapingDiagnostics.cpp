@@ -159,7 +159,7 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         0., m_output_species[i_buffer], nlev_output, m_file_prefix,
-        m_file_min_digits, false, false, isBTD, i_buffer, geom,
+        m_file_min_digits, false, false, isBTD, 0, geom,
         isLastBTD, m_totalParticles_flushed_already[0]);
 
 }
