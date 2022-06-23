@@ -50,7 +50,7 @@ diag1.fields_to_plot = Ex
 
 diag2.intervals = 1
 diag2.diag_type = Full
-diag2.fields_to_plot = Er
+diag2.fields_to_plot = none
 diag2.format = openpmd
 
 diag3.diag_type = BoundaryScraping

@@ -69,6 +69,11 @@ Diagnostics::BaseReadParameters ()
             m_varnames_fields = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
         }
     }
+    if (m_varnames_fields[0] == "none") {
+        m_varnames_fields = {};
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_format == "openpmd",
+           "`fields_to_plot = none` only works in combination with `format = openpmd`");
+    }
 
     // Sanity check if user requests to plot phi
     if (WarpXUtilStr::is_in(m_varnames_fields, "phi")){
