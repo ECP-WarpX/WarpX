@@ -125,9 +125,6 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
         }
     }
 
-    std::cout << "np = " << np << std::endl;
-    std::cout << "nfine_gather = " << nfine_gather << std::endl;
-    std::cout << "nfine_current = " << nfine_current << std::endl;
     // only deposit / gather to coarsest grid
     if (m_deposit_on_main_grid && lev > 0) {
         nfine_current = 0;
