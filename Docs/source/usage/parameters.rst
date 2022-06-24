@@ -1998,6 +1998,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``,
     unless in RZ geometry with ``<diag_name>.format == openpmd``,
     then default is ``<diag_name>.fields_to_plot = Er Et Ez Br Bt Bz jr jt jz``.
+    When the special value ``none`` is specified, no fields are written out.
     Note that the fields are averaged on the cell centers before they are written to file.
     Also, when ``<diag_name>.format = openpmd``, the RZ modes for all fields are written.
     Otherwise, we reconstruct a 2D Cartesian slice of the fields for output at :math:`\theta=0`.
