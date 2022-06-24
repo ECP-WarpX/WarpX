@@ -1243,6 +1243,8 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
                     self.plot_finepatch = 1
                 elif dataname == 'crsepatch':
                     self.plot_crsepatch = 1
+                elif dataname == 'none':
+                    fields_to_plot = set(('none',))
 
             # --- Convert the set to a sorted list so that the order
             # --- is the same on all processors.
