@@ -149,9 +149,6 @@ private:
 
     /** Vector of lab-frame time corresponding to each snapshot */
     amrex::Vector<amrex::Real> m_t_lab;
-    /** Vector of lab-frame physical domain corresponding to the boosted-frame simulation
-     *  domain at lab-frame time corresponding to each snapshot*/
-    amrex::Vector<amrex::RealBox> m_prob_domain_lab;
     /** Vector of user-defined physical region for diagnostics in lab-frame
      *  for each back-transformed snapshot */
     amrex::Vector<amrex::RealBox> m_snapshot_domain_lab;
