@@ -62,7 +62,6 @@ void BTDiagnostics::DerivedInitData ()
     nlev_output = 1;
 
     m_t_lab.resize(m_num_buffers);
-    m_prob_domain_lab.resize(m_num_buffers);
     m_snapshot_domain_lab.resize(m_num_buffers);
     m_buffer_domain_lab.resize(m_num_buffers);
     m_snapshot_box.resize(m_num_buffers);
@@ -238,17 +237,6 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab
         + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
 
-    // Compute lab-frame co-ordinates that correspond to the simulation domain
-    // at level, lev, and time, m_t_lab[i_buffer] for each ith buffer.
-    m_prob_domain_lab[i_buffer] = warpx.Geom(lev).ProbDomain();
-    amrex::Real zmin_prob_domain_lab = m_prob_domain_lab[i_buffer].lo(m_moving_window_dir)
-                                      / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-    amrex::Real zmax_prob_domain_lab = m_prob_domain_lab[i_buffer].hi(m_moving_window_dir)
-                                      / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-    m_prob_domain_lab[i_buffer].setLo(m_moving_window_dir, zmin_prob_domain_lab +
-                                               warpx.moving_window_v * m_t_lab[i_buffer] );
-    m_prob_domain_lab[i_buffer].setHi(m_moving_window_dir, zmax_prob_domain_lab +
-                                               warpx.moving_window_v * m_t_lab[i_buffer] );
 
     // Define buffer domain in boosted frame at level, lev, with user-defined lo and hi
     amrex::RealBox diag_dom;
@@ -311,12 +299,6 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
                                  / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
 
 
-    m_snapshot_domain_lab[i_buffer] = diag_dom;
-    m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir,
-                                  zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
-    m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
-                                  zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
-
     // Initialize buffer counter and z-positions of the  i^th snapshot in
     // boosted-frame and lab-frame
     m_buffer_flush_counter[i_buffer] = 0;
@@ -368,6 +350,29 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
 #else
     m_snapshot_ncells_lab[i_buffer] = amrex::IntVect(Nz_lab);
 #endif
+
+    // Estimating the maximum number of buffer multifabs needed to obtain the
+    // full lab-frame snapshot
+    m_max_buffer_multifabs[i_buffer] = static_cast<int>( std::ceil (
+        amrex::Real(m_snapshot_ncells_lab[i_buffer][m_moving_window_dir]) /
+        amrex::Real(m_buffer_size) ) );
+    // Number of cells in moving window dir (z-direction) is modified since each buffer multifab always
+    // contains a minimum of m_buffer_size cells
+    int num_z_cells_in_snapshot = m_max_buffer_multifabs[i_buffer] * m_buffer_size;
+    // Compute lab-frame co-ordinates that correspond to the simulation domain
+    // at level, lev, and time, m_t_lab[i_buffer] for each ith buffer.
+    m_snapshot_domain_lab[i_buffer] = diag_dom;
+    m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir,
+                                  zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+    m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
+                                  zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+    // Based on the number of cells in the z-direction, shifting the lo end of the domain to accomodate
+    // all the back-transformed multifabs that will be flushed.
+    amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
+                         num_z_cells_in_snapshot *
+                         dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+    m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_lo);
+
 }
 
 void
@@ -541,6 +546,16 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                         }
                         DefineFieldBufferMultiFab(i_buffer, lev);
                     }
+                    if ( m_current_z_lab[i_buffer] < m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) ||
+                        m_current_z_lab[i_buffer] > m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir) )
+                    {
+                        amrex::Print() << " current zlab " << m_current_z_lab[i_buffer] << " lo : " << m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) << " hi " << m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir) << "\n";
+                    }
+                   WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                       m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
+                       m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir),
+                       "z-slice in lab-frame is outside the buffer domain physical extent. ");
+
                 }
                 m_all_field_functors[lev][i]->PrepareFunctorData (
                                              i_buffer, ZSliceInDomain,
@@ -566,12 +581,13 @@ int
 BTDiagnostics::k_index_zlab (int i_buffer, int lev)
 {
     auto & warpx = WarpX::GetInstance();
-    amrex::Real prob_domain_zmin_lab = m_prob_domain_lab[i_buffer].lo( m_moving_window_dir );
+    amrex::Real prob_domain_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );
     amrex::IntVect ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
     int k_lab = static_cast<int>(floor (
                           ( m_current_z_lab[i_buffer]
-                            - (prob_domain_zmin_lab + 0.5*dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]) ) )
+                            - (prob_domain_zmin_lab ) )
+//                            - (prob_domain_zmin_lab + 0.5*dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]) ) )
                           / dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] )
                       ) );
     return k_lab;
@@ -616,10 +632,14 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
             } else {
                 cellsize = dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
             }
-            amrex::Real buffer_lo = m_prob_domain_lab[i_buffer].lo(idim)
-                                    + (buffer_ba.getCellCenteredBox(0).smallEnd(idim) ) * cellsize;
-            amrex::Real buffer_hi = m_prob_domain_lab[i_buffer].lo(idim) +
-                                          (buffer_ba.getCellCenteredBox( buffer_ba.size()-1 ).bigEnd(idim) + 1) * cellsize;
+            // The physical lo,hi of the buffer that is currently filled.
+            // This buffer is a small portion of the full snapshot
+            amrex::Real buffer_lo = m_snapshot_domain_lab[i_buffer].lo(idim)
+                                    + (buffer_ba.getCellCenteredBox(0).smallEnd(idim)
+                                      - m_snapshot_box[i_buffer].smallEnd(idim)) * cellsize;
+            amrex::Real buffer_hi = m_snapshot_domain_lab[i_buffer].lo(idim)
+                                    + (buffer_ba.getCellCenteredBox( buffer_ba.size()-1 ).bigEnd(idim)
+                                      - m_snapshot_box[i_buffer].smallEnd(idim) + 1) * cellsize;
             m_buffer_domain_lab[i_buffer].setLo(idim, buffer_lo);
             m_buffer_domain_lab[i_buffer].setHi(idim, buffer_hi);
         }
@@ -659,7 +679,7 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
             amrex::Real(m_snapshot_ncells_lab[i_buffer][m_moving_window_dir]) /
             amrex::Real(m_buffer_size) ) );
         // number of cells in z is modified since each buffer multifab always
-        // contains a minimum m_buffer_size=256 cells
+        // contains a minimum m_buffer_size cells
         int num_z_cells_in_snapshot = m_max_buffer_multifabs[i_buffer] * m_buffer_size;
         // Modify the domain indices according to the buffers that are flushed out
         m_snapshot_box[i_buffer].setSmall( m_moving_window_dir,
@@ -669,10 +689,6 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
         // Modifying the physical coordinates of the lab-frame snapshot to be
         // consistent with the above modified domain-indices in m_snapshot_box.
         amrex::IntVect ref_ratio = amrex::IntVect(1);
-        amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
-                             num_z_cells_in_snapshot *
-                             dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
-        m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_lo);
         if (lev == 0) {
             // The extent of the physical domain covered by the ith snapshot
             // Default non-periodic geometry for diags
