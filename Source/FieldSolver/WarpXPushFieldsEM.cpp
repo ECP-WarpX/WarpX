@@ -635,7 +635,9 @@ WarpX::PushPSATD ()
         PSATDVayDeposition();
         PSATDBackwardTransformJ(current_fp, current_cp);
         PSATDSubtractCurrentPartialSumsAvg();
-        SyncCurrent();
+        const bool apply_filtering = false;
+        const bool sum_guard_cells = true;
+        SyncCurrent(current_fp, current_cp, apply_filtering, sum_guard_cells);
         PSATDForwardTransformJ(current_fp, current_cp);
     }
 

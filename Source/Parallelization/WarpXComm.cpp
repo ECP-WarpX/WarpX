@@ -855,12 +855,13 @@ WarpX::FillBoundaryAux (int lev, IntVect ng)
 }
 
 void
-WarpX::SyncCurrent ()
+WarpX::SyncCurrent (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const bool apply_filtering,
+    const bool sum_guard_cells)
 {
     WARPX_PROFILE("WarpX::SyncCurrent()");
-
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp = current_fp;
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp = current_cp;
 
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
     if (WarpX::do_current_centering)
@@ -899,7 +900,7 @@ WarpX::SyncCurrent ()
     // - add the coarse patch/buffer of `lev+1` into the fine patch of `lev`
     // - sum guard cells of the coarse patch of `lev+1` and fine patch of `lev`
     for (int lev=0; lev <= finest_level; ++lev) {
-        AddCurrentFromFineLevelandSumBoundary(J_fp, J_cp, lev);
+        AddCurrentFromFineLevelandSumBoundary(J_fp, J_cp, lev, apply_filtering, sum_guard_cells);
     }
 }
 
@@ -958,7 +959,9 @@ void WarpX::ApplyFilterandSumBoundaryJ (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
     const int lev,
-    PatchType patch_type)
+    PatchType patch_type,
+    const bool apply_filtering,
+    const bool sum_guard_cells)
 {
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
     const amrex::Periodicity& period = Geom(glev).periodicity();
@@ -980,16 +983,27 @@ void WarpX::ApplyFilterandSumBoundaryJ (
             ng_depos_J[2] += WarpX::current_centering_noz / 2;
 #endif
         }
-        if (use_filter) {
+        if (use_filter && apply_filtering) {
             ng += bilinear_filter.stencil_length_each_dir-1;
-            ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
-            ng_depos_J.min(ng);
             MultiFab jf(j[idim]->boxArray(), j[idim]->DistributionMap(), j[idim]->nComp(), ng);
             bilinear_filter.ApplyStencil(jf, *j[idim], lev);
-            WarpXSumGuardCells(*(j[idim]), jf, period, ng_depos_J, 0, (j[idim])->nComp());
+            if (sum_guard_cells)
+            {
+                ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
+                ng_depos_J.min(ng);
+                WarpXSumGuardCells(*(j[idim]), jf, period, ng_depos_J, 0, (j[idim])->nComp());
+            }
+            else
+            {
+                // TODO Use amrex::MultiFab::Copy instead
+                WarpXSumGuardCells(*(j[idim]), jf, period, amrex::IntVect(0), 0, (j[idim])->nComp());
+            }
         } else {
-            ng_depos_J.min(ng);
-            WarpXSumGuardCells(*(j[idim]), period, ng_depos_J, 0, (j[idim])->nComp());
+            if (sum_guard_cells)
+            {
+                ng_depos_J.min(ng);
+                WarpXSumGuardCells(*(j[idim]), period, ng_depos_J, 0, (j[idim])->nComp());
+            }
         }
     }
 }
@@ -1010,9 +1024,11 @@ void WarpX::ApplyFilterandSumBoundaryJ (
 void WarpX::AddCurrentFromFineLevelandSumBoundary (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-    const int lev)
+    const int lev,
+    const bool apply_filtering,
+    const bool sum_guard_cells)
 {
-    ApplyFilterandSumBoundaryJ(J_fp, J_cp, lev, PatchType::fine);
+    ApplyFilterandSumBoundaryJ(J_fp, J_cp, lev, PatchType::fine, apply_filtering, sum_guard_cells);
 
     if (lev < finest_level) {
         // When there are current buffers, unlike coarse patch,

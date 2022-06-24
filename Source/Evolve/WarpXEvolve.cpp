@@ -403,9 +403,17 @@ WarpX::OneStep_nosub (Real cur_time)
     // the actual current J. This is computed later in WarpX::PushPSATD, by calling
     // WarpX::PSATDVayDeposition. The function SyncCurrent is called after that,
     // instead of here, so that we synchronize the correct current.
-    if (WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay)
+    if (current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
-        SyncCurrent();
+        const bool apply_filtering = true;
+        const bool sum_guard_cells = false;
+        SyncCurrent(current_fp_vay, current_cp, apply_filtering, sum_guard_cells);
+    }
+    else
+    {
+        const bool apply_filtering = use_filter;
+        const bool sum_guard_cells = true;
+        SyncCurrent(current_fp, current_cp, apply_filtering, sum_guard_cells);
     }
     SyncRho();
 
@@ -534,7 +542,9 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
     mypc->DepositCurrent(current, dt[0], -dt[0]);
     // Filter, exchange boundary, and interpolate across levels
-    SyncCurrent();
+    const bool apply_filtering = use_filter;
+    const bool sum_guard_cells = true;
+    SyncCurrent(current_fp, current_cp, apply_filtering, sum_guard_cells);
     // Forward FFT of J
     PSATDForwardTransformJ(current_fp, current_cp);
 
@@ -558,7 +568,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // (dt[0] denotes the time step on mesh refinement level 0)
         mypc->DepositCurrent(current, dt[0], t_depose);
         // Filter, exchange boundary, and interpolate across levels
-        SyncCurrent();
+        SyncCurrent(current_fp, current_cp, apply_filtering, sum_guard_cells);
         // Forward FFT of J
         PSATDForwardTransformJ(current_fp, current_cp);
 
@@ -679,7 +689,10 @@ WarpX::OneStep_sub1 (Real curtime)
     PushParticlesandDepose(fine_lev, curtime, DtType::FirstHalf);
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
     RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
-    ApplyFilterandSumBoundaryJ(current_fp, current_cp, fine_lev, PatchType::fine);
+    const bool apply_filtering = use_filter;
+    const bool sum_guard_cells = true;
+    ApplyFilterandSumBoundaryJ(current_fp, current_cp, fine_lev, PatchType::fine,
+                               apply_filtering, sum_guard_cells);
     ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, 2*ncomps);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
@@ -706,7 +719,8 @@ WarpX::OneStep_sub1 (Real curtime)
     // by only half a coarse step (first half)
     PushParticlesandDepose(coarse_lev, curtime, DtType::Full);
     StoreCurrent(coarse_lev);
-    AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, coarse_lev);
+    AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, coarse_lev,
+                                          apply_filtering, sum_guard_cells);
     AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, coarse_lev, 0, ncomps);
 
     EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
@@ -735,7 +749,8 @@ WarpX::OneStep_sub1 (Real curtime)
     PushParticlesandDepose(fine_lev, curtime+dt[fine_lev], DtType::SecondHalf);
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
     RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
-    ApplyFilterandSumBoundaryJ(current_fp, current_cp, fine_lev, PatchType::fine);
+    ApplyFilterandSumBoundaryJ(current_fp, current_cp, fine_lev, PatchType::fine,
+                               apply_filtering, sum_guard_cells);
     ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, ncomps);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
@@ -761,7 +776,8 @@ WarpX::OneStep_sub1 (Real curtime)
     // v) Push the fields on the coarse patch and mother grid
     // by only half a coarse step (second half)
     RestoreCurrent(coarse_lev);
-    AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, coarse_lev);
+    AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, coarse_lev,
+                                          apply_filtering, sum_guard_cells);
     AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, coarse_lev, ncomps, ncomps);
 
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev]);
