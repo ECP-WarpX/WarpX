@@ -546,10 +546,10 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                    {
                        amrex::Print() << " current zlab " << m_current_z_lab[i_buffer] << " lo : " << m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) << " hi " << m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir) << "\n";
                    }
-                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                        m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
-                        m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir),
-                        "z-slice in lab-frame is outside the buffer domain physical extent. ");
+                    //WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    //    m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
+                    //    m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir),
+                    //    "z-slice in lab-frame is outside the buffer domain physical extent. ");
                 }
                 m_all_field_functors[lev][i]->PrepareFunctorData (
                                              i_buffer, ZSliceInDomain,
