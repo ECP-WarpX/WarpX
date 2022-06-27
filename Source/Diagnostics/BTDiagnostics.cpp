@@ -589,7 +589,7 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
                             - (prob_domain_zmin_lab ) )
 //                            - (prob_domain_zmin_lab + 0.5*dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]) ) )
                           / dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] )
-                      ) );
+                      ) ) + m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir);
     return k_lab;
 }
 
