@@ -688,7 +688,6 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
 
         // Modifying the physical coordinates of the lab-frame snapshot to be
         // consistent with the above modified domain-indices in m_snapshot_box.
-        amrex::IntVect ref_ratio = amrex::IntVect(1);
         if (lev == 0) {
             // The extent of the physical domain covered by the ith snapshot
             // Default non-periodic geometry for diags
