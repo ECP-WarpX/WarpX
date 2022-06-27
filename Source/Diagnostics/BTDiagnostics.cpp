@@ -62,7 +62,6 @@ void BTDiagnostics::DerivedInitData ()
     nlev_output = 1;
 
     m_t_lab.resize(m_num_buffers);
-    m_prob_domain_lab.resize(m_num_buffers);
     m_snapshot_domain_lab.resize(m_num_buffers);
     m_buffer_domain_lab.resize(m_num_buffers);
     m_snapshot_box.resize(m_num_buffers);
@@ -171,7 +170,6 @@ BTDiagnostics::ReadParameters ()
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
     }
 
-
     amrex::Vector< std::string > BTD_varnames_supported = {"Ex", "Ey", "Ez",
                                                            "Bx", "By", "Bz",
                                                            "jx", "jy", "jz", "rho"};
@@ -238,18 +236,6 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab
         + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
 
-    // Compute lab-frame co-ordinates that correspond to the simulation domain
-    // at level, lev, and time, m_t_lab[i_buffer] for each ith buffer.
-    m_prob_domain_lab[i_buffer] = warpx.Geom(lev).ProbDomain();
-    amrex::Real zmin_prob_domain_lab = m_prob_domain_lab[i_buffer].lo(m_moving_window_dir)
-                                      / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-    amrex::Real zmax_prob_domain_lab = m_prob_domain_lab[i_buffer].hi(m_moving_window_dir)
-                                      / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-    m_prob_domain_lab[i_buffer].setLo(m_moving_window_dir, zmin_prob_domain_lab +
-                                               warpx.moving_window_v * m_t_lab[i_buffer] );
-    m_prob_domain_lab[i_buffer].setHi(m_moving_window_dir, zmax_prob_domain_lab +
-                                               warpx.moving_window_v * m_t_lab[i_buffer] );
-
     // Define buffer domain in boosted frame at level, lev, with user-defined lo and hi
     amrex::RealBox diag_dom;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim ) {
@@ -311,11 +297,6 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
                                  / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
 
 
-    m_snapshot_domain_lab[i_buffer] = diag_dom;
-    m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir,
-                                  zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
-    m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
-                                  zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
 
     // Initialize buffer counter and z-positions of the  i^th snapshot in
     // boosted-frame and lab-frame
@@ -368,6 +349,27 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
 #else
     m_snapshot_ncells_lab[i_buffer] = amrex::IntVect(Nz_lab);
 #endif
+
+
+    // Box covering the extent of the user-defined diag in the back-transformed frame
+    // for the ith snapshot
+    // estimating the maximum number of buffer multifabs needed to obtain the
+    // full lab-frame snapshot
+    m_max_buffer_multifabs[i_buffer] = static_cast<int>( std::ceil (
+        amrex::Real(m_snapshot_ncells_lab[i_buffer][m_moving_window_dir]) /
+        amrex::Real(m_buffer_size) ) );
+    // number of cells in z is modified since each buffer multifab always
+    // contains a minimum m_buffer_size=256 cells
+    int num_z_cells_in_snapshot = m_max_buffer_multifabs[i_buffer] * m_buffer_size;
+    m_snapshot_domain_lab[i_buffer] = diag_dom;
+    m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir,
+                                  zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+    m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
+                                  zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+    amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
+                         num_z_cells_in_snapshot *
+                         dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+    m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_lo);
 }
 
 void
@@ -544,7 +546,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                     if ( m_current_z_lab[i_buffer] < m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) ||
                         m_current_z_lab[i_buffer] > m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir) )
                    {
-                       amrex::Print() << " current zlab " << m_current_z_lab[i_buffer] << " lo : " << m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) << " hi " << m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir) << "\n";
+                        amrex::Print() << " current zlab " << m_current_z_lab[i_buffer] << " lo : " << m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) << " hi " << m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir) << "\n";
                    }
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                         m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
@@ -575,14 +577,14 @@ int
 BTDiagnostics::k_index_zlab (int i_buffer, int lev)
 {
     auto & warpx = WarpX::GetInstance();
-    amrex::Real prob_domain_zmin_lab = m_prob_domain_lab[i_buffer].lo( m_moving_window_dir );
+    amrex::Real prob_domain_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );
     amrex::IntVect ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
     int k_lab = static_cast<int>(floor (
                           ( m_current_z_lab[i_buffer]
-                            - (prob_domain_zmin_lab + 0.5*dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]) ) )
+                            - (prob_domain_zmin_lab  ) )
                           / dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] )
-                      ) );
+                      ) ) + m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir);
     return k_lab;
 }
 
@@ -663,11 +665,11 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
 {
     if ( m_do_back_transformed_fields ) {
         auto & warpx = WarpX::GetInstance();
-        const int k_lab = k_index_zlab (i_buffer, lev);
-        // Box covering the extent of the user-defined diag in the back-transformed frame
-        // for the ith snapshot
-        // estimating the maximum number of buffer multifabs needed to obtain the
-        // full lab-frame snapshot
+        const int k_lab = k_index_zlab(i_buffer, lev);
+        //// Box covering the extent of the user-defined diag in the back-transformed frame
+        //// for the ith snapshot
+        //// estimating the maximum number of buffer multifabs needed to obtain the
+        //// full lab-frame snapshot
         m_max_buffer_multifabs[i_buffer] = static_cast<int>( std::ceil (
             amrex::Real(m_snapshot_ncells_lab[i_buffer][m_moving_window_dir]) /
             amrex::Real(m_buffer_size) ) );
@@ -682,10 +684,6 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
         // Modifying the physical coordinates of the lab-frame snapshot to be
         // consistent with the above modified domain-indices in m_snapshot_box.
         amrex::IntVect ref_ratio = amrex::IntVect(1);
-        amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
-                             num_z_cells_in_snapshot *
-                             dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
-        m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_lo);
         if (lev == 0) {
             // The extent of the physical domain covered by the ith snapshot
             // Default non-periodic geometry for diags
@@ -711,13 +709,12 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
 {
     auto & warpx = WarpX::GetInstance();
     const amrex::RealBox& boost_domain = warpx.Geom(lev).ProbDomain();
-
     amrex::Real buffer_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );
     amrex::Real buffer_zmax_lab = m_snapshot_domain_lab[i_buffer].hi( m_moving_window_dir );
-    if ( ( m_current_z_boost[i_buffer] < boost_domain.lo(m_moving_window_dir) ) or
-         ( m_current_z_boost[i_buffer] > boost_domain.hi(m_moving_window_dir) ) or
-          ( m_current_z_lab[i_buffer] < buffer_zmin_lab ) or
-         ( m_current_z_lab[i_buffer] > buffer_zmax_lab ) )
+    if ( ( m_current_z_boost[i_buffer] <= boost_domain.lo(m_moving_window_dir) ) or
+         ( m_current_z_boost[i_buffer] >= boost_domain.hi(m_moving_window_dir) ) or
+         ( m_current_z_lab[i_buffer] <= buffer_zmin_lab ) or
+         ( m_current_z_lab[i_buffer] >= buffer_zmax_lab ) )
     {
         // the slice is not in the boosted domain or lab-frame domain
         return false;
