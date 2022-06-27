@@ -2569,7 +2569,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         } else {
             const IntVect& ref_ratio = WarpX::RefRatio(gather_lev);
             box = amrex::coarsen(pti.tilebox(),ref_ratio);
-        } 
+        }
     }
 
     // Add guard cells to the box.
@@ -2675,10 +2675,10 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const auto t_do_not_gather = do_not_gather;
 
 ////    const Geometry& geom = Geom(0); //delete this line
-//    std::cout << "Here box = " << box << std::endl;        
-//    std::cout << "Here lo = " << lbound(box) << std::endl;        
-////    std::cout << "geom = " << geom << std::endl;        
-//    std::cout << "Here box = " << box << std::endl;        
+//    std::cout << "Here box = " << box << std::endl;
+//    std::cout << "Here lo = " << lbound(box) << std::endl;
+////    std::cout << "geom = " << geom << std::endl;
+//    std::cout << "Here box = " << box << std::endl;
 //    std::cout << "(xmin,ymin,zmin) = (" << xyzmin_arr[0] << ", " << xyzmin_arr[1] << ", " << xyzmin_arr[2] << ")" << std::endl;
 //    std::cout << "(dx,dy,dz) = (" << dx_arr[0] << ", " << dx_arr[1] << ", " << dx_arr[2] << ")" << std::endl;
 //    std::cout << "galerkin_interpolation = " << galerkin_interpolation << std::endl;
@@ -2688,7 +2688,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
 
-        //std::cout << "gather_lev = " << gather_lev << ". (xp,yp,zp) = (" << xp << ", " << yp << ", " << zp << ")" << std::endl; 
+        //std::cout << "gather_lev = " << gather_lev << ". (xp,yp,zp) = (" << xp << ", " << yp << ", " << zp << ")" << std::endl;
 
         if (save_previous_position) {
 #if (AMREX_SPACEDIM >= 2)
@@ -2716,8 +2716,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
-//        std::cout << "gather_lev = " << gather_lev << ".(Exp,Eyp,Ezp) = (" << Exp << ", " << Eyp << ", " << Ezp << ")" << std::endl; 
-//        std::cout << "gather_lev = " << gather_lev << ".(Bxp,Byp,Bzp) = (" << Bxp << ", " << Byp << ", " << Bzp << ")" << std::endl; 
+//        std::cout << "gather_lev = " << gather_lev << ".(Exp,Eyp,Ezp) = (" << Exp << ", " << Eyp << ", " << Ezp << ")" << std::endl;
+//        std::cout << "gather_lev = " << gather_lev << ".(Bxp,Byp,Bzp) = (" << Bxp << ", " << Byp << ", " << Bzp << ")" << std::endl;
 
         doParticlePush(getPosition, setPosition, copyAttribs, ip,
                        ux[ip], uy[ip], uz[ip],

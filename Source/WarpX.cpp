@@ -2043,7 +2043,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         for(int i = 0; i < 3; i++) cdx[i] = 2.0*cdx[i];
 
         std::cout << "cba = " << crba << std::endl;
-        
+
         std::cout << "ba = " << ba << std::endl;
 
         // Create the MultiFabs for B
