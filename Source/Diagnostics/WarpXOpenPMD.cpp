@@ -732,7 +732,6 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     }
 
     // open files from all processors, in case some will not contribute below
-    // @todo move to SetStep
     m_Series->flush();
 
     // dump individual particles
@@ -815,15 +814,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
             offset += numParticleOnTile64;
         }
     }
-    /*
-     * Deliberately not flushing here.
-     * The ADIOS2 BP5 engine can read data directly from user-specified pointers
-     * if there happens no adios2::Engine::PerformPuts() (invoked by Series::flush())
-     * before adios2::Engine::EndStep() (invoked by Iteration::close()).
-     * So, in order to avoid unneeded data copies, don't flush anymore until
-     * closing this iteration.
-     */
-    // m_Series->flush();
+    m_Series->flush();
 }
 
 void
@@ -1423,15 +1414,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 #ifdef AMREX_USE_GPU
         amrex::Gpu::streamSynchronize();
 #endif
-        /*
-         * Deliberately not flushing here.
-         * The ADIOS2 BP5 engine can read data directly from user-specified pointers
-         * if there happens no adios2::Engine::PerformPuts() (invoked by Series::flush())
-         * before adios2::Engine::EndStep() (invoked by Iteration::close()).
-         * So, in order to avoid unneeded data copies, don't flush anymore until
-         * closing this iteration.
-         */
-        // m_Series->flush();
+        // Flush data to disk after looping over all components
+        m_Series->flush();
     } // levels loop (i)
 }
 #endif // WARPX_USE_OPENPMD
