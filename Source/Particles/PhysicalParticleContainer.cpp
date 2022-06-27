@@ -2582,10 +2582,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const auto getExternalEB = GetExternalEBField(pti, offset);
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
-    //const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev, 0._rt);
-    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner((pti.tilebox().grow(2*ngEB)), lev, 0._rt);
-    //const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(pti.tilebox(), lev, 0._rt);
-    //const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
+    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner((gather_lev < 0) ? (pti.tilebox().grow(2*ngEB)) : box, lev, 0._rt);
 
     const Dim3 lo = lbound(box);
     //const Dim3 lo = lbound(pti.tilebox());
