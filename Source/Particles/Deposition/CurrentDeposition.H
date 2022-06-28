@@ -449,12 +449,12 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 
     const amrex::Box sample_tbox(IntVect(AMREX_D_DECL(0,0,0)), a_tbox_max_size - 1);
     amrex::Box sample_tbox_x = convert(sample_tbox, jx_type);
-    //amrex::Box sample_tbox_y = convert(sample_tbox, jy_type);
-    //amrex::Box sample_tbox_z = convert(sample_tbox, jz_type);
+    amrex::Box sample_tbox_y = convert(sample_tbox, jy_type);
+    amrex::Box sample_tbox_z = convert(sample_tbox, jz_type);
 
-    sample_tbox_x.grow(depos_order); //ghost cell inclusion
-    //sample_tbox_y.grow(depos_order); //ghost cell inclusion
-    //sample_tbox_z.grow(depos_order); //ghost cell inclusion
+    sample_tbox_x.grow(depos_order);
+    sample_tbox_y.grow(depos_order);
+    sample_tbox_z.grow(depos_order);
 
     //Note that the number of points in any of the sample boxes is the same for all
     const auto npts_per_box = sample_tbox_x.numPts(); 
@@ -501,22 +501,22 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
           ParticleReal xp, yp, zp;
           //WATCH. Random access hurts. Maybe we want to sort every timestep
           GetPosition(permutation[bin_start], xp, yp, zp);
+          //Andrew, could I just use the D_DECL here?
 #if defined(WARPX_DIM_3D)
           IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
-                               int( amrex::Math::floor((xp-plo[1]) * dxiarr[1]) ),
-                               int( amrex::Math::floor((xp-plo[2]) * dxiarr[2]) ));
+                               int( amrex::Math::floor((yp-plo[1]) * dxiarr[1]) ),
+                               int( amrex::Math::floor((zp-plo[2]) * dxiarr[2]) ));
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
           IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
-                               int( amrex::Math::floor((xp-plo[1]) * dxiarr[1]) ));
+                               int( amrex::Math::floor((yp-plo[1]) * dxiarr[1]) ));
 #elif defined(WARPX_DIM_1D_Z)
           IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ));
 #endif
           iv += domain.smallEnd();
-          //Andrew, off the top of your head do you know what the postconditions of this method are?
-          //They are not documented. Furthermore, why are we calling a getter without assiging the
-          //value
           //Looks like it sets buffer box to contain the tile
           //iv is a point. first box is the entire domain, last box gets written with size bin_size
+          //TODO this seems inefficient. We should be able to just get buffer_box_x and copy,
+          //but what can ya do. We're in debug mode. Premature optimization is the root of all evil
           getTileIndex(iv, box, true, bin_size, buffer_box_x);
           getTileIndex(iv, box, true, bin_size, buffer_box_y);
           getTileIndex(iv, box, true, bin_size, buffer_box_z);
@@ -552,9 +552,9 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         __syncthreads();
 #else
         //TODO wrap these in 3D
-        amrex::Array4<amrex::Real> const& jx_buff = &jx_arr; 
-        amrex::Array4<amrex::Real> const& jy_buff = &jy_arr;
-        amrex::Array4<amrex::Real> const& jz_buff = &jz_arr;
+        amrex::Array4<amrex::Real> const& jx_buff = jx_arr; 
+        amrex::Array4<amrex::Real> const& jy_buff = jy_arr;
+        amrex::Array4<amrex::Real> const& jz_buff = jz_arr;
 #endif
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
