@@ -130,7 +130,11 @@ extern "C" {
   void warpx_FillBoundaryE ();
   void warpx_FillBoundaryB ();
   void warpx_SyncRho ();
-  void warpx_SyncCurrent ();
+  void warpx_SyncCurrent (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const bool apply_filtering,
+    const bool sum_guard_cells);
   void warpx_UpdateAuxilaryData ();
   void warpx_PushParticlesandDepose (amrex::Real cur_time);
 
