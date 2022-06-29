@@ -89,30 +89,80 @@ struct Compute_shifted_shape_factor
     {
         if constexpr (depos_order == 1){
             const auto i = static_cast<int>(x_old);
-            const int i_shift = i - i_new;
+            //const int i_shift = i - i_new;
+            const bool shift = i != i_new;
             const T xint = x_old - T(i);
-            sx[1+i_shift] = T(1.0) - xint;
-            sx[2+i_shift] = xint;
+
+            //amrex::AllPrint() << "i_shift=" << i_shift << "\n";
+
+            // we avoid dynamic indexing here, to enable vectorization (CPU) and
+            // reduce register/lmem footprint (GPU).
+            // The below is equivalent to this:
+            //sx[1+i_shift] = T(1.0) - xint;
+            //sx[2+i_shift] = xint;
+            sx[1] = T(1.0) - xint;
+            sx[2] = xint;
+
+            sx[0] = shift ? sx[1] : T(0.0);
+            sx[1] = shift ? sx[2] : sx[1];
+            sx[2] = shift ? T(0.0) : sx[2];
+
             return i;
         }
         else if constexpr (depos_order == 2){
             const auto i = static_cast<int>(x_old + T(0.5));
-            const int i_shift = i - (i_new + 1);
+            //const int i_shift = i - (i_new + 1);
+            const bool shift = i != (i_new + 1);
             const T xint = x_old - T(i);
-            sx[1+i_shift] = T(0.5)*(T(0.5) - xint)*(T(0.5) - xint);
-            sx[2+i_shift] = T(0.75) - xint*xint;
-            sx[3+i_shift] = T(0.5)*(T(0.5) + xint)*(T(0.5) + xint);
+
+            //amrex::AllPrint() << "i_shift=" << i_shift << "\n";
+
+            // we avoid dynamic indexing here, to enable vectorization (CPU) and
+            // reduce register/lmem footprint (GPU).
+            // The below is equivalent to this:
+            //sx[1+i_shift] = T(0.5)*(T(0.5) - xint)*(T(0.5) - xint);
+            //sx[2+i_shift] = T(0.75) - xint*xint;
+            //sx[3+i_shift] = T(0.5)*(T(0.5) + xint)*(T(0.5) + xint);
+
+            sx[1] = T(0.5)*(T(0.5) - xint)*(T(0.5) - xint);
+            sx[2] = T(0.75) - xint*xint;
+            sx[3] = T(0.5)*(T(0.5) + xint)*(T(0.5) + xint);
+
+            sx[0] = shift ? sx[1] : T(0.0);
+            sx[1] = shift ? sx[2] : sx[1];
+            sx[2] = shift ? sx[3] : sx[2];
+            sx[3] = shift ? T(0.0) : sx[3];
+
             // index of the leftmost cell where particle deposits
             return i - 1;
         }
         else if constexpr (depos_order == 3){
             const auto i = static_cast<int>(x_old);
-            const int i_shift = i - (i_new + 1);
+            //const int i_shift = i - (i_new + 1);
+            const bool shift = i != (i_new + 1);
             const T xint = x_old - i;
-            sx[1+i_shift] = (T(1.0))/(T(6.0))*(T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - xint);
-            sx[2+i_shift] = (T(2.0))/(T(3.0)) - xint*xint*(T(1.0) - xint/(T(2.0)));
-            sx[3+i_shift] = (T(2.0))/(T(3.0)) - (T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - T(0.5)*(T(1.0) - xint));
-            sx[4+i_shift] = (T(1.0))/(T(6.0))*xint*xint*xint;
+
+            //amrex::AllPrint() << "i_shift=" << i_shift << "\n";
+
+            // we avoid dynamic indexing here, to enable vectorization (CPU) and
+            // reduce register/lmem footprint (GPU).
+            // The below is equivalent to this:
+            //sx[1+i_shift] = (T(1.0))/(T(6.0))*(T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - xint);
+            //sx[2+i_shift] = (T(2.0))/(T(3.0)) - xint*xint*(T(1.0) - xint/(T(2.0)));
+            //sx[3+i_shift] = (T(2.0))/(T(3.0)) - (T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - T(0.5)*(T(1.0) - xint));
+            //sx[4+i_shift] = (T(1.0))/(T(6.0))*xint*xint*xint;
+
+            sx[1] = (T(1.0))/(T(6.0))*(T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - xint);
+            sx[2] = (T(2.0))/(T(3.0)) - xint*xint*(T(1.0) - xint/(T(2.0)));
+            sx[3] = (T(2.0))/(T(3.0)) - (T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - T(0.5)*(T(1.0) - xint));
+            sx[4] = (T(1.0))/(T(6.0))*xint*xint*xint;
+
+            sx[0] = shift ? sx[1] : T(0.0);
+            sx[1] = shift ? sx[2] : sx[1];
+            sx[2] = shift ? sx[3] : sx[2];
+            sx[3] = shift ? sx[4] : sx[3];
+            sx[4] = shift ? T(0.0) : sx[4];
+
             // index of the leftmost cell where particle deposits
             return i - 1;
         }
