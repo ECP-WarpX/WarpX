@@ -983,22 +983,26 @@ void WarpX::ApplyFilterandSumBoundaryJ (
             ng_depos_J[2] += WarpX::current_centering_noz / 2;
 #endif
         }
-        if (use_filter && apply_filtering) {
+        if (use_filter && apply_filtering)
+        {
             ng += bilinear_filter.stencil_length_each_dir-1;
+            ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
+            ng_depos_J.min(ng);
+
             MultiFab jf(j[idim]->boxArray(), j[idim]->DistributionMap(), j[idim]->nComp(), ng);
             bilinear_filter.ApplyStencil(jf, *j[idim], lev);
+
             if (sum_guard_cells)
             {
-                ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
-                ng_depos_J.min(ng);
                 WarpXSumGuardCells(*(j[idim]), jf, period, ng_depos_J, 0, (j[idim])->nComp());
             }
             else
             {
-                // TODO Use amrex::MultiFab::Copy instead
-                WarpXSumGuardCells(*(j[idim]), jf, period, amrex::IntVect(0), 0, (j[idim])->nComp());
+                amrex::MultiFab::Copy(*(j[idim]), jf, 0, 0, j[idim]->nComp(), ng_depos_J);
             }
-        } else {
+        }
+        else
+        {
             if (sum_guard_cells)
             {
                 ng_depos_J.min(ng);
