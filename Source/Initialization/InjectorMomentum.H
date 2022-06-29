@@ -167,7 +167,7 @@ struct InjectorMomentumBoltzmann
             amrex::Abort("beta = v/c magnitude greater than or equal to 1");
         }
         // Calculate the value of vave from the local temperature
-        amrex::Real const vave = std::sqrt(2._rt * theta);
+        amrex::Real const vave = std::sqrt(theta);
         int const dir = velocity.direction();
 
         amrex::Real u[3];
