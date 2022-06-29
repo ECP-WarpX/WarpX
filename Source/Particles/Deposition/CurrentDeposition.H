@@ -411,7 +411,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
 
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
+#if (AMREX_SPACEDIM >= 2)
     const amrex::Real xmin = xyzmin[0];
 #endif
 #if defined(WARPX_DIM_3D)
@@ -457,15 +457,17 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     sample_tbox_z.grow(depos_order);
 
     //Note that the number of points in any of the sample boxes is the same for all
-    const auto npts_per_box = sample_tbox_x.numPts(); 
+    const auto npts_per_box = sample_tbox_z.numPts(); 
 
     //needed for gpu kernel
     const int nblocks = a_bins.numBins();
     const auto offsets_ptr = a_bins.offsetsPtr();
     const int threads_per_block = 256; 
 
-    //calculate how much shared memory is needed
-    std::size_t shared_mem_bytes = npts_per_box*sizeof(amrex::Real) * AMREX_SPACEDIM; 
+    //calculate how much shared memory is needed. Note 3 because writing to 3 array4s
+    //Andrew, really? We gotta talk about this Array4 always has 3d etc. Look how
+    //painful this is on the shared mem!
+    std::size_t shared_mem_bytes = npts_per_box*sizeof(amrex::Real) * 3; 
     amrex::IntVect bin_size = WarpX::sort_bin_size;
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
     //WATCH may get burned if this makes you use less threads
@@ -474,6 +476,8 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 
     amrex::ignore_unused(np_to_depose);
     // Loop one thread-block per tile, each tile is a bin, so we're looping over bins
+    //Andrew, how does this know what it is looping over? How blockId.x index into bin
+    //cause nblocks=a_bins.numBins()?
     amrex::launch(
             nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
             [=] AMREX_GPU_DEVICE () noexcept
@@ -501,16 +505,16 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
           ParticleReal xp, yp, zp;
           //WATCH. Random access hurts. Maybe we want to sort every timestep
           GetPosition(permutation[bin_start], xp, yp, zp);
-          //Andrew, could I just use the D_DECL here?
+//WATCH strange here
 #if defined(WARPX_DIM_3D)
           IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
                                int( amrex::Math::floor((yp-plo[1]) * dxiarr[1]) ),
                                int( amrex::Math::floor((zp-plo[2]) * dxiarr[2]) ));
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
           IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
-                               int( amrex::Math::floor((yp-plo[1]) * dxiarr[1]) ));
+                               int( amrex::Math::floor((zp-plo[1]) * dxiarr[1]) ));
 #elif defined(WARPX_DIM_1D_Z)
-          IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ));
+          IntVect iv = IntVect(int( amrex::Math::floor((zp-plo[0]) * dxiarr[0]) ));
 #endif
           iv += domain.smallEnd();
           //Looks like it sets buffer box to contain the tile
@@ -537,24 +541,41 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         //If not using shared mem, then you would just make the buffer the actual object in device
         //mem
         //TODO wrap in the ifs for the 3D
+//#if defined(WARPX_DIM_3D)
         amrex::Array4<amrex::Real> const jx_buff(shared, 
                 amrex::begin(tbox_x), amrex::end(tbox_x), 1);
         amrex::Array4<amrex::Real> const jy_buff(shared + tbox_x.numPts(), 
                 amrex::begin(tbox_y), amrex::end(tbox_y), 1);
         amrex::Array4<amrex::Real> const jz_buff(shared + tbox_x.numPts() + tbox_y.numPts(),
                 amrex::begin(tbox_z), amrex::end(tbox_z), 1);
-
+//#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+//        amrex::Array4<amrex::Real> const jx_buff(shared, 
+//                amrex::begin(tbox_x), amrex::end(tbox_x), 1);
+//        amrex::Array4<amrex::Real> const jy_buff(shared + tbox_x.numPts(), 
+//                amrex::begin(tbox_y), amrex::end(tbox_y), 1);
+//#elif defined(WARPX_DIM_1D_Z)
+//        amrex::Array4<amrex::Real> const jx_buff(shared, 
+//                amrex::begin(tbox_x), amrex::end(tbox_x), 1);
+//#endif
         // Zero-initialize the temporary array in shared memory
         volatile amrex::Real* vs = shared; 
-        for (int i = threadIdx.x; i < tbox_x.numPts()*AMREX_SPACEDIM; i += blockDim.x){
+        for (int i = threadIdx.x; i < tbox_x.numPts()*3; i += blockDim.x){
             vs[i] = 0.0;
         }
         __syncthreads();
 #else
         //TODO wrap these in 3D
+//#if defined(WARPX_DIM_3D)
         amrex::Array4<amrex::Real> const& jx_buff = jx_arr; 
         amrex::Array4<amrex::Real> const& jy_buff = jy_arr;
         amrex::Array4<amrex::Real> const& jz_buff = jz_arr;
+//#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+//        amrex::Array4<amrex::Real> const& jx_buff = jx_arr; 
+//        amrex::Array4<amrex::Real> const& jy_buff = jy_arr;
+//#elif defined(WARPX_DIM_1D_Z)
+//        amrex::Array4<amrex::Real> const& jx_buff = jx_arr; 
+//#endif
+
 #endif
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
@@ -590,6 +611,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             const amrex::Real vz  = uzp[ip]*gaminv;
             // wqx, wqy wqz are particle current in each direction
 #if defined(WARPX_DIM_RZ)
+            //TODO what's up with using x and y here where elsewhere we use x and z?
             // In RZ, wqx is actually wqr, and wqy is wqtheta
             // Convert to cylinderical at the mid point
             const amrex::Real xpmid = xp + relative_time*vx;
@@ -736,6 +758,11 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                     amrex::Gpu::Atomic::AddNoRet(
                         &jz_buff(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0),
                         sx_jz[ix]*sz_jz[iz]*wqz);
+                    printf("writing (%.2ef, %.2ef, %.2ef)\n", 
+                            sx_jx[ix]*sz_jx[iz]*wqx,
+                            sx_jy[ix]*sz_jy[iz]*wqy,
+                            sx_jz[ix]*sz_jz[iz]*wqz
+                            );
 #if defined(WARPX_DIM_RZ)
                     Complex xy = xy0; // Note that xy is equal to e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
