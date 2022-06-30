@@ -483,7 +483,11 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 }
 
 void
-PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
+PsatdAlgorithmRZ::VayDeposition (
+    SpectralFieldDataRZ& /*field_data*/,
+    const int /*idx_jx*/,
+    const int /*idx_jy*/,
+    const int /*idx_jz*/)
 {
     amrex::Abort(Utils::TextMsg::Err(
         "Vay deposition not implemented in RZ geometry"));

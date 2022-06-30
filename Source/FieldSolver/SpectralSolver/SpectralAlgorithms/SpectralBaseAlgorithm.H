@@ -58,8 +58,13 @@ class SpectralBaseAlgorithm
          * This virtual function is pure and must be defined in derived classes.
          *
          * \param[in,out] field_data All fields in Fourier space
+         * TODO Add new arguments
          */
-        virtual void VayDeposition (SpectralFieldData& field_data) = 0;
+        virtual void VayDeposition (
+            SpectralFieldData& field_data,
+            const int idx_jx,
+            const int idx_jy,
+            const int idx_jz) = 0;
 
         /**
          * TODO

@@ -1499,10 +1499,14 @@ private:
      *             storing the fine patch current to be transformed
      * \param J_cp Vector of three-dimensional arrays (for each level)
      *             storing the coarse patch current to be transformed
+     * TODO Add new arguments
      */
     void PSATDForwardTransformJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const int idx_jx,
+        const int idx_jy,
+        const int idx_jz);
 
     /**
      * \brief Backward FFT of J on all mesh refinement levels
@@ -1511,10 +1515,14 @@ private:
      *             storing the fine patch current to be transformed
      * \param J_cp Vector of three-dimensional arrays (for each level)
      *             storing the coarse patch current to be transformed
+     * TODO Add new arguments
      */
     void PSATDBackwardTransformJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const int idx_jx,
+        const int idx_jy,
+        const int idx_jz);
 
     /**
      * \brief Forward FFT of rho on all mesh refinement levels,
@@ -1572,8 +1580,13 @@ private:
 
     /**
      * \brief Vay deposition in Fourier space (https://doi.org/10.1016/j.jcp.2013.03.010)
+     *
+     * TODO Add new arguments
      */
-    void PSATDVayDeposition ();
+    void PSATDVayDeposition (
+        const int idx_jx,
+        const int idx_jy,
+        const int idx_jz);
 
     /**
      * TODO

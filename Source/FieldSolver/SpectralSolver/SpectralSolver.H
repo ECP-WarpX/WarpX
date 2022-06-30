@@ -143,10 +143,14 @@ class SpectralSolver
          * \param[in]     lev     The mesh refinement level
          * \param[in,out] current Array of unique pointers to \c MultiFab storing
          *                        the three components of the current density
+         * TODO Add new arguments
          */
-        void VayDeposition ()
+        void VayDeposition (
+            const int idx_jx,
+            const int idx_jy,
+            const int idx_jz)
         {
-            algorithm->VayDeposition(field_data);
+            algorithm->VayDeposition(field_data, idx_jx, idx_jy, idx_jz);
         }
 
         /**

@@ -66,8 +66,13 @@ class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
          * derived classes.
          *
          * \param[in,out] field_data All fields in Fourier space
+         * TODO Add new arguments
          */
-        virtual void VayDeposition (SpectralFieldData& field_data) override final;
+        virtual void VayDeposition (
+            SpectralFieldData& field_data,
+            const int idx_jx,
+            const int idx_jy,
+            const int idx_jz) override final;
 
         /**
          * TODO

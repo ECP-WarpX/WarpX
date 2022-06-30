@@ -410,7 +410,11 @@ PsatdAlgorithmPml::CurrentCorrection (SpectralFieldData& /*field_data*/)
 }
 
 void
-PsatdAlgorithmPml::VayDeposition (SpectralFieldData& /*field_data*/)
+PsatdAlgorithmPml::VayDeposition (
+    SpectralFieldData& /*field_data*/,
+    const int /*idx_jx*/,
+    const int /*idx_jy*/,
+    const int /*idx_jz*/)
 {
     amrex::Abort(Utils::TextMsg::Err(
         "Vay deposition not implemented for PML PSATD"));

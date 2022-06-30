@@ -834,12 +834,18 @@ void PsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data)
 }
 
 void
-PsatdAlgorithm::VayDeposition (SpectralFieldData& field_data)
+PsatdAlgorithm::VayDeposition (
+    SpectralFieldData& field_data,
+    const int idx_jx,
+    const int idx_jy,
+    const int idx_jz)
 {
     // Profiling
     BL_PROFILE("PsatdAlgorithm::VayDeposition()");
 
-    const SpectralFieldIndex& Idx = m_spectral_index;
+#if !defined(WARPX_DIM_3D)
+    amrex::ignore_unused(idx_jy);
+#endif
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi)
@@ -860,11 +866,11 @@ PsatdAlgorithm::VayDeposition (SpectralFieldData& field_data)
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Shortcuts for the values of D
-            const Complex Dx = fields(i,j,k,Idx.Jx);
+            const Complex Dx = fields(i,j,k,idx_jx);
 #if defined(WARPX_DIM_3D)
-            const Complex Dy = fields(i,j,k,Idx.Jy);
+            const Complex Dy = fields(i,j,k,idx_jy);
 #endif
-            const Complex Dz = fields(i,j,k,Idx.Jz);
+            const Complex Dz = fields(i,j,k,idx_jz);
 
             // Imaginary unit
             constexpr Complex I = Complex{0._rt, 1._rt};
@@ -879,24 +885,24 @@ PsatdAlgorithm::VayDeposition (SpectralFieldData& field_data)
 #endif
 
             // Compute Jx
-            if (kx_mod != 0._rt) fields(i,j,k,Idx.Jx) = I * Dx / kx_mod;
-            else                 fields(i,j,k,Idx.Jx) = 0._rt;
+            if (kx_mod != 0._rt) fields(i,j,k,idx_jx) = I * Dx / kx_mod;
+            else                 fields(i,j,k,idx_jx) = 0._rt;
 
 #if defined(WARPX_DIM_3D)
             // Compute Jy
-            if (ky_mod != 0._rt) fields(i,j,k,Idx.Jy) = I * Dy / ky_mod;
-            else                 fields(i,j,k,Idx.Jy) = 0._rt;
+            if (ky_mod != 0._rt) fields(i,j,k,idx_jy) = I * Dy / ky_mod;
+            else                 fields(i,j,k,idx_jy) = 0._rt;
 #endif
 
             // Compute Jz
-            if (kz_mod != 0._rt) fields(i,j,k,Idx.Jz) = I * Dz / kz_mod;
-            else                 fields(i,j,k,Idx.Jz) = 0._rt;
+            if (kz_mod != 0._rt) fields(i,j,k,idx_jz) = I * Dz / kz_mod;
+            else                 fields(i,j,k,idx_jz) = 0._rt;
         });
     }
 }
 
 void
-PsatdAlgorithm::VayDepositionCombineJ (SpectralFieldData& field_data)
+PsatdAlgorithm::VayDepositionCombineJ (SpectralFieldData& /*field_data*/)
 {
 }
 

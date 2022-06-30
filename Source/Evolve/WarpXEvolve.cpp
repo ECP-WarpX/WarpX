@@ -543,14 +543,23 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         (current_deposition_algo == CurrentDepositionAlgo::Vay) ? current_fp_vay
         : ((do_current_centering) ? current_fp_nodal : current_fp);
 
+    int idx_jx, idx_jy, idx_jz;
+
     // 4) Deposit J at relative time -dt with time step dt
     //    (dt[0] denotes the time step on mesh refinement level 0)
     //    TODO Probably not needed for Vay deposition (wrong time)
-    mypc->DepositCurrent(current, dt[0], -dt[0]);
-    // Filter, exchange boundary, and interpolate across levels
-    SyncCurrent();
-    // Forward FFT of J
-    PSATDForwardTransformJ(current_fp, current_cp);
+    if (current_deposition_algo != CurrentDepositionAlgo::Vay)
+    {
+        mypc->DepositCurrent(current, dt[0], -dt[0]);
+        // Filter, exchange boundary, and interpolate across levels
+        SyncCurrent();
+        // Forward FFT of J
+        // (get spectral index from spectral solver on level 0)
+        idx_jx = spectral_solver_fp[0]->m_spectral_index.Jx_new;
+        idx_jy = spectral_solver_fp[0]->m_spectral_index.Jy_new;
+        idx_jz = spectral_solver_fp[0]->m_spectral_index.Jz_new;
+        PSATDForwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
+    }
 
     // Number of depositions for multi-J scheme
     const int n_depose = WarpX::do_multi_J_n_depositions;
@@ -569,24 +578,29 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         {
             // Vay deposition at 1/4 of the time sub-step
             mypc->DepositCurrent(current, 0.5_rt*sub_dt, t_depose-3._rt/4._rt*sub_dt);
-            PSATDForwardTransformJ(current, current_cp); // spectral index J<x,y,z>_new
-            PSATDVayDeposition();
-            PSATDMoveJNewToJOld(); // spectral index J<x,y,z>
-            PSATDBackwardTransformJ(current_fp, current_cp);
+            // Get old spectral index from spectral solver on level 0
+            idx_jx = spectral_solver_fp[0]->m_spectral_index.Jx;
+            idx_jy = spectral_solver_fp[0]->m_spectral_index.Jy;
+            idx_jz = spectral_solver_fp[0]->m_spectral_index.Jz;
+            PSATDForwardTransformJ(current, current_cp, idx_jx, idx_jy, idx_jz);
+            PSATDVayDeposition(idx_jx, idx_jy, idx_jz);
+            PSATDBackwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
             PSATDSubtractCurrentPartialSumsAvg();
             SyncCurrent();
-            PSATDForwardTransformJ(current_fp, current_cp); // spectral index J<x,y,z>_new
+            PSATDForwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
 
             // Vay deposition at 3/4 of the time sub-step
-            PSATDMoveJNewToJOld(); // spectral index J<x,y,z>
             mypc->DepositCurrent(current, 0.5_rt*sub_dt, t_depose-1._rt/4._rt*sub_dt);
-            PSATDForwardTransformJ(current, current_cp); // spectral index J<x,y,z>_new
-            PSATDVayDeposition();
-            PSATDMoveJNewToJOld(); // spectral index J<x,y,z>
-            PSATDBackwardTransformJ(current_fp, current_cp);
+            // Get new spectral index from spectral solver on level 0
+            idx_jx = spectral_solver_fp[0]->m_spectral_index.Jx_new;
+            idx_jy = spectral_solver_fp[0]->m_spectral_index.Jy_new;
+            idx_jz = spectral_solver_fp[0]->m_spectral_index.Jz_new;
+            PSATDForwardTransformJ(current, current_cp, idx_jx, idx_jy, idx_jz);
+            PSATDVayDeposition(idx_jx, idx_jy, idx_jz);
+            PSATDBackwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
             PSATDSubtractCurrentPartialSumsAvg();
             SyncCurrent();
-            PSATDForwardTransformJ(current_fp, current_cp); // spectral index J<x,y,z>_new
+            PSATDForwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
 
             // At this point, in spectral space, J<x,y,z> stores J at 1/4 of the
             // time sub-step and J<x,y,z>_new stores J at 3/4 of the time sub-step.
@@ -604,7 +618,11 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Filter, exchange boundary, and interpolate across levels
             SyncCurrent();
             // Forward FFT of J
-            PSATDForwardTransformJ(current_fp, current_cp);
+            // (get new spectral index from spectral solver on level 0)
+            idx_jx = spectral_solver_fp[0]->m_spectral_index.Jx_new;
+            idx_jy = spectral_solver_fp[0]->m_spectral_index.Jy_new;
+            idx_jz = spectral_solver_fp[0]->m_spectral_index.Jz_new;
+            PSATDForwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
         }
 
         // Deposit mid rho and new rho
@@ -636,7 +654,11 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             if (WarpX::current_correction)
             {
                 PSATDCurrentCorrection();
-                PSATDBackwardTransformJ(current_fp, current_cp);
+                // Get new spectral index from spectral solver on level 0
+                idx_jx = spectral_solver_fp[0]->m_spectral_index.Jx_new;
+                idx_jy = spectral_solver_fp[0]->m_spectral_index.Jy_new;
+                idx_jz = spectral_solver_fp[0]->m_spectral_index.Jz_new;
+                PSATDBackwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
             }
 
         }

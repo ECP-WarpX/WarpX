@@ -157,7 +157,10 @@ SpectralSolverRZ::CurrentCorrection ()
 }
 
 void
-SpectralSolverRZ::VayDeposition ()
+SpectralSolverRZ::VayDeposition (
+    const int idx_jx,
+    const int idx_jy,
+    const int idx_jz)
 {
-    algorithm->VayDeposition(field_data);
+    algorithm->VayDeposition(field_data, idx_jx, idx_jy, idx_jz);
 }

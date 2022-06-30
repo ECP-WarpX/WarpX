@@ -46,8 +46,13 @@ class PsatdAlgorithmGalileanRZ : public SpectralBaseAlgorithmRZ
          * derived classes.
          *
          * \param[in,out] field_data All fields in Fourier space
+         * TODO Add new arguments
          */
-        virtual void VayDeposition (SpectralFieldDataRZ& field_data) override final;
+        virtual void VayDeposition (
+            SpectralFieldDataRZ& field_data,
+            const int idx_jx,
+            const int idx_jy,
+            const int idx_jz) override final;
 
         /**
          * TODO

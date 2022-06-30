@@ -243,29 +243,17 @@ WarpX::PSATDBackwardTransformG ()
 
 void WarpX::PSATDForwardTransformJ (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const int idx_jx,
+    const int idx_jy,
+    const int idx_jz)
 {
-    SpectralFieldIndex Idx;
-    int idx_jx, idx_jy, idx_jz;
-
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        Idx = spectral_solver_fp[lev]->m_spectral_index;
-
-        idx_jx = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
-        idx_jy = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
-        idx_jz = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
-
         ForwardTransformVect(lev, *spectral_solver_fp[lev], J_fp[lev], idx_jx, idx_jy, idx_jz);
 
         if (spectral_solver_cp[lev])
         {
-            Idx = spectral_solver_cp[lev]->m_spectral_index;
-
-            idx_jx = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
-            idx_jy = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
-            idx_jz = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
-
             ForwardTransformVect(lev, *spectral_solver_cp[lev], J_cp[lev], idx_jx, idx_jy, idx_jz);
         }
     }
@@ -276,11 +264,11 @@ void WarpX::PSATDForwardTransformJ (
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            spectral_solver_fp[lev]->ApplyFilter(lev, Idx.Jx, Idx.Jy, Idx.Jz);
+            spectral_solver_fp[lev]->ApplyFilter(lev, idx_jx, idx_jy, idx_jz);
 
             if (spectral_solver_cp[lev])
             {
-                spectral_solver_cp[lev]->ApplyFilter(lev, Idx.Jx, Idx.Jy, Idx.Jz);
+                spectral_solver_cp[lev]->ApplyFilter(lev, idx_jx, idx_jy, idx_jz);
             }
         }
     }
@@ -289,29 +277,17 @@ void WarpX::PSATDForwardTransformJ (
 
 void WarpX::PSATDBackwardTransformJ (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const int idx_jx,
+    const int idx_jy,
+    const int idx_jz)
 {
-    SpectralFieldIndex Idx;
-    int idx_jx, idx_jy, idx_jz;
-
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        Idx = spectral_solver_fp[lev]->m_spectral_index;
-
-        idx_jx = static_cast<int>(Idx.Jx);
-        idx_jy = static_cast<int>(Idx.Jy);
-        idx_jz = static_cast<int>(Idx.Jz);
-
         BackwardTransformVect(lev, *spectral_solver_fp[lev], J_fp[lev], idx_jx, idx_jy, idx_jz);
 
         if (spectral_solver_cp[lev])
         {
-            Idx = spectral_solver_cp[lev]->m_spectral_index;
-
-            idx_jx = static_cast<int>(Idx.Jx);
-            idx_jy = static_cast<int>(Idx.Jy);
-            idx_jz = static_cast<int>(Idx.Jz);
-
             BackwardTransformVect(lev, *spectral_solver_cp[lev], J_cp[lev], idx_jx, idx_jy, idx_jz);
         }
     }
@@ -367,15 +343,18 @@ void WarpX::PSATDCurrentCorrection ()
     }
 }
 
-void WarpX::PSATDVayDeposition ()
+void WarpX::PSATDVayDeposition (
+    const int idx_jx,
+    const int idx_jy,
+    const int idx_jz)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        spectral_solver_fp[lev]->VayDeposition();
+        spectral_solver_fp[lev]->VayDeposition(idx_jx, idx_jy, idx_jz);
 
         if (spectral_solver_cp[lev])
         {
-            spectral_solver_cp[lev]->VayDeposition();
+            spectral_solver_cp[lev]->VayDeposition(idx_jx, idx_jy, idx_jz);
         }
     }
 }
@@ -640,7 +619,12 @@ WarpX::PushPSATD ()
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp =
         (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ? current_fp_vay : current_fp;
 
-    PSATDForwardTransformJ(J_fp, current_cp);
+    // Forward FFT of J
+    // (get spectral index from spectral solver on level 0)
+    int idx_jx = spectral_solver_fp[0]->m_spectral_index.Jx;
+    int idx_jy = spectral_solver_fp[0]->m_spectral_index.Jy;
+    int idx_jz = spectral_solver_fp[0]->m_spectral_index.Jz;
+    PSATDForwardTransformJ(J_fp, current_cp, idx_jx, idx_jy, idx_jz);
 
     // Do rho FFTs only if needed
     if (WarpX::update_with_rho || WarpX::current_correction || WarpX::do_dive_cleaning)
@@ -654,18 +638,18 @@ WarpX::PushPSATD ()
     if (WarpX::current_correction)
     {
         PSATDCurrentCorrection();
-        PSATDBackwardTransformJ(current_fp, current_cp);
+        PSATDBackwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
     }
 
     // Compute the current in Fourier space according to the Vay deposition scheme, and
     // transform back to real space so that the Vay deposition is reflected in the diagnostics
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
-        PSATDVayDeposition();
-        PSATDBackwardTransformJ(current_fp, current_cp);
+        PSATDVayDeposition(idx_jx, idx_jy, idx_jz);
+        PSATDBackwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
         PSATDSubtractCurrentPartialSumsAvg();
         SyncCurrent();
-        PSATDForwardTransformJ(current_fp, current_cp);
+        PSATDForwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
     }
 
 #ifdef WARPX_DIM_RZ

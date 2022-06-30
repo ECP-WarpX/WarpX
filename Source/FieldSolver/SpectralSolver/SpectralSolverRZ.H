@@ -106,8 +106,13 @@ class SpectralSolverRZ
          * declared in the base class SpectralBaseAlgorithmRZ and defined in its
          * derived classes, from objects of class SpectralSolverRZ through the private
          * unique pointer \c algorithm.
+         *
+         * TODO Add new arguments
          */
-        void VayDeposition ();
+        void VayDeposition (
+            const int idx_jx,
+            const int idx_jy,
+            const int idx_jz);
 
         /**
          * TODO
