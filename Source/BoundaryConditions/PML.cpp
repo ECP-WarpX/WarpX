@@ -19,7 +19,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
-#include "Parallelization/WarpXCommUtil.H"
+
+#include <ablastr/utils/Communication.H>
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -1187,7 +1188,9 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
     if (do_pml_in_domain){
         // Valid cells of the PML and of the regular grid overlap
         // Copy from valid cells of the PML to valid cells of the regular grid
-        WarpXCommUtil::ParallelCopy(reg, totpmlmf, 0, 0, 1, IntVect(0), IntVect(0), period);
+        ablastr::utils::communication::ParallelCopy(reg, totpmlmf, 0, 0, 1, IntVect(0), IntVect(0),
+                                                    WarpX::do_single_precision_comms,
+                                                    period);
     } else {
         // Valid cells of the PML only overlap with guard cells of regular grid
         // (and outermost valid cell of the regular grid, for nodal direction)
@@ -1195,7 +1198,9 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         // but avoid updating the outermost valid cell
         if (ngr.max() > 0) {
             MultiFab::Copy(tmpregmf, reg, 0, 0, 1, ngr);
-            WarpXCommUtil::ParallelCopy(tmpregmf, totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
+            ablastr::utils::communication::ParallelCopy(tmpregmf, totpmlmf, 0, 0, 1, IntVect(0), ngr,
+                                   WarpX::do_single_precision_comms,
+                                                        period);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -1228,9 +1233,12 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         // Where valid cells of tmpregmf overlap with PML valid cells,
         // copy the PML (this is order to avoid overwriting PML valid cells,
         // in the next `ParallelCopy`)
-        WarpXCommUtil::ParallelCopy(tmpregmf, pml,0, 0, ncp, IntVect(0), IntVect(0), period);
+        ablastr::utils::communication::ParallelCopy(tmpregmf, pml, 0, 0, ncp, IntVect(0), IntVect(0),
+                                                    WarpX::do_single_precision_comms,
+                                                    period);
     }
-    WarpXCommUtil::ParallelCopy(pml, tmpregmf, 0, 0, ncp, IntVect(0), ngp, period);
+    ablastr::utils::communication::ParallelCopy(pml, tmpregmf, 0, 0, ncp, IntVect(0), ngp,
+                                                WarpX::do_single_precision_comms, period);
 }
 
 
@@ -1240,7 +1248,8 @@ PML::CopyToPML (MultiFab& pml, MultiFab& reg, const Geometry& geom)
   const IntVect& ngp = pml.nGrowVect();
   const auto& period = geom.periodicity();
 
-  WarpXCommUtil::ParallelCopy(pml, reg, 0, 0, 1, IntVect(0), ngp, period);
+    ablastr::utils::communication::ParallelCopy(pml, reg, 0, 0, 1, IntVect(0), ngp,
+                                                WarpX::do_single_precision_comms, period);
 }
 
 void
@@ -1266,13 +1275,13 @@ PML::FillBoundaryE (PatchType patch_type)
     {
         const auto& period = m_geom->periodicity();
         Vector<MultiFab*> mf{pml_E_fp[0].get(),pml_E_fp[1].get(),pml_E_fp[2].get()};
-        WarpXCommUtil::FillBoundary(mf, period);
+        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
     }
     else if (patch_type == PatchType::coarse && pml_E_cp[0] && pml_E_cp[0]->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
         Vector<MultiFab*> mf{pml_E_cp[0].get(),pml_E_cp[1].get(),pml_E_cp[2].get()};
-        WarpXCommUtil::FillBoundary(mf, period);
+        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
     }
 }
 
@@ -1290,13 +1299,13 @@ PML::FillBoundaryB (PatchType patch_type)
     {
         const auto& period = m_geom->periodicity();
         Vector<MultiFab*> mf{pml_B_fp[0].get(),pml_B_fp[1].get(),pml_B_fp[2].get()};
-        WarpXCommUtil::FillBoundary(mf, period);
+        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
     }
     else if (patch_type == PatchType::coarse && pml_B_cp[0])
     {
         const auto& period = m_cgeom->periodicity();
         Vector<MultiFab*> mf{pml_B_cp[0].get(),pml_B_cp[1].get(),pml_B_cp[2].get()};
-        WarpXCommUtil::FillBoundary(mf, period);
+        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
     }
 }
 
@@ -1313,12 +1322,12 @@ PML::FillBoundaryF (PatchType patch_type)
     if (patch_type == PatchType::fine && pml_F_fp && pml_F_fp->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
-        WarpXCommUtil::FillBoundary(*pml_F_fp, period);
+        ablastr::utils::communication::FillBoundary(*pml_F_fp, WarpX::do_single_precision_comms, period);
     }
     else if (patch_type == PatchType::coarse && pml_F_cp && pml_F_cp->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
-        WarpXCommUtil::FillBoundary(*pml_F_cp, period);
+        ablastr::utils::communication::FillBoundary(*pml_F_cp, WarpX::do_single_precision_comms, period);
     }
 }
 
@@ -1335,12 +1344,12 @@ PML::FillBoundaryG (PatchType patch_type)
     if (patch_type == PatchType::fine && pml_G_fp && pml_G_fp->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
-        WarpXCommUtil::FillBoundary(*pml_G_fp, period);
+        ablastr::utils::communication::FillBoundary(*pml_G_fp, WarpX::do_single_precision_comms, period);
     }
     else if (patch_type == PatchType::coarse && pml_G_cp && pml_G_cp->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
-        WarpXCommUtil::FillBoundary(*pml_G_cp, period);
+        ablastr::utils::communication::FillBoundary(*pml_G_cp, WarpX::do_single_precision_comms, period);
     }
 }
 

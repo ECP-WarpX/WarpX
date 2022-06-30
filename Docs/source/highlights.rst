@@ -19,11 +19,6 @@ Scientific works in laser-plasma and beam-plasma acceleration.
    *preprint*. under review, 2022.
    `arXiv:2205.12083 <https://arxiv.org/abs/2205.12083>`__
 
-#. Levy D, Andriyash IA, Haessler S, Ouille M, Kaur J, Flacco A, Kroupp E, Malka V, Lopez-Martens R.
-   **Low-divergence MeV-class proton beams from kHz-driven laser-solid interactions**.
-   *preprint*. under review, 2021.
-   `arXiv:2112.12581 <https://arxiv.org/abs/2112.12581>`__
-
 #. Miao B, Shrock JE, Feder L, Hollinger RC, Morrison J, Nedbailo R, Picksley A, Song H, Wang S, Rocca JJ, Milchberg HM.
    **Multi-GeV electron bunches from an all-optical laser wakefield accelerator**.
    *preprint*. under review, 2021.
@@ -43,6 +38,11 @@ Scientific works in laser-ion acceleration and laser-matter interaction.
 #. Hakimi S, Obst-Huebl L, Huebl A, Nakamura K, Bulanov SS, Steinke S, Leemans WP, Kober Z, Ostermayr TM, Schenkel T, Gonsalves AJ, Vay J-L, Tilborg Jv, Toth C, Schroeder CB, Esarey E, Geddes CGR.
    **Laser-solid interaction studies enabled by the new capabilities of the iP2 BELLA PW beamline**.
    under review, 2022
+
+#. Levy D, Andriyash IA, Haessler S, Ouille M, Kaur J, Flacco A, Kroupp E, Malka V, Lopez-Martens R.
+   **Low-divergence MeV-class proton beams from kHz-driven laser-solid interactions**.
+   *preprint*. under review, 2021.
+   `arXiv:2112.12581 <https://arxiv.org/abs/2112.12581>`__
 
 
 Particle Accelerator & Beam Physics

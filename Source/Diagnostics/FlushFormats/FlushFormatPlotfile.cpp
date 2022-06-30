@@ -71,15 +71,17 @@ FlushFormatPlotfile::WriteToFile (
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::Version_v1);
     if (plot_raw_fields) rfs.emplace_back("raw_fields");
-    amrex::WriteMultiLevelPlotfile(filename, nlev,
-                                   amrex::GetVecOfConstPtrs(mf),
-                                   varnames, geom,
-                                   static_cast<Real>(time), iteration, warpx.refRatio(),
-                                   "HyperCLaw-V1.1",
-                                   "Level_",
-                                   "Cell",
-                                   rfs
-                                   );
+    if (varnames.size() > 0) {
+        amrex::WriteMultiLevelPlotfile(filename, nlev,
+                                       amrex::GetVecOfConstPtrs(mf),
+                                       varnames, geom,
+                                       static_cast<Real>(time), iteration, warpx.refRatio(),
+                                       "HyperCLaw-V1.1",
+                                       "Level_",
+                                       "Cell",
+                                       rfs
+                                       );
+    }
 
     WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards);
 

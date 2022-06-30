@@ -12,13 +12,13 @@
 #include "FlushFormats/FlushFormatPlotfile.H"
 #include "FlushFormats/FlushFormatSensei.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
@@ -167,6 +167,10 @@ Diagnostics::BaseReadParameters ()
             "Input error: string " + species + " in " + m_diag_name
             + ".particle_fields_species does not match any species"
         );
+    }
+
+    if (WarpXUtilStr::is_in(m_varnames_fields, "none")){
+        m_varnames_fields.clear();
     }
 
     m_varnames = m_varnames_fields;
@@ -442,7 +446,8 @@ Diagnostics::ComputeAndPack ()
 
             // needed for contour plots of rho, i.e. ascent/sensei
             if (m_format == "sensei" || m_format == "ascent") {
-                WarpXCommUtil::FillBoundary(m_mf_output[i_buffer][lev], warpx.Geom(lev).periodicity());
+                ablastr::utils::communication::FillBoundary(m_mf_output[i_buffer][lev], WarpX::do_single_precision_comms,
+                                                            warpx.Geom(lev).periodicity());
             }
         }
         // Call Particle functor
