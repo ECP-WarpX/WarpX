@@ -447,6 +447,10 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const auto plo = geom.ProbLoArray();
     const auto domain = geom.Domain();
 
+    //This could be it. Make absolute certain that every box has the same number of points
+    //convert copies in case you had any doubts
+    //types are node and cell
+    //note you only use one of these
     const amrex::Box sample_tbox(IntVect(AMREX_D_DECL(0,0,0)), a_tbox_max_size - 1);
     amrex::Box sample_tbox_x = convert(sample_tbox, jx_type);
     amrex::Box sample_tbox_y = convert(sample_tbox, jy_type);
@@ -456,8 +460,13 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     sample_tbox_y.grow(depos_order);
     sample_tbox_z.grow(depos_order);
 
+    if(!(sample_tbox_x.numPts() == sample_tbox_y.numPts() &&
+            (sample_tbox_y.numPts() == sample_tbox_z.numPts())))
+            printf("na ner na ner na ner! boxes not same size! ya thought wrong");
+
+
     //Note that the number of points in any of the sample boxes is the same for all
-    const auto npts_per_box = sample_tbox_z.numPts(); 
+    const auto npts = sample_tbox_x.numPts()+sample_tbox_y.numPts()+sample_tbox_z.numPts(); 
 
     //needed for gpu kernel
     const int nblocks = a_bins.numBins();
@@ -467,7 +476,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     //calculate how much shared memory is needed. Note 3 because writing to 3 array4s
     //Andrew, really? We gotta talk about this Array4 always has 3d etc. Look how
     //painful this is on the shared mem!
-    std::size_t shared_mem_bytes = npts_per_box*sizeof(amrex::Real) * 3; 
+    std::size_t shared_mem_bytes = npts*sizeof(amrex::Real); 
     amrex::IntVect bin_size = WarpX::sort_bin_size;
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
     //WATCH may get burned if this makes you use less threads
@@ -557,9 +566,12 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 //        amrex::Array4<amrex::Real> const jx_buff(shared, 
 //                amrex::begin(tbox_x), amrex::end(tbox_x), 1);
 //#endif
+        //for(int i = 0; i < shared_mem_bytes / sizeof(amrex::Real); i++){
+        //    vs[i] = 0.0;
+        //}
         // Zero-initialize the temporary array in shared memory
         volatile amrex::Real* vs = shared; 
-        for (int i = threadIdx.x; i < tbox_x.numPts()*3; i += blockDim.x){
+        for (int i = threadIdx.x; i < tbox_x.numPts()+tbox_y.numPts()+tbox_z.numPts(); i += blockDim.x){
             vs[i] = 0.0;
         }
         __syncthreads();
@@ -749,20 +761,25 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
+                    //auto preVal = jz_buff(lo.x+j_jz+ix, lo.y+l_jz+iz, 1, 0);
+                    //printf("%.2ef\n", preVal);
                     amrex::Gpu::Atomic::AddNoRet(
                         &jx_buff(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 0),
                         sx_jx[ix]*sz_jx[iz]*wqx);
                     amrex::Gpu::Atomic::AddNoRet(
                         &jy_buff(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 0),
                         sx_jy[ix]*sz_jy[iz]*wqy);
+                    //auto postVal = jz_buff(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0);
+                    //printf("pre = %.2ef;\t post = %.2ef;\n", preVal, postVal);
                     amrex::Gpu::Atomic::AddNoRet(
                         &jz_buff(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0),
                         sx_jz[ix]*sz_jz[iz]*wqz);
-                    printf("writing (%.2ef, %.2ef, %.2ef)\n", 
-                            sx_jx[ix]*sz_jx[iz]*wqx,
-                            sx_jy[ix]*sz_jy[iz]*wqy,
-                            sx_jz[ix]*sz_jz[iz]*wqz
-                            );
+                    //if(ip==bin_stop)
+                    //printf("writing (%.2ef, %.2ef, %.2ef)\n", 
+                    //        sx_jx[ix]*sz_jx[iz]*wqx,
+                    //        sx_jy[ix]*sz_jy[iz]*wqy,
+                    //        sx_jz[ix]*sz_jz[iz]*wqz
+                    //        );
 #if defined(WARPX_DIM_RZ)
                     Complex xy = xy0; // Note that xy is equal to e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
