@@ -163,7 +163,7 @@ struct InjectorMomentumBoltzmann
         }
         // Calculate local velocity and abort if |beta|>=1
         amrex::Real const beta = velocity(x,y,z);
-        if (beta <= -1_rt || beta >= 1_rt) {
+        if (beta <= -1._rt || beta >= 1._rt) {
             amrex::Abort("beta = v/c magnitude greater than or equal to 1");
         }
         // Calculate the value of vave from the local temperature
