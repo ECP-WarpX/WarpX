@@ -11,6 +11,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealVect.H>
+#include <AMReX_Vector.H>
 
 /**
  * \brief This class computes and stores the number of guard cells needed for
@@ -23,11 +24,12 @@ public:
     /**
      * \brief Initialize number of guard cells depending on the options used.
      *
+     * \param dt time step
+     * \param dx cell spacing
      * \param do_subcycling bool, whether to use subcycling
      * \param do_fdtd_nci_corr bool, whether to use Godfrey NCI corrector
      * \param do_nodal bool, whether the field solver is nodal
      * \param do_moving_window bool, whether to use moving window
-     * \param aux_is_nodal bool, true if the aux grid is nodal
      * \param moving_window_dir direction of moving window
      * \param nox order of current deposition
      * \param nox_fft order of PSATD in x direction
@@ -36,6 +38,16 @@ public:
      * \param nci_corr_stencil stencil of NCI corrector
      * \param maxwell_solver_id if of Maxwell solver
      * \param max_level max level of the simulation
+     * \param v_galilean Velocity used in the Galilean PSATD scheme
+     * \param v_comoving Velocity used in the comoving PSATD scheme
+     * \param safe_guard_cells Run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
+     * \param do_electrostatic Whether to run in electrostatic mode i.e. solving the Poisson equation instead of the Maxwell equations.
+     * \param do_multi_J Whether to use the multi-J PSATD scheme
+     * \param fft_do_time_averaging Whether to average the E and B field in time (with PSATD) before interpolating them onto the macro-particles
+     * \param do_pml whether pml is turned on (only used by RZ PSATD)
+     * \param do_pml_in_domain whether pml is done in the domain (only used by RZ PSATD)
+     * \param pml_ncell number of cells on the pml layer (only used by RZ PSATD)
+     * \param ref_ratios mesh refinement ratios between mesh-refinement levels
      */
     void Init(
         const amrex::Real dt,
@@ -56,6 +68,9 @@ public:
         const int do_electrostatic,
         const int do_multi_J,
         const bool fft_do_time_averaging,
+        const bool do_pml,
+        const int do_pml_in_domain,
+        const int pml_ncell,
         const amrex::Vector<amrex::IntVect>& ref_ratios);
 
     // Guard cells allocated for MultiFabs E and B

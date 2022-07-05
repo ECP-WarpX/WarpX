@@ -96,8 +96,6 @@ This is mostly implemented in ``Source/Parallelization``, see the following func
 
 .. doxygenfunction:: WarpX::SyncCurrent
 
-.. doxygenfunction:: interpolateCurrentFineToCoarse
-
 .. doxygenfunction:: WarpX::RestrictCurrentFromFineToCoarsePatch
 
 .. doxygenfunction:: WarpX::AddCurrentFromFineLevelandSumBoundary
@@ -112,11 +110,7 @@ General functions for filtering can be found in ``Source/Filter/``, where the ma
 Bilinear filter
 ~~~~~~~~~~~~~~~
 
-The multi-pass bilinear filter (applied on the current density) is implemented in ``Source/Filter/``, and class ``WarpX`` holds an instance of this class in member variable ``WarpX::bilinear_filter``. For performance reasons (to avoid creating too many guard cells), this filter is directly applied in communication routines, see
-
-.. doxygenfunction:: WarpX::AddCurrentFromFineLevelandSumBoundary
-
-and
+The multi-pass bilinear filter (applied on the current density) is implemented in ``Source/Filter/``, and class ``WarpX`` holds an instance of this class in member variable ``WarpX::bilinear_filter``. For performance reasons (to avoid creating too many guard cells), this filter is directly applied in communication routines, see ``WarpX::AddCurrentFromFineLevelandSumBoundary`` above and
 
 .. doxygenfunction:: WarpX::ApplyFilterandSumBoundaryJ
 

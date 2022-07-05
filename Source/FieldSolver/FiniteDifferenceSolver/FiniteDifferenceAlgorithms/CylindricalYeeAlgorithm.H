@@ -49,7 +49,7 @@ struct CylindricalYeeAlgorithm {
         // In the rz case, the Courant limit has been evaluated
         // semi-analytically by R. Lehe, and resulted in the following
         // coefficients.
-        std::array< amrex::Real, 6 > const multimode_coeffs = {{ 0.2105, 1.0, 3.5234, 8.5104, 15.5059, 24.5037 }};
+        std::array< amrex::Real, 6 > const multimode_coeffs = {{ 0.2105_rt, 1.0_rt, 3.5234_rt, 8.5104_rt, 15.5059_rt, 24.5037_rt }};
         amrex::Real multimode_alpha;
         if (n_rz_azimuthal_modes < 7) {
           // Use the table of the coefficients

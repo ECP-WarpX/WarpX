@@ -8,17 +8,31 @@ When adding a new feature, you want to make sure that (i) you did not break the 
 Continuous Integration in WarpX
 -------------------------------
 
-WarpX-tests.ini files
-^^^^^^^^^^^^^^^^^^^^^
+Configuration
+^^^^^^^^^^^^^
 
-.. note::
-   section empty!
+Our regression tests are using the suite published and documented at `AMReX-Codes/regression_testing <https://github.com/AMReX-Codes/regression_testing>`__.
 
-Local tests every night
-^^^^^^^^^^^^^^^^^^^^^^^
+Most of the configuration of our regression tests happens in ``Regression/Warpx-tests.ini``.
+We slightly modify this file in ``Regression/prepare_file_ci.py``.
 
-.. note::
-   section empty!
+For example, if you like to change the compiler to compilation to build on Nvidia GPUs, modify this block to add ``-DWarpX_COMPUTE=CUDA``:
+
+.. code-block:: toml
+
+   [source]
+   dir = /home/regtester/AMReX_RegTesting/warpx
+   branch = development
+   cmakeSetupOpts = -DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON -DWarpX_COMPUTE=CUDA
+
+We also support changing compilation options :ref:`via the usual build enviroment variables <building-cmake-envvars:>`__.
+For instance, compiling with ``clang++ -Werror`` would be:
+
+.. code-block:: sh
+
+   export CXX=$(which clang++)
+   export CXXFLAGS="-Werror"
+
 
 Run the test suite locally
 --------------------------
@@ -77,8 +91,9 @@ Add a test to the suite
 There are three steps to follow to add a new automated test (illustrated here for PML boundary conditions):
 
 * An input file for your test, in folder `Example/Tests/...`. For the PML test, the input file is at ``Examples/Tests/PML/inputs_2d``. You can also re-use an existing input file (even better!) and pass specific parameters at runtime (see below).
-* A Python script that reads simulation output and tests correctness versus theory or calibrated results. For the PML test, see ``Examples/Tests/PML/analysis_pml_yee.py``. It typically ends with Python statement `assert( error<0.01 )`.
-* Add an entry to [Regression/WarpX-tests.ini](./Regression/WarpX-tests.ini), so that a WarpX simulation runs your test in the continuous integration process, and the Python script is executed to assess the correctness. For the PML test, the entry is
+* A Python script that reads simulation output and tests correctness versus theory or calibrated results. For the PML test, see ``Examples/Tests/PML/analysis_pml_yee.py``. It typically ends with Python statement ``assert( error<0.01 )``.
+* If you need a new Python package dependency for testing, add it in ``Regression/requirements.txt``
+* Add an entry to ``Regression/WarpX-tests.ini``, so that a WarpX simulation runs your test in the continuous integration process, and the Python script is executed to assess the correctness. For the PML test, the entry is
 
 .. code-block::
 
@@ -88,19 +103,30 @@ There are three steps to follow to add a new automated test (illustrated here fo
    runtime_params = warpx.do_dynamic_scheduling=0 algo.maxwell_solver=yee
    dim = 2
    addToCompileString =
+   cmakeSetupOpts = -DWarpX_DIMS=2
    restartTest = 0
    useMPI = 1
    numprocs = 2
    useOMP = 1
-   numthreads = 2
+   numthreads = 1
    compileTest = 0
    doVis = 0
    analysisRoutine = Examples/Tests/PML/analysis_pml_yee.py
 
 If you re-use an existing input file, you can add arguments to ``runtime_params``, like ``runtime_params = amr.max_level=1 amr.n_cell=32 512 max_step=100 plasma_e.zmin=-200.e-6``.
 
+.. note::
+
+   If you added ``analysisRoutine = Examples/analysis_default_regression.py``, then run the new test case locally and add the :ref:`checksum <developers-checksum>` file for the expected output.
+
+.. note::
+
+   We run those tests on our continuous integration services, which at the moment only have 2 virtual CPU cores.
+   Thus, make sure that the product of ``numprocs`` and ``numthreads`` for a test is ``<=2``.
+
+
 Useful tool for plotfile comparison: ``fcompare``
---------------------------------------------------
+-------------------------------------------------
 
 AMReX provides ``fcompare``, an executable that takes two ``plotfiles`` as input and returns the absolute and relative difference for each field between these two plotfiles. For some changes in the code, it is very convenient to run the same input file with an old and your current version, and ``fcompare`` the plotfiles at the same iteration. To use it:
 

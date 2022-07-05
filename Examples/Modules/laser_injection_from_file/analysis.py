@@ -16,14 +16,17 @@
 # - Compute the theory for laser envelope at time T
 # - Compare theory and simulation, for both envelope and central frequency
 
-import yt ; yt.funcs.mylog.setLevel(50)
-import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from scipy.signal import hilbert
 import glob
 import os
+
+import matplotlib
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.signal import hilbert
+
+import yt ; yt.funcs.mylog.setLevel(50)
 
 #Maximum acceptable error for this test
 relative_error_threshold = 0.065
@@ -208,14 +211,14 @@ def do_analysis(fname, compname, steps):
 def launch_analysis(executable):
     create_gaussian_2d()
     os.system("./" + executable + " inputs.2d_test_txye diag1.file_prefix=diags/plotfiles/plt")
-    do_analysis("diags/plotfiles/plt00250/", "comp_unf.pdf", 250)
+    do_analysis("diags/plotfiles/plt000250/", "comp_unf.pdf", 250)
     os.system("sed 's/gauss_2d_unf.txye/gauss_2d.txye/g' inputs.2d_test_txye > inputs.2d_test_txye_non_unf")
     os.system("./" + executable + " inputs.2d_test_txye_non_unf diag1.file_prefix=diags/plotfiles/plt")
-    do_analysis("diags/plotfiles/plt00250/", "comp_non_unf.pdf", 250)
+    do_analysis("diags/plotfiles/plt000250/", "comp_non_unf.pdf", 250)
 
 
 def main() :
-    executables = glob.glob("main2d*")
+    executables = glob.glob("*.ex")
     if len(executables) == 1 :
         launch_analysis(executables[0])
     else :

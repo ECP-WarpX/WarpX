@@ -12,6 +12,7 @@
 #include "InjectorDensity.H"
 #include "InjectorMomentum.H"
 #include "TemperatureProperties.H"
+#include "VelocityProperties.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 
 #include "InjectorPosition_fwd.H"
@@ -40,7 +41,7 @@ class PlasmaInjector
 
 public:
 
-    PlasmaInjector ();
+    PlasmaInjector () = default;
 
     PlasmaInjector (int ispecies, const std::string& name);
 
@@ -106,6 +107,11 @@ public:
 
     bool surface_flux = false; // inject from a surface
     amrex::Real surface_flux_pos; // surface location
+    amrex::Real flux_tmin = -1.; // Time after which we start injecting particles
+    amrex::Real flux_tmax = -1.; // Time after which we stop injecting particles
+    // Flux normal axis represents the direction in which to emit particles
+    // When compiled in Cartesian geometry, 0 = x, 1 = y, 2 = z
+    // When compiled in cylindrical geometry, 0 = radial, 1 = azimuthal, 2 = z
     int flux_normal_axis;
     int flux_direction; // -1 for left, +1 for right
 
@@ -153,6 +159,7 @@ protected:
     // Keep a pointer to TemperatureProperties to ensure the lifetime of the
     // contained Parser
     std::unique_ptr<TemperatureProperties> h_mom_temp;
+    std::unique_ptr<VelocityProperties> h_mom_vel;
 
     void parseDensity (amrex::ParmParse& pp);
     void parseMomentum (amrex::ParmParse& pp);

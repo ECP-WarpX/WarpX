@@ -5,10 +5,11 @@
 #
 # License: BSD-3-Clause-LBNL
 
+from collections import namedtuple
 from glob import glob
 import os
+
 import numpy as np
-from collections import namedtuple
 
 HeaderInfo = namedtuple('HeaderInfo', ['version', 'how', 'ncomp', 'nghost'])
 
@@ -37,7 +38,7 @@ def read_data(plt_file):
 
     '''
     all_data = []
-    raw_files = glob(plt_file + "/raw_fields/Level_*/")
+    raw_files = sorted(glob(plt_file + "/raw_fields/Level_*/"))
     for raw_file in raw_files:
         field_names = _get_field_names(raw_file)
 

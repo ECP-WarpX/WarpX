@@ -7,7 +7,7 @@ amr.max_level = 0
 warpx.numprocs = 1 2
 
 # Geometry
-geometry.coord_sys = 1
+geometry.dims = RZ
 geometry.prob_lo =   0    -220e-6
 geometry.prob_hi = 200e-6   10e-6
 boundary.field_lo = none damped
@@ -37,7 +37,6 @@ warpx.do_dive_cleaning = 1
 warpx.do_divb_cleaning = 1
 warpx.do_multi_J = 1
 warpx.do_multi_J_n_depositions = 2
-psatd.J_linear_in_time = 1
 psatd.do_time_averaging = 1
 
 # PSATD
@@ -114,5 +113,5 @@ plasma_p.do_continuous_injection = 1
 diagnostics.diags_names = diag1
 diag1.intervals = 50
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_driver rho_plasma_e rho_plasma_p
+diag1.fields_to_plot = Ex Ez By jx jz rho rho_driver rho_plasma_e rho_plasma_p
 diag1.species = driver plasma_e plasma_p

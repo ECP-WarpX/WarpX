@@ -47,6 +47,7 @@ class SpectralSolver
          * \param[in] norder_y spectral order along y
          * \param[in] norder_z spectral order along z
          * \param[in] nodal whether the spectral solver is applied to a nodal or staggered grid
+         * \param[in] fill_guards Update the guard cells (in addition to the valid cells) when pushing the fields in time
          * \param[in] v_galilean three-dimensional vector containing the components of the Galilean
          *                       velocity for the standard or averaged Galilean PSATD solvers
          * \param[in] v_comoving three-dimensional vector containing the components of the comoving
@@ -58,9 +59,9 @@ class SpectralSolver
          *                                (no domain decomposition)
          * \param[in] update_with_rho whether rho is used in the field update equations
          * \param[in] fft_do_time_averaging whether the time averaging algorithm is used
-         * \param[in] J_linear_in_time whether to use two currents computed at the beginning and
-         *                             the end of the time interval (instead of using one current
-         *                             computed at half time)
+         * \param[in] do_multi_J whether the multi-J algorithm is used (hence two currents
+         *                       computed at the beginning and the end of the time interval
+         *                       instead of one current computed at half time)
          * \param[in] dive_cleaning whether to use div(E) cleaning to account for errors in
          *                          Gauss law (new field F in the update equations)
          * \param[in] divb_cleaning whether to use div(B) cleaning to account for errors in
@@ -80,18 +81,23 @@ class SpectralSolver
                         const bool periodic_single_box,
                         const bool update_with_rho,
                         const bool fft_do_time_averaging,
-                        const bool J_linear_in_time,
+                        const bool do_multi_J,
                         const bool dive_cleaning,
                         const bool divb_cleaning);
 
         /**
-         * \brief Transform the component `i_comp` of MultiFab `mf`
-         *  to spectral space, and store the corresponding result internally
-         *  (in the spectral field specified by `field_index`) */
-        void ForwardTransform( const int lev,
+         * \brief Transform the component i_comp of the MultiFab mf to Fourier space,
+         * and store the result internally (in the spectral field specified by field_index)
+         *
+         * \param[in] lev mesh refinement level
+         * \param[in] mf MultiFab that is transformed to Fourier space (component i_comp)
+         * \param[in] field_index index of the spectral field that stores the FFT result
+         * \param[in] i_comp component of the MultiFab mf that is transformed to Fourier space
+         */
+        void ForwardTransform (const int lev,
                                const amrex::MultiFab& mf,
                                const int field_index,
-                               const int i_comp=0 );
+                               const int i_comp = 0);
 
         /**
          * \brief Transform spectral field specified by `field_index` back to
@@ -120,17 +126,12 @@ class SpectralSolver
         /**
          * \brief Public interface to call the virtual function \c CurrentCorrection,
          * defined in the base class SpectralBaseAlgorithm and possibly overridden
-         * by its derived classes (e.g. PsatdAlgorithm, GalileanAlgorithm), from
+         * by its derived classes (e.g. PsatdAlgorithm, PsatdAlgorithmComoving, etc.), from
          * objects of class SpectralSolver through the private unique pointer \c algorithm
-         *
-         * \param[in,out] current three-dimensional array of unique pointers to MultiFab
-         *                        storing the three components of the current density
-         * \param[in]     rho     unique pointer to MultiFab storing the charge density
          */
-        void CurrentCorrection ( const int lev,
-                                 std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                 const std::unique_ptr<amrex::MultiFab>& rho ) {
-            algorithm->CurrentCorrection( lev, field_data, current, rho );
+        void CurrentCorrection ()
+        {
+            algorithm->CurrentCorrection(field_data);
         }
 
         /**
@@ -139,12 +140,13 @@ class SpectralSolver
          * derived classes, from objects of class SpectralSolver through the private
          * unique pointer \c algorithm.
          *
+         * \param[in]     lev     The mesh refinement level
          * \param[in,out] current Array of unique pointers to \c MultiFab storing
          *                        the three components of the current density
          */
-        void VayDeposition (const int lev, std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+        void VayDeposition ()
         {
-            algorithm->VayDeposition(lev, field_data, current);
+            algorithm->VayDeposition(field_data);
         }
 
         /**

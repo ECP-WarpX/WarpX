@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019
 #
@@ -7,11 +7,16 @@
 # License: BSD-3-Clause-LBNL
 
 import sys
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import os
+
 import numpy as np
 import yt
+
 yt.funcs.mylog.setLevel(50)
 import re
+
 import checksumAPI
 from scipy.constants import c
 
@@ -19,8 +24,8 @@ from scipy.constants import c
 fn = sys.argv[1]
 
 # Load yt data
-ds_old = yt.load('divb_cleaning_3d_plt00398')
-ds_mid = yt.load('divb_cleaning_3d_plt00399')
+ds_old = yt.load('divb_cleaning_3d_plt000398')
+ds_mid = yt.load('divb_cleaning_3d_plt000399')
 ds_new = yt.load(fn) # this is the last plotfile
 
 ad_old = ds_old.covering_grid(level = 0, left_edge = ds_old.domain_left_edge, dims = ds_old.domain_dimensions)
@@ -42,7 +47,7 @@ tolerance = 1e-1
 
 assert(rel_error < tolerance)
 
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+test_name = os.path.split(os.getcwd())[1]
 
 if re.search('single_precision', fn):
     checksumAPI.evaluate_checksum(test_name, fn, rtol=1.e-3)

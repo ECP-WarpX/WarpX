@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2019-2021 David Bizzozero, David Grote
 #
@@ -17,10 +17,12 @@ the correct speed and that the electric field is accurately modeled against a
 known analytic solution. While the radius r(t) is not analytically known, its
 inverse t(r) can be solved for exactly.
 """
+import sys
+
 import numpy as np
 from scipy.optimize import fsolve
-import sys
 import yt
+
 yt.funcs.mylog.setLevel(0)
 
 # Open plotfile specified in command line

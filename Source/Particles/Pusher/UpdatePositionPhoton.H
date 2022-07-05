@@ -32,7 +32,11 @@ void UpdatePositionPhoton(
     const amrex::Real c_over_umod = (u_norm == 0._rt) ? 0._rt: PhysConst::c/u_norm;
 
     // Update positions over one time step
+#if (AMREX_SPACEDIM >= 2)
     x += ux * c_over_umod * dt;
+#else
+    amrex::ignore_unused(x);
+#endif
 #if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ) // RZ pushes particles in 3D
     y += uy * c_over_umod * dt;
 #else

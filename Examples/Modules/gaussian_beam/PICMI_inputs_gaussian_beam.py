@@ -1,13 +1,20 @@
-from pywarpx import picmi
+#!/usr/bin/env python3
+
 #from warp import picmi
 import argparse
 
+from pywarpx import picmi
 
 parser = argparse.ArgumentParser(description="Gaussian beam PICMI example")
 
 parser.add_argument('--diagformat', type=str,
                     help='Format of the full diagnostics (plotfile, openpmd, ascent, sensei, ...)',
                     default='plotfile')
+parser.add_argument('--fields_to_plot', type=str,
+                    help='List of fields to write to diagnostics',
+                    default=['E', 'B', 'J', 'part_per_cell'],
+                    nargs = '*')
+
 args = parser.parse_args()
 
 constants = picmi.constants
@@ -57,7 +64,7 @@ protons = picmi.Species(particle_type='proton', name='protons', initial_distribu
 field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     grid = grid,
                                     period = 10,
-                                    data_list = ['E', 'B', 'J', 'part_per_cell'],
+                                    data_list = args.fields_to_plot,
                                     warpx_format = args.diagformat,
                                     write_dir = '.',
                                     warpx_file_prefix = 'Python_gaussian_beam_plt')

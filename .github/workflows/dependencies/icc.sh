@@ -11,8 +11,9 @@ export DEBIAN_FRONTEND=noninteractive
 sudo apt-get -qqq update
 sudo apt-get install -y \
   build-essential \
-  cmake           \
   ca-certificates \
+  ccache          \
+  cmake           \
   gnupg           \
   pkg-config      \
   wget
@@ -26,21 +27,23 @@ sudo apt-get update
 sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
 
 # activate now via
-set +e
+set +eu
 source /opt/intel/oneapi/setvars.sh
-set -e
+set -eu
 
 # cmake-easyinstall
 sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
 sudo chmod a+x /usr/local/bin/cmake-easyinstall
 export CEI_SUDO="sudo"
+export CEI_TMP="/tmp/cei"
 
 # openPMD-api
 CXX=$(which icpc) CC=$(which icc) \
   cmake-easyinstall               \
   --prefix=/usr/local             \
-  git+https://github.com/openPMD/openPMD-api.git@0.14.2 \
+  git+https://github.com/openPMD/openPMD-api.git@0.14.3 \
   -DopenPMD_USE_PYTHON=OFF \
   -DBUILD_TESTING=OFF      \
   -DBUILD_EXAMPLES=OFF     \
-  -DBUILD_CLI_TOOLS=OFF
+  -DBUILD_CLI_TOOLS=OFF    \
+  -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache)

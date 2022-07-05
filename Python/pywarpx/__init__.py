@@ -1,19 +1,21 @@
-# Copyright 2016-2019 Andrew Myers, David Grote
+# Copyright 2016-2022 Andrew Myers, David Grote, Lorenzo Giacomel
 #
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
 
-from .WarpX import warpx
-from .Constants import my_constants
+from .Algo import algo
 from .Amr import amr
 from .Boundary import boundary
-from .Geometry import geometry
-from .Algo import algo
-from .Langmuirwave import langmuirwave
-from .Interpolation import interpolation
-from .Particles import particles, electrons, positrons, protons, newspecies
 from .Collisions import collisions
-from .PSATD import psatd
-from .Lasers import lasers
+from .Constants import my_constants
 from .Diagnostics import diagnostics
+from .EB2 import eb2
+from .Geometry import geometry
+from .Interpolation import interpolation
+from .Langmuirwave import langmuirwave
+from .Lasers import lasers
+from .PSATD import psatd
+from .Particles import electrons, newspecies, particles, positrons, protons
+from .WarpX import warpx
+from ._libwarpx import libwarpx

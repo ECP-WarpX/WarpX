@@ -454,7 +454,7 @@ EXTRACT_PACKAGE        = NO
 # included in the documentation.
 # The default value is: NO.
 
-EXTRACT_STATIC         = NO
+EXTRACT_STATIC         = YES
 
 # If the EXTRACT_LOCAL_CLASSES tag is set to YES, classes (and structs) defined
 # locally in source files will be included in the documentation. If set to NO,
@@ -791,7 +791,7 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = ../Source/ ../Tools/ ../Regression/Checksum/
+INPUT                  = Doxygen/main.dox ../Source/ ../Tools/ ../Regression/Checksum/
 RECURSIVE              = YES
 
 # This tag can be used to specify the character encoding of the source files
@@ -2104,7 +2104,8 @@ SKIP_FUNCTION_MACROS   = YES
 # the path). If a tag file is not located in the directory in which doxygen is
 # run, you must also specify the path to the tagfile here.
 
-TAGFILES               = amrex-doxygen-web.tag.xml=https://amrex-codes.github.io/amrex/doxygen/
+TAGFILES               = amrex-doxygen-web.tag.xml=https://amrex-codes.github.io/amrex/doxygen/  \
+                         openpmd-api-doxygen-web.tag.xml=https://openpmd-api.readthedocs.io/en/latest/_static/doxyhtml/
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create a
 # tag file that is based on the input files it reads. See section "Linking to

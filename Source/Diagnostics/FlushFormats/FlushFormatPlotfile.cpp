@@ -3,8 +3,9 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Particles/ParticleBuffer.H"
+#include "Particles/PinnedMemoryParticleContainer.H"
 #include "Utils/Interpolate.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -58,31 +59,33 @@ FlushFormatPlotfile::WriteToFile (
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,
-    bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
-    bool /*isLastBTDFlush*/) const
+    bool isBTD, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
+    bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
 {
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
     const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
-    amrex::Print() << "  Writing plotfile " << filename << "\n";
+    amrex::Print() << Utils::TextMsg::Info("Writing plotfile " + filename);
 
     Vector<std::string> rfs;
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::Version_v1);
     if (plot_raw_fields) rfs.emplace_back("raw_fields");
-    amrex::WriteMultiLevelPlotfile(filename, nlev,
-                                   amrex::GetVecOfConstPtrs(mf),
-                                   varnames, geom,
-                                   static_cast<Real>(time), iteration, warpx.refRatio(),
-                                   "HyperCLaw-V1.1",
-                                   "Level_",
-                                   "Cell",
-                                   rfs
-                                   );
+    if (varnames.size() > 0) {
+        amrex::WriteMultiLevelPlotfile(filename, nlev,
+                                       amrex::GetVecOfConstPtrs(mf),
+                                       varnames, geom,
+                                       static_cast<Real>(time), iteration, warpx.refRatio(),
+                                       "HyperCLaw-V1.1",
+                                       "Level_",
+                                       "Cell",
+                                       rfs
+                                       );
+    }
 
     WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards);
 
-    WriteParticles(filename, particle_diags);
+    WriteParticles(filename, particle_diags, isBTD);
 
     WriteJobInfo(filename);
 
@@ -194,10 +197,10 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
             jobInfoFile << "   -y: " << "interior" << "\n";
             jobInfoFile << "   +y: " << "interior" << "\n";
         }
-        if (AMREX_SPACEDIM == 3) {
+#if defined(WARPX_DIM_3D)
             jobInfoFile << "   -z: " << "interior" << "\n";
             jobInfoFile << "   +z: " << "interior" << "\n";
-        }
+#endif
 
         jobInfoFile << "\n\n";
 
@@ -294,13 +297,20 @@ FlushFormatPlotfile::WriteWarpXHeader(
 }
 
 void
-FlushFormatPlotfile::WriteParticles (const std::string& dir,
-                                     const amrex::Vector<ParticleDiag>& particle_diags) const
+FlushFormatPlotfile::WriteParticles(const std::string& dir,
+                                    const amrex::Vector<ParticleDiag>& particle_diags,
+                                    bool isBTD) const
 {
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-        auto tmp = ParticleBuffer::getTmpPC<amrex::PinnedArenaAllocator>(pc);
+        auto tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
+        if (isBTD) {
+            PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
+            tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
+            tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
+            tmp.SetParticleDistributionMap(0, pinned_pc->ParticleDistributionMap(0));
+        }
 
         Vector<std::string> real_names;
         Vector<std::string> int_names;
@@ -348,15 +358,19 @@ FlushFormatPlotfile::WriteParticles (const std::string& dir,
         GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                              particle_diags[i].m_diag_domain);
 
-        using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
-        tmp.copyParticles(*pc,
-                          [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
-        {
-            const SuperParticleType& p = src.getSuperParticle(ip);
-            return random_filter(p, engine) * uniform_filter(p, engine)
-                * parser_filter(p, engine) * geometry_filter(p, engine);
-        }, true);
-
+        if (!isBTD) {
+            using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+            tmp.copyParticles(*pc,
+                              [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+            {
+                const SuperParticleType& p = src.getSuperParticle(ip);
+                return random_filter(p, engine) * uniform_filter(p, engine)
+                    * parser_filter(p, engine) * geometry_filter(p, engine);
+            }, true);
+        } else {
+            PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
+            tmp.copyParticles(*pinned_pc, true);
+        }
         // real_names contains a list of all particle attributes.
         // real_flags & int_flags are 1 or 0, whether quantity is dumped or not.
         tmp.WritePlotFile(
