@@ -32,7 +32,7 @@ algo.particle_shape = 1
 particles.species_names = proton1 boron1 alpha1 proton2 boron2 alpha2 proton3 boron3 alpha3
                           proton4 boron4 alpha4 proton5 boron5 alpha5
 
-my_constants.m_b11 =  10.9298*m_p # Boron 11 mass
+my_constants.m_b11 = 11.00930536*m_u # Boron 11 mass
 my_constants.m_reduced = m_p*m_b11/(m_p+m_b11)
 my_constants.keV_to_J = 1.e3*q_e
 my_constants.Energy_step = 22. * keV_to_J
@@ -63,7 +63,7 @@ boron1.momentum_function_uz(x,y,z) = -sqrt(2*m_reduced*Energy_step*(floor(z)**2)
 boron1.do_not_push = 1
 boron1.do_not_deposit = 1
 
-alpha1.species_type = alpha
+alpha1.species_type = helium
 alpha1.do_not_push = 1
 alpha1.do_not_deposit = 1
 
@@ -94,7 +94,7 @@ boron2.momentum_distribution_type = "constant"
 boron2.do_not_push = 1
 boron2.do_not_deposit = 1
 
-alpha2.species_type = alpha
+alpha2.species_type = helium
 alpha2.do_not_push = 1
 alpha2.do_not_deposit = 1
 
@@ -120,7 +120,7 @@ boron3.theta = temperature/(m_b11*clight**2)
 boron3.do_not_push = 1
 boron3.do_not_deposit = 1
 
-alpha3.species_type = alpha
+alpha3.species_type = helium
 alpha3.do_not_push = 1
 alpha3.do_not_deposit = 1
 
@@ -145,7 +145,7 @@ boron4.momentum_distribution_type = "constant"
 boron4.do_not_push = 1
 boron4.do_not_deposit = 1
 
-alpha4.species_type = alpha
+alpha4.species_type = helium
 alpha4.do_not_push = 1
 alpha4.do_not_deposit = 1
 
@@ -168,7 +168,7 @@ boron5.momentum_distribution_type = "constant"
 boron5.do_not_push = 1
 boron5.do_not_deposit = 1
 
-alpha5.species_type = alpha
+alpha5.species_type = helium
 alpha5.do_not_push = 1
 alpha5.do_not_deposit = 1
 

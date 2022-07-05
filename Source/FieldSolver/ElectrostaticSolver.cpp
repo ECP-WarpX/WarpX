@@ -16,7 +16,10 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Parallelization/WarpXCommUtil.H"
+
+#include <ablastr/fields/PoissonSolver.H>
+#include <ablastr/utils/Communication.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -41,6 +44,9 @@
 #include <AMReX_SPACE.H>
 #include <AMReX_Vector.H>
 #include <AMReX_MFInterp_C.H>
+#ifdef AMREX_USE_EB
+#   include <AMReX_EBFabFactory.H>
+#endif
 
 #include <array>
 #include <memory>
@@ -102,7 +108,7 @@ WarpX::AddBoundaryField ()
 
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
-    if (!field_boundary_handler.bcs_set) field_boundary_handler.definePhiBCs();
+    if (!m_poisson_boundary_handler.bcs_set) m_poisson_boundary_handler.definePhiBCs();
 
     // Allocate fields for charge and potential
     const int num_levels = max_level + 1;
@@ -142,7 +148,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
-    if (!field_boundary_handler.bcs_set) field_boundary_handler.definePhiBCs();
+    if (!m_poisson_boundary_handler.bcs_set) m_poisson_boundary_handler.definePhiBCs();
 
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
@@ -192,7 +198,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
-    if (!field_boundary_handler.bcs_set) field_boundary_handler.definePhiBCs();
+    if (!m_poisson_boundary_handler.bcs_set) m_poisson_boundary_handler.definePhiBCs();
 
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
@@ -273,178 +279,70 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    int const max_iters,
                    int const verbosity) const
 {
-    // scale rho appropriately; also determine if rho is zero everywhere
-    amrex::Real max_norm_b = 0.0;
-    for (int lev=0; lev < rho.size(); lev++){
-        rho[lev]->mult(-1._rt/PhysConst::ep0);
-        max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
-    }
-    amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
-
-    bool always_use_bnorm = (max_norm_b > 0);
-    if (!always_use_bnorm) {
-        if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
-        WarpX::GetInstance().RecordWarning(
-            "ElectrostaticSolver", "Max norm of rho is 0", WarnPriority::low
-        );
-    }
-
-    LPInfo info;
-
-    for (int lev=0; lev<=finest_level; lev++) {
-        // Set the value of beta
-        amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
-#if defined(WARPX_DIM_1D_Z)
-            {{ beta[2] }};  // beta_x and beta_z
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            {{ beta[0], beta[2] }};  // beta_x and beta_z
-#else
-            {{ beta[0], beta[1], beta[2] }};
-#endif
-
-#if !(defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ))
-        // Determine whether to use semi-coarsening
-        Array<Real,AMREX_SPACEDIM> dx_scaled
-            {AMREX_D_DECL(Geom(lev).CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
-                          Geom(lev).CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
-                          Geom(lev).CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
-        int max_semicoarsening_level = 0;
-        int semicoarsening_direction = -1;
-        int min_dir = std::distance(dx_scaled.begin(),
-                                    std::min_element(dx_scaled.begin(),dx_scaled.end()));
-        int max_dir = std::distance(dx_scaled.begin(),
-                                    std::max_element(dx_scaled.begin(),dx_scaled.end()));
-        if (dx_scaled[max_dir] > dx_scaled[min_dir]) {
-            semicoarsening_direction = max_dir;
-            max_semicoarsening_level = static_cast<int>
-                (std::log2(dx_scaled[max_dir]/dx_scaled[min_dir]));
-        }
-        if (max_semicoarsening_level > 0) {
-            info.setSemicoarsening(true);
-            info.setMaxSemicoarseningLevel(max_semicoarsening_level);
-            info.setSemicoarseningDirection(semicoarsening_direction);
-        }
-#endif
-
-#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
-        // In the presence of EB or RZ: the solver assumes that the beam is
-        // propagating along  one of the axes of the grid, i.e. that only *one*
-        // of the components of `beta` is non-negligible.
-        MLEBNodeFDLaplacian linop( {Geom(lev)}, {boxArray(lev)}, {DistributionMap(lev)}, info
+    std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
 #if defined(AMREX_USE_EB)
-            , {&WarpX::fieldEBFactory(lev)}
-#endif
-        );
 
-        // Note: this assumes that the beam is propagating along
-        // one of the axes of the grid, i.e. that only *one* of the
-        // components of `beta` is non-negligible.
-#if defined(WARPX_DIM_RZ)
-        linop.setSigma({0._rt, 1._rt-beta_solver[1]*beta_solver[1]});
-#else
-        linop.setSigma({AMREX_D_DECL(
-            1._rt-beta_solver[0]*beta_solver[0],
-            1._rt-beta_solver[1]*beta_solver[1],
-            1._rt-beta_solver[2]*beta_solver[2])});
-#endif
-
-#if defined(AMREX_USE_EB)
-        // if the EB potential only depends on time, the potential can be passed
-        // as a float instead of a callable
-        if (field_boundary_handler.phi_EB_only_t) {
-            linop.setEBDirichlet(field_boundary_handler.potential_eb_t(gett_new(0)));
-        }
-        else linop.setEBDirichlet(field_boundary_handler.getPhiEB(gett_new(0)));
-#endif
-#else
-        // In the absence of EB and RZ: use a more generic solver
-        // that can handle beams propagating in any direction
-        MLNodeTensorLaplacian linop( {Geom(lev)}, {boxArray(lev)},
-            {DistributionMap(lev)}, info );
-        linop.setBeta( beta_solver );
-#endif
-
-        // Solve the Poisson equation
-        linop.setDomainBC( field_boundary_handler.lobc, field_boundary_handler.hibc );
-#ifdef WARPX_DIM_RZ
-        linop.setRZ(true);
-#endif
-        MLMG mlmg(linop);
-        mlmg.setVerbose(verbosity);
-        mlmg.setMaxIter(max_iters);
-        mlmg.setAlwaysUseBNorm(always_use_bnorm);
-
-        // Solve Poisson equation at lev
-        mlmg.solve( {phi[lev].get()}, {rho[lev].get()},
-                    required_precision, absolute_tolerance );
-
-        // Interpolation from phi[lev] to phi[lev+1]
-        // (This provides both the boundary conditions and initial guess for phi[lev+1])
-        if (lev < finest_level) {
-
-            // Allocate phi_cp for lev+1
-            BoxArray ba = phi[lev+1]->boxArray();
-            const IntVect& refratio = refRatio(lev);
-            ba.coarsen(refratio);
-            const int ncomp = linop.getNComp();
-            MultiFab phi_cp(ba, phi[lev+1]->DistributionMap(), ncomp, 1);
-
-            // Copy from phi[lev] to phi_cp (in parallel)
-            const amrex::IntVect& ng = IntVect::TheUnitVector();
-            const amrex::Periodicity& crse_period = Geom(lev).periodicity();
-            WarpXCommUtil::ParallelCopy(phi_cp, *phi[lev], 0, 0, 1, ng, ng, crse_period);
-
-            // Local interpolation from phi_cp to phi[lev+1]
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-            for (MFIter mfi(*phi[lev+1],TilingIfNotGPU()); mfi.isValid(); ++mfi)
-            {
-                Array4<Real> const& phi_fp_arr = phi[lev+1]->array(mfi);
-                Array4<Real> const& phi_cp_arr = phi_cp.array(mfi);
-
-                Box const& b = mfi.tilebox(phi[lev+1]->ixType().toIntVect());
-                amrex::ParallelFor( b,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                {
-                    mf_nodebilin_interp(i, j, k, 0, phi_fp_arr, 0, phi_cp_arr, 0, refratio);
-                });
-            }
-
-        }
-
-#ifdef AMREX_USE_EB
-        // use amrex to directly calculate the electric field since with EB's the
-        // simple finite difference scheme in WarpX::computeE sometimes fails
-        if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
-        {
-#if defined(WARPX_DIM_1D_Z)
-            mlmg.getGradSolution(
-                {amrex::Array<amrex::MultiFab*,1>{
+    // EB: use AMReX to directly calculate the electric field since with EB's the
+    // simple finite difference scheme in WarpX::computeE sometimes fails
+    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
+    {
+        // TODO: maybe make this a helper function or pass Efield_fp directly
+        amrex::Vector<
+            amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM>
+        > e_field;
+        for (int lev = 0; lev <= finest_level; ++lev) {
+            e_field.push_back(
+#   if defined(WARPX_DIM_1D_Z)
+                amrex::Array<amrex::MultiFab*, 1>{
                     get_pointer_Efield_fp(lev, 2)
-                    }}
-            );
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            mlmg.getGradSolution(
-                {amrex::Array<amrex::MultiFab*,2>{
-                    get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 2)
-                    }}
-            );
-#elif defined(WARPX_DIM_3D)
-            mlmg.getGradSolution(
-                {amrex::Array<amrex::MultiFab*,3>{
-                    get_pointer_Efield_fp(lev, 0),get_pointer_Efield_fp(lev, 1),
+                }
+#   elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                amrex::Array<amrex::MultiFab*, 2>{
+                    get_pointer_Efield_fp(lev, 0),
                     get_pointer_Efield_fp(lev, 2)
-                    }}
+                }
+#   elif defined(WARPX_DIM_3D)
+                amrex::Array<amrex::MultiFab *, 3>{
+                    get_pointer_Efield_fp(lev, 0),
+                    get_pointer_Efield_fp(lev, 1),
+                    get_pointer_Efield_fp(lev, 2)
+                }
+#   endif
             );
-            get_pointer_Efield_fp(lev, 1)->mult(-1._rt);
-#endif
-            get_pointer_Efield_fp(lev, 0)->mult(-1._rt);
-            get_pointer_Efield_fp(lev, 2)->mult(-1._rt);
         }
-#endif
-
+        post_phi_calculation = ElectrostaticSolver::EBCalcEfromPhiPerLevel(e_field);
     }
+
+    std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory;
+    amrex::Vector<
+        amrex::EBFArrayBoxFactory const *
+    > factories;
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        factories.push_back(&WarpX::fieldEBFactory(lev));
+    }
+    eb_farray_box_factory = factories;
+#else
+    std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > eb_farray_box_factory;
+#endif
+
+    ablastr::fields::computePhi(
+        rho,
+        phi,
+        beta,
+        required_precision,
+        absolute_tolerance,
+        max_iters,
+        verbosity,
+        this->geom,
+        this->dmap,
+        this->grids,
+        this->m_poisson_boundary_handler,
+        WarpX::do_single_precision_comms,
+        this->ref_ratio,
+        post_phi_calculation,
+        gett_new(0),
+        eb_farray_box_factory
+    );
 
 }
 
@@ -459,26 +357,26 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
    \param[in] idim The dimension for which the Dirichlet boundary condition is set
 */
 void
-WarpX::setPhiBC( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
+WarpX::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
 {
     // check if any dimension has non-periodic boundary conditions
-    if (!field_boundary_handler.has_non_periodic) return;
+    if (!m_poisson_boundary_handler.has_non_periodic) return;
 
     // get the boundary potentials at the current time
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_lo;
     amrex::Array<amrex::Real,AMREX_SPACEDIM> phi_bc_values_hi;
-    phi_bc_values_lo[WARPX_ZINDEX] = field_boundary_handler.potential_zlo(gett_new(0));
-    phi_bc_values_hi[WARPX_ZINDEX] = field_boundary_handler.potential_zhi(gett_new(0));
+    phi_bc_values_lo[WARPX_ZINDEX] = m_poisson_boundary_handler.potential_zlo(gett_new(0));
+    phi_bc_values_hi[WARPX_ZINDEX] = m_poisson_boundary_handler.potential_zhi(gett_new(0));
 #ifndef WARPX_DIM_1D_Z
-    phi_bc_values_lo[0] = field_boundary_handler.potential_xlo(gett_new(0));
-    phi_bc_values_hi[0] = field_boundary_handler.potential_xhi(gett_new(0));
+    phi_bc_values_lo[0] = m_poisson_boundary_handler.potential_xlo(gett_new(0));
+    phi_bc_values_hi[0] = m_poisson_boundary_handler.potential_xhi(gett_new(0));
 #endif
 #if defined(WARPX_DIM_3D)
-    phi_bc_values_lo[1] = field_boundary_handler.potential_ylo(gett_new(0));
-    phi_bc_values_hi[1] = field_boundary_handler.potential_yhi(gett_new(0));
+    phi_bc_values_lo[1] = m_poisson_boundary_handler.potential_ylo(gett_new(0));
+    phi_bc_values_hi[1] = m_poisson_boundary_handler.potential_yhi(gett_new(0));
 #endif
 
-    auto dirichlet_flag = field_boundary_handler.dirichlet_flag;
+    auto dirichlet_flag = m_poisson_boundary_handler.dirichlet_flag;
 
     // loop over all mesh refinement levels and set the boundary values
     for (int lev=0; lev <= max_level; lev++) {
@@ -760,7 +658,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
     }
 }
 
-void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
+void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
 {
     int dim_start = 0;
 #ifdef WARPX_DIM_RZ
@@ -826,7 +724,7 @@ void ElectrostaticSolver::BoundaryHandler::definePhiBCs ( )
     bcs_set = true;
 }
 
-void ElectrostaticSolver::BoundaryHandler::buildParsers ()
+void ElectrostaticSolver::PoissonBoundaryHandler::buildParsers ()
 {
     potential_xlo_parser = makeParser(potential_xlo_str, {"t"});
     potential_xhi_parser = makeParser(potential_xhi_str, {"t"});

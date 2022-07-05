@@ -19,17 +19,29 @@
 
 namespace {
     /**
-     * \brief TODO
-     * @param[in] soa_1 struct of array data of the first colliding species
-     * @param[in] soa_2 struct of array data of the second colliding species
-     * or tritium)
-     * @param[out] ...
-     * @param[in] idx_1 index of first colliding macroparticle
-     * @param[in] idx_2 index of second colliding macroparticle
-     * @param[in]...
-     * @param[in] m1 mass of first colliding species
-     * @param[in] m2 mass of second colliding species
-     * @param[in] engine the random engine
+     * \brief Given the momenta of two colliding macroparticles in a fusion reaction,
+     * this function computes the momenta of the two product macroparticles.
+     *
+     * This is done by using the conservation of energy and momentum,
+     * and by assuming isotropic emission of the products in the center-of-mass frame
+     *
+     * @param[in] u1x_in normalized momentum of the first colliding macroparticles along x (in m.s^-1)
+     * @param[in] u1y_in normalized momentum of the first colliding macroparticles along y (in m.s^-1)
+     * @param[in] u1z_in normalized momentum of the first colliding macroparticles along z (in m.s^-1)
+     * @param[in] m1_in mass of the first colliding macroparticles
+     * @param[in] u2x_in normalized momentum of the second colliding macroparticles along x (in m.s^-1)
+     * @param[in] u2y_in normalized momentum of the second colliding macroparticles along y (in m.s^-1)
+     * @param[in] u2z_in normalized momentum of the second colliding macroparticles along z (in m.s^-1)
+     * @param[in] m2_in mass of the second colliding macroparticles
+     * @param[out] u1x_out normalized momentum of the first product macroparticles along x (in m.s^-1)
+     * @param[out] u1y_out normalized momentum of the first product macroparticles along y (in m.s^-1)
+     * @param[out] u1z_out normalized momentum of the first product macroparticles along z (in m.s^-1)
+     * @param[in] m1_out mass of the first product macroparticles
+     * @param[out] u2x_out normalized momentum of the second product macroparticles along x (in m.s^-1)
+     * @param[out] u2y_out normalized momentum of the second product macroparticles along y (in m.s^-1)
+     * @param[out] u2z_out normalized momentum of the second product macroparticles along z (in m.s^-1)
+     * @param[in] m2_out mass of the second product macroparticles
+     * @param[in] engine the random engine (used to calculate the angle of emission of the products)
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     void TwoProductFusionComputeProductMomenta (
@@ -80,7 +92,11 @@ namespace {
                                                 pow2(p1y_in+p2y_in) +
                                                 pow2(p1z_in+p2z_in);
 
+<<<<<<< HEAD
         // Total energy of incident species in the lab frame
+=======
+        // Total energy of incident macroparticles in the lab frame
+>>>>>>> improve_SpeciesPhysicalProperties
         const amrex::ParticleReal E_lab = (m1_in * g1_in + m2_in * g2_in) * c_sq;
         // Total energy squared of proton+boron in the center of mass frame, calculated using the
         // Lorentz invariance of the four-momentum norm
@@ -116,7 +132,11 @@ namespace {
         const amrex::ParticleReal vcz    = (p1z_in+p2z_in) / mass_g;
         const amrex::ParticleReal vc_sq   = vcx*vcx + vcy*vcy + vcz*vcz;
 
+<<<<<<< HEAD
         // Convert momentum of first alpha to lab frame, using equation (13) of F. Perez et al.,
+=======
+        // Convert momentum of first product to lab frame, using equation (13) of F. Perez et al.,
+>>>>>>> improve_SpeciesPhysicalProperties
         // Phys.Plasmas.19.083104 (2012)
         if ( vc_sq > std::numeric_limits<amrex::ParticleReal>::min() )
         {
@@ -141,7 +161,11 @@ namespace {
         const amrex::ParticleReal p2y_out = p1y_in + p2y_in - p1y_out;
         const amrex::ParticleReal p2z_out = p1z_in + p2z_in - p1z_out;
 
+<<<<<<< HEAD
         // Compute the momentum of the product species
+=======
+        // Compute the momentum of the product macroparticles
+>>>>>>> improve_SpeciesPhysicalProperties
         u1x_out = p1x_out/m1_out;
         u1y_out = p1y_out/m1_out;
         u1z_out = p1z_out/m1_out;

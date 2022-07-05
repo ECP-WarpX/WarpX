@@ -33,9 +33,9 @@ namespace BinaryCollisionUtils{
             {
                 return NuclearFusionType::DeuteriumTritium;
             }
-            else if ((species1.AmIA<PhysicalSpecies::hydrogen>() && species2.AmIA<PhysicalSpecies::boron11>())
+            else if ((species1.AmIA<PhysicalSpecies::proton>() && species2.AmIA<PhysicalSpecies::boron11>())
                 ||
-                (species1.AmIA<PhysicalSpecies::boron11>() && species2.AmIA<PhysicalSpecies::hydrogen>())
+                (species1.AmIA<PhysicalSpecies::boron11>() && species2.AmIA<PhysicalSpecies::proton>())
                 )
             {
                 return NuclearFusionType::ProtonBoron;

@@ -10,7 +10,6 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
-#include "Parallelization/WarpXCommUtil.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
@@ -40,6 +39,9 @@
 #endif
 
 #include "WarpX.H"
+
+#include <ablastr/utils/Communication.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_Array.H>
@@ -552,7 +554,7 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
         }
         if (!local) {
             const Geometry& gm = allcontainers[0]->Geom(lev);
-            WarpXCommUtil::SumBoundary(*rho, gm.periodicity());
+            ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity());
         }
         return rho;
     }
@@ -1025,9 +1027,9 @@ void MultiParticleContainer::InitQuantumSync ()
         m_quantum_sync_photon_creation_energy_threshold = temp;
     }
     else{
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "Using default value (2*me*c^2) for photon energy creation threshold",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
     }
 
     // qs_minimum_chi_part is the minimum chi parameter to be
@@ -1043,9 +1045,9 @@ void MultiParticleContainer::InitQuantumSync ()
     }
 
     if(lookup_table_mode == "generate"){
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "A new Quantum Synchrotron table will be generated.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
 #ifndef WARPX_QED_TABLE_GEN
         amrex::Error("Error: Compile with QED_TABLE_GEN=TRUE to enable table generation!\n");
 #else
@@ -1055,9 +1057,9 @@ void MultiParticleContainer::InitQuantumSync ()
     else if(lookup_table_mode == "load"){
         std::string load_table_name;
         pp_qed_qs.query("load_table_from", load_table_name);
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "The Quantum Synchrotron table will be read from the file: " + load_table_name,
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
         if(load_table_name.empty()){
             amrex::Abort("Quantum Synchrotron table name should be provided");
         }
@@ -1068,10 +1070,10 @@ void MultiParticleContainer::InitQuantumSync ()
             qs_minimum_chi_part);
     }
     else if(lookup_table_mode == "builtin"){
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "The built-in Quantum Synchrotron table will be used. "
             "This low resolution table is intended for testing purposes only.",
-            WarnPriority::medium);
+            ablastr::warn_manager::WarnPriority::medium);
         m_shr_p_qs_engine->init_builtin_tables(qs_minimum_chi_part);
     }
     else{
@@ -1101,9 +1103,9 @@ void MultiParticleContainer::InitBreitWheeler ()
     }
 
     if(lookup_table_mode == "generate"){
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "A new Breit Wheeler table will be generated.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
 #ifndef WARPX_QED_TABLE_GEN
         amrex::Error("Error: Compile with QED_TABLE_GEN=TRUE to enable table generation!\n");
 #else
@@ -1113,9 +1115,9 @@ void MultiParticleContainer::InitBreitWheeler ()
     else if(lookup_table_mode == "load"){
         std::string load_table_name;
         pp_qed_bw.query("load_table_from", load_table_name);
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "The Breit Wheeler table will be read from the file:" + load_table_name,
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
         if(load_table_name.empty()){
             amrex::Abort("Breit Wheeler table name should be provided");
         }
@@ -1126,10 +1128,10 @@ void MultiParticleContainer::InitBreitWheeler ()
             table_data, bw_minimum_chi_part);
     }
     else if(lookup_table_mode == "builtin"){
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "The built-in Breit Wheeler table will be used. "
             "This low resolution table is intended for testing purposes only.",
-            WarnPriority::medium);
+            ablastr::warn_manager::WarnPriority::medium);
         m_shr_p_bw_engine->init_builtin_tables(bw_minimum_chi_part);
     }
     else{

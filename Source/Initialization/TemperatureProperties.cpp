@@ -8,7 +8,8 @@
 #include "TemperatureProperties.H"
 
 #include "Utils/TextMsg.H"
-#include "WarpX.H"
+
+#include <ablastr/warn_manager/WarnManager.H>
 
 /*
  * Construct TemperatureProperties based on the passed parameters.
@@ -43,7 +44,7 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
 
 
         if (mom_dist_s == "maxwell_boltzmann" && theta > 0.01) {
-            WarpX::GetInstance().RecordWarning(
+            ablastr::warn_manager::WMRecordWarning(
                 "Temperature",
                 std::string{"Maxwell-Boltzmann distribution has errors greater than 1%"} +
                 std::string{" for temperature parameter theta > 0.01. (theta = "} +
