@@ -92,11 +92,7 @@ namespace {
                                                 pow2(p1y_in+p2y_in) +
                                                 pow2(p1z_in+p2z_in);
 
-<<<<<<< HEAD
-        // Total energy of incident species in the lab frame
-=======
         // Total energy of incident macroparticles in the lab frame
->>>>>>> improve_SpeciesPhysicalProperties
         const amrex::ParticleReal E_lab = (m1_in * g1_in + m2_in * g2_in) * c_sq;
         // Total energy squared of proton+boron in the center of mass frame, calculated using the
         // Lorentz invariance of the four-momentum norm
@@ -132,11 +128,7 @@ namespace {
         const amrex::ParticleReal vcz    = (p1z_in+p2z_in) / mass_g;
         const amrex::ParticleReal vc_sq   = vcx*vcx + vcy*vcy + vcz*vcz;
 
-<<<<<<< HEAD
-        // Convert momentum of first alpha to lab frame, using equation (13) of F. Perez et al.,
-=======
         // Convert momentum of first product to lab frame, using equation (13) of F. Perez et al.,
->>>>>>> improve_SpeciesPhysicalProperties
         // Phys.Plasmas.19.083104 (2012)
         if ( vc_sq > std::numeric_limits<amrex::ParticleReal>::min() )
         {
@@ -161,11 +153,7 @@ namespace {
         const amrex::ParticleReal p2y_out = p1y_in + p2y_in - p1y_out;
         const amrex::ParticleReal p2z_out = p1z_in + p2z_in - p1z_out;
 
-<<<<<<< HEAD
-        // Compute the momentum of the product species
-=======
         // Compute the momentum of the product macroparticles
->>>>>>> improve_SpeciesPhysicalProperties
         u1x_out = p1x_out/m1_out;
         u1y_out = p1y_out/m1_out;
         u1z_out = p1z_out/m1_out;
