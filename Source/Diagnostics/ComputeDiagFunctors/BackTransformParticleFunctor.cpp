@@ -5,9 +5,12 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "BackTransformParticleFunctor.H"
+
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXConst.H"
 #include "WarpX.H"
+
 #include <AMReX.H>
 #include <AMReX_Print.H>
 #include <AMReX_BaseFwd.H>
