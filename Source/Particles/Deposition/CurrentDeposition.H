@@ -466,11 +466,10 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     //needed for gpu kernel
     const int nblocks = a_bins.numBins();
     const auto offsets_ptr = a_bins.offsetsPtr();
+    //TODO could play with this
     const int threads_per_block = 256; 
 
     //calculate how much shared memory is needed. Note 3 because writing to 3 array4s
-    //Andrew, really? We gotta talk about this Array4 always has 3d etc. Look how
-    //painful this is on the shared mem!
     std::size_t shared_mem_bytes = npts*sizeof(amrex::Real); 
     amrex::IntVect bin_size = WarpX::sort_bin_size;
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
@@ -523,8 +522,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
           iv += domain.smallEnd();
           //Looks like it sets buffer box to contain the tile
           //iv is a point. first box is the entire domain, last box gets written with size bin_size
-          //TODO this seems inefficient. We should be able to just get buffer_box_x and copy,
-          //but what can ya do. We're in debug mode. Premature optimization is the root of all evil
           getTileIndex(iv, box, true, bin_size, buffer_box_x);
           getTileIndex(iv, box, true, bin_size, buffer_box_y);
           getTileIndex(iv, box, true, bin_size, buffer_box_z);
@@ -539,31 +536,17 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         tbox_z.grow(depos_order);
 
         Gpu::SharedMemory<amrex::Real> gsm;
-        amrex::Real* const shared = gsm.dataPtr(); //Why, we're in a kernel?
+        amrex::Real* const shared = gsm.dataPtr();
         
         //buf is a buffer in shard mem to write the results of a tile/thread-block to.
         //If not using shared mem, then you would just make the buffer the actual object in device
         //mem
-        //TODO wrap in the ifs for the 3D
-//#if defined(WARPX_DIM_3D)
         amrex::Array4<amrex::Real> const jx_buff(shared, 
                 amrex::begin(tbox_x), amrex::end(tbox_x), 1);
         amrex::Array4<amrex::Real> const jy_buff(shared + tbox_x.numPts(), 
                 amrex::begin(tbox_y), amrex::end(tbox_y), 1);
         amrex::Array4<amrex::Real> const jz_buff(shared + tbox_x.numPts() + tbox_y.numPts(),
                 amrex::begin(tbox_z), amrex::end(tbox_z), 1);
-//#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-//        amrex::Array4<amrex::Real> const jx_buff(shared, 
-//                amrex::begin(tbox_x), amrex::end(tbox_x), 1);
-//        amrex::Array4<amrex::Real> const jy_buff(shared + tbox_x.numPts(), 
-//                amrex::begin(tbox_y), amrex::end(tbox_y), 1);
-//#elif defined(WARPX_DIM_1D_Z)
-//        amrex::Array4<amrex::Real> const jx_buff(shared, 
-//                amrex::begin(tbox_x), amrex::end(tbox_x), 1);
-//#endif
-        //for(int i = 0; i < shared_mem_bytes / sizeof(amrex::Real); i++){
-        //    vs[i] = 0.0;
-        //}
         // Zero-initialize the temporary array in shared memory
         volatile amrex::Real* vs = shared; 
         for (int i = threadIdx.x; i < tbox_x.numPts()+tbox_y.numPts()+tbox_z.numPts(); i += blockDim.x){
@@ -571,18 +554,9 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         }
         __syncthreads();
 #else
-        //TODO wrap these in 3D
-//#if defined(WARPX_DIM_3D)
         amrex::Array4<amrex::Real> const& jx_buff = jx_arr; 
         amrex::Array4<amrex::Real> const& jy_buff = jy_arr;
         amrex::Array4<amrex::Real> const& jz_buff = jz_arr;
-//#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-//        amrex::Array4<amrex::Real> const& jx_buff = jx_arr; 
-//        amrex::Array4<amrex::Real> const& jy_buff = jy_arr;
-//#elif defined(WARPX_DIM_1D_Z)
-//        amrex::Array4<amrex::Real> const& jx_buff = jx_arr; 
-//#endif
-
 #endif
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
@@ -618,7 +592,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             const amrex::Real vz  = uzp[ip]*gaminv;
             // wqx, wqy wqz are particle current in each direction
 #if defined(WARPX_DIM_RZ)
-            //TODO what's up with using x and y here where elsewhere we use x and z?
             // In RZ, wqx is actually wqr, and wqy is wqtheta
             // Convert to cylinderical at the mid point
             const amrex::Real xpmid = xp + relative_time*vx;
