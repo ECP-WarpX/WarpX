@@ -460,11 +460,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     sample_tbox_y.grow(depos_order);
     sample_tbox_z.grow(depos_order);
 
-    if(!(sample_tbox_x.numPts() == sample_tbox_y.numPts() &&
-            (sample_tbox_y.numPts() == sample_tbox_z.numPts())))
-            printf("na ner na ner na ner! boxes not same size! ya thought wrong");
-
-
     //Note that the number of points in any of the sample boxes is the same for all
     const auto npts = sample_tbox_x.numPts()+sample_tbox_y.numPts()+sample_tbox_z.numPts(); 
 
@@ -761,25 +756,15 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
-                    //auto preVal = jz_buff(lo.x+j_jz+ix, lo.y+l_jz+iz, 1, 0);
-                    //printf("%.2ef\n", preVal);
                     amrex::Gpu::Atomic::AddNoRet(
                         &jx_buff(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 0),
                         sx_jx[ix]*sz_jx[iz]*wqx);
                     amrex::Gpu::Atomic::AddNoRet(
                         &jy_buff(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 0),
                         sx_jy[ix]*sz_jy[iz]*wqy);
-                    //auto postVal = jz_buff(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0);
-                    //printf("pre = %.2ef;\t post = %.2ef;\n", preVal, postVal);
                     amrex::Gpu::Atomic::AddNoRet(
                         &jz_buff(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0),
                         sx_jz[ix]*sz_jz[iz]*wqz);
-                    //if(ip==bin_stop)
-                    //printf("writing (%.2ef, %.2ef, %.2ef)\n", 
-                    //        sx_jx[ix]*sz_jx[iz]*wqx,
-                    //        sx_jy[ix]*sz_jy[iz]*wqy,
-                    //        sx_jz[ix]*sz_jz[iz]*wqz
-                    //        );
 #if defined(WARPX_DIM_RZ)
                     Complex xy = xy0; // Note that xy is equal to e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
