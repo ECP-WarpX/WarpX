@@ -81,7 +81,7 @@ namespace {
         // which can cause compilation to fail or generate a warning, so we're explicitly setting
         // them as double. Note that nuclear fusion module does not currently work with single
         // precision anyways.
-        constexpr double m_alpha = PhysConst::m_p * 3.97369_prt;
+        constexpr double m_alpha = PhysConst::m_u * 4.002602_prt;
         constexpr double m_beryllium = PhysConst::m_p * 7.94748_prt;
         constexpr double mBe_sq = m_beryllium*m_beryllium;
         constexpr amrex::ParticleReal c_sq = PhysConst::c * PhysConst::c;

@@ -32,7 +32,7 @@ algo.particle_shape = 1
 particles.species_names = proton1 boron1 alpha1 proton2 boron2 alpha2 proton3 boron3 alpha3
                           proton4 boron4 alpha4 proton5 boron5 alpha5
 
-my_constants.m_b11 =  10.9298*m_p # Boron 11 mass
+my_constants.m_b11 = 11.00930536*m_u # Boron 11 mass
 my_constants.m_reduced = m_p*m_b11/(m_p+m_b11)
 my_constants.keV_to_J = 1.e3*q_e
 my_constants.Energy_step = 22. * keV_to_J
