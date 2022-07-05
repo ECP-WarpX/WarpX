@@ -66,9 +66,9 @@ keV_to_Joule = scc.e*1e3
 MeV_to_Joule = scc.e*1e6
 barn_to_square_meter = 1.e-28
 m_p = scc.m_p # Proton mass
-m_b = 10.9298*m_p # Boron 11 mass
+m_b = 11.00930536*scc.m_u # Boron 11 mass
 m_reduced = m_p*m_b/(m_p+m_b)
-m_a = 3.97369*m_p # Alpha mass
+m_a = 4.002602*scc.m_u # Alpha mass
 m_be = 7.94748*m_p # Beryllium 8 mass
 Z_boron = 5.
 Z_proton = 1.
@@ -381,7 +381,7 @@ def p_sq_boron_frame_to_E_COM_frame(p_proton_sq):
     E_com = np.sqrt(E_lab**2 - p_proton_sq*scc.c**2)
     # Corresponding kinetic energy
     E_com_kin = E_com - (m_b+scc.m_p)*scc.c**2
-    return E_com_kin
+    return E_com_kin*(p_proton_sq>0.)
 
 def p_sq_to_kinetic_energy(p_sq, m):
     ## Returns the kinetic energy of a particle as a function of its squared momentum.
