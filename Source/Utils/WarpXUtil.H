@@ -198,7 +198,7 @@ int
 safeCastToInt(amrex::Real x, const std::string& real_name);
 
 /**
-* \brief Do a safe cast of a real to aa long
+* \brief Do a safe cast of a real to a long
 * This ensures that the float value is within the range of longs and if not,
 * raises an exception.
 *
