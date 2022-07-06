@@ -207,6 +207,7 @@ private:
     /** Vector of counters tracking number of times the buffer of multifab is
      *  flushed out and emptied before being refilled again for each snapshot */
     amrex::Vector<int> m_buffer_flush_counter;
+    amrex::Vector<int> m_buffer_k_index_hi;
     /** Multi-level cell-centered multifab with all field-data components, namely,
      *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho.
      *  This cell-centered data extending over the entire domain
@@ -276,7 +277,7 @@ private:
                when buffer counter is equal to m_buffer_size
      */
     bool buffer_full (int i_buffer) {
-        return ( m_buffer_counter[i_buffer] == m_buffer_size );
+        return (k_index_zlab(i_buffer,0) == m_buffer_box[i_buffer].smallEnd(m_moving_window_dir));
     }
 
     /** whether field buffer is empty.

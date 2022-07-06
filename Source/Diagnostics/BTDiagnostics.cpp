@@ -78,6 +78,7 @@ void BTDiagnostics::DerivedInitData ()
     m_geom_snapshot.resize( m_num_buffers );
     m_snapshot_full.resize( m_num_buffers );
     m_lastValidZSlice.resize( m_num_buffers );
+    m_buffer_k_index_hi.resize(m_num_buffers);
     for (int i = 0; i < m_num_buffers; ++i) {
         m_geom_snapshot[i].resize(nmax_lev);
         m_snapshot_full[i] = 0;
@@ -370,6 +371,16 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
                          num_z_cells_in_snapshot *
                          dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
     m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_lo);
+    // cell-centered index that corresponds to the hi-end of the lab-frame in the z-direction
+    int snapshot_kindex_hi = static_cast<int>(floor(
+                             ( m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir)
+                               - (m_snapshot_domain_lab[i_buffer].lo(m_moving_window_dir)
+                                 + 0.5*dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir])
+                                 )
+                             ) / dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]) ));
+    m_snapshot_box[i_buffer].setBig( m_moving_window_dir, snapshot_kindex_hi);
+    m_snapshot_box[i_buffer].setSmall( m_moving_window_dir,
+                                       snapshot_kindex_hi - (num_z_cells_in_snapshot-1) );
 }
 
 void
@@ -484,8 +495,9 @@ BTDiagnostics::UpdateBufferData ()
             {
                 bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
                 if (ZSliceInDomain) ++m_buffer_counter[i_buffer];
-                // when the 0th z-index is filled, then set lastValidZSlice to 1
-                if (k_index_zlab(i_buffer, lev) == 0) m_lastValidZSlice[i_buffer] = 1;
+                // when the z-index is equal to the smallEnd of the snapshot box, then set lastValidZSlice to 1
+                if (k_index_zlab(i_buffer, lev) == m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir))
+                    m_lastValidZSlice[i_buffer] = 1;
             }
         }
    }
@@ -543,15 +555,10 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                         }
                         DefineFieldBufferMultiFab(i_buffer, lev);
                     }
-                    if ( m_current_z_lab[i_buffer] < m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) ||
-                        m_current_z_lab[i_buffer] > m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir) )
-                   {
-                        amrex::Print() << " current zlab " << m_current_z_lab[i_buffer] << " lo : " << m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) << " hi " << m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir) << "\n";
-                   }
-                    //WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    //    m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
-                    //    m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir),
-                    //    "z-slice in lab-frame is outside the buffer domain physical extent. ");
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                        m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
+                        m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir),
+                        "z-slice in lab-frame is outside the buffer domain physical extent. ");
                 }
                 m_all_field_functors[lev][i]->PrepareFunctorData (
                                              i_buffer, ZSliceInDomain,
@@ -563,7 +570,6 @@ BTDiagnostics::PrepareFieldDataForOutput ()
             }
         }
     }
-
 }
 
 
@@ -604,9 +610,11 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     if ( m_do_back_transformed_fields ) {
         auto & warpx = WarpX::GetInstance();
 
-        const int k_lab = k_index_zlab (i_buffer, lev);
-        m_buffer_box[i_buffer].setSmall( m_moving_window_dir, k_lab - m_buffer_size+1);
-        m_buffer_box[i_buffer].setBig( m_moving_window_dir, k_lab);
+        const int hi_k_lab = m_buffer_k_index_hi[i_buffer];
+        m_buffer_box[i_buffer].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
+        m_buffer_box[i_buffer].setBig( m_moving_window_dir, hi_k_lab );
+        // Setting hi k-index for the next buffer
+        m_buffer_k_index_hi[i_buffer] = m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) - 1;
         amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
         buffer_ba.maxSize(m_max_box_size);
         // Generate a new distribution map for the back-transformed buffer multifab
@@ -614,8 +622,8 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         // Number of guard cells for the output buffer is zero.
         // Unlike FullDiagnostics, "m_format == sensei" option is not included here.
         int ngrow = 0;
-        m_mf_output[i_buffer][lev] = amrex::MultiFab ( buffer_ba, buffer_dmap,
-                                                  m_varnames.size(), ngrow ) ;
+        m_mf_output[i_buffer][lev] = amrex::MultiFab( buffer_ba, buffer_dmap,
+                                                  m_varnames.size(), ngrow );
         m_mf_output[i_buffer][lev].setVal(0.);
 
         amrex::IntVect ref_ratio = amrex::IntVect(1);
@@ -666,28 +674,13 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
     if ( m_do_back_transformed_fields ) {
         auto & warpx = WarpX::GetInstance();
         const int k_lab = k_index_zlab(i_buffer, lev);
-        //// Box covering the extent of the user-defined diag in the back-transformed frame
-        //// for the ith snapshot
-        //// estimating the maximum number of buffer multifabs needed to obtain the
-        //// full lab-frame snapshot
-        m_max_buffer_multifabs[i_buffer] = static_cast<int>( std::ceil (
-            amrex::Real(m_snapshot_ncells_lab[i_buffer][m_moving_window_dir]) /
-            amrex::Real(m_buffer_size) ) );
-        // number of cells in z is modified since each buffer multifab always
-        // contains a minimum m_buffer_size=256 cells
-        int num_z_cells_in_snapshot = m_max_buffer_multifabs[i_buffer] * m_buffer_size;
-        // Modify the domain indices according to the buffers that are flushed out
-        m_snapshot_box[i_buffer].setSmall( m_moving_window_dir,
-                                           k_lab - (num_z_cells_in_snapshot-1) );
-        m_snapshot_box[i_buffer].setBig( m_moving_window_dir, k_lab);
+        // Setting hi k-index for the first buffer
+        m_buffer_k_index_hi[i_buffer] = m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir);
 
-        // Modifying the physical coordinates of the lab-frame snapshot to be
-        // consistent with the above modified domain-indices in m_snapshot_box.
         if (lev == 0) {
-            // The extent of the physical domain covered by the ith snapshot
             // Default non-periodic geometry for diags
             amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
-            // define the geometry object for the ith snapshot using Physical co-oridnates
+            // Define the geometry object for the ith snapshot using Physical co-oridnates
             // of m_snapshot_domain_lab[i_buffer], that corresponds to the full snapshot
             // in the back-transformed frame
             m_geom_snapshot[i_buffer][lev].define( m_snapshot_box[i_buffer],
@@ -757,7 +750,25 @@ BTDiagnostics::Flush (int i_buffer)
         }
     }
     // Redistribute particles in the lab frame box arrays that correspond to the buffer
+    // Prior to redistribute, increase buffer box and Box in ParticleBoxArray by 1 index in the
+    // lo and hi-end, so particles can be binned in the boxes correctly.
+    // For BTD, we may have particles that are out of the domain by half a cell-size or one cell size.
+    // As a result, the index they correspond to may be out of the box by one index
+    // As a work around to the locateParticle error in Redistribute, we increase the box size before
+    // redistribute and shrink it after the call to redistribute.
+    m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) - 1) );
+    m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) + 1) );
+    amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
+    amrex::BoxArray buffer_ba( particle_buffer_box );
+    buffer_ba.maxSize(m_max_box_size*2);
+    m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0, buffer_ba);
+
     RedistributeParticleBuffer(i_buffer);
+
+    // Reset buffer box and particle box array
+    m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
+    m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) - 1) );
+    m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
 
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
@@ -765,7 +776,6 @@ BTDiagnostics::Flush (int i_buffer)
         m_plot_raw_fields, m_plot_raw_fields_guards,
         isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
-
 
     for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
         // Buffer particle container reset to include geometry, dmap, Boxarray, and refratio
