@@ -37,7 +37,6 @@ WarpXLaserProfiles::SpectralLaserProfile::init (
     const amrex::ParmParse& /* ppc */,
     CommonLaserParameters params)
 {
-    std::cout << "initializing spectral file\n";
 
     // Parse the spectral file name
     ppl.get("spectral_file_name", m_params.spectral_file_name);

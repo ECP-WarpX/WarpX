@@ -126,7 +126,6 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     }
 
     //Select laser profile
-    std::cout << "using " << laser_type_s << "\n";
     if(laser_profiles_dictionary.count(laser_type_s) == 0){
         amrex::Abort(std::string("Unknown laser type: ").append(laser_type_s));
     }
