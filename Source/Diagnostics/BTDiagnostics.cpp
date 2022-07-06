@@ -673,7 +673,6 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
 {
     if ( m_do_back_transformed_fields ) {
         auto & warpx = WarpX::GetInstance();
-        const int k_lab = k_index_zlab(i_buffer, lev);
         // Setting hi k-index for the first buffer
         m_buffer_k_index_hi[i_buffer] = m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir);
 
