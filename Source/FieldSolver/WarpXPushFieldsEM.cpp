@@ -380,6 +380,121 @@ void WarpX::PSATDVayDeposition ()
     }
 }
 
+void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
+{
+    // Subtraction of cumulative sum for Vay deposition
+    // implemented only in 2D and 3D Cartesian geometry
+#if !defined (WARPX_DIM_1D_Z) && !defined (WARPX_DIM_RZ)
+
+    // TODO Implementation with coarse patches
+    // TODO Implementation with current centering
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
+
+        amrex::MultiFab& Jx = *current_fp[lev][0];
+        amrex::MultiFab& Jy = *current_fp[lev][1];
+        amrex::MultiFab& Jz = *current_fp[lev][2];
+        amrex::MultiFab const& Dx = *current_fp_vay[lev][0];
+        amrex::MultiFab const& Dy = *current_fp_vay[lev][1];
+        amrex::MultiFab const& Dz = *current_fp_vay[lev][2];
+
+#if defined (WARPX_DIM_XZ)
+        amrex::ignore_unused(Jy, Dy);
+#endif
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+
+        // Subtract average of cumulative sum from Jx
+        for (amrex::MFIter mfi(Jx); mfi.isValid(); ++mfi)
+        {
+            const amrex::Box& bx = mfi.fabbox();
+
+            amrex::Array4<amrex::Real> const& Jx_arr = Jx.array(mfi);
+            amrex::Array4<amrex::Real const> const& Dx_arr = Dx.const_array(mfi);
+
+            const amrex::Dim3 lo = amrex::lbound(bx);
+            const amrex::Dim3 hi = amrex::ubound(bx);
+            const int nx = hi.x - lo.x + 1;
+            const amrex::Real facx = dx[0] / static_cast<amrex::Real>(nx);
+
+            // Subtract average of cumulative sum along x only
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+            {
+                for (int ii = lo.x; ii <= hi.x; ++ii)
+                {
+                    Jx_arr(i,j,k) -= (nx-ii) * Dx_arr(ii,j,k) * facx;
+                }
+            });
+        }
+
+#if defined (WARPX_DIM_3D)
+        // Subtract average of cumulative sum from Jy
+        for (amrex::MFIter mfi(Jy); mfi.isValid(); ++mfi)
+        {
+            const amrex::Box& bx = mfi.fabbox();
+
+            amrex::Array4<amrex::Real> const& Jy_arr = Jy.array(mfi);
+            amrex::Array4<amrex::Real const> const& Dy_arr = Dy.const_array(mfi);
+
+            const amrex::Dim3 lo = amrex::lbound(bx);
+            const amrex::Dim3 hi = amrex::ubound(bx);
+            const int ny = hi.y - lo.y + 1;
+            const amrex::Real facy = dx[1] / static_cast<amrex::Real>(ny);
+
+            // Subtract average of cumulative sum along y only
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+            {
+                for (int jj = lo.y; jj <= hi.y; ++jj)
+                {
+                    Jy_arr(i,j,k) -= (ny-jj) * Dy_arr(i,jj,k) * facy;
+                }
+            });
+        }
+#endif
+
+        // Subtract average of cumulative sum from Jz
+        for (amrex::MFIter mfi(Jz); mfi.isValid(); ++mfi)
+        {
+            const amrex::Box& bx = mfi.fabbox();
+
+            amrex::Array4<amrex::Real> const& Jz_arr = Jz.array(mfi);
+            amrex::Array4<amrex::Real const> const& Dz_arr = Dz.const_array(mfi);
+
+            const amrex::Dim3 lo = amrex::lbound(bx);
+            const amrex::Dim3 hi = amrex::ubound(bx);
+#if defined (WARPX_DIM_XZ)
+            const int nz = hi.y - lo.y + 1;
+#elif defined (WARPX_DIM_3D)
+            const int nz = hi.z - lo.z + 1;
+#endif
+            const amrex::Real facz = dx[2] / static_cast<amrex::Real>(nz);
+
+            // Subtract average of cumulative sum along z only
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+            {
+#if defined (WARPX_DIM_XZ)
+                // z direction is in the second component
+                for (int jj = lo.y; jj <= hi.y; ++jj)
+                {
+                    Jz_arr(i,j,k) -= (nz-jj) * Dz_arr(i,jj,k) * facz;
+                }
+#elif defined (WARPX_DIM_3D)
+                // z direction is in the third component
+                for (int kk = lo.z; kk <= hi.z; ++kk)
+                {
+                    Jz_arr(i,j,k) -= (nz-kk) * Dz_arr(i,j,kk) * facz;
+                }
+#endif
+            });
+        }
+    }
+#endif
+}
+
 void
 WarpX::PSATDPushSpectralFields ()
 {
@@ -487,7 +602,8 @@ void
 WarpX::PushPSATD ()
 {
 #ifndef WARPX_USE_PSATD
-    amrex::Abort("PushFieldsEM: PSATD solver selected but not built");
+    amrex::Abort(Utils::TextMsg::Err(
+        "PushFieldsEM: PSATD solver selected but not built"));
 #else
 
     PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
@@ -518,6 +634,7 @@ WarpX::PushPSATD ()
     {
         PSATDVayDeposition();
         PSATDBackwardTransformJ(current_fp, current_cp);
+        PSATDSubtractCurrentPartialSumsAvg();
         SyncCurrent();
         PSATDForwardTransformJ(current_fp, current_cp);
     }
@@ -778,22 +895,28 @@ void
 WarpX::MacroscopicEvolveE (int lev, amrex::Real a_dt) {
 
     WARPX_PROFILE("WarpX::MacroscopicEvolveE()");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        lev == 0,
+        "Macroscopic EvolveE is not implemented for lev>0, yet."
+    );
+
     MacroscopicEvolveE(lev, PatchType::fine, a_dt);
-    if (lev > 0) {
-        amrex::Abort("Macroscopic EvolveE is not implemented for lev>0, yet.");
-    }
 }
 
 void
 WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
-    if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->MacroscopicEvolveE( Efield_fp[lev], Bfield_fp[lev],
-                                             current_fp[lev], m_edge_lengths[lev],
-                                             a_dt, m_macroscopic_properties);
-    }
-    else {
-        amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
-    }
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        patch_type == PatchType::fine,
+        "Macroscopic EvolveE is not implemented for lev>0, yet."
+    );
+
+    m_fdtd_solver_fp[lev]->MacroscopicEvolveE(
+        Efield_fp[lev], Bfield_fp[lev],
+        current_fp[lev], m_edge_lengths[lev],
+        a_dt, m_macroscopic_properties);
+
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveEPML(

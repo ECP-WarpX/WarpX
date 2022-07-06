@@ -16,12 +16,13 @@
 #include "Diagnostics/BackTransformedDiagnostic_fwd.H"
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
-#include "Evolve/WarpXDtType.H"
-#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
-#include "FieldSolver/ElectrostaticSolver.H"
+#include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
+#include "Filter/NCIGodfreyFilter_fwd.H"
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
+#include "Particles/MultiParticleContainer_fwd.H"
+#include "Particles/WarpXParticleContainer_fwd.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
@@ -30,13 +31,11 @@
 #       include "FieldSolver/SpectralSolver/SpectralSolver_fwd.H"
 #   endif
 #endif
+#include "Evolve/WarpXDtType.H"
+#include "FieldSolver/ElectrostaticSolver.H"
 #include "Filter/BilinearFilter.H"
-#include "Filter/NCIGodfreyFilter_fwd.H"
 #include "Parallelization/GuardCellManager.H"
-#include "Particles/MultiParticleContainer_fwd.H"
-#include "Particles/WarpXParticleContainer_fwd.H"
 #include "Utils/IntervalsParser.H"
-#include "Utils/WarnManager_fwd.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
@@ -44,7 +43,7 @@
 #include <AMReX_Array.H>
 #include <AMReX_Config.H>
 #ifdef AMREX_USE_EB
-#   include "AMReX_EBFabFactory.H"
+#   include <AMReX_EBFabFactory.H>
 #endif
 #include <AMReX_GpuContainers.H>
 #include <AMReX_IntVect.H>
@@ -73,27 +72,6 @@ enum struct PatchType : int
     coarse
 };
 
-/** WarnPriority is recorded together with warning messages. It influences
- * the display order and the appearance of a warning message.
- * This enum class mirrors Utils::MsgLogger::Priority.
-*/
-enum class WarnPriority
-{
-    /** Low priority warning:
-     * essentially an informative message
-     */
-    low,
-    /** Medium priority warning:
-     * a bug or a performance issue may affect the simulation
-     */
-    medium,
-    /** High priority warning:
-     * a very serious bug or performance issue
-     * almost certainly affects the simulation
-     */
-    high
-};
-
 class WarpX
     : public amrex::AmrCore
 {
@@ -111,35 +89,6 @@ public:
     static std::string PicsarVersion (); //!< Version of PICSAR dependency
 
     int Verbose () const { return verbose; }
-
-    /**
-     * \brief This function records a warning message.
-     * RecordWarning is thread safe: it can be used within OpenMP parallel loops.
-     *
-     * @param[in] topic a string to identify the topic of the warning (e.g., "parallelization", "pbc", "particles"...)
-     * @param[in] text the text of the warning message
-     * @param[in] priority priority of the warning message ("medium" by default)
-     */
-    void RecordWarning(
-        std::string topic,
-        std::string text,
-        WarnPriority priority = WarnPriority::medium);
-
-    /**
-     * \brief This function prints all the warning messages collected on the present MPI rank
-     * (i.e., this is not a collective call). This function is mainly intended for debug purposes.
-     *
-     * @param[in] when a string to mark when the warnings are printed out (it appears in the warning list)
-     */
-    void PrintLocalWarnings(const std::string& when);
-
-    /**
-     * \brief This function prints all the warning messages collected by all the MPI ranks
-     * (i.e., this is a collective call). Only the I/O rank prints the message.
-     *
-     * @param[in] when a string to mark when the warnings are printed out (it appears in the warning list)
-     */
-    void PrintGlobalWarnings(const std::string& when);
 
     void InitData ();
 
@@ -243,9 +192,9 @@ public:
     //! and #current_centering_noz
     static bool do_current_centering;
 
-    //! If true, a correction is applied to the current in Fourier space, so that the continuity
-    //! equation is satisfied
-    bool current_correction = false;
+    //! If true, a correction is applied to the current in Fourier space,
+    //  to satisfy the continuity equation and charge conservation
+    bool current_correction;
 
     //! If true, the PSATD update equation for E contains both J and rho
     //! (default is false for standard PSATD and true for Galilean PSATD)
@@ -413,7 +362,6 @@ public:
     amrex::MultiFab * get_pointer_edge_lengths  (int lev, int direction) const { return m_edge_lengths[lev][direction].get(); }
     amrex::MultiFab * get_pointer_face_areas  (int lev, int direction) const { return m_face_areas[lev][direction].get(); }
 
-    const amrex::MultiFab& getcurrent (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
     const amrex::MultiFab& getBfield  (int lev, int direction) {return *Bfield_aux[lev][direction];}
 
@@ -438,6 +386,7 @@ public:
     const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) {return *Bfield_avg_cp[lev][direction];}
 
     bool DoPML () const {return do_pml;}
+
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     const PML_RZ* getPMLRZ() {return pml_rz[0].get();}
 #endif
@@ -495,6 +444,9 @@ public:
 
     /** Print main PIC parameters to stdout */
     void PrintMainPICparameters ();
+
+    /** Write a file that record all inputs: inputs file + command line options */
+    void WriteUsedInputsFile (std::string const & filename = "warpx_used_inputs") const;
 
     /** Print dt and dx,dy,dz */
     void PrintDtDxDyDz ();
@@ -674,21 +626,21 @@ public:
     void UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab const& src);
 
     // Fill boundary cells including coarse/fine boundaries
-    void FillBoundaryB   (amrex::IntVect ng);
-    void FillBoundaryE   (amrex::IntVect ng);
+    void FillBoundaryB   (amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryE   (amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryB_avg   (amrex::IntVect ng);
     void FillBoundaryE_avg   (amrex::IntVect ng);
 
-    void FillBoundaryF   (amrex::IntVect ng);
-    void FillBoundaryG   (amrex::IntVect ng);
+    void FillBoundaryF   (amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryG   (amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryAux (amrex::IntVect ng);
-    void FillBoundaryE   (int lev, amrex::IntVect ng);
-    void FillBoundaryB   (int lev, amrex::IntVect ng);
+    void FillBoundaryE   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryB   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryE_avg   (int lev, amrex::IntVect ng);
     void FillBoundaryB_avg   (int lev, amrex::IntVect ng);
 
-    void FillBoundaryF   (int lev, amrex::IntVect ng);
-    void FillBoundaryG   (int lev, amrex::IntVect ng);
+    void FillBoundaryF   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryG   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
 
     void SyncCurrent ();
@@ -812,7 +764,7 @@ public:
      */
     const amrex::IntVect get_numprocs() const {return numprocs;}
 
-    ElectrostaticSolver::BoundaryHandler field_boundary_handler;
+    ElectrostaticSolver::PoissonBoundaryHandler m_poisson_boundary_handler;
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddBoundaryField ();
     void AddSpaceChargeField (WarpXParticleContainer& pc);
@@ -951,8 +903,7 @@ protected:
     //! DistributionMapping and fill with interpolated coarse level
     //! data.  Called by AmrCore::regrid.
     virtual void MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::BoxArray& /*ba*/,
-                                         const amrex::DistributionMapping& /*dm*/) final
-        { amrex::Abort("MakeNewLevelFromCoarse: To be implemented"); }
+                                         const amrex::DistributionMapping& /*dm*/) final;
 
     //! Remake an existing level using provided BoxArray and
     //! DistributionMapping and fill with existing fine and coarse
@@ -978,25 +929,13 @@ private:
     ///
     void EvolveEM(int numsteps);
 
-    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng);
-    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng);
-    void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng);
-    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng);
+    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng, const bool nodal_sync = false);
 
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
-
-    /**
-     * \brief Synchronize the nodal points of a given vector MultiFab (all mesh refinement levels)
-     */
-    void NodalSync (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_fp,
-                    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_cp);
-
-    /**
-     * \brief Synchronize the nodal points of a given scalar MultiFab (all mesh refinement levels)
-     */
-    void NodalSync (amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_fp,
-                    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_cp);
 
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
@@ -1156,13 +1095,6 @@ private:
 #   endif
 #endif
 
-    // Warning manager: it allows recording and printing error messages
-    std::unique_ptr<Utils::WarnManager> m_p_warn_manager;
-    // Flag to control if WarpX has to emit a warning message as soon as a warning is recorded
-    bool m_always_warn_immediately = false;
-    // Threshold to abort immediately on a warning message
-    std::optional<WarnPriority> m_abort_on_warning_threshold = std::nullopt;
-
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?
 
@@ -1284,6 +1216,7 @@ private:
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
 #endif
+    amrex::Real v_particle_pml;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
     amrex::Real current_injection_position = 0;
@@ -1363,6 +1296,9 @@ private:
     amrex::RealVect fine_tag_hi;
 
     bool is_synchronized = true;
+
+    // Synchronization of nodal points
+    const bool sync_nodal_points = true;
 
     guardCellManager guard_cells;
 
@@ -1481,6 +1417,12 @@ public:
     *
     */
     void ApplyBCKCorrection(const int idim);
+
+    /**
+     * \brief Subtract the average of the cumulative sums of the preliminary current D
+     *        from the current J (computed from D according to the Vay deposition scheme)
+     */
+    void PSATDSubtractCurrentPartialSumsAvg ();
 
 private:
     void ScrapeParticles ();

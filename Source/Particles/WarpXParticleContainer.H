@@ -15,13 +15,13 @@
 #include "Evolve/WarpXDtType.H"
 #include "Particles/ParticleBoundaries.H"
 #include "SpeciesPhysicalProperties.H"
-#include "Utils/TextMsg.H"
 
 #ifdef WARPX_QED
 #    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
 #    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
 #include "MultiParticleContainer_fwd.H"
+#include "NamedComponentParticleContainer.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_FArrayBox.H>
@@ -42,6 +42,8 @@
 #include <memory>
 #include <string>
 #include <utility>
+
+using namespace amrex::literals;
 
 namespace ParticleStringNames
 {
@@ -109,7 +111,7 @@ public:
  * derived classes, e.g., Evolve) or actual functions (e.g. CurrentDeposition).
  */
 class WarpXParticleContainer
-    : public amrex::ParticleContainer<0,0,PIdx::nattribs>
+    : public NamedComponentParticleContainer<amrex::DefaultAllocator>
 {
 public:
     friend MultiParticleContainer;
@@ -176,17 +178,14 @@ public:
      *
      * \param[in,out] J vector of current densities (one three-dimensional array of pointers
      *                to MultiFabs per mesh refinement level)
-     * \param[in] dt: Time step for particle level (is used when temporarily
-     *                modifying the particle positions, either within the
-     *                Esirkepov or when `relative_t` is different than 0
-     * \param[in] relative_t: Time at which to deposit J, relative to the time
-     *                of the current positions of the particles (expressed as
-     *                a fraction of dt). When different than 0, the particle
-     *                position will be temporarily modified to match the
-     *                time of the deposition.
+     * \param[in] dt Time step for particle level
+     * \param[in] relative_time Time at which to deposit J, relative to the time of the
+     *                          current positions of the particles. When different than 0,
+     *                          the particle position will be temporarily modified to match
+     *                          the time of the deposition.
      */
     void DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                         const amrex::Real dt, const amrex::Real relative_t);
+                         const amrex::Real dt, const amrex::Real relative_time);
 
     /**
      * \brief Deposit charge density.
@@ -290,35 +289,6 @@ public:
     // split along diagonals (0) or axes (1)
     int split_type = 0;
 
-    using amrex::ParticleContainer<0, 0, PIdx::nattribs>::AddRealComp;
-    using amrex::ParticleContainer<0, 0, PIdx::nattribs>::AddIntComp;
-
-    void AddRealComp (const std::string& name, bool comm=true)
-    {
-        auto search = particle_comps.find(name);
-        if (search == particle_comps.end()) {
-            particle_comps[name] = NumRealComps();
-            particle_runtime_comps[name] = NumRealComps() - PIdx::nattribs;
-            AddRealComp(comm);
-        } else {
-            amrex::Print() << Utils::TextMsg::Info(
-                name + " already exists in particle_comps, not adding.");
-        }
-    }
-
-    void AddIntComp (const std::string& name, bool comm=true)
-    {
-        auto search = particle_icomps.find(name);
-        if (search == particle_icomps.end()) {
-            particle_icomps[name] = NumIntComps();
-            particle_runtime_icomps[name] = NumIntComps() - 0;
-            AddIntComp(comm);
-        } else {
-            amrex::Print() << Utils::TextMsg::Info(
-                name + " already exists in particle_icomps, not adding.");
-        }
-    }
-
     int doBackTransformedDiagnostics () const { return do_back_transformed_diagnostics; }
     /** Whether back-transformed diagnostics need to be performed for a particular species.
      *
@@ -327,11 +297,6 @@ public:
     void SetDoBackTransformedParticles(const bool do_back_transformed_particles) {
         m_do_back_transformed_particles = do_back_transformed_particles;
     }
-
-    std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
-    std::map<std::string, int> getParticleiComps () const noexcept { return particle_icomps;}
-    std::map<std::string, int> getParticleRuntimeComps () const noexcept { return particle_runtime_comps;}
-    std::map<std::string, int> getParticleRuntimeiComps () const noexcept { return particle_runtime_icomps;}
 
     //amrex::Real getCharge () {return charge;}
     amrex::ParticleReal getCharge () const {return charge;}
@@ -380,11 +345,6 @@ public:
      void defineAllParticleTiles () noexcept;
 
 protected:
-    std::map<std::string, int> particle_comps;
-    std::map<std::string, int> particle_icomps;
-    std::map<std::string, int> particle_runtime_comps;
-    std::map<std::string, int> particle_runtime_icomps;
-
     int species_id;
 
     amrex::Real charge;

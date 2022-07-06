@@ -17,6 +17,8 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX_Array.H>
 #include <AMReX_Config.H>
 #include <AMReX_MFIter.H>
@@ -117,7 +119,8 @@ FieldProbe::FieldProbe (std::string rd_name)
     else if (m_probe_geometry_str == "Plane")
     {
 #if defined(WARPX_DIM_1D_Z)
-        amrex::Abort("ERROR: Plane probe should be used in a 2D or 3D simulation only");
+        amrex::Abort(Utils::TextMsg::Err(
+            "ERROR: Plane probe should be used in a 2D or 3D simulation only"));
 #endif
         m_probe_geometry = DetectorGeometry::Plane;
         y_probe = 0._rt;
@@ -141,10 +144,10 @@ FieldProbe::FieldProbe (std::string rd_name)
     }
     else
     {
-        std::string err_str = "ERROR: Invalid probe geometry '";
-        err_str.append(m_probe_geometry_str);
-        err_str.append("'. Valid geometries are Point, Line or Plane.");
-        amrex::Abort(err_str);
+        amrex::Abort(Utils::TextMsg::Err(
+            "ERROR: Invalid probe geometry '" + m_probe_geometry_str
+            + "'. Valid geometries are Point, Line or Plane."
+        ));
     }
     pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
@@ -153,10 +156,10 @@ FieldProbe::FieldProbe (std::string rd_name)
 
     if (WarpX::gamma_boost > 1.0_rt)
     {
-        WarpX::GetInstance().RecordWarning(
+        ablastr::warn_manager::WMRecordWarning(
             "Boosted Frame Invalid",
             "The FieldProbe Diagnostic will not record lab-frame, but boosted frame data.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
     }
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(interp_order <= WarpX::nox ,
@@ -334,7 +337,8 @@ void FieldProbe::InitData ()
     }
     else
     {
-    amrex::Abort("ERROR: Invalid probe geometry. Valid geometries are Point, Line, and Plane.");
+        amrex::Abort(Utils::TextMsg::Err(
+            "Invalid probe geometry. Valid geometries are Point, Line, and Plane."));
     }
 }
 
@@ -543,7 +547,7 @@ void FieldProbe::ComputeDiags (int step)
                                    temp_interp_order, false);
 
                     //Calculate the Poynting Vector S
-                    amrex::Real const sraw[3]{
+                    amrex::ParticleReal const sraw[3]{
                         Exp * Bzp - Ezp * Byp,
                         Ezp * Bxp - Exp * Bzp,
                         Exp * Byp - Eyp * Bxp
@@ -615,8 +619,7 @@ void FieldProbe::ComputeDiags (int step)
             if (amrex::ParallelDescriptor::IOProcessor()) {
                 length_vector.resize(mpisize, 0);
             }
-            localsize.resize(1,0);
-            localsize[0] = m_data.size();
+            localsize.resize(1, m_data.size());
 
             // gather size of m_data from each processor
             amrex::ParallelDescriptor::Gather(localsize.data(), 1,

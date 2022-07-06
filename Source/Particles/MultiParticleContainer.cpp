@@ -10,7 +10,6 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
-#include "Parallelization/WarpXCommUtil.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
@@ -40,6 +39,9 @@
 #endif
 
 #include "WarpX.H"
+
+#include <ablastr/utils/Communication.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_Array.H>
@@ -475,7 +477,7 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
 void
 MultiParticleContainer::DepositCurrent (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-    const amrex::Real dt, const amrex::Real relative_t)
+    const amrex::Real dt, const amrex::Real relative_time)
 {
     // Reset the J arrays
     for (int lev = 0; lev < J.size(); ++lev)
@@ -488,7 +490,7 @@ MultiParticleContainer::DepositCurrent (
     // Call the deposition kernel for each species
     for (auto& pc : allcontainers)
     {
-        pc->DepositCurrent(J, dt, relative_t);
+        pc->DepositCurrent(J, dt, relative_time);
     }
 
 #ifdef WARPX_DIM_RZ
@@ -502,7 +504,7 @@ MultiParticleContainer::DepositCurrent (
 void
 MultiParticleContainer::DepositCharge (
     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-    const amrex::Real relative_t)
+    const amrex::Real relative_time)
 {
     // Reset the rho array
     for (int lev = 0; lev < rho.size(); ++lev)
@@ -511,7 +513,7 @@ MultiParticleContainer::DepositCharge (
     }
 
     // Push the particles in time, if needed
-    if (relative_t != 0.) PushX(relative_t);
+    if (relative_time != 0.) PushX(relative_time);
 
     // Call the deposition kernel for each species
     for (auto& pc : allcontainers)
@@ -525,7 +527,7 @@ MultiParticleContainer::DepositCharge (
     }
 
     // Push the particles back in time
-    if (relative_t != 0.) PushX(-relative_t);
+    if (relative_time != 0.) PushX(-relative_time);
 
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev < rho.size(); ++lev)
@@ -552,7 +554,7 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
         }
         if (!local) {
             const Geometry& gm = allcontainers[0]->Geom(lev);
-            WarpXCommUtil::SumBoundary(*rho, gm.periodicity());
+            ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity());
         }
         return rho;
     }
@@ -689,37 +691,37 @@ MultiParticleContainer
             // and Fills parts[species number i] with particle data from all grids and
             // tiles in diagnostic_particles. parts contains particles from all
             // AMR levels indistinctly.
-            for (auto it = diagnostic_particles[lev].begin(); it != diagnostic_particles[lev].end(); ++it){
+            for (const auto& dp : diagnostic_particles[lev]){
                 // it->first is the [grid index][tile index] key
                 // it->second is the corresponding
                 // WarpXParticleContainer::DiagnosticParticleData value
                 parts[i].GetRealData(DiagIdx::w).insert(  parts[i].GetRealData(DiagIdx::w  ).end(),
-                                                          it->second.GetRealData(DiagIdx::w  ).begin(),
-                                                          it->second.GetRealData(DiagIdx::w  ).end());
+                                                          dp.second.GetRealData(DiagIdx::w  ).begin(),
+                                                          dp.second.GetRealData(DiagIdx::w  ).end());
 
                 parts[i].GetRealData(DiagIdx::x).insert(  parts[i].GetRealData(DiagIdx::x  ).end(),
-                                                          it->second.GetRealData(DiagIdx::x  ).begin(),
-                                                          it->second.GetRealData(DiagIdx::x  ).end());
+                                                          dp.second.GetRealData(DiagIdx::x  ).begin(),
+                                                          dp.second.GetRealData(DiagIdx::x  ).end());
 
                 parts[i].GetRealData(DiagIdx::y).insert(  parts[i].GetRealData(DiagIdx::y  ).end(),
-                                                          it->second.GetRealData(DiagIdx::y  ).begin(),
-                                                          it->second.GetRealData(DiagIdx::y  ).end());
+                                                          dp.second.GetRealData(DiagIdx::y  ).begin(),
+                                                          dp.second.GetRealData(DiagIdx::y  ).end());
 
                 parts[i].GetRealData(DiagIdx::z).insert(  parts[i].GetRealData(DiagIdx::z  ).end(),
-                                                          it->second.GetRealData(DiagIdx::z  ).begin(),
-                                                          it->second.GetRealData(DiagIdx::z  ).end());
+                                                          dp.second.GetRealData(DiagIdx::z  ).begin(),
+                                                          dp.second.GetRealData(DiagIdx::z  ).end());
 
                 parts[i].GetRealData(DiagIdx::ux).insert(  parts[i].GetRealData(DiagIdx::ux).end(),
-                                                           it->second.GetRealData(DiagIdx::ux).begin(),
-                                                           it->second.GetRealData(DiagIdx::ux).end());
+                                                           dp.second.GetRealData(DiagIdx::ux).begin(),
+                                                           dp.second.GetRealData(DiagIdx::ux).end());
 
                 parts[i].GetRealData(DiagIdx::uy).insert(  parts[i].GetRealData(DiagIdx::uy).end(),
-                                                           it->second.GetRealData(DiagIdx::uy).begin(),
-                                                           it->second.GetRealData(DiagIdx::uy).end());
+                                                           dp.second.GetRealData(DiagIdx::uy).begin(),
+                                                           dp.second.GetRealData(DiagIdx::uy).end());
 
                 parts[i].GetRealData(DiagIdx::uz).insert(  parts[i].GetRealData(DiagIdx::uz).end(),
-                                                           it->second.GetRealData(DiagIdx::uz).begin(),
-                                                           it->second.GetRealData(DiagIdx::uz).end());
+                                                           dp.second.GetRealData(DiagIdx::uz).begin(),
+                                                           dp.second.GetRealData(DiagIdx::uz).end());
             }
         }
     }
@@ -1025,9 +1027,9 @@ void MultiParticleContainer::InitQuantumSync ()
         m_quantum_sync_photon_creation_energy_threshold = temp;
     }
     else{
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "Using default value (2*me*c^2) for photon energy creation threshold",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
     }
 
     // qs_minimum_chi_part is the minimum chi parameter to be
@@ -1043,9 +1045,9 @@ void MultiParticleContainer::InitQuantumSync ()
     }
 
     if(lookup_table_mode == "generate"){
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "A new Quantum Synchrotron table will be generated.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
 #ifndef WARPX_QED_TABLE_GEN
         amrex::Error("Error: Compile with QED_TABLE_GEN=TRUE to enable table generation!\n");
 #else
@@ -1055,9 +1057,9 @@ void MultiParticleContainer::InitQuantumSync ()
     else if(lookup_table_mode == "load"){
         std::string load_table_name;
         pp_qed_qs.query("load_table_from", load_table_name);
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "The Quantum Synchrotron table will be read from the file: " + load_table_name,
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
         if(load_table_name.empty()){
             amrex::Abort("Quantum Synchrotron table name should be provided");
         }
@@ -1068,10 +1070,10 @@ void MultiParticleContainer::InitQuantumSync ()
             qs_minimum_chi_part);
     }
     else if(lookup_table_mode == "builtin"){
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "The built-in Quantum Synchrotron table will be used. "
             "This low resolution table is intended for testing purposes only.",
-            WarnPriority::medium);
+            ablastr::warn_manager::WarnPriority::medium);
         m_shr_p_qs_engine->init_builtin_tables(qs_minimum_chi_part);
     }
     else{
@@ -1101,9 +1103,9 @@ void MultiParticleContainer::InitBreitWheeler ()
     }
 
     if(lookup_table_mode == "generate"){
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "A new Breit Wheeler table will be generated.",
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
 #ifndef WARPX_QED_TABLE_GEN
         amrex::Error("Error: Compile with QED_TABLE_GEN=TRUE to enable table generation!\n");
 #else
@@ -1113,9 +1115,9 @@ void MultiParticleContainer::InitBreitWheeler ()
     else if(lookup_table_mode == "load"){
         std::string load_table_name;
         pp_qed_bw.query("load_table_from", load_table_name);
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "The Breit Wheeler table will be read from the file:" + load_table_name,
-            WarnPriority::low);
+            ablastr::warn_manager::WarnPriority::low);
         if(load_table_name.empty()){
             amrex::Abort("Breit Wheeler table name should be provided");
         }
@@ -1126,10 +1128,10 @@ void MultiParticleContainer::InitBreitWheeler ()
             table_data, bw_minimum_chi_part);
     }
     else if(lookup_table_mode == "builtin"){
-        WarpX::GetInstance().RecordWarning("QED",
+        ablastr::warn_manager::WMRecordWarning("QED",
             "The built-in Breit Wheeler table will be used. "
             "This low resolution table is intended for testing purposes only.",
-            WarnPriority::medium);
+            ablastr::warn_manager::WarnPriority::medium);
         m_shr_p_bw_engine->init_builtin_tables(bw_minimum_chi_part);
     }
     else{

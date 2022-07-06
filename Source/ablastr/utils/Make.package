@@ -1,3 +1,7 @@
-CEXE_sources += TextMsg.cpp SignalHandling.cpp
+CEXE_sources += TextMsg.cpp
+CEXE_sources += SignalHandling.cpp
+CEXE_sources += Communication.cpp
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/ablastr/utils
+
+include $(WARPX_HOME)/Source/ablastr/utils/msg_logger/Make.package
