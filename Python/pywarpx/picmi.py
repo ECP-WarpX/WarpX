@@ -1066,8 +1066,7 @@ class Simulation(picmistandard.PICMI_Simulation):
             pywarpx.warpx.gamma_boost = self.gamma_boost
             pywarpx.warpx.boost_direction = 'z'
 
-        if self.zmax_plasma_to_compute_max_step is not None:
-            pywarpx.warpx.zmax_plasma_to_compute_max_step = self.zmax_plasma_to_compute_max_step
+        pywarpx.warpx.zmax_plasma_to_compute_max_step = self.zmax_plasma_to_compute_max_step
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
