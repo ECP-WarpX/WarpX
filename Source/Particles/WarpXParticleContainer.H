@@ -45,19 +45,6 @@
 
 using namespace amrex::literals;
 
-namespace ParticleStringNames
-{
-    const std::map<std::string, int> to_index = {
-        {"w",     PIdx::w    },
-        {"ux",    PIdx::ux   },
-        {"uy",    PIdx::uy   },
-        {"uz",    PIdx::uz   },
-#ifdef WARPX_DIM_RZ
-        {"theta", PIdx::theta}
-#endif
-    };
-}
-
 class WarpXParIter
     : public amrex::ParIter<0,0,PIdx::nattribs>
 {
