@@ -32,7 +32,7 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
         std::fill(m_plot_flags.begin(), m_plot_flags.end(), 0);
         if (variables[0] != "none"){
             const std::map<std::string, int> existing_variable_names = pc->getParticleComps();
-            for (const auto var : variables){
+            for (const auto& var : variables){
                 const auto search = existing_variable_names.find(var);
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     search != existing_variable_names.end(),
