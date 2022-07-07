@@ -3,8 +3,9 @@
     "particle_cpu": 0.0,
     "particle_id": 2101654260.0,
     "particle_momentum_x": 3.819011093562328e-19,
-    "particle_momentum_y": 0.0,
     "particle_momentum_z": 1.6442909854275157e-18,
+    "particle_orig_x": 0.008258544921875001,
+    "particle_orig_z": 0.0366896337890625,
     "particle_position_x": 0.008132686101590795,
     "particle_position_y": 0.030529760810180325,
     "particle_weight": 2.641331189632942e+17

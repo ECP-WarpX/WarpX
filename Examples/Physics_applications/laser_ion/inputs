@@ -189,7 +189,7 @@ diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydrogen
 # reduce resolution of output fields
 diag1.coarsening_ratio = 4 4
-diag1.electrons.variables = w ux uy uz
+diag1.electrons.variables = w ux uz orig_x orig_z
 diag1.hydrogen.variables = w ux uy uz
 # demonstration of a spatial and momentum filter
 diag1.electrons.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz>=0) * (x<1.0e-6) * (x>-1.0e-6)
