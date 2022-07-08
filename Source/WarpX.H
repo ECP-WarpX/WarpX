@@ -209,6 +209,9 @@ public:
     //! use shared memory algorithm for current deposition
     static bool do_shared_mem_current_deposition;
 
+    //! number of threads to use per block in shared deposition
+    static int shared_mem_current_tpb;
+
     //! Whether to fill the guard cells when computing inverse FFTs, based on the boundary conditions
     static amrex::IntVect fill_guards;
 

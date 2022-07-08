@@ -468,7 +468,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const int nblocks = a_bins.numBins();
     const auto offsets_ptr = a_bins.offsetsPtr();
     //TODO could play with this
-    const int threads_per_block = 256; 
+    const int threads_per_block = WarpX::shared_mem_current_tpb; 
 
     //calculate how much shared memory is needed. Note 3 because writing to 3 array4s
     std::size_t shared_mem_bytes = npts*sizeof(amrex::Real); 

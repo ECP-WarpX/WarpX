@@ -128,6 +128,7 @@ int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
 bool WarpX::do_shared_mem_charge_deposition = false;
 bool WarpX::do_shared_mem_current_deposition = false;
+int WarpX::shared_mem_current_tpb = 512;
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
@@ -753,6 +754,7 @@ WarpX::ReadParameters ()
 #endif
         pp_warpx.query("do_shared_mem_charge_deposition", do_shared_mem_charge_deposition);
         pp_warpx.query("do_shared_mem_current_deposition", do_shared_mem_current_deposition);
+        pp_warpx.query("shared_mem_current_tpb", shared_mem_current_tpb);
 
         pp_warpx.query("serialize_initial_conditions", serialize_initial_conditions);
         pp_warpx.query("refine_plasma", refine_plasma);
