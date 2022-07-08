@@ -27,7 +27,11 @@ const std::map<std::string, int> maxwell_solver_algo_to_int = {
     {"ckc",     MaxwellSolverAlgo::CKC },
     {"psatd",   MaxwellSolverAlgo::PSATD },
     {"ect",     MaxwellSolverAlgo::ECT },
+#if defined(WARPX_DIM_RZ)
     {"default", MaxwellSolverAlgo::Yee }
+#else
+    {"default", MaxwellSolverAlgo::CKC }
+#endif
 };
 
 const std::map<std::string, int> electrostatic_solver_algo_to_int = {
