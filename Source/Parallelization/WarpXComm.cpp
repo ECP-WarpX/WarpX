@@ -954,19 +954,15 @@ void WarpX::RestrictCurrentFromFineToCoarsePatch (
     CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
 }
 
-void WarpX::ApplyFilterandSumBoundaryJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-    const int lev,
-    PatchType patch_type)
+void WarpX::ApplyFilterJ (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J,
+    const int lev)
 {
-    const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
-    const amrex::Periodicity& period = Geom(glev).periodicity();
-    const std::array<std::unique_ptr<amrex::MultiFab>,3>& j = (patch_type == PatchType::fine) ?
-                                                              J_fp[lev] : J_cp[lev];
-    for (int idim = 0; idim < 3; ++idim) {
-        IntVect ng = j[idim]->nGrowVect();
-        IntVect ng_depos_J = get_ng_depos_J();
+    for (int idim=0; idim<3; ++idim)
+    {
+        amrex::IntVect ng = J[lev][idim]->nGrowVect();
+        amrex::IntVect ng_depos_J = get_ng_depos_J();
+
         if (WarpX::do_current_centering)
         {
 #if   defined(WARPX_DIM_1D_Z)
@@ -980,17 +976,58 @@ void WarpX::ApplyFilterandSumBoundaryJ (
             ng_depos_J[2] += WarpX::current_centering_noz / 2;
 #endif
         }
-        if (use_filter) {
-            ng += bilinear_filter.stencil_length_each_dir-1;
-            ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
-            ng_depos_J.min(ng);
-            MultiFab jf(j[idim]->boxArray(), j[idim]->DistributionMap(), j[idim]->nComp(), ng);
-            bilinear_filter.ApplyStencil(jf, *j[idim], lev);
-            WarpXSumGuardCells(*(j[idim]), jf, period, ng_depos_J, 0, (j[idim])->nComp());
-        } else {
-            ng_depos_J.min(ng);
-            WarpXSumGuardCells(*(j[idim]), period, ng_depos_J, 0, (j[idim])->nComp());
+
+        ng += bilinear_filter.stencil_length_each_dir-1;
+        ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
+        ng_depos_J.min(ng);
+
+        const int ncomp = J[lev][idim]->nComp();
+        const amrex::IntVect ngrow = ng;
+        amrex::MultiFab Jf(J[lev][idim]->boxArray(), J[lev][idim]->DistributionMap(), ncomp, ngrow);
+
+        bilinear_filter.ApplyStencil(Jf, *J[lev][idim], lev);
+
+        const int srccomp = 0;
+        const int dstcomp = 0;
+        const int numcomp = J[lev][idim]->nComp();
+        const amrex::IntVect nghost = J[lev][idim]->nGrowVect();
+
+        amrex::MultiFab::Copy(*J[lev][idim], Jf, srccomp, dstcomp, numcomp, nghost);
+    }
+}
+
+void WarpX::SumBoundaryJ (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J,
+    const int lev)
+{
+    const amrex::Periodicity& period = Geom(lev).periodicity();
+
+    for (int idim = 0; idim < 3; ++idim)
+    {
+        amrex::IntVect ng = J[lev][idim]->nGrowVect();
+        amrex::IntVect ng_depos_J = get_ng_depos_J();
+
+        if (WarpX::do_current_centering)
+        {
+#if   defined(WARPX_DIM_1D_Z)
+            ng_depos_J[0] += WarpX::current_centering_noz / 2;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            ng_depos_J[0] += WarpX::current_centering_nox / 2;
+            ng_depos_J[1] += WarpX::current_centering_noz / 2;
+#elif defined(WARPX_DIM_3D)
+            ng_depos_J[0] += WarpX::current_centering_nox / 2;
+            ng_depos_J[1] += WarpX::current_centering_noy / 2;
+            ng_depos_J[2] += WarpX::current_centering_noz / 2;
+#endif
         }
+
+        ng_depos_J.min(ng);
+
+        const amrex::IntVect src_ngrow = ng_depos_J;
+        const int icomp = 0;
+        const int ncomp = J[lev][idim]->nComp();
+
+        WarpXSumGuardCells(*(J[lev][idim]), period, src_ngrow, icomp, ncomp);
     }
 }
 
@@ -1012,7 +1049,8 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
     const int lev)
 {
-    ApplyFilterandSumBoundaryJ(J_fp, J_cp, lev, PatchType::fine);
+    ApplyFilterJ(J_fp, lev);
+    SumBoundaryJ(J_fp, lev);
 
     if (lev < finest_level) {
         // When there are current buffers, unlike coarse patch,
