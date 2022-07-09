@@ -540,12 +540,8 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
     if (use_warpxba == false) dmap = amrex::DistributionMapping{ba};
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
     int ngrow = (m_format == "sensei" || m_format == "ascent") ? 1 : 0;
-    // The zero is hard-coded since the number of output buffers = 1 for FullDiagnostics
     int const ncomp = static_cast<int>(m_varnames.size());
-    if (ncomp > 0) {
-        m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, ncomp, ngrow);
-    }
-
+    m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, ncomp, ngrow);
 
     if (lev == 0) {
         // The extent of the domain covered by the diag multifab, m_mf_output
