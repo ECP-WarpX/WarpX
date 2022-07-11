@@ -554,7 +554,7 @@ WarpXParticleContainer::DepositCurrent (
                         1: new value (after particle push).
  * \param offset      : Index of first particle for which charge is deposited
  * \param np_to_depose: Number of particles for which charge is deposited.
-                        Particles [offset,offset+np_tp_depose] deposit charge
+                        Particles [offset,offset+np_tp_depose) deposit charge
  * \param thread_num  : Thread number (if tiling)
  * \param lev         : Level of box that contains particles
  * \param depos_lev   : Level on which particles deposit (if buffers are used)
