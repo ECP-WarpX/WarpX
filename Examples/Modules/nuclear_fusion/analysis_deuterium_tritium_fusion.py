@@ -140,15 +140,13 @@ def check_particle_number_conservation(data):
     ## Check that number of consumed reactants are equal
     assert_scale = max(total_w_reactant1_start, total_w_reactant2_start)
     assert(is_close(consumed_reactant1, consumed_reactant2, rtol = 0., atol = default_tol*assert_scale))
-    print( consumed_reactant1, consumed_reactant2, assert_scale, default_tol )
 
     # That the number of products corresponds consumed particles
     for species_name in product_species:
         created_product = np.sum(data[species_name + "_w_end"])
-        print(created_product)
         assert(created_product >= 0.)
-        assert(is_close(total_w_reactant1_start, total_w_reactant1_start + created_product))
-        assert(is_close(total_w_reactant2_start, total_w_reactant2_start + created_product))
+        assert(is_close(total_w_reactant1_start, total_w_reactant1_end + created_product))
+        assert(is_close(total_w_reactant2_start, total_w_reactant2_end + created_product))
 
 def compute_energy_array(data, species_name, suffix, m):
     ## Relativistic computation of kinetic energy for a given species
@@ -705,7 +703,7 @@ def main():
 
         for species_name in reactant_species:
             add_species_to_dict(ad_start, data, species_name+str(i), species_name, "start")
-            add_species_to_dict(ad_start, data, species_name+str(i), species_name, "end")
+            add_species_to_dict(ad_end, data, species_name+str(i), species_name, "end")
 
         for species_name in product_species:
             add_species_to_dict(ad_end, data, species_name+str(i), species_name, "end")
