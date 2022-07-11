@@ -65,6 +65,11 @@ default_tol = 1.e-12 # Default relative tolerance
 reactant_species = ['deuterium', 'tritium']
 product_species = ['helium', 'neutron']
 
+<<<<<<< HEAD
+=======
+from scipy.constants import m_p, m_u
+
+>>>>>>> b11812de097d8c120b952460559af23a76258d5b
 mass = {
     'deuterium': 2.01410177812*scc.m_u,
     'tritium': 3.0160492779*scc.m_u,
