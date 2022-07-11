@@ -1049,7 +1049,7 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
     const int lev)
 {
-    ApplyFilterJ(J_fp, lev);
+    if (use_filter) ApplyFilterJ(J_fp, lev);
     SumBoundaryJ(J_fp, lev);
 
     if (lev < finest_level) {

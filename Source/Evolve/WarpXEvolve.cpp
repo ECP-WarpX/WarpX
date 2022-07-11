@@ -675,7 +675,7 @@ WarpX::OneStep_sub1 (Real curtime)
     PushParticlesandDepose(fine_lev, curtime, DtType::FirstHalf);
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
     RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
-    ApplyFilterJ(current_fp, fine_lev);
+    if (use_filter) ApplyFilterJ(current_fp, fine_lev);
     SumBoundaryJ(current_fp, fine_lev);
     ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, 2*ncomps);
 
@@ -732,7 +732,7 @@ WarpX::OneStep_sub1 (Real curtime)
     PushParticlesandDepose(fine_lev, curtime+dt[fine_lev], DtType::SecondHalf);
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
     RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
-    ApplyFilterJ(current_fp, fine_lev);
+    if (use_filter) ApplyFilterJ(current_fp, fine_lev);
     SumBoundaryJ(current_fp, fine_lev);
     ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, ncomps);
 
