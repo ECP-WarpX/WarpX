@@ -167,27 +167,27 @@ def check_energy_conservation(data):
                     rtol = 1.e-8))
 
 def check_momentum_conservation(data):
-    proton_total_px_start = np.sum(data["proton_px_start"]*data["proton_w_start"])
-    proton_total_py_start = np.sum(data["proton_py_start"]*data["proton_w_start"])
-    proton_total_pz_start = np.sum(data["proton_pz_start"]*data["proton_w_start"])
-    proton_total_px_end   = np.sum(data["proton_px_end"]*data["proton_w_end"])
-    proton_total_py_end   = np.sum(data["proton_py_end"]*data["proton_w_end"])
-    proton_total_pz_end   = np.sum(data["proton_pz_end"]*data["proton_w_end"])
-    boron_total_px_start  = np.sum(data["boron_px_start"]*data["boron_w_start"])
-    boron_total_py_start  = np.sum(data["boron_py_start"]*data["boron_w_start"])
-    boron_total_pz_start  = np.sum(data["boron_pz_start"]*data["boron_w_start"])
-    boron_total_px_end    = np.sum(data["boron_px_end"]*data["boron_w_end"])
-    boron_total_py_end    = np.sum(data["boron_py_end"]*data["boron_w_end"])
-    boron_total_pz_end    = np.sum(data["boron_pz_end"]*data["boron_w_end"])
-    alpha_total_px_end    = np.sum(data["alpha_px_end"]*data["alpha_w_end"])
-    alpha_total_py_end    = np.sum(data["alpha_py_end"]*data["alpha_w_end"])
-    alpha_total_pz_end    = np.sum(data["alpha_pz_end"]*data["alpha_w_end"])
-    total_px_start = proton_total_px_start + boron_total_px_start
-    total_py_start = proton_total_py_start + boron_total_py_start
-    total_pz_start = proton_total_pz_start + boron_total_pz_start
-    total_px_end = proton_total_px_end + boron_total_px_end + alpha_total_px_end
-    total_py_end = proton_total_py_end + boron_total_py_end + alpha_total_py_end
-    total_pz_end = proton_total_pz_end + boron_total_pz_end + alpha_total_pz_end
+    total_px_start = 0
+    total_py_start = 0
+    total_pz_start = 0
+    for species_name in reactant_species:
+        total_px_start += np.sum(
+            data[species_name+'_px_start'] * data[species_name+'_w_start'])
+        total_py_start += np.sum(
+            data[species_name+'_py_start'] * data[species_name+'_w_start'])
+        total_pz_start += np.sum(
+            data[species_name+'_pz_start'] * data[species_name+'_w_start'])
+    total_px_end = 0
+    total_py_end = 0
+    total_pz_end = 0
+    for species_name in reactant_species + product_species:
+        total_px_end += np.sum(
+            data[species_name+'_px_end'] * data[species_name+'_w_end'])
+        total_py_end += np.sum(
+            data[species_name+'_py_end'] * data[species_name+'_w_end'])
+        total_pz_end += np.sum(
+            data[species_name+'_pz_end'] * data[species_name+'_w_end'])
+
     ## Absolute tolerance is needed because sometimes the initial momentum is exactly 0
     assert(is_close(total_px_start, total_px_end, atol=1.e-15))
     assert(is_close(total_py_start, total_py_end, atol=1.e-15))
@@ -230,7 +230,7 @@ def basic_product_particles_check(data):
 def generic_check(data):
     check_particle_number_conservation(data)
     check_energy_conservation(data)
-    #check_momentum_conservation(data)
+    check_momentum_conservation(data)
     check_id(data)
     #basic_product_particles_check(data)
 
