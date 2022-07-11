@@ -34,8 +34,8 @@ amrex::ParticleReal DeuteriumTritiumFusionCrossSection (const amrex::ParticleRea
 
     // Compute the Gamow constant B_G (in keV^{1/2})
     // (See Eq. 3 in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)
-    constexpr amrex::ParticleReal m_D = 1.99901 * PhysConst::m_p;
-    constexpr amrex::ParticleReal m_T = 2.99372 * PhysConst::m_p;
+    constexpr amrex::ParticleReal m_D = 2.01410177812 * PhysConst::m_u;
+    constexpr amrex::ParticleReal m_T = 3.0160492779 * PhysConst::m_u;
     constexpr amrex::ParticleReal m_reduced = m_D / (1._prt + m_D/m_T);
     amrex::ParticleReal B_G = MathConst::pi * PhysConst::alpha * 1._prt * 1._prt
          * std::sqrt( 2._prt*m_reduced*PhysConst::c*PhysConst::c * joule_to_keV );
