@@ -540,6 +540,8 @@ MultiParticleContainer::DepositCharge (
     // Call the deposition kernel for each species
     for (auto& pc : allcontainers)
     {
+        if (pc->do_not_deposit) continue;
+
         bool const local = true;
         bool const reset = false;
         bool const do_rz_volume_scaling = false;
@@ -562,24 +564,19 @@ MultiParticleContainer::DepositCharge (
 std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local)
 {
-    if (allcontainers.empty())
-    {
-        std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
-        return rho;
+    std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
+
+    for (unsigned i = 0, n = allcontainers.size(); i < n; ++i) {
+        if (allcontainers[i]->do_not_deposit) continue;
+        std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
+        MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrowVect());
     }
-    else
-    {
-        std::unique_ptr<MultiFab> rho = allcontainers[0]->GetChargeDensity(lev, true);
-        for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
-            std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
-            MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrowVect());
-        }
-        if (!local) {
-            const Geometry& gm = allcontainers[0]->Geom(lev);
-            ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity());
-        }
-        return rho;
+    if (!local) {
+        const Geometry& gm = allcontainers[0]->Geom(lev);
+        ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity());
     }
+
+    return rho;
 }
 
 void

@@ -78,6 +78,7 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         // due to simulation boundary potentials
         for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
             WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
+            if (species.do_not_deposit) continue;
             if (species.initialize_self_fields ||
                 (do_electrostatic == ElectrostaticSolverAlgo::Relativistic)) {
                 AddSpaceChargeField(species);
@@ -218,6 +219,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     bool const do_rz_volume_scaling = false;
     for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
         WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
+        if (species.do_not_deposit) continue;
         species.DepositCharge(
             rho_fp, local, reset, do_rz_volume_scaling, interpolate_across_levels
         );
