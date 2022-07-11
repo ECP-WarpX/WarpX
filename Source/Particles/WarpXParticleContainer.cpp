@@ -566,8 +566,6 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                        const long offset, const long np_to_depose,
                                        int thread_num, int lev, int depos_lev)
 {
-    if (do_not_deposit) return;
-
     WarpX& warpx = WarpX::GetInstance();
 
     // deposition guards
