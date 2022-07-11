@@ -65,23 +65,20 @@ default_tol = 1.e-12 # Default relative tolerance
 reactant_species = ['deuterium', 'tritium']
 product_species = ['helium', 'neutron']
 
+from scipy.constants import m_u, m_p
+mass = {
+    'deuterium': 2.01410177812*m_u,
+    'tritium': 3.0160492779*m_u,
+    'helium': 4.00260325413*m_u,
+    'neutron': 1.0013784193052508*m_p
+}
+
 ## Some physical parameters
 keV_to_Joule = scc.e*1e3
 MeV_to_Joule = scc.e*1e6
 barn_to_square_meter = 1.e-28
-m_p = scc.m_p # Proton mass
-m_b = 11.00930536*scc.m_u # Boron 11 mass
-m_reduced = m_p*m_b/(m_p+m_b)
-m_a = 4.002602*scc.m_u # Alpha mass
-m_be = 7.94748*m_p # Beryllium 8 mass
-Z_boron = 5.
-Z_proton = 1.
-E_Gamow = (Z_boron*Z_proton*np.pi*scc.fine_structure)**2*2.*m_reduced*scc.c**2
-E_Gamow_MeV = E_Gamow/MeV_to_Joule
-E_Gamow_keV = E_Gamow/keV_to_Joule
-E_fusion = 8.59009*MeV_to_Joule # Energy released during p + B -> alpha + Be
-E_decay = 0.0918984*MeV_to_Joule # Energy released during Be -> 2*alpha
-E_fusion_total = E_fusion + E_decay # Energy released during p + B -> 3*alpha
+
+E_fusion = 17.6*MeV_to_Joule # Energy released during the fusion reaction
 
 ## Some numerical parameters for this test
 size_x = 8
@@ -156,20 +153,17 @@ def compute_energy_array(data, species_name, suffix, m):
     return np.sqrt(psq_array*scc.c**2 + rest_energy**2) - rest_energy
 
 def check_energy_conservation(data):
-    proton_energy_start = compute_energy_array(data, "proton", "start", m_p)
-    proton_energy_end   = compute_energy_array(data, "proton", "end", m_p)
-    boron_energy_start  = compute_energy_array(data, "boron", "start", m_b)
-    boron_energy_end    = compute_energy_array(data, "boron", "end", m_b)
-    alpha_energy_end    = compute_energy_array(data, "alpha", "end", m_a)
-    total_energy_start = np.sum(proton_energy_start*data["proton_w_start"]) + \
-                         np.sum(boron_energy_start*data["boron_w_start"])
-    total_energy_end   = np.sum(proton_energy_end*data["proton_w_end"]) + \
-                         np.sum(boron_energy_end*data["boron_w_end"]) + \
-                         np.sum(alpha_energy_end*data["alpha_w_end"])
-    ## Factor 3 is here because each nuclear fusion reaction produces 3 alphas
-    n_fusion_reaction = np.sum(data["alpha_w_end"])/3.
+    total_energy_start = 0
+    for species_name in reactant_species:
+        total_energy_start +=  np.sum( data[species_name + "_w_start"] * \
+            compute_energy_array(data, species_name, "start", mass[species_name]) )
+    total_energy_end = 0
+    for species_name in product_species + reactant_species:
+        total_energy_end +=  np.sum( data[species_name + "_w_end"] * \
+            compute_energy_array(data, species_name, "end", mass[species_name]) )
+    n_fusion_reaction = np.sum(data[product_species[0] + "_w_end"])
     assert(is_close(total_energy_end,
-                    total_energy_start + n_fusion_reaction*E_fusion_total,
+                    total_energy_start + n_fusion_reaction*E_fusion,
                     rtol = 1.e-8))
 
 def check_momentum_conservation(data):
@@ -235,7 +229,7 @@ def basic_product_particles_check(data):
 
 def generic_check(data):
     check_particle_number_conservation(data)
-    #check_energy_conservation(data)
+    check_energy_conservation(data)
     #check_momentum_conservation(data)
     check_id(data)
     #basic_product_particles_check(data)
@@ -587,65 +581,6 @@ def check_xy_isotropy(data):
     assert(average_pz_sq > average_px_sq)
     assert(average_pz_sq > average_py_sq)
 
-def sigmav_thermal_fit_lowE_nonresonant(T):
-    ## Temperature T is in keV
-    ## Returns the nonresonant average of cross section multiplied by relative velocity in m^3/s,
-    ## in the range T <= 70 keV, as described by equation 9 of W.M. Nevins and R. Swain,
-    ## Nuclear Fusion, 40, 865 (2000).
-    E0 = (E_Gamow_keV/4.)**(1./3.) * T**(2./3.)
-    DE0 = 4.*np.sqrt(T*E0/3.)
-    C0 = 197.*1.e3
-    C1 = 0.24*1.e3
-    C2 = 2.31e-4*1.e3
-    tau = 3.*E0/T
-    Seff = C0*(1.+5./(12.*tau)) + C1*(E0+35./36.*T) + C2*(E0**2 + 89./36.*E0*T)
-    ## nonresonant sigma times vrel, in barn meter per second
-    sigmav_nr_bmps =  np.sqrt(2*T*keV_to_Joule/m_reduced) * DE0*Seff/T**2 * np.exp(-tau)
-    ## Return result in cubic meter per second
-    return sigmav_nr_bmps*barn_to_square_meter
-
-def sigmav_thermal_fit_lowE_resonant(T):
-    ## Temperature T is in keV
-    ## Returns the resonant average of cross section multiplied by relative velocity in m^3/s,
-    ## in the range T <= 70 keV, as described by equation 11 of W.M. Nevins and R. Swain,
-    ## Nuclear Fusion, 40, 865 (2000).
-    return 5.41e-21 * np.exp(-148./T) / T**(3./2.)
-
-def sigmav_thermal_fit_lowE(T):
-    ## Temperature T is in keV
-    ## Returns the average of cross section multiplied by relative velocity in m^3/s, using the
-    ## fits described in section 3.1 of W.M. Nevins and R. Swain, Nuclear Fusion, 40, 865 (2000).
-    ## The fits are valid for T <= 70 keV.
-    return sigmav_thermal_fit_lowE_nonresonant(T) + sigmav_thermal_fit_lowE_resonant(T)
-
-def expected_alpha_thermal(T, proton_density, boron_density, dV, dt):
-    ## Computes the expected number of produced alpha particles when the protons and borons follow
-    ## a Maxwellian distribution with a temperature T, in keV. This uses the thermal fits described
-    ## in W.M. Nevins and R. Swain, Nuclear Fusion, 40, 865 (2000).
-
-    ## The fit used here is only valid in the range T <= 70 keV.
-    assert((T >=0) and (T<=70))
-    sigma_times_vrel = sigmav_thermal_fit_lowE(T)
-    ## Factor 3 is here because each fusion event produces 3 alphas.
-    return 3.*proton_density*boron_density*sigma_times_vrel*dV*dt
-
-def check_thermal_alpha_yield(data):
-    ## Checks that the number of alpha particles in test3 is as expected
-    Temperature = 44. # keV
-    proton_density = 1.e28 # m^-3
-    boron_density = 5.e28 # m^-3
-
-    alpha_weight_theory = expected_alpha_thermal(Temperature, proton_density, boron_density,
-                                                 dV_total, dt)
-    alpha_weight_simulation = np.sum(data["alpha_w_end"])
-
-    assert(is_close(alpha_weight_theory, alpha_weight_simulation, rtol = 2.e-1))
-
-def boron_remains(data):
-    ## Checks whether there remains boron macroparticles at the end of the test
-    n_boron_left = data["boron_w_end"].shape[0]
-    return (n_boron_left > 0)
-
 def specific_check1(data):
     check_isotropy(data, relative_tolerance = 3.e-2)
     expected_fusion_number = check_macroparticle_number(data,
@@ -666,21 +601,6 @@ def specific_check2(data):
     check_alpha_yield(data, expected_fusion_number, E_com, proton_density = 1.e20,
                                                            boron_density = 1.e26)
     check_initial_energy2(data)
-
-def specific_check3(data):
-    check_isotropy(data, relative_tolerance = 1.e-1)
-    check_thermal_alpha_yield(data)
-
-def specific_check4(data):
-    ## In test 4, the boron initial density is so small that all borons should have fused within a
-    ## timestep dt. We thus assert that no boron remains at the end of the simulation.
-    assert(not boron_remains(data))
-
-def specific_check5(data):
-    ## Test 5 is similar to test 4, expect that the parameter fusion_probability_threshold is
-    ## increased to the point that we should severely underestimate the fusion yield. Consequently,
-    ## there should still be borons at the end of the test, which we verify here.
-    assert(boron_remains(data))
 
 def check_charge_conservation(rho_start, rho_end):
     assert(np.all(is_close(rho_start, rho_end, rtol=2.e-11)))
