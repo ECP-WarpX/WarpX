@@ -37,7 +37,7 @@ amrex::ParticleReal DeuteriumTritiumFusionCrossSection (const amrex::ParticleRea
     constexpr amrex::ParticleReal m_D = 1.99901 * PhysConst::m_p;
     constexpr amrex::ParticleReal m_T = 2.99372 * PhysConst::m_p;
     constexpr amrex::ParticleReal m_reduced = m_D / (1._prt + m_D/m_T);
-    amrex::ParticleReal B_G = MathConst::pi * PhysConst::alpha * 2._prt * 3._prt
+    amrex::ParticleReal B_G = MathConst::pi * PhysConst::alpha * 1._prt * 1._prt
          * std::sqrt( 2._prt*m_reduced*PhysConst::c*PhysConst::c * joule_to_keV );
 
     // Compute astrophysical_factor
