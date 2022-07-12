@@ -207,12 +207,23 @@ def generic_check(data):
     check_id(data)
 
 def check_isotropy(data, relative_tolerance):
-    ## Checks that the alpha particles are emitted isotropically
-    average_px_sq = np.average(data["alpha_px_end"]*data["alpha_px_end"])
-    average_py_sq = np.average(data["alpha_py_end"]*data["alpha_py_end"])
-    average_pz_sq = np.average(data["alpha_pz_end"]*data["alpha_pz_end"])
-    assert(is_close(average_px_sq, average_py_sq, rtol = relative_tolerance))
-    assert(is_close(average_px_sq, average_pz_sq, rtol = relative_tolerance))
+    ## Checks that the product particles are emitted isotropically
+    for species_name in product_species:
+        average_px_sq = np.average(data[species_name+"_px_end"]*data[species_name+"_px_end"])
+        average_py_sq = np.average(data[species_name+"_py_end"]*data[species_name+"_py_end"])
+        average_pz_sq = np.average(data[species_name+"_pz_end"]*data[species_name+"_pz_end"])
+        assert(is_close(average_px_sq, average_py_sq, rtol = relative_tolerance))
+        assert(is_close(average_px_sq, average_pz_sq, rtol = relative_tolerance))
+
+def check_xy_isotropy(data):
+    ## Checks that the alpha particles are emitted isotropically in x and y
+    for species_name in product_species:
+        average_px_sq = np.average(data[species_name+"_px_end"]*data[species_name+"_px_end"])
+        average_py_sq = np.average(data[species_name+"_py_end"]*data[species_name+"_py_end"])
+        average_pz_sq = np.average(data[species_name+"_pz_end"]*data[species_name+"_pz_end"])
+        assert(is_close(average_px_sq, average_py_sq, rtol = 5.e-2))
+        assert(average_pz_sq > average_px_sq)
+        assert(average_pz_sq > average_py_sq)
 
 def cross_section( E_keV ):
     ## Returns cross section in b, using the analytical fits given
@@ -486,17 +497,8 @@ def check_initial_energy2(data):
         assert(is_close(np.amax(energy_alpha3_simulation), max_energy_alpha23, rtol=2.5e-1))
         assert(is_close(np.amin(energy_alpha3_simulation), min_energy_alpha23, rtol=2.5e-1))
 
-def check_xy_isotropy(data):
-    ## Checks that the alpha particles are emitted isotropically in x and y
-    average_px_sq = np.average(data["alpha_px_end"]*data["alpha_px_end"])
-    average_py_sq = np.average(data["alpha_py_end"]*data["alpha_py_end"])
-    average_pz_sq = np.average(data["alpha_pz_end"]*data["alpha_pz_end"])
-    assert(is_close(average_px_sq, average_py_sq, rtol = 5.e-2))
-    assert(average_pz_sq > average_px_sq)
-    assert(average_pz_sq > average_py_sq)
-
 def specific_check1(data):
-    #check_isotropy(data, relative_tolerance = 3.e-2)
+    check_isotropy(data, relative_tolerance = 3.e-2)
     expected_fusion_number = check_macroparticle_number(data,
                                                         fusion_probability_target_value = 0.002,
                                                         num_pair_per_cell = 10000)
@@ -506,7 +508,7 @@ def specific_check1(data):
     #check_initial_energy1(data, E_com)
 
 def specific_check2(data):
-    #check_xy_isotropy(data)
+    check_xy_isotropy(data)
     ## Only 900 particles pairs per cell here because we ignore the 10% of reactants that are at rest
     expected_fusion_number = check_macroparticle_number(data,
                                                         fusion_probability_target_value = 0.02,
