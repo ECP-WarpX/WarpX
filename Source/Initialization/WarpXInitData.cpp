@@ -352,10 +352,12 @@ WarpX::WriteUsedInputsFile (std::string const & filename) const
 {
     amrex::Print() << "For full input parameters, see the file: " << filename << "\n\n";
 
-    std::ofstream jobInfoFile;
-    jobInfoFile.open(filename.c_str(), std::ios::out);
-    ParmParse::dumpTable(jobInfoFile, true);
-    jobInfoFile.close();
+    if (ParallelDescriptor::IOProcessor()) {
+        std::ofstream jobInfoFile;
+        jobInfoFile.open(filename.c_str(), std::ios::out);
+        ParmParse::dumpTable(jobInfoFile, true);
+        jobInfoFile.close();
+    }
 }
 
 void
