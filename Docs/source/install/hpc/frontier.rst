@@ -33,6 +33,8 @@ Use the following commands to download the WarpX source code and switch to the c
    git clone https://github.com/ECP-WarpX/picsar.git $HOME/src/picsar
    git clone -b 0.14.5 https://github.com/openPMD/openPMD-api.git $HOME/src/openPMD-api
 
+To enable HDF5, work-around the broken ``HDF5_VERSION`` variable (empty) in the Cray PE by commenting out the following lines in ``$HOME/src/openPMD-api/CMakeLists.txt``:
+https://github.com/openPMD/openPMD-api/blob/0.14.5/CMakeLists.txt#L216-L220
 
 We use the following modules and environments on the system (``$HOME/frontier_warpx.profile``).
 
