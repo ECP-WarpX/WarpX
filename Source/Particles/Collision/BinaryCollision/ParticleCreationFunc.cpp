@@ -45,7 +45,10 @@ ParticleCreationFunc::ParticleCreationFunc (const std::string collision_name,
             m_num_products_device.push_back(1);
 #endif
         }
-        // TODO: Raise error otherwise
+        else
+        {
+          amrex::Abort("Unknown collision type in ParticleCreationFunc");
+        }
 
 #ifdef AMREX_USE_GPU
         m_num_products_device.resize(m_num_product_species);

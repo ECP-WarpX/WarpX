@@ -225,15 +225,12 @@ public:
                                                         p_pair_indices_1[i], p_pair_indices_2[i],
                                                         product_start_index, m1, m2, engine);
                 }
-                else
+                else if (t_collision_type == CollisionType::DeuteriumTritiumFusion)
                 {
-                    // TODO: Assert that there are exactly 2 products
-
                     amrex::ParticleReal fusion_energy = 0;
                     if (t_collision_type == CollisionType::DeuteriumTritiumFusion) {
                         fusion_energy = 17.6e6_prt * PhysConst::q_e; // 17.6 MeV
                     }
-                    // TODO: Add exception for other collision types
                     TwoProductFusionInitializeMomentum(soa_1, soa_2,
                         soa_products_data[0], soa_products_data[1],
                         p_pair_indices_1[i], p_pair_indices_2[i],
