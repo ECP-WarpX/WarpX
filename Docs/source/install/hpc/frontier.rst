@@ -23,11 +23,16 @@ If you are new to this system, please see the following resources:
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the WarpX source code and switch to the correct branch.
+**You have to do this on Summit/OLCF Home/etc. since Frontier cannot connect directly to the internet**:
 
 .. code-block:: bash
 
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/AMReX-Codes/amrex.git $HOME/src/amrex
+   git clone https://github.com/ECP-WarpX/picsar.git $HOME/src/picsar
+   git clone -b 0.14.5 https://github.com/openPMD/openPMD-api.git $HOME/src/openPMD-api
+
 
 We use the following modules and environments on the system (``$HOME/frontier_warpx.profile``).
 
@@ -49,8 +54,12 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=HIP
-   cmake --build build -j 10
+   cmake -S . -B build   \
+     -DWarpX_COMPUTE=HIP \
+     -DWarpX_amrex_src=$HOME/src/amrex \
+     -DWarpX_picsar_src=$HOME/src/picsar \
+     -DWarpX_openpmd_src=$HOME/src/openPMD-api
+   cmake --build build -j 32
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
