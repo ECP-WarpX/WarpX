@@ -371,6 +371,7 @@ protected:
 
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     std::vector<bool> m_deposit_on_main_grid;
+    std::vector<bool> m_laser_deposit_on_main_grid;
 
     //! instead of gathering fields from the finest patch level, gather from the coarsest
     std::vector<bool> m_gather_from_main_grid;
