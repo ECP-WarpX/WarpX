@@ -1,10 +1,10 @@
 # please set your project account
-#export proj=<yourProject>
+#export proj=APH114-frontier
 
 # required dependencies
-module load cmake/3.22.1
+module load cmake/3.22.2
 module load craype-accel-amd-gfx90a
-module load rocm/5.0.0
+module load rocm/5.1.0
 module load cray-mpich
 #module load cce/14.0.0  # must be loaded after rocm
 
@@ -16,18 +16,19 @@ module load ninja
 module load nano
 
 # optional: for PSATD in RZ geometry support (not yet available)
+#module load cray-libsci_acc/22.06.1.2
 #module load blaspp
 #module load lapackpp
 
 # optional: for QED lookup table generation support
-#module load boost/1.78.0-cxx17
+module load boost/1.79.0-cxx17
 
 # optional: for openPMD support
 #module load adios2/2.7.1
-#module load cray-hdf5-parallel/1.12.1.1
+module load cray-hdf5-parallel/1.12.1.1
 
 # optional: for Python bindings or libEnsemble
-#module load cray-python/3.9.4.2
+module load cray-python/3.9.12.1
 
 # fix system defaults: do not escape $ with a \ on tab completion
 shopt -s direxpand
