@@ -51,5 +51,5 @@ export CC=$(which cc)
 export CXX=$(which CC)
 export FC=$(which ftn)
 export CFLAGS="-I${ROCM_PATH}/include"
-export CXXFLAGS="-I${ROCM_PATH}/include"
+export CXXFLAGS="-I${ROCM_PATH}/include -Wno-pass-failed"
 export LDFLAGS="-L${ROCM_PATH}/lib -lamdhip64"
