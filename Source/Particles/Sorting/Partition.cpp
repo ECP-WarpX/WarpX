@@ -66,10 +66,15 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
 
     // First, partition particles into the larger buffer
 
+//    std::cout << "WarpX::n_field_gather_buffer = " << WarpX::n_field_gather_buffer << std::endl;
+//    std::cout << "WarpX::n_current_deposition_buffer = " << WarpX::n_current_deposition_buffer << std::endl;
+//    std::cout << "gather_mask = " << gather_masks << std::endl;
+//    std::cout << "current_mask = " << current_masks << std::endl;
     // - Select the larger buffer
     iMultiFab const* bmasks =
         (WarpX::n_field_gather_buffer >= WarpX::n_current_deposition_buffer) ?
         gather_masks : current_masks;
+//    std::cout << "bmasks = " << bmasks << std::endl;
     // - For each particle, find whether it is in the larger buffer,
     //   by looking up the mask. Store the answer in `inexflag`.
     amrex::ParallelFor( np, fillBufferFlag(pti, bmasks, inexflag, Geom(lev)) );

@@ -1994,58 +1994,66 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     //
     // The coarse patch
     //
-    if (lev > 0)
-    {
-        BoxArray cba = ba;
-        cba.coarsen(refRatio(lev-1));
-        std::array<Real,3> cdx = CellSize(lev-1);
+
+        BoxArray crba = ba;
+
+        const IntVect& crse_ratio{2,2,2};
+        crba.coarsen(crse_ratio);
+
+        std::array<Real,3> cdx = CellSize(lev);
+        for(int i = 0; i < 3; i++) cdx[i] = 2.0*cdx[i];
+
+        std::cout << "cba = " << crba << std::endl;
+
+        std::cout << "ba = " << ba << std::endl;
 
         // Create the MultiFabs for B
-        Bfield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_cp[x]"));
-        Bfield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,By_nodal_flag),dm,ncomps,ngEB,tag("Bfield_cp[y]"));
-        Bfield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Bz_nodal_flag),dm,ncomps,ngEB,tag("Bfield_cp[z]"));
+        Bfield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(crba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_cp[x]"));
+        Bfield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(crba,By_nodal_flag),dm,ncomps,ngEB,tag("Bfield_cp[y]"));
+        Bfield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(crba,Bz_nodal_flag),dm,ncomps,ngEB,tag("Bfield_cp[z]"));
 
         // Create the MultiFabs for E
-        Efield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Ex_nodal_flag),dm,ncomps,ngEB,tag("Efield_cp[x]"));
-        Efield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_cp[y]"));
-        Efield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_cp[z]"));
+        Efield_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(crba,Ex_nodal_flag),dm,ncomps,ngEB,tag("Efield_cp[x]"));
+        std::cout << "amrex::convert(crba,Ex_nodal_flag) = " << amrex::convert(crba,Ex_nodal_flag) << std::endl;
+        Efield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(crba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_cp[y]"));
+        Efield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(crba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_cp[z]"));
 
         // Create the MultiFabs for B_avg
-        Bfield_avg_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_cp[x]"));
-        Bfield_avg_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,By_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_cp[y]"));
-        Bfield_avg_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Bz_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_cp[z]"));
+        Bfield_avg_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(crba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_cp[x]"));
+        Bfield_avg_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(crba,By_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_cp[y]"));
+        Bfield_avg_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(crba,Bz_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_cp[z]"));
 
         // Create the MultiFabs for E_avg
-        Efield_avg_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Ex_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_cp[x]"));
-        Efield_avg_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_cp[y]"));
-        Efield_avg_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_cp[z]"));
+        Efield_avg_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(crba,Ex_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_cp[x]"));
+        Efield_avg_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(crba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_cp[y]"));
+        Efield_avg_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(crba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_cp[z]"));
 
         // Create the MultiFabs for the current
-        current_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,jx_nodal_flag),dm,ncomps,ngJ,tag("current_cp[x]"));
-        current_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_cp[y]"));
-        current_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_cp[z]"));
+        current_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(crba,jx_nodal_flag),dm,ncomps,ngJ,tag("current_cp[x]"));
+        current_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(crba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_cp[y]"));
+        current_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(crba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_cp[z]"));
 
         if (deposit_charge) {
             // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
             const int rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
-            rho_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,rho_nodal_flag),dm,rho_ncomps,ngRho,tag("rho_cp"));
+            rho_cp[lev] = std::make_unique<MultiFab>(amrex::convert(crba,rho_nodal_flag),dm,rho_ncomps,ngRho,tag("rho_cp"));
         }
 
         if (do_dive_cleaning)
         {
-            F_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,IntVect::TheUnitVector()),dm,ncomps, ngF.max(),tag("F_cp"));
+            F_cp[lev] = std::make_unique<MultiFab>(amrex::convert(crba,IntVect::TheUnitVector()),dm,ncomps, ngF.max(),tag("F_cp"));
         }
 
         if (do_divb_cleaning)
         {
             if (do_nodal)
             {
-                G_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba, IntVect::TheUnitVector()),
+                G_cp[lev] = std::make_unique<MultiFab>(amrex::convert(crba, IntVect::TheUnitVector()),
                                                        dm, ncomps, ngG.max(), tag("G_cp"));
             }
             else // do_nodal = 0
             {
-                G_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba, IntVect::TheZeroVector()),
+                G_cp[lev] = std::make_unique<MultiFab>(amrex::convert(crba, IntVect::TheZeroVector()),
                                                        dm, ncomps, ngG.max(), tag("G_cp"));
             }
         }
@@ -2059,7 +2067,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #else
 
             // Get the cell-centered box, with guard cells
-            BoxArray c_realspace_ba = cba;// Copy box
+            BoxArray c_realspace_ba = crba;// Copy box
             c_realspace_ba.enclosedCells(); // Make it cell-centered
             // Define spectral solver
 #ifdef WARPX_DIM_RZ
@@ -2090,7 +2098,25 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             m_fdtd_solver_cp[lev] = std::make_unique<FiniteDifferenceSolver>(maxwell_solver_id, cdx,
                                                                              do_nodal);
         }
+
+//      gather buffer and current buffer masks for lev = 0 : emulated MR
+
+    if (n_field_gather_buffer > 0 ) {
+       gather_buffer_masks[lev] = std::make_unique<iMultiFab>(ba, dm, ncomps, 1 );
     }
+
+    if (n_current_deposition_buffer > 0) {
+        current_buf[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,jx_nodal_flag),dm,ncomps,ngJ,tag("current_buf[x]"));
+        current_buf[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_buf[y]"));
+        current_buf[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_buf[z]"));
+        if (rho_cp[lev]) {
+            charge_buf[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho,tag("charge_buf"));
+        }
+        current_buffer_masks[lev] = std::make_unique<iMultiFab>(ba, dm, ncomps, 1);
+        current_buffer_masks[lev]->setVal(1);
+     }
+        // Current buffer masks have 1 ghost cell, because of the fact
+        // that particles may move by more than one cell when using subcycling.
 
     //
     // Copy of the coarse aux
@@ -2472,12 +2498,14 @@ WarpX::getCosts (int lev)
 void
 WarpX::BuildBufferMasks ()
 {
-    for (int lev = 1; lev <= maxLevel(); ++lev)
+    for (int lev = 0; lev <= maxLevel(); ++lev)
     {
-        for (int ipass = 0; ipass < 2; ++ipass)
+        for (int ipass = 1; ipass < 2; ++ipass)
         {
             int ngbuffer = (ipass == 0) ? n_current_deposition_buffer : n_field_gather_buffer;
             iMultiFab* bmasks = (ipass == 0) ? current_buffer_masks[lev].get() : gather_buffer_masks[lev].get();
+
+            std::cout << "ngbuffer = " << ngbuffer << std::endl;
             if (bmasks)
             {
                 const IntVect ngtmp = ngbuffer + bmasks->nGrowVect();
@@ -2495,7 +2523,7 @@ WarpX::BuildBufferMasks ()
                 for (MFIter mfi(*bmasks, true); mfi.isValid(); ++mfi)
                 {
                     const Box tbx = mfi.growntilebox();
-                    BuildBufferMasksInBox( tbx, (*bmasks)[mfi], tmp[mfi], ngbuffer );
+                    BuildBufferMasksInBox( lev, tbx, (*bmasks)[mfi], tmp[mfi], ngbuffer );
                 }
             }
         }
@@ -2511,39 +2539,61 @@ WarpX::BuildBufferMasks ()
  * \param ng          Number of guard cells
  */
 void
-WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
+WarpX::BuildBufferMasksInBox ( int lev, const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
                                const amrex::IArrayBox &guard_mask, const int ng )
 {
+
+    ParmParse pp_warpx("warpx");
+    Vector<Real> f_lo, f_hi;
+    getArrWithParser(pp_warpx, "fine_tag_lo", f_lo);
+    getArrWithParser(pp_warpx, "fine_tag_hi", f_hi);
+    fine_tag_lo = RealVect{f_lo};
+    fine_tag_hi = RealVect{f_hi};
+
+    const auto problo = Geom(lev).ProbLoArray();
+    const auto dx = Geom(lev).CellSizeArray();
+
     bool setnull;
     const amrex::Dim3 lo = amrex::lbound( tbx );
     const amrex::Dim3 hi = amrex::ubound( tbx );
     Array4<int> msk = buffer_mask.array();
-    Array4<int const> gmsk = guard_mask.array();
+
 #if defined(WARPX_DIM_1D_Z)
     int k = lo.z;
     int j = lo.y;
     for (int i = lo.x; i <= hi.x; ++i) {
         setnull = false;
-        // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
-        for (int ii = i-ng; ii <= i+ng; ++ii) {
-            if ( gmsk(ii,j,k) == 0 ) setnull = true;
-        }
-        if ( setnull ) msk(i,j,k) = 0;
-        else           msk(i,j,k) = 1;
+
+        amrex::Real x;
+
+        //WarpXUtilAlgo::getCellCoordinates(i, j, k, mfx_stag, problo, dx, x, y, z);
+        x = problo[0] + (i + 0.5)*dx[0];
+
+        if (x > fine_tag_lo[0] && x < fine_tag_hi[0]) setnull = true;
+
+        if ( setnull ) msk(i,j,k) = 1;
+        else           msk(i,j,k) = 0;
     }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     int k = lo.z;
     for     (int j = lo.y; j <= hi.y; ++j) {
         for (int i = lo.x; i <= hi.x; ++i) {
             setnull = false;
-            // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
-            for     (int jj = j-ng; jj <= j+ng; ++jj) {
-                for (int ii = i-ng; ii <= i+ng; ++ii) {
-                    if ( gmsk(ii,jj,k) == 0 ) setnull = true;
-                }
+
+            amrex::Real x,y;
+
+            //WarpXUtilAlgo::getCellCoordinates(i, j, k, mfx_stag, problo, dx, x, y, z);
+            x = problo[0] + (i + 0.5)*dx[0];
+            y = problo[1] + (j + 0.5)*dx[1];
+
+            if (x > fine_tag_lo[0] && x < fine_tag_hi[0]){
+               if (y > fine_tag_lo[1] && y < fine_tag_hi[1]){
+                   setnull = true;
+               }
             }
-            if ( setnull ) msk(i,j,k) = 0;
-            else           msk(i,j,k) = 1;
+
+            if ( setnull ) msk(i,j,k) = 1;
+            else           msk(i,j,k) = 0;
         }
     }
 #elif defined(WARPX_DIM_3D)
@@ -2551,20 +2601,84 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
         for     (int j = lo.y; j <= hi.y; ++j) {
             for (int i = lo.x; i <= hi.x; ++i) {
                 setnull = false;
-                // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
-                for         (int kk = k-ng; kk <= k+ng; ++kk) {
-                    for     (int jj = j-ng; jj <= j+ng; ++jj) {
-                        for (int ii = i-ng; ii <= i+ng; ++ii) {
-                            if ( gmsk(ii,jj,kk) == 0 ) setnull = true;
-                        }
-                    }
-                }
-                if ( setnull ) msk(i,j,k) = 0;
-                else           msk(i,j,k) = 1;
+
+                amrex::Real x, y, z;
+
+                //WarpXUtilAlgo::getCellCoordinates(i, j, k, mfx_stag, problo, dx, x, y, z);
+                x = problo[0] + (i + 0.5)*dx[0];
+                y = problo[1] + (j + 0.5)*dx[1];
+                z = problo[2] + (k + 0.5)*dx[2];
+
+                if (x > fine_tag_lo[0] && x < fine_tag_hi[0]){
+                   if (y > fine_tag_lo[1] && y < fine_tag_hi[1]){
+                      if (z > fine_tag_lo[2] && z < fine_tag_hi[2]){
+                         setnull = true;
+                      }
+                   }
+                 }
+
+                if ( setnull ) msk(i,j,k) = 1;
+                else           msk(i,j,k) = 0;
+
+                //std::cout << " 3D mask : (x,y,z) = ("<< x << ", "<< y << ", "<< z <<". msk (" << i << ", " << j << ", "<< k << ") = " << msk(i,j,k) << std::endl;
+                //if(msk(i,j,k) == 1)std::cout << " 3D mask : (x,y,z) = ("<< x << ", "<< y << ", "<< z <<". msk (" << i << ", " << j << ", "<< k << ") = " << msk(i,j,k) << std::endl;
             }
         }
     }
 #endif
+
+//    bool setnull;
+//    const amrex::Dim3 lo = amrex::lbound( tbx );
+//    const amrex::Dim3 hi = amrex::ubound( tbx );
+//    Array4<int> msk = buffer_mask.array();
+//    Array4<int const> gmsk = guard_mask.array();
+//
+//#if defined(WARPX_DIM_1D_Z)
+//    int k = lo.z;
+//    int j = lo.y;
+//    for (int i = lo.x; i <= hi.x; ++i) {
+//        setnull = false;
+//        // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
+//        for (int ii = i-ng; ii <= i+ng; ++ii) {
+//            if ( gmsk(ii,j,k) == 0 ) setnull = true;
+//        }
+//        if ( setnull ) msk(i,j,k) = 0;
+//        else           msk(i,j,k) = 1;
+//    }
+//#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+//    int k = lo.z;
+//    for     (int j = lo.y; j <= hi.y; ++j) {
+//        for (int i = lo.x; i <= hi.x; ++i) {
+//            setnull = false;
+//            // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
+//            for     (int jj = j-ng; jj <= j+ng; ++jj) {
+//                for (int ii = i-ng; ii <= i+ng; ++ii) {
+//                    if ( gmsk(ii,jj,k) == 0 ) setnull = true;
+//                }
+//            }
+//            if ( setnull ) msk(i,j,k) = 0;
+//            else           msk(i,j,k) = 1;
+//        }
+//    }
+//#elif defined(WARPX_DIM_3D)
+//    for         (int k = lo.z; k <= hi.z; ++k) {
+//        for     (int j = lo.y; j <= hi.y; ++j) {
+//            for (int i = lo.x; i <= hi.x; ++i) {
+//                setnull = false;
+//                // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
+//                for         (int kk = k-ng; kk <= k+ng; ++kk) {
+//                    for     (int jj = j-ng; jj <= j+ng; ++jj) {
+//                        for (int ii = i-ng; ii <= i+ng; ++ii) {
+//                            if ( gmsk(ii,jj,kk) == 0 ) setnull = true;
+//                        }
+//                    }
+//                }
+//                if ( setnull ) msk(i,j,k) = 0;
+//                else           msk(i,j,k) = 1;
+//            }
+//        }
+//    }
+//#endif
 }
 
 amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_order, const bool nodal)

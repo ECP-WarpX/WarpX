@@ -274,6 +274,48 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 void
 WarpX::UpdateAuxilaryDataSameType ()
 {
+
+    //Emulate MR : coarsen the _fp from level 0 to get the _cp from level 0
+    for (int lev = 0; lev <= 0; ++lev)
+    {
+
+        const IntVect& refinement_ratio{2,2,2};
+
+        // B field
+        Bfield_cp[lev][0]->setVal(0.0);
+        Bfield_cp[lev][1]->setVal(0.0);
+        Bfield_cp[lev][2]->setVal(0.0);
+
+        std::array<const MultiFab*,3> fine_B { Bfield_fp[lev][0].get(),
+                                             Bfield_fp[lev][1].get(),
+                                             Bfield_fp[lev][2].get() };
+        std::array<      MultiFab*,3> crse_B { Bfield_cp[lev][0].get(),
+                                             Bfield_cp[lev][1].get(),
+                                             Bfield_cp[lev][2].get() };
+
+        CoarsenMR::Coarsen( *crse_B[0], *fine_B[0], refinement_ratio );
+        CoarsenMR::Coarsen( *crse_B[1], *fine_B[1], refinement_ratio );
+        CoarsenMR::Coarsen( *crse_B[2], *fine_B[2], refinement_ratio );
+
+        // E field
+        Efield_cp[lev][0]->setVal(0.0);
+        Efield_cp[lev][1]->setVal(0.0);
+        Efield_cp[lev][2]->setVal(0.0);
+
+        std::array<const MultiFab*,3> fine_E { Efield_fp[lev][0].get(),
+                                             Efield_fp[lev][1].get(),
+                                             Efield_fp[lev][2].get() };
+        std::array<      MultiFab*,3> crse_E { Efield_cp[lev][0].get(),
+                                             Efield_cp[lev][1].get(),
+                                             Efield_cp[lev][2].get() };
+
+        CoarsenMR::Coarsen( *crse_E[0], *fine_E[0], refinement_ratio );
+        CoarsenMR::Coarsen( *crse_E[1], *fine_E[1], refinement_ratio );
+        CoarsenMR::Coarsen( *crse_E[2], *fine_E[2], refinement_ratio );
+
+    }
+
+
     for (int lev = 1; lev <= finest_level; ++lev)
     {
         const amrex::Periodicity& crse_period = Geom(lev-1).periodicity();

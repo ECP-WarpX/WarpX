@@ -95,6 +95,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     constexpr int NODE = amrex::IndexType::NODE;
     constexpr int CELL = amrex::IndexType::CELL;
 
+//    std::cout << "(dx,dy,dz) = (" << dx[0] << ", " << dx[1] << ", " << dx[2] << ")" << std::endl;
+//    std::cout << "(xmin,ymin,zmin) = (" << xmin << ", " << ymin << ", " << zmin << ")" << std::endl;
     // --- Compute shape factors
 
     Compute_shape_factor< depos_order > const compute_shape_factor;
@@ -361,6 +363,10 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<=depos_order; iy++){
             for (int ix=0; ix<= depos_order - galerkin_interpolation; ix++){
+                if((lo.x+j_ex+ix == -3) && (lo.y+k_ex+iy == -3) && (lo.z+l_ex+iz == 107)) {
+                  std::cout << "(xp,yp,zp) = (" << xp << ", " << yp << ", " << zp << ") " << "(lo.x,lo.y,lo.z) = (" << lo.x << ", " << lo.y << ", "<< lo.z <<") " <<"(j_ex,k_ex,l_ex) = (" << j_ex << ", " << k_ex << ", "<< l_ex <<") " << "(ix,iy,iz) = (" << ix << ", "<< iy << ", "<< iz <<")"<< std::endl;
+
+                }
                 Exp += sx_ex[ix]*sy_ex[iy]*sz_ex[iz]*
                     ex_arr(lo.x+j_ex+ix, lo.y+k_ex+iy, lo.z+l_ex+iz);
             }

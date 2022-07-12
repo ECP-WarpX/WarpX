@@ -1817,6 +1817,10 @@ PhysicalParticleContainer::Evolve (int lev,
             if (! do_not_push)
             {
                 const long np_gather = (cEx) ? nfine_gather : np;
+                //std::cout << "np_gather = " << np_gather << std::endl;
+                //std::cout << "nfine_gather = " << nfine_gather << std::endl;
+                //std::cout << "np_current = " << np_current << std::endl;
+                //std::cout << "np = " << np << std::endl;
 
                 int e_is_nodal = Ex.is_nodal() and Ey.is_nodal() and Ez.is_nodal();
 
@@ -1831,7 +1835,8 @@ PhysicalParticleContainer::Evolve (int lev,
 
                 if (np_gather < np)
                 {
-                    const IntVect& ref_ratio = WarpX::RefRatio(lev-1);
+                    const IntVect& ref_ratio{2,2,2};
+                    //const IntVect& ref_ratio = WarpX::RefRatio(lev);
                     const Box& cbox = amrex::coarsen(box,ref_ratio);
 
                     // Data on the grid
@@ -1842,6 +1847,7 @@ PhysicalParticleContainer::Evolve (int lev,
                     FArrayBox const* cbyfab = &(*cBy)[pti];
                     FArrayBox const* cbzfab = &(*cBz)[pti];
 
+                    //std::cout << "cexType = " << cexfab->box().ixType() << std::endl;
                     if (WarpX::use_fdtd_nci_corr)
                     {
                         // Filter arrays (*cEx)[pti], store the result in
@@ -2564,17 +2570,25 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     // Get cell size on gather_lev
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(gather_lev,0));
 
+ //   std::cout << "lev = " << lev << ", gather_lev = " << gather_lev << std::endl;
     // Get box from which field is gathered.
     // If not gathering from the finest level, the box is coarsened.
     Box box;
     if (lev == gather_lev) {
         box = pti.tilebox();
     } else {
-        const IntVect& ref_ratio = WarpX::RefRatio(gather_lev);
-        box = amrex::coarsen(pti.tilebox(),ref_ratio);
+        if (gather_lev < 0) {
+            const IntVect& ref_ratio{2,2,2};
+            //const IntVect& ref_ratio = WarpX::RefRatio(gather_lev+1);
+            box = amrex::coarsen(pti.tilebox(),ref_ratio);
+        } else {
+            const IntVect& ref_ratio = WarpX::RefRatio(gather_lev);
+            box = amrex::coarsen(pti.tilebox(),ref_ratio);
+        }
     }
 
     // Add guard cells to the box.
+    //std::cout << "ngEB = " << ngEB << std::endl;
     box.grow(ngEB);
 
     const auto getPosition = GetParticlePosition(pti, offset);
@@ -2583,16 +2597,24 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const auto getExternalEB = GetExternalEBField(pti, offset);
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
-    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev, 0._rt);
+    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner((gather_lev < 0) ? (pti.tilebox().grow(2*ngEB)) : box, lev, 0._rt);
 
     const Dim3 lo = lbound(box);
+    //const Dim3 lo = lbound(pti.tilebox());
 
     bool galerkin_interpolation = WarpX::galerkin_interpolation;
     int nox = WarpX::nox;
     int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
-    amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+    //amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+    amrex::GpuArray<amrex::Real, 3> dx_arr;
+    if (gather_lev < 0) {
+       dx_arr = {2.0*dx[0], 2.0*dx[1], 2.0*dx[2]};
+    } else {
+       dx_arr = {dx[0], dx[1], dx[2]};
+    }
     amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+//    std::cout << "gather_lev = " << gather_lev << ", dx_arr[0] = " << 2.0*dx[0] << std::endl;
 
     amrex::Array4<const amrex::Real> const& ex_arr = exfab->array();
     amrex::Array4<const amrex::Real> const& ey_arr = eyfab->array();
@@ -2667,10 +2689,21 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto t_do_not_gather = do_not_gather;
 
+////    const Geometry& geom = Geom(0); //delete this line
+//    std::cout << "Here box = " << box << std::endl;
+//    std::cout << "Here lo = " << lbound(box) << std::endl;
+////    std::cout << "geom = " << geom << std::endl;
+//    std::cout << "Here box = " << box << std::endl;
+//    std::cout << "(xmin,ymin,zmin) = (" << xyzmin_arr[0] << ", " << xyzmin_arr[1] << ", " << xyzmin_arr[2] << ")" << std::endl;
+//    std::cout << "(dx,dy,dz) = (" << dx_arr[0] << ", " << dx_arr[1] << ", " << dx_arr[2] << ")" << std::endl;
+//    std::cout << "galerkin_interpolation = " << galerkin_interpolation << std::endl;
+
     amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
+
+        //std::cout << "gather_lev = " << gather_lev << ". (xp,yp,zp) = (" << xp << ", " << yp << ", " << zp << ")" << std::endl;
 
         if (save_previous_position) {
 #if (AMREX_SPACEDIM >= 2)
@@ -2697,6 +2730,9 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+
+//        std::cout << "gather_lev = " << gather_lev << ".(Exp,Eyp,Ezp) = (" << Exp << ", " << Eyp << ", " << Ezp << ")" << std::endl;
+//        std::cout << "gather_lev = " << gather_lev << ".(Bxp,Byp,Bzp) = (" << Bxp << ", " << Byp << ", " << Bzp << ")" << std::endl;
 
         doParticlePush(getPosition, setPosition, copyAttribs, ip,
                        ux[ip], uy[ip], uz[ip],

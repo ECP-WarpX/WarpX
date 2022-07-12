@@ -880,15 +880,26 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
         current_z = current_fp[lev][2].get();
     }
 
+//    mypc->Evolve(lev,
+//                 *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
+//                 *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
+//                 *current_x, *current_y, *current_z,
+//                 current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
+//                 rho_fp[lev].get(), charge_buf[lev].get(),
+//                 Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
+//                 Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
+//                 cur_time, dt[lev], a_dt_type, skip_deposition);
+
     mypc->Evolve(lev,
-                 *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
-                 *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
+                 *Efield_fp[lev][0],*Efield_fp[lev][1],*Efield_fp[lev][2],
+                 *Bfield_fp[lev][0],*Bfield_fp[lev][1],*Bfield_fp[lev][2],
                  *current_x, *current_y, *current_z,
                  current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
                  rho_fp[lev].get(), charge_buf[lev].get(),
-                 Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
-                 Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
+                 Efield_cp[lev][0].get(), Efield_cp[lev][1].get(), Efield_cp[lev][2].get(),
+                 Bfield_cp[lev][0].get(), Bfield_cp[lev][1].get(), Bfield_cp[lev][2].get(),
                  cur_time, dt[lev], a_dt_type, skip_deposition);
+
 #ifdef WARPX_DIM_RZ
     if (! skip_deposition) {
         // This is called after all particles have deposited their current and charge.
