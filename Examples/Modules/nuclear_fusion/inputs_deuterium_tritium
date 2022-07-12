@@ -85,7 +85,7 @@ deuterium2.momentum_distribution_type = "parse_momentum_function"
 deuterium2.momentum_function_ux(x,y,z) = 0.
 deuterium2.momentum_function_uy(x,y,z) = 0.
 deuterium2.momentum_function_uz(x,y,z) = "if(y - floor(y) < 0.1,
-                                          0., sqrt(2*m_p*Energy_step*(floor(z)**2))/(m_deuterium*clight))"
+                                          0., sqrt(2*m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight))"
 deuterium2.do_not_push = 1
 deuterium2.do_not_deposit = 1
 

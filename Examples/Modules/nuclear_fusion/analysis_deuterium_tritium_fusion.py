@@ -65,11 +65,6 @@ default_tol = 1.e-12 # Default relative tolerance
 reactant_species = ['deuterium', 'tritium']
 product_species = ['helium', 'neutron']
 
-<<<<<<< HEAD
-=======
-from scipy.constants import m_p, m_u
-
->>>>>>> b11812de097d8c120b952460559af23a76258d5b
 mass = {
     'deuterium': 2.01410177812*scc.m_u,
     'tritium': 3.0160492779*scc.m_u,
@@ -331,7 +326,6 @@ def check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density, r
     for species_name in product_species:
         product_weight_simulation = np.histogram(data[species_name+"_z_end"],
                 bins=size_z, range=(0, size_z), weights = data[species_name+"_w_end"])[0]
-
         ## -1 is here because the first slice 0 < z < 1 does not contribute to fusion
         expected_fusion_number_per_slice = expected_fusion_number/(size_z-1)
         relative_std_weight = 1./np.sqrt(expected_fusion_number_per_slice)
