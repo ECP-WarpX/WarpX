@@ -1656,13 +1656,19 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         n_field_gather_buffer = n_current_deposition_buffer + 1;
     }
 
+    // Initialize filter
+    if (use_filter)
+    {
+        InitFilter();
+    }
+
     AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
                   guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F, guard_cells.ng_alloc_G, aux_is_nodal);
 }
 
 void
 WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm,
-                      const IntVect& ngEB, const IntVect& ngJ, const IntVect& ngRho,
+                      const IntVect& ngEB, IntVect& ngJ, const IntVect& ngRho,
                       const IntVect& ngF, const IntVect& ngG, const bool aux_is_nodal)
 {
     // Declare nodal flags
@@ -1772,6 +1778,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp[x]"));
     Efield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp[y]"));
     Efield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp[z]"));
+
+    if (use_filter)
+    {
+        ngJ += bilinear_filter.stencil_length_each_dir - amrex::IntVect(1);
+    }
 
     current_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,jx_nodal_flag),dm,ncomps,ngJ,tag("current_fp[x]"));
     current_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_fp[y]"));
