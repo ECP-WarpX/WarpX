@@ -72,7 +72,7 @@ public:
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 product_species_name.size() == 2,
-                "ERROR: Deuterium-tritium must contain exactly two product species");
+                "ERROR: Deuterium-tritium fusion must contain exactly two product species");
             auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
             auto& product_species2 = mypc->GetParticleContainerFromName(product_species_name[1]);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
