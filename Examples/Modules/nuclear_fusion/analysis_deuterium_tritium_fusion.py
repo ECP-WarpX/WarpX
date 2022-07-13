@@ -66,7 +66,7 @@ keV_to_Joule = scc.e*1e3
 MeV_to_Joule = scc.e*1e6
 barn_to_square_meter = 1.e-28
 
-E_fusion = 17.6*MeV_to_Joule # Energy released during the fusion reaction
+E_fusion = 17.5893*MeV_to_Joule # Energy released during the fusion reaction
 
 ## Some numerical parameters for this test
 size_x = 8
