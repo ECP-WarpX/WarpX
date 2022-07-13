@@ -979,7 +979,7 @@ WarpX::ReadParameters ()
 
 #ifdef WARPX_DIM_RZ
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            maxwell_solver_id == MaxwellSolverAlgo::Yee, 
+            maxwell_solver_id == MaxwellSolverAlgo::Yee,
             "RZ + FDTD + momentum-conserving is known to be problematic.  Please use energy-conserving field gathering.");
 #endif
         }
