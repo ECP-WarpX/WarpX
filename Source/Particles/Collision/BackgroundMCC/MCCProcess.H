@@ -114,6 +114,9 @@ public:
     }
 
     amrex::Real getEnergyPenalty () const { return m_exe_h.m_energy_penalty; }
+    amrex::Real getMinEnergyInput () const { return m_exe_h.m_energy_lo; }
+    amrex::Real getMaxEnergyInput () const { return m_exe_h.m_energy_hi; }
+    amrex::Real getEnergyInputStep () const { return m_exe_h.m_dE; }
 
     MCCProcessType type () const { return m_exe_h.m_type; }
 

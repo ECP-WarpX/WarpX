@@ -1,5 +1,6 @@
 target_sources(ablastr
   PRIVATE
+    Communication.cpp
     TextMsg.cpp
     SignalHandling.cpp
 )

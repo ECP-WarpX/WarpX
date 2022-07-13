@@ -251,7 +251,7 @@ def check_values(benchmark, data, rtol, atol):
     passed = np.allclose(benchmark, np.sum(np.abs(data[:,:])), rtol = rtol, atol = atol)
     assert(passed)
 
-rtol = 2e-09
+rtol = 5e-08
 atol = 1e-12
 
 # E

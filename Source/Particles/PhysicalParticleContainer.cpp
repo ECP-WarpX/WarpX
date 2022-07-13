@@ -385,9 +385,6 @@ PhysicalParticleContainer::BackwardCompatibility ()
 
 void PhysicalParticleContainer::InitData ()
 {
-    // Init ionization module here instead of in the PhysicalParticleContainer
-    // constructor because dt is required
-    if (do_field_ionization) {InitIonizationModule();}
     AddParticles(0); // Note - add on level 0
     Redistribute();  // We then redistribute
 }

@@ -112,6 +112,7 @@ Theory
    theory/PML
    theory/boosted_frame
    theory/input_output
+   theory/collisions
 
 Development
 -----------

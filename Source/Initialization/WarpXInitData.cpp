@@ -21,7 +21,6 @@
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/MPIInitHelpers.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -29,6 +28,7 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
+#include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
@@ -352,10 +352,12 @@ WarpX::WriteUsedInputsFile (std::string const & filename) const
 {
     amrex::Print() << "For full input parameters, see the file: " << filename << "\n\n";
 
-    std::ofstream jobInfoFile;
-    jobInfoFile.open(filename.c_str(), std::ios::out);
-    ParmParse::dumpTable(jobInfoFile, true);
-    jobInfoFile.close();
+    if (ParallelDescriptor::IOProcessor()) {
+        std::ofstream jobInfoFile;
+        jobInfoFile.open(filename.c_str(), std::ios::out);
+        ParmParse::dumpTable(jobInfoFile, true);
+        jobInfoFile.close();
+    }
 }
 
 void

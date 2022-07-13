@@ -10,7 +10,6 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
-#include "Parallelization/WarpXCommUtil.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
@@ -41,6 +40,7 @@
 
 #include "WarpX.H"
 
+#include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
@@ -397,21 +397,42 @@ MultiParticleContainer::AllocData ()
 void
 MultiParticleContainer::InitData ()
 {
+    InitMultiPhysicsModules();
+
     for (auto& pc : allcontainers) {
         pc->InitData();
     }
     pc_tmp->InitData();
+
+}
+
+void
+MultiParticleContainer::PostRestart ()
+{
+    InitMultiPhysicsModules();
+
+    for (auto& pc : allcontainers) {
+        pc->PostRestart();
+    }
+    pc_tmp->PostRestart();
+}
+
+void
+MultiParticleContainer::InitMultiPhysicsModules ()
+{
+    // Init ionization module here instead of in the MultiParticleContainer
+    // constructor because dt is required to compute ionization rate pre-factors
+    for (auto& pc : allcontainers) {
+        pc->InitIonizationModule();
+    }
     // For each species, get the ID of its product species.
     // This is used for ionization and pair creation processes.
     mapSpeciesProduct();
-
     CheckIonizationProductSpecies();
-
 #ifdef WARPX_QED
     CheckQEDProductSpecies();
     InitQED();
 #endif
-
 }
 
 void
@@ -554,7 +575,7 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
         }
         if (!local) {
             const Geometry& gm = allcontainers[0]->Geom(lev);
-            WarpXCommUtil::SumBoundary(*rho, gm.periodicity());
+            ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity());
         }
         return rho;
     }
@@ -654,15 +675,6 @@ MultiParticleContainer::SetParticleDistributionMap (int lev, DistributionMapping
     for (auto& pc : allcontainers) {
         pc->SetParticleDistributionMap(lev,new_dm);
     }
-}
-
-void
-MultiParticleContainer::PostRestart ()
-{
-    for (auto& pc : allcontainers) {
-        pc->PostRestart();
-    }
-    pc_tmp->PostRestart();
 }
 
 void

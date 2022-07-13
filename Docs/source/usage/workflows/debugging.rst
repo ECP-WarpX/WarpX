@@ -41,7 +41,7 @@ Report these details in a :ref:`WarpX GitHub issue <contact>`.
 Debuggers
 ---------
 
-See the `AMReX debugger section <https://amrex-codes.github.io/amrex/docs_html/Basics.html#breaking-into-debuggers>`__ on additional runtime parameters to
+See the `AMReX debugger section <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ on additional runtime parameters to
 
 * disable backtraces
 * rethrow exceptions
