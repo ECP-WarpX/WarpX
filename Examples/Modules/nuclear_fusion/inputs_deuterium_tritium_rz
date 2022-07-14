@@ -42,11 +42,11 @@ deuterium1.injection_style = "NRandomPerCell"
 deuterium1.num_particles_per_cell = 80000
 deuterium1.profile = constant
 deuterium1.density = 1.
-deuterium1.momentum_distribution_type = "parse_momentum_function"
-deuterium1.momentum_function_ux(x,y,z) = 0.
-deuterium1.momentum_function_uy(x,y,z) = 0.
+deuterium1.momentum_distribution_type = parse_momentum_function
 ## Thanks to the floor, all particles in the same cell have the exact same momentum
-deuterium1.momentum_function_uz(x,y,z) = sqrt(2*m_reduced*Energy_step*(floor(z)**2))/(m_deuterium*clight)
+deuterium1.momentum_function_ux(x,y,z) = "u = sqrt(2*m_reduced*Energy_step*(floor(z)**2))/(m_deuterium*clight); if(x*x+y*y>0.0, -u*y/sqrt(x*x+y*y), 0.0)" # azimuthal velocity
+deuterium1.momentum_function_uy(x,y,z) = "u = sqrt(2*m_reduced*Energy_step*(floor(z)**2))/(m_deuterium*clight); if(x*x+y*y>0.0, u*x/sqrt(x*x+y*y), 0.0)" # azimuthal velocity
+deuterium1.momentum_function_uz(x,y,z) = "0"
 deuterium1.do_not_push = 1
 deuterium1.do_not_deposit = 1
 
@@ -56,10 +56,10 @@ tritium1.num_particles_per_cell = 80000
 tritium1.profile = constant
 tritium1.density = 1.
 tritium1.momentum_distribution_type = "parse_momentum_function"
-tritium1.momentum_function_ux(x,y,z) = 0.
-tritium1.momentum_function_uy(x,y,z) = 0.
 ## Thanks to the floor, all particles in the same cell have the exact same momentum
-tritium1.momentum_function_uz(x,y,z) = -sqrt(2*m_reduced*Energy_step*(floor(z)**2))/(m_tritium*clight)
+tritium1.momentum_function_ux(x,y,z) = "u = sqrt(2*m_reduced*Energy_step*(floor(z)**2))/(m_tritium*clight); if(x*x+y*y>0.0, u*y/sqrt(x*x+y*y), 0.0)" # counter-streaming azimuthal velocity
+tritium1.momentum_function_uy(x,y,z) = "u = sqrt(2*m_reduced*Energy_step*(floor(z)**2))/(m_tritium*clight); if(x*x+y*y>0.0, -u*x/sqrt(x*x+y*y), 0.0)" # counter-streaming azimuthal velocity
+tritium1.momentum_function_uz(x,y,z) = 0
 tritium1.do_not_push = 1
 tritium1.do_not_deposit = 1
 
