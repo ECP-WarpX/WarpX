@@ -73,15 +73,15 @@ is_RZ = "RZ" in sys.argv[1]
 
 ## Some numerical parameters for this test
 size_x = 8
-if is_RZ:
-    size_y = 1
-else:
-    size_y = 8
+size_y = 8
 size_z = 16
-dV_total = size_x*size_y*size_z # Total simulation volume
+if is_RZ:
+    dV_slice = np.pi * size_x**2
+else:
+    dV_slice = size_x*size_y
 # Volume of a slice corresponding to a single cell in the z direction. In tests 1 and 2, all the
 # particles of a given species in the same slice have the exact same momentum
-dV_slice = size_x*size_y
+
 # In test 1 and 2, the energy in cells number i (in z direction) is typically Energy_step * i**2
 Energy_step = 22.*keV_to_Joule
 
@@ -271,7 +271,10 @@ def check_macroparticle_number(data, fusion_probability_target_value, num_pair_p
     ## Checks that the number of macroparticles is as expected for the first and second tests
 
     ## The first slice 0 < z < 1 does not contribute to alpha creation
-    numcells = dV_total - dV_slice
+    if is_RZ:
+        numcells = size_x*(size_z-1)
+    else:
+        numcells = size_x*size_y*(size_z-1)
     ## In these tests, the fusion_multiplier is so high that the fusion probability per pair is
     ## equal to the parameter fusion_probability_target_value
     fusion_probability_per_pair = fusion_probability_target_value
