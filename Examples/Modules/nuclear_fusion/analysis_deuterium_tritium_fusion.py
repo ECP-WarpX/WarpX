@@ -77,8 +77,10 @@ size_y = 8
 size_z = 16
 if is_RZ:
     dV_slice = np.pi * size_x**2
+    yt_z_string = "particle_position_y"
 else:
     dV_slice = size_x*size_y
+    yt_z_string = "particle_position_z"
 # Volume of a slice corresponding to a single cell in the z direction. In tests 1 and 2, all the
 # particles of a given species in the same slice have the exact same momentum
 
@@ -96,7 +98,7 @@ def add_existing_species_to_dict(yt_ad, data_dict, species_name, prefix, suffix)
     data_dict[prefix+"_w_"+suffix]   = yt_ad[species_name, "particle_weight"].v
     data_dict[prefix+"_id_"+suffix]  = yt_ad[species_name, "particle_id"].v
     data_dict[prefix+"_cpu_"+suffix] = yt_ad[species_name, "particle_cpu"].v
-    data_dict[prefix+"_z_"+suffix]   = yt_ad[species_name, "particle_position_z"].v
+    data_dict[prefix+"_z_"+suffix]   = yt_ad[species_name, yt_z_string].v
 
 def add_empty_species_to_dict(data_dict, species_name, prefix, suffix):
     data_dict[prefix+"_px_"+suffix]  = np.empty(0)
@@ -341,7 +343,8 @@ def check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density, r
                                rtol = 5.*relative_std_weight)))
 
 def specific_check1(data, dt):
-    check_isotropy(data, relative_tolerance = 3.e-2)
+    if not is_RZ:
+        check_isotropy(data, relative_tolerance = 3.e-2)
     expected_fusion_number = check_macroparticle_number(data,
                                                         fusion_probability_target_value = 0.002,
                                                         num_pair_per_cell = 10000)
