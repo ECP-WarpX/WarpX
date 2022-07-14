@@ -1041,6 +1041,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
         self.amr_restart = kw.pop('warpx_amr_restart', None)
+        self.zmax_plasma_to_compute_max_step = kw.pop('warpx_zmax_plasma_to_compute_max_step', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
@@ -1064,6 +1065,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         if self.gamma_boost is not None:
             pywarpx.warpx.gamma_boost = self.gamma_boost
             pywarpx.warpx.boost_direction = 'z'
+
+        pywarpx.warpx.zmax_plasma_to_compute_max_step = self.zmax_plasma_to_compute_max_step
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo

@@ -130,6 +130,8 @@ public:
 
     virtual void InitData () = 0;
 
+    virtual void InitIonizationModule () {}
+
     /**
      * Evolve is the central WarpXParticleContainer function that advances
      * particles for a time dt (typically one timestep). It is a pure virtual
