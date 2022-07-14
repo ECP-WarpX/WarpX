@@ -78,9 +78,13 @@ size_z = 16
 if is_RZ:
     dV_slice = np.pi * size_x**2
     yt_z_string = "particle_position_y"
+    nppcell_1 = 10000*8
+    nppcell_2 = 900*8
 else:
     dV_slice = size_x*size_y
     yt_z_string = "particle_position_z"
+    nppcell_1 = 10000
+    nppcell_2 = 900
 # Volume of a slice corresponding to a single cell in the z direction. In tests 1 and 2, all the
 # particles of a given species in the same slice have the exact same momentum
 
@@ -343,11 +347,10 @@ def check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density, r
                                rtol = 5.*relative_std_weight)))
 
 def specific_check1(data, dt):
-    if not is_RZ:
-        check_isotropy(data, relative_tolerance = 3.e-2)
+    check_isotropy(data, relative_tolerance = 3.e-2)
     expected_fusion_number = check_macroparticle_number(data,
                                                         fusion_probability_target_value = 0.002,
-                                                        num_pair_per_cell = 10000)
+                                                        num_pair_per_cell = nppcell_1)
     E_com = compute_E_com1(data)
     check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density = 1.,
                                                            reactant1_density = 1., dt=dt)
@@ -357,7 +360,7 @@ def specific_check2(data, dt):
     ## Only 900 particles pairs per cell here because we ignore the 10% of reactants that are at rest
     expected_fusion_number = check_macroparticle_number(data,
                                                         fusion_probability_target_value = 0.02,
-                                                        num_pair_per_cell = 900)
+                                                        num_pair_per_cell = nppcell_2)
     E_com = compute_E_com2(data)
     check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density = 1.e20,
                                                            reactant1_density = 1.e26, dt=dt)
