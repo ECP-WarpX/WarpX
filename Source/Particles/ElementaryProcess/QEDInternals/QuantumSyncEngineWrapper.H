@@ -138,10 +138,10 @@ public:
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     int operator()(
-        const amrex::Real ux, const amrex::Real uy, const amrex::Real uz,
-        const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
-        const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
-        const amrex::Real dt, amrex::Real& opt_depth) const noexcept
+        const amrex::ParticleReal ux, const amrex::ParticleReal uy, const amrex::ParticleReal uz,
+        const amrex::ParticleReal ex, const amrex::ParticleReal ey, const amrex::ParticleReal ez,
+        const amrex::ParticleReal bx, const amrex::ParticleReal by, const amrex::ParticleReal bz,
+        const amrex::Real dt, amrex::ParticleReal& opt_depth) const noexcept
     {
         using namespace amrex::literals;
         namespace pxr_p = picsar::multi_physics::phys;
@@ -158,11 +158,13 @@ public:
         if (chi_part < m_qs_minimum_chi_part)
             return 0;
 
+        amrex::Real opt_depth_r = static_cast<amrex::Real>(opt_depth);
+
         const auto is_out = pxr_qs::evolve_optical_depth<
             amrex::Real,
             QS_dndt_table_view,
             pxr_p::unit_system::SI>(
-                energy, chi_part, dt, opt_depth, m_table_view);
+                energy, chi_part, dt, opt_depth_r, m_table_view);
 
         return is_out;
     }
