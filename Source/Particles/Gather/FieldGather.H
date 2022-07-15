@@ -507,6 +507,7 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
                     dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
             }
         );
+    }
 }
 
 /**
