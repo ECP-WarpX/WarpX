@@ -477,7 +477,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 
             Box box = pti.validbox();
             box.grow(ng_J);
-            amrex::IntVect bin_size = WarpX::sort_bin_size;
+            amrex::IntVect bin_size = WarpX::shared_tilesize;
 
             //sort particles by bin
             WARPX_PROFILE_VAR_START(blp_sort);
@@ -797,7 +797,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
             Box box = pti.validbox();
             box.grow(ng_rho);
-            amrex::IntVect bin_size = WarpX::sort_bin_size;
+            amrex::IntVect bin_size = WarpX::shared_tilesize;
             int ntiles = numTilesInBox(box, true, bin_size);
 
             bins.build(ptile.numParticles(), pstruct_ptr, ntiles,
@@ -826,7 +826,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
             Box box = pti.validbox();
             box.grow(ng_rho);
-            amrex::IntVect bin_size = WarpX::sort_bin_size;
+            amrex::IntVect bin_size = WarpX::shared_tilesize;
 
             const auto offsets_ptr = bins.offsetsPtr();
             auto tbox_ptr = tboxes.dataPtr();
