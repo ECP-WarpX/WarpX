@@ -8,7 +8,7 @@
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "SpectralAlgorithms/PsatdAlgorithmComoving.H"
 #include "SpectralAlgorithms/PsatdAlgorithmPml.H"
-#include "SpectralAlgorithms/PsatdAlgorithm.H"
+#include "SpectralAlgorithms/PsatdAlgorithmJConstantInTime.H"
 #include "SpectralAlgorithms/PsatdAlgorithmJLinearInTime.H"
 #include "SpectralKSpace.H"
 #include "SpectralSolver.H"
@@ -73,7 +73,7 @@ SpectralSolver::SpectralSolver(
             }
             else // standard, Galilean, averaged Galilean
             {
-                algorithm = std::make_unique<PsatdAlgorithm>(
+                algorithm = std::make_unique<PsatdAlgorithmJConstantInTime>(
                     k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
                     fill_guards, v_galilean, dt, update_with_rho, fft_do_time_averaging,
                     dive_cleaning, divb_cleaning);
