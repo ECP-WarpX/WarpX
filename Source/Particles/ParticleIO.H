@@ -13,6 +13,7 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_REAL.H>
 
+enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
 
 /** Convert particle momentum to/from SI
  *
@@ -49,7 +50,7 @@ particlesConvertUnits (ConvertDirection convert_direction, T_ParticleContainer* 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti)
+        for (ParIter pti(*pc, lev); pti.isValid(); ++pti)
         {
             // - momenta are stored as a struct of array, in `attribs`
             auto& attribs = pti.GetAttribs();

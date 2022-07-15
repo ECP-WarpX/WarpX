@@ -19,8 +19,6 @@ class WarpXParIter;
 
 class WarpXParticleContainer;
 
-enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
-
 struct DiagIdx
 {
     enum {

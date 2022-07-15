@@ -234,15 +234,3 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
         allcontainers.at(i)->WriteHeader(os);
     }
 }
-
-void
-PhysicalParticleContainer::ConvertUnits (ConvertDirection convert_direction)
-{
-    WARPX_PROFILE("PhysicalParticleContainer::ConvertUnits()");
-
-    // Account for the special case of photons
-    const auto t_mass =
-        this->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : this->getMass();
-
-    particlesConvertUnits(convert_direction, this, t_mass);
-}
