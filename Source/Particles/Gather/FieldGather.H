@@ -469,20 +469,43 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
 
     // Loop over particles and gather fields from
     // {e,b}{x,y,z}_arr to {E,B}{xyz}p.
-    amrex::ParallelFor(
-        np_to_gather,
-        [=] AMREX_GPU_DEVICE (long ip) {
+    if (getExternalEB.m_Etype == ExternalFieldInitType::None &&
+        getExternalEB.m_Btype == ExternalFieldInitType::None){
+        amrex::ParallelFor(
+            np_to_gather,
+            [=] AMREX_GPU_DEVICE (long ip) {
 
-            amrex::ParticleReal xp, yp, zp;
-            getPosition(ip, xp, yp, zp);
-            getExternalEB(ip, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip]);
+                amrex::ParticleReal xp, yp, zp;
+                getPosition(ip, xp, yp, zp);
+                Exp[ip] = amrex::Real(0.0);
+                Eyp[ip] = amrex::Real(0.0);
+                Ezp[ip] = amrex::Real(0.0);
+                Bxp[ip] = amrex::Real(0.0);
+                Byp[ip] = amrex::Real(0.0);
+                Bzp[ip] = amrex::Real(0.0);
+                doGatherShapeN<depos_order, lower_in_v>(
+                    xp, yp, zp, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip],
+                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+            }
+        );
+    }
+    else{
+        amrex::ParallelFor(
+            np_to_gather,
+            [=] AMREX_GPU_DEVICE (long ip) {
 
-            doGatherShapeN<depos_order, lower_in_v>(
-                xp, yp, zp, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip],
-                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
-        }
+                amrex::ParticleReal xp, yp, zp;
+                getPosition(ip, xp, yp, zp);
+                getExternalEB(ip, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip]);
+
+                doGatherShapeN<depos_order, lower_in_v>(
+                    xp, yp, zp, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip],
+                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+            }
         );
 }
 
