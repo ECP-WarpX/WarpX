@@ -33,6 +33,9 @@ module load cray-python/3.9.12.1
 # fix system defaults: do not escape $ with a \ on tab completion
 shopt -s direxpand
 
+# make output group-readable by default
+umask 0027
+
 # an alias to request an interactive batch node for one hour
 #   for paralle execution, start on the batch node: srun <command>
 alias getNode="salloc -A $proj -J warpx -t 01:00:00 -p batch -N 1 --ntasks-per-node=8 --gpus-per-task=1 --gpu-bind=closest"
