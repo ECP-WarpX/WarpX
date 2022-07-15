@@ -120,6 +120,8 @@ short WarpX::charge_deposition_algo;
 short WarpX::field_gathering_algo;
 short WarpX::particle_pusher_algo;
 short WarpX::maxwell_solver_id;
+short WarpX::J_in_time;
+short WarpX::rho_in_time;
 short WarpX::load_balance_costs_update_algo;
 bool WarpX::do_dive_cleaning = false;
 bool WarpX::do_divb_cleaning = false;
@@ -1151,6 +1153,17 @@ WarpX::ReadParameters ()
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nox_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(noy_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(noz_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
+        }
+
+        // Integers that correspond to the time dependency of J (constant, linear)
+        // and rho (linear, quadratic) for the PSATD algorithm
+        J_in_time = GetAlgorithmInteger(pp_psatd, "J_in_time");
+        rho_in_time = GetAlgorithmInteger(pp_psatd, "rho_in_time");
+        if (J_in_time == JInTime::Constant)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                rho_in_time == RhoInTime::Linear,
+                "psatd.J_in_time=constant supports only psatd.rho_in_time=linear");
         }
 
         // Current correction activated by default, unless a charge-conserving

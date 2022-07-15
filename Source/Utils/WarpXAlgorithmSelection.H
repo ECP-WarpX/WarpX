@@ -83,6 +83,20 @@ struct GatheringAlgo {
     };
 };
 
+struct JInTime {
+    enum {
+        Constant = 0,
+        Linear = 1
+    };
+};
+
+struct RhoInTime {
+    enum {
+        Linear = 1,
+        Quadratic = 2
+    };
+};
+
 /** Strategy to compute weights for use in load balance.
  */
 struct LoadBalanceCostsUpdateAlgo {
