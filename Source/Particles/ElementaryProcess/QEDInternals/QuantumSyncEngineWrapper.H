@@ -166,6 +166,8 @@ public:
             pxr_p::unit_system::SI>(
                 energy, chi_part, dt, opt_depth_r, m_table_view);
 
+        opt_depth = static_cast<amrex::ParticleReal>(opt_depth_r);
+
         return is_out;
     }
 
