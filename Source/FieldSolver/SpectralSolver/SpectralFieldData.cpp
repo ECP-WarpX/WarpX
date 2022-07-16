@@ -35,7 +35,8 @@ using namespace amrex;
 
 SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
                                         const bool time_averaging,
-                                        const bool do_multi_J,
+                                        const int J_in_time,
+                                        const int rho_in_time,
                                         const bool dive_cleaning,
                                         const bool divb_cleaning,
                                         const bool pml,
@@ -68,11 +69,16 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
 
         if (divb_cleaning) G = c++;
 
-        if (do_multi_J)
+        if (J_in_time == JInTime::Linear)
         {
             Jx_new = c++;
             Jy_new = c++;
             Jz_new = c++;
+        }
+
+        if (rho_in_time == RhoInTime::Quadratic)
+        {
+            rho_mid = c++;
         }
 
         if (pml_rz)

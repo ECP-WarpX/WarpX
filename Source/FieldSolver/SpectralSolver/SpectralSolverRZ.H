@@ -37,7 +37,8 @@ class SpectralSolverRZ
                           bool const with_pml,
                           bool const update_with_rho,
                           const bool fft_do_time_averaging,
-                          const bool do_multi_J,
+                          const int J_in_time,
+                          const int rho_in_time,
                           const bool dive_cleaning,
                           const bool divb_cleaning);
 

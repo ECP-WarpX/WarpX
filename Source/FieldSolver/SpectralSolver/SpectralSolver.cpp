@@ -31,7 +31,8 @@ SpectralSolver::SpectralSolver(
                 const bool pml, const bool periodic_single_box,
                 const bool update_with_rho,
                 const bool fft_do_time_averaging,
-                const bool do_multi_J,
+                const int J_in_time,
+                const int rho_in_time,
                 const bool dive_cleaning,
                 const bool divb_cleaning)
 {
@@ -42,8 +43,9 @@ SpectralSolver::SpectralSolver(
     // as well as the value of the corresponding k coordinates)
     const SpectralKSpace k_space= SpectralKSpace(realspace_ba, dm, dx);
 
-    m_spectral_index = SpectralFieldIndex(update_with_rho, fft_do_time_averaging,
-                                          do_multi_J, dive_cleaning, divb_cleaning, pml);
+    m_spectral_index = SpectralFieldIndex(
+        update_with_rho, fft_do_time_averaging, J_in_time, rho_in_time,
+        dive_cleaning, divb_cleaning, pml);
 
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
@@ -65,18 +67,18 @@ SpectralSolver::SpectralSolver(
         }
         else // PSATD algorithms: standard, Galilean, averaged Galilean, multi-J
         {
-            if (do_multi_J)
-            {
-                algorithm = std::make_unique<PsatdAlgorithmJLinearInTime>(
-                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
-                    fill_guards, dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
-            }
-            else // standard, Galilean, averaged Galilean
+            if (J_in_time == JInTime::Constant)
             {
                 algorithm = std::make_unique<PsatdAlgorithmJConstantInTime>(
                     k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
                     fill_guards, v_galilean, dt, update_with_rho, fft_do_time_averaging,
                     dive_cleaning, divb_cleaning);
+            }
+            else // J linear in time
+            {
+                algorithm = std::make_unique<PsatdAlgorithmJLinearInTime>(
+                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                    fill_guards, dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
             }
         }
     }
