@@ -76,7 +76,7 @@ public:
             auto& product_species = mypc->GetParticleContainerFromName(product_species_name[0]);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 product_species.AmIA<PhysicalSpecies::helium>(),
-                "ERROR: Product species of proton-boron fusion must be of type helium");
+                "ERROR: Product species of proton-boron fusion must be of type alpha");
         }
 
         // default fusion multiplier

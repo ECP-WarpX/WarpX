@@ -13,8 +13,8 @@ module load cuda/11.3.1
 module load ccache
 
 # optional: for PSATD in RZ geometry support
-module load blaspp/2021.04.01
-module load lapackpp/2021.04.00
+module load blaspp/2021.04.01-cpu
+module load lapackpp/2021.04.00-cpu
 
 # optional: for PSATD support (CPU only)
 #module load fftw/3.3.9

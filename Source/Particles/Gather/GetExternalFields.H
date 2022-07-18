@@ -4,6 +4,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 
 #include "Particles/WarpXParticleContainer_fwd.H"
+#include "Utils/WarpXConst.H"
 
 #include "AcceleratorLattice/LatticeElementFinder.H"
 

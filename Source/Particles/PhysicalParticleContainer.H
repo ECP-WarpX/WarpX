@@ -64,7 +64,7 @@ public:
 
     virtual void WriteHeader (std::ostream& os) const override;
 
-    void InitIonizationModule ();
+    virtual void InitIonizationModule () override;
 
     /**
      * \brief Evolve is the central function PhysicalParticleContainer that

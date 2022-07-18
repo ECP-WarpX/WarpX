@@ -9,8 +9,8 @@
 
 #include "WarpX.H"
 #include "Utils/TextMsg.H"
-#include "Parallelization/WarpXCommUtil.H"
 
+#include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
@@ -148,7 +148,7 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
     // Copy data from domain to slice that has same cell size as that of //
     // the domain mf. src and dst have the same number of ghost cells    //
     amrex::IntVect nghost_vect(AMREX_D_DECL(nghost, nghost, nghost));
-    WarpXCommUtil::ParallelCopy(*smf, mf, 0, 0, ncomp,nghost_vect,nghost_vect);
+    ablastr::utils::communication::ParallelCopy(*smf, mf, 0, 0, ncomp, nghost_vect, nghost_vect, WarpX::do_single_precision_comms);
 
     // inteprolate if required on refined slice //
     if (interpolate == 1 ) {

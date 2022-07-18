@@ -63,7 +63,7 @@ class CMakeBuild(build_ext):
             out = subprocess.check_output(['cmake', '--version'])
         except OSError:
             raise RuntimeError(
-                "CMake 3.18.0+ must be installed to build the following " +
+                "CMake 3.20.0+ must be installed to build the following " +
                 "extensions: " +
                 ", ".join(e.name for e in self.extensions))
 
@@ -71,8 +71,8 @@ class CMakeBuild(build_ext):
             r'version\s*([\d.]+)',
             out.decode()
         ).group(1))
-        if cmake_version < '3.18.0':
-            raise RuntimeError("CMake >= 3.18.0 is required")
+        if cmake_version < '3.20.0':
+            raise RuntimeError("CMake >= 3.20.0 is required")
 
         for ext in self.extensions:
             self.build_extension(ext)
@@ -272,7 +272,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '22.06',
+    version = '22.07',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',

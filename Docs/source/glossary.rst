@@ -28,9 +28,11 @@ Abbreviations
 * **ES:** electrostatic, e.g. ES PIC
 * **FDTD:** `Finite-difference time-domain or Yee's method <https://en.wikipedia.org/wiki/Finite-difference_time-domain_method>`__, a class of grid-based finite-difference field solvers
 * **GPU:** originally graphics processing unit, now used for fast `general purpose computing (GPGPU) <https://en.wikipedia.org/wiki/Graphics_processing_unit#Stream_processing_and_general_purpose_GPUs_(GPGPU)>`__; also called (hardware) accelerator
+* **IPO:** `interprocedural optimization <https://en.wikipedia.org/wiki/Interprocedural_optimization>`__, a collection of compiler optimization techniques that analyze the whole code to avoid duplicate calculations and optimize performance
 * **LDRD:** Laboratory Directed Research and Development, a :ref:`funding program in U.S. DOE laboratories <funding>` that kick-started ABLASTR development
 * **LPA:** laser-plasma acceleration, historically used for laser-electron acceleration
 * **LPI:** laser-plasma interaction
+* **LTO:** `link-time optimization <https://en.wikipedia.org/wiki/Interprocedural_optimization#WPO_and_LTO>`__, program optimizations for file-by-file compilation that optimize object files before linking them together to an executable
 * **LWFA:** laser-wakefield acceleration (of electrons/leptons)
 * **MR:** mesh-refinement
 * **MVA:** magnetic-vortex acceleration (of protons/ions)
@@ -40,12 +42,15 @@ Abbreviations
 * **OTP:** `One-Time-Password <https://en.wikipedia.org/wiki/One-time_password>`__; see 2FA
 * **PDE:** `partial differential equation <https://en.wikipedia.org/wiki/Partial_differential_equation>`__, an equation which imposes relations between the various partial derivatives of a multivariable function
 * **PIC:** :ref:`particle-in-cell <theory-pic>`, the method implemented in WarpX
+* **PICMI:** `Particle-In-Cell Modeling Interface <https://picmi-standard.github.io/>`__, a standard proposing naming and structure conventions for particle-in-cell simulation input
+* **PICSAR:** `Particle-In-Cell Scalable Application Resource <https://picsar.net/>`__, a high performance parallelization library intended to help scientists porting their Particle-In-Cell (PIC) codes to next generation of exascale computers
 * **PR:** github pull request, a proposed change to the WarpX code base
 * **PSATD:** pseudo-spectral analytical time-domain method, a spectral field solver with better numerical properties than FDTD solvers
 * **PWFA:** plasma-wakefield acceleration
 * **QED:** `quantum electrodynamics <https://en.wikipedia.org/wiki/Quantum_electrodynamics>`__
 * **RPA:** radiation-pressure acceleration (of protons/ions), e.g. hole-boring (HB) or light-sail (LS) acceleration
 * **RZ:** for the coordinate system ``r-z`` in cylindrical geometry; we use "RZ" when we refer to quasi-cylindrical geometry, decomposed in azimuthal modes (see details `here <https://fbpic.github.io/overview/pic_algorithm.html#cylindrical-grid-with-azimuthal-decomposition>`__)
+* **SENSEI:** `Scalable in situ analysis and visualization <https://sensei-insitu.org/>`__, light weight framework for in situ data analysis offering access to multiple visualization and analysis backends
 * **TNSA:** target-normal sheet acceleration (of protons/ions)
 
 Terms
@@ -53,6 +58,7 @@ Terms
 
 * **accelerator:** depending on context, either a *particle accelerator* in physics or a *hardware accelerator* (e.g. GPU) in computing
 * **AMReX:** `C++ library for block-structured adaptive mesh-refinement <https://amrex-codes.github.io/>`__, a primary dependency of WarpX
+* **Ascent:** `many-core capable flyweight in situ visualization and analysis infrastructure <https://alpine-dav.github.io/ascent/>`__, a visualization backend usable with WarpX data
 * **boosted frame:** a :ref:`Lorentz-boosted frame of reference <theory-boostedframe>` for a simulation
 * **evolve:** this is a generic term to advance a quantity (same nomenclature in AMReX).
               For instance, ``WarpX::EvolveE(dt)`` advances the electric field for duration ``dt``, ``PhysicalParticleContainer::Evolve(...)`` does field gather + particle push + current deposition for all particles in ``PhysicalParticleContainer``, and ``WarpX::EvolveEM`` is the central ``WarpX`` function that performs 1 PIC iteration.
