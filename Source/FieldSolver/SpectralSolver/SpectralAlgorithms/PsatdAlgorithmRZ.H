@@ -64,7 +64,6 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         bool m_update_with_rho;
         bool m_time_averaging;
         int m_J_in_time;
-        int m_rho_in_time;
         bool m_dive_cleaning;
         bool m_divb_cleaning;
         SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;

@@ -35,10 +35,10 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
        m_update_with_rho(update_with_rho),
        m_time_averaging(time_averaging),
        m_J_in_time(J_in_time),
-       m_rho_in_time(rho_in_time),
        m_dive_cleaning(dive_cleaning),
        m_divb_cleaning(divb_cleaning)
 {
+    amrex::ignore_unused(rho_in_time);
 
     // Allocate the arrays of coefficients
     amrex::BoxArray const & ba = spectral_kspace.spectralspace_ba;
@@ -84,7 +84,6 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
     const bool update_with_rho = m_update_with_rho;
     const bool time_averaging = m_time_averaging;
     const int J_in_time = m_J_in_time;
-    const int rho_in_time = m_rho_in_time;
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
@@ -337,7 +336,6 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 {
     const bool time_averaging = m_time_averaging;
     const int J_in_time = m_J_in_time;
-    const int rho_in_time = m_rho_in_time;
 
     // Fill them with the right values:
     // Loop over boxes and allocate the corresponding coefficients
