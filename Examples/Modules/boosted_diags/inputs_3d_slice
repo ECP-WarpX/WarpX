@@ -133,7 +133,7 @@ btd_pltfile.dz_snapshots_lab = 0.001
 btd_pltfile.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
 btd_pltfile.format = plotfile
 btd_pltfile.buffer_size = 32
-btd_pltfile.write_species = 0
+btd_pltfile.write_species = 1
 
 # old BTD diagnostics
 warpx.do_back_transformed_diagnostics = 1
