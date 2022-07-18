@@ -747,27 +747,31 @@ BTDiagnostics::Flush (int i_buffer)
             // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
             m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba[0]);
         }
+        // Redistribute particles in the lab frame box arrays that correspond to the buffer
+        // Prior to redistribute, increase buffer box and Box in ParticleBoxArray by 1 index in the
+        // lo and hi-end, so particles can be binned in the boxes correctly.
+        // For BTD, we may have particles that are out of the domain by half a cell-size or one cell size.
+        // As a result, the index they correspond to may be out of the box by one index
+        // As a work around to the locateParticle error in Redistribute, we increase the box size before
+        // redistribute and shrink it after the call to redistribute.
+        m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) - 1) );
+        m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) + 1) );
+        amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
+        amrex::BoxArray buffer_ba( particle_buffer_box );
+        buffer_ba.maxSize(m_max_box_size*2);
+        m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0, buffer_ba);
     }
-    // Redistribute particles in the lab frame box arrays that correspond to the buffer
-    // Prior to redistribute, increase buffer box and Box in ParticleBoxArray by 1 index in the
-    // lo and hi-end, so particles can be binned in the boxes correctly.
-    // For BTD, we may have particles that are out of the domain by half a cell-size or one cell size.
-    // As a result, the index they correspond to may be out of the box by one index
-    // As a work around to the locateParticle error in Redistribute, we increase the box size before
-    // redistribute and shrink it after the call to redistribute.
-    m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) - 1) );
-    m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) + 1) );
-    amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
-    amrex::BoxArray buffer_ba( particle_buffer_box );
-    buffer_ba.maxSize(m_max_box_size*2);
-    m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0, buffer_ba);
 
     RedistributeParticleBuffer(i_buffer);
 
     // Reset buffer box and particle box array
-    m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
-    m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) - 1) );
-    m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
+    if (m_format == "openpmd") {
+        if (m_particles_buffer.at(i_buffer).size() > 0 ) {
+            m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
+            m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) - 1) );
+            m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
+        }
+    }
 
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
