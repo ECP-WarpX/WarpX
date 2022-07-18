@@ -83,7 +83,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 
     const bool update_with_rho = m_update_with_rho;
     const bool time_averaging = m_time_averaging;
-    const int J_in_time = m_J_in_time;
+    const bool J_in_time_linear = (m_J_in_time == JInTime::Linear) ? true : false;
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
@@ -112,7 +112,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 
         amrex::Array4<const amrex::Real> X5_arr;
         amrex::Array4<const amrex::Real> X6_arr;
-        if (time_averaging && J_in_time == JInTime::Linear)
+        if (time_averaging && J_in_time_linear)
         {
             X5_arr = X5_coef[mfi].array();
             X6_arr = X6_coef[mfi].array();
@@ -238,7 +238,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
                 G_old = fields(i,j,k,G_m);
             }
 
-            if (J_in_time == JInTime::Linear)
+            if (J_in_time_linear)
             {
                 const int Jp_m_new = Idx.Jx_new + Idx.n_fields*mode;
                 const int Jm_m_new = Idx.Jy_new + Idx.n_fields*mode;
@@ -335,7 +335,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
 {
     const bool time_averaging = m_time_averaging;
-    const int J_in_time = m_J_in_time;
+    const bool J_in_time_linear = (m_J_in_time == JInTime::Linear) ? true : false;
 
     // Fill them with the right values:
     // Loop over boxes and allocate the corresponding coefficients
@@ -356,7 +356,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 
         amrex::Array4<amrex::Real> X5;
         amrex::Array4<amrex::Real> X6;
-        if (time_averaging && J_in_time == JInTime::Linear)
+        if (time_averaging && J_in_time_linear)
         {
             X5 = X5_coef[mfi].array();
             X6 = X6_coef[mfi].array();
@@ -395,7 +395,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
                 X3(i,j,k,mode) = - c*c * dt*dt / (3._rt*ep0);
             }
 
-            if (time_averaging && J_in_time == JInTime::Linear)
+            if (time_averaging && J_in_time_linear)
             {
                 constexpr amrex::Real c2 = PhysConst::c;
                 const amrex::Real dt3 = dt * dt * dt;
