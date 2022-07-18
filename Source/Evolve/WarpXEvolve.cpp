@@ -531,12 +531,15 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
     // 4) Deposit J at relative time -dt with time step dt
     //    (dt[0] denotes the time step on mesh refinement level 0)
-    auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
-    mypc->DepositCurrent(current, dt[0], -dt[0]);
-    // Filter, exchange boundary, and interpolate across levels
-    SyncCurrent();
-    // Forward FFT of J
-    PSATDForwardTransformJ(current_fp, current_cp);
+    if (J_in_time == JInTime::Linear)
+    {
+        auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+        mypc->DepositCurrent(current, dt[0], -dt[0]);
+        // Filter, exchange boundary, and interpolate across levels
+        SyncCurrent();
+        // Forward FFT of J
+        PSATDForwardTransformJ(current_fp, current_cp);
+    }
 
     // Number of depositions for multi-J scheme
     const int n_depose = WarpX::do_multi_J_n_depositions;
@@ -550,12 +553,17 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     for (int i_depose = 0; i_depose < n_loop; i_depose++)
     {
         // Move J deposited previously, from new to old
-        PSATDMoveJNewToJOld();
+        if (J_in_time == JInTime::Linear)
+        {
+            PSATDMoveJNewToJOld();
+        }
 
-        const amrex::Real t_depose = (i_depose-n_depose+1)*sub_dt;
+        const amrex::Real t_depose = (J_in_time == JInTime::Linear) ?
+            (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5_rt)*sub_dt;
 
         // Deposit new J at relative time t_depose with time step dt
         // (dt[0] denotes the time step on mesh refinement level 0)
+        auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
         mypc->DepositCurrent(current, dt[0], t_depose);
         // Filter, exchange boundary, and interpolate across levels
         SyncCurrent();
