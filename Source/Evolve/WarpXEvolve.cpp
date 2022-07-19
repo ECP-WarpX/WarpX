@@ -403,7 +403,7 @@ WarpX::OneStep_nosub (Real cur_time)
     // the actual current J. This is computed later in WarpX::PushPSATD, by calling
     // WarpX::PSATDVayDeposition. The function SyncCurrent is called after that,
     // instead of here, so that we synchronize the correct current.
-    if (current_deposition_algo == CurrentDepositionAlgo::Vay)
+    if (current_deposition_algo == CurrentDepositionAlgo::Vay && use_filter)
     {
         const bool apply_filtering = true;
         const bool sum_guard_cells = false;
