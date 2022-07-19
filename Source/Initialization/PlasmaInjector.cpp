@@ -125,7 +125,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     std::string physical_species_s;
     bool species_is_specified = pp_species_name.query("species_type", physical_species_s);
     if (species_is_specified){
-        physical_species = species::from_string( physical_species_s );
+        const auto physical_species_from_string = species::from_string( physical_species_s );
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(physical_species_from_string,
+            physical_species_s + " does not exist!");
+        physical_species = physical_species_from_string.value();
         charge = species::get_charge( physical_species );
         mass = species::get_mass( physical_species );
     }
