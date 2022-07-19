@@ -631,7 +631,7 @@ Particle initialization
 
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in
       space in all directions. This requires additional parameters:
-      ``<species_name>.q_tot`` (beam charge) optional (default is ``q_tot=0``),
+      ``<species_name>.q_tot`` (beam charge),
       ``<species_name>.npart`` (number of particles in the beam),
       ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
       ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
