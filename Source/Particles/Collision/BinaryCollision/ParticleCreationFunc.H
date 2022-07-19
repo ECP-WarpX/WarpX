@@ -10,6 +10,7 @@
 
 #include "BinaryCollisionUtils.H"
 
+#include "Particles/Collision/BinaryCollision/NuclearFusion/TwoProductFusionInitializeMomentum.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/ProtonBoronFusionInitializeMomentum.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/MultiParticleContainer.H"
@@ -77,6 +78,7 @@ public:
      *             reaches 0.
      * @param[in] m1 mass of the first colliding particle species
      * @param[in] m2 mass of the second colliding particle species
+     * @param[in] products_mass array storing the mass of product particles
      * @param[in] p_mask a mask that is 1 if binary collision has resulted in particle creation
      *            event, 0 otherwise.
      * @param[in] products_np array storing the number of existing product particles in that tile
@@ -102,6 +104,7 @@ public:
                     ParticleTileType** AMREX_RESTRICT tile_products,
                     ParticleType* particle_ptr_1, ParticleType*  particle_ptr_2,
                     const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
+                    const amrex::Vector<amrex::ParticleReal>& products_mass,
                     const index_type* AMREX_RESTRICT p_mask,
                     const amrex::Vector<index_type>& products_np,
                     const SmartCopy* AMREX_RESTRICT copy_species1,
@@ -142,18 +145,24 @@ public:
 #ifdef AMREX_USE_GPU
         amrex::Gpu::DeviceVector<SoaData_type> device_soa_products(m_num_product_species);
         amrex::Gpu::DeviceVector<index_type> device_products_np(m_num_product_species);
+        amrex::Gpu::DeviceVector<amrex::ParticleReal> device_products_mass(m_num_product_species);
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, soa_products.begin(),
                               soa_products.end(),
                               device_soa_products.begin());
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, products_np.begin(),
                               products_np.end(),
                               device_products_np.begin());
+       amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, products_mass.begin(),
+                              products_mass.end(),
+                              device_products_mass.begin());
         amrex::Gpu::streamSynchronize();
         SoaData_type* AMREX_RESTRICT soa_products_data = device_soa_products.data();
         const index_type* AMREX_RESTRICT products_np_data = device_products_np.data();
+        const amrex::ParticleReal* AMREX_RESTRICT products_mass_data = device_products_mass.data();
 #else
         SoaData_type* AMREX_RESTRICT soa_products_data = soa_products.data();
         const index_type* AMREX_RESTRICT products_np_data = products_np.data();
+        const amrex::ParticleReal* AMREX_RESTRICT products_mass_data = products_mass.data();
 #endif
 
         const int t_num_product_species = m_num_product_species;
@@ -216,6 +225,20 @@ public:
                                                         p_pair_indices_1[i], p_pair_indices_2[i],
                                                         product_start_index, m1, m2, engine);
                 }
+                else if (t_collision_type == CollisionType::DeuteriumTritiumFusion)
+                {
+                    amrex::ParticleReal fusion_energy = 0.0_prt;
+                    if (t_collision_type == CollisionType::DeuteriumTritiumFusion) {
+                        fusion_energy = 17.5893e6_prt * PhysConst::q_e; // 17.6 MeV
+                    }
+                    TwoProductFusionInitializeMomentum(soa_1, soa_2,
+                        soa_products_data[0], soa_products_data[1],
+                        p_pair_indices_1[i], p_pair_indices_2[i],
+                        products_np_data[0] + 2*p_offsets[i]*p_num_products_device[0],
+                        products_np_data[1] + 2*p_offsets[i]*p_num_products_device[1],
+                        m1, m2, products_mass_data[0], products_mass_data[1], fusion_energy, engine);
+                }
+
             }
         });
 
@@ -260,6 +283,7 @@ public:
                     ParticleTileType** /*tile_products*/,
                     ParticleType* /*particle_ptr_1*/, ParticleType* /*particle_ptr_2*/,
                     const amrex::ParticleReal& /*m1*/, const amrex::ParticleReal& /*m2*/,
+                    const amrex::Vector<amrex::ParticleReal>& /*products_mass*/,
                     const index_type* /*p_mask*/, const amrex::Vector<index_type>& /*products_np*/,
                     const SmartCopy* /*copy_species1*/, const SmartCopy* /*copy_species2*/,
                     const index_type* /*p_pair_indices_1*/, const index_type* /*p_pair_indices_2*/,
