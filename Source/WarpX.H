@@ -1095,7 +1095,7 @@ private:
         const int ncomp,
         const amrex::IntVect& ngrow,
         const amrex::Real value,
-        const amrex::MFInfo& tag);
+        const amrex::MFInfo& tag=amrex::MFInfo().SetTag(""));
 
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
