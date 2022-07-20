@@ -147,9 +147,9 @@ public:
         namespace pxr_p = picsar::multi_physics::phys;
         namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
 
-        constexpr amrex::Real m_e = PhysConst::m_e;
-        constexpr amrex::Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
-        const amrex::Real gamma = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)*inv_c2);
+        constexpr amrex::ParticleReal m_e = PhysConst::m_e;
+        constexpr amrex::ParticleReal inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
+        const amrex::ParticleReal gamma = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)*inv_c2);
         const auto energy = gamma*m_e*PhysConst::c*PhysConst::c;
 
         const auto chi_part = QedUtils::chi_ele_pos(
@@ -158,15 +158,11 @@ public:
         if (chi_part < m_qs_minimum_chi_part)
             return 0;
 
-        amrex::Real opt_depth_r = static_cast<amrex::Real>(opt_depth);
-
         const auto is_out = pxr_qs::evolve_optical_depth<
-            amrex::Real,
+            amrex::ParticleReal,
             QS_dndt_table_view,
             pxr_p::unit_system::SI>(
-                energy, chi_part, dt, opt_depth_r, m_table_view);
-
-        opt_depth = static_cast<amrex::ParticleReal>(opt_depth_r);
+                energy, chi_part, dt, opt_depth, m_table_view);
 
         return is_out;
     }
