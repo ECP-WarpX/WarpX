@@ -977,11 +977,10 @@ void WarpX::ApplyFilterJ (
 
 void WarpX::SumBoundaryJ (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
-    const int lev)
+    const int lev,
+    const amrex::Periodicity& period)
 {
-    const amrex::Periodicity& period = Geom(lev).periodicity();
-
-    for (int idim = 0; idim < 3; ++idim)
+    for (int idim=0; idim<3; ++idim)
     {
         amrex::MultiFab& J = *current[lev][idim];
 
@@ -1034,17 +1033,18 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
     const int lev)
 {
+    const amrex::Periodicity& period = Geom(lev).periodicity();
+
     if (use_filter)
     {
         ApplyFilterJ(J_fp, lev);
     }
-    SumBoundaryJ(J_fp, lev);
+    SumBoundaryJ(J_fp, lev, period);
 
     if (lev < finest_level) {
         // When there are current buffers, unlike coarse patch,
         // we don't care about the final state of them.
 
-        const amrex::Periodicity& period = Geom(lev).periodicity();
         for (int idim = 0; idim < 3; ++idim) {
             MultiFab mf(J_fp[lev][idim]->boxArray(),
                         J_fp[lev][idim]->DistributionMap(), J_fp[lev][idim]->nComp(), 0);

@@ -676,7 +676,7 @@ WarpX::OneStep_sub1 (Real curtime)
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
     RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
     if (use_filter) ApplyFilterJ(current_fp, fine_lev);
-    SumBoundaryJ(current_fp, fine_lev);
+    SumBoundaryJ(current_fp, fine_lev, Geom(fine_lev).periodicity());
     ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, 2*ncomps);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
@@ -733,7 +733,7 @@ WarpX::OneStep_sub1 (Real curtime)
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
     RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
     if (use_filter) ApplyFilterJ(current_fp, fine_lev);
-    SumBoundaryJ(current_fp, fine_lev);
+    SumBoundaryJ(current_fp, fine_lev, Geom(fine_lev).periodicity());
     ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, ncomps);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);

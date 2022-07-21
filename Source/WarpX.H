@@ -955,7 +955,8 @@ private:
         const int lev);
     void SumBoundaryJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
-        const int lev);
+        const int lev,
+        const amrex::Periodicity& period);
     void NodalSyncJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
