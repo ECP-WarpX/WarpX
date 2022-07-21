@@ -7,6 +7,43 @@
 # back to S3. Dump files are never moved or copied to S3; they will be copied
 # from S3 if they're already there.
 
+# WarpX can handle OS signals to checkpoint but we need to pass such signals to
+# the WarpX process.
+function checkpointsim {
+    # note that we use the checkpointing signal rather than the break signal
+    # (with graceful exiting) otherwise the "attempts" functionality on AWS
+    # Batch does not work as intended
+    echo "Sending USR1 signal to $MPIEXECID"
+    kill -USR1 "${MPIEXECID}"
+}
+
+# Retrieve access token used to ping Instance Metadata Service for termination warnings
+TOKEN=`curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"`
+
+# EC2 instances can ping a Instance Metadata Service to see if they are marked
+# for termination. The warning period is 2 minutes. This function's purpose is
+# to continually ping for the warning and then checkpoint the simulation if the
+# warning was found.
+# https://aws.amazon.com/blogs/compute/best-practices-for-handling-ec2-spot-instance-interruptions/
+function pingterminatewarning {
+    while sleep 10; do
+
+        HTTP_CODE=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s -w %{http_code} -o /dev/null http://169.254.169.254/latest/meta-data/spot/instance-action)
+        # 401 means token is invalid
+        if [[ "$HTTP_CODE" -eq 401 ]] ; then
+            echo "Refreshing Authentication Token"
+            TOKEN=`curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 30"`
+        # 200 means marked for termination
+        elif [[ "$HTTP_CODE" -eq 200 ]] ; then
+            echo "Interruption warning found, checkpointing warpx"
+            checkpointsim
+            break
+        # 404 means no warning found
+        fi
+
+    done
+}
+
 # if OVERRIDE_RUN_SCRIPT env var set to a bash script, run that bash script to
 # generate the run script, note must also set COMPUTE as "gpu" or "cpu" if
 # OVERRIDE_RUN_SCRIPT is set
@@ -119,21 +156,30 @@ do
     find . -type f -exec touch -a -c {} +
 done
 }
+
 # https://stackoverflow.com/questions/21465297/tee-stdout-and-stderr-to-separate-files-while-retaining-them-on-their-respective
-{ { bash $SCRIPTNAME; } > >( tee -a stdout.out ); } \
+bash $SCRIPTNAME > >( tee -a stdout.out ) \
                        2> >( tee -a stderr.err >&2 ) &
 
+# sleep so that there is time for the mpiexec process to launch
+sleep 2
+
 MAINID=$!
+MPIEXECID=$(pgrep -P $MAINID -f mpiexec)
+echo "main process id is $MAINID"
+echo "mpiexec process id: $MPIEXECID"
 checkpoint &
 CHECKID=$!
+pingterminatewarning &
+PINGID=$!
 wait -n $MAINID $CHECKID
 EXITFLAG=$?
-# kill, but silently, as one will error no matter what. It looks like killing
-# $MAINID actually isn't enough -- child processes still run -- but it
-# shouldn't matter as the docker container should exit when this script exits,
-# I think.
+# kill, but silently, as either CHECKID or MPIEXECID kill will error no matter
+# what. Note MPIEXECID is klled with -KILL to prevent WarpX from trying to
+# write a final checkpoint, which would fail.
 kill $CHECKID &> /dev/null
-kill $MAINID &> /dev/null
+kill $PINGID &> /dev/null
+kill -KILL "${MPIEXECID}" &> /dev/null
 
 # One last file movement at the end of the run
 filesync

@@ -69,7 +69,7 @@ class SimControl(WarpXDiagnostic):
             f"({total_steps} steps)."
         )
 
-        # register the TERM signal to be handled in C++
+        # register the TERM signal to be handled as a break signal
         mwxrun.simulation.break_signals = "SIGTERM"
 
         # Install checkpointing if required
@@ -79,6 +79,12 @@ class SimControl(WarpXDiagnostic):
             else:
                 dump_period = self.diag_steps*dump_period
             self.checkpoint_diag = CheckPointDiagnostic(dump_period, **kwargs)
+
+            # register the USR1 signal to be handled as a checkpoint signal
+            mwxrun.simulation.checkpoint_signals = "SIGUSR1"
+
+        # install a callback for a signalled checkpointing event
+        callbacks.installoncheckpointsignal(self.trigger_checkpoint)
 
         # install a callback to check whether any termination criteria is met
         callbacks.installafterstep(self.check_criteria)
@@ -119,6 +125,12 @@ class SimControl(WarpXDiagnostic):
                 logger.info(terminate_statement)
                 os.kill(os.getpid(), signal.SIGTERM)
 
+    def trigger_checkpoint(self):
+        """Helper function to trigger the checkpoint diagnostic to write a
+        checkpoint."""
+        if self.checkpoint:
+            self.checkpoint_diag.checkpoint_manager(force_run=True)
+
     def write_results(self):
         """Create results.txt file, and write to it if write_func is set.
         The file signifies that the simulation ran to completion."""
@@ -149,8 +161,7 @@ class SimControl(WarpXDiagnostic):
         mwxrun.simulation.step()
 
         # create fluxdiag checkpoint file if checkpointing is installed
-        if self.checkpoint:
-            self.checkpoint_diag.checkpoint_manager(force_run=True)
+        self.trigger_checkpoint()
 
         # check if the simulation completed the total number of steps
         if mwxrun.get_it() >= mwxrun.simulation.max_steps:

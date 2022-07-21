@@ -23,8 +23,10 @@ export CC=$(which clang)
 export WARPX_COMPUTE=${WARPXCOMPUTE}
 
 # compile binaries for V100 and A100 GPUs
+# also compile with single precision particles if on GPU
 if [ "${WARPX_COMPUTE}" == "CUDA" ]; then
     export AMREX_CUDA_ARCH="7.0;8.0"
+    # export WARPX_PARTICLE_PRECISION=SINGLE (turn on after restart issue is fixed)
 fi
 
 python3 -m pip install -v .

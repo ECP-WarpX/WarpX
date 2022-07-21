@@ -21,6 +21,7 @@ apt-get install -y -o Dpkg::Options::="--force-confdef" \
     ccache              \
     clang               \
     cmake               \
+    curl                \
     gcc                 \
     gfortran            \
     git                 \
