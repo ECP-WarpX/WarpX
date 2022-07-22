@@ -1070,41 +1070,9 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
             mf.setVal(0.0);
 
             IntVect ng = J_cp[lev+1][idim]->nGrowVect();
-            IntVect ng_depos_J = get_ng_depos_J();
-
-            if (WarpX::do_current_centering)
-            {
-#if   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                ng_depos_J[0] += WarpX::current_centering_nox / 2;
-                ng_depos_J[1] += WarpX::current_centering_noz / 2;
-#elif defined(WARPX_DIM_3D)
-                ng_depos_J[0] += WarpX::current_centering_nox / 2;
-                ng_depos_J[1] += WarpX::current_centering_noy / 2;
-                ng_depos_J[2] += WarpX::current_centering_noz / 2;
-#endif
-            }
 
             if (use_filter && current_buf[lev+1][idim])
             {
-                //// coarse patch of fine level
-                //ng += bilinear_filter.stencil_length_each_dir-1;
-                //ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
-                //ng_depos_J.min(ng);
-                //MultiFab jfc(J_cp[lev+1][idim]->boxArray(),
-                //             J_cp[lev+1][idim]->DistributionMap(), J_cp[lev+1][idim]->nComp(), ng);
-                //bilinear_filter.ApplyStencil(jfc, *J_cp[lev+1][idim], lev+1);
-
-                //// buffer patch of fine level
-                //MultiFab jfb(current_buf[lev+1][idim]->boxArray(),
-                //             current_buf[lev+1][idim]->DistributionMap(), current_buf[lev+1][idim]->nComp(), ng);
-                //bilinear_filter.ApplyStencil(jfb, *current_buf[lev+1][idim], lev+1);
-
-                //MultiFab::Add(jfb, jfc, 0, 0, current_buf[lev+1][idim]->nComp(), ng);
-                //ablastr::utils::communication::ParallelAdd(mf, jfb, 0, 0, current_buf[lev + 1][idim]->nComp(),
-                //                                           ng, IntVect::TheZeroVector(), WarpX::do_single_precision_comms, period);
-
-                //WarpXSumGuardCells(*J_cp[lev+1][idim], jfc, period, ng_depos_J, 0, J_cp[lev+1][idim]->nComp());
-
                 ApplyFilterJ(J_cp, lev+1, idim);
                 ApplyFilterJ(current_buf, lev+1, idim);
 
@@ -1117,46 +1085,38 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
                     current_buf[lev+1][idim]->nComp(),
                     ng, amrex::IntVect(0),
                     do_single_precision_comms, period);
-
-                SumBoundaryJ(J_cp, lev+1, idim, period);
             }
             else if (use_filter) // but no buffer
             {
-                // coarse patch of fine level
-                ng += bilinear_filter.stencil_length_each_dir-1;
-                ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
-                ng_depos_J.min(ng);
-                MultiFab jf(J_cp[lev+1][idim]->boxArray(),
-                            J_cp[lev+1][idim]->DistributionMap(), J_cp[lev+1][idim]->nComp(), ng);
-                bilinear_filter.ApplyStencil(jf, *J_cp[lev+1][idim], lev+1);
+                ApplyFilterJ(J_cp, lev+1, idim);
 
-                ablastr::utils::communication::ParallelAdd(mf, jf, 0, 0, J_cp[lev + 1][idim]->nComp(), ng,
-                                                           IntVect::TheZeroVector(), WarpX::do_single_precision_comms, period);
-                WarpXSumGuardCells(*J_cp[lev+1][idim], jf, period, ng_depos_J, 0, J_cp[lev+1][idim]->nComp());
+                ablastr::utils::communication::ParallelAdd(
+                    mf, *J_cp[lev+1][idim], 0, 0,
+                    J_cp[lev+1][idim]->nComp(),
+                    ng, amrex::IntVect(0),
+                    do_single_precision_comms, period);
             }
             else if (current_buf[lev+1][idim]) // but no filter
             {
-                ng_depos_J.min(ng);
-                MultiFab::Add(*current_buf[lev+1][idim],
-                               *J_cp [lev+1][idim], 0, 0, current_buf[lev+1][idim]->nComp(),
-                               J_cp[lev+1][idim]->nGrowVect());
-                ablastr::utils::communication::ParallelAdd(mf, *current_buf[lev + 1][idim], 0, 0,
-                                                           current_buf[lev + 1][idim]->nComp(),
-                                                           current_buf[lev + 1][idim]->nGrowVect(),
-                                                           IntVect::TheZeroVector(), WarpX::do_single_precision_comms,
-                                                           period);
-                WarpXSumGuardCells(*(J_cp[lev+1][idim]), period, ng_depos_J, 0, J_cp[lev+1][idim]->nComp());
+                MultiFab::Add(
+                    *current_buf[lev+1][idim], *J_cp[lev+1][idim],
+                    0, 0, current_buf[lev+1][idim]->nComp(), ng);
+
+                ablastr::utils::communication::ParallelAdd(
+                    mf, *current_buf[lev+1][idim], 0, 0,
+                    current_buf[lev+1][idim]->nComp(),
+                    ng, amrex::IntVect(0),
+                    do_single_precision_comms, period);
             }
             else // no filter, no buffer
             {
-                ng_depos_J.min(ng);
-                ablastr::utils::communication::ParallelAdd(mf, *J_cp[lev + 1][idim], 0, 0,
-                                                           J_cp[lev + 1][idim]->nComp(),
-                                                           J_cp[lev + 1][idim]->nGrowVect(),
-                                                           IntVect::TheZeroVector(), WarpX::do_single_precision_comms,
-                                                           period);
-                WarpXSumGuardCells(*(J_cp[lev+1][idim]), period, ng_depos_J, 0, J_cp[lev+1][idim]->nComp());
+                ablastr::utils::communication::ParallelAdd(
+                    mf, *J_cp[lev+1][idim], 0, 0,
+                    J_cp[lev+1][idim]->nComp(),
+                    ng, amrex::IntVect(0),
+                    do_single_precision_comms, period);
             }
+            SumBoundaryJ(J_cp, lev+1, idim, period);
             MultiFab::Add(*J_fp[lev][idim], mf, 0, 0, J_fp[lev+1][idim]->nComp(), 0);
         }
     }
