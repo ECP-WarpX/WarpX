@@ -952,7 +952,16 @@ private:
     void RestoreCurrent (const int lev);
     void ApplyFilterJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const int lev,
+        const int idim);
+    void ApplyFilterJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
         const int lev);
+    void SumBoundaryJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const int lev,
+        const int idim,
+        const amrex::Periodicity& period);
     void SumBoundaryJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
         const int lev,
