@@ -32,7 +32,7 @@
  * Determine the timestep of the simulation. */
 void
 WarpX::ComputeDt ()
-{   
+{
     //Use finestLevel() instead of max_level for simulation with mesh refinement removal
     const amrex::Real* dx = geom[finestLevel()].CellSize();
     amrex::Real deltat = 0.;
@@ -88,7 +88,7 @@ WarpX::ComputeDt ()
 void
 WarpX::PrintDtDxDyDz ()
 {
-    //Use finest_level instead of max_level 
+    //Use finest_level instead of max_level
     for (int lev=0; lev <= finestLevel(); lev++) {
         auto ss = std::stringstream{};
         const amrex::Real* dx_lev = geom[lev].CellSize();

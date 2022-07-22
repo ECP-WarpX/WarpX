@@ -821,7 +821,7 @@ WarpX::OneStep_sub1 (Real curtime)
 
     // Synchronize nodal points at the end of the time step
     if (do_pml) NodalSyncPML();
-    
+
     if(istep[0]+1==end_fine_patch_step){
         SyncCurrent();
         SyncRho();
