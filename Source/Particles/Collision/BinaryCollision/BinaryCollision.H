@@ -219,6 +219,7 @@ public:
         amrex::Vector<ParticleTileType*> tile_products;
         amrex::Vector<GetParticlePosition> get_position_products;
         amrex::Vector<index_type> products_np;
+        amrex::Vector<amrex::ParticleReal> products_mass;
         constexpr int getpos_offset = 0;
         for (int i = 0; i < n_product_species; i++)
         {
@@ -227,6 +228,7 @@ public:
             get_position_products.push_back(GetParticlePosition(ptile_product,
                                                                       getpos_offset));
             products_np.push_back(ptile_product.numParticles());
+            products_mass.push_back(product_species_vector[i]->getMass());
         }
         auto tile_products_data = tile_products.data();
 
@@ -358,7 +360,7 @@ public:
             const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
                                                     soa_1, soa_1, tile_products_data,
                                                     particle_ptr_1, particle_ptr_1, m1, m1,
-                                                    p_mask, products_np,
+                                                    products_mass, p_mask, products_np,
                                                     copy_species1, copy_species2,
                                                     p_pair_indices_1, p_pair_indices_2,
                                                     p_pair_reaction_weight);
@@ -519,7 +521,7 @@ public:
             const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
                                                     soa_1, soa_2, tile_products_data,
                                                     particle_ptr_1, particle_ptr_2, m1, m2,
-                                                    p_mask, products_np,
+                                                    products_mass, p_mask, products_np,
                                                     copy_species1, copy_species2,
                                                     p_pair_indices_1, p_pair_indices_2,
                                                     p_pair_reaction_weight);
