@@ -140,17 +140,25 @@ WarpXParticleContainer::AllocData ()
 
 void
 WarpXParticleContainer::AddNParticles (int /*lev*/,
-                                       int n, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z,
-                                       const ParticleReal* vx, const ParticleReal* vy, const ParticleReal* vz,
-                                       int nattr, const ParticleReal* attr, int uniqueparticles, amrex::Long id)
+                                       int n, const amrex::ParticleReal* x,
+                                       const amrex::ParticleReal* y,
+                                       const amrex::ParticleReal* z,
+                                       const amrex::ParticleReal* vx,
+                                       const amrex::ParticleReal* vy,
+                                       const amrex::ParticleReal* vz,
+                                       const int nattr_real, const amrex::ParticleReal* attr_real,
+                                       const int nattr_int, const int* attr_int,
+                                       int uniqueparticles, amrex::Long id)
 {
+    using namespace amrex::literals;
+
     int ibegin, iend;
     if (uniqueparticles) {
         ibegin = 0;
         iend = n;
     } else {
-        int myproc = ParallelDescriptor::MyProc();
-        int nprocs = ParallelDescriptor::NProcs();
+        int myproc = amrex::ParallelDescriptor::MyProc();
+        int nprocs = amrex::ParallelDescriptor::NProcs();
         int navg = n/nprocs;
         int nleft = n - navg * nprocs;
         if (myproc < nleft) {
@@ -166,7 +174,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     // Redistribute() will move them to proper places.
     auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
-    using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
+    using PinnedTile = amrex::ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
                                     amrex::PinnedArenaAllocator>;
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
@@ -174,10 +182,10 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     std::size_t np = iend-ibegin;
 
     // treat weight as a special attr since it will always be specified
-    Vector<ParticleReal> weight(np);
+    amrex::Vector<amrex::ParticleReal> weight(np);
 
 #ifdef WARPX_DIM_RZ
-    Vector<ParticleReal> theta(np);
+    amrex::Vector<amrex::ParticleReal> theta(np);
 #endif
 
     for (int i = ibegin; i < iend; ++i)
@@ -189,7 +197,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         } else {
             p.id() = id;
         }
-        p.cpu() = ParallelDescriptor::MyProc();
+        p.cpu() = amrex::ParallelDescriptor::MyProc();
 #if defined(WARPX_DIM_3D)
         p.pos(0) = x[i];
         p.pos(1) = y[i];
@@ -211,7 +219,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         pinned_tile.push_back(p);
 
         // grab weight from the attr array
-        weight[i-ibegin] = attr[i*nattr];
+        weight[i-ibegin] = attr_real[i*nattr_real];
     }
 
     if (np > 0)
@@ -232,26 +240,42 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
                 pinned_tile.push_back_real(comp, theta.data(), theta.data() + np);
             }
             else {
-                pinned_tile.push_back_real(comp, np, 0.0);
+                pinned_tile.push_back_real(comp, np, 0.0_prt);
             }
 #else
-            pinned_tile.push_back_real(comp, np, 0.0);
+            pinned_tile.push_back_real(comp, np, 0.0_prt);
 #endif
         }
 
         for (int j = PIdx::nattribs; j < NumRealComps(); ++j)
         {
-            if (j - PIdx::nattribs < nattr - 1) {
-                // get the next attribute from attr array
-                Vector<ParticleReal> attr_vals(np);
+            if (j - PIdx::nattribs < nattr_real - 1) {
+                // get the next attribute from attr_real array
+                amrex::Vector<amrex::ParticleReal> attr_vals(np);
                 for (int i = ibegin; i < iend; ++i)
                 {
-                    attr_vals[i-ibegin] = attr[j - PIdx::nattribs + 1 + i*nattr];
+                    attr_vals[i-ibegin] = attr_real[j - PIdx::nattribs + 1 + i*nattr_real];
                 }
                 pinned_tile.push_back_real(j, attr_vals.data(), attr_vals.data() + np);
             }
             else {
-                pinned_tile.push_back_real(j, np, 0.0);
+                pinned_tile.push_back_real(j, np, 0.0_prt);
+            }
+        }
+
+        for (int j = 0; j < NumIntComps(); ++j)
+        {
+            if (j < nattr_int) {
+                // get the next attribute from attr_int array
+                amrex::Vector<int> attr_vals(np);
+                for (int i = ibegin; i < iend; ++i)
+                {
+                    attr_vals[i-ibegin] = attr_int[j + i*nattr_int];
+                }
+                pinned_tile.push_back_int(j, attr_vals.data(), attr_vals.data() + np);
+            }
+            else {
+                pinned_tile.push_back_int(j, np, 0);
             }
         }
 

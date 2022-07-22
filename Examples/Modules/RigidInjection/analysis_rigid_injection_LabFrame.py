@@ -85,5 +85,17 @@ print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
 
+
+### Check that user runtime attributes are correctly initialized
+filename_start = filename[:-5] + '00000'
+ds_start = yt.load( filename_start )
+ad_start = ds_start.all_data()
+x = ad_start['beam', 'particle_position_x']
+z = ad_start['beam', 'particle_position_y']
+orig_z = ad_start['beam', 'particle_orig_z']
+center = ad_start['beam', 'particle_center']
+assert(np.array_equal(z, orig_z))
+assert(np.array_equal(1*(np.abs(x) < 5.e-7), center))
+
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

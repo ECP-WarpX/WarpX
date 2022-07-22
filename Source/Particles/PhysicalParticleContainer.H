@@ -221,6 +221,38 @@ public:
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uz,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_w);
 
+    /**
+     * \brief Computes the initial value of runtime attributes (ionization, QED, user defined
+     * attributes) and then creates particles using the WarpXParticleContainer::AddNParticles
+     * routine.
+     *
+     * @param[in] lev refinement level (used to compute time for parser in user defined attributes)
+     * @param[in] np the number of particles to add
+     * @param[in] x x component of the position of particles to be added
+     * @param[in] y y component of the position of particles to be added
+     * @param[in] z z component of the position of particles to be added
+     * @param[in] ux x component of the momentum of particles to be added
+     * @param[in] uy y component of the momentum of particles to be added
+     * @param[in] uz z component of the momentum of particles to be added
+     * @param[in] w weight of particles to be added
+     * @param[in] uniqueparticles if true, each MPI rank calling this function creates np
+     * particles. Else, all MPI ranks work together to create np particles in total.
+     * @param[in] id if different than -1, this id will be assigned to the particles (used for
+     * particle tagging in some routines, e.g. SplitParticle)
+     * @param[in] engine the random engine, used in initialization of QED optical depths
+     */
+    void InitializeRuntimeAttributesAndAddNParticles (
+        const int lev, const int np,
+        const amrex::ParticleReal* x,
+        const amrex::ParticleReal* y,
+        const amrex::ParticleReal* z,
+        const amrex::ParticleReal* ux,
+        const amrex::ParticleReal* uy,
+        const amrex::ParticleReal* uz,
+        const amrex::ParticleReal* w,
+        const int uniqueparticles, const amrex::Long id,
+        const amrex::RandomEngine& engine);
+
     virtual void GetParticleSlice (
         const int direction, const amrex::Real z_old,
         const amrex::Real z_new, const amrex::Real t_boost,

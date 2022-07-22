@@ -268,6 +268,8 @@ class LibWarpX():
                                                       _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
                                                       ctypes.c_int,
                                                       _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
+                                                      ctypes.c_int,
+                                                      _ndpointer(ctypes.c_int, flags="C_CONTIGUOUS"),
                                                       ctypes.c_int)
 
         self.libwarpx_so.warpx_getProbLo.restype = c_real
@@ -625,6 +627,9 @@ class LibWarpX():
             # --- The -3 is because components 1 to 3 are velocities
             attr[:,self.get_particle_comp_index(species_name, key)-3] = vals
 
+        nattr_int = 0
+        attr_int = np.empty([0], ctypes.c_int)
+
         # Iff x/y/z/ux/uy/uz are not numpy arrays of the correct dtype, new
         # array copies are made with the correct dtype
         x = x.astype(self._numpy_particlereal_dtype, copy=False)
@@ -636,7 +641,7 @@ class LibWarpX():
 
         self.libwarpx_so.warpx_addNParticles(
             ctypes.c_char_p(species_name.encode('utf-8')), x.size,
-            x, y, z, ux, uy, uz, nattr, attr, unique_particles
+            x, y, z, ux, uy, uz, nattr, attr, nattr_int, attr_int, unique_particles
         )
 
     def get_particle_count(self, species_name, local=False):

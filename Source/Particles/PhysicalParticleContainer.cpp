@@ -514,10 +514,10 @@ PhysicalParticleContainer::AddGaussianBeam (
     }
     // Add the temporary CPU vectors to the particle structure
     np = particle_z.size();
-    AddNParticles(0,np,
-                  particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
-                  particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
-                  1, particle_w.dataPtr(),1);
+    InitializeRuntimeAttributesAndAddNParticles (0, np,
+                    particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
+                    particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
+                    particle_w.dataPtr(), 1, -1, amrex::RandomEngine{});
 }
 
 void
@@ -622,16 +622,135 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         }
     } // IO Processor
     auto const np = particle_z.size();
-    AddNParticles(0, np,
-                  particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
-                  particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
-                  1, particle_w.dataPtr(),1);
+    InitializeRuntimeAttributesAndAddNParticles (0, np,
+                particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
+                particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
+                particle_w.dataPtr(), 1, -1, amrex::RandomEngine{});
 #endif // WARPX_USE_OPENPMD
 
     ignore_unused(q_tot, z_shift);
 
     return;
 }
+
+void
+PhysicalParticleContainer::InitializeRuntimeAttributesAndAddNParticles (
+    const int lev, const int np,
+    const amrex::ParticleReal* x,
+    const amrex::ParticleReal* y,
+    const amrex::ParticleReal* z,
+    const amrex::ParticleReal* ux,
+    const amrex::ParticleReal* uy,
+    const amrex::ParticleReal* uz,
+    const amrex::ParticleReal* w,
+    const int uniqueparticles, const amrex::Long id,
+    const amrex::RandomEngine& engine)
+{
+    amrex::Gpu::HostVector<amrex::ParticleReal> particle_runtime_real_attributes;
+    amrex::Gpu::HostVector<int> particle_runtime_int_attributes;
+    // + 1 is here because we also treat the weight as an extra runtime comp in AddNParticles
+    // (although it is technically not a runtime comp)
+    const int nattr_real = NumRuntimeRealComps() + 1;
+    const int nattr_int = NumRuntimeIntComps();
+    particle_runtime_real_attributes.resize(np*nattr_real);
+    particle_runtime_int_attributes.resize(np*nattr_int);
+    amrex::ParticleReal* p_attr_real = particle_runtime_real_attributes.dataPtr();
+    int* p_attr_int = particle_runtime_int_attributes.dataPtr();
+
+    // weight is given an idx of 0 in the particle_runtime_real_attributes vector
+    constexpr int idx_w = 0;
+
+    // Needed for the parser for user defined attributes
+    const amrex::Real t = WarpX::GetInstance().gett_new(lev);
+
+    // Prepare initialization of QED optical depths
+#ifdef WARPX_QED
+    QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt;
+    BreitWheelerGetOpticalDepth breit_wheeler_get_opt;
+
+    int idx_qsr = 0;
+    int idx_bw = 0;
+
+    if (has_quantum_sync()) {
+        quantum_sync_get_opt =
+                m_shr_p_qs_engine->build_optical_depth_functor();
+        // + 1 is here because the weight (technically not a runtime comp) is included in the
+        // particle_runtime_real_attributes vector, with idx 0
+        idx_qsr = particle_runtime_comps["opticalDepthQSR"] + 1;
+    }
+    if (has_breit_wheeler()) {
+        breit_wheeler_get_opt =
+                m_shr_p_bw_engine->build_optical_depth_functor();
+        // + 1 is here because the weight (technically not a runtime comp) is included in the
+        // particle_runtime_real_attributes vector with idx 0
+        idx_bw = particle_runtime_comps["opticalDepthBW"] + 1;
+    }
+#else
+    amrex::ignore_unused(engine);
+#endif
+
+    // Prepare initialization of ionization level
+    int idx_ionization = 0;
+    if (do_field_ionization) {
+        idx_ionization = particle_runtime_icomps["ionizationLevel"];
+    }
+
+    // Prepare initialization of user-defined integer and real attributes
+    const int n_user_int_attribs = m_user_int_attribs.size();
+    const int n_user_real_attribs = m_user_real_attribs.size();
+    amrex::Gpu::HostVector<int> idx_int_attribs(n_user_int_attribs);
+    amrex::Gpu::HostVector<int> idx_real_attribs(n_user_real_attribs);
+    amrex::Gpu::HostVector< amrex::ParserExecutor<7> > user_int_attrib_parserexec(n_user_int_attribs);
+    amrex::Gpu::HostVector< amrex::ParserExecutor<7> > user_real_attrib_parserexec(n_user_real_attribs);
+    for (int ia = 0; ia < n_user_int_attribs; ++ia) {
+        idx_int_attribs[ia] = particle_runtime_icomps[m_user_int_attribs[ia]];
+        user_int_attrib_parserexec[ia] = m_user_int_attrib_parser[ia]->compile<7>();
+    }
+    for (int ia = 0; ia < n_user_real_attribs; ++ia) {
+        // + 1 is here because the weight (technically not a runtime comp) is included in the
+        // particle_runtime_real_attributes vector, with idx 0
+        idx_real_attribs[ia] = particle_runtime_comps[m_user_real_attribs[ia]] + 1;
+        user_real_attrib_parserexec[ia] = m_user_real_attrib_parser[ia]->compile<7>();
+    }
+    amrex::ParserExecutor<7> const* user_int_parserexec_data =
+                                                            user_int_attrib_parserexec.dataPtr();
+    amrex::ParserExecutor<7> const* user_real_parserexec_data =
+                                                            user_real_attrib_parserexec.dataPtr();
+
+    // Loop over particles and compute initial value of runtime attributes
+    for (int i = 0; i < np; ++i) {
+        p_attr_real[i*nattr_real + idx_w] = w[i];
+
+#ifdef WARPX_QED
+        if (has_quantum_sync()) {
+            p_attr_real[i*nattr_real + idx_qsr] = quantum_sync_get_opt(engine);
+        }
+        if (has_breit_wheeler()) {
+            p_attr_real[i*nattr_real + idx_bw] = breit_wheeler_get_opt(engine);
+        }
+#endif
+
+        if (do_field_ionization) {
+            p_attr_int[i*nattr_int + idx_ionization] = ionization_initial_level;
+        }
+
+        for (int ia = 0; ia < n_user_int_attribs; ++ia) {
+            p_attr_int[i*nattr_int + idx_int_attribs[ia]] =static_cast<int>(
+                        user_int_parserexec_data[ia](x[i], y[i], z[i], ux[i], uy[i], uz[i], t));
+        }
+        for (int ia = 0; ia < n_user_real_attribs; ++ia) {
+            p_attr_real[i*nattr_real + idx_real_attribs[ia]] =
+                        user_real_parserexec_data[ia](x[i], y[i], z[i], ux[i], uy[i], uz[i], t);
+        }
+
+    }
+
+    AddNParticles(lev, np, x, y, z, ux, uy, uz,
+                nattr_real, particle_runtime_real_attributes.dataPtr(),
+                nattr_int, particle_runtime_int_attributes.dataPtr(), uniqueparticles, id);
+
+}
+
 
 void
 PhysicalParticleContainer::CheckAndAddParticle (
@@ -672,14 +791,15 @@ PhysicalParticleContainer::AddParticles (int lev)
                                       plasma_injector->single_particle_vel[1],
                                       plasma_injector->single_particle_vel[2]);
         }
-        AddNParticles(lev, 1,
-                      &(plasma_injector->single_particle_pos[0]),
-                      &(plasma_injector->single_particle_pos[1]),
-                      &(plasma_injector->single_particle_pos[2]),
-                      &(plasma_injector->single_particle_vel[0]),
-                      &(plasma_injector->single_particle_vel[1]),
-                      &(plasma_injector->single_particle_vel[2]),
-                      1, &(plasma_injector->single_particle_weight), 0);
+        InitializeRuntimeAttributesAndAddNParticles (lev, 1,
+                        &(plasma_injector->single_particle_pos[0]),
+                        &(plasma_injector->single_particle_pos[1]),
+                        &(plasma_injector->single_particle_pos[2]),
+                        &(plasma_injector->single_particle_vel[0]),
+                        &(plasma_injector->single_particle_vel[1]),
+                        &(plasma_injector->single_particle_vel[2]),
+                        &(plasma_injector->single_particle_weight), 0, -1,
+                        amrex::RandomEngine{});
         return;
     }
 
@@ -694,14 +814,16 @@ PhysicalParticleContainer::AddParticles (int lev)
                                           plasma_injector->multiple_particles_vel_z[i]);
             }
         }
-        AddNParticles(lev, plasma_injector->multiple_particles_pos_x.size(),
-                      plasma_injector->multiple_particles_pos_x.dataPtr(),
-                      plasma_injector->multiple_particles_pos_y.dataPtr(),
-                      plasma_injector->multiple_particles_pos_z.dataPtr(),
-                      plasma_injector->multiple_particles_vel_x.dataPtr(),
-                      plasma_injector->multiple_particles_vel_y.dataPtr(),
-                      plasma_injector->multiple_particles_vel_z.dataPtr(),
-                      1, plasma_injector->multiple_particles_weight.dataPtr(), 0);
+        InitializeRuntimeAttributesAndAddNParticles (lev,
+                        plasma_injector->multiple_particles_pos_x.size(),
+                        plasma_injector->multiple_particles_pos_x.dataPtr(),
+                        plasma_injector->multiple_particles_pos_y.dataPtr(),
+                        plasma_injector->multiple_particles_pos_z.dataPtr(),
+                        plasma_injector->multiple_particles_vel_x.dataPtr(),
+                        plasma_injector->multiple_particles_vel_y.dataPtr(),
+                        plasma_injector->multiple_particles_vel_z.dataPtr(),
+                        plasma_injector->multiple_particles_weight.dataPtr(), 0, -1,
+                        amrex::RandomEngine{});
         return;
     }
 
@@ -2189,6 +2311,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
                               psplit_uz.dataPtr(),
                               1,
                               psplit_w.dataPtr(),
+                              0, nullptr,
                               1, NoSplitParticleID);
     // Copy particles from tmp to current particle container
     addParticles(pctmp_split,1);
