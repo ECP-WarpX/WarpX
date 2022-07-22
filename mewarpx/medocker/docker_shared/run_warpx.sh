@@ -7,16 +7,6 @@
 # back to S3. Dump files are never moved or copied to S3; they will be copied
 # from S3 if they're already there.
 
-# WarpX can handle OS signals to checkpoint but we need to pass such signals to
-# the WarpX process.
-function checkpointsim {
-    # note that we use the checkpointing signal rather than the break signal
-    # (with graceful exiting) otherwise the "attempts" functionality on AWS
-    # Batch does not work as intended
-    echo "Sending USR1 signal to $MPIEXECID"
-    kill -USR1 "${MPIEXECID}"
-}
-
 # Retrieve access token used to ping Instance Metadata Service for termination warnings
 TOKEN=`curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"`
 
@@ -35,8 +25,13 @@ function pingterminatewarning {
             TOKEN=`curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 30"`
         # 200 means marked for termination
         elif [[ "$HTTP_CODE" -eq 200 ]] ; then
+            # Use the WarpX signal handling functionality to checkpoint the
+            # simulation. Note that we use the checkpointing signal rather than
+            # the break signal (with graceful exiting) otherwise the "attempts"
+            # functionality on AWS Batch does not work as intended.
             echo "Interruption warning found, checkpointing warpx"
-            checkpointsim
+            echo "Sending USR1 signal to $MPIEXECID"
+            kill -USR1 "${MPIEXECID}"
             break
         # 404 means no warning found
         fi
@@ -147,8 +142,11 @@ do
     echo stdout was written to $TIMEDIFF seconds ago
 
     if [ $TIMEDIFF -gt $TIMEOUT ]; then
-        echo Timeout - no output to stdout after ${TIMEOUT} seconds
-        exit 33
+        # SIGKILL the WarpX process - will result in exit code 143
+        echo "Timeout - no output to stdout after ${TIMEOUT} seconds"
+        echo "Sending KILL signal to $MPIEXECID"
+        kill -KILL "${MPIEXECID}"
+        break
     fi
 
     # Finally, 'touch' each file in the run directory so files for runs that
@@ -168,18 +166,16 @@ MAINID=$!
 MPIEXECID=$(pgrep -P $MAINID -f mpiexec)
 echo "main process id is $MAINID"
 echo "mpiexec process id: $MPIEXECID"
-checkpoint &
-CHECKID=$!
 pingterminatewarning &
 PINGID=$!
-wait -n $MAINID $CHECKID
+checkpoint &
+CHECKID=$!
+wait $MAINID
 EXITFLAG=$?
-# kill, but silently, as either CHECKID or MPIEXECID kill will error no matter
-# what. Note MPIEXECID is klled with -KILL to prevent WarpX from trying to
-# write a final checkpoint, which would fail.
+
+# kill, but silently, as CHECKID kill will error no matter what.
 kill $CHECKID &> /dev/null
 kill $PINGID &> /dev/null
-kill -KILL "${MPIEXECID}" &> /dev/null
 
 # One last file movement at the end of the run
 filesync
