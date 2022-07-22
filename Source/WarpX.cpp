@@ -123,6 +123,7 @@ short WarpX::maxwell_solver_id;
 short WarpX::load_balance_costs_update_algo;
 bool WarpX::do_dive_cleaning = false;
 bool WarpX::do_divb_cleaning = false;
+bool WarpX::do_asymmetrical = false;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
@@ -1123,6 +1124,8 @@ WarpX::ReadParameters ()
         ParmParse pp_psatd("psatd");
         pp_psatd.query("periodic_single_box_fft", fft_periodic_single_box);
 
+        pp_psatd.query("do_asymmetrical", do_asymmetrical);
+
         std::string nox_str;
         std::string noy_str;
         std::string noz_str;
@@ -1145,6 +1148,30 @@ WarpX::ReadParameters ()
             noz_fft = -1;
         } else {
             queryWithParser(pp_psatd, "noz", noz_fft);
+        }
+
+        std::string nox_loc_str;
+        std::string noy_loc_str;
+        std::string noz_loc_str;
+
+        pp_psatd.query("nox_cur_loc", nox_loc_str);
+        pp_psatd.query("noy_cur_loc", noy_loc_str);
+        pp_psatd.query("noz_cur_loc", noz_loc_str);
+
+        if(nox_loc_str == "inf") {
+            nox_loc_fft = -1;
+        } else {
+            queryWithParser(pp_psatd, "nox_cur_loc", nox_loc_fft);
+        }
+        if(noy_loc_str == "inf") {
+            noy_loc_fft = -1;
+        } else {
+            queryWithParser(pp_psatd, "noy_cur_loc", noy_loc_fft);
+        }
+        if(noz_loc_str == "inf") {
+            noz_loc_fft = -1;
+        } else {
+            queryWithParser(pp_psatd, "noz_cur_loc", noz_loc_fft);
         }
 
         if (!fft_periodic_single_box) {
@@ -2240,6 +2267,9 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 nox_fft,
                                                 noy_fft,
                                                 noz_fft,
+                                                nox_loc_fft,
+                                                noy_loc_fft,
+                                                noz_loc_fft,
                                                 do_nodal,
                                                 WarpX::fill_guards,
                                                 m_v_galilean,
@@ -2252,7 +2282,8 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 fft_do_time_averaging,
                                                 do_multi_J,
                                                 do_dive_cleaning,
-                                                do_divb_cleaning);
+                                                do_divb_cleaning,
+                                                do_asymmetrical);
     spectral_solver[lev] = std::move(pss);
 }
 #   endif

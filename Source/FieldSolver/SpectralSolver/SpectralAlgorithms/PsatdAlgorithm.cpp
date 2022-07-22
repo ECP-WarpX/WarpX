@@ -43,7 +43,8 @@ PsatdAlgorithm::PsatdAlgorithm(
     const bool dive_cleaning,
     const bool divb_cleaning)
     // Initializer list
-    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
+    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z,
+      nodal, fill_guards),
     m_spectral_index(spectral_index),
     // Initialize the centered finite-order modified k vectors:
     // these are computed always with the assumption of centered grids

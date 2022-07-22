@@ -212,6 +212,8 @@ public:
     //! Solve additional Maxwell equation for G in order to control errors in magnetic Gauss' law
     static bool do_divb_cleaning;
 
+    static bool do_asymmetrical;
+
     //! Order of the particle shape factors (splines) along x
     static int nox;
     //! Order of the particle shape factors (splines) along y
@@ -1313,6 +1315,10 @@ private:
     int nox_fft = 16;
     int noy_fft = 16;
     int noz_fft = 16;
+
+    int nox_loc_fft = 16;
+    int noy_loc_fft = 16;
+    int noz_loc_fft = 16;
 
     //! Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
