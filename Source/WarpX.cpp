@@ -105,7 +105,6 @@ int WarpX::moving_window_dir = -1;
 Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
 int WarpX::end_fine_patch_step=-1;
-bool WarpX::FinelevInit_flag=false;
 
 bool WarpX::fft_do_time_averaging = false;
 
@@ -644,7 +643,7 @@ WarpX::ReadParameters ()
                 auto ss = std::stringstream{};
                 if(max_step>=end_fine_patch_step){
                     ss << "When the fine patch is removed, the max step will be " << end_fine_patch_step + std::floor(0.5*(max_step-end_fine_patch_step)) << ", users are advised to use stop time instead";
-                    this->RecordWarning("Mesh Refinement", ss.str(), WarnPriority::high);
+                    ablastr::warn_manager::WMRecordWarning("Mesh Refinement", ss.str(), ablastr::warn_manager::WarnPriority::high);
                 }
             }
         }

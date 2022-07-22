@@ -32,12 +32,9 @@
  * Determine the timestep of the simulation. */
 void
 WarpX::ComputeDt ()
-{
-    int Finelev;
-    //Use max_level before finest_level is initialised, max_level corresponds to the maximum level value allowed and not the current maximum level
-    if (!FinelevInit_flag) Finelev = max_level;
-    else Finelev = AmrMesh::finestLevel();
-    const amrex::Real* dx = geom[Finelev].CellSize();
+{   
+    //Use finestLevel() instead of max_level for simulation with mesh refinement removal
+    const amrex::Real* dx = geom[finestLevel()].CellSize();
     amrex::Real deltat = 0.;
 
     if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
@@ -76,12 +73,13 @@ WarpX::ComputeDt ()
 
 
     if (do_subcycling) {
-        for (int lev = Finelev-1; lev >= 0; --lev) {
+        for (int lev = finestLevel()-1; lev >= 0; --lev) {
+            dt[lev] = dt[lev+1] * refRatio(lev)[0];
         }
     }
 
     if (do_electrostatic != ElectrostaticSolverAlgo::None) {
-        for (int lev=0; lev<=max_level; lev++) {
+        for (int lev=0; lev<=finestLevel(); lev++) {
             dt[lev] = const_dt;
         }
     }
@@ -90,11 +88,8 @@ WarpX::ComputeDt ()
 void
 WarpX::PrintDtDxDyDz ()
 {
-    int Finelev;
-    //Use max_level until finest_level is initialised, max_level corresponds to the maximum level value allowed and not the current maximum level
-    if (!FinelevInit_flag) Finelev = max_level;
-    else Finelev = AmrMesh::finestLevel();
-    for (int lev=0; lev <= Finelev; lev++) {
+    //Use finest_level instead of max_level 
+    for (int lev=0; lev <= finestLevel(); lev++) {
         auto ss = std::stringstream{};
         const amrex::Real* dx_lev = geom[lev].CellSize();
         ss <<"Level" << lev << ": dt=" << dt[lev]

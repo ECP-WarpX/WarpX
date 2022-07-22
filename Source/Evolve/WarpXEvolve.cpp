@@ -398,7 +398,7 @@ WarpX::OneStep_nosub (Real cur_time)
         regrid(coarse_lev, cur_time);
         mypc->Redistribute();
         warpx.ComputeDt();
-        PrintDtDxDyDz ();
+        PrintDtDxDyDz();
         Print() << Utils::TextMsg::Info(
                     "Remove the patch");
     }
@@ -821,7 +821,7 @@ WarpX::OneStep_sub1 (Real curtime)
 
     // Synchronize nodal points at the end of the time step
     if (do_pml) NodalSyncPML();
-
+    
     if(istep[0]+1==end_fine_patch_step){
         SyncCurrent();
         SyncRho();
@@ -829,6 +829,7 @@ WarpX::OneStep_sub1 (Real curtime)
         mypc->Redistribute();
                 Print() << Utils::TextMsg::Info(
                     "Remove the patch");
+        PrintDtDxDyDz();
         do_subcycling=0;
     }
 }
