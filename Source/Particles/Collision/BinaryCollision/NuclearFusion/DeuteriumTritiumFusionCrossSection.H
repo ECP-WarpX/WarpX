@@ -53,7 +53,7 @@ amrex::ParticleReal DeuteriumTritiumFusionCrossSection (const amrex::ParticleRea
         B3 = 6.981e-5;
         B4 = 1.728e-4;
     } else {
-        // (See Eq. 9 and Table VI in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)        
+        // (See Eq. 9 and Table VI in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)
         A1 = -1.4714e6;
         A2 = 0;
         A3 = 0;

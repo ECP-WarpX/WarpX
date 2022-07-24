@@ -111,9 +111,6 @@ macro(find_amrex)
             if(WarpX_COMPUTE STREQUAL CUDA)
                 enable_language(CUDA)
                 # AMReX 21.06+ supports CUDA_ARCHITECTURES
-                if(CMAKE_VERSION VERSION_LESS 3.20)
-                    include(AMReX_SetupCUDA)
-                endif()
             endif()
             add_subdirectory(${WarpX_amrex_src} _deps/localamrex-build/)
         else()
@@ -130,9 +127,6 @@ macro(find_amrex)
                 if(WarpX_COMPUTE STREQUAL CUDA)
                     enable_language(CUDA)
                     # AMReX 21.06+ supports CUDA_ARCHITECTURES
-                    if(CMAKE_VERSION VERSION_LESS 3.20)
-                        include(AMReX_SetupCUDA)
-                    endif()
                 endif()
                 add_subdirectory(${fetchedamrex_SOURCE_DIR} ${fetchedamrex_BINARY_DIR})
             endif()
@@ -241,7 +235,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "a633d2bff1db1a3335efd077a34b6a8dcfb4e793"
+set(WarpX_amrex_branch "40b3d2176b17785191050482a2ead5539993fac6"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 
