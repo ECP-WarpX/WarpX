@@ -66,7 +66,7 @@ amrex::ParticleReal DeuteriumTritiumFusionCrossSection (const amrex::ParticleRea
 
     amrex::ParticleReal astrophysical_factor =
         (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*A4))) /
-        (1 + E_keV*(B1 + E_keV*(B2 + E_keV*(B3 + E_keV*B4))));
+        (1_prt + E_keV*(B1 + E_keV*(B2 + E_keV*(B3 + E_keV*B4))));
 
     // Compute cross-section in SI units
     // (See Eq. 8 in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)
