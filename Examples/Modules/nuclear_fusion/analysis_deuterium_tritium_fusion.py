@@ -21,8 +21,7 @@ import scipy.constants as scc
 ## The first test is performed in the center of mass frame of the reactant. It could correspond to the
 ## physical case of two beams colliding with each other. The kinetic energy of the colliding
 ## particles depends on the cell number in the z direction and varies in the few keV to few MeV
-## range. All the particles within a cell have the exact same momentum, which allows detailed
-## checks of the energy of produced alpha particles. The reactant species have the same
+## range. All the particles within a cell have the exact same momentum. The reactant species have the same
 ## density and number of particles in this test. The number of product species is much smaller than
 ## the initial number of reactants
 ##
@@ -30,8 +29,7 @@ import scipy.constants as scc
 ## physical case of a low density beam colliding with a high-density mixed target. The energy of the
 ## beam particles is varied in the few keV to few MeV range, depending on the cell number in the z
 ## direction. As in the previous case, all the particles within a cell have the exact same
-## momentum, which allows detailed checks of the energy of product particles. In this test,
-## there are 100 immobile macroparticles for each reactant per cell, as well as 900
+## momentum. In this test, there are 100 immobile macroparticles for each reactant per cell, as well as 900
 ## of the beam reactant macroparticles per cell. The density of the immobile particles is 6 orders of
 ## magnitude higher than the number of beam particles, which means that they have a much higher
 ## weight. This test is similar to the example given in section 3 of Higginson et al.,
@@ -66,7 +64,7 @@ keV_to_Joule = scc.e*1e3
 MeV_to_Joule = scc.e*1e6
 barn_to_square_meter = 1.e-28
 
-E_fusion = 17.6*MeV_to_Joule # Energy released during the fusion reaction
+E_fusion = 17.5893*MeV_to_Joule # Energy released during the fusion reaction
 
 ## Checks whether this is the 2D or the 3D test
 is_RZ = "RZ" in sys.argv[1]
@@ -214,7 +212,7 @@ def check_isotropy(data, relative_tolerance):
         assert(is_close(average_px_sq, average_pz_sq, rtol = relative_tolerance))
 
 def check_xy_isotropy(data):
-    ## Checks that the alpha particles are emitted isotropically in x and y
+    ## Checks that the product particles are emitted isotropically in x and y
     for species_name in product_species:
         average_px_sq = np.average(data[species_name+"_px_end"]*data[species_name+"_px_end"])
         average_py_sq = np.average(data[species_name+"_py_end"]*data[species_name+"_py_end"])

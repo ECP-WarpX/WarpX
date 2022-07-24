@@ -108,10 +108,11 @@ namespace {
 
         // Square of the norm of the momentum of the products in the center of mass frame
         // Formula obtained by inverting E^2 = p^2*c^2 + m^2*c^4 in the COM frame for each particle
-        auto constexpr pow3 = [](double const x) { return x*x*x; };
-        const amrex::ParticleReal p_star_f_sq =
-            E_star_f_sq*0.25_prt*inv_csq - (m1_out*m1_out + m2_out*m2_out)*c_sq*0.5_prt +
-            pow3(c_sq)*0.25_prt * pow2(m1_out*m1_out - m2_out*m2_out) / E_star_f_sq;
+        // The expression below is specifically written in a form that avoids returning
+        // small negative numbers due to machine precision errors, for low-energy particles
+        const amrex::ParticleReal E_ratio = std::sqrt(E_star_f_sq)/((m1_out + m2_out)*c_sq);
+        const amrex::ParticleReal p_star_f_sq = m1_out*m2_out*c_sq * ( pow2(E_ratio) - 1._prt )
+                + pow2(m1_out - m2_out)*c_sq*0.25_prt * pow2( E_ratio - 1._prt/E_ratio );
 
         // Compute momentum of first product in the center of mass frame, assuming isotropic
         // distribution
