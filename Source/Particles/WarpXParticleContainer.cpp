@@ -346,6 +346,10 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     Real q = this->charge;
 
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Sorting", blp_sort);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::FindMaxTilesize", 
+            blp_get_max_tilesize);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::DirectCurrentDepKernel", 
+            direct_current_dep_kernel);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::CurrentDeposition", blp_deposit);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Accumulate", blp_accumulate);
 
@@ -500,6 +504,8 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         });
             }
             WARPX_PROFILE_VAR_STOP(blp_sort);
+
+            WARPX_PROFILE_VAR_START(blp_get_max_tilesize);
                 //get the maximum size necessary for shared mem
                 // get tile boxes
                 amrex::Gpu::DeviceVector<Box> tboxes(bins.numBins(), amrex::Box());
@@ -554,7 +560,9 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                                                      amrex::get<1>(hv),
                                                      amrex::get<2>(hv)));
             }
+            WARPX_PROFILE_VAR_STOP(blp_get_max_tilesize);
 
+            WARPX_PROFILE_VAR_START(direct_current_dep_kernel);
             if        (WarpX::nox == 1){
                 doDepositionSharedShapeN<1>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
@@ -577,6 +585,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
                     WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
             }
+            WARPX_PROFILE_VAR_STOP(direct_current_dep_kernel);
 
         } else {
             if        (WarpX::nox == 1){
