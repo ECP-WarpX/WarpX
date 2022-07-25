@@ -64,6 +64,7 @@ public:
 
         m_fusion_type = BinaryCollisionUtils::get_nuclear_fusion_type(collision_name, mypc);
 
+        amrex::ParmParse pp_collision_name(collision_name);
         // default fusion multiplier
         m_fusion_multiplier = 1.0_rt;
         queryWithParser(pp_collision_name, "fusion_multiplier", m_fusion_multiplier);
