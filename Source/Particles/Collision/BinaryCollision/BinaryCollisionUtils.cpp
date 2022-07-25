@@ -25,16 +25,38 @@ namespace BinaryCollisionUtils{
             pp_collision_name.getarr("species", species_names);
             auto& species1 = mypc->GetParticleContainerFromName(species_names[0]);
             auto& species2 = mypc->GetParticleContainerFromName(species_names[1]);
+            amrex::Vector<std::string> product_species_name;
+            pp_collision_name.getarr("product_species", product_species_name);
 
             if ((species1.AmIA<PhysicalSpecies::hydrogen2>() && species2.AmIA<PhysicalSpecies::hydrogen3>())
                 ||
                 (species1.AmIA<PhysicalSpecies::hydrogen3>() && species2.AmIA<PhysicalSpecies::hydrogen2>())
                 )
             {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    product_species_name.size() == 2u,
+                    "ERROR: Deuterium-tritium fusion must contain exactly two product species");
+                auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
+                auto& product_species2 = mypc->GetParticleContainerFromName(product_species_name[1]);
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (product_species1.AmIA<PhysicalSpecies::helium4>() && product_species2.AmIA<PhysicalSpecies::neutron>())
+                    ||
+                    (product_species1.AmIA<PhysicalSpecies::neutron>() && product_species2.AmIA<PhysicalSpecies::helium4>()),
+                    "ERROR: Product species of deuterium-tritium fusion must be of type neutron and helium4");
                 return NuclearFusionType::DeuteriumTritium;
             }
             else if (species1.AmIA<PhysicalSpecies::hydrogen2>() && species2.AmIA<PhysicalSpecies::hydrogen2>())
             {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    product_species_name.size() == 2u,
+                    "ERROR: Deuterium-deuterium fusion must contain exactly two product species");
+                auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
+                auto& product_species2 = mypc->GetParticleContainerFromName(product_species_name[1]);
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (product_species1.AmIA<PhysicalSpecies::helium3>() && product_species2.AmIA<PhysicalSpecies::neutron>())
+                    ||
+                    (product_species1.AmIA<PhysicalSpecies::neutron>() && product_species2.AmIA<PhysicalSpecies::helium3>()),
+                    "ERROR: Product species of deuterium-deuterium fusion must be of type neutron and helium3");
                 return NuclearFusionType::DeuteriumDeuterium;
             }
             else if ((species1.AmIA<PhysicalSpecies::proton>() && species2.AmIA<PhysicalSpecies::boron11>())
@@ -42,6 +64,13 @@ namespace BinaryCollisionUtils{
                 (species1.AmIA<PhysicalSpecies::boron11>() && species2.AmIA<PhysicalSpecies::proton>())
                 )
             {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    product_species_name.size() == 1,
+                    "ERROR: Proton-boron must contain exactly one product species");
+                auto& product_species = mypc->GetParticleContainerFromName(product_species_name[0]);
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    product_species.AmIA<PhysicalSpecies::helium>(),
+                    "ERROR: Product species of proton-boron fusion must be of type alpha");
                 return NuclearFusionType::ProtonBoron;
             }
             amrex::Abort("Binary nuclear fusion not implemented between species " +
