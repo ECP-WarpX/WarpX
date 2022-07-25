@@ -19,14 +19,14 @@ HardEdgedQuadrupole::HardEdgedQuadrupole ()
 }
 
 void
-HardEdgedQuadrupole::AddElement (amrex::ParmParse & pp_element, amrex::Real & z_location)
+HardEdgedQuadrupole::AddElement (amrex::ParmParse & pp_element, amrex::ParticleReal & z_location)
 {
     using namespace amrex::literals;
 
     AddElementBase(pp_element, z_location);
 
-    amrex::Real dEdx = 0._rt;
-    amrex::Real dBdx = 0._rt;
+    amrex::ParticleReal dEdx = 0._prt;
+    amrex::ParticleReal dBdx = 0._prt;
     pp_element.query("dEdx", dEdx);
     pp_element.query("dBdx", dBdx);
 

@@ -27,7 +27,7 @@ LatticeElementFinder::InitElementFinder (int const lev, amrex::MFIter const& a_m
     m_dz = WarpX::CellSize(lev)[2];
 
     m_gamma_boost = WarpX::gamma_boost;
-    m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._rt)*PhysConst::c;
+    m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._prt)*PhysConst::c;
 
     AllocateIndices(accelerator_lattice);
 
@@ -104,7 +104,7 @@ LatticeElementFinderDevice::InitLatticeElementFinderDevice (WarpXParIter const& 
     m_dt = warpx.getdt(lev);
 
     m_gamma_boost = WarpX::gamma_boost;
-    m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._rt)*PhysConst::c;
+    m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._prt)*PhysConst::c;
 
     m_zmin = h_finder.m_zmin;
     m_dz = h_finder.m_dz;

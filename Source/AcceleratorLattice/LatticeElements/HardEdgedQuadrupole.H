@@ -37,7 +37,7 @@ struct HardEdgedQuadrupole
      * @param[in/out] z_location The current z location in the lattice
      */
     void
-    AddElement (amrex::ParmParse & pp_element, amrex::Real & z_location);
+    AddElement (amrex::ParmParse & pp_element, amrex::ParticleReal & z_location);
 
     /**
      * \brief Write the element information to the device
@@ -47,11 +47,11 @@ struct HardEdgedQuadrupole
 
     /* The field gradients */
     /* On the host */
-    std::vector<amrex::Real> h_dEdx;
-    std::vector<amrex::Real> h_dBdx;
+    std::vector<amrex::ParticleReal> h_dEdx;
+    std::vector<amrex::ParticleReal> h_dBdx;
     /* On the device */
-    amrex::Gpu::DeviceVector<amrex::Real> d_dEdx;
-    amrex::Gpu::DeviceVector<amrex::Real> d_dBdx;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_dEdx;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_dBdx;
 
     /**
      * \brief Returns the device level instance with the lattice information
@@ -75,11 +75,11 @@ struct HardEdgedQuadrupoleDevice
 
     int nelements = 0;
 
-    const amrex::Real* AMREX_RESTRICT d_zs_arr;
-    const amrex::Real* AMREX_RESTRICT d_ze_arr;
+    const amrex::ParticleReal* AMREX_RESTRICT d_zs_arr;
+    const amrex::ParticleReal* AMREX_RESTRICT d_ze_arr;
 
-    const amrex::Real* AMREX_RESTRICT d_dEdx_arr;
-    const amrex::Real* AMREX_RESTRICT d_dBdx_arr;
+    const amrex::ParticleReal* AMREX_RESTRICT d_dEdx_arr;
+    const amrex::ParticleReal* AMREX_RESTRICT d_dBdx_arr;
 
     /**
      * \brief Fetch the field of the specified element at the given location
@@ -103,10 +103,10 @@ struct HardEdgedQuadrupoleDevice
 
         // Calculate the residence correction, the fraction of the time step that the particle
         // spends inside the hard edged element.
-        amrex::Real const frac = hard_edged_fraction(z, zpvdt, d_zs_arr[ielement], d_ze_arr[ielement]);
+        amrex::ParticleReal const frac = hard_edged_fraction(z, zpvdt, d_zs_arr[ielement], d_ze_arr[ielement]);
 
-        amrex::Real dEdx = frac*d_dEdx_arr[ielement];
-        amrex::Real dBdx = frac*d_dBdx_arr[ielement];
+        amrex::ParticleReal dEdx = frac*d_dEdx_arr[ielement];
+        amrex::ParticleReal dBdx = frac*d_dBdx_arr[ielement];
 
         Ex = +x*dEdx;
         Ey = -y*dEdx;

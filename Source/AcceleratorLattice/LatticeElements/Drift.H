@@ -26,7 +26,7 @@ struct Drift
      * @param[in/out] z_location The current z location in the lattice
      */
     void
-    AddElement (amrex::ParmParse & pp_element, amrex::Real & z_location);
+    AddElement (amrex::ParmParse & pp_element, amrex::ParticleReal & z_location);
 
 };
 

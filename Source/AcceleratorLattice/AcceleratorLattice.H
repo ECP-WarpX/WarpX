@@ -27,7 +27,7 @@ public:
      * @param[in] z_location starting z location for the lattice
      */
     void
-    ReadLattice (std::string const & root_name, amrex::Real & z_location);
+    ReadLattice (std::string const & root_name, amrex::ParticleReal & z_location);
 
     /* Refinement level at which this accelerator lattice is defined */
     int m_level;

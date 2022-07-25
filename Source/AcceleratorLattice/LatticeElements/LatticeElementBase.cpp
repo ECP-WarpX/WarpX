@@ -19,10 +19,10 @@ LatticeElementBase::LatticeElementBase (std::string const& element_name)
 }
 
 void
-LatticeElementBase::AddElementBase (amrex::ParmParse & pp_element, amrex::Real & z_location)
+LatticeElementBase::AddElementBase (amrex::ParmParse & pp_element, amrex::ParticleReal & z_location)
 {
     // Read in the length of the element and save the start and end, and update z_location
-    amrex::Real ds;
+    amrex::ParticleReal ds;
     pp_element.get("ds", ds);
 
     h_zs.push_back(z_location);

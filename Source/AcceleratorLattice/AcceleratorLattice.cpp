@@ -17,7 +17,7 @@ AcceleratorLattice::AcceleratorLattice ()
     using namespace amrex::literals;
 
     /* Get the inputs for and initialize all of the lattice element types */
-    amrex::Real z_location = 0._rt;
+    amrex::ParticleReal z_location = 0._prt;
     ReadLattice("lattice", z_location);
 
     h_quad.WriteToDevice();
@@ -25,7 +25,7 @@ AcceleratorLattice::AcceleratorLattice ()
 }
 
 void
-AcceleratorLattice::ReadLattice (std::string const & root_name, amrex::Real & z_location)
+AcceleratorLattice::ReadLattice (std::string const & root_name, amrex::ParticleReal & z_location)
 {
     amrex::ParmParse pp_lattice(root_name);
     std::vector<std::string> lattice_elements;

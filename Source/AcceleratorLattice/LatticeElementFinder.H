@@ -54,13 +54,15 @@ struct LatticeElementFinder
                         AcceleratorLattice const& accelerator_lattice);
 
     /* Define the location and size of the index lookup table */
+    /* Use the type Real to be consistent with the way the main grid is defined */
     int m_nz;
     amrex::Real m_zmin;
     amrex::Real m_dz;
 
     /* Parameters needed for the Lorentz transforms into and out of the boosted frame */
-    amrex::Real m_gamma_boost;
-    amrex::Real m_uz_boost;
+    /* The time for m_time is consistent with the main time variable */
+    amrex::ParticleReal m_gamma_boost;
+    amrex::ParticleReal m_uz_boost;
     amrex::Real m_time;
 
     /**
@@ -85,23 +87,23 @@ struct LatticeElementFinder
      * @param[in] ze list of the ends of the lattice elements
      * @param[in] indices the index lookup table to be filled in
      */
-    void setup_lattice_indices (amrex::Gpu::DeviceVector<amrex::Real> const & zs,
-                                amrex::Gpu::DeviceVector<amrex::Real> const & ze,
+    void setup_lattice_indices (amrex::Gpu::DeviceVector<amrex::ParticleReal> const & zs,
+                                amrex::Gpu::DeviceVector<amrex::ParticleReal> const & ze,
                                 amrex::Gpu::DeviceVector<int> & indices)
     {
 
         using namespace amrex::literals;
 
         int nelements = static_cast<int>(zs.size());
-        amrex::Real const * zs_arr = zs.data();
-        amrex::Real const * ze_arr = ze.data();
+        amrex::ParticleReal const * zs_arr = zs.data();
+        amrex::ParticleReal const * ze_arr = ze.data();
         int * indices_arr = indices.data();
 
         amrex::Real const zmin = m_zmin;
         amrex::Real const dz = m_dz;
 
-        amrex::Real const gamma_boost = m_gamma_boost;
-        amrex::Real const uz_boost = m_uz_boost;
+        amrex::ParticleReal const gamma_boost = m_gamma_boost;
+        amrex::ParticleReal const uz_boost = m_uz_boost;
         amrex::Real const time = m_time;
 
         amrex::ParallelFor( m_nz,
@@ -110,7 +112,7 @@ struct LatticeElementFinder
                 // Get the location of the grid node
                 amrex::Real z_node = zmin + iz*dz;
 
-                if (gamma_boost > 1._rt) {
+                if (gamma_boost > 1._prt) {
                     // Transform to lab frame
                     z_node = gamma_boost*z_node + uz_boost*time;
                 }
@@ -120,16 +122,16 @@ struct LatticeElementFinder
                 for (int ie = 0 ; ie < nelements ; ie++) {
                     // Find the mid points between element ie and the ones before and after it.
                     // The first and last element need special handling.
-                    amrex::Real zcenter_left, zcenter_right;
+                    amrex::ParticleReal zcenter_left, zcenter_right;
                     if (ie == 0) {
-                        zcenter_left = std::numeric_limits<amrex::Real>::lowest();
+                        zcenter_left = std::numeric_limits<amrex::ParticleReal>::lowest();
                     } else {
-                        zcenter_left = 0.5_rt*(ze_arr[ie-1] + zs_arr[ie]);
+                        zcenter_left = 0.5_prt*(ze_arr[ie-1] + zs_arr[ie]);
                     }
                     if (ie < nelements - 1) {
-                        zcenter_right = 0.5_rt*(ze_arr[ie] + zs_arr[ie+1]);
+                        zcenter_right = 0.5_prt*(ze_arr[ie] + zs_arr[ie+1]);
                     } else {
-                        zcenter_right = std::numeric_limits<amrex::Real>::max();
+                        zcenter_right = std::numeric_limits<amrex::ParticleReal>::max();
                     }
 
                     if (zcenter_left <= z_node && z_node < zcenter_right) {
@@ -169,8 +171,8 @@ struct LatticeElementFinderDevice
     amrex::Real m_dt;
 
     /* Parameters needed for the Lorentz transforms into and out of the boosted frame */
-    amrex::Real m_gamma_boost;
-    amrex::Real m_uz_boost;
+    amrex::ParticleReal m_gamma_boost;
+    amrex::ParticleReal m_uz_boost;
     amrex::Real m_time;
 
     GetParticlePosition m_get_position;
@@ -211,24 +213,24 @@ struct LatticeElementFinderDevice
         // (which is in the boosted frame)
         const int iz = static_cast<int>((z - m_zmin)/m_dz);
 
-        constexpr amrex::Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
-        amrex::Real const gamma = std::sqrt(1._rt + (m_ux[i]*m_ux[i] + m_uy[i]*m_uy[i] + m_uz[i]*m_uz[i])*inv_c2);
-        amrex::Real const vzp = m_uz[i]/gamma;
+        constexpr amrex::ParticleReal inv_c2 = 1._prt/(PhysConst::c*PhysConst::c);
+        amrex::ParticleReal const gamma = std::sqrt(1._prt + (m_ux[i]*m_ux[i] + m_uy[i]*m_uy[i] + m_uz[i]*m_uz[i])*inv_c2);
+        amrex::ParticleReal const vzp = m_uz[i]/gamma;
 
-        amrex::Real zpvdt = z + vzp*m_dt;
+        amrex::ParticleReal zpvdt = z + vzp*m_dt;
 
         // The position passed to the get_field methods needs to be in the lab frame.
-        if (m_gamma_boost > 1._rt) {
+        if (m_gamma_boost > 1._prt) {
             z = m_gamma_boost*z + m_uz_boost*m_time;
             zpvdt = m_gamma_boost*zpvdt + m_uz_boost*(m_time + m_dt);
         }
 
-        amrex::ParticleReal Ex_sum = 0._rt;
-        amrex::ParticleReal Ey_sum = 0._rt;
-        amrex::ParticleReal Ez_sum = 0._rt;
-        amrex::ParticleReal Bx_sum = 0._rt;
-        amrex::ParticleReal By_sum = 0._rt;
-        amrex::ParticleReal Bz_sum = 0._rt;
+        amrex::ParticleReal Ex_sum = 0._prt;
+        amrex::ParticleReal Ey_sum = 0._prt;
+        amrex::ParticleReal Ez_sum = 0._prt;
+        amrex::ParticleReal Bx_sum = 0._prt;
+        amrex::ParticleReal By_sum = 0._prt;
+        amrex::ParticleReal Bz_sum = 0._prt;
 
         if (d_quad.nelements > 0) {
             if (d_quad_indices_arr[iz] > -1) {
@@ -254,7 +256,7 @@ struct LatticeElementFinderDevice
             }
         }
 
-        if (m_gamma_boost > 1._rt) {
+        if (m_gamma_boost > 1._prt) {
             // The fields returned from get_field is in the lab frame
             // Transform the fields to the boosted frame
             const amrex::ParticleReal Ex_boost = m_gamma_boost*Ex_sum - m_uz_boost*By_sum;

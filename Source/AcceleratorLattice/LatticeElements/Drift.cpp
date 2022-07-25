@@ -16,7 +16,7 @@ Drift::Drift ()
 }
 
 void
-Drift::AddElement (amrex::ParmParse & pp_element, amrex::Real & z_location)
+Drift::AddElement (amrex::ParmParse & pp_element, amrex::ParticleReal & z_location)
 {
     AddElementBase(pp_element, z_location);
 }

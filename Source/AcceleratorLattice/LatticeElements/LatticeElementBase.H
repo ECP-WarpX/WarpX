@@ -33,7 +33,7 @@ struct LatticeElementBase
      * @param[in/out] z_location The current z location in the lattice
      */
     void
-    AddElementBase(amrex::ParmParse & pp_element, amrex::Real & z_location);
+    AddElementBase(amrex::ParmParse & pp_element, amrex::ParticleReal & z_location);
 
     /**
      * \brief Write the base element information to the device
@@ -46,12 +46,12 @@ struct LatticeElementBase
     int nelements = 0;
 
     // The host level copy of the data.
-    std::vector<amrex::Real> h_zs;
-    std::vector<amrex::Real> h_ze;
+    std::vector<amrex::ParticleReal> h_zs;
+    std::vector<amrex::ParticleReal> h_ze;
 
     // The device level copy of the data.
-    amrex::Gpu::DeviceVector<amrex::Real> d_zs;
-    amrex::Gpu::DeviceVector<amrex::Real> d_ze;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_zs;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_ze;
 
 };
 
