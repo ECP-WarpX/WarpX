@@ -1,5 +1,14 @@
 Version, Physics version, Date,        List of changes
-8.4.1, 2, In progress, "
+8.4.2, 2, In progress, "
+
+**Other Changes**:
+
+- Merge ``upstream/development`` (git hash ``8124561``) into ``memaster`` which
+  now includes a callback that executes whenever WarpX receives a checkpointing
+  signal.
+
+"
+8.4.1, 2, 6/23/2022, "
 
 **Other Changes**:
 
