@@ -8,6 +8,7 @@
 #ifndef DEUTERIUM_TRITIUM_FUSION_CROSS_SECTION_H
 #define DEUTERIUM_TRITIUM_FUSION_CROSS_SECTION_H
 
+#include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_REAL.H>
@@ -15,14 +16,19 @@
 #include <cmath>
 
 /**
- * \brief Computes the total deuterium-tritium fusion cross section, using
- * the analytical fits given in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
+ * \brief Computes the fusion cross section, using the analytical fits given in
+ * H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
  *
- * @param[in] E_kin_star the kinetic energy of the deuterium-tritium pair in its center of mass frame, in SI units.
+ * @param[in] E_kin_star the kinetic energy of the reactants in their center of mass frame, in SI units.
+ * @param[in] fusion_type indicates which fusion reaction to calculate the cross-section for
  * @return The total cross section in SI units (square meters).
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-amrex::ParticleReal DeuteriumTritiumFusionCrossSection (const amrex::ParticleReal& E_kin_star)
+amrex::ParticleReal BoschHaleFusionCrossSection (
+    const amrex::ParticleReal& E_kin_star,
+    const NuclearFusionType& fusion_type,
+    const amrex::ParticleReal& m1,
+    const amrex::ParticleReal& m2 )
 {
     using namespace amrex::literals;
 
@@ -34,25 +40,38 @@ amrex::ParticleReal DeuteriumTritiumFusionCrossSection (const amrex::ParticleRea
 
     // Compute the Gamow constant B_G (in keV^{1/2})
     // (See Eq. 3 in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)
-    constexpr amrex::ParticleReal m_D = 2.01410177812 * PhysConst::m_u;
-    constexpr amrex::ParticleReal m_T = 3.0160492779 * PhysConst::m_u;
-    constexpr amrex::ParticleReal m_reduced = m_D / (1._prt + m_D/m_T);
+    const amrex::ParticleReal m_reduced = m1 / (1._prt + m1/m2);
     amrex::ParticleReal B_G = MathConst::pi * PhysConst::alpha * 1._prt * 1._prt
          * std::sqrt( 2._prt*m_reduced*PhysConst::c*PhysConst::c * joule_to_keV );
 
     // Compute astrophysical_factor
     // (See Eq. 9 and Table IV in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)
-    constexpr amrex::ParticleReal A1 = 6.927e4;
-    constexpr amrex::ParticleReal A2 = 7.454e8;
-    constexpr amrex::ParticleReal A3 = 2.050e6;
-    constexpr amrex::ParticleReal A4 = 5.2002e4;
-    constexpr amrex::ParticleReal B1 = 6.38e1;
-    constexpr amrex::ParticleReal B2 = -9.95e-1;
-    constexpr amrex::ParticleReal B3 = 6.981e-5;
-    constexpr amrex::ParticleReal B4 = 1.728e-4;
+    amrex::ParticleReal A1=0_prt, A2=0_prt, A3=0_prt, A4=0_prt, A5=0_prt, B1=0_prt, B2=0_prt, B3=0_prt, B4=0_prt;
+    if (fusion_type == NuclearFusionType::DeuteriumTritium) {
+        A1 = 6.927e4_prt;
+        A2 = 7.454e8_prt;
+        A3 = 2.050e6_prt;
+        A4 = 5.2002e4_prt;
+        A5 = 0_prt;
+        B1 = 6.38e1_prt;
+        B2 = -9.95e-1_prt;
+        B3 = 6.981e-5_prt;
+        B4 = 1.728e-4_prt;
+    }
+    else if (fusion_type == NuclearFusionType::DeuteriumDeuterium) {
+        A1 = 5.3701e4_prt;
+        A2 = 3.3027e2_prt;
+        A3 = -1.2706e-1_prt;
+        A4 = 2.9327e-5_prt;
+        A5 = -2.5151e-9_prt;
+        B1 = 0_prt;
+        B2 = 0_prt;
+        B3 = 0_prt;
+        B4 = 0_prt;
+    }
 
     amrex::ParticleReal astrophysical_factor =
-        (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*A4))) /
+        (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*(A4 + E_keV*A5)))) /
         (1_prt + E_keV*(B1 + E_keV*(B2 + E_keV*(B3 + E_keV*B4))));
 
     // Compute cross-section in SI units

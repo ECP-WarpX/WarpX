@@ -81,6 +81,19 @@ public:
                 (product_species1.AmIA<PhysicalSpecies::neutron>() && product_species2.AmIA<PhysicalSpecies::helium4>()),
                 "ERROR: Product species of deuterium-tritium fusion must be of type neutron and helium4");
         }
+        if (m_fusion_type == NuclearFusionType::DeuteriumDeuterium)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                product_species_name.size() == 2u,
+                "ERROR: Deuterium-deuterium fusion must contain exactly two product species");
+            auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
+            auto& product_species2 = mypc->GetParticleContainerFromName(product_species_name[1]);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (product_species1.AmIA<PhysicalSpecies::helium3>() && product_species2.AmIA<PhysicalSpecies::neutron>())
+                ||
+                (product_species1.AmIA<PhysicalSpecies::neutron>() && product_species2.AmIA<PhysicalSpecies::helium3>()),
+                "ERROR: Product species of deuterium-deuterium fusion must be of type neutron and helium3");
+        }
         if (m_fusion_type == NuclearFusionType::ProtonBoron)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(

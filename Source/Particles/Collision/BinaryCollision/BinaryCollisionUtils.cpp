@@ -33,6 +33,10 @@ namespace BinaryCollisionUtils{
             {
                 return NuclearFusionType::DeuteriumTritium;
             }
+            else if (species1.AmIA<PhysicalSpecies::hydrogen2>() && species2.AmIA<PhysicalSpecies::hydrogen2>())
+            {
+                return NuclearFusionType::DeuteriumDeuterium;
+            }
             else if ((species1.AmIA<PhysicalSpecies::proton>() && species2.AmIA<PhysicalSpecies::boron11>())
                 ||
                 (species1.AmIA<PhysicalSpecies::boron11>() && species2.AmIA<PhysicalSpecies::proton>())
@@ -65,6 +69,8 @@ namespace BinaryCollisionUtils{
         {
             if (fusion_type == NuclearFusionType::DeuteriumTritium)
                 return CollisionType::DeuteriumTritiumFusion;
+            if (fusion_type == NuclearFusionType::DeuteriumDeuterium)
+                return CollisionType::DeuteriumDeuteriumFusion;
             if (fusion_type == NuclearFusionType::ProtonBoron)
                 return CollisionType::ProtonBoronFusion;
             amrex::Abort("Invalid nuclear fusion type");

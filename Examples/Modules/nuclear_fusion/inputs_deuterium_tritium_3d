@@ -63,7 +63,7 @@ tritium1.momentum_function_uz(x,y,z) = -sqrt(2*m_reduced*Energy_step*(floor(z)**
 tritium1.do_not_push = 1
 tritium1.do_not_deposit = 1
 
-helium1.species_type = helium4
+helium1.species_type = helium3
 helium1.do_not_push = 1
 helium1.do_not_deposit = 1
 
@@ -111,7 +111,7 @@ neutron2.do_not_deposit = 1
 #################################
 collisions.collision_names = DTF1 DTF2
 
-DTF1.species = deuterium1 tritium1
+DTF1.species = deuterium1 deuterium1
 DTF1.product_species = helium1 neutron1
 DTF1.type = nuclearfusion
 DTF1.fusion_multiplier = 1.e50

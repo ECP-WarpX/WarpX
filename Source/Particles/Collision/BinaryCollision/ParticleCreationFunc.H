@@ -229,7 +229,10 @@ public:
                 {
                     amrex::ParticleReal fusion_energy = 0.0_prt;
                     if (t_collision_type == CollisionType::DeuteriumTritiumFusion) {
-                        fusion_energy = 17.5893e6_prt * PhysConst::q_e; // 17.6 MeV
+                        fusion_energy = 17.5893e6_prt * PhysConst::q_e;
+                    }
+                    else if (t_collision_type == CollisionType::DeuteriumDeuteriumFusion) {
+                        fusion_energy = 3.268911e6_prt * PhysConst::q_e;
                     }
                     TwoProductFusionInitializeMomentum(soa_1, soa_2,
                         soa_products_data[0], soa_products_data[1],
