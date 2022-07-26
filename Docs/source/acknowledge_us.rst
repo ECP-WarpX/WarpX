@@ -58,8 +58,8 @@ If your project uses the specific algorithms, please consider citing the respect
   `DOI:10.1088/1367-2630/ac4ef1 <https://doi.org/10.1088/1367-2630/ac4ef1>`__
 
 - Zoni E, Lehe R, Shapoval O, Belkin D, Zaim N, Fedeli L, Vincenti H, Vay JL.
-  **A Hybrid Nodal-Staggered Pseudo-Spectral Electromagnetic Particle-In-Cell Method with Finite-Order Centering**. under review, 2022.
-  `arXiv:2106.12919 <https://arxiv.org/abs/2106.12919>`__
+  **A hybrid nodal-staggered pseudo-spectral electromagnetic particle-in-cell method with finite-order centering**. *Computer Physics Communications* **279**, 2022.
+  `DOI:10.1016/j.cpc.2022.108457 <https://doi.org/10.1016/j.cpc.2022.108457>`__
 
 - Shapoval O, Lehe R, Thevenet M, Zoni E, Zhao Y, Vay JL.
   **Overcoming timestep limitations in boosted-frame Particle-In-Cell simulations of plasma-based acceleration**.

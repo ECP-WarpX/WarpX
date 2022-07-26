@@ -37,25 +37,25 @@ namespace amrex { struct RandomEngine; }
 // Aliases =============================
 using BW_dndt_table_params =
     picsar::multi_physics::phys::breit_wheeler::
-    dndt_lookup_table_params<amrex::Real>;
+    dndt_lookup_table_params<amrex::ParticleReal>;
 
 using BW_dndt_table =
     picsar::multi_physics::phys::breit_wheeler::
     dndt_lookup_table<
-    amrex::Real,
-    amrex::Gpu::DeviceVector<amrex::Real>>;
+    amrex::ParticleReal,
+    amrex::Gpu::DeviceVector<amrex::ParticleReal>>;
 
 using BW_dndt_table_view = BW_dndt_table::view_type;
 
 using BW_pair_prod_table_params =
     picsar::multi_physics::phys::breit_wheeler::
-    pair_prod_lookup_table_params<amrex::Real>;
+    pair_prod_lookup_table_params<amrex::ParticleReal>;
 
 using BW_pair_prod_table =
     picsar::multi_physics::phys::breit_wheeler::
     pair_prod_lookup_table<
-    amrex::Real,
-    amrex::Gpu::DeviceVector<amrex::Real>>;
+    amrex::ParticleReal,
+    amrex::Gpu::DeviceVector<amrex::ParticleReal>>;
 
 using BW_pair_prod_table_view = BW_pair_prod_table::view_type;
 
@@ -90,7 +90,7 @@ public:
      */
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
-    amrex::Real operator() (amrex::RandomEngine const& engine) const noexcept
+    amrex::ParticleReal operator() (amrex::RandomEngine const& engine) const noexcept
     {
         namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
 
@@ -122,7 +122,7 @@ public:
      */
     BreitWheelerEvolveOpticalDepth (
         const BW_dndt_table_view table_view,
-        const amrex::Real bw_minimum_chi_phot):
+        const amrex::ParticleReal bw_minimum_chi_phot):
         m_table_view{table_view}, m_bw_minimum_chi_phot{bw_minimum_chi_phot}{}
 
     /**
@@ -153,7 +153,7 @@ public:
         namespace pxr_p = picsar::multi_physics::phys;
         namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
 
-        constexpr amrex::Real m_e = PhysConst::m_e;
+        constexpr amrex::ParticleReal m_e = PhysConst::m_e;
         const auto u_norm = std::sqrt(ux*ux + uy*uy + uz*uz);
         const auto energy = u_norm*m_e*PhysConst::c;
 
@@ -170,7 +170,7 @@ public:
         const auto gamma_photon = pxr_p::compute_gamma_photon<
                 amrex::ParticleReal, pxr_p::unit_system::SI>(
                     px, py, pz);
-        if (gamma_photon < pxr_m::two<amrex::Real> ||
+        if (gamma_photon < pxr_m::two<amrex::ParticleReal> ||
             chi_phot < m_bw_minimum_chi_phot)
             return 0;
 
@@ -185,7 +185,7 @@ public:
 
 private:
     BW_dndt_table_view m_table_view;
-    amrex::Real m_bw_minimum_chi_phot;
+    amrex::ParticleReal m_bw_minimum_chi_phot;
 };
 
 /**
@@ -335,14 +335,14 @@ public:
      */
     bool init_lookup_tables_from_raw_data (
         const std::vector<char>& raw_data,
-        const amrex::Real bw_minimum_chi_phot);
+        const amrex::ParticleReal bw_minimum_chi_phot);
 
     /**
      * Init lookup tables using built-in (low resolution) tables
      *
      * @param[in] bw_minimum_chi_phot minimum chi parameter to evolve the optical depth of a photon
      */
-    void init_builtin_tables(const amrex::Real bw_minimum_chi_phot);
+    void init_builtin_tables(const amrex::ParticleReal bw_minimum_chi_phot);
 
     /**
      * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
@@ -351,7 +351,7 @@ public:
      * @param[in] bw_minimum_chi_phot minimum chi parameter to evolve the optical depth of a photon
      */
     void compute_lookup_tables (const PicsarBreitWheelerCtrl ctrl,
-        const amrex::Real bw_minimum_chi_phot);
+        const amrex::ParticleReal bw_minimum_chi_phot);
 
     /**
      * gets default values for the control parameters
@@ -360,14 +360,14 @@ public:
      */
     PicsarBreitWheelerCtrl get_default_ctrl() const;
 
-    amrex::Real get_minimum_chi_phot() const;
+    amrex::ParticleReal get_minimum_chi_phot() const;
 
 private:
     bool m_lookup_tables_initialized = false;
 
     //Variables to store the minimum chi parameters to enable
     //Quantum Synchrotron process
-    amrex::Real m_bw_minimum_chi_phot;
+    amrex::ParticleReal m_bw_minimum_chi_phot;
 
     BW_dndt_table m_dndt_table;
     BW_pair_prod_table m_pair_prod_table;
