@@ -979,5 +979,6 @@ WarpX::HandleSignals()
 
     if (SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_CHECKPOINT)) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
+        ExecutePythonCallback("oncheckpointsignal");
     }
 }

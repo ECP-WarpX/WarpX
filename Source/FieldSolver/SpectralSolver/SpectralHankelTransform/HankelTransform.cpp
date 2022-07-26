@@ -220,11 +220,11 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
     int const nr = m_nr;
 
     amrex::ParallelFor(G_box,
-    [=] AMREX_GPU_DEVICE(int ik, int iz, int inotused) noexcept {
-        G_arr(ik,iz,G_icomp) = 0.;
+    [=] AMREX_GPU_DEVICE(int ik, int iz, int k3d) noexcept {
+        G_arr(ik,iz,k3d,G_icomp) = 0.;
         for (int ir=0 ; ir < nr ; ir++) {
             int const ii = ir + ik*nr;
-            G_arr(ik,iz,G_icomp) += M_arr[ii]*F_arr(ir,iz,F_icomp);
+            G_arr(ik,iz,k3d,G_icomp) += M_arr[ii]*F_arr(ir,iz,k3d,F_icomp);
         }
     });
 
@@ -270,11 +270,11 @@ HankelTransform::HankelInverseTransform (amrex::FArrayBox const& G, int const G_
     int const nk = m_nk;
 
     amrex::ParallelFor(G_box,
-    [=] AMREX_GPU_DEVICE(int ir, int iz, int inotused) noexcept {
-        F_arr(ir,iz,F_icomp) = 0.;
+    [=] AMREX_GPU_DEVICE(int ir, int iz, int k3d) noexcept {
+        F_arr(ir,iz,k3d,F_icomp) = 0.;
         for (int ik=0 ; ik < nk ; ik++) {
             int const ii = ik + ir*nk;
-            F_arr(ir,iz,F_icomp) += invM_arr[ii]*G_arr(ik,iz,G_icomp);
+            F_arr(ir,iz,k3d,F_icomp) += invM_arr[ii]*G_arr(ik,iz,k3d,G_icomp);
         }
     });
 

@@ -1455,8 +1455,8 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
 #ifdef WARPX_QED
         //Pointer to the optical depth component
-        amrex::Real* p_optical_depth_QSR = nullptr;
-        amrex::Real* p_optical_depth_BW  = nullptr;
+        amrex::ParticleReal* p_optical_depth_QSR = nullptr;
+        amrex::ParticleReal* p_optical_depth_BW  = nullptr;
 
         // If a QED effect is enabled, the corresponding optical depth
         // has to be initialized

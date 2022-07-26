@@ -279,9 +279,16 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    int const max_iters,
                    int const verbosity) const
 {
+    // create a vector to our fields, sorted by level
+    amrex::Vector<amrex::MultiFab*> sorted_rho;
+    amrex::Vector<amrex::MultiFab*> sorted_phi;
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        sorted_rho.emplace_back(rho[lev].get());
+        sorted_phi.emplace_back(phi[lev].get());
+    }
+
     std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
 #if defined(AMREX_USE_EB)
-
     // EB: use AMReX to directly calculate the electric field since with EB's the
     // simple finite difference scheme in WarpX::computeE sometimes fails
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
@@ -326,8 +333,8 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #endif
 
     ablastr::fields::computePhi(
-        rho,
-        phi,
+        sorted_rho,
+        sorted_phi,
         beta,
         required_precision,
         absolute_tolerance,
