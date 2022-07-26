@@ -29,6 +29,7 @@ HPC Systems
    hpc/summit
    hpc/spock
    hpc/crusher
+   hpc/frontier
    hpc/juwels
    hpc/lassen
    hpc/quartz
