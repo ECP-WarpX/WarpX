@@ -128,7 +128,8 @@ int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
 bool WarpX::do_shared_mem_charge_deposition = false;
 bool WarpX::do_shared_mem_current_deposition = false;
-amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1));
+//Note this is not really the default. Default is sort_bin_size
+amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1)); 
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
@@ -764,14 +765,6 @@ WarpX::ReadParameters ()
                 shared_tilesize[i] = vect_shared_tilesize[i];
         }
 
-       // Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
-       // bool sort_bin_size_is_specified = queryArrWithParser(pp_warpx, "sort_bin_size",
-       //                                                     vect_sort_bin_size, 0, AMREX_SPACEDIM);
-       // if (sort_bin_size_is_specified){
-       //     for (int i=0; i<AMREX_SPACEDIM; i++)
-       //         sort_bin_size[i] = vect_sort_bin_size[i];
-       // }
-
         pp_warpx.query("serialize_initial_conditions", serialize_initial_conditions);
         pp_warpx.query("refine_plasma", refine_plasma);
         pp_warpx.query("do_dive_cleaning", do_dive_cleaning);
@@ -1073,6 +1066,7 @@ WarpX::ReadParameters ()
             for (int i=0; i<AMREX_SPACEDIM; i++)
                 sort_bin_size[i] = vect_sort_bin_size[i];
         }
+        shared_tilesize = sort_bin_size;
     }
 
     {
