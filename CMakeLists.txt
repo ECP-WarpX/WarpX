@@ -447,8 +447,13 @@ if(WarpX_LIB)
     )
 
     # this will also upgrade/downgrade dependencies, e.g., when the version of picmistandard changes
+    if(WarpX_MPI)
+        set(pyWarpX_REQUIREMENT_FILE "requirements_mpi.txt")
+    else()
+        set(pyWarpX_REQUIREMENT_FILE "requirements.txt")
+    endif()
     add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
-        python3 -m pip install ${PYINSTALLOPTIONS} -r ${WarpX_SOURCE_DIR}/requirements.txt
+        python3 -m pip install ${PYINSTALLOPTIONS} -r "${WarpX_SOURCE_DIR}/${pyWarpX_REQUIREMENT_FILE}"
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
     )
