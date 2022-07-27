@@ -1434,7 +1434,7 @@ Note that elements of the same type cannot overlap each other.
               The field applied to the particles will be `Bx = dBdx*y` and `By = dBdx*x`.
 
         * ``plasmalens`` for a field modeling a plasma lens
-          This applies an radially directed plasma lens field that is uniform within the `z` extent of the elemnt with
+          This applies a radially directed plasma lens field that is uniform within the `z` extent of the element with
           a sharp cut off at the ends.
           This uses residence corrections, with the field scaled by the amount of time within the element for particles entering
           or leaving it, to increase the accuracy.
