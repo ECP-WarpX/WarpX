@@ -85,7 +85,7 @@ public:
       return  allcontainers[ispecies];
     }
 #endif
-    std::array<amrex::Real, 3> meanParticleVelocity(int ispecies) {
+    std::array<amrex::ParticleReal, 3> meanParticleVelocity(int ispecies) {
         return allcontainers[ispecies]->meanParticleVelocity();
     }
 
