@@ -6,7 +6,7 @@
 #SBATCH -t 00:10:00
 #SBATCH -p batch
 #SBATCH --ntasks-per-node=8
-#SBATCH --cpus-per-task=8
+#S BATCH --cpus-per-task=8
 #SBATCH --gpus-per-task=1
 #SBATCH --gpu-bind=closest
 #SBATCH -N 1
@@ -24,5 +24,5 @@
 # known issue with Libfabric (both in the May and June PE)
 export FI_MR_CACHE_MAX_COUNT=0
 
-export OMP_NUM_THREADS=8
+export OMP_NUM_THREADS=1
 srun ./warpx inputs > output.txt
