@@ -1442,10 +1442,10 @@ Note that elements of the same type cannot overlap each other.
 
             * ``<element_name>.ds`` (``float``, in meters) the segment length
 
-            * ``<element_name>.dEdx`` (``float``, in volts/meter^2) optional (default: 0.) the electric quadrupole field gradient
+            * ``<element_name>.dEdx`` (``float``, in volts/meter^2) optional (default: 0.) the electric field gradient
               The field applied to the particles will be `Ex = dEdx*x` and `Ey = dEdx*y`.
 
-            * ``<element_name>.dBdx`` (``float``, in Tesla/meter) optional (default: 0.) the magnetic quadrupole field gradient
+            * ``<element_name>.dBdx`` (``float``, in Tesla/meter) optional (default: 0.) the magnetic field gradient
               The field applied to the particles will be `Bx = dBdx*y` and `By = -dBdx*x`.
 
 .. _running-cpp-parameters-collision:
