@@ -2646,8 +2646,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     }
 
     // Loop over the particles and update their momentum
-    const amrex::Real q = this->charge;
-    const amrex::Real m = this-> mass;
+    const amrex::ParticleReal q = this->charge;
+    const amrex::ParticleReal m = this-> mass;
 
     const auto pusher_algo = WarpX::particle_pusher_algo;
     const auto do_crr = do_classical_radiation_reaction;
