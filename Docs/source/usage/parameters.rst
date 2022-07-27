@@ -1420,7 +1420,7 @@ Note that elements of the same type cannot overlap each other.
             * ``<element_name>.ds`` (``float``, in meters) the segment length
 
         * ``quad`` for a hard edged quadrupole.
-          This applies a quadrupole field that is uniform within the `z` extent of the elemnt with a sharp cut off at the ends.
+          This applies a quadrupole field that is uniform within the `z` extent of the element with a sharp cut off at the ends.
           This uses residence corrections, with the field scaled by the amount of time within the element for particles entering
           or leaving it, to increase the accuracy.
           This requires these additional parameters:
