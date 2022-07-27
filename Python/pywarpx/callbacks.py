@@ -264,6 +264,7 @@ _beforestep = CallbackFunctions('beforestep')
 _afterstep = CallbackFunctions('afterstep')
 _afterdiagnostics = CallbackFunctions('afterdiagnostics')
 _afterrestart = CallbackFunctions('afterrestart',lcallonce=1)
+_oncheckpointsignal = CallbackFunctions('oncheckpointsignal')
 _particleinjection = CallbackFunctions('particleinjection')
 _appliedfields = CallbackFunctions('appliedfields')
 
@@ -505,6 +506,20 @@ def isinstalledafterrestart(f):
     "Checks if the function is called immediately after a restart"
     raise Exception('restart call back not implemented yet')
     return _afterrestart.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def oncheckpointsignal(f):
+    installoncheckpointsignal(f)
+    return f
+def installoncheckpointsignal(f):
+    "Adds a function to the list of functions called on checkpoint signal"
+    _oncheckpointsignal.installfuncinlist(f)
+def uninstalloncheckpointsignal(f):
+    "Removes the function from the list of functions called on checkpoint signal"
+    _oncheckpointsignal.uninstallfuncinlist(f)
+def isinstalledoncheckpointsignal(f):
+    "Checks if the function is called on checkpoint signal"
+    return _oncheckpointsignal.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
 def callfromparticleinjection(f):

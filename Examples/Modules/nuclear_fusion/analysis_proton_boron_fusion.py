@@ -79,15 +79,30 @@ E_fusion = 8.59009*MeV_to_Joule # Energy released during p + B -> alpha + Be
 E_decay = 0.0918984*MeV_to_Joule # Energy released during Be -> 2*alpha
 E_fusion_total = E_fusion + E_decay # Energy released during p + B -> 3*alpha
 
+## Checks whether this is the 2D or the 3D test
+is_2D = "2D" in sys.argv[1]
+
 ## Some numerical parameters for this test
 size_x = 8
-size_y = 8
+if is_2D:
+    size_y = 1
+else:
+    size_y = 8
 size_z = 16
 dV_total = size_x*size_y*size_z # Total simulation volume
 # Volume of a slice corresponding to a single cell in the z direction. In tests 1 and 2, all the
 # particles of a given species in the same slice have the exact same momentum
 dV_slice = size_x*size_y
-dt = 1./(scc.c*np.sqrt(3.))
+if is_2D:
+    dt = 1./(scc.c*np.sqrt(2.))
+    yt_z_string = "particle_position_y"
+    nppcell_1 = 10000*8
+    nppcell_2 = 900*8
+else:
+    dt = 1./(scc.c*np.sqrt(3.))
+    yt_z_string = "particle_position_z"
+    nppcell_1 = 10000
+    nppcell_2 = 900
 # In test 1 and 2, the energy in cells number i (in z direction) is typically Energy_step * i**2
 Energy_step = 22.*keV_to_Joule
 
@@ -102,7 +117,7 @@ def add_existing_species_to_dict(yt_ad, data_dict, species_name, prefix, suffix)
     data_dict[prefix+"_w_"+suffix]   = yt_ad[species_name, "particle_weight"].v
     data_dict[prefix+"_id_"+suffix]  = yt_ad[species_name, "particle_id"].v
     data_dict[prefix+"_cpu_"+suffix] = yt_ad[species_name, "particle_cpu"].v
-    data_dict[prefix+"_z_"+suffix]   = yt_ad[species_name, "particle_position_z"].v
+    data_dict[prefix+"_z_"+suffix]   = yt_ad[species_name, yt_z_string].v
 
 def add_empty_species_to_dict(data_dict, species_name, prefix, suffix):
     data_dict[prefix+"_px_"+suffix]  = np.empty(0)
@@ -323,8 +338,8 @@ def E_com_to_p_sq_com(m1, m2, E):
     ## E is the total (kinetic+mass) energy of a two particle (with mass m1 and m2) system in
     ## its center of mass frame, in J.
     ## Returns the square norm of the momentum of each particle in that frame.
-    return E**2/(4.*scc.c**2) - (m1**2 + m2**2)*scc.c**2/2. + \
-           scc.c**6/(4.*E**2)*((m1**2 - m2**2)**2)
+    E_ratio = E/((m1+m2)*scc.c**2)
+    return m1*m2*scc.c**2 * (E_ratio**2 - 1) + (m1-m2)**2*scc.c**2/4 * (E_ratio - 1./E_ratio)**2
 
 def compute_relative_v_com(E):
     ## E is the kinetic energy of proton+boron in the center of mass frame, in keV
@@ -643,7 +658,7 @@ def specific_check1(data):
     check_isotropy(data, relative_tolerance = 3.e-2)
     expected_fusion_number = check_macroparticle_number(data,
                                                         fusion_probability_target_value = 0.002,
-                                                        num_pair_per_cell = 10000)
+                                                        num_pair_per_cell = nppcell_1)
     E_com = compute_E_com1(data)
     check_alpha_yield(data, expected_fusion_number, E_com, proton_density = 1.,
                                                            boron_density = 1.)
@@ -654,7 +669,7 @@ def specific_check2(data):
     ## Only 900 particles pairs per cell here because we ignore the 10% of protons that are at rest
     expected_fusion_number = check_macroparticle_number(data,
                                                         fusion_probability_target_value = 0.02,
-                                                        num_pair_per_cell = 900)
+                                                        num_pair_per_cell = nppcell_2)
     E_com = compute_E_com2(data)
     check_alpha_yield(data, expected_fusion_number, E_com, proton_density = 1.e20,
                                                            boron_density = 1.e26)

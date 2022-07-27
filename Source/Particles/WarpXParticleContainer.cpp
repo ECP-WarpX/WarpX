@@ -359,6 +359,10 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     Real q = this->charge;
 
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Sorting", blp_sort);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::FindMaxTilesize", 
+            blp_get_max_tilesize);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::DirectCurrentDepKernel", 
+            direct_current_dep_kernel);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::CurrentDeposition", blp_deposit);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Accumulate", blp_accumulate);
 
@@ -513,7 +517,9 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         });
             }
             WARPX_PROFILE_VAR_STOP(blp_sort);
-
+            WARPX_PROFILE_VAR_START(blp_get_max_tilesize);
+                //get the maximum size necessary for shared mem
+                // get tile boxes
             //get the maximum size necessary for shared mem
 #if AMREX_SPACEDIM > 0
             int sizeX = getMaxTboxAlongDim(box.size()[0], WarpX::shared_tilesize[0]);
@@ -525,8 +531,10 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             int sizeY = getMaxTboxAlongDim(box.size()[2], WarpX::shared_tilesize[2]);
 #endif
             amrex::IntVect max_tbox_size( AMREX_D_DECL(sizeX,sizeZ,sizeY) );
+            WARPX_PROFILE_VAR_STOP(blp_get_max_tilesize);
 
 
+            WARPX_PROFILE_VAR_START(direct_current_dep_kernel);
             if        (WarpX::nox == 1){
                 doDepositionSharedShapeN<1>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
@@ -549,6 +557,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
                     WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
             }
+            WARPX_PROFILE_VAR_STOP(direct_current_dep_kernel);
 
         } else {
             if        (WarpX::nox == 1){

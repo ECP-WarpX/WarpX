@@ -71,17 +71,15 @@ FlushFormatPlotfile::WriteToFile (
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::Version_v1);
     if (plot_raw_fields) rfs.emplace_back("raw_fields");
-    if (varnames.size() > 0) {
-        amrex::WriteMultiLevelPlotfile(filename, nlev,
-                                       amrex::GetVecOfConstPtrs(mf),
-                                       varnames, geom,
-                                       static_cast<Real>(time), iteration, warpx.refRatio(),
-                                       "HyperCLaw-V1.1",
-                                       "Level_",
-                                       "Cell",
-                                       rfs
-                                       );
-    }
+    amrex::WriteMultiLevelPlotfile(filename, nlev,
+                                   amrex::GetVecOfConstPtrs(mf),
+                                   varnames, geom,
+                                   static_cast<Real>(time), iteration, warpx.refRatio(),
+                                   "HyperCLaw-V1.1",
+                                   "Level_",
+                                   "Cell",
+                                   rfs
+                                   );
 
     WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards);
 
@@ -307,9 +305,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         auto tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
         if (isBTD) {
             PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
-            tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
-            tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
-            tmp.SetParticleDistributionMap(0, pinned_pc->ParticleDistributionMap(0));
+            tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
         }
 
         Vector<std::string> real_names;
