@@ -212,6 +212,9 @@ public:
     //! number of threads to use per block in shared deposition
     static int shared_mem_current_tpb;
 
+    //! tileSize to use for shared current deposition operations
+    static amrex::IntVect shared_tilesize;
+
     //! Whether to fill the guard cells when computing inverse FFTs, based on the boundary conditions
     static amrex::IntVect fill_guards;
 

@@ -472,7 +472,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 
     //calculate how much shared memory is needed. Note 3 because writing to 3 array4s
     std::size_t shared_mem_bytes = npts*sizeof(amrex::Real); 
-    amrex::IntVect bin_size = WarpX::sort_bin_size;
+    amrex::IntVect bin_size = WarpX::shared_tilesize;
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
     //WATCH may get burned if this makes you use less threads
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,

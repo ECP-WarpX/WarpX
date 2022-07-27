@@ -10,6 +10,7 @@
 #include "Utils/WarpXConst.H"
 
 #include <ablastr/utils/Communication.H>
+#include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX_MultiFab.H>
@@ -74,7 +75,7 @@ namespace ablastr::fields {
  * \param[in] rho The charge density a given species
  * \param[out] phi The potential to be computed by this function
  * \param[in] beta Represents the velocity of the source of `phi`
- * \param[in] required_precision The relative convergence threshold for the MLMG solver
+ * \param[in] relative_tolerance The relative convergence threshold for the MLMG solver
  * \param[in] absolute_tolerance The absolute convergence threshold for the MLMG solver
  * \param[in] max_iters The maximum number of iterations allowed for the MLMG solver
  * \param[in] verbosity The verbosity setting for the MLMG solver
@@ -90,14 +91,14 @@ namespace ablastr::fields {
  */
 template<
     typename T_BoundaryHandler,
-    typename T_PostPhiCalculationFunctor,
+    typename T_PostPhiCalculationFunctor = std::nullopt_t,
     typename T_FArrayBoxFactory = void
 >
 void
-computePhi (amrex::Vector<std::unique_ptr<amrex::MultiFab> > const & rho,
-            amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
+            amrex::Vector<amrex::MultiFab*> & phi,
             std::array<amrex::Real, 3> const beta,
-            amrex::Real const required_precision,
+            amrex::Real const relative_tolerance,
             amrex::Real absolute_tolerance,
             int const max_iters,
             int const verbosity,
@@ -107,7 +108,7 @@ computePhi (amrex::Vector<std::unique_ptr<amrex::MultiFab> > const & rho,
             T_BoundaryHandler const boundary_handler,
             bool const do_single_precision_comms = false,
             std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
-            std::optional<T_PostPhiCalculationFunctor> post_phi_calculation = std::nullopt,
+            [[maybe_unused]] T_PostPhiCalculationFunctor post_phi_calculation = std::nullopt,
             [[maybe_unused]] std::optional<amrex::Real const> current_time = std::nullopt, // only used for EB
             [[maybe_unused]] std::optional<amrex::Vector<T_FArrayBoxFactory const *> > eb_farray_box_factory = std::nullopt // only used for EB
 )
@@ -125,7 +126,7 @@ computePhi (amrex::Vector<std::unique_ptr<amrex::MultiFab> > const & rho,
     // scale rho appropriately; also determine if rho is zero everywhere
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
-        rho[lev]->mult(-1._rt/PhysConst::ep0);
+        rho[lev]->mult(-1._rt/PhysConst::ep0); // TODO: when do we "un-multiply" this? We need to document this side-effect!
         max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
@@ -152,7 +153,7 @@ computePhi (amrex::Vector<std::unique_ptr<amrex::MultiFab> > const & rho,
                 {{ beta[0], beta[1], beta[2] }};
 #endif
 
-#if !(defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ))
+#if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
                 {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
@@ -226,8 +227,8 @@ computePhi (amrex::Vector<std::unique_ptr<amrex::MultiFab> > const & rho,
         mlmg.setAlwaysUseBNorm(always_use_bnorm);
 
         // Solve Poisson equation at lev
-        mlmg.solve( {phi[lev].get()}, {rho[lev].get()},
-                    required_precision, absolute_tolerance );
+        mlmg.solve( {phi[lev]}, {rho[lev]},
+                    relative_tolerance, absolute_tolerance );
 
         // needed for solving the levels by levels:
         // - coarser level is initial guess for finer level
@@ -279,8 +280,9 @@ computePhi (amrex::Vector<std::unique_ptr<amrex::MultiFab> > const & rho,
         }
 
         // Run additional operations, such as calculation of the E field for embedded boundaries
-        if (post_phi_calculation.has_value())
-            post_phi_calculation.value()(mlmg, lev);
+        if constexpr (!std::is_same<T_PostPhiCalculationFunctor, std::nullopt_t>::value)
+            if (post_phi_calculation.has_value())
+                post_phi_calculation.value()(mlmg, lev);
 
     } // loop over lev(els)
 }

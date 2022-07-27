@@ -128,7 +128,9 @@ int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
 bool WarpX::do_shared_mem_charge_deposition = false;
 bool WarpX::do_shared_mem_current_deposition = false;
-int WarpX::shared_mem_current_tpb = 512;
+int WarpX::shared_mem_current_tpb = 256;
+//Note this is not really the default. Default is sort_bin_size
+amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1)); 
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
@@ -291,8 +293,12 @@ WarpX::WarpX ()
     current_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
-    Efield_avg_fp.resize(nlevs_max);
-    Bfield_avg_fp.resize(nlevs_max);
+
+    if (fft_do_time_averaging)
+    {
+        Efield_avg_fp.resize(nlevs_max);
+        Bfield_avg_fp.resize(nlevs_max);
+    }
 
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
@@ -323,8 +329,12 @@ WarpX::WarpX ()
     current_cp.resize(nlevs_max);
     Efield_cp.resize(nlevs_max);
     Bfield_cp.resize(nlevs_max);
-    Efield_avg_cp.resize(nlevs_max);
-    Bfield_avg_cp.resize(nlevs_max);
+
+    if (fft_do_time_averaging)
+    {
+        Efield_avg_cp.resize(nlevs_max);
+        Bfield_avg_cp.resize(nlevs_max);
+    }
 
     Efield_cax.resize(nlevs_max);
     Bfield_cax.resize(nlevs_max);
@@ -755,6 +765,15 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_shared_mem_charge_deposition", do_shared_mem_charge_deposition);
         pp_warpx.query("do_shared_mem_current_deposition", do_shared_mem_current_deposition);
         pp_warpx.query("shared_mem_current_tpb", shared_mem_current_tpb);
+        
+        // initialize the shared tilesize
+        Vector<int> vect_shared_tilesize(AMREX_SPACEDIM, 1);
+        bool shared_tilesize_is_specified = queryArrWithParser(pp_warpx, "shared_tilesize",
+                                                            vect_shared_tilesize, 0, AMREX_SPACEDIM);
+        if (shared_tilesize_is_specified){
+            for (int i=0; i<AMREX_SPACEDIM; i++)
+                shared_tilesize[i] = vect_shared_tilesize[i];
+        }
 
         pp_warpx.query("serialize_initial_conditions", serialize_initial_conditions);
         pp_warpx.query("refine_plasma", refine_plasma);
@@ -1057,6 +1076,7 @@ WarpX::ReadParameters ()
             for (int i=0; i<AMREX_SPACEDIM; i++)
                 sort_bin_size[i] = vect_sort_bin_size[i];
         }
+        shared_tilesize = sort_bin_size;
     }
 
     {
@@ -1801,13 +1821,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             dm, ncomps, ngJ, tag("current_fp_vay[z]"));
     }
 
-    Bfield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_fp[x]"));
-    Bfield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_fp[y]"));
-    Bfield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_fp[z]"));
+    if (fft_do_time_averaging)
+    {
+        Bfield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_fp[x]"));
+        Bfield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_fp[y]"));
+        Bfield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_fp[z]"));
 
-    Efield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_fp[x]"));
-    Efield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_fp[y]"));
-    Efield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_fp[z]"));
+        Efield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_fp[x]"));
+        Efield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_fp[y]"));
+        Efield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_fp[z]"));
+    }
 
 #ifdef AMREX_USE_EB
     constexpr int nc_ls = 1;
@@ -2016,15 +2039,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_cp[y]"));
         Efield_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_cp[z]"));
 
-        // Create the MultiFabs for B_avg
-        Bfield_avg_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_cp[x]"));
-        Bfield_avg_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,By_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_cp[y]"));
-        Bfield_avg_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Bz_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_cp[z]"));
+        if (fft_do_time_averaging)
+        {
+            Bfield_avg_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_cp[x]"));
+            Bfield_avg_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,By_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_cp[y]"));
+            Bfield_avg_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Bz_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_cp[z]"));
 
-        // Create the MultiFabs for E_avg
-        Efield_avg_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Ex_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_cp[x]"));
-        Efield_avg_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_cp[y]"));
-        Efield_avg_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_cp[z]"));
+            Efield_avg_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,Ex_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_cp[x]"));
+            Efield_avg_cp[lev][1] = std::make_unique<MultiFab>(amrex::convert(cba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_cp[y]"));
+            Efield_avg_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_avg_cp[z]"));
+        }
 
         // Create the MultiFabs for the current
         current_cp[lev][0] = std::make_unique<MultiFab>(amrex::convert(cba,jx_nodal_flag),dm,ncomps,ngJ,tag("current_cp[x]"));

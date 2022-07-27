@@ -266,6 +266,19 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     Redistribute();
 }
 
+/*
+ * \brief gets the maximum width, height, or length of a tilebox. In number of cells.
+ * \param nCells : Number of cells in the direction to be considered
+ * \param tilesize : The 1D tilesize in the direction to be considered
+ */
+int getMaxTboxAlongDim(int nCells, int tilesize){
+    int maxTilesize = 0;
+    int nTiles = nCells / tilesize;
+    int remainder = nCells % tilesize;
+    maxTilesize = tilesize + std::ceil((float) remainder / nTiles);
+    return maxTilesize;
+}
+
 /* \brief Current Deposition for thread thread_num
  * \param pti         : Particle iterator
  * \param wp          : Array of particle weights
@@ -346,6 +359,10 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     Real q = this->charge;
 
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Sorting", blp_sort);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::FindMaxTilesize", 
+            blp_get_max_tilesize);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::DirectCurrentDepKernel", 
+            direct_current_dep_kernel);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::CurrentDeposition", blp_deposit);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Accumulate", blp_accumulate);
 
@@ -477,7 +494,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 
             Box box = pti.validbox();
             box.grow(ng_J);
-            amrex::IntVect bin_size = WarpX::sort_bin_size;
+            amrex::IntVect bin_size = WarpX::shared_tilesize;
 
             //sort particles by bin
             WARPX_PROFILE_VAR_START(blp_sort);
@@ -500,61 +517,24 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         });
             }
             WARPX_PROFILE_VAR_STOP(blp_sort);
+            WARPX_PROFILE_VAR_START(blp_get_max_tilesize);
                 //get the maximum size necessary for shared mem
                 // get tile boxes
-                amrex::Gpu::DeviceVector<Box> tboxes(bins.numBins(), amrex::Box());
-                {
-                    auto& ptile = ParticlesAt(lev, pti);
-                    auto& aos   = ptile.GetArrayOfStructs();
-                    auto pstruct_ptr = aos().dataPtr();
+            //get the maximum size necessary for shared mem
+#if AMREX_SPACEDIM > 0
+            int sizeX = getMaxTboxAlongDim(box.size()[0], WarpX::shared_tilesize[0]);
+#endif
+#if AMREX_SPACEDIM > 1
+            int sizeZ = getMaxTboxAlongDim(box.size()[1], WarpX::shared_tilesize[1]);
+#endif
+#if AMREX_SPACEDIM > 2
+            int sizeY = getMaxTboxAlongDim(box.size()[2], WarpX::shared_tilesize[2]);
+#endif
+            amrex::IntVect max_tbox_size( AMREX_D_DECL(sizeX,sizeZ,sizeY) );
+            WARPX_PROFILE_VAR_STOP(blp_get_max_tilesize);
 
-                    const auto offsets_ptr = bins.offsetsPtr();
-                    auto tbox_ptr = tboxes.dataPtr();
-                    auto permutation = bins.permutationPtr();
-                    amrex::ParallelFor(bins.numBins(),
-                                       [=] AMREX_GPU_DEVICE (int ibin) {
-                                           const int bin_start = offsets_ptr[ibin];
-                                           const int bin_stop = offsets_ptr[ibin+1];
-                                           if (bin_start < bin_stop) {
-                                               auto p = pstruct_ptr[permutation[bin_start]];
-                                               Box tbox;
-                                               auto iv = getParticleCell(p, plo, dxi, domain);
-                                               AMREX_ASSERT(box.contains(iv));
-                                               [[maybe_unused]] auto tid = getTileIndex(iv, box, true, bin_size, tbox);
-                                               AMREX_ASSERT(tid == ibin);
-                                               AMREX_ASSERT(tbox.contains(iv));
-                                               tbox_ptr[ibin] = tbox;
-                                           }
-                                       });
-                }
 
-            // compute max tile box size in each direction
-            amrex::IntVect max_tbox_size;
-            {
-                ReduceOps<AMREX_D_DECL(ReduceOpMax, ReduceOpMax, ReduceOpMax)> reduce_op;
-                ReduceData<AMREX_D_DECL(int, int, int)> reduce_data(reduce_op);
-                using ReduceTuple = typename decltype(reduce_data)::Type;
-
-                const auto boxes_ptr = tboxes.dataPtr();
-                reduce_op.eval(tboxes.size(), reduce_data,
-                               [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
-                               {
-                                   const Box& box = boxes_ptr[i];
-                                   if (box.ok()) {
-                                       IntVect si = box.length();
-                                       return {AMREX_D_DECL(si[0], si[1], si[2])};
-                                   } else {
-                                       return {AMREX_D_DECL(0, 0, 0)};
-                                   }
-                               });
-
-                ReduceTuple hv = reduce_data.value();
-
-                max_tbox_size = IntVect(AMREX_D_DECL(amrex::get<0>(hv),
-                                                     amrex::get<1>(hv),
-                                                     amrex::get<2>(hv)));
-            }
-
+            WARPX_PROFILE_VAR_START(direct_current_dep_kernel);
             if        (WarpX::nox == 1){
                 doDepositionSharedShapeN<1>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
@@ -577,6 +557,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
                     WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
             }
+            WARPX_PROFILE_VAR_STOP(direct_current_dep_kernel);
 
         } else {
             if        (WarpX::nox == 1){
@@ -797,7 +778,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
             Box box = pti.validbox();
             box.grow(ng_rho);
-            amrex::IntVect bin_size = WarpX::sort_bin_size;
+            amrex::IntVect bin_size = WarpX::shared_tilesize;
             int ntiles = numTilesInBox(box, true, bin_size);
 
             bins.build(ptile.numParticles(), pstruct_ptr, ntiles,
@@ -826,7 +807,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
             Box box = pti.validbox();
             box.grow(ng_rho);
-            amrex::IntVect bin_size = WarpX::sort_bin_size;
+            amrex::IntVect bin_size = WarpX::shared_tilesize;
 
             const auto offsets_ptr = bins.offsetsPtr();
             auto tbox_ptr = tboxes.dataPtr();
