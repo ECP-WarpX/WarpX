@@ -85,7 +85,7 @@ public:
       return  allcontainers[ispecies];
     }
 #endif
-    std::array<amrex::Real, 3> meanParticleVelocity(int ispecies) {
+    std::array<amrex::ParticleReal, 3> meanParticleVelocity(int ispecies) {
         return allcontainers[ispecies]->meanParticleVelocity();
     }
 
@@ -298,8 +298,8 @@ public:
     std::string m_B_ext_particle_s = "none";
     std::string m_E_ext_particle_s = "none";
     // External fields added to particle fields.
-    amrex::Vector<amrex::Real> m_B_external_particle;
-    amrex::Vector<amrex::Real> m_E_external_particle;
+    amrex::Vector<amrex::ParticleReal> m_B_external_particle;
+    amrex::Vector<amrex::ParticleReal> m_E_external_particle;
     // Parser for B_external on the particle
     std::unique_ptr<amrex::Parser> m_Bx_particle_parser;
     std::unique_ptr<amrex::Parser> m_By_particle_parser;
@@ -309,15 +309,15 @@ public:
     std::unique_ptr<amrex::Parser> m_Ey_particle_parser;
     std::unique_ptr<amrex::Parser> m_Ez_particle_parser;
 
-    amrex::Real m_repeated_plasma_lens_period;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_starts;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_lengths;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_E;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_B;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_starts;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_lengths;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_E;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_B;
+    amrex::ParticleReal m_repeated_plasma_lens_period;
+    amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_starts;
+    amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_lengths;
+    amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_strengths_E;
+    amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_strengths_B;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_starts;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_lengths;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_strengths_E;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_strengths_B;
 
 #ifdef WARPX_QED
     /**

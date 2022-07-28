@@ -33,7 +33,7 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false, "background_type must be either electrons or ions");
     }
 
-    amrex::Real background_density;
+    amrex::ParticleReal background_density;
     std::string background_density_str;
     if (queryWithParser(pp_collision_name, "background_density", background_density)) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(background_density > 0,
@@ -46,7 +46,7 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
                  "For background stopping, the background density must be specified.");
     }
 
-    amrex::Real background_temperature;
+    amrex::ParticleReal background_temperature;
     std::string background_temperature_str;
     if (queryWithParser(pp_collision_name, "background_temperature", background_temperature)) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(background_temperature > 0,
@@ -81,8 +81,8 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiPar
     using namespace amrex::literals;
 
     auto& species = mypc->GetParticleContainerFromName(m_species_names[0]);
-    amrex::Real species_mass = species.getMass();
-    amrex::Real species_charge = species.getCharge();
+    amrex::ParticleReal species_mass = species.getMass();
+    amrex::ParticleReal species_charge = species.getCharge();
 
     BackgroundStoppingType background_type = m_background_type;
 
@@ -121,7 +121,7 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiPar
 }
 
 void BackgroundStopping::doBackgroundStoppingOnElectronsWithinTile (WarpXParIter& pti, amrex::Real dt, amrex::Real t,
-                                                                    amrex::Real species_mass, amrex::Real species_charge)
+                                                                    amrex::ParticleReal species_mass, amrex::ParticleReal species_charge)
 {
     using namespace amrex::literals;
 
@@ -132,7 +132,7 @@ void BackgroundStopping::doBackgroundStoppingOnElectronsWithinTile (WarpXParIter
     const long np = pti.numParticles();
 
     // get background particle mass
-    amrex::Real mass_e = m_background_mass;
+    amrex::ParticleReal mass_e = m_background_mass;
 
     // setup parsers for the background density and temperature
     auto n_e_func = m_background_density_func;
@@ -153,33 +153,33 @@ void BackgroundStopping::doBackgroundStoppingOnElectronsWithinTile (WarpXParIter
 
             amrex::ParticleReal x, y, z;
             GetPosition.AsStored(ip, x, y, z);
-            amrex::Real const n_e = n_e_func(x, y, z, t);
-            amrex::Real const T_e = T_e_func(x, y, z, t)*PhysConst::kb;
+            amrex::ParticleReal const n_e = n_e_func(x, y, z, t);
+            amrex::ParticleReal const T_e = T_e_func(x, y, z, t)*PhysConst::kb;
 
             // This implements the equation 14.12 from Introduction to Plasma Physics,
             // Goldston and Rutherford, the slowing down of beam ions due to collisions with electrons.
             // The equation is written as dV/dt = -alpha*V, and integrated to
             // give V(t+dt) = V(t)*exp(-alpha*dt)
 
-            amrex::Real constexpr pi = MathConst::pi;
-            amrex::Real constexpr ep0 = PhysConst::ep0;
-            amrex::Real constexpr q_e = PhysConst::q_e;
-            amrex::Real constexpr q_e2 = q_e*q_e;
-            amrex::Real constexpr ep02 = ep0*ep0;
+            amrex::ParticleReal constexpr pi = MathConst::pi;
+            amrex::ParticleReal constexpr ep0 = PhysConst::ep0;
+            amrex::ParticleReal constexpr q_e = PhysConst::q_e;
+            amrex::ParticleReal constexpr q_e2 = q_e*q_e;
+            amrex::ParticleReal constexpr ep02 = ep0*ep0;
 
-            amrex::Real const Zb = abs(species_charge/q_e);
+            amrex::ParticleReal const Zb = abs(species_charge/q_e);
 
-            amrex::Real const vth = sqrt(3._rt*T_e/mass_e);
-            amrex::Real const wp = sqrt(n_e*q_e2/(ep0*mass_e));
-            amrex::Real const lambdadb = vth/wp;
-            amrex::Real const lambdadb3 = lambdadb*lambdadb*lambdadb;
-            amrex::Real const loglambda = log((12._rt*pi/Zb)*(n_e*lambdadb3));
+            amrex::ParticleReal const vth = sqrt(3._prt*T_e/mass_e);
+            amrex::ParticleReal const wp = sqrt(n_e*q_e2/(ep0*mass_e));
+            amrex::ParticleReal const lambdadb = vth/wp;
+            amrex::ParticleReal const lambdadb3 = lambdadb*lambdadb*lambdadb;
+            amrex::ParticleReal const loglambda = log((12._prt*pi/Zb)*(n_e*lambdadb3));
 
-            amrex::Real const pi32 = pi*sqrt(pi);
-            amrex::Real const q2 = species_charge*species_charge;
-            amrex::Real const T32 = T_e*sqrt(T_e);
+            amrex::ParticleReal const pi32 = pi*sqrt(pi);
+            amrex::ParticleReal const q2 = species_charge*species_charge;
+            amrex::ParticleReal const T32 = T_e*sqrt(T_e);
 
-            amrex::Real const alpha = sqrt(2._rt)*n_e*q2*q_e2*sqrt(mass_e)*loglambda/(12._rt*pi32*ep02*species_mass*T32);
+            amrex::ParticleReal const alpha = sqrt(2._prt)*n_e*q2*q_e2*sqrt(mass_e)*loglambda/(12._prt*pi32*ep02*species_mass*T32);
 
             ux[ip] *= exp(-alpha*dt);
             uy[ip] *= exp(-alpha*dt);
@@ -190,7 +190,7 @@ void BackgroundStopping::doBackgroundStoppingOnElectronsWithinTile (WarpXParIter
 }
 
 void BackgroundStopping::doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti, amrex::Real dt, amrex::Real t,
-                                                               amrex::Real species_mass, amrex::Real species_charge)
+                                                               amrex::ParticleReal species_mass, amrex::ParticleReal species_charge)
 {
     using namespace amrex::literals;
 
@@ -201,8 +201,8 @@ void BackgroundStopping::doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti
     const long np = pti.numParticles();
 
     // get background particle mass
-    amrex::Real mass_i = m_background_mass;
-    amrex::Real charge_state_i = m_background_charge_state;
+    amrex::ParticleReal mass_i = m_background_mass;
+    amrex::ParticleReal charge_state_i = m_background_charge_state;
 
     // setup parsers for the background density and temperature
     auto n_i_func = m_background_density_func;
@@ -223,37 +223,37 @@ void BackgroundStopping::doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti
 
             amrex::ParticleReal x, y, z;
             GetPosition.AsStored(ip, x, y, z);
-            amrex::Real const n_i = n_i_func(x, y, z, t);
-            amrex::Real const T_i = T_i_func(x, y, z, t)*PhysConst::kb;
+            amrex::ParticleReal const n_i = n_i_func(x, y, z, t);
+            amrex::ParticleReal const T_i = T_i_func(x, y, z, t)*PhysConst::kb;
 
             // This implements the equation 14.20 from Introduction to Plasma Physics,
             // Goldston and Rutherford, the slowing down of beam ions due to collisions with electrons.
             // The equation is written with energy, W, as dW/dt = -alpha/W**0.5, and integrated to
             // give W(t+dt) = (W(t)**1.5 - 3./2.*alpha*dt)**(2/3)
 
-            amrex::Real constexpr pi = MathConst::pi;
-            amrex::Real constexpr q_e = PhysConst::q_e;
-            amrex::Real constexpr q_e2 = q_e*q_e;
-            amrex::Real constexpr ep0 = PhysConst::ep0;
-            amrex::Real constexpr ep02 = ep0*ep0;
+            amrex::ParticleReal constexpr pi = MathConst::pi;
+            amrex::ParticleReal constexpr q_e = PhysConst::q_e;
+            amrex::ParticleReal constexpr q_e2 = q_e*q_e;
+            amrex::ParticleReal constexpr ep0 = PhysConst::ep0;
+            amrex::ParticleReal constexpr ep02 = ep0*ep0;
 
-            amrex::Real const qi2 = charge_state_i*charge_state_i*q_e2;
-            amrex::Real const qb2 = species_charge*species_charge;
-            amrex::Real const Zb = abs(species_charge/q_e);
+            amrex::ParticleReal const qi2 = charge_state_i*charge_state_i*q_e2;
+            amrex::ParticleReal const qb2 = species_charge*species_charge;
+            amrex::ParticleReal const Zb = abs(species_charge/q_e);
 
-            amrex::Real const vth = sqrt(3._rt*T_i/mass_i);
-            amrex::Real const wp = sqrt(n_i*q_e2/(ep0*mass_i));
-            amrex::Real const lambdadb = vth/wp;
-            amrex::Real const lambdadb3 = lambdadb*lambdadb*lambdadb;
-            amrex::Real const loglambda = log((12._rt*pi/Zb)*(n_i*lambdadb3));
+            amrex::ParticleReal const vth = sqrt(3._prt*T_i/mass_i);
+            amrex::ParticleReal const wp = sqrt(n_i*q_e2/(ep0*mass_i));
+            amrex::ParticleReal const lambdadb = vth/wp;
+            amrex::ParticleReal const lambdadb3 = lambdadb*lambdadb*lambdadb;
+            amrex::ParticleReal const loglambda = log((12._prt*pi/Zb)*(n_i*lambdadb3));
 
-            amrex::Real const alpha = sqrt(2._rt)*n_i*qi2*qb2*sqrt(species_mass)*loglambda/(8._rt*pi*ep02*mass_i);
+            amrex::ParticleReal const alpha = sqrt(2._prt)*n_i*qi2*qb2*sqrt(species_mass)*loglambda/(8._prt*pi*ep02*mass_i);
 
-            amrex::Real const W0 = 0.5_rt*species_mass*(ux[ip]*ux[ip] + uy[ip]*uy[ip] + uz[ip]*uz[ip]);
-            amrex::Real const f1 = pow(W0, 1.5_rt) - 1.5_rt*alpha*dt;
+            amrex::ParticleReal const W0 = 0.5_prt*species_mass*(ux[ip]*ux[ip] + uy[ip]*uy[ip] + uz[ip]*uz[ip]);
+            amrex::ParticleReal const f1 = pow(W0, 1.5_prt) - 1.5_prt*alpha*dt;
             // If f1 goes negative, the particle has fully stopped, so set W1 to 0.
-            amrex::Real const W1 = pow((f1 > 0._rt ? f1 : 0._rt), 2._rt/3._rt);
-            amrex::Real const vscale = (W0 > 0._rt ? std::sqrt(W1/W0) : 0._rt);
+            amrex::ParticleReal const W1 = pow((f1 > 0._prt ? f1 : 0._prt), 2._prt/3._prt);
+            amrex::ParticleReal const vscale = (W0 > 0._prt ? std::sqrt(W1/W0) : 0._prt);
 
             ux[ip] *= vscale;
             uy[ip] *= vscale;
