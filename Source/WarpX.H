@@ -932,18 +932,6 @@ private:
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
 
-    /**
-     * \brief Synchronize the nodal points of a given vector MultiFab (all mesh refinement levels)
-     */
-    void NodalSync (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_fp,
-                    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_cp);
-
-    /**
-     * \brief Synchronize the nodal points of a given scalar MultiFab (all mesh refinement levels)
-     */
-    void NodalSync (amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_fp,
-                    amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_cp);
-
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
 

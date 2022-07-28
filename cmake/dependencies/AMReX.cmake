@@ -111,9 +111,6 @@ macro(find_amrex)
             if(WarpX_COMPUTE STREQUAL CUDA)
                 enable_language(CUDA)
                 # AMReX 21.06+ supports CUDA_ARCHITECTURES
-                if(CMAKE_VERSION VERSION_LESS 3.20)
-                    include(AMReX_SetupCUDA)
-                endif()
             endif()
             add_subdirectory(${WarpX_amrex_src} _deps/localamrex-build/)
         else()
@@ -130,9 +127,6 @@ macro(find_amrex)
                 if(WarpX_COMPUTE STREQUAL CUDA)
                     enable_language(CUDA)
                     # AMReX 21.06+ supports CUDA_ARCHITECTURES
-                    if(CMAKE_VERSION VERSION_LESS 3.20)
-                        include(AMReX_SetupCUDA)
-                    endif()
                 endif()
                 add_subdirectory(${fetchedamrex_SOURCE_DIR} ${fetchedamrex_BINARY_DIR})
             endif()
@@ -227,7 +221,7 @@ macro(find_amrex)
         endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PARTICLE_PRECISION})
 
-        find_package(AMReX 22.06 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
+        find_package(AMReX 22.07 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()
@@ -241,7 +235,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "027f2ff77fed33a191cfc735d8adaabb42d21743"
+set(WarpX_amrex_branch "4b7e20057a3dff84beae21812d826d24e19f2109"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 
