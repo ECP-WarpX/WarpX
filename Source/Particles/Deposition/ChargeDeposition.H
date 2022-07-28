@@ -230,7 +230,9 @@ void addLocalToGlobal (const amrex::Box& bx,
         i += lo.x;
         j += lo.y;
         k += lo.z;
-        amrex::Gpu::Atomic::AddNoRet( &global(i, j, k), local(i, j, k));
+        if (local(i, j, k) > 0.0_rt) {
+            amrex::Gpu::Atomic::AddNoRet( &global(i, j, k), local(i, j, k));
+        }
     }
 }
 #endif
