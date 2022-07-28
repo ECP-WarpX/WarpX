@@ -20,5 +20,7 @@
 #define WARPX_PROFILE_VAR_START(vname) ABLASTR_PROFILE_VAR_START(vname, WarpX::do_device_synchronize)
 #define WARPX_PROFILE_VAR_STOP(vname) ABLASTR_PROFILE_VAR_STOP(vname, WarpX::do_device_synchronize)
 #define WARPX_PROFILE_REGION(rname) ABLASTR_PROFILE_REGION(rname, WarpX::do_device_synchronize)
+#define WARPX_PROFILE_REGION_START(rname) ABLASTR_PROFILE_REGION_START(rname, WarpX::do_device_synchronize)
+#define WARPX_PROFILE_REGION_STOP(rname) ABLASTR_PROFILE_REGION_STOP(rname, WarpX::do_device_synchronize)
 
 #endif // WARPX_PROFILERWRAPPER_H_

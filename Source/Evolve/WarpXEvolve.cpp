@@ -80,6 +80,7 @@ WarpX::Evolve (int numsteps)
     const int step_begin = istep[0];
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
+        WARPX_PROFILE_REGION_START("WarpX::Evolve::step");
         WARPX_PROFILE("WarpX::Evolve::step");
         Real evolve_time_beg_step = amrex::second();
 
@@ -368,6 +369,7 @@ WarpX::Evolve (int numsteps)
             break;
         }
 
+        WARPX_PROFILE_REGION_STOP("WarpX::Evolve::step");
         // End loop on time steps
     }
     multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
@@ -394,7 +396,9 @@ WarpX::OneStep_nosub (Real cur_time)
     ExecutePythonCallback("particlescraper");
     ExecutePythonCallback("beforedeposition");
 
+    WARPX_PROFILE_REGION_START("WarpX::nosub::PushParticles");
     PushParticlesandDepose(cur_time);
+    WARPX_PROFILE_REGION_STOP("WarpX::nosub::PushParticles");
 
     ExecutePythonCallback("afterdeposition");
 
@@ -403,11 +407,13 @@ WarpX::OneStep_nosub (Real cur_time)
     // the actual current J. This is computed later in WarpX::PushPSATD, by calling
     // WarpX::PSATDVayDeposition. The function SyncCurrent is called after that,
     // instead of here, so that we synchronize the correct current.
+    WARPX_PROFILE_REGION_START("WarpX::nosub::SyncJ_rho");
     if (WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay)
     {
         SyncCurrent();
     }
     SyncRho();
+    WARPX_PROFILE_REGION_STOP("WarpX::nosub::SyncJ_rho");
 
     // At this point, J is up-to-date inside the domain, and E and B are
     // up-to-date including enough guard cells for first step of the field
@@ -421,6 +427,7 @@ WarpX::OneStep_nosub (Real cur_time)
 
     // Push E and B from {n} to {n+1}
     // (And update guard cells immediately afterwards)
+    WARPX_PROFILE_REGION_START("WarpX::nosub::PushE_B");
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
         if (use_hybrid_QED)
         {
@@ -488,6 +495,7 @@ WarpX::OneStep_nosub (Real cur_time)
         if (safe_guard_cells)
             FillBoundaryB(guard_cells.ng_alloc_EB);
     } // !PSATD
+    WARPX_PROFILE_REGION_START("WarpX::nosub::PushE_B");
 
     ExecutePythonCallback("afterEsolve");
 }

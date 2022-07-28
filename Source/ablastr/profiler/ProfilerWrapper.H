@@ -52,5 +52,7 @@ namespace profiler {
 #define ABLASTR_PROFILE_VAR_START(vname, sync) ablastr::profiler::device_synchronize(sync); BL_PROFILE_VAR_START(vname)
 #define ABLASTR_PROFILE_VAR_STOP(vname, sync) ablastr::profiler::device_synchronize(sync); BL_PROFILE_VAR_STOP(vname)
 #define ABLASTR_PROFILE_REGION(rname, sync) ablastr::profiler::device_synchronize(sync); BL_PROFILE_REGION(rname); ablastr::profiler::SynchronizeOnDestruct BL_PROFILE_PASTE(SYNC_R_, __COUNTER__){sync}
+#define ABLASTR_PROFILE_REGION_START(rname, sync) ablastr::profiler::device_synchronize(sync); BL_PROFILE_REGION_START(rname); ablastr::profiler::SynchronizeOnDestruct BL_PROFILE_PASTE(SYNC_R_, __COUNTER__){sync}
+#define ABLASTR_PROFILE_REGION_STOP(rname, sync) ablastr::profiler::device_synchronize(sync); BL_PROFILE_REGION_STOP(rname); ablastr::profiler::SynchronizeOnDestruct BL_PROFILE_PASTE(SYNC_R_, __COUNTER__){sync}
 
 #endif // ABLASTR_PROFILERWRAPPER_H_
