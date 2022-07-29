@@ -1252,7 +1252,7 @@ std::string F_name, std::string F_component)
     }
     else std::cout << "Unable to open file info.txt." << "\n";
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     int n0_ext = int(info[0]);
     int n1_ext = int(info[1]);
     double d0_ext = info[2];
@@ -1301,7 +1301,7 @@ std::string F_name, std::string F_component)
         const amrex::Box& tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
         auto const& mffab = mf->array(mfi);
 
-#ifdef WARPX_DIM_RZ
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
         // Start ParallelFor
         amrex::ParallelFor (tb,
