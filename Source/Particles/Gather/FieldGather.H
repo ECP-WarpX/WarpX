@@ -262,35 +262,66 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // Gather field on particle Eyp from field on grid ey_arr
     for (int iz=0; iz<=depos_order; iz++){
         for (int ix=0; ix<=depos_order; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+            Eyp += sx_ey[ix]*sz_ey[iz]*
+                ( ey_arr(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 0) +
+                  ey_arr_ext(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 0) );
+#else
             Eyp += sx_ey[ix]*sz_ey[iz]*
                 ey_arr(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 0);
+#endif
         }
     }
     // Gather field on particle Exp from field on grid ex_arr
     // Gather field on particle Bzp from field on grid bz_arr
     for (int iz=0; iz<=depos_order; iz++){
         for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+            Exp += sx_ex[ix]*sz_ex[iz]*
+                ( ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 0) +
+                  ex_arr_ext(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 0) );
+            Bzp += sx_bz[ix]*sz_bz[iz]*
+                ( bz_arr(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 0) +
+                  bz_arr_ext(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 0) );
+#else
             Exp += sx_ex[ix]*sz_ex[iz]*
                 ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 0);
             Bzp += sx_bz[ix]*sz_bz[iz]*
                 bz_arr(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 0);
+#endif
         }
     }
     // Gather field on particle Ezp from field on grid ez_arr
     // Gather field on particle Bxp from field on grid bx_arr
     for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
         for (int ix=0; ix<=depos_order; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+            Ezp += sx_ez[ix]*sz_ez[iz]*
+                ( ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 0) +
+                  ez_arr_ext(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 0) );
+            Bxp += sx_bx[ix]*sz_bx[iz]*
+                ( bx_arr(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 0) +
+                  bx_arr_ext(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 0) );
+#else
             Ezp += sx_ez[ix]*sz_ez[iz]*
                 ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 0);
             Bxp += sx_bx[ix]*sz_bx[iz]*
                 bx_arr(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 0);
+#endif
         }
     }
     // Gather field on particle Byp from field on grid by_arr
     for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
         for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+            Byp += sx_by[ix]*sz_by[iz]*
+                ( by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 0) +
+                  by_arr_ext(lo.x+j_by+ix, lo.y+l_by+iz, 0, 0) );
+#else
             Byp += sx_by[ix]*sz_by[iz]*
                 by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 0);
+
+#endif
         }
     }
 
@@ -313,8 +344,15 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         // Gather field on particle Eyp from field on grid ey_arr
         for (int iz=0; iz<=depos_order; iz++){
             for (int ix=0; ix<=depos_order; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+                const amrex::Real dEy = (+ (ey_arr(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 2*imode-1)+
+                                            ey_arr_ext(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 0))*xy.real()
+                                         - (ey_arr(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 2*imode)+
+                                            ey_arr_ext(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 0))*xy.imag());
+#else
                 const amrex::Real dEy = (+ ey_arr(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 2*imode-1)*xy.real()
                                          - ey_arr(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 2*imode)*xy.imag());
+#endif
                 Eyp += sx_ey[ix]*sz_ey[iz]*dEy;
             }
         }
@@ -322,11 +360,22 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         // Gather field on particle Bzp from field on grid bz_arr
         for (int iz=0; iz<=depos_order; iz++){
             for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+                const amrex::Real dEx = (+ (ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 2*imode-1)+
+                                            ex_arr_ext(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 0))*xy.real()
+                                         - (ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 2*imode)+
+                                            ex_arr_ext(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 0))*xy.imag());
+                const amrex::Real dBz = (+ (bz_arr(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 2*imode-1)+
+                                            bz_arr_ext(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 0))*xy.real()
+                                         - (bz_arr(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 2*imode)+
+                                            bz_arr_ext(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 0))*xy.imag());
+#else
                 const amrex::Real dEx = (+ ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 2*imode-1)*xy.real()
                                          - ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 2*imode)*xy.imag());
-                Exp += sx_ex[ix]*sz_ex[iz]*dEx;
                 const amrex::Real dBz = (+ bz_arr(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 2*imode-1)*xy.real()
                                          - bz_arr(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 2*imode)*xy.imag());
+#endif
+                Exp += sx_ex[ix]*sz_ex[iz]*dEx;
                 Bzp += sx_bz[ix]*sz_bz[iz]*dBz;
             }
         }
@@ -334,19 +383,37 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         // Gather field on particle Bxp from field on grid bx_arr
         for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
             for (int ix=0; ix<=depos_order; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+                const amrex::Real dEz = (+ (ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 2*imode-1)+
+                                            ez_arr_ext(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 0))*xy.real()
+                                         - (ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 2*imode)+
+                                            ez_arr_ext(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 0))*xy.imag());
+                const amrex::Real dBx = (+ (bx_arr(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 2*imode-1)+
+                                            bx_arr_ext(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 0))*xy.real()
+                                         - (bx_arr(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 2*imode)+
+                                            bx_arr_ext(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 0))*xy.imag());
+#else
                 const amrex::Real dEz = (+ ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 2*imode-1)*xy.real()
                                          - ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 2*imode)*xy.imag());
-                Ezp += sx_ez[ix]*sz_ez[iz]*dEz;
                 const amrex::Real dBx = (+ bx_arr(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 2*imode-1)*xy.real()
                                          - bx_arr(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 2*imode)*xy.imag());
+#endif
+                Ezp += sx_ez[ix]*sz_ez[iz]*dEz;
                 Bxp += sx_bx[ix]*sz_bx[iz]*dBx;
             }
         }
         // Gather field on particle Byp from field on grid by_arr
         for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
             for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
+#ifdef WARPX_EXTERNAL_FIELD
+                const amrex::Real dBy = (+ (by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 2*imode-1)+
+                                            by_arr_ext(lo.x+j_by+ix, lo.y+l_by+iz, 0, 0))*xy.real()
+                                         - (by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 2*imode)+
+                                            by_arr_ext(lo.x+j_by+ix, lo.y+l_by+iz, 0, 0))*xy.imag());
+#else
                 const amrex::Real dBy = (+ by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 2*imode-1)*xy.real()
                                          - by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 2*imode)*xy.imag());
+#endif
                 Byp += sx_by[ix]*sz_by[iz]*dBy;
             }
         }
@@ -416,7 +483,6 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                 Bzp += sx_bz[ix]*sy_bz[iy]*sz_bz[iz]*
                     ( bz_arr(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz) +
                   bz_arr_ext(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz) );
-std::cout << "@_@: " << bz_arr_ext(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz) << "\n";
 #else
                 Bzp += sx_bz[ix]*sy_bz[iy]*sz_bz[iz]*
                     bz_arr(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz);

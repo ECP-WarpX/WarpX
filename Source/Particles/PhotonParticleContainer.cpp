@@ -160,6 +160,13 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     amrex::Array4<const amrex::Real> const& by_arr = byfab->array();
     amrex::Array4<const amrex::Real> const& bz_arr = bzfab->array();
 
+    amrex::Array4<const amrex::Real> const& ex_arr_ext = exfab_ext->array();
+    amrex::Array4<const amrex::Real> const& ey_arr_ext = eyfab_ext->array();
+    amrex::Array4<const amrex::Real> const& ez_arr_ext = ezfab_ext->array();
+    amrex::Array4<const amrex::Real> const& bx_arr_ext = bxfab_ext->array();
+    amrex::Array4<const amrex::Real> const& by_arr_ext = byfab_ext->array();
+    amrex::Array4<const amrex::Real> const& bz_arr_ext = bzfab_ext->array();
+
     amrex::IndexType const ex_type = exfab->box().ixType();
     amrex::IndexType const ey_type = eyfab->box().ixType();
     amrex::IndexType const ez_type = ezfab->box().ixType();
@@ -183,7 +190,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                 // first gather E and B to the particle positions
                 doGatherShapeN(x, y, z, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                               ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                               ex_arr_ext, ey_arr_ext, ez_arr_ext, bx_arr_ext, by_arr_ext, bz_arr_ext,
                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
