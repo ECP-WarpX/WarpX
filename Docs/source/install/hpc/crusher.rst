@@ -97,7 +97,7 @@ Known System Issues
    May 16th, 2022 (OLCFHELP-6888):
    There is a caching bug in Libfrabric that causes WarpX simulations to occasionally hang on Crusher on more than 1 node.
 
-   As a work-around, please export the following environment variable in your job scripts unti the issue is fixed:
+   As a work-around, please export the following environment variable in your job scripts until the issue is fixed:
 
    .. code-block:: bash
 
