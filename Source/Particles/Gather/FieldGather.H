@@ -238,24 +238,48 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // Gather field on particle Exp from field on grid ex_arr
     // Gather field on particle Bzp from field on grid bz_arr
     for (int iz=0; iz<=depos_order; iz++){
+#ifdef WARPX_EXTERNAL_FIELD
+        Eyp += sz_ey[iz]*
+            ( ey_arr(lo.x+l_ey+iz, 0, 0, 0) +
+              ey_arr_ext(lo.x+l_ey+iz, 0, 0, 0) );
+        Exp += sz_ex[iz]*
+            ( ex_arr(lo.x+l_ex+iz, 0, 0, 0) +
+              ex_arr_ext(lo.x+l_ex+iz, 0, 0, 0) );
+        Bzp += sz_bz[iz]*
+            ( bz_arr(lo.x+l_bz+iz, 0, 0, 0) +
+              bz_arr_ext(lo.x+l_bz+iz, 0, 0, 0) );
+#else
         Eyp += sz_ey[iz]*
             ey_arr(lo.x+l_ey+iz, 0, 0, 0);
         Exp += sz_ex[iz]*
             ex_arr(lo.x+l_ex+iz, 0, 0, 0);
         Bzp += sz_bz[iz]*
             bz_arr(lo.x+l_bz+iz, 0, 0, 0);
+#endif
     }
 
     // Gather field on particle Byp from field on grid by_arr
     // Gather field on particle Ezp from field on grid ez_arr
     // Gather field on particle Bxp from field on grid bx_arr
     for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
+#ifdef WARPX_EXTERNAL_FIELD
+        Ezp += sz_ez[iz]*
+            ( ez_arr(lo.x+l_ez+iz, 0, 0, 0) +
+              ez_arr_ext(lo.x+l_ez+iz, 0, 0, 0) );
+        Bxp += sz_bx[iz]*
+            ( bx_arr(lo.x+l_bx+iz, 0, 0, 0) +
+              bx_arr_ext(lo.x+l_bx+iz, 0, 0, 0) );
+        Byp += sz_by[iz]*
+            ( by_arr(lo.x+l_by+iz, 0, 0, 0) +
+              by_arr_ext(lo.x+l_by+iz, 0, 0, 0) );
+#else
         Ezp += sz_ez[iz]*
             ez_arr(lo.x+l_ez+iz, 0, 0, 0);
         Bxp += sz_bx[iz]*
             bx_arr(lo.x+l_bx+iz, 0, 0, 0);
         Byp += sz_by[iz]*
             by_arr(lo.x+l_by+iz, 0, 0, 0);
+#endif
     }
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)

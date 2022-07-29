@@ -1251,7 +1251,6 @@ std::string F_name, std::string F_component)
         myfile_info.close();
     }
     else std::cout << "Unable to open file info.txt." << "\n";
-
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     int n0_ext = int(info[0]);
     int n1_ext = int(info[1]);
@@ -1261,6 +1260,11 @@ std::string F_name, std::string F_component)
     double x1min_ext = info[5];
     double x0max_ext = x0min_ext + d0_ext*n0_ext;
     double x1max_ext = x1min_ext + d1_ext*n1_ext;
+#elif defined(WARPX_DIM_1D_Z)
+    int n0_ext = int(info[0]);
+    double d0_ext = info[1];
+    double x0min_ext = info[2];
+    double x0max_ext = x0min_ext + d0_ext*n0_ext;
 #else // 3D
     int n0_ext = int(info[0]);
     int n1_ext = int(info[1]);
@@ -1336,6 +1340,38 @@ std::string F_name, std::string F_component)
                     F_ext[ (i0+1)*n1_ext+(i1  ) ]*(    dd0)*(1.0-dd1) +
                     F_ext[ (i0  )*n1_ext+(i1+1) ]*(1.0-dd0)*(    dd1) +
                     F_ext[ (i0+1)*n1_ext+(i1+1) ]*(    dd0)*(    dd1);
+
+            }
+
+        ); // End ParallelFor
+
+#elif defined(WARPX_DIM_1D_Z)
+
+        // Start ParallelFor
+        amrex::ParallelFor (tb,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+
+                // Physical coordinates of the grid point
+                amrex::Real x0;
+
+                if ( box.type(0)==1 )
+                     { x0 = real_box.lo(0) + i*dx[0]; }
+                else { x0 = real_box.lo(0) + i*dx[0] + 0.5*dx[0]; }
+
+                // Get index of the external field array
+                int i0 = floor( (x0-x0min_ext)/d0_ext );
+
+                // Get coordinates of external grid point
+                amrex::Real x0_ext;
+                x0_ext = x0min_ext + i0*d0_ext;
+
+                // Get portion ratio for linear interpolatioin
+                amrex::Real dd0;
+                dd0 = std::abs(x0-x0_ext)/d0_ext;
+
+                mffab(i,j,k,0) =
+                    F_ext[ i0   ]*(1.0-dd0) +
+                    F_ext[ i0+1 ]*(    dd0);
 
             }
 
