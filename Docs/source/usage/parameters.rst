@@ -1405,7 +1405,8 @@ Accelerator Lattice
 ^^^^^^^^^^^^^^^^^^^
 
 Several accelerator lattice elements can be defined as described below.
-The elements are defined relative to the `z` axis and in the lab frame. They are described using a simplified MAD like syntax.
+The elements are defined relative to the `z` axis and in the lab frame, starting at `z = 0`.
+They are described using a simplified MAD like syntax.
 Note that elements of the same type cannot overlap each other.
 
 * ``lattice.elements`` (``list of strings``) optional (default: no elements)
