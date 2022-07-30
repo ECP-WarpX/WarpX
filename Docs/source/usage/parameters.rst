@@ -957,7 +957,7 @@ Particle initialization
     the above mentioned function.
 
     .. note::
-        When accessing the data via Python, the scraped particle buffer relies on the user 
+        When accessing the data via Python, the scraped particle buffer relies on the user
         to clear the buffer after processing the data. The
         buffer will grow unbounded as particles are scraped and therefore could
         lead to memory issues if not periodically cleared. To clear the buffer
