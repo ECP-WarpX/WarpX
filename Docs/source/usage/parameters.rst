@@ -938,14 +938,16 @@ Particle initialization
      :math:`\gamma` is the Lorentz factor,
      :math:`v/c` is the particle velocity normalized by the speed of light.
 
-* ``<species>.save_particles_at_xlo/ylo/zlo``,  ``<species>.save_particles_at_xhi/yhi/zhi`` and ``<species>.save_particles_at_eb`` (`0` or `1` optional, default `0`)
+* ``<species>.save_particles_at_xlo/ylo/zlo``, ``<species>.save_particles_at_xhi/yhi/zhi`` and ``<species>.save_particles_at_eb`` (`0` or `1` optional, default `0`)
     If `1` particles of this species will be copied to the scraped particle
     buffer for the specified boundary if they leave the simulation domain in
     the specified direction. **If USE_EB=TRUE** the ``save_particles_at_eb``
     flag can be set to `1` to also save particle data for the particles of this
     species that impact the embedded boundary.
     The scraped particle buffer can be used to track particle fluxes out of the
-    simulation but is currently only accessible via the Python interface. The
+    simulation.
+    The particle data can be written out by setting up a ``BoundaryScrapingDiagnostic``.
+    It is also accessible via the Python interface. The
     function ``get_particle_boundary_buffer``, found in the
     ``picmi.Simulation`` class as
     ``sim.extension.get_particle_boundary_buffer()``, can be
@@ -955,8 +957,8 @@ Particle initialization
     the above mentioned function.
 
     .. note::
-        Currently the scraped particle buffer relies on the user to access the
-        data in the buffer for processing and periodically clear the buffer. The
+        When accessing the data via Python, the scraped particle buffer relies on the user 
+        to clear the buffer after processing the data. The
         buffer will grow unbounded as particles are scraped and therefore could
         lead to memory issues if not periodically cleared. To clear the buffer
         call ``warpx_clearParticleBoundaryBuffer()``.
@@ -1922,7 +1924,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     If this is `1`, the last timestep is dumped regardless of ``<diag_name>.period``.
 
 * ``<diag_name>.diag_type`` (`string`)
-    Type of diagnostics. ``Full`` and ``BackTransformed``
+    Type of diagnostics. ``Full``, ``BackTransformed``, and ``BoundaryScraping``
     example: ``diag1.diag_type = Full`` or ``diag1.diag_type = BackTransformed``
 
 * ``<diag_name>.format`` (`string` optional, default ``plotfile``)
@@ -2247,12 +2249,17 @@ Boundary Scraping Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``BoundaryScrapingDiagnostics`` are used to collect the particles that are absorbed at the boundaries, throughout the simulation.
+This diagnostic type is specified by setting ``<diag_name>.diag_type`` = ``BoundaryScraping``.
+Currently, the only supported output format is openPMD, so the user also needs to set ``<diag>.format=openpmd`` and WarpX must be compiled with openPMD turned on.
+The data that is to be collected and recorded is controlled per species and per boundary by setting one or more of the flags to ``1``,
+``<species>.save_particles_at_xlo/ylo/zlo``, ``<species>.save_particles_at_xhi/yhi/zhi``, and ``<species>.save_particles_at_eb``.
 (Note that this diagnostics does not save any field ; it only saves particles.)
-Currently, the only supported output format is openPMD, so the user needs to set ``<diag>.format=openpmd``. In addition, the user needs
-to set ``<species>.save_particles_at_xlo/ylo/zlo``, ``<species>.save_particles_at_xhi/yhi/zhi``, ``<species>.save_particles_at_eb``
-to ``1`` for the species and boundaries that are to be recorded on file.
 
-In addition to their usual attributes, the saved particles have an additional integer attribute ``timestamp``, which
+The data collected at each boundary is written out to a subdirectory of the diagnostics directory with the name of the boundary, for example, ``particles_at_xlo``, ``particles_at_zhi``, or ``particles_at_eb``.
+By default, all of the collected particle data is written out at the end of the simulation. Optionally, the ``<diag_name>.intervals`` parameter can be given to specify writing out the data more often.
+This can be important if a large number of particles are lost, avoiding filling up memory with the accumulated lost particle data.
+
+In addition to their usual attributes, the saved particles have an integer attribute ``timestamp``, which
 indicates the PIC iteration at which each particle was absorbed at the boundary.
 
 .. _running-cpp-parameters-diagnostics-reduced:
