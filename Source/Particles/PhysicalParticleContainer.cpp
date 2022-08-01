@@ -652,8 +652,10 @@ PhysicalParticleContainer::InitializeRuntimeAttributesAndAddNParticles (
     // (although it is technically not a runtime comp)
     const int nattr_real = NumRuntimeRealComps() + 1;
     const int nattr_int = NumRuntimeIntComps();
-    particle_runtime_real_attributes.resize(np*nattr_real);
-    particle_runtime_int_attributes.resize(np*nattr_int);
+    particle_runtime_real_attributes.resize(
+                                static_cast<std::size_t>(np)*static_cast<std::size_t>(nattr_real));
+    particle_runtime_int_attributes.resize(
+                                static_cast<std::size_t>(np)*static_cast<std::size_t>(nattr_int));
     amrex::ParticleReal* p_attr_real = particle_runtime_real_attributes.dataPtr();
     int* p_attr_int = particle_runtime_int_attributes.dataPtr();
 
