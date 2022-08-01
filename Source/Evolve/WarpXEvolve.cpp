@@ -495,7 +495,7 @@ WarpX::OneStep_nosub (Real cur_time)
         if (safe_guard_cells)
             FillBoundaryB(guard_cells.ng_alloc_EB);
     } // !PSATD
-    WARPX_PROFILE_REGION_START("WarpX::nosub::PushE_B");
+    WARPX_PROFILE_REGION_STOP("WarpX::nosub::PushE_B");
 
     ExecutePythonCallback("afterEsolve");
 }
