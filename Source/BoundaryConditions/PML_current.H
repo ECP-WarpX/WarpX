@@ -23,17 +23,17 @@ void push_ex_pml_current (int j, int k, int l,
                           amrex::Real mu_c2_dt)
 {
 #if defined(WARPX_DIM_3D)
-    amrex::Real alpha_xy, alpha_xz;
-    if (sigjy[k-ylo]+sigjz[l-zlo] == 0){
-        alpha_xy = 0.5;
-        alpha_xz = 0.5;
-    }
-    else {
-        alpha_xy = sigjy[k-ylo]/(sigjy[k-ylo]+sigjz[l-zlo]);
-        alpha_xz = sigjz[l-zlo]/(sigjy[k-ylo]+sigjz[l-zlo]);
-    }
-    Ex(j,k,l,PMLComp::xy) = Ex(j,k,l,PMLComp::xy) - mu_c2_dt  * alpha_xy * jx(j,k,l);
-    Ex(j,k,l,PMLComp::xz) = Ex(j,k,l,PMLComp::xz) - mu_c2_dt  * alpha_xz * jx(j,k,l);
+    //amrex::Real alpha_xy, alpha_xz;
+    //if (sigjy[k-ylo]+sigjz[l-zlo] == 0){
+    //    alpha_xy = 0.5;
+    //    alpha_xz = 0.5;
+    //}
+    //else {
+    //    alpha_xy = sigjy[k-ylo]/(sigjy[k-ylo]+sigjz[l-zlo]);
+    //    alpha_xz = sigjz[l-zlo]/(sigjy[k-ylo]+sigjz[l-zlo]);
+    //}
+    Ex(j,k,l,PMLComp::xy) = Ex(j,k,l,PMLComp::xy) - mu_c2_dt  * jx(j,k,l);
+    // Ex(j,k,l,PMLComp::xz) = Ex(j,k,l,PMLComp::xz) - mu_c2_dt  * alpha_xz * jx(j,k,l);
 #else
     Ex(j,k,l,PMLComp::xz) = Ex(j,k,l,PMLComp::xz) - mu_c2_dt  * jx(j,k,l);
     amrex::ignore_unused(sigjy, sigjz, ylo, zlo);
@@ -50,7 +50,7 @@ void push_ey_pml_current (int j, int k, int l,
                           amrex::Real mu_c2_dt)
 {
 #if defined(WARPX_DIM_3D)
-    amrex::Real alpha_yx, alpha_yz;
+/*    amrex::Real alpha_yx, alpha_yz;
     if (sigjx[j-xlo]+sigjz[l-zlo] == 0){
         alpha_yx = 0.5;
         alpha_yz = 0.5;
@@ -58,9 +58,9 @@ void push_ey_pml_current (int j, int k, int l,
     else {
         alpha_yx = sigjx[j-xlo]/(sigjx[j-xlo]+sigjz[l-zlo]);
         alpha_yz = sigjz[l-zlo]/(sigjx[j-xlo]+sigjz[l-zlo]);
-    }
-    Ey(j,k,l,PMLComp::yz) = Ey(j,k,l,PMLComp::yz) - mu_c2_dt  * alpha_yz * jy(j,k,l);
-    Ey(j,k,l,PMLComp::yx) = Ey(j,k,l,PMLComp::yx) - mu_c2_dt  * alpha_yx * jy(j,k,l);
+    }*/
+    Ey(j,k,l,PMLComp::yz) = Ey(j,k,l,PMLComp::yz) - mu_c2_dt * jy(j,k,l);
+    // Ey(j,k,l,PMLComp::yx) = Ey(j,k,l,PMLComp::yx) - mu_c2_dt  * alpha_yx * jy(j,k,l);
 #else
     Ey(j,k,l,PMLComp::yz) = Ey(j,k,l,PMLComp::yz) - amrex::Real(0.5) * mu_c2_dt  * jy(j,k,l);
     Ey(j,k,l,PMLComp::yx) = Ey(j,k,l,PMLComp::yx) - amrex::Real(0.5) * mu_c2_dt  * jy(j,k,l);

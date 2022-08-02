@@ -115,7 +115,7 @@ class FiniteDifferenceSolver
         void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
                       amrex::Real const dt,
-                      const bool dive_cleaning);
+                      const bool dive_cleaning, const amrex::Real theta_pml);
 
        void EvolveEPML ( std::array< amrex::MultiFab*, 3 > Efield,
                       std::array< amrex::MultiFab*, 3 > const Bfield,
@@ -123,7 +123,8 @@ class FiniteDifferenceSolver
                       std::array< amrex::MultiFab*, 3 > const edge_lengths,
                       amrex::MultiFab* const Ffield,
                       MultiSigmaBox const& sigba,
-                      amrex::Real const dt, bool pml_has_particles );
+                      amrex::Real const dt, bool pml_has_particles,
+                      const amrex::Real theta_pml);
 
        void EvolveFPML ( amrex::MultiFab* Ffield,
                      std::array< amrex::MultiFab*, 3 > const Efield,
@@ -251,7 +252,7 @@ class FiniteDifferenceSolver
             std::array< amrex::MultiFab*, 3 > Bfield,
             std::array< amrex::MultiFab*, 3 > const Efield,
             amrex::Real const dt,
-            const bool dive_cleaning);
+            const bool dive_cleaning, const amrex::Real theta_pml);
 
         template< typename T_Algo >
         void EvolveEPMLCartesian (
@@ -261,7 +262,8 @@ class FiniteDifferenceSolver
             std::array< amrex::MultiFab*, 3 > const edge_lengths,
             amrex::MultiFab* const Ffield,
             MultiSigmaBox const& sigba,
-            amrex::Real const dt, bool pml_has_particles );
+            amrex::Real const dt, bool pml_has_particles,
+            const amrex::Real theta_pml);
 
         template< typename T_Algo >
         void EvolveFPMLCartesian ( amrex::MultiFab* Ffield,

@@ -43,6 +43,7 @@ using namespace amrex;
 /**
  * \brief Update the E field, over one timestep
  */
+
 void FiniteDifferenceSolver::EvolveEPML (
     std::array< amrex::MultiFab*, 3 > Efield,
     std::array< amrex::MultiFab*, 3 > const Bfield,
@@ -50,7 +51,8 @@ void FiniteDifferenceSolver::EvolveEPML (
     std::array< amrex::MultiFab*, 3 > const edge_lengths,
     amrex::MultiFab* const Ffield,
     MultiSigmaBox const& sigba,
-    amrex::Real const dt, bool pml_has_particles ) {
+    amrex::Real const dt, bool pml_has_particles, 
+    const amrex::Real theta_pml) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
@@ -62,17 +64,17 @@ void FiniteDifferenceSolver::EvolveEPML (
     if (m_do_nodal) {
 
         EvolveEPMLCartesian <CartesianNodalAlgorithm> (
-            Efield, Bfield, Jfield, edge_lengths, Ffield, sigba, dt, pml_has_particles );
+            Efield, Bfield, Jfield, edge_lengths, Ffield, sigba, dt, pml_has_particles, theta_pml);
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee || m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         EvolveEPMLCartesian <CartesianYeeAlgorithm> (
-            Efield, Bfield, Jfield,  edge_lengths, Ffield, sigba, dt, pml_has_particles );
+            Efield, Bfield, Jfield,  edge_lengths, Ffield, sigba, dt, pml_has_particles, theta_pml);
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
         EvolveEPMLCartesian <CartesianCKCAlgorithm> (
-            Efield, Bfield, Jfield,  edge_lengths, Ffield, sigba, dt, pml_has_particles );
+            Efield, Bfield, Jfield,  edge_lengths, Ffield, sigba, dt, pml_has_particles, theta_pml);
 
     } else {
         amrex::Abort(Utils::TextMsg::Err("EvolveEPML: Unknown algorithm"));
@@ -91,9 +93,11 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
     std::array< amrex::MultiFab*, 3 > const edge_lengths,
     amrex::MultiFab* const Ffield,
     MultiSigmaBox const& sigba,
-    amrex::Real const dt, bool pml_has_particles ) {
+    amrex::Real const dt, bool pml_has_particles,
+    const amrex::Real theta_pml) {
 
     Real constexpr c2 = PhysConst::c * PhysConst::c;
+    Real tan_th = std::tan(theta_pml);
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
@@ -122,7 +126,21 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
         int const n_coefs_y = m_stencil_coefs_y.size();
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
         int const n_coefs_z = m_stencil_coefs_z.size();
+        
+        const Real* sigma_x = sigba[mfi].sigma[0].data();
+        const Real* sigma_y = sigba[mfi].sigma[1].data();
+        const Real* sigma_z = sigba[mfi].sigma[2].data();
 
+        int const x_lo = sigba[mfi].sigma[0].lo();
+#if defined(WARPX_DIM_3D)
+        int const y_lo = sigba[mfi].sigma[1].lo();
+        int const z_lo = sigba[mfi].sigma[2].lo();
+#else
+        int const y_lo = 0;
+        int const z_lo = sigba[mfi].sigma[1].lo();
+#endif
+        const Real mu_c2_dt = (PhysConst::mu0*PhysConst::c*PhysConst::c) * dt;
+        
         // Extract tileboxes for which to loop
         Box const& tex  = mfi.tilebox(Efield[0]->ixType().ixType());
         Box const& tey  = mfi.tilebox(Efield[1]->ixType().ixType());
@@ -135,26 +153,68 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
 #ifdef AMREX_USE_EB
                 if(lx(i, j, k) <= 0) return;
 #endif
-
+                amrex::Real CC1 = 0._rt;
+                #ifdef WARPX_DIM_XZ
+                    CC1 = T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j-1, k, PMLComp::yz)
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j-1, k, PMLComp::yx)
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k, PMLComp::yz)
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k, PMLComp::yx)
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i+1, j-1, k, PMLComp::yz)  // here
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i+1, j-1, k, PMLComp::yx)
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i+1, j, k, PMLComp::yz)
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i+1, j, k, PMLComp::yx);
+                #elif defined WARPX_DIM_3D
+                    CC1 = T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k-1, PMLComp::yz)
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k-1, PMLComp::yx)
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k, PMLComp::yz)
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k, PMLComp::yx)
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i+1, j, k-1, PMLComp::yz)  // here
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i+1, j, k-1, PMLComp::yx)
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i+1, j, k, PMLComp::yz)
+                        + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i+1, j, k, PMLComp::yx);
+                #endif
                 Ex(i, j, k, PMLComp::xz) -= c2 * dt * (
                     T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, PMLComp::yx)
-                  + T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, PMLComp::yz) );
+                  + T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, PMLComp::yz)
+                  + tan_th*CC1/4._rt);
                 Ex(i, j, k, PMLComp::xy) += c2 * dt * (
                     T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k, PMLComp::zx)
-                  + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k, PMLComp::zy) );
+                  + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k, PMLComp::zy)
+                  + tan_th*CC1/4._rt);
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
                 if(ly(i, j, k)<=0) return;
 #endif
-
+                amrex::Real CC2 = 0._rt;
+                #ifdef WARPX_DIM_XZ
+                    CC2 = T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i-1, j-1, k, PMLComp::xz)
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i-1, j-1, k, PMLComp::xy)
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i-1, j, k, PMLComp::xz)
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i-1, j, k, PMLComp::xy)
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i, j-1, k, PMLComp::xz) // here
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i, j-1, k, PMLComp::xy)
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i, j, k, PMLComp::xz)
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i, j, k, PMLComp::xy);
+                #elif defined WARPX_DIM_3D
+                    CC2 = T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i-1, j, k-1, PMLComp::xz)
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i-1, j, k-1, PMLComp::xy)
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i-1, j, k, PMLComp::xz)
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i-1, j, k, PMLComp::xy)
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i, j, k-1, PMLComp::xz) // here
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i, j, k-1, PMLComp::xy)
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i, j, k, PMLComp::xz)
+                        + T_Algo::UpwardDx(Bx, coefs_x, n_coefs_x, i, j, k, PMLComp::xy);
+                #endif
                 Ey(i, j, k, PMLComp::yx) -= c2 * dt * (
                     T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, PMLComp::zx)
-                  + T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, PMLComp::zy) );
+                  + T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, PMLComp::zy)
+                  + tan_th*CC2/4._rt);
                 Ey(i, j, k, PMLComp::yz) += c2 * dt * (
                     T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k, PMLComp::xy)
-                  + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k, PMLComp::xz) );
+                  + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k, PMLComp::xz)
+                  + tan_th*CC2/4._rt);
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){

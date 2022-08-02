@@ -705,10 +705,10 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveBPML(
-                pml[lev]->GetB_fp(), pml[lev]->GetE_fp(), a_dt, WarpX::do_dive_cleaning);
+                pml[lev]->GetB_fp(), pml[lev]->GetE_fp(), a_dt, WarpX::do_dive_cleaning, WarpX::theta_pml);
         } else {
             m_fdtd_solver_cp[lev]->EvolveBPML(
-                pml[lev]->GetB_cp(), pml[lev]->GetE_cp(), a_dt, WarpX::do_dive_cleaning);
+                pml[lev]->GetB_cp(), pml[lev]->GetE_cp(), a_dt, WarpX::do_dive_cleaning, WarpX::theta_pml);
         }
     }
 
@@ -760,14 +760,14 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
                 pml[lev]->Getj_fp(), pml[lev]->Get_edge_lengths(),
                 pml[lev]->GetF_fp(),
                 pml[lev]->GetMultiSigmaBox_fp(),
-                a_dt, pml_has_particles );
+                a_dt, pml_has_particles, theta_pml);
         } else {
             m_fdtd_solver_cp[lev]->EvolveEPML(
                 pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
                 pml[lev]->Getj_cp(), pml[lev]->Get_edge_lengths(),
                 pml[lev]->GetF_cp(),
                 pml[lev]->GetMultiSigmaBox_cp(),
-                a_dt, pml_has_particles );
+                a_dt, pml_has_particles, theta_pml);
         }
     }
 
@@ -924,14 +924,14 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                 pml[lev]->Getj_fp(), pml[lev]->Get_edge_lengths(),
                 pml[lev]->GetF_fp(),
                 pml[lev]->GetMultiSigmaBox_fp(),
-                a_dt, pml_has_particles );
+                a_dt, pml_has_particles, theta_pml);
         } else {
             m_fdtd_solver_cp[lev]->EvolveEPML(
                 pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
                 pml[lev]->Getj_cp(), pml[lev]->Get_edge_lengths(),
                 pml[lev]->GetF_cp(),
                 pml[lev]->GetMultiSigmaBox_cp(),
-                a_dt, pml_has_particles );
+                a_dt, pml_has_particles, theta_pml);
         }
     }
 
