@@ -102,7 +102,7 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         particle_saving_activated.size() == 0u,
         error_string);
-    
+
     // Initialize one ParticleDiag per species requested
     ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
