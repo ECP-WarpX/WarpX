@@ -253,11 +253,11 @@ public:
     /// This returns the total charge for all the particles in this ParticleContainer.
     /// This is needed when solving Poisson's equation with periodic boundary conditions.
     ///
-    amrex::Real sumParticleCharge(bool local = false);
+    amrex::ParticleReal sumParticleCharge(bool local = false);
 
-    std::array<amrex::Real, 3> meanParticleVelocity(bool local = false);
+    std::array<amrex::ParticleReal, 3> meanParticleVelocity(bool local = false);
 
-    amrex::Real maxParticleVelocity(bool local = false);
+    amrex::ParticleReal maxParticleVelocity(bool local = false);
 
     void AddNParticles (int lev,
                         int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
@@ -349,8 +349,8 @@ public:
 protected:
     int species_id;
 
-    amrex::Real charge;
-    amrex::Real mass;
+    amrex::ParticleReal charge;
+    amrex::ParticleReal mass;
     PhysicalSpecies physical_species;
 
     // Controls boundaries for particles exiting the domain
