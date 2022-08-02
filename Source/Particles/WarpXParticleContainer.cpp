@@ -359,9 +359,9 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     amrex::ParticleReal q = this->charge;
 
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Sorting", blp_sort);
-    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::FindMaxTilesize", 
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::FindMaxTilesize",
             blp_get_max_tilesize);
-    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::DirectCurrentDepKernel", 
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::DirectCurrentDepKernel",
             direct_current_dep_kernel);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::CurrentDeposition", blp_deposit);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Accumulate", blp_accumulate);
@@ -489,7 +489,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         {
             const Geometry& geom = Geom(lev);
             const auto dxi = geom.InvCellSizeArray();
-            const auto plo = geom.ProbLoArray(); 
+            const auto plo = geom.ProbLoArray();
             const auto domain = geom.Domain();
 
             Box box = pti.validbox();

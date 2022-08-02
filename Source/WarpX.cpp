@@ -130,7 +130,7 @@ bool WarpX::do_shared_mem_charge_deposition = false;
 bool WarpX::do_shared_mem_current_deposition = false;
 int WarpX::shared_mem_current_tpb = 256;
 //Note this is not really the default. Default is sort_bin_size
-amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1)); 
+amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1));
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
@@ -765,7 +765,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("do_shared_mem_charge_deposition", do_shared_mem_charge_deposition);
         pp_warpx.query("do_shared_mem_current_deposition", do_shared_mem_current_deposition);
         pp_warpx.query("shared_mem_current_tpb", shared_mem_current_tpb);
-        
+
         // initialize the shared tilesize
         Vector<int> vect_shared_tilesize(AMREX_SPACEDIM, 1);
         bool shared_tilesize_is_specified = queryArrWithParser(pp_warpx, "shared_tilesize",

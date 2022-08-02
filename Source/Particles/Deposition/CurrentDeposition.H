@@ -444,7 +444,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
     //This is literally, AMREX_D_DECL(dx[0], dx[1], dx[2]) as a gpu array
-    const auto dxiarr = geom.InvCellSizeArray(); 
+    const auto dxiarr = geom.InvCellSizeArray();
     const auto plo = geom.ProbLoArray();
     const auto domain = geom.Domain();
 
@@ -467,10 +467,10 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const int nblocks = a_bins.numBins();
     const auto offsets_ptr = a_bins.offsetsPtr();
     //TODO could play with this
-    const int threads_per_block = WarpX::shared_mem_current_tpb; 
+    const int threads_per_block = WarpX::shared_mem_current_tpb;
 
     //calculate how much shared memory is needed. Note 3 because writing to 3 array4s
-    std::size_t shared_mem_bytes = npts*sizeof(amrex::Real); 
+    std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
     amrex::IntVect bin_size = WarpX::shared_tilesize;
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
     //WATCH may get burned if this makes you use less threads
@@ -488,17 +488,17 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip_orig) noexcept
 #endif
       {
-#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP) 
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         const int bin_id = blockIdx.x;
         const unsigned int bin_start = offsets_ptr[bin_id];
         const unsigned int bin_stop = offsets_ptr[bin_id+1];
 
-        if (bin_start == bin_stop) { 
+        if (bin_start == bin_stop) {
             //WATCH this would be a great spot for a counter to evaluate performance
-            
+
             //this bin has no particles
-            return; 
-        } 
+            return;
+        }
 
         //These boxes will be stored in shared mem in order to write depositions
         amrex::Box buffer_box_x;
@@ -537,18 +537,18 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 
         Gpu::SharedMemory<amrex::Real> gsm;
         amrex::Real* const shared = gsm.dataPtr();
-        
+
         //buf is a buffer in shard mem to write the results of a tile/thread-block to.
         //If not using shared mem, then you would just make the buffer the actual object in device
         //mem
-        amrex::Array4<amrex::Real> const jx_buff(shared, 
+        amrex::Array4<amrex::Real> const jx_buff(shared,
                 amrex::begin(tbox_x), amrex::end(tbox_x), 1);
         amrex::Array4<amrex::Real> const jy_buff(shared,
                 amrex::begin(tbox_y), amrex::end(tbox_y), 1);
         amrex::Array4<amrex::Real> const jz_buff(shared,
                 amrex::begin(tbox_z), amrex::end(tbox_z), 1);
         // Zero-initialize the temporary array in shared memory
-        volatile amrex::Real* vs = shared; 
+        volatile amrex::Real* vs = shared;
         for (int i = threadIdx.x; i < npts; i += blockDim.x){
             vs[i] = 0.0;
         }
@@ -755,15 +755,15 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             vs[i] = 0.0;
         }
         __syncthreads();
-        
+
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         //this should probably be incorporated into above, but we'll leave here for now...
 
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
 #endif
-        { 
+        {
             //the gpu initialization is over. This chunk is same for shared or not
-            
+
             //control the iteration order
             unsigned int ip = permutation[ip_orig];
 
@@ -953,12 +953,12 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         }
         __syncthreads();
 
-#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)        
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
 #endif
-        { 
+        {
             //the gpu initialization is over. This chunk is same for shared or not
-            
+
             //control the iteration order
             unsigned int ip = permutation[ip_orig];
 
