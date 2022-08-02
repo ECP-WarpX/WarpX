@@ -660,9 +660,11 @@ namespace
         WarpX& warpx = WarpX::GetInstance();
         warpx.SyncRho();
     }
-    void warpx_SyncCurrent () {
+    void warpx_SyncCurrent (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.SyncCurrent();
+        warpx.SyncCurrent(J_fp, J_cp);
     }
     void warpx_UpdateAuxilaryData () {
         WarpX& warpx = WarpX::GetInstance();
