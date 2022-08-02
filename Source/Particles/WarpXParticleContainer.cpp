@@ -343,7 +343,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for current deposition");
 
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
-    Real q = this->charge;
+    amrex::ParticleReal q = this->charge;
 
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::CurrentDeposition", blp_deposit);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Accumulate", blp_accumulate);
@@ -767,9 +767,9 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     return rho;
 }
 
-Real WarpXParticleContainer::sumParticleCharge(bool local) {
+amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
 
-    amrex::Real total_charge = 0.0;
+    amrex::ParticleReal total_charge = 0.0;
 
     const int nLevels = finestLevel();
     for (int lev = 0; lev <= nLevels; ++lev)
@@ -792,15 +792,15 @@ Real WarpXParticleContainer::sumParticleCharge(bool local) {
     return total_charge;
 }
 
-std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
+std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
 
-    amrex::Real vx_total = 0.0_rt;
-    amrex::Real vy_total = 0.0_rt;
-    amrex::Real vz_total = 0.0_rt;
+    amrex::ParticleReal vx_total = 0.0_prt;
+    amrex::ParticleReal vy_total = 0.0_prt;
+    amrex::ParticleReal vz_total = 0.0_prt;
 
     amrex::Long np_total = 0;
 
-    amrex::Real inv_clight_sq = 1.0_rt/PhysConst::c/PhysConst::c;
+    amrex::ParticleReal inv_clight_sq = 1.0_prt/PhysConst::c/PhysConst::c;
 
     const int nLevels = finestLevel();
 
@@ -808,7 +808,7 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
     if (Gpu::inLaunchRegion())
     {
         ReduceOps<ReduceOpSum, ReduceOpSum, ReduceOpSum> reduce_op;
-        ReduceData<Real, Real, Real> reduce_data(reduce_op);
+        ReduceData<ParticleReal, ParticleReal, ParticleReal> reduce_data(reduce_op);
         using ReduceTuple = typename decltype(reduce_data)::Type;
         for (int lev = 0; lev <= nLevels; ++lev) {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -823,10 +823,10 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
                 reduce_op.eval(np, reduce_data,
                                [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                                {
-                                   Real usq = (uxp[i]*uxp[i] +
-                                               uyp[i]*uyp[i] +
-                                               uzp[i]*uzp[i])*inv_clight_sq;
-                                   Real gaminv = 1.0_rt/std::sqrt(1.0_rt + usq);
+                                   amrex::ParticleReal usq = (uxp[i]*uxp[i] +
+                                                              uyp[i]*uyp[i] +
+                                                              uzp[i]*uzp[i])*inv_clight_sq;
+                                   amrex::ParticleReal gaminv = 1.0_prt/std::sqrt(1.0_prt + usq);
                                    return {uxp[i]*gaminv,  uyp[i]*gaminv, uzp[i]*gaminv};
                                });
             }
@@ -853,8 +853,8 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
                 np_total += pti.numParticles();
 
                 for (unsigned long i = 0; i < ux.size(); i++) {
-                    Real usq = (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])*inv_clight_sq;
-                    Real gaminv = 1.0_rt/std::sqrt(1.0_rt + usq);
+                    amrex::ParticleReal usq = (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])*inv_clight_sq;
+                    amrex::ParticleReal gaminv = 1.0_prt/std::sqrt(1.0_prt + usq);
                     vx_total += ux[i]*gaminv;
                     vy_total += uy[i]*gaminv;
                     vz_total += uz[i]*gaminv;
@@ -870,7 +870,7 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
         ParallelDescriptor::ReduceLongSum(np_total);
     }
 
-    std::array<Real, 3> mean_v;
+    std::array<amrex::ParticleReal, 3> mean_v;
     if (np_total > 0) {
         mean_v[0] = vx_total / np_total;
         mean_v[1] = vy_total / np_total;
@@ -880,7 +880,7 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
     return mean_v;
 }
 
-Real WarpXParticleContainer::maxParticleVelocity(bool local) {
+amrex::ParticleReal WarpXParticleContainer::maxParticleVelocity(bool local) {
 
     amrex::ParticleReal max_v = 0.0;
 

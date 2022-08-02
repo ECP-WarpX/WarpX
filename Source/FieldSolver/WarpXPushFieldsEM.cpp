@@ -635,7 +635,7 @@ WarpX::PushPSATD ()
         PSATDVayDeposition();
         PSATDBackwardTransformJ(current_fp, current_cp);
         PSATDSubtractCurrentPartialSumsAvg();
-        SyncCurrent();
+        SyncCurrent(current_fp, current_cp);
         PSATDForwardTransformJ(current_fp, current_cp);
     }
 

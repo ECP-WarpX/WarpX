@@ -628,9 +628,6 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
           }, true);
           particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
       } else if (isBTD) {
-          tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
-          tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
-          tmp.SetParticleDistributionMap(0, pinned_pc->ParticleDistributionMap(0));
           tmp.copyParticles(*pinned_pc, true);
           particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
       }

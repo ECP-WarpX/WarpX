@@ -1,9 +1,9 @@
-.. _building-crusher:
+.. _building-frontier:
 
-Crusher (OLCF)
-==============
+Frontier (OLCF)
+===============
 
-The `Crusher cluster <https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html>`_ is located at OLCF.
+The `Frontier cluster (see: Crusher) <https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html>`_ is located at OLCF.
 Each node contains 4 AMD MI250X GPUs, each with 2 Graphics Compute Dies (GCDs) for a total of 8 GCDs per node.
 You can think of the 8 GCDs as 8 separate GPUs, each having 64 GB of high-bandwidth memory (HBM2E).
 
@@ -23,23 +23,30 @@ If you are new to this system, please see the following resources:
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the WarpX source code and switch to the correct branch.
+**You have to do this on Summit/OLCF Home/etc. since Frontier cannot connect directly to the internet**:
 
 .. code-block:: bash
 
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/AMReX-Codes/amrex.git $HOME/src/amrex
+   git clone https://github.com/ECP-WarpX/picsar.git $HOME/src/picsar
+   git clone -b 0.14.5 https://github.com/openPMD/openPMD-api.git $HOME/src/openPMD-api
 
-We use the following modules and environments on the system (``$HOME/crusher_warpx.profile``).
+To enable HDF5, work-around the broken ``HDF5_VERSION`` variable (empty) in the Cray PE by commenting out the following lines in ``$HOME/src/openPMD-api/CMakeLists.txt``:
+https://github.com/openPMD/openPMD-api/blob/0.14.5/CMakeLists.txt#L216-L220
 
-.. literalinclude:: ../../../../Tools/machines/crusher-olcf/crusher_warpx.profile.example
+We use the following modules and environments on the system (``$HOME/frontier_warpx.profile``).
+
+.. literalinclude:: ../../../../Tools/machines/frontier-olcf/frontier_warpx.profile.example
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/crusher-olcf/crusher_warpx.profile.example``.
+   :caption: You can copy this file from ``Tools/machines/frontier-olcf/frontier_warpx.profile.example``.
 
-We recommend to store the above lines in a file, such as ``$HOME/crusher_warpx.profile``, and load it into your shell after a login:
+We recommend to store the above lines in a file, such as ``$HOME/frontier_warpx.profile``, and load it into your shell after a login:
 
 .. code-block:: bash
 
-   source $HOME/crusher_warpx.profile
+   source $HOME/frontier_warpx.profile
 
 
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
@@ -49,18 +56,22 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=HIP
-   cmake --build build -j 10
+   cmake -S . -B build   \
+     -DWarpX_COMPUTE=HIP \
+     -DWarpX_amrex_src=$HOME/src/amrex \
+     -DWarpX_picsar_src=$HOME/src/picsar \
+     -DWarpX_openpmd_src=$HOME/src/openPMD-api
+   cmake --build build -j 32
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
 
-.. _running-cpp-crusher:
+.. _running-cpp-frontier:
 
 Running
 -------
 
-.. _running-cpp-crusher-MI100-GPUs:
+.. _running-cpp-frontier-MI100-GPUs:
 
 MI250X GPUs (2x64 GB)
 ^^^^^^^^^^^^^^^^^^^^^
@@ -73,12 +84,12 @@ After requesting an interactive node with the ``getNode`` alias above, run a sim
 
 Or in non-interactive runs:
 
-.. literalinclude:: ../../../../Tools/machines/crusher-olcf/submit.sh
+.. literalinclude:: ../../../../Tools/machines/frontier-olcf/submit.sh
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/crusher-olcf/submit.sh``.
+   :caption: You can copy this file from ``Tools/machines/frontier-olcf/submit.sh``.
 
 
-.. _post-processing-crusher:
+.. _post-processing-frontier:
 
 Post-Processing
 ---------------
@@ -87,7 +98,7 @@ For post-processing, most users use Python via OLCFs's `Jupyter service <https:/
 
 Please follow the same guidance as for :ref:`OLCF Summit post-processing <post-processing-summit>`.
 
-.. _known-crusher-issues:
+.. _known-frontier-issues:
 
 Known System Issues
 -------------------
@@ -95,7 +106,7 @@ Known System Issues
 .. warning::
 
    May 16th, 2022 (OLCFHELP-6888):
-   There is a caching bug in Libfrabric that causes WarpX simulations to occasionally hang on Crusher on more than 1 node.
+   There is a caching bug in Libfrabric that causes WarpX simulations to occasionally hang on Frontier on more than 1 node.
 
    As a work-around, please export the following environment variable in your job scripts until the issue is fixed:
 

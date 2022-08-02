@@ -8,6 +8,7 @@
 #ifndef SINGLE_NUCLEAR_FUSION_EVENT_H_
 #define SINGLE_NUCLEAR_FUSION_EVENT_H_
 
+#include "DeuteriumTritiumFusionCrossSection.H"
 #include "ProtonBoronFusionCrossSection.H"
 
 #include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
@@ -55,7 +56,7 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
                                const amrex::ParticleReal& u2y, const amrex::ParticleReal& u2z,
                                const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
                                amrex::ParticleReal w1, amrex::ParticleReal w2,
-                               const amrex::Real& dt, const amrex::Real& dV, const int& pair_index,
+                               const amrex::Real& dt, const amrex::ParticleReal& dV, const int& pair_index,
                                index_type* AMREX_RESTRICT p_mask,
                                amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
                                const amrex::ParticleReal& fusion_multiplier,
@@ -111,7 +112,11 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
 
     // Compute fusion cross section as a function of kinetic energy in the center of mass frame
     auto fusion_cross_section = amrex::ParticleReal(0.);
-    if (fusion_type == NuclearFusionType::ProtonBoron)
+    if (fusion_type == NuclearFusionType::DeuteriumTritium)
+    {
+        fusion_cross_section = DeuteriumTritiumFusionCrossSection(E_kin_star);
+    }
+    else if (fusion_type == NuclearFusionType::ProtonBoron)
     {
         fusion_cross_section = ProtonBoronFusionCrossSection(E_kin_star);
     }

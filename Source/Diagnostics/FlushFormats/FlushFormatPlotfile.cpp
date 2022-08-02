@@ -306,9 +306,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         auto tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
         if (isBTD) {
             PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
-            tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
-            tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
-            tmp.SetParticleDistributionMap(0, pinned_pc->ParticleDistributionMap(0));
+            tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
         }
 
         Vector<std::string> real_names;

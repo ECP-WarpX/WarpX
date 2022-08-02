@@ -28,8 +28,8 @@ void UpdatePositionPhoton(
 
     // Compute speed of light over inverse of momentum modulus, avoiding a division by zero in the
     // case where the photon has exactly zero momentum
-    const amrex::Real u_norm = std::sqrt(ux*ux + uy*uy + uz*uz);
-    const amrex::Real c_over_umod = (u_norm == 0._rt) ? 0._rt: PhysConst::c/u_norm;
+    const amrex::ParticleReal u_norm = std::sqrt(ux*ux + uy*uy + uz*uz);
+    const amrex::ParticleReal c_over_umod = (u_norm == 0._prt) ? 0._prt: PhysConst::c/u_norm;
 
     // Update positions over one time step
 #if (AMREX_SPACEDIM >= 2)

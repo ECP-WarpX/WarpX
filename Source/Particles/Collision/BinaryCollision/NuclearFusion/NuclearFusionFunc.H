@@ -68,6 +68,19 @@ public:
         amrex::Vector<std::string> product_species_name;
         pp_collision_name.getarr("product_species", product_species_name);
 
+        if (m_fusion_type == NuclearFusionType::DeuteriumTritium)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                product_species_name.size() == 2u,
+                "ERROR: Deuterium-tritium fusion must contain exactly two product species");
+            auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
+            auto& product_species2 = mypc->GetParticleContainerFromName(product_species_name[1]);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (product_species1.AmIA<PhysicalSpecies::helium4>() && product_species2.AmIA<PhysicalSpecies::neutron>())
+                ||
+                (product_species1.AmIA<PhysicalSpecies::neutron>() && product_species2.AmIA<PhysicalSpecies::helium4>()),
+                "ERROR: Product species of deuterium-tritium fusion must be of type neutron and helium4");
+        }
         if (m_fusion_type == NuclearFusionType::ProtonBoron)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -80,14 +93,14 @@ public:
         }
 
         // default fusion multiplier
-        m_fusion_multiplier = 1.0_rt;
+        m_fusion_multiplier = 1.0_prt;
         queryWithParser(pp_collision_name, "fusion_multiplier", m_fusion_multiplier);
         // default fusion probability threshold
-        m_probability_threshold = 0.02_rt;
+        m_probability_threshold = 0.02_prt;
         queryWithParser(pp_collision_name, "fusion_probability_threshold",
                                             m_probability_threshold);
         // default fusion probability target_value
-        m_probability_target_value = 0.002_rt;
+        m_probability_target_value = 0.002_prt;
         queryWithParser(pp_collision_name, "fusion_probability_target_value",
                                             m_probability_target_value);
     }
@@ -210,15 +223,15 @@ public:
 private:
     // Factor used to increase the number of fusion reaction by decreasing the weight of the
     // produced particles
-    amrex::Real m_fusion_multiplier;
+    amrex::ParticleReal m_fusion_multiplier;
     // If the fusion multiplier is too high and results in a fusion probability that approaches
     // 1, there is a risk of underestimating the total fusion yield. In these cases, we reduce
     // the fusion multiplier used in a given collision. m_probability_threshold is the fusion
     // probability threshold above which we reduce the fusion multiplier.
     // m_probability_target_value is the target probability used to determine by how much
     // the fusion multiplier should be reduced.
-    amrex::Real m_probability_threshold;
-    amrex::Real m_probability_target_value;
+    amrex::ParticleReal m_probability_threshold;
+    amrex::ParticleReal m_probability_target_value;
     NuclearFusionType m_fusion_type;
     bool m_isSameSpecies;
 };
