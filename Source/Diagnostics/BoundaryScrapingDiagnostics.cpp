@@ -47,29 +47,8 @@ BoundaryScrapingDiagnostics::ReadParameters ()
     amrex::Abort("You need to compile WarpX with openPMD support, in order to use BoundaryScrapingDiagnostic: -DWarpX_OPENPMD=ON");
 #endif
 
-    // Check that saving at EB has been activated for each requested species
-    std::set<std::string> particle_saving_activated;
-    for (auto const& species_name : m_output_species_names){
-        amrex::ParmParse pp(species_name);
-        bool save_particles_at_eb;
-        pp.query("save_particles_at_eb", save_particles_at_eb);
-        if (save_particles_at_eb == false) particle_saving_activated.insert(species_name);
-    }
-    std::string error_string = "You need to set "
-        "you need to set:\n";
-    for (auto const& species_name : particle_saving_activated){
-        error_string
-            .append("  ")
-            .append(species_name)
-            .append("save_particles_at_eb=1\n");
-    }
-    error_string.append("in order to use for the BoundaryScrapingDiagnostic.");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        particle_saving_activated.size() == 0u,
-        error_string);
-
     // Check that the output format is openPMD
-    error_string = std::string("You need to set `")
+    std::string error_string = std::string("You need to set `")
         .append(m_diag_name)
         .append(".format=openpmd` for the BoundaryScrapingDiagnostic.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -104,6 +83,26 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
         m_output_species_names = mpc.GetSpeciesNames();
     }
 
+    // Check that saving at EB has been activated for each requested species
+    std::set<std::string> particle_saving_activated;
+    for (auto const& species_name : m_output_species_names){
+        amrex::ParmParse pp(species_name);
+        bool save_particles_at_eb = false;
+        pp.query("save_particles_at_eb", save_particles_at_eb);
+        if (save_particles_at_eb == false) particle_saving_activated.insert(species_name);
+    }
+    std::string error_string = "You need to set:\n";
+    for (auto const& species_name : particle_saving_activated){
+        error_string
+            .append("  ")
+            .append(species_name)
+            .append(".save_particles_at_eb=1\n");
+    }
+    error_string.append("in order to use the BoundaryScrapingDiagnostic.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        particle_saving_activated.size() == 0u,
+        error_string);
+    
     // Initialize one ParticleDiag per species requested
     ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
