@@ -96,6 +96,39 @@ void push_ez_pml_current (int j, int k, int l,
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
+void push_by_pml_current (int j, int k, int l,
+                          amrex::Array4<amrex::Real> const& By,
+                          amrex::Array4<amrex::Real const> const& jx,
+                          amrex::Real const * const sigjx,
+                          amrex::Real const * const sigjz,
+                          int xlo, int zlo,
+                          amrex::Real mu_c2_dt, amrex::Real C)
+{
+#if defined(WARPX_DIM_3D)
+    amrex::Real alpha_yx, alpha_yz, sigma_yx, sigma_yz;
+    
+    if (sigjx[j-xlo]+sigjz[l-zlo] == 0){
+        alpha_yx = 0.5;
+        alpha_yz = 0.5;
+    }
+    else {
+        alpha_yx = sigjx[j-xlo]/(sigjx[j-xlo]+sigjz[l-zlo]);
+        alpha_yz = sigjz[l-zlo]/(sigjx[j-xlo]+sigjz[l-zlo]);
+    }
+    
+    sigma_yx = sigjx[j-xlo];
+    sigma_yz = sigjz[l-zlo];
+    
+    By(j,k,l,PMLComp::yz) = By(j,k,l,PMLComp::yz) + C * mu_c2_dt  * alpha_yz * jx(j,k,l);
+    By(j,k,l,PMLComp::yx) = By(j,k,l,PMLComp::yx) - C * mu_c2_dt  * alpha_yx * jx(j,k,l);
+#else
+    By(j,k,l,PMLComp::yz) = By(j,k,l,PMLComp::yz) + C * amrex::Real(0.5) * mu_c2_dt  * jx(j,k,l);
+    By(j,k,l,PMLComp::yx) = By(j,k,l,PMLComp::yx) - C * amrex::Real(0.5) * mu_c2_dt  * jx(j,k,l);
+    amrex::ignore_unused(sigjx, sigjz, xlo, zlo);
+#endif
+}
+
+AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void damp_jx_pml (int j, int k, int l,
                   amrex::Array4<amrex::Real> const& jx,
                   amrex::Real const* const sigsjx,
