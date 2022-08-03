@@ -5,7 +5,11 @@ Spock (OLCF)
 
 The `Spock cluster <https://docs.olcf.ornl.gov/systems/spock_quick_start_guide.html>`_ is located at OLCF.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `Spock user guide <https://docs.olcf.ornl.gov/systems/spock_quick_start_guide.html>`_
 * Batch system: `Slurm <https://docs.olcf.ornl.gov/systems/spock_quick_start_guide.html#running-jobs>`_
