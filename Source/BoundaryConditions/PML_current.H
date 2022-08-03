@@ -106,7 +106,7 @@ void push_by_pml_current (int j, int k, int l,
 {
 #if defined(WARPX_DIM_3D)
     amrex::Real alpha_yx, alpha_yz, sigma_yx, sigma_yz;
-    
+
     if (sigjx[j-xlo]+sigjz[l-zlo] == 0){
         alpha_yx = 0.5;
         alpha_yz = 0.5;
@@ -115,10 +115,10 @@ void push_by_pml_current (int j, int k, int l,
         alpha_yx = sigjx[j-xlo]/(sigjx[j-xlo]+sigjz[l-zlo]);
         alpha_yz = sigjz[l-zlo]/(sigjx[j-xlo]+sigjz[l-zlo]);
     }
-    
+
     sigma_yx = sigjx[j-xlo];
     sigma_yz = sigjz[l-zlo];
-    
+
     By(j,k,l,PMLComp::yz) = By(j,k,l,PMLComp::yz) + C * mu_c2_dt  * alpha_yz * jx(j,k,l);
     By(j,k,l,PMLComp::yx) = By(j,k,l,PMLComp::yx) - C * mu_c2_dt  * alpha_yx * jx(j,k,l);
 #else

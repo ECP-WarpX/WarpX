@@ -180,7 +180,7 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
 
                 const Real sigma_xy = sigma_y[j-y_lo];
                 const Real sigma_xz = sigma_z[k-z_lo];
-                
+
                 if (dive_cleaning)
                 {
                     UpwardDx_Ez_zz = T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k, PMLComp::zz);
@@ -243,10 +243,10 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
             }
 
         );
-        
+
         // Update the B field in the PML, using the current
         // deposited by the particles in the PML
-        
+
         if (pml_has_particles) {
 
             // Extract field data for this grid/tile
@@ -267,7 +267,7 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
 
         amrex::ParallelFor(tby,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    push_by_pml_current(i, j, k, By, Jx, 
+                    push_by_pml_current(i, j, k, By, Jx,
                                 sigmaj_y, sigmaj_z, y_lo, z_lo, mu_c2_dt, C_th);
                 }
             );

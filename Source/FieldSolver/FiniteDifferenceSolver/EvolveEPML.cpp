@@ -131,7 +131,7 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
         int const n_coefs_y = m_stencil_coefs_y.size();
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
         int const n_coefs_z = m_stencil_coefs_z.size();
-        
+
         const Real* sigma_x = sigba[mfi].sigma[0].data();
         const Real* sigma_y = sigba[mfi].sigma[1].data();
         const Real* sigma_z = sigba[mfi].sigma[2].data();
@@ -145,7 +145,7 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
         int const z_lo = sigba[mfi].sigma[1].lo();
 #endif
         const Real mu_c2_dt = (PhysConst::mu0*PhysConst::c*PhysConst::c) * dt;
-        
+
         // Extract tileboxes for which to loop
         Box const& tex  = mfi.tilebox(Efield[0]->ixType().ixType());
         Box const& tey  = mfi.tilebox(Efield[1]->ixType().ixType());
