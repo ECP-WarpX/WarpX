@@ -12,9 +12,18 @@
 
 #include "Particles/MultiParticleContainer.H"
 
-enum struct CollisionType { DeuteriumFusionToTritium, DeuteriumFusionToHelium, DeuteriumTritiumFusion, ProtonBoronFusion, Undefined };
+enum struct CollisionType { DeuteriumTritiumToNeutronHeliumFusion,
+                            DeuteriumDeuteriumToProtonTritiumFusion,
+                            DeuteriumDeuteriumToNeutronHeliumFusion,
+                            ProtonBoronToAlphasFusion,
+                            Undefined };
 
-enum struct NuclearFusionType { DeuteriumToTritium, DeuteriumToHelium, DeuteriumTritium, ProtonBoron, Undefined };
+enum struct NuclearFusionType {
+                                DeuteriumTritiumToNeutronHelium,
+                                DeuteriumDeuteriumToProtonTritium,
+                                DeuteriumDeuteriumToNeutronHelium,
+                                ProtonBoronToAlphas,
+                                Undefined };
 
 namespace BinaryCollisionUtils{
 

@@ -47,7 +47,7 @@ amrex::ParticleReal BoschHaleFusionCrossSection (
     // Compute astrophysical_factor
     // (See Eq. 9 and Table IV in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)
     amrex::ParticleReal A1=0_prt, A2=0_prt, A3=0_prt, A4=0_prt, A5=0_prt, B1=0_prt, B2=0_prt, B3=0_prt, B4=0_prt;
-    if (fusion_type == NuclearFusionType::DeuteriumTritium) {
+    if (fusion_type == NuclearFusionType::DeuteriumTritiumToNeutronHelium) {
         A1 = 6.927e4_prt;
         A2 = 7.454e8_prt;
         A3 = 2.050e6_prt;
@@ -58,7 +58,7 @@ amrex::ParticleReal BoschHaleFusionCrossSection (
         B3 = 6.981e-5_prt;
         B4 = 1.728e-4_prt;
     }
-    else if (fusion_type == NuclearFusionType::DeuteriumToTritium) {
+    else if (fusion_type == NuclearFusionType::DeuteriumDeuteriumToProtonTritium) {
         A1 = 5.5576e4_prt;
         A2 = 2.1054e2_prt;
         A3 = -3.2638e-2_prt;
@@ -69,7 +69,7 @@ amrex::ParticleReal BoschHaleFusionCrossSection (
         B3 = 0_prt;
         B4 = 0_prt;
     }
-    else if (fusion_type == NuclearFusionType::DeuteriumToHelium) {
+    else if (fusion_type == NuclearFusionType::DeuteriumDeuteriumToNeutronHelium) {
         A1 = 5.3701e4_prt;
         A2 = 3.3027e2_prt;
         A3 = -1.2706e-1_prt;
