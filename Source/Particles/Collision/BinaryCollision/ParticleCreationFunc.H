@@ -231,7 +231,10 @@ public:
                     if (t_collision_type == CollisionType::DeuteriumTritiumFusion) {
                         fusion_energy = 17.5893e6_prt * PhysConst::q_e;
                     }
-                    else if (t_collision_type == CollisionType::DeuteriumDeuteriumFusion) {
+                    else if (t_collision_type == CollisionType::DeuteriumFusionToTritium) {
+                        fusion_energy = 4.032667e6_prt * PhysConst::q_e;
+                    }
+                    else if (t_collision_type == CollisionType::DeuteriumFusionToHelium) {
                         fusion_energy = 3.268911e6_prt * PhysConst::q_e;
                     }
                     TwoProductFusionInitializeMomentum(soa_1, soa_2,

@@ -35,7 +35,8 @@ ParticleCreationFunc::ParticleCreationFunc (const std::string collision_name,
 #endif
             }
         else if ((m_collision_type == CollisionType::DeuteriumTritiumFusion)
-              || (m_collision_type == CollisionType::DeuteriumDeuteriumFusion))
+              || (m_collision_type == CollisionType::DeuteriumFusionToTritium)
+              || (m_collision_type == CollisionType::DeuteriumFusionToHelium))
         {
             m_num_product_species = 2;
             m_num_products_host.push_back(1);

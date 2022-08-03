@@ -58,7 +58,18 @@ amrex::ParticleReal BoschHaleFusionCrossSection (
         B3 = 6.981e-5_prt;
         B4 = 1.728e-4_prt;
     }
-    else if (fusion_type == NuclearFusionType::DeuteriumDeuterium) {
+    else if (fusion_type == NuclearFusionType::DeuteriumToTritium) {
+        A1 = 5.5576e4_prt;
+        A2 = 2.1054e2_prt;
+        A3 = -3.2638e-2_prt;
+        A4 = 1.4987e-6_prt;
+        A5 = 1.8181e-10_prt;
+        B1 = 0_prt;
+        B2 = 0_prt;
+        B3 = 0_prt;
+        B4 = 0_prt;
+    }
+    else if (fusion_type == NuclearFusionType::DeuteriumToHelium) {
         A1 = 5.3701e4_prt;
         A2 = 3.3027e2_prt;
         A3 = -1.2706e-1_prt;

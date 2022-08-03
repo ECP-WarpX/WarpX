@@ -52,12 +52,17 @@ namespace BinaryCollisionUtils{
                     "ERROR: Deuterium-deuterium fusion must contain exactly two product species");
                 auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
                 auto& product_species2 = mypc->GetParticleContainerFromName(product_species_name[1]);
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                if (
                     (product_species1.AmIA<PhysicalSpecies::helium3>() && product_species2.AmIA<PhysicalSpecies::neutron>())
-                    ||
-                    (product_species1.AmIA<PhysicalSpecies::neutron>() && product_species2.AmIA<PhysicalSpecies::helium3>()),
-                    "ERROR: Product species of deuterium-deuterium fusion must be of type neutron and helium3");
-                return NuclearFusionType::DeuteriumDeuterium;
+                  ||(product_species1.AmIA<PhysicalSpecies::neutron>() && product_species2.AmIA<PhysicalSpecies::helium3>())){
+                    return NuclearFusionType::DeuteriumToHelium;
+                } else if (
+                    (product_species1.AmIA<PhysicalSpecies::hydrogen3>() && product_species2.AmIA<PhysicalSpecies::proton>())
+                  ||(product_species1.AmIA<PhysicalSpecies::proton>() && product_species2.AmIA<PhysicalSpecies::hydrogen3>())){
+                    return NuclearFusionType::DeuteriumToTritium;
+                } else {
+                    amrex::Abort("ERROR: Product species of proton-boron fusion must be of type helium3 and neutron, or tritium and proton");
+                }
             }
             else if ((species1.AmIA<PhysicalSpecies::proton>() && species2.AmIA<PhysicalSpecies::boron11>())
                 ||
@@ -98,8 +103,10 @@ namespace BinaryCollisionUtils{
         {
             if (fusion_type == NuclearFusionType::DeuteriumTritium)
                 return CollisionType::DeuteriumTritiumFusion;
-            if (fusion_type == NuclearFusionType::DeuteriumDeuterium)
-                return CollisionType::DeuteriumDeuteriumFusion;
+            if (fusion_type == NuclearFusionType::DeuteriumToTritium)
+                return CollisionType::DeuteriumFusionToTritium;
+            if (fusion_type == NuclearFusionType::DeuteriumToHelium)
+                return CollisionType::DeuteriumFusionToHelium;
             if (fusion_type == NuclearFusionType::ProtonBoron)
                 return CollisionType::ProtonBoronFusion;
             amrex::Abort("Invalid nuclear fusion type");
