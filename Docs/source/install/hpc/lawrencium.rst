@@ -5,7 +5,11 @@ Lawrencium (LBNL)
 
 The `Lawrencium cluster <http://scs.lbl.gov/Systems>`_ is located at LBNL.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `Lawrencium user guide <https://sites.google.com/a/lbl.gov/high-performance-computing-services-group/lbnl-supercluster/lawrencium>`_
 * Batch system: `Slurm <https://sites.google.com/a/lbl.gov/high-performance-computing-services-group/scheduler/slurm-usage-instructions>`_
