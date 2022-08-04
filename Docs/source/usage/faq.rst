@@ -29,13 +29,13 @@ Note that the tiny profiler adds literally no overhead to the simulation runtime
 
 What do I need to know about using the boosted frame?
 -----------------------------------------------------
-The boost transformations are calculated internally to WarpX, so the input deck can be designed in the lab frame.  Little modification is needed beyond setting ``warpx.gamma_boost``.
+The boost transformations are calculated internally to WarpX, so the input deck can be designed in the lab frame and no modification to the physical set-up is needed.
 There are new instabilities that arise (see :ref:`boosted frame theory <theory-boostedframe>`) that require different algorithms for stability; please see the :ref:`boosted examples <usage-examples>` for more help.
 That said, there are some practical items worth considering that we list here to assist in designing and analyzing boosted frame simulations:
 
 - The boosted frame simulation begins at boosted time :math:`t'=0`.
-- Best practice is to set the upper :math:`z` limit of the problem domain to 0 with ``geometry.prob_hi``.
-Otherwise it is possible that the boosted simulation begins with downstream objects unexpectedly in the problem domain before there is a chance to correctly calculate all interactions.
+- Best practice is to set the upper :math:`z` limit of the problem domain to 0 with ``geometry.prob_hi``.   Things moving to the right should start with `z < 0` and things stationary (moving to the left in the boosted frame) should start with `z > 0`. 
+
 
 
 What kinds of RZ output do you support?
