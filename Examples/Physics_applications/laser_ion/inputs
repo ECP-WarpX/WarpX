@@ -190,7 +190,7 @@ diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydrogen
 # reduce resolution of output fields
 diag1.coarsening_ratio = 4 4
 diag1.electrons.variables = w ux uy uz
-diag1.hydrogen.variables = w ux uy uz
+diag1.hydrogen.variables = w ux uz orig_x orig_z
 # demonstration of a spatial and momentum filter
 diag1.electrons.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz>=0) * (x<1.0e-6) * (x>-1.0e-6)
 diag1.hydrogen.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz>=0) * (x<1.0e-6) * (x>-1.0e-6)
@@ -201,7 +201,7 @@ openPMDfw.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydr
 # reduce resolution of output fields
 openPMDfw.coarsening_ratio = 4 4
 openPMDfw.electrons.variables = w ux uy uz
-openPMDfw.hydrogen.variables = w ux uy uz
+openPMDfw.hydrogen.variables = w ux uy uz orig_x orig_z
 openPMDfw.format = openpmd
 openPMDfw.openpmd_backend = h5
 openPMDfw.species = electrons hydrogen
@@ -215,7 +215,7 @@ openPMDbw.fields_to_plot = rho_hydrogen
 # reduce resolution of output fields
 openPMDbw.coarsening_ratio = 4 4
 openPMDbw.electrons.variables = w ux uy uz
-openPMDbw.hydrogen.variables = w ux uy uz
+openPMDbw.hydrogen.variables = w ux uy uz orig_x orig_z
 openPMDbw.format = openpmd
 openPMDbw.openpmd_backend = h5
 openPMDbw.species = electrons hydrogen

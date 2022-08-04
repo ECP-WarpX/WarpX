@@ -592,7 +592,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
         real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
     }
     // plot any "extra" fields by default
-    real_flags = particle_diags[i].plot_flags;
+    real_flags = particle_diags[i].m_plot_flags;
     real_flags.resize(tmp.NumRealComps(), 1);
     // and the names
     int_names.resize(tmp.NumIntComps());
