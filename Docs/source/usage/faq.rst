@@ -29,6 +29,7 @@ Note that the tiny profiler adds literally no overhead to the simulation runtime
 
 What do I need to know about using the boosted frame?
 -----------------------------------------------------
+
 The boost transformations are calculated internally to WarpX, so the input deck can be designed in the lab frame and no modification to the physical set-up is needed.
 There are new instabilities that arise (see :ref:`boosted frame theory <theory-boostedframe>`) that require different algorithms for stability; please see the :ref:`boosted examples <usage-examples>` for more help.
 That said, there are some practical items worth considering that we list here to assist in designing and analyzing boosted frame simulations:
