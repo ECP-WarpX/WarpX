@@ -35,7 +35,7 @@ There are new instabilities that arise (see :ref:`boosted frame theory <theory-b
 That said, there are some practical items worth considering that we list here to assist in designing and analyzing boosted frame simulations:
 
 - The boosted frame simulation begins at boosted time :math:`t'=0`.
-- Best practice is to set the upper :math:`z` limit of the problem domain to 0 with ``geometry.prob_hi``.   Things moving to the right should start with `z < 0` and things stationary (moving to the left in the boosted frame) should start with `z > 0`. 
+- Best practice is to set the upper :math:`z` limit of the problem domain to 0 with ``geometry.prob_hi``.   Things moving to the right should start with `z < 0` and things stationary (moving to the left in the boosted frame) should start with `z > 0`.
 
 
 
