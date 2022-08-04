@@ -359,8 +359,6 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     amrex::ParticleReal q = this->charge;
 
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Sorting", blp_sort);
-    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::FindMaxTilesize",
-            blp_get_max_tilesize);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::DirectCurrentDepKernel",
             direct_current_dep_kernel);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::CurrentDeposition", blp_deposit);
@@ -483,8 +481,6 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 WarpX::load_balance_costs_update_algo);
         }
     } else {
-        //Working
-        //Pretty sure this is where the big if comes in
         if (WarpX::do_shared_mem_current_deposition)
         {
             const Geometry& geom = Geom(lev);
@@ -517,9 +513,6 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         });
             }
             WARPX_PROFILE_VAR_STOP(blp_sort);
-            WARPX_PROFILE_VAR_START(blp_get_max_tilesize);
-                //get the maximum size necessary for shared mem
-                // get tile boxes
             //get the maximum size necessary for shared mem
 #if AMREX_SPACEDIM > 0
             int sizeX = getMaxTboxAlongDim(box.size()[0], WarpX::shared_tilesize[0]);
@@ -531,9 +524,9 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             int sizeY = getMaxTboxAlongDim(box.size()[2], WarpX::shared_tilesize[2]);
 #endif
             amrex::IntVect max_tbox_size( AMREX_D_DECL(sizeX,sizeZ,sizeY) );
-            WARPX_PROFILE_VAR_STOP(blp_get_max_tilesize);
 
 
+            //call shared version of deposition routine
             WARPX_PROFILE_VAR_START(direct_current_dep_kernel);
             if        (WarpX::nox == 1){
                 doDepositionSharedShapeN<1>(
@@ -560,6 +553,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             WARPX_PROFILE_VAR_STOP(direct_current_dep_kernel);
 
         } else {
+            // Not doing shared. Regular doDeposition call
             if        (WarpX::nox == 1){
                 doDepositionShapeN<1>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,

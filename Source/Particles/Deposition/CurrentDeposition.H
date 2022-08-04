@@ -359,6 +359,10 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
  * \param cost  Pointer to (load balancing) cost corresponding to box where present particles deposit current.
  * \param load_balance_costs_update_algo Selected method for updating load balance costs.
+ * \param a_bins       sorted bins containing particles
+ * \param box          around all particles
+ * \param geom         At level containing particles
+ * \param a_tbox_max_size Max size of a tile in number of cells
  */
 template <int depos_order>
 void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
@@ -384,9 +388,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                         const amrex::Geometry& geom,
                         const amrex::IntVect& a_tbox_max_size)
 {
-    using namespace amrex;
-
-    auto permutation = a_bins.permutationPtr();
+    auto permutation = a_bins.permutationPtr(); // order to access particles
 
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
@@ -412,6 +414,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
 
+    //get lower bounds of domain
 #if (AMREX_SPACEDIM >= 2)
     const amrex::Real xmin = xyzmin[0];
 #endif
@@ -422,10 +425,11 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 
     const amrex::Real clightsq = 1.0_rt/PhysConst::c/PhysConst::c;
 
+    //get the current grids
     amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
     amrex::Array4<amrex::Real> const& jy_arr = jy_fab.array();
     amrex::Array4<amrex::Real> const& jz_arr = jz_fab.array();
-    amrex::IntVect const jx_type = jx_fab.box().type(); //this is the type you need
+    amrex::IntVect const jx_type = jx_fab.box().type();
     amrex::IntVect const jy_type = jy_fab.box().type();
     amrex::IntVect const jz_type = jz_fab.box().type();
 
@@ -433,7 +437,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     constexpr int NODE = amrex::IndexType::NODE;
     constexpr int CELL = amrex::IndexType::CELL;
 
-    // Loop over particles and deposit into jx_fab, jy_fab and jz_fab
 #if defined(WARPX_USE_GPUCLOCK)
     amrex::Real* cost_real = nullptr;
     if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
@@ -443,16 +446,12 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
-    //This is literally, AMREX_D_DECL(dx[0], dx[1], dx[2]) as a gpu array
+    //Up until launch this is about finding the shared mem size, and making sure it fits
     const auto dxiarr = geom.InvCellSizeArray();
     const auto plo = geom.ProbLoArray();
     const auto domain = geom.Domain();
 
-    //This could be it. Make absolute certain that every box has the same number of points
-    //convert copies in case you had any doubts
-    //types are node and cell
-    //note you only use one of these
-    const amrex::Box sample_tbox(IntVect(AMREX_D_DECL(0,0,0)), a_tbox_max_size - 1);
+    const amrex::Box sample_tbox(amrex::IntVect(AMREX_D_DECL(0,0,0)), a_tbox_max_size - 1);
     amrex::Box sample_tbox_x = convert(sample_tbox, jx_type);
     amrex::Box sample_tbox_y = convert(sample_tbox, jy_type);
     amrex::Box sample_tbox_z = convert(sample_tbox, jz_type);
@@ -466,23 +465,19 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     //needed for gpu kernel
     const int nblocks = a_bins.numBins();
     const auto offsets_ptr = a_bins.offsetsPtr();
-    //TODO could play with this
-    const int threads_per_block = WarpX::shared_mem_current_tpb;
 
     //calculate how much shared memory is needed. Note 3 because writing to 3 array4s
     std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
     amrex::IntVect bin_size = WarpX::shared_tilesize;
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
-    //WATCH may get burned if this makes you use less threads
+
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
                                       "Tile size too big for GPU shared memory current deposition");
 
     amrex::ignore_unused(np_to_depose);
     // Loop one thread-block per tile, each tile is a bin, so we're looping over bins
-    //Andrew, how does this know what it is looping over? How blockId.x index into bin
-    //cause nblocks=a_bins.numBins()?
     amrex::launch(
-            nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
+            nblocks, WarpX::shared_mem_current_tpb, shared_mem_bytes, amrex::Gpu::gpuStream(),
             [=] AMREX_GPU_DEVICE () noexcept
 #else
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip_orig) noexcept
@@ -494,8 +489,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         const unsigned int bin_stop = offsets_ptr[bin_id+1];
 
         if (bin_start == bin_stop) {
-            //WATCH this would be a great spot for a counter to evaluate performance
-
             //this bin has no particles
             return;
         }
@@ -505,37 +498,35 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         amrex::Box buffer_box_y;
         amrex::Box buffer_box_z;
         {
-          ParticleReal xp, yp, zp;
-          //WATCH. Random access hurts. Maybe we want to sort every timestep
+          amrex::ParticleReal xp, yp, zp;
           GetPosition(permutation[bin_start], xp, yp, zp);
-//WATCH strange here
+
 #if defined(WARPX_DIM_3D)
-          IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
+          amrex::IntVect iv = amrex::IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
                                int( amrex::Math::floor((yp-plo[1]) * dxiarr[1]) ),
                                int( amrex::Math::floor((zp-plo[2]) * dxiarr[2]) ));
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-          IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
+          amrex::IntVect iv = amrex::IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
                                int( amrex::Math::floor((zp-plo[1]) * dxiarr[1]) ));
 #elif defined(WARPX_DIM_1D_Z)
-          IntVect iv = IntVect(int( amrex::Math::floor((zp-plo[0]) * dxiarr[0]) ));
+          amrex::IntVect iv = amrex::IntVect(int( amrex::Math::floor((zp-plo[0]) * dxiarr[0]) ));
 #endif
           iv += domain.smallEnd();
-          //Looks like it sets buffer box to contain the tile
-          //iv is a point. first box is the entire domain, last box gets written with size bin_size
+
           getTileIndex(iv, box, true, bin_size, buffer_box_x);
           getTileIndex(iv, box, true, bin_size, buffer_box_y);
           getTileIndex(iv, box, true, bin_size, buffer_box_z);
         }
 
-        Box tbox_x = convert(buffer_box_x, jx_type);
-        Box tbox_y = convert(buffer_box_y, jy_type);
-        Box tbox_z = convert(buffer_box_z, jz_type);
+        amrex::Box tbox_x = convert(buffer_box_x, jx_type);
+        amrex::Box tbox_y = convert(buffer_box_y, jy_type);
+        amrex::Box tbox_z = convert(buffer_box_z, jz_type);
 
         tbox_x.grow(depos_order);
         tbox_y.grow(depos_order);
         tbox_z.grow(depos_order);
 
-        Gpu::SharedMemory<amrex::Real> gsm;
+        amrex::Gpu::SharedMemory<amrex::Real> gsm;
         amrex::Real* const shared = gsm.dataPtr();
 
         //buf is a buffer in shard mem to write the results of a tile/thread-block to.
@@ -560,9 +551,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
-        //this should probably be incorporated into above, but we'll leave here for now...
-
-        for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
+        for (unsigned int ip_orig=bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig+=blockDim.x)
 #endif
         {
             //the gpu initialization is over. This chunk is same for shared or not
