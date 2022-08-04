@@ -1,7 +1,5 @@
 {
   "ele_para0": {
-    "particle_cpu": 0.0,
-    "particle_id": 1.0,
     "particle_momentum_x": 7.802641516393779e-20,
     "particle_momentum_y": 1.170396227459067e-19,
     "particle_momentum_z": 2.340792454918134e-19,
@@ -11,8 +9,6 @@
     "particle_weight": 1e-08
   },
   "ele_perp0": {
-    "particle_cpu": 0.0,
-    "particle_id": 2.0,
     "particle_momentum_x": 8.11389431708072e-21,
     "particle_momentum_y": 4.844504297489887e-21,
     "particle_momentum_z": 5.126883587771859e-21,
@@ -22,8 +18,6 @@
     "particle_weight": 1e-08
   },
   "ele_perp1": {
-    "particle_cpu": 0.0,
-    "particle_id": 3.0,
     "particle_momentum_x": 2.3334382603801444e-20,
     "particle_momentum_y": 5.8105622999913844e-21,
     "particle_momentum_z": 4.872846384604778e-21,
@@ -33,8 +27,6 @@
     "particle_weight": 1e-08
   },
   "ele_perp2": {
-    "particle_cpu": 0.0,
-    "particle_id": 4.0,
     "particle_momentum_x": 1.81896887291916e-20,
     "particle_momentum_y": 2.623053574283056e-20,
     "particle_momentum_z": 1.9178497447812487e-20,
@@ -47,8 +39,6 @@
     "rho": 0.00051269652288
   },
   "pos_perp2": {
-    "particle_cpu": 0.0,
-    "particle_id": 5.0,
     "particle_momentum_x": 1.818968872919164e-20,
     "particle_momentum_y": 3.108111940394833e-20,
     "particle_momentum_z": 9.477330125576942e-21,
