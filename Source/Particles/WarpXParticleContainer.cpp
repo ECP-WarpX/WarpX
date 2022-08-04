@@ -56,6 +56,7 @@
 #include <AMReX_ParticleTile.H>
 #include <AMReX_ParticleTransformation.H>
 #include <AMReX_ParticleUtil.H>
+#include <AMReX_Random.H>
 #include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 
@@ -247,37 +248,33 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
 #endif
         }
 
-        for (int j = PIdx::nattribs; j < NumRealComps(); ++j)
+        // Initialize nattr_real - 1 runtime real attributes from data in the attr_real array
+        for (int j = PIdx::nattribs; j < PIdx::nattribs + nattr_real - 1; ++j)
         {
-            if (j - PIdx::nattribs < nattr_real - 1) {
-                // get the next attribute from attr_real array
-                amrex::Vector<amrex::ParticleReal> attr_vals(np);
-                for (int i = ibegin; i < iend; ++i)
-                {
-                    attr_vals[i-ibegin] = attr_real[j - PIdx::nattribs + 1 + i*nattr_real];
-                }
-                pinned_tile.push_back_real(j, attr_vals.data(), attr_vals.data() + np);
+            // get the next attribute from attr_real array
+            amrex::Vector<amrex::ParticleReal> attr_vals(np);
+            for (int i = ibegin; i < iend; ++i)
+            {
+                attr_vals[i-ibegin] = attr_real[j - PIdx::nattribs + 1 + i*nattr_real];
             }
-            else {
-                pinned_tile.push_back_real(j, np, 0.0_prt);
-            }
+            pinned_tile.push_back_real(j, attr_vals.data(), attr_vals.data() + np);
         }
 
-        for (int j = 0; j < NumIntComps(); ++j)
+        // Initialize nattr_int runtime integer attributes from data in the attr_int array
+        for (int j = 0; j < nattr_int; ++j)
         {
-            if (j < nattr_int) {
-                // get the next attribute from attr_int array
-                amrex::Vector<int> attr_vals(np);
-                for (int i = ibegin; i < iend; ++i)
-                {
-                    attr_vals[i-ibegin] = attr_int[j + i*nattr_int];
-                }
-                pinned_tile.push_back_int(j, attr_vals.data(), attr_vals.data() + np);
+            // get the next attribute from attr_int array
+            amrex::Vector<int> attr_vals(np);
+            for (int i = ibegin; i < iend; ++i)
+            {
+                attr_vals[i-ibegin] = attr_int[j + i*nattr_int];
             }
-            else {
-                pinned_tile.push_back_int(j, np, 0);
-            }
+            pinned_tile.push_back_int(j, attr_vals.data(), attr_vals.data() + np);
         }
+
+        // Default initialize the other real and integer runtime attributes
+        DefaultInitializeRuntimeAttributes(pinned_tile, nattr_real - 1, nattr_int,
+                                           amrex::RandomEngine{});
 
         auto old_np = particle_tile.numParticles();
         auto new_np = old_np + pinned_tile.numParticles();

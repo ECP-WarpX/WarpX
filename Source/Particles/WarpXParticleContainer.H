@@ -29,6 +29,7 @@
 #include <AMReX_INT.H>
 #include <AMReX_ParIter.H>
 #include <AMReX_Particles.H>
+#include <AMReX_Random.H>
 #include <AMReX_REAL.H>
 #include <AMReX_StructOfArrays.H>
 #include <AMReX_Vector.H>
@@ -156,6 +157,17 @@ public:
 
     void AllocData ();
 
+    /**
+     * \brief Virtual method to initialize runtime attributes. Must be overriden by each derived
+     * class.
+     */
+    virtual void DefaultInitializeRuntimeAttributes (
+                        amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
+                                            NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                        const int n_external_attr_real,
+                        const int n_external_attr_int,
+                        const amrex::RandomEngine& engine) = 0;
+
     ///
     /// This pushes the particle positions by one half time step.
     /// It is used to desynchronize the particles after initializaton
@@ -270,10 +282,13 @@ public:
      * @param[in] ux x component of the momentum of particles to be added
      * @param[in] uy y component of the momentum of particles to be added
      * @param[in] uz z component of the momentum of particles to be added
-     * @param[in] nattr_real number of real attributes to initialize (particle weight is treated as
-     * a real attribute in this routine)
+     * @param[in] nattr_real number of runtime real attributes to initialize with the attr_real
+     * array. (particle weight is treated as a real attribute in this routine). The remaining
+     * runtime real attributes are initialized in the method DefaultInitializeRuntimeAttributes.
      * @param[in] attr_real value of real attributes to initialize
-     * @param[in] nattr_int number of int attributes to initialize
+     * @param[in] nattr_int number of runtime int attributes to initialize with the attr_int array.
+     * The remaining runtime int attributes are initialized in the method
+     * DefaultInitializeRuntimeAttributes.
      * @param[in] attr_int value of int attributes to initialize
      * @param[in] uniqueparticles if true, each MPI rank calling this function creates n
      * particles. Else, all MPI ranks work together to create n particles in total.

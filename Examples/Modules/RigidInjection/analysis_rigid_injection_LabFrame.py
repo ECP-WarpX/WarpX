@@ -18,6 +18,9 @@ the theory (with a 5% error allowed).
 As a help to the user, the script also compares beam width to the theory in
 case rigid injection is OFF (i.e., the beam starts expanding from -5 microns),
 in which case a warning is raised.
+
+Additionally, this script tests that runtime attributes are correctly initialized
+with the gaussian_beam injection style.
 '''
 
 import os
