@@ -1,7 +1,5 @@
 {
   "ions1": {
-    "particle_cpu": 0.0,
-    "particle_id": 10.0,
     "particle_momentum_x": 3.4560250353184555e-22,
     "particle_momentum_y": 3.4560250353184555e-22,
     "particle_momentum_z": 3.4560250353184555e-22,
@@ -11,8 +9,6 @@
     "particle_weight": 4.0
   },
   "ions2": {
-    "particle_cpu": 0.0,
-    "particle_id": 26.0,
     "particle_momentum_x": 9.111625188610108e-22,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,
@@ -22,8 +18,6 @@
     "particle_weight": 4.0
   },
   "ions3": {
-    "particle_cpu": 0.0,
-    "particle_id": 42.0,
     "particle_momentum_x": 6.943047764036734e-22,
     "particle_momentum_y": 6.943047764036734e-22,
     "particle_momentum_z": 6.943047764036734e-22,
@@ -33,8 +27,6 @@
     "particle_weight": 4.0
   },
   "ions4": {
-    "particle_cpu": 0.0,
-    "particle_id": 58.0,
     "particle_momentum_x": 1.8496124473858214e-21,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,
