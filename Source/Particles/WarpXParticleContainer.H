@@ -45,19 +45,6 @@
 
 using namespace amrex::literals;
 
-namespace ParticleStringNames
-{
-    const std::map<std::string, int> to_index = {
-        {"w",     PIdx::w    },
-        {"ux",    PIdx::ux   },
-        {"uy",    PIdx::uy   },
-        {"uz",    PIdx::uz   },
-#ifdef WARPX_DIM_RZ
-        {"theta", PIdx::theta}
-#endif
-    };
-}
-
 class WarpXParIter
     : public amrex::ParIter<0,0,PIdx::nattribs>
 {
@@ -129,6 +116,8 @@ public:
     virtual ~WarpXParticleContainer() {}
 
     virtual void InitData () = 0;
+
+    virtual void InitIonizationModule () {}
 
     /**
      * Evolve is the central WarpXParticleContainer function that advances
@@ -251,11 +240,11 @@ public:
     /// This returns the total charge for all the particles in this ParticleContainer.
     /// This is needed when solving Poisson's equation with periodic boundary conditions.
     ///
-    amrex::Real sumParticleCharge(bool local = false);
+    amrex::ParticleReal sumParticleCharge(bool local = false);
 
-    std::array<amrex::Real, 3> meanParticleVelocity(bool local = false);
+    std::array<amrex::ParticleReal, 3> meanParticleVelocity(bool local = false);
 
-    amrex::Real maxParticleVelocity(bool local = false);
+    amrex::ParticleReal maxParticleVelocity(bool local = false);
 
     void AddNParticles (int lev,
                         int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
@@ -347,8 +336,8 @@ public:
 protected:
     int species_id;
 
-    amrex::Real charge;
-    amrex::Real mass;
+    amrex::ParticleReal charge;
+    amrex::ParticleReal mass;
     PhysicalSpecies physical_species;
 
     // Controls boundaries for particles exiting the domain

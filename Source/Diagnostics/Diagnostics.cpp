@@ -169,6 +169,10 @@ Diagnostics::BaseReadParameters ()
         );
     }
 
+    if (WarpXUtilStr::is_in(m_varnames_fields, "none")){
+        m_varnames_fields.clear();
+    }
+
     m_varnames = m_varnames_fields;
     // Generate names of averaged particle fields and append to m_varnames
     for (int ivar=0; ivar<m_pfield_varnames.size(); ivar++) {

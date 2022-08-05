@@ -177,8 +177,9 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 
     // Get the particle beta vector
     bool const local_average = false; // Average across all MPI ranks
-    std::array<Real, 3> beta = pc.meanParticleVelocity(local_average);
-    for (Real& beta_comp : beta) beta_comp /= PhysConst::c; // Normalize
+    std::array<ParticleReal, 3> beta_pr = pc.meanParticleVelocity(local_average);
+    std::array<Real, 3> beta;
+    for (int i=0 ; i < static_cast<int>(beta.size()) ; i++) beta[i] = beta_pr[i]/PhysConst::c; // Normalize
 
     // Compute the potential phi, by solving the Poisson equation
     computePhi( rho, phi, beta, pc.self_fields_required_precision,
@@ -279,9 +280,16 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    int const max_iters,
                    int const verbosity) const
 {
+    // create a vector to our fields, sorted by level
+    amrex::Vector<amrex::MultiFab*> sorted_rho;
+    amrex::Vector<amrex::MultiFab*> sorted_phi;
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        sorted_rho.emplace_back(rho[lev].get());
+        sorted_phi.emplace_back(phi[lev].get());
+    }
+
     std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
 #if defined(AMREX_USE_EB)
-
     // EB: use AMReX to directly calculate the electric field since with EB's the
     // simple finite difference scheme in WarpX::computeE sometimes fails
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
@@ -326,8 +334,8 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #endif
 
     ablastr::fields::computePhi(
-        rho,
-        phi,
+        sorted_rho,
+        sorted_phi,
         beta,
         required_precision,
         absolute_tolerance,

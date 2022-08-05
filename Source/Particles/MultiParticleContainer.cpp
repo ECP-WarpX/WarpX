@@ -19,6 +19,7 @@
 #   include "Particles/ElementaryProcess/QEDPhotonEmission.H"
 #endif
 #include "Particles/LaserParticleContainer.H"
+#include "Particles/NamedComponentParticleContainer.H"
 #include "Particles/ParticleCreation/FilterCopyTransform.H"
 #ifdef WARPX_QED
 #   include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
@@ -397,21 +398,42 @@ MultiParticleContainer::AllocData ()
 void
 MultiParticleContainer::InitData ()
 {
+    InitMultiPhysicsModules();
+
     for (auto& pc : allcontainers) {
         pc->InitData();
     }
     pc_tmp->InitData();
+
+}
+
+void
+MultiParticleContainer::PostRestart ()
+{
+    InitMultiPhysicsModules();
+
+    for (auto& pc : allcontainers) {
+        pc->PostRestart();
+    }
+    pc_tmp->PostRestart();
+}
+
+void
+MultiParticleContainer::InitMultiPhysicsModules ()
+{
+    // Init ionization module here instead of in the MultiParticleContainer
+    // constructor because dt is required to compute ionization rate pre-factors
+    for (auto& pc : allcontainers) {
+        pc->InitIonizationModule();
+    }
     // For each species, get the ID of its product species.
     // This is used for ionization and pair creation processes.
     mapSpeciesProduct();
-
     CheckIonizationProductSpecies();
-
 #ifdef WARPX_QED
     CheckQEDProductSpecies();
     InitQED();
 #endif
-
 }
 
 void
@@ -654,15 +676,6 @@ MultiParticleContainer::SetParticleDistributionMap (int lev, DistributionMapping
     for (auto& pc : allcontainers) {
         pc->SetParticleDistributionMap(lev,new_dm);
     }
-}
-
-void
-MultiParticleContainer::PostRestart ()
-{
-    for (auto& pc : allcontainers) {
-        pc->PostRestart();
-    }
-    pc_tmp->PostRestart();
 }
 
 void
@@ -1393,8 +1406,7 @@ MultiParticleContainer::doQEDSchwinger ()
         const auto CreateEle = create_factory_ele.getSmartCreate();
         const auto CreatePos = create_factory_pos.getSmartCreate();
 
-        const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size,
-                            ParticleStringNames::to_index.find("w")->second};
+        const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size, PIdx::w};
 
         const auto num_added = filterCreateTransformFromFAB<1>( dst_ele_tile,
                                dst_pos_tile, box, fieldsEB, np_ele_dst,

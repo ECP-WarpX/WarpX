@@ -855,12 +855,11 @@ WarpX::FillBoundaryAux (int lev, IntVect ng)
 }
 
 void
-WarpX::SyncCurrent ()
+WarpX::SyncCurrent (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
 {
     WARPX_PROFILE("WarpX::SyncCurrent()");
-
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp = current_fp;
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp = current_cp;
 
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
     if (WarpX::do_current_centering)
@@ -1342,44 +1341,4 @@ void WarpX::NodalSyncPML (int lev, PatchType patch_type)
         pml_rz_B[1]->OverrideSync(period);
     }
 #endif
-}
-
-void WarpX::NodalSync (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_fp,
-                       amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& mf_cp)
-{
-    if (!override_sync_intervals.contains(istep[0]) && !do_pml) return;
-
-    for (int lev = 0; lev <= WarpX::finest_level; lev++)
-    {
-        const amrex::Periodicity& period = Geom(lev).periodicity();
-        ablastr::utils::communication::OverrideSync(*mf_fp[lev][0], WarpX::do_single_precision_comms, period);
-        ablastr::utils::communication::OverrideSync(*mf_fp[lev][1], WarpX::do_single_precision_comms, period);
-        ablastr::utils::communication::OverrideSync(*mf_fp[lev][2], WarpX::do_single_precision_comms, period);
-
-        if (lev > 0)
-        {
-            const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
-            ablastr::utils::communication::OverrideSync(*mf_cp[lev][0], WarpX::do_single_precision_comms, cperiod);
-            ablastr::utils::communication::OverrideSync(*mf_cp[lev][1], WarpX::do_single_precision_comms, cperiod);
-            ablastr::utils::communication::OverrideSync(*mf_cp[lev][2], WarpX::do_single_precision_comms, cperiod);
-        }
-    }
-}
-
-void WarpX::NodalSync (amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_fp,
-                       amrex::Vector<std::unique_ptr<amrex::MultiFab>>& mf_cp)
-{
-    if (!override_sync_intervals.contains(istep[0]) && !do_pml) return;
-
-    for (int lev = 0; lev <= WarpX::finest_level; lev++)
-    {
-        const amrex::Periodicity& period = Geom(lev).periodicity();
-        mf_fp[lev]->OverrideSync(period);
-
-        if (lev > 0)
-        {
-            const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
-            mf_cp[lev]->OverrideSync(cperiod);
-        }
-    }
 }

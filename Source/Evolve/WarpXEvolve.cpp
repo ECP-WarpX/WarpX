@@ -398,14 +398,17 @@ WarpX::OneStep_nosub (Real cur_time)
 
     ExecutePythonCallback("afterdeposition");
 
-    // Synchronize J and rho.
+    // Synchronize J and rho: filter, exchange boundary, interpolate across levels.
     // With Vay current deposition, the current deposited at this point is not yet
     // the actual current J. This is computed later in WarpX::PushPSATD, by calling
     // WarpX::PSATDVayDeposition. The function SyncCurrent is called after that,
     // instead of here, so that we synchronize the correct current.
+    // With current centering, the nodal current is deposited in 'current_fp_nodal':
+    // SyncCurrent stores the result of its centering into 'current_fp' and then
+    // performs both filtering, if used, and exchange of guard cells.
     if (WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay)
     {
-        SyncCurrent();
+        SyncCurrent(current_fp, current_cp);
     }
     SyncRho();
 
@@ -533,8 +536,12 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     //    (dt[0] denotes the time step on mesh refinement level 0)
     auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
     mypc->DepositCurrent(current, dt[0], -dt[0]);
-    // Filter, exchange boundary, and interpolate across levels
-    SyncCurrent();
+    // Synchronize J: filter, exchange boundary, and interpolate across levels.
+    // With current centering, the nodal current is deposited in 'current',
+    // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
+    // into 'current_fp' and then performs both filtering, if used, and exchange
+    // of guard cells.
+    SyncCurrent(current_fp, current_cp);
     // Forward FFT of J
     PSATDForwardTransformJ(current_fp, current_cp);
 
@@ -557,8 +564,12 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // Deposit new J at relative time t_depose with time step dt
         // (dt[0] denotes the time step on mesh refinement level 0)
         mypc->DepositCurrent(current, dt[0], t_depose);
-        // Filter, exchange boundary, and interpolate across levels
-        SyncCurrent();
+        // Synchronize J: filter, exchange boundary, and interpolate across levels.
+        // With current centering, the nodal current is deposited in 'current',
+        // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
+        // into 'current_fp' and then performs both filtering, if used, and exchange
+        // of guard cells.
+        SyncCurrent(current_fp, current_cp);
         // Forward FFT of J
         PSATDForwardTransformJ(current_fp, current_cp);
 
@@ -622,17 +633,13 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         DampPML();
     }
 
-    // Exchange guard cells
-    FillBoundaryE(guard_cells.ng_alloc_EB);
-    FillBoundaryB(guard_cells.ng_alloc_EB);
-    if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning) FillBoundaryF(guard_cells.ng_alloc_F);
-    if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning) FillBoundaryG(guard_cells.ng_alloc_G);
-
-    // Synchronize E, B, F, G fields on nodal points
-    NodalSync(Efield_fp, Efield_cp);
-    NodalSync(Bfield_fp, Bfield_cp);
-    if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
-    if (WarpX::do_divb_cleaning) NodalSync(G_fp, G_cp);
+    // Exchange guard cells and synchronize nodal points
+    FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+    FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+    if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning)
+        FillBoundaryF(guard_cells.ng_alloc_F, WarpX::sync_nodal_points);
+    if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
+        FillBoundaryG(guard_cells.ng_alloc_G, WarpX::sync_nodal_points);
 
     // Synchronize fields on nodal points in PML
     if (do_pml)
@@ -983,5 +990,6 @@ WarpX::HandleSignals()
 
     if (SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_CHECKPOINT)) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
+        ExecutePythonCallback("oncheckpointsignal");
     }
 }

@@ -574,8 +574,19 @@ Particle initialization
 
 * ``<species_name>.species_type`` (`string`) optional (default `unspecified`)
     Type of physical species.
-    Currently, the accepted species are ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"`` (or equivalently ``"proton"``), ``"helium"`` (or equivalently ``"alpha"``), ``"boron"``, ``"carbon"``, ``"oxygen"``, ``"nitrogen"``, ``"argon"``, ``"copper"`` and ``"xenon"``.
-    Either this or both ``mass`` and ``charge`` have to be specified.
+    Currently, the accepted species are
+    ``"electron"``, ``"positron"``, ``"muon"``, ``"antimuon"``, ``"photon"``, ``"neutron"``, ``"proton"`` , ``"alpha"``,
+    ``"hydrogen1"`` (a.k.a. ``"protium"``), ``"hydrogen2"`` (a.k.a. ``"deuterium"``), ``"hydrogen3"`` (a.k.a.``"tritium"``),
+    ``"helium"``, ``"helium3"``, ``"helium4"``,
+    ``"lithium"``, ``"lithium6"``, ``"lithium7"``, ``"beryllium"``, ``"boron"``, ``"boron10"``, ``"boron11"``,
+    ``"carbon"``, ``"carbon12"``, ``"carbon13"``, ``"nitrogen"``, ``"nitrogen14"``, ``"nitrogen15"``,
+    ``"oxygen"``, ``"oxygen16"``, ``"oxygen17"``, ``"oxygen18"``, ``"fluorine"``, ``"neon"``, ``"neon20"``,
+    ``"neon21"``, ``"neon22"``, ``"aluminium"``, ``"argon"``, ``"copper"``, ``"xenon"`` and ``"gold"``.
+    The difference between ``"proton"`` and ``"hydrogen1"`` is that the mass of the latter includes also the mass
+    of the bound electron (same for ``"alpha"`` and ``"helium4"``). When only the name of an element is specified, the mass
+    is a weighted average of the masses of the stable isotopes. For all the elements with ``Z < 11`` we provide
+    also the stable isotopes as an option for ``species_type`` (e.g., ``"helium3"`` and ``"helium4"``).
+    Either ``species_type`` or both ``mass`` and ``charge`` have to be specified.
 
 * ``<species_name>.charge`` (`float`) optional (default `NaN`)
     The charge of one `physical` particle of this species.
@@ -620,10 +631,9 @@ Particle initialization
 
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in
       space in all directions. This requires additional parameters:
-      ``<species_name>.q_tot`` (beam charge) optional (default is ``q_tot=0``),
+      ``<species_name>.q_tot`` (beam charge),
       ``<species_name>.npart`` (number of particles in the beam),
       ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
-      ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
       ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
       ``<species_name>.x/y/z_cut`` (optional, particles with ``abs(x-x_m) > x_cut*x_rms`` are not injected, same for y and z. ``<species_name>.q_tot`` is the charge of the un-cut beam, so that cutting the distribution is likely to result in a lower total charge),
       and optional argument ``<species_name>.do_symmetrize`` (whether to
@@ -928,14 +938,16 @@ Particle initialization
      :math:`\gamma` is the Lorentz factor,
      :math:`v/c` is the particle velocity normalized by the speed of light.
 
-* ``<species>.save_particles_at_xlo/ylo/zlo``,  ``<species>.save_particles_at_xhi/yhi/zhi`` and ``<species>.save_particles_at_eb`` (`0` or `1` optional, default `0`)
+* ``<species>.save_particles_at_xlo/ylo/zlo``, ``<species>.save_particles_at_xhi/yhi/zhi`` and ``<species>.save_particles_at_eb`` (`0` or `1` optional, default `0`)
     If `1` particles of this species will be copied to the scraped particle
     buffer for the specified boundary if they leave the simulation domain in
     the specified direction. **If USE_EB=TRUE** the ``save_particles_at_eb``
     flag can be set to `1` to also save particle data for the particles of this
     species that impact the embedded boundary.
     The scraped particle buffer can be used to track particle fluxes out of the
-    simulation but is currently only accessible via the Python interface. The
+    simulation.
+    The particle data can be written out by setting up a ``BoundaryScrapingDiagnostic``.
+    It is also accessible via the Python interface. The
     function ``get_particle_boundary_buffer``, found in the
     ``picmi.Simulation`` class as
     ``sim.extension.get_particle_boundary_buffer()``, can be
@@ -945,8 +957,8 @@ Particle initialization
     the above mentioned function.
 
     .. note::
-        Currently the scraped particle buffer relies on the user to access the
-        data in the buffer for processing and periodically clear the buffer. The
+        When accessing the data via Python, the scraped particle buffer relies on the user
+        to clear the buffer after processing the data. The
         buffer will grow unbounded as particles are scraped and therefore could
         lead to memory issues if not periodically cleared. To clear the buffer
         call ``warpx_clearParticleBoundaryBuffer()``.
@@ -1912,7 +1924,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     If this is `1`, the last timestep is dumped regardless of ``<diag_name>.period``.
 
 * ``<diag_name>.diag_type`` (`string`)
-    Type of diagnostics. ``Full`` and ``BackTransformed``
+    Type of diagnostics. ``Full``, ``BackTransformed``, and ``BoundaryScraping``
     example: ``diag1.diag_type = Full`` or ``diag1.diag_type = BackTransformed``
 
 * ``<diag_name>.format`` (`string` optional, default ``plotfile``)
@@ -1998,6 +2010,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``,
     unless in RZ geometry with ``<diag_name>.format == openpmd``,
     then default is ``<diag_name>.fields_to_plot = Er Et Ez Br Bt Bz jr jt jz``.
+    When the special value ``none`` is specified, no fields are written out.
     Note that the fields are averaged on the cell centers before they are written to file.
     Also, when ``<diag_name>.format = openpmd``, the RZ modes for all fields are written.
     Otherwise, we reconstruct a 2D Cartesian slice of the fields for output at :math:`\theta=0`.
@@ -2235,12 +2248,18 @@ Back-Transformed Diagnostics (legacy output)
 Boundary Scraping Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``BoundaryScrapingDiagnostics`` are used to collect the particles that are absorbed at the embedded boundary, throughout the simulation.
+``BoundaryScrapingDiagnostics`` are used to collect the particles that are absorbed at the boundaries, throughout the simulation.
+This diagnostic type is specified by setting ``<diag_name>.diag_type`` = ``BoundaryScraping``.
+Currently, the only supported output format is openPMD, so the user also needs to set ``<diag>.format=openpmd`` and WarpX must be compiled with openPMD turned on.
+The data that is to be collected and recorded is controlled per species and per boundary by setting one or more of the flags to ``1``,
+``<species>.save_particles_at_xlo/ylo/zlo``, ``<species>.save_particles_at_xhi/yhi/zhi``, and ``<species>.save_particles_at_eb``.
 (Note that this diagnostics does not save any field ; it only saves particles.)
-Currently, the only supported output format is openPMD, so the user needs to set ``<diag>.format=openpmd``. In addition, the user needs
-to set ``<species>.save_particles_at_eb=1`` for each of the species that are to be saved in this diagnostic.
 
-In addition to their usual attributes, the saved particles have an additional integer attribute ``timestamp``, which
+The data collected at each boundary is written out to a subdirectory of the diagnostics directory with the name of the boundary, for example, ``particles_at_xlo``, ``particles_at_zhi``, or ``particles_at_eb``.
+By default, all of the collected particle data is written out at the end of the simulation. Optionally, the ``<diag_name>.intervals`` parameter can be given to specify writing out the data more often.
+This can be important if a large number of particles are lost, avoiding filling up memory with the accumulated lost particle data.
+
+In addition to their usual attributes, the saved particles have an integer attribute ``timestamp``, which
 indicates the PIC iteration at which each particle was absorbed at the boundary.
 
 .. _running-cpp-parameters-diagnostics-reduced:
