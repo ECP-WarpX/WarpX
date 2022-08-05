@@ -399,8 +399,11 @@ public:
     amrex::MultiFab * get_pointer_Efield_aux  (int lev, int direction) const { return Efield_fp_external[0][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) const { return Bfield_fp_external[0][direction].get(); }
 
-    amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
+//    amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
+//    amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp_external[0][direction].get(); }
+    amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp_external[0][direction].get(); }
+
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
     amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
@@ -864,6 +867,9 @@ public:
          const int lev);
 
     void ReadExternalFieldsFromFile (std::string read_from_path, amrex::MultiFab* mf,
+        std::string F_name, std::string F_component);
+
+    void ReadExternalFieldsFromFileOpenPMD (std::string read_from_path, amrex::MultiFab* mf,
         std::string F_name, std::string F_component);
 
     /**
