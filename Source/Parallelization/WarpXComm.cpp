@@ -967,9 +967,7 @@ void WarpX::ApplyFilterJ (
 
     const int srccomp = 0;
     const int dstcomp = 0;
-    const int numcomp = J.nComp();
-    const amrex::IntVect nghost = J.nGrowVect();
-    amrex::MultiFab::Copy(J, Jf, srccomp, dstcomp, numcomp, nghost);
+    amrex::MultiFab::Copy(J, Jf, srccomp, dstcomp, ncomp, ngrow);
 }
 
 void WarpX::ApplyFilterJ (
