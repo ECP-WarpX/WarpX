@@ -322,6 +322,8 @@ void WarpX::PSATDForwardTransformRho (
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
     const int icomp, const int dcomp)
 {
+    if (charge_fp[0] == nullptr) return;
+
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     // Select index in k space
@@ -606,46 +608,118 @@ WarpX::PushPSATD ()
         "PushFieldsEM: PSATD solver selected but not built"));
 #else
 
+    if (fft_periodic_single_box)
+    {
+        if (current_correction)
+        {
+            // FFT of J and rho
+            PSATDForwardTransformJ(current_fp, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+
+            // Correct J in k-space
+            PSATDCurrentCorrection();
+
+            // Inverse FFT of J
+            PSATDBackwardTransformJ(current_fp, current_cp);
+        }
+        else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            // FFT of D and rho (if used)
+            PSATDForwardTransformJ(current_fp_vay, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+
+            // Compute J from D in k-space
+            PSATDVayDeposition();
+
+            // Inverse FFT of J, subtract cumulative sums of D
+            PSATDBackwardTransformJ(current_fp, current_cp);
+            // TODO Cumulative sums need to be fixed with periodic single box
+            PSATDSubtractCurrentPartialSumsAvg();
+
+            // FFT of J after subtraction of cumulative sums
+            PSATDForwardTransformJ(current_fp, current_cp);
+        }
+        else // no current correction, no Vay deposition
+        {
+            // FFT of J and rho (if used)
+            PSATDForwardTransformJ(current_fp, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+        }
+    }
+    else // no periodic single box
+    {
+        if (current_correction)
+        {
+            // FFT of J and rho
+            PSATDForwardTransformJ(current_fp, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+
+            // Correct J in k-space
+            PSATDCurrentCorrection();
+
+            // Inverse FFT of J
+            PSATDBackwardTransformJ(current_fp, current_cp);
+
+            // Synchronize J and rho
+            SyncCurrent(current_fp, current_cp);
+            SyncRho();
+
+            // FFT of J and rho after synchronization
+            PSATDForwardTransformJ(current_fp, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+        }
+        else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            // FFT of D and rho (if used)
+            PSATDForwardTransformJ(current_fp_vay, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+
+            // Compute J from D in k-space
+            PSATDVayDeposition();
+
+            // Inverse FFT of J, subtract cumulative sums of D
+            PSATDBackwardTransformJ(current_fp, current_cp);
+            PSATDSubtractCurrentPartialSumsAvg();
+
+            // Synchronize J and rho (if used)
+            SyncCurrent(current_fp, current_cp);
+            SyncRho();
+
+            // FFT of J and rho (if used) after synchronization
+            PSATDForwardTransformJ(current_fp, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+        }
+        else // no current correction, no Vay deposition
+        {
+            // FFT of J and rho (if used)
+            PSATDForwardTransformJ(current_fp, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+        }
+    }
+
+    // FFT of E and B
     PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
-
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp =
-        (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ? current_fp_vay : current_fp;
-
-    PSATDForwardTransformJ(J_fp, current_cp);
-
-    // Do rho FFTs only if needed
-    if (WarpX::update_with_rho || WarpX::current_correction || WarpX::do_dive_cleaning)
-    {
-        PSATDForwardTransformRho(rho_fp, rho_cp, 0,0); // rho old
-        PSATDForwardTransformRho(rho_fp, rho_cp, 1,1); // rho new
-    }
-
-    // Correct the current in Fourier space so that the continuity equation is satisfied, and
-    // transform back to real space so that the current correction is reflected in the diagnostics
-    if (WarpX::current_correction)
-    {
-        PSATDCurrentCorrection();
-        PSATDBackwardTransformJ(current_fp, current_cp);
-    }
-
-    // Compute the current in Fourier space according to the Vay deposition scheme, and
-    // transform back to real space so that the Vay deposition is reflected in the diagnostics
-    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
-    {
-        PSATDVayDeposition();
-        PSATDBackwardTransformJ(current_fp, current_cp);
-        PSATDSubtractCurrentPartialSumsAvg();
-        SyncCurrent(current_fp, current_cp);
-        PSATDForwardTransformJ(current_fp, current_cp);
-    }
 
 #ifdef WARPX_DIM_RZ
     if (pml_rz[0]) pml_rz[0]->PushPSATD(0);
 #endif
 
+    // FFT of F and G
     if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
     if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
+
+    // Update E, B, F, and G in k-space
     PSATDPushSpectralFields();
+
+    // Inverse FFT of E, B, F, and G
     PSATDBackwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
     if (WarpX::fft_do_time_averaging)
         PSATDBackwardTransformEBavg(Efield_avg_fp, Bfield_avg_fp, Efield_avg_cp, Bfield_avg_cp);

@@ -1327,10 +1327,15 @@ WarpX::ReadParameters ()
             }
         }
 
-        // Fill guard cells with backward FFTs if Vay current deposition is used
-        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+        // Without periodic single box, fill guard cells with backward FFTs,
+        // with current correction or Vay deposition
+        if (fft_periodic_single_box == false)
         {
-            WarpX::fill_guards = amrex::IntVect(1);
+            if (current_correction ||
+                current_deposition_algo == CurrentDepositionAlgo::Vay)
+            {
+                fill_guards = amrex::IntVect(1);
+            }
         }
     }
 
