@@ -725,6 +725,7 @@ BTDiagnostics::Flush (int i_buffer)
     }
     SetSnapshotFullStatus(i_buffer);
     bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
+    bool const use_pinned_pc = true;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
 
@@ -777,7 +778,7 @@ BTDiagnostics::Flush (int i_buffer)
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards,
-        isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush,
+        use_pinned_pc, isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
 
     for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {

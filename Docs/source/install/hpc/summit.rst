@@ -5,16 +5,20 @@ Summit (OLCF)
 
 The `Summit cluster <https://www.olcf.ornl.gov/summit/>`_ is located at OLCF.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `Summit user guide <https://docs.olcf.ornl.gov/systems/summit_user_guide.html>`_
 * Batch system: `LSF <https://docs.olcf.ornl.gov/systems/summit_user_guide.html#running-jobs>`_
 * `Jupyter service <https://jupyter.olcf.ornl.gov>`__
-* `Production directories <https://docs.olcf.ornl.gov/data/storage_overview.html>`_:
+* `Production directories <https://docs.olcf.ornl.gov/data/index.html#data-storage-and-transfers>`_:
 
-  * ``$PROJWORK/$proj/``: shared with all members of a project (recommended)
-  * ``$MEMBERWORK/$proj/``: single user (usually smaller quota)
-  * ``$WORLDWORK/$proj/``: shared with all users
+  * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days (recommended)
+  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days (usually smaller quota)
+  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days
   * Note that the ``$HOME`` directory is mounted as read-only on compute nodes.
     That means you cannot run in your ``$HOME``.
 

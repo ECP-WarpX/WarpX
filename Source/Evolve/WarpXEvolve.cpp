@@ -398,14 +398,17 @@ WarpX::OneStep_nosub (Real cur_time)
 
     ExecutePythonCallback("afterdeposition");
 
-    // Synchronize J and rho.
+    // Synchronize J and rho: filter, exchange boundary, interpolate across levels.
     // With Vay current deposition, the current deposited at this point is not yet
     // the actual current J. This is computed later in WarpX::PushPSATD, by calling
     // WarpX::PSATDVayDeposition. The function SyncCurrent is called after that,
     // instead of here, so that we synchronize the correct current.
+    // With current centering, the nodal current is deposited in 'current_fp_nodal':
+    // SyncCurrent stores the result of its centering into 'current_fp' and then
+    // performs both filtering, if used, and exchange of guard cells.
     if (WarpX::current_deposition_algo != CurrentDepositionAlgo::Vay)
     {
-        SyncCurrent();
+        SyncCurrent(current_fp, current_cp);
     }
     SyncRho();
 
@@ -542,7 +545,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     {
         mypc->DepositCurrent(current, dt[0], -dt[0]);
         // Filter, exchange boundary, and interpolate across levels
-        SyncCurrent();
+        SyncCurrent(current_fp, current_cp);
         // Forward FFT of J
         // (get spectral index from spectral solver on level 0)
         idx_jx = spectral_solver_fp[0]->m_spectral_index.Jx_new;
@@ -576,7 +579,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             PSATDVayDeposition(idx_jx, idx_jy, idx_jz);
             PSATDBackwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
             PSATDSubtractCurrentPartialSumsAvg();
-            SyncCurrent();
+            SyncCurrent(current_fp, current_cp);
             PSATDForwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
 
             // Vay deposition at 3/4 of the time sub-step
@@ -589,7 +592,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             PSATDVayDeposition(idx_jx, idx_jy, idx_jz);
             PSATDBackwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
             PSATDSubtractCurrentPartialSumsAvg();
-            SyncCurrent();
+            SyncCurrent(current_fp, current_cp);
             PSATDForwardTransformJ(current_fp, current_cp, idx_jx, idx_jy, idx_jz);
 
             // At this point, in spectral space, J<x,y,z> stores J at 1/4 of the
@@ -606,7 +609,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             PSATDMoveJNewToJOld();
             mypc->DepositCurrent(current, dt[0], t_depose);
             // Filter, exchange boundary, and interpolate across levels
-            SyncCurrent();
+            SyncCurrent(current_fp, current_cp);
             // Forward FFT of J
             // (get new spectral index from spectral solver on level 0)
             idx_jx = spectral_solver_fp[0]->m_spectral_index.Jx_new;

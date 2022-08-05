@@ -59,6 +59,7 @@ FlushFormatPlotfile::WriteToFile (
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,
+    const bool /*use_pinned_pc*/,
     bool isBTD, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
     bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
 {
@@ -329,7 +330,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
 
         // plot any "extra" fields by default
-        real_flags = particle_diags[i].plot_flags;
+        real_flags = particle_diags[i].m_plot_flags;
         real_flags.resize(pc->NumRealComps(), 1);
 
         // and the names

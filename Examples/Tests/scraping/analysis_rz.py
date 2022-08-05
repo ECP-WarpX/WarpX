@@ -47,7 +47,7 @@ assert(error==tolerance)
 # remaining particles and scraped particles is equal to the
 # original number of particles
 ts_full = OpenPMDTimeSeries('./diags/diag2/')
-ts_scraping = OpenPMDTimeSeries('./diags/diag3/')
+ts_scraping = OpenPMDTimeSeries('./diags/diag3/particles_at_eb')
 
 def n_remaining_particles( iteration ):
     w, = ts_full.get_particle(['w'], iteration=iteration)

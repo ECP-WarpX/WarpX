@@ -1,7 +1,5 @@
 {
   "electron": {
-    "particle_cpu": 0.0,
-    "particle_id": 1.0,
     "particle_momentum_x": 1.2084126370460285e-22,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 1.1345273207159581e-23,
@@ -38,8 +36,6 @@
     "part_per_cell": 0.0
   },
   "positron": {
-    "particle_cpu": 0.0,
-    "particle_id": 2.0,
     "particle_momentum_x": 1.2084126370460285e-22,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 1.1345273207159581e-23,

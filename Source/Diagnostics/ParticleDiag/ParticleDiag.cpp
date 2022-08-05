@@ -16,40 +16,29 @@ using namespace amrex;
 ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticleContainer* pc, PinnedMemoryParticleContainer* pinned_pc)
     : m_diag_name(diag_name), m_name(name), m_pc(pc), m_pinned_pc(pinned_pc)
 {
+    //variable to set m_plot_flags size
+    const int plot_flag_size = pc->NumRealComps();
+
+    // By default output all attributes
+    m_plot_flags.resize(plot_flag_size, 1);
+
     ParmParse pp_diag_name_species_name(diag_name + "." + name);
-    if (!pp_diag_name_species_name.queryarr("variables", variables)){
-        variables = {"ux", "uy", "uz", "w"};
-    }
+    amrex::Vector<std::string> variables;
+    const int variables_specified = pp_diag_name_species_name.queryarr("variables", variables);
 
-    //variable to set plot_flags size
-    int plot_flag_size = PIdx::nattribs;
-    if(WarpX::do_back_transformed_diagnostics && m_pc->doBackTransformedDiagnostics())
-        // Also output old values for position and momenta
-        plot_flag_size += 6;
-
-#ifdef WARPX_QED
-    if(m_pc->DoQED()){
-        // plot_flag will have an entry for the optical depth
-        plot_flag_size++;
-    }
-#endif
-
-    // Set plot_flag to 0 for all attribs
-    plot_flags.resize(plot_flag_size, 0);
-
-    // If not none, set plot_flags values to 1 for elements in variables.
-    if (variables[0] != "none"){
-        for (const auto& var : variables){
-            // The string "rho" is needed to dump rho per species, which is generated
-            // on the fly from existing species variables. Hence, "rho" is not part
-            // of the species' PIdx variables.
-            if (var != "rho") {
-                // Return error if var not in PIdx.
+    if (variables_specified){
+        // If only specific variables have been specified, fill m_plot_flags with zero and only set
+        // requested variables to one
+        std::fill(m_plot_flags.begin(), m_plot_flags.end(), 0);
+        if (variables[0] != "none"){
+            const std::map<std::string, int> existing_variable_names = pc->getParticleComps();
+            for (const auto& var : variables){
+                const auto search = existing_variable_names.find(var);
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    ParticleStringNames::to_index.count(var),
+                    search != existing_variable_names.end(),
                     "variables argument '" + var
-                    +"' not in ParticleStringNames");
-                plot_flags[ParticleStringNames::to_index.at(var)] = 1;
+                    +"' is not an existing attribute for this species");
+                m_plot_flags[existing_variable_names.at(var)] = 1;
             }
         }
     }
@@ -58,17 +47,7 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
     // Always write out theta, whether or not it's requested,
     // to be consistent with always writing out r and z.
     // TODO: openPMD does a reconstruction to Cartesian, so we can now skip force-writing this
-    plot_flags[ParticleStringNames::to_index.at("theta")] = 1;
-#endif
-
-#ifdef WARPX_QED
-    if(m_pc->DoQED()){
-        // TODO: cleaner handling of particle attributes. This should probably be done in
-        // the particle container classes, either by adding "opt_depth_BW" to ParticleStringNames
-        // or by using a std::map for particle attributes.
-        // Optical depths is always plotted if QED is on.
-        plot_flags[plot_flag_size-1] = 1;
-    }
+    m_plot_flags[pc->getParticleComps().at("theta")] = 1;
 #endif
 
     // build filter functors

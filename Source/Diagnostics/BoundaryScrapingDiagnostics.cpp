@@ -13,6 +13,7 @@
 #include "WarpX.H"
 
 #include <AMReX.H>
+#include <AMReX_ParmParse.H>
 
 #include <set>
 #include <string>
@@ -35,46 +36,33 @@ BoundaryScrapingDiagnostics::ReadParameters ()
     m_varnames_fields = {}; // No fields in boundary scraping diagnostics
     m_varnames = {}; // No fields in boundary scraping diagnostics
 
-    // Number of buffers = 1 for BoundaryScrapingDiagnostics.
-    // (buffers are used in BTDiagnostics, and correspond to different snapshots)
-    m_num_buffers = 1;
+    // num_buffers corresponds to the number of boundaries
+    // (upper/lower domain boundary in each dimension)
+    // + the EB boundary if available
+    m_num_buffers = AMREX_SPACEDIM*2;
+#ifdef AMREX_USE_EB
+    m_num_buffers += 1;
+#endif
 
     // Do a few checks
-#ifndef AMREX_USE_EB
-    amrex::Abort("You need to compile WarpX with Embedded Boundary (EB) support, in order to use BoundaryScrapingDiagnostic: -DWarpX_EB=ON");
-#endif
 #ifndef WARPX_USE_OPENPMD
     amrex::Abort("You need to compile WarpX with openPMD support, in order to use BoundaryScrapingDiagnostic: -DWarpX_OPENPMD=ON");
 #endif
 
-    // Check that saving at EB has been activated for each requested species
-    std::set<std::string> particle_saving_activated;
-    for (auto const& species_name : m_output_species_names){
-        amrex::ParmParse pp(species_name);
-        bool save_particles_at_eb;
-        pp.query("save_particles_at_eb", save_particles_at_eb);
-        if (save_particles_at_eb == false) particle_saving_activated.insert(species_name);
-    }
-    std::string error_string = "You need to set "
-        "you need to set:\n";
-    for (auto const& species_name : particle_saving_activated){
-        error_string
-            .append("  ")
-            .append(species_name)
-            .append("save_particles_at_eb=1\n");
-    }
-    error_string.append("in order to use for the BoundaryScrapingDiagnostic.");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        particle_saving_activated.size() == 0u,
-        error_string);
-
     // Check that the output format is openPMD
-    error_string = std::string("You need to set `")
+    std::string error_string = std::string("You need to set `")
         .append(m_diag_name)
         .append(".format=openpmd` for the BoundaryScrapingDiagnostic.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "openpmd",
         error_string);
+
+    // Check for the optional intervals parameter
+    amrex::ParmParse pp_diag_name(m_diag_name);
+    std::vector<std::string> intervals_string_vec = {"0"};
+    pp_diag_name.queryarr("intervals", intervals_string_vec);
+    m_intervals = IntervalsParser(intervals_string_vec);
+
 }
 
 void
@@ -108,11 +96,9 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
     ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for (auto const& species_name : m_output_species_names){
-            // `particle_buffer` contains buffers for all boundaries
-            // here we select the one for the EB (index: AMREX_SPACEDIM*2)
             WarpXParticleContainer* pc = &mpc.GetParticleContainerFromName(species_name);
-            PinnedMemoryParticleContainer* eb_buffer = particle_buffer.getParticleBufferPointer(species_name, AMREX_SPACEDIM*2);
-            m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species_name, pc, eb_buffer));
+            PinnedMemoryParticleContainer* bnd_buffer = particle_buffer.getParticleBufferPointer(species_name, i_buffer);
+            m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species_name, pc, bnd_buffer));
         }
     }
     // Initialize total number of particles flushed
@@ -133,12 +119,12 @@ BoundaryScrapingDiagnostics::DoComputeAndPack (int /*step*/, bool /*force_flush*
 }
 
 bool
-BoundaryScrapingDiagnostics::DoDump (int /*step*/, int /*i_buffer*/, bool force_flush)
+BoundaryScrapingDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flush)
 {
     if (force_flush) {
         return true;
     } else {
-        return false;
+        return (m_intervals.contains(step+1));
     }
 }
 
@@ -146,22 +132,34 @@ void
 BoundaryScrapingDiagnostics::Flush (int i_buffer)
 {
     auto & warpx = WarpX::GetInstance();
+    ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();
 
-    // This is not a backtransform diagnostics, but we still set the flag `isBTD`
-    // This enables:
-    //   - writing the data that was accumulated in a PinnedMemoryParticleContainer
-    //   - writing repeatedly to the same file
-    bool const isBTD = true;
-    // For now, because this function is currently only called at the very end
-    // of the simulation for BoundaryScrapingDiagnostics, we always set `isLastBTD`.
-    // This tells WarpX to write all the metadata (and not purely the particle data)
-    bool const isLastBTD = true;
+    int n_particles = 0;
+    for (auto const& species_name : m_output_species_names) {
+        n_particles += particle_buffer.getNumParticlesInContainer(species_name, i_buffer);
+    }
+
+    // If the saving of the particles was not set up for any of the species for this boundary
+    // or if no particles have been lost, then don't write anything out.
+    if (n_particles == 0) return;
+
+    // This is not a backtransform diagnostics
+    bool const isBTD = false;
+    bool const isLastBTD = false;
+    // The data being written out is saved in a pinned particle container
+    bool const use_pinned_pc = true;
     const amrex::Geometry& geom = warpx.Geom(0); // For compatibility with `WriteToFile` ; not used
+
+    // The data for each boundary is written out to a separate directory with the boundary name
+    std::string file_prefix = m_file_prefix + "/particles_at_" + particle_buffer.boundaryName(i_buffer);
 
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        0., m_output_species[i_buffer], nlev_output, m_file_prefix,
-        m_file_min_digits, false, false, isBTD, i_buffer, geom,
+        warpx.gett_new(0), m_output_species[i_buffer], nlev_output, file_prefix,
+        m_file_min_digits, false, false, use_pinned_pc, isBTD, warpx.getistep(0), geom,
         isLastBTD, m_totalParticles_flushed_already[i_buffer]);
+
+    // Now that the data has been written out, clear out the buffer
+    particle_buffer.clearParticles(i_buffer);
 
 }
