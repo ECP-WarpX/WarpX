@@ -5,7 +5,11 @@ Lassen (LLNL)
 
 The `Lassen V100 GPU cluster <https://hpc.llnl.gov/hardware/platforms/lassen>`_ is located at LLNL.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `LLNL user account <https://lc.llnl.gov/lorenz/mylc/mylc.cgi>`_
 * `Lassen user guide <https://hpc.llnl.gov/training/tutorials/using-lcs-sierra-system>`_

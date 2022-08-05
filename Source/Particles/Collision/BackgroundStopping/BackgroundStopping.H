@@ -47,7 +47,7 @@ public:
      *
      */
     void doBackgroundStoppingOnElectronsWithinTile (WarpXParIter& pti, amrex::Real dt, amrex::Real t,
-                                                    amrex::Real species_mass, amrex::Real species_charge);
+                                                    amrex::ParticleReal species_mass, amrex::ParticleReal species_charge);
 
     /** Perform the stopping calculation within a tile for stopping on ions
      *
@@ -59,12 +59,12 @@ public:
      *
      */
     void doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti, amrex::Real dt, amrex::Real t,
-                                               amrex::Real species_mass, amrex::Real species_charge);
+                                               amrex::ParticleReal species_mass, amrex::ParticleReal species_charge);
 
 private:
 
-    amrex::Real m_background_mass;
-    amrex::Real m_background_charge_state;
+    amrex::ParticleReal m_background_mass;
+    amrex::ParticleReal m_background_charge_state;
     BackgroundStoppingType m_background_type;
 
     amrex::Parser m_background_density_parser;

@@ -55,8 +55,12 @@ class Checksum:
         # of a non-periodic domain along dimension 0.
         if 'force_periodicity' in dir(ds): ds.force_periodicity()
         grid_fields = [item for item in ds.field_list if item[0] == 'boxlib']
+
+        # "fields"/"species" we remove:
+        #   - nbody: added by yt by default, unused by us
         species_list = set([item[0] for item in ds.field_list if
-                            item[1][:9] == 'particle_' and item[0] != 'all' and
+                            item[1][:9] == 'particle_' and
+                            item[0] != 'all' and
                             item[0] != 'nbody'])
 
         data = {}
@@ -81,8 +85,15 @@ class Checksum:
         if do_particles:
             ad = ds.all_data()
             for species in species_list:
+                # properties we remove:
+                #   - particle_cpu/id: they depend on the parallelism: MPI-ranks and
+                #                      on-node acceleration scheme, thus not portable
+                #                      and irrelevant for physics benchmarking
                 part_fields = [item[1] for item in ds.field_list
-                               if item[0] == species]
+                               if item[0] == species and
+                                   item[1] != 'particle_cpu' and
+                                   item[1] != 'particle_id'
+                               ]
                 data_species = {}
                 for field in part_fields:
                     Q = ad[(species, field)].v
