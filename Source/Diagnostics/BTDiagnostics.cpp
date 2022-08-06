@@ -744,10 +744,6 @@ BTDiagnostics::Flush (int i_buffer)
                 vrefratio.push_back(m_particles_buffer[i_buffer][0]->GetParGDB()->refRatio(lev));
             }
         }
-        for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
-            // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
-            m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba[0]);
-        }
         // Redistribute particles in the lab frame box arrays that correspond to the buffer
         // Prior to redistribute, increase buffer box and Box in ParticleBoxArray by 1 index in the
         // lo and hi-end, so particles can be binned in the boxes correctly.
@@ -761,6 +757,10 @@ BTDiagnostics::Flush (int i_buffer)
         amrex::BoxArray buffer_ba( particle_buffer_box );
         buffer_ba.maxSize(m_max_box_size*2);
         m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0, buffer_ba);
+        for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
+            // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
+            m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], buffer_ba);
+        }
     }
 
     RedistributeParticleBuffer(i_buffer);
