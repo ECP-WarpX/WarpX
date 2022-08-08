@@ -486,12 +486,19 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
 {
     WarpX& warpx = WarpX::GetInstance();
 
-    BoxArray ba = warpx.boxArray(lev);
+    BoxArray nba = warpx.boxArray(lev);
     DistributionMapping dmap = warpx.DistributionMap(lev);
     const int ng_rho = warpx.get_ng_depos_rho().max();
 
-    auto zero_rho = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheNodeVector()),
-                                               dmap,WarpX::ncomps,ng_rho);
+    bool is_PSATD_RZ = false;
+#ifdef WARPX_DIM_RZ
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        is_PSATD_RZ = true;
+#endif
+    if( !is_PSATD_RZ )
+        nba.surroundingNodes();
+
+    auto zero_rho = std::make_unique<MultiFab>(nba, dmap, WarpX::ncomps, ng_rho);
     zero_rho->setVal(amrex::Real(0.0));
     return zero_rho;
 }
