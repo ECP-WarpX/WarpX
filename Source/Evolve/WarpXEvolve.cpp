@@ -408,6 +408,7 @@ WarpX::OneStep_nosub (Real cur_time)
             // even with current correction or Vay deposition
             if (current_deposition_algo == CurrentDepositionAlgo::Vay)
             {
+                // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
                 SyncCurrent(current_fp_vay, current_cp);
                 SyncRho();
             }
