@@ -12,9 +12,10 @@ logger = logging.getLogger(__name__)
 
 
 class CheckPointDiagnostic(WarpXDiagnostic):
+
     def __init__(self, diag_steps,
                  name=init_restart_util.DEFAULT_CHECKPOINT_NAME,
-                 clear_old_checkpoints=True, num_to_keep=1, **kwargs):
+                 clear_old_checkpoints=True, num_to_keep=2, **kwargs):
         """
         This class is a wrapper for creating checkpoints from which a
         simulation can be restarted. Adding flux diagnostic data to

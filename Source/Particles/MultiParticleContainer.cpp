@@ -19,6 +19,7 @@
 #   include "Particles/ElementaryProcess/QEDPhotonEmission.H"
 #endif
 #include "Particles/LaserParticleContainer.H"
+#include "Particles/NamedComponentParticleContainer.H"
 #include "Particles/ParticleCreation/FilterCopyTransform.H"
 #ifdef WARPX_QED
 #   include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
@@ -1405,8 +1406,7 @@ MultiParticleContainer::doQEDSchwinger ()
         const auto CreateEle = create_factory_ele.getSmartCreate();
         const auto CreatePos = create_factory_pos.getSmartCreate();
 
-        const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size,
-                            ParticleStringNames::to_index.find("w")->second};
+        const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size, PIdx::w};
 
         const auto num_added = filterCreateTransformFromFAB<1>( dst_ele_tile,
                                dst_pos_tile, box, fieldsEB, np_ele_dst,

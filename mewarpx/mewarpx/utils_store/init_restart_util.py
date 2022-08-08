@@ -61,7 +61,7 @@ def get_sorted_checkpoints(checkpoint_directory, checkpoint_prefix):
 
 def clean_old_checkpoints(checkpoint_directory="diags",
                           checkpoint_prefix=DEFAULT_CHECKPOINT_NAME,
-                          num_to_keep=1):
+                          num_to_keep=2):
     """Utility function to remove old checkpoints.
 
     Arguments:
@@ -69,7 +69,8 @@ def clean_old_checkpoints(checkpoint_directory="diags",
             directories. Default is ``diags``.
         checkpoint_prefix (str): Look for a checkpoint directory starting
             with this prefix to restart from.
-        num_to_keep (int): Keep this many of the newest checkpoints. Default 1.
+        num_to_keep (int): Keep this many of the newest checkpoints. Default 2,
+            so that one being judged corrupt will never ruin all checkpoints.
     """
     # handle the case where num_to_keep is 0 or None
     if not num_to_keep:
@@ -87,6 +88,98 @@ def clean_old_checkpoints(checkpoint_directory="diags",
         dirpath = os.path.join(checkpoint_directory, d)
         logger.info(f"Removing old checkpoint file {dirpath}")
         shutil.rmtree(dirpath)
+
+
+def _eval_checkpoint_validity(checkpoint_dir, checkpoint):
+    """Determine if a checkpoint appears to be valid by checking if
+    fluxdata.ckpt is present.
+
+    Arguments:
+        checkpoint_dir (str): Look in this directory for checkpoint
+            directories.
+        checkpoint (str): Checkpoint folder
+
+    Returns:
+        checkpoint_ok (bool): True if the checkpoint appears good
+        (fluxdata.ckpt is present), False if fluxdata.ckpt is missing.
+    """
+    if not os.path.isfile(
+        os.path.join(checkpoint_dir, checkpoint, "fluxdata.ckpt")
+    ):
+        logger.warning(
+            f"Checkpoint {checkpoint} does not contain a flux diag "
+            "checkpoint."
+        )
+        return False
+
+    return True
+
+
+def _remove_corrupt_checkpoint(checkpoint_dir, checkpoint):
+    """Remove a checkpoint that has already been determined to be corrupt and
+    appropriate to remove.
+
+    Arguments:
+        checkpoint_dir (str): Look in this directory for checkpoint
+            directories.
+        checkpoint (str): Checkpoint folder
+    """
+    dirpath = os.path.join(checkpoint_dir, checkpoint)
+    logger.info(f"Removing corrupt checkpoint {dirpath}")
+    shutil.rmtree(dirpath)
+
+
+def _handle_corrupt_checkpoints(checkpoint_dir, checkpoint_list):
+    """Utility function to remove the last checkpoint if it appears to be
+    corrupt. Error out if two or more checkpoints are corrupt.
+
+    Note:
+        A checkpoint is judged corrupt if a flux diag checkpoint does not exist
+        (which is always written after the checkpoint). If runs are ever used
+        without flux diagnostics this logic should be adapted.
+
+    Arguments:
+        checkpoint_dir (str): Look in this directory for checkpoint
+            directories.
+        checkpoint_list (list): List of the checkpoints returned by
+            get_sorted_checkpoints.
+
+    Returns:
+        checkpoint_list (list): The same checkpoint_list, but if the final
+        checkpoint was corrupt it will be removed. If multiple appear to be
+        corrupt an error is raised instead of returning.
+    """
+    last_checkpoint_ok = _eval_checkpoint_validity(
+        checkpoint_dir, checkpoint_list[-1]
+    )
+    # Short-circuit the corrupt handling logic: We don't have an issue, carry
+    # on as before.
+    if last_checkpoint_ok:
+        return checkpoint_list
+
+    # If there's only one checkpoint and we know it's corrupt, remove it and
+    # then execute the non-restart logic by returning an empty checkpoint
+    # list.
+    if len(checkpoint_list) == 1:
+        _remove_corrupt_checkpoint(checkpoint_dir, checkpoint_list[-1])
+        return []
+
+    # If there are multiple checkpoints, our action depends on whether only the
+    # final one is corrupt
+    penultimate_checkpoint_ok = _eval_checkpoint_validity(
+        checkpoint_dir, checkpoint_list[-2]
+    )
+    # If only the final one is corrupt, we remove it and carry on
+    if penultimate_checkpoint_ok:
+        _remove_corrupt_checkpoint(checkpoint_dir, checkpoint_list[-1])
+        return checkpoint_list[:-1]
+
+    # If multiple are corrupt, we raise an error and don't do anything
+    raise RuntimeError(
+        "Multiple checkpoints lacked fluxdata.ckpt, indicating they are "
+        "corrupt. This should never occur, so the simulation is terminating "
+        "now."
+    )
 
 
 def run_restart(checkpoint_directory="diags",
@@ -129,15 +222,22 @@ def run_restart(checkpoint_directory="diags",
         checkpoint_prefix=checkpoint_prefix
     )
 
+    if checkpoints:
+        checkpoints = _handle_corrupt_checkpoints(
+            checkpoint_directory, checkpoints
+        )
+
+    # Note this can't be an else clause! checkpoints can be changed by
+    # _handle_corrupt_checkpoints
     if not checkpoints:
         if force:
             raise RuntimeError(
-                "There were no checkpoint directories "
+                "There were no valid checkpoint directories "
                 f"starting with {checkpoint_prefix}!"
             )
         else:
             logger.warning(
-                "There were no checkpoint directories "
+                "There were no valid checkpoint directories "
                 f"starting with {checkpoint_prefix}!"
             )
             return False, None, None

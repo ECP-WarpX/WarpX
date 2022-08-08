@@ -37,8 +37,8 @@ electrons.density = 10.2e16
 electrons.profile = constant
 electrons.momentum_distribution_type = maxwell_boltzmann
 electrons.theta = (kb*30000/(m_e*clight^2))
-electrons.save_particles_at_zlo = 1
-electrons.save_particles_at_zhi = 1
+electrons.save_particles_at_xlo = 1
+electrons.save_particles_at_xhi = 1
 electrons.save_particles_at_eb = 1
 
 ar_ions.species_type = argon
@@ -55,8 +55,8 @@ ar_ions.uz_m = 0.0
 ar_ions.ux_th = 2.6285641070031447e-06
 ar_ions.uy_th = 2.6285641070031447e-06
 ar_ions.uz_th = 2.6285641070031447e-06
-ar_ions.save_particles_at_zlo = 1
-ar_ions.save_particles_at_zhi = 1
+ar_ions.save_particles_at_xlo = 1
+ar_ions.save_particles_at_xhi = 1
 ar_ions.save_particles_at_eb = 1
 
 collisions.collision_names = coll_electrons coll_ar_ions
@@ -80,8 +80,12 @@ coll_ar_ions.back_cross_section = ../../../../warpx-data/MCC_cross_sections/Ar/i
 coll_ar_ions.elastic_cross_section = ../../../../warpx-data/MCC_cross_sections/Ar/ion_scattering.dat
 coll_ar_ions.charge_exchange_cross_section = ../../../../warpx-data/MCC_cross_sections/Ar/charge_exchange.dat
 
-diagnostics.diags_names = diag1
+diagnostics.diags_names = diag1 diag3
 diag1.diag_type = Full
 diag1.format = plotfile
 diag1.intervals = 1
 diag1.fields_to_plot = phi rho_electrons rho_ar_ions
+
+diag3.diag_type = BoundaryScraping
+diag3.format = openpmd
+diag3.intervals = 5
