@@ -97,10 +97,10 @@ WarpXLaserProfiles::SpectralLaserProfile::init (
 
 }
 
-void 
+void
 WarpXLaserProfiles::SpectralLaserProfile::parse_spectral_file(std::string spectral_file_name)
 {
-    
+
     openPMD::Series series =
         openPMD::Series(spectral_file_name, openPMD::Access::READ_ONLY);
     auto i = series.iterations[1];
@@ -148,7 +148,7 @@ WarpXLaserProfiles::SpectralLaserProfile::fill_amplitude (
     const int nt = m_params.nt;
     const Real t_min = m_params.tmin;
     const Real t_max = m_params.tmax;
-    
+
     const auto delta_t =  m_params.t_peak - t; // this is negative of what I think it should be and I can't explain why this works
     if (delta_t < t_min || delta_t >= t_max)  {
         longitudinal = 0.0;
@@ -203,7 +203,7 @@ WarpXLaserProfiles::SpectralLaserProfile::fill_amplitude (
 
     auto const tmp_emax_diffract = emax_and_diffract;
     auto const tmp_long = longitudinal;
-    
+
     // Loop through the macroparticle to calculate the proper amplitude
     amrex::ParallelFor(
         np,
@@ -265,12 +265,12 @@ WarpXLaserProfiles::SpectralLaserProfile::fill_amplitude (
             t_min = tarr[0];
             t_max = tarr[nt-1];
             // std::transform(tarr.begin(), tarr.end(), [](){})
-            std::transform(tarr.begin(), tarr.end(), e_arr.begin(), [inv_tau2, simple_oscillation](Real t){ Complex env_exp = t*t*inv_tau2; 
-                return simple_oscillation * amrex::exp(-env_exp); 
-            // return amrex::exp(-env_exp); 
+            std::transform(tarr.begin(), tarr.end(), e_arr.begin(), [inv_tau2, simple_oscillation](Real t){ Complex env_exp = t*t*inv_tau2;
+                return simple_oscillation * amrex::exp(-env_exp);
+            // return amrex::exp(-env_exp);
             });
         }
-        
+
         const auto delta_t =  m_params.t_peak - t; // this is negative of what I think it should be and I can't explain why this works
         if (delta_t < t_min || delta_t >= t_max)  {
             longitudinal = 0.0;
@@ -325,7 +325,7 @@ WarpXLaserProfiles::SpectralLaserProfile::fill_amplitude (
     auto const tmp_zeta = m_params.zeta;
     auto const tmp_theta_stc = m_params.theta_stc;
     auto const tmp_profile_focal_distance = m_params.focal_distance;
-    
+
     // Loop through the macroparticle to calculate the proper amplitude
     amrex::ParallelFor(
         np,

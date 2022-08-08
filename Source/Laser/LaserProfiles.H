@@ -417,7 +417,7 @@ public:
 private:
     /** \brief parse a field file in formatted according to the OpenPMD standard.
     *
-    * 
+    *
     *
     * \param spectral_file_name: name of the file to parse
     */

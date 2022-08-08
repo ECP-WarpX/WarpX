@@ -1,20 +1,17 @@
 """
 Utility to convert spectral information to temporal profile for use in WarpX
 
-Based on the corresponding functionality in FBPIC: 
+Based on the corresponding functionality in FBPIC:
 https://github.com/fbpic/fbpic/blob/ce3d530b0ffffc14b334b76850825dafc9d18942/fbpic/lpa_utils/laser/longitudinal_laser_profiles.py#L190
 """
 
-import numpy as np
 import os
-import sys
-import csv
-import glob
-from matplotlib import pyplot as plt
-from scipy.constants import e, m_e, c, epsilon_0
 
-from scipy.interpolate import interp1d
+from matplotlib import pyplot as plt
+import numpy as np
 import openpmd_api as io
+from scipy.constants import c, e, epsilon_0, m_e
+from scipy.interpolate import interp1d
 
 
 def get_central_frequency(wavelength, intensity):
@@ -23,7 +20,7 @@ def get_central_frequency(wavelength, intensity):
                             1. / np.trapz(intensity, wavelength)
     return lambda0
 
-def spectral_to_temporal(spectral_file_name, 
+def spectral_to_temporal(spectral_file_name,
                          Ninterp = 1000):
     """
     """
@@ -60,13 +57,13 @@ def spectral_to_temporal(spectral_file_name,
 
     return time_arr, Ex
 
-def save_to_openpmd(time_arr, 
-                    Ex_arr, 
-                    temporal_file_name, 
-                    author_name = None, 
+def save_to_openpmd(time_arr,
+                    Ex_arr,
+                    temporal_file_name,
+                    author_name = None,
                     author_email = None):
     """
-    Save `E(t_i), t_i` arrays in an openPMD file 
+    Save `E(t_i), t_i` arrays in an openPMD file
 
     Notes
     ---
@@ -132,7 +129,7 @@ if __name__ == '__main__':
         temporal_file = os.path.dirname(args.spectral_file) + '/temporal_profile.h5'
     times, Exs = spectral_to_temporal(args.spectral_file)
     save_to_openpmd(times,
-                    Exs, 
-                    temporal_file, 
+                    Exs,
+                    temporal_file,
                     args.author,
                     args.email)
