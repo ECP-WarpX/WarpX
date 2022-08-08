@@ -78,7 +78,6 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         // due to simulation boundary potentials
         for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
             WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-            if (species.do_not_deposit) continue;
             if (species.initialize_self_fields ||
                 (do_electrostatic == ElectrostaticSolverAlgo::Relativistic)) {
                 AddSpaceChargeField(species);
@@ -166,15 +165,18 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
         BoxArray nba = boxArray(lev);
         nba.surroundingNodes();
         rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
+        rho[lev]->setVal(0.);
         phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
         phi[lev]->setVal(0.);
     }
 
     // Deposit particle charge density (source of Poisson solver)
     bool const local = false;
-    bool const reset = true;
+    bool const reset = false;
     bool const do_rz_volume_scaling = true;
-    pc.DepositCharge(rho, local, reset, do_rz_volume_scaling);
+    if ( !pc.do_not_deposit) {
+        pc.DepositCharge(rho, local, reset, do_rz_volume_scaling);
+    }
 
     // Get the particle beta vector
     bool const local_average = false; // Average across all MPI ranks
