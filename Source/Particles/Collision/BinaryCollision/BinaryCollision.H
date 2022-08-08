@@ -339,7 +339,7 @@ public:
                         indices_1, cell_start_1, cell_half_1, engine );
 #if defined WARPX_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
-                    auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
+                    auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
 #endif
                     // Call the function in order to perform collisions
                     // If there are product species, mask, p_pair_indices_1/2, and
@@ -500,7 +500,7 @@ public:
                     ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
 #if defined WARPX_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
-                    auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
+                    auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
 #endif
                     // Call the function in order to perform collisions
                     // If there are product species, p_mask, p_pair_indices_1/2, and

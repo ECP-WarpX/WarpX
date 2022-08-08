@@ -1,7 +1,5 @@
 {
   "driver": {
-    "particle_cpu": 0.0,
-    "particle_id": 5000050000.0,
     "particle_momentum_x": 1.4539941020025028e-16,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 9.822790382172444e-09,
@@ -29,8 +27,6 @@
     "rho_plasma_p": 1361225477.7925916
   },
   "plasma_e": {
-    "particle_cpu": 29652.0,
-    "particle_id": 1194907032.0,
     "particle_momentum_x": 7.24535866217633e-19,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 2.3479181521728354e-17,
@@ -39,8 +35,6 @@
     "particle_weight": 6.643024495443786e+16
   },
   "plasma_p": {
-    "particle_cpu": 29696.0,
-    "particle_id": 1202173888.0,
     "particle_momentum_x": 1.4515031430944076e-18,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 4.0084640226979506e-14,

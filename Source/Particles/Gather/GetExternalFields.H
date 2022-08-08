@@ -28,8 +28,8 @@ struct GetExternalEBField
     ExternalFieldInitType m_Etype;
     ExternalFieldInitType m_Btype;
 
-    amrex::Real m_gamma_boost;
-    amrex::Real m_uz_boost;
+    amrex::ParticleReal m_gamma_boost;
+    amrex::ParticleReal m_uz_boost;
 
     amrex::GpuArray<amrex::ParticleReal, 3> m_Efield_value;
     amrex::GpuArray<amrex::ParticleReal, 3> m_Bfield_value;
@@ -44,11 +44,11 @@ struct GetExternalEBField
     GetParticlePosition m_get_position;
     amrex::Real m_time;
 
-    amrex::Real m_repeated_plasma_lens_period;
-    const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_starts = nullptr;
-    const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_lengths = nullptr;
-    const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_strengths_E = nullptr;
-    const amrex::Real* AMREX_RESTRICT m_repeated_plasma_lens_strengths_B = nullptr;
+    amrex::ParticleReal m_repeated_plasma_lens_period;
+    const amrex::ParticleReal* AMREX_RESTRICT m_repeated_plasma_lens_starts = nullptr;
+    const amrex::ParticleReal* AMREX_RESTRICT m_repeated_plasma_lens_lengths = nullptr;
+    const amrex::ParticleReal* AMREX_RESTRICT m_repeated_plasma_lens_strengths_E = nullptr;
+    const amrex::ParticleReal* AMREX_RESTRICT m_repeated_plasma_lens_strengths_B = nullptr;
     int m_n_lenses;
     amrex::Real m_dt;
     const amrex::ParticleReal* AMREX_RESTRICT m_ux = nullptr;
@@ -68,14 +68,14 @@ struct GetExternalEBField
 
         if (m_Etype == None && m_Btype == None) return;
 
-        amrex::ParticleReal Ex = 0._rt;
-        amrex::ParticleReal Ey = 0._rt;
-        amrex::ParticleReal Ez = 0._rt;
-        amrex::ParticleReal Bx = 0._rt;
-        amrex::ParticleReal By = 0._rt;
-        amrex::ParticleReal Bz = 0._rt;
+        amrex::ParticleReal Ex = 0._prt;
+        amrex::ParticleReal Ey = 0._prt;
+        amrex::ParticleReal Ez = 0._prt;
+        amrex::ParticleReal Bx = 0._prt;
+        amrex::ParticleReal By = 0._prt;
+        amrex::ParticleReal Bz = 0._prt;
 
-        constexpr amrex::Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
+        constexpr amrex::ParticleReal inv_c2 = 1._prt/(PhysConst::c*PhysConst::c);
 
         if (m_Etype == Constant)
         {
@@ -88,13 +88,13 @@ struct GetExternalEBField
             amrex::ParticleReal x, y, z;
             m_get_position(i, x, y, z);
             amrex::Real lab_time = m_time;
-            if (m_gamma_boost > 1._rt) {
+            if (m_gamma_boost > 1._prt) {
                 lab_time = m_gamma_boost*m_time + m_uz_boost*z*inv_c2;
                 z = m_gamma_boost*z + m_uz_boost*m_time;
             }
-            Ex = m_Exfield_partparser((amrex::Real) x, (amrex::Real) y, (amrex::Real) z, lab_time);
-            Ey = m_Eyfield_partparser((amrex::Real) x, (amrex::Real) y, (amrex::Real) z, lab_time);
-            Ez = m_Ezfield_partparser((amrex::Real) x, (amrex::Real) y, (amrex::Real) z, lab_time);
+            Ex = m_Exfield_partparser((amrex::ParticleReal) x, (amrex::ParticleReal) y, (amrex::ParticleReal) z, lab_time);
+            Ey = m_Eyfield_partparser((amrex::ParticleReal) x, (amrex::ParticleReal) y, (amrex::ParticleReal) z, lab_time);
+            Ez = m_Ezfield_partparser((amrex::ParticleReal) x, (amrex::ParticleReal) y, (amrex::ParticleReal) z, lab_time);
         }
 
         if (m_Btype == Constant)
@@ -108,7 +108,7 @@ struct GetExternalEBField
             amrex::ParticleReal x, y, z;
             m_get_position(i, x, y, z);
             amrex::Real lab_time = m_time;
-            if (m_gamma_boost > 1._rt) {
+            if (m_gamma_boost > 1._prt) {
                 lab_time = m_gamma_boost*m_time + m_uz_boost*z*inv_c2;
                 z = m_gamma_boost*z + m_uz_boost*m_time;
             }
@@ -127,13 +127,13 @@ struct GetExternalEBField
             const amrex::ParticleReal uyp = m_uy[i];
             const amrex::ParticleReal uzp = m_uz[i];
 
-            const amrex::ParticleReal gamma = std::sqrt(1._rt + (uxp*uxp + uyp*uyp + uzp*uzp)*inv_c2);
+            const amrex::ParticleReal gamma = std::sqrt(1._prt + (uxp*uxp + uyp*uyp + uzp*uzp)*inv_c2);
             const amrex::ParticleReal vzp = uzp/gamma;
 
             amrex::ParticleReal zl = z;
             amrex::ParticleReal zr = z + vzp*m_dt;
 
-            if (m_gamma_boost > 1._rt) {
+            if (m_gamma_boost > 1._prt) {
                 zl = m_gamma_boost*zl + m_uz_boost*m_time;
                 zr = m_gamma_boost*zr + m_uz_boost*(m_time + m_dt);
             }
@@ -141,18 +141,18 @@ struct GetExternalEBField
             // This assumes that zl > 0.
             int i_lens = static_cast<int>(std::floor(zl/m_repeated_plasma_lens_period));
             i_lens = i_lens % m_n_lenses;
-            amrex::Real const lens_start = m_repeated_plasma_lens_starts[i_lens] + i_lens*m_repeated_plasma_lens_period;
-            amrex::Real const lens_end = lens_start + m_repeated_plasma_lens_lengths[i_lens];
+            amrex::ParticleReal const lens_start = m_repeated_plasma_lens_starts[i_lens] + i_lens*m_repeated_plasma_lens_period;
+            amrex::ParticleReal const lens_end = lens_start + m_repeated_plasma_lens_lengths[i_lens];
 
             // Calculate the residence correction
             // frac will be 1 if the step is completely inside the lens, between 0 and 1
             // when entering or leaving the lens, and otherwise 0.
             // This assumes that vzp > 0.
-            amrex::Real fl = 0.;
+            amrex::ParticleReal fl = 0.;
             if (zl >= lens_start && zl < lens_end) fl = 1.;
-            amrex::Real fr = 0.;
+            amrex::ParticleReal fr = 0.;
             if (zr >= lens_start && zr < lens_end) fr = 1.;
-            amrex::Real frac = fl;
+            amrex::ParticleReal frac = fl;
             if (fl > fr) frac = (lens_end - zl)/(zr - zl);
             if (fr > fl) frac = (zr - lens_start)/(zr - zl);
 
@@ -165,12 +165,12 @@ struct GetExternalEBField
 
         }
 
-        if (m_gamma_boost > 1._rt) {
+        if (m_gamma_boost > 1._prt) {
             // Transform the fields to the boosted frame
-            const amrex::Real Ex_boost = m_gamma_boost*Ex - m_uz_boost*By;
-            const amrex::Real Ey_boost = m_gamma_boost*Ey + m_uz_boost*Bx;
-            const amrex::Real Bx_boost = m_gamma_boost*Bx + m_uz_boost*Ey*inv_c2;
-            const amrex::Real By_boost = m_gamma_boost*By - m_uz_boost*Ex*inv_c2;
+            const amrex::ParticleReal Ex_boost = m_gamma_boost*Ex - m_uz_boost*By;
+            const amrex::ParticleReal Ey_boost = m_gamma_boost*Ey + m_uz_boost*Bx;
+            const amrex::ParticleReal Bx_boost = m_gamma_boost*Bx + m_uz_boost*Ey*inv_c2;
+            const amrex::ParticleReal By_boost = m_gamma_boost*By - m_uz_boost*Ex*inv_c2;
             Ex = Ex_boost;
             Ey = Ey_boost;
             Bx = Bx_boost;

@@ -153,7 +153,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 {{ beta[0], beta[1], beta[2] }};
 #endif
 
-#if !(defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ))
+#if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
                 {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
