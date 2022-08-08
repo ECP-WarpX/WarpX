@@ -1148,6 +1148,21 @@ Laser initialization
       none of the parameters below are used when ``<laser_name>.parse_field_function=1``. Even
       though ``<laser_name>.wavelength`` and ``<laser_name>.e_max`` should be included in the laser
       function, they still have to be specified as they are used for numerical purposes.
+    - ``"Spectral"``: the longitudinal electric field of the laser is read from an external ``openPMD``
+      file whose format is explained below. It requires the name of the ``openPMD`` file, provided by
+      setting the additional parameter ``<laser_name>.spectral_file_name`` (`string`). 
+      The field value is meant to be multiplied by
+      ``<laser_name>.e_max`` (i.e. in most cases the maximum of abs(E(z)) should be 1,
+      so that the maximum field intensity can be set straightforwardly with ``<laser_name>.e_max``).
+      This option for laser initialization makes the paraxial approximation and imposes a Gaussian
+      transverse profile for the laser.  All input parameters for the ``"Spectral"`` laser initialization
+      are the same as for the ``"Gaussian"`` laser except for the ``<laser_name>.profile_duration``
+      parameter, which is not needed for the ``"Spectral"`` laser initialization.
+      The format of the file is a mesh record ``E`` with component ``x`` being the temporal profile of the laser.
+      The timing of the pulse can be obtained from the grid data of the mesh record ``E``.
+      A utility function for converting a .csv file of spectral intensity and phase to temporal profile can be found 
+      :download:`here <../../../Tools/Spectral_laser_input/spectral2temporal.py>` in the 
+      ``Tools/Spectral_laser_input`` folder.
     - ``"from_txye_file"``: the electric field of the laser is read from an external binary file
       whose format is explained below. It requires to provide the name of the binary file
       setting the additional parameter ``<laser_name>.txye_file_name`` (`string`). It accepts an
