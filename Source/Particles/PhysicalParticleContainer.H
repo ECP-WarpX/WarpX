@@ -222,7 +222,9 @@ public:
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_w);
 
     /**
-     * \brief Default initialize runtime attributes in a tile.
+     * \brief Default initialize runtime attributes in a tile. This routine does not initialize the
+     * first n_external_attr_real real attributes and the first n_external_attr_int integer
+     * attributes, which have been in principle externally set elsewhere.
      *
      * @param[inout] pinned_tile the tile in which attributes are initialized
      * @param[in] n_external_attr_real The number of real attributes that have been externally set.
