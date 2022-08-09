@@ -5,7 +5,11 @@ Cori (NERSC)
 
 The `Cori cluster <https://docs.nersc.gov/systems/cori/>`_ is located at NERSC.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `GPU nodes <https://docs-dev.nersc.gov/cgpu/access>`__
 
@@ -14,8 +18,8 @@ If you are new to this system, please see the following resources:
 * `Jupyter service <https://docs.nersc.gov/services/jupyter/>`__
 * `Production directories <https://www.nersc.gov/users/storage-and-file-systems/>`__:
 
-  * ``$SCRATCH``: per-user production directory (20TB)
-  * ``/global/cscratch1/sd/m3239``: shared production directory for users in the project ``m3239`` (50TB)
+  * ``$SCRATCH``: per-user production directory, purged every 30 days (20TB)
+  * ``/global/cscratch1/sd/m3239``: shared production directory for users in the project ``m3239``, purged every 30 days (50TB)
   * ``/global/cfs/cdirs/m3239/``: community file system for users in the project ``m3239`` (100TB)
 
 Installation

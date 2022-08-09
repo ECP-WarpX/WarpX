@@ -1,7 +1,5 @@
 {
   "ele1": {
-    "particle_cpu": 47686.0,
-    "particle_id": 209186302749.0,
     "particle_momentum_x": 2.601742834496299e-14,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,
@@ -11,8 +9,6 @@
     "particle_weight": 904932.0220947266
   },
   "ele2": {
-    "particle_cpu": 5810.0,
-    "particle_id": 26571750017.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 8.023686137822937e-15,
     "particle_momentum_z": 0.0,
@@ -22,8 +18,6 @@
     "particle_weight": 112028.1219482422
   },
   "ele3": {
-    "particle_cpu": 63202.0,
-    "particle_id": 293358397774.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 1.727920430764487e-13,
@@ -33,8 +27,6 @@
     "particle_weight": 1203489.303588867
   },
   "ele4": {
-    "particle_cpu": 24605.0,
-    "particle_id": 118610822236.0,
     "particle_momentum_x": 3.86289566432756e-13,
     "particle_momentum_y": 3.86289566432756e-13,
     "particle_momentum_z": 3.86289566432756e-13,
@@ -47,8 +39,6 @@
     "Ex": 0.0
   },
   "p1": {
-    "particle_cpu": 476602.0,
-    "particle_id": 257834584968.0,
     "particle_momentum_x": 5.208894445891535e-13,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,
@@ -58,8 +48,6 @@
     "particle_weight": 9095067.977905273
   },
   "p2": {
-    "particle_cpu": 518478.0,
-    "particle_id": 840902233155.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 1.415750875140187e-12,
     "particle_momentum_z": 0.0,
@@ -69,8 +57,6 @@
     "particle_weight": 9887971.878051758
   },
   "p3": {
-    "particle_cpu": 461198.0,
-    "particle_id": 1246625458064.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 2.518952899586491e-12,
@@ -80,8 +66,6 @@
     "particle_weight": 8796510.696411133
   },
   "p4": {
-    "particle_cpu": 499665.0,
-    "particle_id": 1891409190037.0,
     "particle_momentum_x": 1.575921123151564e-11,
     "particle_momentum_y": 1.575921123151564e-11,
     "particle_momentum_z": 1.575921123151564e-11,
@@ -91,8 +75,6 @@
     "particle_weight": 9532032.012939453
   },
   "pos1": {
-    "particle_cpu": 47686.0,
-    "particle_id": 210311858790.0,
     "particle_momentum_x": 2.580947118885758e-14,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,
@@ -102,8 +84,6 @@
     "particle_weight": 904932.0220947266
   },
   "pos2": {
-    "particle_cpu": 5810.0,
-    "particle_id": 26589015080.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 8.016397398195943e-15,
     "particle_momentum_z": 0.0,
@@ -113,8 +93,6 @@
     "particle_weight": 112028.1219482422
   },
   "pos3": {
-    "particle_cpu": 63202.0,
-    "particle_id": 295349177343.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 1.718369575300312e-13,
@@ -124,8 +102,6 @@
     "particle_weight": 1203489.303588867
   },
   "pos4": {
-    "particle_cpu": 24605.0,
-    "particle_id": 118911854274.0,
     "particle_momentum_x": 3.873971285219934e-13,
     "particle_momentum_y": 3.873971285219934e-13,
     "particle_momentum_z": 3.873971285219934e-13,
