@@ -644,6 +644,13 @@ public:
     void FillBoundaryAux (int lev, amrex::IntVect ng);
 
     /**
+     * \brief Synchronize J and rho:
+     * filter (if used), exchange guard cells, interpolate across MR levels.
+     * Contains separate calls to WarpX::SyncCurrent and WarpX::SyncRho.
+     */
+    void SyncCurrentAndRho ();
+
+    /**
      * \brief Apply filter and sum guard cells across MR levels.
      * If current centering is used, center the current from a nodal grid
      * to a staggered grid. For each MR level beyond level 0, interpolate

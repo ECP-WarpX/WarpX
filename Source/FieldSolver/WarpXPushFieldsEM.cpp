@@ -668,11 +668,6 @@ WarpX::PushPSATD ()
             // Synchronize J and rho
             SyncCurrent(current_fp, current_cp);
             SyncRho();
-
-            // FFT of J and rho after synchronization
-            PSATDForwardTransformJ(current_fp, current_cp);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
         }
         else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
@@ -691,19 +686,12 @@ WarpX::PushPSATD ()
             // Synchronize J and rho (if used)
             SyncCurrent(current_fp, current_cp);
             SyncRho();
+        }
 
-            // FFT of J and rho (if used) after synchronization
-            PSATDForwardTransformJ(current_fp, current_cp);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
-        }
-        else // no current correction, no Vay deposition
-        {
-            // FFT of J and rho (if used)
-            PSATDForwardTransformJ(current_fp, current_cp);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
-        }
+        // FFT of J and rho (if used)
+        PSATDForwardTransformJ(current_fp, current_cp);
+        PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+        PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
     }
 
     // FFT of E and B
