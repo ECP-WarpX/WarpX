@@ -29,7 +29,7 @@ algo.particle_shape = 1
 #################################
 ############ PLASMA #############
 #################################
-particles.species_names = deuterium1 tritium1 helium1 neutron1 proton1 deuterium2 tritium2 helium2 neutron2
+particles.species_names = deuterium1 tritium1 helium1 neutron1 deuterium2 tritium2 helium2 neutron2
 
 my_constants.m_deuterium = 2.01410177812*m_u
 my_constants.m_tritium = 3.0160492779*m_u
@@ -63,17 +63,13 @@ tritium1.momentum_function_uz(x,y,z) = -sqrt(2*m_reduced*Energy_step*(floor(z)**
 tritium1.do_not_push = 1
 tritium1.do_not_deposit = 1
 
-helium1.species_type = helium3
+helium1.species_type = helium4
 helium1.do_not_push = 1
 helium1.do_not_deposit = 1
 
 neutron1.species_type = neutron
 neutron1.do_not_push = 1
 neutron1.do_not_deposit = 1
-
-proton1.species_type = proton
-proton1.do_not_push = 1
-proton1.do_not_deposit = 1
 
 my_constants.background_dens = 1.e26
 my_constants.beam_dens = 1.e20
@@ -113,17 +109,12 @@ neutron2.do_not_deposit = 1
 #################################
 ############ COLLISION ##########
 #################################
-collisions.collision_names = DDHeF1 DDTF1 DTF2
+collisions.collision_names = DTF1 DTF2
 
-DDHeF1.species = deuterium1 deuterium1
-DDHeF1.product_species = helium1 neutron1
-DDHeF1.type = nuclearfusion
-DDHeF1.fusion_multiplier = 1.e50
-
-DDTF1.species = deuterium1 deuterium1
-DDTF1.product_species = tritium1 proton1
-DDTF1.type = nuclearfusion
-DDTF1.fusion_multiplier = 1.e50
+DTF1.species = deuterium1 tritium1
+DTF1.product_species = helium1 neutron1
+DTF1.type = nuclearfusion
+DTF1.fusion_multiplier = 1.e50
 
 DTF2.species = deuterium2 tritium2
 DTF2.product_species = helium2 neutron2
