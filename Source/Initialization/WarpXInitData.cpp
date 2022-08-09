@@ -1467,9 +1467,15 @@ std::string F_name, std::string F_component)
         auto d = F.gridSpacing<long double>();
         auto FE = F[F_component];
         auto extent = FE.getExtent();
-std::cout << "@_@:extent:" << extent[0] << "\n";
-std::cout << "@_@:extent:" << extent[1] << "\n";
-std::cout << "@_@:extent:" << extent[2] << "\n";
+std::cout << "@_@:extent0:" << extent[0] << "\n";
+std::cout << "@_@:extent1:" << extent[1] << "\n";
+std::cout << "@_@:extent2:" << extent[2] << "\n";
+std::cout << "@_@:d0:" << d[0] << "\n";
+std::cout << "@_@:d1:" << d[1] << "\n";
+std::cout << "@_@:d2:" << d[2] << "\n";
+std::cout << "@_@:offset0:" << offset[0] << "\n";
+std::cout << "@_@:offset1:" << offset[1] << "\n";
+std::cout << "@_@:offset2:" << offset[2] << "\n";
 
         auto box = mfi.growntilebox();
         auto lo = lbound(box);
@@ -1477,156 +1483,32 @@ std::cout << "@_@:extent:" << extent[2] << "\n";
         const amrex::RealBox& real_box = geom.ProbDomain();
         const auto dx = geom.CellSizeArray();
 
-        // Get physical low and high coordniates of this box.
-        // Then the external field read must cover these coordinates.
-        amrex::Real x_lo, y_lo, z_lo, x_hi, y_hi, z_hi;
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        if ( box.type(0)==1 ) { // If nodal
-            x_lo = real_box.lo(0) + lo.x*dx[0];
-            x_hi = real_box.lo(0) + hi.x*dx[0];
-        } else { // else cell-centered
-            x_lo = real_box.lo(0) + lo.x*dx[0] + 0.5*dx[0];
-            x_hi = real_box.lo(0) + hi.x*dx[0] + 0.5*dx[0];
-        }
-        if ( box.type(1)==1 ) {
-            z_lo = real_box.lo(1) + lo.y*dx[1];
-            z_hi = real_box.lo(1) + hi.y*dx[1];
-        } else {
-            z_lo = real_box.lo(1) + lo.y*dx[1] + 0.5*dx[1];
-            z_hi = real_box.lo(1) + hi.y*dx[1] + 0.5*dx[1];
-        }
-std::cout << "@_@:real_box.lo: " << real_box.lo(0) << "\n";
-std::cout << "@_@:real_box.lo: " << real_box.lo(1) << "\n";
-std::cout << "@_@:real_box.lo: " << real_box.lo(2) << "\n";
-std::cout << "@_@:dx: " << dx[0] << "\n";
-std::cout << "@_@:dx: " << dx[1] << "\n";
-std::cout << "@_@:dx: " << dx[2] << "\n";
-std::cout << "@_@:lo: " << lo.x << "\n";
-std::cout << "@_@:lo: " << lo.y << "\n";
-std::cout << "@_@:lo: " << lo.z << "\n";
-std::cout << "@_@:hi: " << hi.x << "\n";
-std::cout << "@_@:hi: " << hi.y << "\n";
-std::cout << "@_@:hi: " << hi.z << "\n";
-#else // 3D
-        if ( box.type(0)==1 ) { // If nodal
-            x_lo = real_box.lo(0) + lo.x*dx[0];
-            x_hi = real_box.lo(0) + hi.x*dx[0];
-        } else { // else cell-centered
-            x_lo = real_box.lo(0) + lo.x*dx[0] + 0.5*dx[0];
-            x_hi = real_box.lo(0) + hi.x*dx[0] + 0.5*dx[0];
-        }
-        if ( box.type(1)==1 ) {
-            y_lo = real_box.lo(1) + lo.y*dx[1];
-            y_hi = real_box.lo(1) + hi.y*dx[1];
-        } else {
-            y_lo = real_box.lo(1) + lo.y*dx[1] + 0.5*dx[1];
-            y_hi = real_box.lo(1) + hi.y*dx[1] + 0.5*dx[1];
-        }
-        if ( box.type(2)==1 ) {
-            z_lo = real_box.lo(2) + lo.z*dx[2];
-            z_hi = real_box.lo(2) + hi.z*dx[2];
-        } else {
-            z_lo = real_box.lo(2) + lo.z*dx[2] + 0.5*dx[2];
-            z_hi = real_box.lo(2) + hi.z*dx[2] + 0.5*dx[2];
-        }
-#endif
-
-        // Find the index range needed in the data file.
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        if (x_lo<0.0) { x_lo = 0.0; }
-        unsigned long ix_lo = floor( (x_lo-offset[0])/d[0] );
-        unsigned long ix_hi = floor( (x_hi-offset[0])/d[0] );
-        unsigned long iz_lo = floor( (z_lo-offset[1])/d[1] );
-        unsigned long iz_hi = floor( (z_hi-offset[1])/d[1] );
-std::cout << "@_@:offset:" << offset[0] << "\n";
-std::cout << "@_@:offset:" << offset[1] << "\n";
-std::cout << "@_@:offset:" << offset[2] << "\n";
-std::cout << "@_@:d:" << d[0] << "\n";
-std::cout << "@_@:d:" << d[1] << "\n";
-std::cout << "@_@:d:" << d[2] << "\n";
-std::cout << "@_@:x_lo:" << x_lo << "\n";
-std::cout << "@_@:x_hi:" << x_hi << "\n";
-std::cout << "@_@:floor( (x_lo-offset[0])/d[0] ):" << floor( (x_lo-offset[0])/d[0] ) << "\n";
-std::cout << "@_@:ix_lo:" << ix_lo << "\n";
-std::cout << "@_@:ix_hi:" << ix_hi << "\n";
-std::cout << "@_@:iz_lo:" << iz_lo << "\n";
-std::cout << "@_@:iz_hi:" << iz_hi << "\n";
-#else // 3D
-        unsigned long ix_lo = floor( (x_lo-offset[0])/d[0] );
-        unsigned long ix_hi = floor( (x_hi-offset[0])/d[0] );
-        unsigned long iy_lo = floor( (y_lo-offset[1])/d[1] );
-        unsigned long iy_hi = floor( (y_hi-offset[1])/d[1] );
-        unsigned long iz_lo = floor( (z_lo-offset[2])/d[2] );
-        unsigned long iz_hi = floor( (z_hi-offset[2])/d[2] );
-#endif
-
-        if (ix_lo>1) {
-            ix_lo=ix_lo-2;
-        } else {
-            ix_lo=0;
-        }
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        if (iz_lo>1) {
-            iz_lo=iz_lo-2;
-        } else {
-            iz_lo=0;
-        }
-#else
-        if (iy_lo>1) {
-            iy_lo=iy_lo-2;
-        } else {
-            iy_lo=0;
-        }
-        if (iz_lo>1) {
-            iz_lo=iz_lo-2;
-        } else {
-            iz_lo=0;
-        }
-#endif
-
-        if (ix_hi<extent[0]-2) {
-            ix_hi=ix_hi+2;
-        } else {
-            ix_hi=extent[0]-1;
-        }
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        if (iz_hi<extent[1]-2) {
-            iz_hi=iz_hi+2;
-        } else {
-            iz_hi=extent[1]-1;
-        }
-#else
-        if (iy_hi<extent[1]-2) {
-            iy_hi=iy_hi+2;
-        } else {
-            iy_hi=extent[1]-1;
-        }
-        if (iz_hi<extent[2]-2) {
-            iz_hi=iz_hi+2;
-        } else {
-            iz_hi=extent[2]-1;
-        }
-#endif
+std::cout << "@_@:real_box.lo0: " << real_box.lo(0) << "\n";
+std::cout << "@_@:real_box.lo1: " << real_box.lo(1) << "\n";
+std::cout << "@_@:real_box.lo2: " << real_box.lo(2) << "\n";
+std::cout << "@_@:real_box.hi0: " << real_box.hi(0) << "\n";
+std::cout << "@_@:real_box.hi1: " << real_box.hi(1) << "\n";
+std::cout << "@_@:real_box.hi2: " << real_box.hi(2) << "\n";
+std::cout << "@_@:lo.x: " << lo.x << "\n";
+std::cout << "@_@:lo.y: " << lo.y << "\n";
+std::cout << "@_@:lo.z: " << lo.z << "\n";
+std::cout << "@_@:hi.x: " << hi.x << "\n";
+std::cout << "@_@:hi.y: " << hi.y << "\n";
+std::cout << "@_@:hi.z: " << hi.z << "\n";
+std::cout << "@_@:dx0: " << dx[0] << "\n";
+std::cout << "@_@:dx1: " << dx[1] << "\n";
+std::cout << "@_@:dx2: " << dx[2] << "\n";
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-//        openPMD::Offset chunk_offset = {ix_lo, iz_lo};
-//        openPMD::Extent chunk_extent = {ix_hi-ix_lo, iz_hi-iz_lo};
         openPMD::Offset chunk_offset = {0,0};
         openPMD::Extent chunk_extent = {extent[0],extent[1]};
 #else
-        openPMD::Offset chunk_offset = {ix_lo, iy_lo, iz_lo};
-        openPMD::Extent chunk_extent = {ix_hi-ix_lo, iy_hi-iy_lo, iz_hi-iz_lo};
+        openPMD::Offset chunk_offset = {0,0,0};
+        openPMD::Extent chunk_extent = {extent[0],extent[1],extent[2]};
 #endif
 
-std::cout << "@_@:chunk_offset:" << chunk_offset[0] << "\n";
-std::cout << "@_@:chunk_offset:" << chunk_offset[1] << "\n";
-std::cout << "@_@:chunk_offset:" << chunk_offset[2] << "\n";
-std::cout << "@_@:chunk_extent:" << chunk_extent[0] << "\n";
-std::cout << "@_@:chunk_extent:" << chunk_extent[1] << "\n";
-std::cout << "@_@:chunk_extent:" << chunk_extent[2] << "\n";
-        auto FE_chunk_data = FE.loadChunk<double>(chunk_offset, chunk_extent);
+        auto FE_chunk_data = FE.loadChunk<double>(chunk_offset,chunk_extent);
         series.flush();
-std::cout << "#_#" << "\n";
         auto FE_data = FE_chunk_data.get();
 
         const amrex::Box& tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
@@ -1643,6 +1525,8 @@ std::cout << "#_#" << "\n";
                 ii = i;
 #endif
 
+std::cout << "@_@:i,j,k:" << i << " " << j << " " << k << "\n";
+
                 // Physical coordinates of the grid point
                 amrex::Real x, y, z;
                 if ( box.type(0)==1 )
@@ -1650,8 +1534,8 @@ std::cout << "#_#" << "\n";
                 else { x = real_box.lo(0) + ii*dx[0] + 0.5*dx[0]; }
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 if ( box.type(1)==1 )
-                     { z = real_box.lo(1) + k*dx[1]; }
-                else { z = real_box.lo(1) + k*dx[1] + 0.5*dx[1]; }
+                     { z = real_box.lo(1) + j*dx[1]; }
+                else { z = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
 #else // 3D
                 if ( box.type(1)==1 )
                      { y = real_box.lo(1) + j*dx[1]; }
@@ -1688,14 +1572,6 @@ std::cout << "#_#" << "\n";
 #else // 3D
                 ddy = (y-yy)/d[1];
                 ddz = (z-zz)/d[2];
-#endif
-
-                ix = ix - chunk_offset[0];
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                iz = iz - chunk_offset[1];
-#else // 3D
-                iy = iy - chunk_offset[1];
-                iz = iz - chunk_offset[2];
 #endif
 
                 // Assign the values through linear interpolation
