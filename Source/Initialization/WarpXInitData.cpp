@@ -1467,6 +1467,9 @@ std::string F_name, std::string F_component)
         auto d = F.gridSpacing<long double>();
         auto FE = F[F_component];
         auto extent = FE.getExtent();
+std::cout << "@_@:extent:" << extent[0] << "\n";
+std::cout << "@_@:extent:" << extent[1] << "\n";
+std::cout << "@_@:extent:" << extent[2] << "\n";
 
         auto box = mfi.growntilebox();
         auto lo = lbound(box);
@@ -1477,6 +1480,34 @@ std::string F_name, std::string F_component)
         // Get physical low and high coordniates of this box.
         // Then the external field read must cover these coordinates.
         amrex::Real x_lo, y_lo, z_lo, x_hi, y_hi, z_hi;
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        if ( box.type(0)==1 ) { // If nodal
+            x_lo = real_box.lo(0) + lo.x*dx[0];
+            x_hi = real_box.lo(0) + hi.x*dx[0];
+        } else { // else cell-centered
+            x_lo = real_box.lo(0) + lo.x*dx[0] + 0.5*dx[0];
+            x_hi = real_box.lo(0) + hi.x*dx[0] + 0.5*dx[0];
+        }
+        if ( box.type(1)==1 ) {
+            z_lo = real_box.lo(1) + lo.y*dx[1];
+            z_hi = real_box.lo(1) + hi.y*dx[1];
+        } else {
+            z_lo = real_box.lo(1) + lo.y*dx[1] + 0.5*dx[1];
+            z_hi = real_box.lo(1) + hi.y*dx[1] + 0.5*dx[1];
+        }
+std::cout << "@_@:real_box.lo: " << real_box.lo(0) << "\n";
+std::cout << "@_@:real_box.lo: " << real_box.lo(1) << "\n";
+std::cout << "@_@:real_box.lo: " << real_box.lo(2) << "\n";
+std::cout << "@_@:dx: " << dx[0] << "\n";
+std::cout << "@_@:dx: " << dx[1] << "\n";
+std::cout << "@_@:dx: " << dx[2] << "\n";
+std::cout << "@_@:lo: " << lo.x << "\n";
+std::cout << "@_@:lo: " << lo.y << "\n";
+std::cout << "@_@:lo: " << lo.z << "\n";
+std::cout << "@_@:hi: " << hi.x << "\n";
+std::cout << "@_@:hi: " << hi.y << "\n";
+std::cout << "@_@:hi: " << hi.z << "\n";
+#else // 3D
         if ( box.type(0)==1 ) { // If nodal
             x_lo = real_box.lo(0) + lo.x*dx[0];
             x_hi = real_box.lo(0) + hi.x*dx[0];
@@ -1498,20 +1529,49 @@ std::string F_name, std::string F_component)
             z_lo = real_box.lo(2) + lo.z*dx[2] + 0.5*dx[2];
             z_hi = real_box.lo(2) + hi.z*dx[2] + 0.5*dx[2];
         }
+#endif
 
         // Find the index range needed in the data file.
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        if (x_lo<0.0) { x_lo = 0.0; }
+        unsigned long ix_lo = floor( (x_lo-offset[0])/d[0] );
+        unsigned long ix_hi = floor( (x_hi-offset[0])/d[0] );
+        unsigned long iz_lo = floor( (z_lo-offset[1])/d[1] );
+        unsigned long iz_hi = floor( (z_hi-offset[1])/d[1] );
+std::cout << "@_@:offset:" << offset[0] << "\n";
+std::cout << "@_@:offset:" << offset[1] << "\n";
+std::cout << "@_@:offset:" << offset[2] << "\n";
+std::cout << "@_@:d:" << d[0] << "\n";
+std::cout << "@_@:d:" << d[1] << "\n";
+std::cout << "@_@:d:" << d[2] << "\n";
+std::cout << "@_@:x_lo:" << x_lo << "\n";
+std::cout << "@_@:x_hi:" << x_hi << "\n";
+std::cout << "@_@:floor( (x_lo-offset[0])/d[0] ):" << floor( (x_lo-offset[0])/d[0] ) << "\n";
+std::cout << "@_@:ix_lo:" << ix_lo << "\n";
+std::cout << "@_@:ix_hi:" << ix_hi << "\n";
+std::cout << "@_@:iz_lo:" << iz_lo << "\n";
+std::cout << "@_@:iz_hi:" << iz_hi << "\n";
+#else // 3D
         unsigned long ix_lo = floor( (x_lo-offset[0])/d[0] );
         unsigned long ix_hi = floor( (x_hi-offset[0])/d[0] );
         unsigned long iy_lo = floor( (y_lo-offset[1])/d[1] );
         unsigned long iy_hi = floor( (y_hi-offset[1])/d[1] );
         unsigned long iz_lo = floor( (z_lo-offset[2])/d[2] );
         unsigned long iz_hi = floor( (z_hi-offset[2])/d[2] );
+#endif
 
         if (ix_lo>1) {
             ix_lo=ix_lo-2;
         } else {
             ix_lo=0;
         }
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        if (iz_lo>1) {
+            iz_lo=iz_lo-2;
+        } else {
+            iz_lo=0;
+        }
+#else
         if (iy_lo>1) {
             iy_lo=iy_lo-2;
         } else {
@@ -1522,12 +1582,20 @@ std::string F_name, std::string F_component)
         } else {
             iz_lo=0;
         }
+#endif
 
         if (ix_hi<extent[0]-2) {
             ix_hi=ix_hi+2;
         } else {
             ix_hi=extent[0]-1;
         }
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        if (iz_hi<extent[1]-2) {
+            iz_hi=iz_hi+2;
+        } else {
+            iz_hi=extent[1]-1;
+        }
+#else
         if (iy_hi<extent[1]-2) {
             iy_hi=iy_hi+2;
         } else {
@@ -1538,19 +1606,27 @@ std::string F_name, std::string F_component)
         } else {
             iz_hi=extent[2]-1;
         }
+#endif
 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ix_lo>=0,"ix_lo<0");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(iy_lo>=0,"iy_lo<0");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(iz_lo>=0,"iz_lo<0");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ix_hi<=extent[0],"ix_hi>extent[0]");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(iy_hi<=extent[1],"iy_hi>extent[1]");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(iz_hi<=extent[2],"iz_hi>extent[2]");
-
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+//        openPMD::Offset chunk_offset = {ix_lo, iz_lo};
+//        openPMD::Extent chunk_extent = {ix_hi-ix_lo, iz_hi-iz_lo};
+        openPMD::Offset chunk_offset = {0,0};
+        openPMD::Extent chunk_extent = {extent[0],extent[1]};
+#else
         openPMD::Offset chunk_offset = {ix_lo, iy_lo, iz_lo};
         openPMD::Extent chunk_extent = {ix_hi-ix_lo, iy_hi-iy_lo, iz_hi-iz_lo};
+#endif
 
+std::cout << "@_@:chunk_offset:" << chunk_offset[0] << "\n";
+std::cout << "@_@:chunk_offset:" << chunk_offset[1] << "\n";
+std::cout << "@_@:chunk_offset:" << chunk_offset[2] << "\n";
+std::cout << "@_@:chunk_extent:" << chunk_extent[0] << "\n";
+std::cout << "@_@:chunk_extent:" << chunk_extent[1] << "\n";
+std::cout << "@_@:chunk_extent:" << chunk_extent[2] << "\n";
         auto FE_chunk_data = FE.loadChunk<double>(chunk_offset, chunk_extent);
         series.flush();
+std::cout << "#_#" << "\n";
         auto FE_data = FE_chunk_data.get();
 
         const amrex::Box& tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
@@ -1560,43 +1636,79 @@ std::string F_name, std::string F_component)
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 
+                int ii;
+#if defined(WARPX_DIM_RZ)
+                if (i<0) {ii = -i;} else {ii = i;}
+#else
+                ii = i;
+#endif
+
                 // Physical coordinates of the grid point
                 amrex::Real x, y, z;
                 if ( box.type(0)==1 )
-                     { x = real_box.lo(0) + i*dx[0]; }
-                else { x = real_box.lo(0) + i*dx[0] + 0.5*dx[0]; }
+                     { x = real_box.lo(0) + ii*dx[0]; }
+                else { x = real_box.lo(0) + ii*dx[0] + 0.5*dx[0]; }
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                if ( box.type(1)==1 )
+                     { z = real_box.lo(1) + k*dx[1]; }
+                else { z = real_box.lo(1) + k*dx[1] + 0.5*dx[1]; }
+#else // 3D
                 if ( box.type(1)==1 )
                      { y = real_box.lo(1) + j*dx[1]; }
                 else { y = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
                 if ( box.type(2)==1 )
                      { z = real_box.lo(2) + k*dx[2]; }
                 else { z = real_box.lo(2) + k*dx[2] + 0.5*dx[2]; }
+#endif
 
                 // Get index of the external field array
                 int ix = floor( (x-offset[0])/d[0] );
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                int iz = floor( (z-offset[1])/d[1] );
+#else // 3D
                 int iy = floor( (y-offset[1])/d[1] );
                 int iz = floor( (z-offset[2])/d[2] );
+#endif
 
                 // Get coordinates of external grid point
                 amrex::Real xx, yy, zz;
                 xx = offset[0] + ix*d[0];
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                zz = offset[1] + iz*d[1];
+#else // 3D
                 yy = offset[1] + iy*d[1];
                 zz = offset[2] + iz*d[2];
+#endif
 
                 // Get portion ratio for linear interpolatioin
                 amrex::Real ddx, ddy, ddz;
                 ddx = (x-xx)/d[0];
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                ddz = (z-zz)/d[1];
+#else // 3D
                 ddy = (y-yy)/d[1];
                 ddz = (z-zz)/d[2];
+#endif
 
                 ix = ix - chunk_offset[0];
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                iz = iz - chunk_offset[1];
+#else // 3D
                 iy = iy - chunk_offset[1];
                 iz = iz - chunk_offset[2];
+#endif
 
                 // Assign the values through linear interpolation
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+std::cout << "$_$:x,xx,ddx,d[0] " << x << " " << xx << " " << ddx << " " << d[0] << "\n";
+                mffab(i,j,k) = FE_data[(iz  )+(ix  )*chunk_extent[1]]*(1.0-ddx)*(1.0-ddz) +
+                               FE_data[(iz  )+(ix+1)*chunk_extent[1]]*(    ddx)*(1.0-ddz) +
+                               FE_data[(iz+1)+(ix  )*chunk_extent[1]]*(1.0-ddx)*(    ddz) +
+                               FE_data[(iz+1)+(ix+1)*chunk_extent[1]]*(    ddx)*(    ddz);
+std::cout << "%_%" << "\n";
+#else // 3D
                 int ext_1 = chunk_extent[2];
                 int ext_2 = chunk_extent[1]*chunk_extent[2];
-
                 mffab(i,j,k) = FE_data[(iz  )+(iy  )*ext_1+(ix  )*ext_2]*(1.0-ddx)*(1.0-ddy)*(1.0-ddz) +
                                FE_data[(iz  )+(iy  )*ext_1+(ix+1)*ext_2]*(    ddx)*(1.0-ddy)*(1.0-ddz) +
                                FE_data[(iz  )+(iy+1)*ext_1+(ix  )*ext_2]*(1.0-ddx)*(    ddy)*(1.0-ddz) +
@@ -1605,6 +1717,7 @@ std::string F_name, std::string F_component)
                                FE_data[(iz+1)+(iy  )*ext_1+(ix+1)*ext_2]*(    ddx)*(1.0-ddy)*(    ddz) +
                                FE_data[(iz+1)+(iy+1)*ext_1+(ix  )*ext_2]*(1.0-ddx)*(    ddy)*(    ddz) +
                                FE_data[(iz+1)+(iy+1)*ext_1+(ix+1)*ext_2]*(    ddx)*(    ddy)*(    ddz);
+#endif
 
             }
 
