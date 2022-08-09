@@ -626,6 +626,7 @@ WarpX::PushPSATD ()
         else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
             // FFT of D and rho (if used)
+            // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
             PSATDForwardTransformJ(current_fp_vay, current_cp);
             PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
             PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
