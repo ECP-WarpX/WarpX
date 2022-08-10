@@ -1230,6 +1230,14 @@ WarpX::ReadExternalFieldsFromFile (std::string read_fields_from_path, MultiFab* 
 std::string F_name, std::string F_component)
 {
 
+    //! add_external: 0 for no exteranl field loading; 1/2/3 for E/B/both.
+    if (E_ext_grid_s=="read_from_file" && B_ext_grid_s=="read_from_file") {
+        add_external_fields = 3;
+    } else {
+        if (E_ext_grid_s=="read_from_file") { add_external_fields = 1; }
+        if (B_ext_grid_s=="read_from_file") { add_external_fields = 2; }
+    }
+
     // Get WarpX domain info
     auto& warpx = WarpX::GetInstance();
     amrex::Geometry const& geom = warpx.Geom(0);

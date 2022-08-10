@@ -541,7 +541,7 @@ void FieldProbe::ComputeDiags (int step)
                                    arrEx, arrEy, arrEz, arrBx, arrBy, arrBz,
                                    Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
                                    dx_arr, xyzmin_arr, lo, temp_modes,
-                                   temp_interp_order, false);
+                                   temp_interp_order, false, WarpX::add_external_fields);
 
                     //Calculate the Poynting Vector S
                     amrex::Real const sraw[3]{

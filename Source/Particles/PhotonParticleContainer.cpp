@@ -193,7 +193,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                ex_arr_ext, ey_arr_ext, ez_arr_ext, bx_arr_ext, by_arr_ext, bz_arr_ext,
                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                               nox, galerkin_interpolation);
+                               nox, galerkin_interpolation, WarpX::add_external_fields);
             }
             getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
