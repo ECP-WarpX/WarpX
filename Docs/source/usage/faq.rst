@@ -38,7 +38,7 @@ but not exactly equal.
 What do I need to know about using the boosted frame?
 -----------------------------------------------------
 
-The input deck can be designed in the lab frame and little modification to the physical set-up is needed -- 
+The input deck can be designed in the lab frame and little modification to the physical set-up is needed --
 most of the work is done internally.
 Here are a few practical items to assist in designing boosted frame simulations:
 
