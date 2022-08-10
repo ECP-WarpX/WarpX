@@ -106,7 +106,7 @@ and new folder `bl_prof`, which contains the profiling data.
     - You can directly click on the timeline to see which actual MPI call is being perform. (Note that the colorbar can be misleading.)
 
 .. _developers-profiling-nsight-systems:
-.. _running-cpp-perlmutter-A100-GPUs: 
+.. _running-cpp-perlmutter-A100-GPUs:
 
 Nvidia Nsight-Systems
 ---------------------
@@ -129,7 +129,7 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
        ./warpx.3d.MPI.CUDA.DP.QED            \
          inputs_3d                           \
            warpx.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
-           
+
 You can find the header of the file :ref:`here <running-cpp-perlmutter-A100-GPUs>`.
 
 .. warning::
