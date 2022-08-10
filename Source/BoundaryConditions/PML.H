@@ -43,13 +43,15 @@ struct SigmaBox
 {
     SigmaBox (const amrex::Box& box, const amrex::BoxArray& grids,
               const amrex::Real* dx, const amrex::IntVect& ncell, const amrex::IntVect& delta,
-              const amrex::Box& regdomain);
+              const amrex::Box& regdomain, const amrex::Real v_sigma);
 
     void define_single (const amrex::Box& regdomain, const amrex::IntVect& ncell,
-                        const amrex::Array<amrex::Real,AMREX_SPACEDIM>& fac);
+                        const amrex::Array<amrex::Real,AMREX_SPACEDIM>& fac,
+                        const amrex::Real v_sigma);
     void define_multiple (const amrex::Box& box, const amrex::BoxArray& grids,
                           const amrex::IntVect& ncell,
-                          const amrex::Array<amrex::Real,AMREX_SPACEDIM>& fac);
+                          const amrex::Array<amrex::Real,AMREX_SPACEDIM>& fac,
+                          const amrex::Real v_sigma);
 
     void ComputePMLFactorsB (const amrex::Real* dx, amrex::Real dt);
     void ComputePMLFactorsE (const amrex::Real* dx, amrex::Real dt);
@@ -64,6 +66,7 @@ struct SigmaBox
     SigmaVect sigma_cumsum_fac;
     SigmaVect sigma_star_fac;
     SigmaVect sigma_star_cumsum_fac;
+    amrex::Real v_sigma;
 
 };
 
@@ -73,8 +76,8 @@ class SigmaBoxFactory
 public:
     SigmaBoxFactory (const amrex::BoxArray& grid_ba, const amrex::Real* dx,
                      const amrex::IntVect& ncell, const amrex::IntVect& delta,
-                     const amrex::Box& regular_domain)
-        : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta), m_regdomain(regular_domain) {}
+                     const amrex::Box& regular_domain, const amrex::Real v_sigma_sb)
+        : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta), m_regdomain(regular_domain), m_v_sigma_sb(v_sigma_sb) {}
     virtual ~SigmaBoxFactory () = default;
 
     SigmaBoxFactory (const SigmaBoxFactory&) = default;
@@ -86,7 +89,7 @@ public:
 
     virtual SigmaBox* create (const amrex::Box& box, int /*ncomps*/,
                               const amrex::FabInfo& /*info*/, int /*box_index*/) const final
-        { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta, m_regdomain); }
+        { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta, m_regdomain, m_v_sigma_sb); }
     virtual void destroy (SigmaBox* fab) const final {
         delete fab;
     }
@@ -99,6 +102,7 @@ private:
     amrex::IntVect m_ncell;
     amrex::IntVect m_delta;
     amrex::Box m_regdomain;
+    amrex::Real m_v_sigma_sb;
 };
 
 class MultiSigmaBox
@@ -108,7 +112,7 @@ public:
     MultiSigmaBox(const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                   const amrex::BoxArray& grid_ba, const amrex::Real* dx,
                   const amrex::IntVect& ncell, const amrex::IntVect& delta,
-                  const amrex::Box& regular_domain);
+                  const amrex::Box& regular_domain, const amrex::Real v_sigma_sb);
     void ComputePMLFactorsB (const amrex::Real* dx, amrex::Real dt);
     void ComputePMLFactorsE (const amrex::Real* dx, amrex::Real dt);
 private:
@@ -129,7 +133,7 @@ public:
          int do_moving_window, int pml_has_particles, int do_pml_in_domain,
          const bool do_multi_J,
          const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
-         int max_guard_EB,
+         int max_guard_EB, amrex::Real v_sigma_sb,
          const amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
          const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
 

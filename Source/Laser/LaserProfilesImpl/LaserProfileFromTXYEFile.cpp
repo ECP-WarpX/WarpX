@@ -9,7 +9,8 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpX_Complex.H"
-#include "WarpX.H"
+
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -47,10 +48,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
 {
     if (!std::numeric_limits< double >::is_iec559)
     {
-        WarpX::GetInstance().RecordWarning("Laser",
+        ablastr::warn_manager::WMRecordWarning("Laser",
             "(Double does not comply with IEEE 754: bad"
             "things will happen parsing the X, Y and T profiles for the laser!)",
-            WarnPriority::high);
+            ablastr::warn_manager::WarnPriority::high);
     }
 
     // Parse the TXYE file
@@ -262,7 +263,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::find_left_right_time_indices(amrex
         const auto t_min = m_params.t_coords.front();
         const auto t_max = m_params.t_coords.back();
         const auto temp_idx_t_right = static_cast<int>(
-            ceil( (m_params.nt-1)*(t-t_min)/(t_max-t_min)));
+            std::ceil( (m_params.nt-1)*(t-t_min)/(t_max-t_min)));
         idx_t_right = max(min(temp_idx_t_right, m_params.nt-1),1);
     }
     else{
@@ -353,6 +354,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         (m_params.t_coords.back()-m_params.t_coords.front())/(m_params.nt-1) +
         m_params.t_coords.front();
 
+#if (defined WARPX_DIM_1D_Z)
+    amrex::Abort(Utils::TextMsg::Err(
+        "WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for 1D"));
+#endif
     // Loop through the macroparticle to calculate the proper amplitude
     amrex::ParallelFor(
     np,
@@ -370,7 +375,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
 #endif
         //Find indices and coordinates along x
         const int temp_idx_x_right = static_cast<int>(
-            ceil((tmp_nx-1)*(Xp[i]- tmp_x_min)/(tmp_x_max-tmp_x_min)));
+            std::ceil((tmp_nx-1)*(Xp[i]- tmp_x_min)/(tmp_x_max-tmp_x_min)));
         const int idx_x_right =
             max(min(temp_idx_x_right,tmp_nx-1),static_cast<int>(1));
         const int idx_x_left = idx_x_right - 1;
@@ -382,7 +387,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
 #if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
         //Find indices and coordinates along y
         const int temp_idx_y_right = static_cast<int>(
-            ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
+            std::ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
         const int idx_y_right =
             max(min(temp_idx_y_right,tmp_ny-1),static_cast<int>(1));
         const int idx_y_left = idx_y_right - 1;
@@ -429,7 +434,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         // TODO: implement WARPX_DIM_1D_Z
         amrex::ignore_unused(x_0, x_1, tmp_e_max, p_E_data, tmp_idx_first_time,
                              t_left, t_right, Xp, Yp, t, idx_x_left);
-        amrex::Abort("WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for the current geometry");
 #endif
         }
     );
@@ -462,6 +466,11 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
     const int idx_t_right = idx_t_left+1;
     const auto t_left = m_params.t_coords[idx_t_left];
     const auto t_right = m_params.t_coords[idx_t_right];
+
+#if (defined WARPX_DIM_1D_Z)
+    amrex::Abort(Utils::TextMsg::Err(
+        "WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for 1D"));
+#endif
 
     // Loop through the macroparticle to calculate the proper amplitude
     amrex::ParallelFor(
@@ -531,7 +540,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
         // TODO: implement WARPX_DIM_1D_Z
         amrex::ignore_unused(idx_x_left, idx_t_left, idx_t_right, tmp_e_max,
                              p_E_data, tmp_idx_first_time, t_left, t_right, t);
-        amrex::Abort("WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for the current geometry");
 #endif
         }
     );

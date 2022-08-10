@@ -21,7 +21,7 @@ public:
     WarpXParticleContainer* getParticleContainer() const { return m_pc; }
     PinnedMemoryParticleContainer* getPinnedParticleContainer() const { return m_pinned_pc; }
     std::string getSpeciesName() const { return m_name; }
-    amrex::Vector<int> plot_flags;
+    amrex::Vector<int> m_plot_flags;
 
     bool m_do_random_filter  = false;
     bool m_do_uniform_filter = false;
@@ -36,7 +36,6 @@ public:
 private:
     std::string m_diag_name;
     std::string m_name;
-    amrex::Vector< std::string > variables;
     WarpXParticleContainer* m_pc;
     PinnedMemoryParticleContainer* m_pinned_pc;
 };

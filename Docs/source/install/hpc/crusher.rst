@@ -7,15 +7,19 @@ The `Crusher cluster <https://docs.olcf.ornl.gov/systems/crusher_quick_start_gui
 Each node contains 4 AMD MI250X GPUs, each with 2 Graphics Compute Dies (GCDs) for a total of 8 GCDs per node.
 You can think of the 8 GCDs as 8 separate GPUs, each having 64 GB of high-bandwidth memory (HBM2E).
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `Crusher user guide <https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html>`_
 * Batch system: `Slurm <https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html#running-jobs>`_
-* `Production directories <https://docs.olcf.ornl.gov/data/storage_overview.html>`_:
+* `Production directories <https://docs.olcf.ornl.gov/data/index.html#data-storage-and-transfers>`_:
 
-  * ``$PROJWORK/$proj/``: shared with all members of a project (recommended)
-  * ``$MEMBERWORK/$proj/``: single user (usually smaller quota)
-  * ``$WORLDWORK/$proj/``: shared with all users
+  * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days (recommended)
+  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days(usually smaller quota)
+  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days
   * Note that the ``$HOME`` directory is mounted as read-only on compute nodes.
     That means you cannot run in your ``$HOME``.
 
@@ -86,3 +90,19 @@ Post-Processing
 For post-processing, most users use Python via OLCFs's `Jupyter service <https://jupyter.olcf.ornl.gov>`__ (`Docs <https://docs.olcf.ornl.gov/services_and_applications/jupyter/index.html>`__).
 
 Please follow the same guidance as for :ref:`OLCF Summit post-processing <post-processing-summit>`.
+
+.. _known-crusher-issues:
+
+Known System Issues
+-------------------
+
+.. warning::
+
+   May 16th, 2022 (OLCFHELP-6888):
+   There is a caching bug in Libfrabric that causes WarpX simulations to occasionally hang on Crusher on more than 1 node.
+
+   As a work-around, please export the following environment variable in your job scripts until the issue is fixed:
+
+   .. code-block:: bash
+
+      export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching

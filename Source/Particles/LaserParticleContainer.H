@@ -14,6 +14,7 @@
 #include "WarpXParticleContainer.H"
 
 #include <AMReX_Extension.H>
+#include <AMReX_Random.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 #include <AMReX_Vector.H>
@@ -44,6 +45,16 @@ public:
     virtual ~LaserParticleContainer () {}
 
     virtual void InitData () final;
+
+    /**
+     * \brief Method to initialize runtime attributes. Does nothing for LaserParticleContainer.
+     */
+    virtual void DefaultInitializeRuntimeAttributes (
+                        amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
+                                            NArrayInt,amrex::PinnedArenaAllocator>& /*pinned_tile*/,
+                        const int /*n_external_attr_real*/,
+                        const int /*n_external_attr_int*/,
+                        const amrex::RandomEngine& /*engine*/) override final {}
 
     virtual void ReadHeader (std::istream& is) final;
 

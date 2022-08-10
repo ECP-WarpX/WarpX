@@ -20,6 +20,8 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Config.H>
@@ -47,11 +49,9 @@ namespace {
         std::string string;
         stringstream << var << " string '" << name << "' not recognized.";
         string = stringstream.str();
-        amrex::Abort(string.c_str());
+        amrex::Abort(Utils::TextMsg::Err(string.c_str()));
     }
 }
-
-PlasmaInjector::PlasmaInjector () {}
 
 PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     : species_id(ispecies), species_name(name)
@@ -125,7 +125,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     std::string physical_species_s;
     bool species_is_specified = pp_species_name.query("species_type", physical_species_s);
     if (species_is_specified){
-        physical_species = species::from_string( physical_species_s );
+        const auto physical_species_from_string = species::from_string( physical_species_s );
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(physical_species_from_string,
+            physical_species_s + " does not exist!");
+        physical_species = physical_species_from_string.value();
         charge = species::get_charge( physical_species );
         mass = species::get_mass( physical_species );
     }
@@ -143,27 +146,32 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     bool mass_is_specified = queryWithParser(pp_species_name, "mass", mass);
 
     if ( charge_is_specified && species_is_specified ){
-        WarpX::GetInstance().RecordWarning("Species",
+        ablastr::warn_manager::WMRecordWarning("Species",
             "Both '" + species_name +  ".charge' and " +
                 species_name + ".species_type' are specified.\n" +
                 species_name + ".charge' will take precedence.\n");
 
     }
-    if (!charge_is_specified && !species_is_specified && injection_style != "external_file"){
-        // external file will throw own assertions below if charge cannot be found
-        amrex::Abort("Need to specify at least one of species_type or charge");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        charge_is_specified ||
+        species_is_specified ||
+        (injection_style == "external_file"),
+        "Need to specify at least one of species_type or charge"
+    );
 
     if ( mass_is_specified && species_is_specified ){
-        WarpX::GetInstance().RecordWarning("Species",
+        ablastr::warn_manager::WMRecordWarning("Species",
             "Both '" + species_name +  ".mass' and " +
                 species_name + ".species_type' are specified.\n" +
                 species_name + ".mass' will take precedence.\n");
     }
-    if (!mass_is_specified && !species_is_specified && injection_style != "external_file"){
-        // external file will throw own assertions below if mass cannot be found
-        amrex::Abort("Need to specify at least one of species_type or mass");
-    }
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        mass_is_specified ||
+        species_is_specified ||
+        (injection_style == "external_file"),
+        "Need to specify at least one of species_type or mass"
+    );
 
     num_particles_per_cell_each_dim.assign(3, 0);
 
@@ -354,8 +362,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseMomentum(pp_species_name);
     } else if (injection_style == "external_file") {
 #ifndef WARPX_USE_OPENPMD
-        amrex::Abort("WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
-                     " to read the external openPMD file with species data");
+        amrex::Abort(Utils::TextMsg::Err(
+            "WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
+            " to read the external openPMD file with species data"));
 #endif
         external_file = true;
         std::string str_injection_file;
@@ -393,13 +402,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 "'" + ps_name + ".species_type' in your input file!\n");
 
             if (charge_is_specified) {
-                WarpX::GetInstance().RecordWarning("Species",
+                ablastr::warn_manager::WMRecordWarning("Species",
                     "Both '" + ps_name + ".charge' and '" +
                         ps_name + ".injection_file' specify a charge.\n'" +
                         ps_name + ".charge' will take precedence.\n");
             }
             else if (species_is_specified) {
-                WarpX::GetInstance().RecordWarning("Species",
+                ablastr::warn_manager::WMRecordWarning("Species",
                     "Both '" + ps_name + ".species_type' and '" +
                         ps_name + ".injection_file' specify a charge.\n'" +
                         ps_name + ".species_type' will take precedence.\n");
@@ -412,13 +421,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 charge = p_q * charge_unit;
             }
             if (mass_is_specified) {
-                WarpX::GetInstance().RecordWarning("Species",
+                ablastr::warn_manager::WMRecordWarning("Species",
                     "Both '" + ps_name + ".mass' and '" +
                         ps_name + ".injection_file' specify a charge.\n'" +
                         ps_name + ".mass' will take precedence.\n");
             }
             else if (species_is_specified) {
-                WarpX::GetInstance().RecordWarning("Species",
+                ablastr::warn_manager::WMRecordWarning("Species",
                     "Both '" + ps_name + ".species_type' and '" +
                         ps_name + ".injection_file' specify a mass.\n'" +
                         ps_name + ".species_type' will take precedence.\n");
@@ -440,8 +449,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             amrex::ParallelDescriptor::Bcast(&mass, 1,
                 amrex::ParallelDescriptor::IOProcessorNumber());
 #else
-        amrex::Abort("Plasma injection via external_file requires openPMD support: "
-                     "Add USE_OPENPMD=TRUE when compiling WarpX.\n");
+        amrex::Abort(Utils::TextMsg::Err(
+            "Plasma injection via external_file requires openPMD support: "
+            "Add USE_OPENPMD=TRUE when compiling WarpX."));
 #endif  // WARPX_USE_OPENPMD
 
     } else {

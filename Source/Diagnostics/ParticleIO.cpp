@@ -151,13 +151,12 @@ MultiParticleContainer::Restart (const std::string& dir)
 
         for (auto const& comp : pc->getParticleRuntimeComps()) {
             auto search = std::find(real_comp_names.begin(), real_comp_names.end(), comp.first);
-            if (search == real_comp_names.end()) {
-                amrex::Abort(Utils::TextMsg::Err(
-                    "Species " + species_names[i]
-                    + "needs runtime real component " +  comp.first
-                    + ", but it was not found in the checkpoint file."
-                ));
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                search != real_comp_names.end(),
+                "Species " + species_names[i]
+                + "needs runtime real component " +  comp.first
+                + ", but it was not found in the checkpoint file."
+            );
         }
 
         for (int j = PIdx::nattribs; j < nr; ++j) {
@@ -186,12 +185,11 @@ MultiParticleContainer::Restart (const std::string& dir)
 
         for (auto const& comp : pc->getParticleRuntimeiComps()) {
             auto search = std::find(int_comp_names.begin(), int_comp_names.end(), comp.first);
-            if (search == int_comp_names.end()) {
-                std::stringstream ss;
-                ss << "Species " << species_names[i] << "needs runtime int component " << comp.first;
-                ss << ", but it was not found in the checkpoint file. \n";
-                amrex::Abort(ss.str());
-            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                search != int_comp_names.end(),
+                "Species " + species_names[i] + "needs runtime int component " + comp.first
+                + ", but it was not found in the checkpoint file."
+            );
         }
 
         for (int j = 0; j < ni; ++j) {

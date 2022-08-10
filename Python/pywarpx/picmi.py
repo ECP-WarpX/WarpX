@@ -1,5 +1,5 @@
-# Copyright 2018-2020 Andrew Myers, David Grote, Ligia Diana Amorim
-# Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+# Copyright 2018-2022 Andrew Myers, David Grote, Ligia Diana Amorim
+# Maxence Thevenet, Remi Lehe, Revathi Jambunathan, Lorenzo Giacomel
 #
 #
 # This file is part of WarpX.
@@ -61,23 +61,26 @@ class Species(picmistandard.PICMI_Species):
                     self.charge = '-q_e'
                 else:
                     self.charge = self.charge_state*constants.q_e
-            # Match a string of the format '#nXx', with the '#n' optional isotope number.
-            m = re.match(r'(?P<iso>#[\d+])*(?P<sym>[A-Za-z]+)', self.particle_type)
-            if m is not None:
-                element = periodictable.elements.symbol(m['sym'])
-                if m['iso'] is not None:
-                    element = element[m['iso'][1:]]
-                if self.charge_state is not None:
-                    assert self.charge_state <= element.number, Exception('%s charge state not valid'%self.particle_type)
-                    try:
-                        element = element.ion[self.charge_state]
-                    except ValueError:
-                        # Note that not all valid charge states are defined in elements,
-                        # so this value error can be ignored.
-                        pass
-                self.element = element
-                if self.mass is None:
-                    self.mass = element.mass*periodictable.constants.atomic_mass_constant
+            if self.particle_type is not None:
+                # Match a string of the format '#nXx', with the '#n' optional isotope number.
+                m = re.match(r'(?P<iso>#[\d+])*(?P<sym>[A-Za-z]+)', self.particle_type)
+                if m is not None:
+                    element = periodictable.elements.symbol(m['sym'])
+                    if m['iso'] is not None:
+                        element = element[m['iso'][1:]]
+                    if self.charge_state is not None:
+                        assert self.charge_state <= element.number, Exception('%s charge state not valid'%self.particle_type)
+                        try:
+                            element = element.ion[self.charge_state]
+                        except ValueError:
+                            # Note that not all valid charge states are defined in elements,
+                            # so this value error can be ignored.
+                            pass
+                    self.element = element
+                    if self.mass is None:
+                        self.mass = element.mass*periodictable.constants.atomic_mass_constant
+                else:
+                    raise Exception('The species "particle_type" is not known')
 
         self.boost_adjust_transverse_positions = kw.pop('warpx_boost_adjust_transverse_positions', None)
 
@@ -917,21 +920,43 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
     """
     Custom class to handle set up of embedded boundaries specific to WarpX.
     If embedded boundary initialization is added to picmistandard this can be
-    changed to inherit that functionality.
+    changed to inherit that functionality. The geometry can be specified either as
+    an implicit function or as an STL file (ASCII or binary). In the latter case the
+    geometry specified in the STL file can be scaled, translated and inverted.
     - implicit_function: Analytic expression describing the embedded boundary
+    - stl_file: STL file path (string), file contains the embedded boundary geometry
+    - stl_scale: factor by which the STL geometry is scaled (pure number)
+    - stl_center: vector by which the STL geometry is translated (in meters)
+    - stl_reverse_normal: if True inverts the orientation of the STL geometry
     - potential: Analytic expression defining the potential. Can only be specified
                  when the solver is electrostatic. Optional, defaults to 0.
      Parameters used in the expressions should be given as additional keyword arguments.
     """
-    def __init__(self, implicit_function, potential=None, **kw):
+    def __init__(self, implicit_function=None, stl_file=None, stl_scale=None, stl_center=None, stl_reverse_normal=False,
+                 potential=None, **kw):
+
+        assert stl_file is None or implicit_function is None, Exception('Only one between implicit_function and '
+                                                                            'stl_file can be specified')
+
         self.implicit_function = implicit_function
+        self.stl_file = stl_file
+
+        if stl_file is None:
+            assert stl_scale is None, Exception('EB can only be scaled only when using an stl file')
+            assert stl_center is None, Exception('EB can only be translated only when using an stl file')
+            assert stl_reverse_normal is False, Exception('EB can only be reversed only when using an stl file')
+
+        self.stl_scale = stl_scale
+        self.stl_center = stl_center
+        self.stl_reverse_normal = stl_reverse_normal
+
         self.potential = potential
 
         # Handle keyword arguments used in expressions
         self.user_defined_kw = {}
         for k in list(kw.keys()):
-            if (re.search(r'\b%s\b'%k, implicit_function) or
-                (potential is not None and re.search(r'\b%s\b'%k, potential))):
+            if (implicit_function is not None and re.search(r'\b%s\b'%k, implicit_function) or
+               (potential is not None and re.search(r'\b%s\b'%k, potential))):
                 self.user_defined_kw[k] = kw[k]
                 del kw[k]
 
@@ -944,8 +969,16 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         # defined in my_constants with the same name but different value.
         self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
-        expression = pywarpx.my_constants.mangle_expression(self.implicit_function, self.mangle_dict)
-        pywarpx.warpx.eb_implicit_function = expression
+        if self.implicit_function is not None:
+            expression = pywarpx.my_constants.mangle_expression(self.implicit_function, self.mangle_dict)
+            pywarpx.warpx.eb_implicit_function = expression
+
+        if self.stl_file is not None:
+            pywarpx.eb2.geom_type = "stl"
+            pywarpx.eb2.stl_file = self.stl_file
+            pywarpx.eb2.stl_scale = self.stl_scale
+            pywarpx.eb2.stl_center = self.stl_center
+            pywarpx.eb2.stl_reverse_normal = self.stl_reverse_normal
 
         if self.potential is not None:
             assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
@@ -1011,6 +1044,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
         self.amr_restart = kw.pop('warpx_amr_restart', None)
+        self.zmax_plasma_to_compute_max_step = kw.pop('warpx_zmax_plasma_to_compute_max_step', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
@@ -1034,6 +1068,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         if self.gamma_boost is not None:
             pywarpx.warpx.gamma_boost = self.gamma_boost
             pywarpx.warpx.boost_direction = 'z'
+
+        pywarpx.warpx.zmax_plasma_to_compute_max_step = self.zmax_plasma_to_compute_max_step
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
@@ -1213,6 +1249,8 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
                     self.plot_finepatch = 1
                 elif dataname == 'crsepatch':
                     self.plot_crsepatch = 1
+                elif dataname == 'none':
+                    fields_to_plot = set(('none',))
 
             # --- Convert the set to a sorted list so that the order
             # --- is the same on all processors.

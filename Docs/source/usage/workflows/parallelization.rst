@@ -30,7 +30,8 @@ AMReX ``max_grid_size`` and ``blocking_factor``
 
      You can use the parameters above if you want the same number of cells in all directions.
      Or you can set ``amr.max_grid_size_x``, ``amr.max_grid_size_y`` and ``amr.max_grid_size_z``;
-     ``amr.blocking_factor_x``, ``amr.blocking_factor_x`` and ``amr.blocking_factor_x`` to different numbers of cells.
+     ``amr.blocking_factor_x``, ``amr.blocking_factor_y`` and ``amr.blocking_factor_z`` to different numbers of cells.
+     Note that, in RZ geometry, the parameters corresponding to the longitudinal direction are ``amr.max_grid_size_y`` and ``amr.blocking_factor_y``.
 
 The total number of **grids** is determined using those two restrictions and the number of
 ranks used to run the simulation. You can visit `AMReX <https://amrex-codes.github.io/amrex/docs_html/GridCreation.html?highlight=blocking_factor>`_

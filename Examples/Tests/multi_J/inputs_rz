@@ -113,5 +113,5 @@ plasma_p.do_continuous_injection = 1
 diagnostics.diags_names = diag1
 diag1.intervals = 50
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_driver rho_plasma_e rho_plasma_p
+diag1.fields_to_plot = Ex Ez By jx jz rho rho_driver rho_plasma_e rho_plasma_p
 diag1.species = driver plasma_e plasma_p

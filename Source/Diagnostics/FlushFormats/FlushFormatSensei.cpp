@@ -29,13 +29,12 @@ FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
     m_insitu_bridge->setEnabled(true);
     m_insitu_bridge->setConfig(m_insitu_config);
     m_insitu_bridge->setPinMesh(m_insitu_pin_mesh);
-    if (!m_amr_mesh || m_insitu_bridge->initialize())
-    {
-        amrex::ErrorStream() << "FlushFormtSensei::FlushFormatSensei : "
-            "Failed to initialize the in situ bridge." << std::endl;
 
-        amrex::Abort();
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_amr_mesh && !m_insitu_bridge->initialize(),
+        "FlushFormtSensei::FlushFormatSensei : "
+        "Failed to initialize the in situ bridge."
+    );
     m_insitu_bridge->setFrequency(1);
 #endif
 }
@@ -56,6 +55,7 @@ FlushFormatSensei::WriteToFile (
     const amrex::Vector<ParticleDiag>& particle_diags,
     int nlev, const std::string prefix, int file_min_digits,
     bool plot_raw_fields, bool plot_raw_fields_guards,
+    const bool use_pinned_pc,
     bool isBTD, int snapshotID,
     const amrex::Geometry& full_BTD_snapshot, bool isLastBTDFlush,
     const amrex::Vector<int>& totalParticlesFlushedAlready) const
@@ -63,7 +63,7 @@ FlushFormatSensei::WriteToFile (
     amrex::ignore_unused(
         geom, nlev, prefix, file_min_digits,
         plot_raw_fields, plot_raw_fields_guards,
-        isBTD, snapshotID, full_BTD_snapshot,
+        use_pinned_pc, isBTD, snapshotID, full_BTD_snapshot,
         isLastBTDFlush, totalParticlesFlushedAlready);
 
 #ifndef AMREX_USE_SENSEI_INSITU
@@ -79,13 +79,11 @@ FlushFormatSensei::WriteToFile (
         iteration[0], time, m_amr_mesh,{mf_ptr}, {varnames},
         particles, {}, {}, {{"u",{0,1,2}}}, {});
 
-    if (didUpdate)
-    {
-        amrex::ErrorStream() << "FlushFormatSensei::WriteToFile : "
-            "Failed to update the in situ bridge." << std::endl;
-
-        amrex::Abort();
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !didUpdate,
+        "FlushFormatSensei::WriteToFile : "
+        "Failed to update the in situ bridge."
+    );
 #endif
 }
 
@@ -95,9 +93,9 @@ FlushFormatSensei::WriteParticles (
 {
     amrex::ignore_unused(particle_diags);
 #ifdef AMREX_USE_SENSEI_INSITU
-    amrex::ErrorStream() << "FlushFormatSensei::WriteParticles : "
-        "Not yet implemented." << std::endl;
-
-    amrex::Abort();
+    amrex::Abort(Utils::TextMsg::Err(
+        "FlushFormatSensei::WriteParticles : "
+        "Not yet implemented."
+    ));
 #endif
 }
