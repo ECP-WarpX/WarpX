@@ -1785,17 +1785,17 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     ParmParse pp_warpx("warpx");
     pp_warpx.query("B_ext_grid_init_style", WarpX::B_ext_grid_s);
     pp_warpx.query("E_ext_grid_init_style", WarpX::E_ext_grid_s);
-    if (WarpX::B_ext_grid_s=="read_B_from_file" && lev==0)
+    if (WarpX::B_ext_grid_s=="read_from_file" && lev==0)
     {
-        Bfield_fp_external[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_fp_external[x]"));
-        Bfield_fp_external[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngEB,tag("Bfield_fp_external[y]"));
-        Bfield_fp_external[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngEB,tag("Bfield_fp_external[z]"));
+        Bfield_fp_external[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_fp_external[0]"));
+        Bfield_fp_external[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngEB,tag("Bfield_fp_external[1]"));
+        Bfield_fp_external[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngEB,tag("Bfield_fp_external[2]"));
     }
-    if (WarpX::E_ext_grid_s=="read_E_from_file" && lev==0)
+    if (WarpX::E_ext_grid_s=="read_from_file" && lev==0)
     {
-        Efield_fp_external[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp_external[x]"));
-        Efield_fp_external[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp_external[y]"));
-        Efield_fp_external[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp_external[z]"));
+        Efield_fp_external[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp_external[0]"));
+        Efield_fp_external[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp_external[1]"));
+        Efield_fp_external[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp_external[2]"));
     }
 
     if (do_current_centering)

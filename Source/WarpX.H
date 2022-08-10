@@ -866,10 +866,7 @@ public:
          const char field,
          const int lev);
 
-    void ReadExternalFieldsFromFile (std::string read_from_path, amrex::MultiFab* mf,
-        std::string F_name, std::string F_component);
-
-    void ReadExternalFieldsFromFileOpenPMD (std::string read_from_path, amrex::MultiFab* mf,
+    void ReadExternalFieldsFromFile (std::string read_fields_from_path, amrex::MultiFab* mf,
         std::string F_name, std::string F_component);
 
     /**
