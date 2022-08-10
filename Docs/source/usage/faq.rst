@@ -44,11 +44,11 @@ Here are a few practical items to assist in designing boosted frame simulations:
 
 - Ions must be explicitly included
 - Best practice is to separate counter-propagating objects; things moving to the right should start with :math:`z <= 0` and things stationary or moving to the left (moving to the left in the boosted frame) should start with :math:`z > 0`
-- Don't forget the general design principles as listed in the above section
+- Don't forget the general design principles listed above
 - The boosted frame simulation begins at boosted time :math:`t'=0`
-- Numerics and algorithms need to be adjusted, as there are numerical instabilities that arise in the boosted frame. At a minimum, this means setting ``particles.use_fdtd_nci_corr=1`` for an FDTD simulation or setting ``psatd.use_default_v_galilean=1`` for a ``PSATD`` simulation
+- Numerics and algorithms need to be adjusted, as there are numerical instabilities that arise in the boosted frame. For example, setting ``particles.use_fdtd_nci_corr=1`` for an FDTD simulation or setting ``psatd.use_default_v_galilean=1`` for a PSATD simulation. Be careful as this is overly simplistic and these options will not work in all cases.  Please see the :ref:`input parameters documentation <running-cpp-parameters>` and the :ref:`examples <usage-examples>` for more information
 
-Examples of how to use boosted frame simulations are provided in the :ref:`examples <usage-examples>` section and an in-depth discussion of the boosted frame is provided in the :ref:`moving window and optimal Lorentz boosted frame <theory-boostedframe>` section.
+An in-depth discussion of the boosted frame is provided in the :ref:`moving window and optimal Lorentz boosted frame <theory-boostedframe>` section.
 
 
 
