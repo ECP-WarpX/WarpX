@@ -127,7 +127,7 @@ class SpectralFieldData
                                const int i_comp);
 
         void BackwardTransform (const int lev, amrex::MultiFab& mf, const int field_index,
-                                const int i_comp, const amrex::IntVect& fill_guards);
+                                const amrex::IntVect& fill_guards, const int i_comp);
 
         // `fields` stores fields in spectral space, as multicomponent FabArray
         SpectralField fields;
