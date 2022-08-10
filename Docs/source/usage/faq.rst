@@ -30,21 +30,21 @@ Note that the tiny profiler adds literally no overhead to the simulation runtime
 What design principles should I keep in mind when creating an input file?
 -------------------------------------------------------------------------
 
-Leave a cushion between lasers, particles, and the edge of computational domain.  
-The laser antenna and plasma species ``zmin`` can be less than or greater than  the ``geometry.prob_hi``, 
+Leave a cushion between lasers, particles, and the edge of computational domain.
+The laser antenna and plasma species ``zmin`` can be less than or greater than  the ``geometry.prob_hi``,
 but not exactly equal.
 
 
 What do I need to know about using the boosted frame?
 -----------------------------------------------------
 
-The input deck can be designed in the lab frame and little modification to the physical set-up is needed since 
+The input deck can be designed in the lab frame and little modification to the physical set-up is needed since
 the boost transformations are calculated internally to WarpX.
 Here are a few practical items to assist in designing and analyzing boosted frame simulations:
 
-- Ions must be explicitly included.
-- Different algorithms must be used to mitigate numerical instabilities that arise in boosted frame simulations.
-- Best practice is to separate counter-propagating objects; 
+- Ions must be explicitly included
+- The boosted frame simulation begins at boosted time :math:`t'=0`.
+- Best practice is to separate counter-propagating objects;
 things moving to the right should start with :math:`z <= 0` and things stationary or moving to the left (moving to the left in the boosted frame) should start with :math:`z > 0`.
 - Don't forget the general best-practices as listed in the above section.
 - The boosted frame simulation begins at boosted time :math:`t'=0`.
