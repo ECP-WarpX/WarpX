@@ -40,17 +40,18 @@ What do I need to know about using the boosted frame?
 
 The input deck can be designed in the lab frame and little modification to the physical set-up is needed since 
 the boost transformations are calculated internally to WarpX.
-Different algorithms must be used to mitigate numerical instabilities that arise in boosted frame simulations;
-an in-depth discussion of the boosted frame is provided in the section on :ref:`boosted frame theory <theory-boostedframe>`.
-Examples of how to use boosted frame simulations are provided in the :ref:`examples <usage-examples>` section.
-
 Here are a few practical items to assist in designing and analyzing boosted frame simulations:
 
-- Ions must be explicitly included
-- The boosted frame simulation begins at boosted time :math:`t'=0`.
+- Ions must be explicitly included.
+- Different algorithms must be used to mitigate numerical instabilities that arise in boosted frame simulations.
 - Best practice is to separate counter-propagating objects; 
 things moving to the right should start with :math:`z <= 0` and things stationary or moving to the left (moving to the left in the boosted frame) should start with :math:`z > 0`.
 - Don't forget the general best-practices as listed in the above section.
+- The boosted frame simulation begins at boosted time :math:`t'=0`.
+
+Examples of how to use boosted frame simulations are provided in the :ref:`examples <usage-examples>` section.
+An in-depth discussion of the boosted frame is provided in the section on :ref:`boosted frame theory <theory-boostedframe>`.
+
 
 
 
