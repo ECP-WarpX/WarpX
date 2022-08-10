@@ -106,6 +106,7 @@ and new folder `bl_prof`, which contains the profiling data.
     - You can directly click on the timeline to see which actual MPI call is being perform. (Note that the colorbar can be misleading.)
 
 .. _developers-profiling-nsight-systems:
+.. _running-cpp-perlmutter-A100-GPUs: 
 
 Nvidia Nsight-Systems
 ---------------------
@@ -120,61 +121,6 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
 
 .. code-block:: bash
 
-   #!/bin/bash -l
-
-   # Copyright 2021 Axel Huebl, Kevin Gott
-   #
-   # This file is part of WarpX.
-   #
-   # License: BSD-3-Clause-LBNL
-
-   #SBATCH -t 01:00:00
-   #SBATCH -N 1
-   #SBATCH -J WarpX
-   ##    note: <project name> #must end on _g
-   #SBATCH -A  <project name>
-   #for <project name> LBNL/AMP users: for large runs, comment in
-   #S BATCH -q early_science
-   #SBATCH -C gpu
-   #SBATCH -c 32
-   #SBATCH --ntasks-per-node=4
-   #SBATCH --gpus-per-task=1
-   #SBATCH --gpu-bind=single:1
-   #SBATCH -o WarpX.o%j
-   #SBATCH -e WarpX.e%j
-
-   # ============
-   # -N =                 nodes
-   # -n =                 tasks (MPI ranks, usually = G)
-   # -G =                 GPUs (full Perlmutter node, 4)
-   # -c =                 CPU per task (128 total threads on CPU, 32 per GPU)
-   #
-   # --ntasks-per-node=   number of tasks (MPI ranks) per node (full node, 4)
-   # --gpus-per-task=     number of GPUs per task (MPI rank) (full node, 4)
-   # --gpus-per-node=     number of GPUs per node (full node, 4)
-   #
-   # --gpu-bind=single:1  sets only one GPU to be visible to each MPI rank
-   #                         (quiets AMReX init warnings)
-   #
-   # Recommend using --ntasks-per-node=4, --gpus-per-task=1 and --gpu-bind=single:1,
-   # as they are fixed values and allow for easy scaling with less adjustments.
-   #
-   # ============
-   # GPU-aware MPI
-   export MPICH_GPU_SUPPORT_ENABLED=1
-   # 1 OpenMP thread
-   export OMP_NUM_THREADS=1
-
-   export TMPDIR="$PWD/tmp"
-   rm -rf ${TMPDIR} profiling*
-   mkdir -p ${TMPDIR}
-
-   # 2021.5.1 (broken: lacks most trace info)
-   #NSYS="/global/common/software/nersc/pm-2021q4/easybuild/software/Nsight-Systems/2021.5.1/bin/nsys"
-   # 2021.4.1 (working)
-   NSYS="/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/compilers/bin/nsys"
-
-   # record
    srun --ntasks=4 --gpus=4 --cpu-bind=cores \
        ${NSYS} profile -f true               \
          -o profiling_%q{SLURM_TASK_PID}     \
@@ -183,6 +129,8 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
        ./warpx.3d.MPI.CUDA.DP.QED            \
          inputs_3d                           \
            warpx.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
+           
+You can find the header of the file :ref:`here <running-cpp-perlmutter-A100-GPUs>`.
 
 .. warning::
 
