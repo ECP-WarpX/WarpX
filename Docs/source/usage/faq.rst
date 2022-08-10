@@ -38,19 +38,17 @@ but not exactly equal.
 What do I need to know about using the boosted frame?
 -----------------------------------------------------
 
-The input deck can be designed in the lab frame and little modification to the physical set-up is needed since
-the boost transformations are calculated internally to WarpX.
-Here are a few practical items to assist in designing and analyzing boosted frame simulations:
+The input deck can be designed in the lab frame and little modification to the physical set-up is needed -- 
+most of the work is done internally.
+Here are a few practical items to assist in designing boosted frame simulations:
 
 - Ions must be explicitly included
-- The boosted frame simulation begins at boosted time :math:`t'=0`.
-- Best practice is to separate counter-propagating objects;
-things moving to the right should start with :math:`z <= 0` and things stationary or moving to the left (moving to the left in the boosted frame) should start with :math:`z > 0`.
-- Don't forget the general best-practices as listed in the above section.
-- The boosted frame simulation begins at boosted time :math:`t'=0`.
+- Best practice is to separate counter-propagating objects; things moving to the right should start with :math:`z <= 0` and things stationary or moving to the left (moving to the left in the boosted frame) should start with :math:`z > 0`
+- Don't forget the general design principles as listed in the above section
+- The boosted frame simulation begins at boosted time :math:`t'=0`
+- Numerics and algorithms need to be adjusted, as there are numerical instabilities that arise in the boosted frame. At a minimum, this means setting ``particles.use_fdtd_nci_corr=1`` for an FDTD simulation or setting ``psatd.use_default_v_galilean=1`` for a ``PSATD`` simulation
 
-Examples of how to use boosted frame simulations are provided in the :ref:`examples <usage-examples>` section.
-An in-depth discussion of the boosted frame is provided in the section on :ref:`boosted frame theory <theory-boostedframe>`.
+Examples of how to use boosted frame simulations are provided in the :ref:`examples <usage-examples>` section and an in-depth discussion of the boosted frame is provided in the :ref:`moving window and optimal Lorentz boosted frame <theory-boostedframe>` section.
 
 
 
