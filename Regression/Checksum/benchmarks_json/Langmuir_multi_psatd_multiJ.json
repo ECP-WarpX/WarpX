@@ -1,7 +1,5 @@
 {
   "electrons": {
-    "particle_cpu": 131072.0,
-    "particle_id": 18862440448.0,
     "particle_momentum_x": 9.638052804050334e-20,
     "particle_position_x": 2.621440000001177,
     "particle_position_y": 2.6214400000011775,
@@ -22,8 +20,6 @@
     "rho": 702985676.1282513
   },
   "positrons": {
-    "particle_cpu": 131072.0,
-    "particle_id": 56518901760.0,
     "particle_momentum_z": 9.638052669516354e-20,
     "particle_position_x": 2.621440000001177,
     "particle_position_y": 2.6214400000011775,
