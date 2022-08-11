@@ -128,7 +128,7 @@ int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
 bool WarpX::do_shared_mem_charge_deposition = false;
 bool WarpX::do_shared_mem_current_deposition = false;
-int WarpX::shared_mem_current_tpb = 256;
+int WarpX::shared_mem_current_tpb = 128;
 //Note this is not really the default. Default is sort_bin_size
 amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1));
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
