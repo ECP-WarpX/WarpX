@@ -1825,14 +1825,15 @@ Numerics and algorithms
 
     Note that the update with and without rho is also supported in RZ geometry.
 
-* ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
-    Defines the galilean velocity.
-    Non-zero `v_galilean` activates Galilean algorithm, which suppresses the Numerical Cherenkov instability
-    in boosted-frame simulation. This requires the code to be compiled with `USE_PSATD=TRUE`.
-    (see the sub-section Numerical Stability and alternate formulation
-    in a Galilean frame in the :ref:`theory section <theory-boostedframe-galilean>`).
-    It also requires the use of the `direct` current deposition option
-    `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
+* ``psatd.v_galilean`` (`3 floats`, in units of the speed of light; default ``0. 0. 0.``)
+    Defines the Galilean velocity.
+    A non-zero velocity activates the Galilean algorithm, which suppresses numerical Cherenkov instabilities (NCI) in boosted-frame simulations (see the section :ref:`Numerical Stability and alternate formulation in a Galilean frame <theory-boostedframe-galilean>` for more information).
+    This requires the code to be compiled with the spectral solver.
+    It also requires the use of the direct current deposition algorithm (by setting ``algo.current_deposition = direct``).
+
+* ``psatd.use_default_v_galilean`` (`0` or `1`; default: `0`)
+    This can be used in boosted-frame simulations only and sets the Galilean velocity along the :math:`z` direction automatically as :math:`v_{G} = -\sqrt{1-1/\gamma^2}`, where :math:`\gamma` is the Lorentz factor of the boosted frame (set by ``warpx.gamma_boost``).
+    See the section :ref:`Numerical Stability and alternate formulation in a Galilean frame <theory-boostedframe-galilean>` for more information on the Galilean algorithm for boosted-frame simulations.
 
 * ``psatd.v_comoving`` (3 floating-point values, in units of the speed of light; default ``0. 0. 0.``)
     Defines the comoving velocity in the comoving PSATD scheme.
