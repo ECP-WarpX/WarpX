@@ -719,8 +719,10 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
         doParticleSetup = is_first_flush_with_particles || is_last_flush_and_never_particles;
 
     // this setup stage also implicitly calls "makeEmpty" if needed (i.e., is_last_flush_and_never_particles)
-    //   for BTD, we call this multiple times as we may resize in subsequent dumps if number of particles in the buffer > 0
-    if (doParticleSetup || is_resizing_flush) {
+    //   - for BTD, we call this multiple times as we may resize in subsequent dumps if number of particles in the buffer > 0
+    //   - for BTD, we also call this in the last flush to a step, in case that step adds no new particles
+    //     - this is needed so we can call SetConstParticleRecordsEDPIC below
+    if (doParticleSetup || is_resizing_flush || is_last_flush_to_step) {
         SetupPos(currSpecies, NewParticleVectorSize, isBTD);
         SetupRealProperties(pc, currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names,
                             NewParticleVectorSize, isBTD);
