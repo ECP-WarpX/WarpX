@@ -27,7 +27,7 @@ MultiDiagnostics::MultiDiagnostics ()
             alldiags[i] = std::make_unique<BTDiagnostics>(i, diags_names[i]);
 #ifdef WARPX_DIM_RZ
             ablastr::warn_manager::WMRecordWarning("MultiDiagnostics", "BackTransformed diagnostics for fields is not yet fully implemented in RZ. Field output might be incorrect.");
-#endif            
+#endif
         } else if ( diags_types[i] == DiagTypes::BoundaryScraping ){
             alldiags[i] = std::make_unique<BoundaryScrapingDiagnostics>(i, diags_names[i]);
         } else {
