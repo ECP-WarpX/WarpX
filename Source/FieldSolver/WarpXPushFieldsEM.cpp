@@ -159,22 +159,19 @@ void WarpX::PSATDBackwardTransformEBavg (
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
-    // No need to fill guard cells for averaged fields
-    const amrex::IntVect& fill_guards = amrex::IntVect(0);
-
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         BackwardTransformVect(lev, *spectral_solver_fp[lev], E_avg_fp[lev],
-                              Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg, fill_guards);
+                              Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg, m_fill_guards_fields);
         BackwardTransformVect(lev, *spectral_solver_fp[lev], B_avg_fp[lev],
-                              Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg, fill_guards);
+                              Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg, m_fill_guards_fields);
 
         if (spectral_solver_cp[lev])
         {
             BackwardTransformVect(lev, *spectral_solver_cp[lev], E_avg_cp[lev],
-                                  Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg, fill_guards);
+                                  Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg, m_fill_guards_fields);
             BackwardTransformVect(lev, *spectral_solver_cp[lev], B_avg_cp[lev],
-                                  Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg, fill_guards);
+                                  Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg, m_fill_guards_fields);
         }
     }
 }
