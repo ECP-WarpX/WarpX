@@ -555,9 +555,11 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                         }
                         DefineFieldBufferMultiFab(i_buffer, lev);
                     }
+                    amrex::IntVect ref_ratio = amrex::IntVect(1);
+                    if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                        m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
-                        m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir),
+                        m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) - 0.1*dz_lab(warpx.getdt(lev),ref_ratio[m_moving_window_dir]) and
+                        m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir) + 0.1*dz_lab(warpx.getdt(lev),ref_ratio[m_moving_window_dir]),
                         "z-slice in lab-frame is outside the buffer domain physical extent. ");
                 }
                 m_all_field_functors[lev][i]->PrepareFunctorData (
@@ -588,7 +590,7 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
     int k_lab = static_cast<int>(floor (
                           ( m_current_z_lab[i_buffer]
-                            - (prob_domain_zmin_lab  ) )
+                            - (prob_domain_zmin_lab + 0.5*dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]) ) )
                           / dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] )
                       ) ) + m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir);
     return k_lab;
