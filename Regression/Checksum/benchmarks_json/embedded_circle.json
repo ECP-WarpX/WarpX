@@ -1,7 +1,5 @@
 {
   "ar_ions": {
-    "particle_cpu": 31743.0,
-    "particle_id": 3219840760.0,
     "particle_momentum_x": 2.656937628868437e-18,
     "particle_momentum_y": 2.6462397149880108e-18,
     "particle_momentum_z": 2.653197184723758e-18,
@@ -10,8 +8,6 @@
     "particle_weight": 988047180.1757812
   },
   "electrons": {
-    "particle_cpu": 30736.0,
-    "particle_id": 1041926893.0,
     "particle_momentum_x": 3.017862149732503e-20,
     "particle_momentum_y": 3.016284742627221e-20,
     "particle_momentum_z": 3.026716864845998e-20,

@@ -8,6 +8,7 @@
 #define WARPX_BOUNDARYSCRAPINGDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
+#include "Utils/IntervalsParser.H"
 
 #include <string>
 
@@ -28,14 +29,17 @@ public:
 private:
     /** Read relevant parameters for BoundaryScraping */
     void ReadParameters ();
+
+    /** Determines timesteps at which the particles are written out */
+    IntervalsParser m_intervals;
+
     /** \brief Flush data to file. */
     void Flush (int i_buffer) override;
     /** \brief Return whether to dump data to file at this time step.
      * (i.e. whether to call Flush)
      *
      * \param[in] step current time step
-     * \param[in] i_buffer used only for BackTransformedDiagnostics.
-     * For BoundaryScrapingDiagnostics, this is always 0
+     * \param[in] i_buffer index of the boundary buffer used (e.g. upper/lower boundary, EB boundary)
      * \param[in] force_flush if true, return true for any step
      */
     bool DoDump (int step, int i_buffer, bool force_flush=false) override;

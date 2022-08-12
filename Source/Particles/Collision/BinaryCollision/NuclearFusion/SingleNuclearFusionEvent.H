@@ -56,7 +56,7 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
                                const amrex::ParticleReal& u2y, const amrex::ParticleReal& u2z,
                                const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
                                amrex::ParticleReal w1, amrex::ParticleReal w2,
-                               const amrex::Real& dt, const amrex::Real& dV, const int& pair_index,
+                               const amrex::Real& dt, const amrex::ParticleReal& dV, const int& pair_index,
                                index_type* AMREX_RESTRICT p_mask,
                                amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
                                const amrex::ParticleReal& fusion_multiplier,

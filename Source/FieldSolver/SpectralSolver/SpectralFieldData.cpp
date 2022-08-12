@@ -310,8 +310,8 @@ void
 SpectralFieldData::BackwardTransform (const int lev,
                                       MultiFab& mf,
                                       const int field_index,
-                                      const int i_comp,
-                                      const amrex::IntVect& fill_guards)
+                                      const amrex::IntVect& fill_guards,
+                                      const int i_comp)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
     bool do_costs = WarpXUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());

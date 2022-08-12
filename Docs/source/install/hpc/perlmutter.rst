@@ -10,15 +10,19 @@ Perlmutter (NERSC)
 
 The `Perlmutter cluster <https://docs.nersc.gov/systems/perlmutter/>`_ is located at NERSC.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `NERSC user guide <https://docs.nersc.gov/>`__
 * Batch system: `Slurm <https://docs.nersc.gov/systems/perlmutter/#running-jobs>`__
 * `Jupyter service <https://docs.nersc.gov/services/jupyter/>`__
 * `Production directories <https://docs.nersc.gov/filesystems/perlmutter-scratch/>`__:
 
-  * ``$PSCRATCH``: per-user production directory (<TBD>TB)
-  * ``/global/cscratch1/sd/m3239``: shared production directory for users in the project ``m3239`` (50TB)
+  * ``$PSCRATCH``: per-user production directory, purged every 30 days (<TBD>TB)
+  * ``/global/cscratch1/sd/m3239``: shared production directory for users in the project ``m3239``, purged every 30 days (50TB)
   * ``/global/cfs/cdirs/m3239/``: community file system for users in the project ``m3239`` (100TB)
 
 

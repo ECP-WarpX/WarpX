@@ -145,6 +145,7 @@ BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst
                    if (Flag[i] == 1) GetParticleLorentzTransform(dst_data, src_data, i,
                                                                  old_size + IndexLocation[i]);
                 });
+                amrex::Gpu::synchronize();
             }
         }
     }

@@ -55,8 +55,8 @@ void doParticlePush(const GetParticlePosition& GetPosition,
                     const amrex::ParticleReal By,
                     const amrex::ParticleReal Bz,
                     const int ion_lev,
-                    const amrex::Real m,
-                    const amrex::Real q,
+                    const amrex::ParticleReal m,
+                    const amrex::ParticleReal q,
                     const int pusher_algo,
                     const int do_crr,
                     const int do_copy,
@@ -97,7 +97,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
             SetPosition(i, x, y, z);
         }
 #else
-        amrex::Real qp = q;
+        amrex::ParticleReal qp = q;
         if (ion_lev) { qp *= ion_lev; }
         UpdateMomentumBorisWithRadiationReaction(ux, uy, uz,
                                                  Ex, Ey, Ez, Bx,
@@ -108,7 +108,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
         SetPosition(i, x, y, z);
 #endif
     } else if (pusher_algo == ParticlePusherAlgo::Boris) {
-        amrex::Real qp = q;
+        amrex::ParticleReal qp = q;
         if (ion_lev) { qp *= ion_lev; }
         UpdateMomentumBoris( ux, uy, uz,
                              Ex, Ey, Ez, Bx,
@@ -118,7 +118,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
         UpdatePosition(x, y, z, ux, uy, uz, dt );
         SetPosition(i, x, y, z);
     } else if (pusher_algo == ParticlePusherAlgo::Vay) {
-        amrex::Real qp = q;
+        amrex::ParticleReal qp = q;
         if (ion_lev){ qp *= ion_lev; }
         UpdateMomentumVay( ux, uy, uz,
                            Ex, Ey, Ez, Bx,
@@ -128,7 +128,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
         UpdatePosition(x, y, z, ux, uy, uz, dt );
         SetPosition(i, x, y, z);
     } else if (pusher_algo == ParticlePusherAlgo::HigueraCary) {
-        amrex::Real qp = q;
+        amrex::ParticleReal qp = q;
         if (ion_lev){ qp *= ion_lev; }
         UpdateMomentumHigueraCary( ux, uy, uz,
                                    Ex, Ey, Ez, Bx,

@@ -62,8 +62,10 @@ extern "C" {
                              amrex::ParticleReal const * vx,
                              amrex::ParticleReal const * vy,
                              amrex::ParticleReal const * vz,
-                             int nattr,
-                             amrex::ParticleReal const * attr,
+                             const int nattr_real,
+                             amrex::ParticleReal const * attr_real,
+                             const int nattr_int,
+                             int const * attr_int,
                              int uniqueparticles);
 
     void warpx_ConvertLabParamsToBoost();
@@ -130,7 +132,9 @@ extern "C" {
   void warpx_FillBoundaryE ();
   void warpx_FillBoundaryB ();
   void warpx_SyncRho ();
-  void warpx_SyncCurrent ();
+  void warpx_SyncCurrent (
+      const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+      const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
   void warpx_UpdateAuxilaryData ();
   void warpx_PushParticlesandDepose (amrex::Real cur_time);
 

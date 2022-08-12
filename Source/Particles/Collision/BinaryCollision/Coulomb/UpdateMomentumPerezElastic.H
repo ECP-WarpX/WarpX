@@ -25,60 +25,60 @@
  *        compile with USE_ASSERTION=TRUE.
 */
 
-template <typename T_R>
+template <typename T_PR, typename T_R>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void UpdateMomentumPerezElastic (
-    T_R& u1x, T_R& u1y, T_R& u1z, T_R& u2x, T_R& u2y, T_R& u2z,
-    T_R const n1, T_R const n2, T_R const n12,
-    T_R const q1, T_R const m1, T_R const w1,
-    T_R const q2, T_R const m2, T_R const w2,
-    T_R const dt, T_R const L,  T_R const lmdD,
+    T_PR& u1x, T_PR& u1y, T_PR& u1z, T_PR& u2x, T_PR& u2y, T_PR& u2z,
+    T_PR const n1, T_PR const n2, T_PR const n12,
+    T_PR const q1, T_PR const m1, T_PR const w1,
+    T_PR const q2, T_PR const m2, T_PR const w2,
+    T_R const dt, T_PR const L, T_PR const lmdD,
     amrex::RandomEngine const& engine)
 {
 
-    T_R const diffx = amrex::Math::abs(u1x-u2x);
-    T_R const diffy = amrex::Math::abs(u1y-u2y);
-    T_R const diffz = amrex::Math::abs(u1z-u2z);
-    T_R const diffm = std::sqrt(diffx*diffx+diffy*diffy+diffz*diffz);
-    T_R const summm = std::sqrt(u1x*u1x+u1y*u1y+u1z*u1z) + std::sqrt(u2x*u2x+u2y*u2y+u2z*u2z);
+    T_PR const diffx = amrex::Math::abs(u1x-u2x);
+    T_PR const diffy = amrex::Math::abs(u1y-u2y);
+    T_PR const diffz = amrex::Math::abs(u1z-u2z);
+    T_PR const diffm = std::sqrt(diffx*diffx+diffy*diffy+diffz*diffz);
+    T_PR const summm = std::sqrt(u1x*u1x+u1y*u1y+u1z*u1z) + std::sqrt(u2x*u2x+u2y*u2y+u2z*u2z);
     // If g = u1 - u2 = 0, do not collide.
     // Or if the relative difference is less than 1.0e-10.
-    if ( diffm < std::numeric_limits<T_R>::min() || diffm/summm < 1.0e-10 ) { return; }
+    if ( diffm < std::numeric_limits<T_PR>::min() || diffm/summm < 1.0e-10 ) { return; }
 
-    T_R constexpr inv_c2 = T_R(1.0) / ( PhysConst::c * PhysConst::c );
+    T_PR constexpr inv_c2 = T_PR(1.0) / ( PhysConst::c * PhysConst::c );
 
     // Compute Lorentz factor gamma
-    T_R const g1 = std::sqrt( T_R(1.0) + (u1x*u1x+u1y*u1y+u1z*u1z)*inv_c2 );
-    T_R const g2 = std::sqrt( T_R(1.0) + (u2x*u2x+u2y*u2y+u2z*u2z)*inv_c2 );
+    T_PR const g1 = std::sqrt( T_PR(1.0) + (u1x*u1x+u1y*u1y+u1z*u1z)*inv_c2 );
+    T_PR const g2 = std::sqrt( T_PR(1.0) + (u2x*u2x+u2y*u2y+u2z*u2z)*inv_c2 );
 
     // Compute momenta
-    T_R const p1x = u1x * m1;
-    T_R const p1y = u1y * m1;
-    T_R const p1z = u1z * m1;
-    T_R const p2x = u2x * m2;
-    T_R const p2y = u2y * m2;
-    T_R const p2z = u2z * m2;
+    T_PR const p1x = u1x * m1;
+    T_PR const p1y = u1y * m1;
+    T_PR const p1z = u1z * m1;
+    T_PR const p2x = u2x * m2;
+    T_PR const p2y = u2y * m2;
+    T_PR const p2z = u2z * m2;
 
     // Compute center-of-mass (COM) velocity and gamma
-    T_R const mass_g = m1 * g1 + m2 * g2;
-    T_R const vcx    = (p1x+p2x) / mass_g;
-    T_R const vcy    = (p1y+p2y) / mass_g;
-    T_R const vcz    = (p1z+p2z) / mass_g;
-    T_R const vcms   = vcx*vcx + vcy*vcy + vcz*vcz;
-    T_R const gc     = T_R(1.0) / std::sqrt( T_R(1.0) - vcms*inv_c2 );
+    T_PR const mass_g = m1 * g1 + m2 * g2;
+    T_PR const vcx    = (p1x+p2x) / mass_g;
+    T_PR const vcy    = (p1y+p2y) / mass_g;
+    T_PR const vcz    = (p1z+p2z) / mass_g;
+    T_PR const vcms   = vcx*vcx + vcy*vcy + vcz*vcz;
+    T_PR const gc     = T_PR(1.0) / std::sqrt( T_PR(1.0) - vcms*inv_c2 );
 
     // Compute vc dot v1 and v2
-    T_R const vcDv1 = (vcx*u1x + vcy*u1y + vcz*u1z) / g1;
-    T_R const vcDv2 = (vcx*u2x + vcy*u2y + vcz*u2z) / g2;
+    T_PR const vcDv1 = (vcx*u1x + vcy*u1y + vcz*u1z) / g1;
+    T_PR const vcDv2 = (vcx*u2x + vcy*u2y + vcz*u2z) / g2;
 
     // Compute p1 star
-    T_R p1sx;
-    T_R p1sy;
-    T_R p1sz;
-    if ( vcms > std::numeric_limits<T_R>::min() )
+    T_PR p1sx;
+    T_PR p1sy;
+    T_PR p1sz;
+    if ( vcms > std::numeric_limits<T_PR>::min() )
     {
-        T_R const lorentz_tansform_factor =
-            ( (gc-T_R(1.0))/vcms*vcDv1 - gc )*m1*g1;
+        T_PR const lorentz_tansform_factor =
+            ( (gc-T_PR(1.0))/vcms*vcDv1 - gc )*m1*g1;
         p1sx = p1x + vcx*lorentz_tansform_factor;
         p1sy = p1y + vcy*lorentz_tansform_factor;
         p1sz = p1z + vcz*lorentz_tansform_factor;
@@ -89,45 +89,45 @@ void UpdateMomentumPerezElastic (
         p1sy = p1y;
         p1sz = p1z;
     }
-    T_R const p1sm = std::sqrt( p1sx*p1sx + p1sy*p1sy + p1sz*p1sz );
+    T_PR const p1sm = std::sqrt( p1sx*p1sx + p1sy*p1sy + p1sz*p1sz );
 
     // Compute gamma star
-    T_R const g1s = ( T_R(1.0) - vcDv1*inv_c2 )*gc*g1;
-    T_R const g2s = ( T_R(1.0) - vcDv2*inv_c2 )*gc*g2;
+    T_PR const g1s = ( T_PR(1.0) - vcDv1*inv_c2 )*gc*g1;
+    T_PR const g2s = ( T_PR(1.0) - vcDv2*inv_c2 )*gc*g2;
 
     // Compute the Coulomb log lnLmd
-    T_R lnLmd;
-    if ( L > T_R(0.0) ) { lnLmd = L; }
+    T_PR lnLmd;
+    if ( L > T_PR(0.0) ) { lnLmd = L; }
     else
     {
         // Compute b0
-        T_R const b0 = amrex::Math::abs(q1*q2) * inv_c2 /
-               (T_R(4.0)*MathConst::pi*PhysConst::ep0) * gc/mass_g *
-               ( m1*g1s*m2*g2s/(p1sm*p1sm*inv_c2) + T_R(1.0) );
+        T_PR const b0 = amrex::Math::abs(q1*q2) * inv_c2 /
+               (T_PR(4.0)*MathConst::pi*PhysConst::ep0) * gc/mass_g *
+               ( m1*g1s*m2*g2s/(p1sm*p1sm*inv_c2) + T_PR(1.0) );
 
         // Compute the minimal impact parameter
-        constexpr T_R hbar_pi = static_cast<T_R>(PhysConst::hbar*MathConst::pi);
-        const T_R bmin = amrex::max(hbar_pi/p1sm, b0);
+        constexpr T_PR hbar_pi = static_cast<T_PR>(PhysConst::hbar*MathConst::pi);
+        const T_PR bmin = amrex::max(hbar_pi/p1sm, b0);
 
         // Compute the Coulomb log lnLmd
-        lnLmd = amrex::max( T_R(2.0),
-                T_R(0.5)*std::log(T_R(1.0)+lmdD*lmdD/(bmin*bmin)) );
+        lnLmd = amrex::max( T_PR(2.0),
+                T_PR(0.5)*std::log(T_PR(1.0)+lmdD*lmdD/(bmin*bmin)) );
     }
 
     // Compute s
-    const auto tts = m1*g1s*m2*g2s/(inv_c2*p1sm*p1sm) + T_R(1.0);
+    const auto tts = m1*g1s*m2*g2s/(inv_c2*p1sm*p1sm) + T_PR(1.0);
     const auto tts2 = tts*tts;
-    T_R s = n1*n2/n12 * dt*lnLmd*q1*q1*q2*q2 /
-          ( T_R(4.0) * MathConst::pi * PhysConst::ep0 * PhysConst::ep0 *
+    T_PR s = n1*n2/n12 * dt*lnLmd*q1*q1*q2*q2 /
+          ( T_PR(4.0) * MathConst::pi * PhysConst::ep0 * PhysConst::ep0 *
             m1*g1*m2*g2/(inv_c2*inv_c2) ) * gc*p1sm/mass_g * tts2;
 
     // Compute s'
     const auto cbrt_n1 = std::cbrt(n1);
     const auto cbrt_n2 = std::cbrt(n2);
-    const auto coeff = static_cast<T_R>(
+    const auto coeff = static_cast<T_PR>(
         std::pow(4.0*MathConst::pi/3.0,1.0/3.0));
-    T_R const vrel = mass_g*p1sm/(m1*g1s*m2*g2s*gc);
-    T_R const sp = coeff * n1*n2/n12 * dt * vrel * (m1+m2) /
+    T_PR const vrel = mass_g*p1sm/(m1*g1s*m2*g2s*gc);
+    T_PR const sp = coeff * n1*n2/n12 * dt * vrel * (m1+m2) /
           amrex::max( m1*cbrt_n1*cbrt_n1,
                       m2*cbrt_n2*cbrt_n2);
 
@@ -135,54 +135,54 @@ void UpdateMomentumPerezElastic (
     s = amrex::min(s,sp);
 
     // Get random numbers
-    T_R r = amrex::Random(engine);
+    T_PR r = amrex::Random(engine);
 
     // Compute scattering angle
-    T_R cosXs;
-    T_R sinXs;
-    if ( s <= T_R(0.1) )
+    T_PR cosXs;
+    T_PR sinXs;
+    if ( s <= T_PR(0.1) )
     {
         while ( true )
         {
-            cosXs = T_R(1.0) + s * std::log(r);
+            cosXs = T_PR(1.0) + s * std::log(r);
             // Avoid the bug when r is too small such that cosXs < -1
-            if ( cosXs >= T_R(-1.0) ) { break; }
+            if ( cosXs >= T_PR(-1.0) ) { break; }
             r = amrex::Random(engine);
         }
     }
-    else if ( s > T_R(0.1) && s <= T_R(3.0) )
+    else if ( s > T_PR(0.1) && s <= T_PR(3.0) )
     {
-        T_R const Ainv = static_cast<T_R>(
+        T_PR const Ainv = static_cast<T_PR>(
             0.0056958 + 0.9560202*s - 0.508139*s*s +
             0.47913906*s*s*s - 0.12788975*s*s*s*s + 0.02389567*s*s*s*s*s);
-        cosXs = Ainv * std::log( std::exp(T_R(-1.0)/Ainv) +
-                T_R(2.0) * r * std::sinh(T_R(1.0)/Ainv) );
+        cosXs = Ainv * std::log( std::exp(T_PR(-1.0)/Ainv) +
+                T_PR(2.0) * r * std::sinh(T_PR(1.0)/Ainv) );
     }
-    else if ( s > T_R(3.0) && s <= T_R(6.0) )
+    else if ( s > T_PR(3.0) && s <= T_PR(6.0) )
     {
-        T_R const A = T_R(3.0) * std::exp(-s);
-        cosXs = T_R(1.0)/A * std::log( std::exp(-A) +
-                T_R(2.0) * r * std::sinh(A) );
+        T_PR const A = T_PR(3.0) * std::exp(-s);
+        cosXs = T_PR(1.0)/A * std::log( std::exp(-A) +
+                T_PR(2.0) * r * std::sinh(A) );
     }
     else
     {
-        cosXs = T_R(2.0) * r - T_R(1.0);
+        cosXs = T_PR(2.0) * r - T_PR(1.0);
     }
-    sinXs = std::sqrt(T_R(1.0) - cosXs*cosXs);
+    sinXs = std::sqrt(T_PR(1.0) - cosXs*cosXs);
 
     // Get random azimuthal angle
-    T_R const phis = amrex::Random(engine) * T_R(2.0) * MathConst::pi;
-    T_R const cosphis = std::cos(phis);
-    T_R const sinphis = std::sin(phis);
+    T_PR const phis = amrex::Random(engine) * T_PR(2.0) * MathConst::pi;
+    T_PR const cosphis = std::cos(phis);
+    T_PR const sinphis = std::sin(phis);
 
     // Compute post-collision momenta pfs in COM
-    T_R p1fsx;
-    T_R p1fsy;
-    T_R p1fsz;
+    T_PR p1fsx;
+    T_PR p1fsy;
+    T_PR p1fsz;
     // p1sp is the p1s perpendicular
-    T_R p1sp = std::sqrt( p1sx*p1sx + p1sy*p1sy );
+    T_PR p1sp = std::sqrt( p1sx*p1sx + p1sy*p1sy );
     // Make sure p1sp is not almost zero
-    if ( p1sp > std::numeric_limits<T_R>::min() )
+    if ( p1sp > std::numeric_limits<T_PR>::min() )
     {
         p1fsx = ( p1sx*p1sz/p1sp ) * sinXs*cosphis +
                 ( p1sy*p1sm/p1sp ) * sinXs*sinphis +
@@ -191,7 +191,7 @@ void UpdateMomentumPerezElastic (
                 (-p1sx*p1sm/p1sp ) * sinXs*sinphis +
                 ( p1sy           ) * cosXs;
         p1fsz = (-p1sp           ) * sinXs*cosphis +
-                ( T_R(0.0)       ) * sinXs*sinphis +
+                ( T_PR(0.0)      ) * sinXs*sinphis +
                 ( p1sz           ) * cosXs;
         // Note a negative sign is different from
         // Eq. (12) in Perez's paper,
@@ -210,25 +210,25 @@ void UpdateMomentumPerezElastic (
                 (-p1sy*p1sm/p1sp ) * sinXs*sinphis +
                 ( p1sz           ) * cosXs;
         p1fsx = (-p1sp           ) * sinXs*cosphis +
-                ( T_R(0.0)       ) * sinXs*sinphis +
+                ( T_PR(0.0)      ) * sinXs*sinphis +
                 ( p1sx           ) * cosXs;
     }
 
-    T_R const p2fsx = -p1fsx;
-    T_R const p2fsy = -p1fsy;
-    T_R const p2fsz = -p1fsz;
+    T_PR const p2fsx = -p1fsx;
+    T_PR const p2fsy = -p1fsy;
+    T_PR const p2fsz = -p1fsz;
 
     // Transform from COM to lab frame
-    T_R p1fx;    T_R p2fx;
-    T_R p1fy;    T_R p2fy;
-    T_R p1fz;    T_R p2fz;
-    if ( vcms > std::numeric_limits<T_R>::min() )
+    T_PR p1fx;    T_PR p2fx;
+    T_PR p1fy;    T_PR p2fy;
+    T_PR p1fz;    T_PR p2fz;
+    if ( vcms > std::numeric_limits<T_PR>::min() )
     {
-        T_R const vcDp1fs = vcx*p1fsx + vcy*p1fsy + vcz*p1fsz;
-        T_R const vcDp2fs = vcx*p2fsx + vcy*p2fsy + vcz*p2fsz;
-        T_R const factor = (gc-T_R(1.0))/vcms;
-        T_R const factor1 = factor*vcDp1fs + m1*g1s*gc;
-        T_R const factor2 = factor*vcDp2fs + m2*g2s*gc;
+        T_PR const vcDp1fs = vcx*p1fsx + vcy*p1fsy + vcz*p1fsz;
+        T_PR const vcDp2fs = vcx*p2fsx + vcy*p2fsy + vcz*p2fsz;
+        T_PR const factor = (gc-T_PR(1.0))/vcms;
+        T_PR const factor1 = factor*vcDp1fs + m1*g1s*gc;
+        T_PR const factor2 = factor*vcDp2fs + m2*g2s*gc;
         p1fx = p1fsx + vcx * factor1;
         p1fy = p1fsy + vcy * factor1;
         p1fz = p1fsz + vcz * factor1;
