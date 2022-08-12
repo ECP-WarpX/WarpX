@@ -385,7 +385,7 @@ class LibWarpX():
     def get_nattr(self):
         '''
 
-        Get the number of extra attributes.
+        Get the number of extra particle attributes.
 
         '''
         # --- The -3 is because the comps include the velocites
@@ -395,6 +395,12 @@ class LibWarpX():
         '''
 
         Get the number of real attributes for the given species.
+
+        Parameters
+        ----------
+
+        species_name: str
+            Name of the species
 
         '''
         return self.libwarpx_so.warpx_nCompsSpecies(
@@ -456,8 +462,11 @@ class LibWarpX():
         Parameter
         ---------
 
-        level : the refinement level to reference
+        level : int
+            The refinement level to reference
+
         '''
+
         return self.libwarpx_so.warpx_getistep(level)
 
     def gett_new(self, level=0):
@@ -478,21 +487,60 @@ class LibWarpX():
         Parameters
         ----------
 
-        num_steps: int, the number of steps to take
+        num_steps: int
+            The number of steps to take
 
         '''
 
         self.libwarpx_so.warpx_evolve(num_steps);
 
     def getProbLo(self, direction):
+        '''
+
+        Get the values of the lower domain boundary.
+
+        Parameters
+        ----------
+
+        direction    : int
+            Direction of interest
+
+        '''
+
         assert 0 <= direction < self.dim, 'Inappropriate direction specified'
         return self.libwarpx_so.warpx_getProbLo(direction)
 
     def getProbHi(self, direction):
+        '''
+
+        Get the values of the upper domain boundary.
+
+        Parameters
+        ----------
+
+        direction    : int
+            Direction of interest
+
+        '''
+
         assert 0 <= direction < self.dim, 'Inappropriate direction specified'
         return self.libwarpx_so.warpx_getProbHi(direction)
 
     def getCellSize(self, direction, level=0):
+        '''
+
+        Get the cell size in the given direction and on the given level.
+
+        Parameters
+        ----------
+
+        direction    : int
+            Direction of interest
+        level        : int
+            The refinement level to reference
+
+        '''
+
         assert 0 <= direction < 3, 'Inappropriate direction specified'
         assert 0 <= level and level <= self.libwarpx_so.warpx_finestLevel(), 'Inappropriate level specified'
         return self.libwarpx_so.warpx_getCellSize(direction, level)
@@ -547,15 +595,20 @@ class LibWarpX():
         Parameters
         ----------
 
-        species_name     : the species to add the particle to
-        x, y, z          : arrays or scalars of the particle positions (default = 0.)
-        ux, uy, uz       : arrays or scalars of the particle momenta (default = 0.)
-        w                : array or scalar of particle weights (default = 0.)
-        unique_particles : whether the particles are unique or duplicated on
-                        several processes. (default = True)
-        kwargs           : dictionary containing an entry for all the extra particle
-                        attribute arrays. If an attribute is not given it will be
-                        set to 0.
+        species_name     : str
+            The type of species for which particles will be added
+        x, y, z          : arrays or scalars
+            The particle positions (default = 0.)
+        ux, uy, uz       : arrays or scalars
+            The particle momenta (default = 0.)
+        w                : array or scalars
+            Particle weights (default = 0.)
+        unique_particles : bool
+            Whether the particles are unique or duplicated on several processes
+            (default = True)
+        kwargs           : dict
+            Containing an entry for all the extra particle attribute arrays. If
+            an attribute is not given it will be set to 0.
 
         '''
 

@@ -145,6 +145,56 @@ The input file should have the line ``sim.step()`` which runs the simulation.
 where ``<n_ranks>`` is the number of MPI ranks used, and ``<python_script>``
 is the name of the script.
 
+When running WarpX directly from Python it is possible to interact with the simulation
+by installing ``CallbackFunctions``, which will execute a given Python function at a
+specific location in the WarpX simulation loop.
+
+.. autoclass:: pywarpx.callbacks.CallbackFunctions
+
+Places in the WarpX loop where callbacks are available include:
+``afterinit``, ``beforecollisions``, ``aftercollisions``, ``beforeEsolve``, ``afterEsolve``,
+``beforedeposition``, ``afterdeposition``, ``beforestep``, ``afterstep``, ``afterdiagnostics``,
+``afterrestart`` and ``oncheckpointsignal``.
+
+There are several "hooks" available via the ``libwarpx`` shared library to access and manipulate
+simulation objects (particles, fields and memory buffers) as well as general properties
+(such as processor number). These "hooks" are accessible through the `Simulation.extension` object.
+
+.. autofunction:: pywarpx.libwarpx.getNProcs
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getNProcs
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getMyProc
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.get_nattr
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.get_nattr_species
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getistep
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.gett_new
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.evolve
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.finalize
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getistep
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.gett_new
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.evolve
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getProbLo
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getProbHi
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getCellSize
+
+Particles can be added to the simulation at specific positions and with specific
+attribute values:
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.add_particles
+
 Using Python input as a preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
