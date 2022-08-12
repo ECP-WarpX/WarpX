@@ -1,7 +1,5 @@
 {
   "electrons": {
-    "particle_cpu": 16384.0,
-    "particle_id": 268451840.0,
     "particle_momentum_x": 2.4335130953142086e-19,
     "particle_momentum_y": 2.463314849025226e-19,
     "particle_momentum_z": 2.4452967447264526e-19,
@@ -40,8 +38,6 @@
     "jz_protons": 1.075623636096527e-09
   },
   "photons": {
-    "particle_cpu": 16384.0,
-    "particle_id": 1342193664.0,
     "particle_momentum_x": 1.43264587339745e-18,
     "particle_momentum_y": 1.420927243614407e-18,
     "particle_momentum_z": 1.4314382225453842e-18,
@@ -51,8 +47,6 @@
     "particle_weight": 800000000000000.0
   },
   "protons": {
-    "particle_cpu": 16384.0,
-    "particle_id": 805322752.0,
     "particle_momentum_x": 1.4305311394194743e-19,
     "particle_momentum_y": 1.4342178041433115e-19,
     "particle_momentum_z": 1.378886053708302e-19,

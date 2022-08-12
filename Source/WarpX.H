@@ -203,8 +203,11 @@ public:
     //! perform field communications in single precision
     static bool do_single_precision_comms;
 
-    //! Whether to fill the guard cells when computing inverse FFTs, based on the boundary conditions
-    static amrex::IntVect fill_guards;
+    //! Whether to fill guard cells when computing inverse FFTs of fields
+    static amrex::IntVect m_fill_guards_fields;
+
+    //! Whether to fill guard cells when computing inverse FFTs of currents
+    static amrex::IntVect m_fill_guards_current;
 
     //! Solve additional Maxwell equation for F in order to control errors in Gauss' law
     //! (useful when using current deposition algorithms that are not charge-conserving)

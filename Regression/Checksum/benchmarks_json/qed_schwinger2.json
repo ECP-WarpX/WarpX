@@ -1,7 +1,5 @@
 {
   "ele_schwinger": {
-    "particle_cpu": 512.0,
-    "particle_id": 393728.0,
     "particle_momentum_x": 5.389220349308058e-10,
     "particle_momentum_y": 3.802325665885952e-11,
     "particle_momentum_z": 1.304165048547374e-10,
@@ -22,8 +20,6 @@
     "jz": 1607473995814483300569405456384.0
   },
   "pos_schwinger": {
-    "particle_cpu": 512.0,
-    "particle_id": 655872.0,
     "particle_momentum_x": 5.389212418869713e-10,
     "particle_momentum_y": 3.652400862149359e-11,
     "particle_momentum_z": 1.311928986068885e-10,

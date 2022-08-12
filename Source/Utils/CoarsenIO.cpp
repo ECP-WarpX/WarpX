@@ -139,7 +139,7 @@ CoarsenIO::Coarsen ( MultiFab& mf_dst,
     {
         // Cannot coarsen into MultiFab with different BoxArray or DistributionMapping:
         // 1) create temporary MultiFab on coarsened version of source BoxArray with same DistributionMapping
-        MultiFab mf_tmp( ba_tmp, mf_src.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
+        MultiFab mf_tmp( ba_tmp, mf_src.DistributionMap(), ncomp, ngrowvect, MFInfo(), FArrayBoxFactory() );
         // 2) interpolate from mf_src to mf_tmp (start writing into component 0)
         CoarsenIO::Loop( mf_tmp, mf_src, 0, scomp, ncomp, ngrowvect, crse_ratio );
         // 3) copy from mf_tmp to mf_dst (with different BoxArray or DistributionMapping)
