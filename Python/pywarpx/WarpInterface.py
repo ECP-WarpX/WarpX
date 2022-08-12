@@ -14,8 +14,9 @@
 # The class WarpX_EM3D inherits from Warp's EM3D class. It primarily provides
 # access to the field plotting routines.
 
-from pywarpx import PGroup
 import warp
+
+from pywarpx import PGroup
 
 from . import fields
 

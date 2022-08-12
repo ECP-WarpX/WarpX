@@ -29,6 +29,7 @@
 #include <AMReX_INT.H>
 #include <AMReX_ParIter.H>
 #include <AMReX_Particles.H>
+#include <AMReX_Random.H>
 #include <AMReX_REAL.H>
 #include <AMReX_StructOfArrays.H>
 #include <AMReX_Vector.H>
@@ -143,6 +144,17 @@ public:
 
     void AllocData ();
 
+    /**
+     * \brief Virtual method to initialize runtime attributes. Must be overriden by each derived
+     * class.
+     */
+    virtual void DefaultInitializeRuntimeAttributes (
+                        amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
+                                            NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                        const int n_external_attr_real,
+                        const int n_external_attr_int,
+                        const amrex::RandomEngine& engine) = 0;
+
     ///
     /// This pushes the particle positions by one half time step.
     /// It is used to desynchronize the particles after initializaton
@@ -246,10 +258,36 @@ public:
 
     amrex::ParticleReal maxParticleVelocity(bool local = false);
 
+    /**
+     * \brief Adds n particles to the simulation
+     *
+     * @param[in] lev refinement level (unused)
+     * @param[in] n the number of particles to add
+     * @param[in] x x component of the position of particles to be added
+     * @param[in] y y component of the position of particles to be added
+     * @param[in] z z component of the position of particles to be added
+     * @param[in] ux x component of the momentum of particles to be added
+     * @param[in] uy y component of the momentum of particles to be added
+     * @param[in] uz z component of the momentum of particles to be added
+     * @param[in] nattr_real number of runtime real attributes to initialize with the attr_real
+     * array. (particle weight is treated as a real attribute in this routine). The remaining
+     * runtime real attributes are initialized in the method DefaultInitializeRuntimeAttributes.
+     * @param[in] attr_real value of real attributes to initialize
+     * @param[in] nattr_int number of runtime int attributes to initialize with the attr_int array.
+     * The remaining runtime int attributes are initialized in the method
+     * DefaultInitializeRuntimeAttributes.
+     * @param[in] attr_int value of int attributes to initialize
+     * @param[in] uniqueparticles if true, each MPI rank calling this function creates n
+     * particles. Else, all MPI ranks work together to create n particles in total.
+     * @param[in] id if different than -1, this id will be assigned to the particles (used for
+     * particle tagging in some routines, e.g. SplitParticle)
+     */
     void AddNParticles (int lev,
                         int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
                         const amrex::ParticleReal* vx, const amrex::ParticleReal* vy, const amrex::ParticleReal* vz,
-                        int nattr, const amrex::ParticleReal* attr, int uniqueparticles, amrex::Long id=-1);
+                        const int nattr_real, const amrex::ParticleReal* attr_real,
+                        const int nattr_int, const int* attr_int,
+                        int uniqueparticles, amrex::Long id=-1);
 
     virtual void ReadHeader (std::istream& is) = 0;
 
