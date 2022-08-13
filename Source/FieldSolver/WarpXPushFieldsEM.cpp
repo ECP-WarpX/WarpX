@@ -700,10 +700,8 @@ WarpX::PushPSATD ()
         }
         else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
-            // FFT of D and rho (if used)
+            // FFT of D
             PSATDForwardTransformJ(current_fp_vay, current_cp);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
 
             // Compute J from D in k-space
             PSATDVayDeposition();
