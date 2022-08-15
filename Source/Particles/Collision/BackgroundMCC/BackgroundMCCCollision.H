@@ -27,7 +27,7 @@ public:
 
     virtual ~BackgroundMCCCollision () = default;
 
-    amrex::Real get_nu_max (amrex::Vector<MCCProcess> const& mcc_processes);
+    amrex::ParticleReal get_nu_max (amrex::Vector<MCCProcess> const& mcc_processes);
 
     /** Perform the collisions
      *
@@ -73,14 +73,14 @@ private:
     bool init_flag = false;
     bool ionization_flag = false;
 
-    amrex::Real m_mass1;
+    amrex::ParticleReal m_mass1;
 
-    amrex::Real m_max_background_density = 0;
-    amrex::Real m_background_mass;
-    amrex::Real m_total_collision_prob;
-    amrex::Real m_total_collision_prob_ioniz = 0;
-    amrex::Real m_nu_max;
-    amrex::Real m_nu_max_ioniz;
+    amrex::ParticleReal m_max_background_density = 0;
+    amrex::ParticleReal m_background_mass;
+    amrex::ParticleReal m_total_collision_prob;
+    amrex::ParticleReal m_total_collision_prob_ioniz = 0;
+    amrex::ParticleReal m_nu_max;
+    amrex::ParticleReal m_nu_max_ioniz;
 
     amrex::Parser m_background_density_parser;
     amrex::Parser m_background_temperature_parser;

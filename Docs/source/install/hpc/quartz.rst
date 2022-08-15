@@ -5,7 +5,11 @@ Quartz (LLNL)
 
 The `Quartz Intel CPU cluster <https://hpc.llnl.gov/hardware/platforms/quartz>`_ is located at LLNL.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `LLNL user account <https://lc.llnl.gov/lorenz/mylc/mylc.cgi>`_
 * `Quartz user guide <https://computing.llnl.gov/tutorials/linux_clusters/>`_

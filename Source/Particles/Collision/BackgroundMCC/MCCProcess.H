@@ -27,7 +27,7 @@ public:
     MCCProcess (
                 const std::string& scattering_process,
                 const std::string& cross_section_file,
-                const amrex::Real energy
+                const amrex::ParticleReal energy
                 );
 
     template <typename InputVector>
@@ -35,7 +35,7 @@ public:
                 const std::string& scattering_process,
                 const InputVector&& energies,
                 const InputVector&& sigmas,
-                const amrex::Real energy
+                const amrex::ParticleReal energy
                 );
 
     MCCProcess (MCCProcess const&) = delete;
@@ -55,14 +55,14 @@ public:
     static
     void readCrossSectionFile (
                                const std::string cross_section_file,
-                               amrex::Vector<amrex::Real>& energies,
-                               amrex::Gpu::HostVector<amrex::Real>& sigmas
+                               amrex::Vector<amrex::ParticleReal>& energies,
+                               amrex::Gpu::HostVector<amrex::ParticleReal>& sigmas
                                );
 
     static
     void sanityCheckEnergyGrid (
-                                const amrex::Vector<amrex::Real>& energies,
-                                amrex::Real dE
+                                const amrex::Vector<amrex::ParticleReal>& energies,
+                                amrex::ParticleReal dE
                                 );
 
     struct Executor {
@@ -74,7 +74,7 @@ public:
          *
          */
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-        amrex::Real getCrossSection (amrex::Real E_coll) const
+        amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
         {
             if (E_coll < m_energy_lo) {
                 return m_sigma_lo;
@@ -84,7 +84,7 @@ public:
                 using amrex::Math::floor;
                 using amrex::Math::ceil;
                 // calculate index of bounding energy pairs
-                amrex::Real temp = (E_coll - m_energy_lo) / m_dE;
+                amrex::ParticleReal temp = (E_coll - m_energy_lo) / m_dE;
                 int idx_1 = static_cast<int>(floor(temp));
                 int idx_2 = static_cast<int>(ceil(temp));
 
@@ -94,9 +94,9 @@ public:
             }
         }
 
-        amrex::Real* m_sigmas_data = nullptr;
-        amrex::Real m_energy_lo, m_energy_hi, m_sigma_lo, m_sigma_hi, m_dE;
-        amrex::Real m_energy_penalty;
+        amrex::ParticleReal* m_sigmas_data = nullptr;
+        amrex::ParticleReal m_energy_lo, m_energy_hi, m_sigma_lo, m_sigma_hi, m_dE;
+        amrex::ParticleReal m_energy_penalty;
         MCCProcessType m_type;
     };
 
@@ -108,15 +108,15 @@ public:
 #endif
     }
 
-    amrex::Real getCrossSection (amrex::Real E_coll) const
+    amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
     {
         return m_exe_h.getCrossSection(E_coll);
     }
 
-    amrex::Real getEnergyPenalty () const { return m_exe_h.m_energy_penalty; }
-    amrex::Real getMinEnergyInput () const { return m_exe_h.m_energy_lo; }
-    amrex::Real getMaxEnergyInput () const { return m_exe_h.m_energy_hi; }
-    amrex::Real getEnergyInputStep () const { return m_exe_h.m_dE; }
+    amrex::ParticleReal getEnergyPenalty () const { return m_exe_h.m_energy_penalty; }
+    amrex::ParticleReal getMinEnergyInput () const { return m_exe_h.m_energy_lo; }
+    amrex::ParticleReal getMaxEnergyInput () const { return m_exe_h.m_energy_hi; }
+    amrex::ParticleReal getEnergyInputStep () const { return m_exe_h.m_dE; }
 
     MCCProcessType type () const { return m_exe_h.m_type; }
 
@@ -125,15 +125,15 @@ private:
     static
     MCCProcessType parseProcessType(const std::string& process);
 
-    void init (const std::string& scattering_process, const amrex::Real energy);
+    void init (const std::string& scattering_process, const amrex::ParticleReal energy);
 
-    amrex::Vector<amrex::Real> m_energies;
+    amrex::Vector<amrex::ParticleReal> m_energies;
 
 #ifdef AMREX_USE_GPU
-    amrex::Gpu::DeviceVector<amrex::Real> m_sigmas_d;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> m_sigmas_d;
     Executor m_exe_d;
 #endif
-    amrex::Gpu::HostVector<amrex::Real> m_sigmas_h;
+    amrex::Gpu::HostVector<amrex::ParticleReal> m_sigmas_h;
     Executor m_exe_h;
 
     int m_grid_size;

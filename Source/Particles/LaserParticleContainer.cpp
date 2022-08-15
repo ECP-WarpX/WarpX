@@ -516,7 +516,7 @@ LaserParticleContainer::InitData (int lev)
     AddNParticles(0,
                   np, particle_x.dataPtr(), particle_y.dataPtr(), particle_z.dataPtr(),
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
-                  1, particle_w.dataPtr(), 1);
+                  1, particle_w.dataPtr(), 0, nullptr, 1);
 }
 
 void
