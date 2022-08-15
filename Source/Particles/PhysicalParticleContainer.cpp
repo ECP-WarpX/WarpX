@@ -1910,7 +1910,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
             const long np_current = (cjx) ? nfine_current : np;
 
-            if (rho && ! skip_deposition) {
+            if (rho && ! skip_deposition && ! do_not_deposit) {
                 // Deposit charge before particle push, in component 0 of MultiFab rho.
                 int* AMREX_RESTRICT ion_lev;
                 if (do_field_ionization){
@@ -2006,7 +2006,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 } // end of "if do_electrostatic == ElectrostaticSolverAlgo::None"
             } // end of "if do_not_push"
 
-            if (rho && ! skip_deposition) {
+            if (rho && ! skip_deposition && ! do_not_deposit) {
                 // Deposit charge after particle push, in component 1 of MultiFab rho.
                 // (Skipped for electrostatic solver, as this may lead to out-of-bounds)
                 if (WarpX::do_electrostatic == ElectrostaticSolverAlgo::None) {
