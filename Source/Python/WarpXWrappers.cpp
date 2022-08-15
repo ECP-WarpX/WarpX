@@ -624,7 +624,7 @@ namespace
         {
             const long np = pti.numParticles();
             auto& wp = pti.GetAttribs(PIdx::w);
-            // Do this unconditionally from myspc.do_not_deposit, to support diagnostic uses
+            // Do this unconditionally, ignoring myspc.do_not_deposit, to support diagnostic uses
             myspc.DepositCharge(pti, wp, nullptr, rho_fp, 0, 0, np, 0, lev, lev);
         }
 #ifdef WARPX_DIM_RZ
