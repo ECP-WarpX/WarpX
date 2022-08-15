@@ -35,14 +35,14 @@ amrex::ParticleReal hard_edged_fraction(const amrex::ParticleReal z,
     amrex::ParticleReal const zl = std::min(z, zpvdt);
     amrex::ParticleReal const zr = std::max(z, zpvdt);
 
-    // Calculate the residence correction
-    // frac will be 1 if the step is completely inside the lens, between 0 and 1
-    // when entering or leaving the lens, and otherwise 0.
-    amrex::ParticleReal const fl = ( (zl >= zs && zl < ze) ? 1. : 0.);
-    amrex::ParticleReal const fr = ( (zr >= zs && zr < ze) ? 1. : 0.);
-    amrex::ParticleReal frac = fl;
-    if (fl > fr) frac = (ze - zl)/(zr - zl);
-    if (fr > fl) frac = (zr - zs)/(zr - zl);
+   // Calculate the residence correction
+   // frac will be 1 if the step is completely inside the lens, between 0 and 1
+   // when entering or leaving the lens, and otherwise 0.
+   // This accounts for the case when particles step over the element without landing in it.
+   // This assumes that vzp != 0.
+   amrex::ParticleReal const zl_bounded = std::min(std::max(zl, zs), ze);
+   amrex::ParticleReal const zr_bounded = std::min(std::max(zr, zs), ze);
+   amrex::ParticleReal frac = (zr_bounded - zl_bounded)/(zr - zl);
 
     return frac;
 }
