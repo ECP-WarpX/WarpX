@@ -221,10 +221,11 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     bool const do_rz_volume_scaling = false;
     for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
         WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        if (species.do_not_deposit) continue;
-        species.DepositCharge(
-            rho_fp, local, reset, do_rz_volume_scaling, interpolate_across_levels
-        );
+        if (!species.do_not_deposit) {
+            species.DepositCharge( rho_fp,
+                                   local, reset, do_rz_volume_scaling, interpolate_across_levels
+                                  );
+        }
     }
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
