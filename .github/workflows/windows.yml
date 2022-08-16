@@ -40,10 +40,7 @@ jobs:
 
         python3 -m pip install --upgrade pip setuptools wheel
         if(!$?) { Exit $LASTEXITCODE }
-        python3 -m pip install --upgrade cmake
-        if(!$?) { Exit $LASTEXITCODE }
-        $env:PYWARPX_LIB_DIR="$(Get-Location | Foreach-Object { $_.Path })\build\lib\Debug\"
-        python3 -m pip install . -vv --no-build-isolation
+        cmake --build build --config Debug --target pip_install
         if(!$?) { Exit $LASTEXITCODE }
 
         python3 Examples\Modules\gaussian_beam\PICMI_inputs_gaussian_beam.py
@@ -90,10 +87,7 @@ jobs:
 
         python3 -m pip install --upgrade pip setuptools wheel
         if errorlevel 1 exit 1
-        python3 -m pip install --upgrade cmake
-        if errorlevel 1 exit 1
-        set "PYWARPX_LIB_DIR=%cd%\build\lib\"
-        python3 -m pip install . -vv --no-build-isolation
+        cmake --build build --config Release --target pip_install
         if errorlevel 1 exit 1
 
         python3 Examples\Modules\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
