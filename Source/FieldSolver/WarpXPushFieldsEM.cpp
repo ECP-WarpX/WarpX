@@ -270,7 +270,8 @@ WarpX::PSATDBackwardTransformG ()
 
 void WarpX::PSATDForwardTransformJ (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const bool apply_kspace_filter)
 {
     SpectralFieldIndex Idx;
     int idx_jx, idx_jy, idx_jz;
@@ -299,7 +300,7 @@ void WarpX::PSATDForwardTransformJ (
 
 #ifdef WARPX_DIM_RZ
     // Apply filter in k space if needed
-    if (WarpX::use_kspace_filter)
+    if (use_kspace_filter && apply_kspace_filter)
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
@@ -311,6 +312,8 @@ void WarpX::PSATDForwardTransformJ (
             }
         }
     }
+#else
+    amrex::ignore_unused(apply_kspace_filter);
 #endif
 }
 
@@ -349,7 +352,7 @@ void WarpX::PSATDBackwardTransformJ (
 void WarpX::PSATDForwardTransformRho (
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-    const int icomp, const int dcomp)
+    const int icomp, const int dcomp, const bool apply_kspace_filter)
 {
     if (charge_fp[0] == nullptr) return;
 
@@ -370,7 +373,7 @@ void WarpX::PSATDForwardTransformRho (
 
 #ifdef WARPX_DIM_RZ
     // Apply filter in k space if needed
-    if (WarpX::use_kspace_filter)
+    if (use_kspace_filter && apply_kspace_filter)
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
@@ -382,6 +385,8 @@ void WarpX::PSATDForwardTransformRho (
             }
         }
     }
+#else
+    amrex::ignore_unused(apply_kspace_filter);
 #endif
 }
 
@@ -684,9 +689,18 @@ WarpX::PushPSATD ()
         if (current_correction)
         {
             // FFT of J and rho
+#ifdef WARPX_DIM_RZ
+            // In RZ geometry, do not apply filtering here, since it is
+            // applied in the subsequent calls to these functions (below)
+            const bool apply_kspace_filter = false;
+            PSATDForwardTransformJ(current_fp, current_cp, apply_kspace_filter);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0, apply_kspace_filter); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1, apply_kspace_filter); // rho new
+#else
             PSATDForwardTransformJ(current_fp, current_cp);
             PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
             PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+#endif
 
             // Correct J in k-space
             PSATDCurrentCorrection();
