@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""
+This script is used to test the results of the Galilean PSATD and
+averaged Galilean PSATD methods in WarpX.
+
+It compares the energy of the electric field with a given reference energy.
+
+The reference energy is computed by running the same test with:
+(i)  psatd.v_galilean=(0,0,0) for Galilean tests, or
+(ii) psatd.do_time_averaging=0 for averaged Galilean tests.
+
+In both cases, the reference energy corresponds to unstable results due to NCI
+(suppressed by the Galilean PSATD method, without or with averaging, respectively).
+"""
+import os
+import re
+import sys
+
+import numpy as np
+import scipy.constants as scc
+
+import yt ; yt.funcs.mylog.setLevel(0)
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
+
+filename = sys.argv[1]
+
+# Parse some input arguments from output file 'warpx_used_inputs'
+current_correction = False
+time_averaging = False
+warpx_used_inputs = open('./warpx_used_inputs', 'r').read()
+if re.search('geometry.dims\s*=\s*2', warpx_used_inputs):
+    dims = '2D'
+elif re.search('geometry.dims\s*=\s*RZ', warpx_used_inputs):
+    dims = 'RZ'
+elif re.search('geometry.dims\s*=\s*3', warpx_used_inputs):
+    dims = '3D'
+if re.search('psatd.current_correction\s*=\s*1', warpx_used_inputs):
+    current_correction = True
+if re.search('psatd.do_time_averaging\s*=\s*1', warpx_used_inputs):
+    time_averaging = True
+
+ds = yt.load(filename)
+
+# yt 4.0+ has rounding issues with our domain data:
+# RuntimeError: yt attempted to read outside the boundaries
+# of a non-periodic domain along dimension 0.
+if 'force_periodicity' in dir(ds): ds.force_periodicity()
+
+all_data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
+Ex = all_data['boxlib', 'Ex'].squeeze().v
+Ey = all_data['boxlib', 'Ey'].squeeze().v
+Ez = all_data['boxlib', 'Ez'].squeeze().v
+
+# Set tolerance for numerical stability and charge conservation
+tol_charge = 1e-9
+if dims == '2D':
+    if not current_correction:
+        energy_ref = 35657.99361677053
+        tol_energy = 1e-8
+    if current_correction:
+        energy_ref = 35024.02751955393
+        tol_energy = 2e-8
+    if time_averaging:
+        energy_ref = 32532.00882239954
+        tol_energy = 1e-6
+elif dims == 'RZ':
+    if not current_correction:
+        energy_ref = 239019.10670780553
+        tol_energy = 1e-8
+    if current_correction:
+        energy_ref = 471730.0524143545
+        tol_energy = 1e-9
+elif dims == '3D':
+    if not current_correction:
+        energy_ref = 8218.678808709019
+        tol_energy = 1e-6;
+    if current_correction:
+        energy_ref = 75333.81851879464
+        tol_energy = 5e-8;
+    if time_averaging:
+        energy_ref = 6.816182771544472
+        tol_energy = 1e-4
+
+# Check numerical stability by comparing electric field energy to reference energy
+energy = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
+err_energy = energy / energy_ref
+print('\nCheck numerical stability:')
+print(f'err_energy = {err_energy}')
+print(f'tol_energy = {tol_energy}')
+assert(err_energy < tol_energy)
+
+# Check charge conservation (relative L-infinity norm of error) with current correction
+if current_correction:
+    divE = all_data['boxlib', 'divE'].squeeze().v
+    rho  = all_data['boxlib', 'rho' ].squeeze().v / scc.epsilon_0
+    err_charge = np.amax(np.abs(divE - rho)) / max(np.amax(divE), np.amax(rho))
+    print('\nCheck charge conservation:')
+    print(f'err_charge = {err_charge}')
+    print(f'tol_charge = {tol_charge}')
+    assert(err_charge < tol_charge)
+
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)
