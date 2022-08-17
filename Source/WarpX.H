@@ -203,8 +203,11 @@ public:
     //! perform field communications in single precision
     static bool do_single_precision_comms;
 
-    //! Whether to fill the guard cells when computing inverse FFTs, based on the boundary conditions
-    static amrex::IntVect fill_guards;
+    //! Whether to fill guard cells when computing inverse FFTs of fields
+    static amrex::IntVect m_fill_guards_fields;
+
+    //! Whether to fill guard cells when computing inverse FFTs of currents
+    static amrex::IntVect m_fill_guards_current;
 
     //! Solve additional Maxwell equation for F in order to control errors in Gauss' law
     //! (useful when using current deposition algorithms that are not charge-conserving)
@@ -643,7 +646,21 @@ public:
     void FillBoundaryG   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
 
-    void SyncCurrent ();
+    /**
+     * \brief Apply filter and sum guard cells across MR levels.
+     * If current centering is used, center the current from a nodal grid
+     * to a staggered grid. For each MR level beyond level 0, interpolate
+     * the fine-patch current onto the coarse-patch current at the same level.
+     * Then, for each MR level, including level 0, apply filter and sum guard
+     * cells across levels.
+     *
+     * \param[in,out] J_fp reference to fine-patch current \c MultiFab (all MR levels)
+     * \param[in,out] J_cp reference to coarse-patch current \c MultiFab (all MR levels)
+     */
+    void SyncCurrent (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+
     void SyncRho ();
 
     amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
