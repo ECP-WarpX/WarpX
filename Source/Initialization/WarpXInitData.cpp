@@ -70,11 +70,6 @@
 #include <string>
 #include <utility>
 
-////////
-#include <iostream>
-#include <fstream>
-////////
-
 #include <openPMD/openPMD.hpp>
 
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
@@ -423,15 +418,19 @@ WarpX::InitData ()
     PrintMainPICparameters();
     WriteUsedInputsFile();
 
+std::cout << "@_@: after WriteUsedInputsFile" << "\n";
     if (restart_chkfile.empty())
     {
         // Loop through species and calculate their space-charge field
         bool const reset_fields = false; // Do not erase previous user-specified values on the grid
+std::cout << "@_@: before compute" << "\n";
         ComputeSpaceChargeField(reset_fields);
 
+std::cout << "@_@: before filter" << "\n";
         // Write full diagnostics before the first iteration.
         multi_diags->FilterComputePackFlush( -1 );
 
+std::cout << "@_@: before reduced diags" << "\n";
         // Write reduced diagnostics before the first iteration.
         if (reduced_diags->m_plot_rd != 0)
         {
@@ -439,8 +438,10 @@ WarpX::InitData ()
             reduced_diags->WriteToFile(-1);
         }
     }
+std::cout << "@_@: before PerformanceHints" << "\n";
 
     PerformanceHints();
+std::cout << "@_@: after PerformanceHints" << "\n";
 }
 
 void
@@ -1257,7 +1258,6 @@ void
 WarpX::ReadExternalFieldsFromFile (std::string read_fields_from_path, MultiFab* mf,
 std::string F_name, std::string F_component)
 {
-
     //! add_external: 0 for no exteranl field loading; 1/2/3 for E/B/both.
     if (E_ext_grid_s=="read_from_file" && B_ext_grid_s=="read_from_file") {
         add_external_fields = 3;
@@ -1338,8 +1338,8 @@ std::string F_name, std::string F_component)
                 else { x1 = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
 
                 // Get index of the external field array
-                int ix0 = floor( (x0-offset[0])/d[0] );
-                int ix1 = floor( (x1-offset[1])/d[1] );
+                int const ix0 = floor( (x0-offset[0])/d[0] );
+                int const ix1 = floor( (x1-offset[1])/d[1] );
 
                 // Get coordinates of external grid point
                 amrex::Real const xx0 = offset[0] + ix0*d[0];
