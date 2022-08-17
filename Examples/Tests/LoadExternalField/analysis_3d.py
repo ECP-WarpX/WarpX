@@ -24,11 +24,12 @@
 
 import os
 import sys
-import numpy as np
+
 import matplotlib.pyplot as plt
-import scipy.constants as sc
+import numpy as np
 import openpmd_api as io
 from openpmd_viewer import OpenPMDTimeSeries
+import scipy.constants as sc
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI

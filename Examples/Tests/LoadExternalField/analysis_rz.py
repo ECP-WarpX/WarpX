@@ -24,6 +24,7 @@
 
 import os
 import sys
+
 import numpy as np
 import openpmd_api as io
 from openpmd_viewer import OpenPMDTimeSeries
