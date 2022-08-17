@@ -1,7 +1,5 @@
 {
   "electron": {
-    "particle_cpu": 0.0,
-    "particle_id": 1.0,
     "particle_momentum_x": 5.955475926588059e-26,
     "particle_momentum_y": 1.4612764777454504e-35,
     "particle_momentum_z": 3.4687284535374423e-23,
