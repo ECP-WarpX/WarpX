@@ -12,6 +12,7 @@
 #include "ablastr/particles/DepositCharge.H"
 #include "Deposition/ChargeDeposition.H"
 #include "Deposition/CurrentDeposition.H"
+#include "Deposition/SharedDepositionUtils.H"
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
 #include "ParticleBoundaries_K.H"
@@ -264,19 +265,6 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     }
 
     Redistribute();
-}
-
-/*
- * \brief gets the maximum width, height, or length of a tilebox. In number of cells.
- * \param nCells : Number of cells in the direction to be considered
- * \param tilesize : The 1D tilesize in the direction to be considered
- */
-int getMaxTboxAlongDim (int nCells, int tilesize){
-    int maxTilesize = 0;
-    int nTiles = nCells / tilesize;
-    int remainder = nCells % tilesize;
-    maxTilesize = tilesize + int(std::ceil((amrex::Real) remainder / nTiles));
-    return maxTilesize;
 }
 
 /* \brief Current Deposition for thread thread_num

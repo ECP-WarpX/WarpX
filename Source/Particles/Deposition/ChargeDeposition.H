@@ -9,6 +9,7 @@
 #define CHARGEDEPOSITION_H_
 
 #include "Parallelization/KernelTimer.H"
+#include "Particles/Deposition/SharedDepositionUtils.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -213,29 +214,6 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 }
-
-#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void addLocalToGlobal (const amrex::Box& bx,
-                       const amrex::Array4<amrex::Real>& global,
-                       const amrex::Array4<amrex::Real>& local) noexcept
-{
-    const auto lo  = amrex::lbound(bx);
-    const auto len = amrex::length(bx);
-    for (int icell = threadIdx.x; icell < bx.numPts(); icell += blockDim.x)
-    {
-        int k =  icell / (len.x*len.y);
-        int j = (icell - k*(len.x*len.y)) /   len.x;
-        int i = (icell - k*(len.x*len.y)) - j*len.x;
-        i += lo.x;
-        j += lo.y;
-        k += lo.z;
-        if (amrex::Math::abs(local(i, j, k)) > 0.0_rt) {
-            amrex::Gpu::Atomic::AddNoRet( &global(i, j, k), local(i, j, k));
-        }
-    }
-}
-#endif
 
 /* \brief Perform charge deposition on a tile using shared memory
  * \param GetPosition   : A functor for returning the particle position.
