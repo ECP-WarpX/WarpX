@@ -65,12 +65,6 @@ proton.charge = q_e
 #electron.charge = -q_e*1.0e-20
 
 # Diagnostics
-diagnostics.diags_names = diag1 diag2
-
-diag1.intervals = 1
+diagnostics.diags_names = diag1
+diag1.intervals = 300
 diag1.diag_type = Full
-
-diag2.intervals = 1
-diag2.diag_type = Full
-diag2.format = openpmd
-diag2.openpmd_backend = h5
