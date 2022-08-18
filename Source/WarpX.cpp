@@ -107,7 +107,8 @@ Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
 bool WarpX::fft_do_time_averaging = false;
 
-amrex::IntVect WarpX::fill_guards = amrex::IntVect(0);
+amrex::IntVect WarpX::m_fill_guards_fields  = amrex::IntVect(0);
+amrex::IntVect WarpX::m_fill_guards_current = amrex::IntVect(0);
 
 Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
 Real WarpX::gamma_boost = 1._rt;
@@ -735,10 +736,10 @@ WarpX::ReadParameters ()
         }
         else // FDTD
         {
-            // Filter currently not working with FDTD solver in RZ geometry
+            // Filter currently not working with FDTD solver in RZ geometry along R
             // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!use_filter,
-                "Filter currently not working with FDTD solver in RZ geometry");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!use_filter || filter_npass_each_dir[0] == 0,
+                "In RZ geometry with FDTD, filtering can only be apply along z. This can be controlled by setting warpx.filter_npass_each_dir");
         }
 #endif
 
@@ -1328,14 +1329,14 @@ WarpX::ReadParameters ()
             if (WarpX::field_boundary_lo[dir] == FieldBoundaryType::Damped ||
                 WarpX::field_boundary_hi[dir] == FieldBoundaryType::Damped)
             {
-                WarpX::fill_guards[dir] = 1;
+                WarpX::m_fill_guards_fields[dir] = 1;
             }
         }
 
         // Fill guard cells with backward FFTs if Vay current deposition is used
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
-            WarpX::fill_guards = amrex::IntVect(1);
+            WarpX::m_fill_guards_current = amrex::IntVect(1);
         }
     }
 
@@ -2260,7 +2261,6 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 noy_fft,
                                                 noz_fft,
                                                 do_nodal,
-                                                WarpX::fill_guards,
                                                 m_v_galilean,
                                                 m_v_comoving,
                                                 dx_vect,

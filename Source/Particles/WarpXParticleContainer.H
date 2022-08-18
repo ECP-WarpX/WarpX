@@ -315,6 +315,7 @@ public:
     void ApplyBoundaryConditions ();
 
     bool do_splitting = false;
+    int do_not_deposit = 0;
     bool initialize_self_fields = false;
     amrex::Real self_fields_required_precision = amrex::Real(1.e-11);
     amrex::Real self_fields_absolute_tolerance = amrex::Real(0.0);
@@ -396,7 +397,6 @@ protected:
     bool m_gather_from_main_grid = false;
 
     int do_not_push = 0;
-    int do_not_deposit = 0;
     int do_not_gather = 0;
 
     // Whether to allow particles outside of the simulation domain to be
