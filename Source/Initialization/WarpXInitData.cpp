@@ -418,19 +418,15 @@ WarpX::InitData ()
     PrintMainPICparameters();
     WriteUsedInputsFile();
 
-std::cout << "@_@: after WriteUsedInputsFile" << "\n";
     if (restart_chkfile.empty())
     {
         // Loop through species and calculate their space-charge field
         bool const reset_fields = false; // Do not erase previous user-specified values on the grid
-std::cout << "@_@: before compute" << "\n";
         ComputeSpaceChargeField(reset_fields);
 
-std::cout << "@_@: before filter" << "\n";
         // Write full diagnostics before the first iteration.
         multi_diags->FilterComputePackFlush( -1 );
 
-std::cout << "@_@: before reduced diags" << "\n";
         // Write reduced diagnostics before the first iteration.
         if (reduced_diags->m_plot_rd != 0)
         {
@@ -438,10 +434,8 @@ std::cout << "@_@: before reduced diags" << "\n";
             reduced_diags->WriteToFile(-1);
         }
     }
-std::cout << "@_@: before PerformanceHints" << "\n";
 
     PerformanceHints();
-std::cout << "@_@: after PerformanceHints" << "\n";
 }
 
 void

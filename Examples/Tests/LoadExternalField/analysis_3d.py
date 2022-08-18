@@ -6,46 +6,31 @@
 #
 # License: BSD-3-Clause-LBNL
 
-
-# This script tests the particle pusher (HC)
-# using a force-free field,
-# in which position x should remain 0.
-# An initial velocity Vy corresponding to
-# Lorentz factor = 20 is used.
-# Bz is fixed at 1 T.
-# Ex = -Vy*Bz.
-
-# Possible errors:
-# Boris:     2321.3958529
-# Vay:       0.00010467
-# HC:        0.00011403
-# tolerance: 0.001
-# Possible running time: ~ 4.0 s
-
 import os
 import sys
 
-import matplotlib.pyplot as plt
 import numpy as np
 import openpmd_api as io
 from openpmd_viewer import OpenPMDTimeSeries
-import scipy.constants as sc
+import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 tolerance = 0.001
-x0 = 1.140180338454055003e-1
-y0 = -4.908434106235705363e-2
-z0 = 4.379090207432996706
+x0 = 0.12238072
+y0 = 0.00965394
+z0 = 4.31754477
 
 filename = sys.argv[1]
-print(filename)
-ts = OpenPMDTimeSeries(filename)
-it = ts.iterations
-x,y,z = ts.get_particle(var_list=['x','y','z','ux','uy','uz'], iteration=it[len(it)-1], species='proton')
 
-error = np.sqrt((x-x0)**2+(y-y0)**2+(z-z0)**2)
+ds = yt.load( filename )
+ad = ds.all_data()
+x  = ad['proton','particle_position_x'].to_ndarray()
+y  = ad['proton','particle_position_y'].to_ndarray()
+z  = ad['proton','particle_position_z'].to_ndarray()
+
+error = np.min(np.sqrt((x-x0)**2+(y-y0)**2+(z-z0)**2))
 
 print('error = ', error)
 print('tolerance = ', tolerance)

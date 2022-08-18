@@ -1,5 +1,10 @@
-warpx.B_ext_grid_init_style = "read_B_from_file"
-warpx.read_B_from_path = "openpmd_data.h5"
+warpx.serialize_initial_conditions = 0
+warpx.do_dynamic_scheduling = 0
+particles.do_tiling = 0
+
+warpx.B_ext_grid_init_style = "read_from_file"
+warpx.read_fields_from_path = "/Users/yin/warpx/openpmd_data_3d.h5"
+
 warpx.do_nodal = 1
 warpx.do_electrostatic = labframe
 
@@ -51,7 +56,5 @@ proton.charge = q_e
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 1
+diag1.intervals = 300
 diag1.diag_type = Full
-diag1.format = openpmd
-diag1.openpmd_backend = h5
