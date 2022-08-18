@@ -56,30 +56,30 @@ Ez = all_data['boxlib', 'Ez'].squeeze().v
 tol_charge = 1e-9
 if dims == '2D':
     if not current_correction:
-        energy_ref = 35657.99361677053
+        energy_ref = 35657.41657683263
         tol_energy = 1e-8
     if current_correction:
-        energy_ref = 35024.02751955393
+        energy_ref = 35024.0275199999
         tol_energy = 2e-8
     if time_averaging:
-        energy_ref = 32532.00882239954
+        energy_ref = 26208.04843478073
         tol_energy = 1e-6
 elif dims == 'RZ':
     if not current_correction:
-        energy_ref = 239019.10670780553
+        energy_ref = 191002.6526271543
         tol_energy = 1e-8
     if current_correction:
-        energy_ref = 471730.0524143545
+        energy_ref = 472779.70801323955
         tol_energy = 1e-9
 elif dims == '3D':
     if not current_correction:
-        energy_ref = 8218.678808709019
+        energy_ref = 661285.098907683
         tol_energy = 1e-6;
     if current_correction:
-        energy_ref = 75333.81851879464
+        energy_ref = 856783.3007547935
         tol_energy = 5e-8;
     if time_averaging:
-        energy_ref = 6.816182771544472
+        energy_ref = 14.564631643496
         tol_energy = 1e-4
 
 # Check numerical stability by comparing electric field energy to reference energy
