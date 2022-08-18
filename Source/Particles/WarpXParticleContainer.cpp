@@ -271,11 +271,11 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
  * \param nCells : Number of cells in the direction to be considered
  * \param tilesize : The 1D tilesize in the direction to be considered
  */
-int getMaxTboxAlongDim(int nCells, int tilesize){
+int getMaxTboxAlongDim (int nCells, int tilesize){
     int maxTilesize = 0;
     int nTiles = nCells / tilesize;
     int remainder = nCells % tilesize;
-    maxTilesize = tilesize + std::ceil((float) remainder / nTiles);
+    maxTilesize = tilesize + int(std::ceil((amrex::Real) remainder / nTiles));
     return maxTilesize;
 }
 
