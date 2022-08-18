@@ -362,27 +362,27 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
  */
 template <int depos_order>
 void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
-                        const amrex::ParticleReal * const wp,
-                        const amrex::ParticleReal * const uxp,
-                        const amrex::ParticleReal * const uyp,
-                        const amrex::ParticleReal * const uzp,
-                        const int * const ion_lev,
-                        amrex::FArrayBox& jx_fab,
-                        amrex::FArrayBox& jy_fab,
-                        amrex::FArrayBox& jz_fab,
-                        const long np_to_depose,
-                        const amrex::Real relative_time,
-                        const std::array<amrex::Real,3>& dx,
-                        const std::array<amrex::Real,3>& xyzmin,
-                        const amrex::Dim3 lo,
-                        const amrex::Real q,
-                        const int n_rz_azimuthal_modes,
-                        amrex::Real* cost,
-                        const long load_balance_costs_update_algo,
-                        const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
-                        const amrex::Box& box,
-                        const amrex::Geometry& geom,
-                        const amrex::IntVect& a_tbox_max_size)
+                               const amrex::ParticleReal * const wp,
+                               const amrex::ParticleReal * const uxp,
+                               const amrex::ParticleReal * const uyp,
+                               const amrex::ParticleReal * const uzp,
+                               const int * const ion_lev,
+                               amrex::FArrayBox& jx_fab,
+                               amrex::FArrayBox& jy_fab,
+                               amrex::FArrayBox& jz_fab,
+                               const long np_to_depose,
+                               const amrex::Real relative_time,
+                               const std::array<amrex::Real,3>& dx,
+                               const std::array<amrex::Real,3>& xyzmin,
+                               const amrex::Dim3 lo,
+                               const amrex::Real q,
+                               const int n_rz_azimuthal_modes,
+                               amrex::Real* cost,
+                               const long load_balance_costs_update_algo,
+                               const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
+                               const amrex::Box& box,
+                               const amrex::Geometry& geom,
+                               const amrex::IntVect& a_tbox_max_size)
 {
     using namespace amrex;
 
@@ -443,15 +443,10 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
-    //This is literally, AMREX_D_DECL(dx[0], dx[1], dx[2]) as a gpu array
     const auto dxiarr = geom.InvCellSizeArray();
     const auto plo = geom.ProbLoArray();
     const auto domain = geom.Domain();
 
-    //This could be it. Make absolute certain that every box has the same number of points
-    //convert copies in case you had any doubts
-    //types are node and cell
-    //note you only use one of these
     const amrex::Box sample_tbox(IntVect(AMREX_D_DECL(0,0,0)), a_tbox_max_size - 1);
     amrex::Box sample_tbox_x = convert(sample_tbox, jx_type);
     amrex::Box sample_tbox_y = convert(sample_tbox, jy_type);
@@ -463,68 +458,56 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 
     const auto npts = amrex::max(sample_tbox_x.numPts(), sample_tbox_y.numPts(), sample_tbox_z.numPts());
 
-    //needed for gpu kernel
     const int nblocks = a_bins.numBins();
-    const auto offsets_ptr = a_bins.offsetsPtr();
-    //TODO could play with this
     const int threads_per_block = WarpX::shared_mem_current_tpb;
+    const auto offsets_ptr = a_bins.offsetsPtr();
 
-    //calculate how much shared memory is needed. Note 3 because writing to 3 array4s
-    std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
-    amrex::IntVect bin_size = WarpX::shared_tilesize;
+    const std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
+    const amrex::IntVect bin_size = WarpX::shared_tilesize;
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
-    //WATCH may get burned if this makes you use less threads
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
-                                      "Tile size too big for GPU shared memory current deposition");
+                                     "Tile size too big for GPU shared memory current deposition");
 
     amrex::ignore_unused(np_to_depose);
-    // Loop one thread-block per tile, each tile is a bin, so we're looping over bins
-    //Andrew, how does this know what it is looping over? How blockId.x index into bin
-    //cause nblocks=a_bins.numBins()?
+    // Launch one thread-block per bin
     amrex::launch(
             nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
             [=] AMREX_GPU_DEVICE () noexcept
 #else
+    // fall back to non-shared implementation
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip_orig) noexcept
 #endif
-      {
+    {
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         const int bin_id = blockIdx.x;
         const unsigned int bin_start = offsets_ptr[bin_id];
         const unsigned int bin_stop = offsets_ptr[bin_id+1];
 
-        if (bin_start == bin_stop) {
-            //WATCH this would be a great spot for a counter to evaluate performance
+        if (bin_start == bin_stop) { return; /*this bin has no particles*/ }
 
-            //this bin has no particles
-            return;
-        }
-
-        //These boxes will be stored in shared mem in order to write depositions
+        // These boxes define the index space for the shared memory buffers
         amrex::Box buffer_box_x;
         amrex::Box buffer_box_y;
         amrex::Box buffer_box_z;
         {
-          ParticleReal xp, yp, zp;
-          //WATCH. Random access hurts. Maybe we want to sort every timestep
-          GetPosition(permutation[bin_start], xp, yp, zp);
-//WATCH strange here
+            ParticleReal xp, yp, zp;
+            GetPosition(permutation[bin_start], xp, yp, zp);
 #if defined(WARPX_DIM_3D)
-          IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
-                               int( amrex::Math::floor((yp-plo[1]) * dxiarr[1]) ),
-                               int( amrex::Math::floor((zp-plo[2]) * dxiarr[2]) ));
+            IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
+                                 int( amrex::Math::floor((yp-plo[1]) * dxiarr[1]) ),
+                                 int( amrex::Math::floor((zp-plo[2]) * dxiarr[2]) ));
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-          IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
-                               int( amrex::Math::floor((zp-plo[1]) * dxiarr[1]) ));
+            IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
+                                 int( amrex::Math::floor((zp-plo[1]) * dxiarr[1]) ));
 #elif defined(WARPX_DIM_1D_Z)
-          IntVect iv = IntVect(int( amrex::Math::floor((zp-plo[0]) * dxiarr[0]) ));
+            IntVect iv = IntVect(int( amrex::Math::floor((zp-plo[0]) * dxiarr[0]) ));
 #endif
-          iv += domain.smallEnd();
-          //Looks like it sets buffer box to contain the tile
-          //iv is a point. first box is the entire domain, last box gets written with size bin_size
-          getTileIndex(iv, box, true, bin_size, buffer_box_x);
-          getTileIndex(iv, box, true, bin_size, buffer_box_y);
-          getTileIndex(iv, box, true, bin_size, buffer_box_z);
+            iv += domain.smallEnd();
+            // Looks like it sets buffer box to contain the tile
+            // iv is a point. first box is the entire domain, last box gets written with size bin_size
+            getTileIndex(iv, box, true, bin_size, buffer_box_x);
+            getTileIndex(iv, box, true, bin_size, buffer_box_y);
+            getTileIndex(iv, box, true, bin_size, buffer_box_z);
         }
 
         Box tbox_x = convert(buffer_box_x, jx_type);
@@ -538,15 +521,13 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         Gpu::SharedMemory<amrex::Real> gsm;
         amrex::Real* const shared = gsm.dataPtr();
 
-        //buf is a buffer in shard mem to write the results of a tile/thread-block to.
-        //If not using shared mem, then you would just make the buffer the actual object in device
-        //mem
         amrex::Array4<amrex::Real> const jx_buff(shared,
                 amrex::begin(tbox_x), amrex::end(tbox_x), 1);
         amrex::Array4<amrex::Real> const jy_buff(shared,
                 amrex::begin(tbox_y), amrex::end(tbox_y), 1);
         amrex::Array4<amrex::Real> const jz_buff(shared,
                 amrex::begin(tbox_z), amrex::end(tbox_z), 1);
+
         // Zero-initialize the temporary array in shared memory
         volatile amrex::Real* vs = shared;
         for (int i = threadIdx.x; i < npts; i += blockDim.x){
@@ -560,14 +541,9 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
-        //this should probably be incorporated into above, but we'll leave here for now...
-
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
 #endif
         {
-            //the gpu initialization is over. This chunk is same for shared or not
-
-            //control the iteration order
             unsigned int ip = permutation[ip_orig];
 
 #if defined(WARPX_USE_GPUCLOCK)
@@ -762,9 +738,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
 #endif
         {
-            //the gpu initialization is over. This chunk is same for shared or not
-
-            //control the iteration order
             unsigned int ip = permutation[ip_orig];
 
 #if defined(WARPX_USE_GPUCLOCK)
@@ -957,9 +930,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
 #endif
         {
-            //the gpu initialization is over. This chunk is same for shared or not
-
-            //control the iteration order
             unsigned int ip = permutation[ip_orig];
 
 #if defined(WARPX_USE_GPUCLOCK)
