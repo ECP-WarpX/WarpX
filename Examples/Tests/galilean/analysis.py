@@ -53,31 +53,26 @@ Ey = all_data['boxlib', 'Ey'].squeeze().v
 Ez = all_data['boxlib', 'Ez'].squeeze().v
 
 # Set tolerance for numerical stability and charge conservation
+tol_energy = 1e-8
 tol_charge = 1e-9
 if dims == '2D':
     if not current_correction:
         energy_ref = 35657.41657683263
-        tol_energy = 1e-8
     if current_correction:
         energy_ref = 35024.0275199999
-        tol_energy = 2e-8
     if time_averaging:
         energy_ref = 26208.04843478073
         tol_energy = 1e-6
 elif dims == 'RZ':
     if not current_correction:
         energy_ref = 191002.6526271543
-        tol_energy = 1e-8
     if current_correction:
         energy_ref = 472779.70801323955
-        tol_energy = 1e-9
 elif dims == '3D':
     if not current_correction:
         energy_ref = 661285.098907683
-        tol_energy = 1e-6;
     if current_correction:
         energy_ref = 856783.3007547935
-        tol_energy = 5e-8;
     if time_averaging:
         energy_ref = 14.564631643496
         tol_energy = 1e-4
