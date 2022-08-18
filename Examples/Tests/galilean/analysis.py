@@ -52,7 +52,7 @@ Ex = all_data['boxlib', 'Ex'].squeeze().v
 Ey = all_data['boxlib', 'Ey'].squeeze().v
 Ez = all_data['boxlib', 'Ez'].squeeze().v
 
-# Set tolerance for numerical stability and charge conservation
+# Set reference energy values, and tolerances for numerical stability and charge conservation
 tol_energy = 1e-8
 tol_charge = 1e-9
 if dims == '2D':
