@@ -151,7 +151,7 @@ void depositComponent (const GetParticlePosition& GetPosition,
 #endif
     const amrex::Real wqz = wq*invvol*vz;
 
-    amrex::Real pcurrent;
+    amrex::Real pcurrent = 0.0;
     if (dir == 0) {
         wq = wqx;
     } else if (dir == 1) {
