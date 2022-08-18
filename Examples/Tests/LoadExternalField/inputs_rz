@@ -1,4 +1,3 @@
-#warpx.abort_on_warning_threshold = "high"
 warpx.serialize_initial_conditions = 0
 warpx.do_dynamic_scheduling = 0
 particles.do_tiling = 0
@@ -49,7 +48,7 @@ algo.particle_shape = 1
 #################################
 ############ PLASMA #############
 #################################
-particles.species_names = proton electron
+particles.species_names = proton #electron
 proton.injection_style = "SingleParticle"
 proton.single_particle_pos = 0.0  0.2  2.5
 proton.single_particle_vel = 9.506735958279367e-05  0.0  0.00013435537232359165
@@ -58,17 +57,20 @@ proton.do_not_deposit = 1
 proton.mass = m_p
 proton.charge = q_e
 
-electron.injection_style = "SingleParticle"
-electron.single_particle_pos = 0.0  0.2  2.5
-electron.single_particle_vel = 0.0  0.0  0.0
-electron.single_particle_weight = 1.0
-electron.mass = 1.0
-electron.charge = -q_e*1.0e-10
+#electron.injection_style = "SingleParticle"
+#electron.single_particle_pos = 0.0  0.2  2.5
+#electron.single_particle_vel = 0.0  0.0  0.0
+#electron.single_particle_weight = 1.0
+#electron.mass = 1.0
+#electron.charge = -q_e*1.0e-20
 
 # Diagnostics
-diagnostics.diags_names = diag1
+diagnostics.diags_names = diag1 diag2
+
 diag1.intervals = 1
 diag1.diag_type = Full
-diag1.format = openpmd
-diag1.openpmd_backend = h5
 
+diag2.intervals = 1
+diag2.diag_type = Full
+diag2.format = openpmd
+diag2.openpmd_backend = h5

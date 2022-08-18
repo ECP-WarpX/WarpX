@@ -11,12 +11,12 @@
     "jz": 0.0
   },
   "proton": {
-    "particle_momentum_x": -5.578299461750383856e-05,
-    "particle_momentum_y": -1.503068111596137966e-04,
-    "particle_momentum_z": -3.721947018413563480e-05,
-    "particle_position_x": 1.140180338454055003e-01,
-    "particle_position_y": -4.908434106235705363e-02,
-    "particle_position_z": 4.379090207432996706e+00,
+    "particle_momentum_x": 1.2945379007111673e-23,
+    "particle_momentum_y": 7.901629565308321e-23,
+    "particle_momentum_z": 2.000459243217852e-23,
+    "particle_position_x": 0.1240200458560378,
+    "particle_position_y": 4.3632492046588744,
+    "particle_theta": 0.22200801011320764,
     "particle_weight": 1.0
   }
 }
