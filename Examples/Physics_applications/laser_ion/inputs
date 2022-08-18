@@ -76,6 +76,14 @@ algo.load_balance_costs_update = Heuristic
 #################################
 # Target Profile
 #
+
+#   definitions for target extent and pre-plasma
+my_constants.L    = 0.05e-6            # [m] scale length (>0)
+my_constants.Lcut = 2.0e-6             # [m] hard cutoff from surface
+my_constants.r0 = 2.5e-6               # [m] radius or half-thickness
+my_constants.eps_z = 0.05e-6           # [m] small offset in z to make zmin, zmax interval larger than 2*(r0 + Lcut)
+my_constants.zmax = r0 + Lcut + eps_z  # [m] upper limit in z for particle creation
+
 particles.species_names = electrons hydrogen
 
 # particle species
@@ -83,8 +91,10 @@ hydrogen.species_type = hydrogen
 hydrogen.injection_style = NUniformPerCell
 hydrogen.num_particles_per_cell_each_dim = 2 2 4
 hydrogen.momentum_distribution_type = at_rest
-#hydrogen.zmin = -10.0e-6
-#hydrogen.zmax =  10.0e-6
+# minimum and maximum z position between which particles are initialized
+# --> should be set for dense targets limit memory consumption during initialization
+hydrogen.zmin = -zmax
+hydrogen.zmax = zmax
 hydrogen.profile = parse_density_function
 hydrogen.addRealAttributes = orig_x orig_z
 hydrogen.attribute.orig_x(x,y,z,ux,uy,uz,t) = "x"
@@ -96,8 +106,10 @@ electrons.num_particles_per_cell_each_dim = 2 2 4
 electrons.momentum_distribution_type = "gaussian"
 electrons.ux_th = .01
 electrons.uz_th = .01
-#electrons.zmin = -10.0e-6
-#electrons.zmax =  10.0e-6
+# minimum and maximum z position between which particles are initialized
+# --> should be set for dense targets limit memory consumption during initialization
+electrons.zmin = -zmax
+electrons.zmax = zmax
 
 # ionization physics (field ionization/ADK)
 #   [i1] none (fully pre-ionized):
@@ -130,12 +142,7 @@ my_constants.n0    = 30.0      # [n_c]
 #   [material 4] Copper (ion density: 8.49e28/m^3; times ionization level)
 #my_constants.n0    = 1400
 
-# profiles
-#   pre-plasma
-my_constants.L    = 0.05e-6      # [1/m] scale length (>0)
-my_constants.Lcut = 2.0e-6       # [1/m] hard cutoff from surface
-#   core: flat foil, cylinder or sphere
-my_constants.r0 = 2.5e-6        # [m] radius or half-thickness
+# density profiles (target extent, pre-plasma and cutoffs defined above particle species list)
 
 # [target 1] flat foil (thickness = 2*r0)
 electrons.density_function(x,y,z) = "nc*n0*(
