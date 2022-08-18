@@ -389,10 +389,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 
     auto permutation = a_bins.permutationPtr();
 
-#if !defined(WARPX_DIM_RZ)
-    amrex::ignore_unused(n_rz_azimuthal_modes);
-#endif
-
 #if !defined(AMREX_USE_GPU)
     amrex::ignore_unused(cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size);
 #endif
@@ -519,34 +515,58 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         amrex::Array4<amrex::Real> const& jz_buff = jz_arr;
 #endif
 
-        depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff, jx_type,
-                                      relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
-                                      bin_start, bin_stop, permutation, zdir, NODE, CELL);
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
+        for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
+#endif
+        {
+            unsigned int ip = permutation[ip_orig];
+            depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff, jx_type,
+                                          relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
+                                          ip, zdir, NODE, CELL, 0);
+        }
 
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         __syncthreads();
         addLocalToGlobal(tbox_x, jx_arr, jx_buff);
         for (int i = threadIdx.x; i < npts; i += blockDim.x){
             vs[i] = 0.0;
         }
         __syncthreads();
+#endif
 
-        depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff, jy_type,
-                                      relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
-                                      bin_start, bin_stop, permutation, zdir, NODE, CELL);
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
+        for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
+#endif
+        {
+            unsigned int ip = permutation[ip_orig];
+            depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff, jy_type,
+                                          relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
+                                          ip, zdir, NODE, CELL, 1);
+        }
 
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         __syncthreads();
         addLocalToGlobal(tbox_y, jy_arr, jy_buff);
         for (int i = threadIdx.x; i < npts; i += blockDim.x){
             vs[i] = 0.0;
         }
         __syncthreads();
+#endif
 
-        depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, jz_type,
-                                      relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
-                                      bin_start, bin_stop, permutation, zdir, NODE, CELL);
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
+        for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
+#endif
+        {
+            unsigned int ip = permutation[ip_orig];
+            depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, jz_type,
+                                          relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
+                                          ip, zdir, NODE, CELL, 2);
+        }
 
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         __syncthreads();
         addLocalToGlobal(tbox_z, jz_arr, jz_buff);
+#endif
     });
 #if defined(WARPX_USE_GPUCLOCK)
     if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
