@@ -153,11 +153,11 @@ void depositComponent (const GetParticlePosition& GetPosition,
 
     amrex::Real pcurrent = 0.0;
     if (dir == 0) {
-        wq = wqx;
+        pcurrent = wqx;
     } else if (dir == 1) {
-        wq = wqy;
+        pcurrent = wqy;
     } else if (dir == 2) {
-        wq = wqz;
+        pcurrent = wqz;
     }
 
     // --- Compute shape factors
