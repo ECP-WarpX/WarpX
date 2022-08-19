@@ -8,6 +8,8 @@
 
 #include <AMReX.H>
 #include <AMReX_BaseFab.H>
+#include <AMReX_BLProfiler.H>
+#include <AMReX_IntVect.H>
 #include <AMReX_FabArray.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_iMultiFab.H>
@@ -120,6 +122,7 @@ void FillBoundary (amrex::iMultiFab&         imf,
                    const amrex::Periodicity& period)
 {
     BL_PROFILE("ablastr::utils::communication::FillBoundary");
+
     imf.FillBoundary(ng, period);
 }
 
@@ -215,6 +218,8 @@ void OverrideSync (amrex::MultiFab &mf,
                    bool do_single_precision_comms,
                    const amrex::Periodicity &period)
 {
+    BL_PROFILE("ablastr::utils::communication::OverrideSync");
+
     if (mf.ixType().cellCentered()) return;
 
     if (do_single_precision_comms)
