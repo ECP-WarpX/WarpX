@@ -4,6 +4,7 @@
 #
 # License: BSD-3-Clause-LBNL
 
+from . import picmi
 from .Algo import algo
 from .Amr import amr
 from .Boundary import boundary
@@ -19,5 +20,3 @@ from .PSATD import psatd
 from .Particles import electrons, newspecies, particles, positrons, protons
 from .WarpX import warpx
 from ._libwarpx import libwarpx
-
-from . import picmi
