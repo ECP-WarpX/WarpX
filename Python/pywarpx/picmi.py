@@ -39,7 +39,18 @@ class constants:
 
 picmistandard.register_constants(constants)
 
-class Species(picmistandard.PICMI_Species):
+class DocumentedMetaClass(type):
+    """This is used as a metaclass that combines the __doc__ of the picmistandard base and the WarpX implementation"""
+    def __new__(cls, name, bases, attrs):
+        if bases:
+            warpx_doc = attrs.get('__doc__', '')
+            if warpx_doc:
+                attrs['__doc__'] = bases[0].__doc__ + """\n    WarpX specific documentation\n""" + warpx_doc
+            else:
+                attrs['__doc__'] = bases[0].__doc__
+        return super(DocumentedMetaClass, cls).__new__(cls, name, bases, attrs)
+
+class Species(picmistandard.PICMI_Species, metaclass=DocumentedMetaClass):
     def init(self, kw):
 
         if self.particle_type == 'electron':
@@ -177,7 +188,7 @@ class Species(picmistandard.PICMI_Species):
             self.species.charge = 'q_e'
 
 picmistandard.PICMI_MultiSpecies.Species_class = Species
-class MultiSpecies(picmistandard.PICMI_MultiSpecies):
+class MultiSpecies(picmistandard.PICMI_MultiSpecies, metaclass=DocumentedMetaClass):
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
                           injection_plane_position = None,
@@ -189,7 +200,7 @@ class MultiSpecies(picmistandard.PICMI_MultiSpecies):
                                       injection_plane_normal_vector)
 
 
-class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
+class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution, metaclass=DocumentedMetaClass):
     def initialize_inputs(self, species_number, layout, species, density_scale):
         species.injection_style = "gaussian_beam"
         species.x_m = self.centroid_position[0]
@@ -243,7 +254,7 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
             species.uz = self.centroid_velocity[2]/constants.c
 
 
-class UniformDistribution(picmistandard.PICMI_UniformDistribution):
+class UniformDistribution(picmistandard.PICMI_UniformDistribution, metaclass=DocumentedMetaClass):
     def initialize_inputs(self, species_number, layout, species, density_scale):
 
         if isinstance(layout, GriddedLayout):
@@ -289,7 +300,7 @@ class UniformDistribution(picmistandard.PICMI_UniformDistribution):
             species.do_continuous_injection = 1
 
 
-class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
+class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution, metaclass=DocumentedMetaClass):
     def init(self, kw):
         self.mangle_dict = None
 
@@ -354,7 +365,7 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
                 expression = f'{self.directed_velocity[idir]}'
             species.__setattr__(f'momentum_function_u{sdir}(x,y,z)', f'({expression})/{constants.c}')
 
-class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
+class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution, metaclass=DocumentedMetaClass):
     def init(self, kw):
         pass
 
@@ -372,21 +383,21 @@ class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
             species.multiple_particles_weight = self.weight*density_scale
 
 
-class ParticleDistributionPlanarInjector(picmistandard.PICMI_ParticleDistributionPlanarInjector):
+class ParticleDistributionPlanarInjector(picmistandard.PICMI_ParticleDistributionPlanarInjector, metaclass=DocumentedMetaClass):
     pass
 
 
-class GriddedLayout(picmistandard.PICMI_GriddedLayout):
+class GriddedLayout(picmistandard.PICMI_GriddedLayout, metaclass=DocumentedMetaClass):
     pass
 
 
-class PseudoRandomLayout(picmistandard.PICMI_PseudoRandomLayout):
+class PseudoRandomLayout(picmistandard.PICMI_PseudoRandomLayout, metaclass=DocumentedMetaClass):
     def init(self, kw):
         if self.seed is not None:
             print('Warning: WarpX does not support specifying the random number seed in PseudoRandomLayout')
 
 
-class BinomialSmoother(picmistandard.PICMI_BinomialSmoother):
+class BinomialSmoother(picmistandard.PICMI_BinomialSmoother, metaclass=DocumentedMetaClass):
 
     def initialize_inputs(self, solver):
         pywarpx.warpx.use_filter = 1
@@ -403,8 +414,9 @@ class BinomialSmoother(picmistandard.PICMI_BinomialSmoother):
         pywarpx.warpx.filter_npass_each_dir = self.n_pass
 
 
-class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
-    """This assumes that WarpX was compiled with USE_RZ = TRUE
+class CylindricalGrid(picmistandard.PICMI_CylindricalGrid, metaclass=DocumentedMetaClass):
+    """
+    This assumes that WarpX was compiled with USE_RZ = TRUE
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -471,7 +483,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
             pywarpx.amr.max_level = 0
 
 
-class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
+class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid, metaclass=DocumentedMetaClass):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
@@ -524,7 +536,7 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         else:
             pywarpx.amr.max_level = 0
 
-class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
+class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid, metaclass=DocumentedMetaClass):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
@@ -585,7 +597,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
             pywarpx.amr.max_level = 0
 
 
-class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
+class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid, metaclass=DocumentedMetaClass):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
@@ -652,7 +664,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         else:
             pywarpx.amr.max_level = 0
 
-class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
+class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver, metaclass=DocumentedMetaClass):
     def init(self, kw):
         assert self.method is None or self.method in ['Yee', 'CKC', 'PSATD', 'ECT'], Exception("Only 'Yee', 'CKC', 'PSATD', and 'ECT' are supported")
 
@@ -717,7 +729,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.pml_has_particles = self.pml_has_particles
         pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
 
-class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
+class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver, metaclass=DocumentedMetaClass):
     def init(self, kw):
         self.relativistic = kw.pop('warpx_relativistic', False)
         self.absolute_tolerance = kw.pop('warpx_absolute_tolerance', None)
@@ -743,7 +755,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
             pywarpx.boundary.potential_hi_z = self.grid.potential_zmax
 
 
-class GaussianLaser(picmistandard.PICMI_GaussianLaser):
+class GaussianLaser(picmistandard.PICMI_GaussianLaser, metaclass=DocumentedMetaClass):
     def initialize_inputs(self):
         self.laser_number = len(pywarpx.lasers.names) + 1
         if self.name is None:
@@ -765,7 +777,7 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
 
         self.laser.do_continuous_injection = self.fill_in
 
-class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
+class AnalyticLaser(picmistandard.PICMI_AnalyticLaser, metaclass=DocumentedMetaClass):
     def init(self, kw):
         self.mangle_dict = None
 
@@ -790,7 +802,7 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
         expression = pywarpx.my_constants.mangle_expression(self.field_expression, self.mangle_dict)
         self.laser.__setattr__('field_function(X,Y,t)', expression)
 
-class LaserAntenna(picmistandard.PICMI_LaserAntenna):
+class LaserAntenna(picmistandard.PICMI_LaserAntenna, metaclass=DocumentedMetaClass):
     def initialize_inputs(self, laser):
         laser.laser.position = self.position  # This point is on the laser plane
         laser.laser.direction = self.normal_vector  # The plane normal direction
@@ -799,7 +811,7 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
             laser.laser.profile_t_peak = (self.position[2] - laser.centroid_position[2])/constants.c  # The time at which the laser reaches its peak (in seconds)
 
 
-class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField):
+class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField, metaclass=DocumentedMetaClass):
     def initialize_inputs(self):
         # Note that lower and upper_bound are not used by WarpX
 
@@ -816,7 +828,7 @@ class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField):
             pywarpx.particles.B_external_particle = [self.Bx or 0., self.By or 0., self.Bz or 0.]
 
 
-class AnalyticAppliedField(picmistandard.PICMI_AnalyticAppliedField):
+class AnalyticAppliedField(picmistandard.PICMI_AnalyticAppliedField, metaclass=DocumentedMetaClass):
     def init(self, kw):
         self.mangle_dict = None
 
@@ -845,7 +857,7 @@ class AnalyticAppliedField(picmistandard.PICMI_AnalyticAppliedField):
                 pywarpx.particles.__setattr__(f'B{sdir}_external_particle_function(x,y,z,t)', expression)
 
 
-class Mirror(picmistandard.PICMI_Mirror):
+class Mirror(picmistandard.PICMI_Mirror, metaclass=DocumentedMetaClass):
     def initialize_inputs(self):
         try:
             pywarpx.warpx.num_mirrors
@@ -862,9 +874,11 @@ class Mirror(picmistandard.PICMI_Mirror):
 
 
 class CoulombCollisions(picmistandard.base._ClassWithInit):
-    """Custom class to handle setup of binary Coulmb collisions in WarpX. If
+    """
+    Custom class to handle setup of binary Coulmb collisions in WarpX. If
     collision initialization is added to picmistandard this can be changed to
-    inherit that functionality."""
+    inherit that functionality.
+    """
 
     def __init__(self, name, species, CoulombLog=None, ndt=None, **kw):
         self.name = name
@@ -883,9 +897,11 @@ class CoulombCollisions(picmistandard.base._ClassWithInit):
 
 
 class MCCCollisions(picmistandard.base._ClassWithInit):
-    """Custom class to handle setup of MCC collisions in WarpX. If collision
+    """
+    Custom class to handle setup of MCC collisions in WarpX. If collision
     initialization is added to picmistandard this can be changed to inherit
-    that functionality."""
+    that functionality.
+    """
 
     def __init__(self, name, species, background_density,
                  background_temperature, scattering_processes,
@@ -1019,7 +1035,7 @@ class PlasmaLens(picmistandard.base._ClassWithInit):
         pywarpx.particles.repeated_plasma_lens_strengths_B = self.strengths_B
 
 
-class Simulation(picmistandard.PICMI_Simulation):
+class Simulation(picmistandard.PICMI_Simulation, metaclass=DocumentedMetaClass):
 
     # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
     # Simulation objects. In the future, LibWarpX objects may actually be owned
@@ -1177,7 +1193,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 # ----------------------------
 
 
-class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
+class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, metaclass=DocumentedMetaClass):
     def init(self, kw):
 
         self.plot_raw_fields = kw.pop('warpx_plot_raw_fields', None)
@@ -1274,6 +1290,16 @@ ElectrostaticFieldDiagnostic = FieldDiagnostic
 
 
 class Checkpoint(picmistandard.base._ClassWithInit):
+    """
+    Sets up checkpointing of the simulation, allowing for later restarts
+
+    warpx_file_prefix: string
+        The prefix to the checkpoint directory names
+
+    warpx_file_min_digits: integer
+        Minimum number of digits for the time step number in the checkpoint
+        directory name.
+    """
 
     def __init__(self, period = 1, write_dir = None, name = None, **kw):
 
@@ -1306,7 +1332,7 @@ class Checkpoint(picmistandard.base._ClassWithInit):
             file_prefix = (self.file_prefix or self.name)
             self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
-class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
+class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, metaclass=DocumentedMetaClass):
     def init(self, kw):
 
         self.format = kw.pop('warpx_format', 'plotfile')
@@ -1405,7 +1431,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
 # ----------------------------
 
 
-class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
+class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic, metaclass=DocumentedMetaClass):
     """
     Warp specific arguments:
       - warpx_new_BTD: Use the new BTD diagnostics
@@ -1417,7 +1443,6 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
       - warpx_lower_bound: Passed to <diagnostic name>.lower_bound
       - warpx_upper_bound: Passed to <diagnostic name>.upper_bound
     """
-    __doc__ = picmistandard.PICMI_LabFrameFieldDiagnostic.__doc__ + __doc__
     def init(self, kw):
         self.use_new_BTD = kw.pop('warpx_new_BTD', False)
         if self.use_new_BTD:
@@ -1510,7 +1535,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
             self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
 
-class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic):
+class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic, metaclass=DocumentedMetaClass):
     def initialize_inputs(self):
 
         pywarpx.warpx.check_consistency('num_snapshots_lab', self.num_snapshots, 'The number of snapshots must be the same in all lab frame diagnostics')

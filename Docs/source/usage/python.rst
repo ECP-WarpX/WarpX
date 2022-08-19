@@ -20,24 +20,26 @@ Simulation and grid setup
 The `Simulation` object is the central object in a PICMI script.
 It defines the simulation time, field solver, registered species, etc.
 
-.. autoclass:: picmistandard.PICMI_Simulation
+.. autoclass:: pywarpx.picmi.Simulation
     :members: step, add_species, add_laser, write_input_file
 
 Field solvers define the updates of electric and magnetic fields.
 
-.. autoclass:: picmistandard.PICMI_ElectromagneticSolver
+.. autoclass:: pywarpx.picmi.ElectromagneticSolver
 
-.. autoclass:: picmistandard.PICMI_ElectrostaticSolver
+.. autoclass:: pywarpx.picmi.ElectrostaticSolver
 
 Grid define the geometry and discretization.
 
-.. autoclass:: picmistandard.PICMI_Cartesian3DGrid
+.. autoclass:: pywarpx.picmi.Cartesian3DGrid
 
-.. autoclass:: picmistandard.PICMI_Cartesian2DGrid
+.. autoclass:: pywarpx.picmi.Cartesian2DGrid
 
-.. autoclass:: picmistandard.PICMI_Cartesian1DGrid
+.. autoclass:: pywarpx.picmi.Cartesian1DGrid
 
-.. autoclass:: picmistandard.PICMI_CylindricalGrid
+.. autoclass:: pywarpx.picmi.CylindricalGrid
+
+.. autoclass:: pywarpx.picmi.EmbeddedBoundary
 
 For convenience, the PICMI interface defines the following constants,
 which can be used directly inside any PICMI script. The values are in SI units.
@@ -51,25 +53,31 @@ which can be used directly inside any PICMI script. The values are in SI units.
 
 Additionally to self-consistent fields from the field solver, external fields can be applied.
 
-.. autoclass:: picmistandard.PICMI_ConstantAppliedField
+.. autoclass:: pywarpx.picmi.ConstantAppliedField
 
-.. autoclass:: picmistandard.PICMI_AnalyticAppliedField
+.. autoclass:: pywarpx.picmi.AnalyticAppliedField
 
-.. autoclass:: picmistandard.PICMI_Mirror
+.. autoclass:: pywarpx.picmi.PlasmaLens
+
+.. autoclass:: pywarpx.picmi.Mirror
 
 Diagnostics can be used to output data.
 
-.. autoclass:: picmistandard.PICMI_ParticleDiagnostic
+.. autoclass:: pywarpx.picmi.ParticleDiagnostic
 
-.. autoclass:: picmistandard.PICMI_FieldDiagnostic
+.. autoclass:: pywarpx.picmi.FieldDiagnostic
 
-.. autoclass:: picmistandard.PICMI_ElectrostaticFieldDiagnostic
+.. autoclass:: pywarpx.picmi.ElectrostaticFieldDiagnostic
 
 Lab-frame diagnostics diagnostics are used when running boosted-frame simulations.
 
-.. autoclass:: picmistandard.PICMI_LabFrameParticleDiagnostic
+.. autoclass:: pywarpx.picmi.LabFrameParticleDiagnostic
 
-.. autoclass:: picmistandard.PICMI_LabFrameFieldDiagnostic
+.. autoclass:: pywarpx.picmi.LabFrameFieldDiagnostic
+
+Checkpoints can be controlled
+
+.. autoclass:: pywarpx.picmi.Checkpoint
 
 Particles
 ^^^^^^^^^
@@ -77,38 +85,44 @@ Particles
 Species objects are a collection of particles with similar properties.
 For instance, background plasma electrons, background plasma ions and an externally injected beam could each be their own particle species.
 
-.. autoclass:: picmistandard.PICMI_Species
+.. autoclass:: pywarpx.picmi.Species
 
-.. autoclass:: picmistandard.PICMI_MultiSpecies
+.. autoclass:: pywarpx.picmi.MultiSpecies
 
 Particle distributions can be used for to initialize particles in a particle species.
 
-.. autoclass:: picmistandard.PICMI_GaussianBunchDistribution
+.. autoclass:: pywarpx.picmi.GaussianBunchDistribution
 
-.. autoclass:: picmistandard.PICMI_UniformDistribution
+.. autoclass:: pywarpx.picmi.UniformDistribution
 
-.. autoclass:: picmistandard.PICMI_AnalyticDistribution
+.. autoclass:: pywarpx.picmi.AnalyticDistribution
 
-.. autoclass:: picmistandard.PICMI_ParticleListDistribution
+.. autoclass:: pywarpx.picmi.ParticleListDistribution
 
 Particle layouts determine how to microscopically place macro particles in a grid cell.
 
-.. autoclass:: picmistandard.PICMI_GriddedLayout
+.. autoclass:: pywarpx.picmi.GriddedLayout
 
-.. autoclass:: picmistandard.PICMI_PseudoRandomLayout
+.. autoclass:: pywarpx.picmi.PseudoRandomLayout
+
+Other operations related to particles
+
+.. autoclass:: pywarpx.picmi.CoulombCollisions
+
+.. autoclass:: pywarpx.picmi.MCCCollisions
 
 Lasers
 ^^^^^^
 
 Laser profiles can be used to initialize laser pulses in the simulation.
 
-.. autoclass:: picmistandard.PICMI_GaussianLaser
+.. autoclass:: pywarpx.picmi.GaussianLaser
 
-.. autoclass:: picmistandard.PICMI_AnalyticLaser
+.. autoclass:: pywarpx.picmi.AnalyticLaser
 
 Laser injectors control where to initialize laser pulses on the simulation grid.
 
-.. autoclass:: picmistandard.PICMI_LaserAntenna
+.. autoclass:: pywarpx.picmi.LaserAntenna
 
 
 .. _usage-picmi-run:

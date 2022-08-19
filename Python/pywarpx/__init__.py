@@ -19,3 +19,5 @@ from .PSATD import psatd
 from .Particles import electrons, newspecies, particles, positrons, protons
 from .WarpX import warpx
 from ._libwarpx import libwarpx
+
+from . import picmi
