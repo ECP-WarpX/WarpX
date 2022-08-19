@@ -1271,7 +1271,7 @@ WarpX::ReadParameters ()
         );
 
 #   ifdef WARPX_DIM_RZ
-        update_with_rho = true;  // Must be true for RZ PSATD
+        update_with_rho = true;
 #   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0. &&
             m_v_comoving[0] == 0. && m_v_comoving[1] == 0. && m_v_comoving[2] == 0.) {
