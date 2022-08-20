@@ -298,7 +298,6 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
                                  / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
 
 
-
     // Initialize buffer counter and z-positions of the  i^th snapshot in
     // boosted-frame and lab-frame
     m_buffer_flush_counter[i_buffer] = 0;
@@ -367,6 +366,11 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
                                   zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
     m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
                                   zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+    // To prevent round off errors, moving the snapshot domain by half a cell so that all the slices
+    // lie close to the cell-centers in the lab-frame grid instead of on the edge of cell.
+    amrex::Real new_hi = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir)
+                       + 0.5_rt * dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+    m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,new_hi);
     amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
                          num_z_cells_in_snapshot *
                          dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
@@ -762,7 +766,6 @@ BTDiagnostics::Flush (int i_buffer)
             m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], buffer_ba);
         }
     }
-
     RedistributeParticleBuffer(i_buffer);
 
     // Reset buffer box and particle box array
