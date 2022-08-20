@@ -367,7 +367,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
                                   zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
     // To prevent round off errors, moving the snapshot domain by half a cell so that all the slices
-    // lie close to the cell-centers in the lab-frame grid instead of on the edge of cell.    
+    // lie close to the cell-centers in the lab-frame grid instead of on the edge of cell.
     amrex::Real new_hi = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir)
                        + 0.5_rt * dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
     m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,new_hi);
