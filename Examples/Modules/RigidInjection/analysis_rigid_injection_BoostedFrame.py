@@ -48,6 +48,7 @@ series = io.Series("./diags/btd_openpmd/openpmd_%T.h5", io.Access.read_only)
 ds_openpmd = series.iterations[1]
 z_btd_openpmd = ds_openpmd.particles['beam']['position']['z'][:]
 x_btd_openpmd = ds_openpmd.particles['beam']['position']['x'][:]
+series.flush()
 z_btd_openpmd_mean = np.mean(z_btd_openpmd)
 x_btd_openpmd_std = np.std(x_btd_openpmd)
 
