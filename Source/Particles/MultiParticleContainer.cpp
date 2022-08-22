@@ -511,9 +511,9 @@ MultiParticleContainer::DepositCurrent (
     // Reset the J arrays
     for (int lev = 0; lev < J.size(); ++lev)
     {
-        J[lev][0]->setVal(0.0, J[lev][0]->nGrowVect());
-        J[lev][1]->setVal(0.0, J[lev][1]->nGrowVect());
-        J[lev][2]->setVal(0.0, J[lev][2]->nGrowVect());
+        J[lev][0]->setVal(0.0_rt);
+        J[lev][1]->setVal(0.0_rt);
+        J[lev][2]->setVal(0.0_rt);
     }
 
     // Call the deposition kernel for each species
@@ -538,7 +538,7 @@ MultiParticleContainer::DepositCharge (
     // Reset the rho array
     for (int lev = 0; lev < rho.size(); ++lev)
     {
-        rho[lev]->setVal(0.0, 0, WarpX::ncomps, rho[lev]->nGrowVect());
+        rho[lev]->setVal(0.0_rt);
     }
 
     // Push the particles in time, if needed
