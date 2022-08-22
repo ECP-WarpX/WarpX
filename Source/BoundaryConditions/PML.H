@@ -133,6 +133,8 @@ public:
          int do_moving_window, int pml_has_particles, int do_pml_in_domain,
          const bool do_multi_J,
          const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
+         const amrex::IntVect& fill_guards_fields,
+         const amrex::IntVect& fill_guards_current,
          int max_guard_EB, amrex::Real v_sigma_sb,
          const amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
          const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
@@ -208,6 +210,9 @@ private:
     bool m_dive_cleaning;
     bool m_divb_cleaning;
 
+    const amrex::IntVect m_fill_guards_fields;
+    const amrex::IntVect m_fill_guards_current;
+
     const amrex::Geometry* m_geom;
     const amrex::Geometry* m_cgeom;
 
@@ -280,7 +285,8 @@ void PushPMLPSATDSinglePatch( const int lev,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_E,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_B,
     std::unique_ptr<amrex::MultiFab>& pml_F,
-    std::unique_ptr<amrex::MultiFab>& pml_G);
+    std::unique_ptr<amrex::MultiFab>& pml_G,
+    const amrex::IntVect& fill_guards);
 #endif
 
 #endif

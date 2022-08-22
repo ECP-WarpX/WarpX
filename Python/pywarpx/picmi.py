@@ -13,6 +13,7 @@ import re
 
 import numpy as np
 import periodictable
+
 import picmistandard
 import pywarpx
 
@@ -61,23 +62,26 @@ class Species(picmistandard.PICMI_Species):
                     self.charge = '-q_e'
                 else:
                     self.charge = self.charge_state*constants.q_e
-            # Match a string of the format '#nXx', with the '#n' optional isotope number.
-            m = re.match(r'(?P<iso>#[\d+])*(?P<sym>[A-Za-z]+)', self.particle_type)
-            if m is not None:
-                element = periodictable.elements.symbol(m['sym'])
-                if m['iso'] is not None:
-                    element = element[m['iso'][1:]]
-                if self.charge_state is not None:
-                    assert self.charge_state <= element.number, Exception('%s charge state not valid'%self.particle_type)
-                    try:
-                        element = element.ion[self.charge_state]
-                    except ValueError:
-                        # Note that not all valid charge states are defined in elements,
-                        # so this value error can be ignored.
-                        pass
-                self.element = element
-                if self.mass is None:
-                    self.mass = element.mass*periodictable.constants.atomic_mass_constant
+            if self.particle_type is not None:
+                # Match a string of the format '#nXx', with the '#n' optional isotope number.
+                m = re.match(r'(?P<iso>#[\d+])*(?P<sym>[A-Za-z]+)', self.particle_type)
+                if m is not None:
+                    element = periodictable.elements.symbol(m['sym'])
+                    if m['iso'] is not None:
+                        element = element[m['iso'][1:]]
+                    if self.charge_state is not None:
+                        assert self.charge_state <= element.number, Exception('%s charge state not valid'%self.particle_type)
+                        try:
+                            element = element.ion[self.charge_state]
+                        except ValueError:
+                            # Note that not all valid charge states are defined in elements,
+                            # so this value error can be ignored.
+                            pass
+                    self.element = element
+                    if self.mass is None:
+                        self.mass = element.mass*periodictable.constants.atomic_mass_constant
+                else:
+                    raise Exception('The species "particle_type" is not known')
 
         self.boost_adjust_transverse_positions = kw.pop('warpx_boost_adjust_transverse_positions', None)
 

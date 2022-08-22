@@ -517,7 +517,7 @@ PhysicalParticleContainer::AddGaussianBeam (
     AddNParticles(0,np,
                   particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
-                  1, particle_w.dataPtr(),1);
+                  1, particle_w.dataPtr(), 0, nullptr, 1);
 }
 
 void
@@ -625,13 +625,125 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
     AddNParticles(0, np,
                   particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
-                  1, particle_w.dataPtr(),1);
+                  1, particle_w.dataPtr(), 0, nullptr, 1);
 #endif // WARPX_USE_OPENPMD
 
     ignore_unused(q_tot, z_shift);
 
     return;
 }
+
+void
+PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
+                    amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
+                                        NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                    const int n_external_attr_real,
+                    const int n_external_attr_int,
+                    const amrex::RandomEngine& engine)
+{
+        using namespace amrex::literals;
+
+        const int np = pinned_tile.numParticles();
+
+        // Preparing data needed for user defined attributes
+        const int n_user_real_attribs = m_user_real_attribs.size();
+        const int n_user_int_attribs = m_user_int_attribs.size();
+        const auto get_position = GetParticlePosition(pinned_tile);
+        const auto soa = pinned_tile.getParticleTileData();
+        const amrex::ParticleReal* AMREX_RESTRICT ux = soa.m_rdata[PIdx::ux];
+        const amrex::ParticleReal* AMREX_RESTRICT uy = soa.m_rdata[PIdx::uy];
+        const amrex::ParticleReal* AMREX_RESTRICT uz = soa.m_rdata[PIdx::uz];
+        constexpr int lev = 0;
+        const amrex::Real t = WarpX::GetInstance().gett_new(lev);
+
+#ifndef WARPX_QED
+        amrex::ignore_unused(engine);
+#endif
+
+        // Initialize the last NumRuntimeRealComps() - n_external_attr_real runtime real attributes
+        for (int j = PIdx::nattribs + n_external_attr_real; j < NumRealComps() ; ++j)
+        {
+            amrex::Vector<amrex::ParticleReal> attr_temp(np, 0.0_prt);
+#ifdef WARPX_QED
+            // Current runtime comp is quantum synchrotron optical depth
+            if (particle_comps.find("opticalDepthQSR") != particle_comps.end() &&
+                particle_comps["opticalDepthQSR"] == j)
+            {
+                const QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt =
+                                                m_shr_p_qs_engine->build_optical_depth_functor();;
+                for (int i = 0; i < np; ++i) {
+                    attr_temp[i] = quantum_sync_get_opt(engine);
+                }
+            }
+
+             // Current runtime comp is Breit-Wheeler optical depth
+            if (particle_comps.find("opticalDepthBW") != particle_comps.end() &&
+                particle_comps["opticalDepthBW"] == j)
+            {
+                const BreitWheelerGetOpticalDepth breit_wheeler_get_opt =
+                                                m_shr_p_bw_engine->build_optical_depth_functor();;
+                for (int i = 0; i < np; ++i) {
+                    attr_temp[i] = breit_wheeler_get_opt(engine);
+                }
+            }
+#endif
+
+            for (int ia = 0; ia < n_user_real_attribs; ++ia)
+            {
+                // Current runtime comp is ia-th user defined attribute
+                if (particle_comps.find(m_user_real_attribs[ia]) != particle_comps.end() &&
+                    particle_comps[m_user_real_attribs[ia]] == j)
+                {
+                    amrex::ParticleReal xp, yp, zp;
+                    const amrex::ParserExecutor<7> user_real_attrib_parserexec =
+                                             m_user_real_attrib_parser[ia]->compile<7>();
+                    for (int i = 0; i < np; ++i) {
+                        get_position(i, xp, yp, zp);
+                        attr_temp[i] = user_real_attrib_parserexec(xp, yp, zp,
+                                                                   ux[i], uy[i], uz[i], t);
+                    }
+                }
+            }
+
+            pinned_tile.push_back_real(j, attr_temp.data(), attr_temp.data() + np);
+        }
+
+        // Initialize the last NumRuntimeIntComps() - n_external_attr_int runtime int attributes
+        for (int j = n_external_attr_int; j < NumIntComps() ; ++j)
+        {
+            amrex::Vector<int> attr_temp(np, 0);
+
+            // Current runtime comp is ionization level
+            if (particle_icomps.find("ionizationLevel") != particle_icomps.end() &&
+                particle_icomps["ionizationLevel"] == j)
+            {
+                for (int i = 0; i < np; ++i) {
+                    attr_temp[i] = ionization_initial_level;
+                }
+            }
+
+            for (int ia = 0; ia < n_user_int_attribs; ++ia)
+            {
+                // Current runtime comp is ia-th user defined attribute
+                if (particle_icomps.find(m_user_int_attribs[ia]) != particle_icomps.end() &&
+                    particle_icomps[m_user_int_attribs[ia]] == j)
+                {
+                    amrex::ParticleReal xp, yp, zp;
+                    const amrex::ParserExecutor<7> user_int_attrib_parserexec =
+                                             m_user_int_attrib_parser[ia]->compile<7>();
+                    for (int i = 0; i < np; ++i) {
+                        get_position(i, xp, yp, zp);
+                        attr_temp[i] = static_cast<int>(
+                                user_int_attrib_parserexec(xp, yp, zp, ux[i], uy[i], uz[i], t));
+                    }
+                }
+            }
+
+            pinned_tile.push_back_int(j, attr_temp.data(), attr_temp.data() + np);
+        }
+
+}
+
 
 void
 PhysicalParticleContainer::CheckAndAddParticle (
@@ -679,7 +791,7 @@ PhysicalParticleContainer::AddParticles (int lev)
                       &(plasma_injector->single_particle_vel[0]),
                       &(plasma_injector->single_particle_vel[1]),
                       &(plasma_injector->single_particle_vel[2]),
-                      1, &(plasma_injector->single_particle_weight), 0);
+                      1, &(plasma_injector->single_particle_weight), 0, nullptr, 0);
         return;
     }
 
@@ -701,7 +813,7 @@ PhysicalParticleContainer::AddParticles (int lev)
                       plasma_injector->multiple_particles_vel_x.dataPtr(),
                       plasma_injector->multiple_particles_vel_y.dataPtr(),
                       plasma_injector->multiple_particles_vel_z.dataPtr(),
-                      1, plasma_injector->multiple_particles_weight.dataPtr(), 0);
+                      1, plasma_injector->multiple_particles_weight.dataPtr(), 0, nullptr, 0);
         return;
     }
 
@@ -1798,7 +1910,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
             const long np_current = (cjx) ? nfine_current : np;
 
-            if (rho && ! skip_deposition) {
+            if (rho && ! skip_deposition && ! do_not_deposit) {
                 // Deposit charge before particle push, in component 0 of MultiFab rho.
                 int* AMREX_RESTRICT ion_lev;
                 if (do_field_ionization){
@@ -1894,7 +2006,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 } // end of "if do_electrostatic == ElectrostaticSolverAlgo::None"
             } // end of "if do_not_push"
 
-            if (rho && ! skip_deposition) {
+            if (rho && ! skip_deposition && ! do_not_deposit) {
                 // Deposit charge after particle push, in component 1 of MultiFab rho.
                 // (Skipped for electrostatic solver, as this may lead to out-of-bounds)
                 if (WarpX::do_electrostatic == ElectrostaticSolverAlgo::None) {
@@ -2189,6 +2301,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
                               psplit_uz.dataPtr(),
                               1,
                               psplit_w.dataPtr(),
+                              0, nullptr,
                               1, NoSplitParticleID);
     // Copy particles from tmp to current particle container
     addParticles(pctmp_split,1);
