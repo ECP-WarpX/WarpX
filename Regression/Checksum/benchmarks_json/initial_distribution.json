@@ -1,7 +1,5 @@
 {
   "beam": {
-    "particle_cpu": 0.0,
-    "particle_id": 870219268590.0,
     "particle_momentum_x": 1.065668650866494e-16,
     "particle_momentum_y": 1.065290456129874e-16,
     "particle_momentum_z": 1.064668914438635e-16,
@@ -11,8 +9,6 @@
     "particle_weight": 0.05958446885576042
   },
   "gaussian": {
-    "particle_cpu": 0.0,
-    "particle_id": 131072256000.0,
     "particle_momentum_x": 1.1148694854418736e-18,
     "particle_momentum_y": 1.1139504847073219e-18,
     "particle_momentum_z": 1.11450954619821e-18,
@@ -33,8 +29,6 @@
     "jz": 193560414509.5226
   },
   "maxwell_boltzmann": {
-    "particle_cpu": 0.0,
-    "particle_id": 393216256000.0,
     "particle_momentum_x": 1.115726254239343e-18,
     "particle_momentum_y": 1.115862732826254e-18,
     "particle_momentum_z": 1.116611006199691e-18,
@@ -44,8 +38,6 @@
     "particle_weight": 8e+21
   },
   "maxwell_juttner": {
-    "particle_cpu": 0.0,
-    "particle_id": 655360256000.0,
     "particle_momentum_x": 2.21345187770139e-16,
     "particle_momentum_y": 2.216103639626306e-16,
     "particle_momentum_z": 2.212898013900304e-16,
@@ -55,8 +47,6 @@
     "particle_weight": 8e+21
   },
   "maxwell_juttner_parser": {
-    "particle_cpu": 0.0,
-    "particle_id": 1167759616000.0,
     "particle_momentum_x": 3.244003577912501e-16,
     "particle_momentum_y": 3.250401412760131e-16,
     "particle_momentum_z": 3.245149232761166e-16,
@@ -66,8 +56,6 @@
     "particle_weight": 8e+21
   },
   "velocity_constant": {
-    "particle_cpu": 0.0,
-    "particle_id": 1429903616000.0,
     "particle_momentum_x": 3.525652955878835e-21,
     "particle_momentum_y": 2.854131883579881e-17,
     "particle_momentum_z": 3.529207116503112e-21,
@@ -77,8 +65,6 @@
     "particle_weight": 8e+21
   },
   "velocity_parser": {
-    "particle_cpu": 0.0,
-    "particle_id": 1692047616000.0,
     "particle_momentum_x": 3.527571570541855e-21,
     "particle_momentum_y": 2.85413213756175e-17,
     "particle_momentum_z": 3.524858765083303e-21,

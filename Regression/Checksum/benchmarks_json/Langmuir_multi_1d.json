@@ -1,7 +1,5 @@
 {
   "electrons": {
-    "particle_cpu": 0.0,
-    "particle_id": 0.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,
@@ -20,8 +18,6 @@
     "jz": 47472967251388.14
   },
   "positrons": {
-    "particle_cpu": 0.0,
-    "particle_id": 0.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,

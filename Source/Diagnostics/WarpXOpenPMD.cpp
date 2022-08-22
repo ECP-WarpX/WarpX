@@ -552,7 +552,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 
 void
 WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
-                  const bool isBTD, const bool isLastBTDFlush, const amrex::Vector<int>& totalParticlesFlushedAlready)
+                  const bool use_pinned_pc, const bool isBTD, const bool isLastBTDFlush,
+                  const amrex::Vector<int>& totalParticlesFlushedAlready)
 {
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
 
@@ -561,10 +562,11 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
     PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
     PinnedMemoryParticleContainer tmp;
-    if (! isBTD) {
-        tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
-    } else {
+    if (isBTD || use_pinned_pc) {
+        if (!pinned_pc->isDefined()) continue; // Skip to the next particle container
         tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
+    } else {
+        tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
     }
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
@@ -590,7 +592,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
         real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
     }
     // plot any "extra" fields by default
-    real_flags = particle_diags[i].plot_flags;
+    real_flags = particle_diags[i].m_plot_flags;
     real_flags.resize(tmp.NumRealComps(), 1);
     // and the names
     int_names.resize(tmp.NumIntComps());
@@ -616,7 +618,9 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                            particle_diags[i].m_diag_domain);
 
-      if (! isBTD) {
+      if (isBTD || use_pinned_pc) {
+          tmp.copyParticles(*pinned_pc, true);
+      } else {
           using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
           tmp.copyParticles(*pc,
                             [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
@@ -625,8 +629,6 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
               return random_filter(p, engine) * uniform_filter(p, engine)
                      * parser_filter(p, engine) * geometry_filter(p, engine);
           }, true);
-      } else if (isBTD) {
-          tmp.copyParticles(*pinned_pc, true);
       }
 
     // real_names contains a list of all real particle attributes.

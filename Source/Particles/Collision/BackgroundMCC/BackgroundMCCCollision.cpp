@@ -28,7 +28,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 
     amrex::ParmParse pp_collision_name(collision_name);
 
-    amrex::Real background_density = 0;
+    amrex::ParticleReal background_density = 0;
     if (queryWithParser(pp_collision_name, "background_density", background_density)) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             (background_density > 0), "The background density must be greater than 0."
@@ -41,7 +41,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
         m_background_density_parser = makeParser(background_density_str, {"x", "y", "z", "t"});
     }
 
-    amrex::Real background_temperature;
+    amrex::ParticleReal background_temperature;
     if (queryWithParser(pp_collision_name, "background_temperature", background_temperature)) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             (background_temperature >= 0), "The background temperature must be positive."
@@ -89,7 +89,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
         std::string cross_section_file;
         pp_collision_name.query(kw_cross_section.c_str(), cross_section_file);
 
-        amrex::Real energy = 0.0;
+        amrex::ParticleReal energy = 0.0;
         // if the scattering process is excitation or ionization get the
         // energy associated with that process
         if (scattering_process.find("excitation") != std::string::npos ||
@@ -152,14 +152,14 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
 /** Calculate the maximum collision frequency using a fixed energy grid that
  *  ranges from 1e-4 to 5000 eV in 0.2 eV increments
  */
-amrex::Real
+amrex::ParticleReal
 BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> const& mcc_processes)
 {
     using namespace amrex::literals;
-    amrex::Real nu, nu_max = 0.0;
-    amrex::Real E_start = 1e-4_rt;
-    amrex::Real E_end = 5000._rt;
-    amrex::Real E_step = 0.2_rt;
+    amrex::ParticleReal nu, nu_max = 0.0;
+    amrex::ParticleReal E_start = 1e-4_prt;
+    amrex::ParticleReal E_end = 5000._prt;
+    amrex::ParticleReal E_step = 0.2_prt;
 
     // set the energy limits and step size for calculating nu_max based
     // on the given cross-section inputs
@@ -172,8 +172,8 @@ BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> const& mcc_processe
         E_step = (energy_step < E_step) ? energy_step : E_step;
     }
 
-    for (amrex::Real E = E_start; E < E_end; E+=E_step) {
-        amrex::Real sigma_E = 0.0;
+    for (amrex::ParticleReal E = E_start; E < E_end; E+=E_step) {
+        amrex::ParticleReal sigma_E = 0.0;
 
         // loop through all collision pathways
         for (const auto &scattering_process : mcc_processes) {
@@ -184,7 +184,7 @@ BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> const& mcc_processe
         // calculate collision frequency
         nu = (
               m_max_background_density
-              * std::sqrt(2.0_rt / m_mass1 * PhysConst::q_e)
+              * std::sqrt(2.0_prt / m_mass1 * PhysConst::q_e)
               * sigma_E * std::sqrt(E)
               );
         if (nu > nu_max) {
@@ -217,12 +217,12 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, Mult
 
         // calculate total collision probability
         auto coll_n = m_nu_max * dt;
-        m_total_collision_prob = 1.0_rt - std::exp(-coll_n);
+        m_total_collision_prob = 1.0_prt - std::exp(-coll_n);
 
         // dt has to be small enough that a linear expansion of the collision
         // probability is sufficiently accurately, otherwise the MCC results
         // will be very heavily affected by small changes in the timestep
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n < 0.1_rt,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n < 0.1_prt,
             "dt is too large to ensure accurate MCC results"
         );
 
@@ -232,9 +232,9 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, Mult
 
             // calculate total ionization probability
             auto coll_n_ioniz = m_nu_max_ioniz * dt;
-            m_total_collision_prob_ioniz = 1.0_rt - std::exp(-coll_n_ioniz);
+            m_total_collision_prob_ioniz = 1.0_prt - std::exp(-coll_n_ioniz);
 
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n_ioniz < 0.1_rt,
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(coll_n_ioniz < 0.1_prt,
                 "dt is too large to ensure accurate MCC results"
             );
 
@@ -345,20 +345,20 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               amrex::ParticleReal x, y, z;
                               GetPosition.AsStored(ip, x, y, z);
 
-                              amrex::Real n_a = n_a_func(x, y, z, t);
-                              amrex::Real T_a = T_a_func(x, y, z, t);
+                              amrex::ParticleReal n_a = n_a_func(x, y, z, t);
+                              amrex::ParticleReal T_a = T_a_func(x, y, z, t);
 
-                              amrex::Real v_coll, v_coll2, sigma_E, nu_i = 0;
+                              amrex::ParticleReal v_coll, v_coll2, sigma_E, nu_i = 0;
                               double gamma, E_coll;
                               amrex::ParticleReal ua_x, ua_y, ua_z, vx, vy, vz;
                               amrex::ParticleReal uCOM_x, uCOM_y, uCOM_z;
-                              amrex::Real col_select = amrex::Random(engine);
+                              amrex::ParticleReal col_select = amrex::Random(engine);
 
                               // get velocities of gas particles from a Maxwellian distribution
                               auto const vel_std = sqrt(PhysConst::kb * T_a / M);
-                              ua_x = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
-                              ua_y = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
-                              ua_z = vel_std * amrex::RandomNormal(0_rt, 1.0_rt, engine);
+                              ua_x = vel_std * amrex::RandomNormal(0_prt, 1.0_prt, engine);
+                              ua_y = vel_std * amrex::RandomNormal(0_prt, 1.0_prt, engine);
+                              ua_z = vel_std * amrex::RandomNormal(0_prt, 1.0_prt, engine);
 
                               // we assume the target particle is not relativistic (in
                               // the lab frame) and therefore we can transform the projectile
@@ -408,7 +408,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 
                                   // subtract any energy penalty of the collision from the
                                   // projectile energy
-                                  if (scattering_process.m_energy_penalty > 0.0_rt) {
+                                  if (scattering_process.m_energy_penalty > 0.0_prt) {
                                       ParticleUtils::getEnergy(v_coll2, m, E_coll);
                                       E_coll = (E_coll - scattering_process.m_energy_penalty) * PhysConst::q_e;
                                       auto scale_fac = sqrt(E_coll * (E_coll + 2.0_prt*mc2) / c2) / m / v_coll;
@@ -464,7 +464,7 @@ void BackgroundMCCCollision::doBackgroundIonization
                                                    m_nu_max_ioniz, m_background_density_func, t
                                                    );
 
-    amrex::Real sqrt_kb_m = std::sqrt(PhysConst::kb / m_background_mass);
+    amrex::ParticleReal sqrt_kb_m = std::sqrt(PhysConst::kb / m_background_mass);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())

@@ -8,9 +8,10 @@ import argparse
 import sys
 
 import numpy as np
-from pywarpx import callbacks, fields, picmi
 from scipy.sparse import csc_matrix
 from scipy.sparse import linalg as sla
+
+from pywarpx import callbacks, fields, picmi
 
 constants = picmi.constants
 

@@ -17,7 +17,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
     auto& mypc = warpx.GetPartContainer();
 
     m_gamma_boost = WarpX::gamma_boost;
-    m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._rt)*PhysConst::c;
+    m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._prt)*PhysConst::c;
 
     m_Etype = Unknown;
     m_Btype = Unknown;

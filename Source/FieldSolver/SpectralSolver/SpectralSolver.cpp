@@ -24,7 +24,6 @@ SpectralSolver::SpectralSolver(
                 const amrex::DistributionMapping& dm,
                 const int norder_x, const int norder_y,
                 const int norder_z, const bool nodal,
-                const amrex::IntVect& fill_guards,
                 const amrex::Vector<amrex::Real>& v_galilean,
                 const amrex::Vector<amrex::Real>& v_comoving,
                 const amrex::RealVect dx, const amrex::Real dt,
@@ -52,7 +51,7 @@ SpectralSolver::SpectralSolver(
     {
         algorithm = std::make_unique<PsatdAlgorithmPml>(
             k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
-            fill_guards, dt, dive_cleaning, divb_cleaning);
+            dt, dive_cleaning, divb_cleaning);
     }
     else // PSATD equations in the regulard grids
     {
@@ -61,7 +60,7 @@ SpectralSolver::SpectralSolver(
         {
             algorithm = std::make_unique<PsatdAlgorithmComoving>(
                 k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
-                fill_guards, v_comoving, dt, update_with_rho);
+                v_comoving, dt, update_with_rho);
         }
         else // PSATD algorithms: standard, Galilean, averaged Galilean, multi-J
         {
@@ -69,13 +68,13 @@ SpectralSolver::SpectralSolver(
             {
                 algorithm = std::make_unique<PsatdAlgorithmJLinearInTime>(
                     k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
-                    fill_guards, dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
+                    dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
             }
             else // standard, Galilean, averaged Galilean
             {
                 algorithm = std::make_unique<PsatdAlgorithm>(
                     k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
-                    fill_guards, v_galilean, dt, update_with_rho, fft_do_time_averaging,
+                    v_galilean, dt, update_with_rho, fft_do_time_averaging,
                     dive_cleaning, divb_cleaning);
             }
         }
@@ -84,8 +83,6 @@ SpectralSolver::SpectralSolver(
     // - Initialize arrays for fields in spectral space + FFT plans
     field_data = SpectralFieldData(lev, realspace_ba, k_space, dm,
                                    m_spectral_index.n_fields, periodic_single_box);
-
-    m_fill_guards = fill_guards;
 }
 
 void
@@ -102,10 +99,11 @@ void
 SpectralSolver::BackwardTransform( const int lev,
                                    amrex::MultiFab& mf,
                                    const int field_index,
+                                   const amrex::IntVect& fill_guards,
                                    const int i_comp )
 {
     WARPX_PROFILE("SpectralSolver::BackwardTransform");
-    field_data.BackwardTransform(lev, mf, field_index, i_comp, m_fill_guards);
+    field_data.BackwardTransform(lev, mf, field_index, fill_guards, i_comp);
 }
 
 void

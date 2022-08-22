@@ -32,7 +32,6 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
                           const SpectralFieldIndex& spectral_index,
                           const int norder_x, const int norder_y,
                           const int norder_z, const bool nodal,
-                          const amrex::IntVect& fill_guards,
                           const amrex::Real dt,
                           const bool dive_cleaning,
                           const bool divb_cleaning);

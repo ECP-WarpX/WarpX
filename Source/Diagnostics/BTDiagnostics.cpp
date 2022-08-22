@@ -298,7 +298,6 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
                                  / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
 
 
-
     // Initialize buffer counter and z-positions of the  i^th snapshot in
     // boosted-frame and lab-frame
     m_buffer_flush_counter[i_buffer] = 0;
@@ -367,6 +366,11 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
                                   zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
     m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
                                   zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+    // To prevent round off errors, moving the snapshot domain by half a cell so that all the slices
+    // lie close to the cell-centers in the lab-frame grid instead of on the edge of cell.
+    amrex::Real new_hi = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir)
+                       + 0.5_rt * dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+    m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,new_hi);
     amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
                          num_z_cells_in_snapshot *
                          dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
@@ -725,6 +729,7 @@ BTDiagnostics::Flush (int i_buffer)
     }
     SetSnapshotFullStatus(i_buffer);
     bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
+    bool const use_pinned_pc = true;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
 
@@ -743,10 +748,6 @@ BTDiagnostics::Flush (int i_buffer)
                 vrefratio.push_back(m_particles_buffer[i_buffer][0]->GetParGDB()->refRatio(lev));
             }
         }
-        for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
-            // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
-            m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba[0]);
-        }
         // Redistribute particles in the lab frame box arrays that correspond to the buffer
         // Prior to redistribute, increase buffer box and Box in ParticleBoxArray by 1 index in the
         // lo and hi-end, so particles can be binned in the boxes correctly.
@@ -760,8 +761,11 @@ BTDiagnostics::Flush (int i_buffer)
         amrex::BoxArray buffer_ba( particle_buffer_box );
         buffer_ba.maxSize(m_max_box_size*2);
         m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0, buffer_ba);
+        for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
+            // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
+            m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], buffer_ba);
+        }
     }
-
     RedistributeParticleBuffer(i_buffer);
 
     // Reset buffer box and particle box array
@@ -777,7 +781,7 @@ BTDiagnostics::Flush (int i_buffer)
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards,
-        isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush,
+        use_pinned_pc, isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
 
     for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
