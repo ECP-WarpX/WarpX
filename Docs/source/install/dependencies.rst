@@ -97,7 +97,7 @@ For most desktop development, pick the OpenMP environment for CPUs unless you ha
 .. code-block:: bash
 
    # download environment file
-   curl -sLo https://raw.githubusercontent.com/ECP-WarpX/WarpX/development/Tools/machines/desktop/spack-${system}-${compute}.sh
+   curl -sLO https://raw.githubusercontent.com/ECP-WarpX/WarpX/development/Tools/machines/desktop/spack-${system}-${compute}.yaml
 
    # create new development environment
    spack env create warpx-${compute}-dev spack-${system}-${compute}.yaml
