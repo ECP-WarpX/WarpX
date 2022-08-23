@@ -1613,6 +1613,13 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[1], WarpX::CellSize(lev)[2]};
 #endif
 
+    // Initialize filter before guard cells manager
+    // (needs info on length of filter's stencil)
+    if (use_filter)
+    {
+        InitFilter();
+    }
+
     guard_cells.Init(
         dt[lev],
         dx,
@@ -1635,7 +1642,9 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::isAnyBoundaryPML(),
         WarpX::do_pml_in_domain,
         WarpX::pml_ncell,
-        this->refRatio());
+        this->refRatio(),
+        use_filter,
+        bilinear_filter.stencil_length_each_dir);
 
 
 #ifdef AMREX_USE_EB
@@ -1662,12 +1671,6 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     if (n_field_gather_buffer < 0) {
         // Field gather buffer should be larger than current deposition buffers
         n_field_gather_buffer = n_current_deposition_buffer + 1;
-    }
-
-    // Initialize filter
-    if (use_filter)
-    {
-        InitFilter();
     }
 
     AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
@@ -1786,11 +1789,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp[x]"));
     Efield_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp[y]"));
     Efield_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_fp[z]"));
-
-    if (use_filter)
-    {
-        ngJ += bilinear_filter.stencil_length_each_dir - amrex::IntVect(1);
-    }
 
     current_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,jx_nodal_flag),dm,ncomps,ngJ,tag("current_fp[x]"));
     current_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_fp[y]"));
