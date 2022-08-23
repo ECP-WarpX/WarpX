@@ -106,7 +106,6 @@ and new folder `bl_prof`, which contains the profiling data.
     - You can directly click on the timeline to see which actual MPI call is being perform. (Note that the colorbar can be misleading.)
 
 .. _developers-profiling-nsight-systems:
-.. _running-cpp-perlmutter-A100-GPUs:
 
 Nvidia Nsight-Systems
 ---------------------
