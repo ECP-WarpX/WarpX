@@ -73,8 +73,11 @@ if dims == '2D':
 elif dims == 'RZ':
     if not current_correction:
         energy_ref = 191002.6526271543
-    if current_correction:
+    if current_correction and periodic_single_box:
         energy_ref = 472779.70801323955
+    if current_correction and not periodic_single_box:
+        energy_ref = 511671.4108624746
+        tol_charge = 2e-4
 elif dims == '3D':
     if not current_correction:
         energy_ref = 661285.098907683
