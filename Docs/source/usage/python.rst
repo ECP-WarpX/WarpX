@@ -145,6 +145,10 @@ The input file should have the line ``sim.step()`` which runs the simulation.
 where ``<n_ranks>`` is the number of MPI ranks used, and ``<python_script>``
 is the name of the script.
 
+
+Extending a Simulation from Python
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 When running WarpX directly from Python it is possible to interact with the simulation
 by installing ``CallbackFunctions``, which will execute a given Python function at a
 specific location in the WarpX simulation loop.
