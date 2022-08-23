@@ -81,8 +81,11 @@ elif dims == 'RZ':
 elif dims == '3D':
     if not current_correction:
         energy_ref = 661285.098907683
-    if current_correction:
+    if current_correction and periodic_single_box:
         energy_ref = 856783.3007547935
+    if current_correction and not periodic_single_box:
+        energy_ref = 875307.5138913819
+        tol_charge = 1e-2
     if time_averaging:
         energy_ref = 14.564631643496
         tol_energy = 1e-4
