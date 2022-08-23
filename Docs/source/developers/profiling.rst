@@ -116,7 +116,8 @@ Nvidia Nsight-Systems
 Perlmutter Example
 """"""""""""""""""
 
-Example on how to create traces on a multi-GPU system that uses the Slurm scheduler (e.g., NERSC's Perlmutter system):
+Example on how to create traces on a multi-GPU system that uses the Slurm scheduler (e.g., NERSC's Perlmutter system).
+You can either run this on an interactive node or use the Slurm batch script header :ref:`documented here <running-cpp-perlmutter-A100-GPUs>`.
 
 .. code-block:: bash
 
@@ -124,13 +125,16 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
    export MPICH_GPU_SUPPORT_ENABLED=1
    # 1 OpenMP thread
    export OMP_NUM_THREADS=1
+
    export TMPDIR="$PWD/tmp"
    rm -rf ${TMPDIR} profiling*
    mkdir -p ${TMPDIR}
+
    # 2021.5.1 (broken: lacks most trace info)
    #NSYS="/global/common/software/nersc/pm-2021q4/easybuild/software/Nsight-Systems/2021.5.1/bin/nsys"
    # 2021.4.1 (working)
    NSYS="/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/compilers/bin/nsys"
+
    # record
    srun --ntasks=4 --gpus=4 --cpu-bind=cores \
        ${NSYS} profile -f true               \
@@ -140,8 +144,6 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
        ./warpx.3d.MPI.CUDA.DP.QED            \
          inputs_3d                           \
            warpx.numprocs=1 1 4 amr.n_cell=512 512 2048 max_step=10
-
-You can find the header of the file :ref:`here <running-cpp-perlmutter-A100-GPUs>`.
 
 .. warning::
 
