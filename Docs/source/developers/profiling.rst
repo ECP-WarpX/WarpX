@@ -154,8 +154,9 @@ You can either run this on an interactive node or use the Slurm batch script hea
 
 .. note::
 
-    If everything went well, the user will obtain as many output files named ``profiling_<number>.nsys-rep`` as active MPI ranks, which will allow the user to analyze each MPI rank's performance trace with the Nsight System graphical user interface (GUI).
-    In WarpX, every MPI rank is associated with one GPU.
+    If everything went well, you will obtain as many output files named ``profiling_<number>.nsys-rep`` as active MPI ranks.
+    Each MPI rank's performance trace can be analyzed with the Nsight System graphical user interface (GUI).
+    In WarpX, every MPI rank is associated with one GPU, which each creates one trace file.
 
 .. warning::
 
