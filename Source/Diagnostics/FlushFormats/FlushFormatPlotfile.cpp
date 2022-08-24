@@ -1,5 +1,6 @@
 #include "FlushFormatPlotfile.H"
 
+#include "Particles/ParticleIO.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -341,8 +342,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         // plot by default
         int_flags.resize(pc->NumIntComps(), 1);
 
-        pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
-
+        const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
         RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                          particle_diags[i].m_random_fraction);
         UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
@@ -356,6 +356,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                              particle_diags[i].m_diag_domain);
 
         if (!isBTD) {
+            particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
             using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
             tmp.copyParticles(*pc,
                               [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
@@ -364,9 +365,11 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                 return random_filter(p, engine) * uniform_filter(p, engine)
                     * parser_filter(p, engine) * geometry_filter(p, engine);
             }, true);
+            particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
         } else {
             PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
             tmp.copyParticles(*pinned_pc, true);
+            particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
         }
         // real_names contains a list of all particle attributes.
         // real_flags & int_flags are 1 or 0, whether quantity is dumped or not.
@@ -374,8 +377,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             dir, particle_diags[i].getSpeciesName(),
             real_flags, int_flags,
             real_names, int_names);
-
-        pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
     }
 }
 

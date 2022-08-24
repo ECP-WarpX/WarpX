@@ -6,6 +6,7 @@
  */
 #include "WarpXOpenPMD.H"
 
+#include "Particles/ParticleIO.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FieldIO.H"
 #include "Particles/Filter/FilterFunctors.H"
@@ -604,8 +605,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     // plot by default
     int_flags.resize(tmp.NumIntComps(), 1);
 
-
-      pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
+    const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
       RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                        particle_diags[i].m_random_fraction);
       UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
@@ -620,7 +620,9 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 
       if (isBTD || use_pinned_pc) {
           tmp.copyParticles(*pinned_pc, true);
+          particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
       } else {
+          particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
           using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
           tmp.copyParticles(*pc,
                             [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
@@ -629,6 +631,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
               return random_filter(p, engine) * uniform_filter(p, engine)
                      * parser_filter(p, engine) * geometry_filter(p, engine);
           }, true);
+          particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
       }
 
     // real_names contains a list of all real particle attributes.
@@ -659,9 +662,6 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
           );
       }
     }
-
-    // Convert momentum back to WarpX units
-    pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
   }
 }
 
