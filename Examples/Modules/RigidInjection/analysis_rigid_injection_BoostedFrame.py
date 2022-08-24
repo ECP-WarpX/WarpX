@@ -20,12 +20,20 @@ The simulation runs in a boosted frame, and the analysis is done in the lab
 frame, i.e., on the back-transformed diagnostics.
 '''
 
+import os
+import sys
+
 import numpy as np
 import openpmd_api as io
 import read_raw_data
 import yt
 
 yt.funcs.mylog.setLevel(0)
+
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
+
+filename = sys.argv[1]
 
 # Read data from legacy back-transformed diagnostics
 snapshot = './lab_frame_data/snapshots/snapshot00001'
@@ -37,14 +45,14 @@ z_btd_legacy_mean = np.mean(z_btd_legacy)
 x_btd_legacy_std = np.std(x_btd_legacy)
 
 # Read data from new back-transformed diagnostics (plotfile)
-ds_plotfile = yt.load('./diags/btd_pltfile000001')
+ds_plotfile = yt.load(filename)
 z_btd_plotfile = ds_plotfile.all_data()['beam', 'particle_position_y'].v
 x_btd_plotfile = ds_plotfile.all_data()['beam', 'particle_position_x'].v
 z_btd_plotfile_mean = np.mean(z_btd_plotfile)
 x_btd_plotfile_std = np.std(x_btd_plotfile)
 
 # Read data from new back-transformed diagnostics (openPMD)
-series = io.Series("./diags/btd_openpmd/openpmd_%T.h5", io.Access.read_only)
+series = io.Series("./diags/diag2/openpmd_%T.h5", io.Access.read_only)
 ds_openpmd = series.iterations[1]
 z_btd_openpmd = ds_openpmd.particles['beam']['position']['z'][:]
 x_btd_openpmd = ds_openpmd.particles['beam']['position']['x'][:]
@@ -80,3 +88,6 @@ print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
+
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)
