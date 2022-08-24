@@ -6,6 +6,16 @@
 #
 # License: BSD-3-Clause-LBNL
 
+# This test tests the external field loading feature.
+# A magnetic mirror field is loaded, and a single particle
+# in the mirror will be reflected by the magnetic mirror effect.
+# At the end of the simulation, the position of the particle
+# is compared with known correct results.
+
+# Possible errors: 6.235230443866285e-9
+# tolerance: 1.0e-8
+# Possible running time: 0.327827743 s
+
 import os
 import sys
 
@@ -17,7 +27,7 @@ import yt
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-tolerance = 0.001
+tolerance = 1.0e-8
 r0 = 0.12402005
 z0 = 4.3632492
 

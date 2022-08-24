@@ -3,7 +3,6 @@ warpx.do_dynamic_scheduling = 0
 particles.do_tiling = 0
 
 warpx.B_ext_grid_init_style = "read_from_file"
-#warpx.read_fields_from_path = "../../../../openpmd_data_rz.h5"
 warpx.read_fields_from_path = "/Users/yin/warpx/openpmd_data_rz.h5"
 
 warpx.do_nodal = 1
@@ -39,7 +38,6 @@ boundary.potential_hi_z = 0
 warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
 warpx.const_dt = 4.40917904849092e-7
-#warpx.cfl = 5918.54275317
 warpx.use_filter = 0
 
 # Order of particle shape factors
