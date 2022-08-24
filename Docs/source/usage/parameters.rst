@@ -1310,6 +1310,13 @@ External fields
     Note that the current implementation of the parser for external B-field
     does not work with RZ and the code will abort with an error message.
 
+    If `B_ext_grid_init_style` is set to be `read_from_file`, an additional parameter,
+    indicating the path of an openPMD data file,
+    `warpx.read_fields_from_path` must be specified,
+    from which external B field data can be loaded into WarpX.
+    One can refer to input files in `Examples/Tests/LoadExternalField` for more information.
+    Regarding how to prepare the openPMD data file, one can refer to...
+
 * ``warpx.E_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
     electric field. The "default" style initializes the
@@ -1334,6 +1341,16 @@ External fields
     and the value of `y` is set to zero.
     Note that the current implementation of the parser for external E-field
     does not work with RZ and the code will abort with an error message.
+
+    If `E_ext_grid_init_style` is set to be `read_from_file`, an additional parameter,
+    indicating the path of an openPMD data file,
+    `warpx.read_fields_from_path` must be specified,
+    from which external E field data can be loaded into WarpX.
+    One can refer to input files in `Examples/Tests/LoadExternalField` for more information.
+    Regarding how to prepare the openPMD data file, one can refer to...
+    Note that if both `B_ext_grid_init_style` and `E_ext_grid_init_style` are set to
+    `read_from_file`, the openPMD file specified by `warpx.read_fields_from_path`
+    should contain both B and E external fields data.
 
 * ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `3 floats`)
     required when ``warpx.E_ext_grid_init_style="constant"``
