@@ -12,6 +12,7 @@
 #include "FlushFormats/FlushFormatPlotfile.H"
 #include "FlushFormats/FlushFormatSensei.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Parallelization/WarpXRegrid.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -349,6 +350,27 @@ Diagnostics::InitData ()
     }
 }
 
+void
+Diagnostics::RemakeLevel (int const lev, amrex::DistributionMapping const & dm) {
+    bool const redistribute = false; // TODO: review me. Anything special for BTD here?
+
+    // note: m_num_buffers is one for FullDiags and >=1 for BTD
+    for (int i = 0; i < m_num_buffers; ++i) {
+        RemakeMultiFab(m_mf_output[i][lev], dm, redistribute);
+    }
+    //m_geom_output // TODO likely needs to be re-done after MultiFab::RemakeLevel ?
+
+    // some collection of PinnedMemoryParticleContainer for BTD?
+    // looks like BTDiagnostics::RedistributeParticleBuffer takes care of this
+    //m_particles_buffer
+
+    // a collection of ParticleDiag that holds a pointer to a m_pinned_pc
+    //m_output_species // TODO?
+
+    // also needed, seems to be done separately already (TODO: unify me)
+    //m_all_field_functors
+    //m_all_particle_functors
+}
 
 void
 Diagnostics::InitBaseData ()

@@ -45,6 +45,17 @@ MultiDiagnostics::InitData ()
 }
 
 void
+MultiDiagnostics::RemakeLevel ( int const lev, amrex::DistributionMapping const & dm )
+{
+    for( auto& diag : alldiags ) {
+        diag->RemakeLevel( lev, dm );
+    }
+
+    // Re-initialize diagnostic functors that stores pointers to the user-requested fields at level, lev.
+    InitializeFieldFunctors(lev);
+}
+
+void
 MultiDiagnostics::InitializeFieldFunctors ( int lev )
 {
     for( auto& diag : alldiags ){
