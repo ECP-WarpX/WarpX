@@ -48,15 +48,15 @@ import scipy.constants as scc
 default_tol = 1.e-12 # Default relative tolerance
 
 ## Define reactants and products
-reactant_species = ['deuterium']
+reactant_species = ['deuterium', 'hydrogen']
 product_species = ['helium', 'neutron']
 
 mass = {
     'deuterium': 2.01410177812*scc.m_u,
+    'hydrogen': 2.01410177812*scc.m_u,
     'tritium': 3.0160492779*scc.m_u,
     'helium': 4.00260325413*scc.m_u,
-    'neutron': 1.0013784193052508*scc.m_p,
-    'proton': scc.m_p
+    'neutron': 1.0013784193052508*scc.m_p
 }
 m_reduced = np.product([mass[s] for s in reactant_species])/np.sum([mass[s] for s in reactant_species])
 
@@ -114,14 +114,22 @@ def check_particle_number_conservation(data):
     # Check consumption of reactants
     total_w_reactant1_start = np.sum(data[reactant_species[0] + "_w_start"])
     total_w_reactant1_end   = np.sum(data[reactant_species[0] + "_w_end"])
+    total_w_reactant2_start = np.sum(data[reactant_species[1] + "_w_start"])
+    total_w_reactant2_end   = np.sum(data[reactant_species[1] + "_w_end"])
     consumed_reactant1 = total_w_reactant1_start - total_w_reactant1_end
+    consumed_reactant2 = total_w_reactant2_start - total_w_reactant2_end
     assert(consumed_reactant1 >= 0.)
+    assert(consumed_reactant2 >= 0.)
+    ## Check that number of consumed reactants are equal
+    assert_scale = max(total_w_reactant1_start, total_w_reactant2_start)
+    assert(is_close(consumed_reactant1, consumed_reactant2, rtol = 0., atol = default_tol*assert_scale))
 
     # That the number of products corresponds consumed particles
     for species_name in product_species:
         created_product = np.sum(data[species_name + "_w_end"])
         assert(created_product >= 0.)
-        assert(is_close(total_w_reactant1_start, total_w_reactant1_end + 2*created_product))
+        assert(is_close(total_w_reactant1_start, total_w_reactant1_end + created_product))
+        assert(is_close(total_w_reactant2_start, total_w_reactant2_end + created_product))
 
 def compute_energy_array(data, species_name, suffix, m):
     ## Relativistic computation of kinetic energy for a given species
@@ -231,7 +239,7 @@ def compute_relative_v_com(E):
     ## E is the kinetic energy of reactants in the center of mass frame, in keV
     ## Returns the relative velocity between reactants in this frame, in m/s
     m0 = mass[reactant_species[0]]
-    m1 = mass[reactant_species[0]]
+    m1 = mass[reactant_species[1]]
     E_J  = E*keV_to_Joule + (m0 + m1)*scc.c**2
     p_sq = E_com_to_p_sq_com(m0, m1, E_J)
     p = np.sqrt(p_sq)
@@ -265,12 +273,29 @@ def check_macroparticle_number(data, fusion_probability_target_value, num_pair_p
     expected_macroparticle_number = 2*expected_fusion_number
     std_macroparticle_number = 2*np.sqrt(expected_fusion_number)
     actual_macroparticle_number = data[product_species[0] + "_w_end"].shape[0]
+    print('expected_macroparticle_number ', expected_macroparticle_number)
+    print('actual_macroparticle_number ', actual_macroparticle_number)
+
     # 5 sigma test that has an intrinsic probability to fail of 1 over ~2 millions
     assert(is_close(actual_macroparticle_number, expected_macroparticle_number, rtol = 0.,
                     atol = 5.*std_macroparticle_number))
 
     ## used in subsequent function
     return expected_fusion_number
+
+def p_sq_reactant1_frame_to_E_COM_frame(p_reactant0_sq):
+    # Takes the reactant0 square norm of the momentum in the reactant1 rest frame and returns the total
+    # kinetic energy in the center of mass frame. Everything is in SI units.
+    m0 = mass[reactant_species[0]]
+    m1 = mass[reactant_species[1]]
+
+    # Total (kinetic + mass) energy in lab frame
+    E_lab = np.sqrt(p_reactant0_sq*scc.c**2 + (m0*scc.c**2)**2) + m1*scc.c**2
+    # Use invariant E**2 - p**2c**2 of 4-momentum norm to compute energy in center of mass frame
+    E_com = np.sqrt(E_lab**2 - p_reactant0_sq*scc.c**2)
+    # Corresponding kinetic energy
+    E_com_kin = E_com - (m1+m0)*scc.c**2
+    return E_com_kin*(p_reactant0_sq>0.)
 
 def p_sq_to_kinetic_energy(p_sq, m):
     ## Returns the kinetic energy of a particle as a function of its squared momentum.
@@ -286,6 +311,13 @@ def compute_E_com1(data):
     for species_name in reactant_species:
         Ekin += p_sq_to_kinetic_energy( p_sq, mass[species_name] )
     return Ekin
+
+def compute_E_com2(data):
+    ## Computes kinetic energy (in Joule) in the center of frame for the second test
+
+    ## Square norm of the momentum of reactant0 as a function of cell number in z direction
+    p_reactant0_sq = 2.*mass[reactant_species[0]]*(Energy_step*np.arange(size_z)**2)
+    return p_sq_reactant1_frame_to_E_COM_frame(p_reactant0_sq)
 
 def check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density, reactant1_density):
     ## Checks that the fusion yield is as expected for the first and second tests.
@@ -310,6 +342,16 @@ def specific_check1(data):
     E_com = compute_E_com1(data)
     check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density = 1.,
                                                            reactant1_density = 1.)
+
+def specific_check2(data):
+    check_xy_isotropy(data)
+    ## Only 900 particles pairs per cell here because we ignore the 10% of reactants that are at rest
+    expected_fusion_number = check_macroparticle_number(data,
+                                                        fusion_probability_target_value = 0.02,
+                                                        num_pair_per_cell = 900)
+    E_com = compute_E_com2(data)
+    check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density = 1.e20,
+                                                           reactant1_density = 1.e26)
 
 def check_charge_conservation(rho_start, rho_end):
     assert(np.all(is_close(rho_start, rho_end, rtol=2.e-11)))

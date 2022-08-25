@@ -29,7 +29,7 @@ algo.particle_shape = 1
 #################################
 ############ PLASMA #############
 #################################
-particles.species_names = deuterium1 tritium1 helium1 neutron1 proton1
+particles.species_names = deuterium1 hydrogen1 helium1 neutron1
 my_constants.m_deuterium = 2.01410177812*m_u
 my_constants.keV_to_J = 1.e3*q_e
 my_constants.Energy_step = 22. * keV_to_J
@@ -38,18 +38,25 @@ deuterium1.species_type = deuterium
 deuterium1.injection_style = "NRandomPerCell"
 deuterium1.num_particles_per_cell = 10000
 deuterium1.profile = constant
-deuterium1.density = 1.
+deuterium1.density = 2.
 deuterium1.momentum_distribution_type = "parse_momentum_function"
 deuterium1.momentum_function_ux(x,y,z) = 0.
 deuterium1.momentum_function_uy(x,y,z) = 0.
-## Thanks to the floor, all particles in the same cell have the exact same momentum, but particles in half of the cell have opposite sign
-deuterium1.momentum_function_uz(x,y,z) = sqrt(2*m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight) * 2*(floor(2*z)-2*floor(z)-0.5)
+deuterium1.momentum_function_uz(x,y,z) = sqrt(2*m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight)
 deuterium1.do_not_push = 1
 deuterium1.do_not_deposit = 1
 
-tritium1.species_type = tritium
-tritium1.do_not_push = 1
-tritium1.do_not_deposit = 1
+hydrogen1.species_type = deuterium
+hydrogen1.injection_style = "NRandomPerCell"
+hydrogen1.num_particles_per_cell = 10000
+hydrogen1.profile = constant
+hydrogen1.density = 2.
+hydrogen1.momentum_distribution_type = "parse_momentum_function"
+hydrogen1.momentum_function_ux(x,y,z) = 0.
+hydrogen1.momentum_function_uy(x,y,z) = 0.
+hydrogen1.momentum_function_uz(x,y,z) = -sqrt(2*m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight)
+hydrogen1.do_not_push = 1
+hydrogen1.do_not_deposit = 1
 
 helium1.species_type = helium3
 helium1.do_not_push = 1
@@ -59,24 +66,15 @@ neutron1.species_type = neutron
 neutron1.do_not_push = 1
 neutron1.do_not_deposit = 1
 
-proton1.species_type = proton
-proton1.do_not_push = 1
-proton1.do_not_deposit = 1
-
 #################################
 ############ COLLISION ##########
 #################################
 collisions.collision_names = DDNHeF1
 
-DDNHeF1.species = deuterium1 deuterium1
+DDNHeF1.species = deuterium1 hydrogen1
 DDNHeF1.product_species = helium1 neutron1
 DDNHeF1.type = nuclearfusion
 DDNHeF1.fusion_multiplier = 1.e50
-
-DDPTF1.species = deuterium1 deuterium1
-DDPTF1.product_species = tritium1 proton1
-DDPTF1.type = nuclearfusion
-DDPTF1.fusion_multiplier = 1.e50
 
 # Diagnostics
 diagnostics.diags_names = diag1
