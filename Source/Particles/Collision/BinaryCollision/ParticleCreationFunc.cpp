@@ -34,6 +34,22 @@ ParticleCreationFunc::ParticleCreationFunc (const std::string collision_name,
                 m_num_products_device.push_back(3);
 #endif
             }
+        else if (m_collision_type == CollisionType::DeuteriumTritiumFusion)
+        {
+            m_num_product_species = 2;
+            m_num_products_host.push_back(1);
+            m_num_products_host.push_back(1);
+#ifndef AMREX_USE_GPU
+            // On CPU, the device vector can be filled immediatly
+            m_num_products_device.push_back(1);
+            m_num_products_device.push_back(1);
+#endif
+        }
+        else
+        {
+          amrex::Abort("Unknown collision type in ParticleCreationFunc");
+        }
+
 #ifdef AMREX_USE_GPU
         m_num_products_device.resize(m_num_product_species);
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_num_products_host.begin(),

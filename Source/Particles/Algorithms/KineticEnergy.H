@@ -21,7 +21,7 @@ namespace Algorithms{
     // This marks the gamma threshold to switch between the full relativistic expression
     // for particle kinetic energy and a Taylor expansion.
     static constexpr auto gamma_relativistic_threshold =
-        static_cast<amrex::Real>(1.005);
+        static_cast<amrex::ParticleReal>(1.005);
 
     /**
      * \brief Computes the kinetic energy of a particle. Below a threshold for the
@@ -36,22 +36,22 @@ namespace Algorithms{
      * @return the kinetic energy of the particle (in S.I. units)
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    amrex::Real KineticEnergy(
-        const amrex::Real ux, const amrex::Real uy, const amrex::Real uz,
-        const amrex::Real mass)
+    amrex::ParticleReal KineticEnergy(
+        const amrex::ParticleReal ux, const amrex::ParticleReal uy, const amrex::ParticleReal uz,
+        const amrex::ParticleReal mass)
     {
         using namespace amrex;
 
         constexpr auto c2 = PhysConst::c * PhysConst::c;
-        constexpr auto inv_c2 = 1.0_rt/c2;
+        constexpr auto inv_c2 = 1.0_prt/c2;
 
         const auto u2 = (ux*ux + uy*uy + uz*uz)*inv_c2;
-        const auto gamma = std::sqrt(1.0_rt + u2);
+        const auto gamma = std::sqrt(1.0_prt + u2);
 
         const auto kk = (gamma > gamma_relativistic_threshold)?
-            (gamma-1.0_rt):
-            (u2*0.5_rt - u2*u2*(1.0_rt/8.0_rt) + u2*u2*u2*(1.0_rt/16.0_rt)-
-            u2*u2*u2*u2*(5.0_rt/128.0_rt) + (7.0_rt/256_rt)*u2*u2*u2*u2*u2); //Taylor expansion
+            (gamma-1.0_prt):
+            (u2*0.5_prt - u2*u2*(1.0_prt/8.0_prt) + u2*u2*u2*(1.0_prt/16.0_prt)-
+            u2*u2*u2*u2*(5.0_prt/128.0_prt) + (7.0_prt/256_prt)*u2*u2*u2*u2*u2); //Taylor expansion
 
         return kk*mass*c2;
     }
@@ -66,8 +66,8 @@ namespace Algorithms{
      * @return the kinetic energy of the photon (in S.I. units)
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
-    amrex::Real KineticEnergyPhotons(
-        const amrex::Real ux, const amrex::Real uy, const amrex::Real uz)
+    amrex::ParticleReal KineticEnergyPhotons(
+        const amrex::ParticleReal ux, const amrex::ParticleReal uy, const amrex::ParticleReal uz)
     {
         // Photons have zero mass, but ux, uy and uz are calculated assuming a mass equal to the
         // electron mass. Hence, photons need a special treatment to calculate the total energy.

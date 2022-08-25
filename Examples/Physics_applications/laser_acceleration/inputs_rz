@@ -20,10 +20,11 @@ boundary.field_hi = pec pec
 #################################
 warpx.verbose = 1
 warpx.do_dive_cleaning = 0
-warpx.use_filter = 0
+warpx.use_filter = 1
+warpx.filter_npass_each_dir = 0 1
 warpx.cfl = 1. # if 1., the time step is set to its CFL limit
 warpx.do_moving_window = 1
-warpx.moving_window_dir = z # Only z is supported for the moment
+warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0 # units of speed of light
 
 # Order of particle shape factors
@@ -88,5 +89,5 @@ diagnostics.diags_names = diag1
 diag1.intervals = 10
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-diag1.electrons.variables = w ux uy uz
+diag1.electrons.variables = w ux uy uz orig_x orig_z
 diag1.beam.variables = w ux uy uz

@@ -31,9 +31,7 @@ SpectralBaseAlgorithm::SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspa
     const amrex::DistributionMapping& dm,
     const SpectralFieldIndex& spectral_index,
     const int norder_x, const int norder_y,
-    const int norder_z, const bool nodal,
-    const amrex::IntVect& fill_guards):
-        m_fill_guards(fill_guards),
+    const int norder_z, const bool nodal):
         m_spectral_index(spectral_index),
     // Compute and assign the modified k vectors
         modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,nodal)),
@@ -65,8 +63,6 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
     field_data.ForwardTransform(lev, *Efield[0], Idx.Ex, 0 );
     field_data.ForwardTransform(lev, *Efield[1], Idx.Ey, 0 );
     field_data.ForwardTransform(lev, *Efield[2], Idx.Ez, 0 );
-
-    const amrex::IntVect& fill_guards = m_fill_guards;
 
     // Loop over boxes
     for (MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -107,5 +103,6 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
     }
 
     // Backward Fourier transform
-    field_data.BackwardTransform(lev, divE, Idx.divE, 0, fill_guards);
+    const amrex::IntVect& fill_guards = amrex::IntVect(0);
+    field_data.BackwardTransform(lev, divE, Idx.divE, fill_guards, 0);
 }

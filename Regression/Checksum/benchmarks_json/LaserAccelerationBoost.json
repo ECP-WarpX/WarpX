@@ -1,7 +1,5 @@
 {
   "beam": {
-    "particle_cpu": 0.0,
-    "particle_id": 500500.0,
     "particle_momentum_x": 4.40462890925364e-19,
     "particle_momentum_y": 4.375137239523109e-19,
     "particle_momentum_z": 2.6808820042118736e-18,
@@ -10,8 +8,6 @@
     "particle_weight": 62415090744.60765
   },
   "electrons": {
-    "particle_cpu": 1200.0,
-    "particle_id": 1392000.0,
     "particle_momentum_x": 6.2983486271535245e-27,
     "particle_momentum_y": 2.561148643336908e-22,
     "particle_momentum_z": 3.2606826949441258e-18,
@@ -20,8 +16,6 @@
     "particle_weight": 7.205670325760674e+16
   },
   "ions": {
-    "particle_cpu": 1200.0,
-    "particle_id": 1538400.0,
     "particle_momentum_x": 7.729986759772206e-30,
     "particle_momentum_y": 2.561148659606118e-22,
     "particle_momentum_z": 5.987111293060833e-15,

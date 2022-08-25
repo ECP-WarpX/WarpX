@@ -64,6 +64,8 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
 {
     m_particle_containers.resize(numBoundaries());
     m_do_boundary_buffer.resize(numBoundaries());
+    m_do_any_boundary.resize(numBoundaries(), 0);
+    m_boundary_names.resize(numBoundaries());
 
     for (int i = 0; i < numBoundaries(); ++i)
     {
@@ -93,7 +95,32 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
 #ifdef AMREX_USE_EB
         pp_species.query("save_particles_at_eb", m_do_boundary_buffer[AMREX_SPACEDIM*2][ispecies]);
 #endif
+        // Set the flag whether the boundary is active or any species
+        for (int i = 0; i < numBoundaries(); ++i) {
+            if (m_do_boundary_buffer[i][ispecies]) m_do_any_boundary[i] = 1;
+        }
     }
+
+#if defined(WARPX_DIM_1D_Z)
+    m_boundary_names[0] = "zlo";
+    m_boundary_names[1] = "zhi";
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    m_boundary_names[0] = "xlo";
+    m_boundary_names[1] = "xhi";
+    m_boundary_names[2] = "zlo";
+    m_boundary_names[3] = "zhi";
+#else
+    m_boundary_names[0] = "xlo";
+    m_boundary_names[1] = "xhi";
+    m_boundary_names[2] = "ylo";
+    m_boundary_names[3] = "yhi";
+    m_boundary_names[4] = "zlo";
+    m_boundary_names[5] = "zhi";
+#endif
+#ifdef AMREX_USE_EB
+    m_boundary_names[AMREX_SPACEDIM*2] =  "eb";
+#endif
+
 }
 
 void ParticleBoundaryBuffer::printNumParticles () const {
@@ -143,12 +170,16 @@ void ParticleBoundaryBuffer::redistribute () {
 void ParticleBoundaryBuffer::clearParticles () {
     for (int i = 0; i < numBoundaries(); ++i)
     {
-        auto& buffer = m_particle_containers[i];
-        for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
-        {
-            auto& species_buffer = buffer[ispecies];
-            if (species_buffer.isDefined()) species_buffer.clearParticles();
-        }
+        clearParticles(i);
+    }
+}
+
+void ParticleBoundaryBuffer::clearParticles (int const i) {
+    auto& buffer = m_particle_containers[i];
+    for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
+    {
+        auto& species_buffer = buffer[ispecies];
+        if (species_buffer.isDefined()) species_buffer.clearParticles();
     }
 }
 
@@ -233,6 +264,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
     auto& buffer = m_particle_containers[m_particle_containers.size()-1];
     for (int i = 0; i < numSpecies(); ++i)
     {
+        if (!m_do_boundary_buffer[AMREX_SPACEDIM*2][i]) continue;
         const auto& pc = mypc.GetParticleContainer(i);
         if (!buffer[i].isDefined())
         {
@@ -332,8 +364,5 @@ ParticleBoundaryBuffer::getParticleBufferPointer(const std::string species_name,
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_boundary_buffer[boundary][index],
-                                     "Attempted to get particle buffer for boundary "
-                                     + std::to_string(boundary) + ", which is not used!");
     return &buffer[index];
 }

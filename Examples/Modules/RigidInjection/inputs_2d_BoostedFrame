@@ -49,7 +49,7 @@ beam.zinject_plane = 20.e-6
 beam.rigid_advance = true
 
 # Diagnostics
-diagnostics.diags_names = diag1 btd_openpmd btd_pltfile
+diagnostics.diags_names = diag1 btd_pltfile btd_openpmd
 diag1.intervals = 10000
 diag1.diag_type = Full
 
@@ -69,6 +69,7 @@ btd_pltfile.dt_snapshots_lab = 1.8679589331096515e-13
 btd_pltfile.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
 btd_pltfile.format = plotfile
 btd_pltfile.buffer_size = 32
+btd_pltfile.write_species = 1
 
 # old BTD diagnostics
 warpx.do_back_transformed_diagnostics = 1

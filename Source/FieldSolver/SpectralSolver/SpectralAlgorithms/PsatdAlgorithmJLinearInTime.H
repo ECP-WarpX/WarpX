@@ -41,7 +41,6 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
          * \param[in] norder_y order of the spectral solver along y
          * \param[in] norder_z order of the spectral solver along z
          * \param[in] nodal whether the E and B fields are defined on a fully nodal grid or a Yee grid
-         * \param[in] fill_guards Update the guard cells (in addition to the valid cells) when pushing the fields in time
          * \param[in] dt time step of the simulation
          * \param[in] time_averaging whether to use time averaging for large time steps
          * \param[in] dive_cleaning Update F as part of the field update, so that errors in divE=rho propagate away at the speed of light
@@ -55,7 +54,6 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
             const int norder_y,
             const int norder_z,
             const bool nodal,
-            const amrex::IntVect& fill_guards,
             const amrex::Real dt,
             const bool time_averaging,
             const bool dive_cleaning,

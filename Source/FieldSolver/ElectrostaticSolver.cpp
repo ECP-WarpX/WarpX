@@ -165,20 +165,24 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
         BoxArray nba = boxArray(lev);
         nba.surroundingNodes();
         rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
+        rho[lev]->setVal(0.);
         phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
         phi[lev]->setVal(0.);
     }
 
     // Deposit particle charge density (source of Poisson solver)
     bool const local = false;
-    bool const reset = true;
+    bool const reset = false;
     bool const do_rz_volume_scaling = true;
-    pc.DepositCharge(rho, local, reset, do_rz_volume_scaling);
+    if ( !pc.do_not_deposit) {
+        pc.DepositCharge(rho, local, reset, do_rz_volume_scaling);
+    }
 
     // Get the particle beta vector
     bool const local_average = false; // Average across all MPI ranks
-    std::array<Real, 3> beta = pc.meanParticleVelocity(local_average);
-    for (Real& beta_comp : beta) beta_comp /= PhysConst::c; // Normalize
+    std::array<ParticleReal, 3> beta_pr = pc.meanParticleVelocity(local_average);
+    std::array<Real, 3> beta;
+    for (int i=0 ; i < static_cast<int>(beta.size()) ; i++) beta[i] = beta_pr[i]/PhysConst::c; // Normalize
 
     // Compute the potential phi, by solving the Poisson equation
     computePhi( rho, phi, beta, pc.self_fields_required_precision,
@@ -217,9 +221,11 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     bool const do_rz_volume_scaling = false;
     for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
         WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        species.DepositCharge(
-            rho_fp, local, reset, do_rz_volume_scaling, interpolate_across_levels
-        );
+        if (!species.do_not_deposit) {
+            species.DepositCharge( rho_fp,
+                                   local, reset, do_rz_volume_scaling, interpolate_across_levels
+                                  );
+        }
     }
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
@@ -279,9 +285,16 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    int const max_iters,
                    int const verbosity) const
 {
+    // create a vector to our fields, sorted by level
+    amrex::Vector<amrex::MultiFab*> sorted_rho;
+    amrex::Vector<amrex::MultiFab*> sorted_phi;
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        sorted_rho.emplace_back(rho[lev].get());
+        sorted_phi.emplace_back(phi[lev].get());
+    }
+
     std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
 #if defined(AMREX_USE_EB)
-
     // EB: use AMReX to directly calculate the electric field since with EB's the
     // simple finite difference scheme in WarpX::computeE sometimes fails
     if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
@@ -326,8 +339,8 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #endif
 
     ablastr::fields::computePhi(
-        rho,
-        phi,
+        sorted_rho,
+        sorted_phi,
         beta,
         required_precision,
         absolute_tolerance,

@@ -3,6 +3,7 @@ import argparse
 import sys
 
 import numpy as np
+
 from pywarpx import callbacks, picmi
 
 # Create the parser and add the argument

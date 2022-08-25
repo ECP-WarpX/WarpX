@@ -338,8 +338,8 @@ def E_com_to_p_sq_com(m1, m2, E):
     ## E is the total (kinetic+mass) energy of a two particle (with mass m1 and m2) system in
     ## its center of mass frame, in J.
     ## Returns the square norm of the momentum of each particle in that frame.
-    return E**2/(4.*scc.c**2) - (m1**2 + m2**2)*scc.c**2/2. + \
-           scc.c**6/(4.*E**2)*((m1**2 - m2**2)**2)
+    E_ratio = E/((m1+m2)*scc.c**2)
+    return m1*m2*scc.c**2 * (E_ratio**2 - 1) + (m1-m2)**2*scc.c**2/4 * (E_ratio - 1./E_ratio)**2
 
 def compute_relative_v_com(E):
     ## E is the kinetic energy of proton+boron in the center of mass frame, in keV

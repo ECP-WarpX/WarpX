@@ -143,6 +143,10 @@ struct LorentzTransformParticles
         dst.m_aos[i_dst].pos(0) = xp;
         dst.m_aos[i_dst].pos(1) = yp;
         dst.m_aos[i_dst].pos(2) = zp;
+#elif defined (WARPX_DIM_RZ)
+        dst.m_aos[i_dst].pos(0) = std::sqrt(xp*xp + yp*yp);
+        dst.m_aos[i_dst].pos(1) = zp;
+        dst.m_rdata[PIdx::theta][i_dst] = std::atan2(yp, xp);
 #elif defined (WARPX_DIM_XZ)
         dst.m_aos[i_dst].pos(0) = xp;
         dst.m_aos[i_dst].pos(1) = zp;
