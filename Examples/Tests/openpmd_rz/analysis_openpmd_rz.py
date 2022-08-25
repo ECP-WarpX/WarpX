@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-import openpmd_api as io
 import numpy as np
+import openpmd_api as io
 
 series = io.Series("LaserAccelerationRZ_opmd_plt/openpmd_%T.h5", io.Access.read_only)
 
