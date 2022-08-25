@@ -589,7 +589,7 @@ LaserParticleContainer::Evolve (int lev,
             if (m_deposit_on_main_grid && lev > 0) {
                 nfine_current = 0;
             }
-            const long np_current = (cjx) ? nfine_current : np;
+            const long np_current = (has_buffer) ? nfine_current : np;
 
             if (rho && ! skip_deposition && ! do_not_deposit) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
