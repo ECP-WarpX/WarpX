@@ -36,8 +36,7 @@ zmin, rmin = rhoe_mesh.grid_global_offset
 rhoe = rhoe_mesh[io.Mesh_Record_Component.SCALAR][:]
 rhob = rhob_mesh[io.Mesh_Record_Component.SCALAR][:]
 series.flush()
-_, nz, _ = rhoe.shape
-
+nm, nz, nr = rhoe.shape
 zlist = zmin + dz * np.arange(nz)
 rhoe0 = rhoe[0] # 0 mode
 rhob0 = rhob[0] # 0 mode
