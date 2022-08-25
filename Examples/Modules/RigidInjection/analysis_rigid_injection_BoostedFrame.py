@@ -29,7 +29,6 @@ import read_raw_data
 from scipy.constants import m_e
 import yt
 
-
 yt.funcs.mylog.setLevel(0)
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
