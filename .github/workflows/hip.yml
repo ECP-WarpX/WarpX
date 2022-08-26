@@ -29,8 +29,8 @@ jobs:
           ~/.cache/ccache
         key: ccache-hip-3dsp-${{ hashFiles('.github/workflows/hip.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
         restore-keys: |
-          ccache-hip-3dsp-${{ hashFiles('.github/workflows/hip.yml') }}-
-          ccache-hip-3dsp-
+          ccache-hip-3dsp-${{ hashFiles('.github/workflows/hip.yml') }}
+          ccache-hip-3dsp
     - name: build WarpX
       shell: bash
       run: |
@@ -84,8 +84,8 @@ jobs:
           ~/.cache/ccache
         key: ccache-hip-2ddp-${{ hashFiles('.github/workflows/hip.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
         restore-keys: |
-          ccache-hip-2ddp-${{ hashFiles('.github/workflows/hip.yml') }}-
-          ccache-hip-2ddp-
+          ccache-hip-2ddp-${{ hashFiles('.github/workflows/hip.yml') }}
+          ccache-hip-2ddp
     - name: build WarpX
       shell: bash
       run: |

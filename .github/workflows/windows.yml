@@ -23,8 +23,8 @@ jobs:
           ~/.cache/ccache
         key: ccache-windows-winmsvc-${{ hashFiles('.github/workflows/windows.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
         restore-keys: |
-          ccache-windows-winmsvc-${{ hashFiles('.github/workflows/windows.yml') }}-
-          ccache-windows-winmsvc-
+          ccache-windows-winmsvc-${{ hashFiles('.github/workflows/windows.yml') }}
+          ccache-windows-winmsvc
     - name: Build & Install
       run: |
         cmake -S . -B build               `
@@ -63,8 +63,8 @@ jobs:
           ~/.cache/ccache
         key: ccache-windows-winclang-${{ hashFiles('.github/workflows/windows.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
         restore-keys: |
-          ccache-windows-winclang-${{ hashFiles('.github/workflows/windows.yml') }}-
-          ccache-windows-winclang-
+          ccache-windows-winclang-${{ hashFiles('.github/workflows/windows.yml') }}
+          ccache-windows-winclang
     - uses: seanmiddleditch/gha-setup-ninja@master
     - name: Build & Install
       shell: cmd

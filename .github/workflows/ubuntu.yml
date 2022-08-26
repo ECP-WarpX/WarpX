@@ -28,8 +28,8 @@ jobs:
           ~/.cache/ccache
         key: ccache-openmp-cxxminimal-${{ hashFiles('.github/workflows/ubuntu.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
         restore-keys: |
-          ccache-openmp-cxxminimal-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
-          ccache-openmp-cxxminimal-
+          ccache-openmp-cxxminimal-${{ hashFiles('.github/workflows/ubuntu.yml') }}
+          ccache-openmp-cxxminimal
     - name: build WarpX
       run: |
         cmake -S . -B build_3D         \
@@ -72,8 +72,8 @@ jobs:
           ~/.cache/ccache
         key: ccache-openmp-gccablastr-${{ hashFiles('.github/workflows/ubuntu.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
         restore-keys: |
-          ccache-openmp-gccablastr-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
-          ccache-openmp-gccablastr-
+          ccache-openmp-gccablastr-${{ hashFiles('.github/workflows/ubuntu.yml') }}
+          ccache-openmp-gccablastr
     - name: build WarpX
       run: |
         cmake -S . -B build            \
@@ -108,8 +108,8 @@ jobs:
           ~/.cache/ccache
         key: ccache-openmp-pyfull-${{ hashFiles('.github/workflows/ubuntu.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
         restore-keys: |
-          ccache-openmp-pyfull-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
-          ccache-openmp-pyfull-
+          ccache-openmp-pyfull-${{ hashFiles('.github/workflows/ubuntu.yml') }}
+          ccache-openmp-pyfull
     - name: build WarpX
       run: |
         python3 -m pip install --upgrade pip setuptools wheel

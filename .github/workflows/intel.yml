@@ -31,8 +31,8 @@ jobs:
           ~/.cache/ccache
         key: ccache-intel-icc-${{ hashFiles('.github/workflows/intel.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
         restore-keys: |
-          ccache-intel-icc-${{ hashFiles('.github/workflows/intel.yml') }}-
-          ccache-intel-icc-
+          ccache-intel-icc-${{ hashFiles('.github/workflows/intel.yml') }}
+          ccache-intel-icc
     - name: build WarpX
       run: |
         set +eu
@@ -86,8 +86,8 @@ jobs:
           ~/.cache/ccache
         key: ccache-intel-icpx-${{ hashFiles('.github/workflows/intel.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
         restore-keys: |
-          ccache-intel-icpx-${{ hashFiles('.github/workflows/intel.yml') }}-
-          ccache-intel-icpx-
+          ccache-intel-icpx-${{ hashFiles('.github/workflows/intel.yml') }}
+          ccache-intel-icpx
     - name: build WarpX
       shell: bash
       run: |
@@ -144,8 +144,8 @@ jobs:
           ~/.cache/ccache
         key: ccache-intel-dpcc-${{ hashFiles('.github/workflows/intel.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
         restore-keys: |
-          ccache-intel-dpcc-${{ hashFiles('.github/workflows/intel.yml') }}-
-          ccache-intel-dpcc-
+          ccache-intel-dpcc-${{ hashFiles('.github/workflows/intel.yml') }}
+          ccache-intel-dpcc
     - name: build WarpX
       shell: bash
       run: |

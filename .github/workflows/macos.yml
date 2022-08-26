@@ -43,8 +43,8 @@ jobs:
         path: /Users/runner/Library/Caches/ccache
         key: ccache-macos-appleclang-${{ hashFiles('.github/workflows/macos.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
         restore-keys: |
-          ccache-macos-appleclang-${{ hashFiles('.github/workflows/macos.yml') }}-
-          ccache-macos-appleclang-
+          ccache-macos-appleclang-${{ hashFiles('.github/workflows/macos.yml') }}
+          ccache-macos-appleclang
     - name: build WarpX
       run: |
         cmake -S . -B build_dp         \
