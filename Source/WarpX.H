@@ -647,6 +647,13 @@ public:
     void FillBoundaryAux (int lev, amrex::IntVect ng);
 
     /**
+     * \brief Synchronize J and rho:
+     * filter (if used), exchange guard cells, interpolate across MR levels.
+     * Contains separate calls to WarpX::SyncCurrent and WarpX::SyncRho.
+     */
+    void SyncCurrentAndRho ();
+
+    /**
      * \brief Apply filter and sum guard cells across MR levels.
      * If current centering is used, center the current from a nodal grid
      * to a staggered grid. For each MR level beyond level 0, interpolate
@@ -1506,10 +1513,13 @@ private:
      *             storing the fine patch current to be transformed
      * \param J_cp Vector of three-dimensional arrays (for each level)
      *             storing the coarse patch current to be transformed
+     * \param[in] apply_kspace_filter Control whether to apply filtering
+     *                                (only used in RZ geometry to avoid double filtering)
      */
     void PSATDForwardTransformJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const bool apply_kspace_filter=true);
 
     /**
      * \brief Backward FFT of J on all mesh refinement levels
@@ -1531,11 +1541,13 @@ private:
      * \param charge_cp Vector (for each level) storing the coarse patch charge to be transformed
      * \param[in] icomp index of fourth component (0 for rho_old, 1 for rho_new)
      * \param[in] dcomp index of spectral component (0 for rho_old, 1 for rho_new)
+     * \param[in] apply_kspace_filter Control whether to apply filtering
+     *                                (only used in RZ geometry to avoid double filtering)
      */
     void PSATDForwardTransformRho (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-        const int icomp, const int dcomp);
+        const int icomp, const int dcomp, const bool apply_kspace_filter=true);
 
     /**
      * \brief Copy rho_new to rho_old in spectral space
