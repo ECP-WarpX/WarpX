@@ -24,6 +24,10 @@ jobs:
       SETUPTOOLS_USE_DISTUTILS: stdlib
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      name: Install Python
+      with:
+        python-version: '3.x'
     - name: install dependencies
       run: |
         .github/workflows/dependencies/nvcc11.sh
