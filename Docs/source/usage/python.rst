@@ -145,6 +145,102 @@ The input file should have the line ``sim.step()`` which runs the simulation.
 where ``<n_ranks>`` is the number of MPI ranks used, and ``<python_script>``
 is the name of the script.
 
+
+Extending a Simulation from Python
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When running WarpX directly from Python it is possible to interact with the simulation
+by installing ``CallbackFunctions``, which will execute a given Python function at a
+specific location in the WarpX simulation loop.
+
+.. autoclass:: pywarpx.callbacks.CallbackFunctions
+
+Places in the WarpX loop where callbacks are available include:
+``afterinit``, ``beforecollisions``, ``aftercollisions``, ``beforeEsolve``, ``afterEsolve``,
+``beforedeposition``, ``afterdeposition``, ``beforestep``, ``afterstep``, ``afterdiagnostics``,
+``afterrestart`` and ``oncheckpointsignal``.
+See the examples in *Examples/Tests/ParticleDataPython* for references on how to use
+``callbacks``.
+
+There are several "hooks" available via the ``libwarpx`` shared library to access and manipulate
+simulation objects (particles, fields and memory buffers) as well as general properties
+(such as processor number). These "hooks" are accessible through the `Simulation.extension` object.
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getNProcs
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getMyProc
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.get_nattr
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.get_nattr_species
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getistep
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.gett_new
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.evolve
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.finalize
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getistep
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.gett_new
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.evolve
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getProbLo
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getProbHi
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.getCellSize
+
+Particles can be added to the simulation at specific positions and with specific
+attribute values:
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.add_particles
+
+Properties of the particles already in the simulation can be obtained with various
+functions.
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_count
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_structs
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_arrays
+
+The ``get_particle_structs()`` and ``get_particle_arrays()`` functions are called
+by several utility functions of the form ``get_particle_{comp_name}`` where
+``comp_name`` is one of ``x``, ``y``, ``z``, ``r``, ``theta``, ``id``, ``cpu``,
+``weight``, ``ux``, ``uy`` or ``uz``.
+
+The index of some specific component of the particle data can be obtained.
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_comp_index
+
+New components can be added via Python.
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.add_real_comp
+
+Various diagnostics are also accessible from Python.
+This includes getting the deposited or total charge density from a given species
+as well as accessing the scraped particle buffer. See the example in
+*Examples/Modules/ParticleBoudaryScrape* for a reference on how to interact
+with scraped particle data.
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.get_species_charge_sum
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.depositChargeDensity
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer_size
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer_size
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer_structs
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.clearParticleBoundaryBuffer
+
 Using Python input as a preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
