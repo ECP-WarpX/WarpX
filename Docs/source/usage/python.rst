@@ -4,7 +4,7 @@ Python (PICMI)
 ==============
 
 WarpX uses the `PICMI standard <https://github.com/picmi-standard/picmi>`__ for its Python input files.
-Python version 3.6 or newer is required.
+Python version 3.7 or newer is required.
 
 Example input files can be found in :ref:`the examples section <usage-examples>`.
 The examples support running in both modes by commenting and uncommenting the appropriate lines.
