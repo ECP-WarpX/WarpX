@@ -83,7 +83,8 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
 
     const RealBox& real_box = dom_geom[0].ProbDomain();
     RealBox slice_cc_nd_box;
-    int slice_grid_size = 32;
+    const int default_grid_size = 32;
+    int slice_grid_size = default_grid_size;
 
     bool interpolate = false;
     bool coarsen = false;
@@ -304,6 +305,8 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
                warnMsg.str(), ablastr::warn_manager::WarnPriority::low);
         }
 
+         const auto very_small_number = 1E-10;
+
         // Factor to ensure index values computation depending on index type //
         double fac = ( 1.0 - SliceType[idim] )*dom_geom[0].CellSize(idim)*0.5;
         // if dimension is reduced to one cell length //
@@ -319,11 +322,11 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
                 slice_lo[idim] = static_cast<int>(
                                  floor( ( (slice_cc_nd_box.lo(idim)
                                  - (real_box.lo(idim) + fac ) )
-                                 / dom_geom[0].CellSize(idim)) + fac * 1E-10) );
+                                 / dom_geom[0].CellSize(idim)) + fac * very_small_number) );
                 slice_lo2[idim] = static_cast<int>(
                                  ceil( ( (slice_cc_nd_box.lo(idim)
                                  - (real_box.lo(idim) + fac) )
-                                 / dom_geom[0].CellSize(idim)) - fac * 1E-10 ) );
+                                 / dom_geom[0].CellSize(idim)) - fac * very_small_number) );
             }
             else {
                 slice_lo[idim] = static_cast<int>(
@@ -353,9 +356,9 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
         else
         {
             // moving realbox.lo and reabox.hi to nearest coarsenable grid point //
-            auto index_lo = static_cast<int>(floor(((slice_realbox.lo(idim) +  1E-10
+            auto index_lo = static_cast<int>(floor(((slice_realbox.lo(idim) +  very_small_number
                             - (real_box.lo(idim))) / dom_geom[0].CellSize(idim))) );
-            auto index_hi = static_cast<int>(ceil(((slice_realbox.hi(idim)  - 1E-10
+            auto index_hi = static_cast<int>(ceil(((slice_realbox.hi(idim)  - very_small_number
                             - (real_box.lo(idim))) / dom_geom[0].CellSize(idim))) );
 
             bool modify_cr = true;
@@ -378,8 +381,9 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
 
                 // If modified index.hi is > baselinebox.hi, move the point  //
                 // to the previous coarsenable point                         //
+                const auto small_number = 0.01;
                 if ( (hi_new * dom_geom[0].CellSize(idim))
-                      > real_box.hi(idim) - real_box.lo(idim) + dom_geom[0].CellSize(idim)*0.01 )
+                      > real_box.hi(idim) - real_box.lo(idim) + dom_geom[0].CellSize(idim)*small_number)
                 {
                    hi_new = index_hi - mod_hi;
                 }
