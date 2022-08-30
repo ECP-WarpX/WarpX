@@ -810,7 +810,7 @@ WarpX::ReadParameters ()
         // Read the incident angle 'theta_pml' in units of radian (the default value is 0 which stand for the normal incident)
         theta_pml = 0._rt;
         queryWithParser(pp_warpx, "theta_pml", theta_pml);
-        
+
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
         // false for FDTD solver, true for PSATD solver.
         if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
