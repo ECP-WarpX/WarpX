@@ -74,6 +74,9 @@ private:
      *                is initialized.
      */
     void InitializeFieldFunctors (int lev) override;
+
+    void InitializeFieldFunctorsRZopenPMD (int lev) override;
+    void AddRZModesToOutputNames (const std::string& field, const int ncomp, bool cellcenter_data);
     /** This function allocates and initializes particle buffers for all the snapshots.
      * This is currently an empty function:
      * The particle containers required for this must be added to populate this function.
@@ -313,9 +316,20 @@ private:
      *  All the fields are stored regardless of the specific fields to plot selected
      *  by the user.
      */
+#ifdef WARPX_DIM_RZ
+    amrex::Vector< std::string > m_cellcenter_varnames = {"Er", "Et", "Ez",
+                                                          "Br", "Bt", "Bz",
+                                                          "jr", "jt", "jz", "rho"};
+    amrex::Vector< std::string > m_cellcenter_varnames_fields = {"Er", "Et", "Ez",
+                                                                 "Br", "Bt", "Bz",
+                                                                 "jr", "jt", "jz",
+                                                                 "rho"};
+#else
     amrex::Vector< std::string > m_cellcenter_varnames = {"Ex", "Ey", "Ez",
                                                           "Bx", "By", "Bz",
                                                           "jx", "jy", "jz", "rho"};
+#endif
+
 
     /** Merge the lab-frame buffer multifabs so it can be visualized as
      *  a single plotfile
