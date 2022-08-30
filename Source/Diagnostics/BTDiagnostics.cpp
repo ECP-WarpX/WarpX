@@ -523,6 +523,12 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
                   nvars, m_num_buffers, m_varnames);
     }
 
+    // For RZ, initialize field functors RZ for openpmd
+    // This is a specialized call for intializing cell-center functors
+    // such that, all modes of a field component are stored contiguously
+    // For examply, Er0, Er1_real, Er1_imag, etc
+    InitializeFieldFunctorsRZopenPMD(lev);
+
     // Define all cell-centered functors required to compute cell-centere data
     // Fill vector of cell-center functors for all field-components, namely,
     // Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho are included in the
@@ -688,6 +694,102 @@ BTDiagnostics::AddRZModesToOutputNames (const std::string& field, const int ncom
         for (int ic=1; ic < nmodes; ic++) {
             m_varnames.push_back( field + "_" + std::to_string(ic) + "_real" );
             m_varnames.push_back( field + "_" + std::to_string(ic) + "_imag" );
+        }
+    }
+#else
+    amrex::ignore_unused(field, ncomp, cellcenter_data);
+#endif
+}
+
+void
+BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
+{
+#ifdef WARPX_DIM_RZ
+    auto & warpx = WarpX::GetInstance();
+    int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0,0)->nComp();
+    int ncomp = ncomp_multimodefab;
+    // This function may be called multiple times, for different values of `lev`
+    // but the `varnames` need only be updated once.
+    bool update_cellcenter_varnames = (lev == 0);
+    if (update_cellcenter_varnames) {
+        m_cellcenter_varnames.clear();
+        const int n_rz = ncomp * m_cellcenter_varnames.size();
+        m_cellcenter_varnames.reserve(n_rz);
+    }
+
+    // Reset field functors
+    m_cell_center_functors[lev].clear();
+    m_cell_center_functors[lev].resize(m_cellcenter_varnames_fields.size());
+
+    for (int comp=0, n=m_cell_center_functors.at(lev).size(); comp<n; comp++){
+        if        ( m_cellcenter_varnames_fields[comp] == "Er" ){
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio, false, ncomp);
+            if (update_cellcenter_varnames) {
+                AddRZModesToOutputNames(std::string("Er"), ncomp, true);
+            }
+        } else if ( m_cellcenter_varnames_fields[comp] == "Et" ){
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 1), lev, m_crse_ratio, false, ncomp);
+            if (update_cellcenter_varnames) {
+                AddRZModesToOutputNames(std::string("Et"), ncomp, true);
+            }
+        } else if ( m_cellcenter_varnames_fields[comp] == "Ez" ){
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 2), lev, m_crse_ratio, false, ncomp);
+            if (update_cellcenter_varnames) {
+                AddRZModesToOutputNames(std::string("Ez"), ncomp, true);
+            }
+        } else if ( m_cellcenter_varnames_fields[comp] == "Br" ){
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 0), lev, m_crse_ratio, false, ncomp);
+            if (update_cellcenter_varnames) {
+                AddRZModesToOutputNames(std::string("Br"), ncomp, true);
+            }
+        } else if ( m_cellcenter_varnames_fields[comp] == "Bt" ){
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 1), lev, m_crse_ratio, false, ncomp);
+            if (update_cellcenter_varnames) {
+                AddRZModesToOutputNames(std::string("Bt"), ncomp, true);
+            }
+        } else if ( m_cellcenter_varnames_fields[comp] == "Bz" ){
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 2), lev, m_crse_ratio, false, ncomp);
+            if (update_cellcenter_varnames) {
+                AddRZModesToOutputNames(std::string("Bz"), ncomp, true);
+            }
+        } else if ( m_cellcenter_varnames_fields[comp] == "jr" ){
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 0), lev, m_crse_ratio, false, ncomp);
+            if (update_cellcenter_varnames) {
+                AddRZModesToOutputNames(std::string("jr"), ncomp, true);
+            }
+        } else if ( m_cellcenter_varnames_fields[comp] == "jt" ){
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 1), lev, m_crse_ratio, false, ncomp);
+            if (update_cellcenter_varnames) {
+                AddRZModesToOutputNames(std::string("jt"), ncomp, true);
+            }
+        } else if ( m_cellcenter_varnames_fields[comp] == "jz" ){
+            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio, false, ncomp);
+            if (update_cellcenter_varnames) {
+                AddRZModesToOutputNames(std::string("jz"), ncomp, true);
+            }
+        } else if ( m_cellcenter_varnames_fields[comp] == "rho" ){
+            m_cell_center_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1, false, ncomp);
+            if (update_cellcenter_varnames) {
+                AddRZModesToOutputNames(std::string("rho"), ncomp, true);
+            }
+        }
+    }
+
+#endif
+    amrex::ignore_unused(lev);
+}
+
+void
+BTDiagnostics::AddRZModesToOutputNames (const std::string& field, const int ncomp, bool cellcenter_data)
+{
+#ifdef WARPX_DIM_RZ
+    // In cylindrical geometry, real and imag part of each mode are also
+    // dumped to file separately, so they need to be added to m_varnames
+    if (cellcenter_data) {
+        m_cellcenter_varnames.push_back( field + "_0_real" );
+        for (int ic=1 ; ic < (ncomp+1)/2 ; ic += 1) {
+            m_cellcenter_varnames.push_back( field + "_" + std::to_string(ic) + "_real" );
+            m_cellcenter_varnames.push_back( field + "_" + std::to_string(ic) + "_imag" );
         }
     }
 #else
