@@ -807,7 +807,10 @@ WarpX::ReadParameters ()
             "Input value for the velocity warpx.v_particle_pml of the macroparticle must be in (0,1] (in units of c).");
         // Scale by the speed of light
         v_particle_pml = v_particle_pml * PhysConst::c;
-
+        // Read the incident angle 'theta_pml' in units of radian (the default value is 0 which stand for the normal incident)
+        theta_pml = 0._rt;
+        queryWithParser(pp_warpx, "theta_pml", theta_pml);
+        
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
         // false for FDTD solver, true for PSATD solver.
         if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)

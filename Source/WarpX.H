@@ -1236,6 +1236,7 @@ private:
     amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
 #endif
     amrex::Real v_particle_pml;
+    amrex::Real theta_pml;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
     amrex::Real current_injection_position = 0;
