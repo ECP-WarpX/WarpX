@@ -16,6 +16,7 @@
 #SBATCH -C gpu
 #SBATCH -c 32
 #SBATCH --ntasks-per-node=4
+#SBATCH --gpus-per-node=4
 #SBATCH -o WarpX.o%j
 #SBATCH -e WarpX.e%j
 
