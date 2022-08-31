@@ -44,7 +44,7 @@ ReducedDiags::ReducedDiags (std::string rd_name)
     if (ParallelDescriptor::IOProcessor())
     {
         // create folder
-        const int permission_flag_rwxrxrx = 0755;
+        constexpr int permission_flag_rwxrxrx = 0755;
         if (!UtilCreateDirectory(m_path, permission_flag_rwxrxrx))
         { CreateDirectoryFailed(m_path); }
 

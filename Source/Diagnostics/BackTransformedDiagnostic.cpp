@@ -54,7 +54,7 @@ using namespace amrex;
 
 namespace
 {
-    const int permission_flag_rwxrxrx = 0755;
+    constexpr int permission_flag_rwxrxrx = 0755;
 }
 
 #ifdef WARPX_USE_HDF5
