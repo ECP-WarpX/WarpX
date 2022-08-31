@@ -487,27 +487,35 @@ void ParticleExtrema::ComputeDiags (int step)
             ParallelDescriptor::ReduceRealMax(chimax_f);
         }
 #endif
-        m_data[0]  = xmin;
-        m_data[1]  = xmax;
-        m_data[2]  = ymin;
-        m_data[3]  = ymax;
-        m_data[4]  = zmin;
-        m_data[5]  = zmax;
-        m_data[6]  = uxmin*m;
-        m_data[7]  = uxmax*m;
-        m_data[8]  = uymin*m;
-        m_data[9]  = uymax*m;
-        m_data[10] = uzmin*m;
-        m_data[11] = uzmax*m;
-        m_data[12] = gmin;
-        m_data[13] = gmax;
-        m_data[14] = wmin;
-        m_data[15] = wmax;
+        constexpr auto
+            idx_xmin   = 0  , idx_xmax   = 1   , idx_ymin   = 2 , idx_ymax   = 3,
+            idx_zmin   = 4  , idx_zmax   = 5   , idx_uxminm = 6 , idx_uxmaxm = 7,
+            idx_uyminm = 8  , idx_uymaxm = 9   , idx_uzminm = 10, idx_uzmaxm = 11,
+            idx_gmin   = 12 , idx_gmax   = 13  , idx_wmin   = 14, idx_wmax   = 15;
+        [[maybe_unused]] constexpr auto
+            idx_chimin_f = 16, idx_chimax_f = 17;
+
+        m_data[idx_xmin]  = xmin;
+        m_data[idx_xmax]  = xmax;
+        m_data[idx_ymin]  = ymin;
+        m_data[idx_ymax]  = ymax;
+        m_data[idx_zmin]  = zmin;
+        m_data[idx_zmax]  = zmax;
+        m_data[idx_uxminm]  = uxmin*m;
+        m_data[idx_uxmaxm]  = uxmax*m;
+        m_data[idx_uyminm]  = uymin*m;
+        m_data[idx_uymaxm]  = uymax*m;
+        m_data[idx_uzminm] = uzmin*m;
+        m_data[idx_uzmaxm] = uzmax*m;
+        m_data[idx_gmin] = gmin;
+        m_data[idx_gmax] = gmax;
+        m_data[idx_wmin] = wmin;
+        m_data[idx_wmax] = wmax;
 #if (defined WARPX_QED)
         if (myspc.DoQED())
         {
-            m_data[16] = chimin_f;
-            m_data[17] = chimax_f;
+            m_data[idx_chimin_f] = chimin_f;
+            m_data[idx_chimax_f] = chimax_f;
         }
 #endif
     }
