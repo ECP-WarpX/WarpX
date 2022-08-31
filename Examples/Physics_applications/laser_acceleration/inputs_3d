@@ -12,6 +12,17 @@ amr.max_level = 0 # Maximum level in hierarchy (1 might be unstable, >1 is not s
 # warpx.fine_tag_lo = -5.e-6   -5.e-6   -50.e-6
 # warpx.fine_tag_hi =  5.e-6    5.e-6   -30.e-6
 
+### TEST BEGIN ###
+
+amrex.abort_on_unused_inputs = 1
+
+apple = tree
+my_constants.foo = "bar"
+
+### TEST END ###
+
+
+
 #################################
 ####### Boundary condition ######
 #################################
