@@ -45,7 +45,7 @@ using namespace amrex::literals;
 
 namespace
 {
-    const int permission_flag_rwxrxrx = 0755;
+    constexpr int permission_flag_rwxrxrx = 0755;
 }
 
 BTDiagnostics::BTDiagnostics (int i, std::string name)
