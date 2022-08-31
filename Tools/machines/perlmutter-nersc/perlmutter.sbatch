@@ -16,8 +16,7 @@
 #SBATCH -C gpu
 #SBATCH -c 32
 #SBATCH --ntasks-per-node=4
-#SBATCH --gpus-per-task=1
-#SBATCH --gpu-bind=single:1
+#SBATCH --gpus-per-node=4
 #SBATCH -o WarpX.o%j
 #SBATCH -e WarpX.e%j
 
@@ -41,6 +40,9 @@
 
 # GPU-aware MPI
 export MPICH_GPU_SUPPORT_ENABLED=1
+
+# expose one GPU per MPI rank
+export CUDA_VISIBLE_DEVICES=$SLURM_LOCALID
 
 EXE=./warpx
 #EXE=../WarpX/build/bin/warpx.3d.MPI.CUDA.DP.OPMD.QED
