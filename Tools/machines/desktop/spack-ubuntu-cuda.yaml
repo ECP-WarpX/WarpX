@@ -96,21 +96,6 @@ spack:
         fc: /usr/bin/gfortran-10
       flags: {}
       # unstable/sid
-      operating_system: debian
-      target: x86_64
-      modules: []
-      environment: {}
-      extra_rpaths: []
-  - compiler:
-      # g++-10 gcc-10 gfortran-10 (or 11) for CUDA 11.7.0
-      spec: gcc@10.4.0
-      paths:
-        cc: /usr/bin/gcc-10
-        cxx: /usr/bin/g++-10
-        f77: /usr/bin/gfortran-10
-        fc: /usr/bin/gfortran-10
-      flags: {}
-      # unstable/sid
       operating_system: debianunstable
       target: x86_64
       modules: []
