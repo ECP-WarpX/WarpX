@@ -584,12 +584,11 @@ LaserParticleContainer::Evolve (int lev,
             plane_Yp.resize(np);
             amplitude_E.resize(np);
 
-            // Determine which particles deposit/gather in the buffer
-            long nfine_current = np;
-            if (m_deposit_on_main_grid && lev > 0) {
-                nfine_current = 0;
+            // Determine whether particles will deposit on the fine or coarse level
+            long np_current = np;
+            if (lev > 0 && m_deposit_on_main_grid && has_buffer) {
+                np_current = 0;
             }
-            const long np_current = (has_buffer) ? nfine_current : np;
 
             if (rho && ! skip_deposition && ! do_not_deposit) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
