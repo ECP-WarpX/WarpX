@@ -25,7 +25,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <numeric>
-#include <type_traits>
 #include <vector>
 
 using namespace amrex;
