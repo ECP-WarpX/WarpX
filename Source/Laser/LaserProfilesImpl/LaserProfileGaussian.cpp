@@ -65,7 +65,8 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
             m_common_params.nvec.end(),
             m_params.stc_direction.begin(), 0.0);
 
-    constexpr auto tol = std::is_same<amrex::Real,double>() ? 1.0e-14_rt : 1.0e-7_rt;
+    constexpr auto tol = static_cast<amrex::Real>(
+        std::is_same<amrex::Real,double>() ? 1.0e-14 : 1.0e-7);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(std::abs(dp2) < tol,
         "stc_direction is not perpendicular to the laser plane vector");
 
