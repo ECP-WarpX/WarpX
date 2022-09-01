@@ -29,15 +29,6 @@
 
 using namespace amrex;
 
-namespace
-{
-    template <typename T>
-    constexpr T perp_tolerance = T(1.0e-14);
-
-    template<>
-    constexpr float perp_tolerance<float> = 1.0e-7f;
-}
-
 void
 WarpXLaserProfiles::GaussianLaserProfile::init (
     const amrex::ParmParse& ppl,
@@ -71,9 +62,9 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
         std::inner_product(
             m_common_params.nvec.begin(),
             m_common_params.nvec.end(),
-            m_params.stc_direction.begin(), Real(0.0));
+            m_params.stc_direction.begin(), 0.0);
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(std::abs(dp2) < ::perp_tolerance<Real>,
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(std::abs(dp2) < 1.0e-14,
         "stc_direction is not perpendicular to the laser plane vector");
 
     // Get angle between p_X and stc_direction
