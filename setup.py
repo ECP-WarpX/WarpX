@@ -297,7 +297,7 @@ setup(
     cmdclass=cmdclass,
     # scripts=['warpx_1d', 'warpx_2d', 'warpx_3d', 'warpx_rz'],
     zip_safe=False,
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     # tests_require=['pytest'],
     install_requires=install_requires,
     # see: src/bindings/python/cli
@@ -307,7 +307,7 @@ setup(
     #    ]
     #},
     extras_require={
-        'all': ['openPMD-api~=0.14.2', 'openPMD-viewer~=1.1', 'yt~=3.6,>=4.0.1', 'matplotlib'],
+        'all': ['openPMD-api~=0.14.2', 'openPMD-viewer~=1.1', 'yt>=4.0.1', 'matplotlib'],
     },
     # cmdclass={'test': PyTest},
     # platforms='any',
@@ -321,7 +321,6 @@ setup(
         'Topic :: Scientific/Engineering :: Physics',
         'Programming Language :: C++',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',

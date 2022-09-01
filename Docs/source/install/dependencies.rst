@@ -27,7 +27,7 @@ Optional dependencies include:
   - see `optional I/O backends <https://github.com/openPMD/openPMD-api#dependencies>`__
 - `CCache <https://ccache.dev>`__: to speed up rebuilds (For CUDA support, needs version 3.7.9+ and 4.2+ is recommended)
 - `Ninja <https://ninja-build.org>`__: for faster parallel compiles
-- `Python 3.6+ <https://www.python.org>`__
+- `Python 3.7+ <https://www.python.org>`__
 
   - `mpi4py <https://mpi4py.readthedocs.io>`__
   - `numpy <https://numpy.org>`__
@@ -84,7 +84,7 @@ Spack (macOS/Linux)
 First, download a `Spack desktop development environment <https://github.com/ECP-WarpX/WarpX/blob/development/Tools/machines/desktop>`__ of your choice.
 For most desktop development, pick the OpenMP environment for CPUs unless you have a supported GPU.
 
-* **Ubuntu** Linux:
+* **Debian/Ubuntu** Linux:
 
   * OpenMP: ``system=ubuntu; compute=openmp`` (CPUs)
   * CUDA: ``system=ubuntu; compute=cuda`` (Nvidia GPUs)

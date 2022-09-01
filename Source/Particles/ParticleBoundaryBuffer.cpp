@@ -9,9 +9,10 @@
 #include "EmbeddedBoundary/DistanceToEB.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/Gather/ScalarFieldGather.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
+
+#include <ablastr/particles/NodalFieldGather.H>
 
 #include <AMReX_Geometry.H>
 #include <AMReX_ParmParse.H>
@@ -296,7 +297,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                     amrex::ParticleReal xp, yp, zp;
                     getPosition(ip, xp, yp, zp);
 
-                    amrex::Real phi_value  = doGatherScalarFieldNodal(
+                    amrex::Real phi_value  = ablastr::particles::doGatherScalarFieldNodal(
                                                                       xp, yp, zp, phiarr, dxi, plo
                                                                       );
                     return phi_value < 0.0 ? 1 : 0;
