@@ -15,7 +15,7 @@
 spack:
   specs:
   - adios2
-  - ascent +adios2 +python ~fortran
+  - ascent +adios2 +python ~fortran ~shared
   - blaspp
   - boost
   - ccache
@@ -37,6 +37,7 @@ spack:
   - py-setuptools
   - py-wheel
   - sensei +ascent ~catalyst +python
+  - vtk-m ~shared
 # This always enables DevilRay, which builds too long on CUDA and we mainly use VTK-m
 #  - ecp-data-vis-sdk +adios2 +ascent +hdf5 +sensei
 # skipped to save time: 3D post-processing
