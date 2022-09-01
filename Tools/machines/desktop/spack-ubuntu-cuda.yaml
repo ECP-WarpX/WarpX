@@ -14,7 +14,8 @@
 #
 spack:
   specs:
-  - adios2
+  # https://github.com/ornladios/ADIOS2/issues/3332
+  - adios2 ~cuda
   - ascent +adios2 +python ~fortran ~shared
   - blaspp
   - boost
