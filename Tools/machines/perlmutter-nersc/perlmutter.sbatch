@@ -12,7 +12,7 @@
 #    note: <proj> must end on _g
 #SBATCH -A <proj>
 # for m3906_g LBNL/AMP users: for large runs, comment in
-##SBATCH -q early_science
+#SBATCH -q regular
 #SBATCH -C gpu
 #SBATCH -c 32
 #SBATCH --ntasks-per-node=4
