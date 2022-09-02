@@ -69,10 +69,21 @@ WarpXLaserProfiles::HarrisLaserProfile::fill_amplitude (
 
     // time envelope is given by the Harris function
     Real time_envelope = 0.;
+
+    constexpr auto norm = 1._rt/32._rt;
+    constexpr auto c_0 = 10._rt;
+    constexpr auto c_1 = -15._rt;
+    constexpr auto c_2 = 6._rt;
+    constexpr auto c_3 = -1._rt;
+    constexpr auto a_1 = 1._rt;
+    constexpr auto a_2 = 2._rt;
+    constexpr auto a_3 = 3._rt;
+
     if (t < m_params.duration)
-        time_envelope = 1._rt/32._rt * (10._rt - 15._rt*std::cos(arg_env) +
-                                  6._rt*std::cos(2._rt*arg_env) -
-                                  std::cos(3._rt*arg_env));
+        time_envelope =  norm * (c_0 +
+                                 c_1*std::cos(a_1*arg_env) +
+                                 c_2*std::cos(a_2*arg_env) +
+                                 c_3*std::cos(a_3*arg_env));
 
     // Copy member variables to tmp copies for GPU runs.
     const auto tmp_e_max = m_common_params.e_max;
