@@ -119,6 +119,8 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
             add_diag("chimax", "chimax()");
         }
 
+        m_data.resize(all_diag_names.size());
+
         if (ParallelDescriptor::IOProcessor())
         {
             if ( m_IsNotRestart )
@@ -408,7 +410,6 @@ void ParticleExtrema::ComputeDiags (int step)
                     // declare external fields
                     const int offset = 0;
                     const auto getExternalEB = GetExternalEBField(pti, offset);
-
                     // define variables in preparation for field gathering
                     amrex::Box box = pti.tilebox();
                     box.grow(ngEB);
