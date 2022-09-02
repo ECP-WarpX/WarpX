@@ -6,12 +6,12 @@ import os
 import setuptools
 
 requires = [
-    "numpy<1.22",
+    "numpy<1.23",
     "scipy",
     "psutil",
     "pandas",
     "yt",
-    "numba==0.55.1",
+    "numba==0.56.0",
     "scikit-image",
     "dill",
     # added on 10/25/21 due to an issue with rendering LaTex in pulse waveform
