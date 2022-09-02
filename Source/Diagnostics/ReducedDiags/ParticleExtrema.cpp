@@ -82,16 +82,41 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
         // get WarpXParticleContainer class object
         auto & myspc = mypc.GetParticleContainer(i_s);
 
-        if (myspc.DoQED())
-        {
-            // resize data array for QED species
-            const int num_quantities = 18;
-            m_data.resize(num_quantities,0.0);
-        } else
-        {
-            // resize data array for regular species
-            const int num_quantities = 16;
-            m_data.resize(num_quantities,0.0);
+        auto all_diag_names = std::vector<std::string> {};
+        auto add_diag = [&,c=0] (
+            const std::string& name, const std::string& header) mutable {
+            m_headers_indices[name] = aux_header_index{header, c++};
+            all_diag_names.push_back(name);
+        };
+
+        add_diag("xmin", "xmin(m)");
+        add_diag("xmax", "xmax(m)");
+        add_diag("ymin", "ymin(m)");
+        add_diag("ymax", "ymax(m)");
+        add_diag("zmin", "zmin(m)");
+        add_diag("zmax", "zmax(m)");
+        add_diag("pxmin", "pxmin(kg*m/s)");
+        add_diag("pxmax", "pxmax(kg*m/s)");
+        add_diag("pymin", "pymin(kg*m/s)");
+        add_diag("pymax", "pymax(kg*m/s)");
+        add_diag("pzmin", "pzmin(kg*m/s)");
+        add_diag("pzmax", "pzmax(kg*m/s)");
+        add_diag("gmin", "gmin()");
+        add_diag("gmax", "gmax()");
+
+#if (defined WARPX_DIM_3D)
+        add_diag("wmin", "wmin()");
+        add_diag("wmax", "wmax()");
+#elif (defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ))
+        add_diag("wmin", "wmin(1/m)");
+        add_diag("wmax", "wmax(1/m)");
+#else
+        add_diag("wmin", "wmin(1/m^2)");
+        add_diag("wmax", "wmax(1/m^2)");
+#endif
+        if (myspc.DoQED()){
+            add_diag("chimin", "chimin()");
+            add_diag("chimax", "chimax()");
         }
 
         if (ParallelDescriptor::IOProcessor())
@@ -103,55 +128,14 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
                 ofs.open(m_path + m_rd_name + "." + m_extension,
                     std::ofstream::out | std::ofstream::app);
                 // write header row
-                int c = 0;
+                int off = 0;
                 ofs << "#";
-                ofs << "[" << c++ << "]step()";
+                ofs << "[" << off++ << "]step()";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]time(s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]xmin(m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]xmax(m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]ymin(m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]ymax(m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]zmin(m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]zmax(m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]pxmin(kg*m/s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]pxmax(kg*m/s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]pymin(kg*m/s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]pymax(kg*m/s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]pzmin(kg*m/s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]pzmax(kg*m/s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]gmin()";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]gmax()";
-                ofs << m_sep;
-#if (defined WARPX_DIM_3D)
-                ofs << "[" << c++ << "]wmin()";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]wmax()";
-#else
-                ofs << "[" << c++ << "]wmin(1/m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]wmax(1/m)";
-#endif
-                if (myspc.DoQED())
-                {
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]chimin()";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]chimax()";
+                ofs << "[" << off++ << "]time(s)";
+                for (const auto& name : all_diag_names){
+                    const auto& el = m_headers_indices[name];
+                    ofs << m_sep << "[" << el.idx + off << "]" << el.header;
                 }
                 ofs << std::endl;
                 // close file
@@ -487,35 +471,32 @@ void ParticleExtrema::ComputeDiags (int step)
             ParallelDescriptor::ReduceRealMax(chimax_f);
         }
 #endif
-        constexpr auto
-            idx_xmin   = 0  , idx_xmax   = 1   , idx_ymin   = 2 , idx_ymax   = 3,
-            idx_zmin   = 4  , idx_zmax   = 5   , idx_uxminm = 6 , idx_uxmaxm = 7,
-            idx_uyminm = 8  , idx_uymaxm = 9   , idx_uzminm = 10, idx_uzmaxm = 11,
-            idx_gmin   = 12 , idx_gmax   = 13  , idx_wmin   = 14, idx_wmax   = 15;
-        [[maybe_unused]] constexpr auto
-            idx_chimin_f = 16, idx_chimax_f = 17;
 
-        m_data[idx_xmin]  = xmin;
-        m_data[idx_xmax]  = xmax;
-        m_data[idx_ymin]  = ymin;
-        m_data[idx_ymax]  = ymax;
-        m_data[idx_zmin]  = zmin;
-        m_data[idx_zmax]  = zmax;
-        m_data[idx_uxminm]  = uxmin*m;
-        m_data[idx_uxmaxm]  = uxmax*m;
-        m_data[idx_uyminm]  = uymin*m;
-        m_data[idx_uymaxm]  = uymax*m;
-        m_data[idx_uzminm] = uzmin*m;
-        m_data[idx_uzmaxm] = uzmax*m;
-        m_data[idx_gmin] = gmin;
-        m_data[idx_gmax] = gmax;
-        m_data[idx_wmin] = wmin;
-        m_data[idx_wmax] = wmax;
+        const auto get_idx = [&](const std::string& name){
+            return m_headers_indices.at(name).idx;
+        };
+
+        m_data[get_idx("xmin")]  = xmin;
+        m_data[get_idx("xmax")]  = xmax;
+        m_data[get_idx("ymin")]  = ymin;
+        m_data[get_idx("ymax")]  = ymax;
+        m_data[get_idx("zmin")]  = zmin;
+        m_data[get_idx("zmax")]  = zmax;
+        m_data[get_idx("pxmin")]  = uxmin*m;
+        m_data[get_idx("pxmax")]  = uxmax*m;
+        m_data[get_idx("pymin")]  = uymin*m;
+        m_data[get_idx("pymax")]  = uymax*m;
+        m_data[get_idx("pzmin")] = uzmin*m;
+        m_data[get_idx("pzmax")] = uzmax*m;
+        m_data[get_idx("gmin")] = gmin;
+        m_data[get_idx("gmax")] = gmax;
+        m_data[get_idx("wmin")] = wmin;
+        m_data[get_idx("wmax")] = wmax;
 #if (defined WARPX_QED)
         if (myspc.DoQED())
         {
-            m_data[idx_chimin_f] = chimin_f;
-            m_data[idx_chimax_f] = chimax_f;
+            m_data[get_idx("chimin")] = chimin_f;
+            m_data[get_idx("chimax")] = chimax_f;
         }
 #endif
     }
