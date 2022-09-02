@@ -28,6 +28,11 @@
 # known issue with Libfabric (both in the May and June PE)
 export FI_MR_CACHE_MAX_COUNT=0
 
+# note (9-2-22, OLCFDEV-1079)
+# this environment setting is needed to avoid that rocFFT writes a cache in
+# the home directory, which does not scale.
+export ROCFFT_RTC_CACHE_PATH=/dev/null
+
 export OMP_NUM_THREADS=1
 export WARPX_NMPI_PER_NODE=8
 export TOTAL_NMPI=$(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} ))
