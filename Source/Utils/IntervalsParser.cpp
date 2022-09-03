@@ -152,7 +152,7 @@ BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_ve
     {
         m_slice_starting_i_buffer[ii+1] = m_slice_starting_i_buffer[ii] + m_slices[ii].numContained();
     }
-    for (int ii = 0; ii < n_slices; ii++) 
+    for (int ii = 0; ii < n_slices; ii++)
     {
         std::cout << "slice ii contains i_buffers starting with " << m_slice_starting_i_buffer[ii] << "\n";
     }
@@ -167,7 +167,7 @@ int BTDIntervalsParser::NumSnapshots () { return m_n_snapshots; }
 
 int BTDIntervalsParser::GetSliceIndex(int i_buffer)
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(0<=i_buffer < m_n_snapshots, 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(0<=i_buffer < m_n_snapshots,
         "invalid i_buffer=" + std::to_string(i_buffer) + " submitted.  Require 0<= i_buffer < " + std::to_string(m_n_snapshots));
     int slice_index = 0;
     while (i_buffer >= m_slice_starting_i_buffer[slice_index+1]

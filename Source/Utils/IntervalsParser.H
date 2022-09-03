@@ -68,7 +68,7 @@ public:
 
     /**
      * @brief A method that returns the number of integers contained by the slice.
-     * 
+     *
      */
     int numContained() const;
 
@@ -183,7 +183,7 @@ public:
 
     int GetBTDIteration(int i_buffer);
 
-    
+
 
     /**
     * \brief A method that returns true if any of the slices contained by the IntervalsParser
