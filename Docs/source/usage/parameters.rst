@@ -2156,9 +2156,13 @@ BackTransformed Diagnostics (with support for Plotfile/openPMD output)
 
 ``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Note that this diagnostic is not currently supported for RZ.  Additional options for this diagnostic include:
 
-* ``<diag_name>.num_snapshots_lab`` (`integer`)
-    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
-    The number of lab-frame snapshots that will be written.
+* ``<diag_name>.intervals`` (`string`)
+    Using the `Intervals parser`_ syntax, this string defines the lab frame times at which data is dumped, 
+    given as multiples of the step size ``dt_snapshots_lab`` or ``dz_snapshots_lab`` described below.
+    .. Use a negative number or 0 to disable data dumping.
+    example: ``btdiag1.intervals = 10:11,20:24:2`` and ``btdiag1.dt_snapshots_lab = 1.e-12``
+    indicate to dump at lab times ``1e-11``, ``1.1e-11``, ``2e-11``, ``2.2e-11``, and ``2.2e-11`` seconds.
+    Note that the stop interval, the second number in the slice, must always be specified.
 
 * ``<diag_name>.dt_snapshots_lab`` (`float`, in seconds)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.

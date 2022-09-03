@@ -161,8 +161,21 @@ BTDiagnostics::ReadParameters ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_back_transformed_fields, " fields must be turned on for the new back-transformed diagnostics");
     if (m_do_back_transformed_fields == false) m_varnames.clear();
 
-    getWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
-    m_num_buffers = m_num_snapshots_lab;
+
+    std::vector<std::string> intervals_string_vec = {"0"};
+    pp_diag_name.getarr("intervals", intervals_string_vec);
+    m_intervals = BTDIntervalsParser(intervals_string_vec);
+    std::cout << "num BTD snapshots: " << m_intervals.NumSnapshots() << "\n";
+    for (int ii = 0; ii < m_intervals.NumSnapshots(); ++ii)
+    {
+        std::cout << "snapshot " << ii;
+        std::cout << " is iteration " << m_intervals.GetBTDIteration(ii);
+        std::cout <<" and is in slice ";
+        std::cout << m_intervals.GetSliceIndex(ii) << "\n";
+    }
+
+    // getWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
+    m_num_buffers = m_intervals.NumSnapshots();
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
     bool snapshot_interval_is_specified = false;
@@ -241,7 +254,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     auto & warpx = WarpX::GetInstance();
     // Lab-frame time for the i^th snapshot
     amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
-    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab
+    m_t_lab.at(i_buffer) = m_intervals.GetBTDIteration(i_buffer) * m_dt_snapshots_lab
         + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
 
     // Define buffer domain in boosted frame at level, lev, with user-defined lo and hi
