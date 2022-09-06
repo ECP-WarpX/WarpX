@@ -163,18 +163,12 @@ BTDiagnostics::ReadParameters ()
 
 
     std::vector<std::string> intervals_string_vec = {"0"};
-    pp_diag_name.getarr("intervals", intervals_string_vec);
-    m_intervals = BTDIntervalsParser(intervals_string_vec);
-    std::cout << "num BTD snapshots: " << m_intervals.NumSnapshots() << "\n";
-    for (int ii = 0; ii < m_intervals.NumSnapshots(); ++ii)
+    if (!pp_diag_name.queryarr("intervals", intervals_string_vec) )
     {
-        std::cout << "snapshot " << ii;
-        std::cout << " is iteration " << m_intervals.GetBTDIteration(ii);
-        std::cout <<" and is in slice ";
-        std::cout << m_intervals.GetSliceIndex(ii) << "\n";
+        getWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
+        intervals_string_vec = {":" + std::to_string(m_num_snapshots_lab)};
     }
-
-    // getWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
+    m_intervals = BTDIntervalsParser(intervals_string_vec);
     m_num_buffers = m_intervals.NumSnapshots();
 
     // Read either dz_snapshots_lab or dt_snapshots_lab

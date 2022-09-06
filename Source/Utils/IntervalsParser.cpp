@@ -130,31 +130,19 @@ BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_ve
 
     auto insplit = WarpXUtilStr::split<std::vector<std::string>>(inconcatenated, m_separator);
 
-    std::cout << "BTD intervals:\n";
     for(const auto& inslc : insplit)
     {
         bool isBTD = true;
         SliceParser temp_slice(inslc, isBTD);
-        ///
-        std::cout << "slice start: " << temp_slice.getStart() << "\n";
-        std::cout << "slice stop: " << temp_slice.getStop() << "\n";
-        std::cout << "slice period: " << temp_slice.getPeriod() << "\n";
-        std::cout << "slice size: " << temp_slice.numContained() << "\n";
-        ///
         m_slices.push_back(temp_slice);
         if ((temp_slice.getPeriod() > 0) &&
                (temp_slice.getStop() >= temp_slice.getStart())) m_activated = true;
     }
     int n_slices = m_slices.size();
-    std::cout << "n slices = " << n_slices << "\n";
     m_slice_starting_i_buffer = std::vector<int> (n_slices);
     for (int ii = 0; ii < n_slices-1; ii++)
     {
         m_slice_starting_i_buffer[ii+1] = m_slice_starting_i_buffer[ii] + m_slices[ii].numContained();
-    }
-    for (int ii = 0; ii < n_slices; ii++)
-    {
-        std::cout << "slice ii contains i_buffers starting with " << m_slice_starting_i_buffer[ii] << "\n";
     }
     m_n_snapshots = 0;
     for (auto& slice : m_slices)
