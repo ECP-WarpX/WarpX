@@ -63,6 +63,7 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
             m_common_params.nvec.begin(),
             m_common_params.nvec.end(),
             m_params.stc_direction.begin(), 0.0);
+
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(std::abs(dp2) < 1.0e-14,
         "stc_direction is not perpendicular to the laser plane vector");
 

@@ -3,8 +3,6 @@
     "Ex": 2.786753684989306e-12
   },
   "p1": {
-    "particle_cpu": 524288.0,
-    "particle_id": 274878431232.0,
     "particle_momentum_x": 1.741631048990957e-14,
     "particle_momentum_y": 1.407382568220122e-14,
     "particle_momentum_z": 3.483802056536476e-14,
@@ -15,8 +13,6 @@
     "particle_weight": 1.2499999999999974e-18
   },
   "p2": {
-    "particle_cpu": 524288.0,
-    "particle_id": 824634245120.0,
     "particle_momentum_x": 7.361130113499369e-16,
     "particle_momentum_y": 1.518077832724208e-14,
     "particle_momentum_z": 1.603495173491284e-14,
@@ -27,8 +23,6 @@
     "particle_weight": 1.2499999999999974e-18
   },
   "p3": {
-    "particle_cpu": 524288.0,
-    "particle_id": 1374390059008.0,
     "particle_momentum_x": 6.887270621502783e-14,
     "particle_momentum_y": 4.244572662732333e-14,
     "particle_momentum_z": 2.829302046630217e-13,
@@ -39,8 +33,6 @@
     "particle_weight": 1.2499999999999974e-18
   },
   "p4": {
-    "particle_cpu": 524288.0,
-    "particle_id": 1924145872896.0,
     "particle_momentum_x": 1.520397879526353e-12,
     "particle_momentum_y": 1.554435446902422e-12,
     "particle_momentum_z": 1.588048115040964e-12,
@@ -51,8 +43,6 @@
     "particle_weight": 1.2499999999999974e-18
   },
   "qsp_1": {
-    "particle_cpu": 1.400740000000000e+05,
-    "particle_id": 6.070061074230000e+11,
     "particle_momentum_x": 1.488735151304356e-17,
     "particle_momentum_y": 5.924036687872583e-18,
     "particle_momentum_z": 2.001829024164515e-17,
@@ -63,8 +53,6 @@
     "particle_weight": 3.338909149169922e-19
   },
   "qsp_2": {
-    "particle_cpu": 1.321710000000000e+05,
-    "particle_id": 6.071037641990000e+11,
     "particle_momentum_x": 3.578117929640622e-18,
     "particle_momentum_y": 1.223998299528126e-16,
     "particle_momentum_z": 1.923837611883339e-17,
@@ -75,8 +63,6 @@
     "particle_weight": 3.142297267913819e-19
   },
   "qsp_3": {
-    "particle_cpu": 3.002850000000000e+05,
-    "particle_id": 1.512777290668000e+12,
     "particle_momentum_x": 1.786622846697726e-15,
     "particle_momentum_y": 9.308159337722657e-16,
     "particle_momentum_z": 2.825511784056859e-14,
@@ -87,8 +73,6 @@
     "particle_weight": 7.158422470092766e-19
   },
   "qsp_4": {
-    "particle_cpu": 1.437930000000000e+05,
-    "particle_id": 7.879430118700000e+11,
     "particle_momentum_x": 9.853699228774894e-14,
     "particle_momentum_y": 9.904668082148487e-14,
     "particle_momentum_z": 9.956637922920388e-14,

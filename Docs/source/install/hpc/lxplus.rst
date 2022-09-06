@@ -5,6 +5,12 @@ LXPLUS (CERN)
 
 The LXPLUS cluster is located at CERN.
 
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
+
 * `Lxplus documentation <https://lxplusdoc.web.cern.ch>`__
 * Batch system: `HTCondor <https://batchdocs.web.cern.ch/index.html>`__
 * Filesystem locations:
@@ -13,6 +19,7 @@ The LXPLUS cluster is located at CERN.
     * Eos storage: ``/eos/home-<a>/<account>`` (1T)
 
 Through LXPLUS we have access to CPU and GPU nodes (the latter equipped with NVIDIA V100 and T4 GPUs).
+
 
 Installation
 ------------

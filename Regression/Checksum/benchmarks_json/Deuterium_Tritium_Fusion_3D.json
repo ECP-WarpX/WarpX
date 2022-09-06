@@ -1,7 +1,5 @@
 {
   "deuterium1": {
-    "particle_cpu": 5120000.0,
-    "particle_id": 26214405120000.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 2.8875978729147693e-13,
@@ -11,8 +9,6 @@
     "particle_weight": 1024.000000000021
   },
   "deuterium2": {
-    "particle_cpu": 512000.0,
-    "particle_id": 10747904512000.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 3.356807324363973e-14,
@@ -22,8 +18,6 @@
     "particle_weight": 1.0227810240779905e+29
   },
   "helium1": {
-    "particle_cpu": 20564.0,
-    "particle_id": 414455929591.0,
     "particle_momentum_x": 1.7519716491839538e-15,
     "particle_momentum_y": 1.7523289312260283e-15,
     "particle_momentum_z": 1.7480231586369996e-15,
@@ -33,8 +27,6 @@
     "particle_weight": 4.421535775967805e-28
   },
   "helium2": {
-    "particle_cpu": 18146.0,
-    "particle_id": 370840895571.0,
     "particle_momentum_x": 1.5330942227771018e-15,
     "particle_momentum_y": 1.5328473121602395e-15,
     "particle_momentum_z": 1.7635828326228758e-15,
@@ -47,8 +39,6 @@
     "rho": 0.0
   },
   "neutron1": {
-    "particle_cpu": 20564.0,
-    "particle_id": 415194438443.0,
     "particle_momentum_x": 1.7519716491839538e-15,
     "particle_momentum_y": 1.7523289312260283e-15,
     "particle_momentum_z": 1.7480231586369996e-15,
@@ -58,8 +48,6 @@
     "particle_weight": 4.421535775967805e-28
   },
   "neutron2": {
-    "particle_cpu": 18146.0,
-    "particle_id": 371427197911.0,
     "particle_momentum_x": 1.5330942227771018e-15,
     "particle_momentum_y": 1.5328473121602395e-15,
     "particle_momentum_z": 1.549297051563983e-15,
@@ -69,8 +57,6 @@
     "particle_weight": 5.756530048087129e+18
   },
   "tritium1": {
-    "particle_cpu": 5120000.0,
-    "particle_id": 78643205120000.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 2.8875978729147693e-13,
@@ -80,8 +66,6 @@
     "particle_weight": 1024.000000000021
   },
   "tritium2": {
-    "particle_cpu": 51200.0,
-    "particle_id": 1103626291200.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,

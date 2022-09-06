@@ -27,7 +27,7 @@ Optional dependencies include:
   - see `optional I/O backends <https://github.com/openPMD/openPMD-api#dependencies>`__
 - `CCache <https://ccache.dev>`__: to speed up rebuilds (For CUDA support, needs version 3.7.9+ and 4.2+ is recommended)
 - `Ninja <https://ninja-build.org>`__: for faster parallel compiles
-- `Python 3.6+ <https://www.python.org>`__
+- `Python 3.7+ <https://www.python.org>`__
 
   - `mpi4py <https://mpi4py.readthedocs.io>`__
   - `numpy <https://numpy.org>`__
@@ -41,44 +41,82 @@ Install
 
 Pick *one* of the installation methods below to install all dependencies for WarpX development in a consistent manner.
 
+Conda (Linux/macOS/Windows)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+With MPI (only Linux/macOS):
+
+.. code-block:: bash
+
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba ninja mpich pip virtualenv
+   source activate warpx-dev
+
+Without MPI:
+
+.. code-block:: bash
+
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
+   source activate warpx-dev
+
+   # compile WarpX with -DWarpX_MPI=OFF
+
+For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you also need to set:
+
+.. code-block:: bash
+
+   export FFTW_HOME=${CONDA_PREFIX}
+   export BLASPP_HOME=${CONDA_PREFIX}
+   export LAPACKPP_HOME=${CONDA_PREFIX}
+
+.. note::
+
+   A general option to deactivate that conda self-activates its base environment.
+   This `avoids interference with the system and other package managers <https://collegeville.github.io/CW20/WorkshopResources/WhitePapers/huebl-working-with-multiple-pkg-mgrs.pdf>`__.
+
+   .. code-block:: bash
+
+      conda config --set auto_activate_base false
+
+
 Spack (macOS/Linux)
 ^^^^^^^^^^^^^^^^^^^
 
+First, download a `Spack desktop development environment <https://github.com/ECP-WarpX/WarpX/blob/development/Tools/machines/desktop>`__ of your choice.
+For most desktop development, pick the OpenMP environment for CPUs unless you have a supported GPU.
+
+* **Debian/Ubuntu** Linux:
+
+  * OpenMP: ``system=ubuntu; compute=openmp`` (CPUs)
+  * CUDA: ``system=ubuntu; compute=cuda`` (Nvidia GPUs)
+  * ROCm: ``system=ubuntu; compute=rocm`` (AMD GPUs)
+  * SYCL: *todo* (Intel GPUs)
+* **macOS**: first, prepare with ``brew install gpg2; brew install gcc``
+
+  * OpenMP: ``system=macos; compute=openmp``
+
 .. code-block:: bash
 
-   spack env create warpx-dev
-   spack env activate warpx-dev
+   # download environment file
+   curl -sLO https://raw.githubusercontent.com/ECP-WarpX/WarpX/development/Tools/machines/desktop/spack-${system}-${compute}.yaml
 
-   spack add adios2        # for openPMD
-   spack add blaspp        # for PSATD in RZ
-   spack add ccache
-   spack add cmake
-   spack add fftw          # for PSATD
-   spack add hdf5          # for openPMD
-   spack add lapackpp      # for PSATD in RZ
-   spack add mpi
-   spack add openpmd-api   # for openPMD
-   spack add pkgconfig     # for fftw
+   # create new development environment
+   spack env create warpx-${compute}-dev spack-${system}-${compute}.yaml
+   spack env activate warpx-${compute}-dev
 
-   # OpenMP support on macOS
-   [[ $OSTYPE == 'darwin'* ]] && spack add llvm-openmp
-
-   # optional:
-   # spack add python
-   # spack add py-pip
-   # spack add cuda
-
+   # installation
    spack install
+   python3 -m pip install jupyter matplotlib numpy openpmd-api openpmd-viewer pandas scipy virtualenv yt
 
-In new terminal sessions, re-activate the environment with ``spack env activate warpx-dev`` again.
-
-If you also want to run runtime tests and added Python (``spack add python`` and ``spack add py-pip``) above, install also these additional Python packages in the active Spack environment:
+In new terminal sessions, re-activate the environment with
 
 .. code-block:: bash
 
-   python3 -m pip install matplotlib yt scipy pandas numpy openpmd-api virtualenv
+   spack env activate warpx-openmp-dev
 
-If you want to run the ``./run_test.sh`` :ref:`test script <developers-testing>`, which uses our legacy GNUmake build system, you need to set the following environment hints after ``spack env activate warpx-dev`` for dependent software:
+again.
+Replace ``openmp`` with the equivalent you chose.
+
+For legacy ``GNUmake`` builds, after each ``source activate warpx-openmp-dev``, you also need to set:
 
 .. code-block:: bash
 
@@ -118,34 +156,6 @@ If you also want to compile with PSATD in RZ, you need to manually install BLAS+
        -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
    cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git \
        -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
-
-
-Conda (Linux/macOS/Windows)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Without MPI:
-
-.. code-block:: bash
-
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
-   source activate warpx-dev
-
-   # compile WarpX with -DWarpX_MPI=OFF
-
-With MPI (only Linux/macOS):
-
-.. code-block:: bash
-
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp "openpmd-api=*=mpi_openmpi*" python numpy pandas scipy yt "fftw=*=mpi_openmpi*" pkg-config matplotlib mamba ninja openmpi pip virtualenv
-   source activate warpx-dev
-
-For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you also need to set:
-
-.. code-block:: bash
-
-   export FFTW_HOME=${CONDA_PREFIX}
-   export BLASPP_HOME=${CONDA_PREFIX}
-   export LAPACKPP_HOME=${CONDA_PREFIX}
 
 
 Apt (Debian/Ubuntu)

@@ -497,12 +497,16 @@ WarpX::InitPML ()
         do_pml_Lo[0][0] = 0; // no PML at r=0, in cylindrical geometry
         pml_rz[0] = std::make_unique<PML_RZ>(0, boxArray(0), DistributionMap(0), &Geom(0), pml_ncell, do_pml_in_domain);
 #else
+        // Note: fill_guards_fields and fill_guards_current are both set to
+        // zero (amrex::IntVect(0)) (what we do with damping BCs does not apply
+        // to the PML, for example in the presence of mesh refinement patches)
         pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
                              do_moving_window, pml_has_particles, do_pml_in_domain,
                              do_multi_J,
                              do_pml_dive_cleaning, do_pml_divb_cleaning,
+                             amrex::IntVect(0), amrex::IntVect(0),
                              guard_cells.ng_FieldSolver.max(),
                              v_particle_pml,
                              do_pml_Lo[0], do_pml_Hi[0]);
@@ -529,12 +533,16 @@ WarpX::InitPML ()
                 do_pml_Lo[lev][0] = 0;
             }
 #endif
+            // Note: fill_guards_fields and fill_guards_current are both set to
+            // zero (amrex::IntVect(0)) (what we do with damping BCs does not apply
+            // to the PML, for example in the presence of mesh refinement patches)
             pml[lev] = std::make_unique<PML>(lev, boxArray(lev), DistributionMap(lev),
                                    &Geom(lev), &Geom(lev-1),
                                    pml_ncell, pml_delta, refRatio(lev-1),
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
                                    do_multi_J, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   amrex::IntVect(0), amrex::IntVect(0),
                                    guard_cells.ng_FieldSolver.max(),
                                    v_particle_pml,
                                    do_pml_Lo[lev], do_pml_Hi[lev]);
@@ -1086,26 +1094,55 @@ WarpX::PerformanceHints ()
     for (int ilev = 0; ilev <= finestLevel(); ++ilev) {
         total_nboxes += boxArray(ilev).size();
     }
-    if (ParallelDescriptor::NProcs() > total_nboxes){
+    auto const nprocs = ParallelDescriptor::NProcs();
+
+    // Check: are there more MPI ranks than Boxes?
+    if (nprocs > total_nboxes) {
         std::stringstream warnMsg;
         warnMsg << "Too many resources / too little work!\n"
             << "  It looks like you requested more compute resources than "
             << "there are total number of boxes of cells available ("
             << total_nboxes << "). "
-            << "You started with (" << ParallelDescriptor::NProcs()
-            << ") MPI ranks, so (" << ParallelDescriptor::NProcs() - total_nboxes
+            << "You started with (" << nprocs
+            << ") MPI ranks, so (" << nprocs - total_nboxes
             << ") rank(s) will have no work.\n"
 #ifdef AMREX_USE_GPU
             << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
             << "each GPU's memory sufficiently. If you do not rely on dynamic "
             << "load-balancing, then one large box per GPU is ideal.\n"
 #endif
+            << "Consider decreasing the amr.blocking_factor and"
+            << "amr.max_grid_size parameters and/or using less MPI ranks.\n"
             << "  More information:\n"
-            << "  https://warpx.readthedocs.io/en/latest/running_cpp/parallelization.html\n";
+            << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
 
         ablastr::warn_manager::WMRecordWarning(
           "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
     }
+
+#ifdef AMREX_USE_GPU
+    // Check: Are there more than 12 boxes per GPU?
+    if (total_nboxes > nprocs * 12) {
+        std::stringstream warnMsg;
+        warnMsg << "Too many boxes per GPU!\n"
+            << "  It looks like you split your simulation domain "
+            << "in too many boxes (" << total_nboxes << "), which "
+            << "results in an average number of ("
+            << amrex::Long(total_nboxes/nprocs) << ") per GPU. "
+            << "This causes severe overhead in the communication of "
+            << "border/guard regions.\n"
+            << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
+            << "each GPU's memory sufficiently. If you do not rely on dynamic "
+            << "load-balancing, then one large box per GPU is ideal.\n"
+            << "Consider increasing the amr.blocking_factor and"
+            << "amr.max_grid_size parameters and/or using more MPI ranks.\n"
+            << "  More information:\n"
+            << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
+
+        ablastr::warn_manager::WMRecordWarning(
+          "Performance", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
+    }
+#endif
 
     // TODO: warn if some ranks have disproportionally more work than all others
     //       tricky: it can be ok to assign "vacuum" boxes to some ranks w/o slowing down
