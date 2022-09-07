@@ -16,8 +16,16 @@ an x-z slice at y=y_center. The field-data, Ez, along z, at (x_center,y_center,:
 between the full back-transformed diagnostic and the reduced diagnostic (i.e., x-z slice) .
 '''
 
+import os
+import sys
+
 import numpy as np
 import read_raw_data
+
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
+
+filename = sys.argv[1]
 
 # Read data from back-transformed diagnostics of entire domain
 snapshot = './lab_frame_data/snapshots/snapshot00002'
@@ -43,3 +51,6 @@ print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
+
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)
