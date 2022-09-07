@@ -151,7 +151,7 @@ struct GetExternalEBField
             // This assumes that vzp > 0.
             amrex::ParticleReal const zl_bounded = std::min(std::max(zl, lens_start), lens_end);
             amrex::ParticleReal const zr_bounded = std::min(std::max(zr, lens_start), lens_end);
-            amrex::ParticleReal const frac = (zr_bounded - zl_bounded)/(zr - zl);
+            amrex::ParticleReal const frac = ((zr - zl) == 0._rt ? 1._rt : (zr_bounded - zl_bounded)/(zr - zl));
 
             // Note that "+=" is used since the fields may have been set above
             // if a different E or Btype was specified.
