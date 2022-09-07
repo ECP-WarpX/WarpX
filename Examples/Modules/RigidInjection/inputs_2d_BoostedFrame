@@ -49,27 +49,25 @@ beam.zinject_plane = 20.e-6
 beam.rigid_advance = true
 
 # Diagnostics
-diagnostics.diags_names = diag1 btd_pltfile btd_openpmd
-diag1.intervals = 10000
-diag1.diag_type = Full
+diagnostics.diags_names = diag1 diag2
 
-btd_openpmd.diag_type = BackTransformed
-btd_openpmd.do_back_transformed_fields = 1
-btd_openpmd.num_snapshots_lab = 2
-btd_openpmd.dt_snapshots_lab = 1.8679589331096515e-13
-btd_openpmd.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-btd_openpmd.format = openpmd
-btd_openpmd.openpmd_backend = h5
-btd_openpmd.buffer_size = 32
+diag1.diag_type = BackTransformed
+diag1.do_back_transformed_fields = 1
+diag1.num_snapshots_lab = 2
+diag1.dt_snapshots_lab = 1.8679589331096515e-13
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+diag1.format = plotfile
+diag1.buffer_size = 32
+diag1.write_species = 1
 
-btd_pltfile.diag_type = BackTransformed
-btd_pltfile.do_back_transformed_fields = 1
-btd_pltfile.num_snapshots_lab = 2
-btd_pltfile.dt_snapshots_lab = 1.8679589331096515e-13
-btd_pltfile.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-btd_pltfile.format = plotfile
-btd_pltfile.buffer_size = 32
-btd_pltfile.write_species = 1
+diag2.diag_type = BackTransformed
+diag2.do_back_transformed_fields = 1
+diag2.num_snapshots_lab = 2
+diag2.dt_snapshots_lab = 1.8679589331096515e-13
+diag2.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+diag2.format = openpmd
+diag2.openpmd_backend = h5
+diag2.buffer_size = 32
 
 # old BTD diagnostics
 warpx.do_back_transformed_diagnostics = 1
