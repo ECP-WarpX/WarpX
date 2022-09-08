@@ -15,7 +15,7 @@
 ##SBATCH -q early_science
 #SBATCH -C gpu
 #SBATCH -c 32
-#SBATCH --ntasks-per-node=4
+#SBATCH --ntasks-per-gpu=1
 #SBATCH --gpus-per-task=1
 #SBATCH --gpu-bind=single:1
 #SBATCH -o WarpX.o%j
