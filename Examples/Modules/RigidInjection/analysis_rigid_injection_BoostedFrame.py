@@ -14,40 +14,89 @@ Analysis script of a WarpX simulation of rigid injection in a boosted frame.
 A Gaussian electron beam starts from -5 microns, propagates rigidly up to
 20 microns after which it expands due to emittance only (the focal position is
 20 microns). The beam width is measured after ~50 microns, and compared with
-the theory (with a 5% error allowed).
+the theory (with a 1% relative error allowed).
 
 The simulation runs in a boosted frame, and the analysis is done in the lab
 frame, i.e., on the back-transformed diagnostics.
 '''
 
+import os
+import sys
+
 import numpy as np
+import openpmd_api as io
 import read_raw_data
+from scipy.constants import m_e
 import yt
 
 yt.funcs.mylog.setLevel(0)
 
-# Read data from back-transformed diagnostics
-snapshot = './lab_frame_data/snapshots/snapshot00001'
-header   = './lab_frame_data/snapshots/Header'
-allrd, info = read_raw_data.read_lab_snapshot(snapshot, header)
-z = np.mean( read_raw_data.get_particle_field(snapshot, 'beam', 'z') )
-w = np.std ( read_raw_data.get_particle_field(snapshot, 'beam', 'x') )
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
-# initial parameters
+filename = sys.argv[1]
+
+# Tolerances to check consistency between legacy BTD and new BTD
+rtol = 1e-16
+atol = 1e-16
+
+# Read data from legacy back-transformed diagnostics
+snapshot = './lab_frame_data/snapshots/snapshot00001'
+x_legacy = read_raw_data.get_particle_field(snapshot, 'beam', 'x')
+z_legacy = read_raw_data.get_particle_field(snapshot, 'beam', 'z')
+ux_legacy = read_raw_data.get_particle_field(snapshot, 'beam', 'ux')
+uy_legacy = read_raw_data.get_particle_field(snapshot, 'beam', 'uy')
+uz_legacy = read_raw_data.get_particle_field(snapshot, 'beam', 'uz')
+
+# Read data from new back-transformed diagnostics (plotfile)
+ds_plotfile = yt.load(filename)
+x_plotfile = ds_plotfile.all_data()['beam', 'particle_position_x'].v
+z_plotfile = ds_plotfile.all_data()['beam', 'particle_position_y'].v
+ux_plotfile = ds_plotfile.all_data()['beam', 'particle_momentum_x'].v
+uy_plotfile = ds_plotfile.all_data()['beam', 'particle_momentum_y'].v
+uz_plotfile = ds_plotfile.all_data()['beam', 'particle_momentum_z'].v
+
+# Read data from new back-transformed diagnostics (openPMD)
+series = io.Series("./diags/diag2/openpmd_%T.h5", io.Access.read_only)
+ds_openpmd = series.iterations[1]
+x_openpmd = ds_openpmd.particles['beam']['position']['x'][:]
+z_openpmd = ds_openpmd.particles['beam']['position']['z'][:]
+ux_openpmd = ds_openpmd.particles['beam']['momentum']['x'][:]
+uy_openpmd = ds_openpmd.particles['beam']['momentum']['y'][:]
+uz_openpmd = ds_openpmd.particles['beam']['momentum']['z'][:]
+series.flush()
+
+# Sort and compare arrays to check consistency between legacy BTD and new BTD (plotfile)
+assert(np.allclose(np.sort(x_legacy), np.sort(x_plotfile), rtol=rtol, atol=atol))
+assert(np.allclose(np.sort(z_legacy), np.sort(z_plotfile), rtol=rtol, atol=atol))
+assert(np.allclose(np.sort(ux_legacy*m_e), np.sort(ux_plotfile), rtol=rtol, atol=atol))
+assert(np.allclose(np.sort(uy_legacy*m_e), np.sort(uy_plotfile), rtol=rtol, atol=atol))
+assert(np.allclose(np.sort(uz_legacy*m_e), np.sort(uz_plotfile), rtol=rtol, atol=atol))
+
+# Sort and compare arrays to check consistency between legacy BTD and new BTD (openPMD)
+assert(np.allclose(np.sort(x_legacy), np.sort(x_openpmd), rtol=rtol, atol=atol))
+assert(np.allclose(np.sort(z_legacy), np.sort(z_openpmd), rtol=rtol, atol=atol))
+assert(np.allclose(np.sort(ux_legacy*m_e), np.sort(ux_openpmd), rtol=rtol, atol=atol))
+assert(np.allclose(np.sort(uy_legacy*m_e), np.sort(uy_openpmd), rtol=rtol, atol=atol))
+assert(np.allclose(np.sort(uz_legacy*m_e), np.sort(uz_openpmd), rtol=rtol, atol=atol))
+
+# Initial parameters
 z0 = 20.e-6
-w0 = 1.e-6
+x0 = 1.e-6
 theta0 = np.arcsin(0.1)
 
-# Theoretical beam width after propagation if rigid ON
-wth = np.sqrt( w0**2 + (z-z0)**2*theta0**2 )
-error_rel = np.abs((w-wth)/wth)
-tolerance_rel = 0.03
+# Theoretical beam width after propagation with rigid injection
+z = np.mean(z_legacy)
+x = np.std(x_legacy)
+print(f'Beam position = {z}')
+print(f'Beam width    = {x}')
 
-# Print error and assert small error
-print("Beam position: " + str(z))
-print("Beam width   : " + str(w))
+xth = np.sqrt(x0**2 + (z-z0)**2 * theta0**2)
+err = np.abs((x-xth) / xth)
+tol = 1e-2
+print(f'error = {err}')
+print(f'tolerance = {tol}')
+assert(err < tol)
 
-print("error_rel    : " + str(error_rel))
-print("tolerance_rel: " + str(tolerance_rel))
-
-assert( error_rel < tolerance_rel )
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)

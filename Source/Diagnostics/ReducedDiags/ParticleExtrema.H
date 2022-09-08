@@ -10,6 +10,7 @@
 
 #include "ReducedDiags.H"
 
+#include <map>
 #include <string>
 
 /**
@@ -36,6 +37,16 @@ public:
      */
     void ComputeDiags(int step) override final;
 
+private:
+    /// auxiliary structure to store headers and indices of the reduced diagnostics
+    struct aux_header_index
+    {
+        std::string header;
+        int idx;
+    };
+
+    /// map to store header texts and indices of the reduced diagnostics
+    std::map<std::string, aux_header_index> m_headers_indices;
 };
 
 #endif

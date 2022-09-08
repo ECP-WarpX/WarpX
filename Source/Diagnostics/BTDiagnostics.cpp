@@ -43,6 +43,11 @@
 
 using namespace amrex::literals;
 
+namespace
+{
+    constexpr int permission_flag_rwxrxrx = 0755;
+}
+
 BTDiagnostics::BTDiagnostics (int i, std::string name)
     : Diagnostics(i, name)
 {
@@ -298,7 +303,6 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
                                  / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
 
 
-
     // Initialize buffer counter and z-positions of the  i^th snapshot in
     // boosted-frame and lab-frame
     m_buffer_flush_counter[i_buffer] = 0;
@@ -367,6 +371,11 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
                                   zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
     m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
                                   zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+    // To prevent round off errors, moving the snapshot domain by half a cell so that all the slices
+    // lie close to the cell-centers in the lab-frame grid instead of on the edge of cell.
+    amrex::Real new_hi = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir)
+                       + 0.5_rt * dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+    m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,new_hi);
     amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
                          num_z_cells_in_snapshot *
                          dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
@@ -762,7 +771,6 @@ BTDiagnostics::Flush (int i_buffer)
             m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], buffer_ba);
         }
     }
-
     RedistributeParticleBuffer(i_buffer);
 
     // Reset buffer box and particle box array
@@ -841,16 +849,16 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
         // Create directory only when the first buffer is flushed out.
         if (m_buffer_flush_counter[i_snapshot] == 0 ) {
             // Create Level_0 directory to store all Cell_D and Cell_H files
-            if (!amrex::UtilCreateDirectory(snapshot_Level0_path, 0755) )
+            if (!amrex::UtilCreateDirectory(snapshot_Level0_path, permission_flag_rwxrxrx) )
                 amrex::CreateDirectoryFailed(snapshot_Level0_path);
             // Create directory for each species selected for diagnostic
             for (int i = 0; i < m_particles_buffer[i_snapshot].size(); ++i) {
                 std::string snapshot_species_path = snapshot_path + "/" + m_output_species_names[i];
-                if ( !amrex::UtilCreateDirectory(snapshot_species_path, 0755))
+                if ( !amrex::UtilCreateDirectory(snapshot_species_path, permission_flag_rwxrxrx))
                     amrex::CreateDirectoryFailed(snapshot_species_path);
                 // Create Level_0 directory for particles to store Particle_H and DATA files
                 std::string species_Level0_path = snapshot_species_path + "/Level_0";
-                if ( !amrex::UtilCreateDirectory(species_Level0_path, 0755))
+                if ( !amrex::UtilCreateDirectory(species_Level0_path, permission_flag_rwxrxrx))
                     amrex::CreateDirectoryFailed(species_Level0_path);
             }
             std::string buffer_WarpXHeader_path = recent_Buffer_filepath + "/WarpXHeader";

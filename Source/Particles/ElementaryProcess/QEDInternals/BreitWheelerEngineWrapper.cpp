@@ -159,10 +159,14 @@ void BreitWheelerEngine::compute_lookup_tables (
 
 void BreitWheelerEngine::init_builtin_dndt_table()
 {
+    constexpr auto default_chi_phot_min = 0.02_prt;
+    constexpr auto default_chi_phot_max = 200.0_prt;
+    constexpr auto default_chi_phot_how_many = 64;
+
     BW_dndt_table_params dndt_params;
-    dndt_params.chi_phot_min = 0.02_prt;
-    dndt_params.chi_phot_max = 200.0_prt;
-    dndt_params.chi_phot_how_many = 64;
+    dndt_params.chi_phot_min = default_chi_phot_min;
+    dndt_params.chi_phot_max = default_chi_phot_max;
+    dndt_params.chi_phot_how_many = default_chi_phot_how_many;
 
     const auto vals = amrex::Gpu::DeviceVector<amrex::ParticleReal>{
         -1.34808e+02_prt, -1.16674e+02_prt, -1.01006e+02_prt, -8.74694e+01_prt,
@@ -189,11 +193,16 @@ void BreitWheelerEngine::init_builtin_dndt_table()
 
 void BreitWheelerEngine::init_builtin_pair_prod_table()
 {
+    constexpr auto default_chi_phot_min = 0.02_prt;
+    constexpr auto default_chi_phot_max = 200.0_prt;
+    constexpr auto default_chi_phot_how_many = 64;
+    constexpr auto default_frac_how_many = 64;
+
     BW_pair_prod_table_params pair_prod_params;
-    pair_prod_params.chi_phot_min = 0.02_prt;
-    pair_prod_params.chi_phot_max = 200.0_prt;
-    pair_prod_params.chi_phot_how_many = 64;
-    pair_prod_params.frac_how_many = 64;
+    pair_prod_params.chi_phot_min = default_chi_phot_min;
+    pair_prod_params.chi_phot_max = default_chi_phot_max;
+    pair_prod_params.chi_phot_how_many = default_chi_phot_how_many;
+    pair_prod_params.frac_how_many = default_frac_how_many;
 
     const auto vals = amrex::Gpu::DeviceVector<amrex::ParticleReal>{
         0.00000e+00_prt, 0.00000e+00_prt, 0.00000e+00_prt, 0.00000e+00_prt,

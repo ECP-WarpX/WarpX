@@ -165,15 +165,18 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
         BoxArray nba = boxArray(lev);
         nba.surroundingNodes();
         rho[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, ng);
+        rho[lev]->setVal(0.);
         phi[lev] = std::make_unique<MultiFab>(nba, DistributionMap(lev), 1, 1);
         phi[lev]->setVal(0.);
     }
 
     // Deposit particle charge density (source of Poisson solver)
     bool const local = false;
-    bool const reset = true;
+    bool const reset = false;
     bool const do_rz_volume_scaling = true;
-    pc.DepositCharge(rho, local, reset, do_rz_volume_scaling);
+    if ( !pc.do_not_deposit) {
+        pc.DepositCharge(rho, local, reset, do_rz_volume_scaling);
+    }
 
     // Get the particle beta vector
     bool const local_average = false; // Average across all MPI ranks
@@ -218,9 +221,11 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     bool const do_rz_volume_scaling = false;
     for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
         WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        species.DepositCharge(
-            rho_fp, local, reset, do_rz_volume_scaling, interpolate_across_levels
-        );
+        if (!species.do_not_deposit) {
+            species.DepositCharge( rho_fp,
+                                   local, reset, do_rz_volume_scaling, interpolate_across_levels
+                                  );
+        }
     }
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {

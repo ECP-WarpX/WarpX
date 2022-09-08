@@ -16,8 +16,8 @@ Scientific works in laser-plasma and beam-plasma acceleration.
 
 #. Wang J, Zeng M, Li D, Wang X, Lu W, Gao J.
    **Injection induced by coaxial laser interference in laser wakefield accelerators**.
-   *preprint*. under review, 2022.
-   `arXiv:2205.12083 <https://arxiv.org/abs/2205.12083>`__
+   Matter and Radiation at Extremes 7, 054001, 2022.
+   `DOI:10.1063/5.0101098 <https://doi.org/10.1063/5.0101098>`__
 
 #. Miao B, Shrock JE, Feder L, Hollinger RC, Morrison J, Nedbailo R, Picksley A, Song H, Wang S, Rocca JJ, Milchberg HM.
    **Multi-GeV electron bunches from an all-optical laser wakefield accelerator**.

@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 22.08)
+project(WarpX VERSION 22.09)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -436,10 +436,10 @@ if(WarpX_LIB)
 
     # build the wheel by re-using the shared library we build
     add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_wheel
-        ${CMAKE_COMMAND} -E rm -f ${WarpX_BINARY_DIR}/pywarpx*whl
+        ${CMAKE_COMMAND} -E rm -f -r warpx-whl
         COMMAND
-            ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-                python3 -m pip wheel -v --no-build-isolation ${WarpX_SOURCE_DIR}
+            ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=$<TARGET_FILE_DIR:shared>
+                python3 -m pip wheel -v --no-build-isolation --no-deps --wheel-dir=warpx-whl ${WarpX_SOURCE_DIR}
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
@@ -463,7 +463,7 @@ if(WarpX_LIB)
     # because otherwise pip would also force reinstall all dependencies.
     add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install
         ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
-            python3 -m pip install --force-reinstall --no-deps ${PYINSTALLOPTIONS} ${WarpX_BINARY_DIR}/pywarpx*whl
+            python3 -m pip install --force-reinstall --no-index --no-deps ${PYINSTALLOPTIONS} --find-links=warpx-whl pywarpx
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS

@@ -733,10 +733,10 @@ WarpX::ReadParameters ()
         }
         else // FDTD
         {
-            // Filter currently not working with FDTD solver in RZ geometry
+            // Filter currently not working with FDTD solver in RZ geometry along R
             // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!use_filter,
-                "Filter currently not working with FDTD solver in RZ geometry");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!use_filter || filter_npass_each_dir[0] == 0,
+                "In RZ geometry with FDTD, filtering can only be apply along z. This can be controlled by setting warpx.filter_npass_each_dir");
         }
 #endif
 
@@ -1207,6 +1207,13 @@ WarpX::ReadParameters ()
                 "Option algo.current_deposition=vay must be used with psatd.periodic_single_box_fft=0.");
         }
 
+        if (current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                current_correction == false,
+                "Options algo.current_deposition=vay and psatd.current_correction=1 cannot be combined together.");
+        }
+
         // Auxiliary: boosted_frame = true if warpx.gamma_boost is set in the inputs
         amrex::ParmParse pp_warpx("warpx");
         const bool boosted_frame = pp_warpx.query("gamma_boost", gamma_boost);
@@ -1284,7 +1291,7 @@ WarpX::ReadParameters ()
         );
 
 #   ifdef WARPX_DIM_RZ
-        update_with_rho = true;  // Must be true for RZ PSATD
+        update_with_rho = true;
 #   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0. &&
             m_v_comoving[0] == 0. && m_v_comoving[1] == 0. && m_v_comoving[2] == 0.) {
@@ -1344,10 +1351,15 @@ WarpX::ReadParameters ()
             }
         }
 
-        // Fill guard cells with backward FFTs if Vay current deposition is used
-        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+        // Without periodic single box, fill guard cells with backward FFTs,
+        // with current correction or Vay deposition
+        if (fft_periodic_single_box == false)
         {
-            WarpX::m_fill_guards_current = amrex::IntVect(1);
+            if (current_correction ||
+                current_deposition_algo == CurrentDepositionAlgo::Vay)
+            {
+                WarpX::m_fill_guards_current = amrex::IntVect(1);
+            }
         }
     }
 
