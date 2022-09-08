@@ -2454,39 +2454,42 @@ Reduced Diagnostics
         sum of the particles' weight of each species.
 
     * ``BeamRelevant``
-        This type computes properties of a particle beam relevant for particle accelerators,
-        like position, momentum, emittance, etc.
+        This type computes properties of a particle beam relevant for particle accelerators, like position, momentum, emittance, etc.
 
-        ``<reduced_diags_name>.species`` must be provided,
-        such that the diagnostics are done for this (beam-like) species only.
+        ``<reduced_diags_name>.species`` must be provided, such that the diagnostics are done for this (beam-like) species only.
 
-        The output columns (for 3D-XYZ) are the following, where the average is done over
-        the whole species (typical usage: the particle beam is in a separate species):
+        The output columns (for 3D-XYZ) are the following, where the average is done over the whole species (typical usage: the particle beam is in a separate species):
 
-        [1], [2], [3]: The mean values of beam positions (m)
-        :math:`\langle x \rangle`, :math:`\langle y \rangle`,
+        [0]: simulation step (iteration).
+
+        [1]: time (s).
+
+        [2], [3], [4]: The mean values of beam positions (m)
+        :math:`\langle x \rangle`,
+        :math:`\langle y \rangle`,
         :math:`\langle z \rangle`.
 
-        [4], [5], [6]: The mean values of beam relativistic momenta (kg m/s)
-        :math:`\langle p_x \rangle`, :math:`\langle p_y \rangle`,
+        [5], [6], [7]: The mean values of beam relativistic momenta (kg m/s)
+        :math:`\langle p_x \rangle`,
+        :math:`\langle p_y \rangle`,
         :math:`\langle p_z \rangle`.
 
-        [7]: The mean Lorentz factor :math:`\langle \gamma \rangle`.
+        [8]: The mean Lorentz factor :math:`\langle \gamma \rangle`.
 
-        [8], [9], [10]: The RMS values of beam positions (m)
+        [9], [10], [11]: The RMS values of beam positions (m)
         :math:`\delta_x = \sqrt{ \langle (x - \langle x \rangle)^2 \rangle }`,
         :math:`\delta_y = \sqrt{ \langle (y - \langle y \rangle)^2 \rangle }`,
         :math:`\delta_z = \sqrt{ \langle (z - \langle z \rangle)^2 \rangle }`.
 
-        [11], [12], [13]: The RMS values of beam relativistic momenta (kg m/s)
+        [12], [13], [14]: The RMS values of beam relativistic momenta (kg m/s)
         :math:`\delta_{px} = \sqrt{ \langle (p_x - \langle p_x \rangle)^2 \rangle }`,
         :math:`\delta_{py} = \sqrt{ \langle (p_y - \langle p_y \rangle)^2 \rangle }`,
         :math:`\delta_{pz} = \sqrt{ \langle (p_z - \langle p_z \rangle)^2 \rangle }`.
 
-        [14]: The RMS value of the Lorentz factor
+        [15]: The RMS value of the Lorentz factor
         :math:`\sqrt{ \langle (\gamma - \langle \gamma \rangle)^2 \rangle }`.
 
-        [15], [16], [17]: beam projected transverse RMS normalized emittance (m)
+        [16], [17], [18]: beam projected transverse RMS normalized emittance (m)
         :math:`\epsilon_x = \dfrac{1}{mc} \sqrt{\delta_x^2 \delta_{px}^2 -
         \Big\langle (x-\langle x \rangle) (p_x-\langle p_x \rangle) \Big\rangle^2}`,
         :math:`\epsilon_y = \dfrac{1}{mc} \sqrt{\delta_y^2 \delta_{py}^2 -
@@ -2494,12 +2497,16 @@ Reduced Diagnostics
         :math:`\epsilon_z = \dfrac{1}{mc} \sqrt{\delta_z^2 \delta_{pz}^2 -
         \Big\langle (z-\langle z \rangle) (p_z-\langle p_z \rangle) \Big\rangle^2}`.
 
-        [18]: The charge of the beam (C).
+        [19], [20]: beta function for the transverse directions (m)
+        :math:`\beta_x = \dfrac{{\delta_x}^2}{\epsilon_x}`,
+        :math:`\beta_y = \dfrac{{\delta_y}^2}{\epsilon_y}`.
+
+        [21]: The charge of the beam (C).
 
         For 2D-XZ,
         :math:`\langle y \rangle`,
         :math:`\delta_y`, and
-        :math:`\epsilon_y` will not be outputed.
+        :math:`\epsilon_y` will not be outputted.
 
     * ``LoadBalanceCosts``
         This type computes the cost, used in load balancing, for each box on the domain.
