@@ -516,7 +516,7 @@ LaserParticleContainer::InitData (int lev)
     AddNParticles(0,
                   np, particle_x.dataPtr(), particle_y.dataPtr(), particle_z.dataPtr(),
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
-                  1, particle_w.dataPtr(), 1);
+                  1, particle_w.dataPtr(), 0, nullptr, 1);
 }
 
 void
@@ -585,7 +585,7 @@ LaserParticleContainer::Evolve (int lev,
             plane_Yp.resize(np);
             amplitude_E.resize(np);
 
-            if (rho && ! skip_deposition) {
+            if (rho && ! skip_deposition && ! do_not_deposit) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
                 DepositCharge(pti, wp, ion_lev, rho, 0, 0,
                               np_current, thread_num, lev, lev);
@@ -639,7 +639,7 @@ LaserParticleContainer::Evolve (int lev,
             }
 
 
-            if (rho && ! skip_deposition) {
+            if (rho && ! skip_deposition && ! do_not_deposit) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
                 DepositCharge(pti, wp, ion_lev, rho, 1, 0,
                               np_current, thread_num, lev, lev);

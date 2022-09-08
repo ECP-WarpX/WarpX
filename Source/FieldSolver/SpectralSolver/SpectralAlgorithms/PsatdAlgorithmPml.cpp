@@ -35,10 +35,10 @@ PsatdAlgorithmPml::PsatdAlgorithmPml(const SpectralKSpace& spectral_kspace,
                                      const SpectralFieldIndex& spectral_index,
                                      const int norder_x, const int norder_y,
                                      const int norder_z, const bool nodal,
-                                     const amrex::IntVect& fill_guards, const Real dt,
+                                     const Real dt,
                                      const bool dive_cleaning, const bool divb_cleaning)
      // Initialize members of base class
-     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
+     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal),
        m_spectral_index(spectral_index),
        m_dt(dt),
        m_dive_cleaning(dive_cleaning),

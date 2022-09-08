@@ -35,13 +35,12 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     const int norder_y,
     const int norder_z,
     const bool nodal,
-    const amrex::IntVect& fill_guards,
     const amrex::Real dt,
     const bool time_averaging,
     const bool dive_cleaning,
     const bool divb_cleaning)
     // Initializer list
-    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
+    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal),
     m_spectral_index(spectral_index),
     m_dt(dt),
     m_time_averaging(time_averaging),

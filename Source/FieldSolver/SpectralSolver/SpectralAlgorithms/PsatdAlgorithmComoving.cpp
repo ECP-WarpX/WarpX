@@ -26,12 +26,11 @@ PsatdAlgorithmComoving::PsatdAlgorithmComoving (const SpectralKSpace& spectral_k
                                                 const SpectralFieldIndex& spectral_index,
                                                 const int norder_x, const int norder_y,
                                                 const int norder_z, const bool nodal,
-                                                const amrex::IntVect& fill_guards,
                                                 const amrex::Vector<amrex::Real>& v_comoving,
                                                 const amrex::Real dt,
                                                 const bool update_with_rho)
      // Members initialization
-     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
+     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal),
        m_spectral_index(spectral_index),
        // Initialize the infinite-order k vectors (the argument n_order = -1 selects
        // the infinite order option, the argument nodal = false is then irrelevant)

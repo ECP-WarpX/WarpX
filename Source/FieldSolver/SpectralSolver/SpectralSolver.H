@@ -47,7 +47,6 @@ class SpectralSolver
          * \param[in] norder_y spectral order along y
          * \param[in] norder_z spectral order along z
          * \param[in] nodal whether the spectral solver is applied to a nodal or staggered grid
-         * \param[in] fill_guards Update the guard cells (in addition to the valid cells) when pushing the fields in time
          * \param[in] v_galilean three-dimensional vector containing the components of the Galilean
          *                       velocity for the standard or averaged Galilean PSATD solvers
          * \param[in] v_comoving three-dimensional vector containing the components of the comoving
@@ -72,7 +71,6 @@ class SpectralSolver
                         const amrex::DistributionMapping& dm,
                         const int norder_x, const int norder_y,
                         const int norder_z, const bool nodal,
-                        const amrex::IntVect& fill_guards,
                         const amrex::Vector<amrex::Real>& v_galilean,
                         const amrex::Vector<amrex::Real>& v_comoving,
                         const amrex::RealVect dx,
@@ -106,6 +104,7 @@ class SpectralSolver
         void BackwardTransform( const int lev,
                                 amrex::MultiFab& mf,
                                 const int field_index,
+                                const amrex::IntVect& fill_guards,
                                 const int i_comp=0 );
 
         /**

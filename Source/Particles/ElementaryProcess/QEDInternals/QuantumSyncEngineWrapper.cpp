@@ -158,10 +158,14 @@ void QuantumSynchrotronEngine::compute_lookup_tables (
 
 void QuantumSynchrotronEngine::init_builtin_dndt_table()
 {
+    constexpr auto default_chi_part_min = 1.0e-3_prt;
+    constexpr auto default_chi_part_max = 200.0_prt;
+    constexpr auto default_chi_part_how_many = 64;
+
     QS_dndt_table_params dndt_params;
-    dndt_params.chi_part_min = 1.0e-3_prt;
-    dndt_params.chi_part_max = 200.0_prt;
-    dndt_params.chi_part_how_many = 64;
+    dndt_params.chi_part_min = default_chi_part_min;
+    dndt_params.chi_part_max = default_chi_part_max;
+    dndt_params.chi_part_how_many = default_chi_part_how_many;
 
 
     const auto vals = amrex::Gpu::DeviceVector<amrex::ParticleReal>{
@@ -190,12 +194,18 @@ void QuantumSynchrotronEngine::init_builtin_dndt_table()
 
 void QuantumSynchrotronEngine::init_builtin_phot_em_table()
 {
+    constexpr auto default_chi_part_min = 1.0e-3_prt;
+    constexpr auto default_chi_part_max = 200.0_prt;
+    constexpr auto default_frac_min = 1.0e-12_prt;
+    constexpr auto default_chi_part_how_many = 64;
+    constexpr auto default_frac_how_many = 64;
+
     QS_phot_em_table_params phot_em_params;
-    phot_em_params.chi_part_min = 1.0e-3_prt;
-    phot_em_params.chi_part_max = 200.0_prt;
-    phot_em_params.frac_min = 1.0e-12_prt;
-    phot_em_params.chi_part_how_many = 64;
-    phot_em_params.frac_how_many = 64;
+    phot_em_params.chi_part_min = default_chi_part_min;
+    phot_em_params.chi_part_max = default_chi_part_max;
+    phot_em_params.frac_min = default_frac_min;
+    phot_em_params.chi_part_how_many = default_chi_part_how_many;
+    phot_em_params.frac_how_many = default_frac_how_many;
 
 
 const auto vals = amrex::Gpu::DeviceVector<amrex::ParticleReal>{
