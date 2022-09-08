@@ -102,6 +102,7 @@ private:
     amrex::Vector<amrex::Real> m_nvec; //! Normal of the plane of the antenna
     amrex::Vector<amrex::Real> m_p_X;// ! Polarization
 
+    amrex::Real m_vz_antenna_over_c = 0; //! Velocity of the antenna
     amrex::Real               m_e_max       = std::numeric_limits<amrex::Real>::quiet_NaN();
     amrex::Real               m_wavelength  = std::numeric_limits<amrex::Real>::quiet_NaN();
 
