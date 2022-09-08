@@ -947,7 +947,7 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
     - stl_reverse_normal: if True inverts the orientation of the STL geometry
     - potential: Analytic expression defining the potential. Can only be specified
                  when the solver is electrostatic. Optional, defaults to 0.
-     Parameters used in the expressions should be given as additional keyword arguments.
+    Parameters used in the expressions should be given as additional keyword arguments.
     """
     def __init__(self, implicit_function=None, stl_file=None, stl_scale=None, stl_center=None, stl_reverse_normal=False,
                  potential=None, **kw):
@@ -1007,10 +1007,10 @@ class PlasmaLens(picmistandard.base._ClassWithInit):
     """
     Custom class to setup a plasma lens lattice.
     The applied fields are dependent on the transverse position
-      - Ex = x*stengths_E
-      - Ey = y*stengths_E
-      - Bx = +y*stengths_B
-      - By = -x*stengths_B
+    - Ex = x*stengths_E
+    - Ey = y*stengths_E
+    - Bx = +y*stengths_B
+    - By = -x*stengths_B
     """
     def __init__(self, period, starts, lengths, strengths_E=None, strengths_B=None, **kw):
         self.period = period
