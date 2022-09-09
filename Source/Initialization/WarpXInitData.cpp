@@ -29,6 +29,7 @@
 #include "Utils/WarpXUtil.H"
 
 #include <ablastr/utils/Communication.H>
+#include <ablastr/utils/UsedInputsFile.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
@@ -64,7 +65,6 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
-#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -350,14 +350,7 @@ WarpX::PrintMainPICparameters ()
 void
 WarpX::WriteUsedInputsFile (std::string const & filename) const
 {
-    amrex::Print() << "For full input parameters, see the file: " << filename << "\n\n";
-
-    if (ParallelDescriptor::IOProcessor()) {
-        std::ofstream jobInfoFile;
-        jobInfoFile.open(filename.c_str(), std::ios::out);
-        ParmParse::dumpTable(jobInfoFile, true);
-        jobInfoFile.close();
-    }
+    ablastr::utils::write_used_inputs_file(filename);
 }
 
 void
