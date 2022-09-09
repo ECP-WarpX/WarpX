@@ -33,5 +33,10 @@ export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
 # the home directory, which does not scale.
 export ROCFFT_RTC_CACHE_PATH=/dev/null
 
+# note (9-2-22, OLCFDEV-1079)
+# this environment setting is needed to avoid that rocFFT writes a cache in
+# the home directory, which does not scale.
+export ROCFFT_RTC_CACHE_PATH=/dev/null
+
 export OMP_NUM_THREADS=8
 srun ./warpx inputs > output.txt
