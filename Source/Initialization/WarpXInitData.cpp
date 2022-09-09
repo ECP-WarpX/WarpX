@@ -392,10 +392,6 @@ WarpX::InitData ()
         WarpX::InitNCICorrector();
     }
 
-    if (WarpX::use_filter) {
-        WarpX::InitFilter();
-    }
-
     BuildBufferMasks();
 
     if (WarpX::em_solver_medium==1) {
