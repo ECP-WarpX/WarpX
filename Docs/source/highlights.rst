@@ -5,7 +5,7 @@ Science Highlights
 
 WarpX can be used in many domains of laser-plasma science, plasma physics, accelerator physics and beyond.
 Below, we collect a series of scientific publications that used WarpX.
-Please :ref:`acknowledge WarpX in your works`, so we can find your works.
+Please :ref:`acknowledge WarpX in your works <acknowledge_warpx>`, so we can find your works.
 
 Is your publication missing? :ref:`Contact us <contact>` or edit this page via a pull request.
 
