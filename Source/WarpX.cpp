@@ -1160,12 +1160,6 @@ WarpX::ReadParameters ()
         // and rho (linear, quadratic) for the PSATD algorithm
         J_in_time = GetAlgorithmInteger(pp_psatd, "J_in_time");
         rho_in_time = GetAlgorithmInteger(pp_psatd, "rho_in_time");
-        if (J_in_time == JInTime::Constant)
-        {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                rho_in_time == RhoInTime::Linear,
-                "psatd.J_in_time=constant supports only psatd.rho_in_time=linear");
-        }
 
         // Current correction activated by default, unless a charge-conserving
         // current deposition (Esirkepov, Vay) or the div(E) cleaning scheme
@@ -1323,11 +1317,26 @@ WarpX::ReadParameters ()
             );
         }
 
+        if (J_in_time == JInTime::Constant)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                rho_in_time == RhoInTime::Linear,
+                "psatd.J_in_time=constant supports only psatd.rho_in_time=linear");
+        }
+
         if (J_in_time == JInTime::Linear)
         {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
-                "psatd.update_with_rho must be set to 1 when psatd.J_in_time=linear"
-            );
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                update_with_rho,
+                "psatd.update_with_rho must be set to 1 when psatd.J_in_time=linear");
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                v_galilean_is_zero,
+                "psatd.J_in_time=linear not implemented with Galilean PSATD");
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                v_comoving_is_zero,
+                "psatd.J_in_time=linear not implemented with comoving PSATD");
         }
 
         for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
