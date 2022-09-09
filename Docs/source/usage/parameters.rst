@@ -1829,6 +1829,12 @@ Numerics and algorithms
 
     Note that the update with and without rho is also supported in RZ geometry.
 
+* ``psatd.J_in_time`` (``constant`` or ``linear``; default ``constant``)
+    This determines whether the current density is assumed to be constant or linear in time, within the time step over which the electromagnetic fields are evolved.
+
+* ``psatd.rho_in_time`` (``linear``; default ``linear``)
+    This determines whether the charge density is assumed to be linear in time, within the time step over which the electromagnetic fields are evolved.
+
 * ``psatd.v_galilean`` (`3 floats`, in units of the speed of light; default ``0. 0. 0.``)
     Defines the Galilean velocity.
     A non-zero velocity activates the Galilean algorithm, which suppresses numerical Cherenkov instabilities (NCI) in boosted-frame simulations (see the section :ref:`Numerical Stability and alternate formulation in a Galilean frame <theory-boostedframe-galilean>` for more information).
