@@ -62,7 +62,8 @@ Ez_plotfile = data[('mesh', 'Ez')].to_ndarray()
 # Read data from new back-transformed diagnostics (openPMD)
 series = io.Series("./diags/diag2/openpmd_%T.h5", io.Access.read_only)
 ds_openpmd = series.iterations[3]
-Ez_openpmd = ds_openpmd.meshes['E']['z']
+Ez_openpmd = ds_openpmd.meshes['E']['z'].load_chunk()
+Ez_openpmd = Ez_openpmd.transpose()
 series.flush()
 
 # Compare arrays to check consistency between legacy BTD and new BTD (plotfile)
