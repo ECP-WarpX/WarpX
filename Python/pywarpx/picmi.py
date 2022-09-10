@@ -868,8 +868,22 @@ class CoulombCollisions(picmistandard.base._ClassWithInit):
     Custom class to handle setup of binary Coulmb collisions in WarpX. If
     collision initialization is added to picmistandard this can be changed to
     inherit that functionality.
-    """
 
+    Parameters
+    ----------
+    name: string
+        Name of instance (used in the inputs file)
+
+    species: list of species instances
+        The species involved in the collision. Must be of length 2.
+
+    CoulombLog: float, optional
+        Value of the Coulomb log to use in the collision cross section.
+        If not supplied, it is calculated from the local conditions.
+
+    ndt: int, optional
+        The collisions will be applied every "ndt" steps. Must be 1 or larger.
+    """
     def __init__(self, name, species, CoulombLog=None, ndt=None, **kw):
         self.name = name
         self.species = species
@@ -891,6 +905,30 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
     Custom class to handle setup of MCC collisions in WarpX. If collision
     initialization is added to picmistandard this can be changed to inherit
     that functionality.
+
+    Parameters
+    ----------
+    name: string
+        Name of instance (used in the inputs file)
+
+    species: species instance
+        The species involved in the collision
+
+    background_density: float
+        The density of the background
+
+    background_temperature: float
+        The temperature of the background
+
+    scattering_processes: dictionary
+        The scattering process to use and any needed information
+
+    background_mass: float, optional
+        The mass of the background particle. If not supplied, the default depends
+        on the type of scattering process.
+
+    ndt: int, optional
+        The collisions will be applied every "ndt" steps. Must be 1 or larger.
     """
 
     def __init__(self, name, species, background_density,
@@ -930,14 +968,31 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
     changed to inherit that functionality. The geometry can be specified either as
     an implicit function or as an STL file (ASCII or binary). In the latter case the
     geometry specified in the STL file can be scaled, translated and inverted.
-    - implicit_function: Analytic expression describing the embedded boundary
-    - stl_file: STL file path (string), file contains the embedded boundary geometry
-    - stl_scale: factor by which the STL geometry is scaled (pure number)
-    - stl_center: vector by which the STL geometry is translated (in meters)
-    - stl_reverse_normal: if True inverts the orientation of the STL geometry
-    - potential: Analytic expression defining the potential. Can only be specified
-                 when the solver is electrostatic. Optional, defaults to 0.
-    Parameters used in the expressions should be given as additional keyword arguments.
+
+    Parameters
+    ----------
+    implicit_function: string
+        Analytic expression describing the embedded boundary
+
+    stl_file: string
+        STL file path (string), file contains the embedded boundary geometry
+
+    stl_scale: float
+        Factor by which the STL geometry is scaled
+
+    stl_center: vector of floats
+        Vector by which the STL geometry is translated (in meters)
+
+    stl_reverse_normal: bool
+        If True inverts the orientation of the STL geometry
+
+    potential: string, default=0.
+        Analytic expression defining the potential. Can only be specified
+        when the solver is electrostatic.
+
+
+    Parameters used in the analytic expressions should be given as additional keyword arguments.
+
     """
     def __init__(self, implicit_function=None, stl_file=None, stl_scale=None, stl_center=None, stl_reverse_normal=False,
                  potential=None, **kw):
@@ -996,11 +1051,36 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
 class PlasmaLens(picmistandard.base._ClassWithInit):
     """
     Custom class to setup a plasma lens lattice.
-    The applied fields are dependent on the transverse position
+    The applied fields are dependent only on the transverse position.
+
+    Parameters
+    ----------
+    period: float
+        Periodicity of the lattice (in lab frame, in meters)
+
+    starts: list of floats
+        The start of each lens relative to the periodic repeat
+
+    lengths: list of floats
+        The length of each lens
+
+    strengths_E=None: list of floats, default = 0.
+        The electric field strength of each lens
+
+    strengths_B=None: list of floats, default = 0.
+        The magnetic field strength of each lens
+
+
+    The field that is applied depends on the transverse position of the particle, (x,y)
+
     - Ex = x*stengths_E
+
     - Ey = y*stengths_E
+
     - Bx = +y*stengths_B
+
     - By = -x*stengths_B
+
     """
     def __init__(self, period, starts, lengths, strengths_E=None, strengths_B=None, **kw):
         self.period = period
@@ -1283,6 +1363,8 @@ class Checkpoint(picmistandard.base._ClassWithInit):
     """
     Sets up checkpointing of the simulation, allowing for later restarts
 
+    Parameters
+    ----------
     warpx_file_prefix: string
         The prefix to the checkpoint directory names
 
@@ -1423,15 +1505,31 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
 
 class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
     """
-    Warp specific arguments:
-      - warpx_new_BTD: Use the new BTD diagnostics
-      - warpx_format: Passed to <diagnostic name>.format
-      - warpx_openpmd_backend: Passed to <diagnostic name>.openpmd_backend
-      - warpx_file_prefix: Passed to <diagnostic name>.file_prefix
-      - warpx_file_min_digits: Passed to <diagnostic name>.file_min_digits
-      - warpx_buffer_size: Passed to <diagnostic name>.buffer_size
-      - warpx_lower_bound: Passed to <diagnostic name>.lower_bound
-      - warpx_upper_bound: Passed to <diagnostic name>.upper_bound
+    Parameters
+    ----------
+    warpx_new_BTD: bool, optional
+        Use the new BTD diagnostics
+
+    warpx_format: string, optional
+        Passed to <diagnostic name>.format
+
+    warpx_openpmd_backend: string, optional
+        Passed to <diagnostic name>.openpmd_backend
+
+    warpx_file_prefix: string, optional
+        Passed to <diagnostic name>.file_prefix
+
+    warpx_file_min_digits: integer, optional
+        Passed to <diagnostic name>.file_min_digits
+
+    warpx_buffer_size: integer, optional
+        Passed to <diagnostic name>.buffer_size
+
+    warpx_lower_bound: vector of floats, optional
+        Passed to <diagnostic name>.lower_bound
+
+    warpx_upper_bound: vector of floats, optional
+        Passed to <diagnostic name>.upper_bound
     """
     def init(self, kw):
         self.use_new_BTD = kw.pop('warpx_new_BTD', False)
