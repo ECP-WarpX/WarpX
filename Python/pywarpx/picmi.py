@@ -41,6 +41,80 @@ picmistandard.register_constants(constants)
 
 
 class Species(picmistandard.PICMI_Species):
+    """
+    Parameters
+    ----------
+    warpx_boost_adjust_transverse_positions: bool, default=False
+        Whether to adjust transverse positions when apply the boost
+        to the simulation frame
+
+    warpx_self_fields_required_precision: float, default=1.e-11
+        Relative precision on the electrostatic solver
+        (when using the relativistic solver)
+
+    warpx_self_fields_absolute_tolerance: float, default=0.
+        Absolute precision on the electrostatic solver
+        (when using the relativistic solver)
+
+    warpx_self_fields_max_iters: integer, default=200
+        Maximum number of iterations for the electrostatic
+        solver for the species
+
+    warpx_self_fields_verbosity: integer, default=2
+        Level of verbosity for the electrostatic solver
+
+    warpx_save_previous_position: bool, default=False
+        Whether to save the old particle positions
+
+    warpx_do_not_deposit: bool, default=False
+        Whether or not to deposit the charge and current density for
+        for this species
+
+    warpx_reflection_model_xlo: string, default='0.'
+        Expression (in terms of the velocity "v") specifying the probability
+        that the particle will reflect on the lower x boundary
+
+    warpx_reflection_model_xhi: string, default='0.'
+        Expression (in terms of the velocity "v") specifying the probability
+        that the particle will reflect on the upper x boundary
+
+    warpx_reflection_model_ylo: string, default='0.'
+        Expression (in terms of the velocity "v") specifying the probability
+        that the particle will reflect on the lower y boundary
+
+    warpx_reflection_model_yhi: string, default='0.'
+        Expression (in terms of the velocity "v") specifying the probability
+        that the particle will reflect on the upper y boundary
+
+    warpx_reflection_model_zlo: string, default='0.'
+        Expression (in terms of the velocity "v") specifying the probability
+        that the particle will reflect on the lower z boundary
+
+    warpx_reflection_model_zhi: string, default='0.'
+        Expression (in terms of the velocity "v") specifying the probability
+        that the particle will reflect on the upper z boundary
+
+    warpx_save_particles_at_xlo: bool, default=False
+        Whether to save particles lost at the lower x boundary
+
+    warpx_save_particles_at_xhi: bool, default=False
+        Whether to save particles lost at the upper x boundary
+
+    warpx_save_particles_at_ylo: bool, default=False
+        Whether to save particles lost at the lower y boundary
+
+    warpx_save_particles_at_yhi: bool, default=False
+        Whether to save particles lost at the upper y boundary
+
+    warpx_save_particles_at_zlo: bool, default=False
+        Whether to save particles lost at the lower z boundary
+
+    warpx_save_particles_at_zhi: bool, default=False
+        Whether to save particles lost at the upper z boundary
+
+    warpx_save_particles_at_eb: bool, default=False
+        Whether to save particles lost at the embedded boundary
+    """
     def init(self, kw):
 
         if self.particle_type == 'electron':
@@ -407,6 +481,38 @@ class BinomialSmoother(picmistandard.PICMI_BinomialSmoother):
 class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
     """
     This assumes that WarpX was compiled with USE_RZ = TRUE
+
+    Parameters
+    ---------
+    warpx_max_grid_size: integer, default=32
+       Maximum block size in either direction
+
+    warpx_max_grid_size_x: integer, optional
+       Maximum block size in radial direction
+
+    warpx_max_grid_size_y: integer, optional
+       Maximum block size in longitudinal direction
+
+    warpx_blocking_factor: integer, optional
+       Blocking factor (which controls the block size)
+
+    warpx_blocking_factor_x: integer, optional
+       Blocking factor (which controls the block size) in the radial direction
+
+    warpx_blocking_factor_y: integer, optional
+       Blocking factor (which controls the block size) in the longitudinal direction
+
+    warpx_potential_lo_r: float, default=0.
+       Electrostatic potential on the lower radial boundary
+
+    warpx_potential_hi_r: float, default=0.
+       Electrostatic potential on the upper radial boundary
+
+    warpx_potential_lo_z: float, default=0.
+       Electrostatic potential on the lower longitudinal boundary
+
+    warpx_potential_hi_z: float, default=0.
+       Electrostatic potential on the upper longitudinal boundary
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -474,6 +580,27 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
 
 class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
+    """
+    Parameters
+    ---------
+    warpx_max_grid_size: integer, default=32
+       Maximum block size in either direction
+
+    warpx_max_grid_size_x: integer, optional
+       Maximum block size in longitudinal direction
+
+    warpx_blocking_factor: integer, optional
+       Blocking factor (which controls the block size)
+
+    warpx_blocking_factor_x: integer, optional
+       Blocking factor (which controls the block size) in the longitudinal direction
+
+    warpx_potential_lo_z: float, default=0.
+       Electrostatic potential on the lower longitudinal boundary
+
+    warpx_potential_hi_z: float, default=0.
+       Electrostatic potential on the upper longitudinal boundary
+    """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
@@ -527,6 +654,39 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
             pywarpx.amr.max_level = 0
 
 class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
+    """
+    Parameters
+    ---------
+    warpx_max_grid_size: integer, default=32
+       Maximum block size in either direction
+
+    warpx_max_grid_size_x: integer, optional
+       Maximum block size in x direction
+
+    warpx_max_grid_size_y: integer, optional
+       Maximum block size in z direction
+
+    warpx_blocking_factor: integer, optional
+       Blocking factor (which controls the block size)
+
+    warpx_blocking_factor_x: integer, optional
+       Blocking factor (which controls the block size) in the x direction
+
+    warpx_blocking_factor_y: integer, optional
+       Blocking factor (which controls the block size) in the z direction
+
+    warpx_potential_lo_x: float, default=0.
+       Electrostatic potential on the lower x boundary
+
+    warpx_potential_hi_x: float, default=0.
+       Electrostatic potential on the upper x boundary
+
+    warpx_potential_lo_z: float, default=0.
+       Electrostatic potential on the lower z boundary
+
+    warpx_potential_hi_z: float, default=0.
+       Electrostatic potential on the upper z boundary
+    """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
@@ -588,6 +748,51 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
 
 
 class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
+    """
+    Parameters
+    ---------
+    warpx_max_grid_size: integer, default=32
+       Maximum block size in either direction
+
+    warpx_max_grid_size_x: integer, optional
+       Maximum block size in x direction
+
+    warpx_max_grid_size_y: integer, optional
+       Maximum block size in z direction
+
+    warpx_max_grid_size_z: integer, optional
+       Maximum block size in z direction
+
+    warpx_blocking_factor: integer, optional
+       Blocking factor (which controls the block size)
+
+    warpx_blocking_factor_x: integer, optional
+       Blocking factor (which controls the block size) in the x direction
+
+    warpx_blocking_factor_y: integer, optional
+       Blocking factor (which controls the block size) in the z direction
+
+    warpx_blocking_factor_z: integer, optional
+       Blocking factor (which controls the block size) in the z direction
+
+    warpx_potential_lo_x: float, default=0.
+       Electrostatic potential on the lower x boundary
+
+    warpx_potential_hi_x: float, default=0.
+       Electrostatic potential on the upper x boundary
+
+    warpx_potential_lo_y: float, default=0.
+       Electrostatic potential on the lower z boundary
+
+    warpx_potential_hi_y: float, default=0.
+       Electrostatic potential on the upper z boundary
+
+    warpx_potential_lo_z: float, default=0.
+       Electrostatic potential on the lower z boundary
+
+    warpx_potential_hi_z: float, default=0.
+       Electrostatic potential on the upper z boundary
+    """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
@@ -655,6 +860,36 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
             pywarpx.amr.max_level = 0
 
 class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
+    """
+    Parameters
+    ----------
+    warpx_pml_ncell: integer, optional
+        The depth of the PML, in number of cells
+
+    warpx_periodic_single_box_fft: bool, default=False
+        Whether to do the spectral solver FFTs assuming a single
+        simulation block
+
+    warpx_current_correction: bool, default=True
+        Whether to do the current correction for the spectral solver.
+        See documentation for exceptions to the default value.
+
+    warpx_psatd_update_with_rho: bool, optional
+        Whether to update with the actual rho for the spectral solver
+
+    warpx_psatd_do_time_averaging: bool, optional
+        Whether to do the time averaging for the spectral solver
+
+    warpx_do_pml_in_domain: bool, default=False
+        Whether to do the PML boundaries within the domain (versus
+        in the guard cells)
+
+    warpx_pml_has_particles: bool, default=False
+        Whether to allow particles in the PML region
+
+    warpx_do_pml_j_damping: bool, default=False
+        Whether to do damping of J in the PML
+    """
     def init(self, kw):
         assert self.method is None or self.method in ['Yee', 'CKC', 'PSATD', 'ECT'], Exception("Only 'Yee', 'CKC', 'PSATD', and 'ECT' are supported")
 
@@ -720,6 +955,18 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
+    """
+    Parameters
+    ----------
+    warpx_relativistic: bool, default=False
+        Whether to use the relativistic solver or lab frame solver
+
+    warpx_absolute_tolerance: float, default=0.
+        Absolute tolerance on the lab fram solver
+
+    warpx_self_fields_verbosity: integer, default=2
+        Level of verbosity for the lab frame solver
+    """
     def init(self, kw):
         self.relativistic = kw.pop('warpx_relativistic', False)
         self.absolute_tolerance = kw.pop('warpx_absolute_tolerance', None)
@@ -881,7 +1128,7 @@ class CoulombCollisions(picmistandard.base._ClassWithInit):
         Value of the Coulomb log to use in the collision cross section.
         If not supplied, it is calculated from the local conditions.
 
-    ndt: int, optional
+    ndt: integer, optional
         The collisions will be applied every "ndt" steps. Must be 1 or larger.
     """
     def __init__(self, name, species, CoulombLog=None, ndt=None, **kw):
@@ -927,7 +1174,7 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
         The mass of the background particle. If not supplied, the default depends
         on the type of scattering process.
 
-    ndt: int, optional
+    ndt: integer, optional
         The collisions will be applied every "ndt" steps. Must be 1 or larger.
     """
 
@@ -1106,6 +1353,76 @@ class PlasmaLens(picmistandard.base._ClassWithInit):
 
 
 class Simulation(picmistandard.PICMI_Simulation):
+    """
+    Parameters
+    ----------
+    warpx_current_deposition_algo: {'direct', 'esirkepov', and 'vay'}, optional
+        Current deposition algorithm. The default depends on conditions.
+
+    warpx_charge_deposition_algo: {'standard'}, optional
+        Charge deposition algorithm.
+
+    warpx_field_gathering_algo: {'energy-conserving', 'momentum-conserving'}, optional
+        Field gathering algorithm. The default depends on conditions.
+
+    warpx_particle_pusher_algo: {'boris', 'vay', 'higuera'}, default='boris'
+        Particle pushing algorithm.
+
+    warpx_use_filter: bool, optional
+        Whether to use filtering. The default depends on the conditions.
+
+    warpx_serialize_initial_conditions: bool, default=False
+        Controls the random numbers used for initialization.
+        This parameter should only be used for testing and continuous integration.
+
+    warpx_do_dynamic_scheduling: bool, default=True
+        Whether to do dynamic scheduling with OpenMP
+
+    warpx_load_balance_intervals: string, default='0'
+        The intervals for doing load balancing
+
+    warpx_load_balance_efficiency_ratio_threshold: float, default=1.1
+        (See documentation)
+
+    warpx_load_balance_with_sfc: bool, default=0
+        (See documentation)
+
+    warpx_load_balance_knapsack_factor: float, default=1.24
+        (See documentation)
+
+    warpx_load_balance_costs_update: {'heuristic' or 'timers' or 'gpuclock'}, optional
+        (See documentation)
+
+    warpx_costs_heuristic_particles_wt: float, optional
+        (See documentation)
+
+    warpx_costs_heuristic_cells_wt: float, optional
+        (See documentation)
+
+    warpx_use_fdtd_nci_corr: bool, optional
+        Whether to use the NCI correction when using the FDTD solver
+
+    warpx_amr_check_input: bool, optional
+        Whether AMReX should perform checks on the input
+        (primarily related to the max grid size and blocking factors)
+
+    warpx_amr_restart: string, optional
+        The name of the restart to use
+
+    warpx_zmax_plasma_to_compute_max_step: float, optional
+        Sets the simulation run time based on the maximum z value
+
+    warpx_collisions: collision instance, optional
+        The collision instance specifying the particle collisions
+
+    warpx_embedded_boundary: embedded boundary instance, optional
+
+    warpx_break_signals: list of strings
+        Signals on which to break
+
+    warpx_checkpoint_signals: list of strings
+        Signals on which to write out a checkpoint
+    """
 
     # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
     # Simulation objects. In the future, LibWarpX objects may actually be owned
