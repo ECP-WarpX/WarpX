@@ -46,33 +46,30 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveEPML (
     std::array< amrex::MultiFab*, 3 > Efield,
     std::array< amrex::MultiFab*, 3 > const Bfield,
-    std::array< amrex::MultiFab*, 3 > const Jfield,
     std::array< amrex::MultiFab*, 3 > const edge_lengths,
-    amrex::MultiFab* const Ffield,
-    MultiSigmaBox const& sigba,
-    amrex::Real const dt, bool pml_has_particles ) {
+    amrex::MultiFab* const Ffield, amrex::Real const dt) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles, edge_lengths);
+    amrex::ignore_unused(Efield, Bfield, Ffield, dt, edge_lengths);
     amrex::Abort(Utils::TextMsg::Err(
         "PML are not implemented in cylindrical geometry."));
 #else
     if (m_do_nodal) {
 
         EvolveEPMLCartesian <CartesianNodalAlgorithm> (
-            Efield, Bfield, Jfield, edge_lengths, Ffield, sigba, dt, pml_has_particles );
+            Efield, Bfield, edge_lengths, Ffield, dt);
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee || m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         EvolveEPMLCartesian <CartesianYeeAlgorithm> (
-            Efield, Bfield, Jfield,  edge_lengths, Ffield, sigba, dt, pml_has_particles );
+            Efield, Bfield, edge_lengths, Ffield, dt);
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
         EvolveEPMLCartesian <CartesianCKCAlgorithm> (
-            Efield, Bfield, Jfield,  edge_lengths, Ffield, sigba, dt, pml_has_particles );
+            Efield, Bfield, edge_lengths, Ffield, dt);
 
     } else {
         amrex::Abort(Utils::TextMsg::Err("EvolveEPML: Unknown algorithm"));
@@ -87,11 +84,8 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveEPMLCartesian (
     std::array< amrex::MultiFab*, 3 > Efield,
     std::array< amrex::MultiFab*, 3 > const Bfield,
-    std::array< amrex::MultiFab*, 3 > const Jfield,
     std::array< amrex::MultiFab*, 3 > const edge_lengths,
-    amrex::MultiFab* const Ffield,
-    MultiSigmaBox const& sigba,
-    amrex::Real const dt, bool pml_has_particles ) {
+    amrex::MultiFab* const Ffield, amrex::Real const dt) {
 
     Real constexpr c2 = PhysConst::c * PhysConst::c;
 
@@ -201,44 +195,6 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
                 }
             );
         }
-
-        // Update the E field in the PML, using the current
-        // deposited by the particles in the PML
-        if (pml_has_particles) {
-
-            // Extract field data for this grid/tile
-            Array4<Real> const& Jx = Jfield[0]->array(mfi);
-            Array4<Real> const& Jy = Jfield[1]->array(mfi);
-            Array4<Real> const& Jz = Jfield[2]->array(mfi);
-            const Real* sigmaj_x = sigba[mfi].sigma[0].data();
-            const Real* sigmaj_y = sigba[mfi].sigma[1].data();
-            const Real* sigmaj_z = sigba[mfi].sigma[2].data();
-            int const x_lo = sigba[mfi].sigma[0].lo();
-#if defined(WARPX_DIM_3D)
-            int const y_lo = sigba[mfi].sigma[1].lo();
-            int const z_lo = sigba[mfi].sigma[2].lo();
-#else
-            int const y_lo = 0;
-            int const z_lo = sigba[mfi].sigma[1].lo();
-#endif
-            const Real mu_c2_dt = (PhysConst::mu0*PhysConst::c*PhysConst::c) * dt;
-
-            amrex::ParallelFor( tex, tey, tez,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    push_ex_pml_current(i, j, k, Ex, Jx,
-                        sigmaj_y, sigmaj_z, y_lo, z_lo, mu_c2_dt);
-                },
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    push_ey_pml_current(i, j, k, Ey, Jy,
-                        sigmaj_x, sigmaj_z, x_lo, z_lo, mu_c2_dt);
-                },
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    push_ez_pml_current(i, j, k, Ez, Jz,
-                        sigmaj_x, sigmaj_y, x_lo, y_lo, mu_c2_dt);
-                }
-            );
-        }
-
     }
 
 #ifndef AMREX_USE_EB

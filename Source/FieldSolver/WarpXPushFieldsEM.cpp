@@ -9,6 +9,8 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
+#include "BoundaryConditions/PML_current.H"
+
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #if defined(WARPX_USE_PSATD)
@@ -762,6 +764,13 @@ WarpX::PushPSATD ()
         if (pml[lev] && pml[lev]->ok())
         {
             pml[lev]->PushPSATD(lev);
+            if (pml_has_particles)
+            {
+                pml[lev]->UpdateEwithCurrents(pml[lev]->GetE_fp(), pml[lev]->Getj_fp(),
+                                pml[lev]->GetMultiSigmaBox_fp(), dt[0]);
+                if (lev > 0) pml[lev]->UpdateEwithCurrents(pml[lev]->GetE_cp(), pml[lev]->Getj_cp(),
+                                pml[lev]->GetMultiSigmaBox_cp(), dt[lev]);
+            }
         }
         ApplyEfieldBoundary(lev, PatchType::fine);
         if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
@@ -848,12 +857,12 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
         m_fdtd_solver_fp[lev]->EvolveE(Efield_fp[lev], Bfield_fp[lev],
                                        current_fp[lev], m_edge_lengths[lev],
                                        m_face_areas[lev], ECTRhofield[lev],
-                                       F_fp[lev], lev, a_dt );
+                                       F_fp[lev], lev, a_dt);
     } else {
         m_fdtd_solver_cp[lev]->EvolveE(Efield_cp[lev], Bfield_cp[lev],
                                        current_cp[lev], m_edge_lengths[lev],
                                        m_face_areas[lev], ECTRhofield[lev],
-                                       F_cp[lev], lev, a_dt );
+                                       F_cp[lev], lev, a_dt);
     }
 
     // Evolve E field in PML cells
@@ -861,18 +870,19 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveEPML(
                 pml[lev]->GetE_fp(), pml[lev]->GetB_fp(),
-                pml[lev]->Getj_fp(), pml[lev]->Get_edge_lengths(),
-                pml[lev]->GetF_fp(),
-                pml[lev]->GetMultiSigmaBox_fp(),
-                a_dt, pml_has_particles );
+                pml[lev]->Get_edge_lengths(),
+                pml[lev]->GetF_fp(), a_dt);
         } else {
             m_fdtd_solver_cp[lev]->EvolveEPML(
                 pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
-                pml[lev]->Getj_cp(), pml[lev]->Get_edge_lengths(),
-                pml[lev]->GetF_cp(),
-                pml[lev]->GetMultiSigmaBox_cp(),
-                a_dt, pml_has_particles );
+                pml[lev]->Get_edge_lengths(),
+                pml[lev]->GetF_cp(), a_dt);
         }
+        if (pml_has_particles)
+            {
+                pml[lev]->UpdateEwithCurrents(pml[lev]->GetE_fp(), pml[lev]->Getj_fp(),
+                            pml[lev]->GetMultiSigmaBox_fp(), a_dt);
+            }
     }
 
     ApplyEfieldBoundary(lev, patch_type);
@@ -1025,17 +1035,13 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveEPML(
                 pml[lev]->GetE_fp(), pml[lev]->GetB_fp(),
-                pml[lev]->Getj_fp(), pml[lev]->Get_edge_lengths(),
-                pml[lev]->GetF_fp(),
-                pml[lev]->GetMultiSigmaBox_fp(),
-                a_dt, pml_has_particles );
+                pml[lev]->Get_edge_lengths(),
+                pml[lev]->GetF_fp(), a_dt);
         } else {
             m_fdtd_solver_cp[lev]->EvolveEPML(
                 pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
-                pml[lev]->Getj_cp(), pml[lev]->Get_edge_lengths(),
-                pml[lev]->GetF_cp(),
-                pml[lev]->GetMultiSigmaBox_cp(),
-                a_dt, pml_has_particles );
+                pml[lev]->Get_edge_lengths(),
+                pml[lev]->GetF_cp(), a_dt);
         }
     }
 
