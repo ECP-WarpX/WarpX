@@ -1,6 +1,6 @@
 #include "GetLogo.H"
 
-std::string utils::logo::get_logo ()
+std::string utils::logo::get_logo () noexcept
 {
     return
 R"(
