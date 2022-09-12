@@ -199,13 +199,13 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
     AMREX_ALWAYS_ASSERT(F_box.bigEnd(0)+1 >= m_nr);
 
     // Note that M is flagged to be transposed since it has dimensions (m_nr, m_nk)
-    Gpu::synchronize();
+    amrex::Gpu::synchronize();
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                m_nk, nz, m_nr, 1._rt,
                m_M.dataPtr(), m_nk,
                F.dataPtr(F_icomp)+ngr, nrF, 0._rt,
                G.dataPtr(G_icomp), m_nk);
-    Gpu::synchronize();
+    amrex::Gpu::synchronize();
 }
 
 void
