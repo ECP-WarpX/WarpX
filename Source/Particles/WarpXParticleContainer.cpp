@@ -447,27 +447,74 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if (WarpX::do_shared_mem_current_deposition) {
+            const Geometry& geom = Geom(lev);
+            const auto dxi = geom.InvCellSizeArray();
+            const auto plo = geom.ProbLoArray();
+            const auto domain = geom.Domain();
+
+            Box box = pti.validbox();
+            box.grow(ng_J);
+            amrex::IntVect bin_size = WarpX::shared_tilesize;
+
+            //sort particles by bin
+            WARPX_PROFILE_VAR_START(blp_sort);
+            amrex::DenseBins<ParticleType> bins;
+            {
+                auto& ptile = ParticlesAt(lev, pti);
+                auto& aos = ptile.GetArrayOfStructs();
+                auto pstruct_ptr = aos().dataPtr();
+
+                int ntiles = numTilesInBox(box, true, bin_size);
+
+                bins.build(ptile.numParticles(), pstruct_ptr, ntiles,
+                        [=] AMREX_GPU_HOST_DEVICE (const ParticleType& p) -> unsigned int
+                        {
+                            Box tbox;
+                            auto iv = getParticleCell(p, plo, dxi, domain);
+                            AMREX_ASSERT(box.contains(iv));
+                            auto tid = getTileIndex(iv, box, true, bin_size, tbox);
+                            return static_cast<unsigned int>(tid);
+                        });
+            }
+            WARPX_PROFILE_VAR_STOP(blp_sort);
+            WARPX_PROFILE_VAR_START(blp_get_max_tilesize);
+                //get the maximum size necessary for shared mem
+                // get tile boxes
+            //get the maximum size necessary for shared mem
+#if AMREX_SPACEDIM > 0
+            int sizeX = getMaxTboxAlongDim(box.size()[0], WarpX::shared_tilesize[0]);
+#endif
+#if AMREX_SPACEDIM > 1
+            int sizeZ = getMaxTboxAlongDim(box.size()[1], WarpX::shared_tilesize[1]);
+#endif
+#if AMREX_SPACEDIM > 2
+            int sizeY = getMaxTboxAlongDim(box.size()[2], WarpX::shared_tilesize[2]);
+#endif
+            amrex::IntVect max_tbox_size( AMREX_D_DECL(sizeX,sizeZ,sizeY) );
+            WARPX_PROFILE_VAR_STOP(blp_get_max_tilesize);
+
+
             if        (WarpX::nox == 1){
                 doEsirkepovDepositionSharedShapeN<1>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                    WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo);
+                    jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx,
+                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
             } else if (WarpX::nox == 2){
                 doEsirkepovDepositionSharedShapeN<2>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                    WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo);
+                    jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx,
+                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
             } else if (WarpX::nox == 3){
                 doEsirkepovDepositionSharedShapeN<3>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                    WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo);
+                    jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx,
+                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
             }
         }
         else {
