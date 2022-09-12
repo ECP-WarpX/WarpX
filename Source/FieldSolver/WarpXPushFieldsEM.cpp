@@ -725,7 +725,9 @@ WarpX::PushPSATD ()
             PSATDSubtractCurrentPartialSumsAvg();
 
             // Synchronize J and rho (if used)
-            SyncCurrent(current_fp, current_cp);
+            // TODO This works only without mesh refinement
+            const int lev = 0;
+            SumBoundaryJ(current_fp, lev, Geom(lev).periodicity());
             SyncRho();
         }
 
