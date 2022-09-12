@@ -446,27 +446,53 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     amrex::Real * const cost = costs ? &((*costs)[pti.index()]) : nullptr;
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
-        if        (WarpX::nox == 1){
-            doEsirkepovDepositionShapeN<1>(
-                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes, cost,
-                WarpX::load_balance_costs_update_algo);
-        } else if (WarpX::nox == 2){
-            doEsirkepovDepositionShapeN<2>(
-                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes, cost,
-                WarpX::load_balance_costs_update_algo);
-        } else if (WarpX::nox == 3){
-            doEsirkepovDepositionShapeN<3>(
-                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes, cost,
-                WarpX::load_balance_costs_update_algo);
+        if (WarpX::do_shared_mem_current_deposition) {
+            if        (WarpX::nox == 1){
+                doEsirkepovDepositionSharedShapeN<1>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                    WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            } else if (WarpX::nox == 2){
+                doEsirkepovDepositionSharedShapeN<2>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                    WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            } else if (WarpX::nox == 3){
+                doEsirkepovDepositionSharedShapeN<3>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                    WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            }
+        }
+        else {
+            if        (WarpX::nox == 1){
+                doEsirkepovDepositionShapeN<1>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                    WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            } else if (WarpX::nox == 2){
+                doEsirkepovDepositionShapeN<2>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                    WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            } else if (WarpX::nox == 3){
+                doEsirkepovDepositionShapeN<3>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                    WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            }
         }
     } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
         if        (WarpX::nox == 1){
