@@ -200,11 +200,14 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
 
     // Note that M is flagged to be transposed since it has dimensions (m_nr, m_nk)
     amrex::Gpu::synchronize();
+    int const device_id = amrex::Gpu::Device::deviceId();
+    blas::Queue queue( device_id, 0 );
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                m_nk, nz, m_nr, 1._rt,
                m_M.dataPtr(), m_nk,
                F.dataPtr(F_icomp)+ngr, nrF, 0._rt,
-               G.dataPtr(G_icomp), m_nk);
+               G.dataPtr(G_icomp), m_nk,
+               queue);
     amrex::Gpu::synchronize();
 }
 
