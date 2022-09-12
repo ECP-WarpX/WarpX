@@ -12,7 +12,7 @@ namespace utils
          *
          * \return a string containing an ASCII art logo
          */
-        std::string get_logo ();
+        std::string get_logo () noexcept;
     }
 }
 
