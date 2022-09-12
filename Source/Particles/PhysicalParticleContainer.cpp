@@ -989,7 +989,17 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 } else {
                     r = 1;
                 }
-                pcounts[index] = num_ppc*r;
+//                pcounts[index] = num_ppc*r;
+                // update pcount by checking which particles have non-zero density
+                int total_pcount = 0;
+                for (int i = 0; i < num_ppc*r; ++i) {
+                    const XDim3 r =
+                        inj_pos->getPositionUnitBox(i, lrrfac);
+                    auto pos = getCellCoords(overlap_corner, dx, r, iv);
+                    dens = inj_rho->getDensity(xp, yp, zp);
+                    if (dens > density_min) total_pcount++;
+                }
+                pcounts[index] = total_pcount;
             }
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             amrex::ignore_unused(k);
