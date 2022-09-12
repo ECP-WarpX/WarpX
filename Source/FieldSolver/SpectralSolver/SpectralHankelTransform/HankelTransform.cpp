@@ -198,37 +198,12 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
     AMREX_ALWAYS_ASSERT(ngr >= 0);
     AMREX_ALWAYS_ASSERT(F_box.bigEnd(0)+1 >= m_nr);
 
-#ifndef AMREX_USE_GPU
-    // On CPU, the blas::gemm is significantly faster
-
     // Note that M is flagged to be transposed since it has dimensions (m_nr, m_nk)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                m_nk, nz, m_nr, 1._rt,
                m_M.dataPtr(), m_nk,
                F.dataPtr(F_icomp)+ngr, nrF, 0._rt,
                G.dataPtr(G_icomp), m_nk);
-
-#else
-    // On GPU, the explicit loop is significantly faster
-    // It is not clear if the GPU gemm wasn't build properly, it is cycling data out and back
-    // in to the device, or if it is because gemm is launching its own threads.
-
-    amrex::Real const * M_arr = m_M.dataPtr();
-    amrex::Array4<const amrex::Real> const & F_arr = F.array();
-    amrex::Array4<      amrex::Real> const & G_arr = G.array();
-
-    int const nr = m_nr;
-
-    amrex::ParallelFor(G_box,
-    [=] AMREX_GPU_DEVICE(int ik, int iz, int k3d) noexcept {
-        G_arr(ik,iz,k3d,G_icomp) = 0.;
-        for (int ir=0 ; ir < nr ; ir++) {
-            int const ii = ir + ik*nr;
-            G_arr(ik,iz,k3d,G_icomp) += M_arr[ii]*F_arr(ir,iz,k3d,F_icomp);
-        }
-    });
-
-#endif
 
 }
 
