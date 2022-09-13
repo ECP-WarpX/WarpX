@@ -552,7 +552,7 @@ void depositEsirkepovComponent (const GetParticlePosition& GetPosition,
             amrex::Real const sdyj = wq*vy*invvol*(
                 one_third*(sx_new[i]*sz_new[k] + sx_old[i]*sz_old[k])
                +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
-            amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdyj);
+            amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdyj);
 #if defined(WARPX_DIM_RZ)
             Complex xy_new = xy_new0;
             Complex xy_mid = xy_mid0;
@@ -667,24 +667,16 @@ void depositEsirkepovComponentX (const GetParticlePosition& GetPosition,
 
 #if defined(WARPX_DIM_3D)
     amrex::Real const invdtdx = 1.0_rt / (dt*dx[1]*dx[2]);
+    amrex::Real constexpr one_third = 1.0_rt / 3.0_rt;
+    amrex::Real constexpr one_sixth = 1.0_rt / 6.0_rt;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::Real const invdtdx = 1.0_rt / (dt*dx[2]);
-    amrex::Real const invdtdz = 1.0_rt / (dt*dx[0]);
-    amrex::Real const invvol = 1.0_rt / (dx[0]*dx[2]);
 #elif defined(WARPX_DIM_1D_Z)
     amrex::Real const invdtdz = 1.0_rt / (dt*dx[0]);
     amrex::Real const invvol = 1.0_rt / (dx[2]);
 #endif
 
-#if defined(WARPX_DIM_RZ)
-    Complex const I = Complex{0._rt, 1._rt};
-#endif
-
     amrex::Real const clightsq = 1.0_rt / ( PhysConst::c * PhysConst::c );
-#if !defined(WARPX_DIM_1D_Z)
-    amrex::Real constexpr one_third = 1.0_rt / 3.0_rt;
-    amrex::Real constexpr one_sixth = 1.0_rt / 6.0_rt;
-#endif
 
     // --- Get particle quantities
     amrex::Real const gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*clightsq
@@ -739,9 +731,7 @@ void depositEsirkepovComponentX (const GetParticlePosition& GetPosition,
         costheta_old = 1._rt;
         sintheta_old = 0._rt;
     }
-    const Complex xy_new0 = Complex{costheta_new, sintheta_new};
     const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
-    const Complex xy_old0 = Complex{costheta_old, sintheta_old};
     // Keep these double to avoid bug in single precision
     double const x_new = (rp_new - xmin)*dxi;
     double const x_old = (rp_old - xmin)*dxi;
@@ -761,11 +751,7 @@ void depositEsirkepovComponentX (const GetParticlePosition& GetPosition,
     double const z_new = (zp - zmin + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv)*dzi;
     double const z_old = z_new - dt*dzi*uzp[ip]*gaminv;
 
-#if defined(WARPX_DIM_RZ)
-    amrex::Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
-#elif defined(WARPX_DIM_XZ)
-    amrex::Real const vy = uyp[ip]*gaminv;
-#elif defined(WARPX_DIM_1D_Z)
+#if defined(WARPX_DIM_1D_Z)
     amrex::Real const vx = uxp[ip]*gaminv;
     amrex::Real const vy = uyp[ip]*gaminv;
 #endif
@@ -911,9 +897,10 @@ void depositEsirkepovComponentY (const GetParticlePosition& GetPosition,
 
 #if defined(WARPX_DIM_3D)
     amrex::Real const invdtdy = 1.0_rt / (dt*dx[0]*dx[2]);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ)
+    amrex::Real const invvol = 1.0_rt / (dx[0]*dx[2]);
+#elif defined(WARPX_DIM_RZ)
     amrex::Real const invdtdx = 1.0_rt / (dt*dx[2]);
-    amrex::Real const invdtdz = 1.0_rt / (dt*dx[0]);
     amrex::Real const invvol = 1.0_rt / (dx[0]*dx[2]);
 #elif defined(WARPX_DIM_1D_Z)
     amrex::Real const invdtdz = 1.0_rt / (dt*dx[0]);
@@ -1157,6 +1144,8 @@ void depositEsirkepovComponentZ (const GetParticlePosition& GetPosition,
 #if defined(WARPX_DIM_3D)
     amrex::Real const dyi = 1.0_rt / dx[1];
     amrex::Real const ymin = xyzmin[1];
+    amrex::Real constexpr one_third = 1.0_rt / 3.0_rt;
+    amrex::Real constexpr one_sixth = 1.0_rt / 6.0_rt;
 #endif
     amrex::Real const dzi = 1.0_rt / dx[2];
     amrex::Real const zmin = xyzmin[2];
@@ -1164,23 +1153,13 @@ void depositEsirkepovComponentZ (const GetParticlePosition& GetPosition,
 #if defined(WARPX_DIM_3D)
     amrex::Real const invdtdz = 1.0_rt / (dt*dx[0]*dx[1]);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    amrex::Real const invdtdx = 1.0_rt / (dt*dx[2]);
     amrex::Real const invdtdz = 1.0_rt / (dt*dx[0]);
-    amrex::Real const invvol = 1.0_rt / (dx[0]*dx[2]);
 #elif defined(WARPX_DIM_1D_Z)
     amrex::Real const invdtdz = 1.0_rt / (dt*dx[0]);
     amrex::Real const invvol = 1.0_rt / (dx[2]);
 #endif
 
-#if defined(WARPX_DIM_RZ)
-    Complex const I = Complex{0._rt, 1._rt};
-#endif
-
     amrex::Real const clightsq = 1.0_rt / ( PhysConst::c * PhysConst::c );
-#if !defined(WARPX_DIM_1D_Z)
-    amrex::Real constexpr one_third = 1.0_rt / 3.0_rt;
-    amrex::Real constexpr one_sixth = 1.0_rt / 6.0_rt;
-#endif
 
     // --- Get particle quantities
     amrex::Real const gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*clightsq
@@ -1233,9 +1212,7 @@ void depositEsirkepovComponentZ (const GetParticlePosition& GetPosition,
         costheta_old = 1._rt;
         sintheta_old = 0._rt;
     }
-    const Complex xy_new0 = Complex{costheta_new, sintheta_new};
     const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
-    const Complex xy_old0 = Complex{costheta_old, sintheta_old};
     // Keep these double to avoid bug in single precision
     double const x_new = (rp_new - xmin)*dxi;
     double const x_old = (rp_old - xmin)*dxi;
@@ -1255,11 +1232,7 @@ void depositEsirkepovComponentZ (const GetParticlePosition& GetPosition,
     double const z_new = (zp - zmin + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv)*dzi;
     double const z_old = z_new - dt*dzi*uzp[ip]*gaminv;
 
-#if defined(WARPX_DIM_RZ)
-    amrex::Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
-#elif defined(WARPX_DIM_XZ)
-    amrex::Real const vy = uyp[ip]*gaminv;
-#elif defined(WARPX_DIM_1D_Z)
+#if defined(WARPX_DIM_1D_Z)
     amrex::Real const vx = uxp[ip]*gaminv;
     amrex::Real const vy = uyp[ip]*gaminv;
 #endif
