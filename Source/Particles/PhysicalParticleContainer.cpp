@@ -989,17 +989,30 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 } else {
                     r = 1;
                 }
-//                pcounts[index] = num_ppc*r;
+                pcounts[index] = num_ppc*r;
                 // update pcount by checking which particles have non-zero density
-                int total_pcount = 0;
-                for (int i = 0; i < num_ppc*r; ++i) {
-                    const XDim3 r =
-                        inj_pos->getPositionUnitBox(i, lrrfac);
-                    auto pos = getCellCoords(overlap_corner, dx, r, iv);
-                    dens = inj_rho->getDensity(xp, yp, zp);
-                    if (dens > density_min) total_pcount++;
+                int flag_pcount = 0;
+                for (int ip = 0; ip < num_ppc*r; ++ip) {
+                    const XDim3 r_loc =
+                        inj_pos->getPositionUnitBox(ip, lrrfac, amrex::RandomEngine{});
+                    amrex::Real dens1 = inj_rho->getDensity(lo.x, lo.y, lo.z);
+                    amrex::Real dens2 = inj_rho->getDensity(lo.x, lo.y, hi.z);
+                    amrex::Real dens3 = inj_rho->getDensity(lo.x, hi.y, lo.z);
+                    amrex::Real dens4 = inj_rho->getDensity(hi.x, lo.y, lo.z);
+                    amrex::Real dens5 = inj_rho->getDensity(lo.x, hi.y, hi.z);
+                    amrex::Real dens6 = inj_rho->getDensity(hi.x, lo.y, hi.z);
+                    amrex::Real dens7 = inj_rho->getDensity(hi.x, hi.y, lo.z);
+                    amrex::Real dens8 = inj_rho->getDensity(hi.x, hi.y, hi.z);
+                    if (  dens1 > 0 || dens2 > 0 || dens3 > 0 || dens4 > 0
+                       || dens5 > 0 || dens6 > 0 || dens7 > 0 || dens8 > 0) {
+                        flag_pcount = 1;
+                    }
                 }
-                pcounts[index] = total_pcount;
+                if (flag_pcount == 1) {
+                    pcounts[index] = num_ppc*r;
+                } else {
+                    pcounts[index] = 0;
+                }
             }
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             amrex::ignore_unused(k);
