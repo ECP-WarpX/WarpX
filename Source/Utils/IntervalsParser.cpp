@@ -134,45 +134,62 @@ BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_ve
     {
         bool isBTD = true;
         SliceParser temp_slice(inslc, isBTD);
-        m_slices.push_back(temp_slice);
+        if (m_slices.size() > 0)
+        {
+            int i_slice = 0;
+            while (temp_slice.getStart() > m_slices[i_slice].getStart() && i_slice < m_slices.size())
+            {
+                i_slice++;
+            }
+            m_slices.insert(m_slices.begin() + i_slice, temp_slice);
+        }
+        else
+        {
+            m_slices.push_back(temp_slice);
+        }
+    }
+    for (const auto& temp_slice : m_slices)
+    {
+        const int start = temp_slice.getStart();
+        const int period = temp_slice.getPeriod();
+        int btd_iter_ind;
+        if (m_btd_iterations.size() == 0)
+        {
+            btd_iter_ind = 0;
+        }
+        else
+        {
+            btd_iter_ind = m_btd_iterations.size() - 1;
+            while (start < m_btd_iterations[btd_iter_ind] and btd_iter_ind>0)
+            {
+                btd_iter_ind--;
+            }
+        }
+        for (int ii = start; ii <= temp_slice.getStop(); ii += period)
+        {
+            if (m_btd_iterations.size() > 0) 
+            {
+                while (ii > m_btd_iterations[btd_iter_ind] && btd_iter_ind < m_btd_iterations.size()) 
+                {
+                    btd_iter_ind++;
+                }
+                if (ii != m_btd_iterations[btd_iter_ind])
+                {
+                    m_btd_iterations.insert(m_btd_iterations.begin() + btd_iter_ind, ii);
+                }
+            } else
+            {
+                m_btd_iterations.push_back(ii);
+            }
+        }
         if ((temp_slice.getPeriod() > 0) &&
-               (temp_slice.getStop() >= temp_slice.getStart())) m_activated = true;
-    }
-    int n_slices = m_slices.size();
-    m_slice_starting_i_buffer = std::vector<int> (n_slices);
-    for (int ii = 0; ii < n_slices-1; ii++)
-    {
-        m_slice_starting_i_buffer[ii+1] = m_slice_starting_i_buffer[ii] + m_slices[ii].numContained();
-    }
-    m_n_snapshots = 0;
-    for (auto& slice : m_slices)
-    {
-        m_n_snapshots += slice.numContained();
+               (temp_slice.getStop() >= start)) m_activated = true;
     }
 }
 
-int BTDIntervalsParser::NumSnapshots () { return m_n_snapshots; }
-
-int BTDIntervalsParser::GetSliceIndex(int i_buffer)
-{
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE((0<=i_buffer) && (i_buffer < m_n_snapshots),
-        "invalid i_buffer=" + std::to_string(i_buffer) + " submitted.  Require 0<= i_buffer < " + std::to_string(m_n_snapshots));
-    int slice_index = 0;
-    while (i_buffer >= m_slice_starting_i_buffer[slice_index+1]
-            && static_cast<unsigned long>(slice_index) < m_slices.size()-1)
-    {
-        slice_index++;
-    }
-    return slice_index;
-}
+int BTDIntervalsParser::NumSnapshots () { return m_btd_iterations.size(); } 
 
 int BTDIntervalsParser::GetBTDIteration(int i_buffer)
 {
-    const auto slice_ind = GetSliceIndex(i_buffer);
-    auto slice_start_ind = m_slice_starting_i_buffer[slice_ind];
-    auto slice = m_slices[slice_ind];
-    auto slice_start = slice.getStart();
-    auto slice_period = slice.getPeriod();
-    int BTDiteration = slice_start + (i_buffer - slice_start_ind) * slice_period;
-    return BTDiteration;
+    return m_btd_iterations[i_buffer];
 }

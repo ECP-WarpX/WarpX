@@ -163,9 +163,12 @@ BTDiagnostics::ReadParameters ()
 
 
     std::vector<std::string> intervals_string_vec = {"0"};
-    if (!pp_diag_name.queryarr("intervals", intervals_string_vec) )
+    bool num_snapshots_specified = queryWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
+    bool intervals_specified = pp_diag_name.queryarr("intervals", intervals_string_vec);
+    if (num_snapshots_specified)
     {
-        getWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!(num_snapshots_specified && intervals_specified),
+            "For back-transformed diagnostics, user should specify either num_snapshots_lab or intervals, not both");
         intervals_string_vec = {":" + std::to_string(m_num_snapshots_lab)};
     }
     m_intervals = BTDIntervalsParser(intervals_string_vec);
