@@ -53,7 +53,9 @@ guardCellManager::Init (
     const bool do_pml,
     const int do_pml_in_domain,
     const int pml_ncell,
-    const amrex::Vector<amrex::IntVect>& ref_ratios)
+    const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const bool use_filter,
+    const amrex::IntVect& bilinear_filter_stencil_length)
 {
     // When using subcycling, the particles on the fine level perform two pushes
     // before being redistributed ; therefore, we need one extra guard cell
@@ -159,6 +161,11 @@ guardCellManager::Init (
     // Number of guard cells for local deposition of J and rho
     ng_depos_J   = ng_alloc_J;
     ng_depos_rho = ng_alloc_Rho;
+
+    if (use_filter)
+    {
+        ng_alloc_J += bilinear_filter_stencil_length - amrex::IntVect(1);
+    }
 
     // After pushing particle
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;

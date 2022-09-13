@@ -1651,6 +1651,13 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[1], WarpX::CellSize(lev)[2]};
 #endif
 
+    // Initialize filter before guard cells manager
+    // (needs info on length of filter's stencil)
+    if (use_filter)
+    {
+        InitFilter();
+    }
+
     guard_cells.Init(
         dt[lev],
         dx,
@@ -1673,7 +1680,9 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::isAnyBoundaryPML(),
         WarpX::do_pml_in_domain,
         WarpX::pml_ncell,
-        this->refRatio());
+        this->refRatio(),
+        use_filter,
+        bilinear_filter.stencil_length_each_dir);
 
 
 #ifdef AMREX_USE_EB
@@ -1708,7 +1717,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 
 void
 WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm,
-                      const IntVect& ngEB, const IntVect& ngJ, const IntVect& ngRho,
+                      const IntVect& ngEB, IntVect& ngJ, const IntVect& ngRho,
                       const IntVect& ngF, const IntVect& ngG, const bool aux_is_nodal)
 {
     // Declare nodal flags

@@ -978,11 +978,22 @@ private:
         const int lev);
     void StoreCurrent (const int lev);
     void RestoreCurrent (const int lev);
-    void ApplyFilterandSumBoundaryJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    void ApplyFilterJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
         const int lev,
-        PatchType patch_type);
+        const int idim);
+    void ApplyFilterJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const int lev);
+    void SumBoundaryJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const int lev,
+        const int idim,
+        const amrex::Periodicity& period);
+    void SumBoundaryJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const int lev,
+        const amrex::Periodicity& period);
     void NodalSyncJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
@@ -1098,7 +1109,7 @@ private:
                                         const int centering_noz);
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                        const amrex::IntVect& ngEB, const amrex::IntVect& ngJ,
+                        const amrex::IntVect& ngEB, amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const amrex::IntVect& ngG, const bool aux_is_nodal);
 #ifdef WARPX_USE_PSATD
