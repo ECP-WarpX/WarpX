@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 #SBATCH -A <project id>
+#    note: WarpX ECP members use aph114
 #SBATCH -J warpx
 #SBATCH -o %x-%j.out
 #SBATCH -t 00:10:00
