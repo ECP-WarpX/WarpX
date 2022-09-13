@@ -13,8 +13,11 @@ module load cuda/11.3.1
 # optional: faster re-builds
 module load ccache
 
-# optional: for PSATD support (CPU only)
-#module load fftw/3.3.9
+# optional: for RZ+PSATD support
+export CMAKE_PREFIX_PATH=$HOME/sw/summit/blaspp-master:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=$HOME/sw/summit/lapackpp-master:$CMAKE_PREFIX_PATH
+export LD_LIBRARY_PATH=$HOME/sw/summit/blaspp-master/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$HOME/sw/summit/lapackpp-master/lib64:$LD_LIBRARY_PATH
 
 # optional: for QED lookup table generation support
 module load boost/1.76.0
