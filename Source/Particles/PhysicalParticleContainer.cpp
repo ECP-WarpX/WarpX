@@ -2808,57 +2808,118 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto t_do_not_gather = do_not_gather;
 
-    amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
-    {
-        amrex::ParticleReal xp, yp, zp;
-        getPosition(ip, xp, yp, zp);
+    struct NoExternalEB {};
+    struct HasExternalEB {};
+    struct NoQED {};
+#ifdef WARPX_QED
+    struct HasQED {};
+#endif
 
-        if (save_previous_position) {
+    auto make_lambda = [=] (auto exteb_flag, auto qed_flag) {
+        amrex::ignore_unused(qed_flag);
+        return [=] AMREX_GPU_DEVICE (long ip)
+        {
+            amrex::ParticleReal xp, yp, zp;
+            getPosition(ip, xp, yp, zp);
+
+            if (save_previous_position) {
 #if (AMREX_SPACEDIM >= 2)
-            x_old[ip] = xp;
+                x_old[ip] = xp;
 #endif
 #if defined(WARPX_DIM_3D)
-            y_old[ip] = yp;
+                y_old[ip] = yp;
 #endif
-            z_old[ip] = zp;
-        }
+                z_old[ip] = zp;
+            }
 
-        amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
-        amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
+            amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
+            amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
 
-        if(!t_do_not_gather){
-            // first gather E and B to the particle positions
-            doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                           ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                           ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                           dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                           nox, galerkin_interpolation);
-        }
-        // Externally applied E and B-field in Cartesian co-ordinates
-        getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+            if(!t_do_not_gather){
+                // first gather E and B to the particle positions
+                doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                               ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                               ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                               dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                               nox, galerkin_interpolation);
+            }
 
-        scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+            if constexpr (std::is_same<decltype(exteb_flag),HasExternalEB>::value) {
+                getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+            }
 
-        doParticlePush(getPosition, setPosition, copyAttribs, ip,
-                       ux[ip], uy[ip], uz[ip],
-                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                       ion_lev ? ion_lev[ip] : 0,
-                       m, q, pusher_algo, do_crr, do_copy,
-#ifdef WARPX_QED
-                       do_sync,
-                       t_chi_max,
-#endif
-                       dt);
+            scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
 #ifdef WARPX_QED
-        if (local_has_quantum_sync) {
-            evolve_opt(ux[ip], uy[ip], uz[ip],
-                       Exp, Eyp, Ezp,Bxp, Byp, Bzp,
-                       dt, p_optical_depth_QSR[ip]);
-        }
+            if constexpr (std::is_same<decltype(qed_flag),HasQED>::value) {
+                if (do_sync) {
+                    doParticlePush<1>(getPosition, setPosition, copyAttribs, ip,
+                                      ux[ip], uy[ip], uz[ip],
+                                      Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                      ion_lev ? ion_lev[ip] : 0,
+                                      m, q, pusher_algo, do_crr, do_copy,
+                                      t_chi_max,
+                                      dt);
+                }
+            }
+            if (!do_sync)
 #endif
+            {
+                doParticlePush<0>(getPosition, setPosition, copyAttribs, ip,
+                                  ux[ip], uy[ip], uz[ip],
+                                  Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                  ion_lev ? ion_lev[ip] : 0,
+                                  m, q, pusher_algo, do_crr, do_copy,
+#ifdef WARPX_QED
+                                  t_chi_max,
+#endif
+                                  dt);
+            }
 
-    });
+#ifdef WARPX_QED
+            if constexpr (std::is_same<decltype(qed_flag),HasQED>::value) {
+                if (local_has_quantum_sync) {
+                    evolve_opt(ux[ip], uy[ip], uz[ip],
+                               Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                               dt, p_optical_depth_QSR[ip]);
+                }
+            }
+#endif
+        };
+    };
+
+#ifdef WARPX_QED
+    if (local_has_quantum_sync || do_sync) {
+        if (getExternalEB.isNoOp()) {
+            auto lambda = make_lambda(NoExternalEB{}, HasQED{});
+            amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
+            {
+                lambda(ip);
+            });
+        } else {
+            auto lambda = make_lambda(HasExternalEB{}, HasQED{});
+            amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
+            {
+                lambda(ip);
+            });
+        }
+    } else
+#endif
+    {
+        if (getExternalEB.isNoOp()) {
+            auto lambda = make_lambda(NoExternalEB{}, NoQED{});
+            amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
+            {
+                lambda(ip);
+            });
+        } else {
+            auto lambda = make_lambda(HasExternalEB{}, NoQED{});
+            amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
+            {
+                lambda(ip);
+            });
+        }
+    }
 }
 
 void
