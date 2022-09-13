@@ -167,9 +167,9 @@ BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_ve
         }
         for (int ii = start; ii <= temp_slice.getStop(); ii += period)
         {
-            if (m_btd_iterations.size() > 0) 
+            if (m_btd_iterations.size() > 0)
             {
-                while (ii > m_btd_iterations[btd_iter_ind] && btd_iter_ind < m_btd_iterations.size()) 
+                while (ii > m_btd_iterations[btd_iter_ind] && btd_iter_ind < m_btd_iterations.size())
                 {
                     btd_iter_ind++;
                 }
@@ -187,7 +187,7 @@ BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_ve
     }
 }
 
-int BTDIntervalsParser::NumSnapshots () { return m_btd_iterations.size(); } 
+int BTDIntervalsParser::NumSnapshots () { return m_btd_iterations.size(); }
 
 int BTDIntervalsParser::GetBTDIteration(int i_buffer)
 {

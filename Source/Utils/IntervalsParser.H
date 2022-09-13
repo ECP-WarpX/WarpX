@@ -183,8 +183,8 @@ public:
     int NumSnapshots ();
 
     /**
-     * @brief Return the iteration number stored at index i_buffer 
-     * 
+     * @brief Return the iteration number stored at index i_buffer
+     *
      * @param i_buffer buffer or iteration index, between 0 and NumSnapshots
      */
     int GetBTDIteration(int i_buffer);

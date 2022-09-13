@@ -2159,7 +2159,7 @@ BackTransformed Diagnostics (with support for Plotfile/openPMD output)
 * ``<diag_name>.num_snapshots_lab`` (`integer`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
     The time interval in between the lab-frame snapshots (where this time interval is expressed in the laboratory frame).
-    Only this option or ``intervals`` should be specified; 
+    Only this option or ``intervals`` should be specified;
     a run-time error occurs if the user attempts to set both ``num_snapshots_lab`` and ``intervals``.
 
 * ``<diag_name>.intervals`` (`string`)
@@ -2169,7 +2169,7 @@ BackTransformed Diagnostics (with support for Plotfile/openPMD output)
     Example: ``btdiag1.intervals = 10:11,20:24:2`` and ``btdiag1.dt_snapshots_lab = 1.e-12``
     indicate to dump at lab times ``1e-11``, ``1.1e-11``, ``2e-11``, ``2.2e-11``, and ``2.2e-11`` seconds.
     Note that the stop interval, the second number in the slice, must always be specified.
-    Only this option or ``num_snapshots_lab`` should be specified; 
+    Only this option or ``num_snapshots_lab`` should be specified;
     a run-time error occurs if the user attempts to set both ``num_snapshots_lab`` and ``intervals``.
 
 * ``<diag_name>.dt_snapshots_lab`` (`float`, in seconds)
