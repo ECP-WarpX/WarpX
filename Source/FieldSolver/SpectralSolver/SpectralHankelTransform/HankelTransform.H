@@ -50,7 +50,7 @@ class HankelTransform
         RealVector m_invM;
         RealVector m_M;
 
-	std::unique_ptr<blas::Queue> m_queue;
+    std::unique_ptr<blas::Queue> m_queue;
 };
 
 #endif

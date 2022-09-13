@@ -197,7 +197,7 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
                                          amrex::FArrayBox      & G, int const G_icomp)
 {
     WARPX_PROFILE("HankelTransform::HankelInverseTransform");
- 
+
     amrex::Box const& F_box = F.box();
     amrex::Box const& G_box = G.box();
 
@@ -225,7 +225,7 @@ HankelTransform::HankelInverseTransform (amrex::FArrayBox const& G, int const G_
                                          amrex::FArrayBox      & F, int const F_icomp)
 {
     WARPX_PROFILE("HankelTransform::HankelInverseTransform");
- 
+
     amrex::Box const& G_box = G.box();
     amrex::Box const& F_box = F.box();
 
