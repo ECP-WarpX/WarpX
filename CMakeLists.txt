@@ -263,7 +263,7 @@ if(WarpX_PSATD)
         # BLAS++ forgets to declare cuBLAS and cuRAND dependencies
         if(WarpX_COMPUTE STREQUAL CUDA)
             find_package(CUDAToolkit REQUIRED)
-            target_link_libraries(ablastr PUBLIC CUDA::cudart CUDA::curand CUDA::cublas)
+            target_link_libraries(ablastr PUBLIC CUDA::cudart CUDA::cublas)
         endif()
     endif()
 endif()
