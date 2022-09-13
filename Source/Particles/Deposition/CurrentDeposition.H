@@ -433,6 +433,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const auto offsets_ptr = a_bins.offsetsPtr();
 
     const std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
+    //amrex::Print() << "current deposition shared mem request " << shared_mem_bytes << "\n";
     const amrex::IntVect bin_size = WarpX::shared_tilesize;
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
@@ -1390,9 +1391,9 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     amrex::IntVect const jy_type = jy_fab.box().type();
     amrex::IntVect const jz_type = jz_fab.box().type();
 
-    constexpr int zdir = WARPX_ZINDEX;
-    constexpr int NODE = amrex::IndexType::NODE;
-    constexpr int CELL = amrex::IndexType::CELL;
+    //constexpr int zdir = WARPX_ZINDEX;
+    //constexpr int NODE = amrex::IndexType::NODE;
+    //constexpr int CELL = amrex::IndexType::CELL;
 
     // Loop over particles and deposit into jx_fab, jy_fab and jz_fab
 #if defined(WARPX_USE_GPUCLOCK)
@@ -1425,6 +1426,7 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 
     const std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
     const amrex::IntVect bin_size = WarpX::shared_tilesize;
+    //amrex::Print() << "current deposition shared mem request " << shared_mem_bytes << "\n";
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
                                      "Tile size too big for GPU shared memory current deposition");
@@ -1510,9 +1512,11 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif
         {
             unsigned int ip = permutation[ip_orig];
-            depositEsirkepovComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff, jx_type,
+            depositEsirkepovComponentX<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff,// jx_type,
                                           dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
-                                          ip, zdir, NODE, CELL, 0);
+                                          ip); 
+                                          //zdir, NODE, CELL, 
+                                          //0);
         }
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
@@ -1529,9 +1533,11 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif
         {
             unsigned int ip = permutation[ip_orig];
-            depositEsirkepovComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff, jy_type,
+            depositEsirkepovComponentY<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff,// jy_type,
                                           dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
-                                          ip, zdir, NODE, CELL, 1);
+                                          ip); 
+                                          //zdir, NODE, CELL,
+                                          //1);
         }
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
@@ -1548,9 +1554,11 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif
         {
             unsigned int ip = permutation[ip_orig];
-            depositEsirkepovComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, jz_type,
+            depositEsirkepovComponentZ<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, //jz_type,
                                           dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
-                                          ip, zdir, NODE, CELL, 2);
+                                          ip);
+                                          //zdir, NODE, CELL, 
+                                          //2);
         }
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
