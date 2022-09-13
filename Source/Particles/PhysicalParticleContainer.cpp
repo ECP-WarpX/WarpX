@@ -993,8 +993,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 // update pcount by checking which particles have non-zero density
                 int flag_pcount = 0;
                 for (int ip = 0; ip < num_ppc*r; ++ip) {
-                    const XDim3 r_loc =
-                        inj_pos->getPositionUnitBox(ip, lrrfac, amrex::RandomEngine{});
                     amrex::Real dens1 = inj_rho->getDensity(lo.x, lo.y, lo.z);
                     amrex::Real dens2 = inj_rho->getDensity(lo.x, lo.y, hi.z);
                     amrex::Real dens3 = inj_rho->getDensity(lo.x, hi.y, lo.z);
