@@ -215,9 +215,9 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
                m_nk, nz, m_nr, 1._rt,
                m_M.dataPtr(), m_nk,
                F.dataPtr(F_icomp)+ngr, nrF, 0._rt,
-               G.dataPtr(G_icomp), m_nk,
+               G.dataPtr(G_icomp), m_nk
 #ifdef AMREX_USE_GPU
-               *m_queue // Calls the GPU version of blas::gemm
+               , *m_queue // Calls the GPU version of blas::gemm
 #endif
            );
 }

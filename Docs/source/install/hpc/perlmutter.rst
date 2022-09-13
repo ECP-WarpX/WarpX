@@ -66,7 +66,7 @@ And since Perlmutter does not yet provide a module for them, install ADIOS2, BLA
    # BLAS++ (for PSATD+RZ)
    git clone https://bitbucket.org/icl/blaspp.git src/blaspp
    rm -rf src/blaspp-pm-build
-   CXX=$(which CC) cmake -S src/blaspp -B src/blaspp-pm-build -Duse_openmp=ON -Dgpu_backend=CUDA -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/blaspp-master
+   CXX=$(which CC) cmake -S src/blaspp -B src/blaspp-pm-build -Duse_openmp=ON -Dgpu_backend=cuda -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/blaspp-master
    cmake --build src/blaspp-pm-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
