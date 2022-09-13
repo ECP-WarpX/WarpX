@@ -32,10 +32,10 @@ HankelTransform::HankelTransform (int const hankel_order,
                                      "azimuthal_mode must be either hankel_order-1, hankel_order or hankel_order+1");
 
     // BLAS setup
+#ifdef AMREX_USE_GPU
     int const device_id = amrex::Gpu::Device::deviceId();
-    //amrex::PrintAll() << "device_id=" << device_id << "\n";
     m_queue = std::make_unique<blas::Queue>( device_id, 0 );
-
+#endif
 
     amrex::Vector<amrex::Real> alphas;
     amrex::Vector<int> alpha_errors;
@@ -211,13 +211,15 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
     AMREX_ALWAYS_ASSERT(F_box.bigEnd(0)+1 >= m_nr);
 
     // Note that M is flagged to be transposed since it has dimensions (m_nr, m_nk)
-    amrex::Gpu::synchronize();
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                m_nk, nz, m_nr, 1._rt,
                m_M.dataPtr(), m_nk,
                F.dataPtr(F_icomp)+ngr, nrF, 0._rt,
-               G.dataPtr(G_icomp), m_nk, *m_queue);
-    amrex::Gpu::synchronize();
+               G.dataPtr(G_icomp), m_nk,
+#ifdef AMREX_USE_GPU
+               *m_queue
+#endif
+           );
 }
 
 void
@@ -238,36 +240,14 @@ HankelTransform::HankelInverseTransform (amrex::FArrayBox const& G, int const G_
     AMREX_ALWAYS_ASSERT(ngr >= 0);
     AMREX_ALWAYS_ASSERT(F_box.bigEnd(0)+1 >= m_nr);
 
-#ifndef AMREX_USE_GPU
-    // On CPU, the blas::gemm is significantly faster
-
     // Note that m_invM is flagged to be transposed since it has dimensions (m_nk, m_nr)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                m_nr, nz, m_nk, 1._rt,
                m_invM.dataPtr(), m_nr,
                G.dataPtr(G_icomp), m_nk, 0._rt,
-               F.dataPtr(F_icomp)+ngr, nrF);
-
-#else
-    // On GPU, the explicit loop is significantly faster
-    // It is not clear if the GPU gemm wasn't build properly, it is cycling data out and back
-    // in to the device, or if it is because gemm is launching its own threads.
-
-    amrex::Real const * invM_arr = m_invM.dataPtr();
-    amrex::Array4<const amrex::Real> const & G_arr = G.array();
-    amrex::Array4<      amrex::Real> const & F_arr = F.array();
-
-    int const nk = m_nk;
-
-    amrex::ParallelFor(G_box,
-    [=] AMREX_GPU_DEVICE(int ir, int iz, int k3d) noexcept {
-        F_arr(ir,iz,k3d,F_icomp) = 0.;
-        for (int ik=0 ; ik < nk ; ik++) {
-            int const ii = ik + ir*nk;
-            F_arr(ir,iz,k3d,F_icomp) += invM_arr[ii]*G_arr(ik,iz,k3d,G_icomp);
-        }
-    });
-
+               F.dataPtr(F_icomp)+ngr, nrF
+#ifdef AMREX_USE_GPU
+              *m_queue
 #endif
-
+           );
 }
