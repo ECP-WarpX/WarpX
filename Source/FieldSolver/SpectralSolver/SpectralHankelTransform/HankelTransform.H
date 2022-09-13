@@ -9,6 +9,10 @@
 
 #include <AMReX_FArrayBox.H>
 
+#include <blas.hh>
+
+#include <memory>
+
 /* \brief This defines the class that performs the Hankel transform.
  * Original authors: Remi Lehe, Manuel Kirchen
  *
@@ -45,6 +49,8 @@ class HankelTransform
 
         RealVector m_invM;
         RealVector m_M;
+
+	std::unique_ptr<blas::Queue> m_queue;
 };
 
 #endif

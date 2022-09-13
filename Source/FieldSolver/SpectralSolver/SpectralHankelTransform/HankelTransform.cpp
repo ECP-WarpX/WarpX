@@ -11,6 +11,8 @@
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
+#include "Utils/WarpXProfilerWrapper.H"
+
 #include <blas.hh>
 #include <lapack.hh>
 
@@ -23,9 +25,17 @@ HankelTransform::HankelTransform (int const hankel_order,
 : m_nr(nr), m_nk(nr)
 {
 
+    WARPX_PROFILE("HankelTransform::HankelTransform");
+
     // Check that azimuthal_mode has a valid value
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(hankel_order-1 <= azimuthal_mode && azimuthal_mode <= hankel_order+1,
                                      "azimuthal_mode must be either hankel_order-1, hankel_order or hankel_order+1");
+
+    // BLAS setup
+    int const device_id = amrex::Gpu::Device::deviceId();
+    //amrex::PrintAll() << "device_id=" << device_id << "\n";
+    m_queue = std::make_unique<blas::Queue>( device_id, 0 );
+
 
     amrex::Vector<amrex::Real> alphas;
     amrex::Vector<int> alpha_errors;
@@ -186,6 +196,8 @@ void
 HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_icomp,
                                          amrex::FArrayBox      & G, int const G_icomp)
 {
+    WARPX_PROFILE("HankelTransform::HankelInverseTransform");
+ 
     amrex::Box const& F_box = F.box();
     amrex::Box const& G_box = G.box();
 
@@ -200,14 +212,11 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
 
     // Note that M is flagged to be transposed since it has dimensions (m_nr, m_nk)
     amrex::Gpu::synchronize();
-    int const device_id = amrex::Gpu::Device::deviceId();
-    blas::Queue queue( device_id, 0 );
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                m_nk, nz, m_nr, 1._rt,
                m_M.dataPtr(), m_nk,
                F.dataPtr(F_icomp)+ngr, nrF, 0._rt,
-               G.dataPtr(G_icomp), m_nk,
-               queue);
+               G.dataPtr(G_icomp), m_nk, *m_queue);
     amrex::Gpu::synchronize();
 }
 
@@ -215,6 +224,8 @@ void
 HankelTransform::HankelInverseTransform (amrex::FArrayBox const& G, int const G_icomp,
                                          amrex::FArrayBox      & F, int const F_icomp)
 {
+    WARPX_PROFILE("HankelTransform::HankelInverseTransform");
+ 
     amrex::Box const& G_box = G.box();
     amrex::Box const& F_box = F.box();
 
