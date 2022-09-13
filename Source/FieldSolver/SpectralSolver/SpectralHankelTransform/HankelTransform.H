@@ -9,7 +9,9 @@
 
 #include <AMReX_FArrayBox.H>
 
+#ifdef AMREX_USE_GPU
 #include <blas.hh>
+#endif
 
 #include <memory>
 
@@ -50,7 +52,9 @@ class HankelTransform
         RealVector m_invM;
         RealVector m_M;
 
-    std::unique_ptr<blas::Queue> m_queue;
+#ifdef AMREX_USE_GPU
+        std::unique_ptr<blas::Queue> m_queue;
+#endif
 };
 
 #endif

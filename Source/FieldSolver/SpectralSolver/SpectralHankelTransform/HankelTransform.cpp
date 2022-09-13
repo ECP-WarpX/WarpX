@@ -31,8 +31,8 @@ HankelTransform::HankelTransform (int const hankel_order,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(hankel_order-1 <= azimuthal_mode && azimuthal_mode <= hankel_order+1,
                                      "azimuthal_mode must be either hankel_order-1, hankel_order or hankel_order+1");
 
-    // BLAS setup
 #ifdef AMREX_USE_GPU
+    // BLAS setup
     int const device_id = amrex::Gpu::Device::deviceId();
     m_queue = std::make_unique<blas::Queue>( device_id, 0 );
 #endif
@@ -217,7 +217,7 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
                F.dataPtr(F_icomp)+ngr, nrF, 0._rt,
                G.dataPtr(G_icomp), m_nk,
 #ifdef AMREX_USE_GPU
-               *m_queue
+               *m_queue // Calls the GPU version of blas::gemm
 #endif
            );
 }
@@ -245,9 +245,9 @@ HankelTransform::HankelInverseTransform (amrex::FArrayBox const& G, int const G_
                m_nr, nz, m_nk, 1._rt,
                m_invM.dataPtr(), m_nr,
                G.dataPtr(G_icomp), m_nk, 0._rt,
-               F.dataPtr(F_icomp)+ngr, nrF,
+               F.dataPtr(F_icomp)+ngr, nrF
 #ifdef AMREX_USE_GPU
-              *m_queue
+               , *m_queue // Calls the GPU version of blas::gemm
 #endif
            );
 }
