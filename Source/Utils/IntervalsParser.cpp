@@ -136,7 +136,7 @@ BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_ve
         SliceParser temp_slice(inslc, isBTD);
         if (m_slices.size() > 0)
         {
-            int i_slice = 0;
+            uint i_slice = 0;
             while (temp_slice.getStart() > m_slices[i_slice].getStart() && i_slice < m_slices.size())
             {
                 i_slice++;
@@ -152,7 +152,7 @@ BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_ve
     {
         const int start = temp_slice.getStart();
         const int period = temp_slice.getPeriod();
-        int btd_iter_ind;
+        uint btd_iter_ind;
         if (m_btd_iterations.size() == 0)
         {
             btd_iter_ind = 0;
