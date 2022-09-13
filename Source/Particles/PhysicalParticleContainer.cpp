@@ -109,6 +109,34 @@
 
 using namespace amrex;
 
+template <int... ctr>
+struct CompiletimeOptions {};
+
+template <int ctr>
+struct CTOption {
+    static constexpr int value = ctr;
+};
+
+template <class F, int... Op>
+void ParallelFor(Long N, F&& f, CompiletimeOptions<Op...>, int runtime_option)
+{
+    int option_miss = 0;
+    (
+        (
+            Op == runtime_option ?
+              (
+                  amrex::ParallelFor(N, [f] AMREX_GPU_DEVICE (Long i) {
+                      f(i, CTOption<Op>{});
+                  })
+              )
+            : (
+                ++option_miss, void()
+              )
+        ),...
+    );
+    AMREX_ASSERT(option_miss < sizeof...(option_pack));
+}
+
 namespace
 {
     using ParticleType = WarpXParticleContainer::ParticleType;
@@ -2808,7 +2836,29 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto t_do_not_gather = do_not_gather;
 
-    amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
+    enum all_options : int {
+        NoExtEB_NoQED, HasExtEB_NoQED, NoExtEB_HasQED, HasExtEB_HasQED
+    };
+
+    int runtime_option;
+#ifdef WARPX_QED
+    if (local_has_quantum_sync || do_sync) {
+        if (getExternalEB.isNoOp()) {
+            runtime_option = NoExtEB_HasQED;
+        } else {
+            runtime_option = HasExtEB_HasQED;
+        }
+    } else
+#endif
+    {
+        if (getExternalEB.isNoOp()) {
+            runtime_option = NoExtEB_NoQED;
+        } else {
+            runtime_option = HasExtEB_NoQED;
+        }
+    }
+
+    ParallelFor(np_to_push, [=] AMREX_GPU_DEVICE (Long ip, auto control)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
@@ -2834,31 +2884,54 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                            dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                            nox, galerkin_interpolation);
         }
-        // Externally applied E and B-field in Cartesian co-ordinates
-        getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+
+        if constexpr (control.value == HasExtEB_NoQED ||
+                      control.value == HasExtEB_HasQED) {
+            getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+        }
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
-        doParticlePush(getPosition, setPosition, copyAttribs, ip,
-                       ux[ip], uy[ip], uz[ip],
-                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                       ion_lev ? ion_lev[ip] : 0,
-                       m, q, pusher_algo, do_crr, do_copy,
 #ifdef WARPX_QED
-                       do_sync,
-                       t_chi_max,
+        if constexpr (control.value ==  NoExtEB_HasQED ||
+                      control.value == HasExtEB_HasQED) {
+            if (do_sync) {
+                doParticlePush<1>(getPosition, setPosition, copyAttribs, ip,
+                                  ux[ip], uy[ip], uz[ip],
+                                  Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                  ion_lev ? ion_lev[ip] : 0,
+                                  m, q, pusher_algo, do_crr, do_copy,
+                                  t_chi_max,
+                                  dt);
+            }
+        }
+        if (!do_sync)
 #endif
-                       dt);
+        {
+            doParticlePush<0>(getPosition, setPosition, copyAttribs, ip,
+                              ux[ip], uy[ip], uz[ip],
+                              Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                              ion_lev ? ion_lev[ip] : 0,
+                              m, q, pusher_algo, do_crr, do_copy,
+#ifdef WARPX_QED
+                              t_chi_max,
+#endif
+                              dt);
+        }
 
 #ifdef WARPX_QED
-        if (local_has_quantum_sync) {
-            evolve_opt(ux[ip], uy[ip], uz[ip],
-                       Exp, Eyp, Ezp,Bxp, Byp, Bzp,
-                       dt, p_optical_depth_QSR[ip]);
+        if constexpr (control.value ==  NoExtEB_HasQED ||
+                      control.value == HasExtEB_HasQED) {
+            if (local_has_quantum_sync) {
+                evolve_opt(ux[ip], uy[ip], uz[ip],
+                           Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                           dt, p_optical_depth_QSR[ip]);
+            }
         }
 #endif
-
-    });
+    }, CompiletimeOptions<NoExtEB_NoQED , HasExtEB_NoQED,
+                          NoExtEB_HasQED, HasExtEB_HasQED>{},
+       runtime_option);
 }
 
 void
