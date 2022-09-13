@@ -126,7 +126,7 @@ diag1.write_species = 1
 
 diag2.diag_type = BackTransformed
 diag2.do_back_transformed_fields = 1
-diag2.intervals = :4
+diag2.intervals = 0:4:2, 1:3:2
 diag2.dz_snapshots_lab = 0.001
 diag2.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
 diag2.format = openpmd
