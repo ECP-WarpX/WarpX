@@ -990,41 +990,22 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     r = 1;
                 }
                 pcounts[index] = num_ppc*r;
-                // update pcount by checking which particles have non-zero density
-                int flag_pcount = 0;
-                for (int ip = 0; ip < num_ppc*r; ++ip) {
-                    amrex::Real dens1 = 0;
-                    amrex::Real dens2 = 0;
-                    amrex::Real dens3 = 0;
-                    amrex::Real dens4 = 0;
-                    amrex::Real dens5 = 0;
-                    amrex::Real dens6 = 0;
-                    amrex::Real dens7 = 0;
-                    amrex::Real dens8 = 0;
-                    // To ensure density parser does not encounter erroneous
-                    // arithmetic operation, such as log(0) or sqrt(-1)
-                    // check if cell-corner is within injection bounds
-                    if (inj_pos->insideBounds(lo.x, lo.y, lo.z))
-                        dens1 = inj_rho->getDensity(lo.x, lo.y, lo.z);
-                    if (inj_pos->insideBounds(lo.x, lo.y, hi.z))
-                        dens2 = inj_rho->getDensity(lo.x, lo.y, hi.z);
-                    if (inj_pos->insideBounds(lo.x, hi.y, lo.z))
-                        dens3 = inj_rho->getDensity(lo.x, hi.y, lo.z);
-                    if (inj_pos->insideBounds(hi.x, lo.y, lo.z))
-                        dens4 = inj_rho->getDensity(hi.x, lo.y, lo.z);
-                    if (inj_pos->insideBounds(lo.x, hi.y, hi.z))
-                        dens5 = inj_rho->getDensity(lo.x, hi.y, hi.z);
-                    if (inj_pos->insideBounds(hi.x, lo.y, hi.z))
-                        dens6 = inj_rho->getDensity(hi.x, lo.y, hi.z);
-                    if (inj_pos->insideBounds(hi.x, hi.y, lo.z))
-                        dens7 = inj_rho->getDensity(hi.x, hi.y, lo.z);
-                    if (inj_pos->insideBounds(hi.x, hi.y, hi.z))
-                        dens8 = inj_rho->getDensity(hi.x, hi.y, hi.z);
-                    if (  dens1 > 0 || dens2 > 0 || dens3 > 0 || dens4 > 0
-                       || dens5 > 0 || dens6 > 0 || dens7 > 0 || dens8 > 0) {
-                        flag_pcount = 1;
-                    }
-                }
+                // update pcount by checking if cell-corners or cell-center
+                // has non-zero density
+                const auto xlim = GpuArray<Real, 3>{lo.x,(lo.x+hi.x)/2._rt,hi.x};
+                const auto ylim = GpuArray<Real, 3>{lo.y,(lo.y+hi.y)/2._rt,hi.y};
+                const auto zlim = GpuArray<Real, 3>{lo.z,(lo.z+hi.z)/2._rt,hi.z};
+
+                const auto checker = [&](){
+                    for (const auto& x : xlim)
+                        for (const auto& y : ylim)
+                            for (const auto& z : zlim)
+                                if (inj_pos->insideBounds(x,y,z)) {
+                                    if (inj_rho->getDensity(x,y,z) > 0) return 1;
+                                }
+                    return 0;
+                };
+                const int flag_pcount = checker();
                 if (flag_pcount == 1) {
                     pcounts[index] = num_ppc*r;
                 } else {
@@ -1038,6 +1019,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             amrex::ignore_unused(j,k);
 #endif
         });
+        // Need synchronize since we have tmp xlim, ylim, zlim arrays
+        amrex::Gpu::synchronize();
 
         // Max number of new particles. All of them are created,
         // and invalid ones are then discarded
