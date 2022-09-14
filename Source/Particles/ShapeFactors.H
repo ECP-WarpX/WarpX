@@ -94,20 +94,27 @@ struct Compute_shifted_shape_factor
             // we avoid dynamic indexing here, to enable vectorization (CPU) and
             // reduce register/lmem footprint (GPU).
             // The below is equivalent to this:
-            //const int i_shift = i - i_new;
+            const int i_shift = i - i_new;
             //sx[1+i_shift] = T(1.0) - xint;
             //sx[2+i_shift] = xint;
             sx[1] = T(1.0) - xint;
             sx[2] = xint;
 
             AMREX_ASSERT_WITH_MESSAGE(
-                i - i_new == 0 || i - i_new == -1,
+                (i_shift == 0) || (i_shift == -1) || (i_shift == 1),
                 "Compute_shifted_shape_factor: shift out of range");
 
-            const bool shift = i != i_new;
-            sx[0] = shift ? sx[1] : T(0.0);
-            sx[1] = shift ? sx[2] : sx[1];
-            sx[2] = shift ? T(0.0) : sx[2];
+            const bool downshift = i_shift == -1;
+            sx[0] = downshift ? sx[1] : T(0.0);
+            sx[1] = downshift ? sx[2] : sx[1];
+            sx[2] = downshift ? sx[3] : sx[2];
+            sx[3] = downshift ? T(0.0) : sx[3];
+
+            const bool upshift = i_shift == 1;
+            sx[3] = upshift ? sx[2] : T(0.0);
+            sx[2] = upshift ? sx[1] : sx[2];
+            sx[1] = upshift ? sx[0] : sx[1];
+            sx[0] = upshift ? T(0.0) : sx[0];
 
             return i;
         }
@@ -118,24 +125,32 @@ struct Compute_shifted_shape_factor
             // we avoid dynamic indexing here, to enable vectorization (CPU) and
             // reduce register/lmem footprint (GPU).
             // The below is equivalent to this:
-            //const int i_shift = i - (i_new + 1);
+            const int i_shift = i - (i_new + 1);
             //sx[1+i_shift] = T(0.5)*(T(0.5) - xint)*(T(0.5) - xint);
             //sx[2+i_shift] = T(0.75) - xint*xint;
             //sx[3+i_shift] = T(0.5)*(T(0.5) + xint)*(T(0.5) + xint);
 
             AMREX_ASSERT_WITH_MESSAGE(
-                i - (i_new + 1) == 0 || i - (i_new + 1) == -1,
+                (i_shift == 0) || (i_shift == -1) || (i_shift == 1),
                 "Compute_shifted_shape_factor: shift out of range");
 
-            const bool shift = i != (i_new + 1);
             sx[1] = T(0.5)*(T(0.5) - xint)*(T(0.5) - xint);
             sx[2] = T(0.75) - xint*xint;
             sx[3] = T(0.5)*(T(0.5) + xint)*(T(0.5) + xint);
 
-            sx[0] = shift ? sx[1] : T(0.0);
-            sx[1] = shift ? sx[2] : sx[1];
-            sx[2] = shift ? sx[3] : sx[2];
-            sx[3] = shift ? T(0.0) : sx[3];
+            const bool downshift = i_shift == -1;
+            sx[0] = downshift ? sx[1] : T(0.0);
+            sx[1] = downshift ? sx[2] : sx[1];
+            sx[2] = downshift ? sx[3] : sx[2];
+            sx[3] = downshift ? sx[4] : sx[3];
+            sx[4] = downshift ? T(0.0) : sx[4];
+
+            const bool upshift = i_shift == 1;
+            sx[4] = upshift ? sx[3] : T(0.0);
+            sx[3] = upshift ? sx[2] : sx[3];
+            sx[2] = upshift ? sx[1] : sx[2];
+            sx[1] = upshift ? sx[0] : sx[1];
+            sx[0] = upshift ? T(0.0) : sx[0];
 
             // index of the leftmost cell where particle deposits
             return i - 1;
@@ -147,27 +162,36 @@ struct Compute_shifted_shape_factor
             // we avoid dynamic indexing here, to enable vectorization (CPU) and
             // reduce register/lmem footprint (GPU).
             // The below is equivalent to this:
-            //const int i_shift = i - (i_new + 1);
+            const int i_shift = i - (i_new + 1);
             //sx[1+i_shift] = (T(1.0))/(T(6.0))*(T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - xint);
             //sx[2+i_shift] = (T(2.0))/(T(3.0)) - xint*xint*(T(1.0) - xint/(T(2.0)));
             //sx[3+i_shift] = (T(2.0))/(T(3.0)) - (T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - T(0.5)*(T(1.0) - xint));
             //sx[4+i_shift] = (T(1.0))/(T(6.0))*xint*xint*xint;
 
             AMREX_ASSERT_WITH_MESSAGE(
-                i - (i_new + 1) == 0 || i - (i_new + 1) == -1,
+                (i_shift == 0) || (i_shift == -1) || (i_shift == 1),
                 "Compute_shifted_shape_factor: shift out of range");
 
-            const bool shift = i != (i_new + 1);
             sx[1] = (T(1.0))/(T(6.0))*(T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - xint);
             sx[2] = (T(2.0))/(T(3.0)) - xint*xint*(T(1.0) - xint/(T(2.0)));
             sx[3] = (T(2.0))/(T(3.0)) - (T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - T(0.5)*(T(1.0) - xint));
             sx[4] = (T(1.0))/(T(6.0))*xint*xint*xint;
 
-            sx[0] = shift ? sx[1] : T(0.0);
-            sx[1] = shift ? sx[2] : sx[1];
-            sx[2] = shift ? sx[3] : sx[2];
-            sx[3] = shift ? sx[4] : sx[3];
-            sx[4] = shift ? T(0.0) : sx[4];
+            const bool downshift = i_shift == -1;
+            sx[0] = downshift ? sx[1] : T(0.0);
+            sx[1] = downshift ? sx[2] : sx[1];
+            sx[2] = downshift ? sx[3] : sx[2];
+            sx[3] = downshift ? sx[4] : sx[3];
+            sx[4] = downshift ? sx[5] : sx[4];
+            sx[5] = downshift ? T(0.0) : sx[5];
+
+            const bool upshift = i_shift == 1;
+            sx[5] = upshift ? sx[4] : T(0.0);
+            sx[4] = upshift ? sx[3] : sx[4];
+            sx[3] = upshift ? sx[2] : sx[3];
+            sx[2] = upshift ? sx[1] : sx[2];
+            sx[1] = upshift ? sx[0] : sx[1];
+            sx[0] = upshift ? T(0.0) : sx[0];
 
             // index of the leftmost cell where particle deposits
             return i - 1;
