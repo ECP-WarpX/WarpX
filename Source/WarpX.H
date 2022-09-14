@@ -203,6 +203,9 @@ public:
     //! perform field communications in single precision
     static bool do_single_precision_comms;
 
+    //! print out diagnostic information about the memory usage for each species
+    static bool print_species_mem_usage;
+    
     //! Whether to fill guard cells when computing inverse FFTs of fields
     static amrex::IntVect m_fill_guards_fields;
 

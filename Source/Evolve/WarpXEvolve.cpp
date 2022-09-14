@@ -303,6 +303,8 @@ WarpX::Evolve (int numsteps)
             }
         }
 
+        if (print_species_mem_usage) { mypc->PrintMemoryUsage(); }
+
         if (sort_intervals.contains(step+1)) {
             if (verbose) {
                 amrex::Print() << Utils::TextMsg::Info("re-sorting particles");

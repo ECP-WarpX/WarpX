@@ -295,6 +295,8 @@ public:
 
     void ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
 
+    void PrintMemoryUsage () const;
+    
     std::string m_B_ext_particle_s = "none";
     std::string m_E_ext_particle_s = "none";
     // External fields added to particle fields.
