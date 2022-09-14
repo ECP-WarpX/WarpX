@@ -2894,18 +2894,6 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
 #ifdef WARPX_QED
-        if constexpr (control.value ==  NoExtEB_HasQED ||
-                      control.value == HasExtEB_HasQED) {
-            if (do_sync) {
-                doParticlePush<1>(getPosition, setPosition, copyAttribs, ip,
-                                  ux[ip], uy[ip], uz[ip],
-                                  Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                  ion_lev ? ion_lev[ip] : 0,
-                                  m, q, pusher_algo, do_crr, do_copy,
-                                  t_chi_max,
-                                  dt);
-            }
-        }
         if (!do_sync)
 #endif
         {
@@ -2919,14 +2907,31 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #endif
                               dt);
         }
+#ifdef WARPX_QED
+        else {
+            if constexpr (control.value ==  NoExtEB_HasQED ||
+                          control.value == HasExtEB_HasQED) {
+                doParticlePush<1>(getPosition, setPosition, copyAttribs, ip,
+                                  ux[ip], uy[ip], uz[ip],
+                                  Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                  ion_lev ? ion_lev[ip] : 0,
+                                  m, q, pusher_algo, do_crr, do_copy,
+                                  t_chi_max,
+                                  dt);
+            }
+        }
+#endif
 
 #ifdef WARPX_QED
+        auto foo_local_has_quantum_sync = local_has_quantum_sync;
+        auto podq = p_optical_depth_QSR;
+        auto& f_eopt = evolve_opt;
         if constexpr (control.value ==  NoExtEB_HasQED ||
                       control.value == HasExtEB_HasQED) {
-            if (local_has_quantum_sync) {
-                evolve_opt(ux[ip], uy[ip], uz[ip],
-                           Exp, Eyp, Ezp,Bxp, Byp, Bzp,
-                           dt, p_optical_depth_QSR[ip]);
+            if (foo_local_has_quantum_sync) {
+                f_eopt(ux[ip], uy[ip], uz[ip],
+                       Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                       dt, podq[ip]);
             }
         }
 #endif
