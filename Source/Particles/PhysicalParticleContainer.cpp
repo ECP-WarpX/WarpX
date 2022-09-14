@@ -134,7 +134,7 @@ void ParallelFor(Long N, F&& f, CompiletimeOptions<Op...>, int runtime_option)
               )
         ),...
     );
-    AMREX_ASSERT(option_miss < sizeof...(option_pack));
+    AMREX_ASSERT(option_miss + 1 == sizeof...(Op));
 }
 
 namespace
