@@ -210,6 +210,10 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
     AMREX_ALWAYS_ASSERT(ngr >= 0);
     AMREX_ALWAYS_ASSERT(F_box.bigEnd(0)+1 >= m_nr);
 
+    // We perform stream synchronization since `gemm` may be running
+    // on a different stream.
+    amrex::Gpu::synchronize();
+
     // Note that M is flagged to be transposed since it has dimensions (m_nr, m_nk)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                m_nk, nz, m_nr, 1._rt,
@@ -220,6 +224,11 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
                , *m_queue // Calls the GPU version of blas::gemm
 #endif
            );
+
+    // We perform stream synchronization since `gemm` may be running
+    // on a different stream.
+    amrex::Gpu::synchronize();
+
 }
 
 void
@@ -240,6 +249,10 @@ HankelTransform::HankelInverseTransform (amrex::FArrayBox const& G, int const G_
     AMREX_ALWAYS_ASSERT(ngr >= 0);
     AMREX_ALWAYS_ASSERT(F_box.bigEnd(0)+1 >= m_nr);
 
+    // We perform stream synchronization since `gemm` may be running
+    // on a different stream.
+    amrex::Gpu::synchronize();
+
     // Note that m_invM is flagged to be transposed since it has dimensions (m_nk, m_nr)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                m_nr, nz, m_nk, 1._rt,
@@ -250,4 +263,8 @@ HankelTransform::HankelInverseTransform (amrex::FArrayBox const& G, int const G_
                , *m_queue // Calls the GPU version of blas::gemm
 #endif
            );
+
+    // We perform stream synchronization since `gemm` may be running
+    // on a different stream.
+    amrex::Gpu::synchronize();
 }

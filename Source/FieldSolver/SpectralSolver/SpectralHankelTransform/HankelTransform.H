@@ -8,9 +8,11 @@
 #define WARPX_HANKEL_TRANSFORM_H_
 
 #include <AMReX_FArrayBox.H>
+#include <AMReX_REAL.H>
+#include <AMReX_GpuContainers.H>
 
 #ifdef AMREX_USE_GPU
-#include <blas.hh>
+#   include <blas.hh>
 #endif
 
 #include <memory>
