@@ -66,9 +66,8 @@ Ez_openpmd = ds_openpmd.meshes['E']['z'].load_chunk()
 Ez_openpmd = Ez_openpmd.transpose()
 series.flush()
 
-# Compare arrays to check consistency between legacy BTD and new BTD (plotfile)
-assert(np.allclose(Ez_legacy, Ez_plotfile, rtol=rtol, atol=atol))
-assert(np.allclose(Ez_legacy, Ez_openpmd, rtol=rtol, atol=atol))
+# Compare arrays to check consistency between new BTD formats (plotfile and openPMD)
+assert(np.allclose(Ez_plotfile, Ez_openpmd, rtol=rtol, atol=atol))
 
 # Check slicing
 err = np.max(np.abs(Ez_legacy_slice_1D-Ez_legacy_1D)) / np.max(np.abs(Ez_legacy_1D))
