@@ -130,10 +130,7 @@ You can either run this on an interactive node or use the Slurm batch script hea
    rm -rf ${TMPDIR} profiling*
    mkdir -p ${TMPDIR}
 
-   # 2021.5.1 (broken: lacks most trace info)
-   #NSYS="/global/common/software/nersc/pm-2021q4/easybuild/software/Nsight-Systems/2021.5.1/bin/nsys"
-   # 2021.4.1 (working)
-   NSYS="/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/compilers/bin/nsys"
+   NSYS="/global/common/software/nersc/pm-2021q4/easybuild/software/Nsight-Systems/2022.2.1/bin/nsys"
 
    # record
    srun --ntasks=4 --gpus=4 --cpu-bind=cores \
