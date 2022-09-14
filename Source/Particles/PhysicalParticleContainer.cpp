@@ -2885,9 +2885,10 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                            nox, galerkin_interpolation);
         }
 
+        auto const& foo = getExternalEB; // Have to do this for nvcc
         if constexpr (control.value == HasExtEB_NoQED ||
                       control.value == HasExtEB_HasQED) {
-            getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+            foo(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
         }
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
