@@ -122,7 +122,9 @@ Known System Issues
 
    .. code-block:: bash
 
-      export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching
+      #export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching
+      # or, less invasive:
+      export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
 
 .. warning::
 
