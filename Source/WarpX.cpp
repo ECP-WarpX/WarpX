@@ -807,7 +807,7 @@ WarpX::ReadParameters ()
             "Input value for the velocity warpx.v_particle_pml of the macroparticle must be in (0,1] (in units of c).");
         // Scale by the speed of light
         v_particle_pml = v_particle_pml * PhysConst::c;
-        
+
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
         // false for FDTD solver, true for PSATD solver.
         if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
