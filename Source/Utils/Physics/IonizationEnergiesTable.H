@@ -9,7 +9,6 @@
 #ifndef WARPX_IONIZATION_TABLE_H_
 #define WARPX_IONIZATION_TABLE_H_
 
-#include <AMReX_AmrCore.H>
 #include <AMReX_REAL.H>
 
 #include <map>
