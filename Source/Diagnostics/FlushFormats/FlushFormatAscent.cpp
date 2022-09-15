@@ -25,6 +25,8 @@ FlushFormatAscent::WriteToFile (
 #ifdef AMREX_USE_ASCENT
     WARPX_PROFILE("FlushFormatAscent::WriteToFile()");
 
+    amrex::Print() << "ASCENT start ...\n";
+
     auto & warpx = WarpX::GetInstance();
 
     // wrap mesh data
@@ -63,6 +65,8 @@ FlushFormatAscent::WriteToFile (
         particle_diags, nlev);
 #endif // AMREX_USE_ASCENT
     amrex::ignore_unused(prefix, plot_raw_fields, plot_raw_fields_guards);
+
+    amrex::Print() << "ASCENT end ...\n";
 }
 
 #ifdef AMREX_USE_ASCENT

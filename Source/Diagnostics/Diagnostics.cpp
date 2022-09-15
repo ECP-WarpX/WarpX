@@ -53,6 +53,9 @@ Diagnostics::BaseReadParameters ()
     pp_diag_name.query("file_prefix", m_file_prefix);
     queryWithParser(pp_diag_name, "file_min_digits", m_file_min_digits);
     pp_diag_name.query("format", m_format);
+
+    std::cout << "@@@@@@@@@@ FORMAT: " << m_format << std::endl;
+
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
     amrex::ParmParse pp_geometry("geometry");
@@ -370,6 +373,9 @@ Diagnostics::InitBaseData ()
         m_lo[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
         m_hi[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
     }
+
+    amrex::Print() << "######### MFORMAT: " << m_format << std::endl;
+
     // Construct Flush class.
     if        (m_format == "plotfile"){
         m_flush_format = std::make_unique<FlushFormatPlotfile>() ;
