@@ -33,6 +33,8 @@ HankelTransform::HankelTransform (int const hankel_order,
 
 #ifdef AMREX_USE_GPU
     // BLAS setup
+    //   SYCL note: we need to double check AMReX device ID conventions and
+    //   BLAS++ device ID conventions are the same
     int const device_id = amrex::Gpu::Device::deviceId();
     m_queue = std::make_unique<blas::Queue>( device_id, 0 );
 #endif
