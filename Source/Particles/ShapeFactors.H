@@ -70,6 +70,45 @@ struct Compute_shape_factor
     }
 };
 
+template <int depos_order>
+struct Compute_shape_factor_uni
+{
+    template< typename T >
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    void operator()(
+            int i_min,
+            T* const sx,
+            T xmid) const
+    {
+        if constexpr (depos_order == 0){
+            sx[0] = T(1.0);
+        }
+        else if constexpr (depos_order == 1){
+            const T xint = xmid - T(i_min);
+            sx[0] = T(1.0) - xint;
+            sx[1] = xint;
+        }
+        else if constexpr (depos_order == 2){
+            const T xint = xmid - T(i_min);
+            sx[0] = T(0.5)*(T(0.5) - xint)*(T(0.5) - xint);
+            sx[1] = T(0.75) - xint*xint;
+            sx[2] = T(0.5)*(T(0.5) + xint)*(T(0.5) + xint);
+        }
+        else if constexpr (depos_order == 3){
+            const T xint = xmid - T(i_min);
+            sx[0] = (T(1.0))/(T(6.0))*(T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - xint);
+            sx[1] = (T(2.0))/(T(3.0)) - xint*xint*(T(1.0) - xint/(T(2.0)));
+            sx[2] = (T(2.0))/(T(3.0)) - (T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - T(0.5)*(T(1.0) - xint));
+            sx[3] = (T(1.0))/(T(6.0))*xint*xint*xint;
+        }
+        else{
+            amrex::Abort("Unknown particle shape selected in Compute_shape_factor");
+            amrex::ignore_unused(i_min, sx, xmid);
+        }
+    }
+};
+
+
 
 
 /**
