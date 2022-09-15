@@ -6,8 +6,15 @@
  * License: BSD-3-Clause-LBNL
  */
 
-void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
-                        std::string& stored_string)
+#include "ParserUtils.H"
+#include "Utils/TextMsg.H"
+
+#include <limits>
+
+void utils::parser::Store_parserString(
+    const amrex::ParmParse& pp,
+    std::string query_string,
+    std::string& stored_string)
 {
     std::vector<std::string> f;
     pp.getarr(query_string.c_str(), f);
@@ -18,7 +25,9 @@ void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
     f.clear();
 }
 
-int safeCastToInt(const amrex::Real x, const std::string& real_name) {
+int utils::parser::safeCastToInt(
+    const amrex::Real x, const std::string& real_name)
+{
     int result = 0;
     bool error_detected = false;
     std::string assert_msg;
