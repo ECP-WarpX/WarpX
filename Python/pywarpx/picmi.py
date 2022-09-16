@@ -42,6 +42,8 @@ picmistandard.register_constants(constants)
 
 class Species(picmistandard.PICMI_Species):
     """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
     Parameters
     ----------
     warpx_boost_adjust_transverse_positions: bool, default=False
@@ -482,6 +484,8 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
     """
     This assumes that WarpX was compiled with USE_RZ = TRUE
 
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
     Parameters
     ---------
     warpx_max_grid_size: integer, default=32
@@ -581,6 +585,8 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
 class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
     """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
     Parameters
     ---------
     warpx_max_grid_size: integer, default=32
@@ -655,6 +661,8 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
 
 class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
     """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
     Parameters
     ---------
     warpx_max_grid_size: integer, default=32
@@ -749,6 +757,8 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
 
 class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
     """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
     Parameters
     ---------
     warpx_max_grid_size: integer, default=32
@@ -861,6 +871,8 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
 
 class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
     """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
     Parameters
     ----------
     warpx_pml_ncell: integer, optional
@@ -956,6 +968,8 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
     Parameters
     ----------
     warpx_relativistic: bool, default=False
@@ -1354,6 +1368,8 @@ class PlasmaLens(picmistandard.base._ClassWithInit):
 
 class Simulation(picmistandard.PICMI_Simulation):
     """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
     Parameters
     ----------
     warpx_current_deposition_algo: {'direct', 'esirkepov', and 'vay'}, optional
@@ -1581,6 +1597,32 @@ class Simulation(picmistandard.PICMI_Simulation):
 
 
 class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ----------
+    warpx_plot_raw_fields: bool, optional
+        Flag whether to dump the raw fields
+
+    warpx_plot_raw_fields_guards: bool, optional
+        Flag whether the raw fields should include the guard cells
+
+    warpx_format: {plotfile, checkpoint, openpmd, ascent, sensei}, optional
+        Diagnostic file format
+
+    warpx_openpmd_backend: {bp, h5, json}, optional
+        Openpmd backend file format
+
+    warpx_file_prefix: string, optional
+        Prefix on the diagnostic file name
+
+    warpx_file_min_digits: integer, optional
+        Minimum number of digits for the time step number in the file name
+
+    warpx_dump_rz_modes: bool, optional
+        Flag whether to dump the data for all RZ modes
+    """
     def init(self, kw):
 
         self.plot_raw_fields = kw.pop('warpx_plot_raw_fields', None)
@@ -1680,6 +1722,8 @@ class Checkpoint(picmistandard.base._ClassWithInit):
     """
     Sets up checkpointing of the simulation, allowing for later restarts
 
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
     Parameters
     ----------
     warpx_file_prefix: string
@@ -1722,6 +1766,32 @@ class Checkpoint(picmistandard.base._ClassWithInit):
             self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ----------
+    warpx_format: {plotfile, checkpoint, openpmd, ascent, sensei}, optional
+        Diagnostic file format
+
+    warpx_openpmd_backend: {bp, h5, json}, optional
+        Openpmd backend file format
+
+    warpx_file_prefix: string, optional
+        Prefix on the diagnostic file name
+
+    warpx_file_min_digits: integer, optional
+        Minimum number of digits for the time step number in the file name
+
+    warpx_random_fraction: float, optional
+        Random fraction of particles to include in the diagnostic
+
+    warpx_uniform_stride: integer, optional
+        Stride to down select to the particles to include in the diagnostic
+
+    warpx_plot_filter_function: string, optional
+        Analytic expression to down select the particles to in the diagnostic
+    """
     def init(self, kw):
 
         self.format = kw.pop('warpx_format', 'plotfile')
@@ -1822,6 +1892,8 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
 
 class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
     """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
     Parameters
     ----------
     warpx_new_BTD: bool, optional
