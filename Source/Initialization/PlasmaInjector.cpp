@@ -156,7 +156,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         charge_is_specified ||
         species_is_specified ||
         (injection_style == "external_file"),
-        "Need to specify at least one of species_type or charge"
+        "Need to specify at least one of species_type or charge for species '" +
+        species_name + "'."
     );
 
     if ( mass_is_specified && species_is_specified ){
@@ -170,7 +171,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         mass_is_specified ||
         species_is_specified ||
         (injection_style == "external_file"),
-        "Need to specify at least one of species_type or mass"
+        "Need to specify at least one of species_type or mass for species '" +
+        species_name + "'."
     );
 
     num_particles_per_cell_each_dim.assign(3, 0);

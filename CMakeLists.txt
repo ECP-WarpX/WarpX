@@ -259,6 +259,12 @@ if(WarpX_PSATD)
     if(WarpX_DIMS STREQUAL RZ)
         target_link_libraries(ablastr PUBLIC blaspp)
         target_link_libraries(ablastr PUBLIC lapackpp)
+
+        # BLAS++ forgets to declare cuBLAS and cudaRT dependencies
+        if(WarpX_COMPUTE STREQUAL CUDA)
+            find_package(CUDAToolkit REQUIRED)
+            target_link_libraries(ablastr PUBLIC CUDA::cudart CUDA::cublas)
+        endif()
     endif()
 endif()
 
