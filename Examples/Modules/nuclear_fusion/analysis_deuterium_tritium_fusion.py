@@ -287,8 +287,6 @@ def check_macroparticle_number(data, fusion_probability_target_value, num_pair_p
     std_macroparticle_number = 2*np.sqrt(expected_fusion_number)
     actual_macroparticle_number = data[product_species[0] + "_w_end"].shape[0]
     # 5 sigma test that has an intrinsic probability to fail of 1 over ~2 millions
-    print('expected ', expected_macroparticle_number)
-    print('actual ', actual_macroparticle_number)
     assert(is_close(actual_macroparticle_number, expected_macroparticle_number, rtol = 0.,
                     atol = 5.*std_macroparticle_number))
 
@@ -347,7 +345,7 @@ def check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density, r
                                rtol = 5.*relative_std_weight)))
 
 def specific_check1(data, dt):
-    #check_isotropy(data, relative_tolerance = 3.e-2)
+    check_isotropy(data, relative_tolerance = 3.e-2)
     expected_fusion_number = check_macroparticle_number(data,
                                                         fusion_probability_target_value = 0.002,
                                                         num_pair_per_cell = nppcell_1)
