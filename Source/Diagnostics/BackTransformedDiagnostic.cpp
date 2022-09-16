@@ -52,6 +52,11 @@
 
 using namespace amrex;
 
+namespace
+{
+    constexpr int permission_flag_rwxrxrx = 0755;
+}
+
 #ifdef WARPX_USE_HDF5
 
 /*
@@ -532,7 +537,7 @@ LorentzTransformZ (MultiFab& data, Real gamma_boost, Real beta_boost)
             {
                 // Transform the transverse E and B fields. Note that ez and bz are not
                 // changed by the tranform.
-                Real e_lab, b_lab, j_lab, r_lab;
+                Real e_lab = 0.0_rt, b_lab = 0.0_rt, j_lab = 0.0_rt, r_lab = 0.0_rt;
                 e_lab = gamma_boost * (arr(i, j, k, 0) +
                                        beta_boost*clight*arr(i, j, k, 4));
                 b_lab = gamma_boost * (arr(i, j, k, 4) +
@@ -550,13 +555,16 @@ LorentzTransformZ (MultiFab& data, Real gamma_boost, Real beta_boost)
                 arr(i, j, k, 3) = b_lab;
 
                 // Transform the charge and current density. Only the z component of j is affected.
-                j_lab = gamma_boost*(arr(i, j, k, 8) +
-                                     beta_boost*clight*arr(i, j, k, 9));
-                r_lab = gamma_boost*(arr(i, j, k, 9) +
-                                     beta_boost*arr(i, j, k, 8)/clight);
+                const int j_comp_index = 8;
+                const int r_comp_index = 9;
 
-                arr(i, j, k, 8) = j_lab;
-                arr(i, j, k, 9) = r_lab;
+                j_lab = gamma_boost*(arr(i, j, k, j_comp_index) +
+                                     beta_boost*clight*arr(i, j, k, j_comp_index));
+                r_lab = gamma_boost*(arr(i, j, k, r_comp_index) +
+                                     beta_boost*arr(i, j, k, r_comp_index)/clight);
+
+                arr(i, j, k, j_comp_index) = j_lab;
+                arr(i, j, k, r_comp_index) = r_lab;
             }
         );
     }
@@ -615,7 +623,7 @@ BackTransformedDiagnostic (Real zmin_lab, Real zmax_lab, Real v_window_lab,
     // Query fields to dump
     std::vector<std::string> user_fields_to_dump;
     ParmParse pp_warpx("warpx");
-    bool do_user_fields;
+    bool do_user_fields = false;
     do_user_fields = pp_warpx.queryarr("back_transformed_diag_fields", user_fields_to_dump);
     if (queryWithParser(pp_warpx, "buffer_size", m_num_buffer_)) {
         if (m_max_box_size_ < m_num_buffer_) m_max_box_size_ = m_num_buffer_;
@@ -1138,7 +1146,7 @@ writeMetaData ()
 
     if (ParallelDescriptor::IOProcessor()) {
         const std::string fullpath = WarpX::lab_data_directory + "/snapshots";
-        if (!UtilCreateDirectory(fullpath, 0755))
+        if (!UtilCreateDirectory(fullpath, permission_flag_rwxrxrx))
             CreateDirectoryFailed(fullpath);
 
         VisMF::IO_Buffer io_buffer(VisMF::IO_Buffer_Size);
@@ -1160,7 +1168,7 @@ writeMetaData ()
 
         if (m_N_slice_snapshots_ > 0) {
            const std::string fullpath_slice = WarpX::lab_data_directory + "/slices";
-           if (!UtilCreateDirectory(fullpath_slice, 0755))
+           if (!UtilCreateDirectory(fullpath_slice, permission_flag_rwxrxrx))
                CreateDirectoryFailed(fullpath_slice);
 
            VisMF::IO_Buffer io_buffer_slice(VisMF::IO_Buffer_Size);
@@ -1285,13 +1293,13 @@ createLabFrameDirectories() {
 #else
     if (ParallelDescriptor::IOProcessor()) {
 
-        if (!UtilCreateDirectory(m_file_name, 0755))
+        if (!UtilCreateDirectory(m_file_name, permission_flag_rwxrxrx))
             CreateDirectoryFailed(m_file_name);
 
         const int nlevels = 1;
         for(int i = 0; i < nlevels; ++i) {
             const std::string &fullpath = LevelFullPath(i, m_file_name);
-            if (!UtilCreateDirectory(fullpath, 0755))
+            if (!UtilCreateDirectory(fullpath, permission_flag_rwxrxrx))
                 CreateDirectoryFailed(fullpath);
         }
 
@@ -1305,7 +1313,7 @@ createLabFrameDirectories() {
             const std::string& species_name =
                 species_names[mypc.mapSpeciesBackTransformedDiagnostics(i)];
             const std::string fullpath = m_file_name + "/" + species_name;
-            if (!UtilCreateDirectory(fullpath, 0755))
+            if (!UtilCreateDirectory(fullpath, permission_flag_rwxrxrx))
                 CreateDirectoryFailed(fullpath);
         }
     }

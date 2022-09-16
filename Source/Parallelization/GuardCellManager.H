@@ -71,7 +71,9 @@ public:
         const bool do_pml,
         const int do_pml_in_domain,
         const int pml_ncell,
-        const amrex::Vector<amrex::IntVect>& ref_ratios);
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        const bool use_filter,
+        const amrex::IntVect& bilinear_filter_stencil_length);
 
     // Guard cells allocated for MultiFabs E and B
     amrex::IntVect ng_alloc_EB = amrex::IntVect::TheZeroVector();

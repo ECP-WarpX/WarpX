@@ -963,8 +963,10 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
         auto pcounts = counts.data();
         int lrrfac = rrfac;
-        int lrefine_injection = refine_injection;
-        Box lfine_box = fine_injection_box;
+        Box fine_overlap_box; // default Box is NOT ok().
+        if (refine_injection) {
+            fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
+        }
         amrex::ParallelFor(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
             IntVect iv(AMREX_D_DECL(i, j, k));
@@ -977,16 +979,13 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
-                if (lrefine_injection) {
-                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, -shifted);
-                    if (fine_overlap_box.ok()) {
-                        int r = (fine_overlap_box.contains(iv)) ?
-                            AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac) : 1;
-                        pcounts[index] = num_ppc*r;
-                    }
+                int r;
+                if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
+                    r = AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac);
                 } else {
-                    pcounts[index] = num_ppc;
+                    r = 1;
                 }
+                pcounts[index] = num_ppc*r;
             }
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             amrex::ignore_unused(k);
@@ -1393,8 +1392,10 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     InjectorPosition* inj_pos = plasma_injector->getInjectorPosition();
     InjectorDensity*  inj_rho = plasma_injector->getInjectorDensity();
     InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentum();
-    Real density_min = plasma_injector->density_min;
-    Real density_max = plasma_injector->density_max;
+    const amrex::Real density_min = plasma_injector->density_min;
+    const amrex::Real density_max = plasma_injector->density_max;
+    constexpr int level_zero = 0;
+    const amrex::Real t = WarpX::GetInstance().gett_new(level_zero);
 
 #ifdef WARPX_DIM_RZ
     const int nmodes = WarpX::n_rz_azimuthal_modes;
@@ -1497,8 +1498,10 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
         auto pcounts = counts.data();
         int lrrfac = rrfac;
-        int lrefine_injection = refine_injection;
-        Box lfine_box = fine_injection_box;
+        Box fine_overlap_box; // default Box is NOT ok().
+        if (refine_injection) {
+            fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
+        }
         amrex::ParallelForRNG(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             IntVect iv(AMREX_D_DECL(i, j, k));
@@ -1510,16 +1513,13 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
-                if (lrefine_injection) {
-                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, -shifted);
-                    if (fine_overlap_box.ok()) {
-                        int r = (fine_overlap_box.contains(iv)) ?
-                            AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac) : 1;
-                        pcounts[index] = num_ppc_int*r;
-                    }
+                int r;
+                if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
+                    r = AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac);
                 } else {
-                    pcounts[index] = num_ppc_int;
+                    r = 1;
                 }
+                pcounts[index] = num_ppc_int*r;
             }
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             amrex::ignore_unused(k);
@@ -1559,6 +1559,26 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         for (int ia = 0; ia < PIdx::nattribs; ++ia) {
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
+
+        // user-defined integer and real attributes
+        const int n_user_int_attribs = m_user_int_attribs.size();
+        const int n_user_real_attribs = m_user_real_attribs.size();
+        amrex::Gpu::DeviceVector<int*> pa_user_int(n_user_int_attribs);
+        amrex::Gpu::DeviceVector<ParticleReal*> pa_user_real(n_user_real_attribs);
+        amrex::Gpu::DeviceVector< amrex::ParserExecutor<7> > user_int_attrib_parserexec(n_user_int_attribs);
+        amrex::Gpu::DeviceVector< amrex::ParserExecutor<7> > user_real_attrib_parserexec(n_user_real_attribs);
+        for (int ia = 0; ia < n_user_int_attribs; ++ia) {
+            pa_user_int[ia] = soa.GetIntData(particle_icomps[m_user_int_attribs[ia]]).data() + old_size;
+            user_int_attrib_parserexec[ia] = m_user_int_attrib_parser[ia]->compile<7>();
+        }
+        for (int ia = 0; ia < n_user_real_attribs; ++ia) {
+            pa_user_real[ia] = soa.GetRealData(particle_comps[m_user_real_attribs[ia]]).data() + old_size;
+            user_real_attrib_parserexec[ia] = m_user_real_attrib_parser[ia]->compile<7>();
+        }
+        int** pa_user_int_data = pa_user_int.dataPtr();
+        ParticleReal** pa_user_real_data = pa_user_real.dataPtr();
+        amrex::ParserExecutor<7> const* user_int_parserexec_data = user_int_attrib_parserexec.dataPtr();
+        amrex::ParserExecutor<7> const* user_real_parserexec_data = user_real_attrib_parserexec.dataPtr();
 
         int* p_ion_level = nullptr;
         if (do_field_ionization) {
@@ -1721,6 +1741,14 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                     p_optical_depth_BW[ip] = breit_wheeler_get_opt(engine);
                 }
 #endif
+                // Initialize user-defined integers with user-defined parser
+                for (int ia = 0; ia < n_user_int_attribs; ++ia) {
+                    pa_user_int_data[ia][ip] = static_cast<int>(user_int_parserexec_data[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t));
+                }
+                // Initialize user-defined real attributes with user-defined parser
+                for (int ia = 0; ia < n_user_real_attribs; ++ia) {
+                    pa_user_real_data[ia][ip] = user_real_parserexec_data[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t);
+                }
 
                 Real weight = dens * scale_fac * dt;
 #ifdef WARPX_DIM_RZ

@@ -1194,6 +1194,13 @@ WarpX::ReadParameters ()
                 "Option algo.current_deposition=vay must be used with psatd.periodic_single_box_fft=0.");
         }
 
+        if (current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                current_correction == false,
+                "Options algo.current_deposition=vay and psatd.current_correction=1 cannot be combined together.");
+        }
+
         // Auxiliary: boosted_frame = true if warpx.gamma_boost is set in the inputs
         amrex::ParmParse pp_warpx("warpx");
         const bool boosted_frame = pp_warpx.query("gamma_boost", gamma_boost);
@@ -1328,10 +1335,15 @@ WarpX::ReadParameters ()
             }
         }
 
-        // Fill guard cells with backward FFTs if Vay current deposition is used
-        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+        // Without periodic single box, fill guard cells with backward FFTs,
+        // with current correction or Vay deposition
+        if (fft_periodic_single_box == false)
         {
-            WarpX::m_fill_guards_current = amrex::IntVect(1);
+            if (current_correction ||
+                current_deposition_algo == CurrentDepositionAlgo::Vay)
+            {
+                WarpX::m_fill_guards_current = amrex::IntVect(1);
+            }
         }
     }
 
@@ -1614,6 +1626,13 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[1], WarpX::CellSize(lev)[2]};
 #endif
 
+    // Initialize filter before guard cells manager
+    // (needs info on length of filter's stencil)
+    if (use_filter)
+    {
+        InitFilter();
+    }
+
     guard_cells.Init(
         dt[lev],
         dx,
@@ -1636,7 +1655,9 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::isAnyBoundaryPML(),
         WarpX::do_pml_in_domain,
         WarpX::pml_ncell,
-        this->refRatio());
+        this->refRatio(),
+        use_filter,
+        bilinear_filter.stencil_length_each_dir);
 
 
 #ifdef AMREX_USE_EB
@@ -1671,7 +1692,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 
 void
 WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm,
-                      const IntVect& ngEB, const IntVect& ngJ, const IntVect& ngRho,
+                      const IntVect& ngEB, IntVect& ngJ, const IntVect& ngRho,
                       const IntVect& ngF, const IntVect& ngG, const bool aux_is_nodal)
 {
     // Declare nodal flags

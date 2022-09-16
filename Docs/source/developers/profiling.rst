@@ -116,7 +116,8 @@ Nvidia Nsight-Systems
 Perlmutter Example
 """"""""""""""""""
 
-Example on how to create traces on a multi-GPU system that uses the Slurm scheduler (e.g., NERSC's Perlmutter system):
+Example on how to create traces on a multi-GPU system that uses the Slurm scheduler (e.g., NERSC's Perlmutter system).
+You can either run this on an interactive node or use the Slurm batch script header :ref:`documented here <running-cpp-perlmutter-A100-GPUs>`.
 
 .. code-block:: bash
 
@@ -151,6 +152,15 @@ Example on how to create traces on a multi-GPU system that uses the Slurm schedu
    This version does not record all trace information.
    You need to use the one directly shipped with the NVHPC base system, version 2021.4.1, located in ``/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/compilers/bin/nsys``.
 
+.. note::
+
+    If everything went well, you will obtain as many output files named ``profiling_<number>.nsys-rep`` as active MPI ranks.
+    Each MPI rank's performance trace can be analyzed with the Nsight System graphical user interface (GUI).
+    In WarpX, every MPI rank is associated with one GPU, which each creates one trace file.
+
+.. warning::
+
+    The last line of the sbatch file has to match the data of your input files.
 
 Summit Example
 """"""""""""""
