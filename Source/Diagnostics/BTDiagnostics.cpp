@@ -163,8 +163,8 @@ BTDiagnostics::ReadParameters ()
 
 
     std::vector<std::string> intervals_string_vec = {"0"};
-    bool num_snapshots_specified = queryWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
-    bool intervals_specified = pp_diag_name.queryarr("intervals", intervals_string_vec);
+    bool const num_snapshots_specified = queryWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
+    bool const intervals_specified = pp_diag_name.queryarr("intervals", intervals_string_vec);
     if (num_snapshots_specified)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!(num_snapshots_specified && intervals_specified),
