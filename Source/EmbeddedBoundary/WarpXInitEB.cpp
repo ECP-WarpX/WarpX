@@ -9,7 +9,6 @@
 
 #ifdef AMREX_USE_EB
 #  include "Utils/TextMsg.H"
-#  include "Utils/WarpXUtil.H"
 
 #  include <AMReX.H>
 #  include <AMReX_Array.H>

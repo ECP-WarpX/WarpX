@@ -11,10 +11,10 @@
 #include "FieldIO.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Utils/TextMsg.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <ablastr/particles/IndexHandling.H>
@@ -611,7 +611,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                          particle_diags[i].m_uniform_stride);
       ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
-                                 compileParser<ParticleDiag::m_nvars>
+                                utils::parser::compileParser<ParticleDiag::m_nvars>
                                      (particle_diags[i].m_particle_filter_parser.get()),
                                  pc->getMass());
       parser_filter.m_units = InputUnits::SI;

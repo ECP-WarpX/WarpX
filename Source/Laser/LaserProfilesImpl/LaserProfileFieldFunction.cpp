@@ -6,9 +6,9 @@
  */
 #include "Laser/LaserProfiles.H"
 
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpX_Complex.H"
-#include "Utils/WarpXUtil.H"
 
 #include <AMReX.H>
 #include <AMReX_Extension.H>
@@ -41,7 +41,7 @@ WarpXLaserProfiles::FieldFunctionLaserProfile::init (
     symbols.erase("t"); // after removing variables, we are left with constants
     for (auto it = symbols.begin(); it != symbols.end(); ) {
         Real v;
-        if (queryWithParser(ppc, it->c_str(), v)) {
+        if (utils::parser::queryWithParser(ppc, it->c_str(), v)) {
             m_parser.setConstant(*it, v);
             it = symbols.erase(it);
         } else {

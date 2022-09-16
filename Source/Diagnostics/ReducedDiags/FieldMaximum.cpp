@@ -8,7 +8,6 @@
 #include "FieldMaximum.H"
 
 #include "Utils/CoarsenIO.H"
-#include "Utils/IntervalsParser.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
 

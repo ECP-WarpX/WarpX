@@ -1,4 +1,4 @@
-/* Copyright 2019-2022 Andrew Myers, Burlen Loring, Luca Fedeli
+/* Copyright 2022 Andrew Myers, Burlen Loring, Luca Fedeli
  * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
  *
  * This file is part of WarpX.
@@ -6,8 +6,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_UTILS_PARSER_H_
-#define WARPX_UTILS_PARSER_H_
+#ifndef WARPX_UTILS_PARSER_PARSERUTILS_H_
+#define WARPX_UTILS_PARSER_PARSERUTILS_H_
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
@@ -43,6 +43,20 @@ namespace utils::parser
         amrex::Vector<std::string> const& varnames);
 
 
+    /**
+    * \brief Parse a string (typically a mathematical expression) from the
+    * input file and store it into a variable.
+    *
+    * \param pp used to read the query_string `pp.<function>=string`
+    * \param query_string ParmParse.query will look for this string
+    * \param stored_string variable in which the string to parse is stored
+    */
+    void Store_parserString(
+        const amrex::ParmParse &pp,
+        std::string query_string,
+        std::string& stored_string);
+
+
     /** Parse a string and return as a double precision floating point number
     *
     * In case the string cannot be interpreted as a double,
@@ -51,7 +65,7 @@ namespace utils::parser
     * \param str The string to be parsed
     * \return representation as a double
     */
-    double parseStringtoDouble(std::string str);
+    double parseStringtoDouble(const std::string& str);
 
 
     /** Parse a string and return an int
@@ -63,7 +77,8 @@ namespace utils::parser
      * \param name For integers, the name, to be used in error messages
      * \return rounded closest integer
      */
-    int parseStringtoInt(std::string str, std::string name);
+    int parseStringtoInt(const std::string& str, const std::string& name);
+
 
     template <int N>
     amrex::ParserExecutor<N> compileParser (amrex::Parser const* parser)
@@ -74,6 +89,7 @@ namespace utils::parser
             return amrex::ParserExecutor<N>{};
         }
     }
+
 
     /** Similar to amrex::ParmParse::query, but also supports math expressions for the value.
      *
@@ -106,6 +122,32 @@ namespace utils::parser
             }
             else {
                 val = static_cast<T>(parser.compileHost<0>()());
+            }
+        }
+        // return the same output as amrex::ParmParse::query
+        return is_specified;
+    }
+
+
+    template <typename T>
+    int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<T>& val)
+    {
+        // call amrex::ParmParse::query, check if the user specified str.
+        std::vector<std::string> tmp_str_arr;
+        int is_specified = a_pp.queryarr(str, tmp_str_arr);
+        if (is_specified)
+        {
+            // If so, create parser objects and apply them to the values provided by the user.
+            int const n = static_cast<int>(tmp_str_arr.size());
+            val.resize(n);
+            for (int i=0 ; i < n ; i++) {
+                auto parser = makeParser(tmp_str_arr[i], {});
+                if (std::is_same<T, int>::value) {
+                    val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+                }
+                else {
+                    val[i] = static_cast<T>(parser.compileHost<0>()());
+                }
             }
         }
         // return the same output as amrex::ParmParse::query
@@ -182,7 +224,6 @@ namespace utils::parser
         }
     }
 
-
     template <typename T>
     void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std::vector<T>& val)
     {
@@ -241,3 +282,5 @@ namespace utils::parser
     }
 
 }
+
+#endif // WARPX_UTILS_PARSER_PARSERUTILS_H_

@@ -13,11 +13,11 @@
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -95,16 +95,18 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     std::transform(laser_type_s.begin(), laser_type_s.end(), laser_type_s.begin(), ::tolower);
 
     // Parse the properties of the antenna
-    getArrWithParser(pp_laser_name, "position", m_position);
-    getArrWithParser(pp_laser_name, "direction", m_nvec);
-    getArrWithParser(pp_laser_name, "polarization", m_p_X);
+    utils::parser::getArrWithParser(pp_laser_name, "position", m_position);
+    utils::parser::getArrWithParser(pp_laser_name, "direction", m_nvec);
+    utils::parser::getArrWithParser(pp_laser_name, "polarization", m_p_X);
 
-    getWithParser(pp_laser_name, "wavelength", m_wavelength);
+    utils::parser::getWithParser(pp_laser_name, "wavelength", m_wavelength);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_wavelength > 0, "The laser wavelength must be >0.");
-    const bool e_max_is_specified = queryWithParser(pp_laser_name, "e_max", m_e_max);
+    const bool e_max_is_specified =
+        utils::parser::queryWithParser(pp_laser_name, "e_max", m_e_max);
     Real a0;
-    const bool a0_is_specified = queryWithParser(pp_laser_name, "a0", a0);
+    const bool a0_is_specified =
+        utils::parser::queryWithParser(pp_laser_name, "a0", a0);
     if (a0_is_specified){
         Real omega = 2._rt*MathConst::pi*PhysConst::c/m_wavelength;
         m_e_max = PhysConst::m_e * omega * PhysConst::c * a0 / PhysConst::q_e;
@@ -187,10 +189,12 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     m_laser_injection_box= Geom(0).ProbDomain();
     {
         Vector<Real> lo, hi;
-        if (queryArrWithParser(pp_laser_name, "prob_lo", lo, 0, AMREX_SPACEDIM)) {
+        if (utils::parser::queryArrWithParser(
+                pp_laser_name, "prob_lo", lo, 0, AMREX_SPACEDIM)) {
             m_laser_injection_box.setLo(lo);
         }
-        if (queryArrWithParser(pp_laser_name, "prob_hi", hi, 0, AMREX_SPACEDIM)) {
+        if (utils::parser::queryArrWithParser(
+                pp_laser_name, "prob_hi", hi, 0, AMREX_SPACEDIM)) {
             m_laser_injection_box.setHi(hi);
         }
     }

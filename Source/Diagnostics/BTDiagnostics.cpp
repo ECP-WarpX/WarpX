@@ -14,10 +14,11 @@
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
+#include "Utils/Algorithms/IsIn.H"
 #include "Utils/CoarsenIO.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <ablastr/utils/Communication.H>
@@ -159,20 +160,22 @@ BTDiagnostics::ReadParameters ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_back_transformed_fields, " fields must be turned on for the new back-transformed diagnostics");
     if (m_do_back_transformed_fields == false) m_varnames.clear();
 
-    getWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
+    utils::parser::getWithParser(
+        pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
     m_num_buffers = m_num_snapshots_lab;
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
     bool snapshot_interval_is_specified = false;
-    snapshot_interval_is_specified = queryWithParser(pp_diag_name, "dt_snapshots_lab", m_dt_snapshots_lab);
-    if ( queryWithParser(pp_diag_name, "dz_snapshots_lab", m_dz_snapshots_lab) ) {
+    snapshot_interval_is_specified = utils::parser::queryWithParser(
+        pp_diag_name, "dt_snapshots_lab", m_dt_snapshots_lab);
+    if ( utils::parser::queryWithParser(pp_diag_name, "dz_snapshots_lab", m_dz_snapshots_lab) ) {
         m_dt_snapshots_lab = m_dz_snapshots_lab/PhysConst::c;
         snapshot_interval_is_specified = true;
     }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
 
-    if (queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
+    if (utils::parser::queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
     }
 
@@ -181,8 +184,12 @@ BTDiagnostics::ReadParameters ()
                                                            "jx", "jy", "jz", "rho"};
 
     for (const auto& var : m_varnames) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (WarpXUtilStr::is_in(BTD_varnames_supported, var )), "Input error: field variable " + var + " in " + m_diag_name
-        + ".fields_to_plot is not supported for BackTransformed diagnostics. Currently supported field variables for BackTransformed diagnostics include Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (utils::algorithms::is_in(BTD_varnames_supported, var )),
+            "Input error: field variable " + var + " in " + m_diag_name
+            + ".fields_to_plot is not supported for BackTransformed diagnostics."
+            + " Currently supported field variables for BackTransformed diagnostics "
+            + "include Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho");
     }
 
     bool particle_fields_to_plot_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);

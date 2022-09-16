@@ -6,9 +6,10 @@
  */
 #include "Laser/LaserProfiles.H"
 
-#include "Utils/TextMsg.H"
 #include "Utils/Algorithms/LinearInterpolation.H"
 #include "Utils/Algorithms/UpperBound.H"
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpX_Complex.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
@@ -66,7 +67,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
     //Set time_chunk_size
     m_params.time_chunk_size = m_params.nt;
     int temp = 1;
-    if(queryWithParser(ppl ,"time_chunk_size", temp)){
+    if(utils::parser::queryWithParser(ppl ,"time_chunk_size", temp)){
         m_params.time_chunk_size = min(
             temp, m_params.time_chunk_size);
     }
@@ -75,7 +76,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
     }
 
     //Reads the (optional) delay
-    queryWithParser(ppl, "delay", m_params.t_delay);
+    utils::parser::queryWithParser(ppl, "delay", m_params.t_delay);
 
     //Allocate memory for E_data Vector
     const int data_size = m_params.time_chunk_size*

@@ -1,4 +1,4 @@
-/* Copyright 2019-2022 Andrew Myers, Burlen Loring, Luca Fedeli
+/* Copyright 2022 Andrew Myers, Burlen Loring, Luca Fedeli
  * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
  *
  * This file is part of WarpX.
@@ -7,9 +7,16 @@
  */
 
 #include "ParserUtils.H"
+
 #include "Utils/TextMsg.H"
+#include "Utils/WarpXConst.H"
+
+#include <AMReX_Parser.H>
+#include <AMReX_ParmParse.H>
 
 #include <limits>
+#include <map>
+#include <set>
 
 void utils::parser::Store_parserString(
     const amrex::ParmParse& pp,
@@ -25,6 +32,7 @@ void utils::parser::Store_parserString(
     f.clear();
 }
 
+
 int utils::parser::safeCastToInt(
     const amrex::Real x, const std::string& real_name)
 {
@@ -34,17 +42,21 @@ int utils::parser::safeCastToInt(
     // (2.0*(numeric_limits<int>::max()/2+1)) converts numeric_limits<int>::max()+1 to a real ensuring accuracy to all digits
     // This accepts x = 2**31-1 but rejects 2**31.
     using namespace amrex::literals;
-    constexpr amrex::Real max_range = (2.0_rt*static_cast<amrex::Real>(std::numeric_limits<int>::max()/2+1));
+    constexpr amrex::Real max_range =
+        (2.0_rt*static_cast<amrex::Real>(std::numeric_limits<int>::max()/2+1));
+
     if (x < max_range) {
         if (std::ceil(x) >= std::numeric_limits<int>::min()) {
             result = static_cast<int>(x);
         } else {
             error_detected = true;
-            assert_msg = "Negative overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
+            assert_msg = "Negative overflow detected when casting " + real_name
+                + " = " + std::to_string(x) + " to int";
         }
     } else if (x > 0) {
         error_detected = true;
-        assert_msg =  "Overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
+        assert_msg =  "Overflow detected when casting " + real_name + " = "
+            + std::to_string(x) + " to int";
     } else {
         error_detected = true;
         assert_msg =  "NaN detected when casting " + real_name + " to int";
@@ -53,13 +65,15 @@ int utils::parser::safeCastToInt(
     return result;
 }
 
-Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames)
+
+amrex::Parser utils::parser::makeParser (
+    std::string const& parse_function, amrex::Vector<std::string> const& varnames)
 {
     // Since queryWithParser recursively calls this routine, keep track of symbols
     // in case an infinite recursion is found (a symbol's value depending on itself).
     static std::set<std::string> recursive_symbols;
 
-    Parser parser(parse_function);
+    amrex::Parser parser(parse_function);
     parser.registerVariables(varnames);
 
     std::set<std::string> symbols = parser.symbols();
@@ -73,7 +87,7 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
     // system of units or some form of quasi-physical behavior in the
     // simulation. Thus, this needs to override any built-in
     // constants.
-    ParmParse pp_my_constants("my_constants");
+    amrex::ParmParse pp_my_constants("my_constants");
 
     // Physical / Numerical Constants available to parsed expressions
     static std::map<std::string, amrex::Real> warpx_constants =
@@ -107,7 +121,7 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
             continue;
         }
 
-        auto constant = warpx_constants.find(*it);
+        const auto constant = warpx_constants.find(*it);
         if (constant != warpx_constants.end()) {
           parser.setConstant(*it, constant->second);
           it = symbols.erase(it);
@@ -122,19 +136,21 @@ Parser makeParser (std::string const& parse_function, amrex::Vector<std::string>
     return parser;
 }
 
+
 double
-parseStringtoReal(std::string str)
+utils::parser::parseStringtoDouble(const std::string& str)
 {
-    auto parser = makeParser(str, {});
-    auto exe = parser.compileHost<0>();
-    double result = exe();
+    const auto parser = makeParser(str, {});
+    const auto exe = parser.compileHost<0>();
+    const auto result = exe();
     return result;
 }
 
+
 int
-parseStringtoInt(std::string str, std::string name)
+utils::parser::parseStringtoInt(const std::string& str, const std::string& name)
 {
-    auto const rval = static_cast<amrex::Real>(parseStringtoReal(str));
-    int ival = safeCastToInt(std::round(rval), name);
+    const auto rval = static_cast<amrex::Real>(parseStringtoDouble(str));
+    const auto ival = safeCastToInt(std::round(rval), name);
     return ival;
 }

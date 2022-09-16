@@ -1,5 +1,5 @@
 target_sources(WarpX
   PRIVATE
-    IntervalParser.cpp
+    IntervalsParser.cpp
     ParserUtils.cpp
 )

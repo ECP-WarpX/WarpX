@@ -9,6 +9,7 @@
 #define WARPX_UTILS_ALGORITHMS_LINEAR_INTERPOLATION_H_
 
 #include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
 
 namespace utils::algorithms
 {

@@ -56,16 +56,6 @@ void CheckGriddingForRZSpectral ();
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin,
                amrex::Real zmax);
 
-/**
- * \brief Parse a string (typically a mathematical expression) from the
- * input file and store it into a variable.
- *
- * \param pp used to read the query_string `pp.<function>=string`
- * \param query_string ParmParse.query will look for this string
- * \param stored_string variable in which the string to parse is stored
- */
-void Store_parserString(const amrex::ParmParse &pp, std::string query_string,
-                        std::string& stored_string);
 
 namespace WarpXUtilIO{
 /**
@@ -115,72 +105,6 @@ void getCellCoordinates (int i, int j, int k,
 
 }
 
-namespace WarpXUtilStr
-{
-    /** Return true if elem is in vect, false otherwise
-     * @param[in] vect vector of strings, typically names
-     * @param[in] elem single string
-     * @return true if elem is in vect, false otherwise
-     */
-    bool is_in(const std::vector<std::string>& vect,
-               const std::string& elem);
-
-    /** Return true if any element in elems is in vect, false otherwise
-     * @param[in] vect vector of strings, typically names
-     * @param[in] elems vector of string
-     * @return true if any element in elems is in vect, false otherwise
-     */
-    bool is_in(const std::vector<std::string>& vect,
-               const std::vector<std::string>& elems);
-
-    /** \brief Splits a string using a string separator. This is somewhat similar to
-     *  amrex::Tokenize. The main difference is that, if the separator ":" is used,
-     *  amrex::Tokenize will split ":3::2" into ["3","2"] while this functio will
-     *  split ":3::2" into ["","3","","2"]. This function can also perform a trimming to
-     *  remove whitespaces (or any other arbitrary string) from the split string.
-     *
-     * @tparam Container the type of the split string.
-     *
-     * @param[in] instr the input string
-     * @param[in] separator the separator string
-     * @param[in] trim true to trim the split string, false otherwise.
-     * @param[in] trim_space the string to trim if trim is true.
-     * @return cont the split string
-     */
-    template <typename Container>
-    auto split (std::string const& instr, std::string const& separator,
-                  bool const trim = false, std::string const& trim_space = " \t")
-    {
-        Container cont;
-        std::size_t current = instr.find(separator);
-        std::size_t previous = 0;
-        while (current != std::string::npos) {
-            if (trim){
-                cont.push_back(amrex::trim(instr.substr(previous, current - previous),trim_space));}
-            else{
-                cont.push_back(instr.substr(previous, current - previous));}
-            previous = current + separator.size();
-            current = instr.find(separator, previous);
-        }
-        if (trim){
-            cont.push_back(amrex::trim(instr.substr(previous, current - previous),trim_space));}
-        else{
-            cont.push_back(instr.substr(previous, current - previous));}
-        return cont;
-    }
-
-    /** \brief This function performs automatic text wrapping on a string,
-     *  returning an array of strings each not exceeding the maximum line length
-     *  (unless the text contains a word exceeding the maximum line length).
-     *
-     * @param[in] text the string containing the text to be wrapped
-     * @param[in] max_line_length the maximum line length
-     * @return an std::vector containing the lines of the wrapped text
-     */
-    std::vector<std::string> automatic_text_wrap(
-        const std::string& text, const int max_line_length);
-
-}
 
 namespace WarpXUtilLoadBalance
 {
