@@ -128,7 +128,7 @@ BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_ve
     std::string inconcatenated;
     for (const auto& instr_element : instr_vec) inconcatenated +=instr_element;
 
-    auto insplit = WarpXUtilStr::split<std::vector<std::string>>(inconcatenated, m_separator);
+    auto const insplit = WarpXUtilStr::split<std::vector<std::string>>(inconcatenated, m_separator);
 
     for(const auto& inslc : insplit)
     {

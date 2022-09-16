@@ -200,7 +200,7 @@ private:
     std::vector<SliceParser> m_slices;
     std::vector<int> m_slice_starting_i_buffer;
     int m_n_snapshots;
-    std::string m_separator = ",";
+    std::string const m_separator = ",";
     bool m_activated = false;
 };
 
