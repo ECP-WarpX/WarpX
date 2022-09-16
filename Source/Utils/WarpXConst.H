@@ -8,7 +8,7 @@
 #ifndef WARPX_CONST_H_
 #define WARPX_CONST_H_
 
-#include <ablastr/Constant.H>
+#include <ablastr/constant.H>
 
 
 namespace MathConst
