@@ -59,7 +59,7 @@ setup(name = 'pywarpx',
       package_dir = {'pywarpx': 'pywarpx'},
       description = """Wrapper of WarpX""",
       package_data = package_data,
-      install_requires = ['numpy', 'picmistandard==0.0.19', 'periodictable'],
+      install_requires = ['numpy', 'picmistandard==0.0.20', 'periodictable'],
       python_requires = '>=3.6',
       zip_safe=False
 )
