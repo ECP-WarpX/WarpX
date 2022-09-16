@@ -68,6 +68,19 @@ namespace ablastr::constant
 
         //! Boltzmann constant (exact) [J/K]
         static constexpr auto kb = 1.380649e-23_rt;
+
+        //! 1 eV in [J]
+        static constexpr auto eV = q_e;
+        //! 1 MeV in [J]
+        static constexpr auto MeV = q_e * 1e6_rt;
+        //! 1 eV/c in [kg*m/s]
+        static constexpr auto eV_invc = eV / c;
+        //! 1 MeV/c in [kg*m/s]
+        static constexpr auto MeV_invc = MeV / c;
+        //! 1 eV/c^2 in [kg]
+        static constexpr auto eV_invc2 = eV / (c * c);
+        //! 1 MeV/c^2 in [kg]
+        static constexpr auto MeV_invc2 = MeV / (c * c);
     } // namespace SI
 } // namespace ablastr::constant
 
