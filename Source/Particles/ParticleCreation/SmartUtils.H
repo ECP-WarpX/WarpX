@@ -17,6 +17,7 @@
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_INT.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_Particle.H>
 
 #include <map>
 #include <string>
@@ -60,12 +61,12 @@ void setNewParticleIDs (PTile& ptile, int old_size, int num_added)
     }
 
     const int cpuid = amrex::ParallelDescriptor::MyProc();
-    auto pp = ptile.GetArrayOfStructs()().data() + old_size;
+    auto ptd = ptile.getParticleTileData();
     amrex::ParallelFor(num_added, [=] AMREX_GPU_DEVICE (int ip) noexcept
     {
-        auto& p = pp[ip];
-        p.id() = pid+ip;
-        p.cpu() = cpuid;
+        auto const new_id = ip + old_size;
+        amrex::ParticleIDWrapper{ptd.m_idcpu[new_id]} = pid+ip;
+        amrex::ParticleCPUWrapper{ptd.m_idcpu[new_id]} = cpuid;
     });
 }
 
