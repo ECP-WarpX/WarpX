@@ -21,7 +21,10 @@
 struct PIdx
 {
     enum {
-        w = 0,      ///< weight
+        x = 0,
+        y,
+        z,
+        w,      ///< weight
         ux, uy, uz,
 #ifdef WARPX_DIM_RZ
         theta,      ///< RZ needs all three position components
