@@ -149,8 +149,8 @@ public:
      * class.
      */
     virtual void DefaultInitializeRuntimeAttributes (
-                        amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
-                                            NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                        amrex::ParticleTile<WarpXParticleContainer, NArrayReal,
+                                            NArrayInt, amrex::PinnedArenaAllocator>& pinned_tile,
                         const int n_external_attr_real,
                         const int n_external_attr_int,
                         const amrex::RandomEngine& engine) = 0;
