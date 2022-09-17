@@ -113,7 +113,7 @@ namespace particles {
                 amrex::ParticleReal const x = p.pos(0);
                 amrex::ParticleReal const y = p.pos(1);
                 amrex::ParticleReal const z = p.pos(2);
-                amrex::ParticleReal const w = p.rdata(T_RealSoAWeight);
+                amrex::ParticleReal const w = p.m_particle_tile_data.m_rdata[T_RealSoAWeight][i];
 
                 return amrex::makeTuple(x, x*x, y, y*y, z, z*z, w);
             },
