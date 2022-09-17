@@ -12,6 +12,7 @@
 
 #include <AMReX_Gpu.H>
 #include <AMReX_Partition.H>
+#include <AMReX_ParticleUtil.H>
 
 
 /** \brief Fill the elements of the input vector with consecutive integer,
@@ -88,7 +89,7 @@ class fillBufferFlag
             // Extract simple structure that can be used directly on the GPU
             m_domain{geom.Domain()},
             m_inexflag_ptr{inexflag.dataPtr()},
-            m_particles{pti.GetArrayOfStructs().data()},
+            m_ptd{pti.GetParticleTile().getConstParticleTileData()},
             m_buffer_mask{(*bmasks)[pti].array()}
         {
             for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
@@ -100,10 +101,8 @@ class fillBufferFlag
 
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
         void operator()( const long i ) const {
-            // Select a particle
-            auto const& p = m_particles[i];
             // Find the index of the cell where this particle is located
-            amrex::IntVect const iv = amrex::getParticleCell( p,
+            amrex::IntVect const iv = amrex::getParticleCell( m_ptd, i,
                                 m_prob_lo, m_inv_cell_size, m_domain );
             // Find the value of the buffer flag in this cell and
             // store it at the corresponding particle position in the array `inexflag`
@@ -113,7 +112,7 @@ class fillBufferFlag
     private:
         amrex::Box m_domain;
         int* m_inexflag_ptr;
-        WarpXParticleContainer::ParticleType const* m_particles;
+        WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType m_ptd;
         amrex::Array4<int const> m_buffer_mask;
         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_prob_lo;
         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_inv_cell_size;
@@ -146,7 +145,7 @@ class fillBufferFlagRemainingParticles
             m_domain{geom.Domain()},
             // Extract simple structure that can be used directly on the GPU
             m_inexflag_ptr{inexflag.dataPtr()},
-            m_particles{pti.GetArrayOfStructs().data()},
+            m_ptd{pti.GetParticleTile().getConstParticleTileData()},
             m_buffer_mask{(*bmasks)[pti].array()},
             m_start_index{start_index},
             m_indices_ptr{particle_indices.dataPtr()}
@@ -161,9 +160,9 @@ class fillBufferFlagRemainingParticles
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
         void operator()( const long i ) const {
             // Select a particle
-            auto const& p = m_particles[m_indices_ptr[i+m_start_index]];
+            auto const j = m_indices_ptr[i+m_start_index];
             // Find the index of the cell where this particle is located
-            amrex::IntVect const iv = amrex::getParticleCell( p,
+            amrex::IntVect const iv = amrex::getParticleCell( m_ptd, j,
                                 m_prob_lo, m_inv_cell_size, m_domain );
             // Find the value of the buffer flag in this cell and
             // store it at the corresponding particle position in the array `inexflag`
@@ -175,7 +174,7 @@ class fillBufferFlagRemainingParticles
         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_inv_cell_size;
         amrex::Box m_domain;
         int* m_inexflag_ptr;
-        WarpXParticleContainer::ParticleType const* m_particles;
+        WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType const m_ptd;
         amrex::Array4<int const> m_buffer_mask;
         long const m_start_index;
         long const* m_indices_ptr;

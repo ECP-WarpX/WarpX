@@ -55,11 +55,10 @@ public:
      * \brief Method to initialize runtime attributes. Does nothing for LaserParticleContainer.
      */
     void DefaultInitializeRuntimeAttributes (
-                        amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
-                                            NArrayReal, NArrayInt, amrex::PinnedArenaAllocator>& /*pinned_tile*/,
-                        const int /*n_external_attr_real*/,
-                        const int /*n_external_attr_int*/,
-                        const amrex::RandomEngine& /*engine*/) final {}
+        typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType& /*pinned_tile*/,
+        const int /*n_external_attr_real*/,
+        const int /*n_external_attr_int*/,
+        const amrex::RandomEngine& /*engine*/) final {}
 
     void ReadHeader (std::istream& is) final;
 

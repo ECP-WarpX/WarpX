@@ -251,12 +251,10 @@ public:
      * @param[in] engine the random engine, used in initialization of QED optical depths
      */
     void DefaultInitializeRuntimeAttributes (
-                    amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
-                                        NArrayReal, NArrayInt,
-                                        amrex::PinnedArenaAllocator>& pinned_tile,
-                    int n_external_attr_real,
-                    int n_external_attr_int,
-                    const amrex::RandomEngine& engine) final;
+        typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType& pinned_tile,
+        const int n_external_attr_real,
+        const int n_external_attr_int,
+        const amrex::RandomEngine& engine) final;
 
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather
