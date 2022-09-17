@@ -33,10 +33,13 @@
  *  creation functor.
  *  This functor also reads and contains the fusion multiplier.
  */
-class NuclearFusionFunc{
+class NuclearFusionFunc
+{
     // Define shortcuts for frequently-used type names
     using ParticleType = WarpXParticleContainer::ParticleType;
-    using ParticleBins = amrex::DenseBins<ParticleType>;
+    using ParticleTileType = WarpXParticleContainer::ParticleTileType;
+    using ParticleTileDataType = ParticleTileType::ParticleTileDataType;
+    using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
     using index_type = ParticleBins::index_type;
     using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
 
@@ -154,12 +157,13 @@ public:
             // other species and we need to decrease their weight accordingly.
             // c1 corresponds to the minimum number of times a particle of species 1 will be paired
             // with a particle of species 2. Same for c2.
-            const index_type c1 = amrex::max(NI2/NI1,1u);
-            const index_type c2 = amrex::max(NI1/NI2,1u);
+            // index_type(1): https://github.com/AMReX-Codes/amrex/pull/3684
+            const index_type c1 = amrex::max(NI2/NI1, index_type(1));
+            const index_type c2 = amrex::max(NI1/NI2, index_type(1));
 
             // multiplier ratio to take into account unsampled pairs
             const auto multiplier_ratio = static_cast<int>(
-                (m_isSameSpecies)?(2u*max_N - 1):(max_N));
+                m_isSameSpecies ? 2*max_N - 1 : max_N);
 
 #if (defined WARPX_DIM_RZ)
             amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
