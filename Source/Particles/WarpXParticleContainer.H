@@ -82,7 +82,7 @@ public:
  * particle container classes (that store a collection of particles) derive. Derived
  * classes can be used for plasma particles, photon particles, or non-physical
  * particles (e.g., for the laser antenna).
- * It derives from amrex::ParticleContainer<0,0,PIdx::nattribs>, where the
+ * It derives from amrex::ParticleContainerPureSoA<PIdx::nattribs>, where the
  * template arguments stand for the number of int and amrex::Real SoA and AoS
  * data in amrex::Particle.
  *  - AoS amrex::Real: x, y, z (default), 0 additional (first template

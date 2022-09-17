@@ -61,7 +61,7 @@
 using namespace amrex;
 
 FieldProbeParticleContainer::FieldProbeParticleContainer (AmrCore* amr_core)
-    : ParticleContainer<0, 0, FieldProbePIdx::nattribs>(amr_core->GetParGDB())
+    : ParticleContainerPureSoA<FieldProbePIdx::nattribs, 0>(amr_core->GetParGDB())
 {
     SetParticleSize();
 }
@@ -92,7 +92,7 @@ FieldProbeParticleContainer::AddNParticles (int lev,
      * (particle_tile).
      */
 
-    using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
+    using PinnedTile = ParticleTile<FieldProbeParticleContainer, NArrayReal, NArrayInt,
                                     amrex::PinnedArenaAllocator>;
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
