@@ -35,7 +35,9 @@ namespace particles {
             amrex::ParticleReal, amrex::ParticleReal>
     MinAndMaxPositions (T_PC const & pc)
     {
-        using PType = typename T_PC::SuperParticleType;
+
+        using ParticleType = typename T_PC::ParticleType;
+        using ParticleTileDataType = typename T_PC::ParticleTileType::ParticleTileDataType;
 
         // Get min and max for the local rank
         amrex::ReduceOps<
@@ -46,8 +48,9 @@ namespace particles {
                               amrex::ParticleReal, amrex::ParticleReal, amrex::ParticleReal>
         >(
             pc,
-            [=] AMREX_GPU_DEVICE(PType const & p) noexcept
+            [=] AMREX_GPU_DEVICE(const ParticleTileDataType& ptd, const int i) noexcept
             {
+                ParticleType p(ptd, i);
                 amrex::ParticleReal const x = p.pos(0);
                 amrex::ParticleReal const y = p.pos(1);
                 amrex::ParticleReal const z = p.pos(2);
@@ -90,7 +93,8 @@ namespace particles {
             amrex::ParticleReal, amrex::ParticleReal>
     MeanAndStdPositions (T_PC const & pc)
     {
-        using PType = typename T_PC::SuperParticleType;
+        using ParticleType = typename T_PC::ParticleType;
+        using ParticleTileDataType = typename T_PC::ParticleTileType::ParticleTileDataType;
 
         amrex::ReduceOps<
             amrex::ReduceOpSum, amrex::ReduceOpSum, amrex::ReduceOpSum,
@@ -103,8 +107,9 @@ namespace particles {
                 amrex::ParticleReal>
         >(
             pc,
-            [=] AMREX_GPU_DEVICE(const PType& p) noexcept
+            [=] AMREX_GPU_DEVICE(const ParticleTileDataType& ptd, const int i) noexcept
             {
+                ParticleType p(ptd, i);
                 amrex::ParticleReal const x = p.pos(0);
                 amrex::ParticleReal const y = p.pos(1);
                 amrex::ParticleReal const z = p.pos(2);
