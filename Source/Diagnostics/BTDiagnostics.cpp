@@ -472,6 +472,7 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     int ngrow = 1;
     int ncomps = static_cast<int>(m_cellcenter_varnames.size());
+    amrex::Print() << " ncomps for CC mf: " << ncomps << "\n";
     m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap, ncomps, ngrow);
 
 }
@@ -481,6 +482,15 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
 {
     // Initialize fields functors only if do_back_transformed_fields is selected
     if (m_do_back_transformed_fields == false) return;
+
+#ifdef WARPX_DIM_RZ
+    // For RZ, initialize field functors RZ for openpmd
+    // This is a specialized call for intializing cell-center functors
+    // such that, all modes of a field component are stored contiguously
+    // For examply, Er0, Er1_real, Er1_imag, etc
+    InitializeFieldFunctorsRZopenPMD(lev);
+    return; // We skip the rest of this function
+#endif
 
     auto & warpx = WarpX::GetInstance();
     // Clear any pre-existing vector to release stored data
@@ -505,11 +515,6 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
                   nvars, m_num_buffers, m_varnames);
     }
 
-    // For RZ, initialize field functors RZ for openpmd
-    // This is a specialized call for intializing cell-center functors
-    // such that, all modes of a field component are stored contiguously
-    // For examply, Er0, Er1_real, Er1_imag, etc
-    InitializeFieldFunctorsRZopenPMD(lev);
 
     // Define all cell-centered functors required to compute cell-centere data
     // Fill vector of cell-center functors for all field-components, namely,
@@ -548,6 +553,47 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     auto & warpx = WarpX::GetInstance();
     int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0,0)->nComp();
     int ncomp = ncomp_multimodefab;
+
+
+    bool update_varnames = (lev==0);
+    if (update_varnames) {
+        m_varnames.clear();
+        const int n_rz = ncomp * m_varnames.size();
+        m_varnames.reserve(n_rz);
+    }
+    // AddRZ modes to output names for the back-transformed data
+    if (update_varnames) {
+        for (int comp=0, n=m_varnames.size(); comp<n; comp++)
+        {
+            if (m_varnames_fields[comp] == "Er")  AddRZModesToOutputNames(std::string("Er"), ncomp, false);
+            if (m_varnames_fields[comp] == "Et")  AddRZModesToOutputNames(std::string("Et"), ncomp, false);
+            if (m_varnames_fields[comp] == "Ez")  AddRZModesToOutputNames(std::string("Ez"), ncomp, false);
+            if (m_varnames_fields[comp] == "Br")  AddRZModesToOutputNames(std::string("Br"), ncomp, false);
+            if (m_varnames_fields[comp] == "Bt")  AddRZModesToOutputNames(std::string("Bt"), ncomp, false);
+            if (m_varnames_fields[comp] == "Bz")  AddRZModesToOutputNames(std::string("Bz"), ncomp, false);
+            if (m_varnames_fields[comp] == "jr")  AddRZModesToOutputNames(std::string("jr"), ncomp, false);
+            if (m_varnames_fields[comp] == "jt")  AddRZModesToOutputNames(std::string("jt"), ncomp, false);
+            if (m_varnames_fields[comp] == "jz")  AddRZModesToOutputNames(std::string("jz"), ncomp, false);
+            if (m_varnames_fields[comp] == "rho") AddRZModesToOutputNames(std::string("rho"),ncomp, false);
+        }
+    }
+
+    // Clear any pre-existing vector to release stored data
+    // This ensures that when domain is load-balanced, the functors point
+    // to the correct field-data pointers
+    m_all_field_functors[lev].clear();
+    // For back-transformed data, all the components are cell-centered and stored
+    // in a single multifab, m_cell_centered_data.
+    // Therefore, size of functors at all levels is 1
+    int num_BT_functors = 1;
+    m_all_field_functors[lev].resize(num_BT_functors);
+    for (int i = 0; i < num_BT_functors; ++i) {
+        int nvars = static_cast<int>(m_varnames.size());
+        m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
+                                       m_cell_centered_data[lev].get(), lev,
+                                       nvars, m_num_buffers, m_varnames);
+    }
+
     // This function may be called multiple times, for different values of `lev`
     // but the `varnames` need only be updated once.
     bool update_cellcenter_varnames = (lev == 0);
@@ -557,7 +603,7 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
         m_cellcenter_varnames.reserve(n_rz);
     }
 
-    // Reset field functors
+    // Reset field functors for cell-center multifab
     m_cell_center_functors[lev].clear();
     m_cell_center_functors[lev].resize(m_cellcenter_varnames_fields.size());
 
@@ -630,6 +676,12 @@ BTDiagnostics::AddRZModesToOutputNames (const std::string& field, const int ncom
         for (int ic=1 ; ic < (ncomp+1)/2 ; ic += 1) {
             m_cellcenter_varnames.push_back( field + "_" + std::to_string(ic) + "_real" );
             m_cellcenter_varnames.push_back( field + "_" + std::to_string(ic) + "_imag" );
+        }
+    } else {
+        m_varnames.push_back(field + "_0_real");
+        for (int ic=1 ; ic < (ncomp+1)/2 ; ic += 1) {
+            m_varnames.push_back( field + "_" + std::to_string(ic) + "_real" );
+            m_varnames.push_back( field + "_" + std::to_string(ic) + "_imag" );
         }
     }
 #else
