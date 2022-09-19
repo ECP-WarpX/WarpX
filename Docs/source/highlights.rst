@@ -21,7 +21,7 @@ Scientific works in laser-plasma and beam-plasma acceleration.
 
 #. Miao B, Shrock JE, Feder L, Hollinger RC, Morrison J, Nedbailo R, Picksley A, Song H, Wang S, Rocca JJ, Milchberg HM.
    **Multi-GeV electron bunches from an all-optical laser wakefield accelerator**.
-   *preprint*, Physical Review X **12**, 031038, 2022.
+   Physical Review X **12**, 031038, 2022.
    `DOI:10.1103/PhysRevX.12.031038 <https://doi.org/10.1103/PhysRevX.12.031038>`__
 
 #. Mirani F, Calzolari D, Formenti A, Passoni M.
