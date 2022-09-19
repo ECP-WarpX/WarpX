@@ -345,7 +345,7 @@ def check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density, r
                                rtol = 5.*relative_std_weight)))
 
 def specific_check1(data, dt):
-    if is_RZ:
+    if not is_RZ:
         check_isotropy(data, relative_tolerance = 3.e-2)
     expected_fusion_number = check_macroparticle_number(data,
                                                         fusion_probability_target_value = 0.002,
