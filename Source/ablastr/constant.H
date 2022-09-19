@@ -23,7 +23,7 @@ namespace ablastr::constant
         static constexpr amrex::Real pi = 3.14159265358979323846_rt;
 
         //! https://tauday.com/tau-manifesto
-        static constexpr amrex::Real tau = 2.0 * 3.14159265358979323846_rt;
+        static constexpr amrex::Real tau = 2.0_rt * pi;
     } // namespace math
 
     /** Physical constants
