@@ -11,4 +11,6 @@ CEXE_sources += MPIInitHelpers.cpp
 CEXE_sources += RelativeCellPosition.cpp
 CEXE_sources += ParticleUtils.cpp
 
+include $(WARPX_HOME)/Source/Utils/Logo/Make.package
+
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Utils
