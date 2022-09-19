@@ -60,7 +60,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
 
         super(PoissonSolver1D, self).initialize_inputs()
 
-        self.nz = self.grid.nx
+        self.nz = self.grid.number_of_cells[0]
         self.dz = (self.grid.xmax - self.grid.xmin) / self.nz
 
         self.nxguardphi = 1
