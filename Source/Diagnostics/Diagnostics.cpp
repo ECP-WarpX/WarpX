@@ -55,9 +55,6 @@ Diagnostics::BaseReadParameters ()
     utils::parser::queryWithParser(
         pp_diag_name, "file_min_digits", m_file_min_digits);
     pp_diag_name.query("format", m_format);
-
-    std::cout << "@@@@@@@@@@ FORMAT: " << m_format << std::endl;
-
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
     amrex::ParmParse pp_geometry("geometry");
