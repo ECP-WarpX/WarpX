@@ -6,8 +6,8 @@
 # License: BSD-3-Clause-LBNL
 
 import os
-import sys
 import re
+import sys
 
 import yt
 
