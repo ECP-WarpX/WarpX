@@ -1265,7 +1265,7 @@ Laser initialization
     per angular mode. The laser particles are loaded into radial spokes, with
     the number of spokes given by min_particles_per_mode*(warpx.n_rz_azimuthal_modes-1).
 
-* ``<laser_name>.deposit_on_main_grid`` (`int`) optional (default `0`)
+* ``lasers.deposit_on_main_grid`` (`int`) optional (default `0`)
     When using mesh refinement, whether the antenna that emits the laser
     deposits charge/current only on the main grid (i.e. level 0), or also
     on the higher mesh-refinement levels.
