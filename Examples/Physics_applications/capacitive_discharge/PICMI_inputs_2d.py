@@ -91,10 +91,10 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
 
         super(PoissonSolverPseudo1D, self).initialize_inputs()
 
-        self.nx = self.grid.nx
-        self.nz = self.grid.ny
-        self.dx = (self.grid.xmax - self.grid.xmin) / self.nx
-        self.dz = (self.grid.ymax - self.grid.ymin) / self.nz
+        self.nx = self.grid.number_of_cells[0]
+        self.nz = self.grid.number_of_cells[1]
+        self.dx = (self.grid.upper_bound[0] - self.grid.lower_bound[0]) / self.nx
+        self.dz = (self.grid.upper_bound[1] - self.grid.lower_bound[1]) / self.nz
 
         if not np.isclose(self.dx, self.dz):
             raise RuntimeError('Direct solver requires dx = dz.')

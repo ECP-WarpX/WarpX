@@ -113,9 +113,11 @@ void BTDiagnostics::DerivedInitData ()
     // Turn on do_back_transformed_particles in the particle containers so that
     // the tmp_particle_data is allocated and the data of the corresponding species is
     // copied and stored in tmp_particle_data before particles are pushed.
-    for (auto const& species : m_output_species_names){
+    if (m_do_back_transformed_particles) {
         mpc.SetDoBackTransformedParticles(m_do_back_transformed_particles);
-        mpc.SetDoBackTransformedParticles(species, m_do_back_transformed_particles);
+        for (auto const& species : m_output_species_names){
+            mpc.SetDoBackTransformedParticles(species, m_do_back_transformed_particles);
+        }
     }
     m_particles_buffer.resize(m_num_buffers);
     m_totalParticles_flushed_already.resize(m_num_buffers);

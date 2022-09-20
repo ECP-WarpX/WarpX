@@ -21,6 +21,7 @@
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Utils/Logo/GetLogo.H"
 #include "Utils/MPIInitHelpers.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
@@ -359,10 +360,13 @@ WarpX::InitData ()
     WARPX_PROFILE("WarpX::InitData()");
     utils::warpx_check_mpi_thread_level();
 
-    Print() << "WarpX (" << WarpX::Version() << ")\n";
 #ifdef WARPX_QED
     Print() << "PICSAR (" << WarpX::PicsarVersion() << ")\n";
 #endif
+
+    Print() << "WarpX (" << WarpX::Version() << ")\n";
+
+    Print() << utils::logo::get_logo();
 
     if (restart_chkfile.empty())
     {
