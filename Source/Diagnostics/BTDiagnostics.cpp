@@ -167,6 +167,9 @@ void BTDiagnostics::DerivedInitData ()
             "BTD", warn_string,
             ablastr::warn_manager::WarnPriority::low);
     }
+#ifdef WARPX_DIM_RZ
+    UpdateVarnamesForRZopenPMD();
+#endif
 }
 
 void
@@ -232,12 +235,13 @@ BTDiagnostics::ReadParameters ()
     if (utils::parser::queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
     }
-    amrex::Print() << " varname size : " << m_varnames.size() << "\n";
 #ifdef WARPX_DIM_RZ
+    pp_diag_name.query("dump_rz_modes", m_dump_rz_modes);
     amrex::Vector< std::string > BTD_varnames_supported = {"Er", "Et", "Ez",
                                                            "Br", "Bt", "Bz",
                                                            "jr", "jt", "jz", "rho"};
 #else
+    amrex::ignore_unused(m_dump_rz_modes);
     amrex::Vector< std::string > BTD_varnames_supported = {"Ex", "Ey", "Ez",
                                                            "Bx", "By", "Bz",
                                                            "jx", "jy", "jz", "rho"};
@@ -472,7 +476,6 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     int ngrow = 1;
     int ncomps = static_cast<int>(m_cellcenter_varnames.size());
-    amrex::Print() << " ncomps for CC mf: " << ncomps << "\n";
     m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap, ncomps, ngrow);
 
 }
@@ -489,8 +492,7 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     // such that, all modes of a field component are stored contiguously
     // For examply, Er0, Er1_real, Er1_imag, etc
     InitializeFieldFunctorsRZopenPMD(lev);
-    return; // We skip the rest of this function
-#endif
+#else
 
     auto & warpx = WarpX::GetInstance();
     // Clear any pre-existing vector to release stored data
@@ -544,6 +546,65 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
         }
     }
 
+#endif
+}
+
+
+void
+BTDiagnostics::UpdateVarnamesForRZopenPMD ()
+{
+#ifdef WARPX_DIM_RZ
+    auto & warpx = WarpX::GetInstance();
+    int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0,0)->nComp();
+    int ncomp = ncomp_multimodefab;
+
+
+    bool update_varnames = true;
+    if (update_varnames) {
+        const int n_rz = ncomp * m_varnames_fields.size();
+        m_varnames.clear();
+        m_varnames.reserve(n_rz);
+    }
+    // AddRZ modes to output names for the back-transformed data
+    if (update_varnames) {
+        for (int comp=0, n=m_varnames_fields.size(); comp<n; comp++)
+        {
+            if (m_varnames[comp] == "Er")  AddRZModesToOutputNames(std::string("Er"), ncomp, false);
+            if (m_varnames[comp] == "Et")  AddRZModesToOutputNames(std::string("Et"), ncomp, false);
+            if (m_varnames[comp] == "Ez")  AddRZModesToOutputNames(std::string("Ez"), ncomp, false);
+            if (m_varnames[comp] == "Br")  AddRZModesToOutputNames(std::string("Br"), ncomp, false);
+            if (m_varnames[comp] == "Bt")  AddRZModesToOutputNames(std::string("Bt"), ncomp, false);
+            if (m_varnames[comp] == "Bz")  AddRZModesToOutputNames(std::string("Bz"), ncomp, false);
+            if (m_varnames[comp] == "jr")  AddRZModesToOutputNames(std::string("jr"), ncomp, false);
+            if (m_varnames[comp] == "jt")  AddRZModesToOutputNames(std::string("jt"), ncomp, false);
+            if (m_varnames[comp] == "jz")  AddRZModesToOutputNames(std::string("jz"), ncomp, false);
+            if (m_varnames[comp] == "rho") AddRZModesToOutputNames(std::string("rho"),ncomp, false);
+        }
+    }
+
+    // This function may be called multiple times, for different values of `lev`
+    // but the `varnames` need only be updated once.
+    bool update_cellcenter_varnames = true;
+    if (update_cellcenter_varnames) {
+        const int n_rz = ncomp * m_cellcenter_varnames.size();
+        m_cellcenter_varnames.clear();
+        m_cellcenter_varnames.reserve(n_rz);
+        for (int comp=0, n=m_cellcenter_varnames_fields.size(); comp<n; comp++)
+        {
+            if ( m_cellcenter_varnames_fields[comp] == "Er" ) AddRZModesToOutputNames(std::string("Er"), ncomp, true);
+            if ( m_cellcenter_varnames_fields[comp] == "Et" ) AddRZModesToOutputNames(std::string("Et"), ncomp, true);
+            if ( m_cellcenter_varnames_fields[comp] == "Ez" ) AddRZModesToOutputNames(std::string("Ez"), ncomp, true);
+            if ( m_cellcenter_varnames_fields[comp] == "Br" ) AddRZModesToOutputNames(std::string("Br"), ncomp, true);
+            if ( m_cellcenter_varnames_fields[comp] == "Bt" ) AddRZModesToOutputNames(std::string("Bt"), ncomp, true);
+            if ( m_cellcenter_varnames_fields[comp] == "Bz" ) AddRZModesToOutputNames(std::string("Bz"), ncomp, true);
+            if ( m_cellcenter_varnames_fields[comp] == "jr" ) AddRZModesToOutputNames(std::string("jr"), ncomp, true);
+            if ( m_cellcenter_varnames_fields[comp] == "jt" ) AddRZModesToOutputNames(std::string("jt"), ncomp, true);
+            if ( m_cellcenter_varnames_fields[comp] == "jz" ) AddRZModesToOutputNames(std::string("jz"), ncomp, true);
+            if ( m_cellcenter_varnames_fields[comp] == "rho" ) AddRZModesToOutputNames(std::string("rho"), ncomp, true);
+        }
+    }
+
+#endif
 }
 
 void
@@ -553,31 +614,6 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     auto & warpx = WarpX::GetInstance();
     int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0,0)->nComp();
     int ncomp = ncomp_multimodefab;
-
-
-    bool update_varnames = (lev==0);
-    if (update_varnames) {
-        m_varnames.clear();
-        const int n_rz = ncomp * m_varnames.size();
-        m_varnames.reserve(n_rz);
-    }
-    // AddRZ modes to output names for the back-transformed data
-    if (update_varnames) {
-        for (int comp=0, n=m_varnames.size(); comp<n; comp++)
-        {
-            if (m_varnames_fields[comp] == "Er")  AddRZModesToOutputNames(std::string("Er"), ncomp, false);
-            if (m_varnames_fields[comp] == "Et")  AddRZModesToOutputNames(std::string("Et"), ncomp, false);
-            if (m_varnames_fields[comp] == "Ez")  AddRZModesToOutputNames(std::string("Ez"), ncomp, false);
-            if (m_varnames_fields[comp] == "Br")  AddRZModesToOutputNames(std::string("Br"), ncomp, false);
-            if (m_varnames_fields[comp] == "Bt")  AddRZModesToOutputNames(std::string("Bt"), ncomp, false);
-            if (m_varnames_fields[comp] == "Bz")  AddRZModesToOutputNames(std::string("Bz"), ncomp, false);
-            if (m_varnames_fields[comp] == "jr")  AddRZModesToOutputNames(std::string("jr"), ncomp, false);
-            if (m_varnames_fields[comp] == "jt")  AddRZModesToOutputNames(std::string("jt"), ncomp, false);
-            if (m_varnames_fields[comp] == "jz")  AddRZModesToOutputNames(std::string("jz"), ncomp, false);
-            if (m_varnames_fields[comp] == "rho") AddRZModesToOutputNames(std::string("rho"),ncomp, false);
-        }
-    }
-
     // Clear any pre-existing vector to release stored data
     // This ensures that when domain is load-balanced, the functors point
     // to the correct field-data pointers
@@ -594,15 +630,6 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
                                        nvars, m_num_buffers, m_varnames);
     }
 
-    // This function may be called multiple times, for different values of `lev`
-    // but the `varnames` need only be updated once.
-    bool update_cellcenter_varnames = (lev == 0);
-    if (update_cellcenter_varnames) {
-        m_cellcenter_varnames.clear();
-        const int n_rz = ncomp * m_cellcenter_varnames.size();
-        m_cellcenter_varnames.reserve(n_rz);
-    }
-
     // Reset field functors for cell-center multifab
     m_cell_center_functors[lev].clear();
     m_cell_center_functors[lev].resize(m_cellcenter_varnames_fields.size());
@@ -610,54 +637,24 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     for (int comp=0, n=m_cell_center_functors.at(lev).size(); comp<n; comp++){
         if        ( m_cellcenter_varnames_fields[comp] == "Er" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio, false, ncomp);
-            if (update_cellcenter_varnames) {
-                AddRZModesToOutputNames(std::string("Er"), ncomp, true);
-            }
         } else if ( m_cellcenter_varnames_fields[comp] == "Et" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 1), lev, m_crse_ratio, false, ncomp);
-            if (update_cellcenter_varnames) {
-                AddRZModesToOutputNames(std::string("Et"), ncomp, true);
-            }
         } else if ( m_cellcenter_varnames_fields[comp] == "Ez" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 2), lev, m_crse_ratio, false, ncomp);
-            if (update_cellcenter_varnames) {
-                AddRZModesToOutputNames(std::string("Ez"), ncomp, true);
-            }
         } else if ( m_cellcenter_varnames_fields[comp] == "Br" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 0), lev, m_crse_ratio, false, ncomp);
-            if (update_cellcenter_varnames) {
-                AddRZModesToOutputNames(std::string("Br"), ncomp, true);
-            }
         } else if ( m_cellcenter_varnames_fields[comp] == "Bt" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 1), lev, m_crse_ratio, false, ncomp);
-            if (update_cellcenter_varnames) {
-                AddRZModesToOutputNames(std::string("Bt"), ncomp, true);
-            }
         } else if ( m_cellcenter_varnames_fields[comp] == "Bz" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 2), lev, m_crse_ratio, false, ncomp);
-            if (update_cellcenter_varnames) {
-                AddRZModesToOutputNames(std::string("Bz"), ncomp, true);
-            }
         } else if ( m_cellcenter_varnames_fields[comp] == "jr" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 0), lev, m_crse_ratio, false, ncomp);
-            if (update_cellcenter_varnames) {
-                AddRZModesToOutputNames(std::string("jr"), ncomp, true);
-            }
         } else if ( m_cellcenter_varnames_fields[comp] == "jt" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 1), lev, m_crse_ratio, false, ncomp);
-            if (update_cellcenter_varnames) {
-                AddRZModesToOutputNames(std::string("jt"), ncomp, true);
-            }
         } else if ( m_cellcenter_varnames_fields[comp] == "jz" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio, false, ncomp);
-            if (update_cellcenter_varnames) {
-                AddRZModesToOutputNames(std::string("jz"), ncomp, true);
-            }
         } else if ( m_cellcenter_varnames_fields[comp] == "rho" ){
             m_cell_center_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1, false, ncomp);
-            if (update_cellcenter_varnames) {
-                AddRZModesToOutputNames(std::string("rho"), ncomp, true);
-            }
         }
     }
 

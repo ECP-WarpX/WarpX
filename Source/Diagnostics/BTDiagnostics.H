@@ -76,6 +76,8 @@ private:
     void InitializeFieldFunctors (int lev) override;
 
     void InitializeFieldFunctorsRZopenPMD (int lev) override;
+    /** Whether to dump the RZ modes */
+    bool m_dump_rz_modes = false;
     void AddRZModesToOutputNames (const std::string& field, const int ncomp, bool cellcenter_data);
     /** This function allocates and initializes particle buffers for all the snapshots.
      * This is currently an empty function:
@@ -370,6 +372,7 @@ private:
     void ClearParticleBuffer(int i_buffer);
     /** Redistributes particles to the buffer box array in the lab-frame */
     void RedistributeParticleBuffer (const int i_buffer);
+    void UpdateVarnamesForRZopenPMD();
 
 };
 #endif // WARPX_BTDIAGNOSTICS_H_
