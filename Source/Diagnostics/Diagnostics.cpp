@@ -381,9 +381,6 @@ Diagnostics::InitBaseData ()
         m_lo[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
         m_hi[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
     }
-
-    amrex::Print() << "######### MFORMAT: " << m_format << std::endl;
-
     // Construct Flush class.
     if        (m_format == "plotfile"){
         m_flush_format = std::make_unique<FlushFormatPlotfile>() ;
