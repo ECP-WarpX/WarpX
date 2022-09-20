@@ -167,8 +167,7 @@ BTDiagnostics::ReadParameters ()
     m_num_buffers = m_num_snapshots_lab;
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
-    bool snapshot_interval_is_specified = false;
-    snapshot_interval_is_specified = utils::parser::queryWithParser(
+    bool snapshot_interval_is_specified = utils::parser::queryWithParser(
         pp_diag_name, "dt_snapshots_lab", m_dt_snapshots_lab);
     if ( utils::parser::queryWithParser(pp_diag_name, "dz_snapshots_lab", m_dz_snapshots_lab) ) {
         m_dt_snapshots_lab = m_dz_snapshots_lab/PhysConst::c;
