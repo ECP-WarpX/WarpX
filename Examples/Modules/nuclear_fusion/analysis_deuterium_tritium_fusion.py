@@ -7,6 +7,7 @@
 
 import os
 import sys
+import re
 
 import yt
 
@@ -67,7 +68,11 @@ barn_to_square_meter = 1.e-28
 E_fusion = 17.5893*MeV_to_Joule # Energy released during the fusion reaction
 
 ## Checks whether this is the 2D or the 3D test
-is_RZ = "RZ" in sys.argv[1]
+warpx_used_inputs = open('./warpx_used_inputs', 'r').read()
+if re.search('geometry.dims = RZ', warpx_used_inputs):
+    is_RZ = True
+else:
+    is_RZ = False
 
 ## Some numerical parameters for this test
 size_x = 8
@@ -374,7 +379,6 @@ def main():
     ds_start = yt.load(filename_start)
     ad_end = ds_end.all_data()
     ad_start = ds_start.all_data()
-    dt = float(ds_end.current_time - ds_start.current_time)
     field_data_end = ds_end.covering_grid(level=0, left_edge=ds_end.domain_left_edge,
                                           dims=ds_end.domain_dimensions)
     field_data_start = ds_start.covering_grid(level=0, left_edge=ds_start.domain_left_edge,
