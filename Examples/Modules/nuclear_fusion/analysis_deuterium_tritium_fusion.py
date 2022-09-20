@@ -6,6 +6,7 @@
 # License: BSD-3-Clause-LBNL
 
 import os
+import re
 import sys
 
 import yt
@@ -66,15 +67,30 @@ barn_to_square_meter = 1.e-28
 
 E_fusion = 17.5893*MeV_to_Joule # Energy released during the fusion reaction
 
+## Checks whether this is the 2D or the 3D test
+warpx_used_inputs = open('./warpx_used_inputs', 'r').read()
+if re.search('geometry.dims = RZ', warpx_used_inputs):
+    is_RZ = True
+else:
+    is_RZ = False
+
 ## Some numerical parameters for this test
 size_x = 8
 size_y = 8
 size_z = 16
-dV_total = size_x*size_y*size_z # Total simulation volume
+if is_RZ:
+    dV_slice = np.pi * size_x**2
+    yt_z_string = "particle_position_y"
+    nppcell_1 = 10000*8
+    nppcell_2 = 900*8
+else:
+    dV_slice = size_x*size_y
+    yt_z_string = "particle_position_z"
+    nppcell_1 = 10000
+    nppcell_2 = 900
 # Volume of a slice corresponding to a single cell in the z direction. In tests 1 and 2, all the
 # particles of a given species in the same slice have the exact same momentum
-dV_slice = size_x*size_y
-dt = 1./(scc.c*np.sqrt(3.))
+
 # In test 1 and 2, the energy in cells number i (in z direction) is typically Energy_step * i**2
 Energy_step = 22.*keV_to_Joule
 
@@ -89,7 +105,7 @@ def add_existing_species_to_dict(yt_ad, data_dict, species_name, prefix, suffix)
     data_dict[prefix+"_w_"+suffix]   = yt_ad[species_name, "particle_weight"].v
     data_dict[prefix+"_id_"+suffix]  = yt_ad[species_name, "particle_id"].v
     data_dict[prefix+"_cpu_"+suffix] = yt_ad[species_name, "particle_cpu"].v
-    data_dict[prefix+"_z_"+suffix]   = yt_ad[species_name, "particle_position_z"].v
+    data_dict[prefix+"_z_"+suffix]   = yt_ad[species_name, yt_z_string].v
 
 def add_empty_species_to_dict(data_dict, species_name, prefix, suffix):
     data_dict[prefix+"_px_"+suffix]  = np.empty(0)
@@ -263,8 +279,11 @@ def expected_weight_com(E_com, reactant0_density, reactant1_density, dV, dt):
 def check_macroparticle_number(data, fusion_probability_target_value, num_pair_per_cell):
     ## Checks that the number of macroparticles is as expected for the first and second tests
 
-    ## The first slice 0 < z < 1 does not contribute to product species creation
-    numcells = dV_total - dV_slice
+    ## The first slice 0 < z < 1 does not contribute to alpha creation
+    if is_RZ:
+        numcells = size_x*(size_z-1)
+    else:
+        numcells = size_x*size_y*(size_z-1)
     ## In these tests, the fusion_multiplier is so high that the fusion probability per pair is
     ## equal to the parameter fusion_probability_target_value
     fusion_probability_per_pair = fusion_probability_target_value
@@ -315,7 +334,7 @@ def compute_E_com2(data):
     p_reactant0_sq = 2.*mass[reactant_species[0]]*(Energy_step*np.arange(size_z)**2)
     return p_sq_reactant1_frame_to_E_COM_frame(p_reactant0_sq)
 
-def check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density, reactant1_density):
+def check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density, reactant1_density, dt):
     ## Checks that the fusion yield is as expected for the first and second tests.
     product_weight_theory = expected_weight_com(E_com/keV_to_Joule,
         reactant0_density, reactant1_density, dV_slice, dt)
@@ -330,24 +349,25 @@ def check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density, r
         assert(np.all(is_close(product_weight_theory, product_weight_simulation,
                                rtol = 5.*relative_std_weight)))
 
-def specific_check1(data):
-    check_isotropy(data, relative_tolerance = 3.e-2)
+def specific_check1(data, dt):
+    if not is_RZ:
+        check_isotropy(data, relative_tolerance = 3.e-2)
     expected_fusion_number = check_macroparticle_number(data,
                                                         fusion_probability_target_value = 0.002,
-                                                        num_pair_per_cell = 10000)
+                                                        num_pair_per_cell = nppcell_1)
     E_com = compute_E_com1(data)
     check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density = 1.,
-                                                           reactant1_density = 1.)
+                                                           reactant1_density = 1., dt=dt)
 
-def specific_check2(data):
+def specific_check2(data, dt):
     check_xy_isotropy(data)
     ## Only 900 particles pairs per cell here because we ignore the 10% of reactants that are at rest
     expected_fusion_number = check_macroparticle_number(data,
                                                         fusion_probability_target_value = 0.02,
-                                                        num_pair_per_cell = 900)
+                                                        num_pair_per_cell = nppcell_2)
     E_com = compute_E_com2(data)
     check_fusion_yield(data, expected_fusion_number, E_com, reactant0_density = 1.e20,
-                                                           reactant1_density = 1.e26)
+                                                           reactant1_density = 1.e26, dt=dt)
 
 def check_charge_conservation(rho_start, rho_end):
     assert(np.all(is_close(rho_start, rho_end, rtol=2.e-11)))
@@ -359,6 +379,7 @@ def main():
     ds_start = yt.load(filename_start)
     ad_end = ds_end.all_data()
     ad_start = ds_start.all_data()
+    dt = float(ds_end.current_time - ds_start.current_time)
     field_data_end = ds_end.covering_grid(level=0, left_edge=ds_end.domain_left_edge,
                                           dims=ds_end.domain_dimensions)
     field_data_start = ds_start.covering_grid(level=0, left_edge=ds_start.domain_left_edge,
@@ -379,7 +400,7 @@ def main():
         generic_check(data)
 
         # Checks that are specific to test number i
-        eval("specific_check"+str(i)+"(data)")
+        eval("specific_check"+str(i)+"(data, dt)")
 
     rho_start = field_data_start["rho"].to_ndarray()
     rho_end = field_data_end["rho"].to_ndarray()
