@@ -663,7 +663,7 @@ WarpX::ReadParameters ()
             const bool dt_snapshots_specified =
                 utils::parser::queryWithParser(pp_warpx, "dt_snapshots_lab", dt_snapshots_lab);
             const bool dz_snapshots_specified =
-                utils::parser::queryWithParser(pp_warpx, "dz_snapshots_lab", dt_snapshots_lab);
+                utils::parser::queryWithParser(pp_warpx, "dz_snapshots_lab", dz_snapshots_lab);
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 dt_snapshots_specified || dz_snapshots_specified,
