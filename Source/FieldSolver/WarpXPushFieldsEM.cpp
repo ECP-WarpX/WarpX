@@ -724,7 +724,10 @@ WarpX::PushPSATD ()
             PSATDBackwardTransformJ(current_fp, current_cp);
             PSATDSubtractCurrentPartialSumsAvg();
 
-            // Synchronize J and rho (if used)
+            // Synchronize J and rho (if used).
+            // Here we call SumBoundaryJ instead of SyncCurrent, because
+            // filtering has been already applied to D in OneStep_nosub,
+            // by calling SyncCurrentAndRho (see Evolve/WarpXEvolve.cpp).
             // TODO This works only without mesh refinement
             const int lev = 0;
             SumBoundaryJ(current_fp, lev, Geom(lev).periodicity());
