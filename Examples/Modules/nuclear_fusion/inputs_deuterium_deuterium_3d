@@ -42,7 +42,7 @@ deuterium1.density = 2.
 deuterium1.momentum_distribution_type = "parse_momentum_function"
 deuterium1.momentum_function_ux(x,y,z) = 0.
 deuterium1.momentum_function_uy(x,y,z) = 0.
-deuterium1.momentum_function_uz(x,y,z) = sqrt(2*m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight)
+deuterium1.momentum_function_uz(x,y,z) = sqrt(m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight)
 deuterium1.do_not_push = 1
 deuterium1.do_not_deposit = 1
 
@@ -54,7 +54,7 @@ hydrogen1.density = 2.
 hydrogen1.momentum_distribution_type = "parse_momentum_function"
 hydrogen1.momentum_function_ux(x,y,z) = 0.
 hydrogen1.momentum_function_uy(x,y,z) = 0.
-hydrogen1.momentum_function_uz(x,y,z) = -sqrt(2*m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight)
+hydrogen1.momentum_function_uz(x,y,z) = -sqrt(m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight)
 hydrogen1.do_not_push = 1
 hydrogen1.do_not_deposit = 1
 
