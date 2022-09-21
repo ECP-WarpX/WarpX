@@ -197,9 +197,6 @@ public:
             }
 
 #if (defined WARPX_DIM_RZ)
-            /* This momentum rotation is analogous to the one in ElasticCollisionPerez.H. */
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1,
-              "RZ mode `warpx.n_rz_azimuthal_modes` must be 1 when using the binary nuclear fusion module.");
             amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
             amrex::ParticleReal * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
 #endif
