@@ -216,15 +216,16 @@ def cross_section( E_keV ):
     ## in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
     joule_to_keV = 1.e-3/scc.e
     B_G = scc.pi * scc.alpha * np.sqrt( 2.*m_reduced * scc.c**2 * joule_to_keV );
-    A1 = 6.927e4;
-    A2 = 7.454e8;
-    A3 = 2.050e6;
-    A4 = 5.2002e4;
+    A1 = 5.3701e4;
+    A2 = 3.3027e2;
+    A3 = -1.2706e-1;
+    A4 = 2.9327e-5;
+    A5 = -2.5151e-9;
     B1 = 6.38e1;
     B2 = -9.95e-1;
     B3 = 6.981e-5;
     B4 = 1.728e-4;
-    astrophysical_factor = (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*A4))) / (1 + E_keV*(B1 + E_keV*(B2 + E_keV*(B3 + E_keV*B4))));
+    astrophysical_factor = (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*(A4 + E_keV*A5)))) / (1 + E_keV*(B1 + E_keV*(B2 + E_keV*(B3 + E_keV*B4))));
     millibarn_to_barn = 1.e-3;
     return millibarn_to_barn * astrophysical_factor/E_keV * np.exp(-B_G/np.sqrt(E_keV))
 
