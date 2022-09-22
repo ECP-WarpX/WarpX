@@ -831,6 +831,8 @@ class LibWarpX():
             return [struct['x'] for struct in structs]
         elif self.geometry_dim == 'rz':
             return [struct['x']*np.cos(theta) for struct, theta in zip(structs, self.get_particle_theta(species_name))]
+        elif self.geometry_dim == '1d':
+            raise Exception('get_particle_x: There is no x coordinate with 1D Cartesian')
 
     def get_particle_y(self, species_name, level=0):
         '''
@@ -840,10 +842,12 @@ class LibWarpX():
 
         '''
         structs = self.get_particle_structs(species_name, level)
-        if self.geometry_dim == '3d' or self.geometry_dim == '2d':
+        if self.geometry_dim == '3d':
             return [struct['y'] for struct in structs]
         elif self.geometry_dim == 'rz':
             return [struct['x']*np.sin(theta) for struct, theta in zip(structs, self.get_particle_theta(species_name))]
+        elif self.geometry_dim == '1d' or self.geometry_dim == '2d':
+            raise Exception('get_particle_y: There is no y coordinate with 1D or 2D Cartesian')
 
     def get_particle_r(self, species_name, level=0):
         '''
@@ -857,8 +861,8 @@ class LibWarpX():
             return [struct['x'] for struct in structs]
         elif self.geometry_dim == '3d':
             return [np.sqrt(struct['x']**2 + struct['y']**2) for struct in structs]
-        elif self.geometry_dim == '2d':
-            raise Exception('get_particle_r: There is no r coordinate with 2D Cartesian')
+        elif self.geometry_dim == '2d' or self.geometry_dim == '1d':
+            raise Exception('get_particle_r: There is no r coordinate with 1D or 2D Cartesian')
 
     def get_particle_z(self, species_name, level=0):
         '''
@@ -872,6 +876,8 @@ class LibWarpX():
             return [struct['z'] for struct in structs]
         elif self.geometry_dim == 'rz' or self.geometry_dim == '2d':
             return [struct['y'] for struct in structs]
+        elif self.geometry_dim == '1d':
+            return [struct['x'] for struct in structs]
 
     def get_particle_id(self, species_name, level=0):
         '''
@@ -946,8 +952,8 @@ class LibWarpX():
         elif self.geometry_dim == '3d':
             structs = self.get_particle_structs(species_name, level)
             return [np.arctan2(struct['y'], struct['x']) for struct in structs]
-        elif self.geometry_dim == '2d':
-            raise Exception('get_particle_r: There is no theta coordinate with 2D Cartesian')
+        elif self.geometry_dim == '2d' or self.geometry_dim == '1d':
+            raise Exception('get_particle_theta: There is no theta coordinate with 1D or 2D Cartesian')
 
     def get_particle_comp_index(self, species_name, pid_name):
         '''
