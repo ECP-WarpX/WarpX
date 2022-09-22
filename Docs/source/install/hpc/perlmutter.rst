@@ -66,13 +66,13 @@ And since Perlmutter does not yet provide a module for them, install ADIOS2, BLA
    # BLAS++ (for PSATD+RZ)
    git clone https://bitbucket.org/icl/blaspp.git src/blaspp
    rm -rf src/blaspp-pm-build
-   CXX=$(which CC) cmake -S src/blaspp -B src/blaspp-pm-build -Duse_openmp=ON -Dgpu_backend=CUDA -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/blaspp-master
+   CXX=$(which CC) cmake -S src/blaspp -B src/blaspp-pm-build -Duse_openmp=OFF -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/blaspp-master
    cmake --build src/blaspp-pm-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
    git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-pm-build
-   CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-pm-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/lapackpp-master
+   CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-pm-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/lapackpp-master
    cmake --build src/lapackpp-pm-build --target install --parallel 16
 
 Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` or dynamic ensemble optimizations (:ref:`libEnsemble <libensemble>`):

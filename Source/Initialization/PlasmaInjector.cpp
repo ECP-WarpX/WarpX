@@ -156,7 +156,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         charge_is_specified ||
         species_is_specified ||
         (injection_style == "external_file"),
-        "Need to specify at least one of species_type or charge"
+        "Need to specify at least one of species_type or charge for species '" +
+        species_name + "'."
     );
 
     if ( mass_is_specified && species_is_specified ){
@@ -170,7 +171,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         mass_is_specified ||
         species_is_specified ||
         (injection_style == "external_file"),
-        "Need to specify at least one of species_type or mass"
+        "Need to specify at least one of species_type or mass for species '" +
+        species_name + "'."
     );
 
     num_particles_per_cell_each_dim.assign(3, 0);
@@ -240,7 +242,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     // so that inj_pos->getPositionUnitBox calls
     // InjectorPosition[Random or Regular].getPositionUnitBox.
     else if (injection_style == "nrandompercell") {
-        queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell);
+        getWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell);
 #if WARPX_DIM_RZ
         if (WarpX::n_rz_azimuthal_modes > 1) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -258,7 +260,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseMomentum(pp_species_name);
     } else if (injection_style == "nfluxpercell") {
         surface_flux = true;
-        queryWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell_real);
+        getWithParser(pp_species_name, "num_particles_per_cell", num_particles_per_cell_real);
 #ifdef WARPX_DIM_RZ
         if (WarpX::n_rz_azimuthal_modes > 1) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(

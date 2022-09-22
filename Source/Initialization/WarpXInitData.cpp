@@ -21,6 +21,7 @@
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Utils/Logo/GetLogo.H"
 #include "Utils/MPIInitHelpers.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -29,6 +30,7 @@
 #include "Utils/WarpXUtil.H"
 
 #include <ablastr/utils/Communication.H>
+#include <ablastr/utils/UsedInputsFile.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
@@ -64,7 +66,6 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
-#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -350,14 +351,7 @@ WarpX::PrintMainPICparameters ()
 void
 WarpX::WriteUsedInputsFile (std::string const & filename) const
 {
-    amrex::Print() << "For full input parameters, see the file: " << filename << "\n\n";
-
-    if (ParallelDescriptor::IOProcessor()) {
-        std::ofstream jobInfoFile;
-        jobInfoFile.open(filename.c_str(), std::ios::out);
-        ParmParse::dumpTable(jobInfoFile, true);
-        jobInfoFile.close();
-    }
+    ablastr::utils::write_used_inputs_file(filename);
 }
 
 void
@@ -366,10 +360,13 @@ WarpX::InitData ()
     WARPX_PROFILE("WarpX::InitData()");
     utils::warpx_check_mpi_thread_level();
 
-    Print() << "WarpX (" << WarpX::Version() << ")\n";
 #ifdef WARPX_QED
     Print() << "PICSAR (" << WarpX::PicsarVersion() << ")\n";
 #endif
+
+    Print() << "WarpX (" << WarpX::Version() << ")\n";
+
+    Print() << utils::logo::get_logo();
 
     if (restart_chkfile.empty())
     {
@@ -390,10 +387,6 @@ WarpX::InitData ()
 
     if (WarpX::use_fdtd_nci_corr) {
         WarpX::InitNCICorrector();
-    }
-
-    if (WarpX::use_filter) {
-        WarpX::InitFilter();
     }
 
     BuildBufferMasks();
@@ -504,7 +497,7 @@ WarpX::InitPML ()
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
                              do_moving_window, pml_has_particles, do_pml_in_domain,
-                             do_multi_J,
+                             J_in_time, rho_in_time,
                              do_pml_dive_cleaning, do_pml_divb_cleaning,
                              amrex::IntVect(0), amrex::IntVect(0),
                              guard_cells.ng_FieldSolver.max(),
@@ -541,7 +534,7 @@ WarpX::InitPML ()
                                    pml_ncell, pml_delta, refRatio(lev-1),
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
-                                   do_multi_J, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   J_in_time, rho_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
                                    amrex::IntVect(0), amrex::IntVect(0),
                                    guard_cells.ng_FieldSolver.max(),
                                    v_particle_pml,

@@ -43,6 +43,11 @@
 
 using namespace amrex::literals;
 
+namespace
+{
+    constexpr int permission_flag_rwxrxrx = 0755;
+}
+
 BTDiagnostics::BTDiagnostics (int i, std::string name)
     : Diagnostics(i, name)
 {
@@ -107,9 +112,11 @@ void BTDiagnostics::DerivedInitData ()
     // Turn on do_back_transformed_particles in the particle containers so that
     // the tmp_particle_data is allocated and the data of the corresponding species is
     // copied and stored in tmp_particle_data before particles are pushed.
-    for (auto const& species : m_output_species_names){
+    if (m_do_back_transformed_particles) {
         mpc.SetDoBackTransformedParticles(m_do_back_transformed_particles);
-        mpc.SetDoBackTransformedParticles(species, m_do_back_transformed_particles);
+        for (auto const& species : m_output_species_names){
+            mpc.SetDoBackTransformedParticles(species, m_do_back_transformed_particles);
+        }
     }
     m_particles_buffer.resize(m_num_buffers);
     m_totalParticles_flushed_already.resize(m_num_buffers);
@@ -844,16 +851,16 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
         // Create directory only when the first buffer is flushed out.
         if (m_buffer_flush_counter[i_snapshot] == 0 ) {
             // Create Level_0 directory to store all Cell_D and Cell_H files
-            if (!amrex::UtilCreateDirectory(snapshot_Level0_path, 0755) )
+            if (!amrex::UtilCreateDirectory(snapshot_Level0_path, permission_flag_rwxrxrx) )
                 amrex::CreateDirectoryFailed(snapshot_Level0_path);
             // Create directory for each species selected for diagnostic
             for (int i = 0; i < m_particles_buffer[i_snapshot].size(); ++i) {
                 std::string snapshot_species_path = snapshot_path + "/" + m_output_species_names[i];
-                if ( !amrex::UtilCreateDirectory(snapshot_species_path, 0755))
+                if ( !amrex::UtilCreateDirectory(snapshot_species_path, permission_flag_rwxrxrx))
                     amrex::CreateDirectoryFailed(snapshot_species_path);
                 // Create Level_0 directory for particles to store Particle_H and DATA files
                 std::string species_Level0_path = snapshot_species_path + "/Level_0";
-                if ( !amrex::UtilCreateDirectory(species_Level0_path, 0755))
+                if ( !amrex::UtilCreateDirectory(species_Level0_path, permission_flag_rwxrxrx))
                     amrex::CreateDirectoryFailed(species_Level0_path);
             }
             std::string buffer_WarpXHeader_path = recent_Buffer_filepath + "/WarpXHeader";
@@ -1185,7 +1192,7 @@ void
 BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
 {
     for (int isp = 0; isp < m_totalParticles_flushed_already[i_buffer].size(); ++isp) {
-        m_totalParticles_flushed_already[i_buffer][isp] += m_totalParticles_in_buffer[i_buffer][isp];
+        m_totalParticles_flushed_already[i_buffer][isp] += m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles();
     }
 }
 

@@ -55,7 +55,8 @@ class SpectralFieldIndex
          */
         SpectralFieldIndex (const bool update_with_rho,
                             const bool time_averaging,
-                            const bool do_multi_J,
+                            const int J_in_time,
+                            const int rho_in_time,
                             const bool dive_cleaning,
                             const bool divb_cleaning,
                             const bool pml,
@@ -89,8 +90,13 @@ class SpectralFieldIndex
     int Ex_avg = -1, Ey_avg = -1, Ez_avg = -1;
     int Bx_avg = -1, By_avg = -1, Bz_avg = -1;
 
-    // Multi-J, div(E) and div(B) cleaning
+    // J linear in time
     int Jx_new = -1, Jy_new = -1, Jz_new = -1;
+
+    // rho quadratic in time
+    int rho_mid = -1;
+
+    // div(E) and div(B) cleaning
     int F = -1, G = -1;
 
     // PML

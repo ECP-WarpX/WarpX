@@ -1,5 +1,5 @@
 /* Copyright 2021 Lorenzo Giacomel, Neil Zaim, Yinjian Zhao
- *                Tiberius Rheaume, Axel Huebl
+ *                Elisa Rheaume, Axel Huebl
  *
  * This file is part of WarpX.
  *
