@@ -72,20 +72,9 @@ FlushFormatSensei::WriteToFile (
                          full_BTD_snapshot, isLastBTDFlush);
 #else
     WARPX_PROFILE("FlushFormatSensei::WriteToFile()");
-    if (!isBTD)
-    {
-      const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
-      amrex::Print() << Utils::TextMsg::Info("Writing Sensei file " + filename);
-    } else
-    {
-      const int min_digits = 0;
-      const std::string& filename = amrex::Concatenate(prefix, snapshotID, min_digits);
-      amrex::Print() << Utils::TextMsg::Info("Writing buffer " + std::to_string(bufferID+1) + " of " + std::to_string(numBuffers) + " to Sensei BTD file " + filename);
-      if (isLastBTDFlush)
-      {
-        amrex::Print() << Utils::TextMsg::Info("Finished writing Sensei BTD file " + filename);
-      }
-    }
+    auto & warpx = WarpX::GetInstance();
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
+    amrex::Print() << Utils::TextMsg::Info("Writing Sensei file " + filename);
 
     amrex::Vector<amrex::MultiFab> *mf_ptr =
         const_cast<amrex::Vector<amrex::MultiFab>*>(&mf);
