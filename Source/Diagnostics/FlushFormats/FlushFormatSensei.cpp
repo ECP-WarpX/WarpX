@@ -70,6 +70,9 @@ FlushFormatSensei::WriteToFile (
     amrex::ignore_unused(varnames, mf, iteration, time, particle_diags);
 #else
     WARPX_PROFILE("FlushFormatSensei::WriteToFile()");
+    auto & warpx = WarpX::GetInstance();
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
+    amrex::Print() << Utils::TextMsg::Info("Writing Sensei file " + filename);
 
     amrex::Vector<amrex::MultiFab> *mf_ptr =
         const_cast<amrex::Vector<amrex::MultiFab>*>(&mf);
