@@ -911,20 +911,31 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 
     // Reading external fields from data file
-    // The field components 0,1,2 denote x,y,z or r,t,z in 3D xyz and 2D rz geometries, respectively.
     if (B_ext_grid_s=="read_from_file" && lev==0) {
         std::string read_fields_from_path="./";
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
-        ReadExternalFieldsFromFile(read_fields_from_path,Bfield_fp_external[lev][0].get(),"B","0");
-        ReadExternalFieldsFromFile(read_fields_from_path,Bfield_fp_external[lev][1].get(),"B","1");
-        ReadExternalFieldsFromFile(read_fields_from_path,Bfield_fp_external[lev][2].get(),"B","2");
+#if defined(WARPX_DIM_RZ)
+        ReadExternalFieldsFromFile(read_fields_from_path,Bfield_fp_external[lev][0].get(),"B","r");
+        ReadExternalFieldsFromFile(read_fields_from_path,Bfield_fp_external[lev][1].get(),"B","t");
+        ReadExternalFieldsFromFile(read_fields_from_path,Bfield_fp_external[lev][2].get(),"B","z");
+#else
+        ReadExternalFieldsFromFile(read_fields_from_path,Bfield_fp_external[lev][0].get(),"B","x");
+        ReadExternalFieldsFromFile(read_fields_from_path,Bfield_fp_external[lev][1].get(),"B","y");
+        ReadExternalFieldsFromFile(read_fields_from_path,Bfield_fp_external[lev][2].get(),"B","z");
+#endif
     }
     if (E_ext_grid_s=="read_from_file" && lev==0) {
         std::string read_fields_from_path="./";
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
-        ReadExternalFieldsFromFile(read_fields_from_path,Efield_fp_external[lev][0].get(),"E","0");
-        ReadExternalFieldsFromFile(read_fields_from_path,Efield_fp_external[lev][1].get(),"E","1");
-        ReadExternalFieldsFromFile(read_fields_from_path,Efield_fp_external[lev][2].get(),"E","2");
+#if defined(WARPX_DIM_RZ)
+        ReadExternalFieldsFromFile(read_fields_from_path,Efield_fp_external[lev][0].get(),"E","r");
+        ReadExternalFieldsFromFile(read_fields_from_path,Efield_fp_external[lev][1].get(),"E","t");
+        ReadExternalFieldsFromFile(read_fields_from_path,Efield_fp_external[lev][2].get(),"E","z");
+#else
+        ReadExternalFieldsFromFile(read_fields_from_path,Efield_fp_external[lev][0].get(),"E","x");
+        ReadExternalFieldsFromFile(read_fields_from_path,Efield_fp_external[lev][1].get(),"E","y");
+        ReadExternalFieldsFromFile(read_fields_from_path,Efield_fp_external[lev][2].get(),"E","z");
+#endif
     }
 
     if (F_fp[lev]) {
@@ -1298,13 +1309,8 @@ std::string F_name, std::string F_component)
         // Now, the full range of data is loaded.
         // Loading chunk data can speed up the process.
         // Thus, `chunk_offset` and `chunk_extent` should be modified accordingly in another PR.
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        openPMD::Offset chunk_offset = {0,0};
-        openPMD::Extent chunk_extent = {extent[0],extent[1]};
-#else
         openPMD::Offset chunk_offset = {0,0,0};
         openPMD::Extent chunk_extent = {extent[0],extent[1],extent[2]};
-#endif
 
         auto FC_chunk_data = FC.loadChunk<double>(chunk_offset,chunk_extent);
         series.flush();

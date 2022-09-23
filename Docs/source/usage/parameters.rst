@@ -1315,7 +1315,8 @@ External fields
     `warpx.read_fields_from_path` must be specified,
     from which external B field data can be loaded into WarpX.
     One can refer to input files in `Examples/Tests/LoadExternalField` for more information.
-    Regarding how to prepare the openPMD data file, one can refer to...
+    Regarding how to prepare the openPMD data file, one can refer to
+    the [openPMD-example-datasets](https://github.com/openPMD/openPMD-example-datasets).
 
 * ``warpx.E_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
@@ -1347,7 +1348,8 @@ External fields
     `warpx.read_fields_from_path` must be specified,
     from which external E field data can be loaded into WarpX.
     One can refer to input files in `Examples/Tests/LoadExternalField` for more information.
-    Regarding how to prepare the openPMD data file, one can refer to...
+    Regarding how to prepare the openPMD data file, one can refer to
+    the [openPMD-example-datasets](https://github.com/openPMD/openPMD-example-datasets).
     Note that if both `B_ext_grid_init_style` and `E_ext_grid_init_style` are set to
     `read_from_file`, the openPMD file specified by `warpx.read_fields_from_path`
     should contain both B and E external fields data.
