@@ -72,7 +72,6 @@ FlushFormatSensei::WriteToFile (
                          full_BTD_snapshot, isLastBTDFlush);
 #else
     WARPX_PROFILE("FlushFormatSensei::WriteToFile()");
-    auto & warpx = WarpX::GetInstance();
     const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
     amrex::Print() << Utils::TextMsg::Info("Writing Sensei file " + filename);
 
