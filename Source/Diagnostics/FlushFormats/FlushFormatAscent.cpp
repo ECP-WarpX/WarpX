@@ -16,7 +16,7 @@ FlushFormatAscent::WriteToFile (
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
-    const std::string prefix, int file_min_digits, bool plot_raw_fields,
+    const std::string prefix, int /*file_min_digits*/, bool plot_raw_fields,
     bool plot_raw_fields_guards,
     const bool /*use_pinned_pc*/,
     bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
@@ -24,6 +24,7 @@ FlushFormatAscent::WriteToFile (
 {
 #ifdef AMREX_USE_ASCENT
     WARPX_PROFILE("FlushFormatAscent::WriteToFile()");
+    int min_digits = 0;
     auto & warpx = WarpX::GetInstance();
     int file_iter;
     if (!isBTD)
@@ -33,7 +34,7 @@ FlushFormatAscent::WriteToFile (
     {
       file_iter = snapshotID;
     }
-    const std::string& filename = amrex::Concatenate(prefix, file_iter, file_min_digits);
+    const std::string& filename = amrex::Concatenate(prefix, file_iter, min_digits);
     amrex::Print() << Utils::TextMsg::Info("Writing Ascent file " + filename);
 
     // wrap mesh data
