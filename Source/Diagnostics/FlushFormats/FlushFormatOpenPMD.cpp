@@ -119,7 +119,15 @@ FlushFormatOpenPMD::WriteToFile (
     bool isLastBTDFlush, const amrex::Vector<int>& totalParticlesFlushedAlready) const
 {
     WARPX_PROFILE("FlushFormatOpenPMD::WriteToFile()");
-    const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
+    int file_iter;
+    if (!isBTD)
+    {
+      file_iter = iteration[0];
+    } else
+    {
+      file_iter = snapshotID;
+    }
+    const std::string& filename = amrex::Concatenate(prefix, file_iter, file_min_digits);
     amrex::Print() << Utils::TextMsg::Info("Writing openPMD file " + filename);
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
