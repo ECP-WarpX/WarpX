@@ -301,8 +301,6 @@ public:
 
     virtual void WriteHeader (std::ostream& os) const = 0;
 
-    virtual void ConvertUnits (ConvertDirection /*convert_dir*/){}
-
     static void ReadParameters ();
 
     static void BackwardCompatibility ();

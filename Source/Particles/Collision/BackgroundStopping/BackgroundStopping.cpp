@@ -59,8 +59,9 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
                  "For background stopping, the background temperature must be specified.");
     }
 
-    m_background_density_func = m_background_density_parser.compile<4>();
-    m_background_temperature_func = m_background_temperature_parser.compile<4>();
+    constexpr auto num_parser_args = 4;
+    m_background_density_func = m_background_density_parser.compile<num_parser_args>();
+    m_background_temperature_func = m_background_temperature_parser.compile<num_parser_args>();
 
     if (m_background_type == BackgroundStoppingType::ELECTRONS) {
         m_background_mass = PhysConst::m_e;

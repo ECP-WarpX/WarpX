@@ -112,6 +112,7 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
 
     for (int i = nspecies; i < nspecies+nlasers; ++i) {
         allcontainers[i] = std::make_unique<LaserParticleContainer>(amr_core, i, lasers_names[i-nspecies]);
+        allcontainers[i]->m_deposit_on_main_grid = m_laser_deposit_on_main_grid[i-nspecies];
     }
 
     pc_tmp = std::make_unique<PhysicalParticleContainer>(amr_core);
@@ -347,6 +348,21 @@ MultiParticleContainer::ReadParameters ()
 
         ParmParse pp_lasers("lasers");
         pp_lasers.queryarr("names", lasers_names);
+        auto const nlasers = lasers_names.size();
+        // Get lasers to deposit on main grid
+        m_laser_deposit_on_main_grid.resize(nlasers, false);
+        std::vector<std::string> tmp;
+        pp_lasers.queryarr("deposit_on_main_grid", tmp);
+        for (auto const& name : tmp) {
+            auto it = std::find(lasers_names.begin(), lasers_names.end(), name);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                it != lasers_names.end(),
+                "laser '" + name
+                + "' in lasers.deposit_on_main_grid must be part of lasers.lasers_names");
+            int i = std::distance(lasers_names.begin(), it);
+            m_laser_deposit_on_main_grid[i] = true;
+        }
+
 
 #ifdef WARPX_QED
         ParmParse pp_warpx("warpx");
@@ -515,9 +531,9 @@ MultiParticleContainer::DepositCurrent (
     // Reset the J arrays
     for (int lev = 0; lev < J.size(); ++lev)
     {
-        J[lev][0]->setVal(0.0, J[lev][0]->nGrowVect());
-        J[lev][1]->setVal(0.0, J[lev][1]->nGrowVect());
-        J[lev][2]->setVal(0.0, J[lev][2]->nGrowVect());
+        J[lev][0]->setVal(0.0_rt);
+        J[lev][1]->setVal(0.0_rt);
+        J[lev][2]->setVal(0.0_rt);
     }
 
     // Call the deposition kernel for each species
@@ -542,7 +558,7 @@ MultiParticleContainer::DepositCharge (
     // Reset the rho array
     for (int lev = 0; lev < rho.size(); ++lev)
     {
-        rho[lev]->setVal(0.0, 0, WarpX::ncomps, rho[lev]->nGrowVect());
+        rho[lev]->setVal(0.0_rt);
     }
 
     // Push the particles in time, if needed

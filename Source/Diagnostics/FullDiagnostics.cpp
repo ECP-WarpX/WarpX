@@ -262,7 +262,7 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, m_rho_per_species_index[i],
                                                         false, ncomp);
             if (update_varnames) {
-                AddRZModesToOutputNames(std::string("rho_") + m_all_species_names[i], ncomp);
+                AddRZModesToOutputNames(std::string("rho_") + m_all_species_names[m_rho_per_species_index[i]], ncomp);
             }
             i++;
         } else if ( m_varnames_fields[comp] == "F" ){
