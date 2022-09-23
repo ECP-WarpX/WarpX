@@ -169,7 +169,7 @@ BTDiagnostics::ReadParameters ()
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!intervals_specified,
             "For back-transformed diagnostics, user should specify either num_snapshots_lab or intervals, not both");
-        intervals_string_vec = {":" + std::to_string(m_num_snapshots_lab)};
+        intervals_string_vec = {":" + std::to_string(m_num_snapshots_lab-1)};
     }
     m_intervals = BTDIntervalsParser(intervals_string_vec);
     m_num_buffers = m_intervals.NumSnapshots();
