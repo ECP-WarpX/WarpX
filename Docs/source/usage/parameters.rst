@@ -2158,7 +2158,7 @@ BackTransformed Diagnostics (with support for Plotfile/openPMD output)
 
 * ``<diag_name>.num_snapshots_lab`` (`integer`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
-    The time interval in between the lab-frame snapshots (where this time interval is expressed in the laboratory frame).
+    The number of lab-frame snapshots that will be written.
     Only this option or ``intervals`` should be specified;
     a run-time error occurs if the user attempts to set both ``num_snapshots_lab`` and ``intervals``.
 
