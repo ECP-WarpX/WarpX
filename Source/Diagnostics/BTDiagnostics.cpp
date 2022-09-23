@@ -167,7 +167,7 @@ BTDiagnostics::ReadParameters ()
     bool const intervals_specified = pp_diag_name.queryarr("intervals", intervals_string_vec);
     if (num_snapshots_specified)
     {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!(num_snapshots_specified && intervals_specified),
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!intervals_specified,
             "For back-transformed diagnostics, user should specify either num_snapshots_lab or intervals, not both");
         intervals_string_vec = {":" + std::to_string(m_num_snapshots_lab)};
     }

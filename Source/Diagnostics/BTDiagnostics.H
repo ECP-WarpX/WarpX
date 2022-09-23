@@ -38,7 +38,7 @@ private:
     bool m_plot_raw_fields_guards = false;
     /** Read relevant parameters for BTD */
     void ReadParameters ();
-    /** Determines timesteps at which full diagnostics are written to file */
+    /** Determines timesteps at which BTD diagnostics are written to file */
     BTDIntervalsParser m_intervals;
     /** \brief Flush m_mf_output and particles to file.
      * Currently, a temporary customized output format for the buffer

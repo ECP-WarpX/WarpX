@@ -2167,7 +2167,7 @@ BackTransformed Diagnostics (with support for Plotfile/openPMD output)
     Using the `Intervals parser`_ syntax, this string defines the lab frame times at which data is dumped,
     given as multiples of the step size ``dt_snapshots_lab`` or ``dz_snapshots_lab`` described below.
     Example: ``btdiag1.intervals = 10:11,20:24:2`` and ``btdiag1.dt_snapshots_lab = 1.e-12``
-    indicate to dump at lab times ``1e-11``, ``1.1e-11``, ``2e-11``, ``2.2e-11``, and ``2.2e-11`` seconds.
+    indicate to dump at lab times ``1e-11``, ``1.1e-11``, ``2e-11``, ``2.2e-11``, and ``2.4e-11`` seconds.
     Note that the stop interval, the second number in the slice, must always be specified.
     Only this option or ``num_snapshots_lab`` should be specified;
     a run-time error occurs if the user attempts to set both ``num_snapshots_lab`` and ``intervals``.
