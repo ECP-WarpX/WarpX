@@ -25,7 +25,8 @@ FlushFormatAscent::WriteToFile (
 #ifdef AMREX_USE_ASCENT
     WARPX_PROFILE("FlushFormatAscent::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
-    const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
+    int min_digits = 0;
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0], min_digits);
     amrex::Print() << Utils::TextMsg::Info("Writing Ascent file " + filename);
 
     // wrap mesh data
