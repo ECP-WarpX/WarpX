@@ -130,7 +130,7 @@ BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_ve
 
     auto const insplit = WarpXUtilStr::split<std::vector<std::string>>(inconcatenated, std::string(1,m_separator));
 
-    // parse the Intervals string into Slices and store each slice in m_slices, 
+    // parse the Intervals string into Slices and store each slice in m_slices,
     // in order of increasing Slice start value
     for(const auto& inslc : insplit)
     {
@@ -138,7 +138,7 @@ BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_ve
         SliceParser temp_slice(inslc, isBTD);
         if (m_slices.size() > 0)
         {
-            // find the last index i_slice where 
+            // find the last index i_slice where
             // the start value of m_slices[i_slice] is greater than temp_slices' start_value
             int i_slice = 0;
             while (temp_slice.getStart() > m_slices[i_slice].getStart() && i_slice < static_cast<int>(m_slices.size()))
@@ -152,10 +152,10 @@ BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_ve
             m_slices.push_back(temp_slice);
         }
     }
-    // from the vector of slices, m_slices, 
+    // from the vector of slices, m_slices,
     // create a vector of integers, m_btd_iterations, containing
     // the iteration of every back-transformed snapshot that will be saved
-    // the iteration values in m_btd_iterations are 
+    // the iteration values in m_btd_iterations are
     // 1. saved in increasing order
     // 2. unique, i.e. no duplicate iterations are saved
     for (const auto& temp_slice : m_slices)
@@ -163,11 +163,11 @@ BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_ve
         const int start = temp_slice.getStart();
         const int period = temp_slice.getPeriod();
         int btd_iter_ind;
-        // for Slice temp_slice in m_slices, 
+        // for Slice temp_slice in m_slices,
         // determine the index in m_btd_iterations where temp_slice's starting value goes
         //
         // Implementation note:
-        // assuming the user mostly lists slices in ascending order, 
+        // assuming the user mostly lists slices in ascending order,
         // start at the end of m_btd_iterations and search backward
         if (m_btd_iterations.size() == 0)
         {
