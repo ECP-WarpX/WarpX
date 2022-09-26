@@ -113,9 +113,11 @@ void BTDiagnostics::DerivedInitData ()
     // Turn on do_back_transformed_particles in the particle containers so that
     // the tmp_particle_data is allocated and the data of the corresponding species is
     // copied and stored in tmp_particle_data before particles are pushed.
-    for (auto const& species : m_output_species_names){
+    if (m_do_back_transformed_particles) {
         mpc.SetDoBackTransformedParticles(m_do_back_transformed_particles);
-        mpc.SetDoBackTransformedParticles(species, m_do_back_transformed_particles);
+        for (auto const& species : m_output_species_names){
+            mpc.SetDoBackTransformedParticles(species, m_do_back_transformed_particles);
+        }
     }
     m_particles_buffer.resize(m_num_buffers);
     m_totalParticles_flushed_already.resize(m_num_buffers);
@@ -160,9 +162,19 @@ BTDiagnostics::ReadParameters ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_back_transformed_fields, " fields must be turned on for the new back-transformed diagnostics");
     if (m_do_back_transformed_fields == false) m_varnames.clear();
 
-    utils::parser::getWithParser(
+
+    std::vector<std::string> intervals_string_vec = {"0"};
+    bool const num_snapshots_specified = utils::parser::queryWithParser(
         pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
-    m_num_buffers = m_num_snapshots_lab;
+    bool const intervals_specified = pp_diag_name.queryarr("intervals", intervals_string_vec);
+    if (num_snapshots_specified)
+    {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!intervals_specified,
+            "For back-transformed diagnostics, user should specify either num_snapshots_lab or intervals, not both");
+        intervals_string_vec = {":" + std::to_string(m_num_snapshots_lab-1)};
+    }
+    m_intervals = utils::parser::BTDIntervalsParser(intervals_string_vec);
+    m_num_buffers = m_intervals.NumSnapshots();
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
     bool snapshot_interval_is_specified = false;
@@ -246,7 +258,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     auto & warpx = WarpX::GetInstance();
     // Lab-frame time for the i^th snapshot
     amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
-    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab
+    m_t_lab.at(i_buffer) = m_intervals.GetBTDIteration(i_buffer) * m_dt_snapshots_lab
         + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
 
     // Define buffer domain in boosted frame at level, lev, with user-defined lo and hi
@@ -1197,7 +1209,7 @@ void
 BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
 {
     for (int isp = 0; isp < m_totalParticles_flushed_already[i_buffer].size(); ++isp) {
-        m_totalParticles_flushed_already[i_buffer][isp] += m_totalParticles_in_buffer[i_buffer][isp];
+        m_totalParticles_flushed_already[i_buffer][isp] += m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles();
     }
 }
 

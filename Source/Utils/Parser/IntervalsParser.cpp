@@ -16,17 +16,20 @@
 
 #include <algorithm>
 
-utils::parser::SliceParser::SliceParser (const std::string& instr)
+utils::parser::SliceParser::SliceParser (const std::string& instr, const bool isBTD)
 {
     namespace utils_str = utils::strings;
 
+    m_isBTD = isBTD;
     // split string and trim whitespaces
     auto insplit = utils_str::split<std::vector<std::string>>(instr, m_separator, true);
 
     if(insplit.size() == 1){ // no colon in input string. The input is the period.
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!m_isBTD, "must specify interval stop for BTD");
         m_period = parseStringtoInt(insplit[0], "interval period");}
     else if(insplit.size() == 2) // 1 colon in input string. The input is start:stop
     {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!m_isBTD || !insplit[1].empty(), "must specify interval stop for BTD");
         if (!insplit[0].empty()){
             m_start = parseStringtoInt(insplit[0], "interval start");}
         if (!insplit[1].empty()){
@@ -34,6 +37,7 @@ utils::parser::SliceParser::SliceParser (const std::string& instr)
     }
     else // 2 colons in input string. The input is start:stop:period
     {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!m_isBTD || !insplit[1].empty(), "must specify interval stop for BTD");
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             insplit.size() == 3,
             instr + "' is not a valid syntax for a slice.");
@@ -81,6 +85,9 @@ int utils::parser::SliceParser::getStart () const {return m_start;}
 
 int utils::parser::SliceParser::getStop () const {return m_stop;}
 
+
+int utils::parser::SliceParser::numContained () const {
+    return (m_stop - m_start) / m_period + 1;}
 
 utils::parser::IntervalsParser::IntervalsParser (
     const std::vector<std::string>& instr_vec)
@@ -143,7 +150,102 @@ int utils::parser::IntervalsParser::localPeriod (const int n) const
 }
 
 
-bool utils::parser::IntervalsParser::isActivated () const
+bool utils::parser::IntervalsParser::isActivated () const {return m_activated;}
+
+
+utils::parser::BTDIntervalsParser::BTDIntervalsParser (
+    const std::vector<std::string>& instr_vec)
 {
-    return m_activated;
+    std::string inconcatenated;
+    for (const auto& instr_element : instr_vec) inconcatenated +=instr_element;
+
+    auto const insplit = utils::strings::split<std::vector<std::string>>(inconcatenated, std::string(1,m_separator));
+
+    // parse the Intervals string into Slices and store each slice in m_slices,
+    // in order of increasing Slice start value
+    for(const auto& inslc : insplit)
+    {
+        bool isBTD = true;
+        SliceParser temp_slice(inslc, isBTD);
+        if (m_slices.size() > 0)
+        {
+            // find the last index i_slice where
+            // the start value of m_slices[i_slice] is greater than temp_slices' start_value
+            int i_slice = 0;
+            while (temp_slice.getStart() > m_slices[i_slice].getStart() && i_slice < static_cast<int>(m_slices.size()))
+            {
+                i_slice++;
+            }
+            m_slices.insert(m_slices.begin() + i_slice, temp_slice);
+        }
+        else
+        {
+            m_slices.push_back(temp_slice);
+        }
+    }
+    // from the vector of slices, m_slices,
+    // create a vector of integers, m_btd_iterations, containing
+    // the iteration of every back-transformed snapshot that will be saved
+    // the iteration values in m_btd_iterations are
+    // 1. saved in increasing order
+    // 2. unique, i.e. no duplicate iterations are saved
+    for (const auto& temp_slice : m_slices)
+    {
+        const int start = temp_slice.getStart();
+        const int period = temp_slice.getPeriod();
+        int btd_iter_ind;
+        // for Slice temp_slice in m_slices,
+        // determine the index in m_btd_iterations where temp_slice's starting value goes
+        //
+        // Implementation note:
+        // assuming the user mostly lists slices in ascending order,
+        // start at the end of m_btd_iterations and search backward
+        if (m_btd_iterations.size() == 0)
+        {
+            btd_iter_ind = 0;
+        }
+        else
+        {
+            btd_iter_ind = m_btd_iterations.size() - 1;
+            while (start < m_btd_iterations[btd_iter_ind] and btd_iter_ind>0)
+            {
+                btd_iter_ind--;
+            }
+        }
+        // insert each iteration contained in temp_slice into m_btd_iterations
+        // adding them in increasing sorted order and not adding any iterations
+        // already contained in m_btd_iterations
+        for (int ii = start; ii <= temp_slice.getStop(); ii += period)
+        {
+            if (m_btd_iterations.size() > 0)
+            {
+                // find where iteration ii should go in m_btd_iterations
+                while (ii > m_btd_iterations[btd_iter_ind] && btd_iter_ind < static_cast<int>(m_btd_iterations.size()))
+                {
+                    btd_iter_ind++;
+                }
+                if (ii != m_btd_iterations[btd_iter_ind])
+                {
+                    m_btd_iterations.insert(m_btd_iterations.begin() + btd_iter_ind, ii);
+                }
+            } else
+            {
+                m_btd_iterations.push_back(ii);
+            }
+        }
+        if ((temp_slice.getPeriod() > 0) &&
+               (temp_slice.getStop() >= start)) m_activated = true;
+    }
+}
+
+
+int utils::parser::BTDIntervalsParser::NumSnapshots ()
+{
+    return m_btd_iterations.size();
+}
+
+
+int utils::parser::BTDIntervalsParser::GetBTDIteration (int i_buffer)
+{
+    return m_btd_iterations[i_buffer];
 }

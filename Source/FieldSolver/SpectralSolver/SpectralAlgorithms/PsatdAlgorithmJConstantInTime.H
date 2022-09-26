@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PSATD_ALGORITHM_H_
-#define WARPX_PSATD_ALGORITHM_H_
+#ifndef WARPX_PSATD_ALGORITHM_J_CONSTANT_IN_TIME_H_
+#define WARPX_PSATD_ALGORITHM_J_CONSTANT_IN_TIME_H_
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
@@ -24,12 +24,12 @@
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
  */
-class PsatdAlgorithm : public SpectralBaseAlgorithm
+class PsatdAlgorithmJConstantInTime : public SpectralBaseAlgorithm
 {
     public:
 
         /**
-         * \brief Constructor of the class PsatdAlgorithm
+         * \brief Constructor of the class PsatdAlgorithmJConstantInTime
          *
          * \param[in] spectral_kspace spectral space
          * \param[in] dm distribution mapping
@@ -45,7 +45,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in] dive_cleaning Update F as part of the field update, so that errors in divE=rho propagate away at the speed of light
          * \param[in] divb_cleaning Update G as part of the field update, so that errors in divB=0 propagate away at the speed of light
          */
-        PsatdAlgorithm (
+        PsatdAlgorithmJConstantInTime (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const SpectralFieldIndex& spectral_index,
@@ -142,4 +142,4 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         bool m_is_galilean;
 };
 #endif // WARPX_USE_PSATD
-#endif // WARPX_PSATD_ALGORITHM_H_
+#endif // WARPX_PSATD_ALGORITHM_J_CONSTANT_IN_TIME_H_

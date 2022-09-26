@@ -13,5 +13,6 @@ target_sources(WarpX
     WarpXVersion.cpp
 )
 
+add_subdirectory(Logo)
 add_subdirectory(Parser)
 add_subdirectory(Strings)

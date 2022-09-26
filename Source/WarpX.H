@@ -186,6 +186,10 @@ public:
      */
     static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
 
+    //! Integers that correspond to the time dependency of J (constant, linear)
+    //! and rho (linear, quadratic) for the PSATD algorithm
+    static short J_in_time;
+    static short rho_in_time;
 
     //! If true, the current is deposited on a nodal grid and then centered onto a staggered grid
     //! using finite centering of order given by #current_centering_nox, #current_centering_noy,
