@@ -11,6 +11,7 @@
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FlushFormats/FlushFormat.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Utils/Algorithms/IsIn.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
@@ -353,7 +354,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     }
 
     // If rho is requested, all components will be written out
-    bool rho_requested = WarpXUtilStr::is_in( m_varnames, "rho" );
+    bool rho_requested = utils::algorithms::is_in( m_varnames, "rho" );
 
     // First index of m_all_field_functors[lev] where RZ modes are stored
     int icomp = m_all_field_functors[0].size();

@@ -665,7 +665,7 @@ WarpX::ReadParameters ()
             const bool dt_snapshots_specified =
                 utils::parser::queryWithParser(pp_warpx, "dt_snapshots_lab", dt_snapshots_lab);
             const bool dz_snapshots_specified =
-                utils::parser::queryWithParser(pp_warpx, "dz_snapshots_lab", dt_snapshots_lab);
+                utils::parser::queryWithParser(pp_warpx, "dz_snapshots_lab", dz_snapshots_lab);
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 dt_snapshots_specified || dz_snapshots_specified,
@@ -933,7 +933,7 @@ WarpX::ReadParameters ()
 
 #ifdef WARPX_DIM_RZ
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
-        queryWithParser(pp_warpx, "n_rz_azimuthal_modes", n_rz_azimuthal_modes);
+        utils::parser::queryWithParser(pp_warpx, "n_rz_azimuthal_modes", n_rz_azimuthal_modes);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( n_rz_azimuthal_modes > 0,
             "The number of azimuthal modes (n_rz_azimuthal_modes) must be at least 1");
 #endif

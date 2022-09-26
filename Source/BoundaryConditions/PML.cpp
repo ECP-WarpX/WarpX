@@ -1,5 +1,5 @@
-/* Copyright 2019 Andrew Myers, Aurore Blelly, Axel Huebl
- * Maxence Thevenet, Remi Lehe, Weiqun Zhang
+/* Copyright 2019-2022 Andrew Myers, Aurore Blelly, Axel Huebl,
+ * Luca Fedeli, Maxence Thevenet, Remi Lehe, Weiqun Zhang
  *
  *
  * This file is part of WarpX.

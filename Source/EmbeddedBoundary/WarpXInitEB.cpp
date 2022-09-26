@@ -8,6 +8,7 @@
 #include "WarpX.H"
 
 #ifdef AMREX_USE_EB
+#  include "Utils/Parser/ParserUtils.H"
 #  include "Utils/TextMsg.H"
 
 #  include <AMReX.H>
@@ -86,7 +87,7 @@ WarpX::InitEB ()
     std::string impf;
     pp_warpx.query("eb_implicit_function", impf);
     if (! impf.empty()) {
-        auto eb_if_parser = makeParser(impf, {"x", "y", "z"});
+        auto eb_if_parser = utils::parser::makeParser(impf, {"x", "y", "z"});
         ParserIF pif(eb_if_parser.compile<3>());
         auto gshop = amrex::EB2::makeShop(pif, eb_if_parser);
          // The last argument of amrex::EB2::Build is the maximum coarsening level
