@@ -1565,6 +1565,11 @@ private:
         const int icomp, const int dcomp, const bool apply_kspace_filter=true);
 
     /**
+     * \brief Copy rho_new to rho_mid in spectral space
+     */
+    void PSATDMoveRhoNewToRhoMid ();
+
+    /**
      * \brief Copy rho_new to rho_old in spectral space
      */
     void PSATDMoveRhoNewToRhoOld ();

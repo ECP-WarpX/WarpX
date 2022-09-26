@@ -55,7 +55,7 @@ SpectralSolver::SpectralSolver(
             k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
             dt, dive_cleaning, divb_cleaning);
     }
-    else // PSATD equations in the regulard grids
+    else // PSATD equations in the regular grids
     {
         // Comoving PSATD algorithm
         if (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.)
@@ -77,7 +77,7 @@ SpectralSolver::SpectralSolver(
             {
                 algorithm = std::make_unique<PsatdAlgorithmJLinearInTime>(
                     k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
-                    dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
+                    dt, fft_do_time_averaging, dive_cleaning, divb_cleaning, rho_in_time);
             }
         }
     }

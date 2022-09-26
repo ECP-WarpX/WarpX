@@ -57,7 +57,8 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
             const amrex::Real dt,
             const bool time_averaging,
             const bool dive_cleaning,
-            const bool divb_cleaning);
+            const bool divb_cleaning,
+            const int rho_in_time);
 
         /**
          * \brief Updates the E and B fields in spectral space, according to the multi-J PSATD equations
@@ -118,6 +119,7 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
         // These real and complex coefficients are always allocated
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralRealCoefficients X1_coef, X2_coef, X3_coef, X5_coef, X6_coef;
+        SpectralRealCoefficients Y1_coef, Y2_coef, Y3_coef;
 
         SpectralFieldIndex m_spectral_index;
 
@@ -126,6 +128,7 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
         bool m_time_averaging;
         bool m_dive_cleaning;
         bool m_divb_cleaning;
+        int m_rho_in_time;
 };
 #endif // WARPX_USE_PSATD
 #endif // WARPX_PSATD_ALGORITHM_J_LINEAR_IN_TIME_H_
