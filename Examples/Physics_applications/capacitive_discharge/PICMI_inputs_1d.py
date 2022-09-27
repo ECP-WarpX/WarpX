@@ -169,10 +169,11 @@ class CapacitiveDischargeExample(object):
     # Time (in seconds) between diagnostic evaluations
     diag_interval = 32 / freq
 
-    def __init__(self, n=0, test=False):
+    def __init__(self, n=0, test=False, pythonsolver=False):
         """Get input parameters for the specific case (n) desired."""
         self.n = n
         self.test = test
+        self.pythonsolver = pythonsolver
 
         # Case specific input parameters
         self.voltage = f"{self.voltage[n]}*sin(2*pi*{self.freq:.5e}*t)"
@@ -221,11 +222,11 @@ class CapacitiveDischargeExample(object):
         # Field solver                                                        #
         #######################################################################
 
-        # self.solver = picmi.ElectrostaticSolver(
-        #    grid=self.grid, method='Multigrid', required_precision=1e-6,
-        #    warpx_self_fields_verbosity=2
-        # )
-        self.solver = PoissonSolver1D(grid=self.grid)
+        if self.pythonsolver:
+            self.solver = PoissonSolver1D(grid=self.grid)
+        else:
+            # This will use the tridiagonal solver
+            self.solver = picmi.ElectrostaticSolver(grid=self.grid)
 
         #######################################################################
         # Particle types setup                                                #
@@ -371,11 +372,15 @@ parser.add_argument(
     '-n', help='Test number to run (1 to 4)', required=False, type=int,
     default=1
 )
+parser.add_argument(
+    '--pythonsolver', help='toggle whether to use the Python level solver',
+    action='store_true'
+)
 args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1]+left
 
 if args.n < 1 or args.n > 4:
     raise AttributeError('Test number must be an integer from 1 to 4.')
 
-run = CapacitiveDischargeExample(n=args.n-1, test=args.test)
+run = CapacitiveDischargeExample(n=args.n-1, test=args.test, pythonsolver=args.pythonsolver)
 run.run_sim()
