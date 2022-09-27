@@ -101,7 +101,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         A[0, 0] = 1.0
         A[-1, -1] = 1.0
 
-        A = csc_matrix(A, dtype=np.float32)
+        A = csc_matrix(A, dtype=np.float64)
         self.lu = sla.splu(A)
 
     def _run_solve(self):
@@ -124,7 +124,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
 
         # Construct b vector
         rho = -self.rho_data / constants.ep0
-        b = np.zeros(rho.shape[0], dtype=np.float32)
+        b = np.zeros(rho.shape[0], dtype=np.float64)
         b[:] = rho * self.dz**2
 
         b[0] = left_voltage
