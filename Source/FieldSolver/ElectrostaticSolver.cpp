@@ -711,13 +711,13 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
 
     auto field_boundary_lo0 = WarpX::field_boundary_lo[0];
     auto field_boundary_hi0 = WarpX::field_boundary_hi[0];
-    if (field_boundary_lo0 == FieldBoundaryType::None) {
-        // Neumann boundary condition
+    if (field_boundary_lo0 == FieldBoundaryType::None || field_boundary_lo0 == FieldBoundaryType::Periodic) {
+        // Neumann or periodic boundary condition
         // Solve for the point on the lower boundary
         nx_solve_min = 0;
     }
-    if (field_boundary_hi0 == FieldBoundaryType::None) {
-        // Neumann boundary condition
+    if (field_boundary_hi0 == FieldBoundaryType::None || field_boundary_hi0 == FieldBoundaryType::Periodic) {
+        // Neumann or periodic boundary condition
         // Solve for the point on the upper boundary
         nx_solve_max = nx_full_domain;
     }
@@ -741,12 +741,12 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
     auto zwork1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, ncomps1d, nguard1d, MFInfo().SetArena(The_Pinned_Arena()));
     auto rho1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, ncomps1d, nguard1d, MFInfo().SetArena(The_Pinned_Arena()));
 
-    // Multiplier on the charge density
-    const amrex::Real norm = dx[0]*dx[0]/PhysConst::ep0;
-
     // Copy previous phi to get the boundary values
     phi1d_mf.ParallelCopy(*phi[lev], 0, 0, 1, Geom(lev).periodicity());
     rho1d_mf.ParallelCopy(*rho[lev], 0, 0, 1, Geom(lev).periodicity());
+
+    // Multiplier on the charge density
+    const amrex::Real norm = dx[0]*dx[0]/PhysConst::ep0;
     rho1d_mf.mult(norm);
 
     const auto& phi1d_arr = phi1d_mf[0].array();
@@ -757,6 +757,7 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
 
     amrex::Real diag = 2._rt;
 
+    // The initial values depend on the boundary condition
     if (field_boundary_lo0 == FieldBoundaryType::PEC) {
 
         phi1d_arr(1,0,0) = (phi1d_arr(0,0,0) + rho1d_arr(1,0,0))/diag;
@@ -766,64 +767,94 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
         // Neumann boundary condition
         phi1d_arr(0,0,0) = rho1d_arr(0,0,0)/diag;
 
-        zwork1d_arr(1,0,0) = -2._rt/diag;
-        diag = 2._rt - (-1._rt)*zwork1d_arr(1,0,0);
+        zwork1d_arr(1,0,0) = 2._rt/diag;
+        diag = 2._rt - zwork1d_arr(1,0,0);
+        phi1d_arr(1,0,0) = (rho1d_arr(1,0,0) - (-1._rt)*phi1d_arr(1-1,0,0))/diag;
+
+    } else if (field_boundary_lo0 == FieldBoundaryType::Periodic) {
+
+        phi1d_arr(0,0,0) = rho1d_arr(0,0,0)/diag;
+
+        zwork1d_arr(1,0,0) = 1._rt/diag;
+        diag = 2._rt - zwork1d_arr(1,0,0);
         phi1d_arr(1,0,0) = (rho1d_arr(1,0,0) - (-1._rt)*phi1d_arr(1-1,0,0))/diag;
 
     }
 
+    // Loop upward, calculating the Gaussian elimination multipliers and right hand sides
     for (int i_up = 2 ; i_up < nx_solve_max ; i_up++) {
 
-        zwork1d_arr(i_up,0,0) = -1._rt/diag;
-        diag = 2._rt - (-1._rt)*zwork1d_arr(i_up,0,0);
+        zwork1d_arr(i_up,0,0) = 1._rt/diag;
+        diag = 2._rt - zwork1d_arr(i_up,0,0);
         phi1d_arr(i_up,0,0) = (rho1d_arr(i_up,0,0) - (-1._rt)*phi1d_arr(i_up-1,0,0))/diag;
 
     }
 
+    // The last value depend on the boundary condition
     int const imax = nx_solve_max;
+    amrex::Real zwork_product = 1.; // Needed for parallel boundaries
     if (field_boundary_hi0 == FieldBoundaryType::PEC) {
 
-        zwork1d_arr(imax,0,0) = -1._rt/diag;
-        diag = 2._rt - (-1._rt)*zwork1d_arr(imax,0,0);
+        zwork1d_arr(imax,0,0) = 1._rt/diag;
+        diag = 2._rt - zwork1d_arr(imax,0,0);
         phi1d_arr(imax,0,0) = (phi1d_arr(imax+1,0,0) + rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
 
     } else if (field_boundary_hi0 == FieldBoundaryType::None) {
 
         // Neumann boundary condition
-        zwork1d_arr(imax,0,0) = -2._rt/diag;
-        diag = 2._rt - (-1._rt)*zwork1d_arr(imax,0,0);
+        zwork1d_arr(imax,0,0) = 1._rt/diag;
+        diag = 2._rt - 2._rt*zwork1d_arr(imax,0,0);
+        if (diag == 0._rt) {
+            // This happens if the lower boundary is also Neumann.
+            // It this case, the potential is relative to an arbitrary constant,
+            // so set the upper boundary to zero to force a value.
+            phi1d_arr(imax,0,0) = 0.;
+        } else {
+            phi1d_arr(imax,0,0) = (rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
+        }
+
+    } else if (field_boundary_hi0 == FieldBoundaryType::Periodic) {
+
+        zwork1d_arr(imax,0,0) = 1._rt/diag;
+
+        for (int i = 1 ; i <= nx_solve_max ; i++) {
+            zwork_product *= zwork1d_arr(i,0,0);
+        }
+
+        diag = 2._rt - zwork1d_arr(imax,0,0) - zwork_product;
         phi1d_arr(imax,0,0) = (rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
 
     }
 
-    for (int i_down = nx_solve_max-1 ; i_down >= nx_solve_min ; i_down--) {
+    // Loop downward to calculate the phi
+    if (field_boundary_lo0 == FieldBoundaryType::Periodic) {
 
-        phi1d_arr(i_down,0,0) = phi1d_arr(i_down,0,0) - zwork1d_arr(i_down+1,0,0)*phi1d_arr(i_down+1,0,0);
+        // With periodic, the right hand column adds an extra term for all rows
+        for (int i_down = nx_solve_max-1 ; i_down >= nx_solve_min ; i_down--) {
+            zwork_product /= zwork1d_arr(i_down+1,0,0);
+            phi1d_arr(i_down,0,0) = phi1d_arr(i_down,0,0) + zwork1d_arr(i_down+1,0,0)*phi1d_arr(i_down+1,0,0) + zwork_product*phi1d_arr(imax,0,0);
+        }
+
+    } else {
+
+        for (int i_down = nx_solve_max-1 ; i_down >= nx_solve_min ; i_down--) {
+            phi1d_arr(i_down,0,0) = phi1d_arr(i_down,0,0) + zwork1d_arr(i_down+1,0,0)*phi1d_arr(i_down+1,0,0);
+        }
 
     }
 
-    // Extrapolate into the lower guard cell
+    // Set the value in the guard cells
+    // The periodic case is handled in the ParallelCopy below
     if (field_boundary_lo0 == FieldBoundaryType::PEC) {
-
-        phi1d_arr(-1,0,0) = 2._rt*phi1d_arr(0,0,0) - phi1d_arr(1,0,0);
-
+        phi1d_arr(-1,0,0) = phi1d_arr(0,0,0);
     } else if (field_boundary_lo0 == FieldBoundaryType::None) {
-
-        // Neumann boundary condition
         phi1d_arr(-1,0,0) = phi1d_arr(1,0,0);
-
     }
 
-    // Extrapolate into the upper guard cell
     if (field_boundary_hi0 == FieldBoundaryType::PEC) {
-
-        phi1d_arr(nx_full_domain+1,0,0) = 2._rt*phi1d_arr(nx_full_domain,0,0) - phi1d_arr(nx_full_domain-1,0,0);
-
+        phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain,0,0);
     } else if (field_boundary_hi0 == FieldBoundaryType::None) {
-
-        // Neumann boundary condition
         phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain-1,0,0);
-
     }
 
     // Copy phi1d to phi, including the x guard cell
