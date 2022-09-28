@@ -15,13 +15,13 @@
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
 #include "ParticleBoundaries_K.H"
-#include "Utils/CoarsenMR.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <ablastr/coarsen/average.H>
 #include <ablastr/utils/Communication.H>
 
 #include <AMReX.H>
@@ -714,7 +714,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
             MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), ngrow );
             coarsened_fine_data.setVal(0.0);
 
-            CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], m_gdb->refRatio(lev) );
+            ablastr::coarsen::average::Coarsen(coarsened_fine_data, *rho[lev + 1], m_gdb->refRatio(lev) );
             ablastr::utils::communication::ParallelAdd(*rho[lev], coarsened_fine_data, 0, 0,
                                                        rho[lev]->nComp(),
                                                        amrex::IntVect::TheZeroVector(),

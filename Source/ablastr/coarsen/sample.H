@@ -1,21 +1,33 @@
-#ifndef WARPX_COARSEN_IO_H_
-#define WARPX_COARSEN_IO_H_
+/* Copyright 2022 Edoardo Zoni, Remi Lehe, David Grote, Axel Huebl
+ *
+ * This file is part of ABLASTR.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#ifndef ABLASTR_COARSEN_SAMPLE_H_
+#define ABLASTR_COARSEN_SAMPLE_H_
+
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
+#include <AMReX_BLassert.H>
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IntVect.H>
+#include <AMReX_Math.H>
 #include <AMReX_REAL.H>
 
 #include <AMReX_BaseFwd.H>
 
 #include <cstdlib>
 
-namespace CoarsenIO{
 
-    using namespace amrex;
-
+/** Mesh Coarsening by Sampling
+ *
+ * These methods are mostly used for I/O.
+ */
+namespace ablastr::coarsen::sample
+{
     /**
      * \brief Interpolates the floating point data contained in the source Array4
      *        \c arr_src, extracted from a fine MultiFab, by averaging over either
@@ -35,15 +47,19 @@ namespace CoarsenIO{
      */
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
-    Real Interp ( Array4<Real const> const& arr_src,
-                  GpuArray<int,3> const& sf,
-                  GpuArray<int,3> const& sc,
-                  GpuArray<int,3> const& cr,
-                  const int i,
-                  const int j,
-                  const int k,
-                  const int comp )
+    amrex::Real Interp (
+        amrex::Array4<amrex::Real const> const& arr_src,
+        amrex::GpuArray<int,3> const& sf,
+        amrex::GpuArray<int,3> const& sc,
+        amrex::GpuArray<int,3> const& cr,
+        const int i,
+        const int j,
+        const int k,
+        const int comp
+    )
     {
+        using namespace amrex::literals;
+
         // Indices of destination array (coarse)
         const int ic[3] = { i, j, k };
 
@@ -70,19 +86,18 @@ namespace CoarsenIO{
         const int jmin = idx_min[1];
         const int kmin = idx_min[2];
         int  ii, jj, kk;
-        Real wx, wy, wz;
+        amrex::Real const wx = 1.0_rt / static_cast<amrex::Real>(numx);
+        amrex::Real const wy = 1.0_rt / static_cast<amrex::Real>(numy);
+        amrex::Real const wz = 1.0_rt / static_cast<amrex::Real>(numz);
 
         // Interpolate over points computed above
-        Real c = 0.0_rt;
+        amrex::Real c = 0.0_rt;
         for         (int kref = 0; kref < numz; ++kref) {
             for     (int jref = 0; jref < numy; ++jref) {
                 for (int iref = 0; iref < numx; ++iref) {
                     ii = imin+iref;
                     jj = jmin+jref;
                     kk = kmin+kref;
-                    wx = 1.0_rt/static_cast<Real>(numx);
-                    wy = 1.0_rt/static_cast<Real>(numy);
-                    wz = 1.0_rt/static_cast<Real>(numz);
                     c += wx*wy*wz*arr_src(ii,jj,kk,comp);
                 }
             }
@@ -109,13 +124,13 @@ namespace CoarsenIO{
      * \param[in]     crse_ratio coarsening ratio between the fine MultiFab \c mf_src
      *                           and the coarsened MultiFab \c mf_dst along each spatial direction
      */
-    void Loop ( MultiFab& mf_dst,
-                const MultiFab& mf_src,
+    void Loop ( amrex::MultiFab& mf_dst,
+                const amrex::MultiFab& mf_src,
                 const int dcomp,
                 const int scomp,
                 const int ncomp,
-                const IntVect ngrow,
-                const IntVect crse_ratio=IntVect(1) );
+                const amrex::IntVect ngrow,
+                const amrex::IntVect crse_ratio=amrex::IntVect(1) );
 
     /**
      * \brief Stores in the coarsened MultiFab \c mf_dst the values obtained by
@@ -136,20 +151,21 @@ namespace CoarsenIO{
      * \param[in]     crse_ratio coarsening ratio between the fine MultiFab \c mf_src
      *                           and the coarsened MultiFab \c mf_dst along each spatial direction
      */
-    void Coarsen ( MultiFab& mf_dst,
-                   const MultiFab& mf_src,
+    void Coarsen ( amrex::MultiFab& mf_dst,
+                   const amrex::MultiFab& mf_src,
                    const int dcomp,
                    const int scomp,
                    const int ncomp,
                    const int ngrow,
-                   const IntVect crse_ratio=IntVect(1) );
-    void Coarsen ( MultiFab& mf_dst,
-                   const MultiFab& mf_src,
+                   const amrex::IntVect crse_ratio=amrex::IntVect(1) );
+    void Coarsen ( amrex::MultiFab& mf_dst,
+                   const amrex::MultiFab& mf_src,
                    const int dcomp,
                    const int scomp,
                    const int ncomp,
-                   const IntVect ngrowvect,
-                   const IntVect crse_ratio=IntVect(1) );
-}
+                   const amrex::IntVect ngrowvect,
+                   const amrex::IntVect crse_ratio=amrex::IntVect(1) );
 
-#endif // WARPX_COARSEN_IO_H_
+} // namespace ablastr::coarsen::sample
+
+#endif // ABLASTR_COARSEN_SAMPLE_H_

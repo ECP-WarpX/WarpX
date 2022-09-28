@@ -13,11 +13,11 @@
 #endif
 #include "FieldIO.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Utils/CoarsenIO.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <ablastr/coarsen/sample.H>
 #include <ablastr/utils/Communication.H>
 
 #ifdef AMREX_USE_SENSEI_INSITU
