@@ -749,112 +749,118 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
     const amrex::Real norm = dx[0]*dx[0]/PhysConst::ep0;
     rho1d_mf.mult(norm);
 
-    const auto& phi1d_arr = phi1d_mf[0].array();
-    const auto& zwork1d_arr = zwork1d_mf[0].array();
-    const auto& rho1d_arr = rho1d_mf[0].array();
+    // Use the MFIter loop since when parallel, only process zero has a FAB.
+    // This skips the loop on all other processors.
+    for (MFIter mfi(phi1d_mf); mfi.isValid(); ++mfi) {
 
-    // The loops are always performed on the CPU
+        const auto& phi1d_arr = phi1d_mf[mfi].array();
+        const auto& zwork1d_arr = zwork1d_mf[mfi].array();
+        const auto& rho1d_arr = rho1d_mf[mfi].array();
 
-    amrex::Real diag = 2._rt;
+        // The loops are always performed on the CPU
 
-    // The initial values depend on the boundary condition
-    if (field_boundary_lo0 == FieldBoundaryType::PEC) {
+        amrex::Real diag = 2._rt;
 
-        phi1d_arr(1,0,0) = (phi1d_arr(0,0,0) + rho1d_arr(1,0,0))/diag;
+        // The initial values depend on the boundary condition
+        if (field_boundary_lo0 == FieldBoundaryType::PEC) {
 
-    } else if (field_boundary_lo0 == FieldBoundaryType::None) {
+            phi1d_arr(1,0,0) = (phi1d_arr(0,0,0) + rho1d_arr(1,0,0))/diag;
 
-        // Neumann boundary condition
-        phi1d_arr(0,0,0) = rho1d_arr(0,0,0)/diag;
+        } else if (field_boundary_lo0 == FieldBoundaryType::None) {
 
-        zwork1d_arr(1,0,0) = 2._rt/diag;
-        diag = 2._rt - zwork1d_arr(1,0,0);
-        phi1d_arr(1,0,0) = (rho1d_arr(1,0,0) - (-1._rt)*phi1d_arr(1-1,0,0))/diag;
+            // Neumann boundary condition
+            phi1d_arr(0,0,0) = rho1d_arr(0,0,0)/diag;
 
-    } else if (field_boundary_lo0 == FieldBoundaryType::Periodic) {
+            zwork1d_arr(1,0,0) = 2._rt/diag;
+            diag = 2._rt - zwork1d_arr(1,0,0);
+            phi1d_arr(1,0,0) = (rho1d_arr(1,0,0) - (-1._rt)*phi1d_arr(1-1,0,0))/diag;
 
-        phi1d_arr(0,0,0) = rho1d_arr(0,0,0)/diag;
+        } else if (field_boundary_lo0 == FieldBoundaryType::Periodic) {
 
-        zwork1d_arr(1,0,0) = 1._rt/diag;
-        diag = 2._rt - zwork1d_arr(1,0,0);
-        phi1d_arr(1,0,0) = (rho1d_arr(1,0,0) - (-1._rt)*phi1d_arr(1-1,0,0))/diag;
+            phi1d_arr(0,0,0) = rho1d_arr(0,0,0)/diag;
 
-    }
+            zwork1d_arr(1,0,0) = 1._rt/diag;
+            diag = 2._rt - zwork1d_arr(1,0,0);
+            phi1d_arr(1,0,0) = (rho1d_arr(1,0,0) - (-1._rt)*phi1d_arr(1-1,0,0))/diag;
 
-    // Loop upward, calculating the Gaussian elimination multipliers and right hand sides
-    for (int i_up = 2 ; i_up < nx_solve_max ; i_up++) {
+        }
 
-        zwork1d_arr(i_up,0,0) = 1._rt/diag;
-        diag = 2._rt - zwork1d_arr(i_up,0,0);
-        phi1d_arr(i_up,0,0) = (rho1d_arr(i_up,0,0) - (-1._rt)*phi1d_arr(i_up-1,0,0))/diag;
+        // Loop upward, calculating the Gaussian elimination multipliers and right hand sides
+        for (int i_up = 2 ; i_up < nx_solve_max ; i_up++) {
 
-    }
+            zwork1d_arr(i_up,0,0) = 1._rt/diag;
+            diag = 2._rt - zwork1d_arr(i_up,0,0);
+            phi1d_arr(i_up,0,0) = (rho1d_arr(i_up,0,0) - (-1._rt)*phi1d_arr(i_up-1,0,0))/diag;
 
-    // The last value depend on the boundary condition
-    int const imax = nx_solve_max;
-    amrex::Real zwork_product = 1.; // Needed for parallel boundaries
-    if (field_boundary_hi0 == FieldBoundaryType::PEC) {
+        }
 
-        zwork1d_arr(imax,0,0) = 1._rt/diag;
-        diag = 2._rt - zwork1d_arr(imax,0,0);
-        phi1d_arr(imax,0,0) = (phi1d_arr(imax+1,0,0) + rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
+        // The last value depend on the boundary condition
+        int const imax = nx_solve_max;
+        amrex::Real zwork_product = 1.; // Needed for parallel boundaries
+        if (field_boundary_hi0 == FieldBoundaryType::PEC) {
 
-    } else if (field_boundary_hi0 == FieldBoundaryType::None) {
+            zwork1d_arr(imax,0,0) = 1._rt/diag;
+            diag = 2._rt - zwork1d_arr(imax,0,0);
+            phi1d_arr(imax,0,0) = (phi1d_arr(imax+1,0,0) + rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
 
-        // Neumann boundary condition
-        zwork1d_arr(imax,0,0) = 1._rt/diag;
-        diag = 2._rt - 2._rt*zwork1d_arr(imax,0,0);
-        if (diag == 0._rt) {
-            // This happens if the lower boundary is also Neumann.
-            // It this case, the potential is relative to an arbitrary constant,
-            // so set the upper boundary to zero to force a value.
-            phi1d_arr(imax,0,0) = 0.;
-        } else {
+        } else if (field_boundary_hi0 == FieldBoundaryType::None) {
+
+            // Neumann boundary condition
+            zwork1d_arr(imax,0,0) = 1._rt/diag;
+            diag = 2._rt - 2._rt*zwork1d_arr(imax,0,0);
+            if (diag == 0._rt) {
+                // This happens if the lower boundary is also Neumann.
+                // It this case, the potential is relative to an arbitrary constant,
+                // so set the upper boundary to zero to force a value.
+                phi1d_arr(imax,0,0) = 0.;
+            } else {
+                phi1d_arr(imax,0,0) = (rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
+            }
+
+        } else if (field_boundary_hi0 == FieldBoundaryType::Periodic) {
+
+            zwork1d_arr(imax,0,0) = 1._rt/diag;
+
+            for (int i = 1 ; i <= nx_solve_max ; i++) {
+                zwork_product *= zwork1d_arr(i,0,0);
+            }
+
+            diag = 2._rt - zwork1d_arr(imax,0,0) - zwork_product;
             phi1d_arr(imax,0,0) = (rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
+
         }
 
-    } else if (field_boundary_hi0 == FieldBoundaryType::Periodic) {
+        // Loop downward to calculate the phi
+        if (field_boundary_lo0 == FieldBoundaryType::Periodic) {
 
-        zwork1d_arr(imax,0,0) = 1._rt/diag;
+            // With periodic, the right hand column adds an extra term for all rows
+            for (int i_down = nx_solve_max-1 ; i_down >= nx_solve_min ; i_down--) {
+                zwork_product /= zwork1d_arr(i_down+1,0,0);
+                phi1d_arr(i_down,0,0) = phi1d_arr(i_down,0,0) + zwork1d_arr(i_down+1,0,0)*phi1d_arr(i_down+1,0,0) + zwork_product*phi1d_arr(imax,0,0);
+            }
 
-        for (int i = 1 ; i <= nx_solve_max ; i++) {
-            zwork_product *= zwork1d_arr(i,0,0);
+        } else {
+
+            for (int i_down = nx_solve_max-1 ; i_down >= nx_solve_min ; i_down--) {
+                phi1d_arr(i_down,0,0) = phi1d_arr(i_down,0,0) + zwork1d_arr(i_down+1,0,0)*phi1d_arr(i_down+1,0,0);
+            }
+
         }
 
-        diag = 2._rt - zwork1d_arr(imax,0,0) - zwork_product;
-        phi1d_arr(imax,0,0) = (rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
-
-    }
-
-    // Loop downward to calculate the phi
-    if (field_boundary_lo0 == FieldBoundaryType::Periodic) {
-
-        // With periodic, the right hand column adds an extra term for all rows
-        for (int i_down = nx_solve_max-1 ; i_down >= nx_solve_min ; i_down--) {
-            zwork_product /= zwork1d_arr(i_down+1,0,0);
-            phi1d_arr(i_down,0,0) = phi1d_arr(i_down,0,0) + zwork1d_arr(i_down+1,0,0)*phi1d_arr(i_down+1,0,0) + zwork_product*phi1d_arr(imax,0,0);
+        // Set the value in the guard cells
+        // The periodic case is handled in the ParallelCopy below
+        if (field_boundary_lo0 == FieldBoundaryType::PEC) {
+            phi1d_arr(-1,0,0) = phi1d_arr(0,0,0);
+        } else if (field_boundary_lo0 == FieldBoundaryType::None) {
+            phi1d_arr(-1,0,0) = phi1d_arr(1,0,0);
         }
 
-    } else {
-
-        for (int i_down = nx_solve_max-1 ; i_down >= nx_solve_min ; i_down--) {
-            phi1d_arr(i_down,0,0) = phi1d_arr(i_down,0,0) + zwork1d_arr(i_down+1,0,0)*phi1d_arr(i_down+1,0,0);
+        if (field_boundary_hi0 == FieldBoundaryType::PEC) {
+            phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain,0,0);
+        } else if (field_boundary_hi0 == FieldBoundaryType::None) {
+            phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain-1,0,0);
         }
 
-    }
-
-    // Set the value in the guard cells
-    // The periodic case is handled in the ParallelCopy below
-    if (field_boundary_lo0 == FieldBoundaryType::PEC) {
-        phi1d_arr(-1,0,0) = phi1d_arr(0,0,0);
-    } else if (field_boundary_lo0 == FieldBoundaryType::None) {
-        phi1d_arr(-1,0,0) = phi1d_arr(1,0,0);
-    }
-
-    if (field_boundary_hi0 == FieldBoundaryType::PEC) {
-        phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain,0,0);
-    } else if (field_boundary_hi0 == FieldBoundaryType::None) {
-        phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain-1,0,0);
     }
 
     // Copy phi1d to phi, including the x guard cell
