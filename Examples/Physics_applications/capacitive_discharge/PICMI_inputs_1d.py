@@ -330,13 +330,18 @@ class CapacitiveDischargeExample(object):
         # Add diagnostics for the CI test to be happy                         #
         #######################################################################
 
+        if self.pythonsolver:
+            file_prefix = 'Python_background_mcc_1d_plt'
+        else:
+            file_prefix = 'Python_background_mcc_1d_tridiag_plt'
+
         field_diag = picmi.FieldDiagnostic(
             name='diag1',
             grid=self.grid,
             period=0,
             data_list=['rho_electrons', 'rho_he_ions'],
             write_dir='.',
-            warpx_file_prefix='Python_background_mcc_1d_plt'
+            warpx_file_prefix=file_prefix
         )
         self.sim.add_diagnostic(field_diag)
 
