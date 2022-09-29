@@ -70,3 +70,17 @@ What does const int ``/*i_buffer*/`` mean in argument list?
 This is often seen in a derived class, overwriting an interface method.
 It means we do not name the parameter because we do not use it when we overwrite the interface.
 But we add the name as a comment ``/* ... */`` so that we know what we ignored when looking at the definition of the overwritten method.
+
+
+Wat is Pinned Memory?
+---------------------
+
+We need pinned aka "page locked" host memory when we:
+
+- do async copies from/to host<->device
+- want to write to CPU memory from a kernel
+
+A typical use case are initialization our (filtered/processed) output routines.
+AMReX provides pinned memory via the ``amrex::PinnedArenaAllocator`` , which is the last argument passed to constructors of ``ParticleContainer`` and ``MultiFab``.
+
+Read more on this here: `How to Optimize Data Transfers in CUDA C/C++ <https://developer.nvidia.com/blog/how-optimize-data-transfers-cuda-cc/>`__
