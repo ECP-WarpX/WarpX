@@ -84,3 +84,6 @@ A typical use case are initialization our (filtered/processed) output routines.
 AMReX provides pinned memory via the ``amrex::PinnedArenaAllocator`` , which is the last argument passed to constructors of ``ParticleContainer`` and ``MultiFab``.
 
 Read more on this here: `How to Optimize Data Transfers in CUDA C/C++ <https://developer.nvidia.com/blog/how-optimize-data-transfers-cuda-cc/>`__
+
+Bonus: underneath the hood, asynchronous MPI communications also pin and unpin memory.
+One of the benefits of GPU-aware MPI implementations is, besides possibility to use direct device-device transfers, that MPI and GPU API calls `are aware of each others pinning ambitions <https://www.open-mpi.org/community/lists/users/2012/11/20659.php>`__ and do not create `data races to unpin the same memory <https://github.com/ComputationalRadiationPhysics/picongpu/pull/438>`__.
