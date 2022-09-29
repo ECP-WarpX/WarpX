@@ -72,8 +72,8 @@ It means we do not name the parameter because we do not use it when we overwrite
 But we add the name as a comment ``/* ... */`` so that we know what we ignored when looking at the definition of the overwritten method.
 
 
-Wat is Pinned Memory?
----------------------
+What is Pinned Memory?
+----------------------
 
 We need pinned aka "page locked" host memory when we:
 
