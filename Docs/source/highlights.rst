@@ -40,10 +40,10 @@ Scientific works in laser-ion acceleration and laser-matter interaction.
    Physics of Plasmas **29**, 083102, 2022.
    `DOI:10.1063/5.0089331 <https://doi.org/10.1063/5.0089331>`__
 
-#. Levy D, Andriyash IA, Haessler S, Ouille M, Kaur J, Flacco A, Kroupp E, Malka V, Lopez-Martens R.
+#. Levy D, Andriyash IA, Haessler S, Kaur J, Ouille M, Flacco A, Kroupp E, Malka V, Lopez-Martens R.
    **Low-divergence MeV-class proton beams from kHz-driven laser-solid interactions**.
-   *preprint*. under review, 2021.
-   `arXiv:2112.12581 <https://arxiv.org/abs/2112.12581>`__
+   Phys. Rev. Accel. Beams **25**, 093402, 2022.
+   `DOI:10.1103/PhysRevAccelBeams.25.093402 <https://doi.org/10.1103/PhysRevAccelBeams.25.093402>`__
 
 
 Particle Accelerator & Beam Physics
