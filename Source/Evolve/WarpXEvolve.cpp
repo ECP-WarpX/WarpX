@@ -370,7 +370,9 @@ WarpX::Evolve (int numsteps)
 
         // End loop on time steps
     }
-    multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
+    if (istep[0] >= max_step || cur_time >= stop_time) {
+        multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
+    }
 
     if (do_back_transformed_diagnostics) {
         myBFD->Flush(geom[0]);
