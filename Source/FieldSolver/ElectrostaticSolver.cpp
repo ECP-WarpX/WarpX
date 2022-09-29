@@ -244,7 +244,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     // Compute the potential phi, by solving the Poisson equation
     if (IsPythonCallBackInstalled("poissonsolver")) {
 
-        // Use the Python level solver (user specificed)
+        // Use the Python level solver (user specified)
         ExecutePythonCallback("poissonsolver");
 
     } else {
