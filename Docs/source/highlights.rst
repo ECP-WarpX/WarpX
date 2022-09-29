@@ -26,7 +26,7 @@ Scientific works in laser-plasma and beam-plasma acceleration.
 
 #. Mirani F, Calzolari D, Formenti A, Passoni M.
    **Superintense laser-driven photon activation analysis**.
-   Nature Communications Physics volume **4**.185, 2021
+   Nature Communications Physics volume **4**.185, 2021.
    `DOI:10.1038/s42005-021-00685-2 <https://doi.org/10.1038/s42005-021-00685-2>`__
 
 
@@ -37,7 +37,8 @@ Scientific works in laser-ion acceleration and laser-matter interaction.
 
 #. Hakimi S, Obst-Huebl L, Huebl A, Nakamura K, Bulanov SS, Steinke S, Leemans WP, Kober Z, Ostermayr TM, Schenkel T, Gonsalves AJ, Vay J-L, Tilborg Jv, Toth C, Schroeder CB, Esarey E, Geddes CGR.
    **Laser-solid interaction studies enabled by the new capabilities of the iP2 BELLA PW beamline**.
-   under review, 2022
+   Physics of Plasmas **29**, 083102, 2022.
+   `DOI:10.1063/5.0089331 <https://doi.org/10.1063/5.0089331>`__
 
 #. Levy D, Andriyash IA, Haessler S, Ouille M, Kaur J, Flacco A, Kroupp E, Malka V, Lopez-Martens R.
    **Low-divergence MeV-class proton beams from kHz-driven laser-solid interactions**.
