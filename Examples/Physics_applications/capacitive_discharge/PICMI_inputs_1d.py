@@ -77,18 +77,6 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         system."""
         self.nsolve = self.nz + 1
 
-        # Set up the tridiagonal computation matrix in order to solve A*phi =
-        # rho for phi.
-        self.A_ldiag = np.ones(self.nsolve-1) / self.dz**2
-        self.A_mdiag = -2.*np.ones(self.nsolve) / self.dz**2
-        self.A_udiag = np.ones(self.nsolve-1) / self.dz**2
-
-        self.A_mdiag[0] = 1.
-        self.A_udiag[0] = 0.0
-
-        self.A_mdiag[-1] = 1.
-        self.A_ldiag[-1] = 0.0
-
         # Set up the computation matrix in order to solve A*phi = rho
         A = np.zeros((self.nsolve, self.nsolve))
         idx = np.arange(self.nsolve)
@@ -357,6 +345,19 @@ class CapacitiveDischargeExample(object):
 
         if self.sim.extension.getMyProc() == 0:
             np.save(f'ion_density_case_{self.n+1}.npy', self.ion_density_array)
+
+        # query the particle z-coordinates if this is run during CI testing
+        # to cover that functionality
+        if self.test:
+            nparts = self.sim.extension.get_particle_count(
+                'he_ions', local=True
+            )
+            z_coords = np.concatenate(
+                self.sim.extension.get_particle_z('he_ions')
+            )
+            assert len(z_coords) == nparts
+            assert np.all(z_coords >= 0.0) and np.all(z_coords <= self.gap)
+
 
 ##########################
 # parse input parameters
