@@ -17,8 +17,9 @@ constants = picmi.constants
 
 
 class PoissonSolver1D(picmi.ElectrostaticSolver):
-    """This can be removed and the MLMG solver used once
-       https://github.com/ECP-WarpX/WarpX/issues/3123 is addressed."""
+    """This solver is maintained as an example of the use of Python callbacks.
+       However, it is not necessarily needed since the 1D code has the direct tridiagonal
+       solver implemented."""
 
     def __init__(self, grid, **kwargs):
         """Direct solver for the Poisson equation using superLU. This solver is
@@ -89,7 +90,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         A[0, 0] = 1.0
         A[-1, -1] = 1.0
 
-        A = csc_matrix(A, dtype=np.float32)
+        A = csc_matrix(A, dtype=np.float64)
         self.lu = sla.splu(A)
 
     def _run_solve(self):
@@ -112,7 +113,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
 
         # Construct b vector
         rho = -self.rho_data / constants.ep0
-        b = np.zeros(rho.shape[0], dtype=np.float32)
+        b = np.zeros(rho.shape[0], dtype=np.float64)
         b[:] = rho * self.dz**2
 
         b[0] = left_voltage
@@ -157,10 +158,11 @@ class CapacitiveDischargeExample(object):
     # Time (in seconds) between diagnostic evaluations
     diag_interval = 32 / freq
 
-    def __init__(self, n=0, test=False):
+    def __init__(self, n=0, test=False, pythonsolver=False):
         """Get input parameters for the specific case (n) desired."""
         self.n = n
         self.test = test
+        self.pythonsolver = pythonsolver
 
         # Case specific input parameters
         self.voltage = f"{self.voltage[n]}*sin(2*pi*{self.freq:.5e}*t)"
@@ -209,11 +211,11 @@ class CapacitiveDischargeExample(object):
         # Field solver                                                        #
         #######################################################################
 
-        # self.solver = picmi.ElectrostaticSolver(
-        #    grid=self.grid, method='Multigrid', required_precision=1e-6,
-        #    warpx_self_fields_verbosity=2
-        # )
-        self.solver = PoissonSolver1D(grid=self.grid)
+        if self.pythonsolver:
+            self.solver = PoissonSolver1D(grid=self.grid)
+        else:
+            # This will use the tridiagonal solver
+            self.solver = picmi.ElectrostaticSolver(grid=self.grid)
 
         #######################################################################
         # Particle types setup                                                #
@@ -317,13 +319,18 @@ class CapacitiveDischargeExample(object):
         # Add diagnostics for the CI test to be happy                         #
         #######################################################################
 
+        if self.pythonsolver:
+            file_prefix = 'Python_background_mcc_1d_plt'
+        else:
+            file_prefix = 'Python_background_mcc_1d_tridiag_plt'
+
         field_diag = picmi.FieldDiagnostic(
             name='diag1',
             grid=self.grid,
             period=0,
             data_list=['rho_electrons', 'rho_he_ions'],
             write_dir='.',
-            warpx_file_prefix='Python_background_mcc_1d_plt'
+            warpx_file_prefix=file_prefix
         )
         self.sim.add_diagnostic(field_diag)
 
@@ -372,11 +379,15 @@ parser.add_argument(
     '-n', help='Test number to run (1 to 4)', required=False, type=int,
     default=1
 )
+parser.add_argument(
+    '--pythonsolver', help='toggle whether to use the Python level solver',
+    action='store_true'
+)
 args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1]+left
 
 if args.n < 1 or args.n > 4:
     raise AttributeError('Test number must be an integer from 1 to 4.')
 
-run = CapacitiveDischargeExample(n=args.n-1, test=args.test)
+run = CapacitiveDischargeExample(n=args.n-1, test=args.test, pythonsolver=args.pythonsolver)
 run.run_sim()
