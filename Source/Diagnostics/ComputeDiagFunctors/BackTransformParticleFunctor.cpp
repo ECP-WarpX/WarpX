@@ -126,7 +126,6 @@ BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst
                 const auto& ptile_src = particles.at(index);
                 auto src_data = ptile_src.getConstParticleTileData();
                 // Flag particles that need to be copied if they cross the z-slice
-                // setting this to 1 for testing (temporarily)
                 amrex::ParallelFor(np,
                 [=] AMREX_GPU_DEVICE(int i)
                 {
@@ -137,7 +136,6 @@ BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst
                 auto& ptile_dst = pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
                 auto old_size = ptile_dst.numParticles();
                 ptile_dst.resize(old_size + total_partdiag_size);
-                amrex::filterParticles(ptile_dst, ptile_src, GetParticleFilter, 0, old_size, np);
                 auto dst_data = ptile_dst.getParticleTileData();
                 amrex::ParallelFor(np,
                 [=] AMREX_GPU_DEVICE(int i)
