@@ -77,7 +77,7 @@ What is Pinned Memory?
 
 We need pinned aka "page locked" host memory when we:
 
-- do async copies from/to host<->device
+- do asynchronous copies between the host and device
 - want to write to CPU memory from a kernel
 
 A typical use case is initialization of our (filtered/processed) output routines.
