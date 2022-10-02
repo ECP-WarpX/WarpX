@@ -46,6 +46,7 @@ sys.path.insert(0, os.path.join( os.path.abspath(__file__), '../Python') )
 extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
+    'sphinx_design',
     'breathe'
  ]
 
