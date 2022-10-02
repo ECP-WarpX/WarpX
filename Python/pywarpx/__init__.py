@@ -19,3 +19,6 @@ from .PSATD import psatd
 from .Particles import electrons, newspecies, particles, positrons, protons
 from .WarpX import warpx
 from ._libwarpx import libwarpx
+
+# This is a circulor import and must happen after the import of libwarpx
+from . import picmi # isort:skip
