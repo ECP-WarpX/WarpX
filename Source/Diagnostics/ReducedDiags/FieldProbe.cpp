@@ -151,7 +151,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     }
     pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
-    pp_rd_name.query("interp_order", interp_order);
+    queryWithParser(pp_rd_name, "interp_order", interp_order);
     pp_rd_name.query("do_moving_window_FP", do_moving_window_FP);
 
     if (WarpX::gamma_boost > 1.0_rt)

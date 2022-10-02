@@ -220,7 +220,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         queryWithParser(pp_species_name, "y_cut", y_cut);
         queryWithParser(pp_species_name, "z_cut", z_cut);
         getWithParser(pp_species_name, "q_tot", q_tot);
-        pp_species_name.get("npart", npart);
+        getWithParser(pp_species_name, "npart", npart);
         pp_species_name.query("do_symmetrize", do_symmetrize);
         gaussian_beam = true;
         parseMomentum(pp_species_name);

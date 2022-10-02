@@ -198,6 +198,17 @@ int
 safeCastToInt(amrex::Real x, const std::string& real_name);
 
 /**
+* \brief Do a safe cast of a real to a long
+* This ensures that the float value is within the range of longs and if not,
+* raises an exception.
+*
+* \param x Real value to cast
+* \param real_name String, the name of the variable being casted to use in the error message
+*/
+long
+safeCastToLong(amrex::Real x, const std::string& real_name);
+
+/**
 * \brief Initialize an amrex::Parser object from a string containing a math expression
 *
 * \param parse_function String to read to initialize the parser.
@@ -265,6 +276,10 @@ int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, T& va
 
             val = safeCastToInt(std::round(parser.compileHost<0>()()), str);
         }
+        else if (std::is_same<T, long>::value) {
+
+            val = safeCastToLong(std::round(parser.compileHost<0>()()), str);
+        }
         else {
             val = static_cast<T>(parser.compileHost<0>()());
         }
@@ -288,6 +303,9 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
             auto parser = makeParser(tmp_str_arr[i], {});
             if (std::is_same<T, int>::value) {
                 val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+            }
+            else if (std::is_same<T, long>::value) {
+                val[i] = safeCastToLong(std::round(parser.compileHost<0>()()), str);
             }
             else {
                 val[i] = static_cast<T>(parser.compileHost<0>()());
@@ -330,6 +348,9 @@ int queryArrWithParser (const amrex::ParmParse& a_pp, char const * const str, st
             if (std::is_same<T, int>::value) {
                 val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
             }
+            else if (std::is_same<T, long>::value) {
+                val[i] = safeCastToLong(std::round(parser.compileHost<0>()()), str);
+            }
             else {
                 val[i] = static_cast<T>(parser.compileHost<0>()());
             }
@@ -361,6 +382,9 @@ void getWithParser (const amrex::ParmParse& a_pp, char const * const str, T& val
     if (std::is_same<T, int>::value) {
         val = safeCastToInt(std::round(parser.compileHost<0>()()), str);
     }
+    else if (std::is_same<T, long>::value) {
+        val = safeCastToLong(std::round(parser.compileHost<0>()()), str);
+    }
     else {
         val = static_cast<T>(parser.compileHost<0>()());
     }
@@ -379,6 +403,9 @@ void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std
         auto parser = makeParser(tmp_str_arr[i], {});
         if (std::is_same<T, int>::value) {
             val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+        }
+        else if (std::is_same<T, long>::value) {
+            val[i] = safeCastToLong(std::round(parser.compileHost<0>()()), str);
         }
         else {
             val[i] = static_cast<T>(parser.compileHost<0>()());
@@ -415,6 +442,9 @@ void getArrWithParser (const amrex::ParmParse& a_pp, char const * const str, std
         auto parser = makeParser(tmp_str_arr[i], {});
         if (std::is_same<T, int>::value) {
             val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+        }
+        else if (std::is_same<T, long>::value) {
+            val[i] = safeCastToLong(std::round(parser.compileHost<0>()()), str);
         }
         else {
             val[i] = static_cast<T>(parser.compileHost<0>()());
