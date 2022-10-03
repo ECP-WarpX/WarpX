@@ -52,18 +52,19 @@ Building the documentation
 --------------------------
 
 To build the documentation on your local computer, you will need to install Doxygen as well as the Python module `breathe`.
-First, change into ``Docs/`` and install the Python requirements:
+First, make sure you are in the root directory of WarpX's source and install the Python requirements:
 
 .. code-block:: sh
 
-    cd Docs/
-    python3 -m pip install -r requirements.txt
+    python3 -m pip install -r Docs/requirements.txt
 
 You will also need Doxygen (macOS: ``brew install doxygen``; Ubuntu: ``sudo apt install doxygen``).
 
 Then, to compile the documentation, use
 
 .. code-block:: sh
+
+    cd Docs/
 
     make html
     # This will first compile the Doxygen documentation (execute doxygen)
