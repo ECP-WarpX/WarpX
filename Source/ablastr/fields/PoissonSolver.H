@@ -161,7 +161,6 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
     // scale rho appropriately; also determine if rho is zero everywhere
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
-        rho[lev]->mult(-1._rt/PhysConst::ep0);
         max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
@@ -226,12 +225,14 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         // one of the axes of the grid, i.e. that only *one* of the
         // components of `beta` is non-negligible. // we use this
 #if defined(WARPX_DIM_RZ)
-        linop.setSigma({0._rt, 1._rt-beta_solver[1]*beta_solver[1]});
+        linop.setSigma({
+            -PhysConst::ep0,
+            -PhysConst::ep0 * (1._rt-beta_solver[1]*beta_solver[1])});
 #else
         linop.setSigma({AMREX_D_DECL(
-            1._rt-beta_solver[0]*beta_solver[0],
-            1._rt-beta_solver[1]*beta_solver[1],
-            1._rt-beta_solver[2]*beta_solver[2])});
+            -PhysConst::ep0 * (1._rt-beta_solver[0]*beta_solver[0]),
+            -PhysConst::ep0 * (1._rt-beta_solver[1]*beta_solver[1]),
+            -PhysConst::ep0 * (1._rt-beta_solver[2]*beta_solver[2]))});
 #endif
 
 #if defined(AMREX_USE_EB)
@@ -243,12 +244,33 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         else
             linop.setEBDirichlet(boundary_handler.getPhiEB(current_time.value()));
 #endif
+
 #else
         // In the absence of EB and RZ: use a more generic solver
         // that can handle beams propagating in any direction
         amrex::MLNodeTensorLaplacian linop( {geom[lev]}, {grids[lev]},
                                      {dmap[lev]}, info );
-        linop.setBeta( beta_solver ); // for the non-axis-aligned solver
+
+#if defined(WARPX_DIM_1D_Z)
+        linop.setSigma({
+            -PhysConst::ep0 * (1._rt-beta_solver[0]*beta_solver[0]), //xx
+        });
+#elif defined(WARPX_DIM_XZ)
+        linop.setSigma({
+            -PhysConst::ep0 * (1._rt-beta_solver[0]*beta_solver[0]), //xx
+            -PhysConst::ep0 * (-beta_solver[0]*beta_solver[1]),      //xy
+            -PhysConst::ep0 * (1._rt-beta_solver[1]*beta_solver[1])  //yy
+        });
+#else
+        linop.setSigma({
+            -PhysConst::ep0 * (1._rt-beta_solver[0]*beta_solver[0]), //xx
+            -PhysConst::ep0 * (-beta_solver[0]*beta_solver[1]),      //xy
+            -PhysConst::ep0 * (-beta_solver[0]*beta_solver[2]),      //xz
+            -PhysConst::ep0 * (1._rt-beta_solver[1]*beta_solver[1]), //yy
+            -PhysConst::ep0 * (1._rt-beta_solver[1]*beta_solver[2]), //yz
+            -PhysConst::ep0 * (1._rt-beta_solver[2]*beta_solver[2])  //zz
+        });
+#endif
 #endif
 
         // Solve the Poisson equation
@@ -317,11 +339,6 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 post_phi_calculation.value()(mlmg, lev);
 
     } // loop over lev(els)
-
-    // Undo the scaling of rho
-    for (int lev=0; lev<=finest_level; lev++) {
-        rho[lev]->mult(-PhysConst::ep0);
-    }
 }
 
 } // namespace ablastr::fields
