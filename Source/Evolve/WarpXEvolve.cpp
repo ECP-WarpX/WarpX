@@ -370,6 +370,9 @@ WarpX::Evolve (int numsteps)
 
         // End loop on time steps
     }
+    // This if statement is needed for PICMI, which allows the Evolve routine to be
+    // called multiple times, otherwise diagnostics will be done at every call,
+    // regardless of the diagnostic period parameter provided in the inputs.
     if (istep[0] >= max_step || cur_time >= stop_time) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
     }
