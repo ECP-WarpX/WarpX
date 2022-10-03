@@ -196,12 +196,33 @@ public:
                 multiplier_ratio = max_N;
             }
 
+#if (defined WARPX_DIM_RZ)
+            amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
+            amrex::ParticleReal * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
+#endif
+
             for (int k = 0; k < max_N; ++k)
             {
                 // c1k : how many times the current particle of species 1 is paired with a particle
                 // of species 2. Same for c2k.
                 const int c1k = (k%NI1 < max_N%NI1) ? c1 + 1: c1;
                 const int c2k = (k%NI2 < max_N%NI2) ? c2 + 1: c2;
+
+#if (defined WARPX_DIM_RZ)
+                /* In RZ geometry, macroparticles can collide with other macroparticles
+                 * in the same *cylindrical* cell. For this reason, collisions between macroparticles
+                 * are actually not local in space. In this case, the underlying assumption is that
+                 * particles within the same cylindrical cell represent a cylindrically-symmetry
+                 * momentum distribution function. Therefore, here, we temporarily rotate the
+                 * momentum of one of the macroparticles in agreement with this cylindrical symmetry.
+                 * (This is technically only valid if we use only the m=0 azimuthal mode in the simulation;
+                 * there is a corresponding assert statement at initialization.) */
+                amrex::ParticleReal const theta = theta2[I2[i2]]-theta1[I1[i1]];
+                amrex::ParticleReal const u1xbuf = u1x[I1[i1]];
+                u1x[I1[i1]] = u1xbuf*std::cos(theta) - u1y[I1[i1]]*std::sin(theta);
+                u1y[I1[i1]] = u1xbuf*std::sin(theta) + u1y[I1[i1]]*std::cos(theta);
+#endif
+
                 SingleNuclearFusionEvent(
                     u1x[ I1[i1] ], u1y[ I1[i1] ], u1z[ I1[i1] ],
                     u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
@@ -211,6 +232,13 @@ public:
                     m_probability_threshold,
                     m_probability_target_value,
                     m_fusion_type, engine);
+
+#if (defined WARPX_DIM_RZ)
+                amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];
+                u1x[I1[i1]] = u1xbuf_new*std::cos(-theta) - u1y[I1[i1]]*std::sin(-theta);
+                u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
+#endif
+
                 p_pair_indices_1[pair_index] = I1[i1];
                 p_pair_indices_2[pair_index] = I2[i2];
                 ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }

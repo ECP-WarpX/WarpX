@@ -43,6 +43,11 @@
 
 using namespace amrex::literals;
 
+namespace
+{
+    constexpr int permission_flag_rwxrxrx = 0755;
+}
+
 BTDiagnostics::BTDiagnostics (int i, std::string name)
     : Diagnostics(i, name)
 {
@@ -107,9 +112,11 @@ void BTDiagnostics::DerivedInitData ()
     // Turn on do_back_transformed_particles in the particle containers so that
     // the tmp_particle_data is allocated and the data of the corresponding species is
     // copied and stored in tmp_particle_data before particles are pushed.
-    for (auto const& species : m_output_species_names){
+    if (m_do_back_transformed_particles) {
         mpc.SetDoBackTransformedParticles(m_do_back_transformed_particles);
-        mpc.SetDoBackTransformedParticles(species, m_do_back_transformed_particles);
+        for (auto const& species : m_output_species_names){
+            mpc.SetDoBackTransformedParticles(species, m_do_back_transformed_particles);
+        }
     }
     m_particles_buffer.resize(m_num_buffers);
     m_totalParticles_flushed_already.resize(m_num_buffers);
@@ -154,8 +161,18 @@ BTDiagnostics::ReadParameters ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_back_transformed_fields, " fields must be turned on for the new back-transformed diagnostics");
     if (m_do_back_transformed_fields == false) m_varnames.clear();
 
-    getWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
-    m_num_buffers = m_num_snapshots_lab;
+
+    std::vector<std::string> intervals_string_vec = {"0"};
+    bool const num_snapshots_specified = queryWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
+    bool const intervals_specified = pp_diag_name.queryarr("intervals", intervals_string_vec);
+    if (num_snapshots_specified)
+    {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!intervals_specified,
+            "For back-transformed diagnostics, user should specify either num_snapshots_lab or intervals, not both");
+        intervals_string_vec = {":" + std::to_string(m_num_snapshots_lab-1)};
+    }
+    m_intervals = BTDIntervalsParser(intervals_string_vec);
+    m_num_buffers = m_intervals.NumSnapshots();
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
     bool snapshot_interval_is_specified = false;
@@ -234,7 +251,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     auto & warpx = WarpX::GetInstance();
     // Lab-frame time for the i^th snapshot
     amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
-    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab
+    m_t_lab.at(i_buffer) = m_intervals.GetBTDIteration(i_buffer) * m_dt_snapshots_lab
         + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
 
     // Define buffer domain in boosted frame at level, lev, with user-defined lo and hi
@@ -296,7 +313,6 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
                                  / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
     amrex::Real zmax_buffer_lab = diag_dom.hi(m_moving_window_dir)
                                  / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-
 
 
     // Initialize buffer counter and z-positions of the  i^th snapshot in
@@ -367,6 +383,11 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
                                   zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
     m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
                                   zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+    // To prevent round off errors, moving the snapshot domain by half a cell so that all the slices
+    // lie close to the cell-centers in the lab-frame grid instead of on the edge of cell.
+    amrex::Real new_hi = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir)
+                       + 0.5_rt * dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+    m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,new_hi);
     amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
                          num_z_cells_in_snapshot *
                          dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
@@ -762,7 +783,6 @@ BTDiagnostics::Flush (int i_buffer)
             m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], buffer_ba);
         }
     }
-
     RedistributeParticleBuffer(i_buffer);
 
     // Reset buffer box and particle box array
@@ -841,16 +861,16 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
         // Create directory only when the first buffer is flushed out.
         if (m_buffer_flush_counter[i_snapshot] == 0 ) {
             // Create Level_0 directory to store all Cell_D and Cell_H files
-            if (!amrex::UtilCreateDirectory(snapshot_Level0_path, 0755) )
+            if (!amrex::UtilCreateDirectory(snapshot_Level0_path, permission_flag_rwxrxrx) )
                 amrex::CreateDirectoryFailed(snapshot_Level0_path);
             // Create directory for each species selected for diagnostic
             for (int i = 0; i < m_particles_buffer[i_snapshot].size(); ++i) {
                 std::string snapshot_species_path = snapshot_path + "/" + m_output_species_names[i];
-                if ( !amrex::UtilCreateDirectory(snapshot_species_path, 0755))
+                if ( !amrex::UtilCreateDirectory(snapshot_species_path, permission_flag_rwxrxrx))
                     amrex::CreateDirectoryFailed(snapshot_species_path);
                 // Create Level_0 directory for particles to store Particle_H and DATA files
                 std::string species_Level0_path = snapshot_species_path + "/Level_0";
-                if ( !amrex::UtilCreateDirectory(species_Level0_path, 0755))
+                if ( !amrex::UtilCreateDirectory(species_Level0_path, permission_flag_rwxrxrx))
                     amrex::CreateDirectoryFailed(species_Level0_path);
             }
             std::string buffer_WarpXHeader_path = recent_Buffer_filepath + "/WarpXHeader";
@@ -1182,7 +1202,7 @@ void
 BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
 {
     for (int isp = 0; isp < m_totalParticles_flushed_already[i_buffer].size(); ++isp) {
-        m_totalParticles_flushed_already[i_buffer][isp] += m_totalParticles_in_buffer[i_buffer][isp];
+        m_totalParticles_flushed_already[i_buffer][isp] += m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles();
     }
 }
 

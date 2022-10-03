@@ -1,6 +1,7 @@
 # Overview
 
 This explains how to generate the documentation for Warpx, and contribute to it.
+More information can be found in Docs/source/developers/documentation.rst.
 
 ## Generating the documentation
 
@@ -8,7 +9,7 @@ This explains how to generate the documentation for Warpx, and contribute to it.
 
 Install the Python requirements for compiling the documentation:
 ```
-python3 -m pip install sphinx sphinx_rtd_theme
+python3 -m pip install -r Docs/requirements.txt
 ```
 
 ### Compiling the documentation

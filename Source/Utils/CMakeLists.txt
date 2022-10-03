@@ -13,3 +13,5 @@ target_sources(WarpX
     WarpXUtil.cpp
     WarpXVersion.cpp
 )
+
+add_subdirectory(Logo)

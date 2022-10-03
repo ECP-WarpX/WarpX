@@ -71,12 +71,12 @@ class CallbackFunctions(object):
 
     Note that for functions passed in that are methods of a class instance,
     a full reference of the instance is saved. This extra reference means
-    that the object will not actually deleted if the user deletes the
+    that the object will not actually be deleted if the user deletes the
     original reference. This is good since the user does not need to keep
     the reference to the object (for example it can be created using a local
     variable in a function). It may be bad if the user thinks an object was
     deleted, but it actually isn't since it had (unkown to the user)
-    installed a method in one of the call back lists
+    installed a method in one of the call back lists.
     """
 
     def __init__(self,name=None,lcallonce=0):

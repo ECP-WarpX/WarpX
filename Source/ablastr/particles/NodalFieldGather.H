@@ -1,19 +1,30 @@
-/* Copyright 2021 Modern Electron
+/* Copyright 2019-2022 Modern Electron, Axel Huebl, Remi Lehe
  *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef SCALARFIELDGATHER_H_
-#define SCALARFIELDGATHER_H_
+#ifndef ABLASTR_NODALFIELDGATHER_H_
+#define ABLASTR_NODALFIELDGATHER_H_
 
+#include <AMReX_Array.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
+#include <AMReX_REAL.H>
+
+
+namespace ablastr::particles
+{
 /**
  * \brief Compute weight of each surrounding node in interpolating a nodal field
  *        to the given coordinates.
  *
+ * This currently only does linear order.
+ *
  * \param xp,yp,zp Particle position coordinates
  * \param plo      Index lower bounds of domain.
- * \param dxi      3D cell spacing
+ * \param dxi      inverse 3D cell spacing
  * \param i,j,k    Variables to store indices of position on grid
  * \param W        2D array of weights to store each neighbouring node
  */
@@ -21,8 +32,8 @@ AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void compute_weights_nodal (const amrex::ParticleReal xp,
                             const amrex::ParticleReal yp,
                             const amrex::ParticleReal zp,
-                            amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
-                            amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi,
+                            amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& plo,
+                            amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& dxi,
                             int& i, int& j, int& k, amrex::Real W[AMREX_SPACEDIM][2]) noexcept
 {
     using namespace amrex::literals;
@@ -110,7 +121,7 @@ amrex::Real interp_field_nodal (int i, int j, int k,
  *
  * \param xp,yp,zp                Particle position coordinates
  * \param scalar_field            Array4 of the nodal scalar field, either full array or tile.
- * \param dxi                     3D cell spacing
+ * \param dxi                     inverse 3D cell spacing
  * \param lo                      Index lower bounds of domain.
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -128,4 +139,41 @@ amrex::Real doGatherScalarFieldNodal (const amrex::ParticleReal xp,
 
     return interp_field_nodal(ii, jj, kk, W, scalar_field);
 }
-#endif // SCALARFIELDGATHER_H_
+
+/**
+ * \brief Vector field gather for a single particle. The field has to be defined
+ *        at the cell nodes (see https://amrex-codes.github.io/amrex/docs_html/Basics.html#id2)
+ *
+ * \param xp,yp,zp Particle position coordinates
+ * \param vector_field_x,vector_field_y,vector_field_z Array4 of nodal scalar fields, either full array or tile.
+ * \param dxi inverse 3D cell spacing
+ * \param lo  Index lower bounds of domain.
+ */
+AMREX_GPU_HOST_DEVICE AMREX_INLINE
+amrex::GpuArray<amrex::Real, 3>
+doGatherVectorFieldNodal (const amrex::ParticleReal xp,
+                          const amrex::ParticleReal yp,
+                          const amrex::ParticleReal zp,
+                          amrex::Array4<const amrex::Real> const& vector_field_x,
+                          amrex::Array4<const amrex::Real> const& vector_field_y,
+                          amrex::Array4<const amrex::Real> const& vector_field_z,
+                          amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& dxi,
+                          amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& lo) noexcept
+{
+    // first find the weight of surrounding nodes to use during interpolation
+    int ii, jj, kk;
+    amrex::Real W[AMREX_SPACEDIM][2];
+    compute_weights_nodal(xp, yp, zp, lo, dxi, ii, jj, kk, W);
+
+    amrex::GpuArray<amrex::Real, 3> const field_interp = {
+        interp_field_nodal(ii, jj, kk, W, vector_field_x),
+        interp_field_nodal(ii, jj, kk, W, vector_field_y),
+        interp_field_nodal(ii, jj, kk, W, vector_field_z)
+    };
+
+    return field_interp;
+}
+
+} // namespace ablastr::particles
+
+#endif // ABLASTR_NODALFIELDGATHER_H_

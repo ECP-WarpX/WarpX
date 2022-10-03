@@ -62,8 +62,10 @@ extern "C" {
                              amrex::ParticleReal const * vx,
                              amrex::ParticleReal const * vy,
                              amrex::ParticleReal const * vz,
-                             int nattr,
-                             amrex::ParticleReal const * attr,
+                             const int nattr_real,
+                             amrex::ParticleReal const * attr_real,
+                             const int nattr_int,
+                             int const * attr_int,
                              int uniqueparticles);
 
     void warpx_ConvertLabParamsToBoost();
