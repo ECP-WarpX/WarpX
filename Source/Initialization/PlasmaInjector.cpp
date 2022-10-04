@@ -222,6 +222,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         add_multiple_particles = true;
         return;
     } else if (injection_style == "gaussian_beam") {
+
         utils::parser::getWithParser(pp_species_name, "x_m", x_m);
         utils::parser::getWithParser(pp_species_name, "y_m", y_m);
         utils::parser::getWithParser(pp_species_name, "z_m", z_m);
@@ -232,7 +233,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         utils::parser::queryWithParser(pp_species_name, "y_cut", y_cut);
         utils::parser::queryWithParser(pp_species_name, "z_cut", z_cut);
         utils::parser::getWithParser(pp_species_name, "q_tot", q_tot);
-        pp_species_name.get("npart", npart);
+        utils::parser::getWithParser(pp_species_name, "npart", npart);
         pp_species_name.query("do_symmetrize", do_symmetrize);
         gaussian_beam = true;
         parseMomentum(pp_species_name);

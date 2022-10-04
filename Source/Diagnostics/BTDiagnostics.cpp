@@ -40,6 +40,7 @@
 #include <cmath>
 #include <cstdio>
 #include <memory>
+#include <string>
 #include <vector>
 
 using namespace amrex::literals;
@@ -585,7 +586,14 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                         m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
                         m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir),
-                        "z-slice in lab-frame is outside the buffer domain physical extent. ");
+                        "z-slice in lab-frame (" +
+                        std::to_string(m_current_z_lab[i_buffer]) +
+                        ") is outside the buffer domain physical extent (" +
+                        std::to_string(m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir)) +
+                        " to " +
+                        std::to_string(m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir)) +
+                        ")."
+                    );
                 }
                 m_all_field_functors[lev][i]->PrepareFunctorData (
                                              i_buffer, ZSliceInDomain,

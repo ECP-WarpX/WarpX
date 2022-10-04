@@ -335,6 +335,10 @@ For post-processing, most users use Python via OLCFs's `Jupyter service <https:/
 We usually just install our software on-the-fly on Summit.
 When starting up a post-processing session, run this in your first cells:
 
+.. note::
+
+   The following software packages are installed only into a temporary directory.
+
 .. code-block:: bash
 
    # work-around for OLCFHELP-4242
@@ -344,6 +348,6 @@ When starting up a post-processing session, run this in your first cells:
    !conda install -c conda-forge -y mamba
 
    # next cell: the software you want
-   !mamba install -c conda-forge -y openpmd-api openpmd-viewer ipympl ipywidgets fast-histogram yt
+   !mamba install --quiet -c conda-forge -y openpmd-api openpmd-viewer ipympl ipywidgets fast-histogram yt
 
    # restart notebook

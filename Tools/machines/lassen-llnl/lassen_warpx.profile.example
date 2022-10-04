@@ -13,7 +13,7 @@ module load fftw/3.3.8
 module load boost/1.70.0
 
 # optional: for openPMD support
-module load hdf5-parallel/1.10.4
+module load hdf5-parallel/1.12.2
 export CMAKE_PREFIX_PATH=$HOME/sw/lassen/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=$HOME/sw/lassen/adios2-2.7.1:$CMAKE_PREFIX_PATH
 export LD_LIBRARY_PATH=$HOME/sw/lassen/c-blosc-1.21.1/lib64:$LD_LIBRARY_PATH

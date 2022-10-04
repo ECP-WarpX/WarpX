@@ -14,7 +14,7 @@ python3 -m pip install -r Docs/requirements.txt
 
 ### Compiling the documentation
 
-`cd` into this directory and type
+`cd` into the `Docs/` directory and type
 ```
 make html
 ```
