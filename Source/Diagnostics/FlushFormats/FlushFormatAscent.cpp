@@ -19,22 +19,27 @@ FlushFormatAscent::WriteToFile (
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,
     const bool /*use_pinned_pc*/,
-    bool isBTD, int snapshotID, const amrex::Geometry& /*full_BTD_snapshot*/,
-    bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
+    bool isBTD, int snapshotID, int bufferID, int numBuffers,
+    const amrex::Geometry& /*full_BTD_snapshot*/,
+    bool isLastBTDFlush, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
 {
 #ifdef AMREX_USE_ASCENT
     WARPX_PROFILE("FlushFormatAscent::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
-    int file_iter;
     if (!isBTD)
     {
-      file_iter = iteration[0];
+      const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
+      amrex::Print() << Utils::TextMsg::Info("Writing Ascent file " + filename);
     } else
     {
-      file_iter = snapshotID;
+      const int min_digits = 0;
+      const std::string& filename = amrex::Concatenate(prefix, snapshotID, min_digits);
+      amrex::Print() << Utils::TextMsg::Info("Writing buffer " + std::to_string(bufferID+1) + " of " + std::to_string(numBuffers) + " to Ascent BTD file " + filename);
+      if (isLastBTDFlush)
+      {
+        amrex::Print() << Utils::TextMsg::Info("Finished writing Ascent BTD file " + filename);
+      }
     }
-    const std::string& filename = amrex::Concatenate(prefix, file_iter, file_min_digits);
-    amrex::Print() << Utils::TextMsg::Info("Writing Ascent file " + filename);
 
     // wrap mesh data
     WARPX_PROFILE_VAR("FlushFormatAscent::WriteToFile::MultiLevelToBlueprint", prof_ascent_mesh_blueprint);
@@ -69,7 +74,8 @@ FlushFormatAscent::WriteToFile (
 
 #else
     amrex::ignore_unused(varnames, mf, geom, iteration, time,
-        particle_diags, nlev, file_min_digits, isBTD, snapshotID);
+        particle_diags, nlev, file_min_digits, isBTD, 
+        snapshotID, bufferID, numBuffers, isLastBTDFlush);
 #endif // AMREX_USE_ASCENT
     amrex::ignore_unused(prefix, plot_raw_fields, plot_raw_fields_guards);
 }
