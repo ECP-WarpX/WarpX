@@ -67,8 +67,8 @@ FlushFormatSensei::WriteToFile (
         totalParticlesFlushedAlready);
 
 #ifndef AMREX_USE_SENSEI_INSITU
-    amrex::ignore_unused(varnames, mf, iteration, time, particle_diags, 
-                         isBTD, snapshotID, bufferID, numBuffers, 
+    amrex::ignore_unused(varnames, mf, iteration, time, particle_diags,
+                         isBTD, snapshotID, bufferID, numBuffers,
                          full_BTD_snapshot, isLastBTDFlush);
 #else
     WARPX_PROFILE("FlushFormatSensei::WriteToFile()");
