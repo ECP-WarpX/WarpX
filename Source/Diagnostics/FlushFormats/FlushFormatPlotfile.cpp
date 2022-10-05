@@ -62,21 +62,28 @@ FlushFormatPlotfile::WriteToFile (
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,
     const bool /*use_pinned_pc*/,
-    bool isBTD, int snapshotID, const amrex::Geometry& /*full_BTD_snapshot*/,
-    bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
+    bool isBTD, int snapshotID,  int bufferID, int numBuffers,
+    const amrex::Geometry& /*full_BTD_snapshot*/,
+    bool isLastBTDFlush, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
 {
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
-    int file_iter;
+    std::string filename;
     if (!isBTD)
     {
-      file_iter = iteration[0];
+      filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
+      amrex::Print() << Utils::TextMsg::Info("Writing plotfile " + filename);
     } else
     {
-      file_iter = snapshotID;
+      const int min_digits = 0;
+      filename = amrex::Concatenate(prefix, snapshotID, min_digits);
+      amrex::Print() << Utils::TextMsg::Info("Writing buffer " + std::to_string(bufferID+1) + " of " + std::to_string(numBuffers)
+                        +  " to BTD plotfile " + filename);
+      if (isLastBTDFlush)
+      {
+        amrex::Print() << Utils::TextMsg::Info("Finished writing BTD plotfile " + filename);
+      }
     }
-    const std::string& filename = amrex::Concatenate(prefix, file_iter, file_min_digits);
-    amrex::Print() << Utils::TextMsg::Info("Writing plotfile " + filename);
 
     Vector<std::string> rfs;
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();

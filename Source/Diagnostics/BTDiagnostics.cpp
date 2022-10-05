@@ -205,7 +205,6 @@ BTDiagnostics::ReadParameters ()
     bool particle_fields_to_plot_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!particle_fields_to_plot_specified, "particle_fields_to_plot is currently not supported for BackTransformed Diagnostics");
 
-
 }
 
 bool
@@ -810,7 +809,8 @@ BTDiagnostics::Flush (int i_buffer)
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards,
-        use_pinned_pc, isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush,
+        use_pinned_pc, isBTD, i_buffer, m_buffer_flush_counter[i_buffer], 
+        m_max_buffer_multifabs[i_buffer], m_geom_snapshot[i_buffer][0], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
 
     for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
