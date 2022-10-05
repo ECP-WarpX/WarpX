@@ -31,7 +31,7 @@ package and setting ``USE_PSATD=TRUE``.
 
            export FFTW_HOME=/usr/
 
-      - Download and build the blaspp and lapackpp packages. These can be obtained from bitbucket.
+      - Download and build the blaspp and lapackpp packages. These can be obtained from GitHub.
         ::
 
            git clone https://github.com/icl-utk-edu/blaspp.git
