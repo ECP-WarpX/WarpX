@@ -40,7 +40,7 @@ export CEI_TMP="/tmp/cei"
 # BLAS++ & LAPACK++
 cmake-easyinstall \
   --prefix=/usr/local                      \
-  git+https://bitbucket.org/icl/blaspp.git \
+  git+https://github.com/icl-utk-edu/blaspp.git \
   -Duse_openmp=OFF                         \
   -Dbuild_tests=OFF                        \
   -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
@@ -48,7 +48,7 @@ cmake-easyinstall \
 
 cmake-easyinstall \
   --prefix=/usr/local                        \
-  git+https://bitbucket.org/icl/lapackpp.git \
+  git+https://github.com/icl-utk-edu/lapackpp.git \
   -Duse_cmake_find_lapack=ON                 \
   -Dbuild_tests=OFF                          \
   -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
