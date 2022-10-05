@@ -74,7 +74,7 @@ FlushFormatAscent::WriteToFile (
 
 #else
     amrex::ignore_unused(varnames, mf, geom, iteration, time,
-        particle_diags, nlev, file_min_digits, isBTD, 
+        particle_diags, nlev, file_min_digits, isBTD,
         snapshotID, bufferID, numBuffers, isLastBTDFlush);
 #endif // AMREX_USE_ASCENT
     amrex::ignore_unused(prefix, plot_raw_fields, plot_raw_fields_guards);
