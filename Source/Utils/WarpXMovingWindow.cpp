@@ -429,7 +429,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         })
 
         if (cost &&
-            mfi.index() < cost.size() && //Workaround to fix invalid memory accesses when mf is a PML
+            mfi.index() < cost->size() && //Workaround to fix invalid memory accesses when mf is a PML
             WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
