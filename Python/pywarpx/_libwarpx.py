@@ -143,13 +143,13 @@ class LibWarpX():
         # our particle data type, depends on _ParticleReal_size
         _p_struct = (
             [(d, self._numpy_particlereal_dtype) for d in 'xyz'[:self.dim]]
-            + [('id', 'i4'), ('cpu', 'i4')]
+            + [('idcpu', 'u8')]
         )
         self._p_dtype = np.dtype(_p_struct, align=True)
 
         _numpy_to_ctypes = {}
         _numpy_to_ctypes[self._numpy_particlereal_dtype] = c_particlereal
-        _numpy_to_ctypes['i4'] = ctypes.c_int
+        _numpy_to_ctypes['u8'] = ctypes.c_uint64
 
         class Particle(ctypes.Structure):
             _fields_ = [(v[0], _numpy_to_ctypes[v[1]]) for v in _p_struct]
@@ -727,7 +727,7 @@ class LibWarpX():
         '''
         This returns a list of numpy arrays containing the particle struct data
         on each tile for this process. The particle data is represented as a structured
-        numpy array and contains the particle 'x', 'y', 'z', 'id', and 'cpu'.
+        numpy array and contains the particle 'x', 'y', 'z', and 'idcpu'.
 
         The data for the numpy arrays are not copied, but share the underlying
         memory buffer with WarpX. The numpy arrays are fully writeable.
@@ -882,22 +882,24 @@ class LibWarpX():
     def get_particle_id(self, species_name, level=0):
         '''
 
-        Return a list of numpy arrays containing the particle 'id'
-        positions on each tile.
+        Return a list of numpy arrays containing the particle id
+        numbers on each tile.
 
         '''
+        from .amrex_particle_id_utils import get_id
         structs = self.get_particle_structs(species_name, level)
-        return [struct['id'] for struct in structs]
+        return [get_id(struct['idcpu']) for struct in structs]
 
     def get_particle_cpu(self, species_name, level=0):
         '''
 
-        Return a list of numpy arrays containing the particle 'cpu'
-        positions on each tile.
+        Return a list of numpy arrays containing the particle cpu
+        numbers on each tile.
 
         '''
+        from .amrex_particle_id_utils import get_cpu
         structs = self.get_particle_structs(species_name, level)
-        return [struct['cpu'] for struct in structs]
+        return [get_cpu(struct['idcpu']) for struct in structs]
 
     def get_particle_weight(self, species_name, level=0):
         '''
@@ -1048,7 +1050,7 @@ class LibWarpX():
         This returns a list of numpy arrays containing the particle struct data
         for a species that has been scraped by a specific simulation boundary. The
         particle data is represented as a structured numpy array and contains the
-        particle 'x', 'y', 'z', 'id', and 'cpu'.
+        particle 'x', 'y', 'z', and 'idcpu'.
 
         The data for the numpy arrays are not copied, but share the underlying
         memory buffer with WarpX. The numpy arrays are fully writeable.

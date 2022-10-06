@@ -17,6 +17,7 @@ import os
 import sys
 
 from setuptools import setup
+from setuptools import Extension
 
 argparser = argparse.ArgumentParser(add_help=False)
 argparser.add_argument('--with-libwarpx', type=str, default=None, help='Install libwarpx with the given value as DIM. This option is only used by the GNU makefile build system.')
@@ -53,6 +54,8 @@ elif args.with_lib_dir or PYWARPX_LIB_DIR:
 else:
     package_data = {}
 
+import numpy as np
+
 setup(name = 'pywarpx',
       version = '22.10',
       packages = ['pywarpx'],
@@ -61,5 +64,12 @@ setup(name = 'pywarpx',
       package_data = package_data,
       install_requires = ['numpy', 'picmistandard==0.0.20', 'periodictable'],
       python_requires = '>=3.7',
+      ext_modules=[
+          Extension(
+              'pywarpx/amrex_particle_id_utils',
+              sources=['pywarpx/amrex_particle_id_utils.cpp'],
+              include_dirs=[np.get_include()]
+          ),
+      ],
       zip_safe=False
 )
