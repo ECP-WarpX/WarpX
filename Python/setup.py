@@ -16,8 +16,7 @@ import argparse
 import os
 import sys
 
-from setuptools import setup
-from setuptools import Extension
+from setuptools import Extension, setup
 
 argparser = argparse.ArgumentParser(add_help=False)
 argparser.add_argument('--with-libwarpx', type=str, default=None, help='Install libwarpx with the given value as DIM. This option is only used by the GNU makefile build system.')

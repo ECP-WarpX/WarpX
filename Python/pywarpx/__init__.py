@@ -19,7 +19,7 @@ from .PSATD import psatd
 from .Particles import electrons, newspecies, particles, positrons, protons
 from .WarpX import warpx
 from ._libwarpx import libwarpx
-from .amrex_particle_id_utils import get_id, get_cpu
+from .amrex_particle_id_utils import get_cpu, get_id
 
 # This is a circulor import and must happen after the import of libwarpx
 from . import picmi # isort:skip
