@@ -146,7 +146,6 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
     // This is not a backtransform diagnostics
     bool const isBTD = false;
     bool const isLastBTD = false;
-    int const snapshotID = 0;
     int const bufferID = 0;
     int const numBTDBuffers = 0;
     // The data being written out is saved in a pinned particle container
