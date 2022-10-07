@@ -144,15 +144,15 @@ void BTDiagnostics::DerivedInitData ()
     // this occurs at time t=t_sn, position  z=zmax + c t_sn
     // the boosted time of this space time pair is
     // gamma (t_sn + beta * (xmax + c t_sn)/c)
-    // 
+    //
     // if j = final snapshot starting step, then we want to solve
     // j dt_boosted >= gamma (t_sn + beta * (xmax + c t_sn)/c)
     int final_snapshot_starting_step = ceil(final_snapshot_iteration / warpx.gamma_boost / (1+warpx.beta_boost) * m_dt_snapshots_lab / dt_boosted_frame);
     int final_snapshot_fill_iteration = final_snapshot_starting_step + num_buffers * m_buffer_size -1;
     if (final_snapshot_fill_iteration > warpx.maxStep()) {
-        std::string warn_string = 
+        std::string warn_string =
             "It looks like this simulation might not run long enough to fill all BTD snapshots.\n"
-            "Final iteration: " + std::to_string(warpx.maxStep()) + "\n" 
+            "Final iteration: " + std::to_string(warpx.maxStep()) + "\n"
             "Last BTD snapshot fills around step: " + std::to_string(final_snapshot_fill_iteration);
         ablastr::warn_manager::WMRecordWarning(
             "Final time step", warn_string,

@@ -191,7 +191,7 @@ public:
 
     /**
      * @brief Return the final BTD iteration
-     * 
+     *
      */
     int GetFinalIteration() { return m_btd_iterations.back(); }
 
