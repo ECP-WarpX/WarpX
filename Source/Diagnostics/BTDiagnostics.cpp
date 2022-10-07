@@ -22,6 +22,8 @@
 #include "WarpX.H"
 
 #include <ablastr/utils/Communication.H>
+#include <ablastr/utils/SignalHandling.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -123,6 +125,39 @@ void BTDiagnostics::DerivedInitData ()
     m_particles_buffer.resize(m_num_buffers);
     m_totalParticles_flushed_already.resize(m_num_buffers);
     m_totalParticles_in_buffer.resize(m_num_buffers);
+
+// check that simulation can fill all BTD snapshots
+    int lev = 0;
+    double dt_boosted_frame = warpx.getdt(lev);
+    int moving_dir = warpx.moving_window_dir;
+    double Lz_lab = warpx.Geom(lev).ProbLength(moving_dir) / warpx.gamma_boost / (1+warpx.beta_boost);
+    int ref_ratio = 1;
+    double dz_snapshot_grid = dz_lab(dt_boosted_frame, ref_ratio);
+    // Need enough buffers so the snapshot length is longer than the lab frame length
+    // num_buffers * m_buffer_size * dz_snapshot_grid >= Lz
+    int num_buffers = ceil(Lz_lab / m_buffer_size / dz_snapshot_grid);
+    const int final_snapshot_iteration =  m_intervals.GetFinalIteration();
+
+    // the final snapshot starts filling when the moving window intersects the final snapshot
+    // time of final snapshot : t_sn = t0 + i dt_snapshot
+    // t0 : time of first BTD snapshot = zmax / c  * beta / (1-beta)
+    // this occurs at time t=t_sn, position  z=zmax + c t_sn
+    // the boosted time of this space time pair is
+    // gamma (t_sn + beta * (xmax + c t_sn)/c)
+    // 
+    // if j = final snapshot starting step, then we want to solve
+    // j dt_boosted >= gamma (t_sn + beta * (xmax + c t_sn)/c)
+    int final_snapshot_starting_step = ceil(final_snapshot_iteration / warpx.gamma_boost / (1+warpx.beta_boost) * m_dt_snapshots_lab / dt_boosted_frame);
+    int final_snapshot_fill_iteration = final_snapshot_starting_step + num_buffers * m_buffer_size -1;
+    if (final_snapshot_fill_iteration > warpx.maxStep()) {
+        std::string warn_string = 
+            "It looks like this simulation might not run long enough to fill all BTD snapshots.\n"
+            "Final iteration: " + std::to_string(warpx.maxStep()) + "\n" 
+            "Last BTD snapshot fills around step: " + std::to_string(final_snapshot_fill_iteration);
+        ablastr::warn_manager::WMRecordWarning(
+            "Final time step", warn_string,
+            ablastr::warn_manager::WarnPriority::low);
+    }
 }
 
 void
