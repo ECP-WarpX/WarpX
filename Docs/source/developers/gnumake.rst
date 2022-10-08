@@ -66,6 +66,7 @@ options are:
     * ``MPI_THREAD_MULTIPLE=TRUE`` or ``FALSE``: Whether to initialize MPI with thread multiple support. Required to use asynchronous IO with more than ``amrex.async_out_nfiles`` (by default, 64) MPI tasks.
       Please see :ref:`data formats <dataanalysis-formats>` for more information.
     * ``PRECISION=FLOAT USE_SINGLE_PRECISION_PARTICLES=TRUE``: Switch from default double precision to single precision (experimental).
+    * ``EXTRA_PARSER_ARGS=0`` or other positive integer: Maximum number of user-defined particle attributes to use in some diagnostics parser functions
 
 For a description of these different options, see the `corresponding page <https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html>`__ in the AMReX documentation.
 

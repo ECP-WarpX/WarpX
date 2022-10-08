@@ -29,12 +29,12 @@ ParticleReductionFunctor::ParticleReductionFunctor (const amrex::MultiFab* mf_sr
     // Allocate and compile a parser based on the input string fn_str
     m_map_fn_parser = std::make_unique<amrex::Parser>(makeParser(
                 fn_str, {"x", "y", "z", "ux", "uy", "uz"}));
-    m_map_fn = m_map_fn_parser->compile<6>();
+    m_map_fn = m_map_fn_parser->compile<m_nvars_parser>();
     // Do the same for filter function, if it exists
     if (m_do_filter) {
         m_filter_fn_parser = std::make_unique<amrex::Parser>(makeParser(
                filter_str, {"x", "y", "z", "ux", "uy", "uz"}));
-        m_filter_fn = m_filter_fn_parser->compile<6>();
+        m_filter_fn = m_filter_fn_parser->compile<m_nvars_parser>();
     }
 }
 
@@ -61,10 +61,15 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& plo,
                 amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> const& dxi)
             {
+                // Data container to pass to parsers. Order: x, y, z, ux, uy, uz, (optional: user-defined particle attributes)
+                amrex::GpuArray<amrex::ParticleReal, m_nvars_parser> parser_data;
                 // Get position in WarpX convention to use in parser. Will be different from
                 // p.pos() for 1D and 2D simulations.
                 amrex::ParticleReal xw = 0._rt, yw = 0._rt, zw = 0._rt;
                 get_particle_position(p, xw, yw, zw);
+                parser_data[0] = xw;
+                parser_data[1] = yw;
+                parser_data[2] = zw;
 
                 // Get position in AMReX convention to calculate corresponding index.
                 // Ideally this will be replaced with the AMReX NGP interpolator
@@ -86,12 +91,12 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
 #endif
 
                 // Fix dimensions since parser assumes u = gamma * v / c
-                amrex::ParticleReal ux = p.rdata(PIdx::ux) / PhysConst::c;
-                amrex::ParticleReal uy = p.rdata(PIdx::uy) / PhysConst::c;
-                amrex::ParticleReal uz = p.rdata(PIdx::uz) / PhysConst::c;
+                parser_data[3] = p.rdata(PIdx::ux) / PhysConst::c;
+                parser_data[4] = p.rdata(PIdx::uy) / PhysConst::c;
+                parser_data[5] = p.rdata(PIdx::uz) / PhysConst::c;
                 amrex::Real value;
-                if ((do_filter) && (!filter_fn(xw, yw, zw, ux, uy, uz))) value = 0._rt;
-                else value = map_fn(xw, yw, zw, ux, uy, uz);
+                if ((do_filter) && (!filter_fn(parser_data))) value = 0._rt;
+                else value = map_fn(parser_data);
                 amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), (amrex::Real)(p.rdata(PIdx::w) * value));
             });
     if (m_do_average) {

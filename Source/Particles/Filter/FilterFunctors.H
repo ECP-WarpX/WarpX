@@ -7,11 +7,13 @@
 #ifndef FILTERFUNCTORS_H
 #define FILTERFUNCTORS_H
 
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
+#include <AMReX_Array.H>
 #include <AMReX_Gpu.H>
 #include <AMReX_Parser.H>
 #include <AMReX_Random.H>
@@ -93,10 +95,10 @@ struct ParserFilter
 {
     /** constructor
      * \param a_is_active whether the test is active
-     * \param a_filter_parser parser taking t, x, y, z, ux, uy, and uz, and returning a boolean for selected particle
+     * \param a_filter_parser parser taking t, x, y, z, ux, uy, and uz, plus EXTRA_PARSER_ARGS user-defined particle attributes and returning a boolean for selected particle
      * \param a_mass mass of the particle species
      */
-    ParserFilter(bool a_is_active, amrex::ParserExecutor<7> const& a_filter_parser,
+    ParserFilter(bool a_is_active, amrex::ParserExecutor<ParticleDiag::m_nvars> const& a_filter_parser,
                  amrex::Real a_mass)
         : m_is_active(a_is_active), m_function_partparser(a_filter_parser), m_mass(a_mass)
     {
@@ -113,8 +115,16 @@ struct ParserFilter
     bool operator () (const SuperParticleType& p, const amrex::RandomEngine&) const noexcept
     {
         if ( !m_is_active ) return 1;
+        // Container to store parser args. Order: t, x, y, z, ux, uy, ux, (optional: user-defined particle attributes)
+        amrex::GpuArray<amrex::Real, ParticleDiag::m_nvars> parser_data;
+        parser_data[0] = m_t;
+        // Compute and pack position
         amrex::ParticleReal x, y, z;
         get_particle_position(p, x, y, z);
+        parser_data[1] = x;
+        parser_data[2] = y;
+        parser_data[3] = z;
+        // Compute and pack momenta
         amrex::Real ux = p.rdata(PIdx::ux)/PhysConst::c;
         amrex::Real uy = p.rdata(PIdx::uy)/PhysConst::c;
         amrex::Real uz = p.rdata(PIdx::uz)/PhysConst::c;
@@ -125,15 +135,19 @@ struct ParserFilter
             uz /= m_mass;
         }
         // ux, uy, uz are now in beta*gamma
-        if ( m_function_partparser(m_t,x,y,z,ux,uy,uz)) return 1;
+        parser_data[4] = ux;
+        parser_data[5] = uy;
+        parser_data[6] = uz;
+
+        if ( m_function_partparser(parser_data) ) return 1;
         else return 0;
     }
 private:
     /** Whether this diagnostics is activated. Select all particles if false */
     const bool m_is_active;
 public:
-    /** Parser function with 7 input variables, t,x,y,z,ux,uy,uz */
-    amrex::ParserExecutor<7> const m_function_partparser;
+    /** Parser function with m_nvars_parser input variables. Arguments: t,x,y,z,ux,uy,uz plus user-defined attributes*/
+    amrex::ParserExecutor<ParticleDiag::m_nvars> const m_function_partparser;
     /** Store physical time. */
     amrex::ParticleReal m_t;
     /** Mass of particle species */

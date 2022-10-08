@@ -209,19 +209,27 @@ void ParticleHistogram::ComputeDiags (int step)
                 amrex::ParallelFor(np,
                    [=] AMREX_GPU_DEVICE(int i)
                 {
+                    // Data to pass to parsers, order: t, x, y, z, ux, uy, uz, (optional: user-defined particle attributes)
+                    amrex::GpuArray<amrex::Real, m_nvars> parser_data;
                     amrex::ParticleReal x, y, z;
                     GetPosition(i, x, y, z);
-                    auto const w  = (amrex::Real)d_w[i];
-                    auto const ux = d_ux[i] / PhysConst::c;
-                    auto const uy = d_uy[i] / PhysConst::c;
-                    auto const uz = d_uz[i] / PhysConst::c;
+
+                    parser_data[0] = t;
+                    parser_data[1] = x;
+                    parser_data[2] = y;
+                    parser_data[3] = z;
+                    auto const w  = d_w[i];
+                    parser_data[4] = d_ux[i] / PhysConst::c;
+                    parser_data[5] = d_uy[i] / PhysConst::c;
+                    parser_data[6] = d_uz[i] / PhysConst::c;
 
                     // don't count a particle if it is filtered out
                     if (do_parser_filter)
-                        if (!fun_filterparser(t, x, y, z, ux, uy, uz))
+                        if (!fun_filterparser(parser_data))
                             return;
                     // continue function if particle is not filtered out
-                    auto const f = fun_partparser(t, x, y, z, ux, uy, uz);
+                    auto const f = fun_partparser(parser_data);
+
                     // determine particle bin
                     int const bin = int(Math::floor((f-bin_min)/bin_size));
                     if ( bin<0 || bin>=num_bins ) return; // discard if out-of-range

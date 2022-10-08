@@ -49,14 +49,16 @@ private:
     int const m_ispec; /**< index of species to average over */
     bool const m_do_average; /**< Whether to calculate the average of the data */
     bool const m_do_filter; /**< whether to apply #m_filter_fn */
-    /** Parser function to be averaged by the functor. Arguments: x, y, z, ux, uy, uz */
+    /** Number of arguments in parser functions. Default arguments: x, y, z, ux, uy, uz */
+    static constexpr int m_nvars_parser = 6;
+    /** Parser function to be averaged by the functor.*/
     std::unique_ptr<amrex::Parser> m_map_fn_parser;
-    /** Parser function to filter particles before pass to map. Arguments: x, y, z, ux, uy, uz */
+    /** Parser function to filter particles before pass to map. */
     std::unique_ptr<amrex::Parser> m_filter_fn_parser;
     /** Compiled #m_map_fn_parser */
-    amrex::ParserExecutor<6> m_map_fn;
+    amrex::ParserExecutor<m_nvars_parser> m_map_fn;
     /** Compiled #m_filter_fn_parser */
-    amrex::ParserExecutor<6> m_filter_fn;
+    amrex::ParserExecutor<m_nvars_parser> m_filter_fn;
 };
 
 #endif // WARPX_PARTICLEREDUCTIONFUNCTOR_H_
