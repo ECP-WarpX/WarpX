@@ -1004,15 +1004,18 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
         amrex::ParticleReal const mass)
 {
     auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
+    auto const scalar = openPMD::RecordComponent::SCALAR;
 
+    // define record shape to be number of particles
     auto const positionComponents = detail::getParticlePositionComponentLabels();
     for( auto const& comp : positionComponents ) {
         currSpecies["positionOffset"][comp].resetDataset( realType );
     }
+    currSpecies["charge"][scalar].resetDataset( realType );
+    currSpecies["mass"][scalar].resetDataset( realType );
 
     // make constant
     using namespace amrex::literals;
-    auto const scalar = openPMD::RecordComponent::SCALAR;
     for( auto const& comp : positionComponents ) {
         currSpecies["positionOffset"][comp].makeConstant( 0._prt );
     }

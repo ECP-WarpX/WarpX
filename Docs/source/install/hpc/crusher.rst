@@ -50,13 +50,13 @@ And since Crusher does not yet provide a module for them, install BLAS++ and LAP
 .. code-block:: bash
 
    # BLAS++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+   git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
    rm -rf src/blaspp-crusher-build
    cmake -S src/blaspp -B src/blaspp-crusher-build -Duse_openmp=OFF -Dgpu_backend=hip -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/crusher/blaspp-master
    cmake --build src/blaspp-crusher-build --target install --parallel 10
 
    # LAPACK++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+   git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-crusher-build
    cmake -S src/lapackpp -B src/lapackpp-crusher-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/crusher/lapackpp-master
    cmake --build src/lapackpp-crusher-build --target install --parallel 10
