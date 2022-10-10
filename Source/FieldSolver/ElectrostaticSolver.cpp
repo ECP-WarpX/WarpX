@@ -11,10 +11,10 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Python/WarpX_py.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <ablastr/fields/PoissonSolver.H>
@@ -937,13 +937,13 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
 
 void ElectrostaticSolver::PoissonBoundaryHandler::buildParsers ()
 {
-    potential_xlo_parser = makeParser(potential_xlo_str, {"t"});
-    potential_xhi_parser = makeParser(potential_xhi_str, {"t"});
-    potential_ylo_parser = makeParser(potential_ylo_str, {"t"});
-    potential_yhi_parser = makeParser(potential_yhi_str, {"t"});
-    potential_zlo_parser = makeParser(potential_zlo_str, {"t"});
-    potential_zhi_parser = makeParser(potential_zhi_str, {"t"});
-    potential_eb_parser = makeParser(potential_eb_str, {"x", "y", "z", "t"});
+    potential_xlo_parser = utils::parser::makeParser(potential_xlo_str, {"t"});
+    potential_xhi_parser = utils::parser::makeParser(potential_xhi_str, {"t"});
+    potential_ylo_parser = utils::parser::makeParser(potential_ylo_str, {"t"});
+    potential_yhi_parser = utils::parser::makeParser(potential_yhi_str, {"t"});
+    potential_zlo_parser = utils::parser::makeParser(potential_zlo_str, {"t"});
+    potential_zhi_parser = utils::parser::makeParser(potential_zhi_str, {"t"});
+    potential_eb_parser  = utils::parser::makeParser(potential_eb_str, {"x", "y", "z", "t"});
 
     potential_xlo = potential_xlo_parser.compile<1>();
     potential_xhi = potential_xhi_parser.compile<1>();
@@ -960,7 +960,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::buildParsers ()
         phi_EB_only_t = false;
     }
     else {
-        potential_eb_parser = makeParser(potential_eb_str, {"t"});
+        potential_eb_parser = utils::parser::makeParser(potential_eb_str, {"t"});
         potential_eb_t = potential_eb_parser.compile<1>();
     }
 }

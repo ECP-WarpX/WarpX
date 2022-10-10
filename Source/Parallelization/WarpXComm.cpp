@@ -14,7 +14,6 @@
 #endif
 #include "Filter/BilinearFilter.H"
 #include "Utils/CoarsenMR.H"
-#include "Utils/IntervalsParser.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"

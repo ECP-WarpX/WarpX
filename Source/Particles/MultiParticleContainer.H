@@ -22,7 +22,6 @@
 #include "PhysicalParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
 #include "ParticleBoundaries.H"
 

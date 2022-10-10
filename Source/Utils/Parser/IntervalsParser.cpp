@@ -1,17 +1,28 @@
+/* Copyright 2022 Andrew Myers, Burlen Loring, Luca Fedeli
+ * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #include "IntervalsParser.H"
-#include "TextMsg.H"
-#include "WarpXUtil.H"
+
+#include "ParserUtils.H"
+#include "Utils/Strings/StringUtils.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX_Utility.H>
 
 #include <algorithm>
-#include <memory>
 
-SliceParser::SliceParser (const std::string& instr, const bool isBTD)
+utils::parser::SliceParser::SliceParser (const std::string& instr, const bool isBTD)
 {
+    namespace utils_str = utils::strings;
+
     m_isBTD = isBTD;
     // split string and trim whitespaces
-    auto insplit = WarpXUtilStr::split<std::vector<std::string>>(instr, m_separator, true);
+    auto insplit = utils_str::split<std::vector<std::string>>(instr, m_separator, true);
 
     if(insplit.size() == 1){ // no colon in input string. The input is the period.
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!m_isBTD, "must specify interval stop for BTD");
@@ -39,13 +50,15 @@ SliceParser::SliceParser (const std::string& instr, const bool isBTD)
     }
 }
 
-bool SliceParser::contains (const int n) const
+
+bool utils::parser::SliceParser::contains (const int n) const
 {
     if (m_period <= 0) {return false;}
     return (n - m_start) % m_period == 0 && n >= m_start && n <= m_stop;
 }
 
-int SliceParser::nextContains (const int n) const
+
+int utils::parser::SliceParser::nextContains (const int n) const
 {
     if (m_period <= 0) {return std::numeric_limits<int>::max();}
     int next = m_start;
@@ -54,7 +67,8 @@ int SliceParser::nextContains (const int n) const
     return next;
 }
 
-int SliceParser::previousContains (const int n) const
+
+int utils::parser::SliceParser::previousContains (const int n) const
 {
     if (m_period <= 0) {return false;}
     int previous = ((std::min(n-1,m_stop)-m_start)/m_period)*m_period+m_start;
@@ -62,20 +76,28 @@ int SliceParser::previousContains (const int n) const
     return previous;
 }
 
-int SliceParser::getPeriod () const {return m_period;}
 
-int SliceParser::getStart () const {return m_start;}
+int utils::parser::SliceParser::getPeriod () const {return m_period;}
 
-int SliceParser::getStop () const {return m_stop;}
 
-int SliceParser::numContained () const {return (m_stop - m_start) / m_period + 1;}
+int utils::parser::SliceParser::getStart () const {return m_start;}
 
-IntervalsParser::IntervalsParser (const std::vector<std::string>& instr_vec)
+
+int utils::parser::SliceParser::getStop () const {return m_stop;}
+
+
+int utils::parser::SliceParser::numContained () const {
+    return (m_stop - m_start) / m_period + 1;}
+
+utils::parser::IntervalsParser::IntervalsParser (
+    const std::vector<std::string>& instr_vec)
 {
+    namespace utils_str = utils::strings;
+
     std::string inconcatenated;
     for (const auto& instr_element : instr_vec) inconcatenated +=instr_element;
 
-    auto insplit = WarpXUtilStr::split<std::vector<std::string>>(inconcatenated, m_separator);
+    auto insplit = utils_str::split<std::vector<std::string>>(inconcatenated, m_separator);
 
     for(const auto& inslc : insplit)
     {
@@ -86,13 +108,15 @@ IntervalsParser::IntervalsParser (const std::vector<std::string>& instr_vec)
     }
 }
 
-bool IntervalsParser::contains (const int n) const
+
+bool utils::parser::IntervalsParser::contains (const int n) const
 {
     return std::any_of(m_slices.begin(), m_slices.end(),
         [&](const auto& slice){return slice.contains(n);});
 }
 
-int IntervalsParser::nextContains (const int n) const
+
+int utils::parser::IntervalsParser::nextContains (const int n) const
 {
     int next = std::numeric_limits<int>::max();
     for(const auto& slice: m_slices){
@@ -101,7 +125,8 @@ int IntervalsParser::nextContains (const int n) const
     return next;
 }
 
-int IntervalsParser::previousContains (const int n) const
+
+int utils::parser::IntervalsParser::previousContains (const int n) const
 {
     int previous = 0;
     for(const auto& slice: m_slices){
@@ -110,25 +135,31 @@ int IntervalsParser::previousContains (const int n) const
     return previous;
 }
 
-int IntervalsParser::previousContainsInclusive (const int n) const
+
+int utils::parser::IntervalsParser::previousContainsInclusive (
+    const int n) const
 {
     if (contains(n)){return n;}
     else {return previousContains(n);}
 }
 
-int IntervalsParser::localPeriod (const int n) const
+
+int utils::parser::IntervalsParser::localPeriod (const int n) const
 {
     return nextContains(n) - previousContainsInclusive(n);
 }
 
-bool IntervalsParser::isActivated () const {return m_activated;}
 
-BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_vec)
+bool utils::parser::IntervalsParser::isActivated () const {return m_activated;}
+
+
+utils::parser::BTDIntervalsParser::BTDIntervalsParser (
+    const std::vector<std::string>& instr_vec)
 {
     std::string inconcatenated;
     for (const auto& instr_element : instr_vec) inconcatenated +=instr_element;
 
-    auto const insplit = WarpXUtilStr::split<std::vector<std::string>>(inconcatenated, std::string(1,m_separator));
+    auto const insplit = utils::strings::split<std::vector<std::string>>(inconcatenated, std::string(1,m_separator));
 
     // parse the Intervals string into Slices and store each slice in m_slices,
     // in order of increasing Slice start value
@@ -207,9 +238,14 @@ BTDIntervalsParser::BTDIntervalsParser (const std::vector<std::string>& instr_ve
     }
 }
 
-int BTDIntervalsParser::NumSnapshots () { return m_btd_iterations.size(); }
 
-int BTDIntervalsParser::GetBTDIteration(int i_buffer)
+int utils::parser::BTDIntervalsParser::NumSnapshots ()
+{
+    return m_btd_iterations.size();
+}
+
+
+int utils::parser::BTDIntervalsParser::GetBTDIteration (int i_buffer)
 {
     return m_btd_iterations[i_buffer];
 }

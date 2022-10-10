@@ -10,7 +10,7 @@
 #include "Diagnostics.H"
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
 
 #include <AMReX_Box.H>
 #include <AMReX_Geometry.H>
@@ -39,7 +39,7 @@ private:
     /** Read relevant parameters for BTD */
     void ReadParameters ();
     /** Determines timesteps at which BTD diagnostics are written to file */
-    BTDIntervalsParser m_intervals;
+    utils::parser::BTDIntervalsParser m_intervals;
     /** \brief Flush m_mf_output and particles to file.
      * Currently, a temporary customized output format for the buffer
      * data is implemented and called in this function.
