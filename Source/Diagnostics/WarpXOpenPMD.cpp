@@ -181,34 +181,44 @@ namespace detail
                 op_block += R"END(,
           "parameters": {
 )END";
-            op_block += op_parameters + "}";
+            op_block += op_parameters +
+                        "\n          }";
         }
             op_block += R"END(
         }
       ]
     })END";
-        if (!engine_type.empty())
-            op_block += ",";
-
+            if (!engine_type.empty() || !en_parameters.empty())
+                op_block += ",";
         }  // end operator string block
 
         // add the engine string block
-        if (!engine_type.empty()) {
+        if (!engine_type.empty() || !en_parameters.empty())
+        {
             en_block = R"END(
-    "engine": {
-      "type": ")END";
-            en_block += engine_type + "\"";
+    "engine": {)END";
 
+            // non-default engine type
+            if (!engine_type.empty()) {
+                en_block += R"END(
+      "type": ")END";
+                en_block += engine_type + "\"";
+
+                if(!en_parameters.empty())
+                    en_block += ",";
+            }
+
+            // non-default engine parameters
             if (!en_parameters.empty()) {
-                en_block += R"END(,
+                en_block += R"END(
       "parameters": {
 )END";
-            en_block += en_parameters + "}";
+                en_block += en_parameters +
+                            "\n      }";
             }
 
             en_block += R"END(
     })END";
-
         }  // end engine string block
 
         options = top_block + op_block + en_block + end_block;
