@@ -68,20 +68,17 @@ FlushFormatPlotfile::WriteToFile (
 {
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
-    std::string filename;
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
     if (!isBTD)
     {
-      filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
       amrex::Print() << Utils::TextMsg::Info("Writing plotfile " + filename);
     } else
     {
-      const int min_digits = 0;
-      filename = amrex::Concatenate(prefix, snapshotID, min_digits);
       amrex::Print() << Utils::TextMsg::Info("Writing buffer " + std::to_string(bufferID+1) + " of " + std::to_string(numBuffers)
-                        +  " to BTD plotfile " + filename);
+                        +  " to BTD snapshot " + std::to_string(snapshotID));
       if (isLastBTDFlush)
       {
-        amrex::Print() << Utils::TextMsg::Info("Finished writing BTD plotfile " + filename);
+        amrex::Print() << Utils::TextMsg::Info("Finished writing snapshot " + std::to_string(snapshotID) + " in file " + filename);
       }
     }
 
