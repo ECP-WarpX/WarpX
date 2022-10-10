@@ -77,4 +77,4 @@ In such a case, as described above, rebuild and rerun in *Debug* mode before sea
 Usually, the bug is from ``NaN`` or ``infinite`` numbers assigned to particles or fields earlier in the code or from ill-defined guard sizes.
 Building in debug mode will likely move the first thrown error to an earlier location in the code, which is then closer to the underlying cause.
 
-Then, continue following the workflow above, adding more compilation guards and and runtime flags that can trap array bound violations and invalid floating point values.
+Then, continue following the workflow above, adding more compilation guards and runtime flags that can trap array bound violations and invalid floating point values.
