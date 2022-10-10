@@ -147,5 +147,5 @@ sim.step(max_steps)
 ###############################################
 # check that the ids and cpus are read properly
 ###############################################
-assert(np.sum(sim.extension.get_particle_id('electrons')) == 5050)
-assert(np.sum(sim.extension.get_particle_cpu('electrons')) == 0)
+assert(np.sum(np.concatenate(sim.extension.get_particle_id('electrons'))) == 5050)
+assert(np.sum(np.concatenate(sim.extension.get_particle_cpu('electrons'))) == 0)
