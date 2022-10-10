@@ -307,7 +307,7 @@ setup(
     #    ]
     #},
     extras_require={
-        'all': ['openPMD-api~=0.14.2', 'openPMD-viewer~=1.1', 'yt>=4.0.1', 'matplotlib'],
+        'all': ['openPMD-api~=0.14.2', 'openPMD-viewer~=1.1', 'yt>=4.1.0', 'matplotlib'],
     },
     # cmdclass={'test': PyTest},
     # platforms='any',
