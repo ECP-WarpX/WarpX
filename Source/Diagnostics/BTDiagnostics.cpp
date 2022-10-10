@@ -155,7 +155,7 @@ void BTDiagnostics::DerivedInitData ()
             "Final iteration: " + std::to_string(warpx.maxStep()) + "\n"
             "Last BTD snapshot fills around step: " + std::to_string(final_snapshot_fill_iteration);
         ablastr::warn_manager::WMRecordWarning(
-            "Final time step", warn_string,
+            "BTD", warn_string,
             ablastr::warn_manager::WarnPriority::low);
     }
 }
