@@ -75,10 +75,10 @@ FlushFormatPlotfile::WriteToFile (
     } else
     {
       amrex::Print() << Utils::TextMsg::Info("Writing buffer " + std::to_string(bufferID+1) + " of " + std::to_string(numBuffers)
-                        +  " to BTD snapshot " + std::to_string(snapshotID));
+                        + " to snapshot " + std::to_string(snapshotID) +  " in plotfile BTD " + prefix );
       if (isLastBTDFlush)
       {
-        amrex::Print() << Utils::TextMsg::Info("Finished writing snapshot " + std::to_string(snapshotID) + " in file " + filename);
+        amrex::Print() << Utils::TextMsg::Info("Finished writing snapshot " + std::to_string(snapshotID) + " in plotfile BTD " + filename);
       }
     }
 

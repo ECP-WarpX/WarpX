@@ -126,10 +126,10 @@ FlushFormatOpenPMD::WriteToFile (
     } else
     {
       amrex::Print() << Utils::TextMsg::Info("Writing buffer " + std::to_string(bufferID+1) + " of " + std::to_string(numBuffers)
-                        +  " to BTD snapshot " + std::to_string(snapshotID));
+                         + " to snapshot " + std::to_string(snapshotID) +  " to openPMD BTD " + prefix);
       if (isLastBTDFlush)
       {
-        amrex::Print() << Utils::TextMsg::Info("Finished writing snapshot " + std::to_string(snapshotID));
+        amrex::Print() << Utils::TextMsg::Info("Finished writing snapshot " + std::to_string(snapshotID) + " in openPMD BTD " + prefix);
       }
     }
 

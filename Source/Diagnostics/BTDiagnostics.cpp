@@ -136,7 +136,7 @@ void BTDiagnostics::DerivedInitData ()
     // Need enough buffers so the snapshot length is longer than the lab frame length
     // num_buffers * m_buffer_size * dz_snapshot_grid >= Lz
     int num_buffers = ceil(Lz_lab / m_buffer_size / dz_snapshot_grid);
-    const int final_snapshot_iteration =  m_intervals.GetFinalIteration();
+    const int final_snapshot_iteration = m_intervals.GetFinalIteration();
 
     // the final snapshot starts filling when the moving window intersects the final snapshot
     // time of final snapshot : t_sn = t0 + i dt_snapshot
