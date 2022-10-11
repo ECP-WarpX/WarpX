@@ -252,8 +252,8 @@ int utils::parser::BTDIntervalsParser::GetBTDIteration (int i_buffer) const
 
 
 int utils::parser::BTDIntervalsParser::GetFinalIteration () const
-{ 
-    return m_btd_iterations.back(); 
+{
+    return m_btd_iterations.back();
 }
 
 
