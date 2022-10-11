@@ -5,6 +5,10 @@ Input Parameters
 
 .. note::
 
+   WarpX input options are read via AMReX `ParmParse <https://amrex-codes.github.io/amrex/docs_html/Basics.html#parmparse>`__.
+
+.. note::
+
    The AMReX parser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted.
 
 .. _running-cpp-parameters-overall:
@@ -23,6 +27,10 @@ Overall simulation parameters
     The maximum physical time of the simulation. Can be provided instead of ``max_step``. If both
     ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
     when the first criterion is hit.
+
+* ``warpx.used_inputs_file`` (`string`; default: ``warpx_used_inputs``)
+    Name of a file that WarpX writes to archive the used inputs.
+    The context of this file will contain an exact copy of all explicitly and implicitly used inputs parameters, including those :ref:`extended and overwritten from the command line <usage_run>`.
 
 * ``warpx.gamma_boost`` (`float`)
     The Lorentz factor of the boosted frame in which the simulation is run.

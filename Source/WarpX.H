@@ -453,7 +453,7 @@ public:
     void PrintMainPICparameters ();
 
     /** Write a file that record all inputs: inputs file + command line options */
-    void WriteUsedInputsFile (std::string const & filename = "warpx_used_inputs") const;
+    void WriteUsedInputsFile () const;
 
     /** Print dt and dx,dy,dz */
     void PrintDtDxDyDz ();

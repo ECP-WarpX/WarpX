@@ -349,8 +349,12 @@ WarpX::PrintMainPICparameters ()
 }
 
 void
-WarpX::WriteUsedInputsFile (std::string const & filename) const
+WarpX::WriteUsedInputsFile () const
 {
+    std::string filename = "warpx_used_inputs";
+    ParmParse pp_warpx("warpx");
+    pp_warpx.queryAdd("used_inputs_file", filename);
+
     ablastr::utils::write_used_inputs_file(filename);
 }
 
