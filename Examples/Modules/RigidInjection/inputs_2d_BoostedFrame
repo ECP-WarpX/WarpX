@@ -1,6 +1,6 @@
 # stop_time = 1.5e-13
 
-warpx.zmax_plasma_to_compute_max_step = 50.e-6
+warpx.zmax_plasma_to_compute_max_step = 56.e-6
 warpx.gamma_boost = 5.
 warpx.boost_direction = z
 
