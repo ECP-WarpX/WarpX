@@ -1130,9 +1130,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 ParticleType& p = pp[ip];
                 p.id() = pid+ip;
                 p.cpu() = cpuid;
-
-                const XDim3 r =
-                    inj_pos->getPositionUnitBox(i_part, lrrfac, engine);
+                const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
+                  // In the refined injection region: use refinement ratio `lrrfac`
+                  inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
+                  // Otherwise: use 1 as the refinement ratio
+                  inj_pos->getPositionUnitBox(i_part, 1, engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
 #if defined(WARPX_DIM_3D)
@@ -1645,8 +1647,11 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 p.cpu() = cpuid;
 
                 // This assumes the inj_pos is of type InjectorPositionRandomPlane
-                const XDim3 r =
-                    inj_pos->getPositionUnitBox(i_part, lrrfac, engine);
+                const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
+                  // In the refined injection region: use refinement ratio `lrrfac`
+                  inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
+                  // Otherwise: use 1 as the refinement ratio
+                  inj_pos->getPositionUnitBox(i_part, 1, engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
                 auto ppos = PDim3(pos);
 
