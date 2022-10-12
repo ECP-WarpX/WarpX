@@ -31,7 +31,6 @@ ad = ds.all_data()
 np = ad['electrons', 'particle_id'].size
 
 # the number of coarse particle streams
-# (odd because one that exactly hits the fine patch is not refined)
 n_coarse = 10
 
 # the number of fine particle streams
