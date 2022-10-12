@@ -1134,7 +1134,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                   // In the refined injection region: use refinement ratio `lrrfac`
                   inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
-                  inj_pos->getPositionUnitBox(i_part, 1, engine);
+                  inj_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
 #if defined(WARPX_DIM_3D)
@@ -1651,7 +1651,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                   // In the refined injection region: use refinement ratio `lrrfac`
                   inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
-                  inj_pos->getPositionUnitBox(i_part, 1, engine);
+                  inj_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
                 auto ppos = PDim3(pos);
 

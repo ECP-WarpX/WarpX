@@ -20,7 +20,7 @@ struct InjectorPositionRandom
 {
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getPositionUnitBox (int /*i_part*/, amrex::IntVect& /*ref_fac*/,
+    getPositionUnitBox (int /*i_part*/, amrex::IntVect const /*ref_fac*/,
                         amrex::RandomEngine const& engine) const noexcept
     {
         return amrex::XDim3{amrex::Random(engine), amrex::Random(engine), amrex::Random(engine)};
@@ -35,7 +35,7 @@ struct InjectorPositionRandomPlane
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getPositionUnitBox (int /*i_part*/, amrex::IntVect& /*ref_fac*/,
+    getPositionUnitBox (int /*i_part*/, amrex::IntVect const /*ref_fac*/,
                         amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex::literals;
@@ -72,7 +72,7 @@ struct InjectorPositionRegular
     // is a_ppc*(ref_fac**AMREX_SPACEDIM).
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getPositionUnitBox (int const i_part, amrex::IntVect const& ref_fac,
+    getPositionUnitBox (int const i_part, amrex::IntVect const ref_fac,
                         amrex::RandomEngine const&) const noexcept
     {
         using namespace amrex;
@@ -155,7 +155,7 @@ struct InjectorPosition
     // (the union is called Object, and the instance is called object).
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getPositionUnitBox (int const i_part, amrex::IntVect const& ref_fac,
+    getPositionUnitBox (int const i_part, amrex::IntVect const ref_fac,
                         amrex::RandomEngine const& engine) const noexcept
     {
         switch (type)
