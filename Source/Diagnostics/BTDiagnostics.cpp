@@ -142,8 +142,8 @@ void BTDiagnostics::DerivedInitData ()
     // right edge of the moving window intersects the final snapshot
     // time of final snapshot : t_sn = t0 + i*dt_snapshot
     // where t0 is the time of first BTD snapshot, t0 = zmax / c  * beta / (1-beta)
-    // 
-    // the right edge of the moving window at the time of the final snapshot 
+    //
+    // the right edge of the moving window at the time of the final snapshot
     // has space time coordinates
     // time t_intersect = t_sn, position  z_intersect=zmax + c*t_sn
     // the boosted time of this space time pair is
