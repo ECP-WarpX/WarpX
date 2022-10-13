@@ -138,7 +138,7 @@ void BTDiagnostics::DerivedInitData ()
     const int num_buffers = ceil(Lz_lab / m_buffer_size / dz_snapshot_grid);
     const int final_snapshot_iteration = m_intervals.GetFinalIteration();
 
-    // the final snapshot starts filling when the 
+    // the final snapshot starts filling when the
     // right edge of the moving window intersects the final snapshot
     // time of final snapshot : t_sn = t0 + i*dt_snapshot
     // where t0 is the time of first BTD snapshot, t0 = zmax / c  * beta / (1-beta)
@@ -155,7 +155,7 @@ void BTDiagnostics::DerivedInitData ()
     //
     // if j = final snapshot starting step, then we want to solve
     // j dt_boosted_frame >= t_intersect_boost = i * dt_snapshot / gamma / (1+beta)
-    // j >= i / gamma / (1+beta) * dt_snapshot / dt_boosted_frame 
+    // j >= i / gamma / (1+beta) * dt_snapshot / dt_boosted_frame
     const int final_snapshot_starting_step = ceil(final_snapshot_iteration / warpx.gamma_boost / (1._rt+warpx.beta_boost) * m_dt_snapshots_lab / dt_boosted_frame);
     const int final_snapshot_fill_iteration = final_snapshot_starting_step + num_buffers * m_buffer_size - 1;
     if (final_snapshot_fill_iteration > warpx.maxStep()) {
