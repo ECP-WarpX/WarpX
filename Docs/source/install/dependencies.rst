@@ -139,6 +139,8 @@ Brew (macOS/Linux)
    brew install git
    brew install hdf5-mpi    # for openPMD
    brew install libomp
+   brew unlink gcc
+   brew link --force libomp
    brew install pkg-config  # for fftw
    brew install open-mpi
    brew install openblas    # for PSATD in RZ
