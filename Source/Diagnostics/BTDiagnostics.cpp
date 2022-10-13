@@ -138,22 +138,29 @@ void BTDiagnostics::DerivedInitData ()
     const int num_buffers = ceil(Lz_lab / m_buffer_size / dz_snapshot_grid);
     const int final_snapshot_iteration = m_intervals.GetFinalIteration();
 
-    // the final snapshot starts filling when the moving window intersects the final snapshot
+    // the final snapshot starts filling when the 
+    // right edge of the moving window intersects the final snapshot
     // time of final snapshot : t_sn = t0 + i*dt_snapshot
-    // t0 : time of first BTD snapshot = zmax / c  * beta / (1-beta)
-    // this occurs at time t=t_sn, position  z=zmax + c*t_sn
+    // where t0 is the time of first BTD snapshot, t0 = zmax / c  * beta / (1-beta)
+    // 
+    // the  occurs at time t_intersect = t_sn, position  z_intersect=zmax + c*t_sn
     // the boosted time of this space time pair is
-    // gamma (t_sn + beta * (xmax + c*t_sn)/c)
+    // t_intersect_boost = gamma * (t_intersect - beta * z_intersect_boost/c)
+    //                   = gamma * (t_sn * (1 - beta) - beta * zmax / c)
+    //                   = gamma * (zmax*beta/c + i*dt_snapshot*(1-beta) - beta*zmax/c)
+    //                   = gamma * i * dt_snapshot * (1-beta)
+    //                   = i * dt_snapshot / gamma / (1+beta)
     //
     // if j = final snapshot starting step, then we want to solve
-    // j dt_boosted >= gamma (t_sn + beta * (xmax + c*t_sn)/c)
+    // j dt_boosted_frame >= t_intersect_boost = i * dt_snapshot / gamma / (1+beta)
+    // j >= i / gamma / (1+beta) * dt_snapshot / dt_boosted_frame 
     const int final_snapshot_starting_step = ceil(final_snapshot_iteration / warpx.gamma_boost / (1._rt+warpx.beta_boost) * m_dt_snapshots_lab / dt_boosted_frame);
     const int final_snapshot_fill_iteration = final_snapshot_starting_step + num_buffers * m_buffer_size - 1;
     if (final_snapshot_fill_iteration > warpx.maxStep()) {
         std::string warn_string =
             "\nSimulation might not run long enough to fill all BTD snapshots.\n"
-            "Final iteration: " + std::to_string(warpx.maxStep()) + "\n"
-            "Last BTD snapshot fills around iteration: " + std::to_string(final_snapshot_fill_iteration);
+            "Final step: " + std::to_string(warpx.maxStep()) + "\n"
+            "Last BTD snapshot fills around step: " + std::to_string(final_snapshot_fill_iteration);
         ablastr::warn_manager::WMRecordWarning(
             "BTD", warn_string,
             ablastr::warn_manager::WarnPriority::low);
