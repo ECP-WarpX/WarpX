@@ -1570,7 +1570,7 @@ private:
         const int icomp, const int dcomp, const bool apply_kspace_filter=true);
 
     /**
-     * \brief Copy rho_new to rho_old in spectral space
+     * \brief Copy rho_new to rho_old in spectral space (when rho is linear in time)
      */
     void PSATDMoveRhoNewToRhoOld ();
 

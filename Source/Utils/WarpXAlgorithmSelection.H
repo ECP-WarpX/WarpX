@@ -92,8 +92,8 @@ struct JInTime {
 
 struct RhoInTime {
     enum {
-        Linear = 1,
-        Quadratic = 2
+        Constant = 0,
+        Linear = 1
     };
 };
 

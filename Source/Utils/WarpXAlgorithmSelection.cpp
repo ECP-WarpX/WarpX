@@ -69,8 +69,8 @@ const std::map<std::string, int> J_in_time_to_int = {
 };
 
 const std::map<std::string, int> rho_in_time_to_int = {
+    {"constant", RhoInTime::Constant},
     {"linear", RhoInTime::Linear},
-    {"quadratic", RhoInTime::Quadratic},
     {"default", RhoInTime::Linear}
 };
 

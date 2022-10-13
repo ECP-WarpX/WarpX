@@ -1353,13 +1353,6 @@ WarpX::ReadParameters ()
             );
         }
 
-        if (J_in_time == JInTime::Constant)
-        {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                rho_in_time == RhoInTime::Linear,
-                "psatd.J_in_time=constant supports only psatd.rho_in_time=linear");
-        }
-
         if (J_in_time == JInTime::Linear)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -2339,6 +2332,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 fft_periodic_single_box,
                                                 update_with_rho,
                                                 fft_do_time_averaging,
+                                                do_multi_J,
                                                 J_in_time,
                                                 rho_in_time,
                                                 do_dive_cleaning,

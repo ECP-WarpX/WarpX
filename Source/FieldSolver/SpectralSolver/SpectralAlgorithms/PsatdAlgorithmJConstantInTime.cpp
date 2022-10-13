@@ -182,9 +182,9 @@ PsatdAlgorithmJConstantInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex Bz_old = fields(i,j,k,Idx.Bz);
 
             // Shortcuts for the values of J and rho
-            const Complex Jx = fields(i,j,k,Idx.Jx);
-            const Complex Jy = fields(i,j,k,Idx.Jy);
-            const Complex Jz = fields(i,j,k,Idx.Jz);
+            const Complex Jx = fields(i,j,k,Idx.Jx_mid);
+            const Complex Jy = fields(i,j,k,Idx.Jy_mid);
+            const Complex Jz = fields(i,j,k,Idx.Jz_mid);
             const Complex rho_old = fields(i,j,k,Idx.rho_old);
             const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
@@ -770,9 +770,9 @@ void PsatdAlgorithmJConstantInTime::CurrentCorrection (SpectralFieldData& field_
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Shortcuts for the values of J and rho
-            const Complex Jx = fields(i,j,k,Idx.Jx);
-            const Complex Jy = fields(i,j,k,Idx.Jy);
-            const Complex Jz = fields(i,j,k,Idx.Jz);
+            const Complex Jx = fields(i,j,k,Idx.Jx_mid);
+            const Complex Jy = fields(i,j,k,Idx.Jy_mid);
+            const Complex Jz = fields(i,j,k,Idx.Jz_mid);
             const Complex rho_old = fields(i,j,k,Idx.rho_old);
             const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
@@ -806,25 +806,25 @@ void PsatdAlgorithmJConstantInTime::CurrentCorrection (SpectralFieldData& field_
                     const Complex rho_old_mod = rho_old * amrex::exp(I * k_dot_vg * dt);
                     const Complex den = 1._rt - amrex::exp(I * k_dot_vg * dt);
 
-                    fields(i,j,k,Idx.Jx) = Jx - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den)
+                    fields(i,j,k,Idx.Jx_mid) = Jx - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den)
                         * kx / (k_norm * k_norm);
 
-                    fields(i,j,k,Idx.Jy) = Jy - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den)
+                    fields(i,j,k,Idx.Jy_mid) = Jy - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den)
                         * ky / (k_norm * k_norm);
 
-                    fields(i,j,k,Idx.Jz) = Jz - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den)
+                    fields(i,j,k,Idx.Jz_mid) = Jz - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den)
                         * kz / (k_norm * k_norm);
                 }
 
                 else
                 {
-                    fields(i,j,k,Idx.Jx) = Jx - (k_dot_J - I * (rho_new - rho_old) / dt)
+                    fields(i,j,k,Idx.Jx_mid) = Jx - (k_dot_J - I * (rho_new - rho_old) / dt)
                         * kx / (k_norm * k_norm);
 
-                    fields(i,j,k,Idx.Jy) = Jy - (k_dot_J - I * (rho_new - rho_old) / dt)
+                    fields(i,j,k,Idx.Jy_mid) = Jy - (k_dot_J - I * (rho_new - rho_old) / dt)
                         * ky / (k_norm * k_norm);
 
-                    fields(i,j,k,Idx.Jz) = Jz - (k_dot_J - I * (rho_new - rho_old) / dt)
+                    fields(i,j,k,Idx.Jz_mid) = Jz - (k_dot_J - I * (rho_new - rho_old) / dt)
                         * kz / (k_norm * k_norm);
                 }
             }
@@ -859,11 +859,11 @@ PsatdAlgorithmJConstantInTime::VayDeposition (SpectralFieldData& field_data)
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Shortcuts for the values of D
-            const Complex Dx = fields(i,j,k,Idx.Jx);
+            const Complex Dx = fields(i,j,k,Idx.Jx_mid);
 #if defined(WARPX_DIM_3D)
-            const Complex Dy = fields(i,j,k,Idx.Jy);
+            const Complex Dy = fields(i,j,k,Idx.Jy_mid);
 #endif
-            const Complex Dz = fields(i,j,k,Idx.Jz);
+            const Complex Dz = fields(i,j,k,Idx.Jz_mid);
 
             // Imaginary unit
             constexpr Complex I = Complex{0._rt, 1._rt};
@@ -878,18 +878,18 @@ PsatdAlgorithmJConstantInTime::VayDeposition (SpectralFieldData& field_data)
 #endif
 
             // Compute Jx
-            if (kx_mod != 0._rt) fields(i,j,k,Idx.Jx) = I * Dx / kx_mod;
-            else                 fields(i,j,k,Idx.Jx) = 0._rt;
+            if (kx_mod != 0._rt) fields(i,j,k,Idx.Jx_mid) = I * Dx / kx_mod;
+            else                 fields(i,j,k,Idx.Jx_mid) = 0._rt;
 
 #if defined(WARPX_DIM_3D)
             // Compute Jy
-            if (ky_mod != 0._rt) fields(i,j,k,Idx.Jy) = I * Dy / ky_mod;
-            else                 fields(i,j,k,Idx.Jy) = 0._rt;
+            if (ky_mod != 0._rt) fields(i,j,k,Idx.Jy_mid) = I * Dy / ky_mod;
+            else                 fields(i,j,k,Idx.Jy_mid) = 0._rt;
 #endif
 
             // Compute Jz
-            if (kz_mod != 0._rt) fields(i,j,k,Idx.Jz) = I * Dz / kz_mod;
-            else                 fields(i,j,k,Idx.Jz) = 0._rt;
+            if (kz_mod != 0._rt) fields(i,j,k,Idx.Jz_mid) = I * Dz / kz_mod;
+            else                 fields(i,j,k,Idx.Jz_mid) = 0._rt;
         });
     }
 }

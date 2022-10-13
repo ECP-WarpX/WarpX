@@ -8,10 +8,12 @@
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "SpectralAlgorithms/PsatdAlgorithmComoving.H"
 #include "SpectralAlgorithms/PsatdAlgorithmPml.H"
+#include "SpectralAlgorithms/PsatdAlgorithm.H"
 #include "SpectralAlgorithms/PsatdAlgorithmJConstantInTime.H"
 #include "SpectralAlgorithms/PsatdAlgorithmJLinearInTime.H"
 #include "SpectralKSpace.H"
 #include "SpectralSolver.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <memory>
@@ -30,6 +32,7 @@ SpectralSolver::SpectralSolver(
                 const bool pml, const bool periodic_single_box,
                 const bool update_with_rho,
                 const bool fft_do_time_averaging,
+                const bool multi_J,
                 const int J_in_time,
                 const int rho_in_time,
                 const bool dive_cleaning,
@@ -64,7 +67,15 @@ SpectralSolver::SpectralSolver(
                 k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
                 v_comoving, dt, update_with_rho);
         }
-        else // PSATD algorithms: standard, Galilean, averaged Galilean, multi-J
+        // Galilean PSATD or averaged Galilean PSATD algorithms (only J constant in time)
+        else if (v_galilean[0] != 0. || v_galilean[1] != 0. || v_galilean[2] != 0.)
+        {
+            algorithm = std::make_unique<PsatdAlgorithmJConstantInTime>(
+                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                v_galilean, dt, update_with_rho, fft_do_time_averaging,
+                dive_cleaning, divb_cleaning);
+        }
+        else if (!multi_J) // standard PSATD algorithm
         {
             if (J_in_time == JInTime::Constant)
             {
@@ -73,12 +84,24 @@ SpectralSolver::SpectralSolver(
                     v_galilean, dt, update_with_rho, fft_do_time_averaging,
                     dive_cleaning, divb_cleaning);
             }
-            else // J linear in time
+            else if (J_in_time == JInTime::Linear)
             {
                 algorithm = std::make_unique<PsatdAlgorithmJLinearInTime>(
                     k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
                     dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
             }
+        }
+        else if (multi_J) // multi-J PSATD algorithm
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                (!dive_cleaning && !divb_cleaning) || (dive_cleaning && divb_cleaning),
+                "warpx.do_dive_cleaning and warpx.do_divb_cleaning must be either both false or both true");
+
+            const bool div_cleaning = (dive_cleaning && divb_cleaning);
+
+            algorithm = std::make_unique<PsatdAlgorithm>(
+                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                dt, div_cleaning, J_in_time, rho_in_time);
         }
     }
 
