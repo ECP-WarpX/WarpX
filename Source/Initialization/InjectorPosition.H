@@ -77,12 +77,22 @@ struct InjectorPositionRegular
     {
         using namespace amrex;
 
-        int const nx = ref_fac[0]*ppc.x;
-        int const ny = ref_fac[1]*ppc.y;
-#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
-        int const nz = ref_fac[2]*ppc.z;
-#else
-        int const nz = 1;
+#if (defined WARPX_DIM_3D)
+    int const nx = ref_fac[0]*ppc.x;
+    int const ny = ref_fac[1]*ppc.y;
+    int const nz = ref_fac[2]*ppc.z;
+#elif (defined WARPX_DIM_RZ)
+    int const nx = ref_fac[0]*ppc.x;
+    int const ny = ref_fac[1]*ppc.y;
+    int const nz = ppc.z; // Number of particles in theta ; no refinement
+#elif (defined WARPX_DIM_XZ)
+    int const nx = ref_fac[0]*ppc.x;
+    int const ny = ref_fac[1]*ppc.y;
+    int const nz = 1;
+#elif (defined WARPX_DIM_1D_Z)
+    int const nx = ref_fac[0]*ppc.x;
+    int const ny = 1;
+    int const nz = 1;
 #endif
         int const ix_part = i_part / (ny*nz);  // written this way backward compatibility
         int const iz_part = (i_part-ix_part*(ny*nz)) / ny;
