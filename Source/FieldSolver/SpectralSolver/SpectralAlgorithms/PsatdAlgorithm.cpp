@@ -244,7 +244,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                                      + C15*rho_c0  // only with div cleaning
                                      + C16*rho_c1; // only with div cleaning and rho linear in time
 
-                // Bx 
+                // Bx
                 C01 = 0._rt;
                 C02 = I*kz*S/(c*knorm);
                 C03 = -I*ky*S/(c*knorm);
@@ -265,7 +265,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                                      + C09*Jx_c0 + C10*Jy_c0 + C11*Jz_c0
                                      + C12*Jx_c1 + C13*Jy_c1 + C14*Jz_c1; // only with J linear in time
 
-                // By 
+                // By
                 C01 = -I*kz*S/(c*knorm);
                 C02 = 0._rt;
                 C03 = I*kx*S/(c*knorm);
@@ -286,7 +286,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                                      + C09*Jx_c0 + C10*Jy_c0 + C11*Jz_c0
                                      + C12*Jx_c1 + C13*Jy_c1 + C14*Jz_c1; // only with J linear in time
 
-                // Bz 
+                // Bz
                 C01 = I*ky*S/(c*knorm);
                 C02 = -I*kx*S/(c*knorm);
                 C03 = 0._rt;
