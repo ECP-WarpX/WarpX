@@ -24,7 +24,7 @@ warpx.do_dive_cleaning = 0
 warpx.use_filter = 1
 warpx.cfl = 0.9 # if 1., the time step is set to its CFL limit
 warpx.do_moving_window = 1
-warpx.moving_window_dir = z # Only z is supported for the moment
+warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0 # units of speed of light
 warpx.do_dynamic_scheduling = 0
 warpx.serialize_initial_conditions = 1
@@ -51,7 +51,7 @@ electrons.addIntegerAttributes = regionofinterest
 electrons.attribute.regionofinterest(x,y,z,ux,uy,uz,t) = " (z>12.0e-6) * (z<13.0e-6)"
 
 #################################
-############ PLASMA #############
+############ LASER ##############
 #################################
 lasers.names        = laser1
 laser1.profile      = Gaussian

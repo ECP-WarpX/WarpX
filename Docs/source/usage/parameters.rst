@@ -139,6 +139,10 @@ Overall simulation parameters
     Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
     `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
 
+* ``amrex.abort_on_unused_inputs`` (``0`` or ``1``; default is ``0`` for false)
+    When set to ``1``, this option causes simulation to fail *after* its completion if there were unused parameters.
+    It is mainly intended for continuous integration and automated testing to check that all tests and inputs are adapted to API changes.
+
 Signal Handling
 ^^^^^^^^^^^^^^^
 
@@ -1265,6 +1269,11 @@ Laser initialization
     per angular mode. The laser particles are loaded into radial spokes, with
     the number of spokes given by min_particles_per_mode*(warpx.n_rz_azimuthal_modes-1).
 
+* ``lasers.deposit_on_main_grid`` (`int`) optional (default `0`)
+    When using mesh refinement, whether the antenna that emits the laser
+    deposits charge/current only on the main grid (i.e. level 0), or also
+    on the higher mesh-refinement levels.
+
 * ``warpx.num_mirrors`` (`int`) optional (default `0`)
     Users can input perfect mirror condition inside the simulation domain.
     The number of mirrors is given by ``warpx.num_mirrors``. The mirrors are
@@ -1759,8 +1768,6 @@ Numerics and algorithms
     If false, instead, the update equation for the electric field is expressed in terms of the current density :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}` only.
     If charge is expected to be conserved (by setting, for example, ``psatd.current_correction=1``), then the two formulations are expected to be equivalent.
 
-    This option is currently implemented only for the standard PSATD and Galilean PSATD schemes, while it is not yet available for the averaged Galilean PSATD scheme (activated by the input parameter ``psatd.do_time_averaging``).
-
     If ``psatd.v_galilean`` is zero, the spectral solver used is the standard PSATD scheme described in (`Vay et al, JCP 243, 2013 <https://doi.org/10.1016/j.jcp.2013.03.010>`_):
 
     1. if ``psatd.update_with_rho=0``, the update equation for the electric field reads
@@ -1822,17 +1829,26 @@ Numerics and algorithms
     The coefficients :math:`C`, :math:`S`, :math:`\theta`, :math:`\nu`, :math:`\chi_1`, :math:`\chi_2`, and :math:`\chi_3` are defined in (`Lehe et al, PRE 94, 2016 <https://doi.org/10.1103/PhysRevE.94.053305>`_).
 
     The default value for ``psatd.update_with_rho`` is ``1`` if ``psatd.v_galilean`` is non-zero and ``0`` otherwise.
+    The option ``psatd.update_with_rho=0`` is not implemented with the following algorithms:
+    comoving PSATD (``psatd.v_comoving``), time averaging (``psatd.do_time_averaging=1``), div(E) cleaning (``warpx.do_dive_cleaning=1``), and multi-J (``warpx.do_multi_J=1``).
 
     Note that the update with and without rho is also supported in RZ geometry.
 
-* ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
-    Defines the galilean velocity.
-    Non-zero `v_galilean` activates Galilean algorithm, which suppresses the Numerical Cherenkov instability
-    in boosted-frame simulation. This requires the code to be compiled with `USE_PSATD=TRUE`.
-    (see the sub-section Numerical Stability and alternate formulation
-    in a Galilean frame in the :ref:`theory section <theory-boostedframe-galilean>`).
-    It also requires the use of the `direct` current deposition option
-    `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
+* ``psatd.J_in_time`` (``constant`` or ``linear``; default ``constant``)
+    This determines whether the current density is assumed to be constant or linear in time, within the time step over which the electromagnetic fields are evolved.
+
+* ``psatd.rho_in_time`` (``linear``; default ``linear``)
+    This determines whether the charge density is assumed to be linear in time, within the time step over which the electromagnetic fields are evolved.
+
+* ``psatd.v_galilean`` (`3 floats`, in units of the speed of light; default ``0. 0. 0.``)
+    Defines the Galilean velocity.
+    A non-zero velocity activates the Galilean algorithm, which suppresses numerical Cherenkov instabilities (NCI) in boosted-frame simulations (see the section :ref:`Numerical Stability and alternate formulation in a Galilean frame <theory-boostedframe-galilean>` for more information).
+    This requires the code to be compiled with the spectral solver.
+    It also requires the use of the direct current deposition algorithm (by setting ``algo.current_deposition = direct``).
+
+* ``psatd.use_default_v_galilean`` (`0` or `1`; default: `0`)
+    This can be used in boosted-frame simulations only and sets the Galilean velocity along the :math:`z` direction automatically as :math:`v_{G} = -\sqrt{1-1/\gamma^2}`, where :math:`\gamma` is the Lorentz factor of the boosted frame (set by ``warpx.gamma_boost``).
+    See the section :ref:`Numerical Stability and alternate formulation in a Galilean frame <theory-boostedframe-galilean>` for more information on the Galilean algorithm for boosted-frame simulations.
 
 * ``psatd.v_comoving`` (3 floating-point values, in units of the speed of light; default ``0. 0. 0.``)
     Defines the comoving velocity in the comoving PSATD scheme.
@@ -2143,6 +2159,18 @@ BackTransformed Diagnostics (with support for Plotfile/openPMD output)
 * ``<diag_name>.num_snapshots_lab`` (`integer`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
     The number of lab-frame snapshots that will be written.
+    Only this option or ``intervals`` should be specified;
+    a run-time error occurs if the user attempts to set both ``num_snapshots_lab`` and ``intervals``.
+
+* ``<diag_name>.intervals`` (`string`)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
+    Using the `Intervals parser`_ syntax, this string defines the lab frame times at which data is dumped,
+    given as multiples of the step size ``dt_snapshots_lab`` or ``dz_snapshots_lab`` described below.
+    Example: ``btdiag1.intervals = 10:11,20:24:2`` and ``btdiag1.dt_snapshots_lab = 1.e-12``
+    indicate to dump at lab times ``1e-11``, ``1.1e-11``, ``2e-11``, ``2.2e-11``, and ``2.4e-11`` seconds.
+    Note that the stop interval, the second number in the slice, must always be specified.
+    Only this option or ``num_snapshots_lab`` should be specified;
+    a run-time error occurs if the user attempts to set both ``num_snapshots_lab`` and ``intervals``.
 
 * ``<diag_name>.dt_snapshots_lab`` (`float`, in seconds)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
@@ -2449,39 +2477,42 @@ Reduced Diagnostics
         sum of the particles' weight of each species.
 
     * ``BeamRelevant``
-        This type computes properties of a particle beam relevant for particle accelerators,
-        like position, momentum, emittance, etc.
+        This type computes properties of a particle beam relevant for particle accelerators, like position, momentum, emittance, etc.
 
-        ``<reduced_diags_name>.species`` must be provided,
-        such that the diagnostics are done for this (beam-like) species only.
+        ``<reduced_diags_name>.species`` must be provided, such that the diagnostics are done for this (beam-like) species only.
 
-        The output columns (for 3D-XYZ) are the following, where the average is done over
-        the whole species (typical usage: the particle beam is in a separate species):
+        The output columns (for 3D-XYZ) are the following, where the average is done over the whole species (typical usage: the particle beam is in a separate species):
 
-        [1], [2], [3]: The mean values of beam positions (m)
-        :math:`\langle x \rangle`, :math:`\langle y \rangle`,
+        [0]: simulation step (iteration).
+
+        [1]: time (s).
+
+        [2], [3], [4]: The mean values of beam positions (m)
+        :math:`\langle x \rangle`,
+        :math:`\langle y \rangle`,
         :math:`\langle z \rangle`.
 
-        [4], [5], [6]: The mean values of beam relativistic momenta (kg m/s)
-        :math:`\langle p_x \rangle`, :math:`\langle p_y \rangle`,
+        [5], [6], [7]: The mean values of beam relativistic momenta (kg m/s)
+        :math:`\langle p_x \rangle`,
+        :math:`\langle p_y \rangle`,
         :math:`\langle p_z \rangle`.
 
-        [7]: The mean Lorentz factor :math:`\langle \gamma \rangle`.
+        [8]: The mean Lorentz factor :math:`\langle \gamma \rangle`.
 
-        [8], [9], [10]: The RMS values of beam positions (m)
+        [9], [10], [11]: The RMS values of beam positions (m)
         :math:`\delta_x = \sqrt{ \langle (x - \langle x \rangle)^2 \rangle }`,
         :math:`\delta_y = \sqrt{ \langle (y - \langle y \rangle)^2 \rangle }`,
         :math:`\delta_z = \sqrt{ \langle (z - \langle z \rangle)^2 \rangle }`.
 
-        [11], [12], [13]: The RMS values of beam relativistic momenta (kg m/s)
+        [12], [13], [14]: The RMS values of beam relativistic momenta (kg m/s)
         :math:`\delta_{px} = \sqrt{ \langle (p_x - \langle p_x \rangle)^2 \rangle }`,
         :math:`\delta_{py} = \sqrt{ \langle (p_y - \langle p_y \rangle)^2 \rangle }`,
         :math:`\delta_{pz} = \sqrt{ \langle (p_z - \langle p_z \rangle)^2 \rangle }`.
 
-        [14]: The RMS value of the Lorentz factor
+        [15]: The RMS value of the Lorentz factor
         :math:`\sqrt{ \langle (\gamma - \langle \gamma \rangle)^2 \rangle }`.
 
-        [15], [16], [17]: beam projected transverse RMS normalized emittance (m)
+        [16], [17], [18]: beam projected transverse RMS normalized emittance (m)
         :math:`\epsilon_x = \dfrac{1}{mc} \sqrt{\delta_x^2 \delta_{px}^2 -
         \Big\langle (x-\langle x \rangle) (p_x-\langle p_x \rangle) \Big\rangle^2}`,
         :math:`\epsilon_y = \dfrac{1}{mc} \sqrt{\delta_y^2 \delta_{py}^2 -
@@ -2489,12 +2520,16 @@ Reduced Diagnostics
         :math:`\epsilon_z = \dfrac{1}{mc} \sqrt{\delta_z^2 \delta_{pz}^2 -
         \Big\langle (z-\langle z \rangle) (p_z-\langle p_z \rangle) \Big\rangle^2}`.
 
-        [18]: The charge of the beam (C).
+        [19], [20]: beta function for the transverse directions (m)
+        :math:`\beta_x = \dfrac{{\delta_x}^2}{\epsilon_x}`,
+        :math:`\beta_y = \dfrac{{\delta_y}^2}{\epsilon_y}`.
+
+        [21]: The charge of the beam (C).
 
         For 2D-XZ,
         :math:`\langle y \rangle`,
         :math:`\delta_y`, and
-        :math:`\epsilon_y` will not be outputed.
+        :math:`\epsilon_y` will not be outputted.
 
     * ``LoadBalanceCosts``
         This type computes the cost, used in load balancing, for each box on the domain.

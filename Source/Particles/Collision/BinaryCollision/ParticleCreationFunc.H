@@ -15,7 +15,6 @@
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX_DenseBins.H>

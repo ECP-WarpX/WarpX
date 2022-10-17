@@ -10,7 +10,6 @@
 
 #include "WarpX.H"
 #include "Utils/CoarsenIO.H"
-#include "Utils/WarpXUtil.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include <AMReX_Array.H>
 

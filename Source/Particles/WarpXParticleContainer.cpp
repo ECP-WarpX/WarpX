@@ -56,6 +56,7 @@
 #include <AMReX_ParticleTile.H>
 #include <AMReX_ParticleTransformation.H>
 #include <AMReX_ParticleUtil.H>
+#include <AMReX_Random.H>
 #include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 
@@ -140,17 +141,25 @@ WarpXParticleContainer::AllocData ()
 
 void
 WarpXParticleContainer::AddNParticles (int /*lev*/,
-                                       int n, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z,
-                                       const ParticleReal* vx, const ParticleReal* vy, const ParticleReal* vz,
-                                       int nattr, const ParticleReal* attr, int uniqueparticles, amrex::Long id)
+                                       int n, const amrex::ParticleReal* x,
+                                       const amrex::ParticleReal* y,
+                                       const amrex::ParticleReal* z,
+                                       const amrex::ParticleReal* vx,
+                                       const amrex::ParticleReal* vy,
+                                       const amrex::ParticleReal* vz,
+                                       const int nattr_real, const amrex::ParticleReal* attr_real,
+                                       const int nattr_int, const int* attr_int,
+                                       int uniqueparticles, amrex::Long id)
 {
+    using namespace amrex::literals;
+
     int ibegin, iend;
     if (uniqueparticles) {
         ibegin = 0;
         iend = n;
     } else {
-        int myproc = ParallelDescriptor::MyProc();
-        int nprocs = ParallelDescriptor::NProcs();
+        int myproc = amrex::ParallelDescriptor::MyProc();
+        int nprocs = amrex::ParallelDescriptor::NProcs();
         int navg = n/nprocs;
         int nleft = n - navg * nprocs;
         if (myproc < nleft) {
@@ -166,7 +175,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     // Redistribute() will move them to proper places.
     auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
-    using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
+    using PinnedTile = amrex::ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
                                     amrex::PinnedArenaAllocator>;
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
@@ -174,10 +183,10 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     std::size_t np = iend-ibegin;
 
     // treat weight as a special attr since it will always be specified
-    Vector<ParticleReal> weight(np);
+    amrex::Vector<amrex::ParticleReal> weight(np);
 
 #ifdef WARPX_DIM_RZ
-    Vector<ParticleReal> theta(np);
+    amrex::Vector<amrex::ParticleReal> theta(np);
 #endif
 
     for (int i = ibegin; i < iend; ++i)
@@ -189,7 +198,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         } else {
             p.id() = id;
         }
-        p.cpu() = ParallelDescriptor::MyProc();
+        p.cpu() = amrex::ParallelDescriptor::MyProc();
 #if defined(WARPX_DIM_3D)
         p.pos(0) = x[i];
         p.pos(1) = y[i];
@@ -211,7 +220,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         pinned_tile.push_back(p);
 
         // grab weight from the attr array
-        weight[i-ibegin] = attr[i*nattr];
+        weight[i-ibegin] = attr_real[i*nattr_real];
     }
 
     if (np > 0)
@@ -232,28 +241,40 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
                 pinned_tile.push_back_real(comp, theta.data(), theta.data() + np);
             }
             else {
-                pinned_tile.push_back_real(comp, np, 0.0);
+                pinned_tile.push_back_real(comp, np, 0.0_prt);
             }
 #else
-            pinned_tile.push_back_real(comp, np, 0.0);
+            pinned_tile.push_back_real(comp, np, 0.0_prt);
 #endif
         }
 
-        for (int j = PIdx::nattribs; j < NumRealComps(); ++j)
+        // Initialize nattr_real - 1 runtime real attributes from data in the attr_real array
+        for (int j = PIdx::nattribs; j < PIdx::nattribs + nattr_real - 1; ++j)
         {
-            if (j - PIdx::nattribs < nattr - 1) {
-                // get the next attribute from attr array
-                Vector<ParticleReal> attr_vals(np);
-                for (int i = ibegin; i < iend; ++i)
-                {
-                    attr_vals[i-ibegin] = attr[j - PIdx::nattribs + 1 + i*nattr];
-                }
-                pinned_tile.push_back_real(j, attr_vals.data(), attr_vals.data() + np);
+            // get the next attribute from attr_real array
+            amrex::Vector<amrex::ParticleReal> attr_vals(np);
+            for (int i = ibegin; i < iend; ++i)
+            {
+                attr_vals[i-ibegin] = attr_real[j - PIdx::nattribs + 1 + i*nattr_real];
             }
-            else {
-                pinned_tile.push_back_real(j, np, 0.0);
-            }
+            pinned_tile.push_back_real(j, attr_vals.data(), attr_vals.data() + np);
         }
+
+        // Initialize nattr_int runtime integer attributes from data in the attr_int array
+        for (int j = 0; j < nattr_int; ++j)
+        {
+            // get the next attribute from attr_int array
+            amrex::Vector<int> attr_vals(np);
+            for (int i = ibegin; i < iend; ++i)
+            {
+                attr_vals[i-ibegin] = attr_int[j + i*nattr_int];
+            }
+            pinned_tile.push_back_int(j, attr_vals.data(), attr_vals.data() + np);
+        }
+
+        // Default initialize the other real and integer runtime attributes
+        DefaultInitializeRuntimeAttributes(pinned_tile, nattr_real - 1, nattr_int,
+                                           amrex::RandomEngine{});
 
         auto old_np = particle_tile.numParticles();
         auto new_np = old_np + pinned_tile.numParticles();
@@ -554,7 +575,7 @@ WarpXParticleContainer::DepositCurrent (
                         1: new value (after particle push).
  * \param offset      : Index of first particle for which charge is deposited
  * \param np_to_depose: Number of particles for which charge is deposited.
-                        Particles [offset,offset+np_tp_depose] deposit charge
+                        Particles [offset,offset+np_tp_depose) deposit charge
  * \param thread_num  : Thread number (if tiling)
  * \param lev         : Level of box that contains particles
  * \param depos_lev   : Level on which particles deposit (if buffers are used)
@@ -566,57 +587,55 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                        const long offset, const long np_to_depose,
                                        int thread_num, int lev, int depos_lev)
 {
-    if (!do_not_deposit) {
-        WarpX& warpx = WarpX::GetInstance();
+    WarpX& warpx = WarpX::GetInstance();
 
-        // deposition guards
-        //   note: this is smaller than rho->nGrowVect() for PSATD
-        const amrex::IntVect& ng_rho = warpx.get_ng_depos_rho();
+    // deposition guards
+    //   note: this is smaller than rho->nGrowVect() for PSATD
+    const amrex::IntVect& ng_rho = warpx.get_ng_depos_rho();
 
-        const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
-        amrex::IntVect ref_ratio;
-        if (lev == depos_lev) {
-            ref_ratio = IntVect(AMREX_D_DECL(1, 1, 1 ));
-        } else {
-            ref_ratio = WarpX::RefRatio(depos_lev);
-        }
-        const int nc = WarpX::ncomps;
-
-        // Get tile box where charge is deposited.
-        // The tile box is different when depositing in the buffers (depos_lev<lev)
-        // or when depositing inside the level (depos_lev=lev)
-        amrex::Box tilebox;
-        if (lev == depos_lev) {
-            tilebox = pti.tilebox();
-        } else {
-            tilebox = amrex::coarsen(pti.tilebox(), ref_ratio);
-        }
-        tilebox.grow(ng_rho);
-
-        // Lower corner of tile box physical domain
-        // Note that this includes guard cells since it is after tilebox.ngrow
-        // Take into account Galilean shift
-        const amrex::Real dt = warpx.getdt(lev);
-        const amrex::Real time_shift_delta = (icomp == 0 ? 0.0_rt : dt);
-        const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, time_shift_delta);
-
-        // pointer to costs data
-        amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
-        amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
-
-        AMREX_ALWAYS_ASSERT(WarpX::nox == WarpX::noy);
-        AMREX_ALWAYS_ASSERT(WarpX::nox == WarpX::noz);
-
-        ablastr::particles::deposit_charge<WarpXParticleContainer>(
-            pti, wp, this->charge, ion_lev,
-            rho, local_rho[thread_num],
-            WarpX::noz, dx, xyzmin, WarpX::n_rz_azimuthal_modes,
-            ng_rho, depos_lev, ref_ratio,
-            offset, np_to_depose,
-            icomp, nc,
-            cost, WarpX::load_balance_costs_update_algo, WarpX::do_device_synchronize
-        );
+    const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
+    amrex::IntVect ref_ratio;
+    if (lev == depos_lev) {
+        ref_ratio = IntVect(AMREX_D_DECL(1, 1, 1 ));
+    } else {
+        ref_ratio = WarpX::RefRatio(depos_lev);
     }
+    const int nc = WarpX::ncomps;
+
+    // Get tile box where charge is deposited.
+    // The tile box is different when depositing in the buffers (depos_lev<lev)
+    // or when depositing inside the level (depos_lev=lev)
+    amrex::Box tilebox;
+    if (lev == depos_lev) {
+        tilebox = pti.tilebox();
+    } else {
+        tilebox = amrex::coarsen(pti.tilebox(), ref_ratio);
+    }
+    tilebox.grow(ng_rho);
+
+    // Lower corner of tile box physical domain
+    // Note that this includes guard cells since it is after tilebox.ngrow
+    // Take into account Galilean shift
+    const amrex::Real dt = warpx.getdt(lev);
+    const amrex::Real time_shift_delta = (icomp == 0 ? 0.0_rt : dt);
+    const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, time_shift_delta);
+
+    // pointer to costs data
+    amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
+    amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
+
+    AMREX_ALWAYS_ASSERT(WarpX::nox == WarpX::noy);
+    AMREX_ALWAYS_ASSERT(WarpX::nox == WarpX::noz);
+
+    ablastr::particles::deposit_charge<WarpXParticleContainer>(
+        pti, wp, this->charge, ion_lev,
+        rho, local_rho[thread_num],
+        WarpX::noz, dx, xyzmin, WarpX::n_rz_azimuthal_modes,
+        ng_rho, depos_lev, ref_ratio,
+        offset, np_to_depose,
+        icomp, nc,
+        cost, WarpX::load_balance_costs_update_algo, WarpX::do_device_synchronize
+    );
 }
 
 void

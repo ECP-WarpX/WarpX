@@ -11,10 +11,9 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -61,17 +60,17 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     pp_rd_name.get("species",selected_species_name);
 
     // read bin parameters
-    getWithParser(pp_rd_name, "bin_number",m_bin_num);
-    getWithParser(pp_rd_name, "bin_max",   m_bin_max);
-    getWithParser(pp_rd_name, "bin_min",   m_bin_min);
+    utils::parser::getWithParser(pp_rd_name, "bin_number",m_bin_num);
+    utils::parser::getWithParser(pp_rd_name, "bin_max",   m_bin_max);
+    utils::parser::getWithParser(pp_rd_name, "bin_min",   m_bin_min);
     m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;
 
     // read histogram function
     std::string function_string = "";
-    Store_parserString(pp_rd_name,"histogram_function(t,x,y,z,ux,uy,uz)",
+    utils::parser::Store_parserString(pp_rd_name,"histogram_function(t,x,y,z,ux,uy,uz)",
                        function_string);
     m_parser = std::make_unique<amrex::Parser>(
-        makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
+        utils::parser::makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
 
     // read normalization type
     std::string norm_string = "default";
@@ -113,9 +112,10 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     m_do_parser_filter = pp_rd_name.query("filter_function(t,x,y,z,ux,uy,uz)", buf);
     if (m_do_parser_filter) {
         std::string filter_string = "";
-        Store_parserString(pp_rd_name,"filter_function(t,x,y,z,ux,uy,uz)", filter_string);
+        utils::parser::Store_parserString(
+            pp_rd_name,"filter_function(t,x,y,z,ux,uy,uz)", filter_string);
         m_parser_filter = std::make_unique<amrex::Parser>(
-                                     makeParser(filter_string,{"t","x","y","z","ux","uy","uz"}));
+            utils::parser::makeParser(filter_string,{"t","x","y","z","ux","uy","uz"}));
     }
 
     // resize data array
@@ -168,10 +168,12 @@ void ParticleHistogram::ComputeDiags (int step)
     auto & myspc = mypc.GetParticleContainer(m_selected_species_id);
 
     // get parser
-    auto fun_partparser = compileParser<m_nvars>(m_parser.get());
+    auto fun_partparser =
+        utils::parser::compileParser<m_nvars>(m_parser.get());
 
     // get filter parser
-    auto fun_filterparser = compileParser<m_nvars>(m_parser_filter.get());
+    auto fun_filterparser =
+        utils::parser::compileParser<m_nvars>(m_parser_filter.get());
 
     // declare local variables
     auto const num_bins = m_bin_num;

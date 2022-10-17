@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2021-2022 Tiberius Rheaume
+# Copyright 2021-2022 Elisa Rheaume
 #
 # This file is part of WarpX.
 #

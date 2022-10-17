@@ -11,7 +11,7 @@
 #include "ElasticCollisionPerez.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXUtil.H"
+#include "Utils/Parser/ParserUtils.H"
 
 #include <AMReX_DenseBins.H>
 #include <AMReX_ParmParse.H>
@@ -49,7 +49,8 @@ public:
         amrex::ParmParse pp_collision_name(collision_name);
         // default Coulomb log, if < 0, will be computed automatically
         m_CoulombLog = -1.0_prt;
-        queryWithParser(pp_collision_name, "CoulombLog", m_CoulombLog);
+        utils::parser::queryWithParser(
+            pp_collision_name, "CoulombLog", m_CoulombLog);
     }
 
     /**

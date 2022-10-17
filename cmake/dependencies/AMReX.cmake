@@ -221,7 +221,7 @@ macro(find_amrex)
         endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PARTICLE_PRECISION})
 
-        find_package(AMReX 22.08 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
+        find_package(AMReX 22.10 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()
@@ -235,7 +235,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "22.08"
+set(WarpX_amrex_branch "2d87a4c8ad5d375008ee9b1c23a50404fe0dfa21"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 
