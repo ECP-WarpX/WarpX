@@ -244,13 +244,6 @@ class Species(picmistandard.PICMI_Species):
             self.species.rigid_advance = 1
             self.species.zinject_plane = injection_plane_position
 
-    def activate_ionization(self, product_species):
-        self.species.add_new_attr("do_field_ionization", 1)
-        self.species.add_new_attr("physical_element", self.particle_type)
-        self.species.add_new_attr("ionization_product_species", product_species.name)
-        self.species.add_new_attr("ionization_initial_level", self.charge_state)
-        self.species.add_new_attr("charge", 'q_e')
-
 
 picmistandard.PICMI_MultiSpecies.Species_class = Species
 class MultiSpecies(picmistandard.PICMI_MultiSpecies):
@@ -1126,7 +1119,11 @@ class Mirror(picmistandard.PICMI_Mirror):
 class FieldIonization(picmistandard.PICMI_FieldIonization):
     def initialize_inputs(self):
         assert self.model == 'ADK', 'WarpX only has ADK ionization model implemented'
-        self.ionized_species.activate_ionization(self.product_species)
+        self.ionized_species.species.do_field_ionization = 1
+        self.ionized_species.species.physical_element = self.ionized_species.particle_type
+        self.ionized_species.species.ionization_product_species = self.product_species.name
+        self.ionized_species.species.ionization_initial_level = self.ionized_species.charge_state
+        self.ionized_species.species.charge = 'q_e'
 
 
 class CoulombCollisions(picmistandard.base._ClassWithInit):
