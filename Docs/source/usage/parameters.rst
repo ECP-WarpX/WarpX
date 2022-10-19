@@ -2860,5 +2860,5 @@ When developing, testing and :ref:`debugging WarpX <debugging_warpx>`, the follo
     Run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
 
 * ``ablastr.fillboundary_always_sync`` (`0` or `1`) optional (default `0`)
-    Run all ``FillBoundary`` operations on ``MultiFab`` to force-synchronize shared nodal points points.
+    Run all ``FillBoundary`` operations on ``MultiFab`` to force-synchronize shared nodal points.
     This slightly increases communication cost and can help to spot missing ``nodal_sync`` flags in these operations.
