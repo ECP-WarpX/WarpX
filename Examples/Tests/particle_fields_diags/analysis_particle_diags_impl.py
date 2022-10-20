@@ -16,8 +16,7 @@ import sys
 
 import numpy as np
 import openpmd_api as io
-from scipy.constants import c, e
-from scipy.constants import m_e, m_p
+from scipy.constants import c, e, m_e, m_p
 import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
