@@ -1117,6 +1117,9 @@ class Mirror(picmistandard.PICMI_Mirror):
 
 
 class FieldIonization(picmistandard.PICMI_FieldIonization):
+    """
+    WarpX only has ADK ionization model implemented.
+    """
     def initialize_inputs(self):
         assert self.model == 'ADK', 'WarpX only has ADK ionization model implemented'
         self.ionized_species.species.do_field_ionization = 1
