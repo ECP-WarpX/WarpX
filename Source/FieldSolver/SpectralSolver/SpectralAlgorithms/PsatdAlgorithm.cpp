@@ -251,7 +251,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 C04 = (div_cleaning) ? C : (kx2+ky2*C+kz2*C)/knorm2;
                 C05 = (div_cleaning) ? 0._rt : kx*ky*(1._rt-C)/knorm2;
                 C06 = (div_cleaning) ? 0._rt : kx*kz*(1._rt-C)/knorm2;
-                C08 = (div_cleaning) ? I*c*kx*S/knorm : 0._rt;
+                C08 = (div_cleaning) ? I*kx*S/(c*knorm) : 0._rt;
                 C09 = 0._rt;
                 C10 = I*mu0*kz*(C-1._rt)/knorm2;
                 C11 = -I*mu0*ky*(C-1._rt)/knorm2;
@@ -272,7 +272,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 C04 = (div_cleaning) ? 0._rt : kx*ky*(1._rt-C)/knorm2;
                 C05 = (div_cleaning) ? C : (kx2*C+ky2+kz2*C)/knorm2;
                 C06 = (div_cleaning) ? 0._rt : ky*kz*(1._rt-C)/knorm2;
-                C08 = (div_cleaning) ? I*c*ky*S/knorm : 0._rt;
+                C08 = (div_cleaning) ? I*ky*S/(c*knorm) : 0._rt;
                 C09 = -I*mu0*kz*(C-1._rt)/knorm2;
                 C10 = 0._rt;
                 C11 = I*mu0*kx*(C-1._rt)/knorm2;
@@ -293,7 +293,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 C04 = (div_cleaning) ? 0._rt : kx*kz*(1._rt-C)/knorm2;
                 C05 = (div_cleaning) ? 0._rt : ky*kz*(1._rt-C)/knorm2;
                 C06 = (div_cleaning) ? C : (kx2*C+ky2*C+kz2)/knorm2;
-                C08 = (div_cleaning) ? I*c*kz*S/knorm : 0._rt;
+                C08 = (div_cleaning) ? I*kz*S/(c*knorm) : 0._rt;
                 C09 = I*mu0*ky*(C-1._rt)/knorm2;
                 C10 = -I*mu0*kx*(C-1._rt)/knorm2;
                 C11 = 0._rt;
@@ -331,9 +331,9 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                                         + C16*rho_c1; // only with rho linear in time
 
                     // G
-                    C04 = I*kx*S/(c*knorm);
-                    C05 = I*ky*S/(c*knorm);
-                    C06 = I*kz*S/(c*knorm);
+                    C04 = I*c*kx*S/knorm;
+                    C05 = I*c*ky*S/knorm;
+                    C06 = I*c*kz*S/knorm;
                     C08 = C;
 
                     fields(i,j,k,Idx.G) = C04*Bx_old + C05*By_old + C06*Bz_old
