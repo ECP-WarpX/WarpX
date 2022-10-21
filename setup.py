@@ -34,15 +34,15 @@ class CopyPreBuild(build):
         # call superclass
         build.run(self)
 
-        # matches: libwarpx.(1d|2d|rz|3d).(so|pyd)
-        re_libprefix = re.compile(r"libwarpx\...\.(?:so|dll)")
+        # matches: warpx_pybind_(1d|2d|rz|3d). ... .(so|pyd)
+        re_libprefix = re.compile(r"warpx_pybind_..\..*\.(?:so|pyd)")
         libs_found = []
         for lib_name in os.listdir(PYWARPX_LIB_DIR):
             if re_libprefix.match(lib_name):
                 lib_path = os.path.join(PYWARPX_LIB_DIR, lib_name)
                 libs_found.append(lib_path)
         if len(libs_found) == 0:
-            raise RuntimeError("Error: no pre-build WarpX libraries found in "
+            raise RuntimeError("Error: no pre-build WarpX modules found in "
                                "PYWARPX_LIB_DIR='{}'".format(PYWARPX_LIB_DIR))
 
         # copy external libs into collection of files in a temporary build dir
@@ -137,6 +137,14 @@ class CMakeBuild(build_ext):
             cmake_args.append('-DWarpX_openpmd_src=' + WARPX_OPENPMD_SRC)
         if WARPX_PICSAR_SRC:
             cmake_args.append('-DWarpX_picsar_src=' + WARPX_PICSAR_SRC)
+        if WARPX_PYAMREX_SRC:
+            cmake_args.append('-DWarpX_pyamrex_src=' + WARPX_PYAMREX_SRC)
+        if WARPX_PYAMREX_INTERNAL:
+            cmake_args.append('-DWarpX_pyamrex_internal=' + WARPX_PYAMREX_INTERNAL)
+        if WARPX_PYBIND11_SRC:
+            cmake_args.append('-DWarpX_pybind11_src=' + WARPX_PYBIND11_SRC)
+        if WARPX_PYBIND11_INTERNAL:
+            cmake_args.append('-DWarpX_pybind11_internal=' + WARPX_PYBIND11_INTERNAL)
         if WARPX_CCACHE_PROGRAM is not None:
             cmake_args.append('-DCCACHE_PROGRAM=' + WARPX_CCACHE_PROGRAM)
 
@@ -226,6 +234,10 @@ WARPX_OPENPMD_SRC = env.pop('WARPX_OPENPMD_SRC', '')
 WARPX_OPENPMD_INTERNAL = env.pop('WARPX_OPENPMD_INTERNAL', 'ON')
 WARPX_PICSAR_SRC = env.pop('WARPX_PICSAR_SRC', '')
 WARPX_PICSAR_INTERNAL = env.pop('WARPX_PICSAR_INTERNAL', 'ON')
+WARPX_PYAMREX_SRC = env.pop('WARPX_PYAMREX_SRC', '')
+WARPX_PYAMREX_INTERNAL = env.pop('WARPX_PYAMREX_INTERNAL', 'ON')
+WARPX_PYBIND11_SRC = env.pop('WARPX_PYBIND11_SRC', '')
+WARPX_PYBIND11_INTERNAL = env.pop('WARPX_PYBIND11_INTERNAL', 'ON')
 WARPX_CCACHE_PROGRAM = env.pop('WARPX_CCACHE_PROGRAM', None)
 
 for key in env.keys():
