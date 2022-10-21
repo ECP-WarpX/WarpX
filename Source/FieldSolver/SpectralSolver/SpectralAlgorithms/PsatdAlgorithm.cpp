@@ -351,7 +351,7 @@ void PsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data)
 
     amrex::ignore_unused(field_data);
     amrex::Abort(Utils::TextMsg::Err(
-        "Current correction not implemented for multi-J PSATD algorithm"));
+        "Current correction not implemented for first-order PSATD equations"));
 }
 
 void
@@ -362,7 +362,7 @@ PsatdAlgorithm::VayDeposition (SpectralFieldData& field_data)
 
     amrex::ignore_unused(field_data);
     amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented for multi-J PSATD algorithm"));
+        "Vay deposition not implemented for first-order PSATD equations"));
 }
 
 #endif // WARPX_USE_PSATD

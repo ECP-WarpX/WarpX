@@ -22,10 +22,7 @@
 
 #if WARPX_USE_PSATD
 /*
- * \brief Class that updates the fields in spectral space according to the multi-J algorithm
- *        and stores the coefficients of the corresponding update equations. J is assumed to be
- *        linear in time and two currents, deposited at the beginning and the end of the time step,
- *        are used for the PSATD update equations, instead of only one current deposited at half time.
+ * \brief Class that updates the fields in spectral space according to the first-order PSATD equations.
  */
 class PsatdAlgorithm : public SpectralBaseAlgorithm
 {
@@ -42,10 +39,9 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in] norder_z order of the spectral solver along z
          * \param[in] nodal whether the E and B fields are defined on a fully nodal grid or a Yee grid
          * \param[in] dt time step of the simulation
-         * \param[in] dive_cleaning Update F as part of the field update, so that errors in divE=rho propagate away at the speed of light
-         * \param[in] divb_cleaning Update G as part of the field update, so that errors in divB=0 propagate away at the speed of light
-         * \param[in] J_in_time Time dependency of J
-         * \param[in] rho_in_time Time dependency of rho
+         * \param[in] div_cleaning whether to use divergence correction for both E and B (thus, F and G)
+         * \param[in] J_in_time time dependency of J (currently supported: constant, linear)
+         * \param[in] rho_in_time time dependency of rho (currently supported: constant, linear)
          */
         PsatdAlgorithm (
             const SpectralKSpace& spectral_kspace,
@@ -61,7 +57,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             const int rho_in_time);
 
         /**
-         * \brief Updates the E and B fields in spectral space, according to the multi-J PSATD equations
+         * \brief Updates E, B, F, and G fields in spectral space,
+         *        according to the first-order PSATD equations
          *
          * \param[in,out] f all the fields in spectral space
          */
