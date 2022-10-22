@@ -342,11 +342,19 @@ class UniformDistribution(picmistandard.PICMI_UniformDistribution):
         species.zmin = self.lower_bound[2]
         species.zmax = self.upper_bound[2]
 
-        # --- Only constant density is supported at this time
-        species.profile = "constant"
-        species.density = self.density
-        if density_scale is not None:
-            species.density *= density_scale
+        # --- Check if the density is a simple number
+        if isinstance(self.density, float):
+            species.profile = "constant"
+            species.density = self.density
+            if density_scale is not None:
+                species.density *= density_scale
+        else:
+            species.profile = "parse_density_function"
+            if density_scale is not None:
+                raise AttributeError(
+                    "Cannot use `density_scale` with a parsable density function."
+                )
+            species.__setattr__('density_function(x,y,z)', self.density)
 
         # --- Note that WarpX takes gamma*beta as input
         if np.any(np.not_equal(self.rms_velocity, 0.)):
