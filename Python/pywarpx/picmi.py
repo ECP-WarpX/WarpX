@@ -1057,10 +1057,26 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
 class LaserAntenna(picmistandard.PICMI_LaserAntenna):
     def initialize_inputs(self, laser):
         laser.laser.position = self.position  # This point is on the laser plane
+        if not np.allclose(laser.laser.direction, [0, 0, 1]):
+            if not np.allclose(laser.laser.direction, self.normal_vector):
+                raise AttributeError(
+                    'The specified laser direction does not match the '
+                    'antenna normal'
+                )
         laser.laser.direction = self.normal_vector  # The plane normal direction
         if isinstance(laser, GaussianLaser):
-            laser.laser.profile_focal_distance = laser.focal_position[2] - self.position[2]  # Focal distance from the antenna (in meters)
-            laser.laser.profile_t_peak = (self.position[2] - laser.centroid_position[2])/constants.c  # The time at which the laser reaches its peak (in seconds)
+            # Focal distance from the antenna (in meters)
+            laser.laser.profile_focal_distance = np.sqrt(
+                (laser.focal_position[0] - self.position[0])**2 +
+                (laser.focal_position[1] - self.position[1])**2 +
+                (laser.focal_position[2] - self.position[2])**2
+            )
+            # The time at which the laser reaches its peak (in seconds)
+            laser.laser.profile_t_peak = np.sqrt(
+                (self.position[0] - laser.centroid_position[0])**2 +
+                (self.position[1] - laser.centroid_position[1])**2 +
+                (self.position[2] - laser.centroid_position[2])**2
+            ) / constants.c
 
 
 class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField):
