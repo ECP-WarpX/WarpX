@@ -2050,8 +2050,8 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
                  extension=None, separator=None, **kw):
 
         self.name = name
-        self.diag_type = diag_type
-        self.period = period
+        self.type = diag_type
+        self.intervals = period
         self.path = path
         self.extension = extension
         self.separator = separator
@@ -2073,23 +2073,23 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
             'BeamRelevant', 'ParticleHistogram', 'ParticleExtrema',
         ]
 
-        if self.diag_type in self._simple_reduced_diagnostics:
+        if self.type in self._simple_reduced_diagnostics:
             pass
-        elif self.diag_type in self._species_reduced_diagnostics:
+        elif self.type in self._species_reduced_diagnostics:
             if self._species is None:
                 raise AttributeError(
-                    f"{self.diag_type} reduced diagnostic requires a species."
+                    f"{self.type} reduced diagnostic requires a species."
                 )
-            if self.diag_type == 'ParticleHistogram':
+            if self.type == 'ParticleHistogram':
                 raise NotImplementedError(
-                    f"{self.diag_type} reduced diagnostic is not yet supported "
+                    f"{self.type} reduced diagnostic is not yet supported "
                     "in pywarpx."
                 )
-        elif self.diag_type == "FieldProbe":
+        elif self.type == "FieldProbe":
             kw = self._handle_field_probe(**kw)
         else:
             raise RuntimeError(
-                f"{self.diag_type} reduced diagnostic is not yet supported "
+                f"{self.type} reduced diagnostic is not yet supported "
                 "in pywarpx."
             )
 
