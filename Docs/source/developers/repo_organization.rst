@@ -28,6 +28,8 @@ Do not list header files (``.H``) here.
 For experienced developers, we also support AMReX' :ref:`GNUmake build script collection <developers-gnumake>`.
 The file ``Make.package`` in each sub-folder has the same purpose as the ``CMakeLists.txt`` file, please add new ``.cpp`` files to both dirs.
 
+.. _developers-cpp-includes:
+
 C++ Includes
 ------------
 
@@ -70,9 +72,11 @@ Each of these groups of header files should ideally be sorted alphabetically, an
 
 For details why this is needed, please see `PR #874 <https://github.com/ECP-WarpX/WarpX/pull/874#issuecomment-607038803>`_, `PR #1947 <https://github.com/ECP-WarpX/WarpX/pull/1947>`_, the `LLVM guidelines <https://llvm.org/docs/CodingStandards.html#include-style>`_, and `include-what-you-use <https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/WhyIWYU.md>`_.
 
+.. _developers-cpp-includes-fwd:
+
 Forward Declaration Headers
 ---------------------------
-Forward declarations can be used when a header file needs only to know that a given class exists, without any further detail (e.g., when only a pointer to an instance of
+`Forward declarations <https://en.wikipedia.org/wiki/Forward_declaration>`__ can be used when a header file needs only to know that a given class exists, without any further detail (e.g., when only a pointer to an instance of
 that class is used). Forward declaration headers are a convenient way to organize forward declarations. If a forward declaration is needed for a given class ``MyClass``, declared in ``MyClass.H``,
 the forward declaration should appear in a header file named ``MyClass_fwd.H``, placed in the same folder containing ``MyClass.H``. As for regular header files, forward declaration headers must have
 include guards. Below we provide a simple example:
@@ -86,7 +90,7 @@ include guards. Below we provide a simple example:
 
    class MyClass;
 
-   #endif //MY_CLASS_FWD_H
+   #endif // MY_CLASS_FWD_H
 
 ``MyClass.H``:
 
@@ -97,24 +101,52 @@ include guards. Below we provide a simple example:
 
    #include "MyClass_fwd.H"
    #include "someHeader.H"
-   class MyClass{/* stuff */};
 
-   #endif //MY_CLASS_H
+   class MyClass {
+       void stuff ();
+   };
+
+   #endif // MY_CLASS_H
 
 ``MyClass.cpp``:
 
 .. code-block:: cpp
 
    #include "MyClass.H"
-   class MyClass{/* stuff */};
 
-Usage: in ``SimpleUsage.H``
+   class MyClass {
+       void stuff () { /* stuff */ }
+   };
+
+Usage: in ``SomeType.H``
 
 .. code-block:: cpp
 
-   #include "MyClass_fwd.H"
+   #ifndef SOMETYPE_H
+   #define SOMETYPE_H
+
+   #include "MyClass_fwd.H" // all info we need here
    #include <memory>
 
-   /* stuff */
-   std::unique_ptr<MyClass> p_my_class;
-   /* stuff */
+   struct SomeType {
+       std::unique_ptr<MyClass> p_my_class;
+   };
+
+   #endif // SOMETYPE_H
+
+Usage: in ``somewhere.cpp``
+
+.. code-block:: cpp
+
+   #include "SomeType.H"
+   #include "MyClass.H"  // because we call "stuff()" we really need
+                         // to know the full declaration of MyClass
+
+   void somewhere ()
+   {
+       SomeType s;
+       s.p_my_class = std::make_unique<MyClass>();
+       s.p_my_class->stuff();
+   }
+
+All files that only need to know the type ``SomeType`` from ``SomeType.H`` but do not access the implementation details of ``MyClass`` will benefit from improved compilation times.

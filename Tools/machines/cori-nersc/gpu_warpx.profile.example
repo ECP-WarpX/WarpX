@@ -4,15 +4,15 @@ module purge
 module load modules
 module load cgpu
 module load esslurm
-module load gcc/8.3.0 cuda/11.4.0 cmake/3.21.3
+module load gcc/8.3.0 cuda/11.4.0 cmake/3.22.1
 module load openmpi
 
-export CMAKE_PREFIX_PATH=$HOME/sw/c-blosc-1.12.1-gpu-install:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-gpu-install:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=$HOME/sw/cori_gpu/c-blosc-1.12.1-install:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=$HOME/sw/cori_gpu/adios2-2.7.1-install:$CMAKE_PREFIX_PATH
 
-if [ -d "$HOME/sw/venvs/gpu_warpx" ]
+if [ -d "$HOME/sw/cori_gpu/venvs/cori_gpu_warpx" ]
 then
-  source $HOME/sw/venvs/gpu_warpx/bin/activate
+  source $HOME/sw/cori_gpu/venvs/cori_gpu_warpx/bin/activate
 fi
 
 # compiler environment hints

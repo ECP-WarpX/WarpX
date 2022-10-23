@@ -36,6 +36,8 @@ struct CopyParticleAttribs
     amrex::ParticleReal* AMREX_RESTRICT uypold = nullptr;
     amrex::ParticleReal* AMREX_RESTRICT uzpold = nullptr;
 
+    CopyParticleAttribs () = default;
+
     /** \brief Construct a new functor
      *
      * \param a_pti iterator to the tile containing the macroparticles

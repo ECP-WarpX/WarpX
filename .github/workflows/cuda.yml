@@ -24,6 +24,10 @@ jobs:
       SETUPTOOLS_USE_DISTUTILS: stdlib
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      name: Install Python
+      with:
+        python-version: '3.x'
     - name: install dependencies
       run: |
         .github/workflows/dependencies/nvcc11.sh
@@ -106,11 +110,11 @@ jobs:
         which nvcc || echo "nvcc not in PATH!"
 
         git clone https://github.com/AMReX-Codes/amrex.git ../amrex
-        cd amrex && git checkout --detach 6bbcbbb7829902e9038bee8c28be09800b22aab2 && cd -
+        cd amrex && git checkout --detach 56b6402d238979fca6e7c57fdc644a54c4cf6fce && cd -
         make COMP=gcc QED=FALSE USE_MPI=TRUE USE_GPU=TRUE USE_OMP=FALSE USE_PSATD=TRUE USE_CCACHE=TRUE -j 2
 
-  build_nvhpc21-9-nvcc:
-    name: NVHPC@21.9 NVCC/NVC++ Release [tests]
+  build_nvhpc21-11-nvcc:
+    name: NVHPC@21.11 NVCC/NVC++ Release [tests]
     runs-on: ubuntu-20.04
     if: github.event.pull_request.draft == false
     env:
@@ -139,7 +143,7 @@ jobs:
     - name: Build & Install
       run: |
         source /etc/profile.d/modules.sh
-        module load /opt/nvidia/hpc_sdk/modulefiles/nvhpc/21.9
+        module load /opt/nvidia/hpc_sdk/modulefiles/nvhpc/21.11
         which nvcc || echo "nvcc not in PATH!"
         which nvc++ || echo "nvc++ not in PATH!"
         which nvc || echo "nvc not in PATH!"

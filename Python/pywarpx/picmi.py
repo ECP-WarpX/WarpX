@@ -1,5 +1,5 @@
-# Copyright 2018-2020 Andrew Myers, David Grote, Ligia Diana Amorim
-# Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+# Copyright 2018-2022 Andrew Myers, David Grote, Ligia Diana Amorim
+# Maxence Thevenet, Remi Lehe, Revathi Jambunathan, Lorenzo Giacomel
 #
 #
 # This file is part of WarpX.
@@ -13,6 +13,7 @@ import re
 
 import numpy as np
 import periodictable
+
 import picmistandard
 import pywarpx
 
@@ -21,7 +22,7 @@ picmistandard.register_codename(codename)
 
 # dictionary to map field boundary conditions from picmistandard to WarpX
 BC_map = {
-    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped', 'none':'none'
+    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped', 'none':'none', None:'none'
 }
 
 class constants:
@@ -38,7 +39,84 @@ class constants:
 
 picmistandard.register_constants(constants)
 
+
 class Species(picmistandard.PICMI_Species):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ----------
+    warpx_boost_adjust_transverse_positions: bool, default=False
+        Whether to adjust transverse positions when apply the boost
+        to the simulation frame
+
+    warpx_self_fields_required_precision: float, default=1.e-11
+        Relative precision on the electrostatic solver
+        (when using the relativistic solver)
+
+    warpx_self_fields_absolute_tolerance: float, default=0.
+        Absolute precision on the electrostatic solver
+        (when using the relativistic solver)
+
+    warpx_self_fields_max_iters: integer, default=200
+        Maximum number of iterations for the electrostatic
+        solver for the species
+
+    warpx_self_fields_verbosity: integer, default=2
+        Level of verbosity for the electrostatic solver
+
+    warpx_save_previous_position: bool, default=False
+        Whether to save the old particle positions
+
+    warpx_do_not_deposit: bool, default=False
+        Whether or not to deposit the charge and current density for
+        for this species
+
+    warpx_reflection_model_xlo: string, default='0.'
+        Expression (in terms of the velocity "v") specifying the probability
+        that the particle will reflect on the lower x boundary
+
+    warpx_reflection_model_xhi: string, default='0.'
+        Expression (in terms of the velocity "v") specifying the probability
+        that the particle will reflect on the upper x boundary
+
+    warpx_reflection_model_ylo: string, default='0.'
+        Expression (in terms of the velocity "v") specifying the probability
+        that the particle will reflect on the lower y boundary
+
+    warpx_reflection_model_yhi: string, default='0.'
+        Expression (in terms of the velocity "v") specifying the probability
+        that the particle will reflect on the upper y boundary
+
+    warpx_reflection_model_zlo: string, default='0.'
+        Expression (in terms of the velocity "v") specifying the probability
+        that the particle will reflect on the lower z boundary
+
+    warpx_reflection_model_zhi: string, default='0.'
+        Expression (in terms of the velocity "v") specifying the probability
+        that the particle will reflect on the upper z boundary
+
+    warpx_save_particles_at_xlo: bool, default=False
+        Whether to save particles lost at the lower x boundary
+
+    warpx_save_particles_at_xhi: bool, default=False
+        Whether to save particles lost at the upper x boundary
+
+    warpx_save_particles_at_ylo: bool, default=False
+        Whether to save particles lost at the lower y boundary
+
+    warpx_save_particles_at_yhi: bool, default=False
+        Whether to save particles lost at the upper y boundary
+
+    warpx_save_particles_at_zlo: bool, default=False
+        Whether to save particles lost at the lower z boundary
+
+    warpx_save_particles_at_zhi: bool, default=False
+        Whether to save particles lost at the upper z boundary
+
+    warpx_save_particles_at_eb: bool, default=False
+        Whether to save particles lost at the embedded boundary
+    """
     def init(self, kw):
 
         if self.particle_type == 'electron':
@@ -61,23 +139,26 @@ class Species(picmistandard.PICMI_Species):
                     self.charge = '-q_e'
                 else:
                     self.charge = self.charge_state*constants.q_e
-            # Match a string of the format '#nXx', with the '#n' optional isotope number.
-            m = re.match(r'(?P<iso>#[\d+])*(?P<sym>[A-Za-z]+)', self.particle_type)
-            if m is not None:
-                element = periodictable.elements.symbol(m['sym'])
-                if m['iso'] is not None:
-                    element = element[m['iso'][1:]]
-                if self.charge_state is not None:
-                    assert self.charge_state <= element.number, Exception('%s charge state not valid'%self.particle_type)
-                    try:
-                        element = element.ion[self.charge_state]
-                    except ValueError:
-                        # Note that not all valid charge states are defined in elements,
-                        # so this value error can be ignored.
-                        pass
-                self.element = element
-                if self.mass is None:
-                    self.mass = element.mass*periodictable.constants.atomic_mass_constant
+            if self.particle_type is not None:
+                # Match a string of the format '#nXx', with the '#n' optional isotope number.
+                m = re.match(r'(?P<iso>#[\d+])*(?P<sym>[A-Za-z]+)', self.particle_type)
+                if m is not None:
+                    element = periodictable.elements.symbol(m['sym'])
+                    if m['iso'] is not None:
+                        element = element[m['iso'][1:]]
+                    if self.charge_state is not None:
+                        assert self.charge_state <= element.number, Exception('%s charge state not valid'%self.particle_type)
+                        try:
+                            element = element.ion[self.charge_state]
+                        except ValueError:
+                            # Note that not all valid charge states are defined in elements,
+                            # so this value error can be ignored.
+                            pass
+                    self.element = element
+                    if self.mass is None:
+                        self.mass = element.mass*periodictable.constants.atomic_mass_constant
+                else:
+                    raise Exception('The species "particle_type" is not known')
 
         self.boost_adjust_transverse_positions = kw.pop('warpx_boost_adjust_transverse_positions', None)
 
@@ -360,9 +441,9 @@ class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
         species.multiple_particles_pos_x = self.x
         species.multiple_particles_pos_y = self.y
         species.multiple_particles_pos_z = self.z
-        species.multiple_particles_vel_x = self.ux/constants.c
-        species.multiple_particles_vel_y = self.uy/constants.c
-        species.multiple_particles_vel_z = self.uz/constants.c
+        species.multiple_particles_vel_x = np.array(self.ux)/constants.c
+        species.multiple_particles_vel_y = np.array(self.uy)/constants.c
+        species.multiple_particles_vel_z = np.array(self.uz)/constants.c
         species.multiple_particles_weight = self.weight
         if density_scale is not None:
             species.multiple_particles_weight = self.weight*density_scale
@@ -400,7 +481,42 @@ class BinomialSmoother(picmistandard.PICMI_BinomialSmoother):
 
 
 class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
-    """This assumes that WarpX was compiled with USE_RZ = TRUE
+    """
+    This assumes that WarpX was compiled with USE_RZ = TRUE
+
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ---------
+    warpx_max_grid_size: integer, default=32
+       Maximum block size in either direction
+
+    warpx_max_grid_size_x: integer, optional
+       Maximum block size in radial direction
+
+    warpx_max_grid_size_y: integer, optional
+       Maximum block size in longitudinal direction
+
+    warpx_blocking_factor: integer, optional
+       Blocking factor (which controls the block size)
+
+    warpx_blocking_factor_x: integer, optional
+       Blocking factor (which controls the block size) in the radial direction
+
+    warpx_blocking_factor_y: integer, optional
+       Blocking factor (which controls the block size) in the longitudinal direction
+
+    warpx_potential_lo_r: float, default=0.
+       Electrostatic potential on the lower radial boundary
+
+    warpx_potential_hi_r: float, default=0.
+       Electrostatic potential on the upper radial boundary
+
+    warpx_potential_lo_z: float, default=0.
+       Electrostatic potential on the lower longitudinal boundary
+
+    warpx_potential_hi_z: float, default=0.
+       Electrostatic potential on the upper longitudinal boundary
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -437,15 +553,15 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
 
         assert self.lower_bound[0] >= 0., Exception('Lower radial boundary must be >= 0.')
-        assert self.bc_rmin != 'periodic' and self.bc_rmax != 'periodic', Exception('Radial boundaries can not be periodic')
+        assert self.lower_boundary_conditions[0] != 'periodic' and self.upper_boundary_conditions[0] != 'periodic', Exception('Radial boundaries can not be periodic')
 
         pywarpx.warpx.n_rz_azimuthal_modes = self.n_azimuthal_modes
 
         # Boundary conditions
-        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_rmin, self.bc_zmin]]
-        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_rmax, self.bc_zmax]]
-        pywarpx.boundary.particle_lo = [self.bc_rmin_particles, self.bc_zmin_particles]
-        pywarpx.boundary.particle_hi = [self.bc_rmax_particles, self.bc_zmax_particles]
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in self.lower_boundary_conditions]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
+        pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
+        pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -468,6 +584,29 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
 
 class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ---------
+    warpx_max_grid_size: integer, default=32
+       Maximum block size in either direction
+
+    warpx_max_grid_size_x: integer, optional
+       Maximum block size in longitudinal direction
+
+    warpx_blocking_factor: integer, optional
+       Blocking factor (which controls the block size)
+
+    warpx_blocking_factor_x: integer, optional
+       Blocking factor (which controls the block size) in the longitudinal direction
+
+    warpx_potential_lo_z: float, default=0.
+       Electrostatic potential on the lower longitudinal boundary
+
+    warpx_potential_hi_z: float, default=0.
+       Electrostatic potential on the upper longitudinal boundary
+    """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
@@ -499,10 +638,10 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         pywarpx.amr.blocking_factor_x = self.blocking_factor_x
 
         # Boundary conditions
-        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin]]
-        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax]]
-        pywarpx.boundary.particle_lo = [self.bc_xmin_particles]
-        pywarpx.boundary.particle_hi = [self.bc_xmax_particles]
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in self.lower_boundary_conditions]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
+        pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
+        pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -521,6 +660,41 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
             pywarpx.amr.max_level = 0
 
 class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ---------
+    warpx_max_grid_size: integer, default=32
+       Maximum block size in either direction
+
+    warpx_max_grid_size_x: integer, optional
+       Maximum block size in x direction
+
+    warpx_max_grid_size_y: integer, optional
+       Maximum block size in z direction
+
+    warpx_blocking_factor: integer, optional
+       Blocking factor (which controls the block size)
+
+    warpx_blocking_factor_x: integer, optional
+       Blocking factor (which controls the block size) in the x direction
+
+    warpx_blocking_factor_y: integer, optional
+       Blocking factor (which controls the block size) in the z direction
+
+    warpx_potential_lo_x: float, default=0.
+       Electrostatic potential on the lower x boundary
+
+    warpx_potential_hi_x: float, default=0.
+       Electrostatic potential on the upper x boundary
+
+    warpx_potential_lo_z: float, default=0.
+       Electrostatic potential on the lower z boundary
+
+    warpx_potential_hi_z: float, default=0.
+       Electrostatic potential on the upper z boundary
+    """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
@@ -556,10 +730,10 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
 
         # Boundary conditions
-        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin, self.bc_ymin]]
-        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax, self.bc_ymax]]
-        pywarpx.boundary.particle_lo = [self.bc_xmin_particles, self.bc_ymin_particles]
-        pywarpx.boundary.particle_hi = [self.bc_xmax_particles, self.bc_ymax_particles]
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in self.lower_boundary_conditions]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
+        pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
+        pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -582,6 +756,53 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
 
 
 class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ---------
+    warpx_max_grid_size: integer, default=32
+       Maximum block size in either direction
+
+    warpx_max_grid_size_x: integer, optional
+       Maximum block size in x direction
+
+    warpx_max_grid_size_y: integer, optional
+       Maximum block size in z direction
+
+    warpx_max_grid_size_z: integer, optional
+       Maximum block size in z direction
+
+    warpx_blocking_factor: integer, optional
+       Blocking factor (which controls the block size)
+
+    warpx_blocking_factor_x: integer, optional
+       Blocking factor (which controls the block size) in the x direction
+
+    warpx_blocking_factor_y: integer, optional
+       Blocking factor (which controls the block size) in the z direction
+
+    warpx_blocking_factor_z: integer, optional
+       Blocking factor (which controls the block size) in the z direction
+
+    warpx_potential_lo_x: float, default=0.
+       Electrostatic potential on the lower x boundary
+
+    warpx_potential_hi_x: float, default=0.
+       Electrostatic potential on the upper x boundary
+
+    warpx_potential_lo_y: float, default=0.
+       Electrostatic potential on the lower z boundary
+
+    warpx_potential_hi_y: float, default=0.
+       Electrostatic potential on the upper z boundary
+
+    warpx_potential_lo_z: float, default=0.
+       Electrostatic potential on the lower z boundary
+
+    warpx_potential_hi_z: float, default=0.
+       Electrostatic potential on the upper z boundary
+    """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.max_grid_size_x = kw.pop('warpx_max_grid_size_x', None)
@@ -621,14 +842,10 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         pywarpx.amr.blocking_factor_z = self.blocking_factor_z
 
         # Boundary conditions
-        pywarpx.boundary.field_lo = [BC_map[bc] for bc in [self.bc_xmin, self.bc_ymin, self.bc_zmin]]
-        pywarpx.boundary.field_hi = [BC_map[bc] for bc in [self.bc_xmax, self.bc_ymax, self.bc_zmax]]
-        pywarpx.boundary.particle_lo = [
-            self.bc_xmin_particles, self.bc_ymin_particles, self.bc_zmin_particles
-        ]
-        pywarpx.boundary.particle_hi = [
-            self.bc_xmax_particles, self.bc_ymax_particles, self.bc_zmax_particles
-        ]
+        pywarpx.boundary.field_lo = [BC_map[bc] for bc in self.lower_boundary_conditions]
+        pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
+        pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
+        pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -653,6 +870,38 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
             pywarpx.amr.max_level = 0
 
 class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ----------
+    warpx_pml_ncell: integer, optional
+        The depth of the PML, in number of cells
+
+    warpx_periodic_single_box_fft: bool, default=False
+        Whether to do the spectral solver FFTs assuming a single
+        simulation block
+
+    warpx_current_correction: bool, default=True
+        Whether to do the current correction for the spectral solver.
+        See documentation for exceptions to the default value.
+
+    warpx_psatd_update_with_rho: bool, optional
+        Whether to update with the actual rho for the spectral solver
+
+    warpx_psatd_do_time_averaging: bool, optional
+        Whether to do the time averaging for the spectral solver
+
+    warpx_do_pml_in_domain: bool, default=False
+        Whether to do the PML boundaries within the domain (versus
+        in the guard cells)
+
+    warpx_pml_has_particles: bool, default=False
+        Whether to allow particles in the PML region
+
+    warpx_do_pml_j_damping: bool, default=False
+        Whether to do damping of J in the PML
+    """
     def init(self, kw):
         assert self.method is None or self.method in ['Yee', 'CKC', 'PSATD', 'ECT'], Exception("Only 'Yee', 'CKC', 'PSATD', and 'ECT' are supported")
 
@@ -718,6 +967,20 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ----------
+    warpx_relativistic: bool, default=False
+        Whether to use the relativistic solver or lab frame solver
+
+    warpx_absolute_tolerance: float, default=0.
+        Absolute tolerance on the lab fram solver
+
+    warpx_self_fields_verbosity: integer, default=2
+        Level of verbosity for the lab frame solver
+    """
     def init(self, kw):
         self.relativistic = kw.pop('warpx_relativistic', False)
         self.absolute_tolerance = kw.pop('warpx_absolute_tolerance', None)
@@ -757,6 +1020,7 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
         self.laser.polarization = self.polarization_direction  # The main polarization vector
         self.laser.profile_waist = self.waist  # The waist of the laser (in meters)
         self.laser.profile_duration = self.duration  # The duration of the laser (in seconds)
+        self.laser.direction = self.propagation_direction
         self.laser.zeta = self.zeta
         self.laser.beta = self.beta
         self.laser.phi2 = self.phi2
@@ -779,6 +1043,7 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
         self.laser.wavelength = self.wavelength  # The wavelength of the laser (in meters)
         self.laser.e_max = self.Emax  # Maximum amplitude of the laser field (in V/m)
         self.laser.polarization = self.polarization_direction  # The main polarization vector
+        self.laser.direction = self.propagation_direction
         self.laser.do_continuous_injection = self.fill_in
 
         if self.mangle_dict is None:
@@ -860,10 +1125,26 @@ class Mirror(picmistandard.PICMI_Mirror):
 
 
 class CoulombCollisions(picmistandard.base._ClassWithInit):
-    """Custom class to handle setup of binary Coulmb collisions in WarpX. If
+    """
+    Custom class to handle setup of binary Coulmb collisions in WarpX. If
     collision initialization is added to picmistandard this can be changed to
-    inherit that functionality."""
+    inherit that functionality.
 
+    Parameters
+    ----------
+    name: string
+        Name of instance (used in the inputs file)
+
+    species: list of species instances
+        The species involved in the collision. Must be of length 2.
+
+    CoulombLog: float, optional
+        Value of the Coulomb log to use in the collision cross section.
+        If not supplied, it is calculated from the local conditions.
+
+    ndt: integer, optional
+        The collisions will be applied every "ndt" steps. Must be 1 or larger.
+    """
     def __init__(self, name, species, CoulombLog=None, ndt=None, **kw):
         self.name = name
         self.species = species
@@ -881,9 +1162,35 @@ class CoulombCollisions(picmistandard.base._ClassWithInit):
 
 
 class MCCCollisions(picmistandard.base._ClassWithInit):
-    """Custom class to handle setup of MCC collisions in WarpX. If collision
+    """
+    Custom class to handle setup of MCC collisions in WarpX. If collision
     initialization is added to picmistandard this can be changed to inherit
-    that functionality."""
+    that functionality.
+
+    Parameters
+    ----------
+    name: string
+        Name of instance (used in the inputs file)
+
+    species: species instance
+        The species involved in the collision
+
+    background_density: float
+        The density of the background
+
+    background_temperature: float
+        The temperature of the background
+
+    scattering_processes: dictionary
+        The scattering process to use and any needed information
+
+    background_mass: float, optional
+        The mass of the background particle. If not supplied, the default depends
+        on the type of scattering process.
+
+    ndt: integer, optional
+        The collisions will be applied every "ndt" steps. Must be 1 or larger.
+    """
 
     def __init__(self, name, species, background_density,
                  background_temperature, scattering_processes,
@@ -919,21 +1226,60 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
     """
     Custom class to handle set up of embedded boundaries specific to WarpX.
     If embedded boundary initialization is added to picmistandard this can be
-    changed to inherit that functionality.
-    - implicit_function: Analytic expression describing the embedded boundary
-    - potential: Analytic expression defining the potential. Can only be specified
-                 when the solver is electrostatic. Optional, defaults to 0.
-     Parameters used in the expressions should be given as additional keyword arguments.
+    changed to inherit that functionality. The geometry can be specified either as
+    an implicit function or as an STL file (ASCII or binary). In the latter case the
+    geometry specified in the STL file can be scaled, translated and inverted.
+
+    Parameters
+    ----------
+    implicit_function: string
+        Analytic expression describing the embedded boundary
+
+    stl_file: string
+        STL file path (string), file contains the embedded boundary geometry
+
+    stl_scale: float
+        Factor by which the STL geometry is scaled
+
+    stl_center: vector of floats
+        Vector by which the STL geometry is translated (in meters)
+
+    stl_reverse_normal: bool
+        If True inverts the orientation of the STL geometry
+
+    potential: string, default=0.
+        Analytic expression defining the potential. Can only be specified
+        when the solver is electrostatic.
+
+
+    Parameters used in the analytic expressions should be given as additional keyword arguments.
+
     """
-    def __init__(self, implicit_function, potential=None, **kw):
+    def __init__(self, implicit_function=None, stl_file=None, stl_scale=None, stl_center=None, stl_reverse_normal=False,
+                 potential=None, **kw):
+
+        assert stl_file is None or implicit_function is None, Exception('Only one between implicit_function and '
+                                                                            'stl_file can be specified')
+
         self.implicit_function = implicit_function
+        self.stl_file = stl_file
+
+        if stl_file is None:
+            assert stl_scale is None, Exception('EB can only be scaled only when using an stl file')
+            assert stl_center is None, Exception('EB can only be translated only when using an stl file')
+            assert stl_reverse_normal is False, Exception('EB can only be reversed only when using an stl file')
+
+        self.stl_scale = stl_scale
+        self.stl_center = stl_center
+        self.stl_reverse_normal = stl_reverse_normal
+
         self.potential = potential
 
         # Handle keyword arguments used in expressions
         self.user_defined_kw = {}
         for k in list(kw.keys()):
-            if (re.search(r'\b%s\b'%k, implicit_function) or
-                (potential is not None and re.search(r'\b%s\b'%k, potential))):
+            if (implicit_function is not None and re.search(r'\b%s\b'%k, implicit_function) or
+               (potential is not None and re.search(r'\b%s\b'%k, potential))):
                 self.user_defined_kw[k] = kw[k]
                 del kw[k]
 
@@ -946,8 +1292,16 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         # defined in my_constants with the same name but different value.
         self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
-        expression = pywarpx.my_constants.mangle_expression(self.implicit_function, self.mangle_dict)
-        pywarpx.warpx.eb_implicit_function = expression
+        if self.implicit_function is not None:
+            expression = pywarpx.my_constants.mangle_expression(self.implicit_function, self.mangle_dict)
+            pywarpx.warpx.eb_implicit_function = expression
+
+        if self.stl_file is not None:
+            pywarpx.eb2.geom_type = "stl"
+            pywarpx.eb2.stl_file = self.stl_file
+            pywarpx.eb2.stl_scale = self.stl_scale
+            pywarpx.eb2.stl_center = self.stl_center
+            pywarpx.eb2.stl_reverse_normal = self.stl_reverse_normal
 
         if self.potential is not None:
             assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
@@ -955,7 +1309,136 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
             pywarpx.warpx.__setattr__('eb_potential(x,y,z,t)', expression)
 
 
+class PlasmaLens(picmistandard.base._ClassWithInit):
+    """
+    Custom class to setup a plasma lens lattice.
+    The applied fields are dependent only on the transverse position.
+
+    Parameters
+    ----------
+    period: float
+        Periodicity of the lattice (in lab frame, in meters)
+
+    starts: list of floats
+        The start of each lens relative to the periodic repeat
+
+    lengths: list of floats
+        The length of each lens
+
+    strengths_E=None: list of floats, default = 0.
+        The electric field strength of each lens
+
+    strengths_B=None: list of floats, default = 0.
+        The magnetic field strength of each lens
+
+
+    The field that is applied depends on the transverse position of the particle, (x,y)
+
+    - Ex = x*stengths_E
+
+    - Ey = y*stengths_E
+
+    - Bx = +y*stengths_B
+
+    - By = -x*stengths_B
+
+    """
+    def __init__(self, period, starts, lengths, strengths_E=None, strengths_B=None, **kw):
+        self.period = period
+        self.starts = starts
+        self.lengths = lengths
+        self.strengths_E = strengths_E
+        self.strengths_B = strengths_B
+
+        assert (self.strengths_E is not None) or (self.strengths_B is not None),\
+               Exception('One of strengths_E or strengths_B must be supplied')
+
+        self.handle_init(kw)
+
+    def initialize_inputs(self):
+
+        pywarpx.particles.E_ext_particle_init_style = 'repeated_plasma_lens'
+        pywarpx.particles.B_ext_particle_init_style = 'repeated_plasma_lens'
+        pywarpx.particles.repeated_plasma_lens_period = self.period
+        pywarpx.particles.repeated_plasma_lens_starts = self.starts
+        pywarpx.particles.repeated_plasma_lens_lengths = self.lengths
+        pywarpx.particles.repeated_plasma_lens_strengths_E = self.strengths_E
+        pywarpx.particles.repeated_plasma_lens_strengths_B = self.strengths_B
+
+
 class Simulation(picmistandard.PICMI_Simulation):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ----------
+    warpx_current_deposition_algo: {'direct', 'esirkepov', and 'vay'}, optional
+        Current deposition algorithm. The default depends on conditions.
+
+    warpx_charge_deposition_algo: {'standard'}, optional
+        Charge deposition algorithm.
+
+    warpx_field_gathering_algo: {'energy-conserving', 'momentum-conserving'}, optional
+        Field gathering algorithm. The default depends on conditions.
+
+    warpx_particle_pusher_algo: {'boris', 'vay', 'higuera'}, default='boris'
+        Particle pushing algorithm.
+
+    warpx_use_filter: bool, optional
+        Whether to use filtering. The default depends on the conditions.
+
+    warpx_serialize_initial_conditions: bool, default=False
+        Controls the random numbers used for initialization.
+        This parameter should only be used for testing and continuous integration.
+
+    warpx_do_dynamic_scheduling: bool, default=True
+        Whether to do dynamic scheduling with OpenMP
+
+    warpx_load_balance_intervals: string, default='0'
+        The intervals for doing load balancing
+
+    warpx_load_balance_efficiency_ratio_threshold: float, default=1.1
+        (See documentation)
+
+    warpx_load_balance_with_sfc: bool, default=0
+        (See documentation)
+
+    warpx_load_balance_knapsack_factor: float, default=1.24
+        (See documentation)
+
+    warpx_load_balance_costs_update: {'heuristic' or 'timers' or 'gpuclock'}, optional
+        (See documentation)
+
+    warpx_costs_heuristic_particles_wt: float, optional
+        (See documentation)
+
+    warpx_costs_heuristic_cells_wt: float, optional
+        (See documentation)
+
+    warpx_use_fdtd_nci_corr: bool, optional
+        Whether to use the NCI correction when using the FDTD solver
+
+    warpx_amr_check_input: bool, optional
+        Whether AMReX should perform checks on the input
+        (primarily related to the max grid size and blocking factors)
+
+    warpx_amr_restart: string, optional
+        The name of the restart to use
+
+    warpx_zmax_plasma_to_compute_max_step: float, optional
+        Sets the simulation run time based on the maximum z value
+
+    warpx_collisions: collision instance, optional
+        The collision instance specifying the particle collisions
+
+    warpx_embedded_boundary: embedded boundary instance, optional
+
+    warpx_break_signals: list of strings
+        Signals on which to break
+
+    warpx_checkpoint_signals: list of strings
+        Signals on which to write out a checkpoint
+    """
 
     # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
     # Simulation objects. In the future, LibWarpX objects may actually be owned
@@ -981,9 +1464,13 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
         self.amr_restart = kw.pop('warpx_amr_restart', None)
+        self.zmax_plasma_to_compute_max_step = kw.pop('warpx_zmax_plasma_to_compute_max_step', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
+
+        self.break_signals = kw.pop('warpx_break_signals', None)
+        self.checkpoint_signals = kw.pop('warpx_checkpoint_signals', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -1001,6 +1488,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         if self.gamma_boost is not None:
             pywarpx.warpx.gamma_boost = self.gamma_boost
             pywarpx.warpx.boost_direction = 'z'
+
+        pywarpx.warpx.zmax_plasma_to_compute_max_step = self.zmax_plasma_to_compute_max_step
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
@@ -1022,6 +1511,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 
         pywarpx.amr.check_input = self.amr_check_input
+
+        pywarpx.warpx.break_signals = self.break_signals
+        pywarpx.warpx.checkpoint_signals = self.checkpoint_signals
 
         particle_shape = self.particle_shape
         for s in self.species:
@@ -1105,6 +1597,32 @@ class Simulation(picmistandard.PICMI_Simulation):
 
 
 class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ----------
+    warpx_plot_raw_fields: bool, optional
+        Flag whether to dump the raw fields
+
+    warpx_plot_raw_fields_guards: bool, optional
+        Flag whether the raw fields should include the guard cells
+
+    warpx_format: {plotfile, checkpoint, openpmd, ascent, sensei}, optional
+        Diagnostic file format
+
+    warpx_openpmd_backend: {bp, h5, json}, optional
+        Openpmd backend file format
+
+    warpx_file_prefix: string, optional
+        Prefix on the diagnostic file name
+
+    warpx_file_min_digits: integer, optional
+        Minimum number of digits for the time step number in the file name
+
+    warpx_dump_rz_modes: bool, optional
+        Flag whether to dump the data for all RZ modes
+    """
     def init(self, kw):
 
         self.plot_raw_fields = kw.pop('warpx_plot_raw_fields', None)
@@ -1144,44 +1662,47 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
 
-        for dataname in self.data_list:
-            if dataname == 'E':
-                fields_to_plot.add('Ex')
-                fields_to_plot.add('Ey')
-                fields_to_plot.add('Ez')
-            elif dataname == 'B':
-                fields_to_plot.add('Bx')
-                fields_to_plot.add('By')
-                fields_to_plot.add('Bz')
-            elif dataname == 'J':
-                fields_to_plot.add('jx')
-                fields_to_plot.add('jy')
-                fields_to_plot.add('jz')
-            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
-                fields_to_plot.add(dataname)
-            elif dataname in ['Jx', 'Jy', 'Jz']:
-                fields_to_plot.add(dataname.lower())
-            elif dataname.startswith('rho_'):
-                # Adds rho_species diagnostic
-                fields_to_plot.add(dataname)
-            elif dataname == 'dive':
-                fields_to_plot.add('divE')
-            elif dataname == 'divb':
-                fields_to_plot.add('divB')
-            elif dataname == 'raw_fields':
-                self.plot_raw_fields = 1
-            elif dataname == 'raw_fields_guards':
-                self.plot_raw_fields_guards = 1
-            elif dataname == 'finepatch':
-                self.plot_finepatch = 1
-            elif dataname == 'crsepatch':
-                self.plot_crsepatch = 1
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'E':
+                    fields_to_plot.add('Ex')
+                    fields_to_plot.add('Ey')
+                    fields_to_plot.add('Ez')
+                elif dataname == 'B':
+                    fields_to_plot.add('Bx')
+                    fields_to_plot.add('By')
+                    fields_to_plot.add('Bz')
+                elif dataname == 'J':
+                    fields_to_plot.add('jx')
+                    fields_to_plot.add('jy')
+                    fields_to_plot.add('jz')
+                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+                    fields_to_plot.add(dataname)
+                elif dataname in ['Jx', 'Jy', 'Jz']:
+                    fields_to_plot.add(dataname.lower())
+                elif dataname.startswith('rho_'):
+                    # Adds rho_species diagnostic
+                    fields_to_plot.add(dataname)
+                elif dataname == 'dive':
+                    fields_to_plot.add('divE')
+                elif dataname == 'divb':
+                    fields_to_plot.add('divB')
+                elif dataname == 'raw_fields':
+                    self.plot_raw_fields = 1
+                elif dataname == 'raw_fields_guards':
+                    self.plot_raw_fields_guards = 1
+                elif dataname == 'finepatch':
+                    self.plot_finepatch = 1
+                elif dataname == 'crsepatch':
+                    self.plot_crsepatch = 1
+                elif dataname == 'none':
+                    fields_to_plot = set(('none',))
 
-        # --- Convert the set to a sorted list so that the order
-        # --- is the same on all processors.
-        fields_to_plot = list(fields_to_plot)
-        fields_to_plot.sort()
-        self.diagnostic.fields_to_plot = fields_to_plot
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            fields_to_plot = list(fields_to_plot)
+            fields_to_plot.sort()
+            self.diagnostic.fields_to_plot = fields_to_plot
 
         self.diagnostic.plot_raw_fields = self.plot_raw_fields
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
@@ -1198,6 +1719,20 @@ ElectrostaticFieldDiagnostic = FieldDiagnostic
 
 
 class Checkpoint(picmistandard.base._ClassWithInit):
+    """
+    Sets up checkpointing of the simulation, allowing for later restarts
+
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ----------
+    warpx_file_prefix: string
+        The prefix to the checkpoint directory names
+
+    warpx_file_min_digits: integer
+        Minimum number of digits for the time step number in the checkpoint
+        directory name.
+    """
 
     def __init__(self, period = 1, write_dir = None, name = None, **kw):
 
@@ -1231,6 +1766,32 @@ class Checkpoint(picmistandard.base._ClassWithInit):
             self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ----------
+    warpx_format: {plotfile, checkpoint, openpmd, ascent, sensei}, optional
+        Diagnostic file format
+
+    warpx_openpmd_backend: {bp, h5, json}, optional
+        Openpmd backend file format
+
+    warpx_file_prefix: string, optional
+        Prefix on the diagnostic file name
+
+    warpx_file_min_digits: integer, optional
+        Minimum number of digits for the time step number in the file name
+
+    warpx_random_fraction: float, optional
+        Random fraction of particles to include in the diagnostic
+
+    warpx_uniform_stride: integer, optional
+        Stride to down select to the particles to include in the diagnostic
+
+    warpx_plot_filter_function: string, optional
+        Analytic expression to down select the particles to in the diagnostic
+    """
     def init(self, kw):
 
         self.format = kw.pop('warpx_format', 'plotfile')
@@ -1279,30 +1840,31 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()
 
-        for dataname in self.data_list:
-            if dataname == 'position':
-                # --- The positions are alway written out anyway
-                pass
-            elif dataname == 'momentum':
-                variables.add('ux')
-                variables.add('uy')
-                variables.add('uz')
-            elif dataname == 'weighting':
-                variables.add('w')
-            elif dataname == 'fields':
-                variables.add('Ex')
-                variables.add('Ey')
-                variables.add('Ez')
-                variables.add('Bx')
-                variables.add('By')
-                variables.add('Bz')
-            elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
-                variables.add(dataname)
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'position':
+                    # --- The positions are alway written out anyway
+                    pass
+                elif dataname == 'momentum':
+                    variables.add('ux')
+                    variables.add('uy')
+                    variables.add('uz')
+                elif dataname == 'weighting':
+                    variables.add('w')
+                elif dataname == 'fields':
+                    variables.add('Ex')
+                    variables.add('Ey')
+                    variables.add('Ez')
+                    variables.add('Bx')
+                    variables.add('By')
+                    variables.add('Bz')
+                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
+                    variables.add(dataname)
 
-        # --- Convert the set to a sorted list so that the order
-        # --- is the same on all processors.
-        variables = list(variables)
-        variables.sort()
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            variables = list(variables)
+            variables.sort()
 
         if np.iterable(self.species):
             species_list = self.species
@@ -1330,17 +1892,34 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
 
 class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
     """
-    Warp specific arguments:
-      - warpx_new_BTD: Use the new BTD diagnostics
-      - warpx_format: Passed to <diagnostic name>.format
-      - warpx_openpmd_backend: Passed to <diagnostic name>.openpmd_backend
-      - warpx_file_prefix: Passed to <diagnostic name>.file_prefix
-      - warpx_file_min_digits: Passed to <diagnostic name>.file_min_digits
-      - warpx_buffer_size: Passed to <diagnostic name>.buffer_size
-      - warpx_lower_bound: Passed to <diagnostic name>.lower_bound
-      - warpx_upper_bound: Passed to <diagnostic name>.upper_bound
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+
+    Parameters
+    ----------
+    warpx_new_BTD: bool, optional
+        Use the new BTD diagnostics
+
+    warpx_format: string, optional
+        Passed to <diagnostic name>.format
+
+    warpx_openpmd_backend: string, optional
+        Passed to <diagnostic name>.openpmd_backend
+
+    warpx_file_prefix: string, optional
+        Passed to <diagnostic name>.file_prefix
+
+    warpx_file_min_digits: integer, optional
+        Passed to <diagnostic name>.file_min_digits
+
+    warpx_buffer_size: integer, optional
+        Passed to <diagnostic name>.buffer_size
+
+    warpx_lower_bound: vector of floats, optional
+        Passed to <diagnostic name>.lower_bound
+
+    warpx_upper_bound: vector of floats, optional
+        Passed to <diagnostic name>.upper_bound
     """
-    __doc__ = picmistandard.PICMI_LabFrameFieldDiagnostic.__doc__ + __doc__
     def init(self, kw):
         self.use_new_BTD = kw.pop('warpx_new_BTD', False)
         if self.use_new_BTD:
@@ -1399,32 +1978,33 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
 
-        for dataname in self.data_list:
-            if dataname == 'E':
-                fields_to_plot.add('Ex')
-                fields_to_plot.add('Ey')
-                fields_to_plot.add('Ez')
-            elif dataname == 'B':
-                fields_to_plot.add('Bx')
-                fields_to_plot.add('By')
-                fields_to_plot.add('Bz')
-            elif dataname == 'J':
-                fields_to_plot.add('jx')
-                fields_to_plot.add('jy')
-                fields_to_plot.add('jz')
-            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho']:
-                fields_to_plot.add(dataname)
-            elif dataname in ['Jx', 'Jy', 'Jz']:
-                fields_to_plot.add(dataname.lower())
-            elif dataname.startswith('rho_'):
-                # Adds rho_species diagnostic
-                fields_to_plot.add(dataname)
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'E':
+                    fields_to_plot.add('Ex')
+                    fields_to_plot.add('Ey')
+                    fields_to_plot.add('Ez')
+                elif dataname == 'B':
+                    fields_to_plot.add('Bx')
+                    fields_to_plot.add('By')
+                    fields_to_plot.add('Bz')
+                elif dataname == 'J':
+                    fields_to_plot.add('jx')
+                    fields_to_plot.add('jy')
+                    fields_to_plot.add('jz')
+                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho']:
+                    fields_to_plot.add(dataname)
+                elif dataname in ['Jx', 'Jy', 'Jz']:
+                    fields_to_plot.add(dataname.lower())
+                elif dataname.startswith('rho_'):
+                    # Adds rho_species diagnostic
+                    fields_to_plot.add(dataname)
 
-        # --- Convert the set to a sorted list so that the order
-        # --- is the same on all processors.
-        fields_to_plot = list(fields_to_plot)
-        fields_to_plot.sort()
-        self.diagnostic.fields_to_plot = fields_to_plot
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            fields_to_plot = list(fields_to_plot)
+            fields_to_plot.sort()
+            self.diagnostic.fields_to_plot = fields_to_plot
 
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')

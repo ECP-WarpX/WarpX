@@ -8,4 +8,5 @@ target_sources(WarpX
     PartPerGridFunctor.cpp
     BackTransformFunctor.cpp
     BackTransformParticleFunctor.cpp
+    ParticleReductionFunctor.cpp
 )

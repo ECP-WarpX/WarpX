@@ -38,6 +38,8 @@ jobs:
           -DWarpX_MPI=OFF              \
           -DWarpX_QED=OFF
         cmake --build build_3D -j 2
+        ./build_3D/bin/warpx Examples/Physics_applications/laser_acceleration/inputs_3d
+
         cmake -S . -B build_RZ         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_DIMS=RZ              \
@@ -45,6 +47,7 @@ jobs:
           -DWarpX_MPI=OFF              \
           -DWarpX_QED=OFF
         cmake --build build_RZ -j 2
+        ./build_RZ/bin/warpx Examples/Physics_applications/laser_acceleration/inputs_rz
 
   build_gcc_ablastr:
     name: GCC ABLASTR w/o MPI

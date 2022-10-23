@@ -8,9 +8,123 @@ import argparse
 import sys
 
 import numpy as np
+from scipy.sparse import csc_matrix
+from scipy.sparse import linalg as sla
+
 from pywarpx import callbacks, fields, picmi
 
 constants = picmi.constants
+
+
+class PoissonSolver1D(picmi.ElectrostaticSolver):
+    """This solver is maintained as an example of the use of Python callbacks.
+       However, it is not necessarily needed since the 1D code has the direct tridiagonal
+       solver implemented."""
+
+    def __init__(self, grid, **kwargs):
+        """Direct solver for the Poisson equation using superLU. This solver is
+        useful for 1D cases.
+
+        Arguments:
+            grid (picmi.Cartesian1DGrid): Instance of the grid on which the
+            solver will be installed.
+        """
+        # Sanity check that this solver is appropriate to use
+        if not isinstance(grid, picmi.Cartesian1DGrid):
+            raise RuntimeError('Direct solver can only be used on a 1D grid.')
+
+        super(PoissonSolver1D, self).__init__(
+            grid=grid, method=kwargs.pop('method', 'Multigrid'),
+            required_precision=1, **kwargs
+        )
+
+    def initialize_inputs(self):
+        """Grab geometrical quantities from the grid. The boundary potentials
+        are also obtained from the grid using 'warpx_potential_zmin' for the
+        left_voltage and 'warpx_potential_zmax' for the right_voltage.
+        These can be given as floats or strings that can be parsed by the
+        WarpX parser.
+        """
+        # grab the boundary potentials from the grid object
+        self.right_voltage = (
+            self.grid.potential_zmax.replace('sin', 'np.sin').replace('pi', 'np.pi')
+        )
+
+        # set WarpX boundary potentials to None since we will handle it
+        # ourselves in this solver
+        self.grid.potential_xmin = None
+        self.grid.potential_xmax = None
+        self.grid.potential_ymin = None
+        self.grid.potential_ymax = None
+        self.grid.potential_zmin = None
+        self.grid.potential_zmax = None
+
+        super(PoissonSolver1D, self).initialize_inputs()
+
+        self.nz = self.grid.number_of_cells[0]
+        self.dz = (self.grid.upper_bound[0] - self.grid.lower_bound[0]) / self.nz
+
+        self.nxguardphi = 1
+        self.nzguardphi = 1
+
+        self.phi = np.zeros(self.nz + 1 + 2*self.nzguardphi)
+
+        self.decompose_matrix()
+
+        callbacks.installpoissonsolver(self._run_solve)
+
+    def decompose_matrix(self):
+        """Function to build the superLU object used to solve the linear
+        system."""
+        self.nsolve = self.nz + 1
+
+        # Set up the computation matrix in order to solve A*phi = rho
+        A = np.zeros((self.nsolve, self.nsolve))
+        idx = np.arange(self.nsolve)
+        A[idx, idx] = -2.0
+        A[idx[1:], idx[:-1]] = 1.0
+        A[idx[:-1], idx[1:]] = 1.0
+
+        A[0, 1] = 0.0
+        A[-1, -2] = 0.0
+        A[0, 0] = 1.0
+        A[-1, -1] = 1.0
+
+        A = csc_matrix(A, dtype=np.float64)
+        self.lu = sla.splu(A)
+
+    def _run_solve(self):
+        """Function run on every step to perform the required steps to solve
+        Poisson's equation."""
+        # get rho from WarpX
+        self.rho_data = fields.RhoFPWrapper(0, False)[...][:,0]
+        # run superLU solver to get phi
+        self.solve()
+        # write phi to WarpX
+        fields.PhiFPWrapper(0, True)[...] = self.phi
+
+    def solve(self):
+        """The solution step. Includes getting the boundary potentials and
+        calculating phi from rho."""
+
+        left_voltage = 0.0
+        t = self.sim_ext.gett_new()
+        right_voltage = eval(self.right_voltage)
+
+        # Construct b vector
+        rho = -self.rho_data / constants.ep0
+        b = np.zeros(rho.shape[0], dtype=np.float64)
+        b[:] = rho * self.dz**2
+
+        b[0] = left_voltage
+        b[-1] = right_voltage
+
+        phi = self.lu.solve(b)
+
+        self.phi[self.nzguardphi:-self.nzguardphi] = phi
+
+        self.phi[:self.nzguardphi] = left_voltage
+        self.phi[-self.nzguardphi:] = right_voltage
 
 
 class CapacitiveDischargeExample(object):
@@ -44,9 +158,11 @@ class CapacitiveDischargeExample(object):
     # Time (in seconds) between diagnostic evaluations
     diag_interval = 32 / freq
 
-    def __init__(self, n=0, test=False):
+    def __init__(self, n=0, test=False, pythonsolver=False):
         """Get input parameters for the specific case (n) desired."""
+        self.n = n
         self.test = test
+        self.pythonsolver = pythonsolver
 
         # Case specific input parameters
         self.voltage = f"{self.voltage[n]}*sin(2*pi*{self.freq:.5e}*t)"
@@ -62,13 +178,12 @@ class CapacitiveDischargeExample(object):
         self.diag_steps = int(self.diag_interval / self.dt)
 
         if self.test:
-            self.max_steps = 20
+            self.max_steps = 50
             self.diag_steps = 5
             self.mcc_subcycling_steps = 2
         else:
             self.mcc_subcycling_steps = None
 
-        self.rho_wrapper = None
         self.ion_density_array = np.zeros(self.nz + 1)
 
         self.setup_run()
@@ -96,10 +211,11 @@ class CapacitiveDischargeExample(object):
         # Field solver                                                        #
         #######################################################################
 
-        self.solver = picmi.ElectrostaticSolver(
-            grid=self.grid, method='Multigrid', required_precision=1e-12,
-            warpx_self_fields_verbosity=0
-        )
+        if self.pythonsolver:
+            self.solver = PoissonSolver1D(grid=self.grid)
+        else:
+            # This will use the tridiagonal solver
+            self.solver = picmi.ElectrostaticSolver(grid=self.grid)
 
         #######################################################################
         # Particle types setup                                                #
@@ -122,7 +238,7 @@ class CapacitiveDischargeExample(object):
         )
 
         #######################################################################
-        # Collision  initialization                                           #
+        # Collision initialization                                            #
         #######################################################################
 
         cross_sec_direc = '../../../../warpx-data/MCC_cross_sections/He/'
@@ -197,10 +313,16 @@ class CapacitiveDischargeExample(object):
                 n_macroparticle_per_cell=[self.seed_nppc], grid=self.grid
             )
         )
+        self.solver.sim_ext = self.sim.extension
 
         #######################################################################
         # Add diagnostics for the CI test to be happy                         #
         #######################################################################
+
+        if self.pythonsolver:
+            file_prefix = 'Python_background_mcc_1d_plt'
+        else:
+            file_prefix = 'Python_background_mcc_1d_tridiag_plt'
 
         field_diag = picmi.FieldDiagnostic(
             name='diag1',
@@ -208,7 +330,7 @@ class CapacitiveDischargeExample(object):
             period=0,
             data_list=['rho_electrons', 'rho_he_ions'],
             write_dir='.',
-            warpx_file_prefix='Python_background_mcc_1d_plt'
+            warpx_file_prefix=file_prefix
         )
         self.sim.add_diagnostic(field_diag)
 
@@ -216,17 +338,33 @@ class CapacitiveDischargeExample(object):
         # deposit the ion density in rho_fp
         self.sim.extension.depositChargeDensity('he_ions', 0)
 
-        rho_data = fields.RhoFPWrapper(0, False)[...][:,0]
+        rho_data = self.rho_wrapper[...][:,0]
         self.ion_density_array += rho_data / constants.q_e / self.diag_steps
 
     def run_sim(self):
 
         self.sim.step(self.max_steps - self.diag_steps)
+
+        self.rho_wrapper = fields.RhoFPWrapper(0, False)
         callbacks.installafterstep(self._get_rho_ions)
+
         self.sim.step(self.diag_steps)
 
         if self.sim.extension.getMyProc() == 0:
-            np.save('avg_ion_density.npy', self.ion_density_array)
+            np.save(f'ion_density_case_{self.n+1}.npy', self.ion_density_array)
+
+        # query the particle z-coordinates if this is run during CI testing
+        # to cover that functionality
+        if self.test:
+            nparts = self.sim.extension.get_particle_count(
+                'he_ions', local=True
+            )
+            z_coords = np.concatenate(
+                self.sim.extension.get_particle_z('he_ions')
+            )
+            assert len(z_coords) == nparts
+            assert np.all(z_coords >= 0.0) and np.all(z_coords <= self.gap)
+
 
 ##########################
 # parse input parameters
@@ -241,11 +379,15 @@ parser.add_argument(
     '-n', help='Test number to run (1 to 4)', required=False, type=int,
     default=1
 )
+parser.add_argument(
+    '--pythonsolver', help='toggle whether to use the Python level solver',
+    action='store_true'
+)
 args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1]+left
 
 if args.n < 1 or args.n > 4:
     raise AttributeError('Test number must be an integer from 1 to 4.')
 
-run = CapacitiveDischargeExample(n=args.n-1, test=args.test)
+run = CapacitiveDischargeExample(n=args.n-1, test=args.test, pythonsolver=args.pythonsolver)
 run.run_sim()

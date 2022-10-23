@@ -70,7 +70,6 @@ struct IonizationFilterFunc
                           amrex::FArrayBox const& bxfab,
                           amrex::FArrayBox const& byfab,
                           amrex::FArrayBox const& bzfab,
-                          amrex::Vector<amrex::Real> v_galilean,
                           const amrex::Real* const AMREX_RESTRICT a_ionization_energies,
                           const amrex::Real* const AMREX_RESTRICT a_adk_prefactor,
                           const amrex::Real* const AMREX_RESTRICT a_adk_exp_prefactor,

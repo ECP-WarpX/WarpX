@@ -34,11 +34,11 @@ lo = [-0.8, -0.8, -0.8]
 m = 0
 n = 1
 p = 1
-Lx = 1.06
-Ly = 1.06
-Lz = 1.06
+Lx = 1
+Ly = 1
+Lz = 1
 h_2 = (m * pi / Lx) ** 2 + (n * pi / Ly) ** 2 + (p * pi / Lz) ** 2
-theta = np.pi/8
+theta = np.pi/6
 
 # Open the right plot file
 filename = sys.argv[1]

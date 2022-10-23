@@ -6,7 +6,7 @@
  */
 #include "MPIInitHelpers.H"
 
-#include "WarpX.H"
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX_Config.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -66,14 +66,16 @@ namespace utils
                            << mtn(thread_provided) << ") is LOWER than requested "
                            << mtn(thread_required) << "). This might lead to undefined "
                            << "results in asynchronous operations (e.g. async_io).";
-            WarpX::GetInstance().RecordWarning("MPI", ss.str(), WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning(
+                    "MPI", ss.str(), ablastr::warn_manager::WarnPriority::high);
         }
         if( thread_provided > thread_required ){
             ss << "NOTE: Provided MPI thread safety level ("
                            << mtn(thread_provided) << ") is stricter than requested "
                            << mtn(thread_required) << "). This might reduce multi-node "
                            << "communication performance.";
-            WarpX::GetInstance().RecordWarning("MPI", ss.str());
+            ablastr::warn_manager::WMRecordWarning(
+                    "MPI", ss.str());
         }
 #endif
     }

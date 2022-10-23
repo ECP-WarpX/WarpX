@@ -6,6 +6,7 @@
  */
 #include "PsatdAlgorithmPmlRZ.H"
 #include "FieldSolver/SpectralSolver/SpectralHankelTransform/HankelTransform.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -162,11 +163,13 @@ void PsatdAlgorithmPmlRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ co
 void
 PsatdAlgorithmPmlRZ::CurrentCorrection (SpectralFieldDataRZ& /* field_data */)
 {
-    amrex::Abort("Current correction not implemented in RZ geometry PML");
+    amrex::Abort(Utils::TextMsg::Err(
+        "Current correction not implemented in RZ geometry PML"));
 }
 
 void
 PsatdAlgorithmPmlRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    amrex::Abort("Vay deposition not implemented in RZ geometry PML");
+    amrex::Abort(Utils::TextMsg::Err(
+        "Vay deposition not implemented in RZ geometry PML"));
 }

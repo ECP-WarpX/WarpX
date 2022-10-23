@@ -22,7 +22,6 @@
 #include "PhysicalParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
 #include "ParticleBoundaries.H"
 
@@ -85,13 +84,15 @@ public:
       return  allcontainers[ispecies];
     }
 #endif
-    std::array<amrex::Real, 3> meanParticleVelocity(int ispecies) {
+    std::array<amrex::ParticleReal, 3> meanParticleVelocity(int ispecies) {
         return allcontainers[ispecies]->meanParticleVelocity();
     }
 
     void AllocData ();
 
     void InitData ();
+
+    void InitMultiPhysicsModules ();
 
     ///
     /// This evolves all the particles by one PIC time step, including current deposition, the
@@ -137,45 +138,41 @@ public:
      * \brief Deposit charge density.
      *
      * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
-     * \param[in] relative_t Time at which to deposit rho, relative to the time
-     *             of the current positions of the particles (expressed as
-     *             a fraction of dt). When different than 0, the particle
-     *             position will be temporarily modified to match the time
-     *             of the deposition.
+     * \param[in] relative_time Time at which to deposit rho, relative to the time of the
+     *                          current positions of the particles. When different than 0,
+     *                          the particle position will be temporarily modified to match
+     *                          the time of the deposition.
      */
     void
     DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                   const amrex::Real relative_t);
+                   const amrex::Real relative_time);
 
     /**
      * \brief Deposit current density.
      *
      * \param[in,out] J vector of current densities (one three-dimensional array of pointers
      *                to MultiFabs per mesh refinement level)
-     * \param[in] dt: Time step for particle level (is used when temporarily
-     *                modifying the particle positions, either within the
-     *                Esirkepov or when `relative_t` is different than 0
-     * \param[in] relative_t: Time at which to deposit J, relative to the time of
-     *                the current positions of the particles (expressed as
-     *                a fraction of dt). When different than 0, the particle
-     *                position will be temporarily modified to match the
-     *                time of the deposition.
+     * \param[in] dt Time step for particle level
+     * \param[in] relative_time Time at which to deposit J, relative to the time of the
+     *                          current positions of the particles. When different than 0,
+     *                          the particle position will be temporarily modified to match
+     *                          the time of the deposition.
      */
     void
     DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                    const amrex::Real dt, const amrex::Real relative_t);
+                    const amrex::Real dt, const amrex::Real relative_time);
 
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
     /// to it. The charge density is accumulated over all the particles in the MultiParticleContainer
-    ///
+
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
     void doFieldIonization (int lev,
                             const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                             const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
 
-    void doCollisions (amrex::Real cur_time);
+    void doCollisions (amrex::Real cur_time, amrex::Real dt);
 
     /**
     * \brief This function loops over all species and performs resampling if appropriate.
@@ -300,8 +297,8 @@ public:
     std::string m_B_ext_particle_s = "none";
     std::string m_E_ext_particle_s = "none";
     // External fields added to particle fields.
-    amrex::Vector<amrex::Real> m_B_external_particle;
-    amrex::Vector<amrex::Real> m_E_external_particle;
+    amrex::Vector<amrex::ParticleReal> m_B_external_particle;
+    amrex::Vector<amrex::ParticleReal> m_E_external_particle;
     // Parser for B_external on the particle
     std::unique_ptr<amrex::Parser> m_Bx_particle_parser;
     std::unique_ptr<amrex::Parser> m_By_particle_parser;
@@ -311,15 +308,15 @@ public:
     std::unique_ptr<amrex::Parser> m_Ey_particle_parser;
     std::unique_ptr<amrex::Parser> m_Ez_particle_parser;
 
-    amrex::Real m_repeated_plasma_lens_period;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_starts;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_lengths;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_E;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_B;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_starts;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_lengths;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_E;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_B;
+    amrex::ParticleReal m_repeated_plasma_lens_period;
+    amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_starts;
+    amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_lengths;
+    amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_strengths_E;
+    amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_strengths_B;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_starts;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_lengths;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_strengths_E;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_strengths_B;
 
 #ifdef WARPX_QED
     /**
@@ -373,6 +370,7 @@ protected:
 
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     std::vector<bool> m_deposit_on_main_grid;
+    std::vector<bool> m_laser_deposit_on_main_grid;
 
     //! instead of gathering fields from the finest patch level, gather from the coarsest
     std::vector<bool> m_gather_from_main_grid;

@@ -9,6 +9,7 @@
 #ifdef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 
@@ -42,9 +43,10 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     amrex::Vector<int> field_boundary_hi) {
 
     // Ensure that we are using the Yee solver
-    if (m_fdtd_algo != MaxwellSolverAlgo::Yee) {
-        amrex::Abort("The Silver-Mueller boundary conditions can only be used with the Yee solver.");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_fdtd_algo == MaxwellSolverAlgo::Yee,
+        "The Silver-Mueller boundary conditions can only be used with the Yee solver."
+    );
 
     // Ensure that we are using the cells the domain
     domain_box.enclosedCells();

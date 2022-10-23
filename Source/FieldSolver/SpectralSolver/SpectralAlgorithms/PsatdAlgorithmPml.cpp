@@ -8,6 +8,7 @@
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpX_Complex.H"
 
@@ -34,10 +35,10 @@ PsatdAlgorithmPml::PsatdAlgorithmPml(const SpectralKSpace& spectral_kspace,
                                      const SpectralFieldIndex& spectral_index,
                                      const int norder_x, const int norder_y,
                                      const int norder_z, const bool nodal,
-                                     const amrex::IntVect& fill_guards, const Real dt,
+                                     const Real dt,
                                      const bool dive_cleaning, const bool divb_cleaning)
      // Initialize members of base class
-     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
+     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal),
        m_spectral_index(spectral_index),
        m_dt(dt),
        m_dive_cleaning(dive_cleaning),
@@ -404,13 +405,15 @@ void PsatdAlgorithmPml::InitializeSpectralCoefficients (
 void
 PsatdAlgorithmPml::CurrentCorrection (SpectralFieldData& /*field_data*/)
 {
-    amrex::Abort("Current correction not implemented for PML PSATD");
+    amrex::Abort(Utils::TextMsg::Err(
+        "Current correction not implemented for PML PSATD"));
 }
 
 void
 PsatdAlgorithmPml::VayDeposition (SpectralFieldData& /*field_data*/)
 {
-    amrex::Abort("Vay deposition not implemented for PML PSATD");
+    amrex::Abort(Utils::TextMsg::Err(
+        "Vay deposition not implemented for PML PSATD"));
 }
 
 #endif // WARPX_USE_PSATD

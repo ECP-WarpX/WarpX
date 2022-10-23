@@ -9,7 +9,6 @@
 #include <WarpX.H>
 
 #include <AMReX_BaseFab.H>
-#include <AMReX_BoxIterator.H>
 #include <AMReX_Config.H>
 #include <AMReX_FabArray.H>
 #include <AMReX_Geometry.H>
@@ -28,25 +27,27 @@ using namespace amrex;
 void
 WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
 {
-    const Real* problo = Geom(lev).ProbLo();
-    const Real* dx = Geom(lev).CellSize();
+    const auto problo = Geom(lev).ProbLoArray();
+    const auto dx = Geom(lev).CellSizeArray();
+
+    const auto ftlo = fine_tag_lo;
+    const auto fthi = fine_tag_hi;
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(tags); mfi.isValid(); ++mfi)
     {
-        auto& fab = tags[mfi];
-        const Box& bx = fab.box();
-        for (BoxIterator bi(bx); bi.ok(); ++bi)
+        const Box& bx = mfi.fabbox();
+        const auto& fab = tags.array(mfi);
+        ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
-            const IntVect& cell = bi();
-            RealVect pos {AMREX_D_DECL((cell[0]+0.5_rt)*dx[0]+problo[0],
-                                       (cell[1]+0.5_rt)*dx[1]+problo[1],
-                                       (cell[2]+0.5_rt)*dx[2]+problo[2])};
-            if (pos > fine_tag_lo && pos < fine_tag_hi) {
-                fab(cell) = TagBox::SET;
+            RealVect pos {AMREX_D_DECL((i+0.5_rt)*dx[0]+problo[0],
+                                       (j+0.5_rt)*dx[1]+problo[1],
+                                       (k+0.5_rt)*dx[2]+problo[2])};
+            if (pos > ftlo && pos < fthi) {
+                fab(i,j,k) = TagBox::SET;
             }
-        }
+        });
     }
 }

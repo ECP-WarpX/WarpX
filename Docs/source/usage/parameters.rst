@@ -5,6 +5,10 @@ Input Parameters
 
 .. note::
 
+   WarpX input options are read via AMReX `ParmParse <https://amrex-codes.github.io/amrex/docs_html/Basics.html#parmparse>`__.
+
+.. note::
+
    The AMReX parser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted.
 
 .. _running-cpp-parameters-overall:
@@ -23,6 +27,10 @@ Overall simulation parameters
     The maximum physical time of the simulation. Can be provided instead of ``max_step``. If both
     ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
     when the first criterion is hit.
+
+* ``warpx.used_inputs_file`` (`string`; default: ``warpx_used_inputs``)
+    Name of a file that WarpX writes to archive the used inputs.
+    The context of this file will contain an exact copy of all explicitly and implicitly used inputs parameters, including those :ref:`extended and overwritten from the command line <usage_run>`.
 
 * ``warpx.gamma_boost`` (`float`)
     The Lorentz factor of the boosted frame in which the simulation is run.
@@ -138,6 +146,41 @@ Overall simulation parameters
     This will cause severe performance drops.
     Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
     `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
+
+* ``amrex.abort_on_unused_inputs`` (``0`` or ``1``; default is ``0`` for false)
+    When set to ``1``, this option causes simulation to fail *after* its completion if there were unused parameters.
+    It is mainly intended for continuous integration and automated testing to check that all tests and inputs are adapted to API changes.
+
+Signal Handling
+^^^^^^^^^^^^^^^
+
+WarpX can handle Unix (Linux/macOS) `process signals <https://en.wikipedia.org/wiki/Signal_(IPC)>`__.
+This can be useful to configure jobs on HPC and cloud systems to shut down cleanly when they are close to reaching their allocated walltime or to steer the simulation behavior interactively.
+
+Allowed signal names are documented in the `C++ standard <https://en.cppreference.com/w/cpp/utility/program/SIG_types>`__ and `POSIX <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html>`__.
+We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal configuration name for ``SIGINT`` is ``INT``.
+
+* ``warpx.break_signals`` (array of `string`, separated by spaces) optional
+    A list of signal names or numbers that the simulation should
+    handle by cleanly terminating at the next timestep
+
+* ``warpx.checkpoint_signals`` (array of `string`, separated by spaces) optional
+    A list of signal names or numbers that the simulation should
+    handle by outputting a checkpoint at the next timestep. A
+    diagnostic of type `checkpoint` must be configured.
+
+.. note::
+
+   Certain signals are only available on specific platforms, please see the links above for details.
+   Typically supported on Linux and macOS are ``HUP``, ``INT``, ``QUIT``, ``ABRT``, ``USR1``, ``USR2``, ``TERM``, ``TSTP``, ``URG``, and ``IO`` among others.
+
+   Signals to think about twice before overwriting in *interactive simulations*:
+   Note that ``INT`` (interupt) is the signal that ``Ctrl+C`` sends on the terminal, which most people use to abort a process; once overwritten you need to abort interactive jobs with, e.g., ``Ctrl+\`` (``QUIT``) or sending the ``KILL`` signal.
+   The ``TSTP`` (terminal stop) command is sent interactively from ``Ctrl+Z`` to temporarily send a process to sleep (until send in the background with commands such as ``bg`` or continued with ``fg``), overwriting it would thus disable that functionality.
+   The signals ``KILL`` and ``STOP`` cannot be used.
+
+   The ``FPE`` signal should not be overwritten in WarpX, as it is `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_warpx>`.
+
 
 .. _running-cpp-parameters-box:
 
@@ -264,7 +307,7 @@ Domain Boundary Conditions
     * ``Periodic``: This option can be used to set periodic domain boundaries. Note that if the fields for lo in a certain dimension are set to periodic, then the corresponding upper boundary must also be set to periodic. If particle boundaries are not specified in the input file, then particles boundaries by default will be set to periodic. If particles boundaries are specified, then they must be set to periodic corresponding to the periodic field boundaries.
 
     * ``pml`` (default): This option can be used to add Perfectly Matched Layers (PML) around the simulation domain. See the :ref:`PML theory section <theory-bc>` for more details.
-      Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.do_particles_in_pml``, and ``warpx.do_pml_j_damping``.
+      Additional pml algorithms can be explored using the parameters ``warpx.do_pml_in_domain``, ``warpx.pml_has_particles``, and ``warpx.do_pml_j_damping``.
 
     * ``absorbing_silver_mueller``: This option can be used to set the Silver-Mueller absorbing boundary conditions. These boundary conditions are simpler and less computationally expensive than the pml, but are also less effective at absorbing the field. They only work with the Yee Maxwell solver.
 
@@ -277,6 +320,7 @@ Domain Boundary Conditions
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
     Options are:
+
     * ``Absorbing``: Particles leaving the boundary will be deleted.
 
     * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistenly set to periodic and both lower and upper boundaries must be periodic.
@@ -313,6 +357,9 @@ Additional PML parameters
 * ``warpx.do_pml_j_damping`` (`int`; default: 0)
     Whether to damp current in PML. Can only be used if particles are propagated in PML,
     i.e. if `warpx.pml_has_particles = 1`.
+
+* ``warpx.v_particle_pml`` (`float`; default: 1)
+    When ``warpx.do_pml_j_damping = 1``, the assumed velocity of the particles to be absorbed in the PML, in units of the speed of light `c`.
 
 * ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
     Whether to use divergence cleaning for E in the PML region.
@@ -539,8 +586,19 @@ Particle initialization
 
 * ``<species_name>.species_type`` (`string`) optional (default `unspecified`)
     Type of physical species.
-    Currently, the accepted species are ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"`` (or equivalently ``"proton"``), ``"helium"`` (or equivalently ``"alpha"``), ``"boron"``, ``"carbon"``, ``"oxygen"``, ``"nitrogen"``, ``"argon"``, ``"copper"`` and ``"xenon"``.
-    Either this or both ``mass`` and ``charge`` have to be specified.
+    Currently, the accepted species are
+    ``"electron"``, ``"positron"``, ``"muon"``, ``"antimuon"``, ``"photon"``, ``"neutron"``, ``"proton"`` , ``"alpha"``,
+    ``"hydrogen1"`` (a.k.a. ``"protium"``), ``"hydrogen2"`` (a.k.a. ``"deuterium"``), ``"hydrogen3"`` (a.k.a.``"tritium"``),
+    ``"helium"``, ``"helium3"``, ``"helium4"``,
+    ``"lithium"``, ``"lithium6"``, ``"lithium7"``, ``"beryllium"``, ``"boron"``, ``"boron10"``, ``"boron11"``,
+    ``"carbon"``, ``"carbon12"``, ``"carbon13"``, ``"nitrogen"``, ``"nitrogen14"``, ``"nitrogen15"``,
+    ``"oxygen"``, ``"oxygen16"``, ``"oxygen17"``, ``"oxygen18"``, ``"fluorine"``, ``"neon"``, ``"neon20"``,
+    ``"neon21"``, ``"neon22"``, ``"aluminium"``, ``"argon"``, ``"copper"``, ``"xenon"`` and ``"gold"``.
+    The difference between ``"proton"`` and ``"hydrogen1"`` is that the mass of the latter includes also the mass
+    of the bound electron (same for ``"alpha"`` and ``"helium4"``). When only the name of an element is specified, the mass
+    is a weighted average of the masses of the stable isotopes. For all the elements with ``Z < 11`` we provide
+    also the stable isotopes as an option for ``species_type`` (e.g., ``"helium3"`` and ``"helium4"``).
+    Either ``species_type`` or both ``mass`` and ``charge`` have to be specified.
 
 * ``<species_name>.charge`` (`float`) optional (default `NaN`)
     The charge of one `physical` particle of this species.
@@ -585,10 +643,9 @@ Particle initialization
 
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in
       space in all directions. This requires additional parameters:
-      ``<species_name>.q_tot`` (beam charge) optional (default is ``q_tot=0``),
+      ``<species_name>.q_tot`` (beam charge),
       ``<species_name>.npart`` (number of particles in the beam),
       ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
-      ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
       ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
       ``<species_name>.x/y/z_cut`` (optional, particles with ``abs(x-x_m) > x_cut*x_rms`` are not injected, same for y and z. ``<species_name>.q_tot`` is the charge of the un-cut beam, so that cutting the distribution is likely to result in a lower total charge),
       and optional argument ``<species_name>.do_symmetrize`` (whether to
@@ -602,7 +659,7 @@ Particle initialization
       ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
       The external file must include the species ``openPMD::Record`` labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
-      If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ```<species_name>.charge`` or ```<species_name>.species_type``).
+      If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ``<species_name>.charge`` or ``<species_name>.species_type``).
       The ``external_file`` option is currently implemented for 2D, 3D and RZ geometries, with record components in the cartesian coordinates ``(x,y,z)`` for 3D and RZ, and ``(x,z)`` for 2D.
       For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :ref:`the install section <install-developers>`.
 
@@ -884,22 +941,25 @@ Particle initialization
     when the particles are generated.
     If the user-defined real attribute is ``<real_attrib_name>`` then the
     following required parameter must be specified to initialize the attribute.
-    * ``<species_name>.attribute.<real_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
-    ``t`` represents the physical time in seconds during the simulation.
-    ``x`, ``y``, ``z` represent particle positions in the unit of meter.
-    ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
-    :math:`\gamma v/c`, where
-    :math:`\gamma` is the Lorentz factor,
-    :math:`v/c` is the particle velocity normalized by the speed of light.
 
-* ``<species>.save_particles_at_xlo/ylo/zlo``,  ``<species>.save_particles_at_xhi/yhi/zhi`` and ``<species>.save_particles_at_eb`` (`0` or `1` optional, default `0`)
+   * ``<species_name>.attribute.<real_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
+     ``t`` represents the physical time in seconds during the simulation.
+     ``x``, ``y``, ``z`` represent particle positions in the unit of meter.
+     ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
+     :math:`\gamma v/c`, where
+     :math:`\gamma` is the Lorentz factor,
+     :math:`v/c` is the particle velocity normalized by the speed of light.
+
+* ``<species>.save_particles_at_xlo/ylo/zlo``, ``<species>.save_particles_at_xhi/yhi/zhi`` and ``<species>.save_particles_at_eb`` (`0` or `1` optional, default `0`)
     If `1` particles of this species will be copied to the scraped particle
     buffer for the specified boundary if they leave the simulation domain in
     the specified direction. **If USE_EB=TRUE** the ``save_particles_at_eb``
     flag can be set to `1` to also save particle data for the particles of this
     species that impact the embedded boundary.
     The scraped particle buffer can be used to track particle fluxes out of the
-    simulation but is currently only accessible via the Python interface. The
+    simulation.
+    The particle data can be written out by setting up a ``BoundaryScrapingDiagnostic``.
+    It is also accessible via the Python interface. The
     function ``get_particle_boundary_buffer``, found in the
     ``picmi.Simulation`` class as
     ``sim.extension.get_particle_boundary_buffer()``, can be
@@ -909,8 +969,8 @@ Particle initialization
     the above mentioned function.
 
     .. note::
-        Currently the scraped particle buffer relies on the user to access the
-        data in the buffer for processing and periodically clear the buffer. The
+        When accessing the data via Python, the scraped particle buffer relies on the user
+        to clear the buffer after processing the data. The
         buffer will grow unbounded as particles are scraped and therefore could
         lead to memory issues if not periodically cleared. To clear the buffer
         call ``warpx_clearParticleBoundaryBuffer()``.
@@ -1029,7 +1089,7 @@ Laser initialization
     transversally.
 
     .. note::
-        In 2D, ```<laser_name>`.position`` is still given by 3 numbers,
+        In 2D, ``<laser_name>.position`` is still given by 3 numbers,
         but the second number is ignored.
 
     When running a **boosted-frame simulation**, provide the value of
@@ -1217,6 +1277,11 @@ Laser initialization
     per angular mode. The laser particles are loaded into radial spokes, with
     the number of spokes given by min_particles_per_mode*(warpx.n_rz_azimuthal_modes-1).
 
+* ``lasers.deposit_on_main_grid`` (`int`) optional (default `0`)
+    When using mesh refinement, whether the antenna that emits the laser
+    deposits charge/current only on the main grid (i.e. level 0), or also
+    on the higher mesh-refinement levels.
+
 * ``warpx.num_mirrors`` (`int`) optional (default `0`)
     Users can input perfect mirror condition inside the simulation domain.
     The number of mirrors is given by ``warpx.num_mirrors``. The mirrors are
@@ -1353,14 +1418,7 @@ External fields
 Collision initialization
 ------------------------
 
-WarpX provides a relativistic elastic Monte Carlo binary Coulomb collision model,
-following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
-When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
-since the current implementation of the collision module assumes axisymmetry.
-A non-relativistic Monte Carlo treatment for particles colliding
-with a neutral, uniform background gas is also available. The implementation follows the so-called
-null collision strategy discussed for example in `Birdsall (IEEE Transactions on
-Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/document/106800>`_.
+WarpX provides several particle collions models, using varying degrees of approximation.
 
 * ``collisions.collision_names`` (`strings`, separated by spaces)
     The name of each collision type.
@@ -1368,16 +1426,30 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
     in this documentation we use ``<collision_name>`` as a placeholder.
 
 * ``<collision_name>.type`` (`string`) optional
-    The type of collsion. The types implemented are ``pairwisecoulomb`` for pairwise Coulomb collisions and
-    ``background_mcc`` for collisions between particles and a neutral background. If not specified, it defaults to ``pairwisecoulomb``.
+    The type of collsion. The types implemented are:
+
+    - ``pairwisecoulomb`` for pairwise Coulomb collisions, the default if unspecified.
+      This provides a pair-wise relativistic elastic Monte Carlo binary Coulomb collision model,
+      following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+      When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
+      since the current implementation of the collision module assumes axisymmetry.
+    - ``background_mcc`` for collisions between particles and a neutral background.
+      This is a relativistic Monte Carlo treatment for particles colliding
+      with a neutral background gas. The implementation follows the so-called
+      null collision strategy discussed for example in `Birdsall (IEEE Transactions on
+      Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/document/106800>`_.
+      See also :ref:`collisions section <theory-collisions>`.
+    - ``background_stopping`` for slowing of ions due to collisions with electrons or ions.
+      This implements the approximate formulae as derived in Introduction to Plasma Physics,
+      from Goldston and Rutherford, section 14.2.
 
 * ``<collision_name>.species`` (`strings`)
     If using ``pairwisecoulomb`` type this should be the names of two species,
     between which the collision will be considered.
     The number of provided ``<collision_name>.species`` should match
     the number of collision names, i.e. ``collisions.collision_names``.
-    If using ``background_mcc`` type this should be the name of the species for
-    which collisions will be included. Only one species name should be given.
+    If using ``background_mcc`` or ``background_stopping`` type this should be the name of the species for which collisions will be included.
+    Only one species name should be given.
 
 * ``<collision_name>.CoulombLog`` (`float`) optional
     Only for ``pairwisecoulomb``. A provided fixed Coulomb logarithm of the
@@ -1395,21 +1467,57 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
     Execute collision every # time steps. The default value is 1.
 
 * ``<collision_name>.background_density`` (`float`)
-    Only for ``background_mcc``. The density of the neutral background gas in :math:`m^{-3}`.
+    Only for ``background_mcc`` and ``background_stopping``. The density of the background in :math:`m^{-3}`.
     Can also provide ``<collision_name>.background_density(x,y,z,t)`` using the parser
-    initialization style for spatially and temporally varying density. If a function
+    initialization style for spatially and temporally varying density. With ``background_mcc``, if a function
     is used for the background density, the input parameter ``<collision_name>.max_background_density``
     must also be provided to calculate the maximum collision probability.
 
 * ``<collision_name>.background_temperature`` (`float`)
-    Only for ``background_mcc``. The temperature of the neutral background gas in Kelvin.
+    Only for ``background_mcc`` and ``background_stopping``. The temperature of the background in Kelvin.
     Can also provide ``<collision_name>.background_temperature(x,y,z,t)`` using the parser
     initialization style for spatially and temporally varying temperature.
 
 * ``<collision_name>.background_mass`` (`float`) optional
-    Only for ``background_mcc``. The mass of the background gas in kg. If not
-    given the mass of the colliding species will be used unless ionization is
+    Only for ``background_mcc`` and ``background_stopping``. The mass of the background gas in kg.
+    With ``background_mcc``, if not given the mass of the colliding species will be used unless ionization is
     included in which case the mass of the product species will be used.
+    With ``background_stopping``, and ``background_type`` set to ``electrons``, if not given defaults to the electron mass. With
+    ``background_type`` set to ``ions``, the mass must be given.
+
+* ``<collision_name>.background_charge_state`` (`float`)
+    Only for ``background_stopping``, where it is required when ``background_type`` is set to ``ions``.
+    This specifies the charge state of the background ions.
+
+* ``<collision_name>.background_type`` (`string`)
+    Only for ``background_stopping``, where it is required, the type of the background.
+    The possible values are ``electrons`` and ``ions``. When ``electrons``, equation 14.12 from Goldston and Rutherford is used.
+    This formula is based on Coulomb collisions with the approximations that :math:`M_b >> m_e` and :math:`V << v_{thermal\_e}`,
+    and the assumption that the electrons have a Maxwellian distribution with temperature :math:`T_e`.
+
+    .. math::
+        \frac{dV}{dt} = - \frac{2^{1/2}n_eZ_b^2e^4m_e^{1/2}\log\Lambda}{12\pi^{3/2}\epsilon_0M_bT_e^{3/2}}V
+
+    where :math:`V` is each velocity component, :math:`n_e` is the background density, :math:`Z_b` is the ion charge state,
+    :math:`e` is the electron charge, :math:`m_e` is the background mass, :math:`\log\Lambda=\log((12\pi/Z_b)(n_e\lambda_{de}^3))`,
+    :math:`\lambda_{de}` is the DeBye length, and :math:`M_b` is the ion mass.
+    The equation is integrated over a time step, giving :math:`V(t+dt) = V(t)*\exp(-\alpha*{dt})`
+    where :math:`\alpha` is the factor multiplying :math:`V`.
+
+    When ``ions``, equation 14.20 is used.
+    This formula is based on Coulomb collisions with the approximations that :math:`M_b >> M` and :math:`V >> v_{thermal\_i}`.
+    The background ion temperature only appears in the :math:`\log\Lambda` term.
+
+    .. math::
+        \frac{dW_b}{dt} = - \frac{2^{1/2}n_iZ^2Z_b^2e^4M_b^{1/2}\log\Lambda}{8\pi\epsilon_0MW_b^{1/2}}
+
+    where :math:`W_b` is the ion energy, :math:`n_i` is the background density,
+    :math:`Z` is the charge state of the background ions, :math:`Z_b` is the ion charge state,
+    :math:`e` is the electron charge, :math:`M_b` is the ion mass, :math:`\log\Lambda=\log((12\pi/Z_b)(n_i\lambda_{di}^3))`,
+    :math:`\lambda_{di}` is the DeBye length, and :math:`M` is the background ion mass.
+    The equation is integrated over a time step, giving :math:`W_b(t+dt) = ((W_b(t)^{3/2}) - 3/2\beta{dt})^{2/3}`
+    where :math:`\beta` is the term on the r.h.s except :math:`W_b`.
+
 
 * ``<collision_name>.scattering_processes`` (`strings` separated by spaces)
     Only for ``background_mcc``. The MCC scattering processes that should be
@@ -1446,7 +1554,7 @@ Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/do
 Numerics and algorithms
 -----------------------
 
-* ``warpx.cfl`` (`float`)
+* ``warpx.cfl`` (`float`) optional (default `0.999`)
     The ratio between the actual timestep that is used in the simulation
     and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
     the timestep will be exactly equal to the CFL limit.)
@@ -1629,7 +1737,7 @@ Numerics and algorithms
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
     If ``psatd.periodic_single_box_fft`` is used, these can be set to ``inf`` for infinite-order PSATD.
 
-* ``psatd.nx_guard`, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
+* ``psatd.nx_guard``, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
     The number of guard cells to use with PSATD solver.
     If not set by users, these values are calculated automatically and determined *empirically* and
     would be equal the order of the solver for nodal grid, and half the order of the solver for staggered.
@@ -1641,8 +1749,9 @@ Numerics and algorithms
     Therefore, all the approximations that are usually made when using local FFTs with guard cells
     (for problems with multiple boxes) become exact in the case of the periodic, single-box FFT without guard cells.
 
-* ``psatd.current_correction`` (`0` or `1`; default: `0`)
+* ``psatd.current_correction`` (`0` or `1`; default: `1`, with the exceptions mentioned below)
     If true, a current correction scheme in Fourier space is applied in order to guarantee charge conservation.
+    The default value is ``psatd.current_correction=1``, unless a charge-conserving current deposition scheme is used (by setting ``algo.current_deposition=esirkepov`` or ``algo.current_deposition=vay``) or unless the ``div(E)`` cleaning scheme is used (by setting ``warpx.do_dive_cleaning=1``).
 
     If ``psatd.v_galilean`` is zero, the spectral solver used is the standard PSATD scheme described in (`Vay et al, JCP 243, 2013 <https://doi.org/10.1016/j.jcp.2013.03.010>`_) and the current correction reads
 
@@ -1660,17 +1769,12 @@ Numerics and algorithms
 
     where :math:`\theta=\exp(i\,\boldsymbol{k}\cdot\boldsymbol{v}_G\,\Delta{t}/2)`.
 
-    This option is currently implemented only for the standard PSATD and Galilean PSATD schemes, while it is not yet available for the averaged Galilean PSATD scheme (activated by the input parameter ``psatd.do_time_averaging``).
-
-    This option guarantees charge conservation only when used in combination with ``psatd.periodic_single_box_fft=1``, namely for periodic single-box simulations with global FFTs without guard cells.
-    The implementation for domain decomposition with local FFTs over guard cells is planned but not yet completed.
+    This option is currently implemented only for the standard PSATD, Galilean PSATD, and averaged Galilean PSATD schemes, while it is not yet available for the multi-J algorithm.
 
 * ``psatd.update_with_rho`` (`0` or `1`)
     If true, the update equation for the electric field is expressed in terms of both the current density and the charge density, namely :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}`, :math:`\widehat\rho^{n}`, and :math:`\widehat\rho^{n+1}`.
     If false, instead, the update equation for the electric field is expressed in terms of the current density :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}` only.
     If charge is expected to be conserved (by setting, for example, ``psatd.current_correction=1``), then the two formulations are expected to be equivalent.
-
-    This option is currently implemented only for the standard PSATD and Galilean PSATD schemes, while it is not yet available for the averaged Galilean PSATD scheme (activated by the input parameter ``psatd.do_time_averaging``).
 
     If ``psatd.v_galilean`` is zero, the spectral solver used is the standard PSATD scheme described in (`Vay et al, JCP 243, 2013 <https://doi.org/10.1016/j.jcp.2013.03.010>`_):
 
@@ -1733,17 +1837,26 @@ Numerics and algorithms
     The coefficients :math:`C`, :math:`S`, :math:`\theta`, :math:`\nu`, :math:`\chi_1`, :math:`\chi_2`, and :math:`\chi_3` are defined in (`Lehe et al, PRE 94, 2016 <https://doi.org/10.1103/PhysRevE.94.053305>`_).
 
     The default value for ``psatd.update_with_rho`` is ``1`` if ``psatd.v_galilean`` is non-zero and ``0`` otherwise.
+    The option ``psatd.update_with_rho=0`` is not implemented with the following algorithms:
+    comoving PSATD (``psatd.v_comoving``), time averaging (``psatd.do_time_averaging=1``), div(E) cleaning (``warpx.do_dive_cleaning=1``), and multi-J (``warpx.do_multi_J=1``).
 
     Note that the update with and without rho is also supported in RZ geometry.
 
-* ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
-    Defines the galilean velocity.
-    Non-zero `v_galilean` activates Galilean algorithm, which suppresses the Numerical Cherenkov instability
-    in boosted-frame simulation. This requires the code to be compiled with `USE_PSATD=TRUE`.
-    (see the sub-section Numerical Stability and alternate formulation
-    in a Galilean frame in the :ref:`theory section <theory-boostedframe-galilean>`).
-    It also requires the use of the `direct` current deposition option
-    `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
+* ``psatd.J_in_time`` (``constant`` or ``linear``; default ``constant``)
+    This determines whether the current density is assumed to be constant or linear in time, within the time step over which the electromagnetic fields are evolved.
+
+* ``psatd.rho_in_time`` (``linear``; default ``linear``)
+    This determines whether the charge density is assumed to be linear in time, within the time step over which the electromagnetic fields are evolved.
+
+* ``psatd.v_galilean`` (`3 floats`, in units of the speed of light; default ``0. 0. 0.``)
+    Defines the Galilean velocity.
+    A non-zero velocity activates the Galilean algorithm, which suppresses numerical Cherenkov instabilities (NCI) in boosted-frame simulations (see the section :ref:`Numerical Stability and alternate formulation in a Galilean frame <theory-boostedframe-galilean>` for more information).
+    This requires the code to be compiled with the spectral solver.
+    It also requires the use of the direct current deposition algorithm (by setting ``algo.current_deposition = direct``).
+
+* ``psatd.use_default_v_galilean`` (`0` or `1`; default: `0`)
+    This can be used in boosted-frame simulations only and sets the Galilean velocity along the :math:`z` direction automatically as :math:`v_{G} = -\sqrt{1-1/\gamma^2}`, where :math:`\gamma` is the Lorentz factor of the boosted frame (set by ``warpx.gamma_boost``).
+    See the section :ref:`Numerical Stability and alternate formulation in a Galilean frame <theory-boostedframe-galilean>` for more information on the Galilean algorithm for boosted-frame simulations.
 
 * ``psatd.v_comoving`` (3 floating-point values, in units of the speed of light; default ``0. 0. 0.``)
     Defines the comoving velocity in the comoving PSATD scheme.
@@ -1797,9 +1910,10 @@ Diagnostics and output
 In-situ visualization
 ^^^^^^^^^^^^^^^^^^^^^
 
-WarpX has three types of diagnostics:
+WarpX has four types of diagnostics:
 ``FullDiagnostics`` consist in dumps of fields and particles at given iterations,
-``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame, and
+``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame,
+``BoundaryScrapingDiagnostics`` are used to collect the particles that are absorbed at the boundary, throughout the simulation, and
 ``ReducedDiags`` allow the user to compute some reduced quantity (particle temperature, max of a field) and write a small amount of data to text files.
 Similar to what is done for physical species, WarpX has a class Diagnostics that allows users to initialize different diagnostics, each of them with different fields, resolution and period.
 This currently applies to standard diagnostics, but should be extended to back-transformed diagnostics and reduced diagnostics (and others) in a near future.
@@ -1834,7 +1948,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     If this is `1`, the last timestep is dumped regardless of ``<diag_name>.period``.
 
 * ``<diag_name>.diag_type`` (`string`)
-    Type of diagnostics. ``Full`` and ``BackTransformed``
+    Type of diagnostics. ``Full``, ``BackTransformed``, and ``BoundaryScraping``
     example: ``diag1.diag_type = Full`` or ``diag1.diag_type = BackTransformed``
 
 * ``<diag_name>.format`` (`string` optional, default ``plotfile``)
@@ -1866,7 +1980,6 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     ``bp`` is the `ADIOS I/O library <https://csmd.ornl.gov/adios>`_, ``h5`` is the `HDF5 format <https://www.hdfgroup.org/solutions/hdf5/>`_, and ``json`` is a `simple text format <https://en.wikipedia.org/wiki/JSON>`_.
     ``json`` only works with serial/single-rank jobs.
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
-    Note that when using ``BackTransformed`` diagnostic type, the openpmd format supports only ``h5`` backend for both species and fields, while ``bp`` backend can be used for visualizing fields, but not particles. The code will abort if ``bp`` is selected for particle output.
 
 * ``<diag_name>.openpmd_encoding`` (optional, ``v`` (variable based), ``f`` (file based) or ``g`` (group based) ) only read if ``<diag_name>.format = openpmd``.
      openPMD `file output encoding <https://openpmd-api.readthedocs.io/en/0.14.0/usage/concepts.html#iteration-and-series>`__.
@@ -1910,14 +2023,56 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
     .. code-block:: text
 
-        <diag_name>.adios2_engine.parameter.NumAggregators = 2048
+        <diag_name>.adios2_engine.parameters.NumAggregators = 2048
         <diag_name>.adios2_engine.parameters.BurstBufferPath="/mnt/bb/username"
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
-    Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe.
-    Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
+    Possible scalar fields: ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe. Also, note that for ``<diag_name>.diag_type = BackTransformed``, the only scalar field currently supported is ``rho``.
+    Possible vector field components in Cartesian geometry: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz``.
+    Possible vector field components in RZ geometry: ``Er`` ``Et`` ``Ez`` ``Br`` ``Bt`` ``Bz`` ``jr`` ``jt`` ``jz``.
+    Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``,
+    unless in RZ geometry with ``<diag_name>.format == openpmd``,
+    then default is ``<diag_name>.fields_to_plot = Er Et Ez Br Bt Bz jr jt jz``.
+    When the special value ``none`` is specified, no fields are written out.
     Note that the fields are averaged on the cell centers before they are written to file.
+    Also, when ``<diag_name>.format = openpmd``, the RZ modes for all fields are written.
+    Otherwise, we reconstruct a 2D Cartesian slice of the fields for output at :math:`\theta=0`.
+
+* ``<diag_name>.dump_rz_modes`` (`0` or `1`) optional (default `0`)
+    Whether to save all modes when in RZ.  When ``openpmd_backend = openpmd``, this parameter is ignored and all modes are saved.
+
+* ``<diag_name>.particle_fields_to_plot`` (list of `strings`, optional)
+   Names of per-cell diagnostics of particle properties to calculate and output as additional fields.
+   Note that the deposition onto the grid does not respect the particle shape factor, but instead uses nearest-grid point interpolation.
+   Default is none.
+   Parser functions for these field names are specified by ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)``.
+   Also, note that this option is only available for ``<diag_name>.diag_type = Full``
+
+* ``<diag_name>.particle_fields_species`` (list of `strings`, optional)
+         Species for which to calculate ``particle_fields_to_plot``.
+         Fields will be calculated separately for each specified species.
+         The default is a list of all of the available particle species.
+
+* ``<diag_name>.particle_fields.<field_name>.do_average`` (`0` or `1`) optional (default `1`)
+   Whether the diagnostic is an average or a sum. With an average, the sum over the specified function is divided
+   by the sum of the particle weights in each cell.
+
+* ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)`` (parser `string`)
+   Parser function to be calculated for each particle per cell. The averaged field written is
+
+        .. math::
+
+            \texttt{<field_name>_<species>} = \frac{\sum_{i=1}^N w_i \, f(x_i,y_i,z_i,u_{x,i},u_{y,i},u_{z,i})}{\sum_{i=1}^N w_i}
+
+   where :math:`w_i` is the particle weight, :math:`f()` is the parser function, and :math:`(x_i,y_i,z_i)` are particle positions in units of a meter. The sums are over all particles of type ``<species>`` in a cell (ignoring the particle shape factor) that satisfy ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)``.
+   When ``<diag_name>.particle_fields.<field_name>.do_average`` is `0`, the division by the sum over particle weights is not done.
+   In 1D or 2D, the particle coordinates will follow the WarpX convention. :math:`(u_{x,i},u_{y,i},u_{z,i})` are components of the particle four-velocity. :math:`u = \gamma v/c`, :math:`\gamma` is the Lorentz factor, :math:`v` is the particle velocity, and :math:`c` is the speed of light.
+
+* ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)`` (parser `string`, optional)
+    Parser function returning a boolean for whether to include a particle in the diagnostic.
+    If not specified, all particles will be included (see above).
+    The function arguments are the same as above.
 
 * ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
     By default, the fields written in the plot files are averaged on the cell centers.
@@ -1974,7 +2129,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     The value provided should be an integer greater than or equal to 0.
 
 * ``<diag_name>.<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
-    Users can provide an expression returning a boolean for whether a particle is dumped (the exact test is whether the return value is `> 0.5`).
+    Users can provide an expression returning a boolean for whether a particle is dumped.
     `t` represents the physical time in seconds during the simulation.
     `x, y, z` represent particle positions in the unit of meter.
     `ux, uy, uz` represent particle velocities in the unit of
@@ -1996,16 +2151,34 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     WarpX must be configured with ``-DWarpX_MPI_THREAD_MULTIPLE=ON``.
     Please see the :ref:`data analysis section <dataanalysis-formats>` for more information.
 
+* ``warpx.field_io_nfiles`` and ``warpx.particle_io_nfiles`` (`int`) optional (default `1024`)
+    The maximum number of files to use when writing field and particle data to plotfile directories.
+
+* ``warpx.mffile_nstreams`` (`int`) optional (default `4`)
+    Limit the number of concurrent readers per file.
+
 .. _running-cpp-parameters-diagnostics-btd:
 
 BackTransformed Diagnostics (with support for Plotfile/openPMD output)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Additional options for this diagnostic include:
+``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Note that this diagnostic is not currently supported for RZ.  Additional options for this diagnostic include:
 
 * ``<diag_name>.num_snapshots_lab`` (`integer`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
     The number of lab-frame snapshots that will be written.
+    Only this option or ``intervals`` should be specified;
+    a run-time error occurs if the user attempts to set both ``num_snapshots_lab`` and ``intervals``.
+
+* ``<diag_name>.intervals`` (`string`)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
+    Using the `Intervals parser`_ syntax, this string defines the lab frame times at which data is dumped,
+    given as multiples of the step size ``dt_snapshots_lab`` or ``dz_snapshots_lab`` described below.
+    Example: ``btdiag1.intervals = 10:11,20:24:2`` and ``btdiag1.dt_snapshots_lab = 1.e-12``
+    indicate to dump at lab times ``1e-11``, ``1.1e-11``, ``2e-11``, ``2.2e-11``, and ``2.4e-11`` seconds.
+    Note that the stop interval, the second number in the slice, must always be specified.
+    Only this option or ``num_snapshots_lab`` should be specified;
+    a run-time error occurs if the user attempts to set both ``num_snapshots_lab`` and ``intervals``.
 
 * ``<diag_name>.dt_snapshots_lab`` (`float`, in seconds)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
@@ -2036,7 +2209,7 @@ BackTransformed Diagnostics (with support for Plotfile/openPMD output)
 Back-Transformed Diagnostics (legacy output)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame, and
+``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame
 
 * ``warpx.do_back_transformed_diagnostics`` (`0` or `1`)
     Whether to use the **back-transformed diagnostics** (i.e. diagnostics that
@@ -2107,6 +2280,23 @@ Back-Transformed Diagnostics (legacy output)
     copied from the full back-transformed diagnostic to the reduced
     slice diagnostic if there are within the user-defined width from
     the slice region defined by ``slice.dom_lo`` and ``slice.dom_hi``.
+
+Boundary Scraping Diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``BoundaryScrapingDiagnostics`` are used to collect the particles that are absorbed at the boundaries, throughout the simulation.
+This diagnostic type is specified by setting ``<diag_name>.diag_type`` = ``BoundaryScraping``.
+Currently, the only supported output format is openPMD, so the user also needs to set ``<diag>.format=openpmd`` and WarpX must be compiled with openPMD turned on.
+The data that is to be collected and recorded is controlled per species and per boundary by setting one or more of the flags to ``1``,
+``<species>.save_particles_at_xlo/ylo/zlo``, ``<species>.save_particles_at_xhi/yhi/zhi``, and ``<species>.save_particles_at_eb``.
+(Note that this diagnostics does not save any field ; it only saves particles.)
+
+The data collected at each boundary is written out to a subdirectory of the diagnostics directory with the name of the boundary, for example, ``particles_at_xlo``, ``particles_at_zhi``, or ``particles_at_eb``.
+By default, all of the collected particle data is written out at the end of the simulation. Optionally, the ``<diag_name>.intervals`` parameter can be given to specify writing out the data more often.
+This can be important if a large number of particles are lost, avoiding filling up memory with the accumulated lost particle data.
+
+In addition to their usual attributes, the saved particles have an integer attribute ``timestamp``, which
+indicates the PIC iteration at which each particle was absorbed at the boundary.
 
 .. _running-cpp-parameters-diagnostics-reduced:
 
@@ -2243,6 +2433,7 @@ Reduced Diagnostics
         otherwise it is set to ``1``.
         Integrated electric and magnetic field components can instead be obtained by specifying
         ``<reduced_diags_name>.integrate == true``.
+        In a *moving window* simulation, the FieldProbe can be set to follow the moving frame by specifying ``<reduced_diags_name>.do_moving_window_FP = 1`` (default 0).
 
         .. warning::
 
@@ -2294,39 +2485,42 @@ Reduced Diagnostics
         sum of the particles' weight of each species.
 
     * ``BeamRelevant``
-        This type computes properties of a particle beam relevant for particle accelerators,
-        like position, momentum, emittance, etc.
+        This type computes properties of a particle beam relevant for particle accelerators, like position, momentum, emittance, etc.
 
-        ``<reduced_diags_name>.species`` must be provided,
-        such that the diagnostics are done for this (beam-like) species only.
+        ``<reduced_diags_name>.species`` must be provided, such that the diagnostics are done for this (beam-like) species only.
 
-        The output columns (for 3D-XYZ) are the following, where the average is done over
-        the whole species (typical usage: the particle beam is in a separate species):
+        The output columns (for 3D-XYZ) are the following, where the average is done over the whole species (typical usage: the particle beam is in a separate species):
 
-        [1], [2], [3]: The mean values of beam positions (m)
-        :math:`\langle x \rangle`, :math:`\langle y \rangle`,
+        [0]: simulation step (iteration).
+
+        [1]: time (s).
+
+        [2], [3], [4]: The mean values of beam positions (m)
+        :math:`\langle x \rangle`,
+        :math:`\langle y \rangle`,
         :math:`\langle z \rangle`.
 
-        [4], [5], [6]: The mean values of beam relativistic momenta (kg m/s)
-        :math:`\langle p_x \rangle`, :math:`\langle p_y \rangle`,
+        [5], [6], [7]: The mean values of beam relativistic momenta (kg m/s)
+        :math:`\langle p_x \rangle`,
+        :math:`\langle p_y \rangle`,
         :math:`\langle p_z \rangle`.
 
-        [7]: The mean Lorentz factor :math:`\langle \gamma \rangle`.
+        [8]: The mean Lorentz factor :math:`\langle \gamma \rangle`.
 
-        [8], [9], [10]: The RMS values of beam positions (m)
+        [9], [10], [11]: The RMS values of beam positions (m)
         :math:`\delta_x = \sqrt{ \langle (x - \langle x \rangle)^2 \rangle }`,
         :math:`\delta_y = \sqrt{ \langle (y - \langle y \rangle)^2 \rangle }`,
         :math:`\delta_z = \sqrt{ \langle (z - \langle z \rangle)^2 \rangle }`.
 
-        [11], [12], [13]: The RMS values of beam relativistic momenta (kg m/s)
+        [12], [13], [14]: The RMS values of beam relativistic momenta (kg m/s)
         :math:`\delta_{px} = \sqrt{ \langle (p_x - \langle p_x \rangle)^2 \rangle }`,
         :math:`\delta_{py} = \sqrt{ \langle (p_y - \langle p_y \rangle)^2 \rangle }`,
         :math:`\delta_{pz} = \sqrt{ \langle (p_z - \langle p_z \rangle)^2 \rangle }`.
 
-        [14]: The RMS value of the Lorentz factor
+        [15]: The RMS value of the Lorentz factor
         :math:`\sqrt{ \langle (\gamma - \langle \gamma \rangle)^2 \rangle }`.
 
-        [15], [16], [17]: beam projected transverse RMS normalized emittance (m)
+        [16], [17], [18]: beam projected transverse RMS normalized emittance (m)
         :math:`\epsilon_x = \dfrac{1}{mc} \sqrt{\delta_x^2 \delta_{px}^2 -
         \Big\langle (x-\langle x \rangle) (p_x-\langle p_x \rangle) \Big\rangle^2}`,
         :math:`\epsilon_y = \dfrac{1}{mc} \sqrt{\delta_y^2 \delta_{py}^2 -
@@ -2334,12 +2528,16 @@ Reduced Diagnostics
         :math:`\epsilon_z = \dfrac{1}{mc} \sqrt{\delta_z^2 \delta_{pz}^2 -
         \Big\langle (z-\langle z \rangle) (p_z-\langle p_z \rangle) \Big\rangle^2}`.
 
-        [18]: The charge of the beam (C).
+        [19], [20]: beta function for the transverse directions (m)
+        :math:`\beta_x = \dfrac{{\delta_x}^2}{\epsilon_x}`,
+        :math:`\beta_y = \dfrac{{\delta_y}^2}{\epsilon_y}`.
+
+        [21]: The charge of the beam (C).
 
         For 2D-XZ,
         :math:`\langle y \rangle`,
         :math:`\delta_y`, and
-        :math:`\epsilon_y` will not be outputed.
+        :math:`\epsilon_y` will not be outputted.
 
     * ``LoadBalanceCosts``
         This type computes the cost, used in load balancing, for each box on the domain.
@@ -2420,8 +2618,7 @@ Reduced Diagnostics
 
         * ``<reduced_diags_name>.filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
             Users can provide an expression returning a boolean for whether a particle is taken
-            into account when calculating the histogram (the exact test is whether the return
-            value is `> 0.5`).
+            into account when calculating the histogram.
             `t` represents the physical time in seconds during the simulation.
             `x, y, z` represent particle positions in the unit of meter.
             `ux, uy, uz` represent particle velocities in the unit of

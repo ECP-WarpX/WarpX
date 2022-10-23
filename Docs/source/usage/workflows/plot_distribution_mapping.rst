@@ -52,7 +52,8 @@ can be used to read the data:
     import plot_distribution_mapping as pdm
 
     sim_knapsack = pdm.SimData('LBC_knapsack.txt', # Data directory
-                               [2800]              # Files to process
+                               [2800],             # Files to process
+                               is_3D=False         # if this is a 2D sim
                               )
     sim_sfc = pdm.SimData('LBC_sfc.txt', [2800])
 

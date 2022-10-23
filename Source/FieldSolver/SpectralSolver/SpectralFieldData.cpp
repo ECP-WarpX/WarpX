@@ -35,7 +35,8 @@ using namespace amrex;
 
 SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
                                         const bool time_averaging,
-                                        const bool do_multi_J,
+                                        const int J_in_time,
+                                        const int rho_in_time,
                                         const bool dive_cleaning,
                                         const bool divb_cleaning,
                                         const bool pml,
@@ -68,11 +69,16 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
 
         if (divb_cleaning) G = c++;
 
-        if (do_multi_J)
+        if (J_in_time == JInTime::Linear)
         {
             Jx_new = c++;
             Jy_new = c++;
             Jz_new = c++;
+        }
+
+        if (rho_in_time == RhoInTime::Quadratic)
+        {
+            rho_mid = c++;
         }
 
         if (pml_rz)
@@ -204,22 +210,22 @@ SpectralFieldData::~SpectralFieldData()
 void
 SpectralFieldData::ForwardTransform (const int lev,
                                      const MultiFab& mf, const int field_index,
-                                     const int i_comp, const IntVect& stag)
+                                     const int i_comp)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
     bool do_costs = WarpXUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space
 #if (AMREX_SPACEDIM >= 2)
-    const bool is_nodal_x = (stag[0] == amrex::IndexType::NODE) ? true : false;
+    const bool is_nodal_x = mf.is_nodal(0);
 #endif
 #if defined(WARPX_DIM_3D)
-    const bool is_nodal_y = (stag[1] == amrex::IndexType::NODE) ? true : false;
-    const bool is_nodal_z = (stag[2] == amrex::IndexType::NODE) ? true : false;
+    const bool is_nodal_y = mf.is_nodal(1);
+    const bool is_nodal_z = mf.is_nodal(2);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    const bool is_nodal_z = (stag[1] == amrex::IndexType::NODE) ? true : false;
+    const bool is_nodal_z = mf.is_nodal(1);
 #elif defined(WARPX_DIM_1D_Z)
-    const bool is_nodal_z = (stag[0] == amrex::IndexType::NODE) ? true : false;
+    const bool is_nodal_z = mf.is_nodal(0);
 #endif
 
     // Loop over boxes
@@ -310,8 +316,8 @@ void
 SpectralFieldData::BackwardTransform (const int lev,
                                       MultiFab& mf,
                                       const int field_index,
-                                      const int i_comp,
-                                      const amrex::IntVect& fill_guards)
+                                      const amrex::IntVect& fill_guards,
+                                      const int i_comp)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
     bool do_costs = WarpXUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());

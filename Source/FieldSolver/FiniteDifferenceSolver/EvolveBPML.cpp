@@ -15,6 +15,7 @@
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
@@ -49,7 +50,8 @@ void FiniteDifferenceSolver::EvolveBPML (
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(Bfield, Efield, dt, dive_cleaning);
-    amrex::Abort("PML are not implemented in cylindrical geometry.");
+    amrex::Abort(Utils::TextMsg::Err(
+        "PML are not implemented in cylindrical geometry."));
 #else
     if (m_do_nodal) {
 
@@ -64,7 +66,8 @@ void FiniteDifferenceSolver::EvolveBPML (
         EvolveBPMLCartesian <CartesianCKCAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 
     } else {
-        amrex::Abort("EvolveBPML: Unknown algorithm");
+        amrex::Abort(Utils::TextMsg::Err(
+            "EvolveBPML: Unknown algorithm"));
     }
 #endif
 }

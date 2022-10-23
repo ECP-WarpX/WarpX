@@ -6,6 +6,7 @@
  */
 #include "PsatdAlgorithmJLinearInTime.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpX_Complex.H"
 
@@ -34,13 +35,12 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     const int norder_y,
     const int norder_z,
     const bool nodal,
-    const amrex::IntVect& fill_guards,
     const amrex::Real dt,
     const bool time_averaging,
     const bool dive_cleaning,
     const bool divb_cleaning)
     // Initializer list
-    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
+    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal),
     m_spectral_index(spectral_index),
     m_dt(dt),
     m_time_averaging(time_averaging),
@@ -429,7 +429,8 @@ void PsatdAlgorithmJLinearInTime::CurrentCorrection (SpectralFieldData& field_da
     BL_PROFILE("PsatdAlgorithmJLinearInTime::CurrentCorrection");
 
     amrex::ignore_unused(field_data);
-    amrex::Abort("Current correction not implemented for multi-J PSATD algorithm");
+    amrex::Abort(Utils::TextMsg::Err(
+        "Current correction not implemented for multi-J PSATD algorithm"));
 }
 
 void
@@ -439,7 +440,8 @@ PsatdAlgorithmJLinearInTime::VayDeposition (SpectralFieldData& field_data)
     BL_PROFILE("PsatdAlgorithmJLinearInTime::VayDeposition()");
 
     amrex::ignore_unused(field_data);
-    amrex::Abort("Vay deposition not implemented for multi-J PSATD algorithm");
+    amrex::Abort(Utils::TextMsg::Err(
+        "Vay deposition not implemented for multi-J PSATD algorithm"));
 }
 
 #endif // WARPX_USE_PSATD

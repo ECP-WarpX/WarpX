@@ -134,14 +134,30 @@ public:
 
   void WriteOpenPMDParticles (
               const amrex::Vector<ParticleDiag>& particle_diags,
+              const bool use_pinned_pc = false,
               const bool isBTD = false,
+              const bool isLastBTDFlush = false,
               const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>());
 
+  /** Write out all openPMD fields for all active MR levels
+   *
+   * @param varnames variable names in each multifab
+   * @param mf multifab for each level
+   * @param geometry for each level
+   * @param output_levels the finest level to output, <= maxLevel
+   * @param iteration the current iteration or reconstructed labframe station number
+   * @param time the current simulation time in the lab frame
+   * @param isBTD true if this is part of a back-transformed diagnostics (BTD) station flush;
+                  in BTD, we write multiple times to the same iteration
+   * @param full_BTD_snapshot the geometry of the full lab frame for BTD
+   */
   void WriteOpenPMDFieldsAll (
               const std::vector<std::string>& varnames,
               const amrex::Vector<amrex::MultiFab>& mf,
               amrex::Vector<amrex::Geometry>& geom,
-              const int iteration, const double time,
+              int output_levels,
+              const int iteration,
+              const double time,
               bool isBTD = false,
               const amrex::Geometry& full_BTD_snapshot=amrex::Geometry() ) const;
 
@@ -185,28 +201,57 @@ private:
   void SetupMeshComp (
       openPMD::Mesh& mesh,
       amrex::Geometry& full_geom,
-      openPMD::MeshRecordComponent& mesh_comp
+      std::string comp_name,
+      std::string field_name,
+      amrex::MultiFab const& mf,
+      bool var_in_theta_mode
   ) const;
 
+  /** Get Component Names from WarpX name
+   *
+   * Get component names of a field for openPMD-api book-keeping
+   * Level is reflected as _lvl<meshLevel>
+   *
+   * @param[in] meshLevel     level of mesh
+   * @param[in] varname       name from WarpX
+   * @param[out] field_name   field name for openPMD-api output
+   * @param[in] comp_name     comp name for openPMD-api output
+   * @param[in] is_theta_mode indicate if this field will be output with theta
+   *                          modes (instead of a reconstructed 2D slice)
+   */
   void GetMeshCompNames (
       int meshLevel,
       const std::string& varname,
       std::string& field_name,
-      std::string& comp_name
+      std::string& comp_name,
+      bool is_theta_mode
   ) const;
 
-  /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
+  /** This function sets up the entries for storing the particle positions and global IDs
   *
   * @param[in] currSpecies Corresponding openPMD species
   * @param[in] np          Number of particles
-  * @param[in] charge      Charge of the particles (note: fix for ions)
-  * @param[in] mass        Mass of the particles
+  * @param[in] isBTD       Is this a back-transformed diagnostics output?
   */
   void SetupPos (
         openPMD::ParticleSpecies& currSpecies,
         const unsigned long long& np,
+        bool const isBTD = false);
+
+  /** This function sets constant particle records and ED-PIC attributes.
+   *
+   * Sets the entries for storing particle position offset, constant records (charge, mass) and ED-PIC attributes.
+   *
+   * @param[in] currSpecies Corresponding openPMD species
+   * @param[in] np          Number of particles
+   * @param[in] charge      Charge of the particles (note: fix for ions)
+   * @param[in] mass        Mass of the particles
+   */
+  void SetConstParticleRecordsEDPIC (
+        openPMD::ParticleSpecies& currSpecies,
+        const unsigned long long& np,
         amrex::ParticleReal const charge,
-        amrex::ParticleReal const mass, bool const isBTD = false);
+        amrex::ParticleReal const mass);
 
   /** This function sets up the entries for particle properties
    *
@@ -255,7 +300,9 @@ private:
    * @param[in] int_comp_names The int attribute names, from WarpX
    * @param[in] charge         Charge of the particles (note: fix for ions)
    * @param[in] mass           Mass of the particles
-   * @param[in] isBTD is this a backtransformed diagnostics write?
+   * @param[in] isBTD is this a backtransformed diagnostics (BTD) write?
+   * @param[in] isLastBTDFlush is this the last time we will flush this BTD station?
+   * @param[in] ParticleFlushOffset previously flushed number of particles in BTD
    */
   void DumpToFile (ParticleContainer* pc,
             const std::string& name,
@@ -265,7 +312,9 @@ private:
             const amrex::Vector<std::string>& real_comp_names,
             const amrex::Vector<std::string>&  int_comp_names,
             amrex::ParticleReal const charge,
-            amrex::ParticleReal const mass, const bool isBTD = false,
+            amrex::ParticleReal const mass,
+            const bool isBTD = false,
+            const bool isLastBTDFlush = false,
             int ParticleFlushOffset = 0);
 
   /** Get the openPMD-api filename for openPMD::Series
@@ -279,9 +328,6 @@ private:
   std::string GetFileName (std::string& filepath);
 
   std::unique_ptr<openPMD::Series> m_Series;
-
-  /** To set particle meta-data for the openpmd dump. */
-  bool m_doParticleSetUp = true;
 
   /** This is the output directory
    *

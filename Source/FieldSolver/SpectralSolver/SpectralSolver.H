@@ -47,7 +47,6 @@ class SpectralSolver
          * \param[in] norder_y spectral order along y
          * \param[in] norder_z spectral order along z
          * \param[in] nodal whether the spectral solver is applied to a nodal or staggered grid
-         * \param[in] fill_guards Update the guard cells (in addition to the valid cells) when pushing the fields in time
          * \param[in] v_galilean three-dimensional vector containing the components of the Galilean
          *                       velocity for the standard or averaged Galilean PSATD solvers
          * \param[in] v_comoving three-dimensional vector containing the components of the comoving
@@ -59,9 +58,10 @@ class SpectralSolver
          *                                (no domain decomposition)
          * \param[in] update_with_rho whether rho is used in the field update equations
          * \param[in] fft_do_time_averaging whether the time averaging algorithm is used
-         * \param[in] do_multi_J whether the multi-J algorithm is used (hence two currents
-         *                       computed at the beginning and the end of the time interval
-         *                       instead of one current computed at half time)
+         * \param[in] J_in_time integer that corresponds to the time dependency of J
+         *                      (constant, linear) for the PSATD algorithm
+         * \param[in] rho_in_time integer that corresponds to the time dependency of rho
+         *                        (linear, quadratic) for the PSATD algorithm
          * \param[in] dive_cleaning whether to use div(E) cleaning to account for errors in
          *                          Gauss law (new field F in the update equations)
          * \param[in] divb_cleaning whether to use div(B) cleaning to account for errors in
@@ -72,7 +72,6 @@ class SpectralSolver
                         const amrex::DistributionMapping& dm,
                         const int norder_x, const int norder_y,
                         const int norder_z, const bool nodal,
-                        const amrex::IntVect& fill_guards,
                         const amrex::Vector<amrex::Real>& v_galilean,
                         const amrex::Vector<amrex::Real>& v_comoving,
                         const amrex::RealVect dx,
@@ -81,7 +80,8 @@ class SpectralSolver
                         const bool periodic_single_box,
                         const bool update_with_rho,
                         const bool fft_do_time_averaging,
-                        const bool do_multi_J,
+                        const int J_in_time,
+                        const int rho_in_time,
                         const bool dive_cleaning,
                         const bool divb_cleaning);
 
@@ -93,48 +93,11 @@ class SpectralSolver
          * \param[in] mf MultiFab that is transformed to Fourier space (component i_comp)
          * \param[in] field_index index of the spectral field that stores the FFT result
          * \param[in] i_comp component of the MultiFab mf that is transformed to Fourier space
-         * \param[in] stag index type that needs to be used to perform the FFT operation
          */
         void ForwardTransform (const int lev,
                                const amrex::MultiFab& mf,
                                const int field_index,
-                               const int i_comp,
-                               const amrex::IntVect& stag);
-
-        /**
-         * \brief Overload of ForwardTransform used if stag is not passed
-         */
-        AMREX_FORCE_INLINE
-        void ForwardTransform (const int lev,
-                               const amrex::MultiFab& mf,
-                               const int field_index,
-                               const int i_comp)
-        {
-            ForwardTransform(lev, mf, field_index, i_comp, mf.ixType().toIntVect());
-        }
-
-        /**
-         * \brief Overload of ForwardTransform used if i_comp is not passed
-         */
-        AMREX_FORCE_INLINE
-        void ForwardTransform (const int lev,
-                               const amrex::MultiFab& mf,
-                               const int field_index,
-                               const amrex::IntVect& stag)
-        {
-            ForwardTransform(lev, mf, field_index, 0, stag);
-        }
-
-        /**
-         * Overload of ForwardTransform used if both i_comp and stag are not passed
-         */
-        AMREX_FORCE_INLINE
-        void ForwardTransform (const int lev,
-                               const amrex::MultiFab& mf,
-                               const int field_index)
-        {
-            ForwardTransform(lev, mf, field_index, 0, mf.ixType().toIntVect());
-        }
+                               const int i_comp = 0);
 
         /**
          * \brief Transform spectral field specified by `field_index` back to
@@ -143,6 +106,7 @@ class SpectralSolver
         void BackwardTransform( const int lev,
                                 amrex::MultiFab& mf,
                                 const int field_index,
+                                const amrex::IntVect& fill_guards,
                                 const int i_comp=0 );
 
         /**

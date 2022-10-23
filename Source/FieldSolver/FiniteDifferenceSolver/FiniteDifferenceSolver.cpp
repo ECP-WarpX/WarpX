@@ -13,6 +13,7 @@
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #ifdef WARPX_DIM_RZ
 #   include "WarpX.H"
@@ -57,7 +58,8 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
                               m_stencil_coefs_z.begin());
         amrex::Gpu::synchronize();
     } else {
-        amrex::Abort("FiniteDifferenceSolver: Unknown algorithm");
+        amrex::Abort(Utils::TextMsg::Err(
+            "FiniteDifferenceSolver: Unknown algorithm"));
     }
 #else
     if (do_nodal) {
@@ -76,7 +78,8 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
             m_h_stencil_coefs_x, m_h_stencil_coefs_y, m_h_stencil_coefs_z );
 
     } else {
-        amrex::Abort("FiniteDifferenceSolver: Unknown algorithm");
+        amrex::Abort(Utils::TextMsg::Err(
+            "FiniteDifferenceSolver: Unknown algorithm"));
     }
 
     m_stencil_coefs_x.resize(m_h_stencil_coefs_x.size());

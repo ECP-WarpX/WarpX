@@ -8,6 +8,14 @@
 #define WARPX_HANKEL_TRANSFORM_H_
 
 #include <AMReX_FArrayBox.H>
+#include <AMReX_REAL.H>
+#include <AMReX_GpuContainers.H>
+
+#ifdef AMREX_USE_GPU
+#   include <blas.hh>
+#endif
+
+#include <memory>
 
 /* \brief This defines the class that performs the Hankel transform.
  * Original authors: Remi Lehe, Manuel Kirchen
@@ -45,6 +53,10 @@ class HankelTransform
 
         RealVector m_invM;
         RealVector m_M;
+
+#ifdef AMREX_USE_GPU
+        std::unique_ptr<blas::Queue> m_queue;
+#endif
 };
 
 #endif

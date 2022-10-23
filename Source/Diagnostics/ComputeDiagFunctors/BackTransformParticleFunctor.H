@@ -143,6 +143,10 @@ struct LorentzTransformParticles
         dst.m_aos[i_dst].pos(0) = xp;
         dst.m_aos[i_dst].pos(1) = yp;
         dst.m_aos[i_dst].pos(2) = zp;
+#elif defined (WARPX_DIM_RZ)
+        dst.m_aos[i_dst].pos(0) = std::sqrt(xp*xp + yp*yp);
+        dst.m_aos[i_dst].pos(1) = zp;
+        dst.m_rdata[PIdx::theta][i_dst] = std::atan2(yp, xp);
 #elif defined (WARPX_DIM_XZ)
         dst.m_aos[i_dst].pos(0) = xp;
         dst.m_aos[i_dst].pos(1) = zp;
@@ -194,7 +198,7 @@ BackTransformParticleFunctor final : public ComputeParticleDiagFunctor
 public:
     BackTransformParticleFunctor(WarpXParticleContainer *pc_src, std::string species_name, int num_buffers);
     /** Computes the Lorentz transform of source particles to obtain lab-frame data in pc_dst*/
-    void operator () (ParticleContainer& pc_dst, int &TotalParticleCounter, int i_buffer) const override;
+    void operator () (PinnedMemoryParticleContainer& pc_dst, int &TotalParticleCounter, int i_buffer) const override;
     void InitData() override;
     /** \brief Prepare data required to back-transform particle attribtutes for lab-frame snapshot, i_buffer
      *

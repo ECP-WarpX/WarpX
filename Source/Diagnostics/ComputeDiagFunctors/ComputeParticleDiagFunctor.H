@@ -8,6 +8,7 @@
 #define WARPX_COMPUTEPARTICLEDIAGFUNCTOR_H_
 
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/PinnedMemoryParticleContainer.H"
 #include <AMReX.H>
 #include <AMReX_AmrParticles.H>
 
@@ -18,7 +19,6 @@ class
 ComputeParticleDiagFunctor
 {
 public:
-    using ParticleContainer = typename amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
     ComputeParticleDiagFunctor( ) {}
     /** Virtual Destructor to handle clean destruction of derived classes */
@@ -52,7 +52,7 @@ public:
      *  \param[out] pc_dst  output particle container where the result is stored.
      *  \param[in] i_buffer snapshot index for which the particle buffer is processed
      */
-    virtual void operator () (ParticleContainer& pc_dst, int &totalParticlesInBuffer, int i_buffer = 0) const = 0;
+    virtual void operator () (PinnedMemoryParticleContainer& pc_dst, int &totalParticlesInBuffer, int i_buffer = 0) const = 0;
     virtual void InitData () {}
 };
 
