@@ -1006,9 +1006,16 @@ WarpX::ReadParameters ()
             "Vay deposition not implemented with mesh refinement");
 
         field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
+
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
             // Use same shape factors in all directions, for gathering
             galerkin_interpolation = false;
+
+#ifdef WARPX_DIM_RZ
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                maxwell_solver_id != MaxwellSolverAlgo::Yee,
+                "RZ + FDTD + momentum-conserving is known to be problematic.  Please use energy-conserving field gathering.");
+#endif
         }
 
         em_solver_medium = GetAlgorithmInteger(pp_algo, "em_solver_medium");
