@@ -15,7 +15,7 @@ boundary.field_lo = periodic periodic periodic
 # diag1
 diag1.diag_type = Full
 diag1.intervals = 300
-diag1.fields_to_plot = Bx By Bz divE Ex Ey Ez jx jy jz rho
+diag1.fields_to_plot = Bx By Bz divE Ex Ey Ez F G jx jy jz rho
 
 # diagnostics
 diagnostics.diags_names = diag1
