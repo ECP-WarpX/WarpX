@@ -1054,16 +1054,19 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
         expression = pywarpx.my_constants.mangle_expression(self.field_expression, self.mangle_dict)
         self.laser.__setattr__('field_function(X,Y,t)', expression)
 
+
 class LaserAntenna(picmistandard.PICMI_LaserAntenna):
     def initialize_inputs(self, laser):
         laser.laser.position = self.position  # This point is on the laser plane
-        if not np.allclose(laser.laser.direction, [0, 0, 1]):
-            if not np.allclose(laser.laser.direction, self.normal_vector):
-                raise AttributeError(
-                    'The specified laser direction does not match the '
-                    'antenna normal'
-                )
-        laser.laser.direction = self.normal_vector  # The plane normal direction
+        if (
+            self.normal_vector is not None
+            and not np.allclose(laser.laser.direction, self.normal_vector)
+        ):
+            raise AttributeError(
+                'The specified laser direction does not match the '
+                'specified antenna normal.'
+            )
+        self.normal_vector = laser.laser.direction # The plane normal direction
         if isinstance(laser, GaussianLaser):
             # Focal distance from the antenna (in meters)
             laser.laser.profile_focal_distance = np.sqrt(
