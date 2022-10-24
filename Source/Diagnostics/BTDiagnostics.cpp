@@ -197,8 +197,8 @@ BTDiagnostics::ReadParameters ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_crse_ratio == amrex::IntVect(1),
         "Only support for coarsening ratio of 1 in all directions is included for BTD\n"
-        );
-
+        );    
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1, "Currently only one mode is supported for BTD");
     // Read list of back-transform diag parameters requested by the user //
     amrex::ParmParse pp_diag_name(m_diag_name);
 
