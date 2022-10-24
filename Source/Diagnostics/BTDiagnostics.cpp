@@ -126,7 +126,7 @@ void BTDiagnostics::DerivedInitData ()
     m_totalParticles_flushed_already.resize(m_num_buffers);
     m_totalParticles_in_buffer.resize(m_num_buffers);
 
-// check that simulation can fill all BTD snapshots
+    // check that simulation can fill all BTD snapshots
     const int lev = 0;
     const amrex::Real dt_boosted_frame = warpx.getdt(lev);
     const int moving_dir = warpx.moving_window_dir;
