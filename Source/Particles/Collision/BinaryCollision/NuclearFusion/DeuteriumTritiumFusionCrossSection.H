@@ -41,15 +41,28 @@ amrex::ParticleReal DeuteriumTritiumFusionCrossSection (const amrex::ParticleRea
          * std::sqrt( 2._prt*m_reduced*PhysConst::c*PhysConst::c * joule_to_keV );
 
     // Compute astrophysical_factor
-    // (See Eq. 9 and Table IV in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)
-    constexpr amrex::ParticleReal A1 = 6.927e4;
-    constexpr amrex::ParticleReal A2 = 7.454e8;
-    constexpr amrex::ParticleReal A3 = 2.050e6;
-    constexpr amrex::ParticleReal A4 = 5.2002e4;
-    constexpr amrex::ParticleReal B1 = 6.38e1;
-    constexpr amrex::ParticleReal B2 = -9.95e-1;
-    constexpr amrex::ParticleReal B3 = 6.981e-5;
-    constexpr amrex::ParticleReal B4 = 1.728e-4;
+    amrex::ParticleReal A1, A2, A3, A4, B1, B2, B3, B4;
+    if (E_keV < 550._prt) {
+        // (See Eq. 9 and Table IV in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)
+        A1 = 6.927e4;
+        A2 = 7.454e8;
+        A3 = 2.050e6;
+        A4 = 5.2002e4;
+        B1 = 6.38e1;
+        B2 = -9.95e-1;
+        B3 = 6.981e-5;
+        B4 = 1.728e-4;
+    } else {
+        // (See Eq. 9 and Table VI in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)
+        A1 = -1.4714e6;
+        A2 = 0;
+        A3 = 0;
+        A4 = 0;
+        B1 = -8.4127e-3;
+        B2 = 4.7983e-6;
+        B3 = -1.0748e-9;
+        B4 = 8.5184e-14;
+    }
 
     amrex::ParticleReal astrophysical_factor =
         (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*A4))) /

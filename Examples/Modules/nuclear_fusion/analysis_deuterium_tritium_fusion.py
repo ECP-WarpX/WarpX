@@ -239,7 +239,17 @@ def cross_section( E_keV ):
     B2 = -9.95e-1;
     B3 = 6.981e-5;
     B4 = 1.728e-4;
-    astrophysical_factor = (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*A4))) / (1 + E_keV*(B1 + E_keV*(B2 + E_keV*(B3 + E_keV*B4))));
+    astrophysical_factor_low = (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*A4))) / (1 + E_keV*(B1 + E_keV*(B2 + E_keV*(B3 + E_keV*B4))))
+    A1 = -1.4714e6;
+    A2 = 0;
+    A3 = 0;
+    A4 = 0;
+    B1 = -8.4127e-3;
+    B2 = 4.7983e-6;
+    B3 = -1.0748e-9;
+    B4 = 8.5184e-14;
+    astrophysical_factor_high = (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*A4))) / (1 + E_keV*(B1 + E_keV*(B2 + E_keV*(B3 + E_keV*B4))))
+    astrophysical_factor = np.where( E_keV < 550, astrophysical_factor_low, astrophysical_factor_high)
     millibarn_to_barn = 1.e-3;
     return millibarn_to_barn * astrophysical_factor/E_keV * np.exp(-B_G/np.sqrt(E_keV))
 
