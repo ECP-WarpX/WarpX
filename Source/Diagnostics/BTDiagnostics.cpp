@@ -569,16 +569,16 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
     if (update_varnames) {
         for (int comp=0, n=m_varnames_fields.size(); comp<n; comp++)
         {
-            if (m_varnames[comp] == "Er")  AddRZModesToOutputNames(std::string("Er"), ncomp, false);
-            if (m_varnames[comp] == "Et")  AddRZModesToOutputNames(std::string("Et"), ncomp, false);
-            if (m_varnames[comp] == "Ez")  AddRZModesToOutputNames(std::string("Ez"), ncomp, false);
-            if (m_varnames[comp] == "Br")  AddRZModesToOutputNames(std::string("Br"), ncomp, false);
-            if (m_varnames[comp] == "Bt")  AddRZModesToOutputNames(std::string("Bt"), ncomp, false);
-            if (m_varnames[comp] == "Bz")  AddRZModesToOutputNames(std::string("Bz"), ncomp, false);
-            if (m_varnames[comp] == "jr")  AddRZModesToOutputNames(std::string("jr"), ncomp, false);
-            if (m_varnames[comp] == "jt")  AddRZModesToOutputNames(std::string("jt"), ncomp, false);
-            if (m_varnames[comp] == "jz")  AddRZModesToOutputNames(std::string("jz"), ncomp, false);
-            if (m_varnames[comp] == "rho") AddRZModesToOutputNames(std::string("rho"),ncomp, false);
+            if (m_varnames_fields[comp] == "Er")  AddRZModesToOutputNames(std::string("Er"), ncomp, false);
+            if (m_varnames_fields[comp] == "Et")  AddRZModesToOutputNames(std::string("Et"), ncomp, false);
+            if (m_varnames_fields[comp] == "Ez")  AddRZModesToOutputNames(std::string("Ez"), ncomp, false);
+            if (m_varnames_fields[comp] == "Br")  AddRZModesToOutputNames(std::string("Br"), ncomp, false);
+            if (m_varnames_fields[comp] == "Bt")  AddRZModesToOutputNames(std::string("Bt"), ncomp, false);
+            if (m_varnames_fields[comp] == "Bz")  AddRZModesToOutputNames(std::string("Bz"), ncomp, false);
+            if (m_varnames_fields[comp] == "jr")  AddRZModesToOutputNames(std::string("jr"), ncomp, false);
+            if (m_varnames_fields[comp] == "jt")  AddRZModesToOutputNames(std::string("jt"), ncomp, false);
+            if (m_varnames_fields[comp] == "jz")  AddRZModesToOutputNames(std::string("jz"), ncomp, false);
+            if (m_varnames_fields[comp] == "rho") AddRZModesToOutputNames(std::string("rho"),ncomp, false);
         }
     }
 
@@ -847,8 +847,6 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         const int hi_k_lab = m_buffer_k_index_hi[i_buffer];
         m_buffer_box[i_buffer].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
         m_buffer_box[i_buffer].setBig( m_moving_window_dir, hi_k_lab );
-        // Setting hi k-index for the next buffer
-        m_buffer_k_index_hi[i_buffer] = m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) - 1;
         amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
         buffer_ba.maxSize(m_max_box_size);
         // Generate a new distribution map for the back-transformed buffer multifab
@@ -1034,6 +1032,8 @@ BTDiagnostics::Flush (int i_buffer)
         ResetTotalParticlesInBuffer(i_buffer);
         ClearParticleBuffer(i_buffer);
     }
+    // Setting hi k-index for the next buffer
+    m_buffer_k_index_hi[i_buffer] = m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) - 1;
 }
 
 void BTDiagnostics::RedistributeParticleBuffer (const int i_buffer)
