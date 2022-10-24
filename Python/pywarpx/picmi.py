@@ -2038,12 +2038,25 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
 
     Parameters
     ----------
-    warpx_file_prefix: string
-        The prefix to the checkpoint directory names
+    diag_type: string
+        The type of reduced diagnostic. See the link above for all the different
+        types of reduced diagnostics available.
 
-    warpx_file_min_digits: integer
-        Minimum number of digits for the time step number in the checkpoint
-        directory name.
+    name: string
+        The name of this diagnostic which will also be the name of the data
+        file written to disk.
+
+    period: integer
+        The simulation step interval at which to output this diagnostic.
+
+    path: string
+        The file path in which the diagnostic file should be written.
+
+    extension: string
+        The file extension used for the diagnostic output.
+
+    separator: string
+        The separator between row values in the output file.
     """
 
     def __init__(self, diag_type, name=None, period=1, path=None,
@@ -2132,7 +2145,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
         self.add_diagnostic()
 
         for key in self.__dict__.keys():
-            if not key.startswith('_') and key != 'diagnostic':
+            if not key.startswith('_') and key not in ['name', 'diagnostic']:
                 self.diagnostic.__setattr__(key, self.__dict__[key])
 
         if self._species is not None:

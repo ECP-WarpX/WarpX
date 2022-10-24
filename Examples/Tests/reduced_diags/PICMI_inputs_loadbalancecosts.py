@@ -20,29 +20,28 @@ zmax = 4.
 
 # Create grid
 grid = picmi.Cartesian3DGrid(
-    number_of_cells = [nx, ny, nz],
+    number_of_cells=[nx, ny, nz],
     warpx_max_grid_size=32,
-    lower_bound = [xmin, ymin, zmin],
-    upper_bound = [xmax, ymax, zmax],
-    lower_boundary_conditions = ['periodic', 'periodic', 'periodic'],
-    upper_boundary_conditions = ['periodic', 'periodic', 'periodic'],
-    #lower_boundary_conditions_particles = ['absorbing', 'absorbing', 'absorbing'],
-    #upper_boundary_conditions_particles = ['absorbing', 'absorbing', 'absorbing']
+    lower_bound=[xmin, ymin, zmin],
+    upper_bound=[xmax, ymax, zmax],
+    lower_boundary_conditions=['periodic', 'periodic', 'periodic'],
+    upper_boundary_conditions=['periodic', 'periodic', 'periodic']
 )
 
 # Electromagnetic solver
 solver = picmi.ElectromagneticSolver(
-    grid = grid,
-    method = 'Yee',
-    cfl = 0.99999
+    grid=grid,
+    method='Yee',
+    cfl=0.99999
 )
 
 # Particles
 electrons = picmi.Species(
-    particle_type = 'electron',
-    name = 'electrons',
-    initial_distribution = picmi.UniformDistribution(
-        density=1e14, rms_velocity=[0]*3,
+    particle_type='electron',
+    name='electrons',
+    initial_distribution=picmi.UniformDistribution(
+        density=1e14,
+        rms_velocity=[0]*3,
         upper_bound=[xmax, ymax, 1.0]
     )
 )
