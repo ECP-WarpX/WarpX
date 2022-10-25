@@ -39,6 +39,7 @@ public:
         bool plot_raw_fields_guards,
         const bool use_pinned_pc = false,
         bool isBTD = false, int snapshotID = -1,
+        int bufferID = 1, int numBuffers = 1,
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
         bool isLastBTDFlush = false,
         const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const override;
