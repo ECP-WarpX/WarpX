@@ -73,6 +73,7 @@ particles.species_names = electrons ions
 psatd.nox = 8
 psatd.noy = 8
 psatd.noz = 8
+psatd.solution_type = first-order
 psatd.J_in_time = constant
 psatd.rho_in_time = constant
 
