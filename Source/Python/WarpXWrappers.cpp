@@ -11,8 +11,8 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 #include "WarpXWrappers.H"
 #include "WarpX_py.H"
@@ -198,14 +198,16 @@ namespace
         const char* char_species_name, int lenx, amrex::ParticleReal const * x,
         amrex::ParticleReal const * y, amrex::ParticleReal const * z,
         amrex::ParticleReal const * vx, amrex::ParticleReal const * vy,
-        amrex::ParticleReal const * vz, int nattr,
-        amrex::ParticleReal const * attr, int uniqueparticles)
+        amrex::ParticleReal const * vz, const int nattr_real,
+        amrex::ParticleReal const * attr_real, const int nattr_int,
+        int const * attr_int, int uniqueparticles)
     {
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         const std::string species_name(char_species_name);
         auto & myspc = mypc.GetParticleContainerFromName(species_name);
         const int lev = 0;
-        myspc.AddNParticles(lev, lenx, x, y, z, vx, vy, vz, nattr, attr, uniqueparticles);
+        myspc.AddNParticles(lev, lenx, x, y, z, vx, vy, vz, nattr_real, attr_real,
+                            nattr_int, attr_int, uniqueparticles);
     }
 
     void warpx_ConvertLabParamsToBoost()
@@ -486,6 +488,42 @@ namespace
         return data;
     }
 
+    void warpx_convert_id_to_long (amrex::Long* ids, const WarpXParticleContainer::ParticleType* pstructs, int size)
+    {
+        amrex::Long* d_ptr = nullptr;
+#ifdef AMREX_USE_GPU
+        amrex::Gpu::DeviceVector<amrex::Long> d_ids(size);
+        d_ptr = d_ids.data();
+#else
+        d_ptr = ids;
+#endif
+        amrex::ParallelFor(size, [=] AMREX_GPU_DEVICE (int i) noexcept
+        {
+            d_ptr[i] = pstructs[i].id();
+        });
+#ifdef AMREX_USE_GPU
+        amrex::Gpu::dtoh_memcpy(ids, d_ptr, size*sizeof(amrex::Long));
+#endif
+    }
+
+    void warpx_convert_cpu_to_int (int* cpus, const WarpXParticleContainer::ParticleType* pstructs, int size)
+    {
+        int* d_ptr = nullptr;
+#ifdef AMREX_USE_GPU
+        amrex::Gpu::DeviceVector<int> d_cpus(size);
+        d_ptr = d_cpus.data();
+#else
+        d_ptr = cpus;
+#endif
+        amrex::ParallelFor(size, [=] AMREX_GPU_DEVICE (int i) noexcept
+        {
+            d_ptr[i] = pstructs[i].cpu();
+        });
+#ifdef AMREX_USE_GPU
+        amrex::Gpu::dtoh_memcpy(cpus, d_ptr, size*sizeof(int));
+#endif
+    }
+
     int warpx_getParticleCompIndex (
          const char* char_species_name, const char* char_comp_name )
     {
@@ -624,6 +662,7 @@ namespace
         {
             const long np = pti.numParticles();
             auto& wp = pti.GetAttribs(PIdx::w);
+            // Do this unconditionally, ignoring myspc.do_not_deposit, to support diagnostic uses
             myspc.DepositCharge(pti, wp, nullptr, rho_fp, 0, 0, np, 0, lev, lev);
         }
 #ifdef WARPX_DIM_RZ

@@ -31,11 +31,11 @@ package and setting ``USE_PSATD=TRUE``.
 
            export FFTW_HOME=/usr/
 
-      - Download and build the blaspp and lapackpp packages. These can be obtained from bitbucket.
+      - Download and build the blaspp and lapackpp packages. These can be obtained from GitHub.
         ::
 
-           git clone https://bitbucket.org/icl/blaspp.git
-           git clone https://bitbucket.org/icl/lapackpp.git
+           git clone https://github.com/icl-utk-edu/blaspp.git
+           git clone https://github.com/icl-utk-edu/lapackpp.git
 
         The two packages can be built in multiple ways. A recommended method is to follow the cmake instructions
         provided in the INSTALL.md that comes with the packages. They can also be installed using spack.

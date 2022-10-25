@@ -1,12 +1,14 @@
 # please set your project account
+#    note: WarpX ECP members use aph114_crusher
 #export proj=<yourProject>
 
 # required dependencies
-module load cmake/3.22.1
+module load cpe/22.08
+module load cmake/3.23.2
 module load craype-accel-amd-gfx90a
-module load rocm/5.0.0
+module load rocm/5.2.0
 module load cray-mpich
-#module load cce/14.0.0  # must be loaded after rocm
+module load cce/14.0.2  # must be loaded after rocm
 
 # optional: faster builds
 module load ccache
@@ -18,16 +20,20 @@ module load nano
 # optional: for PSATD in RZ geometry support (not yet available)
 #module load blaspp
 #module load lapackpp
+export CMAKE_PREFIX_PATH=$HOME/sw/crusher/blaspp-master:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=$HOME/sw/crusher/lapackpp-master:$CMAKE_PREFIX_PATH
+export LD_LIBRARY_PATH=$HOME/sw/crusher/blaspp-master/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$HOME/sw/crusher/lapackpp-master/lib64:$LD_LIBRARY_PATH
 
 # optional: for QED lookup table generation support
-module load boost/1.78.0-cxx17
+#module load boost/1.78.0-cxx17
 
 # optional: for openPMD support
-module load adios2/2.7.1
-module load cray-hdf5-parallel/1.12.1.1
+module load adios2/2.8.1
+module load cray-hdf5-parallel/1.12.1.5
 
 # optional: for Python bindings or libEnsemble
-module load cray-python/3.9.4.2
+module load cray-python/3.9.12.1
 
 # fix system defaults: do not escape $ with a \ on tab completion
 shopt -s direxpand
@@ -51,4 +57,4 @@ export CXX=$(which CC)
 export FC=$(which ftn)
 export CFLAGS="-I${ROCM_PATH}/include"
 export CXXFLAGS="-I${ROCM_PATH}/include"
-export LDFLAGS="-L${ROCM_PATH}/lib -lamdhip64"
+#export LDFLAGS="-L${ROCM_PATH}/lib -lamdhip64"

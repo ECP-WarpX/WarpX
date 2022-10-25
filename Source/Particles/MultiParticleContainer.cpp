@@ -32,8 +32,10 @@
 #include "Particles/RigidInjectedParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "SpeciesPhysicalProperties.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
 #ifdef AMREX_USE_EB
 #   include "EmbeddedBoundary/ParticleScraper.H"
 #   include "EmbeddedBoundary/ParticleBoundaryProcess.H"
@@ -112,6 +114,7 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
 
     for (int i = nspecies; i < nspecies+nlasers; ++i) {
         allcontainers[i] = std::make_unique<LaserParticleContainer>(amr_core, i, lasers_names[i-nspecies]);
+        allcontainers[i]->m_deposit_on_main_grid = m_laser_deposit_on_main_grid[i-nspecies];
     }
 
     pc_tmp = std::make_unique<PhysicalParticleContainer>(amr_core);
@@ -168,13 +171,15 @@ MultiParticleContainer::ReadParameters ()
         // then the values for the external B on particles must
         // be provided in the input file.
         if (m_B_ext_particle_s == "constant")
-            getArrWithParser(pp_particles, "B_external_particle", m_B_external_particle);
+            utils::parser::getArrWithParser(
+                pp_particles, "B_external_particle", m_B_external_particle);
 
         // if the input string for E_external on particles is "constant"
         // then the values for the external E on particles must
         // be provided in the input file.
         if (m_E_ext_particle_s == "constant")
-            getArrWithParser(pp_particles, "E_external_particle", m_E_external_particle);
+            utils::parser::getArrWithParser(
+                pp_particles, "E_external_particle", m_E_external_particle);
 
         // if the input string for B_ext_particle_s is
         // "parse_b_ext_particle_function" then the mathematical expression
@@ -185,20 +190,23 @@ MultiParticleContainer::ReadParameters ()
            std::string str_Bx_ext_particle_function;
            std::string str_By_ext_particle_function;
            std::string str_Bz_ext_particle_function;
-           Store_parserString(pp_particles, "Bx_external_particle_function(x,y,z,t)",
-                                      str_Bx_ext_particle_function);
-           Store_parserString(pp_particles, "By_external_particle_function(x,y,z,t)",
-                                      str_By_ext_particle_function);
-           Store_parserString(pp_particles, "Bz_external_particle_function(x,y,z,t)",
-                                      str_Bz_ext_particle_function);
+           utils::parser::Store_parserString(
+                pp_particles, "Bx_external_particle_function(x,y,z,t)",
+                str_Bx_ext_particle_function);
+           utils::parser::Store_parserString(
+                pp_particles, "By_external_particle_function(x,y,z,t)",
+                str_By_ext_particle_function);
+           utils::parser::Store_parserString(
+                pp_particles, "Bz_external_particle_function(x,y,z,t)",
+                str_Bz_ext_particle_function);
 
            // Parser for B_external on the particle
            m_Bx_particle_parser = std::make_unique<amrex::Parser>(
-                                    makeParser(str_Bx_ext_particle_function,{"x","y","z","t"}));
+               utils::parser::makeParser(str_Bx_ext_particle_function,{"x","y","z","t"}));
            m_By_particle_parser = std::make_unique<amrex::Parser>(
-                                    makeParser(str_By_ext_particle_function,{"x","y","z","t"}));
+               utils::parser::makeParser(str_By_ext_particle_function,{"x","y","z","t"}));
            m_Bz_particle_parser = std::make_unique<amrex::Parser>(
-                                    makeParser(str_Bz_ext_particle_function,{"x","y","z","t"}));
+               utils::parser::makeParser(str_Bz_ext_particle_function,{"x","y","z","t"}));
 
         }
 
@@ -211,19 +219,22 @@ MultiParticleContainer::ReadParameters ()
            std::string str_Ex_ext_particle_function;
            std::string str_Ey_ext_particle_function;
            std::string str_Ez_ext_particle_function;
-           Store_parserString(pp_particles, "Ex_external_particle_function(x,y,z,t)",
-                                      str_Ex_ext_particle_function);
-           Store_parserString(pp_particles, "Ey_external_particle_function(x,y,z,t)",
-                                      str_Ey_ext_particle_function);
-           Store_parserString(pp_particles, "Ez_external_particle_function(x,y,z,t)",
-                                      str_Ez_ext_particle_function);
+           utils::parser::Store_parserString(
+               pp_particles, "Ex_external_particle_function(x,y,z,t)",
+               str_Ex_ext_particle_function);
+           utils::parser::Store_parserString(
+               pp_particles, "Ey_external_particle_function(x,y,z,t)",
+               str_Ey_ext_particle_function);
+           utils::parser::Store_parserString(
+               pp_particles, "Ez_external_particle_function(x,y,z,t)",
+               str_Ez_ext_particle_function);
            // Parser for E_external on the particle
            m_Ex_particle_parser = std::make_unique<amrex::Parser>(
-                                    makeParser(str_Ex_ext_particle_function,{"x","y","z","t"}));
+               utils::parser::makeParser(str_Ex_ext_particle_function,{"x","y","z","t"}));
            m_Ey_particle_parser = std::make_unique<amrex::Parser>(
-                                    makeParser(str_Ey_ext_particle_function,{"x","y","z","t"}));
+               utils::parser::makeParser(str_Ey_ext_particle_function,{"x","y","z","t"}));
            m_Ez_particle_parser = std::make_unique<amrex::Parser>(
-                                    makeParser(str_Ez_ext_particle_function,{"x","y","z","t"}));
+               utils::parser::makeParser(str_Ez_ext_particle_function,{"x","y","z","t"}));
 
         }
 
@@ -232,11 +243,17 @@ MultiParticleContainer::ReadParameters ()
         // must be provided in the input file.
         if (m_E_ext_particle_s == "repeated_plasma_lens" ||
             m_B_ext_particle_s == "repeated_plasma_lens") {
-            getWithParser(pp_particles, "repeated_plasma_lens_period", m_repeated_plasma_lens_period);
+            utils::parser::getWithParser(
+                pp_particles, "repeated_plasma_lens_period",
+                m_repeated_plasma_lens_period);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_repeated_plasma_lens_period > 0._rt,
                                              "The period of the repeated plasma lens must be greater than zero");
-            getArrWithParser(pp_particles, "repeated_plasma_lens_starts", h_repeated_plasma_lens_starts);
-            getArrWithParser(pp_particles, "repeated_plasma_lens_lengths", h_repeated_plasma_lens_lengths);
+            utils::parser::getArrWithParser(
+                pp_particles, "repeated_plasma_lens_starts",
+                h_repeated_plasma_lens_starts);
+            utils::parser::getArrWithParser(
+                pp_particles, "repeated_plasma_lens_lengths",
+                h_repeated_plasma_lens_lengths);
 
             int n_lenses = static_cast<int>(h_repeated_plasma_lens_starts.size());
             d_repeated_plasma_lens_starts.resize(n_lenses);
@@ -252,10 +269,14 @@ MultiParticleContainer::ReadParameters ()
             h_repeated_plasma_lens_strengths_B.resize(n_lenses);
 
             if (m_E_ext_particle_s == "repeated_plasma_lens") {
-                getArrWithParser(pp_particles, "repeated_plasma_lens_strengths_E", h_repeated_plasma_lens_strengths_E);
+                utils::parser::getArrWithParser(
+                    pp_particles, "repeated_plasma_lens_strengths_E",
+                    h_repeated_plasma_lens_strengths_E);
             }
             if (m_B_ext_particle_s == "repeated_plasma_lens") {
-                getArrWithParser(pp_particles, "repeated_plasma_lens_strengths_B", h_repeated_plasma_lens_strengths_B);
+                utils::parser::getArrWithParser(
+                    pp_particles, "repeated_plasma_lens_strengths_B",
+                    h_repeated_plasma_lens_strengths_B);
             }
 
             d_repeated_plasma_lens_strengths_E.resize(n_lenses);
@@ -347,6 +368,21 @@ MultiParticleContainer::ReadParameters ()
 
         ParmParse pp_lasers("lasers");
         pp_lasers.queryarr("names", lasers_names);
+        auto const nlasers = lasers_names.size();
+        // Get lasers to deposit on main grid
+        m_laser_deposit_on_main_grid.resize(nlasers, false);
+        std::vector<std::string> tmp;
+        pp_lasers.queryarr("deposit_on_main_grid", tmp);
+        for (auto const& name : tmp) {
+            auto it = std::find(lasers_names.begin(), lasers_names.end(), name);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                it != lasers_names.end(),
+                "laser '" + name
+                + "' in lasers.deposit_on_main_grid must be part of lasers.lasers_names");
+            int i = std::distance(lasers_names.begin(), it);
+            m_laser_deposit_on_main_grid[i] = true;
+        }
+
 
 #ifdef WARPX_QED
         ParmParse pp_warpx("warpx");
@@ -357,18 +393,26 @@ MultiParticleContainer::ReadParameters ()
             pp_qed_schwinger.get("ele_product_species", m_qed_schwinger_ele_product_name);
             pp_qed_schwinger.get("pos_product_species", m_qed_schwinger_pos_product_name);
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            getWithParser(pp_qed_schwinger, "y_size",m_qed_schwinger_y_size);
+            utils::parser::getWithParser(
+                pp_qed_schwinger, "y_size",m_qed_schwinger_y_size);
 #endif
-            queryWithParser(pp_qed_schwinger, "threshold_poisson_gaussian",
-                                              m_qed_schwinger_threshold_poisson_gaussian);
-            queryWithParser(pp_qed_schwinger, "xmin", m_qed_schwinger_xmin);
-            queryWithParser(pp_qed_schwinger, "xmax", m_qed_schwinger_xmax);
+            utils::parser::queryWithParser(
+                pp_qed_schwinger, "threshold_poisson_gaussian",
+                m_qed_schwinger_threshold_poisson_gaussian);
+            utils::parser::queryWithParser(
+                pp_qed_schwinger, "xmin", m_qed_schwinger_xmin);
+            utils::parser::queryWithParser(
+                pp_qed_schwinger, "xmax", m_qed_schwinger_xmax);
 #if defined(WARPX_DIM_3D)
-            queryWithParser(pp_qed_schwinger, "ymin", m_qed_schwinger_ymin);
-            queryWithParser(pp_qed_schwinger, "ymax", m_qed_schwinger_ymax);
+            utils::parser::queryWithParser(
+                pp_qed_schwinger, "ymin", m_qed_schwinger_ymin);
+            utils::parser::queryWithParser(
+                pp_qed_schwinger, "ymax", m_qed_schwinger_ymax);
 #endif
-            queryWithParser(pp_qed_schwinger, "zmin", m_qed_schwinger_zmin);
-            queryWithParser(pp_qed_schwinger, "zmax", m_qed_schwinger_zmax);
+            utils::parser::queryWithParser(
+                pp_qed_schwinger, "zmin", m_qed_schwinger_zmin);
+            utils::parser::queryWithParser(
+                pp_qed_schwinger, "zmax", m_qed_schwinger_zmax);
         }
 #endif
         initialized = true;
@@ -486,12 +530,19 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
 {
     WarpX& warpx = WarpX::GetInstance();
 
-    BoxArray ba = warpx.boxArray(lev);
+    BoxArray nba = warpx.boxArray(lev);
     DistributionMapping dmap = warpx.DistributionMap(lev);
     const int ng_rho = warpx.get_ng_depos_rho().max();
 
-    auto zero_rho = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheNodeVector()),
-                                               dmap,WarpX::ncomps,ng_rho);
+    bool is_PSATD_RZ = false;
+#ifdef WARPX_DIM_RZ
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        is_PSATD_RZ = true;
+#endif
+    if( !is_PSATD_RZ )
+        nba.surroundingNodes();
+
+    auto zero_rho = std::make_unique<MultiFab>(nba, dmap, WarpX::ncomps, ng_rho);
     zero_rho->setVal(amrex::Real(0.0));
     return zero_rho;
 }
@@ -504,9 +555,9 @@ MultiParticleContainer::DepositCurrent (
     // Reset the J arrays
     for (int lev = 0; lev < J.size(); ++lev)
     {
-        J[lev][0]->setVal(0.0, J[lev][0]->nGrowVect());
-        J[lev][1]->setVal(0.0, J[lev][1]->nGrowVect());
-        J[lev][2]->setVal(0.0, J[lev][2]->nGrowVect());
+        J[lev][0]->setVal(0.0_rt);
+        J[lev][1]->setVal(0.0_rt);
+        J[lev][2]->setVal(0.0_rt);
     }
 
     // Call the deposition kernel for each species
@@ -531,7 +582,7 @@ MultiParticleContainer::DepositCharge (
     // Reset the rho array
     for (int lev = 0; lev < rho.size(); ++lev)
     {
-        rho[lev]->setVal(0.0, 0, WarpX::ncomps, rho[lev]->nGrowVect());
+        rho[lev]->setVal(0.0_rt);
     }
 
     // Push the particles in time, if needed
@@ -540,6 +591,8 @@ MultiParticleContainer::DepositCharge (
     // Call the deposition kernel for each species
     for (auto& pc : allcontainers)
     {
+        if (pc->do_not_deposit) continue;
+
         bool const local = true;
         bool const reset = false;
         bool const do_rz_volume_scaling = false;
@@ -562,24 +615,19 @@ MultiParticleContainer::DepositCharge (
 std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local)
 {
-    if (allcontainers.empty())
-    {
-        std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
-        return rho;
+    std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
+
+    for (unsigned i = 0, n = allcontainers.size(); i < n; ++i) {
+        if (allcontainers[i]->do_not_deposit) continue;
+        std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
+        MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrowVect());
     }
-    else
-    {
-        std::unique_ptr<MultiFab> rho = allcontainers[0]->GetChargeDensity(lev, true);
-        for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
-            std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
-            MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrowVect());
-        }
-        if (!local) {
-            const Geometry& gm = allcontainers[0]->Geom(lev);
-            ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity());
-        }
-        return rho;
+    if (!local) {
+        const Geometry& gm = allcontainers[0]->Geom(lev);
+        ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity());
     }
+
+    return rho;
 }
 
 void
@@ -1035,7 +1083,8 @@ void MultiParticleContainer::InitQuantumSync ()
     //If specified, use a user-defined energy threshold for photon creation
     ParticleReal temp;
     constexpr auto mec2 = PhysConst::c * PhysConst::c * PhysConst::m_e;
-    if(queryWithParser(pp_qed_qs, "photon_creation_energy_threshold", temp)){
+    if(utils::parser::queryWithParser(
+        pp_qed_qs, "photon_creation_energy_threshold", temp)){
         temp *= mec2;
         m_quantum_sync_photon_creation_energy_threshold = temp;
     }
@@ -1049,7 +1098,7 @@ void MultiParticleContainer::InitQuantumSync ()
     // considered for Synchrotron emission. If a lepton has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real qs_minimum_chi_part;
-    getWithParser(pp_qed_qs, "chi_min", qs_minimum_chi_part);
+    utils::parser::getWithParser(pp_qed_qs, "chi_min", qs_minimum_chi_part);
 
 
     pp_qed_qs.query("lookup_table_mode", lookup_table_mode);
@@ -1107,7 +1156,7 @@ void MultiParticleContainer::InitBreitWheeler ()
     // considered for pair production. If a photon has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real bw_minimum_chi_part;
-    if(!queryWithParser(pp_qed_bw, "chi_min", bw_minimum_chi_part))
+    if(!utils::parser::queryWithParser(pp_qed_bw, "chi_min", bw_minimum_chi_part))
         amrex::Abort("qed_bw.chi_min should be provided!");
 
     pp_qed_bw.query("lookup_table_mode", lookup_table_mode);
@@ -1169,7 +1218,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
     // considered for Synchrotron emission. If a lepton has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real qs_minimum_chi_part;
-    getWithParser(pp_qed_qs, "chi_min", qs_minimum_chi_part);
+    utils::parser::getWithParser(pp_qed_qs, "chi_min", qs_minimum_chi_part);
 
     if(ParallelDescriptor::IOProcessor()){
         PicsarQuantumSyncCtrl ctrl;
@@ -1182,14 +1231,17 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
 
         //Minimun chi for the table. If a lepton has chi < tab_dndt_chi_min,
         //chi is considered as if it were equal to tab_dndt_chi_min
-        getWithParser(pp_qed_qs, "tab_dndt_chi_min", ctrl.dndt_params.chi_part_min);
+        utils::parser::getWithParser(
+            pp_qed_qs, "tab_dndt_chi_min", ctrl.dndt_params.chi_part_min);
 
         //Maximum chi for the table. If a lepton has chi > tab_dndt_chi_max,
         //chi is considered as if it were equal to tab_dndt_chi_max
-        getWithParser(pp_qed_qs, "tab_dndt_chi_max", ctrl.dndt_params.chi_part_max);
+        utils::parser::getWithParser(
+            pp_qed_qs, "tab_dndt_chi_max", ctrl.dndt_params.chi_part_max);
 
         //How many points should be used for chi in the table
-        getWithParser(pp_qed_qs, "tab_dndt_how_many", ctrl.dndt_params.chi_part_how_many);
+        utils::parser::getWithParser(
+            pp_qed_qs, "tab_dndt_how_many", ctrl.dndt_params.chi_part_how_many);
         //------
 
         //--- sub-table 2 (2D)
@@ -1199,23 +1251,28 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
 
         //Minimun chi for the table. If a lepton has chi < tab_em_chi_min,
         //chi is considered as if it were equal to tab_em_chi_min
-        getWithParser(pp_qed_qs, "tab_em_chi_min", ctrl.phot_em_params.chi_part_min);
+        utils::parser::getWithParser(
+            pp_qed_qs, "tab_em_chi_min", ctrl.phot_em_params.chi_part_min);
 
         //Maximum chi for the table. If a lepton has chi > tab_em_chi_max,
         //chi is considered as if it were equal to tab_em_chi_max
-        getWithParser(pp_qed_qs, "tab_em_chi_max", ctrl.phot_em_params.chi_part_max);
+        utils::parser::getWithParser(
+            pp_qed_qs, "tab_em_chi_max", ctrl.phot_em_params.chi_part_max);
 
         //How many points should be used for chi in the table
-        getWithParser(pp_qed_qs, "tab_em_chi_how_many", ctrl.phot_em_params.chi_part_how_many);
+        utils::parser::getWithParser(
+            pp_qed_qs, "tab_em_chi_how_many", ctrl.phot_em_params.chi_part_how_many);
 
         //The other axis of the table is the ratio between the quantum
         //parameter of the emitted photon and the quantum parameter of the
         //lepton. This parameter is the minimum ratio to consider for the table.
-        getWithParser(pp_qed_qs, "tab_em_frac_min", ctrl.phot_em_params.frac_min);
+        utils::parser::getWithParser(
+            pp_qed_qs, "tab_em_frac_min", ctrl.phot_em_params.frac_min);
 
         //This parameter is the number of different points to consider for the second
         //axis
-        getWithParser(pp_qed_qs, "tab_em_frac_how_many", ctrl.phot_em_params.frac_how_many);
+        utils::parser::getWithParser(
+            pp_qed_qs, "tab_em_frac_how_many", ctrl.phot_em_params.frac_how_many);
         //====================
 
         m_shr_p_qs_engine->compute_lookup_tables(ctrl, qs_minimum_chi_part);
@@ -1250,7 +1307,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
     // considered for pair production. If a photon has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real bw_minimum_chi_part;
-    getWithParser(pp_qed_bw, "chi_min", bw_minimum_chi_part);
+    utils::parser::getWithParser(pp_qed_bw, "chi_min", bw_minimum_chi_part);
 
     if(ParallelDescriptor::IOProcessor()){
         PicsarBreitWheelerCtrl ctrl;
@@ -1263,14 +1320,17 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 
         //Minimun chi for the table. If a photon has chi < tab_dndt_chi_min,
         //an analytical approximation is used.
-        getWithParser(pp_qed_bw, "tab_dndt_chi_min", ctrl.dndt_params.chi_phot_min);
+        utils::parser::getWithParser(
+            pp_qed_bw, "tab_dndt_chi_min", ctrl.dndt_params.chi_phot_min);
 
         //Maximum chi for the table. If a photon has chi > tab_dndt_chi_max,
         //an analytical approximation is used.
-        getWithParser(pp_qed_bw, "tab_dndt_chi_max", ctrl.dndt_params.chi_phot_max);
+        utils::parser::getWithParser(
+            pp_qed_bw, "tab_dndt_chi_max", ctrl.dndt_params.chi_phot_max);
 
         //How many points should be used for chi in the table
-        getWithParser(pp_qed_bw, "tab_dndt_how_many", ctrl.dndt_params.chi_phot_how_many);
+        utils::parser::getWithParser(
+            pp_qed_bw, "tab_dndt_how_many", ctrl.dndt_params.chi_phot_how_many);
         //------
 
         //--- sub-table 2 (2D)
@@ -1280,19 +1340,23 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 
         //Minimun chi for the table. If a photon has chi < tab_pair_chi_min
         //chi is considered as it were equal to chi_phot_tpair_min
-        getWithParser(pp_qed_bw, "tab_pair_chi_min", ctrl.pair_prod_params.chi_phot_min);
+        utils::parser::getWithParser(
+            pp_qed_bw, "tab_pair_chi_min", ctrl.pair_prod_params.chi_phot_min);
 
         //Maximum chi for the table. If a photon has chi > tab_pair_chi_max
         //chi is considered as it were equal to chi_phot_tpair_max
-        getWithParser(pp_qed_bw, "tab_pair_chi_max", ctrl.pair_prod_params.chi_phot_max);
+        utils::parser::getWithParser(
+            pp_qed_bw, "tab_pair_chi_max", ctrl.pair_prod_params.chi_phot_max);
 
         //How many points should be used for chi in the table
-        getWithParser(pp_qed_bw, "tab_pair_chi_how_many", ctrl.pair_prod_params.chi_phot_how_many);
+        utils::parser::getWithParser(
+            pp_qed_bw, "tab_pair_chi_how_many", ctrl.pair_prod_params.chi_phot_how_many);
 
         //The other axis of the table is the fraction of the initial energy
         //'taken away' by the most energetic particle of the pair.
         //This parameter is the number of different fractions to consider
-        getWithParser(pp_qed_bw, "tab_pair_frac_how_many", ctrl.pair_prod_params.frac_how_many);
+        utils::parser::getWithParser(
+            pp_qed_bw, "tab_pair_frac_how_many", ctrl.pair_prod_params.frac_how_many);
         //====================
 
         m_shr_p_bw_engine->compute_lookup_tables(ctrl, bw_minimum_chi_part);

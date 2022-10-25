@@ -6,7 +6,7 @@
  */
 #include "CollisionBase.H"
 
-#include "Utils/WarpXUtil.H"
+#include "Utils/Parser/ParserUtils.H"
 
 #include <AMReX_ParmParse.H>
 
@@ -19,6 +19,7 @@ CollisionBase::CollisionBase (std::string collision_name)
 
     // number of time steps between collisions
     m_ndt = 1;
-    queryWithParser(pp_collision_name, "ndt", m_ndt);
+    utils::parser::queryWithParser(
+        pp_collision_name, "ndt", m_ndt);
 
 }

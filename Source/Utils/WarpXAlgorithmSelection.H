@@ -83,6 +83,20 @@ struct GatheringAlgo {
     };
 };
 
+struct JInTime {
+    enum {
+        Constant = 0,
+        Linear = 1
+    };
+};
+
+struct RhoInTime {
+    enum {
+        Linear = 1,
+        Quadratic = 2
+    };
+};
+
 /** Strategy to compute weights for use in load balance.
  */
 struct LoadBalanceCostsUpdateAlgo {
@@ -105,7 +119,8 @@ struct FieldBoundaryType {
         Damped = 4,   // Fields in the guard cells are damped for PSATD
                      //in the moving window direction
         Absorbing_SilverMueller = 5, // Silver-Mueller boundary condition
-        None = 6     // The fields values at the boundary are not updated. This is
+        Neumann = 6, // For electrostatic, the normal E is set to zero
+        None = 7     // The fields values at the boundary are not updated. This is
                      // useful for RZ simulations, at r=0.
     };
 };

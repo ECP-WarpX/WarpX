@@ -1,4 +1,4 @@
-/* Copyright 2021 Lorenzo Giacomel, Tiberius Rheaume, Axel Huebl
+/* Copyright 2021 Lorenzo Giacomel, Elisa Rheaume, Axel Huebl
  *
  * This file is part of WarpX.
  *
@@ -11,10 +11,9 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/UpdatePosition.H"
 
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
@@ -90,12 +89,15 @@ FieldProbe::FieldProbe (std::string rd_name)
         x_probe = 0._rt;
         y_probe = 0._rt;
 #if !defined(WARPX_DIM_1D_Z)
-        getWithParser(pp_rd_name, "x_probe", x_probe);
+        utils::parser::getWithParser(
+            pp_rd_name, "x_probe", x_probe);
 #endif
 #if defined(WARPX_DIM_3D)
-        getWithParser(pp_rd_name, "y_probe", y_probe);
+        utils::parser::getWithParser(
+            pp_rd_name, "y_probe", y_probe);
 #endif
-        getWithParser(pp_rd_name, "z_probe", z_probe);
+        utils::parser::getWithParser(
+            pp_rd_name, "z_probe", z_probe);
     }
     else if (m_probe_geometry_str == "Line")
     {
@@ -105,16 +107,16 @@ FieldProbe::FieldProbe (std::string rd_name)
         y_probe = 0._rt;
         y1_probe = 0._rt;
 #if !defined(WARPX_DIM_1D_Z)
-        getWithParser(pp_rd_name, "x_probe", x_probe);
-        getWithParser(pp_rd_name, "x1_probe", x1_probe);
+        utils::parser::getWithParser(pp_rd_name, "x_probe", x_probe);
+        utils::parser::getWithParser(pp_rd_name, "x1_probe", x1_probe);
 #endif
 #if defined(WARPX_DIM_3D)
-        getWithParser(pp_rd_name, "y_probe", y_probe);
-        getWithParser(pp_rd_name, "y1_probe", y1_probe);
+        utils::parser::getWithParser(pp_rd_name, "y_probe", y_probe);
+        utils::parser::getWithParser(pp_rd_name, "y1_probe", y1_probe);
 #endif
-        getWithParser(pp_rd_name, "z_probe", z_probe);
-        getWithParser(pp_rd_name, "z1_probe", z1_probe);
-        getWithParser(pp_rd_name, "resolution", m_resolution);
+        utils::parser::getWithParser(pp_rd_name, "z_probe", z_probe);
+        utils::parser::getWithParser(pp_rd_name, "z1_probe", z1_probe);
+        utils::parser::getWithParser(pp_rd_name, "resolution", m_resolution);
     }
     else if (m_probe_geometry_str == "Plane")
     {
@@ -129,18 +131,18 @@ FieldProbe::FieldProbe (std::string rd_name)
         target_normal_z = 0._rt;
         target_up_y = 0._rt;
 #if defined(WARPX_DIM_3D)
-        getWithParser(pp_rd_name, "y_probe", y_probe);
-        getWithParser(pp_rd_name, "target_normal_x", target_normal_x);
-        getWithParser(pp_rd_name, "target_normal_y", target_normal_y);
-        getWithParser(pp_rd_name, "target_normal_z", target_normal_z);
-        getWithParser(pp_rd_name, "target_up_y", target_up_y);
+        utils::parser::getWithParser(pp_rd_name, "y_probe", y_probe);
+        utils::parser::getWithParser(pp_rd_name, "target_normal_x", target_normal_x);
+        utils::parser::getWithParser(pp_rd_name, "target_normal_y", target_normal_y);
+        utils::parser::getWithParser(pp_rd_name, "target_normal_z", target_normal_z);
+        utils::parser::getWithParser(pp_rd_name, "target_up_y", target_up_y);
 #endif
-        getWithParser(pp_rd_name, "x_probe", x_probe);
-        getWithParser(pp_rd_name, "z_probe", z_probe);
-        getWithParser(pp_rd_name, "target_up_x", target_up_x);
-        getWithParser(pp_rd_name, "target_up_z", target_up_z);
-        getWithParser(pp_rd_name, "detector_radius", detector_radius);
-        getWithParser(pp_rd_name, "resolution", m_resolution);
+        utils::parser::getWithParser(pp_rd_name, "x_probe", x_probe);
+        utils::parser::getWithParser(pp_rd_name, "z_probe", z_probe);
+        utils::parser::getWithParser(pp_rd_name, "target_up_x", target_up_x);
+        utils::parser::getWithParser(pp_rd_name, "target_up_z", target_up_z);
+        utils::parser::getWithParser(pp_rd_name, "detector_radius", detector_radius);
+        utils::parser::getWithParser(pp_rd_name, "resolution", m_resolution);
     }
     else
     {
@@ -151,7 +153,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     }
     pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
-    pp_rd_name.query("interp_order", interp_order);
+    utils::parser::queryWithParser(pp_rd_name, "interp_order", interp_order);
     pp_rd_name.query("do_moving_window_FP", do_moving_window_FP);
 
     if (WarpX::gamma_boost > 1.0_rt)

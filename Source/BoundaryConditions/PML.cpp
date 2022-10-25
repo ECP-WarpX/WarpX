@@ -1,5 +1,5 @@
-/* Copyright 2019 Andrew Myers, Aurore Blelly, Axel Huebl
- * Maxence Thevenet, Remi Lehe, Weiqun Zhang
+/* Copyright 2019-2022 Andrew Myers, Aurore Blelly, Axel Huebl,
+ * Luca Fedeli, Maxence Thevenet, Remi Lehe, Weiqun Zhang
  *
  *
  * This file is part of WarpX.
@@ -17,7 +17,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "WarpX.H"
 
 #include <ablastr/utils/Communication.H>
@@ -548,12 +548,16 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
           int ncell, int delta, amrex::IntVect ref_ratio,
           Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
           int do_moving_window, int /*pml_has_particles*/, int do_pml_in_domain,
-          const bool do_multi_J,
+          const int J_in_time, const int rho_in_time,
           const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
+          const amrex::IntVect& fill_guards_fields,
+          const amrex::IntVect& fill_guards_current,
           int max_guard_EB, const amrex::Real v_sigma_sb,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
     : m_dive_cleaning(do_pml_dive_cleaning),
       m_divb_cleaning(do_pml_divb_cleaning),
+      m_fill_guards_fields(fill_guards_fields),
+      m_fill_guards_current(fill_guards_current),
       m_geom(geom),
       m_cgeom(cgeom)
 {
@@ -614,9 +618,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         int ngFFt_z = do_nodal ? noz_fft : noz_fft/2;
 
         ParmParse pp_psatd("psatd");
-        queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
-        queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
-        queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
+        utils::parser::queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
+        utils::parser::queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
+        utils::parser::queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if defined(WARPX_DIM_3D)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
@@ -749,7 +753,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
-        amrex::ignore_unused(lev, dt, do_multi_J);
+        amrex::ignore_unused(lev, dt, J_in_time, rho_in_time);
 #   if(AMREX_SPACEDIM!=3)
         amrex::ignore_unused(noy_fft);
 #   endif
@@ -757,7 +761,6 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             "PML: PSATD solver selected but not built.");
 #else
         // Flags passed to the spectral solver constructor
-        const amrex::IntVect fill_guards = amrex::IntVect(0);
         const bool in_pml = true;
         const bool periodic_single_box = false;
         const bool update_with_rho = false;
@@ -769,9 +772,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, fill_guards, v_galilean_zero,
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero,
             v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
-            fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
+            fft_do_time_averaging, J_in_time, rho_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif
     }
 
@@ -877,7 +880,6 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
                 "PML: PSATD solver selected but not built.");
 #else
             // Flags passed to the spectral solver constructor
-            const amrex::IntVect fill_guards = amrex::IntVect(0);
             const bool in_pml = true;
             const bool periodic_single_box = false;
             const bool update_with_rho = false;
@@ -889,9 +891,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
-                nox_fft, noy_fft, noz_fft, do_nodal, fill_guards, v_galilean_zero,
+                nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero,
                 v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
-                fft_do_time_averaging, do_multi_J, m_dive_cleaning, m_divb_cleaning);
+                fft_do_time_averaging, J_in_time, rho_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif
         }
     }
@@ -1421,9 +1423,9 @@ void
 PML::PushPSATD (const int lev) {
 
     // Update the fields on the fine and coarse patch
-    PushPMLPSATDSinglePatch(lev, *spectral_solver_fp, pml_E_fp, pml_B_fp, pml_F_fp, pml_G_fp);
+    PushPMLPSATDSinglePatch(lev, *spectral_solver_fp, pml_E_fp, pml_B_fp, pml_F_fp, pml_G_fp, m_fill_guards_fields);
     if (spectral_solver_cp) {
-        PushPMLPSATDSinglePatch(lev, *spectral_solver_cp, pml_E_cp, pml_B_cp, pml_F_cp, pml_G_cp);
+        PushPMLPSATDSinglePatch(lev, *spectral_solver_cp, pml_E_cp, pml_B_cp, pml_F_cp, pml_G_cp, m_fill_guards_fields);
     }
 }
 
@@ -1434,7 +1436,8 @@ PushPMLPSATDSinglePatch (
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_E,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_B,
     std::unique_ptr<amrex::MultiFab>& pml_F,
-    std::unique_ptr<amrex::MultiFab>& pml_G)
+    std::unique_ptr<amrex::MultiFab>& pml_G,
+    const amrex::IntVect& fill_guards)
 {
     const SpectralFieldIndex& Idx = solver.m_spectral_index;
 
@@ -1478,39 +1481,39 @@ PushPMLPSATDSinglePatch (
     solver.pushSpectralFields();
 
     // Perform backward Fourier transforms
-    solver.BackwardTransform(lev, *pml_E[0], Idx.Exy, PMLComp::xy);
-    solver.BackwardTransform(lev, *pml_E[0], Idx.Exz, PMLComp::xz);
-    solver.BackwardTransform(lev, *pml_E[1], Idx.Eyx, PMLComp::yx);
-    solver.BackwardTransform(lev, *pml_E[1], Idx.Eyz, PMLComp::yz);
-    solver.BackwardTransform(lev, *pml_E[2], Idx.Ezx, PMLComp::zx);
-    solver.BackwardTransform(lev, *pml_E[2], Idx.Ezy, PMLComp::zy);
-    solver.BackwardTransform(lev, *pml_B[0], Idx.Bxy, PMLComp::xy);
-    solver.BackwardTransform(lev, *pml_B[0], Idx.Bxz, PMLComp::xz);
-    solver.BackwardTransform(lev, *pml_B[1], Idx.Byx, PMLComp::yx);
-    solver.BackwardTransform(lev, *pml_B[1], Idx.Byz, PMLComp::yz);
-    solver.BackwardTransform(lev, *pml_B[2], Idx.Bzx, PMLComp::zx);
-    solver.BackwardTransform(lev, *pml_B[2], Idx.Bzy, PMLComp::zy);
+    solver.BackwardTransform(lev, *pml_E[0], Idx.Exy, fill_guards, PMLComp::xy);
+    solver.BackwardTransform(lev, *pml_E[0], Idx.Exz, fill_guards, PMLComp::xz);
+    solver.BackwardTransform(lev, *pml_E[1], Idx.Eyx, fill_guards, PMLComp::yx);
+    solver.BackwardTransform(lev, *pml_E[1], Idx.Eyz, fill_guards, PMLComp::yz);
+    solver.BackwardTransform(lev, *pml_E[2], Idx.Ezx, fill_guards, PMLComp::zx);
+    solver.BackwardTransform(lev, *pml_E[2], Idx.Ezy, fill_guards, PMLComp::zy);
+    solver.BackwardTransform(lev, *pml_B[0], Idx.Bxy, fill_guards, PMLComp::xy);
+    solver.BackwardTransform(lev, *pml_B[0], Idx.Bxz, fill_guards, PMLComp::xz);
+    solver.BackwardTransform(lev, *pml_B[1], Idx.Byx, fill_guards, PMLComp::yx);
+    solver.BackwardTransform(lev, *pml_B[1], Idx.Byz, fill_guards, PMLComp::yz);
+    solver.BackwardTransform(lev, *pml_B[2], Idx.Bzx, fill_guards, PMLComp::zx);
+    solver.BackwardTransform(lev, *pml_B[2], Idx.Bzy, fill_guards, PMLComp::zy);
 
     // WarpX::do_pml_dive_cleaning = true
     if (pml_F)
     {
-        solver.BackwardTransform(lev, *pml_E[0], Idx.Exx, PMLComp::xx);
-        solver.BackwardTransform(lev, *pml_E[1], Idx.Eyy, PMLComp::yy);
-        solver.BackwardTransform(lev, *pml_E[2], Idx.Ezz, PMLComp::zz);
-        solver.BackwardTransform(lev, *pml_F, Idx.Fx, PMLComp::x);
-        solver.BackwardTransform(lev, *pml_F, Idx.Fy, PMLComp::y);
-        solver.BackwardTransform(lev, *pml_F, Idx.Fz, PMLComp::z);
+        solver.BackwardTransform(lev, *pml_E[0], Idx.Exx, fill_guards, PMLComp::xx);
+        solver.BackwardTransform(lev, *pml_E[1], Idx.Eyy, fill_guards, PMLComp::yy);
+        solver.BackwardTransform(lev, *pml_E[2], Idx.Ezz, fill_guards, PMLComp::zz);
+        solver.BackwardTransform(lev, *pml_F, Idx.Fx, fill_guards, PMLComp::x);
+        solver.BackwardTransform(lev, *pml_F, Idx.Fy, fill_guards, PMLComp::y);
+        solver.BackwardTransform(lev, *pml_F, Idx.Fz, fill_guards, PMLComp::z);
     }
 
     // WarpX::do_pml_divb_cleaning = true
     if (pml_G)
     {
-        solver.BackwardTransform(lev, *pml_B[0], Idx.Bxx, PMLComp::xx);
-        solver.BackwardTransform(lev, *pml_B[1], Idx.Byy, PMLComp::yy);
-        solver.BackwardTransform(lev, *pml_B[2], Idx.Bzz, PMLComp::zz);
-        solver.BackwardTransform(lev, *pml_G, Idx.Gx, PMLComp::x);
-        solver.BackwardTransform(lev, *pml_G, Idx.Gy, PMLComp::y);
-        solver.BackwardTransform(lev, *pml_G, Idx.Gz, PMLComp::z);
+        solver.BackwardTransform(lev, *pml_B[0], Idx.Bxx, fill_guards, PMLComp::xx);
+        solver.BackwardTransform(lev, *pml_B[1], Idx.Byy, fill_guards, PMLComp::yy);
+        solver.BackwardTransform(lev, *pml_B[2], Idx.Bzz, fill_guards, PMLComp::zz);
+        solver.BackwardTransform(lev, *pml_G, Idx.Gx, fill_guards, PMLComp::x);
+        solver.BackwardTransform(lev, *pml_G, Idx.Gy, fill_guards, PMLComp::y);
+        solver.BackwardTransform(lev, *pml_G, Idx.Gz, fill_guards, PMLComp::z);
     }
 }
 #endif
