@@ -1377,7 +1377,6 @@ BTDiagnostics::InitializeParticleBuffer ()
 void
 BTDiagnostics::PrepareParticleDataForOutput()
 {
-    auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev < nlev_output; ++lev) {
         for (int i = 0; i < m_all_particle_functors.size(); ++i)
         {
