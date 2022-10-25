@@ -889,6 +889,12 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
             hibc[0] = LinOpBCType::Neumann;
             dirichlet_flag[1] = false;
         }
+        else {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                "Field boundary condition at the outer radius must be either PEC or neumann "
+                "when using the electrostatic solver"
+            );
+        }
     }
 #endif
     for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
@@ -911,7 +917,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
             }
             else {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                    "Field boundary conditions have to be either periodic, PEC or none "
+                    "Field boundary conditions have to be either periodic, PEC or neumann "
                     "when using the electrostatic solver"
                 );
             }
@@ -926,7 +932,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
             }
             else {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                    "Field boundary conditions have to be either periodic, PEC or none "
+                    "Field boundary conditions have to be either periodic, PEC or neumann "
                     "when using the electrostatic solver"
                 );
             }
