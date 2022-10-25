@@ -62,8 +62,10 @@ extern "C" {
                              amrex::ParticleReal const * vx,
                              amrex::ParticleReal const * vy,
                              amrex::ParticleReal const * vz,
-                             int nattr,
-                             amrex::ParticleReal const * attr,
+                             const int nattr_real,
+                             amrex::ParticleReal const * attr_real,
+                             const int nattr_int,
+                             int const * attr_int,
                              int uniqueparticles);
 
     void warpx_ConvertLabParamsToBoost();
@@ -79,6 +81,10 @@ extern "C" {
     amrex::Real warpx_getCellSize(int dir, int lev);
 
     long warpx_getNumParticles(const char* char_species_name, const bool local);
+
+    void warpx_convert_id_to_long (amrex::Long* ids, const WarpXParticleContainer::ParticleType* pstructs, int size);
+
+    void warpx_convert_cpu_to_int (int* cpus, const WarpXParticleContainer::ParticleType* pstructs, int size);
 
     amrex::ParticleReal** warpx_getParticleStructs(
         const char* char_species_name, int lev, int* num_tiles,
@@ -130,7 +136,9 @@ extern "C" {
   void warpx_FillBoundaryE ();
   void warpx_FillBoundaryB ();
   void warpx_SyncRho ();
-  void warpx_SyncCurrent ();
+  void warpx_SyncCurrent (
+      const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+      const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
   void warpx_UpdateAuxilaryData ();
   void warpx_PushParticlesandDepose (amrex::Real cur_time);
 

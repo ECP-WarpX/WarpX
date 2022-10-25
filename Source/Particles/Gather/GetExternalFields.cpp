@@ -17,7 +17,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
     auto& mypc = warpx.GetPartContainer();
 
     m_gamma_boost = WarpX::gamma_boost;
-    m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._rt)*PhysConst::c;
+    m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._prt)*PhysConst::c;
 
     m_Etype = Unknown;
     m_Btype = Unknown;
@@ -53,17 +53,19 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
     if (mypc.m_E_ext_particle_s == "parse_e_ext_particle_function")
     {
         m_Etype = ExternalFieldInitType::Parser;
-        m_Exfield_partparser = mypc.m_Ex_particle_parser->compile<4>();
-        m_Eyfield_partparser = mypc.m_Ey_particle_parser->compile<4>();
-        m_Ezfield_partparser = mypc.m_Ez_particle_parser->compile<4>();
+        constexpr auto num_arguments = 4; //x,y,z,t
+        m_Exfield_partparser = mypc.m_Ex_particle_parser->compile<num_arguments>();
+        m_Eyfield_partparser = mypc.m_Ey_particle_parser->compile<num_arguments>();
+        m_Ezfield_partparser = mypc.m_Ez_particle_parser->compile<num_arguments>();
     }
 
     if (mypc.m_B_ext_particle_s == "parse_b_ext_particle_function")
     {
         m_Btype = ExternalFieldInitType::Parser;
-        m_Bxfield_partparser = mypc.m_Bx_particle_parser->compile<4>();
-        m_Byfield_partparser = mypc.m_By_particle_parser->compile<4>();
-        m_Bzfield_partparser = mypc.m_Bz_particle_parser->compile<4>();
+        constexpr auto num_arguments = 4; //x,y,z,t
+        m_Bxfield_partparser = mypc.m_Bx_particle_parser->compile<num_arguments>();
+        m_Byfield_partparser = mypc.m_By_particle_parser->compile<num_arguments>();
+        m_Bzfield_partparser = mypc.m_Bz_particle_parser->compile<num_arguments>();
     }
 
     if (mypc.m_E_ext_particle_s == "repeated_plasma_lens" ||

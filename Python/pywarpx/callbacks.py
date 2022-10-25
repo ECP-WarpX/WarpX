@@ -29,6 +29,7 @@ Functions can be called at the following times:
  - afterdeposition <installafterdeposition>: after particle deposition (for charge and/or current)
  - beforestep <installbeforestep>: before the time step
  - afterstep <installafterstep>: after the time step
+ - afterdiagnostics <installafterdiagnostics>: after diagnostic output
  - particlescraper <installparticlescraper>: just after the particle boundary conditions are applied
                                              but before lost particles are processed
  - particleloader <installparticleloader>: at the time that the standard particle loader is called
@@ -70,12 +71,12 @@ class CallbackFunctions(object):
 
     Note that for functions passed in that are methods of a class instance,
     a full reference of the instance is saved. This extra reference means
-    that the object will not actually deleted if the user deletes the
+    that the object will not actually be deleted if the user deletes the
     original reference. This is good since the user does not need to keep
     the reference to the object (for example it can be created using a local
     variable in a function). It may be bad if the user thinks an object was
     deleted, but it actually isn't since it had (unkown to the user)
-    installed a method in one of the call back lists
+    installed a method in one of the call back lists.
     """
 
     def __init__(self,name=None,lcallonce=0):
@@ -261,7 +262,9 @@ _particlescraper = CallbackFunctions('particlescraper')
 _particleloader = CallbackFunctions('particleloader')
 _beforestep = CallbackFunctions('beforestep')
 _afterstep = CallbackFunctions('afterstep')
+_afterdiagnostics = CallbackFunctions('afterdiagnostics')
 _afterrestart = CallbackFunctions('afterrestart',lcallonce=1)
+_oncheckpointsignal = CallbackFunctions('oncheckpointsignal')
 _particleinjection = CallbackFunctions('particleinjection')
 _appliedfields = CallbackFunctions('appliedfields')
 
@@ -279,6 +282,7 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
               _particlescraper,
               _particleloader,
               _beforestep,_afterstep,
+              _afterdiagnostics,
               _afterrestart,
               _particleinjection,
               _appliedfields]:
@@ -472,6 +476,20 @@ def isinstalledafterstep(f):
     return _afterstep.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
+def callfromafterdiagnostics(f):
+    installafterdiagnostics(f)
+    return f
+def installafterdiagnostics(f):
+    "Adds a function to the list of functions called after diagnostic output"
+    _afterdiagnostics.installfuncinlist(f)
+def uninstallafterdiagnostics(f):
+    "Removes the function from the list of functions called after diagnostic output"
+    _afterdiagnostics.uninstallfuncinlist(f)
+def isinstalledafterdiagnostics(f):
+    "Checks if the function is called after diagnostic output"
+    return _afterdiagnostics.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
 def callfromafterrestart(f):
     raise Exception('restart call back not implemented yet')
     installafterrestart(f)
@@ -488,6 +506,20 @@ def isinstalledafterrestart(f):
     "Checks if the function is called immediately after a restart"
     raise Exception('restart call back not implemented yet')
     return _afterrestart.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def oncheckpointsignal(f):
+    installoncheckpointsignal(f)
+    return f
+def installoncheckpointsignal(f):
+    "Adds a function to the list of functions called on checkpoint signal"
+    _oncheckpointsignal.installfuncinlist(f)
+def uninstalloncheckpointsignal(f):
+    "Removes the function from the list of functions called on checkpoint signal"
+    _oncheckpointsignal.uninstallfuncinlist(f)
+def isinstalledoncheckpointsignal(f):
+    "Checks if the function is called on checkpoint signal"
+    return _oncheckpointsignal.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
 def callfromparticleinjection(f):

@@ -11,7 +11,6 @@
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/IntervalsParser.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
 

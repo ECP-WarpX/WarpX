@@ -8,7 +8,7 @@
 #ifndef WARPX_FINITE_DIFFERENCE_SOLVER_H_
 #define WARPX_FINITE_DIFFERENCE_SOLVER_H_
 
-#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
 #include "FiniteDifferenceSolver_fwd.H"
 
 #include "BoundaryConditions/PML_fwd.H"

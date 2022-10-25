@@ -4,6 +4,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_ParmParse.H>
@@ -44,7 +46,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
            ( openPMD::IterationEncoding::groupBased != encoding ) )
       {
         std::string warnMsg = diag_name+" Unable to support BTD with streaming. Using GroupBased ";
-        WarpX::GetInstance().RecordWarning("Diagnostics", warnMsg);
+        ablastr::warn_manager::WMRecordWarning("Diagnostics", warnMsg);
         encoding = openPMD::IterationEncoding::groupBased;
       }
     }
@@ -100,26 +102,6 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     engine_type, engine_parameters,
     warpx.getPMLdirections()
   );
-
-  // Temporarily adding Abort for adios filetype if species is selected for BTD output
-  bool species_output = true;
-  int write_species = 1;
-  std::vector< std::string > output_species_names;
-  bool species_specified = pp_diag_name.queryarr("species", output_species_names);
-  if (species_specified == true and output_species_names.size() > 0) {
-      species_output = true;
-  } else {
-      // By default species output is computed for all diagnostics, if write_species is not set to 0
-      species_output = true;
-  }
-  // Check user-defined option to turn off species output
-  pp_diag_name.query("write_species", write_species);
-  if (write_species == 0) species_output = false;
-  if (diag_type_str == "BackTransformed" and species_output == true) {
-      if (m_OpenPMDPlotWriter->OpenPMDFileType() == "bp") {
-          amrex::Abort(" Currently BackTransformed diagnostics type does not support species output for ADIOS backend. Please select h5 as openpmd backend");
-      }
-  }
 }
 
 void
@@ -131,6 +113,7 @@ FlushFormatOpenPMD::WriteToFile (
     const amrex::Vector<ParticleDiag>& particle_diags, int output_levels,
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,
+    const bool use_pinned_pc,
     bool isBTD, int snapshotID, const amrex::Geometry& full_BTD_snapshot,
     bool isLastBTDFlush, const amrex::Vector<int>& totalParticlesFlushedAlready) const
 {
@@ -155,7 +138,7 @@ FlushFormatOpenPMD::WriteToFile (
         varnames, mf, geom, output_levels, output_iteration, time, isBTD, full_BTD_snapshot);
 
     // particles: all (reside only on locally finest level)
-    m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags, isBTD, totalParticlesFlushedAlready);
+    m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags, use_pinned_pc, isBTD, isLastBTDFlush, totalParticlesFlushedAlready);
 
     // signal that no further updates will be written to this iteration
     m_OpenPMDPlotWriter->CloseStep(isBTD, isLastBTDFlush);

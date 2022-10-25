@@ -13,6 +13,7 @@
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
@@ -83,7 +84,7 @@ void FiniteDifferenceSolver::EvolveE (
 
 #endif
     } else {
-        amrex::Abort("EvolveE: Unknown algorithm");
+        amrex::Abort(Utils::TextMsg::Err("EvolveE: Unknown algorithm"));
     }
 
 }
@@ -165,9 +166,14 @@ void FiniteDifferenceSolver::EvolveECartesian (
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
+#ifdef WARPX_DIM_3D
                 if (ly(i,j,k) <= 0) return;
+#elif defined(WARPX_DIM_XZ)
+                //In XZ Ey is associated with a mesh node, so we need to check if the mesh node is covered
+                amrex::ignore_unused(ly);
+                if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
 #endif
-
+#endif
                 Ey(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
                     + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)

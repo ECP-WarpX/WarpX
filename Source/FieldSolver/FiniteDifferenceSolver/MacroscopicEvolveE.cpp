@@ -9,8 +9,8 @@
 #endif
 #include "MacroscopicProperties/MacroscopicProperties.H"
 #include "Utils/CoarsenIO.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -46,12 +46,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
-    amrex::Abort("currently macro E-push does not work for RZ");
+    amrex::Abort(Utils::TextMsg::Err(
+        "currently macro E-push does not work for RZ"));
 #else
-    if (m_do_nodal) {
-        amrex::Abort(" macro E-push does not work for nodal ");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !m_do_nodal, "macro E-push does not work for nodal");
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+
+    if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
@@ -83,7 +85,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         }
 
     } else {
-        amrex::Abort("MacroscopicEvolveE: Unknown algorithm");
+        amrex::Abort(Utils::TextMsg::Err(
+            "MacroscopicEvolveE: Unknown algorithm"));
     }
 #endif
 
@@ -190,8 +193,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
-                // Skip field push if this cell is fully covered by embedded boundaries
+#ifdef WARPX_DIM_3D
                 if (ly(i,j,k) <= 0) return;
+#elif defined(WARPX_DIM_XZ)
+                //In XZ Ey is associated with a mesh node, so we need to check if the mesh node is covered
+                amrex::ignore_unused(ly);
+                if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j, k)<=0 || lz(i, j-1, k)<=0) return;
+#endif
 #endif
                 // Interpolate conductivity, sigma, to Ey position on the grid
                 amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,

@@ -13,6 +13,8 @@
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_Config.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -64,7 +66,8 @@ int main(int argc, char* argv[])
 
         warpx.Evolve();
 
-        warpx.PrintGlobalWarnings("THE END"); //Print warning messages at the end of the simulation
+        //Print warning messages at the end of the simulation
+        ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
 
         if (warpx.Verbose()) {
             auto end_total = static_cast<Real>(amrex::second()) - strt_total;

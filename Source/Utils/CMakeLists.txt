@@ -3,10 +3,9 @@ target_sources(WarpX
     CoarsenIO.cpp
     CoarsenMR.cpp
     Interpolate.cpp
-    IntervalsParser.cpp
+    MPIInitHelpers.cpp
     ParticleUtils.cpp
     RelativeCellPosition.cpp
-    WarnManager.cpp
     WarpXAlgorithmSelection.cpp
     WarpXMovingWindow.cpp
     WarpXTagging.cpp
@@ -14,9 +13,6 @@ target_sources(WarpX
     WarpXVersion.cpp
 )
 
-add_subdirectory(MsgLogger)
-
-target_sources(ablastr
-  PRIVATE
-    MPIInitHelpers.cpp
-)
+add_subdirectory(Logo)
+add_subdirectory(Parser)
+add_subdirectory(Strings)

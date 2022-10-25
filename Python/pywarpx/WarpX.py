@@ -1,9 +1,11 @@
-# Copyright 2016-2020 Andrew Myers, David Grote, Maxence Thevenet
-# Remi Lehe
+# Copyright 2016-2022 Andrew Myers, David Grote, Maxence Thevenet
+# Remi Lehe, Lorenzo Giacomel
 #
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
+
+import re
 
 from . import Particles
 from .Algo import algo
@@ -12,7 +14,8 @@ from .Boundary import boundary
 from .Bucket import Bucket
 from .Collisions import collisions, collisions_list
 from .Constants import my_constants
-from .Diagnostics import diagnostics
+from .Diagnostics import diagnostics, reduced_diagnostics
+from .EB2 import eb2
 from .Geometry import geometry
 from .Interpolation import interpolation
 from .Langmuirwave import langmuirwave
@@ -38,6 +41,7 @@ class WarpX(Bucket):
         argv += langmuirwave.attrlist()
         argv += interpolation.attrlist()
         argv += psatd.attrlist()
+        argv += eb2.attrlist()
 
         # --- Search through species_names and add any predefined particle objects in the list.
         particles_list_names = [p.instancename for p in particles_list]
@@ -72,6 +76,14 @@ class WarpX(Bucket):
             for species_diagnostic in diagnostic._species_dict.values():
                 argv += species_diagnostic.attrlist()
 
+        reduced_diagnostics.reduced_diags_names = reduced_diagnostics._diagnostics_dict.keys()
+        argv += reduced_diagnostics.attrlist()
+        for diagnostic in reduced_diagnostics._diagnostics_dict.values():
+            diagnostic.species = diagnostic._species_dict.keys()
+            argv += diagnostic.attrlist()
+            for species_diagnostic in diagnostic._species_dict.values():
+                argv += species_diagnostic.attrlist()
+
         return argv
 
     def init(self, mpi_comm=None):
@@ -101,7 +113,17 @@ class WarpX(Bucket):
 
         with open(filename, 'w') as ff:
 
+            prefix_old = ''
             for arg in argv:
+                # This prints the name of the input group (prefix) as a header
+                # before each group to make the input file more human readable
+                prefix_new = re.split(' |\.', arg)[0]
+                if prefix_new != prefix_old:
+                    if prefix_old != '':
+                        ff.write('\n')
+                    ff.write(f'# {prefix_new}\n')
+                    prefix_old = prefix_new
+
                 ff.write(f'{arg}\n')
 
 warpx = WarpX('warpx')

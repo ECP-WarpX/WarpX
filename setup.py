@@ -63,7 +63,7 @@ class CMakeBuild(build_ext):
             out = subprocess.check_output(['cmake', '--version'])
         except OSError:
             raise RuntimeError(
-                "CMake 3.18.0+ must be installed to build the following " +
+                "CMake 3.20.0+ must be installed to build the following " +
                 "extensions: " +
                 ", ".join(e.name for e in self.extensions))
 
@@ -71,8 +71,8 @@ class CMakeBuild(build_ext):
             r'version\s*([\d.]+)',
             out.decode()
         ).group(1))
-        if cmake_version < '3.18.0':
-            raise RuntimeError("CMake >= 3.18.0 is required")
+        if cmake_version < '3.20.0':
+            raise RuntimeError("CMake >= 3.20.0 is required")
 
         for ext in self.extensions:
             self.build_extension(ext)
@@ -101,6 +101,7 @@ class CMakeBuild(build_ext):
             '-DWarpX_EB:BOOL=' + WARPX_EB,
             '-DWarpX_OPENPMD:BOOL=' + WARPX_OPENPMD,
             '-DWarpX_PRECISION=' + WARPX_PRECISION,
+            '-DWarpX_PARTICLE_PRECISION=' + WARPX_PARTICLE_PRECISION,
             '-DWarpX_PSATD:BOOL=' + WARPX_PSATD,
             '-DWarpX_QED:BOOL=' + WARPX_QED,
             '-DWarpX_QED_TABLE_GEN:BOOL=' + WARPX_QED_TABLE_GEN,
@@ -201,6 +202,7 @@ WARPX_MPI = env.pop('WARPX_MPI', 'OFF')
 WARPX_EB = env.pop('WARPX_EB', 'OFF')
 WARPX_OPENPMD = env.pop('WARPX_OPENPMD', 'ON')
 WARPX_PRECISION = env.pop('WARPX_PRECISION', 'DOUBLE')
+WARPX_PARTICLE_PRECISION = env.pop('WARPX_PARTICLE_PRECISION', WARPX_PRECISION)
 WARPX_PSATD = env.pop('WARPX_PSATD', 'OFF')
 WARPX_QED = env.pop('WARPX_QED', 'ON')
 WARPX_QED_TABLE_GEN = env.pop('WARPX_QED_TABLE_GEN', 'OFF')
@@ -270,7 +272,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '22.03',
+    version = '22.10',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',
@@ -295,7 +297,7 @@ setup(
     cmdclass=cmdclass,
     # scripts=['warpx_1d', 'warpx_2d', 'warpx_3d', 'warpx_rz'],
     zip_safe=False,
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     # tests_require=['pytest'],
     install_requires=install_requires,
     # see: src/bindings/python/cli
@@ -305,7 +307,7 @@ setup(
     #    ]
     #},
     extras_require={
-        'all': ['openPMD-api~=0.14.2', 'openPMD-viewer~=1.1', 'yt~=3.6,>=4.0.1', 'matplotlib'],
+        'all': ['openPMD-api~=0.14.2', 'openPMD-viewer~=1.1', 'yt>=4.1.0', 'matplotlib'],
     },
     # cmdclass={'test': PyTest},
     # platforms='any',
@@ -319,7 +321,6 @@ setup(
         'Topic :: Scientific/Engineering :: Physics',
         'Programming Language :: C++',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',

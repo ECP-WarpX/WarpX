@@ -1,0 +1,87 @@
+/* Copyright 2019-2022 Andrew Myers, Luca Fedeli, Maxence Thevenet,
+ *                     Weiqun Zhang, Axel Huebl
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#ifndef ABLASTR_CONSTANT_H_
+#define ABLASTR_CONSTANT_H_
+
+#include <AMReX_REAL.H>
+
+
+/** Numerical compile-time constants */
+namespace ablastr::constant
+{
+    /** Mathematical constants */
+    namespace math
+    {
+        using namespace amrex::literals;
+
+        //! ratio of a circle's circumference to its diameter
+        static constexpr amrex::Real pi = 3.14159265358979323846_rt;
+
+        //! https://tauday.com/tau-manifesto
+        static constexpr amrex::Real tau = 2.0_rt * pi;
+    } // namespace math
+
+    /** Physical constants
+     *
+     * Values are the 2018 CODATA recommended values
+     * https://physics.nist.gov/cuu/Constants/index.html
+     *
+     * New additions here should also be considered for addition to
+     * `warpx_constants` in WarpXUtil.cpp's `makeParser`, so that they're
+     * available in parsing and evaluation of PICMI expressions, as well
+     * as the corresponding Python definitions
+     */
+    namespace SI
+    {
+        using namespace amrex::literals;
+
+        //! vacuum speed of light [m/s]
+        static constexpr auto c = 299'792'458._rt;
+        //! vacuum permittivity: dielectric permittivity of vacuum [F/m]
+        static constexpr auto ep0 = 8.8541878128e-12_rt;
+        //! vacuum permeability: magnetic permeability of vacuum = 4.0e-7 * pi [H/m]
+        static constexpr auto mu0 = 1.25663706212e-06_rt;
+        //! elementary charge [C]
+        static constexpr auto q_e = 1.602176634e-19_rt;
+        //! electron mass [kg]
+        static constexpr auto m_e = 9.1093837015e-31_rt;
+        //! proton mass [kg]
+        static constexpr auto m_p = 1.67262192369e-27_rt;
+        //! dalton: unified atomic mass unit [kg]
+        static constexpr auto m_u = 1.66053906660e-27_rt;
+
+        //! reduced Planck Constant = h / tau [J*s]
+        static constexpr auto hbar = 1.054571817e-34_rt;
+        //! fine-structure constant = mu0/(4*MathConst::pi)*q_e*q_e*c/hbar [dimensionless]
+        static constexpr auto alpha = 0.007297352573748943_rt;
+        //! classical electron radius = 1./(4*MathConst::pi*ep0) * q_e*q_e/(m_e*c*c) [m]
+        static constexpr auto r_e = 2.817940326204929e-15_rt;
+        //! xi: nonlinearity parameter of Heisenberg-Euler effective theory = (2.*alpha*alpha*ep0*ep0*hbar*hbar*hbar)/(45.*m_e*m_e*m_e*m_e*c*c*c*c*c)
+        static constexpr double xi = 1.3050122447005176e-52;
+        //! xi times c2 = xi*c*c. This should be usable for single precision instead of xi; very close to smallest float32 number possible (1.2e-38)
+        static constexpr auto xi_c2 = 1.1728865132395492e-35_rt;
+
+        //! Boltzmann constant (exact) [J/K]
+        static constexpr auto kb = 1.380649e-23_rt;
+
+        //! 1 eV in [J]
+        static constexpr auto eV = q_e;
+        //! 1 MeV in [J]
+        static constexpr auto MeV = q_e * 1e6_rt;
+        //! 1 eV/c in [kg*m/s]
+        static constexpr auto eV_invc = eV / c;
+        //! 1 MeV/c in [kg*m/s]
+        static constexpr auto MeV_invc = MeV / c;
+        //! 1 eV/c^2 in [kg]
+        static constexpr auto eV_invc2 = eV / (c * c);
+        //! 1 MeV/c^2 in [kg]
+        static constexpr auto MeV_invc2 = MeV / (c * c);
+    } // namespace SI
+} // namespace ablastr::constant
+
+#endif // ABLASTR_CONSTANT_H_

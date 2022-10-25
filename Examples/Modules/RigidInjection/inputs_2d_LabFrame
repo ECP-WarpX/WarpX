@@ -43,6 +43,10 @@ beam.uy_th = 100.
 beam.uz_th =   0.
 beam.zinject_plane = 20.e-6
 beam.rigid_advance = true
+beam.addRealAttributes = orig_z
+beam.addIntegerAttributes = center
+beam.attribute.orig_z(x,y,z,ux,uy,uz,t) = z
+beam.attribute.center(x,y,z,ux,uy,uz,t) = 1*(sqrt(x*x + y*y)<5.e-7)
 
 # Diagnostics
 diagnostics.diags_names = diag1

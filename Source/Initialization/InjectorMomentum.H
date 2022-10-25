@@ -153,34 +153,30 @@ struct InjectorMomentumBoltzmann
     getMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z,
                  amrex::RandomEngine const& engine) const noexcept
     {
+        using namespace amrex::literals;
+
         // Calculate the local temperature and check if it's too
         // high for Boltzmann or less than zero
         amrex::Real const theta = temperature(x,y,z);
-        if (theta < 0) {
+        if (theta < 0._rt) {
             amrex::Abort("Negative temperature parameter theta encountered, which is not allowed");
         }
         // Calculate local velocity and abort if |beta|>=1
         amrex::Real const beta = velocity(x,y,z);
-        if (beta <= -1 || beta >= 1) {
+        if (beta <= -1._rt || beta >= 1._rt) {
             amrex::Abort("beta = v/c magnitude greater than or equal to 1");
         }
         // Calculate the value of vave from the local temperature
-        amrex::Real const vave = std::sqrt(amrex::Real(2) * theta);
+        amrex::Real const vave = std::sqrt(theta);
         int const dir = velocity.direction();
-        amrex::Real x1, x2, gamma;
+
         amrex::Real u[3];
-        x1 = amrex::Random(engine);
-        x2 = amrex::Random(engine);
-        // Each value of sqrt(-log(x1))*sin(2*pi*x2) is a sample from a Gaussian
-        // distribution with sigma = average velocity / c
-        // using the Box-Mueller Method.
-        u[(dir+1)%3] = vave*std::sqrt(-std::log(x1)) *std::sin(2*MathConst::pi*x2);
-        u[(dir+2)%3] = vave*std::sqrt(-std::log(x1)) *std::cos(2*MathConst::pi*x2);
-        u[dir] = vave*std::sqrt(-std::log(amrex::Random(engine)))*
-            std::sin(2*MathConst::pi*amrex::Random(engine));
-        gamma = u[0]*u[0]+u[1]*u[1]+u[2]*u[2];
-        gamma = std::sqrt(1+gamma);
-        // The following condition is equtaion 32 in Zenitani 2015
+        u[dir] = amrex::RandomNormal(0._rt, vave, engine);
+        u[(dir+1)%3] = amrex::RandomNormal(0._rt, vave, engine);
+        u[(dir+2)%3] = amrex::RandomNormal(0._rt, vave, engine);
+        amrex::Real const gamma = std::sqrt(1._rt + u[0]*u[0]+u[1]*u[1]+u[2]*u[2]);
+
+        // The following condition is equation 32 in Zenitani 2015
         // (Phys. Plasmas 22, 042116) , called the flipping method. It
         // transforms the intergral: d3x' -> d3x  where d3x' is the volume
         // element for positions in the boosted frame. The particle positions
@@ -191,15 +187,14 @@ struct InjectorMomentumBoltzmann
         // initialize the particle positions and densities in the frame moving
         // at speed beta, and then perform a Lorentz transform on the positions
         // and MB sampled velocities to the simulation frame.
-        x1 = amrex::Random(engine);
-        if(-beta*u[dir]/gamma > x1)
+        if(-beta*u[dir]/gamma > amrex::Random(engine))
         {
           u[dir] = -u[dir];
         }
         // This Lorentz transform is equation 17 in Zenitani.
         // It transforms the integral d3u' -> d3u
         // where d3u' is the volume element for momentum in the boosted frame.
-        u[dir] = 1/std::sqrt(1-beta*beta)*(u[dir]+gamma*beta);
+        u[dir] = 1._rt/std::sqrt(1._rt-beta*beta)*(u[dir]+gamma*beta);
         // Note that if beta = 0 then the flipping method and Lorentz transform
         // have no effect on the u[dir] direction.
         return amrex::XDim3 {u[0],u[1],u[2]};

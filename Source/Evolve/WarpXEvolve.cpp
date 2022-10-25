@@ -26,12 +26,14 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Python/WarpX_py.H"
-#include "Utils/IntervalsParser.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
+
+#include <ablastr/utils/SignalHandling.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_Array.H>
@@ -53,10 +55,12 @@
 #include <vector>
 
 using namespace amrex;
+using ablastr::utils::SignalHandling;
 
 void
 WarpX::Evolve (int numsteps)
 {
+    WARPX_PROFILE_REGION("WarpX::Evolve()");
     WARPX_PROFILE("WarpX::Evolve()");
 
     Real cur_time = t_new[0];
@@ -77,6 +81,8 @@ WarpX::Evolve (int numsteps)
     {
         WARPX_PROFILE("WarpX::Evolve::step");
         Real evolve_time_beg_step = amrex::second();
+
+        CheckSignals();
 
         multi_diags->NewIteration();
 
@@ -329,17 +335,25 @@ WarpX::Evolve (int numsteps)
         }
         multi_diags->FilterComputePackFlush( step );
 
+        // execute afterdiagnostic callbacks
+        ExecutePythonCallback("afterdiagnostics");
+
         // inputs: unused parameters (e.g. typos) check after step 1 has finished
         if (!early_params_checked) {
             amrex::Print() << "\n"; // better: conditional \n based on return value
             amrex::ParmParse().QueryUnusedInputs();
-            this->PrintGlobalWarnings("FIRST STEP"); //Print the warning list right after the first step.
+
+            //Print the warning list right after the first step.
+            amrex::Print() <<
+                ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("FIRST STEP");
             early_params_checked = true;
         }
 
         // create ending time stamp for calculating elapsed time each iteration
         Real evolve_time_end_step = amrex::second();
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
+
+        HandleSignals();
 
         if (verbose) {
             amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
@@ -349,7 +363,7 @@ WarpX::Evolve (int numsteps)
                       << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n";
         }
 
-        if (cur_time >= stop_time - 1.e-3*dt[0]) {
+        if (cur_time >= stop_time - 1.e-3*dt[0] || SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK)) {
             break;
         }
 
@@ -383,9 +397,9 @@ WarpX::OneStep_nosub (Real cur_time)
 
     ExecutePythonCallback("afterdeposition");
 
-    // Synchronize J and rho
-    SyncCurrent();
-    SyncRho();
+    // Synchronize J and rho:
+    // filter (if used), exchange guard cells, interpolate across MR levels
+    SyncCurrentAndRho();
 
     // At this point, J is up-to-date inside the domain, and E and B are
     // up-to-date including enough guard cells for first step of the field
@@ -413,24 +427,18 @@ WarpX::OneStep_nosub (Real cur_time)
 
         if (use_hybrid_QED) {
             FillBoundaryE(guard_cells.ng_alloc_EB);
-            FillBoundaryB(guard_cells.ng_alloc_EB);
+            FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
             WarpX::Hybrid_QED_Push(dt);
-            FillBoundaryE(guard_cells.ng_afterPushPSATD);
+            FillBoundaryE(guard_cells.ng_afterPushPSATD, WarpX::sync_nodal_points);
         }
         else {
-            FillBoundaryE(guard_cells.ng_afterPushPSATD);
-            FillBoundaryB(guard_cells.ng_afterPushPSATD);
+            FillBoundaryE(guard_cells.ng_afterPushPSATD, WarpX::sync_nodal_points);
+            FillBoundaryB(guard_cells.ng_afterPushPSATD, WarpX::sync_nodal_points);
             if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning)
-                FillBoundaryF(guard_cells.ng_alloc_F);
+                FillBoundaryF(guard_cells.ng_alloc_F, WarpX::sync_nodal_points);
             if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
-                FillBoundaryG(guard_cells.ng_alloc_G);
+                FillBoundaryG(guard_cells.ng_alloc_G, WarpX::sync_nodal_points);
         }
-
-        // Synchronize E, B, F, G fields on nodal points
-        NodalSync(Efield_fp, Efield_cp);
-        NodalSync(Bfield_fp, Bfield_cp);
-        if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
-        if (WarpX::do_divb_cleaning) NodalSync(G_fp, G_cp);
 
         if (do_pml) {
             NodalSyncPML();
@@ -442,7 +450,7 @@ WarpX::OneStep_nosub (Real cur_time)
         FillBoundaryG(guard_cells.ng_FieldSolverG);
         EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
 
-        FillBoundaryB(guard_cells.ng_FieldSolver);
+        FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
         if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
             // vacuum medium
@@ -451,17 +459,13 @@ WarpX::OneStep_nosub (Real cur_time)
             // macroscopic medium
             MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
         } else {
-            amrex::Abort(" Medium for EM is unknown \n");
+            amrex::Abort(Utils::TextMsg::Err("Medium for EM is unknown"));
         }
 
-        FillBoundaryE(guard_cells.ng_FieldSolver);
+        FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
-
-        // Synchronize E and B fields on nodal points
-        NodalSync(Efield_fp, Efield_cp);
-        NodalSync(Bfield_fp, Bfield_cp);
 
         if (do_pml) {
             FillBoundaryF(guard_cells.ng_alloc_F);
@@ -480,151 +484,212 @@ WarpX::OneStep_nosub (Real cur_time)
     ExecutePythonCallback("afterEsolve");
 }
 
+void WarpX::SyncCurrentAndRho ()
+{
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    {
+        if (fft_periodic_single_box)
+        {
+            // With periodic single box, synchronize J and rho here,
+            // even with current correction or Vay deposition
+            if (current_deposition_algo == CurrentDepositionAlgo::Vay)
+            {
+                // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
+                SyncCurrent(current_fp_vay, current_cp);
+                SyncRho();
+            }
+            else
+            {
+                SyncCurrent(current_fp, current_cp);
+                SyncRho();
+            }
+        }
+        else // no periodic single box
+        {
+            // Without periodic single box, synchronize J and rho here,
+            // except with current correction or Vay deposition:
+            // in these cases, synchronize later (in WarpX::PushPSATD)
+            if (current_correction == false &&
+                current_deposition_algo != CurrentDepositionAlgo::Vay)
+            {
+                SyncCurrent(current_fp, current_cp);
+                SyncRho();
+            }
+        }
+    }
+    else // FDTD
+    {
+        SyncCurrent(current_fp, current_cp);
+        SyncRho();
+    }
+}
+
 void
 WarpX::OneStep_multiJ (const amrex::Real cur_time)
 {
 #ifdef WARPX_USE_PSATD
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD,
+        "multi-J algorithm not implemented for FDTD"
+    );
+
+    // Push particle from x^{n} to x^{n+1}
+    //               from p^{n-1/2} to p^{n+1/2}
+    const bool skip_deposition = true;
+    PushParticlesandDepose(cur_time, skip_deposition);
+
+    // Initialize multi-J loop:
+
+    // 1) Prepare E,B,F,G fields in spectral space
+    PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
+    if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
+    if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
+
+    // 2) Set the averaged fields to zero
+    if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
+
+    // 3) Deposit rho (in rho_new, since it will be moved during the loop)
+    if (WarpX::update_with_rho)
     {
-        // Push particle from x^{n} to x^{n+1}
-        //               from p^{n-1/2} to p^{n+1/2}
-        const bool skip_deposition = true;
-        PushParticlesandDepose(cur_time, skip_deposition);
+        // Deposit rho at relative time -dt
+        // (dt[0] denotes the time step on mesh refinement level 0)
+        mypc->DepositCharge(rho_fp, -dt[0]);
+        // Filter, exchange boundary, and interpolate across levels
+        SyncRho();
+        // Forward FFT of rho_new
+        PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
+    }
 
-        // Initialize multi-J loop:
+    // 4) Deposit J at relative time -dt with time step dt
+    //    (dt[0] denotes the time step on mesh refinement level 0)
+    if (J_in_time == JInTime::Linear)
+    {
+        auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+        mypc->DepositCurrent(current, dt[0], -dt[0]);
+        // Synchronize J: filter, exchange boundary, and interpolate across levels.
+        // With current centering, the nodal current is deposited in 'current',
+        // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
+        // into 'current_fp' and then performs both filtering, if used, and exchange
+        // of guard cells.
+        SyncCurrent(current_fp, current_cp);
+        // Forward FFT of J
+        PSATDForwardTransformJ(current_fp, current_cp);
+    }
 
-        // 1) Prepare E,B,F,G fields in spectral space
-        PSATDForwardTransformEB();
-        if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
-        if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
+    // Number of depositions for multi-J scheme
+    const int n_depose = WarpX::do_multi_J_n_depositions;
+    // Time sub-step for each multi-J deposition
+    const amrex::Real sub_dt = dt[0] / static_cast<amrex::Real>(n_depose);
+    // Whether to perform multi-J depositions on a time interval that spans
+    // one or two full time steps (from n*dt to (n+1)*dt, or from n*dt to (n+2)*dt)
+    const int n_loop = (WarpX::fft_do_time_averaging) ? 2*n_depose : n_depose;
 
-        // 2) Set the averaged fields to zero
-        if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
+    // Loop over multi-J depositions
+    for (int i_depose = 0; i_depose < n_loop; i_depose++)
+    {
+        // Move J deposited previously, from new to old
+        if (J_in_time == JInTime::Linear)
+        {
+            PSATDMoveJNewToJOld();
+        }
 
-        // 3) Deposit rho (in rho_new, since it will be moved during the loop)
+        const amrex::Real t_depose_current = (J_in_time == JInTime::Linear) ?
+            (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5_rt)*sub_dt;
+
+        // TODO Update this when rho quadratic in time is implemented
+        const amrex::Real t_depose_charge = (i_depose-n_depose+1)*sub_dt;
+
+        // Deposit new J at relative time t_depose_current with time step dt
+        // (dt[0] denotes the time step on mesh refinement level 0)
+        auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
+        mypc->DepositCurrent(current, dt[0], t_depose_current);
+        // Synchronize J: filter, exchange boundary, and interpolate across levels.
+        // With current centering, the nodal current is deposited in 'current',
+        // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
+        // into 'current_fp' and then performs both filtering, if used, and exchange
+        // of guard cells.
+        SyncCurrent(current_fp, current_cp);
+        // Forward FFT of J
+        PSATDForwardTransformJ(current_fp, current_cp);
+
+        // Deposit new rho
         if (WarpX::update_with_rho)
         {
-            // Deposit rho at relative time -dt
-            // (dt[0] denotes the time step on mesh refinement level 0)
-            mypc->DepositCharge(rho_fp, -dt[0]);
+            // Move rho deposited previously, from new to old
+            PSATDMoveRhoNewToRhoOld();
+
+            // Deposit rho at relative time t_depose_charge
+            mypc->DepositCharge(rho_fp, t_depose_charge);
             // Filter, exchange boundary, and interpolate across levels
             SyncRho();
             // Forward FFT of rho_new
-            PSATDForwardTransformRho(0, 1);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
         }
 
-        // 4) Deposit J at relative time -dt with time step dt
-        //    (dt[0] denotes the time step on mesh refinement level 0)
-        auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
-        mypc->DepositCurrent(current, dt[0], -dt[0]);
-        // Filter, exchange boundary, and interpolate across levels
-        SyncCurrent();
-        // Forward FFT of J
-        PSATDForwardTransformJ();
-
-        // Number of depositions for multi-J scheme
-        const int n_depose = WarpX::do_multi_J_n_depositions;
-        // Time sub-step for each multi-J deposition
-        const amrex::Real sub_dt = dt[0] / static_cast<amrex::Real>(n_depose);
-        // Whether to perform multi-J depositions on a time interval that spans
-        // one or two full time steps (from n*dt to (n+1)*dt, or from n*dt to (n+2)*dt)
-        const int n_loop = (WarpX::fft_do_time_averaging) ? 2*n_depose : n_depose;
-
-        // Loop over multi-J depositions
-        for (int i_depose = 0; i_depose < n_loop; i_depose++)
+        if (WarpX::current_correction)
         {
-            // Move J deposited previously, from new to old
-            PSATDMoveJNewToJOld();
-
-            const amrex::Real t_depose = (i_depose-n_depose+1)*sub_dt;
-
-            // Deposit new J at relative time t_depose with time step dt
-            // (dt[0] denotes the time step on mesh refinement level 0)
-            mypc->DepositCurrent(current, dt[0], t_depose);
-            // Filter, exchange boundary, and interpolate across levels
-            SyncCurrent();
-            // Forward FFT of J
-            PSATDForwardTransformJ();
-
-            // Deposit new rho
-            if (WarpX::update_with_rho)
-            {
-                // Move rho deposited previously, from new to old
-                PSATDMoveRhoNewToRhoOld();
-
-                // Deposit rho at relative time t_depose
-                mypc->DepositCharge(rho_fp, t_depose);
-                // Filter, exchange boundary, and interpolate across levels
-                SyncRho();
-                // Forward FFT of rho_new
-                PSATDForwardTransformRho(0, 1);
-            }
-
-            // Advance E,B,F,G fields in time and update the average fields
-            PSATDPushSpectralFields();
-
-            // Transform non-average fields E,B,F,G after n_depose pushes
-            // (the relative time reached here coincides with an integer full time step)
-            if (i_depose == n_depose-1)
-            {
-                PSATDBackwardTransformEB();
-                if (WarpX::do_dive_cleaning) PSATDBackwardTransformF();
-                if (WarpX::do_divb_cleaning) PSATDBackwardTransformG();
-            }
+            amrex::Abort(Utils::TextMsg::Err(
+                "Current correction not implemented for multi-J algorithm."));
         }
 
-        // Transform fields back to real space
-        if (WarpX::fft_do_time_averaging)
+        // Advance E,B,F,G fields in time and update the average fields
+        PSATDPushSpectralFields();
+
+        // Transform non-average fields E,B,F,G after n_depose pushes
+        // (the relative time reached here coincides with an integer full time step)
+        if (i_depose == n_depose-1)
         {
-            // We summed the integral of the field over 2*dt
-            PSATDScaleAverageFields(1._rt / (2._rt*dt[0]));
-            PSATDBackwardTransformEBavg();
-        }
-
-        // Evolve fields in PML
-        for (int lev = 0; lev <= finest_level; ++lev)
-        {
-            if (do_pml && pml[lev]->ok())
-            {
-                pml[lev]->PushPSATD(lev);
-            }
-            ApplyEfieldBoundary(lev, PatchType::fine);
-            if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
-            ApplyBfieldBoundary(lev, PatchType::fine, DtType::FirstHalf);
-            if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf);
-        }
-
-        // Damp fields in PML before exchanging guard cells
-        if (do_pml)
-        {
-            DampPML();
-        }
-
-        // Exchange guard cells
-        FillBoundaryE(guard_cells.ng_alloc_EB);
-        FillBoundaryB(guard_cells.ng_alloc_EB);
-        if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning) FillBoundaryF(guard_cells.ng_alloc_F);
-        if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning) FillBoundaryG(guard_cells.ng_alloc_G);
-
-        // Synchronize E, B, F, G fields on nodal points
-        NodalSync(Efield_fp, Efield_cp);
-        NodalSync(Bfield_fp, Bfield_cp);
-        if (WarpX::do_dive_cleaning) NodalSync(F_fp, F_cp);
-        if (WarpX::do_divb_cleaning) NodalSync(G_fp, G_cp);
-
-        // Synchronize fields on nodal points in PML
-        if (do_pml)
-        {
-            NodalSyncPML();
+            PSATDBackwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
+            if (WarpX::do_dive_cleaning) PSATDBackwardTransformF();
+            if (WarpX::do_divb_cleaning) PSATDBackwardTransformG();
         }
     }
-    else
+
+    // Transform fields back to real space
+    if (WarpX::fft_do_time_averaging)
     {
-        amrex::Abort("multi-J algorithm not implemented for FDTD");
+        // We summed the integral of the field over 2*dt
+        PSATDScaleAverageFields(1._rt / (2._rt*dt[0]));
+        PSATDBackwardTransformEBavg(Efield_avg_fp, Bfield_avg_fp, Efield_avg_cp, Bfield_avg_cp);
+    }
+
+    // Evolve fields in PML
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (do_pml && pml[lev]->ok())
+        {
+            pml[lev]->PushPSATD(lev);
+        }
+        ApplyEfieldBoundary(lev, PatchType::fine);
+        if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
+        ApplyBfieldBoundary(lev, PatchType::fine, DtType::FirstHalf);
+        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf);
+    }
+
+    // Damp fields in PML before exchanging guard cells
+    if (do_pml)
+    {
+        DampPML();
+    }
+
+    // Exchange guard cells and synchronize nodal points
+    FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+    FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+    if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning)
+        FillBoundaryF(guard_cells.ng_alloc_F, WarpX::sync_nodal_points);
+    if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
+        FillBoundaryG(guard_cells.ng_alloc_G, WarpX::sync_nodal_points);
+
+    // Synchronize fields on nodal points in PML
+    if (do_pml)
+    {
+        NodalSyncPML();
     }
 #else
     amrex::ignore_unused(cur_time);
-    amrex::Abort("multi-J algorithm not implemented for FDTD");
+    amrex::Abort(Utils::TextMsg::Err(
+        "multi-J algorithm not implemented for FDTD"));
 #endif // WARPX_USE_PSATD
 }
 
@@ -646,10 +711,10 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 void
 WarpX::OneStep_sub1 (Real curtime)
 {
-    if( do_electrostatic != ElectrostaticSolverAlgo::None )
-    {
-        amrex::Abort("Electrostatic solver cannot be used with sub-cycling.");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        do_electrostatic == ElectrostaticSolverAlgo::None,
+        "Electrostatic solver cannot be used with sub-cycling."
+    );
 
     // TODO: we could save some charge depositions
 
@@ -659,17 +724,18 @@ WarpX::OneStep_sub1 (Real curtime)
 
     // i) Push particles and fields on the fine patch (first fine step)
     PushParticlesandDepose(fine_lev, curtime, DtType::FirstHalf);
-    RestrictCurrentFromFineToCoarsePatch(fine_lev);
-    RestrictRhoFromFineToCoarsePatch(fine_lev);
-    ApplyFilterandSumBoundaryJ(fine_lev, PatchType::fine);
-    NodalSyncJ(fine_lev, PatchType::fine);
-    ApplyFilterandSumBoundaryRho(fine_lev, PatchType::fine, 0, 2*ncomps);
-    NodalSyncRho(fine_lev, PatchType::fine, 0, 2);
+    RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
+    RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
+    if (use_filter) ApplyFilterJ(current_fp, fine_lev);
+    SumBoundaryJ(current_fp, fine_lev, Geom(fine_lev).periodicity());
+    ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, 2*ncomps);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
-    FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
-    FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_alloc_F);
+    FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver,
+                  WarpX::sync_nodal_points);
+    FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_alloc_F,
+                  WarpX::sync_nodal_points);
 
     EvolveE(fine_lev, PatchType::fine, dt[fine_lev]);
     FillBoundaryE(fine_lev, PatchType::fine, guard_cells.ng_FieldGather);
@@ -690,8 +756,8 @@ WarpX::OneStep_sub1 (Real curtime)
     // by only half a coarse step (first half)
     PushParticlesandDepose(coarse_lev, curtime, DtType::Full);
     StoreCurrent(coarse_lev);
-    AddCurrentFromFineLevelandSumBoundary(coarse_lev);
-    AddRhoFromFineLevelandSumBoundary(coarse_lev, 0, ncomps);
+    AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, coarse_lev);
+    AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, coarse_lev, 0, ncomps);
 
     EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
@@ -703,8 +769,10 @@ WarpX::OneStep_sub1 (Real curtime)
 
     EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::FirstHalf);
     EvolveF(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::FirstHalf);
-    FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather);
-    FillBoundaryF(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolverF);
+    FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather,
+                    WarpX::sync_nodal_points);
+    FillBoundaryF(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolverF,
+                    WarpX::sync_nodal_points);
 
     EvolveE(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
     FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather);
@@ -717,12 +785,11 @@ WarpX::OneStep_sub1 (Real curtime)
 
     // iv) Push particles and fields on the fine patch (second fine step)
     PushParticlesandDepose(fine_lev, curtime+dt[fine_lev], DtType::SecondHalf);
-    RestrictCurrentFromFineToCoarsePatch(fine_lev);
-    RestrictRhoFromFineToCoarsePatch(fine_lev);
-    ApplyFilterandSumBoundaryJ(fine_lev, PatchType::fine);
-    NodalSyncJ(fine_lev, PatchType::fine);
-    ApplyFilterandSumBoundaryRho(fine_lev, PatchType::fine, 0, ncomps);
-    NodalSyncRho(fine_lev, PatchType::fine, 0, 2);
+    RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
+    RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
+    if (use_filter) ApplyFilterJ(current_fp, fine_lev);
+    SumBoundaryJ(current_fp, fine_lev, Geom(fine_lev).periodicity());
+    ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, ncomps);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
@@ -730,7 +797,8 @@ WarpX::OneStep_sub1 (Real curtime)
     FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_FieldSolverF);
 
     EvolveE(fine_lev, PatchType::fine, dt[fine_lev]);
-    FillBoundaryE(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
+    FillBoundaryE(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver,
+                    WarpX::sync_nodal_points);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::SecondHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::SecondHalf);
@@ -747,11 +815,12 @@ WarpX::OneStep_sub1 (Real curtime)
     // v) Push the fields on the coarse patch and mother grid
     // by only half a coarse step (second half)
     RestoreCurrent(coarse_lev);
-    AddCurrentFromFineLevelandSumBoundary(coarse_lev);
-    AddRhoFromFineLevelandSumBoundary(coarse_lev, ncomps, ncomps);
+    AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, coarse_lev);
+    AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, coarse_lev, ncomps, ncomps);
 
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev]);
-    FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver);
+    FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver,
+                  WarpX::sync_nodal_points);
 
     EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::SecondHalf);
     EvolveF(fine_lev, PatchType::coarse, dt[fine_lev], DtType::SecondHalf);
@@ -763,30 +832,39 @@ WarpX::OneStep_sub1 (Real curtime)
         FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_alloc_EB);
     }
 
-    FillBoundaryB(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver);
-
-    FillBoundaryF(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolverF);
+    FillBoundaryB(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver,
+                  WarpX::sync_nodal_points);
+    FillBoundaryF(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolverF,
+                  WarpX::sync_nodal_points);
 
     EvolveE(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
-    FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
+    FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver,
+                  WarpX::sync_nodal_points);
 
     EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::SecondHalf);
     EvolveF(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::SecondHalf);
 
     if (do_pml) {
         if (moving_window_active(istep[0]+1)){
-            // Exchance guard cells of PMLs only (0 cells are exchanged for the
+            // Exchange guard cells of PMLs only (0 cells are exchanged for the
             // regular B field MultiFab). This is required as B and F have just been
             // evolved.
-            FillBoundaryB(coarse_lev, PatchType::fine, IntVect::TheZeroVector());
-            FillBoundaryF(coarse_lev, PatchType::fine, IntVect::TheZeroVector());
+            FillBoundaryB(coarse_lev, PatchType::fine, IntVect::TheZeroVector(),
+                          WarpX::sync_nodal_points);
+            FillBoundaryF(coarse_lev, PatchType::fine, IntVect::TheZeroVector(),
+                          WarpX::sync_nodal_points);
         }
         DampPML(coarse_lev, PatchType::fine);
         if ( safe_guard_cells )
-            FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
+            FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver,
+                          WarpX::sync_nodal_points);
     }
     if ( safe_guard_cells )
-        FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
+        FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver,
+                      WarpX::sync_nodal_points);
+
+    // Synchronize nodal points at the end of the time step
+    if (do_pml) NodalSyncPML();
 }
 
 void
@@ -836,14 +914,28 @@ WarpX::PushParticlesandDepose (amrex::Real cur_time, bool skip_deposition)
 void
 WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_deposition)
 {
-    // If warpx.do_current_centering = 1, the current is deposited on the nodal MultiFab current_fp_nodal
-    // and then centered onto the staggered MultiFab current_fp
-    amrex::MultiFab* current_x = (WarpX::do_current_centering) ? current_fp_nodal[lev][0].get()
-                                                               : current_fp[lev][0].get();
-    amrex::MultiFab* current_y = (WarpX::do_current_centering) ? current_fp_nodal[lev][1].get()
-                                                               : current_fp[lev][1].get();
-    amrex::MultiFab* current_z = (WarpX::do_current_centering) ? current_fp_nodal[lev][2].get()
-                                                               : current_fp[lev][2].get();
+    amrex::MultiFab* current_x = nullptr;
+    amrex::MultiFab* current_y = nullptr;
+    amrex::MultiFab* current_z = nullptr;
+
+    if (WarpX::do_current_centering)
+    {
+        current_x = current_fp_nodal[lev][0].get();
+        current_y = current_fp_nodal[lev][1].get();
+        current_z = current_fp_nodal[lev][2].get();
+    }
+    else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
+    {
+        current_x = current_fp_vay[lev][0].get();
+        current_y = current_fp_vay[lev][1].get();
+        current_z = current_fp_vay[lev][2].get();
+    }
+    else
+    {
+        current_x = current_fp[lev][0].get();
+        current_y = current_fp[lev][1].get();
+        current_z = current_fp[lev][2].get();
+    }
 
     mypc->Evolve(lev,
                  *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
@@ -926,5 +1018,24 @@ WarpX::applyMirrors(Real time){
                 NullifyMF(cBz, lev, z_min, z_max);
             }
         }
+    }
+}
+
+void
+WarpX::CheckSignals()
+{
+    SignalHandling::CheckSignals();
+}
+
+void
+WarpX::HandleSignals()
+{
+    SignalHandling::WaitSignals();
+
+    // SIGNAL_REQUESTS_BREAK is handled directly in WarpX::Evolve
+
+    if (SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_CHECKPOINT)) {
+        multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
+        ExecutePythonCallback("oncheckpointsignal");
     }
 }

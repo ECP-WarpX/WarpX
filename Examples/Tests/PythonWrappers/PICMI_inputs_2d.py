@@ -3,6 +3,7 @@
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import numpy as np
+
 from pywarpx import picmi
 
 # Number of time steps
@@ -251,7 +252,7 @@ def check_values(benchmark, data, rtol, atol):
     passed = np.allclose(benchmark, np.sum(np.abs(data[:,:])), rtol = rtol, atol = atol)
     assert(passed)
 
-rtol = 2e-09
+rtol = 5e-08
 atol = 1e-12
 
 # E

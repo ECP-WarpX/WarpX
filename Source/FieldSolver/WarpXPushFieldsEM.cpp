@@ -63,115 +63,115 @@ namespace {
 #else
         SpectralSolver& solver,
 #endif
-        std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
-        const int compx, const int compy, const int compz,
-        const amrex::IntVect& stag_x, const amrex::IntVect& stag_y, const amrex::IntVect& stag_z)
+        const std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
+        const int compx, const int compy, const int compz)
     {
 #ifdef WARPX_DIM_RZ
-        amrex::ignore_unused(stag_x, stag_y, stag_z);
         solver.ForwardTransform(lev, *vector_field[0], compx, *vector_field[1], compy);
         solver.ForwardTransform(lev, *vector_field[2], compz);
 #else
-        solver.ForwardTransform(lev, *vector_field[0], compx, stag_x);
-        solver.ForwardTransform(lev, *vector_field[1], compy, stag_y);
-        solver.ForwardTransform(lev, *vector_field[2], compz, stag_z);
+        solver.ForwardTransform(lev, *vector_field[0], compx);
+        solver.ForwardTransform(lev, *vector_field[1], compy);
+        solver.ForwardTransform(lev, *vector_field[2], compz);
 #endif
     }
 
-    AMREX_FORCE_INLINE
-    void ForwardTransformVect (
+    void BackwardTransformVect (
         const int lev,
 #ifdef WARPX_DIM_RZ
         SpectralSolverRZ& solver,
 #else
         SpectralSolver& solver,
 #endif
-        std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
-        const int compx, const int compy, const int compz)
-    {
-        ForwardTransformVect(lev, solver, vector_field, compx, compy, compz,
-                             (*vector_field[0]).ixType().toIntVect(),
-                             (*vector_field[1]).ixType().toIntVect(),
-                             (*vector_field[2]).ixType().toIntVect());
-    }
-
-    void
-    BackwardTransformVect (
-        const int lev,
-#ifdef WARPX_DIM_RZ
-        SpectralSolverRZ& solver,
-#else
-        SpectralSolver& solver,
-#endif
-        std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
-        const int compx, const int compy, const int compz)
+        const std::array<std::unique_ptr<amrex::MultiFab>,3>& vector_field,
+        const int compx, const int compy, const int compz,
+        const amrex::IntVect& fill_guards)
     {
 #ifdef WARPX_DIM_RZ
+        amrex::ignore_unused(fill_guards);
         solver.BackwardTransform(lev, *vector_field[0], compx, *vector_field[1], compy);
-#else
-        solver.BackwardTransform(lev, *vector_field[0], compx);
-        solver.BackwardTransform(lev, *vector_field[1], compy);
-#endif
         solver.BackwardTransform(lev, *vector_field[2], compz);
+#else
+        solver.BackwardTransform(lev, *vector_field[0], compx, fill_guards);
+        solver.BackwardTransform(lev, *vector_field[1], compy, fill_guards);
+        solver.BackwardTransform(lev, *vector_field[2], compz, fill_guards);
+#endif
     }
 }
 
-void
-WarpX::PSATDForwardTransformEB ()
+void WarpX::PSATDForwardTransformEB (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        ForwardTransformVect(lev, *spectral_solver_fp[lev], Efield_fp[lev], Idx.Ex, Idx.Ey, Idx.Ez);
-        ForwardTransformVect(lev, *spectral_solver_fp[lev], Bfield_fp[lev], Idx.Bx, Idx.By, Idx.Bz);
+        ForwardTransformVect(lev, *spectral_solver_fp[lev], E_fp[lev], Idx.Ex, Idx.Ey, Idx.Ez);
+        ForwardTransformVect(lev, *spectral_solver_fp[lev], B_fp[lev], Idx.Bx, Idx.By, Idx.Bz);
 
         if (spectral_solver_cp[lev])
         {
-            ForwardTransformVect(lev, *spectral_solver_cp[lev], Efield_cp[lev], Idx.Ex, Idx.Ey, Idx.Ez);
-            ForwardTransformVect(lev, *spectral_solver_cp[lev], Bfield_cp[lev], Idx.Bx, Idx.By, Idx.Bz);
+            ForwardTransformVect(lev, *spectral_solver_cp[lev], E_cp[lev], Idx.Ex, Idx.Ey, Idx.Ez);
+            ForwardTransformVect(lev, *spectral_solver_cp[lev], B_cp[lev], Idx.Bx, Idx.By, Idx.Bz);
         }
     }
 }
 
-void
-WarpX::PSATDBackwardTransformEB ()
+void WarpX::PSATDBackwardTransformEB (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_cp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_cp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], Efield_fp[lev], Idx.Ex, Idx.Ey, Idx.Ez);
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], Bfield_fp[lev], Idx.Bx, Idx.By, Idx.Bz);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], E_fp[lev],
+                              Idx.Ex, Idx.Ey, Idx.Ez, m_fill_guards_fields);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], B_fp[lev],
+                              Idx.Bx, Idx.By, Idx.Bz, m_fill_guards_fields);
 
         if (spectral_solver_cp[lev])
         {
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], Efield_cp[lev], Idx.Ex, Idx.Ey, Idx.Ez);
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], Bfield_cp[lev], Idx.Bx, Idx.By, Idx.Bz);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], E_cp[lev],
+                                  Idx.Ex, Idx.Ey, Idx.Ez, m_fill_guards_fields);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], B_cp[lev],
+                                  Idx.Bx, Idx.By, Idx.Bz, m_fill_guards_fields);
         }
     }
 
     // Damp the fields in the guard cells
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        DampFieldsInGuards(lev, Efield_fp[lev], Bfield_fp[lev]);
+        DampFieldsInGuards(lev, E_fp[lev], B_fp[lev]);
     }
 }
 
-void
-WarpX::PSATDBackwardTransformEBavg ()
+void WarpX::PSATDBackwardTransformEBavg (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& E_avg_cp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& B_avg_cp)
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], Efield_avg_fp[lev], Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg);
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], Bfield_avg_fp[lev], Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], E_avg_fp[lev],
+                              Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg, m_fill_guards_fields);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], B_avg_fp[lev],
+                              Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg, m_fill_guards_fields);
 
         if (spectral_solver_cp[lev])
         {
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], Efield_avg_cp[lev], Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg);
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], Bfield_avg_cp[lev], Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], E_avg_cp[lev],
+                                  Idx.Ex_avg, Idx.Ey_avg, Idx.Ez_avg, m_fill_guards_fields);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], B_avg_cp[lev],
+                                  Idx.Bx_avg, Idx.By_avg, Idx.Bz_avg, m_fill_guards_fields);
         }
     }
 }
@@ -199,11 +199,19 @@ WarpX::PSATDBackwardTransformF ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
+#ifdef WARPX_DIM_RZ
         if (F_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *F_fp[lev], Idx.F);
+#else
+        if (F_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *F_fp[lev], Idx.F, m_fill_guards_fields);
+#endif
 
         if (spectral_solver_cp[lev])
         {
+#ifdef WARPX_DIM_RZ
             if (F_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *F_cp[lev], Idx.F);
+#else
+            if (F_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *F_cp[lev], Idx.F, m_fill_guards_fields);
+#endif
         }
     }
 
@@ -237,11 +245,19 @@ WarpX::PSATDBackwardTransformG ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
+#ifdef WARPX_DIM_RZ
         if (G_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp[lev], Idx.G);
+#else
+        if (G_fp[lev]) spectral_solver_fp[lev]->BackwardTransform(lev, *G_fp[lev], Idx.G, m_fill_guards_fields);
+#endif
 
         if (spectral_solver_cp[lev])
         {
+#ifdef WARPX_DIM_RZ
             if (G_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *G_cp[lev], Idx.G);
+#else
+            if (G_cp[lev]) spectral_solver_cp[lev]->BackwardTransform(lev, *G_cp[lev], Idx.G, m_fill_guards_fields);
+#endif
         }
     }
 
@@ -252,68 +268,39 @@ WarpX::PSATDBackwardTransformG ()
     }
 }
 
-void
-WarpX::PSATDForwardTransformJ ()
+void WarpX::PSATDForwardTransformJ (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const bool apply_kspace_filter)
 {
     SpectralFieldIndex Idx;
     int idx_jx, idx_jy, idx_jz;
-    amrex::IntVect jx_stag, jy_stag, jz_stag;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         Idx = spectral_solver_fp[lev]->m_spectral_index;
 
-        idx_jx = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
-        idx_jy = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
-        idx_jz = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
+        idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
+        idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
+        idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
 
-        // With Vay's deposition, J stores a temporary current (D) that is later modified
-        // in Fourier space: its staggering matches that of rho and not J
-        jx_stag =
-            (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
-            WarpX::m_rho_nodal_flag : current_fp[lev][0]->ixType().toIntVect();
-
-        jy_stag =
-            (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
-            WarpX::m_rho_nodal_flag : current_fp[lev][1]->ixType().toIntVect();
-
-        jz_stag =
-            (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
-            WarpX::m_rho_nodal_flag : current_fp[lev][2]->ixType().toIntVect();
-
-        ForwardTransformVect(lev, *spectral_solver_fp[lev], current_fp[lev],
-                             idx_jx, idx_jy, idx_jz, jx_stag, jy_stag, jz_stag);
+        ForwardTransformVect(lev, *spectral_solver_fp[lev], J_fp[lev], idx_jx, idx_jy, idx_jz);
 
         if (spectral_solver_cp[lev])
         {
             Idx = spectral_solver_cp[lev]->m_spectral_index;
 
-            idx_jx = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
-            idx_jy = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
-            idx_jz = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
+            idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
+            idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
+            idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
 
-            // With Vay's deposition, J stores a temporary current (D) that is later modified
-            // in Fourier space: its staggering matches that of rho and not J
-            jx_stag =
-                (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
-                WarpX::m_rho_nodal_flag : current_cp[lev][0]->ixType().toIntVect();
-
-            jy_stag =
-                (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
-                WarpX::m_rho_nodal_flag : current_cp[lev][1]->ixType().toIntVect();
-
-            jz_stag =
-                (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ?
-                WarpX::m_rho_nodal_flag : current_cp[lev][2]->ixType().toIntVect();
-
-            ForwardTransformVect(lev, *spectral_solver_cp[lev], current_cp[lev],
-                                 idx_jx, idx_jy, idx_jz, jx_stag, jy_stag, jz_stag);
+            ForwardTransformVect(lev, *spectral_solver_cp[lev], J_cp[lev], idx_jx, idx_jy, idx_jz);
         }
     }
 
 #ifdef WARPX_DIM_RZ
     // Apply filter in k space if needed
-    if (WarpX::use_kspace_filter)
+    if (use_kspace_filter && apply_kspace_filter)
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
@@ -325,10 +312,14 @@ WarpX::PSATDForwardTransformJ ()
             }
         }
     }
+#else
+    amrex::ignore_unused(apply_kspace_filter);
 #endif
 }
 
-void WarpX::PSATDBackwardTransformJ ()
+void WarpX::PSATDBackwardTransformJ (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
 {
     SpectralFieldIndex Idx;
     int idx_jx, idx_jy, idx_jz;
@@ -341,7 +332,8 @@ void WarpX::PSATDBackwardTransformJ ()
         idx_jy = static_cast<int>(Idx.Jy);
         idx_jz = static_cast<int>(Idx.Jz);
 
-        BackwardTransformVect(lev, *spectral_solver_fp[lev], current_fp[lev], idx_jx, idx_jy, idx_jz);
+        BackwardTransformVect(lev, *spectral_solver_fp[lev], J_fp[lev],
+                              idx_jx, idx_jy, idx_jz, m_fill_guards_current);
 
         if (spectral_solver_cp[lev])
         {
@@ -351,14 +343,19 @@ void WarpX::PSATDBackwardTransformJ ()
             idx_jy = static_cast<int>(Idx.Jy);
             idx_jz = static_cast<int>(Idx.Jz);
 
-            BackwardTransformVect(lev, *spectral_solver_cp[lev], current_cp[lev], idx_jx, idx_jy, idx_jz);
+            BackwardTransformVect(lev, *spectral_solver_cp[lev], J_cp[lev],
+                                  idx_jx, idx_jy, idx_jz, m_fill_guards_current);
         }
     }
 }
 
-void
-WarpX::PSATDForwardTransformRho (const int icomp, const int dcomp)
+void WarpX::PSATDForwardTransformRho (
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const int icomp, const int dcomp, const bool apply_kspace_filter)
 {
+    if (charge_fp[0] == nullptr) return;
+
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     // Select index in k space
@@ -366,17 +363,17 @@ WarpX::PSATDForwardTransformRho (const int icomp, const int dcomp)
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (rho_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *rho_fp[lev], dst_comp, icomp);
+        if (charge_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *charge_fp[lev], dst_comp, icomp);
 
         if (spectral_solver_cp[lev])
         {
-            if (rho_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *rho_cp[lev], dst_comp, icomp);
+            if (charge_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *charge_cp[lev], dst_comp, icomp);
         }
     }
 
 #ifdef WARPX_DIM_RZ
     // Apply filter in k space if needed
-    if (WarpX::use_kspace_filter)
+    if (use_kspace_filter && apply_kspace_filter)
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
@@ -388,6 +385,8 @@ WarpX::PSATDForwardTransformRho (const int icomp, const int dcomp)
             }
         }
     }
+#else
+    amrex::ignore_unused(apply_kspace_filter);
 #endif
 }
 
@@ -415,6 +414,121 @@ void WarpX::PSATDVayDeposition ()
             spectral_solver_cp[lev]->VayDeposition();
         }
     }
+}
+
+void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
+{
+    // Subtraction of cumulative sum for Vay deposition
+    // implemented only in 2D and 3D Cartesian geometry
+#if !defined (WARPX_DIM_1D_Z) && !defined (WARPX_DIM_RZ)
+
+    // TODO Implementation with coarse patches
+    // TODO Implementation with current centering
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
+
+        amrex::MultiFab& Jx = *current_fp[lev][0];
+        amrex::MultiFab& Jy = *current_fp[lev][1];
+        amrex::MultiFab& Jz = *current_fp[lev][2];
+        amrex::MultiFab const& Dx = *current_fp_vay[lev][0];
+        amrex::MultiFab const& Dy = *current_fp_vay[lev][1];
+        amrex::MultiFab const& Dz = *current_fp_vay[lev][2];
+
+#if defined (WARPX_DIM_XZ)
+        amrex::ignore_unused(Jy, Dy);
+#endif
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+
+        // Subtract average of cumulative sum from Jx
+        for (amrex::MFIter mfi(Jx); mfi.isValid(); ++mfi)
+        {
+            const amrex::Box& bx = mfi.fabbox();
+
+            amrex::Array4<amrex::Real> const& Jx_arr = Jx.array(mfi);
+            amrex::Array4<amrex::Real const> const& Dx_arr = Dx.const_array(mfi);
+
+            const amrex::Dim3 lo = amrex::lbound(bx);
+            const amrex::Dim3 hi = amrex::ubound(bx);
+            const int nx = hi.x - lo.x + 1;
+            const amrex::Real facx = dx[0] / static_cast<amrex::Real>(nx);
+
+            // Subtract average of cumulative sum along x only
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+            {
+                for (int ii = lo.x; ii <= hi.x; ++ii)
+                {
+                    Jx_arr(i,j,k) -= (nx-ii) * Dx_arr(ii,j,k) * facx;
+                }
+            });
+        }
+
+#if defined (WARPX_DIM_3D)
+        // Subtract average of cumulative sum from Jy
+        for (amrex::MFIter mfi(Jy); mfi.isValid(); ++mfi)
+        {
+            const amrex::Box& bx = mfi.fabbox();
+
+            amrex::Array4<amrex::Real> const& Jy_arr = Jy.array(mfi);
+            amrex::Array4<amrex::Real const> const& Dy_arr = Dy.const_array(mfi);
+
+            const amrex::Dim3 lo = amrex::lbound(bx);
+            const amrex::Dim3 hi = amrex::ubound(bx);
+            const int ny = hi.y - lo.y + 1;
+            const amrex::Real facy = dx[1] / static_cast<amrex::Real>(ny);
+
+            // Subtract average of cumulative sum along y only
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+            {
+                for (int jj = lo.y; jj <= hi.y; ++jj)
+                {
+                    Jy_arr(i,j,k) -= (ny-jj) * Dy_arr(i,jj,k) * facy;
+                }
+            });
+        }
+#endif
+
+        // Subtract average of cumulative sum from Jz
+        for (amrex::MFIter mfi(Jz); mfi.isValid(); ++mfi)
+        {
+            const amrex::Box& bx = mfi.fabbox();
+
+            amrex::Array4<amrex::Real> const& Jz_arr = Jz.array(mfi);
+            amrex::Array4<amrex::Real const> const& Dz_arr = Dz.const_array(mfi);
+
+            const amrex::Dim3 lo = amrex::lbound(bx);
+            const amrex::Dim3 hi = amrex::ubound(bx);
+#if defined (WARPX_DIM_XZ)
+            const int nz = hi.y - lo.y + 1;
+#elif defined (WARPX_DIM_3D)
+            const int nz = hi.z - lo.z + 1;
+#endif
+            const amrex::Real facz = dx[2] / static_cast<amrex::Real>(nz);
+
+            // Subtract average of cumulative sum along z only
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+            {
+#if defined (WARPX_DIM_XZ)
+                // z direction is in the second component
+                for (int jj = lo.y; jj <= hi.y; ++jj)
+                {
+                    Jz_arr(i,j,k) -= (nz-jj) * Dz_arr(i,jj,k) * facz;
+                }
+#elif defined (WARPX_DIM_3D)
+                // z direction is in the third component
+                for (int kk = lo.z; kk <= hi.z; ++kk)
+                {
+                    Jz_arr(i,j,k) -= (nz-kk) * Dz_arr(i,j,kk) * facz;
+                }
+#endif
+            });
+        }
+    }
+#endif
 }
 
 void
@@ -524,44 +638,121 @@ void
 WarpX::PushPSATD ()
 {
 #ifndef WARPX_USE_PSATD
-    amrex::Abort("PushFieldsEM: PSATD solver selected but not built");
+    amrex::Abort(Utils::TextMsg::Err(
+        "PushFieldsEM: PSATD solver selected but not built"));
 #else
 
-    PSATDForwardTransformEB();
-    PSATDForwardTransformJ();
-
-    // Do rho FFTs only if needed
-    if (WarpX::update_with_rho || WarpX::current_correction || WarpX::do_dive_cleaning)
+    if (fft_periodic_single_box)
     {
-        PSATDForwardTransformRho(0,0); // rho old
-        PSATDForwardTransformRho(1,1); // rho new
+        if (current_correction)
+        {
+            // FFT of J and rho
+            PSATDForwardTransformJ(current_fp, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+
+            // Correct J in k-space
+            PSATDCurrentCorrection();
+
+            // Inverse FFT of J
+            PSATDBackwardTransformJ(current_fp, current_cp);
+        }
+        else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            // FFT of D and rho (if used)
+            // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
+            PSATDForwardTransformJ(current_fp_vay, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+
+            // Compute J from D in k-space
+            PSATDVayDeposition();
+
+            // Inverse FFT of J, subtract cumulative sums of D
+            PSATDBackwardTransformJ(current_fp, current_cp);
+            // TODO Cumulative sums need to be fixed with periodic single box
+            PSATDSubtractCurrentPartialSumsAvg();
+
+            // FFT of J after subtraction of cumulative sums
+            PSATDForwardTransformJ(current_fp, current_cp);
+        }
+        else // no current correction, no Vay deposition
+        {
+            // FFT of J and rho (if used)
+            PSATDForwardTransformJ(current_fp, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+        }
+    }
+    else // no periodic single box
+    {
+        if (current_correction)
+        {
+            // FFT of J and rho
+#ifdef WARPX_DIM_RZ
+            // In RZ geometry, do not apply filtering here, since it is
+            // applied in the subsequent calls to these functions (below)
+            const bool apply_kspace_filter = false;
+            PSATDForwardTransformJ(current_fp, current_cp, apply_kspace_filter);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0, apply_kspace_filter); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1, apply_kspace_filter); // rho new
+#else
+            PSATDForwardTransformJ(current_fp, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+#endif
+
+            // Correct J in k-space
+            PSATDCurrentCorrection();
+
+            // Inverse FFT of J
+            PSATDBackwardTransformJ(current_fp, current_cp);
+
+            // Synchronize J and rho
+            SyncCurrent(current_fp, current_cp);
+            SyncRho();
+        }
+        else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            // FFT of D
+            PSATDForwardTransformJ(current_fp_vay, current_cp);
+
+            // Compute J from D in k-space
+            PSATDVayDeposition();
+
+            // Inverse FFT of J, subtract cumulative sums of D
+            PSATDBackwardTransformJ(current_fp, current_cp);
+            PSATDSubtractCurrentPartialSumsAvg();
+
+            // Synchronize J and rho (if used)
+            SyncCurrent(current_fp, current_cp);
+            SyncRho();
+        }
+
+        // FFT of J and rho (if used)
+        PSATDForwardTransformJ(current_fp, current_cp);
+        PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+        PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
     }
 
-    // Correct the current in Fourier space so that the continuity equation is satisfied, and
-    // transform back to real space so that the current correction is reflected in the diagnostics
-    if (WarpX::current_correction)
-    {
-        PSATDCurrentCorrection();
-        PSATDBackwardTransformJ();
-    }
-
-    // Compute the current in Fourier space according to the Vay deposition scheme, and
-    // transform back to real space so that the Vay deposition is reflected in the diagnostics
-    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
-    {
-        PSATDVayDeposition();
-        PSATDBackwardTransformJ();
-    }
+    // FFT of E and B
+    PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
 
 #ifdef WARPX_DIM_RZ
     if (pml_rz[0]) pml_rz[0]->PushPSATD(0);
 #endif
 
+    // FFT of F and G
     if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
     if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
+
+    // Update E, B, F, and G in k-space
     PSATDPushSpectralFields();
-    PSATDBackwardTransformEB();
-    if (WarpX::fft_do_time_averaging) PSATDBackwardTransformEBavg();
+
+    // Inverse FFT of E, B, F, and G
+    PSATDBackwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
+    if (WarpX::fft_do_time_averaging)
+        PSATDBackwardTransformEBavg(Efield_avg_fp, Bfield_avg_fp, Efield_avg_cp, Bfield_avg_cp);
     if (WarpX::do_dive_cleaning) PSATDBackwardTransformF();
     if (WarpX::do_divb_cleaning) PSATDBackwardTransformG();
 
@@ -808,22 +999,28 @@ void
 WarpX::MacroscopicEvolveE (int lev, amrex::Real a_dt) {
 
     WARPX_PROFILE("WarpX::MacroscopicEvolveE()");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        lev == 0,
+        "Macroscopic EvolveE is not implemented for lev>0, yet."
+    );
+
     MacroscopicEvolveE(lev, PatchType::fine, a_dt);
-    if (lev > 0) {
-        amrex::Abort("Macroscopic EvolveE is not implemented for lev>0, yet.");
-    }
 }
 
 void
 WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
-    if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->MacroscopicEvolveE( Efield_fp[lev], Bfield_fp[lev],
-                                             current_fp[lev], m_edge_lengths[lev],
-                                             a_dt, m_macroscopic_properties);
-    }
-    else {
-        amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
-    }
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        patch_type == PatchType::fine,
+        "Macroscopic EvolveE is not implemented for lev>0, yet."
+    );
+
+    m_fdtd_solver_fp[lev]->MacroscopicEvolveE(
+        Efield_fp[lev], Bfield_fp[lev],
+        current_fp[lev], m_edge_lengths[lev],
+        a_dt, m_macroscopic_properties);
+
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveEPML(
@@ -847,8 +1044,8 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
 
 void
 WarpX::DampFieldsInGuards(const int lev,
-                          std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                          std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield) {
+                          const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                          const std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield) {
 
     // Loop over dimensions
     for (int dampdir = 0 ; dampdir < AMREX_SPACEDIM ; dampdir++)
@@ -1020,8 +1217,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
         // these do not include the guard cells.
-        std::array<amrex::Real,3> galilean_shift = {0,0,0};
-        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, lev);
+        const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev, 0._rt);
         const Real rmin  = xyzmin[0];
         const Real rminr = xyzmin[0] + (tbr.type(0) == NODE ? 0. : 0.5*dx[0]);
         const Real rmint = xyzmin[0] + (tbt.type(0) == NODE ? 0. : 0.5*dx[0]);
@@ -1183,8 +1379,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
         // these do not include the guard cells.
-        std::array<amrex::Real,3> galilean_shift = {0,0,0};
-        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, lev);
+        const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev, 0._rt);
         const Dim3 lo = lbound(tilebox);
         const Real rmin = xyzmin[0];
         const Real rminr = xyzmin[0] + (tb.type(0) == NODE ? 0. : 0.5*dx[0]);

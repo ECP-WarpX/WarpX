@@ -1,7 +1,5 @@
 {
   "electrons": {
-    "particle_cpu": 29440.0,
-    "particle_id": 913434880.0,
     "particle_momentum_x": 3.3349650061056196e-21,
     "particle_momentum_y": 3.2990576328124603e-21,
     "particle_momentum_z": 7.085667540713606e-21,
@@ -11,8 +9,6 @@
     "particle_weight": 81147583679.15044
   },
   "ions": {
-    "particle_cpu": 29440.0,
-    "particle_id": 2743896320.0,
     "particle_momentum_x": 1.6890660557011582e-20,
     "particle_momentum_y": 1.7009184228847044e-20,
     "particle_momentum_z": 3.6847066231377934e-20,

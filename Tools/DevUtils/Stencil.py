@@ -1,12 +1,15 @@
 """
-Python script to compute the minimum number of guard cells for a given error threshold,
-based on the measurement of the PSATD stencil extent (that is, the minimum number of
-guard cells such that the stencil measure is not larger than the error threshold).
+Python script to compute the minimum number of guard cells for a given
+error threshold, based on the measurement of the PSATD stencil extent
+(that is, the minimum number of guard cells such that the stencil
+measure is not larger than the error threshold).
 Reference: https://arxiv.org/abs/2106.12919
 
-Run the script simply with "python Stencil.py" (or with "run Stencil.py" using IPython).
-The user can modify the input parameters set in the main function at the end of the file.
+Run the script simply with "python Stencil.py" (or with "run Stencil.py"
+using IPython). The user can modify the input parameters set in the main
+function at the end of the file.
 """
+
 import os
 
 import matplotlib.pyplot as plt
@@ -18,14 +21,16 @@ plt.rcParams.update({'font.size': 14})
 
 def get_Fornberg_coeffs(order, staggered):
     """
-    Compute the centered or staggered Fornberg coefficients at finite order.
+    Compute the centered or staggered
+    Fornberg coefficients at finite order.
 
     Parameters
     ----------
     order : int
         Finite order of the approximation.
     staggered : bool
-        Whether to compute the centered or staggered Fornberg coefficients.
+        Whether to compute the centered or staggered
+        Fornberg coefficients.
 
     Returns
     -------
@@ -42,7 +47,8 @@ def get_Fornberg_coeffs(order, staggered):
             prod = prod * (m+k) / (4*k)
         coeffs[0] = 4 * m * prod**2
         for n in range(1, m+1):
-            coeffs[n] = - ((2*n-3) * (m+1-n)) / ((2*n-1) * (m-1+n)) * coeffs[n-1]
+            coeffs[n] = - (((2*n-3) * (m+1-n))
+                        / ((2*n-1) * (m-1+n)) * coeffs[n-1])
     else:
         coeffs[0] = -2.
         for n in range(1, m+1):
@@ -52,7 +58,8 @@ def get_Fornberg_coeffs(order, staggered):
 
 def modified_k(kx, dx, order, staggered):
     """
-    Compute the centered or staggered modified wave vector at finite order.
+    Compute the centered or staggered
+    modified wave vector at finite order.
 
     Parameters
     ----------
@@ -63,7 +70,8 @@ def modified_k(kx, dx, order, staggered):
     order : int
         Finite order of the approximation.
     staggered : bool
-        Whether to compute the centered or staggered modified wave vector.
+        Whether to compute the centered or staggered
+        modified wave vector.
 
     Returns
     -------
@@ -76,11 +84,14 @@ def modified_k(kx, dx, order, staggered):
     # Array of values for n: from 1 to m
     n = np.arange(1, m+1)
 
-    # Array of values of sin (first axis corresponds to k and second axis to n)
+    # Array of values of sin
+    # (first axis corresponds to k and second axis to n)
     if staggered:
-        sin_kn = np.sin(kx[:,np.newaxis] * (n[np.newaxis,:]-0.5) * dx) / ((n[np.newaxis,:]-0.5) * dx)
+        sin_kn = (np.sin(kx[:,np.newaxis]*(n[np.newaxis,:]-0.5) * dx)
+                 / ((n[np.newaxis,:]-0.5) * dx))
     else:
-        sin_kn = np.sin(kx[:,np.newaxis] * n[np.newaxis,:] * dx) / (n[np.newaxis,:] * dx)
+        sin_kn = (np.sin(kx[:,np.newaxis]*n[np.newaxis,:] * dx)
+                 / (n[np.newaxis,:] * dx))
 
     # Modified k
     k_mod = np.tensordot(sin_kn, coeffs[1:], axes=(-1,-1))
@@ -89,9 +100,11 @@ def modified_k(kx, dx, order, staggered):
 
 def func_cosine(om, w_c, dt):
     """
-    Compute the leading spectral coefficient of the general PSATD equations: theta_c**2*cos(om*dt),
-    where theta_c = exp(i*w_c*dt/2), w_c = v_gal*[kz]_c, om_s = c*|[k]| (and [k] or [kz]
-    denote the centered or staggered modified wave vector or vector component).
+    Compute the leading spectral coefficient of the general
+    PSATD equations: theta_c**2*cos(om*dt), where
+    theta_c = exp(i*w_c*dt/2), w_c = v_gal*[kz]_c,
+    om_s = c*|[k]| (and [k] or [kz] denote the centered or
+    staggered modified wave vector or vector component).
 
     Parameters
     ----------
@@ -107,8 +120,8 @@ def func_cosine(om, w_c, dt):
     coeff : numpy.ndarray
         Leading spectral coefficient of the general PSATD equations.
     """
-    theta_c = np.exp(1.j * w_c * dt * 0.5)
-    coeff = theta_c**2 * np.cos(om * dt)
+    theta_c = np.exp(1.j*w_c*dt*0.5)
+    coeff = theta_c**2 * np.cos(om*dt)
     return coeff
 
 def compute_stencils(coeff_nodal, coeff_stagg, axis):
@@ -118,9 +131,11 @@ def compute_stencils(coeff_nodal, coeff_stagg, axis):
     Parameters
     ----------
     coeff_nodal : numpy.ndarray
-        Leading spectral nodal coefficient of the general PSATD equations.
+        Leading spectral nodal coefficient of the general
+        PSATD equations.
     coeff_stagg : numpy.ndarray
-        Leading spectral staggered coefficient of the general PSATD equations.
+        Leading spectral staggered coefficient of the general
+        PSATD equations.
     axis : int
         Axis or direction.
 
@@ -130,28 +145,28 @@ def compute_stencils(coeff_nodal, coeff_stagg, axis):
         Nodal and staggered stencils along a given direction.
     """
     # Inverse FFTs of the spectral coefficient along the chosen axis
-    stencil_nodal = np.fft.ifft(coeff_nodal, axis = axis)
-    stencil_stagg = np.fft.ifft(coeff_stagg, axis = axis)
+    stencil_nodal = np.fft.ifft(coeff_nodal, axis=axis)
+    stencil_stagg = np.fft.ifft(coeff_stagg, axis=axis)
 
     # Average results over remaining axes in spectral space
     if axis == 0:
           # Averaged over ky and kz
-          stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis = 2), axis = 1)
-          stencil_avg_nodal /= (stencil_nodal.shape[2] * stencil_nodal.shape[1])
-          stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis = 2), axis = 1)
-          stencil_avg_stagg /= (stencil_stagg.shape[2] * stencil_stagg.shape[1])
+          stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis=2), axis=1)
+          stencil_avg_nodal /= (stencil_nodal.shape[2]*stencil_nodal.shape[1])
+          stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis=2), axis=1)
+          stencil_avg_stagg /= (stencil_stagg.shape[2]*stencil_stagg.shape[1])
     elif axis == 1:
           # Averaged over kx and kz
-          stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis = 2), axis = 0)
-          stencil_avg_nodal /= (stencil_nodal.shape[2] * stencil_nodal.shape[0])
-          stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis = 2), axis = 0)
-          stencil_avg_stagg /= (stencil_stagg.shape[2] * stencil_stagg.shape[0])
+          stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis=2), axis=0)
+          stencil_avg_nodal /= (stencil_nodal.shape[2]*stencil_nodal.shape[0])
+          stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis=2), axis=0)
+          stencil_avg_stagg /= (stencil_stagg.shape[2]*stencil_stagg.shape[0])
     elif axis == 2:
           # Averaged over kx and ky
-          stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis = 1), axis = 0)
-          stencil_avg_nodal /= (stencil_nodal.shape[1] * stencil_nodal.shape[0])
-          stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis = 1), axis = 0)
-          stencil_avg_stagg /= (stencil_stagg.shape[1] * stencil_stagg.shape[0])
+          stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis=1), axis=0)
+          stencil_avg_nodal /= (stencil_nodal.shape[1]*stencil_nodal.shape[0])
+          stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis=1), axis=0)
+          stencil_avg_stagg /= (stencil_stagg.shape[1]*stencil_stagg.shape[0])
 
     stencils = dict()
     stencils['nodal'] = abs(stencil_avg_nodal)
@@ -159,7 +174,7 @@ def compute_stencils(coeff_nodal, coeff_stagg, axis):
 
     return stencils
 
-def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, nx = 256, ny = 256, nz = 256):
+def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, nx=256, ny=256, nz=256):
     """
     Compute nodal and staggered stencils along all directions.
 
@@ -225,16 +240,17 @@ def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, nx = 256, ny = 256, nz = 2
 
     # Stencils
     stencils = dict()
-    stencils['x'] = compute_stencils(coeff_nodal, coeff_stagg, axis = 0)
-    stencils['y'] = compute_stencils(coeff_nodal, coeff_stagg, axis = 1)
-    stencils['z'] = compute_stencils(coeff_nodal, coeff_stagg, axis = 2)
+    stencils['x'] = compute_stencils(coeff_nodal, coeff_stagg, axis=0)
+    stencils['y'] = compute_stencils(coeff_nodal, coeff_stagg, axis=1)
+    stencils['z'] = compute_stencils(coeff_nodal, coeff_stagg, axis=2)
 
     return stencils
 
 def compute_guard_cells(error, stencil):
     """
-    Compute the minimum number of guard cells for a given error threshold
-    (number of guard cells such that the stencil measure is not larger than the error threshold).
+    Compute the minimum number of guard cells for a given
+    error threshold (number of guard cells such that the
+    stencil measure is not larger than the error threshold).
 
     Parameters
     ----------
@@ -255,7 +271,7 @@ def compute_guard_cells(error, stencil):
 
 def plot_stencil(cells, stencil_nodal, stencil_stagg, label, path, name):
     """
-    Plot stencil extent for nodal and staggered/hybrid solver, as a function of the number of cells,
+    Plot stencil extent for nodal and staggered/hybrid solver,
     as a function of the number of cells.
 
     Parameters
@@ -271,14 +287,14 @@ def plot_stencil(cells, stencil_nodal, stencil_stagg, label, path, name):
     name : str
         Label for figure name.
     """
-    fig = plt.figure(dpi = 100)
+    fig = plt.figure(dpi=100)
     ax = fig.add_subplot(111)
-    ax.plot(cells, stencil_nodal, '-', label = 'nodal')
-    ax.plot(cells, stencil_stagg, '-', label = 'staggered, hybrid')
+    ax.plot(cells, stencil_nodal, '-', label='nodal')
+    ax.plot(cells, stencil_stagg, '-', label='staggered, hybrid')
     ax.set_yscale('log')
-    ax.set_xticks(cells, minor = True)
-    ax.grid(which = 'minor', linewidth = 0.2)
-    ax.grid(which = 'major', linewidth = 0.4)
+    ax.set_xticks(cells, minor=True)
+    ax.grid(which='minor', linewidth=0.2)
+    ax.grid(which='major', linewidth=0.4)
     ax.legend()
     ax.set_xlabel('number of cells')
     ax.set_ylabel(r'$\Gamma({:s})$'.format(label))
@@ -287,11 +303,11 @@ def plot_stencil(cells, stencil_nodal, stencil_stagg, label, path, name):
     fig_name = os.path.join(path, 'figure_stencil_' + label)
     if name:
         fig_name += '_' + name
-    fig.savefig(fig_name + '.pdf', dpi = 100)
-    fig.savefig(fig_name + '.png', dpi = 100)
+    fig.savefig(fig_name + '.pdf', dpi=100)
+    fig.savefig(fig_name + '.png', dpi=100)
 
-def run_main(dx, dy, dz, dt, nox, noy, noz, gamma = 1., galilean = False,
-             ex = 1e-07, ey = 1e-07, ez = 1e-07, path = '.', name = ''):
+def run_main(dx, dy, dz, dt, nox, noy, noz, gamma=1., galilean=False,
+             ex=1e-07, ey=1e-07, ez=1e-07, path='.', name=''):
     """
     Main function.
 
@@ -330,7 +346,8 @@ def run_main(dx, dy, dz, dt, nox, noy, noz, gamma = 1., galilean = False,
     -------
     stencils : dict
         Dictionary of nodal and staggered stencils along all directions.
-        Its element of the dictionary is a dictionary itself, containing numpy.ndarray objects.
+        Its element of the dictionary is a dictionary itself,
+        containing numpy.ndarray objects.
         Keys: stencils.keys() = dict_keys(['x', 'y', 'z'])
               stencils['x'].keys() = dict_keys(['nodal', 'stagg'])
               stencils['y'].keys() = dict_keys(['nodal', 'stagg'])
@@ -339,7 +356,7 @@ def run_main(dx, dy, dz, dt, nox, noy, noz, gamma = 1., galilean = False,
     # Galilean velocity (default = 0.)
     v_gal = 0.
     if galilean:
-        v_gal = - np.sqrt(1. - 1./gamma**2) * c
+        v_gal = - np.sqrt(1.-1./gamma**2) * c
 
     # Display some output
     print('\n >> Numerical Setup')
@@ -387,7 +404,8 @@ def run_main(dx, dy, dz, dt, nox, noy, noz, gamma = 1., galilean = False,
     stencils['z']['stagg'] = stencils['z']['stagg'][:ncz]
 
     # Compute minimum number of guard cells for given error threshold
-    # (number of guard cells such that the stencil measure is not larger than the error threshold)
+    # (number of guard cells such that the stencil measure
+    # is not larger than the error threshold)
 
     print('\n    error threshold:')
     print('    - ex = {:g}'.format(ex))
@@ -415,9 +433,12 @@ def run_main(dx, dy, dz, dt, nox, noy, noz, gamma = 1., galilean = False,
     print('    - {:d} guard cells along z'.format(gc_stagg_z))
 
     # Plot stencils
-    plot_stencil(cx, stencils['x']['nodal'], stencils['x']['stagg'], 'x', path, name)
-    plot_stencil(cy, stencils['y']['nodal'], stencils['y']['stagg'], 'y', path, name)
-    plot_stencil(cz, stencils['z']['nodal'], stencils['z']['stagg'], 'z', path, name)
+    plot_stencil(cx, stencils['x']['nodal'], stencils['x']['stagg'],
+                 'x', path, name)
+    plot_stencil(cy, stencils['y']['nodal'], stencils['y']['stagg'],
+                 'y', path, name)
+    plot_stencil(cz, stencils['z']['nodal'], stencils['z']['stagg'],
+                 'z', path, name)
 
     print('\n >> Output Summary')
     print('    --------------')
@@ -453,7 +474,8 @@ if __name__ == '__main__':
     gamma = 30.
     # Galilean flag
     galilean = True
-    # Error threshold (might need to be smaller in z than (x,y) with Galilean algorithms)
+    # Error threshold
+    # (might need to be smaller in z than (x,y) w/ Galilean algorithms)
     ex = 1e-07
     ey = 1e-07
     ez = 1e-07
@@ -463,8 +485,10 @@ if __name__ == '__main__':
     name = 'test'
     # --
 
-    # Run main function (some arguments are optional, see definition of run_main function for help)
-    stencils = run_main(dx, dy, dz, dt, nox, noy, noz, gamma, galilean, ex, ey, ez, path, name)
+    # Run main function (some arguments are optional,
+    # see definition of run_main function for help)
+    stencils = run_main(dx, dy, dz, dt, nox, noy, noz, gamma,
+                        galilean, ex, ey, ez, path, name)
 
     # Make stencil arrays available for inspection
     sx_nodal = stencils['x']['nodal']

@@ -60,7 +60,11 @@ def applylens(x0, vx0, vz0, gamma, lens_length, lens_strength):
     return x1, vx1
 
 clight = c
-vel_z = eval(ds.parameters.get('my_constants.vel_z'))
+try:
+    vel_z = eval(ds.parameters.get('my_constants.vel_z'))
+except TypeError:
+    # vel_z is not saved in my_constants with the PICMI version
+    vel_z = 0.5*c
 
 plasma_lens_period = float(ds.parameters.get('particles.repeated_plasma_lens_period'))
 plasma_lens_starts = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_starts').split()]
@@ -116,10 +120,19 @@ print(f'Error in y position is {abs(np.abs((yy - yy_sim)/yy))}, which should be 
 print(f'Error in x velocity is {abs(np.abs((ux - ux_sim)/ux))}, which should be < 0.002')
 print(f'Error in y velocity is {abs(np.abs((uy - uy_sim)/uy))}, which should be < 0.002')
 
-assert abs(np.abs((xx - xx_sim)/xx)) < 0.02, Exception('error in x particle position')
-assert abs(np.abs((yy - yy_sim)/yy)) < 0.02, Exception('error in y particle position')
-assert abs(np.abs((ux - ux_sim)/ux)) < 0.002, Exception('error in x particle velocity')
-assert abs(np.abs((uy - uy_sim)/uy)) < 0.002, Exception('error in y particle velocity')
+if plasma_lens_lengths[0] < 0.01:
+    # The shorter lens requires a larger tolerance since
+    # the calculation becomes less accurate
+    position_tolerance = 0.023
+    velocity_tolerance = 0.003
+else:
+    position_tolerance = 0.02
+    velocity_tolerance = 0.002
+
+assert abs(np.abs((xx - xx_sim)/xx)) < position_tolerance, Exception('error in x particle position')
+assert abs(np.abs((yy - yy_sim)/yy)) < position_tolerance, Exception('error in y particle position')
+assert abs(np.abs((ux - ux_sim)/ux)) < velocity_tolerance, Exception('error in x particle velocity')
+assert abs(np.abs((uy - uy_sim)/uy)) < velocity_tolerance, Exception('error in y particle velocity')
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

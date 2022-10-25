@@ -20,6 +20,7 @@ boundary.particle_hi = absorbing absorbing absorbing
 algo.particle_shape = 1
 warpx.gamma_boost = 2.
 warpx.boost_direction = z
+warpx.cfl = 0.7
 
 my_constants.vel_z = 0.5*clight
 

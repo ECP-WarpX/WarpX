@@ -68,14 +68,15 @@ In the code, instead of using ``amrex::Warning`` to immediately print a warning 
 
 .. code-block:: cpp
 
-   WarpX::GetInstance().RecordWarning(
+   ablastr::warn_manager::WMRecordWarning(
       "QED",
       "Using default value (2*me*c^2) for photon energy creation threshold",
-      WarnPriority::low);
+      ablastr::warn_manager::WarnPriority::low);
 
-In this example, ``QED`` is the topic, ``Using [...]`` is the warning message and ``WarnPriority::low`` is the priority.
+In this example, ``QED`` is the topic, ``Using [...]`` is the warning message and ``ablastr::warn_manager::WarnPriority::low`` is the priority.
 `RecordWarning` is **not** a collective call and should also be thread-safe (it can be called in OpenMP loops).
 In case the user wants to also print the warning messages immediately, the runtime parameter ``warpx.always_warn_immediately`` can be set to ``1``.
+The Warning manager is a singleton class defined in ``Source/ablastr/warn_manager/WarnManager.H```
 
 How to print the warning list
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,7 +85,7 @@ The warning list can be printed as follows:
 
 .. code-block:: cpp
 
-   warpx.PrintGlobalWarnings("THE END");
+   amrex::Print() << ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
 
 where the string is a temporal marker that appears in the warning list.
 At the moment this is done right after step one and at the end of the simulation.

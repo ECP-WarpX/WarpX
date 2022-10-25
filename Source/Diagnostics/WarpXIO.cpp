@@ -13,11 +13,12 @@
 #endif
 #include "FieldIO.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Parallelization/WarpXCommUtil.H"
 #include "Utils/CoarsenIO.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+
+#include <ablastr/utils/Communication.H>
 
 #ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -381,7 +382,7 @@ WarpX::GetCellCenteredData() {
         const std::unique_ptr<MultiFab>& charge_density = mypc->GetChargeDensity(lev);
         AverageAndPackScalarField( *cc[lev], *charge_density, dmap[lev], dcomp, ng );
 
-        WarpXCommUtil::FillBoundary(*cc[lev], geom[lev].periodicity());
+        ablastr::utils::communication::FillBoundary(*cc[lev], WarpX::do_single_precision_comms, geom[lev].periodicity());
     }
 
     for (int lev = finest_level; lev > 0; --lev)

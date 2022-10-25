@@ -1,0 +1,67 @@
+# algo
+algo.charge_deposition = standard
+algo.current_deposition = vay
+algo.maxwell_solver = psatd
+algo.particle_pusher = vay
+algo.particle_shape = 3
+
+# amr
+amr.max_level = 0
+amr.n_cell = 64 64 64
+
+# boundary
+boundary.field_hi = periodic periodic periodic
+boundary.field_lo = periodic periodic periodic
+
+# diag
+diag1.diag_type = Full
+diag1.intervals = 25
+diag1.fields_to_plot = Bx By Bz Ex Ey Ez jx jy jz rho divE
+
+# diagnostics
+diagnostics.diags_names = diag1
+
+# electron
+electron.charge = -q_e
+electron.injection_style = "SingleParticle"
+electron.mass = 9e-22
+electron.single_particle_pos = 0. 0. 0.
+electron.single_particle_vel = 0.5 0.5 0.5
+electron.single_particle_weight = 1.
+
+# geometry
+geometry.coord_sys = 0
+geometry.dims = 3
+geometry.prob_hi =  45.  45.  45.
+geometry.prob_lo = -45. -45. -45.
+
+# ion
+ion.charge = q_e
+ion.injection_style = "SingleParticle"
+ion.mass = 9e-22
+ion.single_particle_pos = 0. 0. 0.
+ion.single_particle_vel = -0.5 -0.5 -0.5
+ion.single_particle_weight = 1.
+
+# max_step
+max_step = 25
+
+# particles
+particles.species_names = electron ion
+
+# psatd
+psatd.nox = 4
+psatd.noy = 4
+psatd.noz = 4
+psatd.nx_guard = 20
+psatd.ny_guard = 20
+psatd.nz_guard = 20
+psatd.periodic_single_box_fft = 0
+psatd.update_with_rho = 0
+
+# warpx
+warpx.cfl = 0.9999
+warpx.do_nodal = 1
+warpx.serialize_initial_conditions = 1
+warpx.use_filter = 1
+warpx.verbose = 1

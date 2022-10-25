@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
-cmake_minimum_required(VERSION 3.18.0)
-project(WarpX VERSION 22.03)
+cmake_minimum_required(VERSION 3.20.0)
+project(WarpX VERSION 22.10)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -86,6 +86,13 @@ if(NOT WarpX_PRECISION IN_LIST WarpX_PRECISION_VALUES)
     message(FATAL_ERROR "WarpX_PRECISION (${WarpX_PRECISION}) must be one of ${WarpX_PRECISION_VALUES}")
 endif()
 
+set(WarpX_PARTICLE_PRECISION_VALUES SINGLE DOUBLE)
+set(WarpX_PARTICLE_PRECISION ${WarpX_PRECISION} CACHE STRING "Particle floating point precision (SINGLE/DOUBLE)")
+set_property(CACHE WarpX_PARTICLE_PRECISION PROPERTY STRINGS ${WarpX_PARTICLE_PRECISION_VALUES})
+if(NOT WarpX_PARTICLE_PRECISION IN_LIST WarpX_PARTICLE_PRECISION_VALUES)
+    message(FATAL_ERROR "WarpX_PARTICLE_PRECISION (${WarpX_PARTICLE_PRECISION}) must be one of ${WarpX_PARTICLE_PRECISION_VALUES}")
+endif()
+
 set(WarpX_COMPUTE_VALUES NOACC OMP CUDA SYCL HIP)
 set(WarpX_COMPUTE OMP CACHE STRING "On-node, accelerated computing backend (NOACC/OMP/CUDA/SYCL/HIP)")
 set_property(CACHE WarpX_COMPUTE PROPERTY STRINGS ${WarpX_COMPUTE_VALUES})
@@ -104,6 +111,13 @@ set_default_build_type("Release")
 # Option to enable interprocedural optimization
 # (also know as "link-time optimization" or "whole program optimization")
 option(WarpX_IPO                                "Compile WarpX with interprocedural optimization (will take more time)" OFF)
+
+# note: we could skip this if we solely build WarpX_APP, but if we build a
+# shared WarpX library or a third party, like ImpactX, uses ablastr in a
+# shared library (e.g., for Python bindings), then we need relocatable code.
+option(ABLASTR_POSITION_INDEPENDENT_CODE
+    "Build ABLASTR with position independent code" ${WarpX_LIB})
+mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
 
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
@@ -168,9 +182,21 @@ if(WarpX_LIB)
     set(_BUILDINFO_SRC shared)
     list(APPEND _ALL_TARGETS shared)
 
-    set_target_properties(WarpX ablastr shared PROPERTIES
+    set_target_properties(WarpX shared PROPERTIES
         POSITION_INDEPENDENT_CODE ON
         WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
+    set(ABLASTR_POSITION_INDEPENDENT_CODE ON CACHE BOOL
+        "Build ABLASTR with position independent code" FORCE)
+endif()
+
+# ABLASTR library (static or shared)
+set_target_properties(ablastr PROPERTIES
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
+)
+if(ABLASTR_POSITION_INDEPENDENT_CODE)
+    set_target_properties(ablastr PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
     )
 endif()
 
@@ -233,6 +259,12 @@ if(WarpX_PSATD)
     if(WarpX_DIMS STREQUAL RZ)
         target_link_libraries(ablastr PUBLIC blaspp)
         target_link_libraries(ablastr PUBLIC lapackpp)
+
+        # BLAS++ forgets to declare cuBLAS and cudaRT dependencies
+        if(WarpX_COMPUTE STREQUAL CUDA)
+            find_package(CUDAToolkit REQUIRED)
+            target_link_libraries(ablastr PUBLIC CUDA::cudart CUDA::cublas)
+        endif()
     endif()
 endif()
 
@@ -339,7 +371,7 @@ configure_file(
 # Installs ####################################################################
 #
 # headers, libraries and executables
-set(WarpX_INSTALL_TARGET_NAMES)
+set(WarpX_INSTALL_TARGET_NAMES ablastr)
 if(WarpX_APP)
     list(APPEND WarpX_INSTALL_TARGET_NAMES app)
 endif()
@@ -383,13 +415,13 @@ endif()
 #install(EXPORT WarpXTargets
 #    FILE WarpXTargets.cmake
 #    NAMESPACE WarpX::
-#    DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+#    DESTINATION ${WarpX_INSTALL_CMAKEDIR}
 #)
 #install(
 #    FILES
 #        ${WarpX_BINARY_DIR}/WarpXConfig.cmake
 #        ${WarpX_BINARY_DIR}/WarpXConfigVersion.cmake
-#    DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+#    DESTINATION ${WarpX_INSTALL_CMAKEDIR}
 #)
 
 
@@ -399,12 +431,21 @@ if(WarpX_LIB)
     set(PYINSTALLOPTIONS "" CACHE STRING
         "Additional parameters to pass to `pip install`")
 
+    # add a prefix to custom targets so we do not collide if used as a subproject
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+        set(_WarpX_CUSTOM_TARGET_PREFIX_DEFAULT "")
+    else()
+        set(_WarpX_CUSTOM_TARGET_PREFIX_DEFAULT "warpx_")
+    endif()
+    set(WarpX_CUSTOM_TARGET_PREFIX "${_WarpX_CUSTOM_TARGET_PREFIX_DEFAULT}"
+            CACHE STRING "Prefix for custom targets")
+
     # build the wheel by re-using the shared library we build
-    add_custom_target(pip_wheel
-        ${CMAKE_COMMAND} -E rm -f ${WarpX_BINARY_DIR}/pywarpx*whl
+    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_wheel
+        ${CMAKE_COMMAND} -E rm -f -r warpx-whl
         COMMAND
-            ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-                python3 -m pip wheel -v --no-build-isolation --use-feature=in-tree-build ${WarpX_SOURCE_DIR}
+            ${CMAKE_COMMAND} -E env PYWARPX_LIB_DIR=$<TARGET_FILE_DIR:shared>
+                python3 -m pip wheel -v --no-build-isolation --no-deps --wheel-dir=warpx-whl ${WarpX_SOURCE_DIR}
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
@@ -412,8 +453,13 @@ if(WarpX_LIB)
     )
 
     # this will also upgrade/downgrade dependencies, e.g., when the version of picmistandard changes
-    add_custom_target(pip_install_requirements
-        python3 -m pip install ${PYINSTALLOPTIONS} -r ${WarpX_SOURCE_DIR}/requirements.txt
+    if(WarpX_MPI)
+        set(pyWarpX_REQUIREMENT_FILE "requirements_mpi.txt")
+    else()
+        set(pyWarpX_REQUIREMENT_FILE "requirements.txt")
+    endif()
+    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
+        python3 -m pip install ${PYINSTALLOPTIONS} -r "${WarpX_SOURCE_DIR}/${pyWarpX_REQUIREMENT_FILE}"
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
     )
@@ -421,13 +467,13 @@ if(WarpX_LIB)
     # We force-install because in development, it is likely that the version of
     # the package does not change, but the code did change. We need --no-deps,
     # because otherwise pip would also force reinstall all dependencies.
-    add_custom_target(pip_install
+    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install
         ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
-            python3 -m pip install --force-reinstall --no-deps ${PYINSTALLOPTIONS} ${WarpX_BINARY_DIR}/pywarpx*whl
+            python3 -m pip install --force-reinstall --no-index --no-deps ${PYINSTALLOPTIONS} --find-links=warpx-whl pywarpx
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
-            shared pip_wheel pip_install_requirements
+            shared ${WarpX_CUSTOM_TARGET_PREFIX}pip_wheel ${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
     )
 endif()
 

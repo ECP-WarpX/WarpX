@@ -10,6 +10,7 @@
 
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -112,7 +113,7 @@ WarpX::LoadBalance ()
             {
                 pmap.resize(static_cast<std::size_t>(nboxes));
             }
-            ParallelDescriptor::Bcast(&pmap[0], pmap.size(), ParallelDescriptor::IOProcessorNumber());
+            ParallelDescriptor::Bcast(pmap.data(), pmap.size(), ParallelDescriptor::IOProcessorNumber());
 
             if (ParallelDescriptor::MyProc() != ParallelDescriptor::IOProcessorNumber())
             {

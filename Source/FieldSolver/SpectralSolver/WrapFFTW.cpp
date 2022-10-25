@@ -7,6 +7,8 @@
 
 #include "AnyFFT.H"
 
+#include "Utils/TextMsg.H"
+
 #include <AMReX.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_REAL.H>
@@ -52,7 +54,8 @@ namespace AnyFFT
                 fft_plan.m_plan = VendorCreatePlanR2C2D(
                     real_size[1], real_size[0], real_array, complex_array, FFTW_ESTIMATE);
             } else {
-                amrex::Abort("only dim=2 and dim=3 have been implemented");
+                amrex::Abort(Utils::TextMsg::Err(
+                    "only dim=2 and dim=3 have been implemented"));
             }
         } else if (dir == direction::C2R){
             if (dim == 3) {
@@ -62,7 +65,8 @@ namespace AnyFFT
                 fft_plan.m_plan = VendorCreatePlanC2R2D(
                     real_size[1], real_size[0], complex_array, real_array, FFTW_ESTIMATE);
             } else {
-                amrex::Abort("only dim=2 and dim=3 have been implemented. Should be easy to add dim=1.");
+                amrex::Abort(Utils::TextMsg::Err(
+                    "only dim=2 and dim=3 have been implemented. Should be easy to add dim=1."));
             }
         }
 

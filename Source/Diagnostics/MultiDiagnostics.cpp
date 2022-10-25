@@ -2,7 +2,9 @@
 
 #include "Diagnostics/BTDiagnostics.H"
 #include "Diagnostics/FullDiagnostics.H"
-
+#include "Diagnostics/BoundaryScrapingDiagnostics.H"
+#include "Utils/TextMsg.H"
+#include <ablastr/warn_manager/WarnManager.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX.H>
 #include <AMReX_REAL.H>
@@ -23,8 +25,13 @@ MultiDiagnostics::MultiDiagnostics ()
             alldiags[i] = std::make_unique<FullDiagnostics>(i, diags_names[i]);
         } else if ( diags_types[i] == DiagTypes::BackTransformed ){
             alldiags[i] = std::make_unique<BTDiagnostics>(i, diags_names[i]);
+#ifdef WARPX_DIM_RZ
+            ablastr::warn_manager::WMRecordWarning("MultiDiagnostics", "BackTransformed diagnostics for fields is not yet fully implemented in RZ. Field output might be incorrect.");
+#endif
+        } else if ( diags_types[i] == DiagTypes::BoundaryScraping ){
+            alldiags[i] = std::make_unique<BoundaryScrapingDiagnostics>(i, diags_names[i]);
         } else {
-            amrex::Abort("Unknown diagnostic type");
+            amrex::Abort(Utils::TextMsg::Err("Unknown diagnostic type"));
         }
     }
 }
@@ -65,6 +72,7 @@ MultiDiagnostics::ReadParameters ()
         pp_diag_name.get("diag_type", diag_type_str);
         if (diag_type_str == "Full") diags_types[i] = DiagTypes::Full;
         if (diag_type_str == "BackTransformed") diags_types[i] = DiagTypes::BackTransformed;
+        if (diag_type_str == "BoundaryScraping") diags_types[i] = DiagTypes::BoundaryScraping;
     }
 }
 

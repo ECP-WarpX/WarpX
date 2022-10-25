@@ -10,6 +10,7 @@ target_sources(WarpX
     WarpXIO.cpp
     WarpXOpenPMD.cpp
     BTDiagnostics.cpp
+    BoundaryScrapingDiagnostics.cpp
     BTD_Plotfile_Header_Impl.cpp
 )
 

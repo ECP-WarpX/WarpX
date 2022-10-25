@@ -223,7 +223,7 @@ using namespace amrex;
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             // Loop over sides, iside = 0 (lo), iside = 1 (hi)
             for (int iside = 0; iside < 2; ++iside) {
-                const int isPECBoundary = ( (iside == 0 )
+                const bool isPECBoundary = ( (iside == 0 )
                                         ? is_boundary_PEC(fbndry_lo, idim)
                                         : is_boundary_PEC(fbndry_hi, idim) );
                 if (isPECBoundary == true) {

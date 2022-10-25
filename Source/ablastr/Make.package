@@ -2,5 +2,6 @@
 
 include $(WARPX_HOME)/Source/ablastr/particles/Make.package
 include $(WARPX_HOME)/Source/ablastr/utils/Make.package
+include $(WARPX_HOME)/Source/ablastr/warn_manager/Make.package
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/ablastr
