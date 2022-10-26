@@ -1136,7 +1136,7 @@ private:
         std::unique_ptr<amrex::MultiFab>& mf,
         const amrex::MultiFab& mf_to_alias,
         const int scomp,
-        const int ncomps,
+        const int ncomp,
         const std::string name);
 
     static void AllocInitiMultiFab (

@@ -2842,10 +2842,10 @@ WarpX::AliasInitMultiFab (
     std::unique_ptr<amrex::MultiFab>& mf,
     const amrex::MultiFab& mf_to_alias,
     const int scomp,
-    const int ncomps,
+    const int ncomp,
     const std::string name)
 {
-    mf = std::make_unique<MultiFab>(mf_to_alias, amrex::make_alias, scomp, ncomps);
+    mf = std::make_unique<MultiFab>(mf_to_alias, amrex::make_alias, scomp, ncomp);
     multifab_map[name] = mf.get();
 }
 
