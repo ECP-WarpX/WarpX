@@ -986,6 +986,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         self.relativistic = kw.pop('warpx_relativistic', False)
         self.absolute_tolerance = kw.pop('warpx_absolute_tolerance', None)
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
+        self.magnetostatic = kw.pop('warpx_magnetostatic', False)
 
     def initialize_inputs(self):
 
@@ -994,7 +995,10 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         if self.relativistic:
             pywarpx.warpx.do_electrostatic = 'relativistic'
         else:
-            pywarpx.warpx.do_electrostatic = 'labframe'
+            if self.magnetostatic:
+                pywarpx.warpx.do_electrostatic = 'relativistic-magnetostatic'
+            else:
+                pywarpx.warpx.do_electrostatic = 'labframe'
             pywarpx.warpx.self_fields_required_precision = self.required_precision
             pywarpx.warpx.self_fields_absolute_tolerance = self.absolute_tolerance
             pywarpx.warpx.self_fields_max_iters = self.maximum_iterations
@@ -1722,7 +1726,11 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                     fields_to_plot.add('jx')
                     fields_to_plot.add('jy')
                     fields_to_plot.add('jz')
-                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+                elif dataname == 'A':
+                    fields_to_plot.add('Ax')
+                    fields_to_plot.add('Ay')
+                    fields_to_plot.add('Az')
+                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Ax', 'Ay', 'Az', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
                     fields_to_plot.add(dataname)
                 elif dataname in ['Jx', 'Jy', 'Jz']:
                     fields_to_plot.add(dataname.lower())

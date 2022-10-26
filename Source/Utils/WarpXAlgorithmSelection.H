@@ -49,8 +49,9 @@ struct ElectromagneticSolverAlgo {
 struct ElectrostaticSolverAlgo {
     enum {
         None = 0,
-        Relativistic = 1,
-        LabFrame = 2
+        RelativisticApproximate = 1,
+        RelativisticMagnetostatic = 2,
+        LabFrame = 3  // Non relativistic
     };
 };
 

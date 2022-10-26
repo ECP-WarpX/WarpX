@@ -75,8 +75,16 @@ Diagnostics::BaseReadParameters ()
     // Sanity check if user requests to plot phi
     if (utils::algorithms::is_in(m_varnames_fields, "phi")){
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrame,
+            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrame ||
+            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::RelativisticMagnetostatic,
             "plot phi only works if do_electrostatic = labframe");
+    }
+
+    // Sanity check if user requests to plot A
+    if (utils::algorithms::any_of_is_in(m_varnames_fields, amrex::Vector<std::string>({"Ax", "Ay", "Az", "Ar", "At"}))){
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::RelativisticMagnetostatic,
+            "plot A only works if do_electrostatic = relativistic-magnetostatic");
     }
 
     // Sanity check if user requests to plot F

@@ -33,7 +33,8 @@ const std::map<std::string, int> electromagnetic_solver_algo_to_int = {
 
 const std::map<std::string, int> electrostatic_solver_algo_to_int = {
     {"none", ElectrostaticSolverAlgo::None },
-    {"relativistic", ElectrostaticSolverAlgo::Relativistic},
+    {"relativistic", ElectrostaticSolverAlgo::RelativisticApproximate},
+    {"relativistic-magnetostatic", ElectrostaticSolverAlgo::RelativisticMagnetostatic},
     {"labframe", ElectrostaticSolverAlgo::LabFrame},
     {"default", ElectrostaticSolverAlgo::None }
 };

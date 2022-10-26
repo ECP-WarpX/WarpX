@@ -291,6 +291,15 @@ WarpX::WarpX ()
     current_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
+    
+    // Only allocate vector potential arrays when using the Magnetostatic Solver
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
+    {
+        vector_potential_fp_nodal.resize(nlevs_max);
+        vector_potential_old_fp_nodal.resize(nlevs_max);
+        vector_potential_grad_buf_e_stag.resize(nlevs_max);
+        vector_potential_grad_buf_b_stag.resize(nlevs_max);
+    }
 
     if (fft_do_time_averaging)
     {
@@ -699,7 +708,9 @@ WarpX::ReadParameters ()
         "Currently, the embedded boundary in RZ only works for electrostatic solvers (or no solver).");
 #endif
 
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+            electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic) 
+        {
             // Note that with the relativistic version, these parameters would be
             // input for each species.
             utils::parser::queryWithParser(
@@ -1652,6 +1663,14 @@ WarpX::ClearLevel (int lev)
             current_fp_vay[lev][i].reset();
         }
 
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
+        {
+            vector_potential_fp_nodal[lev][i].reset();
+            vector_potential_old_fp_nodal[lev][i].reset();
+            vector_potential_grad_buf_e_stag[lev][i].reset();
+            vector_potential_grad_buf_b_stag[lev][i].reset();
+        }
+
         current_cp[lev][i].reset();
         Efield_cp [lev][i].reset();
         Bfield_cp [lev][i].reset();
@@ -1896,6 +1915,37 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             dm, ncomps, ngJ, tag("current_fp_vay[z]"));
     }
 
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
+    {
+        vector_potential_fp_nodal[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("vector_potential_fp_nodal[x]"));
+        vector_potential_fp_nodal[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("vector_potential_fp_nodal[y]"));
+        vector_potential_fp_nodal[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("vector_potential_fp_nodal[z]"));
+
+        vector_potential_old_fp_nodal[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("vector_potential_old_fp_nodal[x]"));
+        vector_potential_old_fp_nodal[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("vector_potential_old_fp_nodal[y]"));
+        vector_potential_old_fp_nodal[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngJ, tag("vector_potential_old_fp_nodal[z]"));
+
+        vector_potential_grad_buf_e_stag[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_e_stag[x]"));
+        vector_potential_grad_buf_e_stag[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_e_stag[y]"));
+        vector_potential_grad_buf_e_stag[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_e_stag[z]"));
+        
+        vector_potential_grad_buf_b_stag[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Bx_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_b_stag[x]"));
+        vector_potential_grad_buf_b_stag[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_b_stag[y]"));
+        vector_potential_grad_buf_b_stag[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_b_stag[z]"));
+    }
+
     if (fft_do_time_averaging)
     {
         Bfield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngEB,tag("Bfield_avg_fp[x]"));
@@ -1956,7 +2006,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 #endif
 
-    bool deposit_charge = do_dive_cleaning || (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame);
+    bool deposit_charge = do_dive_cleaning || (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame  || 
+                                               electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic);
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         deposit_charge = do_dive_cleaning || update_with_rho || current_correction;
     }
@@ -1967,11 +2018,30 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,rho_ncomps,ngRho,tag("rho_fp"));
     }
 
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+        electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
     {
         IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
         phi_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,phi_nodal_flag),dm,ncomps,ngPhi,tag("phi_fp"));
         phi_fp[lev]->setVal(0.);
+
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic) {
+            vector_potential_fp_nodal[lev][0]->setVal(0.);
+            vector_potential_fp_nodal[lev][1]->setVal(0.);
+            vector_potential_fp_nodal[lev][2]->setVal(0.);
+
+            vector_potential_old_fp_nodal[lev][0]->setVal(0.);
+            vector_potential_old_fp_nodal[lev][1]->setVal(0.);
+            vector_potential_old_fp_nodal[lev][2]->setVal(0.);
+
+            vector_potential_grad_buf_b_stag[lev][0]->setVal(0.);
+            vector_potential_grad_buf_b_stag[lev][1]->setVal(0.);
+            vector_potential_grad_buf_b_stag[lev][2]->setVal(0.);
+
+            vector_potential_grad_buf_e_stag[lev][0]->setVal(0.);
+            vector_potential_grad_buf_e_stag[lev][1]->setVal(0.);
+            vector_potential_grad_buf_e_stag[lev][2]->setVal(0.);
+        }
     }
 
     if (do_subcycling == 1 && lev == 0)

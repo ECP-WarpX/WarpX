@@ -161,11 +161,15 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
       amrex::Print() << "                      | - laboratory frame" << "\n";
     }
-    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic){
+    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticApproximate){
       amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
       amrex::Print() << "                      | - relativistic" << "\n";
     }
-    else if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
+    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic){
+      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+      amrex::Print() << "                      | - relativistic magnetostatic" << "\n";
+    }
+    else{
       amrex::Print() << "Operation mode:       | Electromagnetic" << "\n";
     }
     if (em_solver_medium == MediumForEM::Vacuum ){
@@ -418,6 +422,8 @@ WarpX::InitData ()
         // Loop through species and calculate their space-charge field
         bool const reset_fields = false; // Do not erase previous user-specified values on the grid
         ComputeSpaceChargeField(reset_fields);
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
+            ComputeCurrentDensityField();
 
         // Write full diagnostics before the first iteration.
         multi_diags->FilterComputePackFlush( -1 );
