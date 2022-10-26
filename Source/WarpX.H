@@ -65,6 +65,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <map>
 
 enum struct PatchType : int
 {
@@ -397,6 +398,9 @@ public:
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     const PML_RZ* getPMLRZ() {return pml_rz[0].get();}
 #endif
+
+    // Map of all of the MultiFabs used (this can include MFs from other classes)
+    static std::map<std::string, amrex::MultiFab *> multifab_map;
 
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
@@ -1118,14 +1122,15 @@ private:
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const amrex::IntVect& ngG, const bool aux_is_nodal);
 
-    void AllocInitMultiFab (
+    static void AllocInitMultiFab (
         std::unique_ptr<amrex::MultiFab>& mf,
         const amrex::BoxArray& bs,
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
-        const amrex::Real value,
-        const amrex::MFInfo& tag=amrex::MFInfo().SetTag(""));
+        const std::string name,
+        const bool do_setval = false,
+        const amrex::Real value = 0.);
 
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ

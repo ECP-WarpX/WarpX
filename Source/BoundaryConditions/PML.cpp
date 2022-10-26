@@ -661,58 +661,58 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     const int ncompe = (m_dive_cleaning) ? 3 : 2;
     const int ncompb = (m_divb_cleaning) ? 3 : 2;
 
-    WarpX::GetInstance().AllocInitMultiFab(
+    WarpX::AllocInitMultiFab(
         pml_E_fp[0],
         amrex::convert(ba, WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect()),
-        dm, ncompe, nge, 0.0_rt, amrex::MFInfo().SetTag("pml_E_fp[x]"));
-    WarpX::GetInstance().AllocInitMultiFab(
+        dm, ncompe, nge, "pml_E_fp[x]", true, 0.0_rt);
+    WarpX::AllocInitMultiFab(
         pml_E_fp[1],
         amrex::convert(ba, WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect()),
-        dm, ncompe, nge, 0.0_rt, amrex::MFInfo().SetTag("pml_E_fp[y]"));
-    WarpX::GetInstance().AllocInitMultiFab(
+        dm, ncompe, nge, "pml_E_fp[y]", true, 0.0_rt);
+    WarpX::AllocInitMultiFab(
         pml_E_fp[2],
         amrex::convert(ba, WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect()),
-        dm, ncompe, nge, 0.0_rt, amrex::MFInfo().SetTag("pml_E_fp[z]"));
+        dm, ncompe, nge, "pml_E_fp[z]", true, 0.0_rt);
 
-    WarpX::GetInstance().AllocInitMultiFab(
+    WarpX::AllocInitMultiFab(
         pml_B_fp[0],
         amrex::convert(ba, WarpX::GetInstance().getBfield_fp(0,0).ixType().toIntVect()),
-        dm, ncompb, ngb, 0.0_rt, amrex::MFInfo().SetTag("pml_B_fp[x]"));
-    WarpX::GetInstance().AllocInitMultiFab(
+        dm, ncompb, ngb, "pml_B_fp[x]", true, 0.0_rt);
+    WarpX::AllocInitMultiFab(
         pml_B_fp[1],
         amrex::convert(ba, WarpX::GetInstance().getBfield_fp(0,1).ixType().toIntVect()),
-        dm, ncompb, ngb, 0.0_rt, amrex::MFInfo().SetTag("pml_B_fp[y]"));
-    WarpX::GetInstance().AllocInitMultiFab(
+        dm, ncompb, ngb, "pml_B_fp[y]", true, 0.0_rt);
+    WarpX::AllocInitMultiFab(
         pml_B_fp[2],
         amrex::convert(ba, WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect()),
-        dm, ncompb, ngb, 0.0_rt, amrex::MFInfo().SetTag("pml_B_fp[z]"));
+        dm, ncompb, ngb, "pml_B_fp[z]", true, 0.0_rt);
 
-    WarpX::GetInstance().AllocInitMultiFab(
+    WarpX::AllocInitMultiFab(
         pml_j_fp[0],
         amrex::convert(ba, WarpX::GetInstance().getcurrent_fp(0,0).ixType().toIntVect()),
-        dm, 1, ngb, 0.0_rt, amrex::MFInfo().SetTag("pml_j_fp[x]"));
-    WarpX::GetInstance().AllocInitMultiFab(
+        dm, 1, ngb, "pml_j_fp[x]", true, 0.0_rt);
+    WarpX::AllocInitMultiFab(
         pml_j_fp[1],
         amrex::convert(ba, WarpX::GetInstance().getcurrent_fp(0,1).ixType().toIntVect()),
-        dm, 1, ngb, 0.0_rt, amrex::MFInfo().SetTag("pml_j_fp[y]"));
-    WarpX::GetInstance().AllocInitMultiFab(
+        dm, 1, ngb, "pml_j_fp[y]", true, 0.0_rt);
+    WarpX::AllocInitMultiFab(
         pml_j_fp[2],
         amrex::convert(ba, WarpX::GetInstance().getcurrent_fp(0,2).ixType().toIntVect()),
-        dm, 1, ngb, 0.0_rt, amrex::MFInfo().SetTag("pml_j_fp[z]"));
+        dm, 1, ngb, "pml_j_fp[z]", true, 0.0_rt);
 
 #ifdef AMREX_USE_EB
-    WarpX::GetInstance().AllocInitMultiFab(
+    WarpX::AllocInitMultiFab(
         pml_edge_lengths[0],
         amrex::convert(ba, WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect()),
-        dm, WarpX::ncomps, amrex::IntVect(max_guard_EB), 0.0_rt, amrex::MFInfo().SetTag("pml_edge_lengths[x]"));
-    WarpX::GetInstance().AllocInitMultiFab(
+        dm, WarpX::ncomps, amrex::IntVect(max_guard_EB), "pml_edge_lengths[x]", true, 0.0_rt);
+    WarpX::AllocInitMultiFab(
         pml_edge_lengths[1],
         amrex::convert(ba, WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect()),
-        dm, WarpX::ncomps, amrex::IntVect(max_guard_EB), 0.0_rt, amrex::MFInfo().SetTag("pml_edge_lengths[y]"));
-    WarpX::GetInstance().AllocInitMultiFab(
+        dm, WarpX::ncomps, amrex::IntVect(max_guard_EB), "pml_edge_lengths[y]", true, 0.0_rt);
+    WarpX::AllocInitMultiFab(
         pml_edge_lengths[2],
         amrex::convert(ba, WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect()),
-        dm, WarpX::ncomps, amrex::IntVect(max_guard_EB), 0.0_rt, amrex::MFInfo().SetTag("pml_edge_lengths[z]"));
+        dm, WarpX::ncomps, amrex::IntVect(max_guard_EB), "pml_edge_lengths[z]", true, 0.0_rt);
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
         WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
@@ -731,9 +731,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     if (m_dive_cleaning)
     {
         const amrex::IntVect& F_nodal_flag = amrex::IntVect::TheNodeVector();
-        WarpX::GetInstance().AllocInitMultiFab(
-            pml_F_fp,amrex::convert(ba, F_nodal_flag), dm, 3, ngf, 0.0_rt,
-            amrex::MFInfo().SetTag("pml_F_fp"));
+        WarpX::AllocInitMultiFab(
+            pml_F_fp,amrex::convert(ba, F_nodal_flag), dm, 3, ngf,
+            "pml_F_fp", true, 0.0_rt);
     }
 
     if (m_divb_cleaning)
@@ -741,9 +741,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         // TODO Shall we define a separate guard cells parameter ngG?
         const amrex::IntVect& G_nodal_flag = (do_nodal) ? amrex::IntVect::TheNodeVector()
                                                         : amrex::IntVect::TheCellVector();
-        WarpX::GetInstance().AllocInitMultiFab(
-            pml_G_fp, amrex::convert(ba, G_nodal_flag), dm, 3, ngf, 0.0_rt,
-            amrex::MFInfo().SetTag("pml_G_fp"));
+        WarpX::AllocInitMultiFab(
+            pml_G_fp, amrex::convert(ba, G_nodal_flag), dm, 3, ngf,
+            "pml_G_fp", true, 0.0_rt);
     }
 
     Box single_domain_box = is_single_box_domain ? domain0 : Box();
@@ -821,32 +821,32 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             cdm.define(cba);
         }
 
-        WarpX::GetInstance().AllocInitMultiFab(pml_E_cp[0],
+        WarpX::AllocInitMultiFab(pml_E_cp[0],
             amrex::convert(cba, WarpX::GetInstance().getEfield_cp(1,0).ixType().toIntVect()),
-            cdm, ncompe, nge, 0.0_rt, amrex::MFInfo().SetTag("pml_E_cp[x]"));
-        WarpX::GetInstance().AllocInitMultiFab(pml_E_cp[1],
+            cdm, ncompe, nge, "pml_E_cp[x]", true, 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_E_cp[1],
             amrex::convert(cba, WarpX::GetInstance().getEfield_cp(1,1).ixType().toIntVect()),
-            cdm, ncompe, nge, 0.0_rt, amrex::MFInfo().SetTag("pml_E_cp[y]"));
-        WarpX::GetInstance().AllocInitMultiFab(pml_E_cp[2],
+            cdm, ncompe, nge, "pml_E_cp[y]", true, 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_E_cp[2],
             amrex::convert(cba, WarpX::GetInstance().getEfield_cp(1,2).ixType().toIntVect()),
-            cdm, ncompe, nge, 0.0_rt, amrex::MFInfo().SetTag("pml_E_cp[z]"));
+            cdm, ncompe, nge, "pml_E_cp[z]", true, 0.0_rt);
 
-        WarpX::GetInstance().AllocInitMultiFab(pml_B_cp[0],
+        WarpX::AllocInitMultiFab(pml_B_cp[0],
             amrex::convert(cba, WarpX::GetInstance().getBfield_cp(1,0).ixType().toIntVect()),
-            cdm, ncompb, ngb, 0.0_rt, amrex::MFInfo().SetTag("pml_B_cp[x]"));
-        WarpX::GetInstance().AllocInitMultiFab(pml_B_cp[1],
+            cdm, ncompb, ngb, "pml_B_cp[x]", true, 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_B_cp[1],
             amrex::convert(cba, WarpX::GetInstance().getBfield_cp(1,1).ixType().toIntVect()),
-            cdm, ncompb, ngb, 0.0_rt, amrex::MFInfo().SetTag("pml_B_cp[y]"));
-        WarpX::GetInstance().AllocInitMultiFab(pml_B_cp[2],
+            cdm, ncompb, ngb, "pml_B_cp[y]", true, 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_B_cp[2],
             amrex::convert(cba, WarpX::GetInstance().getBfield_cp(1,2).ixType().toIntVect()),
-            cdm, ncompb, ngb, 0.0_rt, amrex::MFInfo().SetTag("pml_B_cp[z]"));
+            cdm, ncompb, ngb, "pml_B_cp[z]", true, 0.0_rt);
 
         if (m_dive_cleaning)
         {
             const amrex::IntVect& F_nodal_flag = amrex::IntVect::TheNodeVector();
-            WarpX::GetInstance().AllocInitMultiFab(
-                pml_F_cp, amrex::convert(cba, F_nodal_flag), cdm, 3, ngf, 0.0_rt,
-                amrex::MFInfo().SetTag("pml_F_cp"));
+            WarpX::AllocInitMultiFab(
+                pml_F_cp, amrex::convert(cba, F_nodal_flag), cdm, 3, ngf,
+                "pml_F_cp", true, 0.0_rt);
         }
 
         if (m_divb_cleaning)
@@ -854,20 +854,20 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             // TODO Shall we define a separate guard cells parameter ngG?
             const amrex::IntVect& G_nodal_flag = (do_nodal) ? amrex::IntVect::TheNodeVector()
                                                             : amrex::IntVect::TheCellVector();
-            WarpX::GetInstance().AllocInitMultiFab(
-                pml_G_cp, amrex::convert(cba, G_nodal_flag), cdm, 3, ngf, 0.0_rt,
-                amrex::MFInfo().SetTag("pml_G_cp"));
+            WarpX::AllocInitMultiFab(
+                pml_G_cp, amrex::convert(cba, G_nodal_flag), cdm, 3, ngf,
+                "pml_G_cp", true, 0.0_rt);
         }
 
-        WarpX::GetInstance().AllocInitMultiFab(pml_j_cp[0],
+        WarpX::AllocInitMultiFab(pml_j_cp[0],
             amrex::convert(cba, WarpX::GetInstance().getcurrent_cp(1,0).ixType().toIntVect()),
-            cdm, 1, ngb, 0.0_rt, amrex::MFInfo().SetTag("pml_j_cp[x]"));
-        WarpX::GetInstance().AllocInitMultiFab(pml_j_cp[1],
+            cdm, 1, ngb, "pml_j_cp[x]", true, 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_j_cp[1],
             amrex::convert(cba, WarpX::GetInstance().getcurrent_cp(1,1).ixType().toIntVect()),
-            cdm, 1, ngb, 0.0_rt, amrex::MFInfo().SetTag("pml_j_cp[y]"));
-        WarpX::GetInstance().AllocInitMultiFab(pml_j_cp[2],
+            cdm, 1, ngb, "pml_j_cp[y]", true, 0.0_rt);
+        WarpX::AllocInitMultiFab(pml_j_cp[2],
             amrex::convert(cba, WarpX::GetInstance().getcurrent_cp(1,2).ixType().toIntVect()),
-            cdm, 1, ngb, 0.0_rt, amrex::MFInfo().SetTag("pml_j_cp[z]"));
+            cdm, 1, ngb, "pml_j_cp[z]", true, 0.0_rt);
 
         single_domain_box = is_single_box_domain ? cdomain : Box();
         sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba_reduced, cgeom->CellSize(),
