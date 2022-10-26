@@ -221,13 +221,14 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
             [=] AMREX_GPU_DEVICE (int i, int j, int k)
             {
             // arr(x,y,z,comp) has (2*num_rz_modes-1)*10 components
-            // If there are 2 components, then Er_0_real, Er_1_real, Er_2_real are the first the components
+            // If there are 2 modes, then Er_0_real, Er_1_real, Er_2_real are the first three components
             // followed by three components each for Et, Ez, Br, Bt, Bz, jr, jt, jz, and rho
                 for (int imode = 0; imode < n_rz; ++imode) {
                     int offset = 1;
                     int ncomp = 2;
                     if (imode == 0) {
                         offset = 0;
+                        // Mode 0 has only real part
                         ncomp = 1;
                     }
                     for (int icomp = 0; icomp < ncomp; ++icomp) {
