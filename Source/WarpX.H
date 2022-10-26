@@ -1129,8 +1129,7 @@ private:
         const int ncomp,
         const amrex::IntVect& ngrow,
         const std::string name,
-        const bool do_setval = false,
-        const amrex::Real value = 0.);
+        std::optional<const amrex::Real> initial_value = {});
 
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
