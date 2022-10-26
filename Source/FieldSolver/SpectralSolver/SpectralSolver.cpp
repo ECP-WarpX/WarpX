@@ -78,8 +78,12 @@ SpectralSolver::SpectralSolver(
         else if (psatd_solution_type == PSATDSolutionType::FirstOrder)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                !fft_do_time_averaging,
+                "psatd.do_time_averaging=1 not supported when psatd.solution_type=first-order");
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 (!dive_cleaning && !divb_cleaning) || (dive_cleaning && divb_cleaning),
-                "warpx.do_dive_cleaning and warpx.do_divb_cleaning must be either both false or both true");
+                "warpx.do_dive_cleaning and warpx.do_divb_cleaning must be equal when psatd.solution_type=first-order");
 
             const bool div_cleaning = (dive_cleaning && divb_cleaning);
 
