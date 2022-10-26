@@ -401,6 +401,7 @@ public:
 
     // Map of all of the MultiFabs used (this can include MFs from other classes)
     static std::map<std::string, amrex::MultiFab *> multifab_map;
+    static std::map<std::string, amrex::iMultiFab *> imultifab_map;
 
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
@@ -1124,12 +1125,28 @@ private:
 
     static void AllocInitMultiFab (
         std::unique_ptr<amrex::MultiFab>& mf,
-        const amrex::BoxArray& bs,
+        const amrex::BoxArray& ba,
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
         const std::string name,
         std::optional<const amrex::Real> initial_value = {});
+
+    static void AliasInitMultiFab (
+        std::unique_ptr<amrex::MultiFab>& mf,
+        const amrex::MultiFab& mf_to_alias,
+        const int scomp,
+        const int ncomps,
+        const std::string name);
+
+    static void AllocInitiMultiFab (
+        std::unique_ptr<amrex::iMultiFab>& mf,
+        const amrex::BoxArray& ba,
+        const amrex::DistributionMapping& dm,
+        const int ncomp,
+        const amrex::IntVect& ngrow,
+        const std::string name,
+        std::optional<const int> initial_value = {});
 
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
