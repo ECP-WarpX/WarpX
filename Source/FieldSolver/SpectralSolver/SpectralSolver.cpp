@@ -8,7 +8,7 @@
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "SpectralAlgorithms/PsatdAlgorithmComoving.H"
 #include "SpectralAlgorithms/PsatdAlgorithmPml.H"
-#include "SpectralAlgorithms/PsatdAlgorithm.H"
+#include "SpectralAlgorithms/PsatdAlgorithmFirstOrder.H"
 #include "SpectralAlgorithms/PsatdAlgorithmJConstantInTime.H"
 #include "SpectralAlgorithms/PsatdAlgorithmJLinearInTime.H"
 #include "SpectralKSpace.H"
@@ -87,7 +87,7 @@ SpectralSolver::SpectralSolver(
 
             const bool div_cleaning = (dive_cleaning && divb_cleaning);
 
-            algorithm = std::make_unique<PsatdAlgorithm>(
+            algorithm = std::make_unique<PsatdAlgorithmFirstOrder>(
                 k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
                 dt, div_cleaning, J_in_time, rho_in_time);
         }

@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PSATD_ALGORITHM_H_
-#define WARPX_PSATD_ALGORITHM_H_
+#ifndef WARPX_PSATD_ALGORITHM_FIRST_ORDER_H_
+#define WARPX_PSATD_ALGORITHM_FIRST_ORDER_H_
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
@@ -24,12 +24,12 @@
 /*
  * \brief Class that updates the fields in spectral space according to the first-order PSATD equations.
  */
-class PsatdAlgorithm : public SpectralBaseAlgorithm
+class PsatdAlgorithmFirstOrder : public SpectralBaseAlgorithm
 {
     public:
 
         /**
-         * \brief Constructor of the class PsatdAlgorithm
+         * \brief Constructor of the class PsatdAlgorithmFirstOrder
          *
          * \param[in] spectral_kspace spectral space
          * \param[in] dm distribution mapping
@@ -43,7 +43,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in] J_in_time time dependency of J (currently supported: constant, linear)
          * \param[in] rho_in_time time dependency of rho (currently supported: constant, linear)
          */
-        PsatdAlgorithm (
+        PsatdAlgorithmFirstOrder (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const SpectralFieldIndex& spectral_index,
@@ -97,4 +97,4 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         int m_rho_in_time;
 };
 #endif // WARPX_USE_PSATD
-#endif // WARPX_PSATD_ALGORITHM_H_
+#endif // WARPX_PSATD_ALGORITHM_FIRST_ORDER_H_

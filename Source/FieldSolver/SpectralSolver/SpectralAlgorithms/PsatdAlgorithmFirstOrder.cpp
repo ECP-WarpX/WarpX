@@ -4,7 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "PsatdAlgorithm.H"
+#include "PsatdAlgorithmFirstOrder.H"
 
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -28,7 +28,7 @@
 
 using namespace amrex::literals;
 
-PsatdAlgorithm::PsatdAlgorithm(
+PsatdAlgorithmFirstOrder::PsatdAlgorithmFirstOrder(
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const SpectralFieldIndex& spectral_index,
@@ -50,7 +50,7 @@ PsatdAlgorithm::PsatdAlgorithm(
 {}
 
 void
-PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
+PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
 {
     const bool div_cleaning = m_div_cleaning;
 
@@ -344,10 +344,10 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
     }
 }
 
-void PsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data)
+void PsatdAlgorithmFirstOrder::CurrentCorrection (SpectralFieldData& field_data)
 {
     // Profiling
-    BL_PROFILE("PsatdAlgorithm::CurrentCorrection");
+    BL_PROFILE("PsatdAlgorithmFirstOrder::CurrentCorrection");
 
     amrex::ignore_unused(field_data);
     amrex::Abort(Utils::TextMsg::Err(
@@ -355,10 +355,10 @@ void PsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data)
 }
 
 void
-PsatdAlgorithm::VayDeposition (SpectralFieldData& field_data)
+PsatdAlgorithmFirstOrder::VayDeposition (SpectralFieldData& field_data)
 {
     // Profiling
-    BL_PROFILE("PsatdAlgorithm::VayDeposition()");
+    BL_PROFILE("PsatdAlgorithmFirstOrder::VayDeposition()");
 
     amrex::ignore_unused(field_data);
     amrex::Abort(Utils::TextMsg::Err(
