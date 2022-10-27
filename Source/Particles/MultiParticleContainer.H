@@ -236,9 +236,6 @@ public:
 
     int nSpecies() const {return species_names.size();}
 
-    int nSpeciesBackTransformedDiagnostics() const {return nspecies_back_transformed_diagnostics;}
-    int mapSpeciesBackTransformedDiagnostics(int i) const {return map_species_back_transformed_diagnostics[i];}
-    int doBackTransformedDiagnostics() const {return do_back_transformed_diagnostics;}
     /** Whether back-transformed diagnostics need to be performed for any plasma species.
      *
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
@@ -262,12 +259,6 @@ public:
         auto const & v = m_gather_from_main_grid;
         return std::count( v.begin(), v.end(), fromMainGrid );
     }
-
-    void GetLabFrameData(const std::string& snapshot_name,
-                         const int i_lab, const int direction,
-                         const amrex::Real z_old, const amrex::Real z_new,
-                         const amrex::Real t_boost, const amrex::Real t_lab, const amrex::Real dt,
-                         amrex::Vector<WarpXParticleContainer::DiagnosticParticleData>& parts) const;
 
     // Inject particles during the simulation (for particles entering the
     // simulation domain after some iterations, due to flowing plasma and/or
@@ -494,12 +485,6 @@ private:
 
     void mapSpeciesProduct ();
 
-    // Number of species dumped in BackTransformedDiagnostics
-    int nspecies_back_transformed_diagnostics = 0;
-    // map_species_back_transformed_diagnostics[i] is the species ID in
-    // MultiParticleContainer for 0<i<nspecies_back_transformed_diagnostics
-    std::vector<int> map_species_back_transformed_diagnostics;
-    int do_back_transformed_diagnostics = 0;
     bool m_do_back_transformed_particles = false;
 
     void MFItInfoCheckTiling(const WarpXParticleContainer& /*pc_src*/) const noexcept
