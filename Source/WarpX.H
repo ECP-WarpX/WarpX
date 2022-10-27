@@ -740,9 +740,6 @@ public:
     static amrex::Real moving_window_v;
     static bool fft_do_time_averaging;
 
-    // slice generation //
-    amrex::RealBox getSliceRealBox() const {return slice_realbox;}
-
     // these should be private, but can't due to Cuda limitations
     static void ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                              const std::array<const amrex::MultiFab* const, 3>& B,
