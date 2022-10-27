@@ -13,7 +13,6 @@
 #define WARPX_H_
 
 #include "BoundaryConditions/PML_fwd.H"
-#include "Diagnostics/BackTransformedDiagnostic_fwd.H"
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
@@ -1144,9 +1143,6 @@ private:
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
     std::unique_ptr<MultiDiagnostics> multi_diags;
-
-    // Boosted Frame Diagnostics
-    std::unique_ptr<BackTransformedDiagnostic> myBFD;
 
     //
     // Fields: First array for level, second for direction

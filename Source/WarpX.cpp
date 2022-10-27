@@ -12,7 +12,6 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
@@ -270,7 +269,6 @@ WarpX::WarpX ()
             current_injection_position = geom[0].ProbLo(moving_window_dir);
         }
     }
-    do_back_transformed_particles = mypc->doBackTransformedDiagnostics();
 
     // Particle Boundary Buffer (i.e., scraped particles on boundary)
     m_particle_boundary_buffer = std::make_unique<ParticleBoundaryBuffer>();
