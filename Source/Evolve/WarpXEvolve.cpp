@@ -26,12 +26,11 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Python/WarpX_py.H"
-#include "Utils/IntervalsParser.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 
 #include <ablastr/utils/SignalHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -89,7 +88,7 @@ WarpX::Evolve (int numsteps)
 
         // Start loop on time steps
         if (verbose) {
-            amrex::Print() << "\nSTEP " << step+1 << " starts ...\n";
+            amrex::Print() << "STEP " << step+1 << " starts ...\n";
         }
         ExecutePythonCallback("beforestep");
 
@@ -361,7 +360,7 @@ WarpX::Evolve (int numsteps)
                         << " DT = " << dt[0] << "\n";
             amrex::Print()<< "Evolve time = " << evolve_time
                       << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
-                      << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n";
+                      << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n\n";
         }
 
         if (cur_time >= stop_time - 1.e-3*dt[0] || SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK)) {
@@ -733,8 +732,10 @@ WarpX::OneStep_sub1 (Real curtime)
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
-    FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
-    FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_alloc_F);
+    FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver,
+                  WarpX::sync_nodal_points);
+    FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_alloc_F,
+                  WarpX::sync_nodal_points);
 
     EvolveE(fine_lev, PatchType::fine, dt[fine_lev]);
     FillBoundaryE(fine_lev, PatchType::fine, guard_cells.ng_FieldGather);
@@ -768,8 +769,10 @@ WarpX::OneStep_sub1 (Real curtime)
 
     EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::FirstHalf);
     EvolveF(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::FirstHalf);
-    FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather);
-    FillBoundaryF(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolverF);
+    FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather,
+                    WarpX::sync_nodal_points);
+    FillBoundaryF(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolverF,
+                    WarpX::sync_nodal_points);
 
     EvolveE(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
     FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather);
@@ -794,7 +797,8 @@ WarpX::OneStep_sub1 (Real curtime)
     FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_FieldSolverF);
 
     EvolveE(fine_lev, PatchType::fine, dt[fine_lev]);
-    FillBoundaryE(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
+    FillBoundaryE(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver,
+                    WarpX::sync_nodal_points);
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::SecondHalf);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::SecondHalf);
@@ -830,7 +834,6 @@ WarpX::OneStep_sub1 (Real curtime)
 
     FillBoundaryB(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver,
                   WarpX::sync_nodal_points);
-
     FillBoundaryF(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolverF,
                   WarpX::sync_nodal_points);
 

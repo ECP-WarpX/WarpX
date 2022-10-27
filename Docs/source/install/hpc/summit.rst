@@ -50,13 +50,13 @@ For PSATD+RZ simulations, you will need to build BLAS++ and LAPACK++:
 .. code-block:: bash
 
   # BLAS++ (for PSATD+RZ)
-  git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+  git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
   rm -rf src/blaspp-summit-build
   cmake -S src/blaspp -B src/blaspp-summit-build -Duse_openmp=OFF -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/summit/blaspp-master
   cmake --build src/blaspp-summit-build --target install --parallel 10
 
   # LAPACK++ (for PSATD+RZ)
-  git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+  git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
   rm -rf src/lapackpp-summit-build
   cmake -S src/lapackpp -B src/lapackpp-summit-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/summit/lapackpp-master
   cmake --build src/lapackpp-summit-build --target install --parallel 10
@@ -344,10 +344,7 @@ When starting up a post-processing session, run this in your first cells:
    # work-around for OLCFHELP-4242
    !jupyter serverextension enable --py --sys-prefix dask_labextension
 
-   # next Jupyter cell: install a faster & better conda package manager
-   !conda install -c conda-forge -y mamba
-
-   # next cell: the software you want
+   # next Jupyter cell: the software you want
    !mamba install --quiet -c conda-forge -y openpmd-api openpmd-viewer ipympl ipywidgets fast-histogram yt
 
    # restart notebook

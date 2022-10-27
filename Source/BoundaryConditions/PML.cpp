@@ -1,5 +1,5 @@
-/* Copyright 2019 Andrew Myers, Aurore Blelly, Axel Huebl
- * Maxence Thevenet, Remi Lehe, Weiqun Zhang
+/* Copyright 2019-2022 Andrew Myers, Aurore Blelly, Axel Huebl,
+ * Luca Fedeli, Maxence Thevenet, Remi Lehe, Weiqun Zhang
  *
  *
  * This file is part of WarpX.
@@ -17,7 +17,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "WarpX.H"
 
 #include <ablastr/utils/Communication.H>
@@ -618,9 +618,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         int ngFFt_z = do_nodal ? noz_fft : noz_fft/2;
 
         ParmParse pp_psatd("psatd");
-        queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
-        queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
-        queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
+        utils::parser::queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
+        utils::parser::queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
+        utils::parser::queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if defined(WARPX_DIM_3D)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);

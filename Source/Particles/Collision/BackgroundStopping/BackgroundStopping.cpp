@@ -5,8 +5,9 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "BackgroundStopping.H"
+
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/ParticleUtils.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -35,12 +36,14 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
 
     amrex::ParticleReal background_density;
     std::string background_density_str;
-    if (queryWithParser(pp_collision_name, "background_density", background_density)) {
+    if (utils::parser::queryWithParser(pp_collision_name, "background_density", background_density)) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(background_density > 0,
                  "For background stopping, the background density must be greater than 0");
-        m_background_density_parser = makeParser(std::to_string(background_density), {"x", "y", "z", "t"});
+        m_background_density_parser =
+            utils::parser::makeParser(std::to_string(background_density), {"x", "y", "z", "t"});
     } else if (pp_collision_name.query("background_density(x,y,z,t)", background_density_str)) {
-        m_background_density_parser = makeParser(background_density_str, {"x", "y", "z", "t"});
+        m_background_density_parser =
+            utils::parser::makeParser(background_density_str, {"x", "y", "z", "t"});
     } else {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                  "For background stopping, the background density must be specified.");
@@ -48,12 +51,14 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
 
     amrex::ParticleReal background_temperature;
     std::string background_temperature_str;
-    if (queryWithParser(pp_collision_name, "background_temperature", background_temperature)) {
+    if (utils::parser::queryWithParser(pp_collision_name, "background_temperature", background_temperature)) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(background_temperature > 0,
                  "For background stopping, the background temperature must be greater than 0");
-        m_background_temperature_parser = makeParser(std::to_string(background_temperature), {"x", "y", "z", "t"});
+        m_background_temperature_parser =
+            utils::parser::makeParser(std::to_string(background_temperature), {"x", "y", "z", "t"});
     } else if (pp_collision_name.query("background_temperature(x,y,z,t)", background_temperature_str)) {
-        m_background_temperature_parser = makeParser(background_temperature_str, {"x", "y", "z", "t"});
+        m_background_temperature_parser =
+            utils::parser::makeParser(background_temperature_str, {"x", "y", "z", "t"});
     } else {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                  "For background stopping, the background temperature must be specified.");
@@ -65,10 +70,13 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
 
     if (m_background_type == BackgroundStoppingType::ELECTRONS) {
         m_background_mass = PhysConst::m_e;
-        queryWithParser(pp_collision_name, "background_mass", m_background_mass);
+        utils::parser::queryWithParser(
+            pp_collision_name, "background_mass", m_background_mass);
     } else if (m_background_type == BackgroundStoppingType::IONS) {
-        getWithParser(pp_collision_name, "background_mass", m_background_mass);
-        getWithParser(pp_collision_name, "background_charge_state", m_background_charge_state);
+        utils::parser::getWithParser(
+            pp_collision_name, "background_mass", m_background_mass);
+        utils::parser::getWithParser(
+            pp_collision_name, "background_charge_state", m_background_charge_state);
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_background_mass > 0,
              "For background stopping, the background mass must be greater than 0");

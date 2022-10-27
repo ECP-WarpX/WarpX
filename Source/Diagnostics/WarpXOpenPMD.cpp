@@ -11,10 +11,10 @@
 #include "FieldIO.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Utils/TextMsg.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <ablastr/particles/IndexHandling.H>
@@ -181,34 +181,44 @@ namespace detail
                 op_block += R"END(,
           "parameters": {
 )END";
-            op_block += op_parameters + "}";
+            op_block += op_parameters +
+                        "\n          }";
         }
             op_block += R"END(
         }
       ]
     })END";
-        if (!engine_type.empty())
-            op_block += ",";
-
+            if (!engine_type.empty() || !en_parameters.empty())
+                op_block += ",";
         }  // end operator string block
 
         // add the engine string block
-        if (!engine_type.empty()) {
+        if (!engine_type.empty() || !en_parameters.empty())
+        {
             en_block = R"END(
-    "engine": {
-      "type": ")END";
-            en_block += engine_type + "\"";
+    "engine": {)END";
 
+            // non-default engine type
+            if (!engine_type.empty()) {
+                en_block += R"END(
+      "type": ")END";
+                en_block += engine_type + "\"";
+
+                if(!en_parameters.empty())
+                    en_block += ",";
+            }
+
+            // non-default engine parameters
             if (!en_parameters.empty()) {
-                en_block += R"END(,
+                en_block += R"END(
       "parameters": {
 )END";
-            en_block += en_parameters + "}";
+                en_block += en_parameters +
+                            "\n      }";
             }
 
             en_block += R"END(
     })END";
-
         }  // end engine string block
 
         options = top_block + op_block + en_block + end_block;
@@ -611,7 +621,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                          particle_diags[i].m_uniform_stride);
       ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
-                                 compileParser<ParticleDiag::m_nvars>
+                                utils::parser::compileParser<ParticleDiag::m_nvars>
                                      (particle_diags[i].m_particle_filter_parser.get()),
                                  pc->getMass());
       parser_filter.m_units = InputUnits::SI;
@@ -1004,15 +1014,18 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
         amrex::ParticleReal const mass)
 {
     auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
+    auto const scalar = openPMD::RecordComponent::SCALAR;
 
+    // define record shape to be number of particles
     auto const positionComponents = detail::getParticlePositionComponentLabels();
     for( auto const& comp : positionComponents ) {
         currSpecies["positionOffset"][comp].resetDataset( realType );
     }
+    currSpecies["charge"][scalar].resetDataset( realType );
+    currSpecies["mass"][scalar].resetDataset( realType );
 
     // make constant
     using namespace amrex::literals;
-    auto const scalar = openPMD::RecordComponent::SCALAR;
     for( auto const& comp : positionComponents ) {
         currSpecies["positionOffset"][comp].makeConstant( 0._prt );
     }

@@ -48,13 +48,16 @@ for i in range(ncells[0]):
                                  (-Lx / 2 <= x < Lx / 2) *
                                  (-Lz / 2 <= z < Lz / 2) *
                                  np.cos(np.pi / Lx * c * t))
-
 rel_tol_err = 1e-3
 
 # Compute relative l^2 error on By
 By_sim = data['By'].to_ndarray()
 rel_err_y = np.sqrt(np.sum(np.square(By_sim - By_th)) / np.sum(np.square(By_th)))
 assert (rel_err_y < rel_tol_err)
+
+# Compute relative l^2 error on Ey
+Ey_sim = data['Ey'].to_ndarray()
+rel_err_y = np.sqrt(np.sum(np.square(Ey_sim/c - By_th)) / np.sum(np.square(By_th)))
 
 test_name = os.path.split(os.getcwd())[1]
 

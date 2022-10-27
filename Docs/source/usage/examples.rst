@@ -60,6 +60,12 @@ Laser-ion acceleration
    The resolution of this 2D case is extremely low by default.
    You will need a computing cluster for adequate resolution of the target density, see comments in the input file.
 
+.. warning::
+
+   It is strongly advised to set the parameters ``<species>.zmin / zmax / xmin / ...`` when working with highly dense targets that are limited in one or multiple dimensions.
+   The particle creation routine will first create particles everywhere between these limits (`defaulting to box size if unset`), setting particles to invalid only afterwards based on the density profile.
+   Not setting these parameters can quickly lead to memory overflows.
+
 Uniform plasma
 --------------
 

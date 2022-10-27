@@ -35,7 +35,7 @@
 #include "FieldSolver/ElectrostaticSolver.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
@@ -306,7 +306,7 @@ public:
     static bool do_dynamic_scheduling;
     static bool refine_plasma;
 
-    static IntervalsParser sort_intervals;
+    static utils::parser::IntervalsParser sort_intervals;
     static amrex::IntVect sort_bin_size;
 
     static bool do_subcycling;
@@ -453,7 +453,7 @@ public:
     void PrintMainPICparameters ();
 
     /** Write a file that record all inputs: inputs file + command line options */
-    void WriteUsedInputsFile (std::string const & filename = "warpx_used_inputs") const;
+    void WriteUsedInputsFile () const;
 
     /** Print dt and dx,dy,dz */
     void PrintDtDxDyDz ();
@@ -530,7 +530,10 @@ public:
 
     /** \brief returns the load balance interval
      */
-    IntervalsParser get_load_balance_intervals () const {return load_balance_intervals;}
+    utils::parser::IntervalsParser get_load_balance_intervals () const
+    {
+        return load_balance_intervals;
+    }
 
     /**
      * \brief Private function for spectral solver
@@ -1270,7 +1273,7 @@ private:
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
      * for getting steps at which load balancing is performed */
-    IntervalsParser load_balance_intervals;
+    utils::parser::IntervalsParser load_balance_intervals;
     /** Collection of LayoutData to keep track of weights used in load balancing
      * routines. Contains timer-based or heuristic-based costs depending on input option */
     amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > > costs;
@@ -1303,7 +1306,7 @@ private:
     amrex::Real costs_heuristic_particles_wt = amrex::Real(0);
 
     // Determines timesteps for override sync
-    IntervalsParser override_sync_intervals;
+    utils::parser::IntervalsParser override_sync_intervals;
 
     // Other runtime parameters
     int verbose = 1;

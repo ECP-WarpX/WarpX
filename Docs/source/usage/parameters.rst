@@ -5,6 +5,10 @@ Input Parameters
 
 .. note::
 
+   WarpX input options are read via AMReX `ParmParse <https://amrex-codes.github.io/amrex/docs_html/Basics.html#parmparse>`__.
+
+.. note::
+
    The AMReX parser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted.
 
 .. _running-cpp-parameters-overall:
@@ -23,6 +27,10 @@ Overall simulation parameters
     The maximum physical time of the simulation. Can be provided instead of ``max_step``. If both
     ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
     when the first criterion is hit.
+
+* ``warpx.used_inputs_file`` (`string`; default: ``warpx_used_inputs``)
+    Name of a file that WarpX writes to archive the used inputs.
+    The context of this file will contain an exact copy of all explicitly and implicitly used inputs parameters, including those :ref:`extended and overwritten from the command line <usage_run>`.
 
 * ``warpx.gamma_boost`` (`float`)
     The Lorentz factor of the boosted frame in which the simulation is run.
@@ -308,7 +316,9 @@ Domain Boundary Conditions
     * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. For the electromagnetic solve, at PEC, the tangential electric field and the normal magnetic field are set to 0. This boundary can be used to model a dielectric or metallic surface. In the guard-cell region, the tangential electric field is set equal and opposite to the respective field component in the mirror location across the PEC boundary, and the normal electric field is set equal to the field component in the mirror location in the domain across the PEC boundary. Similarly, the tangential (and normal) magnetic field components are set equal (and opposite) to the respective magnetic field components in the mirror locations across the PEC boundary. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
       If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
 
-    * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`. If the electrostatic solver is used, a Neumann boundary condition (with gradient equal to 0) will be applied on the specified boundary.
+    * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`.
+
+    * ``neumann``: For the electrostatic solver, a Neumann boundary condition (with gradient of the potential equal to 0) will be applied on the specified boundary.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
     Options are:

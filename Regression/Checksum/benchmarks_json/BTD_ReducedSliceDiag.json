@@ -9,9 +9,9 @@
     "particle_weight": 62415.090744607616
   },
   "electrons": {
-    "particle_momentum_x": 9.678379481090198e-20,
-    "particle_momentum_y": 2.5764224165967887e-19,
-    "particle_momentum_z": 3.0774186320322946e-19,
+    "particle_momentum_x": 8.238176902434188e-20,
+    "particle_momentum_y": 2.362174160683283e-19,
+    "particle_momentum_z": 2.776294933800578e-19,
     "particle_position_x": 0.0025853613792120563,
     "particle_position_y": 0.0037728464704368673,
     "particle_position_z": 0.1901073014926564,

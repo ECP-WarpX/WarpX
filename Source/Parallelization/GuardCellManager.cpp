@@ -15,10 +15,10 @@
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Filter/NCIGodfreyFilter.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 
 #include <AMReX_Config.H>
 #include <AMReX_INT.H>
@@ -201,9 +201,9 @@ guardCellManager::Init (
         int ngFFt_z = (do_nodal || galilean) ? noz_fft : noz_fft / 2;
 
         ParmParse pp_psatd("psatd");
-        queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
-        queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
-        queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
+        utils::parser::queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
+        utils::parser::queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
+        utils::parser::queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if defined(WARPX_DIM_3D)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);

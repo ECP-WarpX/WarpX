@@ -23,11 +23,11 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/Logo/GetLogo.H"
 #include "Utils/MPIInitHelpers.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/UsedInputsFile.H>
@@ -349,8 +349,12 @@ WarpX::PrintMainPICparameters ()
 }
 
 void
-WarpX::WriteUsedInputsFile (std::string const & filename) const
+WarpX::WriteUsedInputsFile () const
 {
+    std::string filename = "warpx_used_inputs";
+    ParmParse pp_warpx("warpx");
+    pp_warpx.queryAdd("used_inputs_file", filename);
+
     ablastr::utils::write_used_inputs_file(filename);
 }
 
@@ -699,12 +703,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (B_ext_grid_s == "constant")
-        getArrWithParser(pp_warpx, "B_external_grid", B_external_grid);
+        utils::parser::getArrWithParser(pp_warpx, "B_external_grid", B_external_grid);
 
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (E_ext_grid_s == "constant")
-        getArrWithParser(pp_warpx, "E_external_grid", E_external_grid);
+        utils::parser::getArrWithParser(pp_warpx, "E_external_grid", E_external_grid);
 
     // initialize the averaged fields only if the averaged algorithm
     // is activated ('psatd.do_time_averaging=1')
@@ -775,18 +779,18 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        amrex::Abort(Utils::TextMsg::Err(
            "E and B parser for external fields does not work with RZ -- TO DO"));
 #endif
-       Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
-                                                    str_Bx_ext_grid_function);
-       Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
-                                                    str_By_ext_grid_function);
-       Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
-                                                    str_Bz_ext_grid_function);
+       utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
+          str_Bx_ext_grid_function);
+       utils::parser::Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
+          str_By_ext_grid_function);
+       utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
+          str_Bz_ext_grid_function);
        Bxfield_parser = std::make_unique<amrex::Parser>(
-                                makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
+       utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
        Byfield_parser = std::make_unique<amrex::Parser>(
-                                makeParser(str_By_ext_grid_function,{"x","y","z"}));
+          utils::parser::makeParser(str_By_ext_grid_function,{"x","y","z"}));
        Bzfield_parser = std::make_unique<amrex::Parser>(
-                                makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
+          utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
 
        // Initialize Bfield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Bfield_fp[lev][0].get(),
@@ -833,19 +837,19 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        amrex::Abort(Utils::TextMsg::Err(
            "E and B parser for external fields does not work with RZ -- TO DO"));
 #endif
-       Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
-                                                    str_Ex_ext_grid_function);
-       Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
-                                                    str_Ey_ext_grid_function);
-       Store_parserString(pp_warpx, "Ez_external_grid_function(x,y,z)",
-                                                    str_Ez_ext_grid_function);
+       utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
+           str_Ex_ext_grid_function);
+       utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
+           str_Ey_ext_grid_function);
+       utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(x,y,z)",
+           str_Ez_ext_grid_function);
 
        Exfield_parser = std::make_unique<amrex::Parser>(
-                                makeParser(str_Ex_ext_grid_function,{"x","y","z"}));
+           utils::parser::makeParser(str_Ex_ext_grid_function,{"x","y","z"}));
        Eyfield_parser = std::make_unique<amrex::Parser>(
-                                makeParser(str_Ey_ext_grid_function,{"x","y","z"}));
+           utils::parser::makeParser(str_Ey_ext_grid_function,{"x","y","z"}));
        Ezfield_parser = std::make_unique<amrex::Parser>(
-                                makeParser(str_Ez_ext_grid_function,{"x","y","z"}));
+           utils::parser::makeParser(str_Ez_ext_grid_function,{"x","y","z"}));
 
        // Initialize Efield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Efield_fp[lev][0].get(),
