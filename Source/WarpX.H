@@ -100,8 +100,9 @@ public:
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
-                         int num_shift, int dir, const int lev, amrex::Real external_field=0.0,
-                         bool useparser = false, amrex::ParserExecutor<3> const& field_parser={});
+                         int num_shift, int dir, const int lev, bool update_cost_flag,
+                         amrex::Real external_field=0.0, bool useparser = false,
+                         amrex::ParserExecutor<3> const& field_parser={});
 
     static void GotoNextLine (std::istream& is);
 
