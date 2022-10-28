@@ -53,7 +53,7 @@ An in-depth discussion of the boosted frame is provided in the :ref:`moving wind
 What about Back-transformed diagnostics (BTD)?
 ----------------------------------------------
 
-.. figure:: BTD_features.png
+.. figure:: https://user-images.githubusercontent.com/10621396/198371583-ed6897be-aedd-4844-96b1-12dd32514930.png
    :alt: [fig:BTD_features] Minkowski diagram indicating several features of the back-transformed diagnostic (BTD). The diagram explains why the BTD may not start at :math:`t=0`, why the BTD grid-spacing and snapshot length don't correspond to the grid spacing and length in the input script, and when the snapshot is completed.
 
    [fig:BTD_features] Minkowski diagram indicating several features of the back-transformed diagnostic (BTD). The diagram explains why the BTD may not start at :math:`t=0`, why the BTD grid-spacing and snapshot length don't correspond to the grid spacing and length in the input script, and when the snapshot is completed.
