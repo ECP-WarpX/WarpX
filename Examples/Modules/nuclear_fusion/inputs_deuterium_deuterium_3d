@@ -29,50 +29,50 @@ algo.particle_shape = 1
 #################################
 ############ PLASMA #############
 #################################
-particles.species_names = deuterium1 hydrogen1 helium1 neutron1
+particles.species_names = deuterium_1 hydrogen2_1 helium3_1 neutron_1
 my_constants.m_deuterium = 2.01410177812*m_u
 my_constants.keV_to_J = 1.e3*q_e
 my_constants.Energy_step = 22. * keV_to_J
 
-deuterium1.species_type = deuterium
-deuterium1.injection_style = "NRandomPerCell"
-deuterium1.num_particles_per_cell = 10000
-deuterium1.profile = constant
-deuterium1.density = 1.
-deuterium1.momentum_distribution_type = "parse_momentum_function"
-deuterium1.momentum_function_ux(x,y,z) = 0.
-deuterium1.momentum_function_uy(x,y,z) = 0.
-deuterium1.momentum_function_uz(x,y,z) = sqrt(m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight)
-deuterium1.do_not_push = 1
-deuterium1.do_not_deposit = 1
+deuterium_1.species_type = deuterium
+deuterium_1.injection_style = "NRandomPerCell"
+deuterium_1.num_particles_per_cell = 10000
+deuterium_1.profile = constant
+deuterium_1.density = 1.
+deuterium_1.momentum_distribution_type = "parse_momentum_function"
+deuterium_1.momentum_function_ux(x,y,z) = 0.
+deuterium_1.momentum_function_uy(x,y,z) = 0.
+deuterium_1.momentum_function_uz(x,y,z) = sqrt(m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight)
+deuterium_1.do_not_push = 1
+deuterium_1.do_not_deposit = 1
 
-hydrogen1.species_type = deuterium
-hydrogen1.injection_style = "NRandomPerCell"
-hydrogen1.num_particles_per_cell = 10000
-hydrogen1.profile = constant
-hydrogen1.density = 1.
-hydrogen1.momentum_distribution_type = "parse_momentum_function"
-hydrogen1.momentum_function_ux(x,y,z) = 0.
-hydrogen1.momentum_function_uy(x,y,z) = 0.
-hydrogen1.momentum_function_uz(x,y,z) = -sqrt(m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight)
-hydrogen1.do_not_push = 1
-hydrogen1.do_not_deposit = 1
+hydrogen2_1.species_type = deuterium
+hydrogen2_1.injection_style = "NRandomPerCell"
+hydrogen2_1.num_particles_per_cell = 10000
+hydrogen2_1.profile = constant
+hydrogen2_1.density = 1.
+hydrogen2_1.momentum_distribution_type = "parse_momentum_function"
+hydrogen2_1.momentum_function_ux(x,y,z) = 0.
+hydrogen2_1.momentum_function_uy(x,y,z) = 0.
+hydrogen2_1.momentum_function_uz(x,y,z) = -sqrt(m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight)
+hydrogen2_1.do_not_push = 1
+hydrogen2_1.do_not_deposit = 1
 
-helium1.species_type = helium3
-helium1.do_not_push = 1
-helium1.do_not_deposit = 1
+helium3_1.species_type = helium3
+helium3_1.do_not_push = 1
+helium3_1.do_not_deposit = 1
 
-neutron1.species_type = neutron
-neutron1.do_not_push = 1
-neutron1.do_not_deposit = 1
+neutron_1.species_type = neutron
+neutron_1.do_not_push = 1
+neutron_1.do_not_deposit = 1
 
 #################################
 ############ COLLISION ##########
 #################################
 collisions.collision_names = DDNHeF1
 
-DDNHeF1.species = deuterium1 hydrogen1
-DDNHeF1.product_species = helium1 neutron1
+DDNHeF1.species = deuterium_1 hydrogen2_1
+DDNHeF1.product_species = helium3_1 neutron_1
 DDNHeF1.type = nuclearfusion
 DDNHeF1.fusion_multiplier = 1.e50
 
