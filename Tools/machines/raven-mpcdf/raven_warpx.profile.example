@@ -1,0 +1,55 @@
+# please set your project account
+#export proj=<yourProject>
+
+module purge
+
+# required dependencies
+module load gcc/11
+module load cuda/11.4
+module load openmpi/4
+module load cmake/3.22
+module load git
+
+
+# optional: for QED support with detailed tables
+# TODO: module load boost
+
+# optional: for I/O and openPMD
+module load numdiff/5.9
+# TODO: HDF5, ADIOS2
+
+# optiona: for PSATD+RZ support
+# TODO: BLAS++ & LAPACK++
+
+# optional: for Python bindings or libEnsemble
+# TODO: Python
+
+if [ -d "$HOME/sw/raven-gpu/venvs/warpx" ]
+then
+  source $HOME/sw/raven-gpu/venvs/warpx/bin/activate
+fi
+
+# an alias to request an interactive batch node for one hour
+#   for parallel execution, start on the batch node: srun <command>
+alias getNode="salloc -N 1 --ntasks-per-node=4 -t 1:00:00 -q interactive -C gpu --gpu-bind=single:1 -c 32 -G 4 -A $proj"
+# an alias to run a command on a batch node for up to 30min
+#   usage: runNode <command>
+alias runNode="srun -N 1 --ntasks-per-node=4 -t 0:30:00 -q interactive -C gpu --gpu-bind=single:1 -c 32 -G 4 -A $proj"
+
+# GPU-aware MPI (MPICH)
+#export MPICH_GPU_SUPPORT_ENABLED=1
+
+# optimize CUDA compilation for A100
+#export AMREX_CUDA_ARCH=8.0
+
+# optimize CPU microarchitecture for AMD EPYC 3rd Gen (Milan/Zen3)
+# note: the cc/CC/ftn wrappers below add those
+##export CXXFLAGS="-march=znver3"
+##export CFLAGS="-march=znver3"
+
+# compiler environment hints
+export CC=$(which gcc)
+export CXX=$(which g++)
+export FC=$(which gfortran)
+export CUDACXX=$(which nvcc)
+export CUDAHOSTCXX=${CXX}
