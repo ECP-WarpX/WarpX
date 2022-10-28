@@ -270,7 +270,7 @@ bool
 BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 {
     // timestep < 0, i.e., at initialization time when step == -1
-    amrex::Print() << " buffer " << i_buffer << " full ? " << buffer_full(i_buffer) << " snapshot full " << m_snapshot_full[i_buffer] << " empty ? " << buffer_empty(i_buffer) << "\n";
+    // amrex::AllPrint() << " buffer " << i_buffer << " full ? " << buffer_full(i_buffer) << " snapshot full " << m_snapshot_full[i_buffer] << " empty ? " << buffer_empty(i_buffer) << "\n";
     if (step < 0 )
         return false;
     // Do not call dump if the snapshot is already full and the files are closed.
@@ -525,7 +525,6 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
                   m_cell_centered_data[lev].get(), lev,
                   nvars, m_num_buffers, m_varnames);
     }
-
 
     // Define all cell-centered functors required to compute cell-centere data
     // Fill vector of cell-center functors for all field-components, namely,
@@ -955,7 +954,7 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
 void
 BTDiagnostics::Flush (int i_buffer)
 {
-    amrex::Print() << " in flush buffer " << i_buffer << "\n";
+    // amrex::AllPrint() << " in flush buffer " << i_buffer << "\n";
     auto & warpx = WarpX::GetInstance();
     std::string file_name = m_file_prefix;
     if (m_format=="plotfile") {
@@ -1015,7 +1014,7 @@ BTDiagnostics::Flush (int i_buffer)
             }
         }
     }
-    amrex::Print() << " writing data " << i_buffer <<"\n";
+    // amrex::AllPrint() << " writing data " << i_buffer <<"\n";
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
