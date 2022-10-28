@@ -98,7 +98,7 @@ tritium_2.momentum_distribution_type = "constant"
 tritium_2.do_not_push = 1
 tritium_2.do_not_deposit = 1
 
-helium4_2.species_type = helium4_4
+helium4_2.species_type = helium4
 helium4_2.do_not_push = 1
 helium4_2.do_not_deposit = 1
 
