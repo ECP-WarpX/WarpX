@@ -1068,6 +1068,11 @@ private:
      */
     void CheckGuardCells(amrex::MultiFab const& mf);
 
+    /**
+     * \brief Checks for known numerical issues involving different WarpX modules
+     */
+    void CheckKnownIssues();
+
     /** Check the requested resources and write performance hints */
     void PerformanceHints ();
 
