@@ -33,7 +33,9 @@ void UpdateMomentumPerezElastic (
     T_PR const q1, T_PR const m1, T_PR const w1,
     T_PR const q2, T_PR const m2, T_PR const w2,
     T_R const dt, T_PR const L, T_PR const lmdD,
-    amrex::RandomEngine const& engine)
+    amrex::RandomEngine const& engine,
+    int const nd, int const np, T_R const dV,
+    bool const isSameSpecies=true)
 {
 
     T_PR const diffx = amrex::Math::abs(u1x-u2x);
@@ -117,9 +119,11 @@ void UpdateMomentumPerezElastic (
     // Compute s
     const auto tts = m1*g1s*m2*g2s/(inv_c2*p1sm*p1sm) + T_PR(1.0);
     const auto tts2 = tts*tts;
-    T_PR s = n1*n2/n12 * dt*lnLmd*q1*q1*q2*q2 /
-          ( T_PR(4.0) * MathConst::pi * PhysConst::ep0 * PhysConst::ep0 *
+    T_PR s;
+    s = np/dV*amrex::max(w1,w2)/nd * dt*lnLmd*q1*q1*q2*q2 /
+          ( T_R(4.0) * MathConst::pi * PhysConst::ep0 * PhysConst::ep0 *
             m1*g1*m2*g2/(inv_c2*inv_c2) ) * gc*p1sm/mass_g * tts2;
+    if ( isSameSpecies ) { s = s*T_R(2.0); }
 
     // Compute s'
     const auto cbrt_n1 = std::cbrt(n1);
@@ -127,9 +131,10 @@ void UpdateMomentumPerezElastic (
     const auto coeff = static_cast<T_PR>(
         std::pow(4.0*MathConst::pi/3.0,1.0/3.0));
     T_PR const vrel = mass_g*p1sm/(m1*g1s*m2*g2s*gc);
-    T_PR const sp = coeff * n1*n2/n12 * dt * vrel * (m1+m2) /
-          amrex::max( m1*cbrt_n1*cbrt_n1,
-                      m2*cbrt_n2*cbrt_n2);
+    T_R sp;
+    sp = coeff * np/dV*amrex::max(w1,w2)/nd * dt * vrel * (m1+m2) /
+         amrex::max( m1*cbrt_n1*cbrt_n1, m2*cbrt_n2*cbrt_n2);
+    if ( isSameSpecies ) { sp = sp*T_R(2.0); }
 
     // Determine s
     s = amrex::min(s,sp);

@@ -50,7 +50,8 @@ void ElasticCollisionPerez (
     T_PR const  m1, T_PR const  m2,
     T_PR const  T1, T_PR const  T2,
     T_R const  dt, T_PR const   L, T_R const dV,
-    amrex::RandomEngine const& engine)
+    amrex::RandomEngine const& engine,
+    bool const isSameSpecies)
 {
     int NI1 = I1e - I1s;
     int NI2 = I2e - I2s;
@@ -116,9 +117,40 @@ void ElasticCollisionPerez (
 
     // call UpdateMomentumPerezElastic()
     {
-      int i1 = I1s; int i2 = I2s;
-      for (int k = 0; k < amrex::max(NI1,NI2); ++k)
-      {
+        int i1 = I1s; int i2 = I2s;
+        int d1; int d2;
+        int np;
+
+        if ( isSameSpecies ) {
+            np = (NI1+NI2) - 1 + (NI1+NI2)%2;
+        } else {
+            np = amrex::max(NI1,NI2);
+        }
+
+        for (int k = 0; k < amrex::max(NI1,NI2); ++k)
+        {
+
+            if ( isSameSpecies ) {
+                d1 = 1; d2 = 1;
+                if ( (NI1+NI2)%2>0 && k==0 ) { d1=2; }
+            } else {
+                if ( NI1/NI2>=1 ) { d1 = 1; }
+                else {
+                    if ( k<=NI2%NI1-1 ) {
+                        d1 = std::floor(NI2/NI1) + 1;
+                    } else {
+                        d1 = std::floor(NI2/NI1);
+                    }
+                }
+                if ( NI2/NI1>=1 ) { d2 = 1; }
+                else {
+                    if ( k<=NI1%NI2-1 ) {
+                        d2 = std::floor(NI1/NI2) + 1;
+                    } else {
+                        d2 = std::floor(NI1/NI2);
+                    }
+                }
+            }
 
 #if (defined WARPX_DIM_RZ)
           /* In RZ geometry, macroparticles can collide with other macroparticles
@@ -140,8 +172,8 @@ void ElasticCollisionPerez (
               u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
               n1, n2, n12,
               q1, m1, w1[ I1[i1] ], q2, m2, w2[ I2[i2] ],
-              dt, L, lmdD,
-              engine);
+              dt, L, lmdD, engine,
+              amrex::max(d1,d2), np, dV, isSameSpecies);
 
 #if (defined WARPX_DIM_RZ)
           T_PR const u1xbuf_new = u1x[I1[i1]];
@@ -151,7 +183,7 @@ void ElasticCollisionPerez (
 
           ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
           ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
-      }
+        }
     }
 
 }
