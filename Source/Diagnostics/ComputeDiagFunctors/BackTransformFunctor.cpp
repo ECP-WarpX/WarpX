@@ -116,18 +116,29 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
             amrex::Array4<amrex::Real> dst_arr = mf_dst[mfi].array();
 #ifdef WARPX_DIM_RZ
             const int nrz = WarpX::n_rz_azimuthal_modes;
+            const int n_rz_comp = 2*nrz - 1;
 #endif
             amrex::ParallelFor( tbx, ncomp_dst,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
                 {
+                    // Field id that corresponds to the nth user-requested component
                     const int icomp = field_map_ptr[n];
 #if defined(WARPX_DIM_3D)
                     dst_arr(i, j, k_lab, n) = src_arr(i, j, k, icomp);
 #elif defined(WARPX_DIM_2D)
                     dst_arr(i, k_lab, k, n) = src_arr(i, j, k, icomp);
 #elif defined(WARPX_DIM_RZ)
-                    const int rzcomp = n - static_cast<int>( floor(n/(2.0*nrz-1.0)) ) * (2*nrz-1);
-                    dst_arr(i, k_lab, k, n) = src_arr(i, j, k, icomp*(2*nrz-1)+rzcomp);
+                    // rzcomp below gives the component id, 0 to (n_rz_comp-1) for a given field
+                    const int rzcomp = n - static_cast<int>( floor(n/(2.0*nrz-1.0)) ) * n_rz_comp;
+                    // Accessing the correct rz component from the cell-centered multifab
+                    // that has back-transformed fields and storing it for the appropriate user-requested field, icomp
+                    // For example, for 2 rz modes, we have three components (n_rz_comp=3) for each field
+                    // If n = 4 gives icomp = 1 (for Et) obtained from field_map_ptr,
+                    //           rzcomp = 4 - int(floor(4/3))*3 = 4 - 3 = 1
+                    // Thus we are accessing real component of mode 1 of Et (note that modes go from 0 to 1)
+                    // Since the fields are stored contiguously in src_arr, icomp*n_rz_comp + rz_comp accesses
+                    // real part of mode 1 for Et (1*3+1) = 4
+                    dst_arr(i, k_lab, k, n) = src_arr(i, j, k, icomp*n_rz_comp+rzcomp);
 #endif
                 } );
         }
@@ -226,43 +237,48 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
             // followed by three components each for Et, Ez, Br, Bt, Bz, jr, jt, jz, and rho
                 for (int imode = 0; imode < n_rz; ++imode) {
                     int offset = 1;
+                    // number of components for a given mode
                     int ncomp = 2;
                     if (imode == 0) {
                         offset = 0;
-                        // Mode 0 has only real part
+                        // Mode 0 has only real part, thus ncomp = 1
                         ncomp = 1;
                     }
                     for (int icomp = 0; icomp < ncomp; ++icomp) {
                         // Back-transform the transverse electric and magnetic fields.
                         // Note that the z-components, Ez, Bz, are not changed by the transform.
                         amrex::Real e_lab, b_lab, j_lab, rho_lab;
+
+                        // Offset for a given mode, imode, and component, icomp (0-real, 1-imag)
+                        const int mode_comp_offset = 2*imode + offset*(icomp-1);
+
                         // Transform Ex_boost (ncomp=0) & By_boost (ncomp=4) to lab-frame
-                        e_lab = gamma_boost * ( arr(i, j, k, n_rcomps*0 + 2*imode + offset*(icomp-1))
-                                                + beta_boost * clight * arr(i, j, k, n_rcomps*4+ 2*imode + offset*(icomp-1)) );
-                        b_lab = gamma_boost * ( arr(i, j, k, n_rcomps*4 + 2*imode + offset*(icomp-1))
-                                                + beta_boost * inv_clight * arr(i, j, k, n_rcomps*0 + 2*imode + offset*(icomp-1)) );
+                        e_lab = gamma_boost * ( arr(i, j, k, n_rcomps*0 + mode_comp_offset)
+                                                + beta_boost * clight * arr(i, j, k, n_rcomps*4+ mode_comp_offset) );
+                        b_lab = gamma_boost * ( arr(i, j, k, n_rcomps*4 + mode_comp_offset)
+                                                + beta_boost * inv_clight * arr(i, j, k, n_rcomps*0 + mode_comp_offset) );
                         // Store lab-frame data in-place
-                        arr(i, j, k, n_rcomps*0 + 2*imode + offset*(icomp-1)) = e_lab;
-                        arr(i, j, k, n_rcomps*4 + 2*imode + offset*(icomp-1)) = b_lab;
+                        arr(i, j, k, n_rcomps*0 + mode_component_offset) = e_lab;
+                        arr(i, j, k, n_rcomps*4 + mode_component_offset) = b_lab;
 
                         // Transform Ey_boost (ncomp=1) & Bx_boost (ncomp=3) to lab-frame
-                        e_lab = gamma_boost * ( arr(i, j, k, n_rcomps*1 + 2*imode + offset*(icomp-1))
-                                                - beta_boost * clight * arr(i, j, k, n_rcomps*3 + 2*imode + offset*(icomp-1)) );
-                        b_lab = gamma_boost * ( arr(i, j, k, n_rcomps*3 + 2*imode + offset*(icomp-1))
-                                                - beta_boost * inv_clight * arr(i, j, k, n_rcomps*1 + 2*imode + offset*(icomp-1)) );
+                        e_lab = gamma_boost * ( arr(i, j, k, n_rcomps*1 + mode_comp_offset)
+                                                - beta_boost * clight * arr(i, j, k, n_rcomps*3 + mode_comp_offset) );
+                        b_lab = gamma_boost * ( arr(i, j, k, n_rcomps*3 + mode_comp_offset)
+                                                - beta_boost * inv_clight * arr(i, j, k, n_rcomps*1 + mode_comp_offset) );
                         // Store lab-frame data in-place
-                        arr(i, j, k, n_rcomps*1 + 2*imode + offset*(icomp-1)) = e_lab;
-                        arr(i, j, k, n_rcomps*3 + 2*imode + offset*(icomp-1)) = b_lab;
+                        arr(i, j, k, n_rcomps*1 + mode_comp_offset) = e_lab;
+                        arr(i, j, k, n_rcomps*3 + mode_comp_offset) = b_lab;
 
                         // Transform charge density (ncomp=9)
                         // and z-component of current density (ncomp=8)
-                        j_lab = gamma_boost * ( arr(i, j, k, n_rcomps*8 + 2*imode + offset*(icomp-1))
-                                                + beta_boost * clight * arr(i, j, k, n_rcomps*9 + 2*imode + offset*(icomp-1)) );
+                        j_lab = gamma_boost * ( arr(i, j, k, n_rcomps*8 + mode_comp_offset)
+                                                + beta_boost * clight * arr(i, j, k, n_rcomps*9 + mode_comp_offset) );
                         rho_lab = gamma_boost * ( arr(i, j, k, n_rcomps*9 + 2*imode + offset*(icomp-1))
-                                                  + beta_boost * inv_clight * arr(i, j, k, n_rcomps*8 + 2*imode + offset*(icomp-1)) );
+                                                  + beta_boost * inv_clight * arr(i, j, k, n_rcomps*8 + mode_comp_offset) );
                         // Store lab-frame jz and rho in-place
-                        arr(i, j, k, n_rcomps*8 + 2*imode + offset*(icomp-1)) = j_lab;
-                        arr(i, j, k, n_rcomps*9 + 2*imode + offset*(icomp-1)) = rho_lab;
+                        arr(i, j, k, n_rcomps*8 + mode_comp_offset) = j_lab;
+                        arr(i, j, k, n_rcomps*9 + mode_comp_offset) = rho_lab;
                     }
                 }
             }
