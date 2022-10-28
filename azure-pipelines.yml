@@ -524,10 +524,14 @@ jobs:
     vmImage: macOS-latest
   steps:
   - script: |
+      brew unlink gcc || true
       brew update || true
-      brew install openmpi libomp
+      brew install openmpi
+      brew install libomp
+      brew link --force libomp
       python3 -m pip install -U pip --user
-      WARPX_MPI=ON python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+      python3 -m pip install -U cmake
+      WARPX_MPI=ON python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development
   - script: |
       python3 -c "from pywarpx import picmi"
 #      python3 -m pywarpx --help
@@ -539,7 +543,8 @@ jobs:
   steps:
   - script: |
       python3 -m pip install -U pip --user
-      WARPX_COMPUTE=NOACC python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+      python3 -m pip install -U cmake
+      WARPX_COMPUTE=NOACC python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development
   - script: |
       python3 -c "from pywarpx import picmi"
 #      python3 -m pywarpx --help
