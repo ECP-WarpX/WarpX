@@ -258,8 +258,8 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
                         b_lab = gamma_boost * ( arr(i, j, k, n_rcomps*4 + mode_comp_offset)
                                                 + beta_boost * inv_clight * arr(i, j, k, n_rcomps*0 + mode_comp_offset) );
                         // Store lab-frame data in-place
-                        arr(i, j, k, n_rcomps*0 + mode_component_offset) = e_lab;
-                        arr(i, j, k, n_rcomps*4 + mode_component_offset) = b_lab;
+                        arr(i, j, k, n_rcomps*0 + mode_comp_offset) = e_lab;
+                        arr(i, j, k, n_rcomps*4 + mode_comp_offset) = b_lab;
 
                         // Transform Ey_boost (ncomp=1) & Bx_boost (ncomp=3) to lab-frame
                         e_lab = gamma_boost * ( arr(i, j, k, n_rcomps*1 + mode_comp_offset)
