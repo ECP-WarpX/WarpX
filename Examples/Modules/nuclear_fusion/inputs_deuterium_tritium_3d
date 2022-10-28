@@ -29,7 +29,7 @@ algo.particle_shape = 1
 #################################
 ############ PLASMA #############
 #################################
-particles.species_names = deuterium_1 deuterium_1 helium4_1 neutron_1 deuterium_2 deuterium_2 helium4_2 neutron_2
+particles.species_names = deuterium_1 tritium_1 helium4_1 neutron_1 deuterium_2 tritium_2 helium4_2 neutron_2
 
 my_constants.m_deuterium = 2.01410177812*m_u
 my_constants.m_tritium = 3.0160492779*m_u
@@ -50,18 +50,18 @@ deuterium_1.momentum_function_uz(x,y,z) = sqrt(2*m_reduced*Energy_step*(floor(z)
 deuterium_1.do_not_push = 1
 deuterium_1.do_not_deposit = 1
 
-deuterium_1.species_type = tritium
-deuterium_1.injection_style = "NRandomPerCell"
-deuterium_1.num_particles_per_cell = 10000
-deuterium_1.profile = constant
-deuterium_1.density = 1.
-deuterium_1.momentum_distribution_type = "parse_momentum_function"
-deuterium_1.momentum_function_ux(x,y,z) = 0.
-deuterium_1.momentum_function_uy(x,y,z) = 0.
+tritium_1.species_type = tritium
+tritium_1.injection_style = "NRandomPerCell"
+tritium_1.num_particles_per_cell = 10000
+tritium_1.profile = constant
+tritium_1.density = 1.
+tritium_1.momentum_distribution_type = "parse_momentum_function"
+tritium_1.momentum_function_ux(x,y,z) = 0.
+tritium_1.momentum_function_uy(x,y,z) = 0.
 ## Thanks to the floor, all particles in the same cell have the exact same momentum
-deuterium_1.momentum_function_uz(x,y,z) = -sqrt(2*m_reduced*Energy_step*(floor(z)**2))/(m_tritium*clight)
-deuterium_1.do_not_push = 1
-deuterium_1.do_not_deposit = 1
+tritium_1.momentum_function_uz(x,y,z) = -sqrt(2*m_reduced*Energy_step*(floor(z)**2))/(m_tritium*clight)
+tritium_1.do_not_push = 1
+tritium_1.do_not_deposit = 1
 
 helium4_1.species_type = helium4
 helium4_1.do_not_push = 1
@@ -89,14 +89,14 @@ deuterium_2.momentum_function_uz(x,y,z) = "if(y - floor(y) < 0.1,
 deuterium_2.do_not_push = 1
 deuterium_2.do_not_deposit = 1
 
-deuterium_2.species_type = tritium
-deuterium_2.injection_style = "NRandomPerCell"
-deuterium_2.num_particles_per_cell = 100
-deuterium_2.profile = constant
-deuterium_2.density = background_dens
-deuterium_2.momentum_distribution_type = "constant"
-deuterium_2.do_not_push = 1
-deuterium_2.do_not_deposit = 1
+tritium_2.species_type = tritium
+tritium_2.injection_style = "NRandomPerCell"
+tritium_2.num_particles_per_cell = 100
+tritium_2.profile = constant
+tritium_2.density = background_dens
+tritium_2.momentum_distribution_type = "constant"
+tritium_2.do_not_push = 1
+tritium_2.do_not_deposit = 1
 
 helium4_2.species_type = helium4
 helium4_2.do_not_push = 1
@@ -111,12 +111,12 @@ neutron_2.do_not_deposit = 1
 #################################
 collisions.collision_names = DTF1 DTF2
 
-DTF1.species = deuterium_1 deuterium_1
+DTF1.species = deuterium_1 tritium_1
 DTF1.product_species = helium4_1 neutron_1
 DTF1.type = nuclearfusion
 DTF1.fusion_multiplier = 1.e50
 
-DTF2.species = deuterium_2 deuterium_2
+DTF2.species = deuterium_2 tritium_2
 DTF2.product_species = helium4_2 neutron_2
 DTF2.type = nuclearfusion
 DTF2.fusion_multiplier = 1.e15
