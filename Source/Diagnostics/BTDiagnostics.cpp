@@ -237,12 +237,10 @@ BTDiagnostics::ReadParameters ()
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
     }
 #ifdef WARPX_DIM_RZ
-    pp_diag_name.query("dump_rz_modes", m_dump_rz_modes);
     amrex::Vector< std::string > BTD_varnames_supported = {"Er", "Et", "Ez",
                                                            "Br", "Bt", "Bz",
                                                            "jr", "jt", "jz", "rho"};
 #else
-    amrex::ignore_unused(m_dump_rz_modes);
     amrex::Vector< std::string > BTD_varnames_supported = {"Ex", "Ey", "Ez",
                                                            "Bx", "By", "Bz",
                                                            "jx", "jy", "jz", "rho"};
@@ -270,7 +268,6 @@ bool
 BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 {
     // timestep < 0, i.e., at initialization time when step == -1
-    // amrex::AllPrint() << " buffer " << i_buffer << " full ? " << buffer_full(i_buffer) << " snapshot full " << m_snapshot_full[i_buffer] << " empty ? " << buffer_empty(i_buffer) << "\n";
     if (step < 0 )
         return false;
     // Do not call dump if the snapshot is already full and the files are closed.
@@ -853,86 +850,83 @@ BTDiagnostics::SetSnapshotFullStatus (const int i_buffer)
 void
 BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
 {
-//    if ( m_do_back_transformed_fields ) {
-        auto & warpx = WarpX::GetInstance();
+    auto & warpx = WarpX::GetInstance();
 
-        const int hi_k_lab = m_buffer_k_index_hi[i_buffer];
-        m_buffer_box[i_buffer].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
-        m_buffer_box[i_buffer].setBig( m_moving_window_dir, hi_k_lab );
-        amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
-        buffer_ba.maxSize(m_max_box_size);
-        // Generate a new distribution map for the back-transformed buffer multifab
-        amrex::DistributionMapping buffer_dmap(buffer_ba);
-        // Number of guard cells for the output buffer is zero.
-        // Unlike FullDiagnostics, "m_format == sensei" option is not included here.
-        int ngrow = 0;
-        m_mf_output[i_buffer][lev] = amrex::MultiFab( buffer_ba, buffer_dmap,
-                                                  m_varnames.size(), ngrow );
-        m_mf_output[i_buffer][lev].setVal(0.);
+    const int hi_k_lab = m_buffer_k_index_hi[i_buffer];
+    m_buffer_box[i_buffer].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
+    m_buffer_box[i_buffer].setBig( m_moving_window_dir, hi_k_lab );
+    amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
+    buffer_ba.maxSize(m_max_box_size);
+    // Generate a new distribution map for the back-transformed buffer multifab
+    amrex::DistributionMapping buffer_dmap(buffer_ba);
+    // Number of guard cells for the output buffer is zero.
+    // Unlike FullDiagnostics, "m_format == sensei" option is not included here.
+    int ngrow = 0;
+    m_mf_output[i_buffer][lev] = amrex::MultiFab( buffer_ba, buffer_dmap,
+                                              m_varnames.size(), ngrow );
+    m_mf_output[i_buffer][lev].setVal(0.);
 
-        amrex::IntVect ref_ratio = amrex::IntVect(1);
-        if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            amrex::Real cellsize;
-            if (idim < WARPX_ZINDEX) {
-                cellsize = warpx.Geom(lev).CellSize(idim);
-            } else {
-                cellsize = dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
-            }
-            amrex::Real buffer_lo = m_snapshot_domain_lab[i_buffer].lo(idim)
-                                    + ( buffer_ba.getCellCenteredBox(0).smallEnd(idim)
-                                      - m_snapshot_box[i_buffer].smallEnd(idim)
-                                      ) * cellsize;
-            amrex::Real buffer_hi = m_snapshot_domain_lab[i_buffer].lo(idim)
-                                    + ( buffer_ba.getCellCenteredBox( buffer_ba.size()-1 ).bigEnd(idim)
-                                      - m_snapshot_box[i_buffer].smallEnd(idim)
-                                      + 1 ) * cellsize;
-            m_buffer_domain_lab[i_buffer].setLo(idim, buffer_lo);
-            m_buffer_domain_lab[i_buffer].setHi(idim, buffer_hi);
+    amrex::IntVect ref_ratio = amrex::IntVect(1);
+    if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        amrex::Real cellsize;
+        if (idim < WARPX_ZINDEX) {
+            cellsize = warpx.Geom(lev).CellSize(idim);
+        } else {
+            cellsize = dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
         }
+        amrex::Real buffer_lo = m_snapshot_domain_lab[i_buffer].lo(idim)
+                                + ( buffer_ba.getCellCenteredBox(0).smallEnd(idim)
+                                  - m_snapshot_box[i_buffer].smallEnd(idim)
+                                  ) * cellsize;
+        amrex::Real buffer_hi = m_snapshot_domain_lab[i_buffer].lo(idim)
+                                + ( buffer_ba.getCellCenteredBox( buffer_ba.size()-1 ).bigEnd(idim)
+                                  - m_snapshot_box[i_buffer].smallEnd(idim)
+                                  + 1 ) * cellsize;
+        m_buffer_domain_lab[i_buffer].setLo(idim, buffer_lo);
+        m_buffer_domain_lab[i_buffer].setHi(idim, buffer_hi);
+    }
 
-        // Define the geometry object at level, lev, for the ith buffer.
-        if (lev == 0) {
-            // The extent of the physical domain covered by the ith buffer mf, m_mf_output
-            // Default non-periodic geometry for diags
-            amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
-            // Box covering the extent of the user-defined diag in the back-transformed frame
-            amrex::Box domain = buffer_ba.minimalBox();
-            // define the geometry object for the ith buffer using Physical co-oridnates
-            // of m_buffer_domain_lab[i_buffer].
-            m_geom_output[i_buffer][lev].define( domain, &m_buffer_domain_lab[i_buffer],
-                                                 amrex::CoordSys::cartesian,
-                                                 BTdiag_periodicity.data() );
-        } else if (lev > 0 ) {
-            // Refine the geometry object defined at the previous level, lev-1
-            m_geom_output[i_buffer][lev] = amrex::refine( m_geom_output[i_buffer][lev-1],
-                                                          warpx.RefRatio(lev-1) );
-        }
-//    }
+    // Define the geometry object at level, lev, for the ith buffer.
+    if (lev == 0) {
+        // The extent of the physical domain covered by the ith buffer mf, m_mf_output
+        // Default non-periodic geometry for diags
+        amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
+        // Box covering the extent of the user-defined diag in the back-transformed frame
+        amrex::Box domain = buffer_ba.minimalBox();
+        // define the geometry object for the ith buffer using Physical co-oridnates
+        // of m_buffer_domain_lab[i_buffer].
+        m_geom_output[i_buffer][lev].define( domain, &m_buffer_domain_lab[i_buffer],
+                                             amrex::CoordSys::cartesian,
+                                             BTdiag_periodicity.data() );
+    } else if (lev > 0 ) {
+        // Refine the geometry object defined at the previous level, lev-1
+        m_geom_output[i_buffer][lev] = amrex::refine( m_geom_output[i_buffer][lev-1],
+                                                      warpx.RefRatio(lev-1) );
+    }
 }
 
 
 void
 BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
 {
-        auto & warpx = WarpX::GetInstance();
+    auto & warpx = WarpX::GetInstance();
 
-        if (lev == 0) {
-            // Default non-periodic geometry for diags
-            amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
-            // Define the geometry object for the ith snapshot using Physical co-oridnates
-            // of m_snapshot_domain_lab[i_buffer], that corresponds to the full snapshot
-            // in the back-transformed frame
-            m_geom_snapshot[i_buffer][lev].define( m_snapshot_box[i_buffer],
-                                                   &m_snapshot_domain_lab[i_buffer],
-                                                   amrex::CoordSys::cartesian,
-                                                   BTdiag_periodicity.data() );
-
-        } else if (lev > 0) {
-            // Refine the geometry object defined at the previous level, lev-1
-            m_geom_snapshot[i_buffer][lev] = amrex::refine( m_geom_snapshot[i_buffer][lev-1],
-                                                            warpx.RefRatio(lev-1) );
-        }
+    if (lev == 0) {
+        // Default non-periodic geometry for diags
+        amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
+        // Define the geometry object for the ith snapshot using Physical co-oridnates
+        // of m_snapshot_domain_lab[i_buffer], that corresponds to the full snapshot
+        // in the back-transformed frame
+        m_geom_snapshot[i_buffer][lev].define( m_snapshot_box[i_buffer],
+                                               &m_snapshot_domain_lab[i_buffer],
+                                               amrex::CoordSys::cartesian,
+                                               BTdiag_periodicity.data() );
+    } else if (lev > 0) {
+        // Refine the geometry object defined at the previous level, lev-1
+        m_geom_snapshot[i_buffer][lev] = amrex::refine( m_geom_snapshot[i_buffer][lev-1],
+                                                        warpx.RefRatio(lev-1) );
+    }
 }
 
 bool
@@ -957,7 +951,6 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
 void
 BTDiagnostics::Flush (int i_buffer)
 {
-    // amrex::AllPrint() << " in flush buffer " << i_buffer << "\n";
     auto & warpx = WarpX::GetInstance();
     std::string file_name = m_file_prefix;
     if (m_format=="plotfile") {
@@ -1017,7 +1010,6 @@ BTDiagnostics::Flush (int i_buffer)
             }
         }
     }
-    // amrex::AllPrint() << " writing data " << i_buffer <<"\n";
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
@@ -1058,7 +1050,9 @@ BTDiagnostics::Flush (int i_buffer)
         ResetTotalParticlesInBuffer(i_buffer);
         ClearParticleBuffer(i_buffer);
     }
-    // Setting hi k-index for the next buffer
+    // Setting hi k-index for the next buffer, such that, the index is one less than the lo-index of previous buffer
+    // For example, for buffer size of 256, if the first buffer extent was [256,511]
+    // then the next buffer will be from [0,255]. That is, the hi-index of the following buffer is 256-1
     m_buffer_k_index_hi[i_buffer] = m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) - 1;
 }
 
