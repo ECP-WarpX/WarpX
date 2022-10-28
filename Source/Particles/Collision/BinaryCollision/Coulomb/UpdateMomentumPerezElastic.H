@@ -35,7 +35,7 @@ void UpdateMomentumPerezElastic (
     T_R const dt, T_PR const L, T_PR const lmdD,
     amrex::RandomEngine const& engine,
     int const nd, int const np, T_R const dV,
-    bool const isSameSpecies=true)
+    bool const isSameSpecies)
 {
 
     T_PR const diffx = amrex::Math::abs(u1x-u2x);
@@ -253,7 +253,7 @@ void UpdateMomentumPerezElastic (
 
     // Rejection method
     r = amrex::Random(engine);
-    if ( w2 > r*amrex::max(w1, w2) )
+    if ( w2/amrex::max(w1,w2)>r )
     {
         u1x  = p1fx / m1;
         u1y  = p1fy / m1;
@@ -264,7 +264,7 @@ void UpdateMomentumPerezElastic (
 #endif
     }
     r = amrex::Random(engine);
-    if ( w1 > r*amrex::max(w1, w2) )
+    if ( w1/amrex::max(w1,w2)>r )
     {
         u2x  = p2fx / m2;
         u2y  = p2fy / m2;
