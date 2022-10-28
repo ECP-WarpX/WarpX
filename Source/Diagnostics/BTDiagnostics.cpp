@@ -237,12 +237,10 @@ BTDiagnostics::ReadParameters ()
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
     }
 #ifdef WARPX_DIM_RZ
-    pp_diag_name.query("dump_rz_modes", m_dump_rz_modes);
     amrex::Vector< std::string > BTD_varnames_supported = {"Er", "Et", "Ez",
                                                            "Br", "Bt", "Bz",
                                                            "jr", "jt", "jz", "rho"};
 #else
-    amrex::ignore_unused(m_dump_rz_modes);
     amrex::Vector< std::string > BTD_varnames_supported = {"Ex", "Ey", "Ez",
                                                            "Bx", "By", "Bz",
                                                            "jx", "jy", "jz", "rho"};
@@ -270,7 +268,6 @@ bool
 BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 {
     // timestep < 0, i.e., at initialization time when step == -1
-    // amrex::AllPrint() << " buffer " << i_buffer << " full ? " << buffer_full(i_buffer) << " snapshot full " << m_snapshot_full[i_buffer] << " empty ? " << buffer_empty(i_buffer) << "\n";
     if (step < 0 )
         return false;
     // Do not call dump if the snapshot is already full and the files are closed.
@@ -954,7 +951,6 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
 void
 BTDiagnostics::Flush (int i_buffer)
 {
-    // amrex::AllPrint() << " in flush buffer " << i_buffer << "\n";
     auto & warpx = WarpX::GetInstance();
     std::string file_name = m_file_prefix;
     if (m_format=="plotfile") {
@@ -1014,7 +1010,6 @@ BTDiagnostics::Flush (int i_buffer)
             }
         }
     }
-    // amrex::AllPrint() << " writing data " << i_buffer <<"\n";
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
