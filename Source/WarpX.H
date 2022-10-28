@@ -35,7 +35,7 @@
 #include "FieldSolver/ElectrostaticSolver.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
@@ -186,6 +186,10 @@ public:
      */
     static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
 
+    //! Integers that correspond to the time dependency of J (constant, linear)
+    //! and rho (linear, quadratic) for the PSATD algorithm
+    static short J_in_time;
+    static short rho_in_time;
 
     //! If true, the current is deposited on a nodal grid and then centered onto a staggered grid
     //! using finite centering of order given by #current_centering_nox, #current_centering_noy,
@@ -203,8 +207,11 @@ public:
     //! perform field communications in single precision
     static bool do_single_precision_comms;
 
-    //! Whether to fill the guard cells when computing inverse FFTs, based on the boundary conditions
-    static amrex::IntVect fill_guards;
+    //! Whether to fill guard cells when computing inverse FFTs of fields
+    static amrex::IntVect m_fill_guards_fields;
+
+    //! Whether to fill guard cells when computing inverse FFTs of currents
+    static amrex::IntVect m_fill_guards_current;
 
     //! Solve additional Maxwell equation for F in order to control errors in Gauss' law
     //! (useful when using current deposition algorithms that are not charge-conserving)
@@ -299,7 +306,7 @@ public:
     static bool do_dynamic_scheduling;
     static bool refine_plasma;
 
-    static IntervalsParser sort_intervals;
+    static utils::parser::IntervalsParser sort_intervals;
     static amrex::IntVect sort_bin_size;
 
     static bool do_subcycling;
@@ -446,7 +453,7 @@ public:
     void PrintMainPICparameters ();
 
     /** Write a file that record all inputs: inputs file + command line options */
-    void WriteUsedInputsFile (std::string const & filename = "warpx_used_inputs") const;
+    void WriteUsedInputsFile () const;
 
     /** Print dt and dx,dy,dz */
     void PrintDtDxDyDz ();
@@ -523,7 +530,10 @@ public:
 
     /** \brief returns the load balance interval
      */
-    IntervalsParser get_load_balance_intervals () const {return load_balance_intervals;}
+    utils::parser::IntervalsParser get_load_balance_intervals () const
+    {
+        return load_balance_intervals;
+    }
 
     /**
      * \brief Private function for spectral solver
@@ -643,7 +653,28 @@ public:
     void FillBoundaryG   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
 
-    void SyncCurrent ();
+    /**
+     * \brief Synchronize J and rho:
+     * filter (if used), exchange guard cells, interpolate across MR levels.
+     * Contains separate calls to WarpX::SyncCurrent and WarpX::SyncRho.
+     */
+    void SyncCurrentAndRho ();
+
+    /**
+     * \brief Apply filter and sum guard cells across MR levels.
+     * If current centering is used, center the current from a nodal grid
+     * to a staggered grid. For each MR level beyond level 0, interpolate
+     * the fine-patch current onto the coarse-patch current at the same level.
+     * Then, for each MR level, including level 0, apply filter and sum guard
+     * cells across levels.
+     *
+     * \param[in,out] J_fp reference to fine-patch current \c MultiFab (all MR levels)
+     * \param[in,out] J_cp reference to coarse-patch current \c MultiFab (all MR levels)
+     */
+    void SyncCurrent (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+
     void SyncRho ();
 
     amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
@@ -780,6 +811,8 @@ public:
     void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<amrex::Real, 3> const beta = {{0,0,0}} ) const;
+    void computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
 
     /**
      * \brief
@@ -950,11 +983,22 @@ private:
         const int lev);
     void StoreCurrent (const int lev);
     void RestoreCurrent (const int lev);
-    void ApplyFilterandSumBoundaryJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    void ApplyFilterJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
         const int lev,
-        PatchType patch_type);
+        const int idim);
+    void ApplyFilterJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const int lev);
+    void SumBoundaryJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const int lev,
+        const int idim,
+        const amrex::Periodicity& period);
+    void SumBoundaryJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const int lev,
+        const amrex::Periodicity& period);
     void NodalSyncJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
@@ -1024,6 +1068,11 @@ private:
      */
     void CheckGuardCells(amrex::MultiFab const& mf);
 
+    /**
+     * \brief Checks for known numerical issues involving different WarpX modules
+     */
+    void CheckKnownIssues();
+
     /** Check the requested resources and write performance hints */
     void PerformanceHints ();
 
@@ -1070,7 +1119,7 @@ private:
                                         const int centering_noz);
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                        const amrex::IntVect& ngEB, const amrex::IntVect& ngJ,
+                        const amrex::IntVect& ngEB, amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const amrex::IntVect& ngG, const bool aux_is_nodal);
 #ifdef WARPX_USE_PSATD
@@ -1229,7 +1278,7 @@ private:
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
      * for getting steps at which load balancing is performed */
-    IntervalsParser load_balance_intervals;
+    utils::parser::IntervalsParser load_balance_intervals;
     /** Collection of LayoutData to keep track of weights used in load balancing
      * routines. Contains timer-based or heuristic-based costs depending on input option */
     amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > > costs;
@@ -1262,7 +1311,7 @@ private:
     amrex::Real costs_heuristic_particles_wt = amrex::Real(0);
 
     // Determines timesteps for override sync
-    IntervalsParser override_sync_intervals;
+    utils::parser::IntervalsParser override_sync_intervals;
 
     // Other runtime parameters
     int verbose = 1;
@@ -1489,10 +1538,13 @@ private:
      *             storing the fine patch current to be transformed
      * \param J_cp Vector of three-dimensional arrays (for each level)
      *             storing the coarse patch current to be transformed
+     * \param[in] apply_kspace_filter Control whether to apply filtering
+     *                                (only used in RZ geometry to avoid double filtering)
      */
     void PSATDForwardTransformJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const bool apply_kspace_filter=true);
 
     /**
      * \brief Backward FFT of J on all mesh refinement levels
@@ -1514,11 +1566,13 @@ private:
      * \param charge_cp Vector (for each level) storing the coarse patch charge to be transformed
      * \param[in] icomp index of fourth component (0 for rho_old, 1 for rho_new)
      * \param[in] dcomp index of spectral component (0 for rho_old, 1 for rho_new)
+     * \param[in] apply_kspace_filter Control whether to apply filtering
+     *                                (only used in RZ geometry to avoid double filtering)
      */
     void PSATDForwardTransformRho (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-        const int icomp, const int dcomp);
+        const int icomp, const int dcomp, const bool apply_kspace_filter=true);
 
     /**
      * \brief Copy rho_new to rho_old in spectral space

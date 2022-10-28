@@ -31,8 +31,7 @@ ad = ds.all_data()
 np = ad['electrons', 'particle_id'].size
 
 # the number of coarse particle streams
-# (odd because one that exactly hits the fine patch is not refined)
-n_coarse = 11
+n_coarse = 10
 
 # the number of fine particle streams
 n_fine = 64
@@ -49,6 +48,16 @@ rr = 2
 np_expected = (n_coarse + n_fine*rr)*(n_0 + n_move)
 
 assert( np == np_expected )
+
+# Test uniformity of rho, by taking a slice of rho that
+# crosses the edge of the refined injection region
+# (but is ahead of the mesh refinement patch)
+ds.force_periodicity()
+ad = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
+rho = ad['rho'].to_ndarray().squeeze()
+rho_slice = rho[13:51, 475]
+# Test uniformity up to 0.5% relative variation
+assert( rho_slice.std() < 0.005*abs(rho_slice.mean()) )
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn)

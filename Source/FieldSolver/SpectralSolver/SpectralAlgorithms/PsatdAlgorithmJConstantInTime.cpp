@@ -4,7 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "PsatdAlgorithm.H"
+#include "PsatdAlgorithmJConstantInTime.H"
 
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
@@ -27,7 +27,7 @@
 
 using namespace amrex;
 
-PsatdAlgorithm::PsatdAlgorithm(
+PsatdAlgorithmJConstantInTime::PsatdAlgorithmJConstantInTime(
     const SpectralKSpace& spectral_kspace,
     const DistributionMapping& dm,
     const SpectralFieldIndex& spectral_index,
@@ -35,7 +35,6 @@ PsatdAlgorithm::PsatdAlgorithm(
     const int norder_y,
     const int norder_z,
     const bool nodal,
-    const amrex::IntVect& fill_guards,
     const amrex::Vector<amrex::Real>& v_galilean,
     const amrex::Real dt,
     const bool update_with_rho,
@@ -43,7 +42,7 @@ PsatdAlgorithm::PsatdAlgorithm(
     const bool dive_cleaning,
     const bool divb_cleaning)
     // Initializer list
-    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
+    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal),
     m_spectral_index(spectral_index),
     // Initialize the centered finite-order modified k vectors:
     // these are computed always with the assumption of centered grids
@@ -111,7 +110,7 @@ PsatdAlgorithm::PsatdAlgorithm(
 }
 
 void
-PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
+PsatdAlgorithmJConstantInTime::pushSpectralFields (SpectralFieldData& f) const
 {
     const bool update_with_rho = m_update_with_rho;
     const bool time_averaging  = m_time_averaging;
@@ -341,7 +340,7 @@ PsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
     }
 }
 
-void PsatdAlgorithm::InitializeSpectralCoefficients (
+void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const amrex::Real dt)
@@ -543,7 +542,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
     }
 }
 
-void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
+void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficientsAveraging (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const amrex::Real dt)
@@ -734,10 +733,10 @@ void PsatdAlgorithm::InitializeSpectralCoefficientsAveraging (
     }
 }
 
-void PsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data)
+void PsatdAlgorithmJConstantInTime::CurrentCorrection (SpectralFieldData& field_data)
 {
     // Profiling
-    BL_PROFILE("PsatdAlgorithm::CurrentCorrection");
+    BL_PROFILE("PsatdAlgorithmJConstantInTime::CurrentCorrection");
 
     const SpectralFieldIndex& Idx = m_spectral_index;
 
@@ -834,10 +833,10 @@ void PsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data)
 }
 
 void
-PsatdAlgorithm::VayDeposition (SpectralFieldData& field_data)
+PsatdAlgorithmJConstantInTime::VayDeposition (SpectralFieldData& field_data)
 {
     // Profiling
-    BL_PROFILE("PsatdAlgorithm::VayDeposition()");
+    BL_PROFILE("PsatdAlgorithmJConstantInTime::VayDeposition()");
 
     const SpectralFieldIndex& Idx = m_spectral_index;
 

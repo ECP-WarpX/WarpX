@@ -6,8 +6,10 @@
  */
 #include "Laser/LaserProfiles.H"
 
+#include "Utils/Algorithms/LinearInterpolation.H"
+#include "Utils/Algorithms/UpperBound.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpX_Complex.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
@@ -65,7 +67,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
     //Set time_chunk_size
     m_params.time_chunk_size = m_params.nt;
     int temp = 1;
-    if(queryWithParser(ppl ,"time_chunk_size", temp)){
+    if(utils::parser::queryWithParser(ppl ,"time_chunk_size", temp)){
         m_params.time_chunk_size = min(
             temp, m_params.time_chunk_size);
     }
@@ -74,7 +76,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
     }
 
     //Reads the (optional) delay
-    queryWithParser(ppl, "delay", m_params.t_delay);
+    utils::parser::queryWithParser(ppl, "delay", m_params.t_delay);
 
     //Allocate memory for E_data Vector
     const int data_size = m_params.time_chunk_size*
@@ -402,7 +404,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
                 (i_interp-tmp_idx_first_time)*tmp_nx*tmp_ny+
                 j_interp*tmp_ny + k_interp;
         };
-        amplitude[i] = WarpXUtilAlgo::trilinear_interp(
+        amplitude[i] = utils::algorithms::trilinear_interp(
             t_left, t_right,
             x_0, x_1,
             y_0, y_1,
@@ -421,7 +423,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         const auto idx = [=](int i_interp, int j_interp){
             return (i_interp-tmp_idx_first_time) * tmp_nx + j_interp;
         };
-        amplitude[i] = WarpXUtilAlgo::bilinear_interp(
+        amplitude[i] = utils::algorithms::bilinear_interp(
             t_left, t_right,
             x_0, x_1,
             p_E_data[idx(idx_t_left, idx_x_left)],
@@ -491,14 +493,14 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
 #endif
 
         //Find indices along x
-        auto const p_x_right = WarpXUtilAlgo::upper_bound(
+        auto const p_x_right = utils::algorithms::upper_bound(
                 p_x_coords, p_x_coords+tmp_x_coords_size, Xp[ip]);
         const int idx_x_right = p_x_right - p_x_coords;
         const int idx_x_left = idx_x_right - 1;
 
 #if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
         //Find indices along y
-        auto const p_y_right = WarpXUtilAlgo::upper_bound(
+        auto const p_y_right = utils::algorithms::upper_bound(
             p_y_coords, p_y_coords+tmp_y_coords_size, Yp[ip]);
         const int idx_y_right = p_y_right - p_y_coords;
         const int idx_y_left = idx_y_right - 1;
@@ -509,7 +511,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
                 (i-tmp_idx_first_time)*tmp_x_coords_size*tmp_y_coords_size+
                 j*tmp_y_coords_size + k;
         };
-        amplitude[ip] = WarpXUtilAlgo::trilinear_interp(
+        amplitude[ip] = utils::algorithms::trilinear_interp(
             t_left, t_right,
             p_x_coords[idx_x_left], p_x_coords[idx_x_right],
             p_y_coords[idx_y_left], p_y_coords[idx_y_right],
@@ -528,7 +530,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
         const auto idx = [=](int i, int j){
             return (i-tmp_idx_first_time) * tmp_x_coords_size + j;
         };
-        amplitude[ip] = WarpXUtilAlgo::bilinear_interp(
+        amplitude[ip] = utils::algorithms::bilinear_interp(
             t_left, t_right,
             p_x_coords[idx_x_left], p_x_coords[idx_x_right],
             p_E_data[idx(idx_t_left, idx_x_left)],

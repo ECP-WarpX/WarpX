@@ -27,13 +27,15 @@ ParticleReductionFunctor::ParticleReductionFunctor (const amrex::MultiFab* mf_sr
     AMREX_ALWAYS_ASSERT(ncomp == 1);
 
     // Allocate and compile a parser based on the input string fn_str
-    m_map_fn_parser = std::make_unique<amrex::Parser>(makeParser(
-                fn_str, {"x", "y", "z", "ux", "uy", "uz"}));
+    m_map_fn_parser = std::make_unique<amrex::Parser>(
+        utils::parser::makeParser(
+            fn_str, {"x", "y", "z", "ux", "uy", "uz"}));
     m_map_fn = m_map_fn_parser->compile<6>();
     // Do the same for filter function, if it exists
     if (m_do_filter) {
-        m_filter_fn_parser = std::make_unique<amrex::Parser>(makeParser(
-               filter_str, {"x", "y", "z", "ux", "uy", "uz"}));
+        m_filter_fn_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(
+            filter_str, {"x", "y", "z", "ux", "uy", "uz"}));
         m_filter_fn = m_filter_fn_parser->compile<6>();
     }
 }

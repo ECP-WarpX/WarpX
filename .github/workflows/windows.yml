@@ -34,12 +34,14 @@ jobs:
               -DWarpX_OPENPMD=ON          `
               -DWarpX_MPI=OFF             `
               -DWarpX_LIB=ON
+        if(!$?) { Exit $LASTEXITCODE }
         cmake --build build --config Debug --parallel 2
+        if(!$?) { Exit $LASTEXITCODE }
 
         python3 -m pip install --upgrade pip setuptools wheel
-        python3 -m pip install --upgrade cmake
-        $env:PYWARPX_LIB_DIR="$(Get-Location | Foreach-Object { $_.Path })\build\lib\Debug\"
-        python3 -m pip install . -vv --no-build-isolation
+        if(!$?) { Exit $LASTEXITCODE }
+        cmake --build build --config Debug --target pip_install
+        if(!$?) { Exit $LASTEXITCODE }
 
         python3 Examples\Modules\gaussian_beam\PICMI_inputs_gaussian_beam.py
 # JSON writes are currently very slow (50min) with MSVC
@@ -79,11 +81,14 @@ jobs:
               -DWarpX_LIB=ON                ^
               -DWarpX_MPI=OFF               ^
               -DWarpX_OPENPMD=ON
+        if errorlevel 1 exit 1
         cmake --build build --config Release --parallel 2
+        if errorlevel 1 exit 1
 
         python3 -m pip install --upgrade pip setuptools wheel
-        python3 -m pip install --upgrade cmake
-        set "PYWARPX_LIB_DIR=%cd%\build\lib\"
-        python3 -m pip install . -vv --no-build-isolation
+        if errorlevel 1 exit 1
+        cmake --build build --config Release --target pip_install
+        if errorlevel 1 exit 1
 
         python3 Examples\Modules\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
+        if errorlevel 1 exit 1

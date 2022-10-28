@@ -10,6 +10,7 @@
 #include "Diagnostics.H"
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/Parser/IntervalsParser.H"
 
 #include <AMReX_Box.H>
 #include <AMReX_Geometry.H>
@@ -37,6 +38,8 @@ private:
     bool m_plot_raw_fields_guards = false;
     /** Read relevant parameters for BTD */
     void ReadParameters ();
+    /** Determines timesteps at which BTD diagnostics are written to file */
+    utils::parser::BTDIntervalsParser m_intervals;
     /** \brief Flush m_mf_output and particles to file.
      * Currently, a temporary customized output format for the buffer
      * data is implemented and called in this function.
@@ -149,9 +152,6 @@ private:
 
     /** Vector of lab-frame time corresponding to each snapshot */
     amrex::Vector<amrex::Real> m_t_lab;
-    /** Vector of lab-frame physical domain corresponding to the boosted-frame simulation
-     *  domain at lab-frame time corresponding to each snapshot*/
-    amrex::Vector<amrex::RealBox> m_prob_domain_lab;
     /** Vector of user-defined physical region for diagnostics in lab-frame
      *  for each back-transformed snapshot */
     amrex::Vector<amrex::RealBox> m_snapshot_domain_lab;
@@ -210,6 +210,7 @@ private:
     /** Vector of counters tracking number of times the buffer of multifab is
      *  flushed out and emptied before being refilled again for each snapshot */
     amrex::Vector<int> m_buffer_flush_counter;
+    amrex::Vector<int> m_buffer_k_index_hi;
     /** Multi-level cell-centered multifab with all field-data components, namely,
      *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho.
      *  This cell-centered data extending over the entire domain
@@ -279,7 +280,7 @@ private:
                when buffer counter is equal to m_buffer_size
      */
     bool buffer_full (int i_buffer) {
-        return ( m_buffer_counter[i_buffer] == m_buffer_size );
+        return (k_index_zlab(i_buffer,0) == m_buffer_box[i_buffer].smallEnd(m_moving_window_dir));
     }
 
     /** whether field buffer is empty.

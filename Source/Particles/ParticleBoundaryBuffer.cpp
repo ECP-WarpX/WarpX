@@ -9,9 +9,10 @@
 #include "EmbeddedBoundary/DistanceToEB.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Particles/Gather/ScalarFieldGather.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
+
+#include <ablastr/particles/NodalFieldGather.H>
 
 #include <AMReX_Geometry.H>
 #include <AMReX_ParmParse.H>
@@ -64,6 +65,8 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
 {
     m_particle_containers.resize(numBoundaries());
     m_do_boundary_buffer.resize(numBoundaries());
+    m_do_any_boundary.resize(numBoundaries(), 0);
+    m_boundary_names.resize(numBoundaries());
 
     for (int i = 0; i < numBoundaries(); ++i)
     {
@@ -71,29 +74,71 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
         m_do_boundary_buffer[i].resize(numSpecies(), 0);
     }
 
+#if defined(WARPX_DIM_1D_Z)
+    constexpr auto idx_zlo = 0;
+    constexpr auto idx_zhi = 1;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    constexpr auto idx_xlo = 0;
+    constexpr auto idx_xhi = 1;
+    constexpr auto idx_zlo = 2;
+    constexpr auto idx_zhi = 3;
+#else
+    constexpr auto idx_xlo = 0;
+    constexpr auto idx_xhi = 1;
+    constexpr auto idx_ylo = 2;
+    constexpr auto idx_yhi = 3;
+    constexpr auto idx_zlo = 4;
+    constexpr auto idx_zhi = 5;
+#endif
+
     for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
     {
         amrex::ParmParse pp_species(getSpeciesNames()[ispecies]);
 #if defined(WARPX_DIM_1D_Z)
-        pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[0][ispecies]);
-        pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[1][ispecies]);
+        pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[idx_zlo][ispecies]);
+        pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[idx_zhi][ispecies]);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        pp_species.query("save_particles_at_xlo", m_do_boundary_buffer[0][ispecies]);
-        pp_species.query("save_particles_at_xhi", m_do_boundary_buffer[1][ispecies]);
-        pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[2][ispecies]);
-        pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[3][ispecies]);
+        pp_species.query("save_particles_at_xlo", m_do_boundary_buffer[idx_xlo][ispecies]);
+        pp_species.query("save_particles_at_xhi", m_do_boundary_buffer[idx_xhi][ispecies]);
+        pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[idx_zlo][ispecies]);
+        pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[idx_zhi][ispecies]);
 #else
-        pp_species.query("save_particles_at_xlo", m_do_boundary_buffer[0][ispecies]);
-        pp_species.query("save_particles_at_xhi", m_do_boundary_buffer[1][ispecies]);
-        pp_species.query("save_particles_at_ylo", m_do_boundary_buffer[2][ispecies]);
-        pp_species.query("save_particles_at_yhi", m_do_boundary_buffer[3][ispecies]);
-        pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[4][ispecies]);
-        pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[5][ispecies]);
+        pp_species.query("save_particles_at_xlo", m_do_boundary_buffer[idx_xlo][ispecies]);
+        pp_species.query("save_particles_at_xhi", m_do_boundary_buffer[idx_xhi][ispecies]);
+        pp_species.query("save_particles_at_ylo", m_do_boundary_buffer[idx_ylo][ispecies]);
+        pp_species.query("save_particles_at_yhi", m_do_boundary_buffer[idx_yhi][ispecies]);
+        pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[idx_zlo][ispecies]);
+        pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[idx_zhi][ispecies]);
 #endif
 #ifdef AMREX_USE_EB
         pp_species.query("save_particles_at_eb", m_do_boundary_buffer[AMREX_SPACEDIM*2][ispecies]);
 #endif
+        // Set the flag whether the boundary is active or any species
+        for (int i = 0; i < numBoundaries(); ++i) {
+            if (m_do_boundary_buffer[i][ispecies]) m_do_any_boundary[i] = 1;
+        }
     }
+
+#if defined(WARPX_DIM_1D_Z)
+    m_boundary_names[idx_zlo] = "zlo";
+    m_boundary_names[idx_zhi] = "zhi";
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    m_boundary_names[idx_xlo] = "xlo";
+    m_boundary_names[idx_xhi] = "xhi";
+    m_boundary_names[idx_zlo] = "zlo";
+    m_boundary_names[idx_zhi] = "zhi";
+#else
+    m_boundary_names[idx_xlo] = "xlo";
+    m_boundary_names[idx_xhi] = "xhi";
+    m_boundary_names[idx_ylo] = "ylo";
+    m_boundary_names[idx_yhi] = "yhi";
+    m_boundary_names[idx_zlo] = "zlo";
+    m_boundary_names[idx_zhi] = "zhi";
+#endif
+#ifdef AMREX_USE_EB
+    m_boundary_names[AMREX_SPACEDIM*2] =  "eb";
+#endif
+
 }
 
 void ParticleBoundaryBuffer::printNumParticles () const {
@@ -143,12 +188,16 @@ void ParticleBoundaryBuffer::redistribute () {
 void ParticleBoundaryBuffer::clearParticles () {
     for (int i = 0; i < numBoundaries(); ++i)
     {
-        auto& buffer = m_particle_containers[i];
-        for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
-        {
-            auto& species_buffer = buffer[ispecies];
-            if (species_buffer.isDefined()) species_buffer.clearParticles();
-        }
+        clearParticles(i);
+    }
+}
+
+void ParticleBoundaryBuffer::clearParticles (int const i) {
+    auto& buffer = m_particle_containers[i];
+    for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
+    {
+        auto& species_buffer = buffer[ispecies];
+        if (species_buffer.isDefined()) species_buffer.clearParticles();
     }
 }
 
@@ -233,6 +282,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
     auto& buffer = m_particle_containers[m_particle_containers.size()-1];
     for (int i = 0; i < numSpecies(); ++i)
     {
+        if (!m_do_boundary_buffer[AMREX_SPACEDIM*2][i]) continue;
         const auto& pc = mypc.GetParticleContainer(i);
         if (!buffer[i].isDefined())
         {
@@ -264,7 +314,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                     amrex::ParticleReal xp, yp, zp;
                     getPosition(ip, xp, yp, zp);
 
-                    amrex::Real phi_value  = doGatherScalarFieldNodal(
+                    amrex::Real phi_value  = ablastr::particles::doGatherScalarFieldNodal(
                                                                       xp, yp, zp, phiarr, dxi, plo
                                                                       );
                     return phi_value < 0.0 ? 1 : 0;
@@ -332,8 +382,5 @@ ParticleBoundaryBuffer::getParticleBufferPointer(const std::string species_name,
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_boundary_buffer[boundary][index],
-                                     "Attempted to get particle buffer for boundary "
-                                     + std::to_string(boundary) + ", which is not used!");
     return &buffer[index];
 }

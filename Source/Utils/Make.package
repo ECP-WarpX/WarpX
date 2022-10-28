@@ -11,4 +11,10 @@ CEXE_sources += MPIInitHelpers.cpp
 CEXE_sources += RelativeCellPosition.cpp
 CEXE_sources += ParticleUtils.cpp
 
+include $(WARPX_HOME)/Source/Utils/Algorithms/Make.package
+include $(WARPX_HOME)/Source/Utils/Logo/Make.package
+include $(WARPX_HOME)/Source/Utils/Parser/Make.package
+include $(WARPX_HOME)/Source/Utils/Physics/Make.package
+include $(WARPX_HOME)/Source/Utils/Strings/Make.package
+
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Utils

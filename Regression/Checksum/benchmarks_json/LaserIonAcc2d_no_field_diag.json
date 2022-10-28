@@ -1,7 +1,5 @@
 {
   "electrons": {
-    "particle_cpu": 0.0,
-    "particle_id": 2101654260.0,
     "particle_momentum_x": 3.819006669880345e-19,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 1.6442919544438796e-18,
@@ -10,8 +8,6 @@
     "particle_weight": 2.641331189632942e+17
   },
   "hydrogen": {
-    "particle_cpu": 0.0,
-    "particle_id": 8663540542.0,
     "particle_momentum_x": 2.2442931423587623e-18,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 1.0841108905602765e-18,

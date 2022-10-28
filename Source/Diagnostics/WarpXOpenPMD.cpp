@@ -6,14 +6,15 @@
  */
 #include "WarpXOpenPMD.H"
 
+#include "Particles/ParticleIO.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FieldIO.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Utils/TextMsg.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <ablastr/particles/IndexHandling.H>
@@ -180,34 +181,44 @@ namespace detail
                 op_block += R"END(,
           "parameters": {
 )END";
-            op_block += op_parameters + "}";
+            op_block += op_parameters +
+                        "\n          }";
         }
             op_block += R"END(
         }
       ]
     })END";
-        if (!engine_type.empty())
-            op_block += ",";
-
+            if (!engine_type.empty() || !en_parameters.empty())
+                op_block += ",";
         }  // end operator string block
 
         // add the engine string block
-        if (!engine_type.empty()) {
+        if (!engine_type.empty() || !en_parameters.empty())
+        {
             en_block = R"END(
-    "engine": {
-      "type": ")END";
-            en_block += engine_type + "\"";
+    "engine": {)END";
 
+            // non-default engine type
+            if (!engine_type.empty()) {
+                en_block += R"END(
+      "type": ")END";
+                en_block += engine_type + "\"";
+
+                if(!en_parameters.empty())
+                    en_block += ",";
+            }
+
+            // non-default engine parameters
             if (!en_parameters.empty()) {
-                en_block += R"END(,
+                en_block += R"END(
       "parameters": {
 )END";
-            en_block += en_parameters + "}";
+                en_block += en_parameters +
+                            "\n      }";
             }
 
             en_block += R"END(
     })END";
-
         }  // end engine string block
 
         options = top_block + op_block + en_block + end_block;
@@ -552,7 +563,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 
 void
 WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
-                  const bool isBTD, const bool isLastBTDFlush, const amrex::Vector<int>& totalParticlesFlushedAlready)
+                  const bool use_pinned_pc, const bool isBTD, const bool isLastBTDFlush,
+                  const amrex::Vector<int>& totalParticlesFlushedAlready)
 {
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
 
@@ -561,10 +573,11 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
     PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
     PinnedMemoryParticleContainer tmp;
-    if (! isBTD) {
-        tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
-    } else {
+    if (isBTD || use_pinned_pc) {
+        if (!pinned_pc->isDefined()) continue; // Skip to the next particle container
         tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
+    } else {
+        tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
     }
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
@@ -590,7 +603,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
         real_names[x.second+PIdx::nattribs] = detail::snakeToCamel(x.first);
     }
     // plot any "extra" fields by default
-    real_flags = particle_diags[i].plot_flags;
+    real_flags = particle_diags[i].m_plot_flags;
     real_flags.resize(tmp.NumRealComps(), 1);
     // and the names
     int_names.resize(tmp.NumIntComps());
@@ -602,21 +615,24 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     // plot by default
     int_flags.resize(tmp.NumIntComps(), 1);
 
-
-      pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
+    const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
       RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                        particle_diags[i].m_random_fraction);
       UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                          particle_diags[i].m_uniform_stride);
       ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
-                                 compileParser<ParticleDiag::m_nvars>
+                                utils::parser::compileParser<ParticleDiag::m_nvars>
                                      (particle_diags[i].m_particle_filter_parser.get()),
                                  pc->getMass());
       parser_filter.m_units = InputUnits::SI;
       GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                            particle_diags[i].m_diag_domain);
 
-      if (! isBTD) {
+      if (isBTD || use_pinned_pc) {
+          tmp.copyParticles(*pinned_pc, true);
+          particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
+      } else {
+          particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
           using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
           tmp.copyParticles(*pc,
                             [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
@@ -625,11 +641,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
               return random_filter(p, engine) * uniform_filter(p, engine)
                      * parser_filter(p, engine) * geometry_filter(p, engine);
           }, true);
-      } else if (isBTD) {
-          tmp.SetParticleGeometry(0,pinned_pc->Geom(0));
-          tmp.SetParticleBoxArray(0,pinned_pc->ParticleBoxArray(0));
-          tmp.SetParticleDistributionMap(0, pinned_pc->ParticleDistributionMap(0));
-          tmp.copyParticles(*pinned_pc, true);
+          particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
       }
 
     // real_names contains a list of all real particle attributes.
@@ -660,9 +672,6 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
           );
       }
     }
-
-    // Convert momentum back to WarpX units
-    pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
   }
 }
 
@@ -1005,15 +1014,18 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
         amrex::ParticleReal const mass)
 {
     auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
+    auto const scalar = openPMD::RecordComponent::SCALAR;
 
+    // define record shape to be number of particles
     auto const positionComponents = detail::getParticlePositionComponentLabels();
     for( auto const& comp : positionComponents ) {
         currSpecies["positionOffset"][comp].resetDataset( realType );
     }
+    currSpecies["charge"][scalar].resetDataset( realType );
+    currSpecies["mass"][scalar].resetDataset( realType );
 
     // make constant
     using namespace amrex::literals;
-    auto const scalar = openPMD::RecordComponent::SCALAR;
     for( auto const& comp : positionComponents ) {
         currSpecies["positionOffset"][comp].makeConstant( 0._prt );
     }

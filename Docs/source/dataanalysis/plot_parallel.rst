@@ -12,8 +12,7 @@ Most of its dependencies are standard Python packages, that come with a default
 Anaconda installation or can be installed with ``pip`` or ``conda``:
 `os, matplotlib, sys, argparse, matplotlib, scipy`.
 
-Additional dependencies are ``yt >= 3.5`` ( or ``yt >= 3.6`` if you are using
-rigid injection, see section :doc:`yt` on how to install ``yt``), and ``mpi4py``.
+Additional dependencies are ``yt >= 4.0.1`` and ``mpi4py``.
 
 Run serial
 ----------

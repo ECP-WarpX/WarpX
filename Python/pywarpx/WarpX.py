@@ -14,7 +14,7 @@ from .Boundary import boundary
 from .Bucket import Bucket
 from .Collisions import collisions, collisions_list
 from .Constants import my_constants
-from .Diagnostics import diagnostics
+from .Diagnostics import diagnostics, reduced_diagnostics
 from .EB2 import eb2
 from .Geometry import geometry
 from .Interpolation import interpolation
@@ -71,6 +71,14 @@ class WarpX(Bucket):
         diagnostics.diags_names = diagnostics._diagnostics_dict.keys()
         argv += diagnostics.attrlist()
         for diagnostic in diagnostics._diagnostics_dict.values():
+            diagnostic.species = diagnostic._species_dict.keys()
+            argv += diagnostic.attrlist()
+            for species_diagnostic in diagnostic._species_dict.values():
+                argv += species_diagnostic.attrlist()
+
+        reduced_diagnostics.reduced_diags_names = reduced_diagnostics._diagnostics_dict.keys()
+        argv += reduced_diagnostics.attrlist()
+        for diagnostic in reduced_diagnostics._diagnostics_dict.values():
             diagnostic.species = diagnostic._species_dict.keys()
             argv += diagnostic.attrlist()
             for species_diagnostic in diagnostic._species_dict.values():

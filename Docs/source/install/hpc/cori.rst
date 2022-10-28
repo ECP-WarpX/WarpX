@@ -5,7 +5,11 @@ Cori (NERSC)
 
 The `Cori cluster <https://docs.nersc.gov/systems/cori/>`_ is located at NERSC.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `GPU nodes <https://docs-dev.nersc.gov/cgpu/access>`__
 
@@ -14,8 +18,8 @@ If you are new to this system, please see the following resources:
 * `Jupyter service <https://docs.nersc.gov/services/jupyter/>`__
 * `Production directories <https://www.nersc.gov/users/storage-and-file-systems/>`__:
 
-  * ``$SCRATCH``: per-user production directory (20TB)
-  * ``/global/cscratch1/sd/m3239``: shared production directory for users in the project ``m3239`` (50TB)
+  * ``$SCRATCH``: per-user production directory, purged every 30 days (20TB)
+  * ``/global/cscratch1/sd/m3239``: shared production directory for users in the project ``m3239``, purged every 30 days (50TB)
   * ``/global/cfs/cdirs/m3239/``: community file system for users in the project ``m3239`` (100TB)
 
 Installation
@@ -55,13 +59,13 @@ And install ADIOS2, BLAS++ and LAPACK++:
    cmake --build src/adios2-knl-build --target install --parallel 16
 
    # BLAS++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+   git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
    rm -rf src/blaspp-knl-build
    cmake -S src/blaspp -B src/blaspp-knl-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/knl/blaspp-master-install
    cmake --build src/blaspp-knl-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+   git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-knl-build
    CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-knl-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/knl/lapackpp-master-install
    cmake --build src/lapackpp-knl-build --target install --parallel 16
@@ -118,13 +122,13 @@ And install ADIOS2, BLAS++ and LAPACK++:
    cmake --build src/adios2-haswell-build --target install --parallel 16
 
    # BLAS++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+   git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
    rm -rf src/blaspp-haswell-build
    cmake -S src/blaspp -B src/blaspp-haswell-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/blaspp-master-haswell-install
    cmake --build src/blaspp-haswell-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+   git clone https://github.com/icl-utk-edu/blaspp.git src/lapackpp
    rm -rf src/lapackpp-haswell-build
    CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-haswell-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/haswell/lapackpp-master-install
    cmake --build src/lapackpp-haswell-build --target install --parallel 16

@@ -8,6 +8,7 @@
 # License: BSD-3-Clause-LBNL
 
 
+import os
 import re
 import sys
 
@@ -16,6 +17,9 @@ import scipy.constants as scc
 import yt
 
 yt.funcs.mylog.setLevel(0)
+
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 fn = sys.argv[1]
 use_MR = re.search( 'nci_correctorMR', fn ) != None
@@ -43,3 +47,6 @@ print("energy threshold (from benchmark): %s" %energy_threshold)
 print("energy from this run: %s" %energy)
 
 assert( energy < energy_threshold )
+
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)
