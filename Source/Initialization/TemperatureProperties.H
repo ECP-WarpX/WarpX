@@ -9,8 +9,6 @@
 #ifndef TEMPERATURE_PROPERTIES_H_
 #define TEMPERATURE_PROPERTIES_H_
 
-#include <Utils/WarpXUtil.H>
-
 #include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>

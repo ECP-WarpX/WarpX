@@ -11,8 +11,8 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 #include "WarpXWrappers.H"
 #include "WarpX_py.H"
@@ -488,6 +488,42 @@ namespace
         return data;
     }
 
+    void warpx_convert_id_to_long (amrex::Long* ids, const WarpXParticleContainer::ParticleType* pstructs, int size)
+    {
+        amrex::Long* d_ptr = nullptr;
+#ifdef AMREX_USE_GPU
+        amrex::Gpu::DeviceVector<amrex::Long> d_ids(size);
+        d_ptr = d_ids.data();
+#else
+        d_ptr = ids;
+#endif
+        amrex::ParallelFor(size, [=] AMREX_GPU_DEVICE (int i) noexcept
+        {
+            d_ptr[i] = pstructs[i].id();
+        });
+#ifdef AMREX_USE_GPU
+        amrex::Gpu::dtoh_memcpy(ids, d_ptr, size*sizeof(amrex::Long));
+#endif
+    }
+
+    void warpx_convert_cpu_to_int (int* cpus, const WarpXParticleContainer::ParticleType* pstructs, int size)
+    {
+        int* d_ptr = nullptr;
+#ifdef AMREX_USE_GPU
+        amrex::Gpu::DeviceVector<int> d_cpus(size);
+        d_ptr = d_cpus.data();
+#else
+        d_ptr = cpus;
+#endif
+        amrex::ParallelFor(size, [=] AMREX_GPU_DEVICE (int i) noexcept
+        {
+            d_ptr[i] = pstructs[i].cpu();
+        });
+#ifdef AMREX_USE_GPU
+        amrex::Gpu::dtoh_memcpy(cpus, d_ptr, size*sizeof(int));
+#endif
+    }
+
     int warpx_getParticleCompIndex (
          const char* char_species_name, const char* char_comp_name )
     {
@@ -626,6 +662,7 @@ namespace
         {
             const long np = pti.numParticles();
             auto& wp = pti.GetAttribs(PIdx::w);
+            // Do this unconditionally, ignoring myspc.do_not_deposit, to support diagnostic uses
             myspc.DepositCharge(pti, wp, nullptr, rho_fp, 0, 0, np, 0, lev, lev);
         }
 #ifdef WARPX_DIM_RZ

@@ -8,7 +8,6 @@
 #include "FieldMomentum.H"
 
 #include "Utils/CoarsenIO.H"
-#include "Utils/IntervalsParser.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"

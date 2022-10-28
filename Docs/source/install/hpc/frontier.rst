@@ -75,7 +75,7 @@ The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 Running
 -------
 
-.. _running-cpp-frontier-MI100-GPUs:
+.. _running-cpp-frontier-MI250X-GPUs:
 
 MI250X GPUs (2x64 GB)
 ^^^^^^^^^^^^^^^^^^^^^
@@ -116,4 +116,16 @@ Known System Issues
 
    .. code-block:: bash
 
-      export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching
+      #export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching
+      # or, less invasive:
+      export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
+
+.. warning::
+
+   Sep 2nd, 2022 (OLCFDEV-1079):
+   rocFFT in ROCm 5.1+ tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/library.html#runtime-compilation>`__ in the home area by default.
+   This does not scale, disable it via:
+
+   .. code-block:: bash
+
+      export ROCFFT_RTC_CACHE_PATH=/dev/null

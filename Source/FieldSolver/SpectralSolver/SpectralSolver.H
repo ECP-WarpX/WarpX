@@ -58,9 +58,10 @@ class SpectralSolver
          *                                (no domain decomposition)
          * \param[in] update_with_rho whether rho is used in the field update equations
          * \param[in] fft_do_time_averaging whether the time averaging algorithm is used
-         * \param[in] do_multi_J whether the multi-J algorithm is used (hence two currents
-         *                       computed at the beginning and the end of the time interval
-         *                       instead of one current computed at half time)
+         * \param[in] J_in_time integer that corresponds to the time dependency of J
+         *                      (constant, linear) for the PSATD algorithm
+         * \param[in] rho_in_time integer that corresponds to the time dependency of rho
+         *                        (linear, quadratic) for the PSATD algorithm
          * \param[in] dive_cleaning whether to use div(E) cleaning to account for errors in
          *                          Gauss law (new field F in the update equations)
          * \param[in] divb_cleaning whether to use div(B) cleaning to account for errors in
@@ -79,7 +80,8 @@ class SpectralSolver
                         const bool periodic_single_box,
                         const bool update_with_rho,
                         const bool fft_do_time_averaging,
-                        const bool do_multi_J,
+                        const int J_in_time,
+                        const int rho_in_time,
                         const bool dive_cleaning,
                         const bool divb_cleaning);
 

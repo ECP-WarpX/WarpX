@@ -24,6 +24,10 @@ jobs:
       SETUPTOOLS_USE_DISTUTILS: stdlib
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      name: Install Python
+      with:
+        python-version: '3.x'
     - name: install dependencies
       run: |
         .github/workflows/dependencies/nvcc11.sh
@@ -106,7 +110,7 @@ jobs:
         which nvcc || echo "nvcc not in PATH!"
 
         git clone https://github.com/AMReX-Codes/amrex.git ../amrex
-        cd amrex && git checkout --detach 103db6ebe2b570910ac4dbd7d6611e59d80f1a0b && cd -
+        cd amrex && git checkout --detach 3082028e42870b1ed37f0d26160ef078580511e3 && cd -
         make COMP=gcc QED=FALSE USE_MPI=TRUE USE_GPU=TRUE USE_OMP=FALSE USE_PSATD=TRUE USE_CCACHE=TRUE -j 2
 
   build_nvhpc21-11-nvcc:

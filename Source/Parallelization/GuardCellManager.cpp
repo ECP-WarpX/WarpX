@@ -15,10 +15,10 @@
 #    include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
 #include "Filter/NCIGodfreyFilter.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 
 #include <AMReX_Config.H>
 #include <AMReX_INT.H>
@@ -53,7 +53,9 @@ guardCellManager::Init (
     const bool do_pml,
     const int do_pml_in_domain,
     const int pml_ncell,
-    const amrex::Vector<amrex::IntVect>& ref_ratios)
+    const amrex::Vector<amrex::IntVect>& ref_ratios,
+    const bool use_filter,
+    const amrex::IntVect& bilinear_filter_stencil_length)
 {
     // When using subcycling, the particles on the fine level perform two pushes
     // before being redistributed ; therefore, we need one extra guard cell
@@ -160,6 +162,11 @@ guardCellManager::Init (
     ng_depos_J   = ng_alloc_J;
     ng_depos_rho = ng_alloc_Rho;
 
+    if (use_filter)
+    {
+        ng_alloc_J += bilinear_filter_stencil_length - amrex::IntVect(1);
+    }
+
     // After pushing particle
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell
@@ -194,9 +201,9 @@ guardCellManager::Init (
         int ngFFt_z = (do_nodal || galilean) ? noz_fft : noz_fft / 2;
 
         ParmParse pp_psatd("psatd");
-        queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
-        queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
-        queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
+        utils::parser::queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
+        utils::parser::queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
+        utils::parser::queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if defined(WARPX_DIM_3D)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);

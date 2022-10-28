@@ -7,6 +7,7 @@
  */
 #include "WarpX.H"
 
+#include "Utils/Parser/ParserUtils.H"
 #include "TextMsg.H"
 #include "WarpXAlgorithmSelection.H"
 #include "WarpXConst.H"
@@ -44,7 +45,7 @@ void PreparseAMReXInputIntArray(amrex::ParmParse& a_pp, char const * const input
     const int cnt = a_pp.countval(input_str);
     if (cnt > 0) {
         Vector<int> input_array;
-        getArrWithParser(a_pp, input_str, input_array);
+        utils::parser::getArrWithParser(a_pp, input_str, input_array);
         if (replace) {
             a_pp.remove(input_str);
         }
@@ -64,9 +65,11 @@ void ParseGeometryInput()
     Vector<Real> prob_lo(AMREX_SPACEDIM);
     Vector<Real> prob_hi(AMREX_SPACEDIM);
 
-    getArrWithParser(pp_geometry, "prob_lo", prob_lo, 0, AMREX_SPACEDIM);
+    utils::parser::getArrWithParser(
+        pp_geometry, "prob_lo", prob_lo, 0, AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(prob_lo.size() == AMREX_SPACEDIM);
-    getArrWithParser(pp_geometry, "prob_hi", prob_hi, 0, AMREX_SPACEDIM);
+    utils::parser::getArrWithParser(
+        pp_geometry, "prob_hi", prob_hi, 0, AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
 
 #ifdef WARPX_DIM_RZ
@@ -108,7 +111,7 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
                                 Vector<int>& boost_direction)
 {
     ParmParse pp_warpx("warpx");
-    queryWithParser(pp_warpx, "gamma_boost", gamma_boost);
+    utils::parser::queryWithParser(pp_warpx, "gamma_boost", gamma_boost);
     if( gamma_boost > 1. ) {
         beta_boost = std::sqrt(1._rt-1._rt/std::pow(gamma_boost,2._rt));
         std::string s;
@@ -155,19 +158,25 @@ void ConvertLabParamsToBoost()
     ParmParse pp_amr("amr");
     ParmParse pp_slice("slice");
 
-    getArrWithParser(pp_geometry, "prob_lo", prob_lo, 0, AMREX_SPACEDIM);
-    getArrWithParser(pp_geometry, "prob_hi", prob_hi, 0, AMREX_SPACEDIM);
+    utils::parser::getArrWithParser(
+        pp_geometry, "prob_lo", prob_lo, 0, AMREX_SPACEDIM);
+    utils::parser::getArrWithParser(
+        pp_geometry, "prob_hi", prob_hi, 0, AMREX_SPACEDIM);
 
-    queryArrWithParser(pp_slice, "dom_lo", slice_lo, 0, AMREX_SPACEDIM);
+    utils::parser::queryArrWithParser(
+        pp_slice, "dom_lo", slice_lo, 0, AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(slice_lo.size() == AMREX_SPACEDIM);
-    queryArrWithParser(pp_slice, "dom_hi", slice_hi, 0, AMREX_SPACEDIM);
+    utils::parser::queryArrWithParser(
+        pp_slice, "dom_hi", slice_hi, 0, AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(slice_hi.size() == AMREX_SPACEDIM);
 
 
     pp_amr.query("max_level", max_level);
     if (max_level > 0){
-      getArrWithParser(pp_warpx, "fine_tag_lo", fine_tag_lo);
-      getArrWithParser(pp_warpx, "fine_tag_hi", fine_tag_hi);
+      utils::parser::getArrWithParser(
+        pp_warpx, "fine_tag_lo", fine_tag_lo);
+      utils::parser::getArrWithParser(
+        pp_warpx, "fine_tag_hi", fine_tag_hi);
     }
 
 
@@ -262,130 +271,6 @@ namespace WarpXUtilIO{
         of.close();
         return  of.good();
     }
-}
-
-void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
-                        std::string& stored_string)
-{
-    std::vector<std::string> f;
-    pp.getarr(query_string.c_str(), f);
-    stored_string.clear();
-    for (auto const& s : f) {
-        stored_string += s;
-    }
-    f.clear();
-}
-
-int safeCastToInt(const amrex::Real x, const std::string& real_name) {
-    int result = 0;
-    bool error_detected = false;
-    std::string assert_msg;
-    // (2.0*(numeric_limits<int>::max()/2+1)) converts numeric_limits<int>::max()+1 to a real ensuring accuracy to all digits
-    // This accepts x = 2**31-1 but rejects 2**31.
-    using namespace amrex::literals;
-    constexpr amrex::Real max_range = (2.0_rt*static_cast<amrex::Real>(std::numeric_limits<int>::max()/2+1));
-    if (x < max_range) {
-        if (std::ceil(x) >= std::numeric_limits<int>::min()) {
-            result = static_cast<int>(x);
-        } else {
-            error_detected = true;
-            assert_msg = "Negative overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
-        }
-    } else if (x > 0) {
-        error_detected = true;
-        assert_msg =  "Overflow detected when casting " + real_name + " = " + std::to_string(x) + " to int";
-    } else {
-        error_detected = true;
-        assert_msg =  "NaN detected when casting " + real_name + " to int";
-    }
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!error_detected, assert_msg);
-    return result;
-}
-
-Parser makeParser (std::string const& parse_function, amrex::Vector<std::string> const& varnames)
-{
-    // Since queryWithParser recursively calls this routine, keep track of symbols
-    // in case an infinite recursion is found (a symbol's value depending on itself).
-    static std::set<std::string> recursive_symbols;
-
-    Parser parser(parse_function);
-    parser.registerVariables(varnames);
-
-    std::set<std::string> symbols = parser.symbols();
-    for (auto const& v : varnames) symbols.erase(v.c_str());
-
-    // User can provide inputs under this name, through which expressions
-    // can be provided for arbitrary variables. PICMI inputs are aware of
-    // this convention and use the same prefix as well. This potentially
-    // includes variable names that match physical or mathematical
-    // constants, in case the user wishes to enforce a different
-    // system of units or some form of quasi-physical behavior in the
-    // simulation. Thus, this needs to override any built-in
-    // constants.
-    ParmParse pp_my_constants("my_constants");
-
-    // Physical / Numerical Constants available to parsed expressions
-    static std::map<std::string, amrex::Real> warpx_constants =
-      {
-       {"clight", PhysConst::c},
-       {"epsilon0", PhysConst::ep0},
-       {"mu0", PhysConst::mu0},
-       {"q_e", PhysConst::q_e},
-       {"m_e", PhysConst::m_e},
-       {"m_p", PhysConst::m_p},
-       {"m_u", PhysConst::m_u},
-       {"kb", PhysConst::kb},
-       {"pi", MathConst::pi},
-      };
-
-    for (auto it = symbols.begin(); it != symbols.end(); ) {
-        // Always parsing in double precision avoids potential overflows that may occur when parsing
-        // user's expressions because of the limited range of exponentials in single precision
-        double v;
-
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            recursive_symbols.count(*it)==0,
-            "Expressions contains recursive symbol "+*it);
-        recursive_symbols.insert(*it);
-        const bool is_input = queryWithParser(pp_my_constants, it->c_str(), v);
-        recursive_symbols.erase(*it);
-
-        if (is_input) {
-            parser.setConstant(*it, v);
-            it = symbols.erase(it);
-            continue;
-        }
-
-        auto constant = warpx_constants.find(*it);
-        if (constant != warpx_constants.end()) {
-          parser.setConstant(*it, constant->second);
-          it = symbols.erase(it);
-          continue;
-        }
-
-        ++it;
-    }
-    for (auto const& s : symbols) {
-        amrex::Abort(Utils::TextMsg::Err("makeParser::Unknown symbol "+s));
-    }
-    return parser;
-}
-
-double
-parseStringtoReal(std::string str)
-{
-    auto parser = makeParser(str, {});
-    auto exe = parser.compileHost<0>();
-    double result = exe();
-    return result;
-}
-
-int
-parseStringtoInt(std::string str, std::string name)
-{
-    auto const rval = static_cast<amrex::Real>(parseStringtoReal(str));
-    int ival = safeCastToInt(std::round(rval), name);
-    return ival;
 }
 
 void CheckDims ()
@@ -579,61 +464,6 @@ void ReadBCParams ()
     pp_geometry.addarr("is_periodic", geom_periodicity);
 }
 
-namespace WarpXUtilStr
-{
-    bool is_in(const std::vector<std::string>& vect,
-               const std::string& elem)
-    {
-        return (std::find(vect.begin(), vect.end(), elem) != vect.end());
-    }
-
-    bool is_in(const std::vector<std::string>& vect,
-               const std::vector<std::string>& elems)
-    {
-        return std::any_of(elems.begin(), elems.end(),
-            [&](const auto elem){return is_in(vect, elem);});
-    }
-
-    std::vector<std::string> automatic_text_wrap(
-        const std::string& text, const int max_line_length){
-
-        auto ss_text = std::stringstream{text};
-        auto wrapped_text_lines = std::vector<std::string>{};
-
-        std::string line;
-        while(std::getline(ss_text, line,'\n')){
-
-            auto ss_line = std::stringstream{line};
-            int counter = 0;
-            std::stringstream ss_line_out;
-            std::string word;
-
-            while (ss_line >> word){
-                const auto wlen = static_cast<int>(word.length());
-
-                if(counter == 0){
-                    ss_line_out << word;
-                    counter += wlen;
-                }
-                else{
-                    if (counter + wlen < max_line_length){
-                        ss_line_out << " " << word;
-                        counter += (wlen+1);
-                    }
-                    else{
-                        wrapped_text_lines.push_back(ss_line_out.str());
-                        ss_line_out = std::stringstream{word};
-                        counter = wlen;
-                    }
-                }
-            }
-
-            wrapped_text_lines.push_back(ss_line_out.str());
-        }
-
-        return wrapped_text_lines;
-    }
-}
 
 namespace WarpXUtilLoadBalance
 {

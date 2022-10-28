@@ -1,4 +1,4 @@
-warpx.zmax_plasma_to_compute_max_step = 0.0031
+warpx.zmax_plasma_to_compute_max_step = 0.0055
 
 amr.n_cell =  32 32 64
 amr.max_grid_size = 64
@@ -113,27 +113,25 @@ slice.dt_slice_snapshots_lab = 3.3356409519815207e-12
 slice.particle_slice_width_lab = 2.e-6
 
 # Diagnostics
-diagnostics.diags_names = diag1 btd_openpmd btd_pltfile
-diag1.intervals = 10000
-diag1.diag_type = Full
+diagnostics.diags_names = diag1 diag2
 
-btd_openpmd.diag_type = BackTransformed
-btd_openpmd.do_back_transformed_fields = 1
-btd_openpmd.num_snapshots_lab = 4
-btd_openpmd.dz_snapshots_lab = 0.001
-btd_openpmd.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-btd_openpmd.format = openpmd
-btd_openpmd.buffer_size = 32
-btd_openpmd.openpmd_backend = h5
+diag1.diag_type = BackTransformed
+diag1.do_back_transformed_fields = 1
+diag1.num_snapshots_lab = 4
+diag1.dz_snapshots_lab = 0.001
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+diag1.format = plotfile
+diag1.buffer_size = 32
+diag1.write_species = 1
 
-btd_pltfile.diag_type = BackTransformed
-btd_pltfile.do_back_transformed_fields = 1
-btd_pltfile.num_snapshots_lab = 4
-btd_pltfile.dz_snapshots_lab = 0.001
-btd_pltfile.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-btd_pltfile.format = plotfile
-btd_pltfile.buffer_size = 32
-btd_pltfile.write_species = 1
+diag2.diag_type = BackTransformed
+diag2.do_back_transformed_fields = 1
+diag2.intervals = 0:3:2, 1:3:2
+diag2.dz_snapshots_lab = 0.001
+diag2.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+diag2.format = openpmd
+diag2.buffer_size = 32
+diag2.openpmd_backend = h5
 
 # old BTD diagnostics
 warpx.do_back_transformed_diagnostics = 1

@@ -14,13 +14,16 @@
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
+#include "Utils/Algorithms/IsIn.H"
 #include "Utils/CoarsenIO.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <ablastr/utils/Communication.H>
+#include <ablastr/utils/SignalHandling.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -39,9 +42,15 @@
 #include <cmath>
 #include <cstdio>
 #include <memory>
+#include <string>
 #include <vector>
 
 using namespace amrex::literals;
+
+namespace
+{
+    constexpr int permission_flag_rwxrxrx = 0755;
+}
 
 BTDiagnostics::BTDiagnostics (int i, std::string name)
     : Diagnostics(i, name)
@@ -99,7 +108,7 @@ void BTDiagnostics::DerivedInitData ()
     if (m_output_species_names.size() == 0 and write_species == 1)
         m_output_species_names = mpc.GetSpeciesNames();
 
-    if (m_output_species_names.size() > 0) {
+    if (m_output_species_names.size() > 0 and write_species == 1) {
         m_do_back_transformed_particles = true;
     } else {
         m_do_back_transformed_particles = false;
@@ -107,13 +116,57 @@ void BTDiagnostics::DerivedInitData ()
     // Turn on do_back_transformed_particles in the particle containers so that
     // the tmp_particle_data is allocated and the data of the corresponding species is
     // copied and stored in tmp_particle_data before particles are pushed.
-    for (auto const& species : m_output_species_names){
+    if (m_do_back_transformed_particles) {
         mpc.SetDoBackTransformedParticles(m_do_back_transformed_particles);
-        mpc.SetDoBackTransformedParticles(species, m_do_back_transformed_particles);
+        for (auto const& species : m_output_species_names){
+            mpc.SetDoBackTransformedParticles(species, m_do_back_transformed_particles);
+        }
     }
     m_particles_buffer.resize(m_num_buffers);
     m_totalParticles_flushed_already.resize(m_num_buffers);
     m_totalParticles_in_buffer.resize(m_num_buffers);
+
+    // check that simulation can fill all BTD snapshots
+    const int lev = 0;
+    const amrex::Real dt_boosted_frame = warpx.getdt(lev);
+    const int moving_dir = warpx.moving_window_dir;
+    const amrex::Real Lz_lab = warpx.Geom(lev).ProbLength(moving_dir) / warpx.gamma_boost / (1._rt+warpx.beta_boost);
+    const int ref_ratio = 1;
+    const amrex::Real dz_snapshot_grid = dz_lab(dt_boosted_frame, ref_ratio);
+    // Need enough buffers so the snapshot length is longer than the lab frame length
+    // num_buffers * m_buffer_size * dz_snapshot_grid >= Lz
+    const int num_buffers = ceil(Lz_lab / m_buffer_size / dz_snapshot_grid);
+    const int final_snapshot_iteration = m_intervals.GetFinalIteration();
+
+    // the final snapshot starts filling when the
+    // right edge of the moving window intersects the final snapshot
+    // time of final snapshot : t_sn = t0 + i*dt_snapshot
+    // where t0 is the time of first BTD snapshot, t0 = zmax / c  * beta / (1-beta)
+    //
+    // the right edge of the moving window at the time of the final snapshot
+    // has space time coordinates
+    // time t_intersect = t_sn, position  z_intersect=zmax + c*t_sn
+    // the boosted time of this space time pair is
+    // t_intersect_boost = gamma * (t_intersect - beta * z_intersect_boost/c)
+    //                   = gamma * (t_sn * (1 - beta) - beta * zmax / c)
+    //                   = gamma * (zmax*beta/c + i*dt_snapshot*(1-beta) - beta*zmax/c)
+    //                   = gamma * i * dt_snapshot * (1-beta)
+    //                   = i * dt_snapshot / gamma / (1+beta)
+    //
+    // if j = final snapshot starting step, then we want to solve
+    // j dt_boosted_frame >= t_intersect_boost = i * dt_snapshot / gamma / (1+beta)
+    // j >= i / gamma / (1+beta) * dt_snapshot / dt_boosted_frame
+    const int final_snapshot_starting_step = ceil(final_snapshot_iteration / warpx.gamma_boost / (1._rt+warpx.beta_boost) * m_dt_snapshots_lab / dt_boosted_frame);
+    const int final_snapshot_fill_iteration = final_snapshot_starting_step + num_buffers * m_buffer_size - 1;
+    if (final_snapshot_fill_iteration > warpx.maxStep()) {
+        std::string warn_string =
+            "\nSimulation might not run long enough to fill all BTD snapshots.\n"
+            "Final step: " + std::to_string(warpx.maxStep()) + "\n"
+            "Last BTD snapshot fills around step: " + std::to_string(final_snapshot_fill_iteration);
+        ablastr::warn_manager::WMRecordWarning(
+            "BTD", warn_string,
+            ablastr::warn_manager::WarnPriority::low);
+    }
 }
 
 void
@@ -149,25 +202,34 @@ BTDiagnostics::ReadParameters ()
     m_file_prefix = "diags/" + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
     pp_diag_name.query("do_back_transformed_fields", m_do_back_transformed_fields);
-    pp_diag_name.query("do_back_transformed_particles", m_do_back_transformed_particles);
-    AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_back_transformed_fields, " fields must be turned on for the new back-transformed diagnostics");
     if (m_do_back_transformed_fields == false) m_varnames.clear();
 
-    getWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
-    m_num_buffers = m_num_snapshots_lab;
+
+    std::vector<std::string> intervals_string_vec = {"0"};
+    bool const num_snapshots_specified = utils::parser::queryWithParser(
+        pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
+    bool const intervals_specified = pp_diag_name.queryarr("intervals", intervals_string_vec);
+    if (num_snapshots_specified)
+    {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!intervals_specified,
+            "For back-transformed diagnostics, user should specify either num_snapshots_lab or intervals, not both");
+        intervals_string_vec = {":" + std::to_string(m_num_snapshots_lab-1)};
+    }
+    m_intervals = utils::parser::BTDIntervalsParser(intervals_string_vec);
+    m_num_buffers = m_intervals.NumSnapshots();
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
-    bool snapshot_interval_is_specified = false;
-    snapshot_interval_is_specified = queryWithParser(pp_diag_name, "dt_snapshots_lab", m_dt_snapshots_lab);
-    if ( queryWithParser(pp_diag_name, "dz_snapshots_lab", m_dz_snapshots_lab) ) {
+    bool snapshot_interval_is_specified = utils::parser::queryWithParser(
+        pp_diag_name, "dt_snapshots_lab", m_dt_snapshots_lab);
+    if ( utils::parser::queryWithParser(pp_diag_name, "dz_snapshots_lab", m_dz_snapshots_lab) ) {
         m_dt_snapshots_lab = m_dz_snapshots_lab/PhysConst::c;
         snapshot_interval_is_specified = true;
     }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
 
-    if (queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
+    if (utils::parser::queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
     }
 
@@ -176,13 +238,16 @@ BTDiagnostics::ReadParameters ()
                                                            "jx", "jy", "jz", "rho"};
 
     for (const auto& var : m_varnames) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (WarpXUtilStr::is_in(BTD_varnames_supported, var )), "Input error: field variable " + var + " in " + m_diag_name
-        + ".fields_to_plot is not supported for BackTransformed diagnostics. Currently supported field variables for BackTransformed diagnostics include Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (utils::algorithms::is_in(BTD_varnames_supported, var )),
+            "Input error: field variable " + var + " in " + m_diag_name
+            + ".fields_to_plot is not supported for BackTransformed diagnostics."
+            + " Currently supported field variables for BackTransformed diagnostics "
+            + "include Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho");
     }
 
     bool particle_fields_to_plot_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!particle_fields_to_plot_specified, "particle_fields_to_plot is currently not supported for BackTransformed Diagnostics");
-
 
 }
 
@@ -234,7 +299,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     auto & warpx = WarpX::GetInstance();
     // Lab-frame time for the i^th snapshot
     amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
-    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab
+    m_t_lab.at(i_buffer) = m_intervals.GetBTDIteration(i_buffer) * m_dt_snapshots_lab
         + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
 
     // Define buffer domain in boosted frame at level, lev, with user-defined lo and hi
@@ -296,7 +361,6 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
                                  / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
     amrex::Real zmax_buffer_lab = diag_dom.hi(m_moving_window_dir)
                                  / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-
 
 
     // Initialize buffer counter and z-positions of the  i^th snapshot in
@@ -367,6 +431,11 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
                                   zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
     m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
                                   zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+    // To prevent round off errors, moving the snapshot domain by half a cell so that all the slices
+    // lie close to the cell-centers in the lab-frame grid instead of on the edge of cell.
+    amrex::Real new_hi = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir)
+                       + 0.5_rt * dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+    m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,new_hi);
     amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
                          num_z_cells_in_snapshot *
                          dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
@@ -558,7 +627,14 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                         m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
                         m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir),
-                        "z-slice in lab-frame is outside the buffer domain physical extent. ");
+                        "z-slice in lab-frame (" +
+                        std::to_string(m_current_z_lab[i_buffer]) +
+                        ") is outside the buffer domain physical extent (" +
+                        std::to_string(m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir)) +
+                        " to " +
+                        std::to_string(m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir)) +
+                        ")."
+                    );
                 }
                 m_all_field_functors[lev][i]->PrepareFunctorData (
                                              i_buffer, ZSliceInDomain,
@@ -762,7 +838,6 @@ BTDiagnostics::Flush (int i_buffer)
             m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], buffer_ba);
         }
     }
-
     RedistributeParticleBuffer(i_buffer);
 
     // Reset buffer box and particle box array
@@ -778,7 +853,8 @@ BTDiagnostics::Flush (int i_buffer)
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards,
-        use_pinned_pc, isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush,
+        use_pinned_pc, isBTD, i_buffer, m_buffer_flush_counter[i_buffer],
+        m_max_buffer_multifabs[i_buffer], m_geom_snapshot[i_buffer][0], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
 
     for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
@@ -841,16 +917,16 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
         // Create directory only when the first buffer is flushed out.
         if (m_buffer_flush_counter[i_snapshot] == 0 ) {
             // Create Level_0 directory to store all Cell_D and Cell_H files
-            if (!amrex::UtilCreateDirectory(snapshot_Level0_path, 0755) )
+            if (!amrex::UtilCreateDirectory(snapshot_Level0_path, permission_flag_rwxrxrx) )
                 amrex::CreateDirectoryFailed(snapshot_Level0_path);
             // Create directory for each species selected for diagnostic
             for (int i = 0; i < m_particles_buffer[i_snapshot].size(); ++i) {
                 std::string snapshot_species_path = snapshot_path + "/" + m_output_species_names[i];
-                if ( !amrex::UtilCreateDirectory(snapshot_species_path, 0755))
+                if ( !amrex::UtilCreateDirectory(snapshot_species_path, permission_flag_rwxrxrx))
                     amrex::CreateDirectoryFailed(snapshot_species_path);
                 // Create Level_0 directory for particles to store Particle_H and DATA files
                 std::string species_Level0_path = snapshot_species_path + "/Level_0";
-                if ( !amrex::UtilCreateDirectory(species_Level0_path, 0755))
+                if ( !amrex::UtilCreateDirectory(species_Level0_path, permission_flag_rwxrxrx))
                     amrex::CreateDirectoryFailed(species_Level0_path);
             }
             std::string buffer_WarpXHeader_path = recent_Buffer_filepath + "/WarpXHeader";
@@ -1182,7 +1258,7 @@ void
 BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
 {
     for (int isp = 0; isp < m_totalParticles_flushed_already[i_buffer].size(); ++isp) {
-        m_totalParticles_flushed_already[i_buffer][isp] += m_totalParticles_in_buffer[i_buffer][isp];
+        m_totalParticles_flushed_already[i_buffer][isp] += m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles();
     }
 }
 

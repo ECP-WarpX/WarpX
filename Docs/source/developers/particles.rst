@@ -85,11 +85,9 @@ On a loop over particles it can be useful to access the fields on the box we are
 Main functions
 --------------
 
-.. doxygenfunction:: PhysicalParticleContainer::FieldGather
-
 .. doxygenfunction:: PhysicalParticleContainer::PushPX
 
-.. doxygenfunction:: WarpXParticleContainer::DepositCurrent
+.. doxygenfunction:: WarpXParticleContainer::DepositCurrent(amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &J, const amrex::Real dt, const amrex::Real relative_time)
 
 .. note::
    The current deposition is used both by ``PhysicalParticleContainer`` and ``LaserParticleContainer``, so it is in the parent class ``WarpXParticleContainer``.

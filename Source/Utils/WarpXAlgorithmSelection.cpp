@@ -62,6 +62,18 @@ const std::map<std::string, int> gathering_algo_to_int = {
     {"default",             GatheringAlgo::EnergyConserving }
 };
 
+const std::map<std::string, int> J_in_time_to_int = {
+    {"constant", JInTime::Constant},
+    {"linear", JInTime::Linear},
+    {"default", JInTime::Constant}
+};
+
+const std::map<std::string, int> rho_in_time_to_int = {
+    {"linear", RhoInTime::Linear},
+    {"quadratic", RhoInTime::Quadratic},
+    {"default", RhoInTime::Linear}
+};
+
 const std::map<std::string, int> load_balance_costs_update_algo_to_int = {
     {"timers",    LoadBalanceCostsUpdateAlgo::Timers },
     {"gpuclock",  LoadBalanceCostsUpdateAlgo::GpuClock },
@@ -88,6 +100,7 @@ const std::map<std::string, int> FieldBCType_algo_to_int = {
     {"pmc",      FieldBoundaryType::PMC},
     {"damped",   FieldBoundaryType::Damped},
     {"absorbing_silver_mueller", FieldBoundaryType::Absorbing_SilverMueller},
+    {"neumann",  FieldBoundaryType::Neumann},
     {"none",     FieldBoundaryType::None},
     {"default",  FieldBoundaryType::PML}
 };
@@ -131,6 +144,10 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = charge_deposition_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "field_gathering")) {
         algo_to_int = gathering_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "J_in_time")) {
+        algo_to_int = J_in_time_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "rho_in_time")) {
+        algo_to_int = rho_in_time_to_int;
     } else if (0 == std::strcmp(pp_search_key, "load_balance_costs_update")) {
         algo_to_int = load_balance_costs_update_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "em_solver_medium")) {

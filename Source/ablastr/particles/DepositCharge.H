@@ -22,8 +22,8 @@
 #include <optional>
 
 
-namespace ablastr {
-namespace particles {
+namespace ablastr::particles
+{
 
 /** Perform charge deposition for the particles on a tile.
  *
@@ -208,7 +208,6 @@ deposit_charge (typename T_PC::ParIterType& pti,
 #endif
 }
 
-} // namespace particles
-} // namespace ablastr
+} // namespace ablastr::particles
 
 #endif // ABLASTR_DEPOSIT_CHARGE_H_
