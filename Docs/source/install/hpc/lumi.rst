@@ -11,14 +11,14 @@ Introduction
 
 If you are new to this system, **please see the following resources**:
 
-* `Lumi user guide <TODO>`_
-* Batch system: `TODO <TODO>`_
+* `Lumi user guide <https://docs.lumi-supercomputer.eu>`_
+* Batch system: `Slurm <https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/slurm-quickstart/>`_
 * `Jupyter service ? <TODO>`__
-* `Production directories <TODO>`_:
+* Production directories:
 
-  * scratch?
-  * home?
-  * something read only on compute nodes?
+  * `LUMI-P <https://docs.lumi-supercomputer.eu/hardware/storage/lumip/>`__: 4 independent [Lustre](https://docs.lumi-supercomputer.eu/hardware/storage/lumip/#lustre) file systems
+  * `LUMI-F <https://docs.lumi-supercomputer.eu/hardware/storage/lumif/>`__: a fast Lustre file system
+  * `LUMI-O <https://docs.lumi-supercomputer.eu/hardware/storage/lumio/>`__: object storage
 
 
 Installation
