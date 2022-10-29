@@ -43,6 +43,10 @@ amrex::ParticleReal BoschHaleFusionCrossSection (
     const amrex::ParticleReal m_reduced = m1 / (1._prt + m1/m2);
     amrex::ParticleReal B_G = MathConst::pi * PhysConst::alpha * 1._prt * 1._prt
          * std::sqrt( 2._prt*m_reduced*PhysConst::c*PhysConst::c * joule_to_keV );
+    if (fusion_type == NuclearFusionType::DeuteriumHeliumToProtonHelium) {
+        // Take into account the fact that Z=2 for one of the reactant (helium) in this case
+        B_G *= 2;
+    }
 
     // Compute astrophysical_factor
     // (See Eq. 9 and Table IV in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)
@@ -78,6 +82,17 @@ amrex::ParticleReal BoschHaleFusionCrossSection (
         B1 = 0_prt;
         B2 = 0_prt;
         B3 = 0_prt;
+        B4 = 0_prt;
+    }
+    else if (fusion_type == NuclearFusionType::DeuteriumHeliumToProtonHelium) {
+        A1 = 5.7501e6_prt;
+        A2 = 2.5226e3_prt;
+        A3 = 4.5566e1_prt;
+        A4 = 0_prt;
+        A5 = 0_prt;
+        B1 = -3.1995e-3_prt;
+        B2 = -8.5530e-6_prt;
+        B3 = 5.9014e-8_prt;
         B4 = 0_prt;
     }
 
