@@ -224,9 +224,9 @@ public:
                                                         p_pair_indices_1[i], p_pair_indices_2[i],
                                                         product_start_index, m1, m2, engine);
                 }
-                else if ((m_collision_type == CollisionType::DeuteriumTritiumToNeutronHeliumFusion)
-                      || (m_collision_type == CollisionType::DeuteriumDeuteriumToProtonTritiumFusion)
-                      || (m_collision_type == CollisionType::DeuteriumDeuteriumToNeutronHeliumFusion))
+                else if ((t_collision_type == CollisionType::DeuteriumTritiumToNeutronHeliumFusion)
+                      || (t_collision_type == CollisionType::DeuteriumDeuteriumToProtonTritiumFusion)
+                      || (t_collision_type == CollisionType::DeuteriumDeuteriumToNeutronHeliumFusion))
                 {
                     amrex::ParticleReal fusion_energy = 0.0_prt;
                     if (t_collision_type == CollisionType::DeuteriumTritiumToNeutronHeliumFusion) {
