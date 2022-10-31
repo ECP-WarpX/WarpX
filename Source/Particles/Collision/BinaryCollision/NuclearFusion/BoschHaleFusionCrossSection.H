@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef DEUTERIUM_TRITIUM_FUSION_CROSS_SECTION_H
-#define DEUTERIUM_TRITIUM_FUSION_CROSS_SECTION_H
+#ifndef BOSCH_HALE_FUSION_CROSS_SECTION_H
+#define BOSCH_HALE_FUSION_CROSS_SECTION_H
 
 #include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
 #include "Utils/WarpXConst.H"
@@ -41,7 +41,9 @@ amrex::ParticleReal BoschHaleFusionCrossSection (
     // Compute the Gamow constant B_G (in keV^{1/2})
     // (See Eq. 3 in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611)
     const amrex::ParticleReal m_reduced = m1 / (1._prt + m1/m2);
-    amrex::ParticleReal B_G = MathConst::pi * PhysConst::alpha * 1._prt * 1._prt
+    // The formula for `B_G` below assumes that both reactants have Z=1
+    // When one of the reactants is helium (Z=2), this formula is corrected further below.
+    amrex::ParticleReal B_G = MathConst::pi * PhysConst::alpha *
          * std::sqrt( 2._prt*m_reduced*PhysConst::c*PhysConst::c * joule_to_keV );
     if (fusion_type == NuclearFusionType::DeuteriumHeliumToProtonHelium) {
         // Take into account the fact that Z=2 for one of the reactant (helium) in this case
@@ -106,4 +108,4 @@ amrex::ParticleReal BoschHaleFusionCrossSection (
     return millibarn_to_sqm * astrophysical_factor/E_keV * std::exp(-B_G/std::sqrt(E_keV));
 }
 
-#endif // DEUTERIUM_TRITIUM_TRITIUM_FUSION_CROSS_SECTION_H
+#endif // BOSCH_HALE_FUSION_CROSS_SECTION_H
