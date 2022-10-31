@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-# Copyright 2021 Axel Huebl, Kevin Gott
+# Copyright 2021-2022 Axel Huebl, Kevin Gott
 #
 # This file is part of WarpX.
 #
