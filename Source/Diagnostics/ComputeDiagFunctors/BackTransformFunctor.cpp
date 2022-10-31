@@ -139,6 +139,8 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
                     // Since the fields are stored contiguously in src_arr, icomp*n_rz_comp + rz_comp accesses
                     // real part of mode 1 for Et (1*3+1) = 4
                     dst_arr(i, k_lab, k, n) = src_arr(i, j, k, icomp*n_rz_comp+rzcomp);
+#else
+                    dst_arr(k_lab, j, k, n) = src_arr(i, j, k, icomp);
 #endif
                 } );
         }
