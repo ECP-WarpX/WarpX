@@ -50,6 +50,23 @@ Here are a few practical items to assist in designing boosted frame simulations:
 
 An in-depth discussion of the boosted frame is provided in the :ref:`moving window and optimal Lorentz boosted frame <theory-boostedframe>` section.
 
+What about Back-transformed diagnostics (BTD)?
+----------------------------------------------
+
+.. figure:: https://user-images.githubusercontent.com/10621396/198702232-9dd595ad-479e-4170-bd25-51e2b72cd50a.png
+   :alt: [fig:BTD_features] Minkowski diagram indicating several features of the back-transformed diagnostic (BTD). The diagram explains why the first BTD begins to fill at boosted time :math:`t'=0` but this doesn't necessarily correspond to lab time :math:`t=0`, how the BTD grid-spacing is determined by the boosted time step :math:`\Delta t'`, hence why the snapshot length don't correspond to the grid spacing and length in the input script, and how the BTD snapshots complete when the effective snapshot length is covered in the boosted frame.
+
+   [fig:BTD_features] Minkowski diagram indicating several features of the back-transformed diagnostic (BTD). The diagram explains why the first BTD begins to fill at boosted time :math:`t'=0` but this doesn't necessarily correspond to lab time :math:`t=0`, how the BTD grid-spacing is determined by the boosted time step :math:`\Delta t'`, hence why the snapshot length don't correspond to the grid spacing and length in the input script, and how the BTD snapshots complete when the effective snapshot length is covered in the boosted frame.
+
+
+Several BTD quantities differ slightly from the lab frame domain described in the input deck.
+In the following discussion, we will use a subscript input (e.g. :math:`\Delta z_{\rm input}`) to denote properties of the lab frame domain.
+
+
+- The first back-transformed diagnostic (BTD) snapshot may not occur at :math:`t=0`. Rather, it occurs at :math:`t_0=\frac{z_{max}}c \beta(1+\beta)\gamma^2`. This is the first time when the boosted frame can complete the snapshot.
+- The grid spacing of the BTD snapshot is different from the grid spacing indicated in the input script. It is given by :math:`\Delta z_{\rm grid,snapshot}=\frac{c\Delta t_{\rm boost}}{\gamma\beta}`.  For a CFL-limited time step, :math:`\Delta z_{\rm grid,snapshot}\approx \frac{1+\beta}{\beta} \Delta z_{\rm input}\approx 2 \Delta z_{\rm input}`. Hence in many common use cases at large boost, it is expected that the BTD snapshot has a grid spacing twice what is expressed in the input script.
+- The effective length of the BTD snapshot may be longer than anticipated from the input script because the grid spacing is different. Additionally, the number of grid points in the BTD snapshot is a multiple of ``<BTD>.buffer_size`` whereas the number of grid cells specified in the input deck may not be.
+- The code may require longer than anticipated to complete a BTD snapshot. The code starts filling the :math:`i^{th}` snapshot around step :math:`j_{\rm BTD start}={\rm ceil}\left( i\gamma(1-\beta)\frac{\Delta t_{\rm snapshot}}{\Delta t_{\rm boost}}\right)`. The code then saves information for one BTD cell every time step in the boosted frame simulation. The :math:`i^{th}` snapshot is completed and saved :math:`n_{z,{\rm snapshot}}=n_{\rm buffers}\cdot ({\rm buffer\ size})` time steps after it begins, which is when the effective snapshot length is covered by the simulation.
 
 What kinds of RZ output do you support?
 ---------------------------------------
