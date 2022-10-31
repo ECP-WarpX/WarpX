@@ -43,7 +43,7 @@ amrex::ParticleReal BoschHaleFusionCrossSection (
     const amrex::ParticleReal m_reduced = m1 / (1._prt + m1/m2);
     // The formula for `B_G` below assumes that both reactants have Z=1
     // When one of the reactants is helium (Z=2), this formula is corrected further below.
-    amrex::ParticleReal B_G = MathConst::pi * PhysConst::alpha *
+    amrex::ParticleReal B_G = MathConst::pi * PhysConst::alpha
          * std::sqrt( 2._prt*m_reduced*PhysConst::c*PhysConst::c * joule_to_keV );
     if (fusion_type == NuclearFusionType::DeuteriumHeliumToProtonHelium) {
         // Take into account the fact that Z=2 for one of the reactant (helium) in this case
