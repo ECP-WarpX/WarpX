@@ -481,7 +481,7 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     int ngrow = 1;
 #ifdef WARPX_DIM_RZ
-    int ncomps = (2*WarpX::n_rz_azimuthal_modes - 1) * static_cast<int>(m_cellcenter_varnames.size());
+    int ncomps = WarpX::ncomps * static_cast<int>(m_cellcenter_varnames.size());
 #else
     int ncomps = static_cast<int>(m_cellcenter_varnames.size());
 #endif

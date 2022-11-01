@@ -116,7 +116,7 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
             amrex::Array4<amrex::Real> dst_arr = mf_dst[mfi].array();
 #ifdef WARPX_DIM_RZ
             const int nrz = WarpX::n_rz_azimuthal_modes;
-            const int n_rz_comp = 2*nrz - 1;
+            const int n_rz_comp = WarpX::ncomps;
 #endif
             amrex::ParallelFor( tbx, ncomp_dst,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
@@ -207,7 +207,7 @@ BackTransformFunctor::InitData ()
     for (int i = 0; i < m_varnames.size(); ++i)
     {
 #ifdef WARPX_DIM_RZ
-        const int field_id = i / (WarpX::n_rz_azimuthal_modes*2-1);
+        const int field_id = i / WarpX::ncomps;
         m_map_varnames[i] = m_possible_fields_to_dump[ m_varnames_fields[field_id] ];
 #else
         m_map_varnames[i] = m_possible_fields_to_dump[ m_varnames[i] ] ;
@@ -230,7 +230,7 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
         amrex::Real inv_clight = 1.0_rt/clight;
 #ifdef WARPX_DIM_RZ
         const int n_rz = WarpX::n_rz_azimuthal_modes;
-        const int n_rcomps = 2*n_rz - 1;
+        const int n_rcomps = WarpX::ncomps;
         amrex::ParallelFor( tbx,
             [=] AMREX_GPU_DEVICE (int i, int j, int k)
             {
