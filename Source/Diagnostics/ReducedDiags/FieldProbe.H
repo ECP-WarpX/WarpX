@@ -114,6 +114,16 @@ private:
     /** Check if the probe is in the simulation domain boundary
      */
     bool ProbeInDomain () const;
+
+    /**
+     * Simple utility function to normalize the components of a "vector"
+     */
+    void normalize(amrex::Real &x, amrex::Real &y, amrex::Real &z){
+        amrex::Real mag = std::sqrt(x*x + y*y + z*z);
+        x /= mag;
+        y /= mag;
+        z /= mag;
+    }
 };
 
 #endif // WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDPROBE_H_
