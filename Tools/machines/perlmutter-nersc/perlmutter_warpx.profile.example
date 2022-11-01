@@ -34,9 +34,6 @@ alias getNode="salloc -N 1 --ntasks-per-node=4 -t 1:00:00 -q interactive -C gpu 
 #   usage: runNode <command>
 alias runNode="srun -N 1 --ntasks-per-node=4 -t 0:30:00 -q interactive -C gpu --gpu-bind=single:1 -c 32 -G 4 -A $proj"
 
-# GPU-aware MPI
-export MPICH_GPU_SUPPORT_ENABLED=1
-
 # necessary to use CUDA-Aware MPI and run a job
 export CRAY_ACCEL_TARGET=nvidia80
 
