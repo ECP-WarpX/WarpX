@@ -324,6 +324,15 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
 class DensityDistributionBase(object):
     """This is a base class for several predefined density distributions, meant
     to capture universal initialization logic."""
+    def init(self, kw):
+        self.mangle_dict = None
+
+    def set_mangle_dict(self):
+        if hasattr(self, "user_defined_kw") and self.mangle_dict is None:
+            # Only do this once so that the same variables can be used multiple
+            # times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
     def set_species_attributes(self, species, layout):
         if isinstance(layout, GriddedLayout):
             # --- Note that the grid attribute of GriddedLayout is ignored
@@ -378,6 +387,7 @@ class DensityDistributionBase(object):
 class UniformDistribution(DensityDistributionBase, picmistandard.PICMI_UniformDistribution):
     def initialize_inputs(self, species_number, layout, species, density_scale):
 
+        self.set_mangle_dict()
         self.set_species_attributes(species, layout)
 
         # --- Only constant density is supported by this class
@@ -388,20 +398,13 @@ class UniformDistribution(DensityDistributionBase, picmistandard.PICMI_UniformDi
 
 
 class AnalyticDistribution(DensityDistributionBase, picmistandard.PICMI_AnalyticDistribution):
-    def init(self, kw):
-        self.mangle_dict = None
-
     def initialize_inputs(self, species_number, layout, species, density_scale):
 
+        self.set_mangle_dict()
         self.set_species_attributes(species, layout)
 
-        if self.mangle_dict is None:
-            # Only do this once so that the same variables are used in this distribution
-            # is used multiple times
-            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
-        expression = pywarpx.my_constants.mangle_expression(self.density_expression, self.mangle_dict)
-
         species.profile = "parse_density_function"
+        expression = pywarpx.my_constants.mangle_expression(self.density_expression, self.mangle_dict)
         if density_scale is None:
             species.__setattr__('density_function(x,y,z)', expression)
         else:
