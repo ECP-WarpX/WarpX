@@ -121,19 +121,21 @@ void ElasticCollisionPerez (
         int d1; int d2;
         int np;
 
+        // Eqs in Higginson's paper are labeled
         if ( isSameSpecies ) {
-            np = (NI1+NI2) - 1 + (NI1+NI2)%2;
+            np = (NI1+NI2) - 1 + (NI1+NI2)%2; // Eq.(28)
         } else {
-            np = amrex::max(NI1,NI2);
+            np = amrex::max(NI1,NI2); // Eq.(26)
         }
 
         for (int k = 0; k < amrex::max(NI1,NI2); ++k)
         {
 
-            if ( isSameSpecies ) {
+            if ( isSameSpecies ) { // Eq.(25)
                 d1 = 1; d2 = 1;
                 if ( (NI1+NI2)%2>0 && k==0 ) { d1=2; }
             } else {
+                // Eq.(22)
                 if ( NI1/NI2>=1 ) { d1 = 1; }
                 else {
                     if ( k<=NI2%NI1-1 ) {
@@ -142,6 +144,7 @@ void ElasticCollisionPerez (
                         d1 = std::floor(NI2/NI1);
                     }
                 }
+                // Eq.(22)
                 if ( NI2/NI1>=1 ) { d2 = 1; }
                 else {
                     if ( k<=NI1%NI2-1 ) {
