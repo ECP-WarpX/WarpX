@@ -125,7 +125,7 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
                     const int icomp = field_map_ptr[n];
 #if defined(WARPX_DIM_3D)
                     dst_arr(i, j, k_lab, n) = src_arr(i, j, k, icomp);
-#elif defined(WARPX_DIM_2D)
+#elif defined(WARPX_DIM_XZ)
                     dst_arr(i, k_lab, k, n) = src_arr(i, j, k, icomp);
 #elif defined(WARPX_DIM_RZ)
                     // rzcomp below gives the component id, 0 to (n_rz_comp-1) for a given field
