@@ -24,7 +24,7 @@ jobs:
 #- job: linux_pip_pypi
 #  displayName: Ubuntu pip from PyPI
 #  pool:
-#    vmImage: ubuntu-18.04
+#    vmImage: ubuntu-20.04
 #  steps:
 #  - script: |
 #      python3 -m pip install -U pip --user
@@ -37,7 +37,7 @@ jobs:
 #- job: linux_pip_pypi_nobin
 #  displayName: Ubuntu pip from PyPI w/o binary
 #  pool:
-#    vmImage: ubuntu-18.04
+#    vmImage: ubuntu-20.04
 #  steps:
 #  - script: |
 #      python3 -m pip install -U pip setuptools wheel --user
@@ -80,7 +80,7 @@ jobs:
 #- job: linux_pip_pypi_mpich
 #  displayName: Ubuntu pip from PyPI w/ MPICH
 #  pool:
-#    vmImage: ubuntu-18.04
+#    vmImage: ubuntu-20.04
 #  steps:
 #  - script: |
 #      sudo apt-get update
@@ -130,7 +130,7 @@ jobs:
 - job: linux_conda
   displayName: Ubuntu conda
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-20.04
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
@@ -147,7 +147,7 @@ jobs:
 #- job: linux_conda_mpich
 #  displayName: Ubuntu conda w/ MPICH
 #  pool:
-#    vmImage: ubuntu-18.04
+#    vmImage: ubuntu-20.04
 #  steps:
 #  - bash: echo "##vso[task.prependpath]$CONDA/bin"
 #    displayName: Add conda to PATH
@@ -185,7 +185,7 @@ jobs:
 - job: linux_mamba
   displayName: Ubuntu mamba
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-20.04
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
@@ -202,7 +202,7 @@ jobs:
 #- job: linux_mamba_mpich
 #  displayName: Ubuntu mamba w/ MPICH
 #  pool:
-#    vmImage: ubuntu-18.04
+#    vmImage: ubuntu-20.04
 #  steps:
 #  - bash: echo "##vso[task.prependpath]$CONDA/bin"
 #    displayName: Add conda to PATH
@@ -343,7 +343,7 @@ jobs:
 #- job: linux_source_cuda10_0
 #  displayName: Ubuntu dev source w/ CUDA 10.0.130
 #  pool:
-#    vmImage: ubuntu-18.04
+#    vmImage: ubuntu-20.04
 #  steps:
 #  - script: |
 #      wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
@@ -369,7 +369,7 @@ jobs:
 #- job: linux_source_cuda10_2
 #  displayName: Ubuntu dev source w/ CUDA 10.2.89 w/ OpenMPI
 #  pool:
-#    vmImage: ubuntu-18.04
+#    vmImage: ubuntu-20.04
 #  steps:
 #  - script: |
 #      wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
@@ -392,7 +392,7 @@ jobs:
 #- job: linux_source_oneAPI_icc
 #  displayName: Ubuntu dev source w/ ICC (oneAPI)
 #  pool:
-#    vmImage: ubuntu-18.04
+#    vmImage: ubuntu-20.04
 #  steps:
 #  - script: |
 #      export DEBIAN_FRONTEND=noninteractive
