@@ -240,6 +240,8 @@ FieldProbe::FieldProbe (std::string rd_name)
 
 void FieldProbe::InitData ()
 {
+    using namespace amrex::literals;
+
     // create 1D vector for X, Y, and Z coordinates of "particles"
     amrex::Vector<amrex::ParticleReal> xpos;
     amrex::Vector<amrex::ParticleReal> ypos;
@@ -300,9 +302,9 @@ void FieldProbe::InitData ()
                 y_probe - (direction[1] * detector_radius),
                 z_probe - (direction[2] * detector_radius)};
             amrex::Real lowercorner[3]{
-                uppercorner[0] - (target_up_x * std::sqrt(2) * detector_radius),
-                uppercorner[1] - (target_up_y * std::sqrt(2) * detector_radius),
-                uppercorner[2] - (target_up_z * std::sqrt(2) * detector_radius)};
+                uppercorner[0] - (target_up_x * std::sqrt(2_rt) * detector_radius),
+                uppercorner[1] - (target_up_y * std::sqrt(2_rt) * detector_radius),
+                uppercorner[2] - (target_up_z * std::sqrt(2_rt) * detector_radius)};
             amrex::Real loweropposite[3]{
                 x_probe + (direction[0] * detector_radius),
                 y_probe + (direction[1] * detector_radius),
