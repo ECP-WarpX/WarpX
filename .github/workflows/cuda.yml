@@ -12,8 +12,8 @@ jobs:
 #   https://github.com/ComputationalRadiationPhysics/picongpu/blob/0.5.0/share/picongpu/dockerfiles/ubuntu-1604/Dockerfile
 #   https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/
   build_nvcc:
-    name: NVCC 11.0.2 SP
-    runs-on: ubuntu-18.04
+    name: NVCC 11.0.3 SP
+    runs-on: ubuntu-20.04
     if: github.event.pull_request.draft == false
     env:
       CXXFLAGS: "-Werror"
@@ -30,7 +30,7 @@ jobs:
         python-version: '3.x'
     - name: install dependencies
       run: |
-        .github/workflows/dependencies/nvcc11.sh
+        .github/workflows/dependencies/nvcc11-0.sh
     - name: CCache Cache
       uses: actions/cache@v2
       # - once stored under a key, they become immutable (even if local cache path content changes)
@@ -83,14 +83,14 @@ jobs:
   # make sure legacy build system continues to build, i.e., that we don't forget
   # to add new .cpp files
   build_nvcc_gnumake:
-    name: NVCC 11.0.2 GNUmake
-    runs-on: ubuntu-18.04
+    name: NVCC 11.8.0 GNUmake
+    runs-on: ubuntu-20.04
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
       run: |
-        .github/workflows/dependencies/nvcc11.sh
+        .github/workflows/dependencies/nvcc11-8.sh
     - name: CCache Cache
       uses: actions/cache@v2
       # - once stored under a key, they become immutable (even if local cache path content changes)
