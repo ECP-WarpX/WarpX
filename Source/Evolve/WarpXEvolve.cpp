@@ -70,7 +70,7 @@ WarpX::Evolve (int numsteps)
     if (numsteps < 0) {  // Note that the default argument is numsteps = -1
         numsteps_max = max_step;
     } else {
-        numsteps_max = std::min(istep[0]+numsteps, max_step);
+        numsteps_max = istep[0] + numsteps;
     }
 
     bool early_params_checked = false; // check typos in inputs after step 1
