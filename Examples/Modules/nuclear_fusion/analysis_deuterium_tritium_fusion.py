@@ -50,12 +50,12 @@ default_tol = 1.e-12 # Default relative tolerance
 
 ## Define reactants and products
 reactant_species = ['deuterium', 'tritium']
-product_species = ['helium', 'neutron']
+product_species = ['helium4', 'neutron']
 
 mass = {
     'deuterium': 2.01410177812*scc.m_u,
     'tritium': 3.0160492779*scc.m_u,
-    'helium': 4.00260325413*scc.m_u,
+    'helium4': 4.00260325413*scc.m_u,
     'neutron': 1.0013784193052508*scc.m_p
 }
 m_reduced = np.product([mass[s] for s in reactant_species])/np.sum([mass[s] for s in reactant_species])
@@ -390,11 +390,11 @@ def main():
         data = {}
 
         for species_name in reactant_species:
-            add_species_to_dict(ad_start, data, species_name+str(i), species_name, "start")
-            add_species_to_dict(ad_end, data, species_name+str(i), species_name, "end")
+            add_species_to_dict(ad_start, data, species_name+'_'+str(i), species_name, "start")
+            add_species_to_dict(ad_end, data, species_name+'_'+str(i), species_name, "end")
 
         for species_name in product_species:
-            add_species_to_dict(ad_end, data, species_name+str(i), species_name, "end")
+            add_species_to_dict(ad_end, data, species_name+'_'+str(i), species_name, "end")
 
         # General checks that are performed for all tests
         generic_check(data)

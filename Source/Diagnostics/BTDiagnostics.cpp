@@ -14,13 +14,16 @@
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
+#include "Utils/Algorithms/IsIn.H"
 #include "Utils/CoarsenIO.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <ablastr/utils/Communication.H>
+#include <ablastr/utils/SignalHandling.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
@@ -105,7 +108,7 @@ void BTDiagnostics::DerivedInitData ()
     if (m_output_species_names.size() == 0 and write_species == 1)
         m_output_species_names = mpc.GetSpeciesNames();
 
-    if (m_output_species_names.size() > 0) {
+    if (m_output_species_names.size() > 0 and write_species == 1) {
         m_do_back_transformed_particles = true;
     } else {
         m_do_back_transformed_particles = false;
@@ -122,6 +125,48 @@ void BTDiagnostics::DerivedInitData ()
     m_particles_buffer.resize(m_num_buffers);
     m_totalParticles_flushed_already.resize(m_num_buffers);
     m_totalParticles_in_buffer.resize(m_num_buffers);
+
+    // check that simulation can fill all BTD snapshots
+    const int lev = 0;
+    const amrex::Real dt_boosted_frame = warpx.getdt(lev);
+    const int moving_dir = warpx.moving_window_dir;
+    const amrex::Real Lz_lab = warpx.Geom(lev).ProbLength(moving_dir) / warpx.gamma_boost / (1._rt+warpx.beta_boost);
+    const int ref_ratio = 1;
+    const amrex::Real dz_snapshot_grid = dz_lab(dt_boosted_frame, ref_ratio);
+    // Need enough buffers so the snapshot length is longer than the lab frame length
+    // num_buffers * m_buffer_size * dz_snapshot_grid >= Lz
+    const int num_buffers = ceil(Lz_lab / m_buffer_size / dz_snapshot_grid);
+    const int final_snapshot_iteration = m_intervals.GetFinalIteration();
+
+    // the final snapshot starts filling when the
+    // right edge of the moving window intersects the final snapshot
+    // time of final snapshot : t_sn = t0 + i*dt_snapshot
+    // where t0 is the time of first BTD snapshot, t0 = zmax / c  * beta / (1-beta)
+    //
+    // the right edge of the moving window at the time of the final snapshot
+    // has space time coordinates
+    // time t_intersect = t_sn, position  z_intersect=zmax + c*t_sn
+    // the boosted time of this space time pair is
+    // t_intersect_boost = gamma * (t_intersect - beta * z_intersect_boost/c)
+    //                   = gamma * (t_sn * (1 - beta) - beta * zmax / c)
+    //                   = gamma * (zmax*beta/c + i*dt_snapshot*(1-beta) - beta*zmax/c)
+    //                   = gamma * i * dt_snapshot * (1-beta)
+    //                   = i * dt_snapshot / gamma / (1+beta)
+    //
+    // if j = final snapshot starting step, then we want to solve
+    // j dt_boosted_frame >= t_intersect_boost = i * dt_snapshot / gamma / (1+beta)
+    // j >= i / gamma / (1+beta) * dt_snapshot / dt_boosted_frame
+    const int final_snapshot_starting_step = ceil(final_snapshot_iteration / warpx.gamma_boost / (1._rt+warpx.beta_boost) * m_dt_snapshots_lab / dt_boosted_frame);
+    const int final_snapshot_fill_iteration = final_snapshot_starting_step + num_buffers * m_buffer_size - 1;
+    if (final_snapshot_fill_iteration > warpx.maxStep()) {
+        std::string warn_string =
+            "\nSimulation might not run long enough to fill all BTD snapshots.\n"
+            "Final step: " + std::to_string(warpx.maxStep()) + "\n"
+            "Last BTD snapshot fills around step: " + std::to_string(final_snapshot_fill_iteration);
+        ablastr::warn_manager::WMRecordWarning(
+            "BTD", warn_string,
+            ablastr::warn_manager::WarnPriority::low);
+    }
 }
 
 void
@@ -157,14 +202,13 @@ BTDiagnostics::ReadParameters ()
     m_file_prefix = "diags/" + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
     pp_diag_name.query("do_back_transformed_fields", m_do_back_transformed_fields);
-    pp_diag_name.query("do_back_transformed_particles", m_do_back_transformed_particles);
-    AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_do_back_transformed_fields, " fields must be turned on for the new back-transformed diagnostics");
     if (m_do_back_transformed_fields == false) m_varnames.clear();
 
 
     std::vector<std::string> intervals_string_vec = {"0"};
-    bool const num_snapshots_specified = queryWithParser(pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
+    bool const num_snapshots_specified = utils::parser::queryWithParser(
+        pp_diag_name, "num_snapshots_lab", m_num_snapshots_lab);
     bool const intervals_specified = pp_diag_name.queryarr("intervals", intervals_string_vec);
     if (num_snapshots_specified)
     {
@@ -172,20 +216,20 @@ BTDiagnostics::ReadParameters ()
             "For back-transformed diagnostics, user should specify either num_snapshots_lab or intervals, not both");
         intervals_string_vec = {":" + std::to_string(m_num_snapshots_lab-1)};
     }
-    m_intervals = BTDIntervalsParser(intervals_string_vec);
+    m_intervals = utils::parser::BTDIntervalsParser(intervals_string_vec);
     m_num_buffers = m_intervals.NumSnapshots();
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
-    bool snapshot_interval_is_specified = false;
-    snapshot_interval_is_specified = queryWithParser(pp_diag_name, "dt_snapshots_lab", m_dt_snapshots_lab);
-    if ( queryWithParser(pp_diag_name, "dz_snapshots_lab", m_dz_snapshots_lab) ) {
+    bool snapshot_interval_is_specified = utils::parser::queryWithParser(
+        pp_diag_name, "dt_snapshots_lab", m_dt_snapshots_lab);
+    if ( utils::parser::queryWithParser(pp_diag_name, "dz_snapshots_lab", m_dz_snapshots_lab) ) {
         m_dt_snapshots_lab = m_dz_snapshots_lab/PhysConst::c;
         snapshot_interval_is_specified = true;
     }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
 
-    if (queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
+    if (utils::parser::queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
         if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
     }
 
@@ -194,13 +238,16 @@ BTDiagnostics::ReadParameters ()
                                                            "jx", "jy", "jz", "rho"};
 
     for (const auto& var : m_varnames) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (WarpXUtilStr::is_in(BTD_varnames_supported, var )), "Input error: field variable " + var + " in " + m_diag_name
-        + ".fields_to_plot is not supported for BackTransformed diagnostics. Currently supported field variables for BackTransformed diagnostics include Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (utils::algorithms::is_in(BTD_varnames_supported, var )),
+            "Input error: field variable " + var + " in " + m_diag_name
+            + ".fields_to_plot is not supported for BackTransformed diagnostics."
+            + " Currently supported field variables for BackTransformed diagnostics "
+            + "include Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho");
     }
 
     bool particle_fields_to_plot_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!particle_fields_to_plot_specified, "particle_fields_to_plot is currently not supported for BackTransformed Diagnostics");
-
 
 }
 
@@ -806,7 +853,8 @@ BTDiagnostics::Flush (int i_buffer)
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards,
-        use_pinned_pc, isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush,
+        use_pinned_pc, isBTD, i_buffer, m_buffer_flush_counter[i_buffer],
+        m_max_buffer_multifabs[i_buffer], m_geom_snapshot[i_buffer][0], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
 
     for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {

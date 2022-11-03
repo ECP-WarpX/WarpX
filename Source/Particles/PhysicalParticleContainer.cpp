@@ -31,12 +31,12 @@
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/IonizationEnergiesTable.H"
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/Physics/IonizationEnergiesTable.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
@@ -257,9 +257,12 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     pp_species_name.query("do_continuous_injection", do_continuous_injection);
     pp_species_name.query("initialize_self_fields", initialize_self_fields);
-    queryWithParser(pp_species_name, "self_fields_required_precision", self_fields_required_precision);
-    queryWithParser(pp_species_name, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
-    queryWithParser(pp_species_name, "self_fields_max_iters", self_fields_max_iters);
+    utils::parser::queryWithParser(
+        pp_species_name, "self_fields_required_precision", self_fields_required_precision);
+    utils::parser::queryWithParser(
+        pp_species_name, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
+    utils::parser::queryWithParser(
+        pp_species_name, "self_fields_max_iters", self_fields_max_iters);
     pp_species_name.query("self_fields_verbosity", self_fields_verbosity);
     // Whether to plot back-transformed (lab-frame) diagnostics
     // for this species.
@@ -310,9 +313,11 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     str_int_attrib_function.resize(n_user_int_attribs);
     m_user_int_attrib_parser.resize(n_user_int_attribs);
     for (int i = 0; i < n_user_int_attribs; ++i) {
-        Store_parserString(pp_species_name, "attribute."+m_user_int_attribs.at(i)+"(x,y,z,ux,uy,uz,t)", str_int_attrib_function.at(i));
+        utils::parser::Store_parserString(
+            pp_species_name, "attribute."+m_user_int_attribs.at(i)+"(x,y,z,ux,uy,uz,t)",
+            str_int_attrib_function.at(i));
         m_user_int_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
-                                            makeParser(str_int_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
+            utils::parser::makeParser(str_int_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
         AddIntComp(m_user_int_attribs.at(i));
     }
 
@@ -323,9 +328,11 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     str_real_attrib_function.resize(n_user_real_attribs);
     m_user_real_attrib_parser.resize(n_user_real_attribs);
     for (int i = 0; i < n_user_real_attribs; ++i) {
-        Store_parserString(pp_species_name, "attribute."+m_user_real_attribs.at(i)+"(x,y,z,ux,uy,uz,t)", str_real_attrib_function.at(i));
+        utils::parser::Store_parserString(
+            pp_species_name, "attribute."+m_user_real_attribs.at(i)+"(x,y,z,ux,uy,uz,t)",
+            str_real_attrib_function.at(i));
         m_user_real_attrib_parser.at(i) = std::make_unique<amrex::Parser>(
-                                            makeParser(str_real_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
+            utils::parser::makeParser(str_real_attrib_function.at(i),{"x","y","z","ux","uy","uz","t"}));
         AddRealComp(m_user_real_attribs.at(i));
     }
 
@@ -1123,9 +1130,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 ParticleType& p = pp[ip];
                 p.id() = pid+ip;
                 p.cpu() = cpuid;
-
-                const XDim3 r =
-                    inj_pos->getPositionUnitBox(i_part, lrrfac, engine);
+                const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
+                  // In the refined injection region: use refinement ratio `lrrfac`
+                  inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
+                  // Otherwise: use 1 as the refinement ratio
+                  inj_pos->getPositionUnitBox(i_part, 1, engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
 #if defined(WARPX_DIM_3D)
@@ -1638,8 +1647,11 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 p.cpu() = cpuid;
 
                 // This assumes the inj_pos is of type InjectorPositionRandomPlane
-                const XDim3 r =
-                    inj_pos->getPositionUnitBox(i_part, lrrfac, engine);
+                const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
+                  // In the refined injection region: use refinement ratio `lrrfac`
+                  inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
+                  // Otherwise: use 1 as the refinement ratio
+                  inj_pos->getPositionUnitBox(i_part, 1, engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
                 auto ppos = PDim3(pos);
 
@@ -2873,18 +2885,20 @@ PhysicalParticleContainer::InitIonizationModule ()
             "overriding user value and setting charge = q_e.");
         charge = PhysConst::q_e;
     }
-    queryWithParser(pp_species_name, "ionization_initial_level", ionization_initial_level);
+    utils::parser::queryWithParser(
+        pp_species_name, "ionization_initial_level", ionization_initial_level);
     pp_species_name.get("ionization_product_species", ionization_product_name);
     pp_species_name.get("physical_element", physical_element);
     // Add runtime integer component for ionization level
     AddIntComp("ionizationLevel");
     // Get atomic number and ionization energies from file
-    int const ion_element_id = ion_map_ids.at(physical_element);
-    ion_atomic_number = ion_atomic_numbers[ion_element_id];
+    const int ion_element_id = utils::physics::ion_map_ids.at(physical_element);
+    ion_atomic_number = utils::physics::ion_atomic_numbers[ion_element_id];
     Vector<Real> h_ionization_energies(ion_atomic_number);
-    int offset = ion_energy_offsets[ion_element_id];
+    const int offset = utils::physics::ion_energy_offsets[ion_element_id];
     for(int i=0; i<ion_atomic_number; i++){
-        h_ionization_energies[i] = table_ionization_energies[i+offset];
+        h_ionization_energies[i] =
+            utils::physics::table_ionization_energies[i+offset];
     }
     // Compute ADK prefactors (See Chen, JCP 236 (2013), equation (2))
     // For now, we assume l=0 and m=0.
@@ -2892,11 +2906,11 @@ PhysicalParticleContainer::InitIonizationModule ()
     // without Gamma function
     constexpr auto a3 = PhysConst::alpha*PhysConst::alpha*PhysConst::alpha;
     constexpr auto a4 = a3 * PhysConst::alpha;
-    Real wa = a3 * PhysConst::c / PhysConst::r_e;
-    Real Ea = PhysConst::m_e * PhysConst::c*PhysConst::c /PhysConst::q_e *
+    constexpr Real wa = a3 * PhysConst::c / PhysConst::r_e;
+    constexpr Real Ea = PhysConst::m_e * PhysConst::c*PhysConst::c /PhysConst::q_e *
         a4/PhysConst::r_e;
-    Real UH = table_ionization_energies[0];
-    Real l_eff = std::sqrt(UH/h_ionization_energies[0]) - 1._rt;
+    constexpr Real UH = utils::physics::table_ionization_energies[0];
+    const Real l_eff = std::sqrt(UH/h_ionization_energies[0]) - 1._rt;
 
     const Real dt = WarpX::GetInstance().getdt(0);
 

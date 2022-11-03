@@ -2,8 +2,8 @@
 
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX_ParmParse.H>
@@ -51,19 +51,19 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
 #endif
 
     // build filter functors
-    m_do_random_filter = queryWithParser(pp_diag_name_species_name, "random_fraction",
-                                                                    m_random_fraction);
-    m_do_uniform_filter = queryWithParser(pp_diag_name_species_name, "uniform_stride",
-                                                                     m_uniform_stride);
+    m_do_random_filter = utils::parser::queryWithParser(
+        pp_diag_name_species_name, "random_fraction", m_random_fraction);
+    m_do_uniform_filter = utils::parser::queryWithParser(
+        pp_diag_name_species_name, "uniform_stride",m_uniform_stride);
     std::string buf;
     m_do_parser_filter = pp_diag_name_species_name.query("plot_filter_function(t,x,y,z,ux,uy,uz)",
                                                          buf);
 
     if (m_do_parser_filter) {
         std::string function_string = "";
-        Store_parserString(pp_diag_name_species_name,"plot_filter_function(t,x,y,z,ux,uy,uz)",
-                           function_string);
+        utils::parser::Store_parserString(
+            pp_diag_name_species_name,"plot_filter_function(t,x,y,z,ux,uy,uz)", function_string);
         m_particle_filter_parser = std::make_unique<amrex::Parser>(
-            makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
+            utils::parser::makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
     }
 }

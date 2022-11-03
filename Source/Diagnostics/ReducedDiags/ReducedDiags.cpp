@@ -8,6 +8,7 @@
 #include "ReducedDiags.H"
 
 #include "WarpX.H"
+#include "Utils/Parser/IntervalsParser.H"
 #include "Utils/TextMsg.H"
 
 #include <AMReX.H>
@@ -59,7 +60,7 @@ ReducedDiags::ReducedDiags (std::string rd_name)
     // read reduced diags intervals
     std::vector<std::string> intervals_string_vec = {"1"};
     pp_rd_name.getarr("intervals", intervals_string_vec);
-    m_intervals = IntervalsParser(intervals_string_vec);
+    m_intervals = utils::parser::IntervalsParser(intervals_string_vec);
 
     // read separator
     pp_rd_name.query("separator", m_sep);

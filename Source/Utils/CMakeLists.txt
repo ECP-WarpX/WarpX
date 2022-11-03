@@ -3,7 +3,6 @@ target_sources(WarpX
     CoarsenIO.cpp
     CoarsenMR.cpp
     Interpolate.cpp
-    IntervalsParser.cpp
     MPIInitHelpers.cpp
     ParticleUtils.cpp
     RelativeCellPosition.cpp
@@ -15,3 +14,5 @@ target_sources(WarpX
 )
 
 add_subdirectory(Logo)
+add_subdirectory(Parser)
+add_subdirectory(Strings)

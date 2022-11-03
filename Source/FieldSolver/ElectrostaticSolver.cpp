@@ -11,10 +11,10 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Python/WarpX_py.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <ablastr/fields/PoissonSolver.H>
@@ -711,12 +711,12 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
 
     auto field_boundary_lo0 = WarpX::field_boundary_lo[0];
     auto field_boundary_hi0 = WarpX::field_boundary_hi[0];
-    if (field_boundary_lo0 == FieldBoundaryType::None || field_boundary_lo0 == FieldBoundaryType::Periodic) {
+    if (field_boundary_lo0 == FieldBoundaryType::Neumann || field_boundary_lo0 == FieldBoundaryType::Periodic) {
         // Neumann or periodic boundary condition
         // Solve for the point on the lower boundary
         nx_solve_min = 0;
     }
-    if (field_boundary_hi0 == FieldBoundaryType::None || field_boundary_hi0 == FieldBoundaryType::Periodic) {
+    if (field_boundary_hi0 == FieldBoundaryType::Neumann || field_boundary_hi0 == FieldBoundaryType::Periodic) {
         // Neumann or periodic boundary condition
         // Solve for the point on the upper boundary
         nx_solve_max = nx_full_domain;
@@ -766,7 +766,7 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
 
             phi1d_arr(1,0,0) = (phi1d_arr(0,0,0) + rho1d_arr(1,0,0))/diag;
 
-        } else if (field_boundary_lo0 == FieldBoundaryType::None) {
+        } else if (field_boundary_lo0 == FieldBoundaryType::Neumann) {
 
             // Neumann boundary condition
             phi1d_arr(0,0,0) = rho1d_arr(0,0,0)/diag;
@@ -803,7 +803,7 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
             diag = 2._rt - zwork1d_arr(imax,0,0);
             phi1d_arr(imax,0,0) = (phi1d_arr(imax+1,0,0) + rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
 
-        } else if (field_boundary_hi0 == FieldBoundaryType::None) {
+        } else if (field_boundary_hi0 == FieldBoundaryType::Neumann) {
 
             // Neumann boundary condition
             zwork1d_arr(imax,0,0) = 1._rt/diag;
@@ -851,13 +851,13 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
         // The periodic case is handled in the ParallelCopy below
         if (field_boundary_lo0 == FieldBoundaryType::PEC) {
             phi1d_arr(-1,0,0) = phi1d_arr(0,0,0);
-        } else if (field_boundary_lo0 == FieldBoundaryType::None) {
+        } else if (field_boundary_lo0 == FieldBoundaryType::Neumann) {
             phi1d_arr(-1,0,0) = phi1d_arr(1,0,0);
         }
 
         if (field_boundary_hi0 == FieldBoundaryType::PEC) {
             phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain,0,0);
-        } else if (field_boundary_hi0 == FieldBoundaryType::None) {
+        } else if (field_boundary_hi0 == FieldBoundaryType::Neumann) {
             phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain-1,0,0);
         }
 
@@ -885,9 +885,15 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
             hibc[0] = LinOpBCType::Dirichlet;
             dirichlet_flag[1] = true;
         }
-        else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::None) {
+        else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::Neumann) {
             hibc[0] = LinOpBCType::Neumann;
             dirichlet_flag[1] = false;
+        }
+        else {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                "Field boundary condition at the outer radius must be either PEC or neumann "
+                "when using the electrostatic solver"
+            );
         }
     }
 #endif
@@ -905,13 +911,13 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
                 lobc[idim] = LinOpBCType::Dirichlet;
                 dirichlet_flag[idim*2] = true;
             }
-            else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::None ) {
+            else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Neumann ) {
                 lobc[idim] = LinOpBCType::Neumann;
                 dirichlet_flag[idim*2] = false;
             }
             else {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                    "Field boundary conditions have to be either periodic, PEC or none "
+                    "Field boundary conditions have to be either periodic, PEC or neumann "
                     "when using the electrostatic solver"
                 );
             }
@@ -920,13 +926,13 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
                 hibc[idim] = LinOpBCType::Dirichlet;
                 dirichlet_flag[idim*2+1] = true;
             }
-            else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::None ) {
+            else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::Neumann ) {
                 hibc[idim] = LinOpBCType::Neumann;
                 dirichlet_flag[idim*2+1] = false;
             }
             else {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                    "Field boundary conditions have to be either periodic, PEC or none "
+                    "Field boundary conditions have to be either periodic, PEC or neumann "
                     "when using the electrostatic solver"
                 );
             }
@@ -937,13 +943,13 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
 
 void ElectrostaticSolver::PoissonBoundaryHandler::buildParsers ()
 {
-    potential_xlo_parser = makeParser(potential_xlo_str, {"t"});
-    potential_xhi_parser = makeParser(potential_xhi_str, {"t"});
-    potential_ylo_parser = makeParser(potential_ylo_str, {"t"});
-    potential_yhi_parser = makeParser(potential_yhi_str, {"t"});
-    potential_zlo_parser = makeParser(potential_zlo_str, {"t"});
-    potential_zhi_parser = makeParser(potential_zhi_str, {"t"});
-    potential_eb_parser = makeParser(potential_eb_str, {"x", "y", "z", "t"});
+    potential_xlo_parser = utils::parser::makeParser(potential_xlo_str, {"t"});
+    potential_xhi_parser = utils::parser::makeParser(potential_xhi_str, {"t"});
+    potential_ylo_parser = utils::parser::makeParser(potential_ylo_str, {"t"});
+    potential_yhi_parser = utils::parser::makeParser(potential_yhi_str, {"t"});
+    potential_zlo_parser = utils::parser::makeParser(potential_zlo_str, {"t"});
+    potential_zhi_parser = utils::parser::makeParser(potential_zhi_str, {"t"});
+    potential_eb_parser  = utils::parser::makeParser(potential_eb_str, {"x", "y", "z", "t"});
 
     potential_xlo = potential_xlo_parser.compile<1>();
     potential_xhi = potential_xhi_parser.compile<1>();
@@ -960,7 +966,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::buildParsers ()
         phi_EB_only_t = false;
     }
     else {
-        potential_eb_parser = makeParser(potential_eb_str, {"t"});
+        potential_eb_parser = utils::parser::makeParser(potential_eb_str, {"t"});
         potential_eb_t = potential_eb_parser.compile<1>();
     }
 }

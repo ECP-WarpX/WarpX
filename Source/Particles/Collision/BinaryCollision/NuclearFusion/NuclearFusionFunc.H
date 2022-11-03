@@ -14,8 +14,8 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX_Algorithm.H>
@@ -94,15 +94,17 @@ public:
 
         // default fusion multiplier
         m_fusion_multiplier = 1.0_prt;
-        queryWithParser(pp_collision_name, "fusion_multiplier", m_fusion_multiplier);
+        utils::parser::queryWithParser(
+            pp_collision_name, "fusion_multiplier", m_fusion_multiplier);
         // default fusion probability threshold
         m_probability_threshold = 0.02_prt;
-        queryWithParser(pp_collision_name, "fusion_probability_threshold",
-                                            m_probability_threshold);
+        utils::parser::queryWithParser(
+            pp_collision_name, "fusion_probability_threshold", m_probability_threshold);
         // default fusion probability target_value
         m_probability_target_value = 0.002_prt;
-        queryWithParser(pp_collision_name, "fusion_probability_target_value",
-                                            m_probability_target_value);
+        utils::parser::queryWithParser(
+            pp_collision_name, "fusion_probability_target_value",
+            m_probability_target_value);
     }
 
     /**

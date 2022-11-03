@@ -7,6 +7,7 @@
  */
 #include "TemperatureProperties.H"
 
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
@@ -25,7 +26,8 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
     pp.query("theta_distribution_type", temp_dist_s);
     pp.query("momentum_distribution_type", mom_dist_s);
     if (temp_dist_s == "constant") {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(queryWithParser(pp, "theta", theta),
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            utils::parser::queryWithParser(pp, "theta", theta),
             "Temperature parameter theta not specified");
 
         // Do validation on theta value
@@ -56,9 +58,10 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
     }
     else if (temp_dist_s == "parser") {
         std::string str_theta_function;
-        Store_parserString(pp, "theta_function(x,y,z)", str_theta_function);
+        utils::parser::Store_parserString(pp, "theta_function(x,y,z)", str_theta_function);
         m_ptr_temperature_parser =
-            std::make_unique<amrex::Parser>(makeParser(str_theta_function,{"x","y","z"}));
+            std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(str_theta_function,{"x","y","z"}));
         m_type = TempParserFunction;
     }
     else {

@@ -22,7 +22,8 @@ picmistandard.register_codename(codename)
 
 # dictionary to map field boundary conditions from picmistandard to WarpX
 BC_map = {
-    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped', 'none':'none', None:'none'
+    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped',
+    'neumann':'neumann', 'none':'none', None:'none'
 }
 
 class constants:
@@ -1595,8 +1596,43 @@ class Simulation(picmistandard.PICMI_Simulation):
 # Simulation frame diagnostics
 # ----------------------------
 
+class WarpXDiagnosticBase(object):
+    """
+    Base class for all WarpX diagnostic containing functionality shared by
+    all WarpX diagnostic installations.
+    """
+    def add_diagnostic(self):
+        # reduced diagnostics go in a different bucket than regular diagnostics
+        if isinstance(self, ReducedDiagnostic):
+            bucket = pywarpx.reduced_diagnostics
+            name_template = 'reduced_diag'
+        else:
+            bucket = pywarpx.diagnostics
+            name_template = 'diag'
 
-class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
+        name = getattr(self, 'name', None)
+        if name is None:
+            diagnostics_number = (len(bucket._diagnostics_dict) + 1)
+            self.name = f'{name_template}{diagnostics_number}'
+
+        try:
+            self.diagnostic = bucket._diagnostics_dict[self.name]
+        except KeyError:
+            self.diagnostic = pywarpx.Diagnostics.Diagnostic(
+                self.name, _species_dict={}
+            )
+            bucket._diagnostics_dict[self.name] = self.diagnostic
+
+
+
+    def set_write_dir(self):
+        if self.write_dir is not None or self.file_prefix is not None:
+            write_dir = (self.write_dir or 'diags')
+            file_prefix = (self.file_prefix or self.name)
+            self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
+
+
+class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
     """
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
 
@@ -1637,16 +1673,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
 
     def initialize_inputs(self):
 
-        name = getattr(self, 'name', None)
-        if name is None:
-            diagnostics_number = len(pywarpx.diagnostics._diagnostics_dict) + 1
-            self.name = 'diag{}'.format(diagnostics_number)
-
-        try:
-            self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
-        except KeyError:
-            self.diagnostic = pywarpx.Diagnostics.Diagnostic(self.name, _species_dict={})
-            pywarpx.diagnostics._diagnostics_dict[self.name] = self.diagnostic
+        self.add_diagnostic()
 
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
@@ -1709,16 +1736,13 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.diagnostic.plot_finepatch = self.plot_finepatch
         self.diagnostic.plot_crsepatch = self.plot_crsepatch
 
-        if self.write_dir is not None or self.file_prefix is not None:
-            write_dir = (self.write_dir or 'diags')
-            file_prefix = (self.file_prefix or self.name)
-            self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
+        self.set_write_dir()
 
 
 ElectrostaticFieldDiagnostic = FieldDiagnostic
 
 
-class Checkpoint(picmistandard.base._ClassWithInit):
+class Checkpoint(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     """
     Sets up checkpointing of the simulation, allowing for later restarts
 
@@ -1749,23 +1773,17 @@ class Checkpoint(picmistandard.base._ClassWithInit):
 
     def initialize_inputs(self):
 
-        try:
-            self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
-        except KeyError:
-            self.diagnostic = pywarpx.Diagnostics.Diagnostic(self.name, _species_dict={})
-            pywarpx.diagnostics._diagnostics_dict[self.name] = self.diagnostic
+        self.add_diagnostic()
 
         self.diagnostic.intervals = self.period
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = 'checkpoint'
         self.diagnostic.file_min_digits = self.file_min_digits
 
-        if self.write_dir is not None or self.file_prefix is not None:
-            write_dir = (self.write_dir or 'diags')
-            file_prefix = (self.file_prefix or self.name)
-            self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
+        self.set_write_dir()
 
-class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
+
+class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnosticBase):
     """
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
 
@@ -1815,16 +1833,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
 
     def initialize_inputs(self):
 
-        name = getattr(self, 'name', None)
-        if name is None:
-            diagnostics_number = len(pywarpx.diagnostics._diagnostics_dict) + 1
-            self.name = 'diag{}'.format(diagnostics_number)
-
-        try:
-            self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
-        except KeyError:
-            self.diagnostic = pywarpx.Diagnostics.Diagnostic(self.name, _species_dict={})
-            pywarpx.diagnostics._diagnostics_dict[self.name] = self.diagnostic
+        self.add_diagnostic()
 
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
@@ -1832,10 +1841,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.intervals = self.period
 
-        if self.write_dir is not None or self.file_prefix is not None:
-            write_dir = (self.write_dir or 'diags')
-            file_prefix = (self.file_prefix or self.name)
-            self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
+        self.set_write_dir()
 
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()
@@ -1890,7 +1896,8 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
 # ----------------------------
 
 
-class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
+class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
+                              WarpXDiagnosticBase):
     """
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
 
@@ -1952,16 +1959,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
 
     def initialize_inputs_new(self):
 
-        name = getattr(self, 'name', None)
-        if name is None:
-            diagnostics_number = len(pywarpx.diagnostics._diagnostics_dict) + 1
-            self.name = 'diag{}'.format(diagnostics_number)
-
-        try:
-            self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
-        except KeyError:
-            self.diagnostic = pywarpx.Diagnostics.Diagnostic(self.name, _species_dict={})
-            pywarpx.diagnostics._diagnostics_dict[self.name] = self.diagnostic
+        self.add_diagnostic()
 
         self.diagnostic.diag_type = 'BackTransformed'
         self.diagnostic.format = self.format
@@ -2006,10 +2004,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
             fields_to_plot.sort()
             self.diagnostic.fields_to_plot = fields_to_plot
 
-        if self.write_dir is not None or self.file_prefix is not None:
-            write_dir = (self.write_dir or 'diags')
-            file_prefix = (self.file_prefix or self.name)
-            self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
+        self.set_write_dir()
 
 
 class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic):
@@ -2033,3 +2028,127 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic)
         pywarpx.warpx.num_snapshots_lab = self.num_snapshots
         pywarpx.warpx.dt_snapshots_lab = self.dt_snapshots
         pywarpx.warpx.lab_data_directory = self.write_dir
+
+
+class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
+    """
+    Sets up a reduced diagnostic in the simulation.
+
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#reduced-diagnostics>`_
+    for more information.
+
+    Parameters
+    ----------
+    diag_type: string
+        The type of reduced diagnostic. See the link above for all the different
+        types of reduced diagnostics available.
+
+    name: string
+        The name of this diagnostic which will also be the name of the data
+        file written to disk.
+
+    period: integer
+        The simulation step interval at which to output this diagnostic.
+
+    path: string
+        The file path in which the diagnostic file should be written.
+
+    extension: string
+        The file extension used for the diagnostic output.
+
+    separator: string
+        The separator between row values in the output file.
+    """
+
+    def __init__(self, diag_type, name=None, period=1, path=None,
+                 extension=None, separator=None, **kw):
+
+        self.name = name
+        self.type = diag_type
+        self.intervals = period
+        self.path = path
+        self.extension = extension
+        self.separator = separator
+
+        self._species = kw.pop('species', None)
+
+        # Now we need to handle all the specific inputs required for the
+        # different reduced diagnostic types.
+        # Note: only a limited number are presently supported.
+
+        # The simple diagnostics do not require any additional arguments
+        self._simple_reduced_diagnostics = [
+            'ParticleEnergy', 'ParticleMomentum', 'FieldEnergy',
+            'FieldMomentum', 'FieldMaximum', 'RhoMaximum', 'ParticleNumber',
+            'LoadBalanceCosts', 'LoadBalanceEfficiency',
+        ]
+        # The species diagnostics require a species to be provided
+        self._species_reduced_diagnostics = [
+            'BeamRelevant', 'ParticleHistogram', 'ParticleExtrema',
+        ]
+
+        if self.type in self._simple_reduced_diagnostics:
+            pass
+        elif self.type in self._species_reduced_diagnostics:
+            if self._species is None:
+                raise AttributeError(
+                    f"{self.type} reduced diagnostic requires a species."
+                )
+            if self.type == 'ParticleHistogram':
+                raise NotImplementedError(
+                    f"{self.type} reduced diagnostic is not yet supported "
+                    "in pywarpx."
+                )
+        elif self.type == "FieldProbe":
+            kw = self._handle_field_probe(**kw)
+        else:
+            raise RuntimeError(
+                f"{self.type} reduced diagnostic is not yet supported "
+                "in pywarpx."
+            )
+
+        self.handle_init(kw)
+
+    def _handle_field_probe(self, **kw):
+        """Utility function to grab required inputs for a field probe from kw"""
+        self.probe_geometry = kw.pop("probe_geometry")
+        self.x_probe = kw.pop("x_probe")
+        self.y_probe = kw.pop("y_probe")
+        self.z_probe = kw.pop("z_probe")
+
+        self.interp_order = kw.pop("interp_order", None)
+        self.integrate = kw.pop("integrate", None)
+        self.do_moving_window_FP = kw.pop("do_moving_window_FP", None)
+
+        if self.probe_geometry.lower() != 'point':
+            self.resolution = kw.pop("resolution")
+
+        if self.probe_geometry.lower() == 'line':
+            self.x1_probe = kw.pop("x1_probe")
+            self.y1_probe = kw.pop("y1_probe")
+            self.z1_probe = kw.pop("z1_probe")
+
+        if self.probe_geometry.lower() == 'plane':
+            self.detector_radius = kw.pop("detector_radius")
+
+            self.target_normal_x = kw.pop("target_normal_x")
+            self.target_normal_y = kw.pop("target_normal_y")
+            self.target_normal_z = kw.pop("target_normal_z")
+
+            self.target_up_x = kw.pop("target_up_x")
+            self.target_up_y = kw.pop("target_up_y")
+            self.target_up_z = kw.pop("target_up_z")
+
+        return kw
+
+    def initialize_inputs(self):
+
+        self.add_diagnostic()
+
+        for key in self.__dict__.keys():
+            if not key.startswith('_') and key not in ['name', 'diagnostic']:
+                self.diagnostic.__setattr__(key, self.__dict__[key])
+
+        if self._species is not None:
+            diag = pywarpx.Bucket.Bucket(self.name + '.' + self._species.name)
+            self.diagnostic._species_dict[self._species.name] = diag

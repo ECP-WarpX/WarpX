@@ -2,7 +2,7 @@
 #define WARPX_FULLDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
 
 #include <string>
 
@@ -15,7 +15,7 @@ private:
     /** Read user-requested parameters for full diagnostics */
     void ReadParameters ();
     /** Determines timesteps at which full diagnostics are written to file */
-    IntervalsParser m_intervals;
+    utils::parser::IntervalsParser m_intervals;
     /** Whether to plot raw (i.e., NOT cell-centered) fields */
     bool m_plot_raw_fields = false;
     /** Whether to plot guard cells of raw fields */
