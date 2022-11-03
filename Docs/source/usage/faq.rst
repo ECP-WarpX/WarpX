@@ -21,7 +21,7 @@ For instance, a parallel, multi-process, multi-threaded CPU run could output::
 The 1st line is the number of parallel MPI processes (also called *MPI ranks*).
 
 The 2nd line reports on the `support level of MPI functions to be called from threads <https://www.mpich.org/static/docs/v3.1/www3/MPI_Init_thread.html>`__.
-We currently only use this for optional, :ref:`async IO with AMReX plotfiles <running-cpp-parameters-diagnostics>`.
+We currently only use this for optional, :ref:`async IO with AMReX plotfiles <running-cpp-parameters-diagnostics>` (see: ``amrex.async_out_nfiles``).
 In the past, requesting MPI threading support had performance penalties, but we have not seen such anymore on recent systems.
 Thus, we request it by default but you can overwrite it with a compile time option if it ever becomes needed.
 
