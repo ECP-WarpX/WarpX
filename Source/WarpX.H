@@ -332,6 +332,43 @@ public:
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;
 
+    static void AllocInitMultiFab (
+        std::unique_ptr<amrex::MultiFab>& mf,
+        const amrex::BoxArray& ba,
+        const amrex::DistributionMapping& dm,
+        const int ncomp,
+        const amrex::IntVect& ngrow,
+        const std::string name,
+        std::optional<const amrex::Real> initial_value = {});
+
+    static void AllocInitMultiFab (
+        std::unique_ptr<amrex::iMultiFab>& mf,
+        const amrex::BoxArray& ba,
+        const amrex::DistributionMapping& dm,
+        const int ncomp,
+        const amrex::IntVect& ngrow,
+        const std::string name,
+        std::optional<const int> initial_value = {});
+
+    static void AliasInitMultiFab (
+        std::unique_ptr<amrex::MultiFab>& mf,
+        const amrex::MultiFab& mf_to_alias,
+        const int scomp,
+        const int ncomp,
+        const std::string name);
+
+    // Map of all of the MultiFabs used (this can include MFs from other classes)
+    static std::map<std::string, amrex::MultiFab *> multifab_map;
+    static std::map<std::string, amrex::iMultiFab *> imultifab_map;
+
+    static void AddToMutiFabMap(const std::string name, const std::unique_ptr<amrex::MultiFab>& mf) {
+        multifab_map[name] = mf.get();
+    }
+
+    static void AddToMutiFabMap(const std::string name, const std::unique_ptr<amrex::iMultiFab>& mf) {
+        imultifab_map[name] = mf.get();
+    }
+
     std::array<const amrex::MultiFab* const, 3>
     get_array_Bfield_aux  (const int lev) const {
         return {
@@ -398,10 +435,6 @@ public:
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     const PML_RZ* getPMLRZ() {return pml_rz[0].get();}
 #endif
-
-    // Map of all of the MultiFabs used (this can include MFs from other classes)
-    static std::map<std::string, amrex::MultiFab *> multifab_map;
-    static std::map<std::string, amrex::iMultiFab *> imultifab_map;
 
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
@@ -1122,31 +1155,6 @@ private:
                         const amrex::IntVect& ngEB, amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const amrex::IntVect& ngG, const bool aux_is_nodal);
-
-    static void AllocInitMultiFab (
-        std::unique_ptr<amrex::MultiFab>& mf,
-        const amrex::BoxArray& ba,
-        const amrex::DistributionMapping& dm,
-        const int ncomp,
-        const amrex::IntVect& ngrow,
-        const std::string name,
-        std::optional<const amrex::Real> initial_value = {});
-
-    static void AliasInitMultiFab (
-        std::unique_ptr<amrex::MultiFab>& mf,
-        const amrex::MultiFab& mf_to_alias,
-        const int scomp,
-        const int ncomp,
-        const std::string name);
-
-    static void AllocInitiMultiFab (
-        std::unique_ptr<amrex::iMultiFab>& mf,
-        const amrex::BoxArray& ba,
-        const amrex::DistributionMapping& dm,
-        const int ncomp,
-        const amrex::IntVect& ngrow,
-        const std::string name,
-        std::optional<const int> initial_value = {});
 
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ

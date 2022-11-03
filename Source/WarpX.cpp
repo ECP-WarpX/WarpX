@@ -1928,12 +1928,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             AllocInitMultiFab(m_face_areas[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_face_areas[x]"));
             AllocInitMultiFab(m_face_areas[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_face_areas[y]"));
             AllocInitMultiFab(m_face_areas[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_face_areas[z]"));
-            AllocInitiMultiFab(m_flag_info_face[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_info_face[x]"));
-            AllocInitiMultiFab(m_flag_info_face[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_info_face[y]"));
-            AllocInitiMultiFab(m_flag_info_face[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_info_face[z]"));
-            AllocInitiMultiFab(m_flag_ext_face[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_ext_face[x]"));
-            AllocInitiMultiFab(m_flag_ext_face[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_ext_face[y]"));
-            AllocInitiMultiFab(m_flag_ext_face[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_ext_face[z]"));
+            AllocInitMultiFab(m_flag_info_face[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_info_face[x]"));
+            AllocInitMultiFab(m_flag_info_face[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_info_face[y]"));
+            AllocInitMultiFab(m_flag_info_face[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_info_face[z]"));
+            AllocInitMultiFab(m_flag_ext_face[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_ext_face[x]"));
+            AllocInitMultiFab(m_flag_ext_face[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_ext_face[y]"));
+            AllocInitMultiFab(m_flag_ext_face[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_flag_ext_face[z]"));
             AllocInitMultiFab(m_area_mod[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_area_mod[x]"));
             AllocInitMultiFab(m_area_mod[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_area_mod[y]"));
             AllocInitMultiFab(m_area_mod[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_area_mod[z]"));
@@ -2217,7 +2217,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                 AllocInitMultiFab(Efield_cax[lev][2], amrex::convert(cba,Ez_nodal_flag),dm,ncomps,ngEB,tag("Efield_cax[z]"));
             }
 
-            AllocInitiMultiFab(gather_buffer_masks[lev], ba, dm, ncomps, amrex::IntVect(1), tag("gather_buffer_masks"));
+            AllocInitMultiFab(gather_buffer_masks[lev], ba, dm, ncomps, amrex::IntVect(1), tag("gather_buffer_masks"));
             // Gather buffer masks have 1 ghost cell, because of the fact
             // that particles may move by more than one cell when using subcycling.
         }
@@ -2229,7 +2229,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             if (rho_cp[lev]) {
                 AllocInitMultiFab(charge_buf[lev], amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho,tag("charge_buf"), 0.0_rt);
             }
-            AllocInitiMultiFab(current_buffer_masks[lev], ba, dm, ncomps, amrex::IntVect(1), tag("current_buffer_masks"));
+            AllocInitMultiFab(current_buffer_masks[lev], ba, dm, ncomps, amrex::IntVect(1), tag("current_buffer_masks"));
             // Current buffer masks have 1 ghost cell, because of the fact
             // that particles may move by more than one cell when using subcycling.
         }
@@ -2834,23 +2834,11 @@ WarpX::AllocInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    multifab_map[name] = mf.get();
+    WarpX::AddToMutiFabMap(name, mf);
 }
 
 void
-WarpX::AliasInitMultiFab (
-    std::unique_ptr<amrex::MultiFab>& mf,
-    const amrex::MultiFab& mf_to_alias,
-    const int scomp,
-    const int ncomp,
-    const std::string name)
-{
-    mf = std::make_unique<MultiFab>(mf_to_alias, amrex::make_alias, scomp, ncomp);
-    multifab_map[name] = mf.get();
-}
-
-void
-WarpX::AllocInitiMultiFab (
+WarpX::AllocInitMultiFab (
     std::unique_ptr<amrex::iMultiFab>& mf,
     const amrex::BoxArray& ba,
     const amrex::DistributionMapping& dm,
@@ -2864,5 +2852,17 @@ WarpX::AllocInitiMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    imultifab_map[name] = mf.get();
+    WarpX::AddToMutiFabMap(name, mf);
+}
+
+void
+WarpX::AliasInitMultiFab (
+    std::unique_ptr<amrex::MultiFab>& mf,
+    const amrex::MultiFab& mf_to_alias,
+    const int scomp,
+    const int ncomp,
+    const std::string name)
+{
+    mf = std::make_unique<amrex::MultiFab>(mf_to_alias, amrex::make_alias, scomp, ncomp);
+    WarpX::AddToMutiFabMap(name, mf);
 }
