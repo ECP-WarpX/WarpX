@@ -885,8 +885,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     {
         refine_injection = true;
         fine_injection_box = ParticleBoxArray(1).minimalBox();
-        fine_injection_box.setSmall(WarpX::moving_window_dir, std::numeric_limits<int>::lowest());
-        fine_injection_box.setBig(WarpX::moving_window_dir, std::numeric_limits<int>::max());
+        fine_injection_box.setSmall(WarpX::moving_window_dir, std::numeric_limits<int>::lowest()/2);
+        fine_injection_box.setBig(WarpX::moving_window_dir, std::numeric_limits<int>::max()/2);
         rrfac = m_gdb->refRatio(0);
         fine_injection_box.coarsen(rrfac);
     }
