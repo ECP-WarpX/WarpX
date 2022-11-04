@@ -688,6 +688,10 @@ WarpX::ReadParameters ()
         }
 
         do_electrostatic = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
+        // if an electrostatic solver is used, set the Maxwell solver to None
+        if (do_electrostatic != ElectrostaticSolverAlgo::None) {
+            maxwell_solver_id = MaxwellSolverAlgo::None;
+        }
 
 #if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(do_electrostatic!=ElectrostaticSolverAlgo::None,

@@ -23,6 +23,7 @@
 // and corresponding integer for use inside the code
 
 const std::map<std::string, int> maxwell_solver_algo_to_int = {
+    {"none",    MaxwellSolverAlgo::None },
     {"yee",     MaxwellSolverAlgo::Yee },
     {"ckc",     MaxwellSolverAlgo::CKC },
     {"psatd",   MaxwellSolverAlgo::PSATD },

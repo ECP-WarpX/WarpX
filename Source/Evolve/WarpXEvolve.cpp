@@ -177,7 +177,7 @@ WarpX::Evolve (int numsteps)
         ExecutePythonCallback("particleinjection");
         // Electrostatic case: only gather fields and push particles,
         // deposition and calculation of fields done further below
-        if (do_electrostatic != ElectrostaticSolverAlgo::None)
+        if (maxwell_solver_id == MaxwellSolverAlgo::None)
         {
             const bool skip_deposition = true;
             PushParticlesandDepose(cur_time, skip_deposition);
@@ -278,8 +278,8 @@ WarpX::Evolve (int numsteps)
 
         m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
 
-        // Electrostatic solver: particles can move by an arbitrary number of cells
-        if( do_electrostatic != ElectrostaticSolverAlgo::None )
+        // Non-Maxwell solver: particles can move by an arbitrary number of cells
+        if( maxwell_solver_id == MaxwellSolverAlgo::None )
         {
             mypc->Redistribute();
         } else

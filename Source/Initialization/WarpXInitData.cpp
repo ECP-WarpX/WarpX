@@ -165,7 +165,7 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
       amrex::Print() << "                      | - relativistic" << "\n";
     }
-    else{
+    else if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::None) {
       amrex::Print() << "Operation mode:       | Electromagnetic" << "\n";
     }
     if (em_solver_medium == MediumForEM::Vacuum ){
@@ -220,7 +220,7 @@ WarpX::PrintMainPICparameters ()
     // Print solver's type: Yee, CKC, ECT
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee){
       amrex::Print() << "Maxwell Solver:       | Yee \n";
-      }
+    }
     else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC){
       amrex::Print() << "Maxwell Solver:       | CKC \n";
     }

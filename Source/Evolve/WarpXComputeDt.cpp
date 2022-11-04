@@ -36,7 +36,8 @@ WarpX::ComputeDt ()
     const amrex::Real* dx = geom[max_level].CellSize();
     amrex::Real deltat = 0.;
 
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (maxwell_solver_id == MaxwellSolverAlgo::None){ }
+    else if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
         // Computation of dt for spectral algorithm
         // (determined by the minimum cell size in all directions)
 #if defined(WARPX_DIM_1D_Z)
@@ -77,7 +78,7 @@ WarpX::ComputeDt ()
         }
     }
 
-    if (do_electrostatic != ElectrostaticSolverAlgo::None) {
+    if (maxwell_solver_id == MaxwellSolverAlgo::None) {
         for (int lev=0; lev<=max_level; lev++) {
             dt[lev] = const_dt;
         }

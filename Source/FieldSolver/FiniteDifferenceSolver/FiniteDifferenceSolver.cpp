@@ -37,7 +37,7 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
     m_do_nodal = do_nodal;
 
     // return if not FDTD
-    if (fdtd_algo == MaxwellSolverAlgo::PSATD)
+    if (fdtd_algo == MaxwellSolverAlgo::None || fdtd_algo == MaxwellSolverAlgo::PSATD)
         return;
 
     // Calculate coefficients of finite-difference stencil
