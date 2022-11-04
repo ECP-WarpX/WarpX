@@ -1720,7 +1720,6 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::m_v_galilean,
         WarpX::m_v_comoving,
         safe_guard_cells,
-        WarpX::do_electrostatic,
         WarpX::do_multi_J,
         WarpX::fft_do_time_averaging,
         WarpX::isAnyBoundaryPML(),

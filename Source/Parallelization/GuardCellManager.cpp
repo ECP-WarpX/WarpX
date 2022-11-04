@@ -47,7 +47,6 @@ guardCellManager::Init (
     const amrex::Vector<amrex::Real> v_galilean,
     const amrex::Vector<amrex::Real> v_comoving,
     const bool safe_guard_cells,
-    const int do_electrostatic,
     const int do_multi_J,
     const bool fft_do_time_averaging,
     const bool do_pml,
@@ -135,7 +134,7 @@ guardCellManager::Init (
     // Electromagnetic simulations: account for change in particle positions within half a time step
     // for current deposition and within one time step for charge deposition (since rho is needed
     // both at the beginning and at the end of the PIC iteration)
-    if (do_electrostatic == ElectrostaticSolverAlgo::None)
+    if (maxwell_solver_id != MaxwellSolverAlgo::None)
     {
         for (int i = 0; i < AMREX_SPACEDIM; i++)
         {
