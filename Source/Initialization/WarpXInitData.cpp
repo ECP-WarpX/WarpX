@@ -349,8 +349,12 @@ WarpX::PrintMainPICparameters ()
 }
 
 void
-WarpX::WriteUsedInputsFile (std::string const & filename) const
+WarpX::WriteUsedInputsFile () const
 {
+    std::string filename = "warpx_used_inputs";
+    ParmParse pp_warpx("warpx");
+    pp_warpx.queryAdd("used_inputs_file", filename);
+
     ablastr::utils::write_used_inputs_file(filename);
 }
 
@@ -427,6 +431,8 @@ WarpX::InitData ()
     }
 
     PerformanceHints();
+
+    CheckKnownIssues();
 }
 
 void
@@ -1257,4 +1263,18 @@ void WarpX::InitializeEBGridData (int lev)
 #else
     amrex::ignore_unused(lev);
 #endif
+}
+
+void WarpX::CheckKnownIssues()
+{
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD &&
+        (std::any_of(do_pml_Lo[0].begin(),do_pml_Lo[0].end(),[](const auto& ee){return ee;}) ||
+        std::any_of(do_pml_Hi[0].begin(),do_pml_Hi[0].end(),[](const auto& ee){return ee;})) )
+        {
+            ablastr::warn_manager::WMRecordWarning(
+                "PML",
+                "Using PSATD together with PML may lead to instabilities if the plasma touches the PML region. "
+                "It is recommended to leave enough empty space between the plama boundary and the PML region.",
+                ablastr::warn_manager::WarnPriority::low);
+        }
 }

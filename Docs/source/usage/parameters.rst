@@ -5,6 +5,10 @@ Input Parameters
 
 .. note::
 
+   WarpX input options are read via AMReX `ParmParse <https://amrex-codes.github.io/amrex/docs_html/Basics.html#parmparse>`__.
+
+.. note::
+
    The AMReX parser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted.
 
 .. _running-cpp-parameters-overall:
@@ -23,6 +27,10 @@ Overall simulation parameters
     The maximum physical time of the simulation. Can be provided instead of ``max_step``. If both
     ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
     when the first criterion is hit.
+
+* ``warpx.used_inputs_file`` (`string`; default: ``warpx_used_inputs``)
+    Name of a file that WarpX writes to archive the used inputs.
+    The context of this file will contain an exact copy of all explicitly and implicitly used inputs parameters, including those :ref:`extended and overwritten from the command line <usage_run>`.
 
 * ``warpx.gamma_boost`` (`float`)
     The Lorentz factor of the boosted frame in which the simulation is run.
@@ -48,21 +56,6 @@ Overall simulation parameters
     given in the lab frame). The value of ``max_step`` is overwritten, and
     printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
-
-* ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
-    Controls how much information is printed to the terminal, when running WarpX.
-
-* ``warpx.always_warn_immediately`` (``0`` or ``1``; default is ``0`` for false)
-    If set to ``1``, WarpX immediately prints every warning message as soon as
-    it is generated. It is mainly intended for debug purposes, in case a simulation
-    crashes before a global warning report can be printed.
-
-* ``warpx.abort_on_warning_threshold`` (string: ``low``, ``medium`` or ``high``) optional
-    Optional threshold to abort as soon as a warning is raised.
-    If the threshold is set, warning messages with priority greater than or
-    equal to the threshold trigger an immediate abort.
-    It is mainly intended for debug purposes, and is best used with
-    ``warpx.always_warn_immediately=1``.
 
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
     If provided ``warpx.random_seed = random``, the random seed will be determined
@@ -138,10 +131,6 @@ Overall simulation parameters
     This will cause severe performance drops.
     Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
     `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
-
-* ``amrex.abort_on_unused_inputs`` (``0`` or ``1``; default is ``0`` for false)
-    When set to ``1``, this option causes simulation to fail *after* its completion if there were unused parameters.
-    It is mainly intended for continuous integration and automated testing to check that all tests and inputs are adapted to API changes.
 
 Signal Handling
 ^^^^^^^^^^^^^^^
@@ -308,7 +297,9 @@ Domain Boundary Conditions
     * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. For the electromagnetic solve, at PEC, the tangential electric field and the normal magnetic field are set to 0. This boundary can be used to model a dielectric or metallic surface. In the guard-cell region, the tangential electric field is set equal and opposite to the respective field component in the mirror location across the PEC boundary, and the normal electric field is set equal to the field component in the mirror location in the domain across the PEC boundary. Similarly, the tangential (and normal) magnetic field components are set equal (and opposite) to the respective magnetic field components in the mirror locations across the PEC boundary. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
       If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
 
-    * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`. If the electrostatic solver is used, a Neumann boundary condition (with gradient equal to 0) will be applied on the specified boundary.
+    * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`.
+
+    * ``neumann``: For the electrostatic solver, a Neumann boundary condition (with gradient of the potential equal to 0) will be applied on the specified boundary.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
     Options are:
@@ -486,9 +477,6 @@ Distribution across MPI ranks and parallelization
 
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
-
-* ``warpx.safe_guard_cells`` (`0` or `1`) optional (default `0`)
-    For developers: run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
 
 .. _running-cpp-parameters-parser:
 
@@ -971,10 +959,6 @@ Particle initialization
     Only used when ``warpx.do_back_transformed_diagnostics=1``. When running in a
     boosted frame, whether or not to plot back-transformed diagnostics for
     this species.
-
-* ``warpx.serialize_initial_conditions`` (`0` or `1`) optional (default `0`)
-    Serialize the initial conditions for reproducible testing.
-    Mainly whether or not to use OpenMP threading for particle initialization.
 
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
@@ -2840,3 +2824,41 @@ This is essentially the python slicing syntax except that the stop is inclusive
 Note that if a given period is zero or negative, the corresponding slice is disregarded.
 For example, ``something_intervals = -1`` deactivates ``something`` and
 ``something_intervals = ::-1,100:1000:25`` is equivalent to ``something_intervals = 100:1000:25``.
+
+
+.. _running-cpp-parameters-test-debug:
+
+Testing and Debugging
+---------------------
+
+When developing, testing and :ref:`debugging WarpX <debugging_warpx>`, the following options can be considered.
+
+* ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
+    Controls how much information is printed to the terminal, when running WarpX.
+
+* ``warpx.always_warn_immediately`` (``0`` or ``1``; default is ``0`` for false)
+    If set to ``1``, WarpX immediately prints every warning message as soon as
+    it is generated. It is mainly intended for debug purposes, in case a simulation
+    crashes before a global warning report can be printed.
+
+* ``warpx.abort_on_warning_threshold`` (string: ``low``, ``medium`` or ``high``) optional
+    Optional threshold to abort as soon as a warning is raised.
+    If the threshold is set, warning messages with priority greater than or
+    equal to the threshold trigger an immediate abort.
+    It is mainly intended for debug purposes, and is best used with
+    ``warpx.always_warn_immediately=1``.
+
+* ``amrex.abort_on_unused_inputs`` (``0`` or ``1``; default is ``0`` for false)
+    When set to ``1``, this option causes simulation to fail *after* its completion if there were unused parameters.
+    It is mainly intended for continuous integration and automated testing to check that all tests and inputs are adapted to API changes.
+
+* ``warpx.serialize_initial_conditions`` (`0` or `1`) optional (default `0`)
+    Serialize the initial conditions for reproducible testing, e.g, in our continuous integration tests.
+    Mainly whether or not to use OpenMP threading for particle initialization.
+
+* ``warpx.safe_guard_cells`` (`0` or `1`) optional (default `0`)
+    Run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
+
+* ``ablastr.fillboundary_always_sync`` (`0` or `1`) optional (default `0`)
+    Run all ``FillBoundary`` operations on ``MultiFab`` to force-synchronize shared nodal points.
+    This slightly increases communication cost and can help to spot missing ``nodal_sync`` flags in these operations.

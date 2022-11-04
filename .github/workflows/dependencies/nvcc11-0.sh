@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2020 The WarpX Community
+# Copyright 2020-2022 The WarpX Community
 #
 # License: BSD-3-Clause-LBNL
 # Authors: Axel Huebl
@@ -21,8 +21,10 @@ sudo apt-get install -y \
     pkg-config          \
     wget
 
-sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
-echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" \
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
+sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
+echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /" \
     | sudo tee /etc/apt/sources.list.d/cuda.list
 
 sudo apt-get update

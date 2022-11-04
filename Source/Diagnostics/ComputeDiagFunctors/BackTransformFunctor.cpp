@@ -155,6 +155,20 @@ BackTransformFunctor::InitData ()
     m_k_index_zlab.resize( m_num_buffers );
     m_map_varnames.resize( m_varnames.size() );
 
+#ifdef WARPX_DIM_RZ
+    std::map<std::string, int> m_possible_fields_to_dump = {
+        {"Er", 0},
+        {"Et", 1},
+        {"Ez", 2},
+        {"Br", 3},
+        {"Bt", 4},
+        {"Bz", 5},
+        {"jr", 6},
+        {"jt", 7},
+        {"jz", 8},
+        {"rho", 9}
+    };
+#else
     std::map<std::string, int> m_possible_fields_to_dump = {
         {"Ex", 0},
         {"Ey", 1},
@@ -167,6 +181,7 @@ BackTransformFunctor::InitData ()
         {"jz", 8},
         {"rho", 9}
     };
+#endif
 
     for (int i = 0; i < m_varnames.size(); ++i)
     {

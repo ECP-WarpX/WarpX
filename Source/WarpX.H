@@ -100,8 +100,9 @@ public:
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
-                         int num_shift, int dir, const int lev, amrex::Real external_field=0.0,
-                         bool useparser = false, amrex::ParserExecutor<3> const& field_parser={});
+                         int num_shift, int dir, const int lev, bool update_cost_flag,
+                         amrex::Real external_field=0.0, bool useparser = false,
+                         amrex::ParserExecutor<3> const& field_parser={});
 
     static void GotoNextLine (std::istream& is);
 
@@ -458,7 +459,7 @@ public:
     void PrintMainPICparameters ();
 
     /** Write a file that record all inputs: inputs file + command line options */
-    void WriteUsedInputsFile (std::string const & filename = "warpx_used_inputs") const;
+    void WriteUsedInputsFile () const;
 
     /** Print dt and dx,dy,dz */
     void PrintDtDxDyDz ();
@@ -641,21 +642,21 @@ public:
     void UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab const& src);
 
     // Fill boundary cells including coarse/fine boundaries
-    void FillBoundaryB   (amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryE   (amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryB   (amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryE   (amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryB_avg   (amrex::IntVect ng);
     void FillBoundaryE_avg   (amrex::IntVect ng);
 
-    void FillBoundaryF   (amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryG   (amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryF   (amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryG   (amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryAux (amrex::IntVect ng);
-    void FillBoundaryE   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryB   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryE   (int lev, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryB   (int lev, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryE_avg   (int lev, amrex::IntVect ng);
     void FillBoundaryB_avg   (int lev, amrex::IntVect ng);
 
-    void FillBoundaryF   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryG   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryF   (int lev, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryG   (int lev, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
 
     /**
@@ -962,10 +963,10 @@ private:
     ///
     void EvolveEM(int numsteps);
 
-    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
 
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
@@ -1072,6 +1073,11 @@ private:
      * for a given MultiFab, and abort otherwise.
      */
     void CheckGuardCells(amrex::MultiFab const& mf);
+
+    /**
+     * \brief Checks for known numerical issues involving different WarpX modules
+     */
+    void CheckKnownIssues();
 
     /** Check the requested resources and write performance hints */
     void PerformanceHints ();
