@@ -2834,7 +2834,7 @@ WarpX::AllocInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    WarpX::AddToMutiFabMap(name, mf);
+    WarpX::AddToMultiFabMap(name, mf);
 }
 
 void
@@ -2852,7 +2852,7 @@ WarpX::AllocInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    WarpX::AddToMutiFabMap(name, mf);
+    WarpX::AddToMultiFabMap(name, mf);
 }
 
 void
@@ -2864,5 +2864,5 @@ WarpX::AliasInitMultiFab (
     const std::string name)
 {
     mf = std::make_unique<amrex::MultiFab>(mf_to_alias, amrex::make_alias, scomp, ncomp);
-    WarpX::AddToMutiFabMap(name, mf);
+    WarpX::AddToMultiFabMap(name, mf);
 }

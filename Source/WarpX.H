@@ -361,11 +361,11 @@ public:
     static std::map<std::string, amrex::MultiFab *> multifab_map;
     static std::map<std::string, amrex::iMultiFab *> imultifab_map;
 
-    static void AddToMutiFabMap(const std::string name, const std::unique_ptr<amrex::MultiFab>& mf) {
+    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::MultiFab>& mf) {
         multifab_map[name] = mf.get();
     }
 
-    static void AddToMutiFabMap(const std::string name, const std::unique_ptr<amrex::iMultiFab>& mf) {
+    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::iMultiFab>& mf) {
         imultifab_map[name] = mf.get();
     }
 
