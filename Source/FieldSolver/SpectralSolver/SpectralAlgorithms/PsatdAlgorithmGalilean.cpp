@@ -391,6 +391,7 @@ void PsatdAlgorithmGalilean::InitializeSpectralCoefficients (
             // Calculate the dot product of the k vector with the Galilean velocity.
             // This has to be computed always with the centered (that is, nodal) finite-order
             // modified k vectors, to work correctly for both nodal and staggered simulations.
+            // w_c = 0 always with standard PSATD (zero Galilean velocity).
             const amrex::Real w_c = kx_c[i]*vg_x +
 #if defined(WARPX_DIM_3D)
                 ky_c[j]*vg_y + kz_c[k]*vg_z;
@@ -434,15 +435,36 @@ void PsatdAlgorithmGalilean::InitializeSpectralCoefficients (
             T2(i,j,k) = theta_c * theta_c;
 
             // X1 (multiplies i*([k] \times J) in the update equation for update B)
-            X1(i,j,k) = (1._rt - theta2_c * C(i,j,k) + I * w_c * theta2_c * S_ck(i,j,k))
-                        / (ep0 * (om2_s - w2_c));
+            if ((om_s != 0.) || (w_c != 0.))
+            {
+                X1(i,j,k) = (1._rt - theta2_c * C(i,j,k) + I * w_c * theta2_c * S_ck(i,j,k))
+                            / (ep0 * (om2_s - w2_c));
+            }
+            else // om_s = 0 and w_c = 0
+            {
+                X1(i,j,k) = 0.5_rt * dt2 / ep0;
+            }
 
             // X2 (multiplies rho_new      if update_with_rho = 1 in the update equation for E)
             // X2 (multiplies ([k] \dot E) if update_with_rho = 0 in the update equation for E)
             if (update_with_rho)
             {
-                X2(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c * tmp)
-                            / (theta_c_star - theta_c);
+                if (w_c != 0.)
+                {
+                    X2(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c * tmp)
+                                / (theta_c_star - theta_c);
+                }
+                else // w_c = 0
+                {
+                    if (om_s != 0.)
+                    {
+                        X2(i,j,k) = c2 * (dt - S_ck(i,j,k)) / (ep0 * dt * om2_s);
+                    }
+                    else // om_s = 0 and w_c = 0
+                    {
+                        X2(i,j,k) = c2 * dt2 / (6._rt * ep0);
+                    }
+                }
             }
             else // update_with_rho = 0
             {
@@ -453,12 +475,40 @@ void PsatdAlgorithmGalilean::InitializeSpectralCoefficients (
             // X3 (multiplies ([k] \dot J) if update_with_rho = 0 in the update equation for E)
             if (update_with_rho)
             {
-                X3(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c_star * tmp)
-                            / (theta_c_star - theta_c);
+                if (w_c != 0.)
+                {
+                    X3(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c_star * tmp)
+                                / (theta_c_star - theta_c);
+                }
+                else // w_c = 0
+                {
+                    if (om_s != 0.)
+                    {
+                        X3(i,j,k) = c2 * (dt * C(i,j,k) - S_ck(i,j,k)) / (ep0 * dt * om2_s);
+                    }
+                    else // om_s = 0 and w_c = 0
+                    {
+                        X3(i,j,k) = - c2 * dt2 / (3._rt * ep0);
+                    }
+                }
             }
             else // update_with_rho = 0
             {
-                X3(i,j,k) = I * c2 * (theta2_c * tmp - X1(i,j,k)) / w_c;
+                if (w_c != 0.)
+                {
+                    X3(i,j,k) = I * c2 * (theta2_c * tmp - X1(i,j,k)) / w_c;
+                }
+                else // w_c = 0
+                {
+                    if (om_s != 0.)
+                    {
+                        X3(i,j,k) = c2 * (S_ck(i,j,k) - dt) / (ep0 * om2_s);
+                    }
+                    else // om_s = 0 and w_c = 0
+                    {
+                        X3(i,j,k) = - c2 * dt3 / (6._rt * ep0);
+                    }
+                }
             }
 
             // X4 (multiplies J in the update equation for E)
@@ -526,6 +576,7 @@ void PsatdAlgorithmGalilean::InitializeSpectralCoefficientsAveraging (
             // Calculate the dot product of the k vector with the Galilean velocity.
             // This has to be computed always with the centered (that is, nodal) finite-order
             // modified k vectors, to work correctly for both nodal and staggered simulations.
+            // w_c = 0 always with standard PSATD (zero Galilean velocity).
             const amrex::Real w_c = kx_c[i]*vg_x +
 #if defined(WARPX_DIM_3D)
                 ky_c[j]*vg_y + kz_c[k]*vg_z;
@@ -563,47 +614,92 @@ void PsatdAlgorithmGalilean::InitializeSpectralCoefficientsAveraging (
 
             // Psi1 (multiplies E in the update equation for <E>)
             // Psi1 (multiplies B in the update equation for <B>)
-            Psi1(i,j,k) = (theta3_c * (om2_s * S3_om + I * w_c * C3)
-                          - theta_c * (om2_s * S1_om + I * w_c * C1)) / (dt * (om2_s - w2_c));
+            if ((om_s != 0.) || (w_c != 0.))
+            {
+                Psi1(i,j,k) = (theta3_c * (om2_s * S3_om + I * w_c * C3)
+                              - theta_c * (om2_s * S1_om + I * w_c * C1)) / (dt * (om2_s - w2_c));
+            }
+            else // om_s = 0 and w_c = 0
+            {
+                Psi1(i,j,k) = 1._rt;
+            }
 
             // Psi2 (multiplies i*([k] \times B) in the update equation for <E>)
             // Psi2 (multiplies i*([k] \times E) in the update equation for <B>)
-            Psi2(i,j,k) = (theta3_c * (C3 - I * w_c * S3_om)
-                          - theta_c * (C1 - I * w_c * S1_om)) / (dt * (om2_s - w2_c));
+            if ((om_s != 0.) || (w_c != 0.))
+            {
+                Psi2(i,j,k) = (theta3_c * (C3 - I * w_c * S3_om)
+                              - theta_c * (C1 - I * w_c * S1_om)) / (dt * (om2_s - w2_c));
+            }
+            else // om_s = 0 and w_c = 0
+            {
+                Psi2(i,j,k) = - dt;
+            }
 
             // Psi3
-            Complex Psi3 = - I * (theta3_c - theta_c) / (dt * w_c);
+            Complex Psi3;
+            if (w_c != 0.)
+            {
+                Psi3 = - I * (theta3_c - theta_c) / (dt * w_c);
+            }
+            else // w_c = 0
+            {
+                Psi3 = 1._rt;
+            }
 
             // Y1 (multiplies i*([k] \times J) in the update equation for <B>)
-            Y1(i,j,k) = (1._rt - Psi1(i,j,k) - I * w_c * Psi2(i,j,k)) / (ep0 * (om2_s - w2_c));
+            if ((om_s != 0.) || (w_c != 0.))
+            {
+                Y1(i,j,k) = (1._rt - Psi1(i,j,k) - I * w_c * Psi2(i,j,k)) / (ep0 * (om2_s - w2_c));
+            }
+            else // om_s = 0 and w_c = 0
+            {
+                Y1(i,j,k) = 13._rt * dt2 / (24._rt * ep0);
+            }
 
             // Y2 (multiplies rho_new in the update equation for <E>)
-            if (om_s != 0.)
+            if ((om_s != 0.) && (w_c != 0.))
             {
                 Y2(i,j,k) = I * c2 * (ep0 * om2_s * Y1(i,j,k) - Psi3 + Psi1(i,j,k))
                             / (ep0 * om2_s * (theta2_c - 1._rt));
             }
-            else // om_s = 0
+            else if ((om_s != 0.) && (w_c == 0.))
+            {
+                Y2(i,j,k) = I * c2 * (C1 - C3 - dt2 * om2_s) / (ep0 * dt2 * om4_s);
+            }
+            else if ((om_s == 0.) && (w_c != 0.))
             {
                 Y2(i,j,k) = c2 * (9._rt * dt2 * w2_c * theta3_c - dt2 * w2_c * theta_c
                             - 24._rt * theta3_c + 24._rt * theta_c + I * 8._rt * dt * w_c
                             + I * 24._rt * dt * w_c * theta3_c - I * 8._rt * dt * w_c * theta_c)
                             / (8._rt * ep0 * dt * w3_c * (1._rt - theta2_c));
             }
+            else // om_s = 0 and w_c = 0
+            {
+                Y2(i,j,k) = - I * 5._rt * c2 * dt2 / (24._rt * ep0);
+            }
 
             // Y3 (multiplies rho_old in the update equation for <E>)
-            if (om_s != 0.)
+            if ((om_s != 0.) && (w_c != 0.))
             {
                 Y3(i,j,k) = I * c2 * (Psi3 - Psi1(i,j,k) - ep0 * theta2_c * om2_s * Y1(i,j,k))
                             / (ep0 * om2_s * (theta2_c - 1._rt));
             }
-            else // om_s = 0
+            else if ((om_s != 0.) && (w_c == 0.))
+            {
+                Y3(i,j,k) = I * c2 * (C3 - C1 + dt * om2_s * (S3_om - S1_om)) / (ep0 * dt2 * om4_s);
+            }
+            else if ((om_s == 0.) && (w_c != 0.))
             {
                 Y3(i,j,k) = c2 * (9._rt * dt2 * w2_c * theta3_c - dt2 * w2_c * theta_c
                             - 16._rt * theta5_c + 8._rt * theta3_c + 8._rt * theta_c
                             + I * 12._rt * dt * w_c * theta5_c + I * 8._rt * dt * w_c * theta3_c
                             - I * 4._rt * dt * w_c * theta_c + I * 8._rt * dt * w_c * theta2_c)
                             / (8._rt * ep0 * dt * w3_c * (theta2_c - 1._rt));
+            }
+            else // om_s = 0 and w_c = 0
+            {
+                Y3(i,j,k) = - I * c2 * dt2 / (3._rt * ep0);
             }
 
             // Y4 (multiplies J in the update equation for <E>)
@@ -719,7 +815,7 @@ PsatdAlgorithmGalilean::VayDeposition (SpectralFieldData& field_data)
 
     amrex::ignore_unused(field_data);
     amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented for second-order Galilean PSATD equations"));
+        "Vay deposition not implemented for Galilean PSATD algorithms"));
 }
 
 #endif // WARPX_USE_PSATD
