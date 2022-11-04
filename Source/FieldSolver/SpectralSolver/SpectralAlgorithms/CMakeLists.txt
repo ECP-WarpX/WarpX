@@ -3,6 +3,7 @@ target_sources(WarpX
     PsatdAlgorithmFirstOrder.cpp
     PsatdAlgorithmJConstantInTime.cpp
     PsatdAlgorithmJLinearInTime.cpp
+    PsatdAlgorithmGalilean.cpp
     PsatdAlgorithmPml.cpp
     SpectralBaseAlgorithm.cpp
     PsatdAlgorithmComoving.cpp

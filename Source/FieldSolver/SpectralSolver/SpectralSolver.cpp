@@ -11,6 +11,7 @@
 #include "SpectralAlgorithms/PsatdAlgorithmFirstOrder.H"
 #include "SpectralAlgorithms/PsatdAlgorithmJConstantInTime.H"
 #include "SpectralAlgorithms/PsatdAlgorithmJLinearInTime.H"
+#include "SpectralAlgorithms/PsatdAlgorithmGalilean.H"
 #include "SpectralKSpace.H"
 #include "SpectralSolver.H"
 #include "Utils/TextMsg.H"
@@ -70,7 +71,7 @@ SpectralSolver::SpectralSolver(
         // Galilean PSATD algorithm (only J constant in time)
         else if (v_galilean[0] != 0. || v_galilean[1] != 0. || v_galilean[2] != 0.)
         {
-            algorithm = std::make_unique<PsatdAlgorithmJConstantInTime>(
+            algorithm = std::make_unique<PsatdAlgorithmGalilean>(
                 k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
                 v_galilean, dt, update_with_rho, fft_do_time_averaging,
                 dive_cleaning, divb_cleaning);
