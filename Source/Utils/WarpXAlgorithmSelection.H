@@ -83,6 +83,13 @@ struct GatheringAlgo {
     };
 };
 
+struct PSATDSolutionType {
+    enum {
+        FirstOrder = 0,
+        SecondOrder = 1
+    };
+};
+
 struct JInTime {
     enum {
         Constant = 0,
@@ -92,8 +99,8 @@ struct JInTime {
 
 struct RhoInTime {
     enum {
-        Linear = 1,
-        Quadratic = 2
+        Constant = 0,
+        Linear = 1
     };
 };
 

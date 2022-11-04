@@ -83,18 +83,19 @@ class SpectralFieldIndex
     // Always
     int Ex = -1, Ey = -1, Ez = -1;
     int Bx = -1, By = -1, Bz = -1;
-    int Jx = -1, Jy = -1, Jz = -1;
-    int rho_old = -1, rho_new = -1, divE = -1;
+    int divE = -1;
 
     // Time averaging
     int Ex_avg = -1, Ey_avg = -1, Ez_avg = -1;
     int Bx_avg = -1, By_avg = -1, Bz_avg = -1;
 
-    // J linear in time
+    // J
+    int Jx_old = -1, Jy_old = -1, Jz_old = -1;
+    int Jx_mid = -1, Jy_mid = -1, Jz_mid = -1;
     int Jx_new = -1, Jy_new = -1, Jz_new = -1;
 
-    // rho quadratic in time
-    int rho_mid = -1;
+    // rho
+    int rho_old = -1, rho_mid = -1, rho_new = -1;
 
     // div(E) and div(B) cleaning
     int F = -1, G = -1;
