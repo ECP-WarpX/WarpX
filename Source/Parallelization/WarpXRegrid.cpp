@@ -172,13 +172,13 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             RemakeMultiFab(current_store[lev][idim], dm, false);
 
 #ifdef AMREX_USE_EB
-            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::None ||
-                WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
-                WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
-                WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+            if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::None ||
+                WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::Yee ||
+                WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::CKC ||
+                WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::ECT) {
                 RemakeMultiFab(m_edge_lengths[lev][idim], dm, false);
                 RemakeMultiFab(m_face_areas[lev][idim], dm, false);
-                if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
+                if(WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::ECT){
                     RemakeMultiFab(Venl[lev][idim], dm, false);
                     RemakeMultiFab(m_flag_info_face[lev][idim], dm, false);
                     RemakeMultiFab(m_flag_ext_face[lev][idim], dm, false);
@@ -210,7 +210,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 #endif
 
 #ifdef WARPX_USE_PSATD
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        if (maxwell_solver_id == ElectromagneticSolverAlgo::PSATD) {
             if (spectral_solver_fp[lev] != nullptr) {
                 // Get the cell-centered box
                 BoxArray realspace_ba = ba;   // Copy box
@@ -270,7 +270,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             RemakeMultiFab(rho_cp[lev], dm, false);
 
 #ifdef WARPX_USE_PSATD
-            if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            if (maxwell_solver_id == ElectromagneticSolverAlgo::PSATD) {
                 if (spectral_solver_cp[lev] != nullptr) {
                     BoxArray cba = ba;
                     cba.coarsen(refRatio(lev-1));

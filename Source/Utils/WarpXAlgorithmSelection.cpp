@@ -23,12 +23,12 @@
 // and corresponding integer for use inside the code
 
 const std::map<std::string, int> maxwell_solver_algo_to_int = {
-    {"none",    MaxwellSolverAlgo::None },
-    {"yee",     MaxwellSolverAlgo::Yee },
-    {"ckc",     MaxwellSolverAlgo::CKC },
-    {"psatd",   MaxwellSolverAlgo::PSATD },
-    {"ect",     MaxwellSolverAlgo::ECT },
-    {"default", MaxwellSolverAlgo::Yee }
+    {"none",    ElectromagneticSolverAlgo::None },
+    {"yee",     ElectromagneticSolverAlgo::Yee },
+    {"ckc",     ElectromagneticSolverAlgo::CKC },
+    {"psatd",   ElectromagneticSolverAlgo::PSATD },
+    {"ect",     ElectromagneticSolverAlgo::ECT },
+    {"default", ElectromagneticSolverAlgo::Yee }
 };
 
 const std::map<std::string, int> electrostatic_solver_algo_to_int = {
@@ -139,7 +139,7 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = particle_pusher_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "current_deposition")) {
         algo_to_int = current_deposition_algo_to_int;
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::PSATD)
             algo_to_int["default"] = CurrentDepositionAlgo::Direct;
     } else if (0 == std::strcmp(pp_search_key, "charge_deposition")) {
         algo_to_int = charge_deposition_algo_to_int;

@@ -36,7 +36,7 @@ struct MacroscopicSolverAlgo {
     };
 };
 
-struct MaxwellSolverAlgo {
+struct ElectromagneticSolverAlgo {
     enum {
         None = 0,
         Yee = 1,

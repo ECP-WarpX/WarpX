@@ -153,7 +153,7 @@ WarpX::Evolve (int numsteps)
                     FillBoundaryB_avg(guard_cells.ng_FieldGather);
                 }
                 // TODO Remove call to FillBoundaryAux before UpdateAuxilaryData?
-                if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+                if (WarpX::maxwell_solver_id != ElectromagneticSolverAlgo::PSATD)
                     FillBoundaryAux(guard_cells.ng_UpdateAux);
                 UpdateAuxilaryData();
                 FillBoundaryAux(guard_cells.ng_UpdateAux);
@@ -177,7 +177,7 @@ WarpX::Evolve (int numsteps)
         ExecutePythonCallback("particleinjection");
         // Electrostatic case: only gather fields and push particles,
         // deposition and calculation of fields done further below
-        if (maxwell_solver_id == MaxwellSolverAlgo::None)
+        if (maxwell_solver_id == ElectromagneticSolverAlgo::None)
         {
             const bool skip_deposition = true;
             PushParticlesandDepose(cur_time, skip_deposition);
@@ -279,7 +279,7 @@ WarpX::Evolve (int numsteps)
         m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
 
         // Non-Maxwell solver: particles can move by an arbitrary number of cells
-        if( maxwell_solver_id == MaxwellSolverAlgo::None )
+        if( maxwell_solver_id == ElectromagneticSolverAlgo::None )
         {
             mypc->Redistribute();
         } else
@@ -413,7 +413,7 @@ WarpX::OneStep_nosub (Real cur_time)
 
     // Push E and B from {n} to {n+1}
     // (And update guard cells immediately afterwards)
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::PSATD) {
         if (use_hybrid_QED)
         {
             WarpX::Hybrid_QED_Push(dt);
@@ -486,7 +486,7 @@ WarpX::OneStep_nosub (Real cur_time)
 
 void WarpX::SyncCurrentAndRho ()
 {
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (maxwell_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         if (fft_periodic_single_box)
         {
@@ -530,7 +530,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 #ifdef WARPX_USE_PSATD
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD,
+        WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::PSATD,
         "multi-J algorithm not implemented for FDTD"
     );
 

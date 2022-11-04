@@ -75,7 +75,7 @@ void ParseGeometryInput()
 #ifdef WARPX_DIM_RZ
     ParmParse pp_algo("algo");
     int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (maxwell_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] == 0.,
             "Lower bound of radial coordinate (prob_lo[0]) with RZ PSATD solver must be zero");
@@ -305,7 +305,7 @@ void CheckGriddingForRZSpectral ()
     int maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
 
     // only check for PSATD in RZ
-    if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+    if (maxwell_solver_id != ElectromagneticSolverAlgo::PSATD)
         return;
 
     int max_level;
@@ -448,7 +448,7 @@ void ReadBCParams ()
         }
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (maxwell_solver_id != MaxwellSolverAlgo::PSATD) ||
+            (maxwell_solver_id != ElectromagneticSolverAlgo::PSATD) ||
             (
                 WarpX::field_boundary_lo[idim] != FieldBoundaryType::PEC &&
                 WarpX::field_boundary_hi[idim] != FieldBoundaryType::PEC

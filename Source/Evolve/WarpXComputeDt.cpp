@@ -36,7 +36,7 @@ WarpX::ComputeDt ()
     const amrex::Real* dx = geom[max_level].CellSize();
     amrex::Real deltat = 0.;
 
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (maxwell_solver_id == ElectromagneticSolverAlgo::PSATD) {
         // Computation of dt for spectral algorithm
         // (determined by the minimum cell size in all directions)
 #if defined(WARPX_DIM_1D_Z)
@@ -50,20 +50,20 @@ WarpX::ComputeDt ()
         // Computation of dt for FDTD algorithm
 #ifdef WARPX_DIM_RZ
         // - In RZ geometry
-        if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
+        if (maxwell_solver_id == ElectromagneticSolverAlgo::Yee) {
             deltat = cfl * CylindricalYeeAlgorithm::ComputeMaxDt(dx,  n_rz_azimuthal_modes);
 #else
         // - In Cartesian geometry
         if (do_nodal) {
             deltat = cfl * CartesianNodalAlgorithm::ComputeMaxDt(dx);
-        } else if (maxwell_solver_id == MaxwellSolverAlgo::Yee
-                    || maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+        } else if (maxwell_solver_id == ElectromagneticSolverAlgo::Yee
+                    || maxwell_solver_id == ElectromagneticSolverAlgo::ECT) {
             deltat = cfl * CartesianYeeAlgorithm::ComputeMaxDt(dx);
-        } else if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
+        } else if (maxwell_solver_id == ElectromagneticSolverAlgo::CKC) {
             deltat = cfl * CartesianCKCAlgorithm::ComputeMaxDt(dx);
 #endif
         } else {
-            if (maxwell_solver_id != MaxwellSolverAlgo::None){
+            if (maxwell_solver_id != ElectromagneticSolverAlgo::None){
                 amrex::Abort(Utils::TextMsg::Err(
                     "ComputeDt: Unknown algorithm"));
             }
@@ -79,7 +79,7 @@ WarpX::ComputeDt ()
         }
     }
 
-    if (maxwell_solver_id == MaxwellSolverAlgo::None) {
+    if (maxwell_solver_id == ElectromagneticSolverAlgo::None) {
         for (int lev=0; lev<=max_level; lev++) {
             dt[lev] = const_dt;
         }

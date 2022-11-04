@@ -56,7 +56,7 @@ void FiniteDifferenceSolver::EvolveE (
     int lev, amrex::Real const dt ) {
 
 #ifdef AMREX_USE_EB
-    if (m_fdtd_algo != MaxwellSolverAlgo::ECT) {
+    if (m_fdtd_algo != ElectromagneticSolverAlgo::ECT) {
         amrex::ignore_unused(face_areas, ECTRhofield);
     }
 #else
@@ -66,7 +66,7 @@ void FiniteDifferenceSolver::EvolveE (
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
         ignore_unused(edge_lengths);
         EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
 #else
@@ -74,11 +74,11 @@ void FiniteDifferenceSolver::EvolveE (
 
         EvolveECartesian <CartesianNodalAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee || m_fdtd_algo == MaxwellSolverAlgo::ECT) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee || m_fdtd_algo == ElectromagneticSolverAlgo::ECT) {
 
         EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         EvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 

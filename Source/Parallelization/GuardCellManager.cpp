@@ -134,7 +134,7 @@ guardCellManager::Init (
     // Electromagnetic simulations: account for change in particle positions within half a time step
     // for current deposition and within one time step for charge deposition (since rho is needed
     // both at the beginning and at the end of the PIC iteration)
-    if (maxwell_solver_id != MaxwellSolverAlgo::None)
+    if (maxwell_solver_id != ElectromagneticSolverAlgo::None)
     {
         for (int i = 0; i < AMREX_SPACEDIM; i++)
         {
@@ -169,7 +169,7 @@ guardCellManager::Init (
     // After pushing particle
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell
-    if (maxwell_solver_id == MaxwellSolverAlgo::CKC) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
+    if (maxwell_solver_id == ElectromagneticSolverAlgo::CKC) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 
     // Used if warpx.do_divb_cleaning = 1
@@ -177,7 +177,7 @@ guardCellManager::Init (
     // TODO Does the CKC solver require one additional guard cell (as for F)?
     ng_alloc_G = IntVect(AMREX_D_DECL(ng_alloc_G_int, ng_alloc_G_int, ng_alloc_G_int));
 
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (maxwell_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         // The number of guard cells should be enough to contain the stencil of the FFT solver.
         //
@@ -244,13 +244,13 @@ guardCellManager::Init (
     }
 
     // Compute number of cells required for Field Solver
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (maxwell_solver_id == ElectromagneticSolverAlgo::PSATD) {
         ng_FieldSolver = ng_alloc_EB;
         ng_FieldSolverF = ng_alloc_EB;
         ng_FieldSolverG = ng_alloc_EB;
     }
 #ifdef WARPX_DIM_RZ
-    else if (maxwell_solver_id == MaxwellSolverAlgo::None || maxwell_solver_id == MaxwellSolverAlgo::Yee) {
+    else if (maxwell_solver_id == ElectromagneticSolverAlgo::None || maxwell_solver_id == ElectromagneticSolverAlgo::Yee) {
         ng_FieldSolver  = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverF = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverG = CylindricalYeeAlgorithm::GetMaxGuardCell();
@@ -261,13 +261,13 @@ guardCellManager::Init (
             ng_FieldSolver  = CartesianNodalAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianNodalAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianNodalAlgorithm::GetMaxGuardCell();
-        } else if (maxwell_solver_id == MaxwellSolverAlgo::None ||
-                   maxwell_solver_id == MaxwellSolverAlgo::Yee ||
-                   maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+        } else if (maxwell_solver_id == ElectromagneticSolverAlgo::None ||
+                   maxwell_solver_id == ElectromagneticSolverAlgo::Yee ||
+                   maxwell_solver_id == ElectromagneticSolverAlgo::ECT) {
             ng_FieldSolver  = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianYeeAlgorithm::GetMaxGuardCell();
-        } else if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
+        } else if (maxwell_solver_id == ElectromagneticSolverAlgo::CKC) {
             ng_FieldSolver  = CartesianCKCAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianCKCAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianCKCAlgorithm::GetMaxGuardCell();
@@ -281,7 +281,7 @@ guardCellManager::Init (
     ng_alloc_F.max( ng_FieldSolverF );
     ng_alloc_G.max( ng_FieldSolverG );
 
-    if (do_moving_window && maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (do_moving_window && maxwell_solver_id == ElectromagneticSolverAlgo::PSATD) {
         ng_afterPushPSATD = ng_alloc_EB;
     }
 
