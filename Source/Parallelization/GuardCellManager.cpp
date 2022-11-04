@@ -251,7 +251,7 @@ guardCellManager::Init (
         ng_FieldSolverG = ng_alloc_EB;
     }
 #ifdef WARPX_DIM_RZ
-    else if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
+    else if (maxwell_solver_id == MaxwellSolverAlgo::None || maxwell_solver_id == MaxwellSolverAlgo::Yee) {
         ng_FieldSolver  = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverF = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverG = CylindricalYeeAlgorithm::GetMaxGuardCell();
@@ -262,8 +262,9 @@ guardCellManager::Init (
             ng_FieldSolver  = CartesianNodalAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianNodalAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianNodalAlgorithm::GetMaxGuardCell();
-        } else if (maxwell_solver_id == MaxwellSolverAlgo::Yee
-                   || maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+        } else if (maxwell_solver_id == MaxwellSolverAlgo::None ||
+                   maxwell_solver_id == MaxwellSolverAlgo::Yee ||
+                   maxwell_solver_id == MaxwellSolverAlgo::ECT) {
             ng_FieldSolver  = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianYeeAlgorithm::GetMaxGuardCell();

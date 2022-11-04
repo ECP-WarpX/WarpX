@@ -1240,7 +1240,8 @@ void WarpX::InitializeEBGridData (int lev)
               "particles are close to embedded boundaries");
         }
 
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::None ||
+            WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
             WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
             WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
 

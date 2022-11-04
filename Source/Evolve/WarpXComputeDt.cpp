@@ -36,8 +36,7 @@ WarpX::ComputeDt ()
     const amrex::Real* dx = geom[max_level].CellSize();
     amrex::Real deltat = 0.;
 
-    if (maxwell_solver_id == MaxwellSolverAlgo::None){ }
-    else if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
         // Computation of dt for spectral algorithm
         // (determined by the minimum cell size in all directions)
 #if defined(WARPX_DIM_1D_Z)
@@ -64,8 +63,10 @@ WarpX::ComputeDt ()
             deltat = cfl * CartesianCKCAlgorithm::ComputeMaxDt(dx);
 #endif
         } else {
-            amrex::Abort(Utils::TextMsg::Err(
-                "ComputeDt: Unknown algorithm"));
+            if (maxwell_solver_id != MaxwellSolverAlgo::None){
+                amrex::Abort(Utils::TextMsg::Err(
+                    "ComputeDt: Unknown algorithm"));
+            }
         }
     }
 
