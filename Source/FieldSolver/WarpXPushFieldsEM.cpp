@@ -880,7 +880,7 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     // ECTRhofield must be recomputed at the very end of the Efield update to ensure
     // that ECTRhofield is consistent with Efield
 #ifdef AMREX_USE_EB
-    if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::ECT) {
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_fp[lev], m_edge_lengths[lev],
                                                 m_face_areas[lev], ECTRhofield[lev], lev);

@@ -1131,7 +1131,7 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
           }
 
       meshes.setAttribute("fieldSolver", []() {
-          switch (WarpX::maxwell_solver_id) {
+          switch (WarpX::electromagnetic_solver_id) {
               case ElectromagneticSolverAlgo::Yee :
                   return "Yee";
               case ElectromagneticSolverAlgo::CKC :

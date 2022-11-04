@@ -22,7 +22,7 @@
 // Define dictionary with correspondance between user-input strings,
 // and corresponding integer for use inside the code
 
-const std::map<std::string, int> maxwell_solver_algo_to_int = {
+const std::map<std::string, int> electromagnetic_solver_algo_to_int = {
     {"none",    ElectromagneticSolverAlgo::None },
     {"yee",     ElectromagneticSolverAlgo::Yee },
     {"ckc",     ElectromagneticSolverAlgo::CKC },
@@ -132,14 +132,14 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
     // Pick the right dictionary
     std::map<std::string, int> algo_to_int;
     if (0 == std::strcmp(pp_search_key, "maxwell_solver")) {
-        algo_to_int = maxwell_solver_algo_to_int;
+        algo_to_int = electromagnetic_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "do_electrostatic")) {
         algo_to_int = electrostatic_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "particle_pusher")) {
         algo_to_int = particle_pusher_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "current_deposition")) {
         algo_to_int = current_deposition_algo_to_int;
-        if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::PSATD)
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
             algo_to_int["default"] = CurrentDepositionAlgo::Direct;
     } else if (0 == std::strcmp(pp_search_key, "charge_deposition")) {
         algo_to_int = charge_deposition_algo_to_int;

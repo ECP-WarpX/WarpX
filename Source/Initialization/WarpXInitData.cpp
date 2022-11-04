@@ -165,7 +165,7 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
       amrex::Print() << "                      | - relativistic" << "\n";
     }
-    else if (WarpX::maxwell_solver_id != ElectromagneticSolverAlgo::None) {
+    else if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
       amrex::Print() << "Operation mode:       | Electromagnetic" << "\n";
     }
     if (em_solver_medium == MediumForEM::Vacuum ){
@@ -218,18 +218,18 @@ WarpX::PrintMainPICparameters ()
     amrex::Print() << "Particle Shape Factor:| " << WarpX::nox << "\n";
     amrex::Print() << "-------------------------------------------------------------------------------\n";
     // Print solver's type: Yee, CKC, ECT
-    if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::Yee){
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee){
       amrex::Print() << "Maxwell Solver:       | Yee \n";
     }
-    else if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::CKC){
+    else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC){
       amrex::Print() << "Maxwell Solver:       | CKC \n";
     }
-    else if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::ECT){
+    else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT){
       amrex::Print() << "Maxwell Solver:       | ECT \n";
     }
   #ifdef WARPX_USE_PSATD
     // Print PSATD solver's configuration
-    if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::PSATD){
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
       amrex::Print() << "Maxwell Solver:       | PSATD \n";
       }
     if ((m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)) {
@@ -295,7 +295,7 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "                      | - use_hybrid_QED = true \n";
     }
 
-    if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::PSATD){
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
     // Print solver's order
       std::string psatd_nox_fft, psatd_noy_fft, psatd_noz_fft;
       psatd_nox_fft = (nox_fft == -1) ? "inf" : std::to_string(nox_fft);
@@ -307,11 +307,11 @@ WarpX::PrintMainPICparameters ()
         amrex::Print() << "                      | - psatd.noy = " << psatd_noy_fft << "\n";
         amrex::Print() << "                      | - psatd.noz = " << psatd_noz_fft << "\n";
       }
-      else if (dims=="2" and WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::PSATD){
+      else if (dims=="2" and WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
         amrex::Print() << "Spectral order:       | - psatd.nox = " << psatd_nox_fft << "\n";
         amrex::Print() << "                      | - psatd.noz = " << psatd_noz_fft << "\n";
       }
-      else if (dims=="1" and WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::PSATD){
+      else if (dims=="1" and WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
         amrex::Print() << "Spectral order:       | - psatd.noz = " << psatd_noz_fft << "\n";
       }
     }
@@ -867,7 +867,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
 #ifdef AMREX_USE_EB
         // We initialize ECTRhofield consistently with the Efield
-        if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::ECT) {
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
             m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_fp[lev], m_edge_lengths[lev],
                                                 m_face_areas[lev], ECTRhofield[lev], lev);
 
@@ -897,7 +897,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     'E',
                                                     lev);
 #ifdef AMREX_USE_EB
-           if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::ECT) {
+           if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                // We initialize ECTRhofield consistently with the Efield
                m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
                                                    m_face_areas[lev], ECTRhofield[lev], lev);
@@ -1240,10 +1240,10 @@ void WarpX::InitializeEBGridData (int lev)
               "particles are close to embedded boundaries");
         }
 
-        if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::None ||
-            WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::Yee ||
-            WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::CKC ||
-            WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::ECT) {
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
+            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
+            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
+            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
 
             auto const eb_fact = fieldEBFactory(lev);
 
@@ -1252,7 +1252,7 @@ void WarpX::InitializeEBGridData (int lev)
             ComputeFaceAreas(m_face_areas[lev], eb_fact);
             ScaleAreas(m_face_areas[lev], CellSize(lev));
 
-            if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::ECT) {
+            if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                 MarkCells();
                 ComputeFaceExtensions();
             }
@@ -1268,7 +1268,7 @@ void WarpX::InitializeEBGridData (int lev)
 
 void WarpX::CheckKnownIssues()
 {
-    if (WarpX::maxwell_solver_id == ElectromagneticSolverAlgo::PSATD &&
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD &&
         (std::any_of(do_pml_Lo[0].begin(),do_pml_Lo[0].end(),[](const auto& ee){return ee;}) ||
         std::any_of(do_pml_Hi[0].begin(),do_pml_Hi[0].end(),[](const auto& ee){return ee;})) )
         {
