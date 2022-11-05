@@ -1,6 +1,6 @@
 /* Copyright 2019 Andrew Myers, Ann Almgren, Axel Huebl
  * David Grote, Maxence Thevenet, Michael Rowan
- * Remi Lehe, Weiqun Zhang, levinem
+ * Remi Lehe, Weiqun Zhang, levinem, Revathi Jambunathan
  *
  * This file is part of WarpX.
  *
@@ -170,7 +170,9 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             RemakeMultiFab(Efield_fp[lev][idim], dm, true);
             RemakeMultiFab(current_fp[lev][idim], dm, false);
             RemakeMultiFab(current_store[lev][idim], dm, false);
-
+            if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
+                RemakeMultiFab(current_fp_vay[lev][idim], dm, false);
+            }
 #ifdef AMREX_USE_EB
             if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
                 WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT ||
@@ -264,6 +266,9 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 RemakeMultiFab(Bfield_cp[lev][idim], dm, true);
                 RemakeMultiFab(Efield_cp[lev][idim], dm, true);
                 RemakeMultiFab(current_cp[lev][idim], dm, false);
+                if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
+                    RemakeMultiFab(current_fp_vay[lev][idim], dm, false);
+                }
             }
             RemakeMultiFab(F_cp[lev], dm, true);
             RemakeMultiFab(rho_cp[lev], dm, false);
