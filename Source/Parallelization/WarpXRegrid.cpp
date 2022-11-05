@@ -173,6 +173,13 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
                 RemakeMultiFab(current_fp_vay[lev][idim], dm, false);
             }
+            if (do_current_centering) {
+                RemakeMultiFab(current_fp_nodal[lev][idim], dm, false);
+            }
+            if (fft_do_time_averaging) {
+                RemakeMultiFab(Efield_avg_fp[lev][idim], dm, true);
+                RemakeMultiFab(Bfield_avg_fp[lev][idim], dm, true);
+            }
 #ifdef AMREX_USE_EB
             if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
                 WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT ||
@@ -266,8 +273,9 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 RemakeMultiFab(Bfield_cp[lev][idim], dm, true);
                 RemakeMultiFab(Efield_cp[lev][idim], dm, true);
                 RemakeMultiFab(current_cp[lev][idim], dm, false);
-                if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
-                    RemakeMultiFab(current_fp_vay[lev][idim], dm, false);
+                if (fft_do_time_averaging) {
+                    RemakeMultiFab(Efield_avg_cp[lev][idim], dm, true);
+                    RemakeMultiFab(Bfield_avg_cp[lev][idim], dm, true);
                 }
             }
             RemakeMultiFab(F_cp[lev], dm, true);
