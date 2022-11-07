@@ -110,8 +110,6 @@ PsatdAlgorithmGalilean::pushSpectralFields (SpectralFieldData& f) const
     const bool dive_cleaning   = m_dive_cleaning;
     const bool divb_cleaning   = m_divb_cleaning;
 
-    const amrex::Real dt = m_dt;
-
     const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Loop over boxes
@@ -198,7 +196,6 @@ PsatdAlgorithmGalilean::pushSpectralFields (SpectralFieldData& f) const
 #endif
             // Physical constants and imaginary unit
             constexpr Real c2 = PhysConst::c*PhysConst::c;
-            constexpr Real inv_ep0 = 1._rt/PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
             // These coefficients are initialized in the function InitializeSpectralCoefficients
