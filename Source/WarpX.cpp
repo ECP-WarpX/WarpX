@@ -694,8 +694,9 @@ WarpX::ReadParameters ()
         }
 
 #if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(electrostatic_solver_id!=ElectrostaticSolverAlgo::None,
-        "Currently, the embedded boundary in RZ only works for electrostatic solvers.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        electromagnetic_solver_id==ElectromagneticSolverAlgo::None,
+        "Currently, the embedded boundary in RZ only works for electrostatic solvers (or no solver).");
 #endif
 
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
@@ -1914,10 +1915,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     // EB info are needed only at the finest level
     if (lev == maxLevel())
     {
-        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
-            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
-            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
-            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+        if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
             m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[x]"));
             m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[y]"));
             m_edge_lengths[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[z]"));

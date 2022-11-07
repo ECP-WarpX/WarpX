@@ -1240,10 +1240,7 @@ void WarpX::InitializeEBGridData (int lev)
               "particles are close to embedded boundaries");
         }
 
-        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
-            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
-            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
-            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+        if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD ) {
 
             auto const eb_fact = fieldEBFactory(lev);
 

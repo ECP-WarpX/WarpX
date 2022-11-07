@@ -22,9 +22,9 @@ boundary.potential_lo_z = 0
 boundary.potential_hi_z = 0
 
 warpx.const_dt = 1.216119097e-11
-warpx.do_electrostatic = relativistic
 warpx.eb_implicit_function = "-(x**2-0.1**2)"
 
+algo.maxwell_solver = none
 algo.field_gathering = momentum-conserving
 algo.particle_shape = 1
 

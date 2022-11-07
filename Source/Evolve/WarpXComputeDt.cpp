@@ -32,7 +32,15 @@
 void
 WarpX::ComputeDt ()
 {
-    // Determine
+    // Handle cases where the timestep is not limited by the speed of light
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None) {
+        for (int lev=0; lev<=max_level; lev++) {
+            dt[lev] = const_dt;
+        }
+        return;
+    }
+
+    // Determine the appropriate timestep as limited by the speed of light
     const amrex::Real* dx = geom[max_level].CellSize();
     amrex::Real deltat = 0.;
 
@@ -63,10 +71,7 @@ WarpX::ComputeDt ()
             deltat = cfl * CartesianCKCAlgorithm::ComputeMaxDt(dx);
 #endif
         } else {
-            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None){
-                amrex::Abort(Utils::TextMsg::Err(
-                    "ComputeDt: Unknown algorithm"));
-            }
+            amrex::Abort(Utils::TextMsg::Err("ComputeDt: Unknown algorithm"));
         }
     }
 
@@ -76,12 +81,6 @@ WarpX::ComputeDt ()
     if (do_subcycling) {
         for (int lev = max_level-1; lev >= 0; --lev) {
             dt[lev] = dt[lev+1] * refRatio(lev)[0];
-        }
-    }
-
-    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None) {
-        for (int lev=0; lev<=max_level; lev++) {
-            dt[lev] = const_dt;
         }
     }
 }
