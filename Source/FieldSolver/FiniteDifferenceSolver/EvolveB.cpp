@@ -69,6 +69,9 @@ void FiniteDifferenceSolver::EvolveB (
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
         ignore_unused(Gfield, face_areas);
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Hybrid) {
+        ignore_unused(Gfield, face_areas);
+        EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
 #else
     if(m_do_nodal or m_fdtd_algo != ElectromagneticSolverAlgo::ECT){
         amrex::ignore_unused(face_areas);
@@ -79,6 +82,10 @@ void FiniteDifferenceSolver::EvolveB (
         EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 
     } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
+
+        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
+
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Hybrid) {
 
         EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 

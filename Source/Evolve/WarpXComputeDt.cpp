@@ -63,7 +63,8 @@ WarpX::ComputeDt ()
             deltat = cfl * CartesianCKCAlgorithm::ComputeMaxDt(dx);
 #endif
         } else {
-            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None){
+            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None &&
+                electromagnetic_solver_id != ElectromagneticSolverAlgo::Hybrid ){
                 amrex::Abort(Utils::TextMsg::Err(
                     "ComputeDt: Unknown algorithm"));
             }
@@ -79,7 +80,8 @@ WarpX::ComputeDt ()
         }
     }
 
-    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None) {
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
+        electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid ) {
         for (int lev=0; lev<=max_level; lev++) {
             dt[lev] = const_dt;
         }

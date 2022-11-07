@@ -138,22 +138,28 @@ guardCellManager::Init (
     {
         for (int i = 0; i < AMREX_SPACEDIM; i++)
         {
-            amrex::Real dt_Rho = dt;
-            amrex::Real dt_J = 0.5_rt*dt;
-            if (do_multi_J) {
-                // With multi_J + time averaging, particles can move during 2*dt per PIC cycle.
-                if (fft_do_time_averaging){
-                    dt_Rho = 2._rt*dt;
-                    dt_J = 2._rt*dt;
+            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::Hybrid) {
+                amrex::Real dt_Rho = dt;
+                amrex::Real dt_J = 0.5_rt*dt;
+                if (do_multi_J) {
+                    // With multi_J + time averaging, particles can move during 2*dt per PIC cycle.
+                    if (fft_do_time_averaging){
+                        dt_Rho = 2._rt*dt;
+                        dt_J = 2._rt*dt;
+                    }
+                    // With multi_J but without time averaging, particles can move during dt per PIC
+                    // cycle for the current deposition as well.
+                    else {
+                        dt_J = dt;
+                    }
                 }
-                // With multi_J but without time averaging, particles can move during dt per PIC
-                // cycle for the current deposition as well.
-                else {
-                    dt_J = dt;
-                }
+                ng_alloc_Rho[i] += static_cast<int>(std::ceil(PhysConst::c * dt_Rho / dx[i]));
+                ng_alloc_J[i]   += static_cast<int>(std::ceil(PhysConst::c * dt_J / dx[i]));
             }
-            ng_alloc_Rho[i] += static_cast<int>(std::ceil(PhysConst::c * dt_Rho / dx[i]));
-            ng_alloc_J[i]   += static_cast<int>(std::ceil(PhysConst::c * dt_J / dx[i]));
+            else {
+                ng_alloc_Rho[i]++;
+                ng_alloc_J[i]++;
+            }
         }
     }
 
@@ -250,7 +256,9 @@ guardCellManager::Init (
         ng_FieldSolverG = ng_alloc_EB;
     }
 #ifdef WARPX_DIM_RZ
-    else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None || electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee) {
+    else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid ) {
         ng_FieldSolver  = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverF = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverG = CylindricalYeeAlgorithm::GetMaxGuardCell();
@@ -263,7 +271,8 @@ guardCellManager::Init (
             ng_FieldSolverG = CartesianNodalAlgorithm::GetMaxGuardCell();
         } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
                    electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
-                   electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+                   electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT ||
+                   electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid ) {
             ng_FieldSolver  = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianYeeAlgorithm::GetMaxGuardCell();

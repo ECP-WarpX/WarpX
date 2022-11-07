@@ -22,12 +22,10 @@
 #       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif
 #endif
-#include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Python/WarpX_py.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -182,6 +180,12 @@ WarpX::Evolve (int numsteps)
             const bool skip_deposition = true;
             PushParticlesandDepose(cur_time, skip_deposition);
         }
+        // hybrid case: gather fields and push particles
+        else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
+        {
+            const bool skip_deposition = false;
+            PushParticlesandDepose(cur_time, skip_deposition);
+        }
         // Electromagnetic case: multi-J algorithm
         else if (do_multi_J)
         {
@@ -309,16 +313,37 @@ WarpX::Evolve (int numsteps)
             mypc->SortParticlesByBin(sort_bin_size);
         }
 
-        if( electrostatic_solver_id != ElectrostaticSolverAlgo::None ) {
+        if( electrostatic_solver_id != ElectrostaticSolverAlgo::None ||
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid ) {
+
             ExecutePythonCallback("beforeEsolve");
-            // Electrostatic solver:
-            // For each species: deposit charge and add the associated space-charge
-            // E and B field to the grid ; this is done at the end of the PIC
-            // loop (i.e. immediately after a `Redistribute` and before particle
-            // positions are next pushed) so that the particles do not deposit out of bounds
-            // and so that the fields are at the correct time in the output.
-            bool const reset_fields = true;
-            ComputeSpaceChargeField( reset_fields );
+
+            if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
+                // Electrostatic solver:
+                // For each species: deposit charge and add the associated space-charge
+                // E and B field to the grid ; this is done at the end of the PIC
+                // loop (i.e. immediately after a `Redistribute` and before particle
+                // positions are next pushed) so that the particles do not deposit out of bounds
+                // and so that the fields are at the correct time in the output.
+                bool const reset_fields = true;
+                ComputeSpaceChargeField( reset_fields );
+            } else {
+                // Hybrid case:
+                // The particles are now at p^{n+1/2} and x^{n+1}. The fields
+                // are updated according to the hybrid scheme.
+
+                // First the B field is pushed forward half a timestep
+                // to get B^{n+1/2}
+                EvolveB(0.5_rt * dt[0], DtType::FirstHalf);
+                FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
+                // Now the E field is pushed forward half a timestep using the
+                // electron momentum equation
+
+
+                amrex::Print() << "do hybrid solve here!\n";
+            }
+
             ExecutePythonCallback("afterEsolve");
         }
 

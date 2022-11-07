@@ -1917,7 +1917,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
             WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
             WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
-            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT ||
+            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid ) {
             m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[x]"));
             m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[y]"));
             m_edge_lengths[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[z]"));

@@ -227,6 +227,9 @@ WarpX::PrintMainPICparameters ()
     else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT){
       amrex::Print() << "Maxwell Solver:       | ECT \n";
     }
+    else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid){
+      amrex::Print() << "Maxwell Solver:       | Hybrid \n";
+    }
   #ifdef WARPX_USE_PSATD
     // Print PSATD solver's configuration
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
@@ -1243,7 +1246,8 @@ void WarpX::InitializeEBGridData (int lev)
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
             WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
             WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
-            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT ||
+            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid ) {
 
             auto const eb_fact = fieldEBFactory(lev);
 
