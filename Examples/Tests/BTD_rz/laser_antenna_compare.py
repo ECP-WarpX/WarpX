@@ -4,14 +4,13 @@
 # This file tests if the back-transformed signal is a gaussian
 #
 #
-import os
-import sys
 
-import numpy as np
-from scipy.optimize import curve_fit
-from scipy.constants import c, m_e, e
-from openpmd_viewer import OpenPMDTimeSeries
 import matplotlib.pyplot as plt
+import numpy as np
+from openpmd_viewer import OpenPMDTimeSeries
+from scipy.constants import c, e, m_e
+from scipy.optimize import curve_fit
+
 
 def gaussian_laser( z, a0, z0_phase, z0_prop, ctau, lambda0 ):
     """
@@ -28,12 +27,12 @@ def fit_function(z, z0_phase):
                             z0_b+Lprop_b, ctau0, lambda0 ) )
 
 # The values must be consistent with the values provided in the simulation input
-t_current = 80e-15   # Time of the snapshot1 
+t_current = 80e-15   # Time of the snapshot1
 c = 299792458;
 z0_antenna = -1.e-6  # position of laser
 lambda0 = 0.8e-6     # wavelength of the signal
 tau0 = 10e-15        # duration of the signal
-ctau0 = tau0 * c     
+ctau0 = tau0 * c
 a0 = 15              # amplitude
 t_peak = 20e-15      # Time at which laser reaches its peak
 Lprop_b = c*t_current
