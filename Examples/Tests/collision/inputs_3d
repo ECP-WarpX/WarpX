@@ -21,7 +21,9 @@ boundary.field_hi = periodic periodic periodic
 #################################
 warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
-warpx.cfl = 1.0
+warpx.const_dt = 1.224744871e-07
+
+algo.maxwell_solver = none
 
 # Order of particle shape factors
 algo.particle_shape = 1

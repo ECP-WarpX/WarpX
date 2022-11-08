@@ -257,8 +257,12 @@ guardCellManager::Init (
     }
 #ifdef WARPX_DIM_RZ
     else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
+<<<<<<< HEAD
             electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
             electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid ) {
+=======
+             electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee) {
+>>>>>>> none_maxwell_solver
         ng_FieldSolver  = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverF = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverG = CylindricalYeeAlgorithm::GetMaxGuardCell();

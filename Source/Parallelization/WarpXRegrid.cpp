@@ -172,11 +172,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             RemakeMultiFab(current_store[lev][idim], dm, false);
 
 #ifdef AMREX_USE_EB
-            if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
-                WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
-                WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
-                WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT ||
-                WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid ) {
+            if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
                 RemakeMultiFab(m_edge_lengths[lev][idim], dm, false);
                 RemakeMultiFab(m_face_areas[lev][idim], dm, false);
                 if(WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT){
