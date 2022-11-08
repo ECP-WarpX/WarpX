@@ -69,7 +69,7 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         }
     }
 
-    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
         AddSpaceChargeFieldLabFrame();
     }
     else {
@@ -79,13 +79,13 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
             WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
             if (species.initialize_self_fields ||
-                (do_electrostatic == ElectrostaticSolverAlgo::Relativistic)) {
+                (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic)) {
                 AddSpaceChargeField(species);
             }
         }
 
         // Add the field due to the boundary potentials
-        if (do_electrostatic == ElectrostaticSolverAlgo::Relativistic){
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic){
             AddBoundaryField();
         }
     }
@@ -311,7 +311,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #if defined(AMREX_USE_EB)
     // EB: use AMReX to directly calculate the electric field since with EB's the
     // simple finite difference scheme in WarpX::computeE sometimes fails
-    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
     {
         // TODO: maybe make this a helper function or pass Efield_fp directly
         amrex::Vector<

@@ -75,7 +75,7 @@ The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 Running
 -------
 
-.. _running-cpp-frontier-MI100-GPUs:
+.. _running-cpp-frontier-MI250X-GPUs:
 
 MI250X GPUs (2x64 GB)
 ^^^^^^^^^^^^^^^^^^^^^
