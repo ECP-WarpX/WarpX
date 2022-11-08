@@ -36,7 +36,7 @@ public:
      * \param noy_fft order of PSATD in y direction
      * \param noz_fft order of PSATD in z direction
      * \param nci_corr_stencil stencil of NCI corrector
-     * \param electromagnetic_solver_id if of Maxwell solver
+     * \param electromagnetic_solver_id Integer corresponding to the type of Maxwell solver
      * \param max_level max level of the simulation
      * \param v_galilean Velocity used in the Galilean PSATD scheme
      * \param v_comoving Velocity used in the comoving PSATD scheme
