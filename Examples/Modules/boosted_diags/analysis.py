@@ -21,7 +21,6 @@ import sys
 
 import numpy as np
 import openpmd_api as io
-import read_raw_data
 import yt
 
 yt.funcs.mylog.setLevel(0)
