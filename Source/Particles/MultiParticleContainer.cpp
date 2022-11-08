@@ -536,7 +536,7 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
 
     bool is_PSATD_RZ = false;
 #ifdef WARPX_DIM_RZ
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         is_PSATD_RZ = true;
 #endif
     if( !is_PSATD_RZ )

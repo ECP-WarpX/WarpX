@@ -155,7 +155,7 @@ public:
     //! Integer that corresponds to the particle push algorithm (Boris, Vay, Higuera-Cary)
     static short particle_pusher_algo;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
-    static short maxwell_solver_id;
+    static short electromagnetic_solver_id;
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
@@ -733,7 +733,7 @@ public:
     static const amrex::iMultiFab* CurrentBufferMasks (int lev);
     static const amrex::iMultiFab* GatherBufferMasks (int lev);
 
-    static int do_electrostatic;
+    static int electrostatic_solver_id;
 
     // Parameters for lab frame electrostatic
     static amrex::Real self_fields_required_precision;

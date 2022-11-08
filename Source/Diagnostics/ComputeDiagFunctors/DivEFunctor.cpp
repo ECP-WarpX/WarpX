@@ -34,7 +34,7 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_
     amrex::IntVect cell_type = amrex::IntVect::TheNodeVector();
 #ifdef WARPX_DIM_RZ
     // For RZ spectral, all quantities are cell centered.
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         cell_type = amrex::IntVect::TheCellVector();
 #endif
     const amrex::BoxArray& ba = amrex::convert(warpx.boxArray(m_lev), cell_type);
