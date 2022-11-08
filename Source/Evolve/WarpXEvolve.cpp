@@ -337,11 +337,8 @@ WarpX::Evolve (int numsteps)
                 EvolveB(0.5_rt * dt[0], DtType::FirstHalf);
                 FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
-                // Now the E field is pushed forward half a timestep using the
-                // electron momentum equation
-
-
-                amrex::Print() << "do hybrid solve here!\n";
+                // Now the E field is updated using the electron momentum equation
+                HybridSolveE();
             }
 
             ExecutePythonCallback("afterEsolve");

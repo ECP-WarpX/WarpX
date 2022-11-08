@@ -129,6 +129,23 @@ class FiniteDifferenceSolver
                      std::array< amrex::MultiFab*, 3 > const Efield,
                      amrex::Real const dt );
 
+        /**
+          * \brief E-update in the hybrid PIC algorithm as described in
+          * Winske et al. (2003) Eq. 10.
+          * https://link.springer.com/chapter/10.1007/3-540-36530-3_8
+          *
+          * \param[out] Efield  vector of electric field MultiFabs updated at a given level
+          * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
+          * \param[in] Jfield   vector of current density MultiFabs at a given level
+          * \param[in] rhofield scalar ion chrge density Multifabs at a given level
+          */
+
+        void HybridSolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+                      std::unique_ptr<amrex::MultiFab> const& rhofield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths);
+
     private:
 
         int m_fdtd_algo;

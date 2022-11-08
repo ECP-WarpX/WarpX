@@ -499,6 +499,10 @@ public:
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
 
+    void HybridSolveE ();
+    void HybridSolveE (int lev);
+    void HybridSolveE (int lev, PatchType patch_type);
+
     /** apply QED correction on electric field
      *
      * \param dt vector of time steps (for all levels)
