@@ -954,11 +954,11 @@ WarpX::ReadParameters ()
             maxLevel() <= 0,
             "Vay deposition not implemented with mesh refinement");
 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            !(WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay and
-             (electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
-              electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC)),
-            "Vay deposition not implemented with ckc or yee");
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD,
+                "Vay deposition is implemented only for PSATD");
+        }
 
         field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {

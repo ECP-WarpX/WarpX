@@ -1553,8 +1553,7 @@ Numerics and algorithms
     Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
     is ``esirkepov`` for FDTD maxwell solvers and ``direct`` for standard or
     Galilean PSATD solver (that is, with ``algo.maxwell_solver = psatd``).
-    Note that ``vay`` is only available for ``algo.maxwell_solver = psatd`` and not available for
-    ``algo.maxwell_solver = yee`` or ``algo.maxwell_solver = ckc``.
+    Note that ``vay`` is only available for ``algo.maxwell_solver = psatd``.
 
     1. ``direct``
 
