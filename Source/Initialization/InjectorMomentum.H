@@ -140,7 +140,7 @@ generateGaussianFluxDist( amrex::Real u_m, amrex::Real u_th, amrex::RandomEngine
     return u;
 }
 }
-  
+
 // struct whose getMomentum returns momentum for 1 particle, from random
 // gaussian flux distribution in the specified direction.
 // Along the normal axis, the distribution is v*Gaussian,
