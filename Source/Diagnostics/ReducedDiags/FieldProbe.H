@@ -118,7 +118,8 @@ private:
     /**
      * Simple utility function to normalize the components of a "vector"
      */
-    void normalize(amrex::Real AMREX_RESTRICT &x, amrex::Real AMREX_RESTRICT &y, amrex::Real AMREX_RESTRICT &z){
+    void normalize(amrex::Real &AMREX_RESTRICT x, amrex::Real &AMREX_RESTRICT y,
+                   amrex::Real &AMREX_RESTRICT z){
         amrex::Real mag = std::sqrt(x*x + y*y + z*z);
         x /= mag;
         y /= mag;
