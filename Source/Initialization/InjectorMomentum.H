@@ -86,7 +86,13 @@ private:
     amrex::Real m_ux_th, m_uy_th, m_uz_th;
 };
 
-// TODO: Documentation with exact formula of the distribution that we are generating
+/** Return u sampled according to the probability distribution:
+  * p(u) \propto u \exp(-(u-u_m)^2/2u_th^2)
+  *
+  * @param u_m Central momentum
+  * @param u_th Momentum spread
+  * @param engine Object used to generate random numbers
+  */
 AMREX_GPU_HOST_DEVICE
 amrex::Real
 generateGaussianFluxDist( amrex::Real u_m, amrex::Real u_th, amrex::RandomEngine const& engine ) {
@@ -154,7 +160,13 @@ struct InjectorMomentumGaussianFlux
           m_flux_normal_axis(a_flux_normal_axis),
           m_flux_direction(a_flux_direction)
     {
-// TODO            if (m_flux_normal_axis == 0) assert ux_m > 0, etc.
+        // For now, do not allow negative `u_m` along the flux axis
+        bool raise_error = false;
+        if ((m_flux_normal_axis == 0) && (m_ux_m < 0)) raise_error = true;
+        if ((m_flux_normal_axis == 1) && (m_uy_m < 0)) raise_error = true;
+        if ((m_flux_normal_axis == 2) && (m_uz_m < 0)) raise_error = true;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( raise_error==false,
+            "When using the `gaussianflux` distribution, the central momentum along the flux axis must be positive or zero." );
     }
 
     AMREX_GPU_HOST_DEVICE
