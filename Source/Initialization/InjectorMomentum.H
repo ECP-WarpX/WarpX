@@ -125,8 +125,11 @@ generateGaussianFluxDist( amrex::Real u_m, amrex::Real u_th, amrex::RandomEngine
         amrex::Real approx_u_m = u_m + u_th*u_th/u_m;
         amrex::Real inv_um = 1._rt/u_m; // To save computation
         while (reject) {
-            // Approximate distribution
-            u = amrex::RandomNormal(approx_u_m, u_th, engine);
+            // Approximate distribution: normal distribution, where we only retain positive u
+            u = -1._rt
+            while (u < 0) {
+                u = amrex::RandomNormal(approx_u_m, u_th, engine);
+            }
             // Rejection method
             amrex::Real xrand = amrex::Random(engine);
             if (xrand < u*inv_um* std::exp(1._rt - u*inv_um)) reject = false;
