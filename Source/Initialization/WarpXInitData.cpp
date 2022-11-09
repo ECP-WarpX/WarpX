@@ -976,10 +976,10 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-       const amrex::Dim3 lx_lo = lx.begin;
-       const amrex::Dim3 lx_hi = lx.end;
-       const amrex::Dim3 lz_lo = lz.begin;
-       const amrex::Dim3 lz_hi = lz.end;
+       const amrex::Dim3 lx_lo = amrex::lbound(lx);
+       const amrex::Dim3 lx_hi = amrex::ubound(lx);
+       const amrex::Dim3 lz_lo = amrex::lbound(lz);
+       const amrex::Dim3 lz_hi = amrex::ubound(lz);
 #endif
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -1032,10 +1032,10 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 if((field=='E' and ly(i, j, k)<=0) or (field=='B' and Sy(i, j, k)<=0))  return;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 //In XZ and RZ Ey is associated with a mesh node, so we need to check if  the mesh node is covered
-                if((field=='E' and (lx(std::min(i  , lx_hi.x-1), std::min(j  , lx_hi.y-1), k)<=0
-                                 || lx(std::max(i-1, lx_lo.x  ), std::min(j  , lx_hi.y-1), k)<=0
-                                 || lz(std::min(i  , lz_hi.x-1), std::min(j  , lz_hi.y-1), k)<=0
-                                 || lz(std::min(i  , lz_hi.x-1), std::max(j-1, lz_lo.y  ), k)<=0)) or
+                if((field=='E' and (lx(std::min(i  , lx_hi.x), std::min(j  , lx_hi.y), k)<=0
+                                 || lx(std::max(i-1, lx_lo.x), std::min(j  , lx_hi.y), k)<=0
+                                 || lz(std::min(i  , lz_hi.x), std::min(j  , lz_hi.y), k)<=0
+                                 || lz(std::min(i  , lz_hi.x), std::max(j-1, lz_lo.y), k)<=0)) or
                    (field=='B' and Sy(i,j,k)<=0)) return;
 #endif
 #endif
