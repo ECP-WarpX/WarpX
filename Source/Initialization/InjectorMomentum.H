@@ -98,7 +98,7 @@ generateGaussianFluxDist( amrex::Real u_m, amrex::Real u_th, amrex::RandomEngine
 
     if (u_th == 0._rt) {
         u = u_m; // Trivial case ; avoids division by 0 in the rest of the code below
-    } else if (u_m < 0.7*u_th) {
+    } else if (u_m < 0.6*u_th) {
         // Mean velocity is lower than thermal velocity
         // Use the distribution u*exp(-u**2*(1-u_m/u_th)/(2*u_th**2)) as an approximation
         // and then use the rejection method to correct it
