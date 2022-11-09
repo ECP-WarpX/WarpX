@@ -14,7 +14,7 @@
 #include "TemperatureProperties.H"
 #include "VelocityProperties.H"
 #include "Utils/WarpXConst.H"
-#include "Source/Utils/TextMsg.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX.H>
 #include <AMReX_Config.H>
