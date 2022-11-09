@@ -86,6 +86,67 @@ private:
     amrex::Real m_ux_th, m_uy_th, m_uz_th;
 };
 
+namespace {
+    /** Return u sampled according to the probability distribution:
+      * p(u) \propto u \exp(-(u-u_m)^2/2u_th^2)
+      *
+      * @param u_m Central momentum
+      * @param u_th Momentum spread
+      * @param engine Object used to generate random numbers
+      */
+    AMREX_GPU_HOST_DEVICE
+    amrex::Real
+    generateGaussianFluxDist( amrex::Real u_m, amrex::Real u_th, amrex::RandomEngine const& engine ) {
+
+        using namespace amrex::literals;
+
+        // Momentum to be returned at the end of this function
+        amrex::Real u = 0._rt;
+
+        if (u_th == 0._rt) {
+            u = u_m; // Trivial case ; avoids division by 0 in the rest of the code below
+        } else if (u_m < 0.6*u_th) {
+            // Mean velocity is lower than thermal velocity
+            // Use the distribution u*exp(-u**2*(1-u_m/u_th)/(2*u_th**2)) as an approximation
+            // and then use the rejection method to correct it
+            // ( stop rejecting with probability exp(-u_m/(2*u_th**3)*(u-u_th)**2) )
+            amrex::Real approx_u_th = u_th/std::sqrt( 1._rt - u_m/u_th );
+            amrex::Real reject_prefactor = (u_m/u_th)/(2._rt*u_th*u_th); // To save computation
+            bool reject = true;
+            while (reject) {
+                // Generates u according to u*exp(-u**2/(2*approx_u_th**2),
+                // using the method of the inverse cumulative function
+                amrex::Real xrand = 1._rt - amrex::Random(engine); // ensures urand > 0
+                u = approx_u_th * std::sqrt(2._rt*std::log(1._rt/xrand));
+                // Rejection method
+                xrand = amrex::Random(engine);
+                if (xrand < std::exp(-reject_prefactor*(u-u_th)*(u-u_th))) reject = false;
+            }
+        } else {
+            // Mean velocity is greater than thermal velocity
+            // Use the distribution exp(-(u-u_m-u_th**2/u_m)**2/(2*u_th**2)) as an approximation
+            // and then use the rejection method to correct it
+            // ( stop rejecting with probability (u/u_m)*exp(1-(u/u_m)) ; note
+            // that this number is always between 0 and 1 )
+            bool reject = true;
+            amrex::Real approx_u_m = u_m + u_th*u_th/u_m;
+            amrex::Real inv_um = 1._rt/u_m; // To save computation
+            while (reject) {
+                // Approximate distribution: normal distribution, where we only retain positive u
+                u = -1._rt;
+                while (u < 0) {
+                    u = amrex::RandomNormal(approx_u_m, u_th, engine);
+                }
+                // Rejection method
+                amrex::Real xrand = amrex::Random(engine);
+                if (xrand < u*inv_um* std::exp(1._rt - u*inv_um)) reject = false;
+            }
+        }
+
+        return u;
+    }
+}
+
 // struct whose getMomentum returns momentum for 1 particle, from random
 // gaussian flux distribution in the specified direction.
 // Along the normal axis, the distribution is v*Gaussian,
@@ -153,65 +214,6 @@ private:
     amrex::Real m_ux_th, m_uy_th, m_uz_th;
     int m_flux_normal_axis;
     int m_flux_direction;
-
-    /** Return u sampled according to the probability distribution:
-      * p(u) \propto u \exp(-(u-u_m)^2/2u_th^2)
-      *
-      * @param u_m Central momentum
-      * @param u_th Momentum spread
-      * @param engine Object used to generate random numbers
-      */
-    AMREX_GPU_HOST_DEVICE
-    amrex::Real
-    generateGaussianFluxDist( amrex::Real u_m, amrex::Real u_th, amrex::RandomEngine const& engine ) {
-
-        using namespace amrex::literals;
-
-        // Momentum to be returned at the end of this function
-        amrex::Real u = 0._rt;
-
-        if (u_th == 0._rt) {
-            u = u_m; // Trivial case ; avoids division by 0 in the rest of the code below
-        } else if (u_m < 0.6*u_th) {
-            // Mean velocity is lower than thermal velocity
-            // Use the distribution u*exp(-u**2*(1-u_m/u_th)/(2*u_th**2)) as an approximation
-            // and then use the rejection method to correct it
-            // ( stop rejecting with probability exp(-u_m/(2*u_th**3)*(u-u_th)**2) )
-            amrex::Real approx_u_th = u_th/std::sqrt( 1._rt - u_m/u_th );
-            amrex::Real reject_prefactor = (u_m/u_th)/(2._rt*u_th*u_th); // To save computation
-            bool reject = true;
-            while (reject) {
-                // Generates u according to u*exp(-u**2/(2*approx_u_th**2),
-                // using the method of the inverse cumulative function
-                amrex::Real xrand = 1._rt - amrex::Random(engine); // ensures urand > 0
-                u = approx_u_th * std::sqrt(2._rt*std::log(1._rt/xrand));
-                // Rejection method
-                xrand = amrex::Random(engine);
-                if (xrand < std::exp(-reject_prefactor*(u-u_th)*(u-u_th))) reject = false;
-            }
-        } else {
-            // Mean velocity is greater than thermal velocity
-            // Use the distribution exp(-(u-u_m-u_th**2/u_m)**2/(2*u_th**2)) as an approximation
-            // and then use the rejection method to correct it
-            // ( stop rejecting with probability (u/u_m)*exp(1-(u/u_m)) ; note
-            // that this number is always between 0 and 1 )
-            bool reject = true;
-            amrex::Real approx_u_m = u_m + u_th*u_th/u_m;
-            amrex::Real inv_um = 1._rt/u_m; // To save computation
-            while (reject) {
-                // Approximate distribution: normal distribution, where we only retain positive u
-                u = -1._rt;
-                while (u < 0) {
-                    u = amrex::RandomNormal(approx_u_m, u_th, engine);
-                }
-                // Rejection method
-                amrex::Real xrand = amrex::Random(engine);
-                if (xrand < u*inv_um* std::exp(1._rt - u*inv_um)) reject = false;
-            }
-        }
-
-        return u;
-    }
 };
 
 // struct whose getMomentum returns momentum for 1 particle with relativistic
