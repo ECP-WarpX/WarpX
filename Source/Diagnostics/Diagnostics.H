@@ -240,8 +240,6 @@ protected:
      *  The first vector is for total number of snapshots and second vector loops
      *  over the total number of species selected for diagnostics.
      */
-    amrex::Vector< amrex::Vector <int> > m_totalParticles_in_buffer;
-
 };
 
 #endif // WARPX_DIAGNOSTICS_H_
