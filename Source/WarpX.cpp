@@ -1502,6 +1502,68 @@ WarpX::BackwardCompatibility ()
         "Please use the renamed option warpx.serialize_initial_conditions instead."
     );
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_back_transformed_diagnostics", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("lab_data_directory", backward_str),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("num_snapshots_lab", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("dt_snapshots_lab", backward_Real),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("dz_snapshots_lab", backward_Real),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_back_transformed_fields", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("buffer_size", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    ParmParse pp_slice("slice");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_slice.query("num_slice_snapshots_lab", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_slice.query("dt_slice_snapshots_lab", backward_Real),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_slice.query("particle_slice_width_lab", backward_Real),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
     ParmParse pp_interpolation("interpolation");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_interpolation.query("nox", backward_int) &&
