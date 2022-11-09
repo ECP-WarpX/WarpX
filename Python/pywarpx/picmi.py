@@ -22,7 +22,8 @@ picmistandard.register_codename(codename)
 
 # dictionary to map field boundary conditions from picmistandard to WarpX
 BC_map = {
-    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped', 'none':'none', None:'none'
+    'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped',
+    'neumann':'neumann', 'none':'none', None:'none'
 }
 
 class constants:
@@ -1053,13 +1054,32 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
         expression = pywarpx.my_constants.mangle_expression(self.field_expression, self.mangle_dict)
         self.laser.__setattr__('field_function(X,Y,t)', expression)
 
+
 class LaserAntenna(picmistandard.PICMI_LaserAntenna):
     def initialize_inputs(self, laser):
         laser.laser.position = self.position  # This point is on the laser plane
-        laser.laser.direction = self.normal_vector  # The plane normal direction
+        if (
+            self.normal_vector is not None
+            and not np.allclose(laser.laser.direction, self.normal_vector)
+        ):
+            raise AttributeError(
+                'The specified laser direction does not match the '
+                'specified antenna normal.'
+            )
+        self.normal_vector = laser.laser.direction # The plane normal direction
         if isinstance(laser, GaussianLaser):
-            laser.laser.profile_focal_distance = laser.focal_position[2] - self.position[2]  # Focal distance from the antenna (in meters)
-            laser.laser.profile_t_peak = (self.position[2] - laser.centroid_position[2])/constants.c  # The time at which the laser reaches its peak (in seconds)
+            # Focal distance from the antenna (in meters)
+            laser.laser.profile_focal_distance = np.sqrt(
+                (laser.focal_position[0] - self.position[0])**2 +
+                (laser.focal_position[1] - self.position[1])**2 +
+                (laser.focal_position[2] - self.position[2])**2
+            )
+            # The time at which the laser reaches its peak (in seconds)
+            laser.laser.profile_t_peak = np.sqrt(
+                (self.position[0] - laser.centroid_position[0])**2 +
+                (self.position[1] - laser.centroid_position[1])**2 +
+                (self.position[2] - laser.centroid_position[2])**2
+            ) / constants.c
 
 
 class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField):
@@ -1902,9 +1922,6 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
 
     Parameters
     ----------
-    warpx_new_BTD: bool, optional
-        Use the new BTD diagnostics
-
     warpx_format: string, optional
         Passed to <diagnostic name>.format
 
@@ -1927,36 +1944,16 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         Passed to <diagnostic name>.upper_bound
     """
     def init(self, kw):
-        self.use_new_BTD = kw.pop('warpx_new_BTD', False)
-        if self.use_new_BTD:
-            # The user is using the new BTD
-            self.format = kw.pop('warpx_format', None)
-            self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
-            self.file_prefix = kw.pop('warpx_file_prefix', None)
-            self.file_min_digits = kw.pop('warpx_file_min_digits', None)
-            self.buffer_size = kw.pop('warpx_buffer_size', None)
-            self.lower_bound = kw.pop('warpx_lower_bound', None)
-            self.upper_bound = kw.pop('warpx_upper_bound', None)
+        # The user is using the new BTD
+        self.format = kw.pop('warpx_format', None)
+        self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.file_min_digits = kw.pop('warpx_file_min_digits', None)
+        self.buffer_size = kw.pop('warpx_buffer_size', None)
+        self.lower_bound = kw.pop('warpx_lower_bound', None)
+        self.upper_bound = kw.pop('warpx_upper_bound', None)
 
     def initialize_inputs(self):
-        if self.use_new_BTD:
-            self.initialize_inputs_new()
-        else:
-            self.initialize_inputs_old()
-
-    def initialize_inputs_old(self):
-
-        pywarpx.warpx.check_consistency('num_snapshots_lab', self.num_snapshots, 'The number of snapshots must be the same in all lab frame diagnostics')
-        pywarpx.warpx.check_consistency('dt_snapshots_lab', self.dt_snapshots, 'The time between snapshots must be the same in all lab frame diagnostics')
-        pywarpx.warpx.check_consistency('lab_data_directory', self.write_dir, 'The write directory must be the same in all lab frame diagnostics')
-
-        pywarpx.warpx.do_back_transformed_diagnostics = 1
-        pywarpx.warpx.num_snapshots_lab = self.num_snapshots
-        pywarpx.warpx.dt_snapshots_lab = self.dt_snapshots
-        pywarpx.warpx.do_back_transformed_fields = 1
-        pywarpx.warpx.lab_data_directory = self.write_dir
-
-    def initialize_inputs_new(self):
 
         self.add_diagnostic()
 
@@ -2004,30 +2001,6 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
             self.diagnostic.fields_to_plot = fields_to_plot
 
         self.set_write_dir()
-
-
-class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic):
-    def initialize_inputs(self):
-
-        pywarpx.warpx.check_consistency('num_snapshots_lab', self.num_snapshots, 'The number of snapshots must be the same in all lab frame diagnostics')
-        pywarpx.warpx.check_consistency('dt_snapshots_lab', self.dt_snapshots, 'The time between snapshots must be the same in all lab frame diagnostics')
-        pywarpx.warpx.check_consistency('lab_data_directory', self.write_dir, 'The write directory must be the same in all lab frame diagnostics')
-
-        pywarpx.warpx.do_back_transformed_diagnostics = 1
-
-        if isinstance(self.species, Species):
-            self.species.do_back_transformed_diagnostics = 1
-        else:
-            try:
-                for specie in self.species:
-                    specie.do_back_transformed_diagnostics = 1
-            except TypeError:
-                pass
-
-        pywarpx.warpx.num_snapshots_lab = self.num_snapshots
-        pywarpx.warpx.dt_snapshots_lab = self.dt_snapshots
-        pywarpx.warpx.lab_data_directory = self.write_dir
-
 
 class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     """

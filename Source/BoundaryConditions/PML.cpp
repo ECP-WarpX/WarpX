@@ -598,7 +598,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     IntVect nge = IntVect(AMREX_D_DECL(2, 2, 2));
     IntVect ngb = IntVect(AMREX_D_DECL(2, 2, 2));
     int ngf_int = 0;
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC) ngf_int = std::max( ngf_int, 1 );
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) ngf_int = std::max( ngf_int, 1 );
     IntVect ngf = IntVect(AMREX_D_DECL(ngf_int, ngf_int, ngf_int));
 
     if (do_moving_window) {
@@ -610,7 +610,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         ngf[WarpX::moving_window_dir] = std::max(ngf[WarpX::moving_window_dir], rr);
     }
 
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         // Increase the number of guard cells, in order to fit the extent
         // of the stencil for the spectral solver
         int ngFFt_x = do_nodal ? nox_fft : nox_fft/2;
@@ -714,9 +714,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         amrex::convert(ba, WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect()),
         dm, WarpX::ncomps, amrex::IntVect(max_guard_EB), "pml_edge_lengths[z]", 0.0_rt);
 
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
-        WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
-        WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
+        WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
+        WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
 
         auto const eb_fact = fieldEBFactory();
 
@@ -751,7 +751,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     sigba_fp = std::make_unique<MultiSigmaBox>(ba, dm, grid_ba_reduced, geom->CellSize(),
                                                IntVect(ncell), IntVect(delta), single_domain_box, v_sigma_sb);
 
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
         amrex::ignore_unused(lev, dt, J_in_time, rho_in_time);
 #   if(AMREX_SPACEDIM!=3)
@@ -780,7 +780,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
     if (cgeom)
     {
-        if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD) {
+        if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
             nge = IntVect(AMREX_D_DECL(1, 1, 1));
             ngb = IntVect(AMREX_D_DECL(1, 1, 1));
         }
@@ -873,7 +873,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba_reduced, cgeom->CellSize(),
                                                    cncells, cdelta, single_domain_box, v_sigma_sb);
 
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
             amrex::ignore_unused(dt);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
