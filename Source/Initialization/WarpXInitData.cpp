@@ -933,6 +933,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
     amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
     amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
     amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
+
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
@@ -950,6 +951,13 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
        amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
        amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
+
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+       const amrex::Dim3 lx_lo = amrex::lbound(lx);
+       const amrex::Dim3 lx_hi = amrex::ubound(lx);
+       const amrex::Dim3 lz_lo = amrex::lbound(lz);
+       const amrex::Dim3 lz_hi = amrex::ubound(lz);
+#endif
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         amrex::ignore_unused(ly, Sx, Sz);
@@ -1001,7 +1009,10 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 if((field=='E' and ly(i, j, k)<=0) or (field=='B' and Sy(i, j, k)<=0))  return;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 //In XZ and RZ Ey is associated with a mesh node, so we need to check if  the mesh node is covered
-                if((field=='E' and (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j, k)<=0 || lz(i, j-1, k)<=0)) or
+                if((field=='E' and (lx(std::min(i  , lx_hi.x), std::min(j  , lx_hi.y), k)<=0
+                                 || lx(std::max(i-1, lx_lo.x), std::min(j  , lx_hi.y), k)<=0
+                                 || lz(std::min(i  , lz_hi.x), std::min(j  , lz_hi.y), k)<=0
+                                 || lz(std::min(i  , lz_hi.x), std::max(j-1, lz_lo.y), k)<=0)) or
                    (field=='B' and Sy(i,j,k)<=0)) return;
 #endif
 #endif
