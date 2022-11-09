@@ -85,7 +85,6 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 {
     charge = 1.0;
     mass = std::numeric_limits<Real>::max();
-    do_back_transformed_diagnostics = 0;
 
     ParmParse pp_laser_name(m_laser_name);
 

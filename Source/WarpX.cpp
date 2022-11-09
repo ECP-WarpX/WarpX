@@ -12,7 +12,6 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
@@ -169,17 +168,6 @@ int WarpX::num_mirrors = 0;
 utils::parser::IntervalsParser WarpX::sort_intervals;
 amrex::IntVect WarpX::sort_bin_size(AMREX_D_DECL(1,1,1));
 
-bool WarpX::do_back_transformed_diagnostics = false;
-std::string WarpX::lab_data_directory = "lab_frame_data";
-int  WarpX::num_snapshots_lab = std::numeric_limits<int>::lowest();
-Real WarpX::dt_snapshots_lab  = std::numeric_limits<Real>::lowest();
-bool WarpX::do_back_transformed_fields = true;
-bool WarpX::do_back_transformed_particles = true;
-
-int  WarpX::num_slice_snapshots_lab = 0;
-Real WarpX::dt_slice_snapshots_lab;
-Real WarpX::particle_slice_width_lab = 0.0_rt;
-
 bool WarpX::do_dynamic_scheduling = true;
 
 int WarpX::electrostatic_solver_id;
@@ -270,7 +258,6 @@ WarpX::WarpX ()
             current_injection_position = geom[0].ProbLo(moving_window_dir);
         }
     }
-    do_back_transformed_particles = mypc->doBackTransformedDiagnostics();
 
     // Particle Boundary Buffer (i.e., scraped particles on boundary)
     m_particle_boundary_buffer = std::make_unique<ParticleBoundaryBuffer>();
@@ -642,49 +629,6 @@ WarpX::ReadParameters ()
             utils::parser::getWithParser(
                 pp_warpx, "moving_window_v", moving_window_v);
             moving_window_v *= PhysConst::c;
-        }
-
-        pp_warpx.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);
-        if (do_back_transformed_diagnostics) {
-
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(gamma_boost > 1.0,
-                   "gamma_boost must be > 1 to use the boosted frame diagnostic.");
-
-            pp_warpx.query("lab_data_directory", lab_data_directory);
-
-            std::string s;
-            pp_warpx.get("boost_direction", s);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (s == "z" || s == "Z"),
-                   "The boosted frame diagnostic currently only works if the boost is in the z direction.");
-
-            utils::parser::queryWithParser(
-                pp_warpx, "num_snapshots_lab", num_snapshots_lab);
-
-            // Read either dz_snapshots_lab or dt_snapshots_lab
-            Real dz_snapshots_lab = 0;
-            const bool dt_snapshots_specified =
-                utils::parser::queryWithParser(pp_warpx, "dt_snapshots_lab", dt_snapshots_lab);
-            const bool dz_snapshots_specified =
-                utils::parser::queryWithParser(pp_warpx, "dz_snapshots_lab", dz_snapshots_lab);
-
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                dt_snapshots_specified || dz_snapshots_specified,
-                "When using back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab.");
-
-            if (dz_snapshots_specified){
-                dt_snapshots_lab = dz_snapshots_lab/PhysConst::c;
-            }
-
-            utils::parser::getWithParser(pp_warpx, "gamma_boost", gamma_boost);
-
-            pp_warpx.query("do_back_transformed_fields", do_back_transformed_fields);
-
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(do_moving_window,
-                   "The moving window should be on if using the boosted frame diagnostic.");
-
-            pp_warpx.get("moving_window_dir", s);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (s == "z" || s == "Z"),
-                   "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
         }
 
         electrostatic_solver_id = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
@@ -1451,19 +1395,6 @@ WarpX::ReadParameters ()
                 slice_cr_ratio[idim] = slice_crse_ratio[idim];
             }
         }
-
-        if (do_back_transformed_diagnostics) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(gamma_boost > 1.0,
-                "gamma_boost must be > 1 to use the boost frame diagnostic");
-            utils::parser::queryWithParser(
-                pp_slice, "num_slice_snapshots_lab", num_slice_snapshots_lab);
-            if (num_slice_snapshots_lab > 0) {
-                utils::parser::getWithParser(
-                    pp_slice, "dt_slice_snapshots_lab", dt_slice_snapshots_lab );
-                utils::parser::getWithParser(
-                    pp_slice, "particle_slice_width_lab",particle_slice_width_lab);
-            }
-        }
     }
 }
 
@@ -1569,6 +1500,68 @@ WarpX::BackwardCompatibility ()
         !pp_warpx.query("serialize_ics", backward_bool),
         "warpx.serialize_ics is no longer a valid option. "
         "Please use the renamed option warpx.serialize_initial_conditions instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_back_transformed_diagnostics", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("lab_data_directory", backward_str),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("num_snapshots_lab", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("dt_snapshots_lab", backward_Real),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("dz_snapshots_lab", backward_Real),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_back_transformed_fields", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("buffer_size", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    ParmParse pp_slice("slice");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_slice.query("num_slice_snapshots_lab", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_slice.query("dt_slice_snapshots_lab", backward_Real),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_slice.query("particle_slice_width_lab", backward_Real),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
     );
 
     ParmParse pp_interpolation("interpolation");

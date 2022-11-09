@@ -68,8 +68,3 @@ diag2.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
 diag2.format = openpmd
 diag2.openpmd_backend = h5
 diag2.buffer_size = 32
-
-# old BTD diagnostics
-warpx.do_back_transformed_diagnostics = 1
-warpx.num_snapshots_lab = 2
-warpx.dt_snapshots_lab = 1.8679589331096515e-13

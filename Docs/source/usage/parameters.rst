@@ -955,11 +955,6 @@ Particle initialization
         lead to memory issues if not periodically cleared. To clear the buffer
         call ``warpx_clearParticleBoundaryBuffer()``.
 
-* ``<species>.do_back_transformed_diagnostics`` (`0` or `1` optional, default `1`)
-    Only used when ``warpx.do_back_transformed_diagnostics=1``. When running in a
-    boosted frame, whether or not to plot back-transformed diagnostics for
-    this species.
-
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
 
@@ -2181,81 +2176,6 @@ BackTransformed Diagnostics (with support for Plotfile/openPMD output)
     to frequent flushes of the lab-frame data. The other option is to keep the default
     value for buffer size and use slices to reduce the memory footprint and maintain
     optimum I/O performance.
-
-Back-Transformed Diagnostics (legacy output)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame
-
-* ``warpx.do_back_transformed_diagnostics`` (`0` or `1`)
-    Whether to use the **back-transformed diagnostics** (i.e. diagnostics that
-    perform on-the-fly conversion to the laboratory frame, when running
-    boosted-frame simulations)
-
-* ``warpx.lab_data_directory`` (`string`)
-    The directory in which to save the lab frame data when using the
-    **back-transformed diagnostics**. If not specified, the default is
-    is `lab_frame_data`.
-
-* ``warpx.num_snapshots_lab`` (`integer`)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The number of lab-frame snapshots that will be written.
-
-* ``warpx.dt_snapshots_lab`` (`float`, in seconds)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The time interval inbetween the lab-frame snapshots (where this
-    time interval is expressed in the laboratory frame).
-
-* ``warpx.dz_snapshots_lab`` (`float`, in meters)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    Distance between the lab-frame snapshots (expressed in the laboratory
-    frame). ``dt_snapshots_lab`` is then computed by
-    ``dt_snapshots_lab = dz_snapshots_lab/c``. Either `dt_snapshots_lab`
-    or `dz_snapshot_lab` is required.
-
-* ``warpx.do_back_transformed_fields`` (`0 or 1`)
-    Whether to use the **back-transformed diagnostics** for the fields.
-
-* ``warpx.back_transformed_diag_fields`` (space-separated list of `string`)
-    Which fields to dumped in back-transformed diagnostics. Choices are
-    'Ex', 'Ey', Ez', 'Bx', 'By', Bz', 'jx', 'jy', jz' and 'rho'. Example:
-    ``warpx.back_transformed_diag_fields = Ex Ez By``. By default, all fields
-    are dumped.
-
-* ``warpx.buffer_size`` (`integer`)
-    The default size of the back transformed diagnostic buffers used to generate lab-frame
-    data is 256. That is, when the multifab with lab-frame data has 256 z-slices,
-    the data will be flushed out. However, if many lab-frame snapshots are required for
-    diagnostics and visualization, the GPU may run out of memory with many large boxes with
-    a size of 256 in the z-direction. This input parameter can then be used to set a
-    smaller buffer-size, preferably multiples of 8, such that, a large number of
-    lab-frame snapshot data can be generated without running out of gpu memory.
-    The downside to using a small buffer size, is that the I/O time may increase due
-    to frequent flushes of the lab-frame data. The other option is to keep the default
-    value for buffer size and use slices to reduce the memory footprint and maintain
-    optimum I/O performance.
-
-* ``slice.num_slice_snapshots_lab`` (`integer`)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The number of back-transformed field and particle data that
-    will be written for the reduced domain defined by ``slice.dom_lo``
-    and ``slice.dom_hi``. Note that the 'slice' is a reduced
-    diagnostic which could be 1D, 2D, or 3D, aligned with the co-ordinate axes.
-    These slices can be visualized using read_raw_data.py and the HDF5 format can
-    be visualized using the h5py library. Please see the documentation on visualization
-    for further details.
-
-* ``slice.dt_slice_snapshots_lab`` (`float`, in seconds)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The time interval between the back-transformed reduced diagnostics (where this
-    time interval is expressed in the laboratory frame).
-
-* ``slice.particle_slice_width_lab`` (`float`, in meters)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1`` and
-    ``slice.num_slice_snapshots_lab`` is non-zero. Particles are
-    copied from the full back-transformed diagnostic to the reduced
-    slice diagnostic if there are within the user-defined width from
-    the slice region defined by ``slice.dom_lo`` and ``slice.dom_hi``.
 
 Boundary Scraping Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -137,11 +137,6 @@ public:
 
     virtual void PostRestart () = 0;
 
-    virtual void GetParticleSlice(const int /*direction*/, const amrex::Real /*z_old*/,
-                                  const amrex::Real /*z_new*/, const amrex::Real /*t_boost*/,
-                                  const amrex::Real /*t_lab*/, const amrex::Real /*dt*/,
-                                  DiagnosticParticles& /*diagnostic_particles*/) {}
-
     void AllocData ();
 
     /**
@@ -315,7 +310,6 @@ public:
     // split along diagonals (0) or axes (1)
     int split_type = 0;
 
-    int doBackTransformedDiagnostics () const { return do_back_transformed_diagnostics; }
     /** Whether back-transformed diagnostics need to be performed for a particular species.
      *
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
@@ -408,7 +402,6 @@ protected:
 
     int do_resampling = 0;
 
-    int do_back_transformed_diagnostics = 1;
     /** Whether back-transformed diagnostics is turned on for the corresponding species.*/
     bool m_do_back_transformed_particles = false;
 
