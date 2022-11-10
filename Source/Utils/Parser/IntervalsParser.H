@@ -192,14 +192,20 @@ namespace utils::parser
         /**
          * @brief Return the total number of unique labframe snapshots
          */
-        int NumSnapshots ();
+        int NumSnapshots () const;
 
         /**
          * @brief Return the iteration number stored at index i_buffer
          *
          * @param i_buffer buffer or iteration index, between 0 and NumSnapshots
          */
-        int GetBTDIteration(int i_buffer);
+        int GetBTDIteration(int i_buffer) const;
+
+        /**
+         * @brief Return the final BTD iteration
+         *
+         */
+        int GetFinalIteration() const;
 
         /**
         * \brief A method that returns true if any of the slices contained by the IntervalsParser
@@ -211,7 +217,6 @@ namespace utils::parser
         std::vector<int> m_btd_iterations;
         std::vector<SliceParser> m_slices;
         std::vector<int> m_slice_starting_i_buffer;
-        int m_n_snapshots;
         static constexpr char m_separator = ',';
         bool m_activated = false;
     };

@@ -48,24 +48,10 @@ import scipy.constants as scc
 
 default_tol = 1.e-12 # Default relative tolerance
 
-## Define reactants and products
-reactant_species = ['deuterium', 'tritium']
-product_species = ['helium', 'neutron']
-
-mass = {
-    'deuterium': 2.01410177812*scc.m_u,
-    'tritium': 3.0160492779*scc.m_u,
-    'helium': 4.00260325413*scc.m_u,
-    'neutron': 1.0013784193052508*scc.m_p
-}
-m_reduced = np.product([mass[s] for s in reactant_species])/np.sum([mass[s] for s in reactant_species])
-
 ## Some physical parameters
 keV_to_Joule = scc.e*1e3
 MeV_to_Joule = scc.e*1e6
 barn_to_square_meter = 1.e-28
-
-E_fusion = 17.5893*MeV_to_Joule # Energy released during the fusion reaction
 
 ## Checks whether this is the 2D or the 3D test
 warpx_used_inputs = open('./warpx_used_inputs', 'r').read()
@@ -73,6 +59,33 @@ if re.search('geometry.dims = RZ', warpx_used_inputs):
     is_RZ = True
 else:
     is_RZ = False
+
+## Check which kind of test we are doing: D+T or D+D
+# Define reactants and products
+if re.search('tritium', warpx_used_inputs):
+    # If tritium appears in the file, than this is the D+T test
+    reaction_type = 'DT'
+    reactant_species = ['deuterium', 'tritium']
+    product_species = ['helium4', 'neutron']
+    ntests = 2
+    E_fusion = 17.5893*MeV_to_Joule # Energy released during the fusion reaction
+else:
+    # else, this is the D+D test
+    reaction_type = 'DD'
+    reactant_species = ['deuterium', 'hydrogen2']
+    product_species = ['helium3', 'neutron']
+    ntests = 1
+    E_fusion = 3.268911e6*MeV_to_Joule
+
+mass = {
+    'deuterium': 2.01410177812*scc.m_u,
+    'hydrogen2': 2.01410177812*scc.m_u,
+    'tritium': 3.0160492779*scc.m_u,
+    'helium3': 3.016029*scc.m_u,
+    'helium4': 4.00260325413*scc.m_u,
+    'neutron': 1.0013784193052508*scc.m_p
+}
+m_reduced = np.product([mass[s] for s in reactant_species])/np.sum([mass[s] for s in reactant_species])
 
 ## Some numerical parameters for this test
 size_x = 8
@@ -231,15 +244,28 @@ def cross_section( E_keV ):
     ## in H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
     joule_to_keV = 1.e-3/scc.e
     B_G = scc.pi * scc.alpha * np.sqrt( 2.*m_reduced * scc.c**2 * joule_to_keV );
-    A1 = 6.927e4;
-    A2 = 7.454e8;
-    A3 = 2.050e6;
-    A4 = 5.2002e4;
-    B1 = 6.38e1;
-    B2 = -9.95e-1;
-    B3 = 6.981e-5;
-    B4 = 1.728e-4;
-    astrophysical_factor = (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*A4))) / (1 + E_keV*(B1 + E_keV*(B2 + E_keV*(B3 + E_keV*B4))));
+    if reaction_type == 'DT':
+        A1 = 6.927e4;
+        A2 = 7.454e8;
+        A3 = 2.050e6;
+        A4 = 5.2002e4;
+        A5 = 0;
+        B1 = 6.38e1;
+        B2 = -9.95e-1;
+        B3 = 6.981e-5;
+        B4 = 1.728e-4;
+    elif reaction_type == 'DD':
+        A1 = 5.3701e4;
+        A2 = 3.3027e2;
+        A3 = -1.2706e-1;
+        A4 = 2.9327e-5;
+        A5 = -2.5151e-9;
+        B1 = 0;
+        B2 = 0;
+        B3 = 0;
+        B4 = 0;
+
+    astrophysical_factor = (A1 + E_keV*(A2 + E_keV*(A3 + E_keV*(A4 + E_keV*A5)))) / (1 + E_keV*(B1 + E_keV*(B2 + E_keV*(B3 + E_keV*B4))));
     millibarn_to_barn = 1.e-3;
     return millibarn_to_barn * astrophysical_factor/E_keV * np.exp(-B_G/np.sqrt(E_keV))
 
@@ -385,16 +411,15 @@ def main():
     field_data_start = ds_start.covering_grid(level=0, left_edge=ds_start.domain_left_edge,
                                               dims=ds_start.domain_dimensions)
 
-    ntests = 2
     for i in range(1, ntests+1):
         data = {}
 
         for species_name in reactant_species:
-            add_species_to_dict(ad_start, data, species_name+str(i), species_name, "start")
-            add_species_to_dict(ad_end, data, species_name+str(i), species_name, "end")
+            add_species_to_dict(ad_start, data, species_name+'_'+str(i), species_name, "start")
+            add_species_to_dict(ad_end, data, species_name+'_'+str(i), species_name, "end")
 
         for species_name in product_species:
-            add_species_to_dict(ad_end, data, species_name+str(i), species_name, "end")
+            add_species_to_dict(ad_end, data, species_name+'_'+str(i), species_name, "end")
 
         # General checks that are performed for all tests
         generic_check(data)

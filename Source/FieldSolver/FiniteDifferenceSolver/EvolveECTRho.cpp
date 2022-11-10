@@ -54,7 +54,7 @@ void FiniteDifferenceSolver::EvolveECTRho (
     const int lev) {
 
 #if !defined(WARPX_DIM_RZ) and defined(AMREX_USE_EB)
-    if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::ECT) {
 
         EvolveRhoCartesianECT(Efield, edge_lengths, face_areas, ECTRhofield, lev);
 

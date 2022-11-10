@@ -1,19 +1,14 @@
 # please set your project account
-#export proj=<yourProject>  # LBNL/AMP: m3906_g
+#export proj="<yourProject>_g"  # change me
 
 # required dependencies
 module load cmake/3.22.0
-module load PrgEnv-gnu
-module load cudatoolkit
-
-# optional: just an additional text editor
-# module load nano  # TODO: request from support
 
 # optional: for QED support with detailed tables
 module load boost/1.78.0-gnu
 
 # optional: for openPMD and PSATD+RZ support
-module load cray-hdf5-parallel/1.12.1.1
+module load cray-hdf5-parallel/1.12.1.5
 export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/adios2-2.7.1:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/blaspp-master:$CMAKE_PREFIX_PATH
@@ -25,7 +20,7 @@ export LD_LIBRARY_PATH=$HOME/sw/perlmutter/blaspp-master/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HOME/sw/perlmutter/lapackpp-master/lib64:$LD_LIBRARY_PATH
 
 # optional: for Python bindings or libEnsemble
-module load cray-python/3.9.7.1
+module load cray-python/3.9.12.1
 
 if [ -d "$HOME/sw/perlmutter/venvs/warpx" ]
 then
@@ -38,9 +33,6 @@ alias getNode="salloc -N 1 --ntasks-per-node=4 -t 1:00:00 -q interactive -C gpu 
 # an alias to run a command on a batch node for up to 30min
 #   usage: runNode <command>
 alias runNode="srun -N 1 --ntasks-per-node=4 -t 0:30:00 -q interactive -C gpu --gpu-bind=single:1 -c 32 -G 4 -A $proj"
-
-# GPU-aware MPI
-export MPICH_GPU_SUPPORT_ENABLED=1
 
 # necessary to use CUDA-Aware MPI and run a job
 export CRAY_ACCEL_TARGET=nvidia80

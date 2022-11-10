@@ -260,6 +260,12 @@ Known System Issues
 
 .. warning::
 
+   Sep 20th, 2022 (OLCFHELP-8992):
+   The above **HDF5 Jupyter read** work-around for OLCFHELP-3685 does not work anymore, due to the way that GPFS is mounted via NSF on Jupyter nodes.
+   As a work-around until this is fixed, please copy your HDF5 data to ``/ccs``, ``$HOME`` or use ADIOS2 BP instead of HDF5 files.
+
+.. warning::
+
    Aug 27th, 2021 (OLCFHELP-3442):
    Created simulation files and directories are no longer accessible by your team members, even if you create them on ``$PROJWORK``.
    Setting the proper "user mask" (``umask``) does not yet work to fix this.

@@ -53,7 +53,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         !m_do_nodal, "macro E-push does not work for nodal");
 
 
-    if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
 
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
@@ -68,7 +68,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 
         }
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         // Note : EvolveE is the same for CKC and Yee.
         // In the templated Yee and CKC calls, the core operations for EvolveE is the same.
