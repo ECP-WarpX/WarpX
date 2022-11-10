@@ -5,7 +5,6 @@
 #
 #
 
-import matplotlib.pyplot as plt
 import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
 from scipy.constants import c, e, m_e
