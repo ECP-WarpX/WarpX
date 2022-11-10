@@ -249,7 +249,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     common_params.e_max = m_e_max;
     common_params.p_X = m_p_X;
     common_params.nvec = m_nvec;
-    m_up_laser_profile->init(pp_laser_name, ParmParse{"my_constants"}, common_params);
+    m_up_laser_profile->init(pp_laser_name, common_params);
 }
 
 /* \brief Check if laser particles enter the box, and inject if necessary.
