@@ -5,7 +5,7 @@ Science Highlights
 
 WarpX can be used in many domains of laser-plasma science, plasma physics, accelerator physics and beyond.
 Below, we collect a series of scientific publications that used WarpX.
-Please :ref:`acknowledge WarpX in your works`, so we can find your works.
+Please :ref:`acknowledge WarpX in your works <acknowledge_warpx>`, so we can find your works.
 
 Is your publication missing? :ref:`Contact us <contact>` or edit this page via a pull request.
 
@@ -26,7 +26,7 @@ Scientific works in laser-plasma and beam-plasma acceleration.
 
 #. Mirani F, Calzolari D, Formenti A, Passoni M.
    **Superintense laser-driven photon activation analysis**.
-   Nature Communications Physics volume **4**.185, 2021
+   Nature Communications Physics volume **4**.185, 2021.
    `DOI:10.1038/s42005-021-00685-2 <https://doi.org/10.1038/s42005-021-00685-2>`__
 
 
@@ -37,12 +37,13 @@ Scientific works in laser-ion acceleration and laser-matter interaction.
 
 #. Hakimi S, Obst-Huebl L, Huebl A, Nakamura K, Bulanov SS, Steinke S, Leemans WP, Kober Z, Ostermayr TM, Schenkel T, Gonsalves AJ, Vay J-L, Tilborg Jv, Toth C, Schroeder CB, Esarey E, Geddes CGR.
    **Laser-solid interaction studies enabled by the new capabilities of the iP2 BELLA PW beamline**.
-   under review, 2022
+   Physics of Plasmas **29**, 083102, 2022.
+   `DOI:10.1063/5.0089331 <https://doi.org/10.1063/5.0089331>`__
 
-#. Levy D, Andriyash IA, Haessler S, Ouille M, Kaur J, Flacco A, Kroupp E, Malka V, Lopez-Martens R.
+#. Levy D, Andriyash IA, Haessler S, Kaur J, Ouille M, Flacco A, Kroupp E, Malka V, Lopez-Martens R.
    **Low-divergence MeV-class proton beams from kHz-driven laser-solid interactions**.
-   *preprint*. under review, 2021.
-   `arXiv:2112.12581 <https://arxiv.org/abs/2112.12581>`__
+   Phys. Rev. Accel. Beams **25**, 093402, 2022.
+   `DOI:10.1103/PhysRevAccelBeams.25.093402 <https://doi.org/10.1103/PhysRevAccelBeams.25.093402>`__
 
 
 Particle Accelerator & Beam Physics

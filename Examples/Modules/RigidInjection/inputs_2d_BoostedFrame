@@ -1,6 +1,6 @@
 # stop_time = 1.5e-13
 
-warpx.zmax_plasma_to_compute_max_step = 50.e-6
+warpx.zmax_plasma_to_compute_max_step = 56.e-6
 warpx.gamma_boost = 5.
 warpx.boost_direction = z
 
@@ -53,7 +53,7 @@ diagnostics.diags_names = diag1 diag2
 
 diag1.diag_type = BackTransformed
 diag1.do_back_transformed_fields = 1
-diag1.num_snapshots_lab = 2
+diag1.intervals = :1
 diag1.dt_snapshots_lab = 1.8679589331096515e-13
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
 diag1.format = plotfile
@@ -68,8 +68,3 @@ diag2.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
 diag2.format = openpmd
 diag2.openpmd_backend = h5
 diag2.buffer_size = 32
-
-# old BTD diagnostics
-warpx.do_back_transformed_diagnostics = 1
-warpx.num_snapshots_lab = 2
-warpx.dt_snapshots_lab = 1.8679589331096515e-13

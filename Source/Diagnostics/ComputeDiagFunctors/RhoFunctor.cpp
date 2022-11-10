@@ -56,7 +56,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     // Apply k-space filtering when using the PSATD solver
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         if (WarpX::use_kspace_filter) {
             auto & solver = warpx.get_spectral_solver_fp(m_lev);

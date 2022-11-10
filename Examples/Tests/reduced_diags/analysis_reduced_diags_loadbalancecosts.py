@@ -17,7 +17,6 @@
 
 # Possible running time: ~ 1 s
 
-import os
 import sys
 
 import numpy as np
@@ -68,8 +67,9 @@ efficiency_before, efficiency_after = get_efficiency(1), get_efficiency(2)
 print('load balance efficiency (before load balance): ', efficiency_before)
 print('load balance efficiency (after load balance): ', efficiency_after)
 
-# The load balanced case is expcted to be more efficient then non-load balanced case
+# The load balanced case is expected to be more efficient
+# than non-load balanced case
 assert(efficiency_before < efficiency_after)
 
-test_name = os.path.split(os.getcwd())[1]
+test_name = 'reduced_diags_loadbalancecosts_timers'
 checksumAPI.evaluate_checksum(test_name, fn)

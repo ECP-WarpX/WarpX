@@ -5,6 +5,10 @@ Input Parameters
 
 .. note::
 
+   WarpX input options are read via AMReX `ParmParse <https://amrex-codes.github.io/amrex/docs_html/Basics.html#parmparse>`__.
+
+.. note::
+
    The AMReX parser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted.
 
 .. _running-cpp-parameters-overall:
@@ -23,6 +27,10 @@ Overall simulation parameters
     The maximum physical time of the simulation. Can be provided instead of ``max_step``. If both
     ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
     when the first criterion is hit.
+
+* ``warpx.used_inputs_file`` (`string`; default: ``warpx_used_inputs``)
+    Name of a file that WarpX writes to archive the used inputs.
+    The context of this file will contain an exact copy of all explicitly and implicitly used inputs parameters, including those :ref:`extended and overwritten from the command line <usage_run>`.
 
 * ``warpx.gamma_boost`` (`float`)
     The Lorentz factor of the boosted frame in which the simulation is run.
@@ -48,21 +56,6 @@ Overall simulation parameters
     given in the lab frame). The value of ``max_step`` is overwritten, and
     printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
-
-* ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
-    Controls how much information is printed to the terminal, when running WarpX.
-
-* ``warpx.always_warn_immediately`` (``0`` or ``1``; default is ``0`` for false)
-    If set to ``1``, WarpX immediately prints every warning message as soon as
-    it is generated. It is mainly intended for debug purposes, in case a simulation
-    crashes before a global warning report can be printed.
-
-* ``warpx.abort_on_warning_threshold`` (string: ``low``, ``medium`` or ``high``) optional
-    Optional threshold to abort as soon as a warning is raised.
-    If the threshold is set, warning messages with priority greater than or
-    equal to the threshold trigger an immediate abort.
-    It is mainly intended for debug purposes, and is best used with
-    ``warpx.always_warn_immediately=1``.
 
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
     If provided ``warpx.random_seed = random``, the random seed will be determined
@@ -138,10 +131,6 @@ Overall simulation parameters
     This will cause severe performance drops.
     Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
     `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
-
-* ``amrex.abort_on_unused_inputs`` (``0`` or ``1``; default is ``0`` for false)
-    When set to ``1``, this option causes simulation to fail *after* its completion if there were unused parameters.
-    It is mainly intended for continuous integration and automated testing to check that all tests and inputs are adapted to API changes.
 
 Signal Handling
 ^^^^^^^^^^^^^^^
@@ -308,7 +297,9 @@ Domain Boundary Conditions
     * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. For the electromagnetic solve, at PEC, the tangential electric field and the normal magnetic field are set to 0. This boundary can be used to model a dielectric or metallic surface. In the guard-cell region, the tangential electric field is set equal and opposite to the respective field component in the mirror location across the PEC boundary, and the normal electric field is set equal to the field component in the mirror location in the domain across the PEC boundary. Similarly, the tangential (and normal) magnetic field components are set equal (and opposite) to the respective magnetic field components in the mirror locations across the PEC boundary. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
       If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
 
-    * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`. If the electrostatic solver is used, a Neumann boundary condition (with gradient equal to 0) will be applied on the specified boundary.
+    * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`.
+
+    * ``neumann``: For the electrostatic solver, a Neumann boundary condition (with gradient of the potential equal to 0) will be applied on the specified boundary.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
     Options are:
@@ -487,9 +478,6 @@ Distribution across MPI ranks and parallelization
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
 
-* ``warpx.safe_guard_cells`` (`0` or `1`) optional (default `0`)
-    For developers: run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
-
 .. _running-cpp-parameters-parser:
 
 Math parser and user-defined constants
@@ -580,11 +568,11 @@ Particle initialization
     Type of physical species.
     Currently, the accepted species are
     ``"electron"``, ``"positron"``, ``"muon"``, ``"antimuon"``, ``"photon"``, ``"neutron"``, ``"proton"`` , ``"alpha"``,
-    ``"hydrogen1"`` (a.k.a. ``"protium"``), ``"hydrogen2"`` (a.k.a. ``"deuterium"``), ``"hydrogen3"`` (a.k.a.``"tritium"``),
+    ``"hydrogen1"`` (a.k.a. ``"protium"``), ``"hydrogen2"`` (a.k.a. ``"deuterium"``), ``"hydrogen3"`` (a.k.a. ``"tritium"``),
     ``"helium"``, ``"helium3"``, ``"helium4"``,
-    ``"lithium"``, ``"lithium6"``, ``"lithium7"``, ``"beryllium"``, ``"boron"``, ``"boron10"``, ``"boron11"``,
-    ``"carbon"``, ``"carbon12"``, ``"carbon13"``, ``"nitrogen"``, ``"nitrogen14"``, ``"nitrogen15"``,
-    ``"oxygen"``, ``"oxygen16"``, ``"oxygen17"``, ``"oxygen18"``, ``"fluorine"``, ``"neon"``, ``"neon20"``,
+    ``"lithium"``, ``"lithium6"``, ``"lithium7"``, ``"beryllium"``, ``"beryllium9"``, ``"boron"``, ``"boron10"``, ``"boron11"``,
+    ``"carbon"``, ``"carbon12"``, ``"carbon13"``, ``"carbon14"``, ``"nitrogen"``, ``"nitrogen14"``, ``"nitrogen15"``,
+    ``"oxygen"``, ``"oxygen16"``, ``"oxygen17"``, ``"oxygen18"``, ``"fluorine"``, ``"fluorine19"``, ``"neon"``, ``"neon20"``,
     ``"neon21"``, ``"neon22"``, ``"aluminium"``, ``"argon"``, ``"copper"``, ``"xenon"`` and ``"gold"``.
     The difference between ``"proton"`` and ``"hydrogen1"`` is that the mass of the latter includes also the mass
     of the bound electron (same for ``"alpha"`` and ``"helium4"``). When only the name of an element is specified, the mass
@@ -966,15 +954,6 @@ Particle initialization
         buffer will grow unbounded as particles are scraped and therefore could
         lead to memory issues if not periodically cleared. To clear the buffer
         call ``warpx_clearParticleBoundaryBuffer()``.
-
-* ``<species>.do_back_transformed_diagnostics`` (`0` or `1` optional, default `1`)
-    Only used when ``warpx.do_back_transformed_diagnostics=1``. When running in a
-    boosted frame, whether or not to plot back-transformed diagnostics for
-    this species.
-
-* ``warpx.serialize_initial_conditions`` (`0` or `1`) optional (default `0`)
-    Serialize the initial conditions for reproducible testing.
-    Mainly whether or not to use OpenMP threading for particle initialization.
 
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
@@ -2159,6 +2138,18 @@ BackTransformed Diagnostics (with support for Plotfile/openPMD output)
 * ``<diag_name>.num_snapshots_lab`` (`integer`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
     The number of lab-frame snapshots that will be written.
+    Only this option or ``intervals`` should be specified;
+    a run-time error occurs if the user attempts to set both ``num_snapshots_lab`` and ``intervals``.
+
+* ``<diag_name>.intervals`` (`string`)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
+    Using the `Intervals parser`_ syntax, this string defines the lab frame times at which data is dumped,
+    given as multiples of the step size ``dt_snapshots_lab`` or ``dz_snapshots_lab`` described below.
+    Example: ``btdiag1.intervals = 10:11,20:24:2`` and ``btdiag1.dt_snapshots_lab = 1.e-12``
+    indicate to dump at lab times ``1e-11``, ``1.1e-11``, ``2e-11``, ``2.2e-11``, and ``2.4e-11`` seconds.
+    Note that the stop interval, the second number in the slice, must always be specified.
+    Only this option or ``num_snapshots_lab`` should be specified;
+    a run-time error occurs if the user attempts to set both ``num_snapshots_lab`` and ``intervals``.
 
 * ``<diag_name>.dt_snapshots_lab`` (`float`, in seconds)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
@@ -2185,81 +2176,6 @@ BackTransformed Diagnostics (with support for Plotfile/openPMD output)
     to frequent flushes of the lab-frame data. The other option is to keep the default
     value for buffer size and use slices to reduce the memory footprint and maintain
     optimum I/O performance.
-
-Back-Transformed Diagnostics (legacy output)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame
-
-* ``warpx.do_back_transformed_diagnostics`` (`0` or `1`)
-    Whether to use the **back-transformed diagnostics** (i.e. diagnostics that
-    perform on-the-fly conversion to the laboratory frame, when running
-    boosted-frame simulations)
-
-* ``warpx.lab_data_directory`` (`string`)
-    The directory in which to save the lab frame data when using the
-    **back-transformed diagnostics**. If not specified, the default is
-    is `lab_frame_data`.
-
-* ``warpx.num_snapshots_lab`` (`integer`)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The number of lab-frame snapshots that will be written.
-
-* ``warpx.dt_snapshots_lab`` (`float`, in seconds)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The time interval inbetween the lab-frame snapshots (where this
-    time interval is expressed in the laboratory frame).
-
-* ``warpx.dz_snapshots_lab`` (`float`, in meters)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    Distance between the lab-frame snapshots (expressed in the laboratory
-    frame). ``dt_snapshots_lab`` is then computed by
-    ``dt_snapshots_lab = dz_snapshots_lab/c``. Either `dt_snapshots_lab`
-    or `dz_snapshot_lab` is required.
-
-* ``warpx.do_back_transformed_fields`` (`0 or 1`)
-    Whether to use the **back-transformed diagnostics** for the fields.
-
-* ``warpx.back_transformed_diag_fields`` (space-separated list of `string`)
-    Which fields to dumped in back-transformed diagnostics. Choices are
-    'Ex', 'Ey', Ez', 'Bx', 'By', Bz', 'jx', 'jy', jz' and 'rho'. Example:
-    ``warpx.back_transformed_diag_fields = Ex Ez By``. By default, all fields
-    are dumped.
-
-* ``warpx.buffer_size`` (`integer`)
-    The default size of the back transformed diagnostic buffers used to generate lab-frame
-    data is 256. That is, when the multifab with lab-frame data has 256 z-slices,
-    the data will be flushed out. However, if many lab-frame snapshots are required for
-    diagnostics and visualization, the GPU may run out of memory with many large boxes with
-    a size of 256 in the z-direction. This input parameter can then be used to set a
-    smaller buffer-size, preferably multiples of 8, such that, a large number of
-    lab-frame snapshot data can be generated without running out of gpu memory.
-    The downside to using a small buffer size, is that the I/O time may increase due
-    to frequent flushes of the lab-frame data. The other option is to keep the default
-    value for buffer size and use slices to reduce the memory footprint and maintain
-    optimum I/O performance.
-
-* ``slice.num_slice_snapshots_lab`` (`integer`)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The number of back-transformed field and particle data that
-    will be written for the reduced domain defined by ``slice.dom_lo``
-    and ``slice.dom_hi``. Note that the 'slice' is a reduced
-    diagnostic which could be 1D, 2D, or 3D, aligned with the co-ordinate axes.
-    These slices can be visualized using read_raw_data.py and the HDF5 format can
-    be visualized using the h5py library. Please see the documentation on visualization
-    for further details.
-
-* ``slice.dt_slice_snapshots_lab`` (`float`, in seconds)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The time interval between the back-transformed reduced diagnostics (where this
-    time interval is expressed in the laboratory frame).
-
-* ``slice.particle_slice_width_lab`` (`float`, in meters)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1`` and
-    ``slice.num_slice_snapshots_lab`` is non-zero. Particles are
-    copied from the full back-transformed diagnostic to the reduced
-    slice diagnostic if there are within the user-defined width from
-    the slice region defined by ``slice.dom_lo`` and ``slice.dom_hi``.
 
 Boundary Scraping Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2828,3 +2744,41 @@ This is essentially the python slicing syntax except that the stop is inclusive
 Note that if a given period is zero or negative, the corresponding slice is disregarded.
 For example, ``something_intervals = -1`` deactivates ``something`` and
 ``something_intervals = ::-1,100:1000:25`` is equivalent to ``something_intervals = 100:1000:25``.
+
+
+.. _running-cpp-parameters-test-debug:
+
+Testing and Debugging
+---------------------
+
+When developing, testing and :ref:`debugging WarpX <debugging_warpx>`, the following options can be considered.
+
+* ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
+    Controls how much information is printed to the terminal, when running WarpX.
+
+* ``warpx.always_warn_immediately`` (``0`` or ``1``; default is ``0`` for false)
+    If set to ``1``, WarpX immediately prints every warning message as soon as
+    it is generated. It is mainly intended for debug purposes, in case a simulation
+    crashes before a global warning report can be printed.
+
+* ``warpx.abort_on_warning_threshold`` (string: ``low``, ``medium`` or ``high``) optional
+    Optional threshold to abort as soon as a warning is raised.
+    If the threshold is set, warning messages with priority greater than or
+    equal to the threshold trigger an immediate abort.
+    It is mainly intended for debug purposes, and is best used with
+    ``warpx.always_warn_immediately=1``.
+
+* ``amrex.abort_on_unused_inputs`` (``0`` or ``1``; default is ``0`` for false)
+    When set to ``1``, this option causes simulation to fail *after* its completion if there were unused parameters.
+    It is mainly intended for continuous integration and automated testing to check that all tests and inputs are adapted to API changes.
+
+* ``warpx.serialize_initial_conditions`` (`0` or `1`) optional (default `0`)
+    Serialize the initial conditions for reproducible testing, e.g, in our continuous integration tests.
+    Mainly whether or not to use OpenMP threading for particle initialization.
+
+* ``warpx.safe_guard_cells`` (`0` or `1`) optional (default `0`)
+    Run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
+
+* ``ablastr.fillboundary_always_sync`` (`0` or `1`) optional (default `0`)
+    Run all ``FillBoundary`` operations on ``MultiFab`` to force-synchronize shared nodal points.
+    This slightly increases communication cost and can help to spot missing ``nodal_sync`` flags in these operations.

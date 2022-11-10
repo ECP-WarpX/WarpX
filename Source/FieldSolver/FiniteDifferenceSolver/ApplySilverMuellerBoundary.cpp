@@ -44,7 +44,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 
     // Ensure that we are using the Yee solver
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_fdtd_algo == MaxwellSolverAlgo::Yee,
+        m_fdtd_algo == ElectromagneticSolverAlgo::Yee,
         "The Silver-Mueller boundary conditions can only be used with the Yee solver."
     );
 
