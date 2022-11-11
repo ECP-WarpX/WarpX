@@ -18,6 +18,7 @@
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridModel/HybridModel.H"
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
@@ -400,6 +401,10 @@ WarpX::InitData ()
 
     if (WarpX::em_solver_medium==1) {
         m_macroscopic_properties->InitData();
+    }
+
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid) {
+        m_hybrid_model->InitData();
     }
 
     InitDiagnostics();

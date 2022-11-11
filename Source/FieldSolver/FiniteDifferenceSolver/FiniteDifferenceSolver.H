@@ -12,6 +12,7 @@
 #include "FiniteDifferenceSolver_fwd.H"
 
 #include "BoundaryConditions/PML_fwd.H"
+#include "HybridModel/HybridModel_fwd.H"
 #include "MacroscopicProperties/MacroscopicProperties_fwd.H"
 
 #include <AMReX_GpuContainers.H>
@@ -144,7 +145,8 @@ class FiniteDifferenceSolver
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
                       std::unique_ptr<amrex::MultiFab> const& rhofield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths);
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                      int lev, std::unique_ptr<HybridModel> const& hybrid_model );
 
     private:
 
@@ -201,6 +203,16 @@ class FiniteDifferenceSolver
         void ComputeDivECylindrical (
             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
             amrex::MultiFab& divE );
+
+        template<typename T_Algo>
+        void HybridSolveECylindrical (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+            std::unique_ptr<amrex::MultiFab> const& rhofield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev, std::unique_ptr<HybridModel> const& hybrid_model );
+
 #else
         template< typename T_Algo >
         void EvolveBCartesian (
@@ -284,6 +296,15 @@ class FiniteDifferenceSolver
         void EvolveFPMLCartesian ( amrex::MultiFab* Ffield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
                       amrex::Real const dt );
+
+        template<typename T_Algo>
+        void HybridSolveECartesian (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+            std::unique_ptr<amrex::MultiFab> const& rhofield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev, std::unique_ptr<HybridModel> const& hybrid_model );
 #endif
 
 };

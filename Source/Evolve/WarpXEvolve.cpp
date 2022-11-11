@@ -339,6 +339,16 @@ WarpX::Evolve (int numsteps)
 
                 // Now the E field is updated using the electron momentum equation
                 HybridSolveE();
+                FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
+                // The B field is pushed forward another half a timestep
+                // to get B^{n+1}
+                EvolveB(0.5_rt * dt[0], DtType::SecondHalf);
+                FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
+                // Finally the E field is updated to E^{n+1}
+                HybridSolveE();
+                FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
             }
 
             ExecutePythonCallback("afterEsolve");

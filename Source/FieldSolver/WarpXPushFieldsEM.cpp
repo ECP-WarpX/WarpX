@@ -1071,7 +1071,8 @@ WarpX::HybridSolveE (int lev, PatchType patch_type)
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->HybridSolveE(Efield_fp[lev], Bfield_fp[lev],
                                        current_fp[lev], rho_fp[lev],
-                                       m_edge_lengths[lev] );
+                                       m_edge_lengths[lev], lev,
+                                       m_hybrid_model);
     } else {
         amrex::Abort(Utils::TextMsg::Err(
         "HybridSolveE: Only one level implemented for hybrid solver."));

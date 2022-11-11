@@ -15,4 +15,5 @@ target_sources(WarpX
     ApplySilverMuellerBoundary.cpp
 )
 
+add_subdirectory(HybridModel)
 add_subdirectory(MacroscopicProperties)

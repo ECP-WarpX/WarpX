@@ -18,6 +18,7 @@
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridModel/HybridModel.H"
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #   ifdef WARPX_DIM_RZ
@@ -720,6 +721,11 @@ WarpX::ReadParameters ()
         pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
+
+        // Create hybrid model object if needed
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid) {
+            m_hybrid_model = std::make_unique<HybridModel>();
+        }
 
         utils::parser::queryWithParser(pp_warpx, "const_dt", const_dt);
 
@@ -1956,7 +1962,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 #endif
 
-    bool deposit_charge = do_dive_cleaning || (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame);
+    bool deposit_charge = do_dive_cleaning ||
+                          (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
+                          (electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid );
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         deposit_charge = do_dive_cleaning || update_with_rho || current_correction;
     }
