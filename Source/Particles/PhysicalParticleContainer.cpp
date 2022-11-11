@@ -1661,9 +1661,6 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 pu.y *= PhysConst::c;
                 pu.z *= PhysConst::c;
 
-                const amrex::Real t_fract = amrex::Random(engine)*dt;
-                UpdatePosition(ppos.x, ppos.y, ppos.z, pu.x, pu.y, pu.z, t_fract);
-
 #if defined(WARPX_DIM_3D)
                 if (!tile_realbox.contains(XDim3{ppos.x,ppos.y,ppos.z})) {
                     p.id() = -1;
@@ -1682,7 +1679,6 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                     continue;
                 }
 #endif
-
                 // Save the x and y values to use in the insideBounds checks.
                 // This is needed with WARPX_DIM_RZ since x and y are modified.
                 Real xb = ppos.x;
@@ -1726,8 +1722,10 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                     p.id() = -1;
                     continue;
                 }
-
                 Real dens = inj_rho->getDensity(ppos.x, ppos.y, ppos.z);
+
+                const amrex::Real t_fract = amrex::Random(engine)*dt;
+                UpdatePosition(ppos.x, ppos.y, ppos.z, pu.x, pu.y, pu.z, t_fract);
 
                 // Remove particle if density below threshold
                 if ( dens < density_min ){
