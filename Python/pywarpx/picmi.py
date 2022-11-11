@@ -384,7 +384,7 @@ class DensityDistributionBase(object):
             species.__setattr__(f'momentum_function_u{sdir}(x,y,z)', f'({expression})/{constants.c}')
 
 
-class UniformDistribution(DensityDistributionBase, picmistandard.PICMI_UniformDistribution):
+class UniformDistribution(picmistandard.PICMI_UniformDistribution, DensityDistributionBase):
     def initialize_inputs(self, species_number, layout, species, density_scale):
 
         self.set_mangle_dict()
@@ -397,7 +397,7 @@ class UniformDistribution(DensityDistributionBase, picmistandard.PICMI_UniformDi
             species.density *= density_scale
 
 
-class AnalyticDistribution(DensityDistributionBase, picmistandard.PICMI_AnalyticDistribution):
+class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution, DensityDistributionBase):
     def initialize_inputs(self, species_number, layout, species, density_scale):
 
         self.set_mangle_dict()
