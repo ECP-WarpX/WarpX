@@ -119,20 +119,6 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
 
     pc_tmp = std::make_unique<PhysicalParticleContainer>(amr_core);
 
-    // Compute the number of species for which lab-frame data is dumped
-    // nspecies_lab_frame_diags, and map their ID to MultiParticleContainer
-    // particle IDs in map_species_lab_diags.
-    map_species_back_transformed_diagnostics.resize(nspecies);
-    nspecies_back_transformed_diagnostics = 0;
-    for (int i=0; i<nspecies; i++){
-        auto& pc = allcontainers[i];
-        if (pc->do_back_transformed_diagnostics){
-            map_species_back_transformed_diagnostics[nspecies_back_transformed_diagnostics] = i;
-            do_back_transformed_diagnostics = 1;
-            nspecies_back_transformed_diagnostics += 1;
-        }
-    }
-
     // Setup particle collisions
     collisionhandler = std::make_unique<CollisionHandler>(this);
 
@@ -536,7 +522,7 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
 
     bool is_PSATD_RZ = false;
 #ifdef WARPX_DIM_RZ
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         is_PSATD_RZ = true;
 #endif
     if( !is_PSATD_RZ )
@@ -723,68 +709,6 @@ MultiParticleContainer::SetParticleDistributionMap (int lev, DistributionMapping
 {
     for (auto& pc : allcontainers) {
         pc->SetParticleDistributionMap(lev,new_dm);
-    }
-}
-
-void
-MultiParticleContainer
-::GetLabFrameData (const std::string& /*snapshot_name*/,
-                   const int /*i_lab*/, const int direction,
-                   const Real z_old, const Real z_new,
-                   const Real t_boost, const Real t_lab, const Real dt,
-                   Vector<WarpXParticleContainer::DiagnosticParticleData>& parts) const
-{
-
-    WARPX_PROFILE("MultiParticleContainer::GetLabFrameData()");
-
-    // Loop over particle species
-    for (int i = 0; i < nspecies_back_transformed_diagnostics; ++i){
-        int isp = map_species_back_transformed_diagnostics[i];
-        WarpXParticleContainer* pc = allcontainers[isp].get();
-        WarpXParticleContainer::DiagnosticParticles diagnostic_particles;
-        pc->GetParticleSlice(direction, z_old, z_new, t_boost, t_lab, dt, diagnostic_particles);
-        // Here, diagnostic_particles[lev][index] is a WarpXParticleContainer::DiagnosticParticleData
-        // where "lev" is the AMR level and "index" is a [grid index][tile index] pair.
-
-        // Loop over AMR levels
-        for (int lev = 0; lev <= pc->finestLevel(); ++lev){
-            // Loop over [grid index][tile index] pairs
-            // and Fills parts[species number i] with particle data from all grids and
-            // tiles in diagnostic_particles. parts contains particles from all
-            // AMR levels indistinctly.
-            for (const auto& dp : diagnostic_particles[lev]){
-                // it->first is the [grid index][tile index] key
-                // it->second is the corresponding
-                // WarpXParticleContainer::DiagnosticParticleData value
-                parts[i].GetRealData(DiagIdx::w).insert(  parts[i].GetRealData(DiagIdx::w  ).end(),
-                                                          dp.second.GetRealData(DiagIdx::w  ).begin(),
-                                                          dp.second.GetRealData(DiagIdx::w  ).end());
-
-                parts[i].GetRealData(DiagIdx::x).insert(  parts[i].GetRealData(DiagIdx::x  ).end(),
-                                                          dp.second.GetRealData(DiagIdx::x  ).begin(),
-                                                          dp.second.GetRealData(DiagIdx::x  ).end());
-
-                parts[i].GetRealData(DiagIdx::y).insert(  parts[i].GetRealData(DiagIdx::y  ).end(),
-                                                          dp.second.GetRealData(DiagIdx::y  ).begin(),
-                                                          dp.second.GetRealData(DiagIdx::y  ).end());
-
-                parts[i].GetRealData(DiagIdx::z).insert(  parts[i].GetRealData(DiagIdx::z  ).end(),
-                                                          dp.second.GetRealData(DiagIdx::z  ).begin(),
-                                                          dp.second.GetRealData(DiagIdx::z  ).end());
-
-                parts[i].GetRealData(DiagIdx::ux).insert(  parts[i].GetRealData(DiagIdx::ux).end(),
-                                                           dp.second.GetRealData(DiagIdx::ux).begin(),
-                                                           dp.second.GetRealData(DiagIdx::ux).end());
-
-                parts[i].GetRealData(DiagIdx::uy).insert(  parts[i].GetRealData(DiagIdx::uy).end(),
-                                                           dp.second.GetRealData(DiagIdx::uy).begin(),
-                                                           dp.second.GetRealData(DiagIdx::uy).end());
-
-                parts[i].GetRealData(DiagIdx::uz).insert(  parts[i].GetRealData(DiagIdx::uz).end(),
-                                                           dp.second.GetRealData(DiagIdx::uz).begin(),
-                                                           dp.second.GetRealData(DiagIdx::uz).end());
-            }
-        }
     }
 }
 

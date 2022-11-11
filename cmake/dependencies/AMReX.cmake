@@ -69,7 +69,11 @@ macro(find_amrex)
             set(AMReX_SENSEI ON CACHE INTERNAL "")
         endif()
 
-        set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
+        if(DEFINED AMReX_BUILD_SHARED_LIBS)
+            set(AMReX_INSTALL ${AMReX_BUILD_SHARED_LIBS} CACHE INTERNAL "")
+        else()
+            set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
+        endif()
         set(AMReX_AMRLEVEL OFF CACHE INTERNAL "")
         set(AMReX_ENABLE_TESTS OFF CACHE INTERNAL "")
         set(AMReX_FORTRAN OFF CACHE INTERNAL "")
@@ -235,7 +239,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "22.11"
+set(WarpX_amrex_branch "0d3deeb5c75cade14c381ef620921beaa2604c11"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

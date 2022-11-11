@@ -13,7 +13,6 @@
 #define WARPX_H_
 
 #include "BoundaryConditions/PML_fwd.H"
-#include "Diagnostics/BackTransformedDiagnostic_fwd.H"
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
@@ -155,7 +154,7 @@ public:
     //! Integer that corresponds to the particle push algorithm (Boris, Vay, Higuera-Cary)
     static short particle_pusher_algo;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
-    static short maxwell_solver_id;
+    static short electromagnetic_solver_id;
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
@@ -277,22 +276,6 @@ public:
 
     //! If true, the initial conditions from random number generators are serialized (useful for reproducible testing with OpenMP)
     static bool serialize_initial_conditions;
-
-    //! If true, then lab-frame data will be computed for boosted frame simulations
-    //! with customized output format
-    static bool do_back_transformed_diagnostics;
-    //! Name of the back-transformed diagnostics output directory
-    static std::string lab_data_directory;
-    //! Number of back-tranformed snapshots in the lab-frame
-    static int  num_snapshots_lab;
-    //! Time interval in lab-frame between the back-transformed snapshots
-    static amrex::Real dt_snapshots_lab;
-    //! If true, then lab-frame data will be computed for the fields and flushed out
-    //! in customized format
-    static bool do_back_transformed_fields;
-    //! If true, then lab-frame data will be computed for the particles and flushed out
-    //! in customized format
-    static bool do_back_transformed_particles;
 
     //! Lorentz factor of the boosted frame in which a boosted-frame simulation is run
     static amrex::Real gamma_boost;
@@ -738,7 +721,7 @@ public:
     static const amrex::iMultiFab* CurrentBufferMasks (int lev);
     static const amrex::iMultiFab* GatherBufferMasks (int lev);
 
-    static int do_electrostatic;
+    static int electrostatic_solver_id;
 
     // Parameters for lab frame electrostatic
     static amrex::Real self_fields_required_precision;
@@ -762,12 +745,6 @@ public:
     static int moving_window_dir;
     static amrex::Real moving_window_v;
     static bool fft_do_time_averaging;
-
-    // slice generation //
-    static int num_slice_snapshots_lab;
-    static amrex::Real dt_slice_snapshots_lab;
-    static amrex::Real particle_slice_width_lab;
-    amrex::RealBox getSliceRealBox() const {return slice_realbox;}
 
     // these should be private, but can't due to Cuda limitations
     static void ComputeDivB (amrex::MultiFab& divB, int const dcomp,
@@ -1082,8 +1059,6 @@ private:
     /** Check the requested resources and write performance hints */
     void PerformanceHints ();
 
-    std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
-
     void BuildBufferMasks ();
     void BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
                                  const amrex::IArrayBox &guard_mask, const int ng );
@@ -1155,9 +1130,6 @@ private:
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
     std::unique_ptr<MultiDiagnostics> multi_diags;
-
-    // Boosted Frame Diagnostics
-    std::unique_ptr<BackTransformedDiagnostic> myBFD;
 
     //
     // Fields: First array for level, second for direction
