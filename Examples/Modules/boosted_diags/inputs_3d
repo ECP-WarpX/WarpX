@@ -55,7 +55,6 @@ electrons.zmax = .003
 electrons.profile = constant
 electrons.density = 3.5e24
 electrons.do_continuous_injection = 1
-electrons.do_back_transformed_diagnostics = 1
 
 ions.charge = q_e
 ions.mass = m_p
@@ -71,7 +70,6 @@ ions.zmax = .003
 ions.profile = constant
 ions.density = 3.5e24
 ions.do_continuous_injection = 1
-ions.do_back_transformed_diagnostics = 1
 
 beam.charge = -q_e
 beam.mass = m_e
@@ -104,14 +102,6 @@ laser1.profile_t_peak = 40.e-15    # The time at which the laser reaches its pea
 laser1.profile_focal_distance = 0.5e-3  # Focal distance from the antenna (in meters)
 laser1.wavelength = 0.81e-6         # The wavelength of the laser (in meters)
 
-slice.dom_lo     = xmin  0.0  zmin
-slice.dom_hi     = xmax  0.0  zmax
-slice.coarsening_ratio = 1 1 1
-slice.plot_int = -1
-slice.num_slice_snapshots_lab = 4
-slice.dt_slice_snapshots_lab = 3.3356409519815207e-12
-slice.particle_slice_width_lab = 2.e-6
-
 # Diagnostics
 diagnostics.diags_names = diag1 diag2
 
@@ -132,9 +122,3 @@ diag2.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
 diag2.format = openpmd
 diag2.buffer_size = 32
 diag2.openpmd_backend = h5
-
-# old BTD diagnostics
-warpx.do_back_transformed_diagnostics = 1
-warpx.num_snapshots_lab = 4
-warpx.dz_snapshots_lab = 0.001
-warpx.back_transformed_diag_fields= Ex Ey Ez By rho
