@@ -917,15 +917,13 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
         current_y = current_fp_nodal[lev][1].get();
         current_z = current_fp_nodal[lev][2].get();
     }
-#ifdef PSATD
-    else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay and
-             electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
+    else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
+        // Note that Vay deposition is supported only for PSATD and the code currently aborts otherwise
         current_x = current_fp_vay[lev][0].get();
         current_y = current_fp_vay[lev][1].get();
         current_z = current_fp_vay[lev][2].get();
     }
-#endif
     else
     {
         current_x = current_fp[lev][0].get();
