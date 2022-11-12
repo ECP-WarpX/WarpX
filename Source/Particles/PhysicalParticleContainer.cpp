@@ -1783,7 +1783,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 p.pos(1) = ppos.y;
                 p.pos(2) = ppos.z;
 #elif defined(WARPX_DIM_RZ)
-                pa[PIdx::theta][ip] = std::atan2(y, x);
+                pa[PIdx::theta][ip] = std::atan2(ppos.y, ppos.x);
                 p.pos(0) = std::sqrt(ppos.x*ppos.x + ppos.y*ppos.y);
                 p.pos(1) = ppos.z;
 #elif defined(WARPX_DIM_XZ)
