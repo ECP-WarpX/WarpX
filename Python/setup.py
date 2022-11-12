@@ -54,12 +54,12 @@ else:
     package_data = {}
 
 setup(name = 'pywarpx',
-      version = '22.09',
+      version = '22.11',
       packages = ['pywarpx'],
       package_dir = {'pywarpx': 'pywarpx'},
       description = """Wrapper of WarpX""",
       package_data = package_data,
-      install_requires = ['numpy', 'picmistandard==0.0.19', 'periodictable'],
+      install_requires = ['numpy', 'picmistandard==0.0.20', 'periodictable'],
       python_requires = '>=3.7',
       zip_safe=False
 )

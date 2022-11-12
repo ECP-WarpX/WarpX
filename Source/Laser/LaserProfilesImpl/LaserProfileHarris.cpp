@@ -6,8 +6,8 @@
  */
 #include "Laser/LaserProfiles.H"
 
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpX_Complex.H"
 
 #include <AMReX_Extension.H>
@@ -22,13 +22,15 @@ using namespace amrex;
 void
 WarpXLaserProfiles::HarrisLaserProfile::init (
     const amrex::ParmParse& ppl,
-    const amrex::ParmParse& /* ppc */,
     CommonLaserParameters params)
 {
     // Parse the properties of the Harris profile
-    getWithParser(ppl, "profile_waist", m_params.waist);
-    getWithParser(ppl, "profile_duration", m_params.duration);
-    getWithParser(ppl, "profile_focal_distance", m_params.focal_distance);
+    utils::parser::getWithParser(
+        ppl, "profile_waist", m_params.waist);
+    utils::parser::getWithParser(
+        ppl, "profile_duration", m_params.duration);
+    utils::parser::getWithParser(
+        ppl, "profile_focal_distance", m_params.focal_distance);
     //Copy common params
     m_common_params = params;
 }

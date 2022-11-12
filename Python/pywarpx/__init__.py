@@ -9,7 +9,7 @@ from .Amr import amr
 from .Boundary import boundary
 from .Collisions import collisions
 from .Constants import my_constants
-from .Diagnostics import diagnostics
+from .Diagnostics import diagnostics, reduced_diagnostics
 from .EB2 import eb2
 from .Geometry import geometry
 from .Interpolation import interpolation
@@ -19,3 +19,6 @@ from .PSATD import psatd
 from .Particles import electrons, newspecies, particles, positrons, protons
 from .WarpX import warpx
 from ._libwarpx import libwarpx
+
+# This is a circulor import and must happen after the import of libwarpx
+from . import picmi # isort:skip

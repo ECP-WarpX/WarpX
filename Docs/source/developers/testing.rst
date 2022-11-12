@@ -25,7 +25,7 @@ For example, if you like to change the compiler to compilation to build on Nvidi
    branch = development
    cmakeSetupOpts = -DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON -DWarpX_COMPUTE=CUDA
 
-We also support changing compilation options :ref:`via the usual build enviroment variables <building-cmake-envvars:>`__.
+We also support changing compilation options via the usual :ref:`build enviroment variables <building-cmake-envvars>`.
 For instance, compiling with ``clang++ -Werror`` would be:
 
 .. code-block:: sh

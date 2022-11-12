@@ -14,12 +14,14 @@
 #
 spack:
   specs:
-  - adios2
+  # https://github.com/ornladios/ADIOS2/issues/3332
+  - adios2 ~cuda
+  - ascent +adios2 +python ~fortran ~shared
   - blaspp
   - boost
   - ccache
   - cmake
-  - ecp-data-vis-sdk +adios2 +ascent +hdf5 +sensei
+  - conduit ~fortran
   - cuda
   - fftw
   - hdf5
@@ -35,6 +37,10 @@ spack:
   - py-pip
   - py-setuptools
   - py-wheel
+  - sensei +ascent ~catalyst +python
+  - vtk-m ~shared
+# This always enables DevilRay, which builds too long on CUDA and we mainly use VTK-m
+#  - ecp-data-vis-sdk +adios2 +ascent +hdf5 +sensei
 # skipped to save time: 3D post-processing
 #  - paraview +adios2 +python3 +qt
 # skipped to save time, because they are faster installed via pip afterwards

@@ -11,10 +11,10 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Python/WarpX_py.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <ablastr/fields/PoissonSolver.H>
@@ -69,7 +69,7 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         }
     }
 
-    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
         AddSpaceChargeFieldLabFrame();
     }
     else {
@@ -79,13 +79,13 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
             WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
             if (species.initialize_self_fields ||
-                (do_electrostatic == ElectrostaticSolverAlgo::Relativistic)) {
+                (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic)) {
                 AddSpaceChargeField(species);
             }
         }
 
         // Add the field due to the boundary potentials
-        if (do_electrostatic == ElectrostaticSolverAlgo::Relativistic){
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic){
             AddBoundaryField();
         }
     }
@@ -242,10 +242,24 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     setPhiBC(phi_fp);
 
     // Compute the potential phi, by solving the Poisson equation
-    if ( IsPythonCallBackInstalled("poissonsolver") ) ExecutePythonCallback("poissonsolver");
-    else computePhi( rho_fp, phi_fp, beta, self_fields_required_precision,
-                     self_fields_absolute_tolerance, self_fields_max_iters,
-                     self_fields_verbosity );
+    if (IsPythonCallBackInstalled("poissonsolver")) {
+
+        // Use the Python level solver (user specified)
+        ExecutePythonCallback("poissonsolver");
+
+    } else {
+
+#if defined(WARPX_DIM_1D_Z)
+        // Use the tridiag solver with 1D
+        computePhiTriDiagonal(rho_fp, phi_fp);
+#else
+        // Use the AMREX MLMG solver otherwise
+        computePhi(rho_fp, phi_fp, beta, self_fields_required_precision,
+                   self_fields_absolute_tolerance, self_fields_max_iters,
+                   self_fields_verbosity);
+#endif
+
+    }
 
     // Compute the electric field. Note that if an EB is used the electric
     // field will be calculated in the computePhi call.
@@ -297,7 +311,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #if defined(AMREX_USE_EB)
     // EB: use AMReX to directly calculate the electric field since with EB's the
     // simple finite difference scheme in WarpX::computeE sometimes fails
-    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
     {
         // TODO: maybe make this a helper function or pass Efield_fp directly
         amrex::Vector<
@@ -671,6 +685,190 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
     }
 }
 
+/* \brief Compute the potential by solving Poisson's equation with
+          a 1D tridiagonal solve.
+
+   \param[in] rho The charge density a given species
+   \param[out] phi The potential to be computed by this function
+*/
+void
+WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                              amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const
+{
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
+        "The tridiagonal solver cannot be used with mesh refinement");
+
+    const int lev = 0;
+
+    const amrex::Real* dx = Geom(lev).CellSize();
+    const amrex::Real xmin = Geom(lev).ProbLo(0);
+    const amrex::Real xmax = Geom(lev).ProbHi(0);
+    const int nx_full_domain = static_cast<int>( (xmax - xmin)/dx[0] + 0.5_rt );
+
+    int nx_solve_min = 1;
+    int nx_solve_max = nx_full_domain - 1;
+
+    auto field_boundary_lo0 = WarpX::field_boundary_lo[0];
+    auto field_boundary_hi0 = WarpX::field_boundary_hi[0];
+    if (field_boundary_lo0 == FieldBoundaryType::Neumann || field_boundary_lo0 == FieldBoundaryType::Periodic) {
+        // Neumann or periodic boundary condition
+        // Solve for the point on the lower boundary
+        nx_solve_min = 0;
+    }
+    if (field_boundary_hi0 == FieldBoundaryType::Neumann || field_boundary_hi0 == FieldBoundaryType::Periodic) {
+        // Neumann or periodic boundary condition
+        // Solve for the point on the upper boundary
+        nx_solve_max = nx_full_domain;
+    }
+
+    // Create a 1-D MultiFab that covers all of x, including guard cells on each end.
+    // The tridiag solve will be done in this MultiFab and then copied out afterwards.
+    const amrex::IntVect lo_full_domain(AMREX_D_DECL(-1,0,0));
+    const amrex::IntVect hi_full_domain(AMREX_D_DECL(nx_full_domain+1,0,0));
+    const amrex::Box box_full_domain(lo_full_domain, hi_full_domain);
+    const BoxArray ba_full_domain(box_full_domain);
+    amrex::DistributionMapping dm_full_domain;
+    amrex::Vector<int> pmap = {0}; // The data will only be on processor 0
+    dm_full_domain.define(pmap);
+    const int ncomps1d = 1;
+    const amrex::IntVect nguard1d(AMREX_D_DECL(1,0,0));
+    const BoxArray ba_full_domain_node = amrex::convert(ba_full_domain, amrex::IntVect::TheNodeVector());
+
+    // Put the data in the pinned arena since the tridiag solver will be done on the CPU, but have
+    // the data readily accessible from the GPU.
+    auto phi1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, ncomps1d, nguard1d, MFInfo().SetArena(The_Pinned_Arena()));
+    auto zwork1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, ncomps1d, nguard1d, MFInfo().SetArena(The_Pinned_Arena()));
+    auto rho1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, ncomps1d, nguard1d, MFInfo().SetArena(The_Pinned_Arena()));
+
+    // Copy previous phi to get the boundary values
+    phi1d_mf.ParallelCopy(*phi[lev], 0, 0, 1, Geom(lev).periodicity());
+    rho1d_mf.ParallelCopy(*rho[lev], 0, 0, 1, Geom(lev).periodicity());
+
+    // Multiplier on the charge density
+    const amrex::Real norm = dx[0]*dx[0]/PhysConst::ep0;
+    rho1d_mf.mult(norm);
+
+    // Use the MFIter loop since when parallel, only process zero has a FAB.
+    // This skips the loop on all other processors.
+    for (MFIter mfi(phi1d_mf); mfi.isValid(); ++mfi) {
+
+        const auto& phi1d_arr = phi1d_mf[mfi].array();
+        const auto& zwork1d_arr = zwork1d_mf[mfi].array();
+        const auto& rho1d_arr = rho1d_mf[mfi].array();
+
+        // The loops are always performed on the CPU
+
+        amrex::Real diag = 2._rt;
+
+        // The initial values depend on the boundary condition
+        if (field_boundary_lo0 == FieldBoundaryType::PEC) {
+
+            phi1d_arr(1,0,0) = (phi1d_arr(0,0,0) + rho1d_arr(1,0,0))/diag;
+
+        } else if (field_boundary_lo0 == FieldBoundaryType::Neumann) {
+
+            // Neumann boundary condition
+            phi1d_arr(0,0,0) = rho1d_arr(0,0,0)/diag;
+
+            zwork1d_arr(1,0,0) = 2._rt/diag;
+            diag = 2._rt - zwork1d_arr(1,0,0);
+            phi1d_arr(1,0,0) = (rho1d_arr(1,0,0) - (-1._rt)*phi1d_arr(1-1,0,0))/diag;
+
+        } else if (field_boundary_lo0 == FieldBoundaryType::Periodic) {
+
+            phi1d_arr(0,0,0) = rho1d_arr(0,0,0)/diag;
+
+            zwork1d_arr(1,0,0) = 1._rt/diag;
+            diag = 2._rt - zwork1d_arr(1,0,0);
+            phi1d_arr(1,0,0) = (rho1d_arr(1,0,0) - (-1._rt)*phi1d_arr(1-1,0,0))/diag;
+
+        }
+
+        // Loop upward, calculating the Gaussian elimination multipliers and right hand sides
+        for (int i_up = 2 ; i_up < nx_solve_max ; i_up++) {
+
+            zwork1d_arr(i_up,0,0) = 1._rt/diag;
+            diag = 2._rt - zwork1d_arr(i_up,0,0);
+            phi1d_arr(i_up,0,0) = (rho1d_arr(i_up,0,0) - (-1._rt)*phi1d_arr(i_up-1,0,0))/diag;
+
+        }
+
+        // The last value depend on the boundary condition
+        int const imax = nx_solve_max;
+        amrex::Real zwork_product = 1.; // Needed for parallel boundaries
+        if (field_boundary_hi0 == FieldBoundaryType::PEC) {
+
+            zwork1d_arr(imax,0,0) = 1._rt/diag;
+            diag = 2._rt - zwork1d_arr(imax,0,0);
+            phi1d_arr(imax,0,0) = (phi1d_arr(imax+1,0,0) + rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
+
+        } else if (field_boundary_hi0 == FieldBoundaryType::Neumann) {
+
+            // Neumann boundary condition
+            zwork1d_arr(imax,0,0) = 1._rt/diag;
+            diag = 2._rt - 2._rt*zwork1d_arr(imax,0,0);
+            if (diag == 0._rt) {
+                // This happens if the lower boundary is also Neumann.
+                // It this case, the potential is relative to an arbitrary constant,
+                // so set the upper boundary to zero to force a value.
+                phi1d_arr(imax,0,0) = 0.;
+            } else {
+                phi1d_arr(imax,0,0) = (rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
+            }
+
+        } else if (field_boundary_hi0 == FieldBoundaryType::Periodic) {
+
+            zwork1d_arr(imax,0,0) = 1._rt/diag;
+
+            for (int i = 1 ; i <= nx_solve_max ; i++) {
+                zwork_product *= zwork1d_arr(i,0,0);
+            }
+
+            diag = 2._rt - zwork1d_arr(imax,0,0) - zwork_product;
+            phi1d_arr(imax,0,0) = (rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
+
+        }
+
+        // Loop downward to calculate the phi
+        if (field_boundary_lo0 == FieldBoundaryType::Periodic) {
+
+            // With periodic, the right hand column adds an extra term for all rows
+            for (int i_down = nx_solve_max-1 ; i_down >= nx_solve_min ; i_down--) {
+                zwork_product /= zwork1d_arr(i_down+1,0,0);
+                phi1d_arr(i_down,0,0) = phi1d_arr(i_down,0,0) + zwork1d_arr(i_down+1,0,0)*phi1d_arr(i_down+1,0,0) + zwork_product*phi1d_arr(imax,0,0);
+            }
+
+        } else {
+
+            for (int i_down = nx_solve_max-1 ; i_down >= nx_solve_min ; i_down--) {
+                phi1d_arr(i_down,0,0) = phi1d_arr(i_down,0,0) + zwork1d_arr(i_down+1,0,0)*phi1d_arr(i_down+1,0,0);
+            }
+
+        }
+
+        // Set the value in the guard cells
+        // The periodic case is handled in the ParallelCopy below
+        if (field_boundary_lo0 == FieldBoundaryType::PEC) {
+            phi1d_arr(-1,0,0) = phi1d_arr(0,0,0);
+        } else if (field_boundary_lo0 == FieldBoundaryType::Neumann) {
+            phi1d_arr(-1,0,0) = phi1d_arr(1,0,0);
+        }
+
+        if (field_boundary_hi0 == FieldBoundaryType::PEC) {
+            phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain,0,0);
+        } else if (field_boundary_hi0 == FieldBoundaryType::Neumann) {
+            phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain-1,0,0);
+        }
+
+    }
+
+    // Copy phi1d to phi, including the x guard cell
+    const IntVect xghost(AMREX_D_DECL(1,0,0));
+    phi[lev]->ParallelCopy(phi1d_mf, 0, 0, 1, xghost, xghost, Geom(lev).periodicity());
+
+}
+
 void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
 {
     int dim_start = 0;
@@ -687,9 +885,15 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
             hibc[0] = LinOpBCType::Dirichlet;
             dirichlet_flag[1] = true;
         }
-        else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::None) {
+        else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::Neumann) {
             hibc[0] = LinOpBCType::Neumann;
             dirichlet_flag[1] = false;
+        }
+        else {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                "Field boundary condition at the outer radius must be either PEC or neumann "
+                "when using the electrostatic solver"
+            );
         }
     }
 #endif
@@ -707,13 +911,13 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
                 lobc[idim] = LinOpBCType::Dirichlet;
                 dirichlet_flag[idim*2] = true;
             }
-            else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::None ) {
+            else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Neumann ) {
                 lobc[idim] = LinOpBCType::Neumann;
                 dirichlet_flag[idim*2] = false;
             }
             else {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                    "Field boundary conditions have to be either periodic, PEC or none "
+                    "Field boundary conditions have to be either periodic, PEC or neumann "
                     "when using the electrostatic solver"
                 );
             }
@@ -722,13 +926,13 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
                 hibc[idim] = LinOpBCType::Dirichlet;
                 dirichlet_flag[idim*2+1] = true;
             }
-            else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::None ) {
+            else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::Neumann ) {
                 hibc[idim] = LinOpBCType::Neumann;
                 dirichlet_flag[idim*2+1] = false;
             }
             else {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                    "Field boundary conditions have to be either periodic, PEC or none "
+                    "Field boundary conditions have to be either periodic, PEC or neumann "
                     "when using the electrostatic solver"
                 );
             }
@@ -739,13 +943,13 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
 
 void ElectrostaticSolver::PoissonBoundaryHandler::buildParsers ()
 {
-    potential_xlo_parser = makeParser(potential_xlo_str, {"t"});
-    potential_xhi_parser = makeParser(potential_xhi_str, {"t"});
-    potential_ylo_parser = makeParser(potential_ylo_str, {"t"});
-    potential_yhi_parser = makeParser(potential_yhi_str, {"t"});
-    potential_zlo_parser = makeParser(potential_zlo_str, {"t"});
-    potential_zhi_parser = makeParser(potential_zhi_str, {"t"});
-    potential_eb_parser = makeParser(potential_eb_str, {"x", "y", "z", "t"});
+    potential_xlo_parser = utils::parser::makeParser(potential_xlo_str, {"t"});
+    potential_xhi_parser = utils::parser::makeParser(potential_xhi_str, {"t"});
+    potential_ylo_parser = utils::parser::makeParser(potential_ylo_str, {"t"});
+    potential_yhi_parser = utils::parser::makeParser(potential_yhi_str, {"t"});
+    potential_zlo_parser = utils::parser::makeParser(potential_zlo_str, {"t"});
+    potential_zhi_parser = utils::parser::makeParser(potential_zhi_str, {"t"});
+    potential_eb_parser  = utils::parser::makeParser(potential_eb_str, {"x", "y", "z", "t"});
 
     potential_xlo = potential_xlo_parser.compile<1>();
     potential_xhi = potential_xhi_parser.compile<1>();
@@ -762,7 +966,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::buildParsers ()
         phi_EB_only_t = false;
     }
     else {
-        potential_eb_parser = makeParser(potential_eb_str, {"t"});
+        potential_eb_parser = utils::parser::makeParser(potential_eb_str, {"t"});
         potential_eb_t = potential_eb_parser.compile<1>();
     }
 }

@@ -70,12 +70,13 @@ for fn in fn_list:
     # load file
     ds  = yt.load( fn )
     ad  = ds.all_data()
-    px  = ad['particle_momentum_x'].to_ndarray()
+    pxe  = ad['electron', 'particle_momentum_x'].to_ndarray()
+    pxi  = ad['ion', 'particle_momentum_x'].to_ndarray()
     # get time index j
     j = int(fn[-5:])
     # compute error
-    vxe = numpy.mean(px[ 0:ne])/me/c
-    vxi = numpy.mean(px[ne:np])/mi/c
+    vxe = numpy.mean(pxe)/me/c
+    vxi = numpy.mean(pxi)/mi/c
     vxd = vxe - vxi
     fit = a*math.exp(b*j)
     error = error + abs(fit-vxd)

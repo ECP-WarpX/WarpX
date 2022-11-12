@@ -8,7 +8,7 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_REDUCEDDIAGS_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_REDUCEDDIAGS_H_
 
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
 
 #include <AMReX_REAL.H>
 
@@ -34,7 +34,7 @@ public:
     std::string m_rd_name;
 
     /// output intervals
-    IntervalsParser m_intervals;
+    utils::parser::IntervalsParser m_intervals;
 
     /// check if it is a restart run
     int m_IsNotRestart = 1;

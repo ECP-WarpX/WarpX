@@ -7,9 +7,9 @@
  */
 #include "Laser/LaserProfiles.H"
 
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpX_Complex.H"
 
 #include <AMReX_BLassert.H>
@@ -32,24 +32,23 @@ using namespace amrex;
 void
 WarpXLaserProfiles::GaussianLaserProfile::init (
     const amrex::ParmParse& ppl,
-    const amrex::ParmParse& /* ppc */,
     CommonLaserParameters params)
 {
     //Copy common params
     m_common_params = params;
 
     // Parse the properties of the Gaussian profile
-    getWithParser(ppl, "profile_waist", m_params.waist);
-    getWithParser(ppl, "profile_duration", m_params.duration);
-    getWithParser(ppl, "profile_t_peak", m_params.t_peak);
-    getWithParser(ppl, "profile_focal_distance", m_params.focal_distance);
-    queryWithParser(ppl, "zeta", m_params.zeta);
-    queryWithParser(ppl, "beta", m_params.beta);
-    queryWithParser(ppl, "phi2", m_params.phi2);
-    queryWithParser(ppl, "phi0", m_params.phi0);
+    utils::parser::getWithParser(ppl, "profile_waist", m_params.waist);
+    utils::parser::getWithParser(ppl, "profile_duration", m_params.duration);
+    utils::parser::getWithParser(ppl, "profile_t_peak", m_params.t_peak);
+    utils::parser::getWithParser(ppl, "profile_focal_distance", m_params.focal_distance);
+    utils::parser::queryWithParser(ppl, "zeta", m_params.zeta);
+    utils::parser::queryWithParser(ppl, "beta", m_params.beta);
+    utils::parser::queryWithParser(ppl, "phi2", m_params.phi2);
+    utils::parser::queryWithParser(ppl, "phi0", m_params.phi0);
 
     m_params.stc_direction = m_common_params.p_X;
-    queryArrWithParser(ppl, "stc_direction", m_params.stc_direction);
+    utils::parser::queryArrWithParser(ppl, "stc_direction", m_params.stc_direction);
     auto const s = 1.0_rt / std::sqrt(
         m_params.stc_direction[0]*m_params.stc_direction[0] +
         m_params.stc_direction[1]*m_params.stc_direction[1] +
