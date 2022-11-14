@@ -10,7 +10,6 @@
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/IntervalsParser.H"
 #include "WarpX.H"
 
 #include <AMReX_GpuQualifiers.H>

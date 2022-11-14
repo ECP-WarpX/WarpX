@@ -66,7 +66,7 @@ behavior of *each* individual MPI rank. The workflow for doing so is the followi
             cmake -S . -B build -DAMReX_BASE_PROFILE=OFF -DAMReX_TINY_PROFILE=ON
 
 - Run the simulation to be profiled. Note that the WarpX executable will create
-and new folder `bl_prof`, which contains the profiling data.
+  a new folder `bl_prof`, which contains the profiling data.
 
     .. note::
 

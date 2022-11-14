@@ -16,21 +16,29 @@ yt.funcs.mylog.setLevel(50)
 
 
 class Checksum:
-    '''Class for checksum comparison of one test.
-    '''
+    """Class for checksum comparison of one test.
+    """
 
     def __init__(self, test_name, plotfile, do_fields=True, do_particles=True):
-        '''Constructor
-
+        """
+        Checksum constructor.
         Store test_name and plotfile name, and compute checksum
         from plotfile and store it in self.data.
 
-        @param self The object pointer.
-        @param test_name Name of test, as found between [] in .ini file.
-        @param plotfile Plotfile from which the checksum is computed.
-        @param do_fields Whether to compare fields in the checksum.
-        @param do_particles Whether to compare particles in the checksum.
-        '''
+        Parameters
+        ----------
+        test_name: string
+            Name of test, as found between [] in .ini file.
+
+        plotfile: string
+            Plotfile from which the checksum is computed.
+
+        do_fields: bool, default=True
+            Whether to compare fields in the checksum.
+
+        do_particles: bool, default=True
+            Whether to compare particles in the checksum.
+        """
 
         self.test_name = test_name
         self.plotfile = plotfile
@@ -38,16 +46,20 @@ class Checksum:
                                        do_particles=do_particles)
 
     def read_plotfile(self, do_fields=True, do_particles=True):
-        '''Get checksum from plotfile.
-
+        """
+        Get checksum from plotfile.
         Read an AMReX plotfile with yt, compute 1 checksum per field and return
         all checksums in a dictionary.
         The checksum of quantity Q is max(abs(Q)).
 
-        @param self The object pointer.
-        @param do_fields Whether to read fields from the plotfile.
-        @param do_particles Whether to read particles from the plotfile.
-        '''
+        Parameters
+        ----------
+        do_fields: bool, default=True
+            Whether to read fields from the plotfile.
+
+        do_particles: bool, default=True
+            Whether to read particles from the plotfile.
+        """
 
         ds = yt.load(self.plotfile)
         # yt 4.0+ has rounding issues with our domain data:
@@ -103,17 +115,21 @@ class Checksum:
         return data
 
     def evaluate(self, rtol=1.e-9, atol=1.e-40):
-        '''Compare plotfile checksum with benchmark.
-
+        """
+        Compare plotfile checksum with benchmark.
         Read checksum from input plotfile, read benchmark
         corresponding to test_name, and assert that they are equal.
         Almost all the body of this functions is for
         user-readable print statements.
 
-        @param self The object pointer.
-        @param test_name Name of test, as found between [] in .ini file.
-        @param plotfile Plotfile from which the checksum is computed.
-        '''
+        Parameters
+        ----------
+        rtol: float, default=1.e-9
+            Relative tolerance on the benchmark
+
+        atol: float, default=1.e-40
+            Absolute tolerance on the benchmark
+        """
 
         ref_benchmark = Benchmark(self.test_name)
 

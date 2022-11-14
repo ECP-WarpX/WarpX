@@ -64,12 +64,12 @@ void FiniteDifferenceSolver::EvolveEPML (
         EvolveEPMLCartesian <CartesianNodalAlgorithm> (
             Efield, Bfield, Jfield, edge_lengths, Ffield, sigba, dt, pml_has_particles );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee || m_fdtd_algo == MaxwellSolverAlgo::ECT) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee || m_fdtd_algo == ElectromagneticSolverAlgo::ECT) {
 
         EvolveEPMLCartesian <CartesianYeeAlgorithm> (
             Efield, Bfield, Jfield,  edge_lengths, Ffield, sigba, dt, pml_has_particles );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         EvolveEPMLCartesian <CartesianCKCAlgorithm> (
             Efield, Bfield, Jfield,  edge_lengths, Ffield, sigba, dt, pml_has_particles );

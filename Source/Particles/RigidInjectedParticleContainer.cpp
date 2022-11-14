@@ -18,10 +18,10 @@
 #include "Pusher/UpdateMomentumHigueraCary.H"
 #include "Pusher/UpdateMomentumVay.H"
 #include "RigidInjectedParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -63,7 +63,8 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
 
     ParmParse pp_species_name(species_name);
 
-    getWithParser(pp_species_name, "zinject_plane", zinject_plane);
+    utils::parser::getWithParser(
+        pp_species_name, "zinject_plane", zinject_plane);
     pp_species_name.query("rigid_advance", rigid_advance);
 
 }

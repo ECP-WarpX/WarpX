@@ -25,7 +25,6 @@ import sys
 
 import numpy as np
 import openpmd_api as io
-import read_raw_data
 from scipy.constants import m_e
 import yt
 
@@ -36,17 +35,9 @@ import checksumAPI
 
 filename = sys.argv[1]
 
-# Tolerances to check consistency between legacy BTD and new BTD
+# Tolerances to check consistency between plotfile BTD and openPMD BTD
 rtol = 1e-16
 atol = 1e-16
-
-# Read data from legacy back-transformed diagnostics
-snapshot = './lab_frame_data/snapshots/snapshot00001'
-x_legacy = read_raw_data.get_particle_field(snapshot, 'beam', 'x')
-z_legacy = read_raw_data.get_particle_field(snapshot, 'beam', 'z')
-ux_legacy = read_raw_data.get_particle_field(snapshot, 'beam', 'ux')
-uy_legacy = read_raw_data.get_particle_field(snapshot, 'beam', 'uy')
-uz_legacy = read_raw_data.get_particle_field(snapshot, 'beam', 'uz')
 
 # Read data from new back-transformed diagnostics (plotfile)
 ds_plotfile = yt.load(filename)
@@ -66,19 +57,12 @@ uy_openpmd = ds_openpmd.particles['beam']['momentum']['y'][:]
 uz_openpmd = ds_openpmd.particles['beam']['momentum']['z'][:]
 series.flush()
 
-# Sort and compare arrays to check consistency between legacy BTD and new BTD (plotfile)
-assert(np.allclose(np.sort(x_legacy), np.sort(x_plotfile), rtol=rtol, atol=atol))
-assert(np.allclose(np.sort(z_legacy), np.sort(z_plotfile), rtol=rtol, atol=atol))
-assert(np.allclose(np.sort(ux_legacy*m_e), np.sort(ux_plotfile), rtol=rtol, atol=atol))
-assert(np.allclose(np.sort(uy_legacy*m_e), np.sort(uy_plotfile), rtol=rtol, atol=atol))
-assert(np.allclose(np.sort(uz_legacy*m_e), np.sort(uz_plotfile), rtol=rtol, atol=atol))
-
-# Sort and compare arrays to check consistency between legacy BTD and new BTD (openPMD)
-assert(np.allclose(np.sort(x_legacy), np.sort(x_openpmd), rtol=rtol, atol=atol))
-assert(np.allclose(np.sort(z_legacy), np.sort(z_openpmd), rtol=rtol, atol=atol))
-assert(np.allclose(np.sort(ux_legacy*m_e), np.sort(ux_openpmd), rtol=rtol, atol=atol))
-assert(np.allclose(np.sort(uy_legacy*m_e), np.sort(uy_openpmd), rtol=rtol, atol=atol))
-assert(np.allclose(np.sort(uz_legacy*m_e), np.sort(uz_openpmd), rtol=rtol, atol=atol))
+# Sort and compare arrays to check consistency between plotfile BTD and openPMD BTD
+assert(np.allclose(np.sort(x_plotfile), np.sort(x_openpmd), rtol=rtol, atol=atol))
+assert(np.allclose(np.sort(z_plotfile), np.sort(z_openpmd), rtol=rtol, atol=atol))
+assert(np.allclose(np.sort(ux_plotfile), np.sort(ux_openpmd), rtol=rtol, atol=atol))
+assert(np.allclose(np.sort(uy_plotfile), np.sort(uy_openpmd), rtol=rtol, atol=atol))
+assert(np.allclose(np.sort(uz_plotfile), np.sort(uz_openpmd), rtol=rtol, atol=atol))
 
 # Initial parameters
 z0 = 20.e-6
@@ -86,8 +70,8 @@ x0 = 1.e-6
 theta0 = np.arcsin(0.1)
 
 # Theoretical beam width after propagation with rigid injection
-z = np.mean(z_legacy)
-x = np.std(x_legacy)
+z = np.mean(z_plotfile)
+x = np.std(x_plotfile)
 print(f'Beam position = {z}')
 print(f'Beam width    = {x}')
 

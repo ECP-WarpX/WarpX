@@ -65,6 +65,8 @@ jobs:
     name: oneAPI ICX SP
     runs-on: ubuntu-20.04
     # Since 2021.4.0, AMReX_GpuUtility.H: error: comparison with NaN always evaluates to false in fast floating point modes
+    # oneAPI 2022.2.0 hangs for -O2 and higher:
+    #   https://github.com/ECP-WarpX/WarpX/issues/3442
     env:
       CXXFLAGS: "-Werror -Wno-error=pass-failed -Wno-tautological-constant-compare"
     # For oneAPI, Ninja is slower than the default:
@@ -98,6 +100,7 @@ jobs:
         export CC=$(which icx)
 
         cmake -S . -B build_sp         \
+          -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_EB=ON                \
           -DWarpX_LIB=ON               \
@@ -123,6 +126,8 @@ jobs:
     name: oneAPI DPC++ SP
     runs-on: ubuntu-20.04
     # Since 2021.4.0, AMReX_GpuUtility.H: error: comparison with NaN always evaluates to false in fast floating point modes
+    # oneAPI 2022.2.0 hangs for -O2 and higher:
+    #   https://github.com/ECP-WarpX/WarpX/issues/3442
     env:
       CXXFLAGS: "-Werror -Wno-tautological-constant-compare"
     # For oneAPI, Ninja is slower than the default:
@@ -156,6 +161,7 @@ jobs:
         export CC=$(which clang)
 
         cmake -S . -B build_sp         \
+          -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
           -DBUILD_SHARED_LIBS=ON       \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_COMPUTE=SYCL         \

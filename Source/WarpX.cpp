@@ -12,7 +12,6 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
@@ -121,7 +120,7 @@ short WarpX::current_deposition_algo;
 short WarpX::charge_deposition_algo;
 short WarpX::field_gathering_algo;
 short WarpX::particle_pusher_algo;
-short WarpX::maxwell_solver_id;
+short WarpX::electromagnetic_solver_id;
 short WarpX::J_in_time;
 short WarpX::rho_in_time;
 short WarpX::load_balance_costs_update_algo;
@@ -167,23 +166,12 @@ bool WarpX::refine_plasma     = false;
 
 int WarpX::num_mirrors = 0;
 
-IntervalsParser WarpX::sort_intervals;
+utils::parser::IntervalsParser WarpX::sort_intervals;
 amrex::IntVect WarpX::sort_bin_size(AMREX_D_DECL(1,1,1));
-
-bool WarpX::do_back_transformed_diagnostics = false;
-std::string WarpX::lab_data_directory = "lab_frame_data";
-int  WarpX::num_snapshots_lab = std::numeric_limits<int>::lowest();
-Real WarpX::dt_snapshots_lab  = std::numeric_limits<Real>::lowest();
-bool WarpX::do_back_transformed_fields = true;
-bool WarpX::do_back_transformed_particles = true;
-
-int  WarpX::num_slice_snapshots_lab = 0;
-Real WarpX::dt_slice_snapshots_lab;
-Real WarpX::particle_slice_width_lab = 0.0_rt;
 
 bool WarpX::do_dynamic_scheduling = true;
 
-int WarpX::do_electrostatic;
+int WarpX::electrostatic_solver_id;
 Real WarpX::self_fields_required_precision = 1.e-11_rt;
 Real WarpX::self_fields_absolute_tolerance = 0.0_rt;
 int WarpX::self_fields_max_iters = 200;
@@ -271,7 +259,6 @@ WarpX::WarpX ()
             current_injection_position = geom[0].ProbLo(moving_window_dir);
         }
     }
-    do_back_transformed_particles = mypc->doBackTransformedDiagnostics();
 
     // Particle Boundary Buffer (i.e., scraped particles on boundary)
     m_particle_boundary_buffer = std::make_unique<ParticleBoundaryBuffer>();
@@ -372,7 +359,7 @@ WarpX::WarpX ()
         && WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic)
     {
 #ifdef AMREX_USE_GPU
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
             switch (WarpX::nox)
             {
                 case 1:
@@ -413,12 +400,12 @@ WarpX::WarpX ()
 
     // Allocate field solver objects
 #ifdef WARPX_USE_PSATD
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         spectral_solver_fp.resize(nlevs_max);
         spectral_solver_cp.resize(nlevs_max);
     }
 #endif
-    if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD) {
+    if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
         m_fdtd_solver_fp.resize(nlevs_max);
         m_fdtd_solver_cp.resize(nlevs_max);
     }
@@ -431,7 +418,7 @@ WarpX::WarpX ()
     // Sanity checks. Must be done after calling the MultiParticleContainer
     // constructor, as it reads additional parameters
     // (e.g., use_fdtd_nci_corr)
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         AMREX_ALWAYS_ASSERT(use_fdtd_nci_corr == 0);
         AMREX_ALWAYS_ASSERT(do_subcycling == 0);
     }
@@ -459,8 +446,8 @@ WarpX::ReadParameters ()
 
     {
         ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
-        queryWithParser(pp, "max_step", max_step);
-        queryWithParser(pp, "stop_time", stop_time);
+        utils::parser::queryWithParser(pp, "max_step", max_step);
+        utils::parser::queryWithParser(pp, "stop_time", stop_time);
         pp.query("authors", authors);
     }
 
@@ -472,7 +459,7 @@ WarpX::ReadParameters ()
 
     {
         ParmParse pp_algo("algo");
-        maxwell_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+        electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
     }
 
     {
@@ -505,7 +492,9 @@ WarpX::ReadParameters ()
         }
 
         std::vector<int> numprocs_in;
-        queryArrWithParser(pp_warpx, "numprocs", numprocs_in, 0, AMREX_SPACEDIM);
+        utils::parser::queryArrWithParser(
+            pp_warpx, "numprocs", numprocs_in, 0, AMREX_SPACEDIM);
+
         if (not numprocs_in.empty()) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE
                 (numprocs_in.size() == AMREX_SPACEDIM,
@@ -583,20 +572,22 @@ WarpX::ReadParameters ()
             }
         }
 
-        queryWithParser(pp_warpx, "cfl", cfl);
+        utils::parser::queryWithParser(pp_warpx, "cfl", cfl);
         pp_warpx.query("verbose", verbose);
-        queryWithParser(pp_warpx, "regrid_int", regrid_int);
+        utils::parser::queryWithParser(pp_warpx, "regrid_int", regrid_int);
         pp_warpx.query("do_subcycling", do_subcycling);
         pp_warpx.query("do_multi_J", do_multi_J);
         if (do_multi_J)
         {
-            getWithParser(pp_warpx, "do_multi_J_n_depositions", do_multi_J_n_depositions);
+            utils::parser::getWithParser(
+                pp_warpx, "do_multi_J_n_depositions", do_multi_J_n_depositions);
         }
         pp_warpx.query("use_hybrid_QED", use_hybrid_QED);
         pp_warpx.query("safe_guard_cells", safe_guard_cells);
         std::vector<std::string> override_sync_intervals_string_vec = {"1"};
         pp_warpx.queryarr("override_sync_intervals", override_sync_intervals_string_vec);
-        override_sync_intervals = IntervalsParser(override_sync_intervals_string_vec);
+        override_sync_intervals =
+            utils::parser::IntervalsParser(override_sync_intervals_string_vec);
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
                                          "Subcycling method 1 only works for 2 levels.");
@@ -607,15 +598,17 @@ WarpX::ReadParameters ()
 
         // queryWithParser returns 1 if argument zmax_plasma_to_compute_max_step is
         // specified by the user, 0 otherwise.
-        do_compute_max_step_from_zmax =
-            queryWithParser(pp_warpx, "zmax_plasma_to_compute_max_step",
-                      zmax_plasma_to_compute_max_step);
+        do_compute_max_step_from_zmax = utils::parser::queryWithParser(
+            pp_warpx, "zmax_plasma_to_compute_max_step",
+            zmax_plasma_to_compute_max_step);
 
         pp_warpx.query("do_moving_window", do_moving_window);
         if (do_moving_window)
         {
-            queryWithParser(pp_warpx, "start_moving_window_step", start_moving_window_step);
-            queryWithParser(pp_warpx, "end_moving_window_step", end_moving_window_step);
+            utils::parser::queryWithParser(
+                pp_warpx, "start_moving_window_step", start_moving_window_step);
+            utils::parser::queryWithParser(
+                pp_warpx, "end_moving_window_step", end_moving_window_step);
             std::string s;
             pp_warpx.get("moving_window_dir", s);
             if (s == "x" || s == "X") {
@@ -638,61 +631,32 @@ WarpX::ReadParameters ()
 
             moving_window_x = geom[0].ProbLo(moving_window_dir);
 
-            getWithParser(pp_warpx, "moving_window_v", moving_window_v);
+            utils::parser::getWithParser(
+                pp_warpx, "moving_window_v", moving_window_v);
             moving_window_v *= PhysConst::c;
         }
 
-        pp_warpx.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);
-        if (do_back_transformed_diagnostics) {
-
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(gamma_boost > 1.0,
-                   "gamma_boost must be > 1 to use the boosted frame diagnostic.");
-
-            pp_warpx.query("lab_data_directory", lab_data_directory);
-
-            std::string s;
-            pp_warpx.get("boost_direction", s);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (s == "z" || s == "Z"),
-                   "The boosted frame diagnostic currently only works if the boost is in the z direction.");
-
-            queryWithParser(pp_warpx, "num_snapshots_lab", num_snapshots_lab);
-
-            // Read either dz_snapshots_lab or dt_snapshots_lab
-            Real dz_snapshots_lab = 0;
-            bool snapshot_interval_is_specified = queryWithParser(pp_warpx, "dt_snapshots_lab", dt_snapshots_lab);
-            if ( queryWithParser(pp_warpx, "dz_snapshots_lab", dz_snapshots_lab) ){
-                dt_snapshots_lab = dz_snapshots_lab/PhysConst::c;
-                snapshot_interval_is_specified = true;
-            }
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                snapshot_interval_is_specified,
-                "When using back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab.");
-
-            getWithParser(pp_warpx, "gamma_boost", gamma_boost);
-
-            pp_warpx.query("do_back_transformed_fields", do_back_transformed_fields);
-
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(do_moving_window,
-                   "The moving window should be on if using the boosted frame diagnostic.");
-
-            pp_warpx.get("moving_window_dir", s);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (s == "z" || s == "Z"),
-                   "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
+        electrostatic_solver_id = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
+        // if an electrostatic solver is used, set the Maxwell solver to None
+        if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
+            electromagnetic_solver_id = ElectromagneticSolverAlgo::None;
         }
 
-        do_electrostatic = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
-
 #if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(do_electrostatic!=ElectrostaticSolverAlgo::None,
-        "Currently, the embedded boundary in RZ only works for electrostatic solvers.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        electromagnetic_solver_id==ElectromagneticSolverAlgo::None,
+        "Currently, the embedded boundary in RZ only works for electrostatic solvers (or no solver).");
 #endif
 
-        if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
             // Note that with the relativistic version, these parameters would be
             // input for each species.
-            queryWithParser(pp_warpx, "self_fields_required_precision", self_fields_required_precision);
-            queryWithParser(pp_warpx, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
-            queryWithParser(pp_warpx, "self_fields_max_iters", self_fields_max_iters);
+            utils::parser::queryWithParser(
+                pp_warpx, "self_fields_required_precision", self_fields_required_precision);
+            utils::parser::queryWithParser(
+                pp_warpx, "self_fields_absolute_tolerance", self_fields_absolute_tolerance);
+            utils::parser::queryWithParser(
+                pp_warpx, "self_fields_max_iters", self_fields_max_iters);
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
         }
         // Parse the input file for domain boundary potentials
@@ -706,12 +670,12 @@ WarpX::ReadParameters ()
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
 
-        queryWithParser(pp_warpx, "const_dt", const_dt);
+        utils::parser::queryWithParser(pp_warpx, "const_dt", const_dt);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
         // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
 #ifdef WARPX_DIM_RZ
-        if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD) WarpX::use_filter = false;
+        if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) WarpX::use_filter = false;
 #endif
 
         // Read filter and fill IntVect filter_npass_each_dir with
@@ -719,7 +683,8 @@ WarpX::ReadParameters ()
         pp_warpx.query("use_filter", use_filter);
         pp_warpx.query("use_filter_compensation", use_filter_compensation);
         Vector<int> parse_filter_npass_each_dir(AMREX_SPACEDIM,1);
-        queryArrWithParser(pp_warpx, "filter_npass_each_dir", parse_filter_npass_each_dir, 0, AMREX_SPACEDIM);
+        utils::parser::queryArrWithParser(
+            pp_warpx, "filter_npass_each_dir", parse_filter_npass_each_dir, 0, AMREX_SPACEDIM);
         filter_npass_each_dir[0] = parse_filter_npass_each_dir[0];
 #if (AMREX_SPACEDIM >= 2)
         filter_npass_each_dir[1] = parse_filter_npass_each_dir[1];
@@ -731,7 +696,7 @@ WarpX::ReadParameters ()
         // TODO When k-space filtering will be implemented also for Cartesian geometries,
         // this code block will have to be applied in all cases (remove #ifdef condition)
 #ifdef WARPX_DIM_RZ
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
             // With RZ spectral, only use k-space filtering
             use_kspace_filter = use_filter;
             use_filter = false;
@@ -745,14 +710,18 @@ WarpX::ReadParameters ()
         }
 #endif
 
-        queryWithParser(pp_warpx, "num_mirrors", num_mirrors);
+        utils::parser::queryWithParser(
+            pp_warpx, "num_mirrors", num_mirrors);
         if (num_mirrors>0){
             mirror_z.resize(num_mirrors);
-            getArrWithParser(pp_warpx, "mirror_z", mirror_z, 0, num_mirrors);
+            utils::parser::getArrWithParser(
+                pp_warpx, "mirror_z", mirror_z, 0, num_mirrors);
             mirror_z_width.resize(num_mirrors);
-            getArrWithParser(pp_warpx, "mirror_z_width", mirror_z_width, 0, num_mirrors);
+            utils::parser::getArrWithParser(
+                pp_warpx, "mirror_z_width", mirror_z_width, 0, num_mirrors);
             mirror_z_npoints.resize(num_mirrors);
-            getArrWithParser(pp_warpx, "mirror_z_npoints", mirror_z_npoints, 0, num_mirrors);
+            utils::parser::getArrWithParser(
+                pp_warpx, "mirror_z_npoints", mirror_z_npoints, 0, num_mirrors);
         }
 
         pp_warpx.query("do_single_precision_comms", do_single_precision_comms);
@@ -770,11 +739,14 @@ WarpX::ReadParameters ()
         pp_warpx.query("refine_plasma", refine_plasma);
         pp_warpx.query("do_dive_cleaning", do_dive_cleaning);
         pp_warpx.query("do_divb_cleaning", do_divb_cleaning);
-        queryWithParser(pp_warpx, "n_field_gather_buffer", n_field_gather_buffer);
-        queryWithParser(pp_warpx, "n_current_deposition_buffer", n_current_deposition_buffer);
+        utils::parser::queryWithParser(
+            pp_warpx, "n_field_gather_buffer", n_field_gather_buffer);
+        utils::parser::queryWithParser(
+            pp_warpx, "n_current_deposition_buffer", n_current_deposition_buffer);
 
         amrex::Real quantum_xi_tmp;
-        int quantum_xi_is_specified = queryWithParser(pp_warpx, "quantum_xi", quantum_xi_tmp);
+        const auto quantum_xi_is_specified =
+            utils::parser::queryWithParser(pp_warpx, "quantum_xi", quantum_xi_tmp);
         if (quantum_xi_is_specified) {
             double const quantum_xi = quantum_xi_tmp;
             quantum_xi_c2 = static_cast<amrex::Real>(quantum_xi * PhysConst::c * PhysConst::c);
@@ -796,20 +768,20 @@ WarpX::ReadParameters ()
             {
                 // SilverMueller is implemented for Yee
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    maxwell_solver_id == MaxwellSolverAlgo::Yee,
+                    electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee,
                     "The Silver-Mueller boundary condition can only be used with the Yee solver.");
             }
         }
 
-        queryWithParser(pp_warpx, "pml_ncell", pml_ncell);
-        queryWithParser(pp_warpx, "pml_delta", pml_delta);
+        utils::parser::queryWithParser(pp_warpx, "pml_ncell", pml_ncell);
+        utils::parser::queryWithParser(pp_warpx, "pml_delta", pml_delta);
         pp_warpx.query("pml_has_particles", pml_has_particles);
         pp_warpx.query("do_pml_j_damping", do_pml_j_damping);
         pp_warpx.query("do_pml_in_domain", do_pml_in_domain);
         pp_warpx.query("do_similar_dm_pml", do_similar_dm_pml);
         // Read `v_particle_pml` in units of the speed of light
         v_particle_pml = 1._rt;
-        queryWithParser(pp_warpx, "v_particle_pml", v_particle_pml);
+        utils::parser::queryWithParser(pp_warpx, "v_particle_pml", v_particle_pml);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(0._rt < v_particle_pml && v_particle_pml <= 1._rt,
             "Input value for the velocity warpx.v_particle_pml of the macroparticle must be in (0,1] (in units of c).");
         // Scale by the speed of light
@@ -817,7 +789,7 @@ WarpX::ReadParameters ()
 
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
         // false for FDTD solver, true for PSATD solver.
-        if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+        if (electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD)
         {
             do_pml_dive_cleaning = false;
             do_pml_divb_cleaning = false;
@@ -835,14 +807,14 @@ WarpX::ReadParameters ()
         // If WarpX::do_divb_cleaning = true, set also WarpX::do_pml_divb_cleaning = true
         // (possibly overwritten by users in the input file, see query below)
         // TODO Implement div(B) cleaning in PML with FDTD and remove second if condition
-        if (do_divb_cleaning && maxwell_solver_id == MaxwellSolverAlgo::PSATD) do_pml_divb_cleaning = true;
+        if (do_divb_cleaning && electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) do_pml_divb_cleaning = true;
 
         // Query input parameters to use div(E) and div(B) cleaning in PMLs
         pp_warpx.query("do_pml_dive_cleaning", do_pml_dive_cleaning);
         pp_warpx.query("do_pml_divb_cleaning", do_pml_divb_cleaning);
 
         // TODO Implement div(B) cleaning in PML with FDTD and remove ASSERT
-        if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+        if (electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 do_pml_divb_cleaning == false,
@@ -851,7 +823,7 @@ WarpX::ReadParameters ()
 
         // Divergence cleaning in PMLs for PSATD solver implemented only
         // for both div(E) and div(B) cleaning
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 do_pml_dive_cleaning == do_pml_divb_cleaning,
@@ -865,7 +837,7 @@ WarpX::ReadParameters ()
         }
 
 #ifdef WARPX_DIM_RZ
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false || maxwell_solver_id == MaxwellSolverAlgo::PSATD,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( isAnyBoundaryPML() == false || electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD,
             "PML are not implemented in RZ geometry with FDTD; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( field_boundary_lo[1] != FieldBoundaryType::PML && field_boundary_hi[1] != FieldBoundaryType::PML,
             "PML are not implemented in RZ geometry along z; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
@@ -890,19 +862,19 @@ WarpX::ReadParameters ()
             ParmParse pp_vismf("vismf");
             pp_vismf.add("usesingleread", use_single_read);
             pp_vismf.add("usesinglewrite", use_single_write);
-            queryWithParser(pp_warpx, "mffile_nstreams", mffile_nstreams);
+            utils::parser::queryWithParser(pp_warpx, "mffile_nstreams", mffile_nstreams);
             VisMF::SetMFFileInStreams(mffile_nstreams);
-            queryWithParser(pp_warpx, "field_io_nfiles", field_io_nfiles);
+            utils::parser::queryWithParser(pp_warpx, "field_io_nfiles", field_io_nfiles);
             VisMF::SetNOutFiles(field_io_nfiles);
-            queryWithParser(pp_warpx, "particle_io_nfiles", particle_io_nfiles);
+            utils::parser::queryWithParser(pp_warpx, "particle_io_nfiles", particle_io_nfiles);
             ParmParse pp_particles("particles");
             pp_particles.add("particles_nfiles", particle_io_nfiles);
         }
 
         if (maxLevel() > 0) {
             Vector<Real> lo, hi;
-            getArrWithParser(pp_warpx, "fine_tag_lo", lo);
-            getArrWithParser(pp_warpx, "fine_tag_hi", hi);
+            utils::parser::getArrWithParser(pp_warpx, "fine_tag_lo", lo);
+            utils::parser::getArrWithParser(pp_warpx, "fine_tag_hi", hi);
             fine_tag_lo = RealVect{lo};
             fine_tag_hi = RealVect{hi};
         }
@@ -915,7 +887,7 @@ WarpX::ReadParameters ()
 
 #ifdef WARPX_DIM_RZ
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
-        queryWithParser(pp_warpx, "n_rz_azimuthal_modes", n_rz_azimuthal_modes);
+        utils::parser::queryWithParser(pp_warpx, "n_rz_azimuthal_modes", n_rz_azimuthal_modes);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( n_rz_azimuthal_modes > 0,
             "The number of azimuthal modes (n_rz_azimuthal_modes) must be at least 1");
 #endif
@@ -938,11 +910,11 @@ WarpX::ReadParameters ()
     {
         ParmParse pp_algo("algo");
 #ifdef WARPX_DIM_RZ
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( maxwell_solver_id != MaxwellSolverAlgo::CKC,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( electromagnetic_solver_id != ElectromagneticSolverAlgo::CKC,
             "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
 #endif
 #ifndef WARPX_USE_PSATD
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( maxwell_solver_id != MaxwellSolverAlgo::PSATD,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD,
             "algo.maxwell_solver = psatd is not supported because WarpX was built without spectral solvers");
 #endif
 
@@ -957,7 +929,7 @@ WarpX::ReadParameters ()
                 "Error : Field boundary at r=0 must be ``none``. \n");
         }
 
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
             // Force do_nodal=true (that is, not staggered) and
             // use same shape factors in all directions, for gathering
             do_nodal = true;
@@ -1001,14 +973,17 @@ WarpX::ReadParameters ()
         // Load balancing parameters
         std::vector<std::string> load_balance_intervals_string_vec = {"0"};
         pp_algo.queryarr("load_balance_intervals", load_balance_intervals_string_vec);
-        load_balance_intervals = IntervalsParser(load_balance_intervals_string_vec);
+        load_balance_intervals = utils::parser::IntervalsParser(
+            load_balance_intervals_string_vec);
         pp_algo.query("load_balance_with_sfc", load_balance_with_sfc);
         pp_algo.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
-        queryWithParser(pp_algo, "load_balance_efficiency_ratio_threshold",
+        utils::parser::queryWithParser(pp_algo, "load_balance_efficiency_ratio_threshold",
                         load_balance_efficiency_ratio_threshold);
         load_balance_costs_update_algo = GetAlgorithmInteger(pp_algo, "load_balance_costs_update");
-        queryWithParser(pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
-        queryWithParser(pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
+        utils::parser::queryWithParser(
+            pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
+        utils::parser::queryWithParser(
+            pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
 
         // Parse algo.particle_shape and check that input is acceptable
         // (do this only if there is at least one particle or laser species)
@@ -1023,7 +998,7 @@ WarpX::ReadParameters ()
         std::vector<std::string> sort_intervals_string_vec = {"-1"};
         int particle_shape;
         if (!species_names.empty() || !lasers_names.empty()) {
-            if (queryWithParser(pp_algo, "particle_shape", particle_shape)){
+            if (utils::parser::queryWithParser(pp_algo, "particle_shape", particle_shape)){
 
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     (particle_shape >= 1) && (particle_shape <=3),
@@ -1058,11 +1033,13 @@ WarpX::ReadParameters ()
 
         amrex::ParmParse pp_warpx("warpx");
         pp_warpx.queryarr("sort_intervals", sort_intervals_string_vec);
-        sort_intervals = IntervalsParser(sort_intervals_string_vec);
+        sort_intervals = utils::parser::IntervalsParser(sort_intervals_string_vec);
 
         Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
-        bool sort_bin_size_is_specified = queryArrWithParser(pp_warpx, "sort_bin_size",
-                                                            vect_sort_bin_size, 0, AMREX_SPACEDIM);
+        bool sort_bin_size_is_specified =
+            utils::parser::queryArrWithParser(
+                pp_warpx, "sort_bin_size",
+                vect_sort_bin_size, 0, AMREX_SPACEDIM);
         if (sort_bin_size_is_specified){
             for (int i=0; i<AMREX_SPACEDIM; i++)
                 sort_bin_size[i] = vect_sort_bin_size[i];
@@ -1082,17 +1059,23 @@ WarpX::ReadParameters ()
         if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
             WarpX::do_nodal == 0)
         {
-            queryWithParser(pp_interpolation, "field_centering_nox", field_centering_nox);
-            queryWithParser(pp_interpolation, "field_centering_noy", field_centering_noy);
-            queryWithParser(pp_interpolation, "field_centering_noz", field_centering_noz);
+            utils::parser::queryWithParser(
+                pp_interpolation, "field_centering_nox", field_centering_nox);
+            utils::parser::queryWithParser(
+                pp_interpolation, "field_centering_noy", field_centering_noy);
+            utils::parser::queryWithParser(
+                pp_interpolation, "field_centering_noz", field_centering_noz);
         }
 
         // Read order of finite-order centering of currents (nodal to staggered)
         if (WarpX::do_current_centering)
         {
-            queryWithParser(pp_interpolation, "current_centering_nox", current_centering_nox);
-            queryWithParser(pp_interpolation, "current_centering_noy", current_centering_noy);
-            queryWithParser(pp_interpolation, "current_centering_noz", current_centering_noz);
+            utils::parser::queryWithParser(
+                pp_interpolation, "current_centering_nox", current_centering_nox);
+            utils::parser::queryWithParser(
+                pp_interpolation, "current_centering_noy", current_centering_noy);
+            utils::parser::queryWithParser(
+                pp_interpolation, "current_centering_noz", current_centering_noz);
         }
 
         // Finite-order centering is not implemented with mesh refinement
@@ -1126,7 +1109,7 @@ WarpX::ReadParameters ()
         }
     }
 
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         ParmParse pp_psatd("psatd");
         pp_psatd.query("periodic_single_box_fft", fft_periodic_single_box);
@@ -1142,17 +1125,17 @@ WarpX::ReadParameters ()
         if(nox_str == "inf") {
             nox_fft = -1;
         } else {
-            queryWithParser(pp_psatd, "nox", nox_fft);
+            utils::parser::queryWithParser(pp_psatd, "nox", nox_fft);
         }
         if(noy_str == "inf") {
             noy_fft = -1;
         } else {
-            queryWithParser(pp_psatd, "noy", noy_fft);
+            utils::parser::queryWithParser(pp_psatd, "noy", noy_fft);
         }
         if(noz_str == "inf") {
             noz_fft = -1;
         } else {
-            queryWithParser(pp_psatd, "noz", noz_fft);
+            utils::parser::queryWithParser(pp_psatd, "noz", noz_fft);
         }
 
         if (!fft_periodic_single_box) {
@@ -1232,7 +1215,8 @@ WarpX::ReadParameters ()
         }
         else
         {
-            queryArrWithParser(pp_psatd, "v_galilean", m_v_galilean, 0, 3);
+            utils::parser::queryArrWithParser(
+                pp_psatd, "v_galilean", m_v_galilean, 0, 3);
         }
 
         // Check whether the default comoving velocity should be used
@@ -1250,7 +1234,8 @@ WarpX::ReadParameters ()
         }
         else
         {
-            queryArrWithParser(pp_psatd, "v_comoving", m_v_comoving, 0, 3);
+            utils::parser::queryArrWithParser(
+                pp_psatd, "v_comoving", m_v_comoving, 0, 3);
         }
 
         // Scale the Galilean/comoving velocity by the speed of light
@@ -1377,7 +1362,7 @@ WarpX::ReadParameters ()
         }
     }
 
-    if (maxwell_solver_id != MaxwellSolverAlgo::PSATD ) {
+    if (electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD ) {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 (WarpX::field_boundary_lo[idim] != FieldBoundaryType::Damped) &&
@@ -1389,39 +1374,32 @@ WarpX::ReadParameters ()
 
     // for slice generation //
     {
-       ParmParse pp_slice("slice");
-       amrex::Vector<Real> slice_lo(AMREX_SPACEDIM);
-       amrex::Vector<Real> slice_hi(AMREX_SPACEDIM);
-       Vector<int> slice_crse_ratio(AMREX_SPACEDIM);
-       // set default slice_crse_ratio //
-       for (int idim=0; idim < AMREX_SPACEDIM; ++idim )
-       {
-          slice_crse_ratio[idim] = 1;
-       }
-       queryArrWithParser(pp_slice, "dom_lo", slice_lo, 0, AMREX_SPACEDIM);
-       queryArrWithParser(pp_slice, "dom_hi", slice_hi, 0, AMREX_SPACEDIM);
-       queryArrWithParser(pp_slice, "coarsening_ratio",slice_crse_ratio,0,AMREX_SPACEDIM);
-       queryWithParser(pp_slice, "plot_int",slice_plot_int);
-       slice_realbox.setLo(slice_lo);
-       slice_realbox.setHi(slice_hi);
-       slice_cr_ratio = IntVect(AMREX_D_DECL(1,1,1));
-       for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
-       {
-          if (slice_crse_ratio[idim] > 1 ) {
-             slice_cr_ratio[idim] = slice_crse_ratio[idim];
-          }
-       }
-
-       if (do_back_transformed_diagnostics) {
-          WARPX_ALWAYS_ASSERT_WITH_MESSAGE(gamma_boost > 1.0,
-                 "gamma_boost must be > 1 to use the boost frame diagnostic");
-          queryWithParser(pp_slice, "num_slice_snapshots_lab", num_slice_snapshots_lab);
-          if (num_slice_snapshots_lab > 0) {
-             getWithParser(pp_slice, "dt_slice_snapshots_lab", dt_slice_snapshots_lab );
-             getWithParser(pp_slice, "particle_slice_width_lab",particle_slice_width_lab);
-          }
-       }
-
+        ParmParse pp_slice("slice");
+        amrex::Vector<Real> slice_lo(AMREX_SPACEDIM);
+        amrex::Vector<Real> slice_hi(AMREX_SPACEDIM);
+        Vector<int> slice_crse_ratio(AMREX_SPACEDIM);
+        // set default slice_crse_ratio //
+        for (int idim=0; idim < AMREX_SPACEDIM; ++idim )
+        {
+            slice_crse_ratio[idim] = 1;
+        }
+        utils::parser::queryArrWithParser(
+        pp_slice, "dom_lo", slice_lo, 0, AMREX_SPACEDIM);
+        utils::parser::queryArrWithParser(
+        pp_slice, "dom_hi", slice_hi, 0, AMREX_SPACEDIM);
+        utils::parser::queryArrWithParser(
+        pp_slice, "coarsening_ratio",slice_crse_ratio,0,AMREX_SPACEDIM);
+        utils::parser::queryWithParser(
+        pp_slice, "plot_int",slice_plot_int);
+        slice_realbox.setLo(slice_lo);
+        slice_realbox.setHi(slice_hi);
+        slice_cr_ratio = IntVect(AMREX_D_DECL(1,1,1));
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
+        {
+            if (slice_crse_ratio[idim] > 1 ) {
+                slice_cr_ratio[idim] = slice_crse_ratio[idim];
+            }
+        }
     }
 }
 
@@ -1529,6 +1507,68 @@ WarpX::BackwardCompatibility ()
         "Please use the renamed option warpx.serialize_initial_conditions instead."
     );
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_back_transformed_diagnostics", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("lab_data_directory", backward_str),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("num_snapshots_lab", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("dt_snapshots_lab", backward_Real),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("dz_snapshots_lab", backward_Real),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_back_transformed_fields", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("buffer_size", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    ParmParse pp_slice("slice");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_slice.query("num_slice_snapshots_lab", backward_int),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_slice.query("dt_slice_snapshots_lab", backward_Real),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_slice.query("particle_slice_width_lab", backward_Real),
+        "Legacy back-transformed diagnostics are not supported anymore. "
+        "Please use the new syntax for back-transformed diagnostics, see documentation."
+    );
+
     ParmParse pp_interpolation("interpolation");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_interpolation.query("nox", backward_int) &&
@@ -1633,7 +1673,7 @@ WarpX::ClearLevel (int lev)
     rho_cp[lev].reset();
 
 #ifdef WARPX_USE_PSATD
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         spectral_solver_fp[lev].reset();
         spectral_solver_cp[lev].reset();
     }
@@ -1674,12 +1714,11 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::nox,
         nox_fft, noy_fft, noz_fft,
         NCIGodfreyFilter::m_stencil_width,
-        maxwell_solver_id,
+        electromagnetic_solver_id,
         maxLevel(),
         WarpX::m_v_galilean,
         WarpX::m_v_comoving,
         safe_guard_cells,
-        WarpX::do_electrostatic,
         WarpX::do_multi_J,
         WarpX::fft_do_time_averaging,
         WarpX::isAnyBoundaryPML(),
@@ -1787,7 +1826,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         G_nodal_flag = amrex::IntVect::TheNodeVector();
     }
 #ifdef WARPX_DIM_RZ
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         // Force cell-centered IndexType in r and z
         Ex_nodal_flag  = IntVect::TheCellVector();
         Ey_nodal_flag  = IntVect::TheCellVector();
@@ -1888,9 +1927,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     // EB info are needed only at the finest level
     if (lev == maxLevel())
     {
-        if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee
-           || WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC
-           || WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+        if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
             m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[x]"));
             m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[y]"));
             m_edge_lengths[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[z]"));
@@ -1898,7 +1935,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             m_face_areas[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, By_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_face_areas[y]"));
             m_face_areas[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Bz_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_face_areas[z]"));
         }
-        if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+        if(WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
             m_edge_lengths[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, Ex_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[x]"));
             m_edge_lengths[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, Ey_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[y]"));
             m_edge_lengths[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, Ez_nodal_flag), dm, ncomps, guard_cells.ng_FieldSolver, tag("m_edge_lengths[z]"));
@@ -1931,8 +1968,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 #endif
 
-    bool deposit_charge = do_dive_cleaning || (do_electrostatic == ElectrostaticSolverAlgo::LabFrame);
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    bool deposit_charge = do_dive_cleaning || (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame);
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         deposit_charge = do_dive_cleaning || update_with_rho || current_correction;
     }
     if (deposit_charge)
@@ -1942,7 +1979,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,rho_ncomps,ngRho,tag("rho_fp"));
     }
 
-    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
     {
         IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
         phi_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,phi_nodal_flag),dm,ncomps,ngPhi,tag("phi_fp"));
@@ -1966,7 +2003,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         G_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, G_nodal_flag), dm, ncomps, ngG, tag("G_fp"));
     }
 
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         // Allocate and initialize the spectral solver
 #ifndef WARPX_USE_PSATD
@@ -2019,9 +2056,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                  pml_flag_false);
 #   endif
 #endif
-    } // MaxwellSolverAlgo::PSATD
+    } // ElectromagneticSolverAlgo::PSATD
     else {
-        m_fdtd_solver_fp[lev] = std::make_unique<FiniteDifferenceSolver>(maxwell_solver_id, dx, do_nodal);
+        m_fdtd_solver_fp[lev] = std::make_unique<FiniteDifferenceSolver>(electromagnetic_solver_id, dx, do_nodal);
     }
 
     //
@@ -2128,7 +2165,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             }
         }
 
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         {
             // Allocate and initialize the spectral solver
 #ifndef WARPX_USE_PSATD
@@ -2163,9 +2200,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                      pml_flag_false);
 #   endif
 #endif
-        } // MaxwellSolverAlgo::PSATD
+        } // ElectromagneticSolverAlgo::PSATD
         else {
-            m_fdtd_solver_cp[lev] = std::make_unique<FiniteDifferenceSolver>(maxwell_solver_id, cdx,
+            m_fdtd_solver_cp[lev] = std::make_unique<FiniteDifferenceSolver>(electromagnetic_solver_id, cdx,
                                                                              do_nodal);
         }
     }
@@ -2482,7 +2519,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
 void
 WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 {
-    if ( WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD ) {
+    if ( WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD ) {
 #ifdef WARPX_USE_PSATD
         spectral_solver_fp[lev]->ComputeSpectralDivE( lev, Efield_aux[lev], divE );
 #else
