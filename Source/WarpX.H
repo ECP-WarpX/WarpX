@@ -501,9 +501,16 @@ public:
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
 
-    void HybridSolveE ();
-    void HybridSolveE (int lev);
-    void HybridSolveE (int lev, PatchType patch_type);
+    void HybridSolveE (DtType a_dt_type);
+    void HybridSolveE (int lev, DtType a_dt_type);
+    void HybridSolveE (int lev, PatchType patch_type, DtType a_dt_type);
+
+    /**
+     * \brief
+     * This function contains the logic involved in evolving the electric and
+     * magnetic fields in the hybrid PIC algorithm.
+     */
+    void HybridEvolveFields ();
 
     /** apply QED correction on electric field
      *
@@ -1174,6 +1181,7 @@ private:
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_old;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_vay;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;

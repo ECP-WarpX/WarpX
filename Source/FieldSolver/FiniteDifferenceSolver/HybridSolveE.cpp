@@ -16,9 +16,11 @@ void FiniteDifferenceSolver::HybridSolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield_old,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    int lev, std::unique_ptr<HybridModel> const& hybrid_model )
+    int lev, std::unique_ptr<HybridModel> const& hybrid_model,
+    DtType a_dt_type )
 {
 
    // Select algorithm (The choice of algorithm is a runtime option,
@@ -29,11 +31,13 @@ void FiniteDifferenceSolver::HybridSolveE (
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Hybrid) {
 #ifdef WARPX_DIM_RZ
         HybridSolveECylindrical <CylindricalYeeAlgorithm> (
-            Efield, Bfield, Jfield, rhofield, edge_lengths, lev
+            Efield, Bfield, Jfield, Jfield_old, rhofield, edge_lengths, lev,
+            hybrid_model, a_dt_type
         );
 #else
         HybridSolveECartesian <CartesianHybridYeeAlgorithm> (
-            Efield, Bfield, Jfield, rhofield, edge_lengths, lev, hybrid_model
+            Efield, Bfield, Jfield, Jfield_old, rhofield, edge_lengths, lev,
+            hybrid_model, a_dt_type
         );
 #endif
     } else {
@@ -48,9 +52,11 @@ void FiniteDifferenceSolver::HybridSolveECylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield_old,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    int lev, std::unique_ptr<HybridModel> const& hybrid_model )
+    int lev, std::unique_ptr<HybridModel> const& hybrid_model,
+    DtType a_dt_type )
 {
 #ifndef AMREX_USE_EB
     amrex::ignore_unused(edge_lengths);
@@ -67,9 +73,11 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield_old,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    int lev, std::unique_ptr<HybridModel> const& hybrid_model )
+    int lev, std::unique_ptr<HybridModel> const& hybrid_model,
+    DtType a_dt_type )
 {
 #ifndef AMREX_USE_EB
     amrex::ignore_unused(edge_lengths);
@@ -122,6 +130,10 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
         Array4<Real> const& jz = Jfield[2]->array(mfi);
         Array4<Real> const& rho = rhofield->array(mfi);
 
+        Array4<Real> const& jx_old = Jfield_old[0]->array(mfi);
+        Array4<Real> const& jy_old = Jfield_old[1]->array(mfi);
+        Array4<Real> const& jz_old = Jfield_old[2]->array(mfi);
+
 #ifdef AMREX_USE_EB
         amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
         amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
@@ -150,15 +162,57 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 if (lx(i, j, k) <= 0) return;
 #endif
 
-                auto const rho_interp = CoarsenIO::Interp(
-                    rho, rho_stag, Ex_stag, coarsen, i, j, k, 0
-                );
-                auto const Jy_interp = CoarsenIO::Interp(
-                    jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0
-                );
-                auto const Jz_interp = CoarsenIO::Interp(
-                    jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0
-                );
+                // allocate variables for all interpolated (onto correct grid) field quantities
+                Real rho_interp, Jy_interp, Jz_interp, grad_p;
+
+                // get the appropriate charge density
+                if (a_dt_type == DtType::Full) {
+                    // use rho^{n}
+                    rho_interp = CoarsenIO::Interp(rho, rho_stag, Ex_stag, coarsen, i, j, k, 0);
+                } else if (a_dt_type == DtType::FirstHalf) {
+                    // use rho^{n+1/2}
+                    rho_interp = 0.5_rt * (
+                        CoarsenIO::Interp(rho, rho_stag, Ex_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(rho, rho_stag, Ex_stag, coarsen, i, j, k, 1)
+                    );
+                } else if (a_dt_type == DtType::SecondHalf) {
+                    // use rho^{n+1}
+                    rho_interp = CoarsenIO::Interp(rho, rho_stag, Ex_stag, coarsen, i, j, k, 1);
+                }
+
+                if (rho_interp == 0._rt) {
+                    Ex(i, j, k) = 0._rt;
+                    return;
+                }
+
+                // get the appropriate ion velocity
+                if (a_dt_type == DtType::Full) {
+                    // use J^{n}
+                    Jy_interp = 0.5_rt * (
+                        CoarsenIO::Interp(jy_old, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
+                    );
+                    Jz_interp = 0.5_rt * (
+                        CoarsenIO::Interp(jz_old, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
+                    );
+                } else if (a_dt_type == DtType::FirstHalf) {
+                    // use J^{n+1/2}
+                    Jy_interp = CoarsenIO::Interp(jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
+                    Jz_interp = CoarsenIO::Interp(jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
+                }
+                else if (a_dt_type == DtType::SecondHalf) {
+                    // use rho^{n+1}
+                    Jy_interp = -0.5_rt * (
+                        CoarsenIO::Interp(jy_old, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
+                        - 3._rt * CoarsenIO::Interp(jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
+                    );
+                    Jz_interp = -0.5_rt * (
+                        CoarsenIO::Interp(jz_old, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
+                        - 3._rt * CoarsenIO::Interp(jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
+                    );
+                }
+
                 auto const By_interp = CoarsenIO::Interp(
                     By, By_stag, Ex_stag, coarsen, i, j, k, 0
                 );
@@ -173,15 +227,34 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 //         Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, i, j, k
                 // );
 
-                // TODO: should use average rho if middle step...
-                auto const grad_p =
 #if (defined WARPX_DIM_1D_Z)
-                0._rt; // 1D Cartesian: derivative along x is 0
+                grad_p = 0._rt; // 1D Cartesian: derivative along x is 0
 #else
-                coefs_x[0]*(
-                    ElectronPressure::get_pressure(n0, T0, gamma, rho(i+1, j, k, 1))
-                    - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 1))
-                );
+                if (a_dt_type == DtType::Full) {
+                    // use rho^{n}
+                    grad_p = coefs_x[0]*(
+                        ElectronPressure::get_pressure(n0, T0, gamma, rho(i+1, j, k, 0))
+                        - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 0))
+                    );
+                } else if (a_dt_type == DtType::FirstHalf) {
+                    // use rho^{n+1/2}
+                    grad_p = coefs_x[0]*(
+                        ElectronPressure::get_pressure(
+                            n0, T0, gamma,
+                            0.5_rt * (rho(i+1, j, k, 1) + rho(i+1, j, k, 0))
+                        )
+                        - ElectronPressure::get_pressure(
+                            n0, T0, gamma,
+                            0.5_rt * (rho(i, j, k, 1) + rho(i, j, k, 0))
+                        )
+                    );
+                } else if (a_dt_type == DtType::SecondHalf) {
+                    // use rho^{n+1}
+                    grad_p = coefs_x[0]*(
+                        ElectronPressure::get_pressure(n0, T0, gamma, rho(i+1, j, k, 1))
+                        - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 1))
+                    );
+                }
 #endif
 
                 Ex(i, j, k) = (
@@ -203,15 +276,57 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
 #endif
 #endif
 
-                auto const rho_interp = CoarsenIO::Interp(
-                    rho, rho_stag, Ey_stag, coarsen, i, j, k, 0
-                );
-                auto const Jx_interp = CoarsenIO::Interp(
-                    jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0
-                );
-                auto const Jz_interp = CoarsenIO::Interp(
-                    jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0
-                );
+                // allocate variables for all interpolated (onto correct grid) field quantities
+                Real rho_interp, Jx_interp, Jz_interp, grad_p;
+
+                // get the appropriate charge density
+                if (a_dt_type == DtType::Full) {
+                    // use rho^{n}
+                    rho_interp = CoarsenIO::Interp(rho, rho_stag, Ey_stag, coarsen, i, j, k, 0);
+                } else if (a_dt_type == DtType::FirstHalf) {
+                    // use rho^{n+1/2}
+                    rho_interp = 0.5_rt * (
+                        CoarsenIO::Interp(rho, rho_stag, Ey_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(rho, rho_stag, Ey_stag, coarsen, i, j, k, 1)
+                    );
+                }
+                else if (a_dt_type == DtType::SecondHalf) {
+                    // use rho^{n+1}
+                    rho_interp = CoarsenIO::Interp(rho, rho_stag, Ey_stag, coarsen, i, j, k, 1);
+                }
+
+                if (rho_interp == 0._rt) {
+                    Ey(i, j, k) = 0._rt;
+                    return;
+                }
+
+                // get the appropriate ion velocity
+                if (a_dt_type == DtType::Full) {
+                    // use J^{n}
+                    Jx_interp = 0.5_rt * (
+                        CoarsenIO::Interp(jx_old, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
+                    );
+                    Jz_interp = 0.5_rt * (
+                        CoarsenIO::Interp(jz_old, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
+                    );
+                } else if (a_dt_type == DtType::FirstHalf) {
+                    // use J^{n+1/2}
+                    Jx_interp = CoarsenIO::Interp(jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0);
+                    Jz_interp = CoarsenIO::Interp(jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0);
+                } else if (a_dt_type == DtType::SecondHalf) {
+                    // use rho^{n+1}
+                    Jx_interp = -0.5_rt * (
+                        CoarsenIO::Interp(jx_old, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
+                        - 3._rt * CoarsenIO::Interp(jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
+                    );
+                    Jz_interp = -0.5_rt * (
+                        CoarsenIO::Interp(jz_old, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
+                        - 3._rt * CoarsenIO::Interp(jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
+                    );
+                }
+
                 auto const Bx_interp = CoarsenIO::Interp(
                     Bx, Bx_stag, Ey_stag, coarsen, i, j, k, 0
                 );
@@ -226,15 +341,34 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 //         Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, i, j, k
                 // );
 
-                // TODO: should use average rho if middle step...
-                auto const grad_p =
 #if (defined WARPX_DIM_1D_Z) || (defined WARPX_DIM_XZ)
-                0._rt; // 1D Cartesian: derivative along y is 0
+                grad_p = 0._rt; // 1D Cartesian: derivative along x is 0
 #else
-                coefs_y[0]*(
-                    ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j+1, k, 1))
-                    - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 1))
-                );
+                if (a_dt_type == DtType::Full) {
+                    // use rho^{n}
+                    grad_p = coefs_y[0]*(
+                        ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j+1, k, 0))
+                        - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 0))
+                    );
+                } else if (a_dt_type == DtType::FirstHalf) {
+                    // use rho^{n+1/2}
+                    grad_p = coefs_y[0]*(
+                        ElectronPressure::get_pressure(
+                            n0, T0, gamma,
+                            0.5_rt * (rho(i, j+1, k, 1) + rho(i, j+1, k, 0))
+                        )
+                        - ElectronPressure::get_pressure(
+                            n0, T0, gamma,
+                            0.5_rt * (rho(i, j, k, 1) + rho(i, j, k, 0))
+                        )
+                    );
+                } else if (a_dt_type == DtType::SecondHalf) {
+                    // use rho^{n+1}
+                    grad_p = coefs_y[0]*(
+                        ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j+1, k, 1))
+                        - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 1))
+                    );
+                }
 #endif
 
                 Ey(i, j, k) = (
@@ -251,15 +385,57 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 if (lz(i,j,k) <= 0) return;
 #endif
 
-                auto const rho_interp = CoarsenIO::Interp(
-                    rho, rho_stag, Ez_stag, coarsen, i, j, k, 0
-                );
-                auto const Jx_interp = CoarsenIO::Interp(
-                    jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0
-                );
-                auto const Jy_interp = CoarsenIO::Interp(
-                    jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0
-                );
+                // allocate variables for all interpolated (onto correct grid) field quantities
+                Real rho_interp, Jx_interp, Jy_interp, grad_p;
+
+                // get the appropriate charge density
+                if (a_dt_type == DtType::Full) {
+                    // use rho^{n}
+                    rho_interp = CoarsenIO::Interp(rho, rho_stag, Ez_stag, coarsen, i, j, k, 0);
+                } else if (a_dt_type == DtType::FirstHalf) {
+                    // use rho^{n+1/2}
+                    rho_interp = 0.5_rt * (
+                        CoarsenIO::Interp(rho, rho_stag, Ez_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(rho, rho_stag, Ez_stag, coarsen, i, j, k, 1)
+                    );
+                } else if (a_dt_type == DtType::SecondHalf) {
+                    // use rho^{n+1}
+                    rho_interp = CoarsenIO::Interp(rho, rho_stag, Ez_stag, coarsen, i, j, k, 1);
+                }
+
+                if (rho_interp == 0._rt) {
+                    Ez(i, j, k) = 0._rt;
+                    return;
+                }
+
+                // get the appropriate ion velocity
+                if (a_dt_type == DtType::Full) {
+                    // use J^{n}
+                    Jx_interp = 0.5_rt * (
+                        CoarsenIO::Interp(jx_old, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
+                    );
+                    Jy_interp = 0.5_rt * (
+                        CoarsenIO::Interp(jy_old, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
+                    );
+                } else if (a_dt_type == DtType::FirstHalf) {
+                    // use J^{n+1/2}
+                    Jx_interp = CoarsenIO::Interp(jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0);
+                    Jy_interp = CoarsenIO::Interp(jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0);
+                }
+                else if (a_dt_type == DtType::SecondHalf) {
+                    // use rho^{n+1}
+                    Jx_interp = -0.5_rt * (
+                        CoarsenIO::Interp(jx_old, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
+                        - 3._rt * CoarsenIO::Interp(jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
+                    );
+                    Jy_interp = -0.5_rt * (
+                        CoarsenIO::Interp(jy_old, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
+                        - 3._rt * CoarsenIO::Interp(jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
+                    );
+                }
+
                 auto const Bx_interp = CoarsenIO::Interp(
                     Bx, Bx_stag, Ez_stag, coarsen, i, j, k, 0
                 );
@@ -274,11 +450,47 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 //         Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, i, j, k
                 // );
 
-                // TODO: should use average rho if middle step...
-                auto const grad_p = coefs_z[0]*(
-                    ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k+1, 1))
-                    - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 1))
-                );
+
+#if (defined WARPX_DIM_1D_Z)
+                auto i1 = i+1;
+                auto j1 = j;
+                auto k1 = k;
+#elif (defined WARPX_DIM_XZ)
+                auto i1 = i;
+                auto j1 = j+1;
+                auto k1 = k;
+#else
+                auto i1 = i;
+                auto j1 = j;
+                auto k1 = k+1;
+#endif
+                if (a_dt_type == DtType::Full) {
+                    // use rho^{n}
+                    grad_p = coefs_z[0]*(
+                        ElectronPressure::get_pressure(n0, T0, gamma, rho(i1, j1, k1, 0))
+                        - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 0))
+                    );
+                }
+                else if (a_dt_type == DtType::FirstHalf) {
+                    // use rho^{n+1/2}
+                    grad_p = coefs_z[0]*(
+                        ElectronPressure::get_pressure(
+                            n0, T0, gamma,
+                            0.5_rt * (rho(i1, j1, k1, 1) + rho(i1, j1, k1, 0))
+                        )
+                        - ElectronPressure::get_pressure(
+                            n0, T0, gamma,
+                            0.5_rt * (rho(i, j, k, 1) + rho(i, j, k, 0))
+                        )
+                    );
+                }
+                else if (a_dt_type == DtType::SecondHalf) {
+                    // use rho^{n+1}
+                    grad_p = coefs_z[0]*(
+                        ElectronPressure::get_pressure(n0, T0, gamma, rho(i1, j1, k1, 1))
+                        - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 1))
+                    );
+                }
 
                 Ez(i, j, k) = (
                     - Bx_interp * (Jy_interp) // - curlB_y / PhysConst::mu0)

@@ -282,8 +282,9 @@ WarpX::Evolve (int numsteps)
 
         m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
 
-        // Non-Maxwell solver: particles can move by an arbitrary number of cells
-        if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None )
+        // Non-explicit Maxwell solver: particles can move by an arbitrary number of cells
+        if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid )
         {
             mypc->Redistribute();
         } else
@@ -331,24 +332,7 @@ WarpX::Evolve (int numsteps)
                 // Hybrid case:
                 // The particles are now at p^{n+1/2} and x^{n+1}. The fields
                 // are updated according to the hybrid scheme.
-
-                // First the B field is pushed forward half a timestep
-                // to get B^{n+1/2}
-                EvolveB(0.5_rt * dt[0], DtType::FirstHalf);
-                FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-
-                // Now the E field is updated using the electron momentum equation
-                HybridSolveE();
-                FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-
-                // The B field is pushed forward another half a timestep
-                // to get B^{n+1}
-                EvolveB(0.5_rt * dt[0], DtType::SecondHalf);
-                FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-
-                // Finally the E field is updated to E^{n+1}
-                HybridSolveE();
-                FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+                HybridEvolveFields();
             }
 
             ExecutePythonCallback("afterEsolve");

@@ -322,6 +322,11 @@ WarpX::WarpX ()
         current_fp_vay.resize(nlevs_max);
     }
 
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
+    {
+        current_fp_old.resize(nlevs_max);
+    }
+
     F_cp.resize(nlevs_max);
     G_cp.resize(nlevs_max);
     rho_cp.resize(nlevs_max);
@@ -1658,6 +1663,11 @@ WarpX::ClearLevel (int lev)
             current_fp_vay[lev][i].reset();
         }
 
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
+        {
+            current_fp_old[lev][i].reset();
+        }
+
         current_cp[lev][i].reset();
         Efield_cp [lev][i].reset();
         Bfield_cp [lev][i].reset();
@@ -1900,6 +1910,18 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             dm, ncomps, ngJ, tag("current_fp_vay[y]"));
         current_fp_vay[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
             dm, ncomps, ngJ, tag("current_fp_vay[z]"));
+    }
+
+    // allocate the "old" current multifab used to store the current density from the previous
+    // step as this is need by the hybrid PIC algorithm
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
+    {
+        current_fp_old[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, jx_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_old[x]"));
+        current_fp_old[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, jy_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_old[y]"));
+        current_fp_old[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, jz_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_old[z]"));
     }
 
     if (fft_do_time_averaging)
