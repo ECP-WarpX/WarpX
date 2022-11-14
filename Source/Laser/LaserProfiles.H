@@ -64,7 +64,6 @@ public:
     virtual void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) = 0;
 
     /** Update Laser Profile
@@ -109,7 +108,6 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) override final;
 
     //No update needed
@@ -152,7 +150,6 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) override final;
 
     //No update needed
@@ -187,7 +184,6 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) override final;
 
     //No update needed
@@ -223,7 +219,6 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) override final;
 
     /** \brief Reads new field data chunk from file if needed
