@@ -1663,19 +1663,34 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
 #if defined(WARPX_DIM_3D)
                 if (!tile_realbox.contains(XDim3{ppos.x,ppos.y,ppos.z})) {
-                    p.id() = -1;
+                    ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+#ifdef WARPX_QED
+                                               ,loc_has_quantum_sync, p_optical_depth_QSR
+                                               ,loc_has_breit_wheeler, p_optical_depth_BW
+#endif
+                                               );
                     continue;
                 }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
                 if (!tile_realbox.contains(XDim3{ppos.x,ppos.z,0.0_prt})) {
-                    p.id() = -1;
+                    ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+#ifdef WARPX_QED
+                                               ,loc_has_quantum_sync, p_optical_depth_QSR
+                                               ,loc_has_breit_wheeler, p_optical_depth_BW
+#endif
+                                               );
                     continue;
                 }
 #else
                 amrex::ignore_unused(j,k);
                 if (!tile_realbox.contains(XDim3{ppos.z,0.0_prt,0.0_prt})) {
-                    p.id() = -1;
+                    ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+#ifdef WARPX_QED
+                                               ,loc_has_quantum_sync, p_optical_depth_QSR
+                                               ,loc_has_breit_wheeler, p_optical_depth_BW
+#endif
+                                               );
                     continue;
                 }
 #endif
@@ -1684,7 +1699,12 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // xmin, xmax, ymin, ymax, zmin, zmax, go to
                 // the next generated particle.
                 if (!inj_pos->insideBounds(ppos.x, ppos.y, ppos.z)) {
-                    p.id() = -1;
+                    ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+#ifdef WARPX_QED
+                                               ,loc_has_quantum_sync, p_optical_depth_QSR
+                                               ,loc_has_breit_wheeler, p_optical_depth_BW
+#endif
+                                               );
                     continue;
                 }
 
