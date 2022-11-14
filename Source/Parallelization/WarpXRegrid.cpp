@@ -151,7 +151,8 @@ RemakeMultiFab (std::unique_ptr<MultiFabType>& mf, const DistributionMapping& dm
 {
     if (mf == nullptr) return;
     const IntVect& ng = mf->nGrowVect();
-    auto pmf = std::make_unique<MultiFabType>(mf->boxArray(), dm, mf->nComp(), ng);
+    std::unique_ptr<MultiFabType> pmf;
+    WarpX::AllocInitMultiFab(pmf, mf->boxArray(), dm, mf->nComp(), ng, mf->tags()[0]);
     if (redistribute) pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng);
     mf = std::move(pmf);
 }
