@@ -92,7 +92,8 @@ macro(find_amrex)
         endif()
 
         # shared libs, i.e. for Python bindings, need relocatable code
-        if(WarpX_LIB OR ABLASTR_POSITION_INDEPENDENT_CODE)
+        #   openPMD: currently triggers shared libs (TODO)
+        if(WarpX_LIB OR ABLASTR_POSITION_INDEPENDENT_CODE OR BUILD_SHARED_LIBS OR WarpX_OPENPMD)
             set(AMReX_PIC ON CACHE INTERNAL "")
         endif()
 
