@@ -112,6 +112,15 @@ set_default_build_type("Release")
 # (also know as "link-time optimization" or "whole program optimization")
 option(WarpX_IPO                                "Compile WarpX with interprocedural optimization (will take more time)" OFF)
 
+# default ABLASTR and AMReX library type: static (as in CMake)
+#   this is temporary and we don't want to set it long term
+#   mainly to work-around a global setting in openPMD-api <= 0.14.5 that changes the
+#   default in superbuilds by accident
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    option(BUILD_SHARED_LIBS "Build shared libraries (so/dylib/dll)." OFF)
+    mark_as_advanced(BUILD_SHARED_LIBS)
+endif()
+
 # note: we could skip this if we solely build WarpX_APP, but if we build a
 # shared WarpX library or a third party, like ImpactX, uses ablastr in a
 # shared library (e.g., for Python bindings), then we need relocatable code.
