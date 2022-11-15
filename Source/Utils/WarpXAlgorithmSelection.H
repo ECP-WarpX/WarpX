@@ -36,12 +36,13 @@ struct MacroscopicSolverAlgo {
     };
 };
 
-struct MaxwellSolverAlgo {
+struct ElectromagneticSolverAlgo {
     enum {
-        Yee = 0,
-        CKC = 1,
-        PSATD = 2,
-        ECT = 3
+        None = 0,
+        Yee = 1,
+        CKC = 2,
+        PSATD = 3,
+        ECT = 4
     };
 };
 

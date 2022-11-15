@@ -14,7 +14,6 @@
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
-#include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
@@ -157,15 +156,15 @@ WarpX::PrintMainPICparameters ()
                      WarpX::n_rz_azimuthal_modes << "\n";
     #endif // WARPX_USE_RZ
     //Print solver's operation mode (e.g., EM or electrostatic)
-    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
       amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
       amrex::Print() << "                      | - laboratory frame" << "\n";
     }
-    else if (do_electrostatic == ElectrostaticSolverAlgo::Relativistic){
+    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic){
       amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
       amrex::Print() << "                      | - relativistic" << "\n";
     }
-    else{
+    else if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
       amrex::Print() << "Operation mode:       | Electromagnetic" << "\n";
     }
     if (em_solver_medium == MediumForEM::Vacuum ){
@@ -218,18 +217,18 @@ WarpX::PrintMainPICparameters ()
     amrex::Print() << "Particle Shape Factor:| " << WarpX::nox << "\n";
     amrex::Print() << "-------------------------------------------------------------------------------\n";
     // Print solver's type: Yee, CKC, ECT
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee){
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee){
       amrex::Print() << "Maxwell Solver:       | Yee \n";
-      }
-    else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC){
+    }
+    else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC){
       amrex::Print() << "Maxwell Solver:       | CKC \n";
     }
-    else if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
+    else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT){
       amrex::Print() << "Maxwell Solver:       | ECT \n";
     }
   #ifdef WARPX_USE_PSATD
     // Print PSATD solver's configuration
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
       amrex::Print() << "Maxwell Solver:       | PSATD \n";
       }
     if ((m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)) {
@@ -295,7 +294,7 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "                      | - use_hybrid_QED = true \n";
     }
 
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
     // Print solver's order
       std::string psatd_nox_fft, psatd_noy_fft, psatd_noz_fft;
       psatd_nox_fft = (nox_fft == -1) ? "inf" : std::to_string(nox_fft);
@@ -307,11 +306,11 @@ WarpX::PrintMainPICparameters ()
         amrex::Print() << "                      | - psatd.noy = " << psatd_noy_fft << "\n";
         amrex::Print() << "                      | - psatd.noz = " << psatd_noz_fft << "\n";
       }
-      else if (dims=="2" and WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
+      else if (dims=="2" and WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
         amrex::Print() << "Spectral order:       | - psatd.nox = " << psatd_nox_fft << "\n";
         amrex::Print() << "                      | - psatd.noz = " << psatd_noz_fft << "\n";
       }
-      else if (dims=="1" and WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD){
+      else if (dims=="1" and WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
         amrex::Print() << "Spectral order:       | - psatd.noz = " << psatd_noz_fft << "\n";
       }
     }
@@ -438,28 +437,6 @@ WarpX::InitData ()
 void
 WarpX::InitDiagnostics () {
     multi_diags->InitData();
-    if (do_back_transformed_diagnostics) {
-        const Real* current_lo = geom[0].ProbLo();
-        const Real* current_hi = geom[0].ProbHi();
-        Real dt_boost = dt[0];
-        Real boosted_moving_window_v = (moving_window_v - beta_boost*PhysConst::c)/(1 - beta_boost*moving_window_v/PhysConst::c);
-        // Find the positions of the lab-frame box that corresponds to the boosted-frame box at t=0
-        Real zmin_lab = static_cast<Real>(
-            (current_lo[moving_window_dir] - boosted_moving_window_v*t_new[0])/( (1.+beta_boost)*gamma_boost ));
-        Real zmax_lab = static_cast<Real>(
-            (current_hi[moving_window_dir] - boosted_moving_window_v*t_new[0])/( (1.+beta_boost)*gamma_boost ));
-        myBFD = std::make_unique<BackTransformedDiagnostic>(
-                                               zmin_lab,
-                                               zmax_lab,
-                                               moving_window_v, dt_snapshots_lab,
-                                               num_snapshots_lab,
-                                               dt_slice_snapshots_lab,
-                                               num_slice_snapshots_lab,
-                                               gamma_boost, t_new[0], dt_boost,
-                                               moving_window_dir, geom[0],
-                                               slice_realbox,
-                                               particle_slice_width_lab);
-    }
     reduced_diags->InitData();
 }
 
@@ -718,25 +695,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     pp_psatd.query("do_time_averaging", fft_do_time_averaging );
 
     for (int i = 0; i < 3; ++i) {
-        current_fp[lev][i]->setVal(0.0);
-        if (lev > 0)
-           current_cp[lev][i]->setVal(0.0);
-
-        // Initialize aux MultiFabs on level 0
-        if (lev == 0) {
-            Bfield_aux[lev][i]->setVal(0.0);
-            Efield_aux[lev][i]->setVal(0.0);
-        }
-
-        if (WarpX::do_current_centering)
-        {
-            current_fp_nodal[lev][i]->setVal(0.0);
-        }
-
-        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
-        {
-            current_fp_vay[lev][i]->setVal(0.0);
-        }
 
         if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
            Bfield_fp[lev][i]->setVal(B_external_grid[i]);
@@ -867,7 +825,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
 #ifdef AMREX_USE_EB
         // We initialize ECTRhofield consistently with the Efield
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
             m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_fp[lev], m_edge_lengths[lev],
                                                 m_face_areas[lev], ECTRhofield[lev], lev);
 
@@ -897,7 +855,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     'E',
                                                     lev);
 #ifdef AMREX_USE_EB
-           if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+           if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                // We initialize ECTRhofield consistently with the Efield
                m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
                                                    m_face_areas[lev], ECTRhofield[lev], lev);
@@ -905,30 +863,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
            }
 #endif
        }
-    }
-
-    if (F_fp[lev]) {
-        F_fp[lev]->setVal(0.0);
-    }
-
-    if (G_fp[lev]) {
-        G_fp[lev]->setVal(0.0);
-    }
-
-    if (rho_fp[lev]) {
-        rho_fp[lev]->setVal(0.0);
-    }
-
-    if (F_cp[lev]) {
-        F_cp[lev]->setVal(0.0);
-    }
-
-    if (G_cp[lev]) {
-        G_cp[lev]->setVal(0.0);
-    }
-
-    if (rho_cp[lev]) {
-        rho_cp[lev]->setVal(0.0);
     }
 
     if (costs[lev]) {
@@ -956,6 +890,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
     amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
     amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
     amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
+
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
@@ -973,6 +908,13 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
        amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
        amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
+
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+       const amrex::Dim3 lx_lo = amrex::lbound(lx);
+       const amrex::Dim3 lx_hi = amrex::ubound(lx);
+       const amrex::Dim3 lz_lo = amrex::lbound(lz);
+       const amrex::Dim3 lz_hi = amrex::ubound(lz);
+#endif
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         amrex::ignore_unused(ly, Sx, Sz);
@@ -1024,7 +966,10 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 if((field=='E' and ly(i, j, k)<=0) or (field=='B' and Sy(i, j, k)<=0))  return;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 //In XZ and RZ Ey is associated with a mesh node, so we need to check if  the mesh node is covered
-                if((field=='E' and (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j, k)<=0 || lz(i, j-1, k)<=0)) or
+                if((field=='E' and (lx(std::min(i  , lx_hi.x), std::min(j  , lx_hi.y), k)<=0
+                                 || lx(std::max(i-1, lx_lo.x), std::min(j  , lx_hi.y), k)<=0
+                                 || lz(std::min(i  , lz_hi.x), std::min(j  , lz_hi.y), k)<=0
+                                 || lz(std::min(i  , lz_hi.x), std::max(j-1, lz_lo.y), k)<=0)) or
                    (field=='B' and Sy(i,j,k)<=0)) return;
 #endif
 #endif
@@ -1240,9 +1185,7 @@ void WarpX::InitializeEBGridData (int lev)
               "particles are close to embedded boundaries");
         }
 
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
-            WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC ||
-            WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+        if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD ) {
 
             auto const eb_fact = fieldEBFactory(lev);
 
@@ -1251,7 +1194,7 @@ void WarpX::InitializeEBGridData (int lev)
             ComputeFaceAreas(m_face_areas[lev], eb_fact);
             ScaleAreas(m_face_areas[lev], CellSize(lev));
 
-            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+            if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                 MarkCells();
                 ComputeFaceExtensions();
             }
@@ -1267,7 +1210,7 @@ void WarpX::InitializeEBGridData (int lev)
 
 void WarpX::CheckKnownIssues()
 {
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD &&
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD &&
         (std::any_of(do_pml_Lo[0].begin(),do_pml_Lo[0].end(),[](const auto& ee){return ee;}) ||
         std::any_of(do_pml_Hi[0].begin(),do_pml_Hi[0].end(),[](const auto& ee){return ee;})) )
         {

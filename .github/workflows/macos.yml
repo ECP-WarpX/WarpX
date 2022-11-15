@@ -36,7 +36,7 @@ jobs:
       run: |
         brew --cache
         set +e
-        rm -rf /usr/local/bin/2to3
+        rm -rf /usr/local/bin/2to3 /usr/local/bin/2to3-3.11 /usr/local/bin/idle3.11 /usr/local/bin/pydoc3.11 /usr/local/bin/python3.11 /usr/local/bin/python3.11-config
         brew unlink gcc
         brew update
         brew install ccache

@@ -75,7 +75,7 @@ Diagnostics::BaseReadParameters ()
     // Sanity check if user requests to plot phi
     if (utils::algorithms::is_in(m_varnames_fields, "phi")){
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            warpx.do_electrostatic==ElectrostaticSolverAlgo::LabFrame,
+            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrame,
             "plot phi only works if do_electrostatic = labframe");
     }
 
