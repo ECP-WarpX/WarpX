@@ -45,7 +45,6 @@ using namespace amrex;
 void
 WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
     const amrex::ParmParse& ppl,
-    const amrex::ParmParse& /* ppc */,
     CommonLaserParameters params)
 {
     if (!std::numeric_limits< double >::is_iec559)
