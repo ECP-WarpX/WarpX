@@ -322,12 +322,13 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
 
 
 class DensityDistributionBase(object):
-    """This is a base class for several predefined density distributions, meant
-    to capture universal initialization logic."""
-    def init(self, kw):
-        self.mangle_dict = None
+    """This is a base class for several predefined density distributions. It
+    captures universal initialization logic."""
 
     def set_mangle_dict(self):
+        if not hasattr(self, 'mangle_dict'):
+            self.mangle_dict = None
+
         if hasattr(self, "user_defined_kw") and self.mangle_dict is None:
             # Only do this once so that the same variables can be used multiple
             # times
