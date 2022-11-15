@@ -7,4 +7,4 @@ import sys
 
 step = int(sys.argv[1][-5:])
 
-assert step == 1
+assert step == 2
