@@ -486,6 +486,7 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     int ncomps = static_cast<int>(m_cellcenter_varnames.size());
 #endif
     m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap, ncomps, ngrow);
+    m_cell_centered_data[lev]->setVal(0.);
 
 }
 
