@@ -64,6 +64,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <map>
 
 enum struct PatchType : int
 {
@@ -319,6 +320,95 @@ public:
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;
+
+    /**
+     * \brief
+     * Allocate and optionally initialize the MultiFab. This also adds the MultiFab
+     * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
+     * interface
+     *
+     * \param mf[out] The MultiFab unique pointer to be allocated
+     * \param ba[in] The BoxArray describing the MultiFab
+     * \param dm[in] The DistributionMapping describing the MultiFab
+     * \param ncomp[in] The number of components in the MultiFab
+     * \param ngrow[in] The number of guard cells in the MultiFab
+     * \param name[in] The name of the MultiFab to use in the map
+     * \param initial_value[in] The optional initial value
+     */
+    static void AllocInitMultiFab (
+        std::unique_ptr<amrex::MultiFab>& mf,
+        const amrex::BoxArray& ba,
+        const amrex::DistributionMapping& dm,
+        const int ncomp,
+        const amrex::IntVect& ngrow,
+        const std::string name,
+        std::optional<const amrex::Real> initial_value = {});
+
+    /**
+     * \brief
+     * Allocate and optionally initialize the iMultiFab. This also adds the iMultiFab
+     * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
+     * interface
+     *
+     * \param mf[out] The iMultiFab unique pointer to be allocated
+     * \param ba[in] The BoxArray describing the iMultiFab
+     * \param dm[in] The DistributionMapping describing the iMultiFab
+     * \param ncomp[in] The number of components in the iMultiFab
+     * \param ngrow[in] The number of guard cells in the iMultiFab
+     * \param name[in] The name of the iMultiFab to use in the map
+     * \param initial_value[in] The optional initial value
+     */
+    static void AllocInitMultiFab (
+        std::unique_ptr<amrex::iMultiFab>& mf,
+        const amrex::BoxArray& ba,
+        const amrex::DistributionMapping& dm,
+        const int ncomp,
+        const amrex::IntVect& ngrow,
+        const std::string name,
+        std::optional<const int> initial_value = {});
+
+    /**
+     * \brief
+     * Create an alias of a MultiFab, adding the alias to the MultiFab map
+     * \param mf[out] The MultiFab to create
+     * \param mf_to_alias[in] The MultiFab to alias
+     * \param scomp[in] The starting component to be aliased
+     * \param ncomp[in] The number of components to alias
+     * \param name[in] The name of the MultiFab to use in the map
+     */
+    static void AliasInitMultiFab (
+        std::unique_ptr<amrex::MultiFab>& mf,
+        const amrex::MultiFab& mf_to_alias,
+        const int scomp,
+        const int ncomp,
+        const std::string name,
+        std::optional<const amrex::Real> initial_value);
+
+    // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)
+    // This is a convenience for the Python interface, allowing all MultiFabs
+    // to be easily referenced from Python.
+    static std::map<std::string, amrex::MultiFab *> multifab_map;
+    static std::map<std::string, amrex::iMultiFab *> imultifab_map;
+
+    /**
+     * \brief
+     * Add the MultiFab to the map of MultiFabs
+     * \param name The name of the MultiFab use to reference the MultiFab
+     * \parame mf The MultiFab to be added to the map (via a pointer to it)
+     */
+    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::MultiFab>& mf) {
+        multifab_map[name] = mf.get();
+    }
+
+    /**
+     * \brief
+     * Add the iMultiFab to the map of MultiFabs
+     * \param name The name of the iMultiFab use to reference the iMultiFab
+     * \parame mf The iMultiFab to be added to the map (via a pointer to it)
+     */
+    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::iMultiFab>& mf) {
+        imultifab_map[name] = mf.get();
+    }
 
     std::array<const amrex::MultiFab* const, 3>
     get_array_Bfield_aux  (const int lev) const {
@@ -1103,6 +1193,7 @@ private:
                         const amrex::IntVect& ngEB, amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const amrex::IntVect& ngG, const bool aux_is_nodal);
+
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
     void AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
