@@ -22,6 +22,11 @@
 // Define dictionary with correspondance between user-input strings,
 // and corresponding integer for use inside the code
 
+const std::map<std::string, int> evolve_scheme_to_int = {
+    {"explicit",        EvolveScheme::Explicit },
+    {"default",         EvolveScheme::Explicit }
+};
+
 const std::map<std::string, int> electromagnetic_solver_algo_to_int = {
     {"none",    ElectromagneticSolverAlgo::None },
     {"yee",     ElectromagneticSolverAlgo::Yee },
@@ -131,7 +136,9 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
 
     // Pick the right dictionary
     std::map<std::string, int> algo_to_int;
-    if (0 == std::strcmp(pp_search_key, "maxwell_solver")) {
+    if (0 == std::strcmp(pp_search_key, "evolve_scheme")) {
+        algo_to_int = evolve_scheme_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "maxwell_solver")) {
         algo_to_int = electromagnetic_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "do_electrostatic")) {
         algo_to_int = electrostatic_solver_algo_to_int;

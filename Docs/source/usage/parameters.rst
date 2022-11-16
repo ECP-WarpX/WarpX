@@ -70,6 +70,10 @@ Overall simulation parameters
     one should not expect to obtain the same random numbers,
     even if a fixed ``warpx.random_seed`` is provided.
 
+* ``algo.evolve_scheme`` (`string`) optional (default `explicit`)
+    Specifies the evolve scheme used by WarpX.
+    Currently, only explicit evolution is implemented.
+
 * ``warpx.do_electrostatic`` (`string`) optional (default `none`)
     Specifies the electrostatic mode. When turned on, instead of updating
     the fields at each iteration with the full Maxwell equations, the fields

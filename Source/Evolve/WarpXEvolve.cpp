@@ -59,6 +59,16 @@ using ablastr::utils::SignalHandling;
 void
 WarpX::Evolve (int numsteps)
 {
+    if (evolve_scheme == EvolveScheme::Explicit) {
+        EvolveExplicit(numsteps);
+    } else {
+        amrex::Abort(Utils::TextMsg::Err("Unknown evolve scheme"));
+    }
+}
+
+void
+WarpX::EvolveExplicit (int numsteps)
+{
     WARPX_PROFILE_REGION("WarpX::Evolve()");
     WARPX_PROFILE("WarpX::Evolve()");
 

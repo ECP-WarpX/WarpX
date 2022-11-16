@@ -93,6 +93,7 @@ public:
     void InitData ();
 
     void Evolve (int numsteps = -1);
+    void EvolveExplicit (int numsteps = -1);
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
@@ -156,6 +157,8 @@ public:
     static short particle_pusher_algo;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
     static short electromagnetic_solver_id;
+    //! Integer that corresponds to the evolve scheme (explicit, implicit_picard)
+    static short evolve_scheme;
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
