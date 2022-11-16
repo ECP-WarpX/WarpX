@@ -1,8 +1,8 @@
 # Copyright 2022
 # Authors: Revathi Jambunathan, Remi Lehe
 #
-# This tests checks the backtransformed diagnostics by emitting a laser 
-# (with the antenna) in the boosted-frame and then checking that the 
+# This tests checks the backtransformed diagnostics by emitting a laser
+# (with the antenna) in the boosted-frame and then checking that the
 # fields recorded by the backtransformed diagnostics have the right amplitude,
 # wavelength, and envelope (i.e. gaussian envelope with the right duration.
 #
