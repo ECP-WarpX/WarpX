@@ -9,8 +9,7 @@
 #include "SpectralAlgorithms/PsatdAlgorithmComoving.H"
 #include "SpectralAlgorithms/PsatdAlgorithmPml.H"
 #include "SpectralAlgorithms/PsatdAlgorithmFirstOrder.H"
-#include "SpectralAlgorithms/PsatdAlgorithmJConstantInTime.H"
-#include "SpectralAlgorithms/PsatdAlgorithmJLinearInTime.H"
+#include "SpectralAlgorithms/PsatdAlgorithmSecondOrder.H"
 #include "SpectralAlgorithms/PsatdAlgorithmGalilean.H"
 #include "SpectralKSpace.H"
 #include "SpectralSolver.H"
@@ -94,19 +93,10 @@ SpectralSolver::SpectralSolver(
         }
         else if (psatd_solution_type == PSATDSolutionType::SecondOrder)
         {
-            if (J_in_time == JInTime::Constant)
-            {
-                algorithm = std::make_unique<PsatdAlgorithmJConstantInTime>(
-                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
-                    v_galilean, dt, update_with_rho, fft_do_time_averaging,
-                    dive_cleaning, divb_cleaning);
-            }
-            else if (J_in_time == JInTime::Linear)
-            {
-                algorithm = std::make_unique<PsatdAlgorithmJLinearInTime>(
-                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
-                    dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
-            }
+            algorithm = std::make_unique<PsatdAlgorithmSecondOrder>(
+                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                dt, update_with_rho, fft_do_time_averaging, dive_cleaning, divb_cleaning,
+                J_in_time, rho_in_time);
         }
     }
 

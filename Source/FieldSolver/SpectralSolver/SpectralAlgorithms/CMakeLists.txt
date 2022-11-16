@@ -1,8 +1,7 @@
 target_sources(WarpX
   PRIVATE
     PsatdAlgorithmFirstOrder.cpp
-    PsatdAlgorithmJConstantInTime.cpp
-    PsatdAlgorithmJLinearInTime.cpp
+    PsatdAlgorithmSecondOrder.cpp
     PsatdAlgorithmGalilean.cpp
     PsatdAlgorithmPml.cpp
     SpectralBaseAlgorithm.cpp
