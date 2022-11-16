@@ -129,7 +129,7 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
                     dst_arr(i, k_lab, k, n) = src_arr(i, j, k, icomp);
 #elif defined(WARPX_DIM_RZ)
                     // rzcomp below gives the component id, 0 to (n_rz_comp-1) for a given field
-                    const int rzcomp = n - static_cast<int>( floor(n/(2.0*nrz-1.0)) ) * n_rz_comp;
+                    const int rzcomp = n % n_rz_comp;
                     // Accessing the correct rz component from the cell-centered multifab
                     // that has back-transformed fields and storing it for the appropriate user-requested field, icomp
                     // For example, for 2 rz modes, we have three components (n_rz_comp=3) for each field
