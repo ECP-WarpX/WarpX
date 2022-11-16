@@ -1,7 +1,10 @@
 # Copyright 2022
 # Authors: Revathi Jambunathan, Remi Lehe
 #
-# This file tests if the back-transformed signal is a gaussian
+# This tests checks the backtransformed diagnostics by emitting a laser 
+# (with the antenna) in the boosted-frame and then checking that the 
+# fields recorded by the backtransformed diagnostics have the right amplitude,
+# wavelength, and envelope (i.e. gaussian envelope with the right duration.
 #
 #
 
@@ -20,7 +23,7 @@ def gaussian_laser( z, a0, z0_phase, z0_prop, ctau, lambda0 ):
     return( E0*np.exp( - (z-z0_prop)**2/ctau**2 ) \
                 *np.cos( k0*(z-z0_phase) ) )
 
-# Fit the on-axis profile to extract a0
+# Fit the on-axis profile to extract the phase (a.k.a. CEP)
 def fit_function(z, z0_phase):
     return( gaussian_laser( z, a0, z0_phase,
                             z0_b+Lprop_b, ctau0, lambda0 ) )
