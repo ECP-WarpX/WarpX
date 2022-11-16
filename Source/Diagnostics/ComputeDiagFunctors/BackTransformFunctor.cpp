@@ -115,7 +115,6 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
             amrex::Array4<amrex::Real> src_arr = tmp[mfi].array();
             amrex::Array4<amrex::Real> dst_arr = mf_dst[mfi].array();
 #ifdef WARPX_DIM_RZ
-            const int nrz = WarpX::n_rz_azimuthal_modes;
             const int n_rz_comp = WarpX::ncomps;
 #endif
             amrex::ParallelFor( tbx, ncomp_dst,
