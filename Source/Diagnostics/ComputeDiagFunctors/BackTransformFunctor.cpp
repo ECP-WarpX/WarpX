@@ -229,7 +229,6 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
         amrex::Real clight = PhysConst::c;
         amrex::Real inv_clight = 1.0_rt/clight;
 #ifdef WARPX_DIM_RZ
-        const int n_rz = WarpX::n_rz_azimuthal_modes;
         const int n_rcomps = WarpX::ncomps;
         amrex::ParallelFor( tbx,
             [=] AMREX_GPU_DEVICE (int i, int j, int k)
