@@ -1053,3 +1053,4 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 #   endif
 #endif // #if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z)
 }
+#endif // CURRENTDEPOSITION_H_
