@@ -340,7 +340,7 @@ class DensityDistributionBase(object):
             species.injection_style = "nuniformpercell"
             species.num_particles_per_cell_each_dim = layout.n_macroparticle_per_cell
         elif isinstance(layout, PseudoRandomLayout):
-            assert (layout.n_macroparticles_per_cell is not None), Exception('WarpX only supports n_macroparticles_per_cell for the PseudoRandomLayout with UniformDistribution')
+            assert (layout.n_macroparticles_per_cell is not None), Exception('WarpX only supports n_macroparticles_per_cell for the PseudoRandomLayout with this distribution')
             species.injection_style = "nrandompercell"
             species.num_particles_per_cell = layout.n_macroparticles_per_cell
         else:
@@ -402,8 +402,7 @@ class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, Densi
 
         # --- Use specific attributes for flux injection
         species.injection_style = "nfluxpercell"
-        if not isinstance(layout, PseudoRandomLayout):
-            print('UniformFluxDistribution only supports the PseudoRandomLayout in WarpX')
+        assert (isinstance(layout, PseudoRandomLayout)), Exception('UniformFluxDistribution only supports the PseudoRandomLayout in WarpX')
         if species.momentum_distribution_type == "gaussian":
             species.momentum_distribution_type = "gaussianflux"
 
