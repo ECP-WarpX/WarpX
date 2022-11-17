@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Copyright 2022
 # Authors: Revathi Jambunathan, Remi Lehe
 #
@@ -5,8 +7,6 @@
 # (with the antenna) in the boosted-frame and then checking that the
 # fields recorded by the backtransformed diagnostics have the right amplitude,
 # wavelength, and envelope (i.e. gaussian envelope with the right duration.
-#
-#
 
 import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
