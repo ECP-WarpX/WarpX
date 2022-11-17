@@ -340,11 +340,11 @@ class DensityDistributionBase(object):
             species.injection_style = "nuniformpercell"
             species.num_particles_per_cell_each_dim = layout.n_macroparticle_per_cell
         elif isinstance(layout, PseudoRandomLayout):
-            assert (layout.n_macroparticles_per_cell is not None), Exception('WarpX only supports n_macroparticles_per_cell for the PseudoRandomLayout with UniformDistribution')
+            assert (layout.n_macroparticles_per_cell is not None), Exception('WarpX only supports n_macroparticles_per_cell for the PseudoRandomLayout with this distribution')
             species.injection_style = "nrandompercell"
             species.num_particles_per_cell = layout.n_macroparticles_per_cell
         else:
-            raise Exception('WarpX does not support the specified layout for UniformDistribution')
+            raise Exception('WarpX does not support the specified layout for this distribution')
 
         species.xmin = self.lower_bound[0]
         species.xmax = self.upper_bound[0]
@@ -383,6 +383,28 @@ class DensityDistributionBase(object):
             else:
                 expression = f'{self.directed_velocity[idir]}'
             species.__setattr__(f'momentum_function_u{sdir}(x,y,z)', f'({expression})/{constants.c}')
+
+
+class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, DensityDistributionBase):
+    def initialize_inputs(self, species_number, layout, species, density_scale):
+
+        self.fill_in = False
+        self.set_mangle_dict()
+        self.set_species_attributes(species, layout)
+
+        species.profile = "constant"
+        species.density = self.flux
+        if density_scale is not None:
+            species.density *= density_scale
+        species.flux_normal_axis = self.flux_normal_axis
+        species.surface_flux_pos = self.surface_flux_position
+        species.flux_direction = self.flux_direction
+
+        # --- Use specific attributes for flux injection
+        species.injection_style = "nfluxpercell"
+        assert (isinstance(layout, PseudoRandomLayout)), Exception('UniformFluxDistribution only supports the PseudoRandomLayout in WarpX')
+        if species.momentum_distribution_type == "gaussian":
+            species.momentum_distribution_type = "gaussianflux"
 
 
 class UniformDistribution(picmistandard.PICMI_UniformDistribution, DensityDistributionBase):
