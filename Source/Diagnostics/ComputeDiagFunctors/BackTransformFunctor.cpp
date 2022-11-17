@@ -34,8 +34,10 @@ using namespace amrex;
 BackTransformFunctor::BackTransformFunctor (amrex::MultiFab const * mf_src, int lev,
                                             const int ncomp, const int num_buffers,
                                             amrex::Vector< std::string > varnames,
-                                            const amrex::IntVect crse_ratio)
-    : ComputeDiagFunctor(ncomp, crse_ratio), m_mf_src(mf_src), m_lev(lev), m_num_buffers(num_buffers), m_varnames(varnames)
+                                            amrex::Vector< std::string > varnames_fields,
+                                            const amrex::IntVect crse_ratio
+                                            )
+    : ComputeDiagFunctor(ncomp, crse_ratio), m_mf_src(mf_src), m_lev(lev), m_num_buffers(num_buffers), m_varnames(varnames), m_varnames_fields(varnames_fields)
 {
     InitData();
 }
@@ -112,14 +114,32 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
             const Box& tbx = mfi.tilebox();
             amrex::Array4<amrex::Real> src_arr = tmp[mfi].array();
             amrex::Array4<amrex::Real> dst_arr = mf_dst[mfi].array();
+#ifdef WARPX_DIM_RZ
+            const int n_rz_comp = WarpX::ncomps;
+#endif
             amrex::ParallelFor( tbx, ncomp_dst,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
                 {
+                    // Field id that corresponds to the nth user-requested component
                     const int icomp = field_map_ptr[n];
 #if defined(WARPX_DIM_3D)
                     dst_arr(i, j, k_lab, n) = src_arr(i, j, k, icomp);
-#else
+#elif defined(WARPX_DIM_XZ)
                     dst_arr(i, k_lab, k, n) = src_arr(i, j, k, icomp);
+#elif defined(WARPX_DIM_RZ)
+                    // rzcomp below gives the component id, 0 to (n_rz_comp-1) for a given field
+                    const int rzcomp = n % n_rz_comp;
+                    // Accessing the correct rz component from the cell-centered multifab
+                    // that has back-transformed fields and storing it for the appropriate user-requested field, icomp
+                    // For example, for 2 rz modes, we have three components (n_rz_comp=3) for each field
+                    // If n = 4 gives icomp = 1 (for Et) obtained from field_map_ptr,
+                    //           rzcomp = 4 - int(floor(4/3))*3 = 4 - 3 = 1
+                    // Thus we are accessing real component of mode 1 of Et (note that modes go from 0 to 1)
+                    // Since the fields are stored contiguously in src_arr, icomp*n_rz_comp + rz_comp accesses
+                    // real part of mode 1 for Et (1*3+1) = 4
+                    dst_arr(i, k_lab, k, n) = src_arr(i, j, k, icomp*n_rz_comp+rzcomp);
+#else
+                    dst_arr(k_lab, j, k, n) = src_arr(i, j, k, icomp);
 #endif
                 } );
         }
@@ -185,7 +205,12 @@ BackTransformFunctor::InitData ()
 
     for (int i = 0; i < m_varnames.size(); ++i)
     {
+#ifdef WARPX_DIM_RZ
+        const int field_id = i / WarpX::ncomps;
+        m_map_varnames[i] = m_possible_fields_to_dump[ m_varnames_fields[field_id] ];
+#else
         m_map_varnames[i] = m_possible_fields_to_dump[ m_varnames[i] ] ;
+#endif
     }
 
 }
@@ -202,6 +227,46 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
         amrex::Array4< amrex::Real > arr = data[mfi].array();
         amrex::Real clight = PhysConst::c;
         amrex::Real inv_clight = 1.0_rt/clight;
+#ifdef WARPX_DIM_RZ
+        const int n_rcomps = WarpX::ncomps;
+        amrex::ParallelFor( tbx,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+                for (int mode_comp = 0; mode_comp < n_rcomps; ++mode_comp) {
+                    // Back-transform the transverse electric and magnetic fields.
+                    // Note that the z-components, Ez, Bz, are not changed by the transform.
+                    amrex::Real e_lab, b_lab, j_lab, rho_lab;
+
+                    // Transform Er_boost & Bt_boost to lab-frame for corresponding mode (mode_comp)
+                    e_lab = gamma_boost * ( arr(i, j, k, n_rcomps*0 + mode_comp)
+                                            + beta_boost * clight * arr(i, j, k, n_rcomps*4+ mode_comp) );
+                    b_lab = gamma_boost * ( arr(i, j, k, n_rcomps*4 + mode_comp)
+                                            + beta_boost * inv_clight * arr(i, j, k, n_rcomps*0 + mode_comp) );
+                    // Store lab-frame data in-place
+                    arr(i, j, k, n_rcomps*0 + mode_comp) = e_lab;
+                    arr(i, j, k, n_rcomps*4 + mode_comp) = b_lab;
+
+                    // Transform Et_boost & Br_boost to lab-frame for corresponding mode (mode_comp)
+                    e_lab = gamma_boost * ( arr(i, j, k, n_rcomps*1 + mode_comp)
+                                            - beta_boost * clight * arr(i, j, k, n_rcomps*3 + mode_comp) );
+                    b_lab = gamma_boost * ( arr(i, j, k, n_rcomps*3 + mode_comp)
+                                            - beta_boost * inv_clight * arr(i, j, k, n_rcomps*1 + mode_comp) );
+                    // Store lab-frame data in-place
+                    arr(i, j, k, n_rcomps*1 + mode_comp) = e_lab;
+                    arr(i, j, k, n_rcomps*3 + mode_comp) = b_lab;
+
+                    // Transform charge density z-component of current density
+                    j_lab = gamma_boost * ( arr(i, j, k, n_rcomps*8 + mode_comp)
+                                            + beta_boost * clight * arr(i, j, k, n_rcomps*9 + mode_comp) );
+                    rho_lab = gamma_boost * ( arr(i, j, k, n_rcomps*9 + mode_comp)
+                                              + beta_boost * inv_clight * arr(i, j, k, n_rcomps*8 + mode_comp) );
+                    // Store lab-frame jz and rho in-place
+                    arr(i, j, k, n_rcomps*8 + mode_comp) = j_lab;
+                    arr(i, j, k, n_rcomps*9 + mode_comp) = rho_lab;
+                }
+            }
+        );
+#else
         // arr(x,y,z,comp) has ten-components namely,
         // Ex Ey Ez Bx By Bz jx jy jz rho in that order.
         amrex::ParallelFor( tbx,
@@ -239,6 +304,7 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
                 arr(i, j, k, 9) = rho_lab;
             }
         );
+#endif
     }
 
 }
