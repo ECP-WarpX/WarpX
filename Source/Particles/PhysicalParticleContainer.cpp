@@ -2634,8 +2634,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     int qed_runtime_flag = no_qed;
 #endif
 
-    // Using this version of ParallelFor with compile time options could
-    // improve performance when qed or external EB is not used by reducing
+    // Using this version of ParallelFor with compile time options
+    // improves performance when qed or external EB are not used by reducing
     // register pressure.
     amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
                                 CompileTimeOptions<no_qed  ,has_qed>>{},

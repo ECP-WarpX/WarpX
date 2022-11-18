@@ -23,6 +23,7 @@
 /**
  * \brief Push position and momentum for a single particle
  *
+ * \tparam do_sync                  Whether to include quantum synchrotron radiation (QSR)
  * \param GetPosition               A functor for returning the particle position.
  * \param SetPosition               A functor for setting the particle position.
  * \param copyAttribs               A functor for storing the old u and x
@@ -36,7 +37,6 @@
  * \param pusher_algo               0: Boris, 1: Vay, 2: HigueraCary
  * \param do_crr                    Whether to do the classical radiation reaction
  * \param do_copy                   Whether to copy the old x and u for the BTD
- * \param do_sync                   Whether to include quantum synchrotron radiation (QSR)
  * \param t_chi_max                 Cutoff chi for QSR
  * \param dt                        Time step size
  */
