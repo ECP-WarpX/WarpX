@@ -817,6 +817,15 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::Array4<amrex::Real> const& temp_arr = temp_fab.array();
 #endif
 
+
+#if defined(WARPX_DIM_XZ)
+    AMREX_ALWAYS_ASSERT(jx_fab.box() == jy_fab.box() && jx_fab.box() == jz_fab.box());
+
+    amrex::FArrayBox temp_fab{jx_fab.box(), 2};
+    temp_fab.setVal<amrex::RunOn::Device>(0._rt);
+    amrex::Array4<amrex::Real> const& temp_arr = temp_fab.array();
+#endif
+
     // Inverse of light speed squared
     const amrex::Real invcsq = 1._rt / (PhysConst::c * PhysConst::c);
 
@@ -935,18 +944,20 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
                 auto const sxn_szo = static_cast<amrex::Real>(sx_new[i] * sz_old[k]);
                 auto const sxo_szo = static_cast<amrex::Real>(sx_old[i] * sz_old[k]);
 
-                // Jx
-                amrex::Gpu::Atomic::AddNoRet(&jx_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
+                // Jx and Jz
+                amrex::Gpu::Atomic::AddNoRet(&temp_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
                     wq * invvol * invdt * 0.5_rt * sxn_szn);
 
-                amrex::Gpu::Atomic::AddNoRet(&jx_arr(lo.x + i_old + i, lo.y + k_new + k, 0, 0),
+                amrex::Gpu::Atomic::AddNoRet(&temp_arr(lo.x + i_old + i, lo.y + k_old + k, 0, 0),
+                    - wq * invvol * invdt * 0.5_rt * sxo_szo);
+
+
+                amrex::Gpu::Atomic::AddNoRet(&temp_arr(lo.x + i_old + i, lo.y + k_new + k, 0, 1),
                     - wq * invvol * invdt * 0.5_rt * sxo_szn);
 
-                amrex::Gpu::Atomic::AddNoRet(&jx_arr(lo.x + i_new + i, lo.y + k_old + k, 0, 0),
+                amrex::Gpu::Atomic::AddNoRet(&temp_arr(lo.x + i_new + i, lo.y + k_old + k, 0, 1),
                     wq * invvol * invdt * 0.5_rt * sxn_szo);
 
-                amrex::Gpu::Atomic::AddNoRet(&jx_arr(lo.x + i_old + i, lo.y + k_old + k, 0, 0),
-                    - wq * invvol * invdt * 0.5_rt * sxo_szo);
 
                 // Jy
                 amrex::Gpu::Atomic::AddNoRet(&jy_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
@@ -961,18 +972,6 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
                 amrex::Gpu::Atomic::AddNoRet(&jy_arr(lo.x + i_old + i, lo.y + k_old + k, 0, 0),
                     wqy * 0.25_rt * sxo_szo);
 
-                // Jz
-                amrex::Gpu::Atomic::AddNoRet(&jz_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
-                    wq * invvol * invdt * 0.5_rt * sxn_szn);
-
-                amrex::Gpu::Atomic::AddNoRet(&jz_arr(lo.x+i_new+i,lo.y+k_old+k,0,0),
-                    - wq * invvol * invdt * 0.5_rt * sxn_szo);
-
-                amrex::Gpu::Atomic::AddNoRet(&jz_arr(lo.x+i_old+i,lo.y+k_new+k,0,0),
-                    wq * invvol * invdt * 0.5_rt * sxo_szn);
-
-                amrex::Gpu::Atomic::AddNoRet(&jz_arr(lo.x + i_old + i, lo.y + k_old + k, 0, 0),
-                    - wq * invvol * invdt * 0.5_rt * sxo_szo);
             }
         }
 
@@ -1043,6 +1042,18 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     // Synchronize so that temp_fab can be safely deallocated in its destructor
     amrex::Gpu::streamSynchronize();
 #endif
+
+#if defined(WARPX_DIM_XZ)
+    amrex::ParallelFor(jx_fab.box(), [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+    {
+        jx_arr(i,j,k) += temp_arr(i,j,k,0) + temp_arr(i,j,k,1));
+        jz_arr(i,j,k) += temp_arr(i,j,k,0) - temp_arr(i,j,k,1));
+    });
+
+    // Synchronize so that temp_fab can be safely deallocated in its destructor
+    amrex::Gpu::streamSynchronize();
+#endif
+
 
 #   if defined(WARPX_USE_GPUCLOCK)
     if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
