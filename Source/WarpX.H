@@ -534,7 +534,7 @@ public:
 
     /**
      * \brief
-     * Compute the last timestep of the simulation and make max_step and stop_time self-consistent.
+     * Compute the last time step of the simulation
      * Calls computeMaxStepBoostAccelerator() if required.
      */
     void ComputeMaxStep ();

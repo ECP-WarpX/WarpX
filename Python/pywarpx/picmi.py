@@ -1586,16 +1586,11 @@ class Simulation(picmistandard.PICMI_Simulation):
             return
 
         self.warpx_initialized = True
-        pywarpx.warpx.init(mpi_comm)
+        pywarpx.warpx.init(mpi_comm, max_step=self.max_steps, stop_time=self.max_time)
 
     def write_input_file(self, file_name='inputs'):
         self.initialize_inputs()
-        kw = {}
-        if self.max_steps is not None:
-            kw['max_step'] = self.max_steps
-        if self.max_time is not None:
-            kw['stop_time'] = self.max_time
-        pywarpx.warpx.write_inputs(file_name, **kw)
+        pywarpx.warpx.write_inputs(file_name, max_step=self.max_steps, stop_time=self.max_time)
 
     def step(self, nsteps=None, mpi_comm=None):
         self.initialize_inputs()
