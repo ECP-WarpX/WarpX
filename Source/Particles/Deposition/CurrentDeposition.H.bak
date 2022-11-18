@@ -1046,8 +1046,8 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 #if defined(WARPX_DIM_XZ)
     amrex::ParallelFor(jx_fab.box(), [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
     {
-        jx_arr(i,j,k) += temp_arr(i,j,k,0) + temp_arr(i,j,k,1);
-        jz_arr(i,j,k) += temp_arr(i,j,k,0) - temp_arr(i,j,k,1);
+        jx_arr(i,j,k) += temp_arr(i,j,k,0) + temp_arr(i,j,k,1));
+        jz_arr(i,j,k) += temp_arr(i,j,k,0) - temp_arr(i,j,k,1));
     });
 
     // Synchronize so that temp_fab can be safely deallocated in its destructor
