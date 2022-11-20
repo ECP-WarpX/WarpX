@@ -449,6 +449,46 @@ MultiParticleContainer::PostRestart ()
 }
 
 void
+MultiParticleContainer::PrintMemoryUsage () const
+{
+    Long mn = 0;
+    Long mx = 0;
+    Long cnt = 0;
+
+    Long mn_cap = 0;
+    Long mx_cap = 0;
+    Long cnt_cap = 0;
+
+    for (int i=0; i < static_cast<int>(species_names.size()); i++)
+    {
+        const auto& pc = allcontainers[i];
+        amrex::Print() << "Memory usage data for species " << species_names[i] << ": \n";
+        amrex::Print() << "Required to store particles: \n";
+        pc->ByteSpread(mn, mx, cnt);
+        amrex::Print() << "Actual vector capacity: \n";
+        pc->PrintCapacity(mn_cap, mx_cap, cnt_cap);
+        amrex::Print() << "\n";
+    }
+
+    amrex::Print() << "Total bytes across all species required to store particles: \n";
+    amrex::Print() << "[Min: "
+                   << mn
+                   << ", Max: "
+                   << mx
+                   << ", Total: "
+                   << cnt
+                   << "]\n";
+    amrex::Print() << "Actual vector capacity (bytes): \n";
+    amrex::Print() << "[Min: "
+                   << mn_cap
+                   << ", Max: "
+                   << mx_cap
+                   << ", Total: "
+                   << cnt_cap
+                   << "]\n";
+}
+
+void
 MultiParticleContainer::InitMultiPhysicsModules ()
 {
     // Init ionization module here instead of in the MultiParticleContainer

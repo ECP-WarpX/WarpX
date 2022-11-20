@@ -266,6 +266,12 @@ Setting up the field mesh
     Perform MPI communications for field guard regions in single precision.
     Only meaningful for ``WarpX_PRECISION=DOUBLE``.
 
+* ``warpx.print_species_mem_usage`` (`bool`; `false` by default)
+    Print out data on the memory usage by particles across MPI ranks. Includes
+    both the minimum required storage and the actual size allocated in vectors.
+    Note that this requires doing extra MPI reductions so it will likely slow
+    down program execution, particularly at scale.
+
 * ``particles.deposit_on_main_grid`` (`list of strings`)
     When using mesh refinement: the particle species whose name are included
     in the list will deposit their charge/current directly on the main grid
