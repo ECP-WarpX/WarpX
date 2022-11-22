@@ -60,7 +60,7 @@ struct GetExternalEBField
     LatticeElementFinderDevice d_lattice_element_finder;
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool isNoOp () const { return (m_Etype == None && m_Btype == None); }
+    bool isNoOp () const { return (m_Etype == None && m_Btype == None && !m_accelerator_lattice_defined); }
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator () (long i,
