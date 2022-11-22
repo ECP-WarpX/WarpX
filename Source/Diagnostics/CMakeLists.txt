@@ -1,6 +1,5 @@
 target_sources(WarpX
   PRIVATE
-    BackTransformedDiagnostic.cpp
     Diagnostics.cpp
     FieldIO.cpp
     FullDiagnostics.cpp

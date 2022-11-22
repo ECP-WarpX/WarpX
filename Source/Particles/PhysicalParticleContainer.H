@@ -240,20 +240,6 @@ public:
                     const int n_external_attr_int,
                     const amrex::RandomEngine& engine) override final;
 
-    virtual void GetParticleSlice (
-        const int direction, const amrex::Real z_old,
-        const amrex::Real z_new, const amrex::Real t_boost,
-        const amrex::Real t_lab, const amrex::Real dt,
-        DiagnosticParticles& diagnostic_particles) final;
-
-    /** Convert particle momentum to/from SI
-     *
-     * @see particlesConvertUnits
-     *
-     * @param convert_dir convert to or from SI
-     */
-    virtual void ConvertUnits (ConvertDirection convert_dir) override;
-
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather
  * \param lev MR level

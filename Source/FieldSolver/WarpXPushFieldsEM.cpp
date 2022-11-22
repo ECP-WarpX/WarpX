@@ -270,7 +270,8 @@ WarpX::PSATDBackwardTransformG ()
 
 void WarpX::PSATDForwardTransformJ (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const bool apply_kspace_filter)
 {
     SpectralFieldIndex Idx;
     int idx_jx, idx_jy, idx_jz;
@@ -279,9 +280,9 @@ void WarpX::PSATDForwardTransformJ (
     {
         Idx = spectral_solver_fp[lev]->m_spectral_index;
 
-        idx_jx = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
-        idx_jy = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
-        idx_jz = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
+        idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
+        idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
+        idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
 
         ForwardTransformVect(lev, *spectral_solver_fp[lev], J_fp[lev], idx_jx, idx_jy, idx_jz);
 
@@ -289,9 +290,9 @@ void WarpX::PSATDForwardTransformJ (
         {
             Idx = spectral_solver_cp[lev]->m_spectral_index;
 
-            idx_jx = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
-            idx_jy = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
-            idx_jz = (WarpX::do_multi_J) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
+            idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
+            idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
+            idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
 
             ForwardTransformVect(lev, *spectral_solver_cp[lev], J_cp[lev], idx_jx, idx_jy, idx_jz);
         }
@@ -299,7 +300,7 @@ void WarpX::PSATDForwardTransformJ (
 
 #ifdef WARPX_DIM_RZ
     // Apply filter in k space if needed
-    if (WarpX::use_kspace_filter)
+    if (use_kspace_filter && apply_kspace_filter)
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
@@ -311,6 +312,8 @@ void WarpX::PSATDForwardTransformJ (
             }
         }
     }
+#else
+    amrex::ignore_unused(apply_kspace_filter);
 #endif
 }
 
@@ -349,8 +352,10 @@ void WarpX::PSATDBackwardTransformJ (
 void WarpX::PSATDForwardTransformRho (
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-    const int icomp, const int dcomp)
+    const int icomp, const int dcomp, const bool apply_kspace_filter)
 {
+    if (charge_fp[0] == nullptr) return;
+
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
 
     // Select index in k space
@@ -368,7 +373,7 @@ void WarpX::PSATDForwardTransformRho (
 
 #ifdef WARPX_DIM_RZ
     // Apply filter in k space if needed
-    if (WarpX::use_kspace_filter)
+    if (use_kspace_filter && apply_kspace_filter)
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
@@ -380,6 +385,8 @@ void WarpX::PSATDForwardTransformRho (
             }
         }
     }
+#else
+    amrex::ignore_unused(apply_kspace_filter);
 #endif
 }
 
@@ -635,46 +642,119 @@ WarpX::PushPSATD ()
         "PushFieldsEM: PSATD solver selected but not built"));
 #else
 
-    PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
-
-    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp =
-        (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) ? current_fp_vay : current_fp;
-
-    PSATDForwardTransformJ(J_fp, current_cp);
-
-    // Do rho FFTs only if needed
-    if (WarpX::update_with_rho || WarpX::current_correction || WarpX::do_dive_cleaning)
+    if (fft_periodic_single_box)
     {
-        PSATDForwardTransformRho(rho_fp, rho_cp, 0,0); // rho old
-        PSATDForwardTransformRho(rho_fp, rho_cp, 1,1); // rho new
+        if (current_correction)
+        {
+            // FFT of J and rho
+            PSATDForwardTransformJ(current_fp, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+
+            // Correct J in k-space
+            PSATDCurrentCorrection();
+
+            // Inverse FFT of J
+            PSATDBackwardTransformJ(current_fp, current_cp);
+        }
+        else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            // FFT of D and rho (if used)
+            // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
+            PSATDForwardTransformJ(current_fp_vay, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+
+            // Compute J from D in k-space
+            PSATDVayDeposition();
+
+            // Inverse FFT of J, subtract cumulative sums of D
+            PSATDBackwardTransformJ(current_fp, current_cp);
+            // TODO Cumulative sums need to be fixed with periodic single box
+            PSATDSubtractCurrentPartialSumsAvg();
+
+            // FFT of J after subtraction of cumulative sums
+            PSATDForwardTransformJ(current_fp, current_cp);
+        }
+        else // no current correction, no Vay deposition
+        {
+            // FFT of J and rho (if used)
+            PSATDForwardTransformJ(current_fp, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+        }
     }
-
-    // Correct the current in Fourier space so that the continuity equation is satisfied, and
-    // transform back to real space so that the current correction is reflected in the diagnostics
-    if (WarpX::current_correction)
+    else // no periodic single box
     {
-        PSATDCurrentCorrection();
-        PSATDBackwardTransformJ(current_fp, current_cp);
-    }
+        if (current_correction)
+        {
+            // FFT of J and rho
+#ifdef WARPX_DIM_RZ
+            // In RZ geometry, do not apply filtering here, since it is
+            // applied in the subsequent calls to these functions (below)
+            const bool apply_kspace_filter = false;
+            PSATDForwardTransformJ(current_fp, current_cp, apply_kspace_filter);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0, apply_kspace_filter); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1, apply_kspace_filter); // rho new
+#else
+            PSATDForwardTransformJ(current_fp, current_cp);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+#endif
 
-    // Compute the current in Fourier space according to the Vay deposition scheme, and
-    // transform back to real space so that the Vay deposition is reflected in the diagnostics
-    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
-    {
-        PSATDVayDeposition();
-        PSATDBackwardTransformJ(current_fp, current_cp);
-        PSATDSubtractCurrentPartialSumsAvg();
-        SyncCurrent(current_fp, current_cp);
+            // Correct J in k-space
+            PSATDCurrentCorrection();
+
+            // Inverse FFT of J
+            PSATDBackwardTransformJ(current_fp, current_cp);
+
+            // Synchronize J and rho
+            SyncCurrent(current_fp, current_cp);
+            SyncRho();
+        }
+        else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
+        {
+            // FFT of D
+            PSATDForwardTransformJ(current_fp_vay, current_cp);
+
+            // Compute J from D in k-space
+            PSATDVayDeposition();
+
+            // Inverse FFT of J, subtract cumulative sums of D
+            PSATDBackwardTransformJ(current_fp, current_cp);
+            PSATDSubtractCurrentPartialSumsAvg();
+
+            // Synchronize J and rho (if used).
+            // Here we call SumBoundaryJ instead of SyncCurrent, because
+            // filtering has been already applied to D in OneStep_nosub,
+            // by calling SyncCurrentAndRho (see Evolve/WarpXEvolve.cpp).
+            // TODO This works only without mesh refinement
+            const int lev = 0;
+            SumBoundaryJ(current_fp, lev, Geom(lev).periodicity());
+            SyncRho();
+        }
+
+        // FFT of J and rho (if used)
         PSATDForwardTransformJ(current_fp, current_cp);
+        PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
+        PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
     }
+
+    // FFT of E and B
+    PSATDForwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
 
 #ifdef WARPX_DIM_RZ
     if (pml_rz[0]) pml_rz[0]->PushPSATD(0);
 #endif
 
+    // FFT of F and G
     if (WarpX::do_dive_cleaning) PSATDForwardTransformF();
     if (WarpX::do_divb_cleaning) PSATDForwardTransformG();
+
+    // Update E, B, F, and G in k-space
     PSATDPushSpectralFields();
+
+    // Inverse FFT of E, B, F, and G
     PSATDBackwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
     if (WarpX::fft_do_time_averaging)
         PSATDBackwardTransformEBavg(Efield_avg_fp, Bfield_avg_fp, Efield_avg_cp, Bfield_avg_cp);
@@ -805,7 +885,7 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     // ECTRhofield must be recomputed at the very end of the Efield update to ensure
     // that ECTRhofield is consistent with Efield
 #ifdef AMREX_USE_EB
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_fp[lev], m_edge_lengths[lev],
                                                 m_face_areas[lev], ECTRhofield[lev], lev);

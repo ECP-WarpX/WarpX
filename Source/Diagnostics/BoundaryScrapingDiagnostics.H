@@ -8,7 +8,7 @@
 #define WARPX_BOUNDARYSCRAPINGDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
 
 #include <string>
 
@@ -31,7 +31,7 @@ private:
     void ReadParameters ();
 
     /** Determines timesteps at which the particles are written out */
-    IntervalsParser m_intervals;
+    utils::parser::IntervalsParser m_intervals;
 
     /** \brief Flush data to file. */
     void Flush (int i_buffer) override;

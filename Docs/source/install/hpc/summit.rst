@@ -45,6 +45,22 @@ We recommend to store the above lines in a file, such as ``$HOME/summit_warpx.pr
 
    source $HOME/summit_warpx.profile
 
+For PSATD+RZ simulations, you will need to build BLAS++ and LAPACK++:
+
+.. code-block:: bash
+
+  # BLAS++ (for PSATD+RZ)
+  git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
+  rm -rf src/blaspp-summit-build
+  cmake -S src/blaspp -B src/blaspp-summit-build -Duse_openmp=OFF -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/summit/blaspp-master
+  cmake --build src/blaspp-summit-build --target install --parallel 10
+
+  # LAPACK++ (for PSATD+RZ)
+  git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
+  rm -rf src/lapackpp-summit-build
+  cmake -S src/lapackpp -B src/lapackpp-summit-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/summit/lapackpp-master
+  cmake --build src/lapackpp-summit-build --target install --parallel 10
+
 Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` or dynamic ensemble optimizations (:ref:`libEnsemble <libensemble>`):
 
 .. code-block:: bash
@@ -244,6 +260,12 @@ Known System Issues
 
 .. warning::
 
+   Sep 20th, 2022 (OLCFHELP-8992):
+   The above **HDF5 Jupyter read** work-around for OLCFHELP-3685 does not work anymore, due to the way that GPFS is mounted via NSF on Jupyter nodes.
+   As a work-around until this is fixed, please copy your HDF5 data to ``/ccs``, ``$HOME`` or use ADIOS2 BP instead of HDF5 files.
+
+.. warning::
+
    Aug 27th, 2021 (OLCFHELP-3442):
    Created simulation files and directories are no longer accessible by your team members, even if you create them on ``$PROJWORK``.
    Setting the proper "user mask" (``umask``) does not yet work to fix this.
@@ -319,15 +341,16 @@ For post-processing, most users use Python via OLCFs's `Jupyter service <https:/
 We usually just install our software on-the-fly on Summit.
 When starting up a post-processing session, run this in your first cells:
 
+.. note::
+
+   The following software packages are installed only into a temporary directory.
+
 .. code-block:: bash
 
    # work-around for OLCFHELP-4242
    !jupyter serverextension enable --py --sys-prefix dask_labextension
 
-   # next Jupyter cell: install a faster & better conda package manager
-   !conda install -c conda-forge -y mamba
-
-   # next cell: the software you want
-   !mamba install -c conda-forge -y openpmd-api openpmd-viewer ipympl ipywidgets fast-histogram yt
+   # next Jupyter cell: the software you want
+   !mamba install --quiet -c conda-forge -y openpmd-api openpmd-viewer ipympl ipywidgets fast-histogram yt
 
    # restart notebook

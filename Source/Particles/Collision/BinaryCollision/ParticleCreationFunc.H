@@ -15,7 +15,6 @@
 #include "Particles/ParticleCreation/SmartCopy.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX_DenseBins.H>
@@ -217,7 +216,7 @@ public:
 
                 // Initialize the product particles' momentum, using a function depending on the
                 // specific collision type
-                if (t_collision_type == CollisionType::ProtonBoronFusion)
+                if (t_collision_type == CollisionType::ProtonBoronToAlphasFusion)
                 {
                     const index_type product_start_index = products_np_data[0] + 2*p_offsets[i]*
                                                            p_num_products_device[0];
@@ -225,11 +224,19 @@ public:
                                                         p_pair_indices_1[i], p_pair_indices_2[i],
                                                         product_start_index, m1, m2, engine);
                 }
-                else if (t_collision_type == CollisionType::DeuteriumTritiumFusion)
+                else if ((t_collision_type == CollisionType::DeuteriumTritiumToNeutronHeliumFusion)
+                      || (t_collision_type == CollisionType::DeuteriumDeuteriumToProtonTritiumFusion)
+                      || (t_collision_type == CollisionType::DeuteriumDeuteriumToNeutronHeliumFusion))
                 {
                     amrex::ParticleReal fusion_energy = 0.0_prt;
-                    if (t_collision_type == CollisionType::DeuteriumTritiumFusion) {
-                        fusion_energy = 17.5893e6_prt * PhysConst::q_e; // 17.6 MeV
+                    if (t_collision_type == CollisionType::DeuteriumTritiumToNeutronHeliumFusion) {
+                        fusion_energy = 17.5893e6_prt * PhysConst::q_e;
+                    }
+                    else if (t_collision_type == CollisionType::DeuteriumDeuteriumToProtonTritiumFusion) {
+                        fusion_energy = 4.032667e6_prt * PhysConst::q_e;
+                    }
+                    else if (t_collision_type == CollisionType::DeuteriumDeuteriumToNeutronHeliumFusion) {
+                        fusion_energy = 3.268911e6_prt * PhysConst::q_e;
                     }
                     TwoProductFusionInitializeMomentum(soa_1, soa_2,
                         soa_products_data[0], soa_products_data[1],

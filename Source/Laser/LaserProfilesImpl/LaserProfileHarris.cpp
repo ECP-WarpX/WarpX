@@ -6,8 +6,8 @@
  */
 #include "Laser/LaserProfiles.H"
 
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpX_Complex.H"
 
 #include <AMReX_Extension.H>
@@ -22,13 +22,15 @@ using namespace amrex;
 void
 WarpXLaserProfiles::HarrisLaserProfile::init (
     const amrex::ParmParse& ppl,
-    const amrex::ParmParse& /* ppc */,
     CommonLaserParameters params)
 {
     // Parse the properties of the Harris profile
-    getWithParser(ppl, "profile_waist", m_params.waist);
-    getWithParser(ppl, "profile_duration", m_params.duration);
-    getWithParser(ppl, "profile_focal_distance", m_params.focal_distance);
+    utils::parser::getWithParser(
+        ppl, "profile_waist", m_params.waist);
+    utils::parser::getWithParser(
+        ppl, "profile_duration", m_params.duration);
+    utils::parser::getWithParser(
+        ppl, "profile_focal_distance", m_params.focal_distance);
     //Copy common params
     m_common_params = params;
 }
@@ -69,10 +71,21 @@ WarpXLaserProfiles::HarrisLaserProfile::fill_amplitude (
 
     // time envelope is given by the Harris function
     Real time_envelope = 0.;
+
+    constexpr auto norm = 1._rt/32._rt;
+    constexpr auto c_0 = 10._rt;
+    constexpr auto c_1 = -15._rt;
+    constexpr auto c_2 = 6._rt;
+    constexpr auto c_3 = -1._rt;
+    constexpr auto a_1 = 1._rt;
+    constexpr auto a_2 = 2._rt;
+    constexpr auto a_3 = 3._rt;
+
     if (t < m_params.duration)
-        time_envelope = 1._rt/32._rt * (10._rt - 15._rt*std::cos(arg_env) +
-                                  6._rt*std::cos(2._rt*arg_env) -
-                                  std::cos(3._rt*arg_env));
+        time_envelope =  norm * (c_0 +
+                                 c_1*std::cos(a_1*arg_env) +
+                                 c_2*std::cos(a_2*arg_env) +
+                                 c_3*std::cos(a_3*arg_env));
 
     // Copy member variables to tmp copies for GPU runs.
     const auto tmp_e_max = m_common_params.e_max;

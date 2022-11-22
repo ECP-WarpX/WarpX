@@ -13,7 +13,6 @@
 #define WARPX_H_
 
 #include "BoundaryConditions/PML_fwd.H"
-#include "Diagnostics/BackTransformedDiagnostic_fwd.H"
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
@@ -36,7 +35,7 @@
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
 #include "AcceleratorLattice/AcceleratorLattice.H"
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
@@ -66,6 +65,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <map>
 
 enum struct PatchType : int
 {
@@ -101,8 +101,9 @@ public:
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
-                         int num_shift, int dir, const int lev, amrex::Real external_field=0.0,
-                         bool useparser = false, amrex::ParserExecutor<3> const& field_parser={});
+                         int num_shift, int dir, const int lev, bool update_cost_flag,
+                         amrex::Real external_field=0.0, bool useparser = false,
+                         amrex::ParserExecutor<3> const& field_parser={});
 
     static void GotoNextLine (std::istream& is);
 
@@ -155,7 +156,7 @@ public:
     //! Integer that corresponds to the particle push algorithm (Boris, Vay, Higuera-Cary)
     static short particle_pusher_algo;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
-    static short maxwell_solver_id;
+    static short electromagnetic_solver_id;
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
@@ -187,6 +188,10 @@ public:
      */
     static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
 
+    //! Integers that correspond to the time dependency of J (constant, linear)
+    //! and rho (linear, quadratic) for the PSATD algorithm
+    static short J_in_time;
+    static short rho_in_time;
 
     //! If true, the current is deposited on a nodal grid and then centered onto a staggered grid
     //! using finite centering of order given by #current_centering_nox, #current_centering_noy,
@@ -269,22 +274,6 @@ public:
     //! If true, the initial conditions from random number generators are serialized (useful for reproducible testing with OpenMP)
     static bool serialize_initial_conditions;
 
-    //! If true, then lab-frame data will be computed for boosted frame simulations
-    //! with customized output format
-    static bool do_back_transformed_diagnostics;
-    //! Name of the back-transformed diagnostics output directory
-    static std::string lab_data_directory;
-    //! Number of back-tranformed snapshots in the lab-frame
-    static int  num_snapshots_lab;
-    //! Time interval in lab-frame between the back-transformed snapshots
-    static amrex::Real dt_snapshots_lab;
-    //! If true, then lab-frame data will be computed for the fields and flushed out
-    //! in customized format
-    static bool do_back_transformed_fields;
-    //! If true, then lab-frame data will be computed for the particles and flushed out
-    //! in customized format
-    static bool do_back_transformed_particles;
-
     //! Lorentz factor of the boosted frame in which a boosted-frame simulation is run
     static amrex::Real gamma_boost;
     //! Beta value corresponding to the Lorentz factor of the boosted frame of the simulation
@@ -303,7 +292,7 @@ public:
     static bool do_dynamic_scheduling;
     static bool refine_plasma;
 
-    static IntervalsParser sort_intervals;
+    static utils::parser::IntervalsParser sort_intervals;
     static amrex::IntVect sort_bin_size;
 
     static bool do_subcycling;
@@ -327,6 +316,95 @@ public:
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;
+
+    /**
+     * \brief
+     * Allocate and optionally initialize the MultiFab. This also adds the MultiFab
+     * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
+     * interface
+     *
+     * \param mf[out] The MultiFab unique pointer to be allocated
+     * \param ba[in] The BoxArray describing the MultiFab
+     * \param dm[in] The DistributionMapping describing the MultiFab
+     * \param ncomp[in] The number of components in the MultiFab
+     * \param ngrow[in] The number of guard cells in the MultiFab
+     * \param name[in] The name of the MultiFab to use in the map
+     * \param initial_value[in] The optional initial value
+     */
+    static void AllocInitMultiFab (
+        std::unique_ptr<amrex::MultiFab>& mf,
+        const amrex::BoxArray& ba,
+        const amrex::DistributionMapping& dm,
+        const int ncomp,
+        const amrex::IntVect& ngrow,
+        const std::string name,
+        std::optional<const amrex::Real> initial_value = {});
+
+    /**
+     * \brief
+     * Allocate and optionally initialize the iMultiFab. This also adds the iMultiFab
+     * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
+     * interface
+     *
+     * \param mf[out] The iMultiFab unique pointer to be allocated
+     * \param ba[in] The BoxArray describing the iMultiFab
+     * \param dm[in] The DistributionMapping describing the iMultiFab
+     * \param ncomp[in] The number of components in the iMultiFab
+     * \param ngrow[in] The number of guard cells in the iMultiFab
+     * \param name[in] The name of the iMultiFab to use in the map
+     * \param initial_value[in] The optional initial value
+     */
+    static void AllocInitMultiFab (
+        std::unique_ptr<amrex::iMultiFab>& mf,
+        const amrex::BoxArray& ba,
+        const amrex::DistributionMapping& dm,
+        const int ncomp,
+        const amrex::IntVect& ngrow,
+        const std::string name,
+        std::optional<const int> initial_value = {});
+
+    /**
+     * \brief
+     * Create an alias of a MultiFab, adding the alias to the MultiFab map
+     * \param mf[out] The MultiFab to create
+     * \param mf_to_alias[in] The MultiFab to alias
+     * \param scomp[in] The starting component to be aliased
+     * \param ncomp[in] The number of components to alias
+     * \param name[in] The name of the MultiFab to use in the map
+     */
+    static void AliasInitMultiFab (
+        std::unique_ptr<amrex::MultiFab>& mf,
+        const amrex::MultiFab& mf_to_alias,
+        const int scomp,
+        const int ncomp,
+        const std::string name,
+        std::optional<const amrex::Real> initial_value);
+
+    // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)
+    // This is a convenience for the Python interface, allowing all MultiFabs
+    // to be easily referenced from Python.
+    static std::map<std::string, amrex::MultiFab *> multifab_map;
+    static std::map<std::string, amrex::iMultiFab *> imultifab_map;
+
+    /**
+     * \brief
+     * Add the MultiFab to the map of MultiFabs
+     * \param name The name of the MultiFab use to reference the MultiFab
+     * \parame mf The MultiFab to be added to the map (via a pointer to it)
+     */
+    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::MultiFab>& mf) {
+        multifab_map[name] = mf.get();
+    }
+
+    /**
+     * \brief
+     * Add the iMultiFab to the map of MultiFabs
+     * \param name The name of the iMultiFab use to reference the iMultiFab
+     * \parame mf The iMultiFab to be added to the map (via a pointer to it)
+     */
+    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::iMultiFab>& mf) {
+        imultifab_map[name] = mf.get();
+    }
 
     std::array<const amrex::MultiFab* const, 3>
     get_array_Bfield_aux  (const int lev) const {
@@ -450,14 +528,14 @@ public:
     void PrintMainPICparameters ();
 
     /** Write a file that record all inputs: inputs file + command line options */
-    void WriteUsedInputsFile (std::string const & filename = "warpx_used_inputs") const;
+    void WriteUsedInputsFile () const;
 
     /** Print dt and dx,dy,dz */
     void PrintDtDxDyDz ();
 
     /**
      * \brief
-     * Compute the last timestep of the simulation and make max_step and stop_time self-consistent.
+     * Compute the last time step of the simulation
      * Calls computeMaxStepBoostAccelerator() if required.
      */
     void ComputeMaxStep ();
@@ -527,7 +605,10 @@ public:
 
     /** \brief returns the load balance interval
      */
-    IntervalsParser get_load_balance_intervals () const {return load_balance_intervals;}
+    utils::parser::IntervalsParser get_load_balance_intervals () const
+    {
+        return load_balance_intervals;
+    }
 
     /**
      * \brief Private function for spectral solver
@@ -630,22 +711,29 @@ public:
     void UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab const& src);
 
     // Fill boundary cells including coarse/fine boundaries
-    void FillBoundaryB   (amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryE   (amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryB   (amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryE   (amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryB_avg   (amrex::IntVect ng);
     void FillBoundaryE_avg   (amrex::IntVect ng);
 
-    void FillBoundaryF   (amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryG   (amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryF   (amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryG   (amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryAux (amrex::IntVect ng);
-    void FillBoundaryE   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryB   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryE   (int lev, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryB   (int lev, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryE_avg   (int lev, amrex::IntVect ng);
     void FillBoundaryB_avg   (int lev, amrex::IntVect ng);
 
-    void FillBoundaryF   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryG   (int lev, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryF   (int lev, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryG   (int lev, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
+
+    /**
+     * \brief Synchronize J and rho:
+     * filter (if used), exchange guard cells, interpolate across MR levels.
+     * Contains separate calls to WarpX::SyncCurrent and WarpX::SyncRho.
+     */
+    void SyncCurrentAndRho ();
 
     /**
      * \brief Apply filter and sum guard cells across MR levels.
@@ -719,7 +807,7 @@ public:
     static const amrex::iMultiFab* CurrentBufferMasks (int lev);
     static const amrex::iMultiFab* GatherBufferMasks (int lev);
 
-    static int do_electrostatic;
+    static int electrostatic_solver_id;
 
     // Parameters for lab frame electrostatic
     static amrex::Real self_fields_required_precision;
@@ -743,12 +831,6 @@ public:
     static int moving_window_dir;
     static amrex::Real moving_window_v;
     static bool fft_do_time_averaging;
-
-    // slice generation //
-    static int num_slice_snapshots_lab;
-    static amrex::Real dt_slice_snapshots_lab;
-    static amrex::Real particle_slice_width_lab;
-    amrex::RealBox getSliceRealBox() const {return slice_realbox;}
 
     // these should be private, but can't due to Cuda limitations
     static void ComputeDivB (amrex::MultiFab& divB, int const dcomp,
@@ -798,6 +880,8 @@ public:
     void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<amrex::Real, 3> const beta = {{0,0,0}} ) const;
+    void computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
 
     /**
      * \brief
@@ -945,10 +1029,10 @@ private:
     ///
     void EvolveEM(int numsteps);
 
-    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng, const bool nodal_sync = false);
-    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng, const bool nodal_sync = false);
+    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
 
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
@@ -971,11 +1055,22 @@ private:
         const int lev);
     void StoreCurrent (const int lev);
     void RestoreCurrent (const int lev);
-    void ApplyFilterandSumBoundaryJ (
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    void ApplyFilterJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
         const int lev,
-        PatchType patch_type);
+        const int idim);
+    void ApplyFilterJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const int lev);
+    void SumBoundaryJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const int lev,
+        const int idim,
+        const amrex::Periodicity& period);
+    void SumBoundaryJ (
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+        const int lev,
+        const amrex::Periodicity& period);
     void NodalSyncJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
@@ -1045,10 +1140,13 @@ private:
      */
     void CheckGuardCells(amrex::MultiFab const& mf);
 
+    /**
+     * \brief Checks for known numerical issues involving different WarpX modules
+     */
+    void CheckKnownIssues();
+
     /** Check the requested resources and write performance hints */
     void PerformanceHints ();
-
-    std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
 
     void BuildBufferMasks ();
     void BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
@@ -1091,9 +1189,10 @@ private:
                                         const int centering_noz);
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                        const amrex::IntVect& ngEB, const amrex::IntVect& ngJ,
+                        const amrex::IntVect& ngEB, amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const amrex::IntVect& ngG, const bool aux_is_nodal);
+
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
     void AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
@@ -1121,9 +1220,6 @@ private:
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
     std::unique_ptr<MultiDiagnostics> multi_diags;
-
-    // Boosted Frame Diagnostics
-    std::unique_ptr<BackTransformedDiagnostic> myBFD;
 
     //
     // Fields: First array for level, second for direction
@@ -1250,7 +1346,7 @@ private:
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
      * for getting steps at which load balancing is performed */
-    IntervalsParser load_balance_intervals;
+    utils::parser::IntervalsParser load_balance_intervals;
     /** Collection of LayoutData to keep track of weights used in load balancing
      * routines. Contains timer-based or heuristic-based costs depending on input option */
     amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > > costs;
@@ -1283,7 +1379,7 @@ private:
     amrex::Real costs_heuristic_particles_wt = amrex::Real(0);
 
     // Determines timesteps for override sync
-    IntervalsParser override_sync_intervals;
+    utils::parser::IntervalsParser override_sync_intervals;
 
     // Other runtime parameters
     int verbose = 1;
@@ -1513,10 +1609,13 @@ private:
      *             storing the fine patch current to be transformed
      * \param J_cp Vector of three-dimensional arrays (for each level)
      *             storing the coarse patch current to be transformed
+     * \param[in] apply_kspace_filter Control whether to apply filtering
+     *                                (only used in RZ geometry to avoid double filtering)
      */
     void PSATDForwardTransformJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const bool apply_kspace_filter=true);
 
     /**
      * \brief Backward FFT of J on all mesh refinement levels
@@ -1538,11 +1637,13 @@ private:
      * \param charge_cp Vector (for each level) storing the coarse patch charge to be transformed
      * \param[in] icomp index of fourth component (0 for rho_old, 1 for rho_new)
      * \param[in] dcomp index of spectral component (0 for rho_old, 1 for rho_new)
+     * \param[in] apply_kspace_filter Control whether to apply filtering
+     *                                (only used in RZ geometry to avoid double filtering)
      */
     void PSATDForwardTransformRho (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-        const int icomp, const int dcomp);
+        const int icomp, const int dcomp, const bool apply_kspace_filter=true);
 
     /**
      * \brief Copy rho_new to rho_old in spectral space

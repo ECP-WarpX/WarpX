@@ -137,11 +137,6 @@ public:
 
     virtual void PostRestart () = 0;
 
-    virtual void GetParticleSlice(const int /*direction*/, const amrex::Real /*z_old*/,
-                                  const amrex::Real /*z_new*/, const amrex::Real /*t_boost*/,
-                                  const amrex::Real /*t_lab*/, const amrex::Real /*dt*/,
-                                  DiagnosticParticles& /*diagnostic_particles*/) {}
-
     void AllocData ();
 
     /**
@@ -293,8 +288,6 @@ public:
 
     virtual void WriteHeader (std::ostream& os) const = 0;
 
-    virtual void ConvertUnits (ConvertDirection /*convert_dir*/){}
-
     static void ReadParameters ();
 
     static void BackwardCompatibility ();
@@ -307,6 +300,7 @@ public:
     void ApplyBoundaryConditions ();
 
     bool do_splitting = false;
+    int do_not_deposit = 0;
     bool initialize_self_fields = false;
     amrex::Real self_fields_required_precision = amrex::Real(1.e-11);
     amrex::Real self_fields_absolute_tolerance = amrex::Real(0.0);
@@ -316,7 +310,6 @@ public:
     // split along diagonals (0) or axes (1)
     int split_type = 0;
 
-    int doBackTransformedDiagnostics () const { return do_back_transformed_diagnostics; }
     /** Whether back-transformed diagnostics need to be performed for a particular species.
      *
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
@@ -388,7 +381,6 @@ protected:
     bool m_gather_from_main_grid = false;
 
     int do_not_push = 0;
-    int do_not_deposit = 0;
     int do_not_gather = 0;
 
     // Whether to allow particles outside of the simulation domain to be
@@ -410,7 +402,6 @@ protected:
 
     int do_resampling = 0;
 
-    int do_back_transformed_diagnostics = 1;
     /** Whether back-transformed diagnostics is turned on for the corresponding species.*/
     bool m_do_back_transformed_particles = false;
 

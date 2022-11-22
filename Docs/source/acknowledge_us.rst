@@ -52,6 +52,11 @@ Prior WarpX references
 
 If your project uses the specific algorithms, please consider citing the respective publications in addition.
 
+- Huebl A, Lehe R, Mitchell C E, Qiang J, Ryne R D, Sandberg R T, Vay JL.
+  **Next Generation Computational Tools for the Modeling and Design of Particle Accelerators at Exascale**.
+  *NAPAC'22*, 2022.
+  `arXiv:2208.02382 <https://arxiv.org/abs/2208.02382>`__
+
 - Fedeli L, Zaim N, Sainte-Marie A, Thevenet M, Huebl A, Myers A, Vay JL, Vincenti H.
   **PICSAR-QED: a Monte Carlo module to simulate Strong-Field Quantum Electrodynamics in Particle-In-Cell codes for exascale architectures**.
   *New Journal of Physics* **24** 025009, 2022.

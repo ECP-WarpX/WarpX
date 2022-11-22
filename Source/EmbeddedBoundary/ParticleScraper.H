@@ -7,12 +7,23 @@
 #ifndef PARTICLESCRAPER_H_
 #define PARTICLESCRAPER_H_
 
-#include <AMReX.H>
-#include <AMReX_Vector.H>
-#include <AMReX_MultiFab.H>
+#include "EmbeddedBoundary/DistanceToEB.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 
-#include <EmbeddedBoundary/DistanceToEB.H>
-#include "Particles/Gather/ScalarFieldGather.H"
+#include <ablastr/particles/NodalFieldGather.H>
+
+#include <AMReX.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_Particle.H>
+#include <AMReX_RandomEngine.H>
+#include <AMReX_REAL.H>
+#include <AMReX_TypeTraits.H>
+#include <AMReX_Vector.H>
+
+#include <type_traits>
+#include <utility>
+
+
 
 /**
  * \brief Interact particles with the embedded boundary walls.
@@ -169,9 +180,9 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
-                compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
+                ablastr::particles::compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
 
-                amrex::Real phi_value  = interp_field_nodal(i, j, k, W, phi);
+                amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
 
                 if (phi_value < 0.0)
                 {

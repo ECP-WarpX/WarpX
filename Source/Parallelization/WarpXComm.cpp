@@ -14,7 +14,6 @@
 #endif
 #include "Filter/BilinearFilter.H"
 #include "Utils/CoarsenMR.H"
-#include "Utils/IntervalsParser.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -66,7 +65,7 @@ void
 WarpX::UpdateAuxilaryDataStagToNodal ()
 {
 #ifndef WARPX_USE_PSATD
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
             "WarpX::UpdateAuxilaryDataStagToNodal: PSATD solver requires "
             "WarpX build with spectral solver support.");
@@ -474,7 +473,7 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
 }
 
 void
-WarpX::FillBoundaryB (IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryB (IntVect ng, std::optional<bool> nodal_sync)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -483,7 +482,7 @@ WarpX::FillBoundaryB (IntVect ng, const bool nodal_sync)
 }
 
 void
-WarpX::FillBoundaryE (IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryE (IntVect ng, std::optional<bool> nodal_sync)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -492,7 +491,7 @@ WarpX::FillBoundaryE (IntVect ng, const bool nodal_sync)
 }
 
 void
-WarpX::FillBoundaryF (IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryF (IntVect ng, std::optional<bool> nodal_sync)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -501,7 +500,7 @@ WarpX::FillBoundaryF (IntVect ng, const bool nodal_sync)
 }
 
 void
-WarpX::FillBoundaryG (IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryG (IntVect ng, std::optional<bool> nodal_sync)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -529,14 +528,14 @@ WarpX::FillBoundaryE_avg (IntVect ng)
 
 
 void
-WarpX::FillBoundaryE (int lev, IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryE (int lev, IntVect ng, std::optional<bool> nodal_sync)
 {
     FillBoundaryE(lev, PatchType::fine, ng, nodal_sync);
     if (lev > 0) FillBoundaryE(lev, PatchType::coarse, ng, nodal_sync);
 }
 
 void
-WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, std::optional<bool> nodal_sync)
 {
     std::array<amrex::MultiFab*,3> mf;
     amrex::Periodicity period;
@@ -586,14 +585,14 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
 }
 
 void
-WarpX::FillBoundaryB (int lev, IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryB (int lev, IntVect ng, std::optional<bool> nodal_sync)
 {
     FillBoundaryB(lev, PatchType::fine, ng, nodal_sync);
     if (lev > 0) FillBoundaryB(lev, PatchType::coarse, ng, nodal_sync);
 }
 
 void
-WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, std::optional<bool> nodal_sync)
 {
     std::array<amrex::MultiFab*,3> mf;
     amrex::Periodicity period;
@@ -748,14 +747,14 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryF (int lev, IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryF (int lev, IntVect ng, std::optional<bool> nodal_sync)
 {
     FillBoundaryF(lev, PatchType::fine, ng, nodal_sync);
     if (lev > 0) FillBoundaryF(lev, PatchType::coarse, ng, nodal_sync);
 }
 
 void
-WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, std::optional<bool> nodal_sync)
 {
     if (patch_type == PatchType::fine)
     {
@@ -789,7 +788,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, const bool noda
     }
 }
 
-void WarpX::FillBoundaryG (int lev, IntVect ng, const bool nodal_sync)
+void WarpX::FillBoundaryG (int lev, IntVect ng, std::optional<bool> nodal_sync)
 {
     FillBoundaryG(lev, PatchType::fine, ng, nodal_sync);
 
@@ -799,7 +798,7 @@ void WarpX::FillBoundaryG (int lev, IntVect ng, const bool nodal_sync)
     }
 }
 
-void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, const bool nodal_sync)
+void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optional<bool> nodal_sync)
 {
     if (patch_type == PatchType::fine)
     {
@@ -953,43 +952,79 @@ void WarpX::RestrictCurrentFromFineToCoarsePatch (
     CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
 }
 
-void WarpX::ApplyFilterandSumBoundaryJ (
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+void WarpX::ApplyFilterJ (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
     const int lev,
-    PatchType patch_type)
+    const int idim)
 {
-    const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
-    const amrex::Periodicity& period = Geom(glev).periodicity();
-    const std::array<std::unique_ptr<amrex::MultiFab>,3>& j = (patch_type == PatchType::fine) ?
-                                                              J_fp[lev] : J_cp[lev];
-    for (int idim = 0; idim < 3; ++idim) {
-        IntVect ng = j[idim]->nGrowVect();
-        IntVect ng_depos_J = get_ng_depos_J();
-        if (WarpX::do_current_centering)
-        {
+    amrex::MultiFab& J = *current[lev][idim];
+
+    const int ncomp = J.nComp();
+    const amrex::IntVect ngrow = J.nGrowVect();
+    amrex::MultiFab Jf(J.boxArray(), J.DistributionMap(), ncomp, ngrow);
+    bilinear_filter.ApplyStencil(Jf, J, lev);
+
+    const int srccomp = 0;
+    const int dstcomp = 0;
+    amrex::MultiFab::Copy(J, Jf, srccomp, dstcomp, ncomp, ngrow);
+}
+
+void WarpX::ApplyFilterJ (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+    const int lev)
+{
+    for (int idim=0; idim<3; ++idim)
+    {
+        ApplyFilterJ(current, lev, idim);
+    }
+}
+
+void WarpX::SumBoundaryJ (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+    const int lev,
+    const int idim,
+    const amrex::Periodicity& period)
+{
+    amrex::MultiFab& J = *current[lev][idim];
+
+    amrex::IntVect ng = J.nGrowVect();
+    amrex::IntVect ng_depos_J = get_ng_depos_J();
+
+    if (WarpX::do_current_centering)
+    {
 #if   defined(WARPX_DIM_1D_Z)
-            ng_depos_J[0] += WarpX::current_centering_noz / 2;
+        ng_depos_J[0] += WarpX::current_centering_noz / 2;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            ng_depos_J[0] += WarpX::current_centering_nox / 2;
-            ng_depos_J[1] += WarpX::current_centering_noz / 2;
+        ng_depos_J[0] += WarpX::current_centering_nox / 2;
+        ng_depos_J[1] += WarpX::current_centering_noz / 2;
 #elif defined(WARPX_DIM_3D)
-            ng_depos_J[0] += WarpX::current_centering_nox / 2;
-            ng_depos_J[1] += WarpX::current_centering_noy / 2;
-            ng_depos_J[2] += WarpX::current_centering_noz / 2;
+        ng_depos_J[0] += WarpX::current_centering_nox / 2;
+        ng_depos_J[1] += WarpX::current_centering_noy / 2;
+        ng_depos_J[2] += WarpX::current_centering_noz / 2;
 #endif
-        }
-        if (use_filter) {
-            ng += bilinear_filter.stencil_length_each_dir-1;
-            ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
-            ng_depos_J.min(ng);
-            MultiFab jf(j[idim]->boxArray(), j[idim]->DistributionMap(), j[idim]->nComp(), ng);
-            bilinear_filter.ApplyStencil(jf, *j[idim], lev);
-            WarpXSumGuardCells(*(j[idim]), jf, period, ng_depos_J, 0, (j[idim])->nComp());
-        } else {
-            ng_depos_J.min(ng);
-            WarpXSumGuardCells(*(j[idim]), period, ng_depos_J, 0, (j[idim])->nComp());
-        }
+    }
+
+    if (use_filter)
+    {
+        ng_depos_J += bilinear_filter.stencil_length_each_dir - amrex::IntVect(1);
+    }
+
+    ng_depos_J.min(ng);
+
+    const amrex::IntVect src_ngrow = ng_depos_J;
+    const int icomp = 0;
+    const int ncomp = J.nComp();
+    WarpXSumGuardCells(J, period, src_ngrow, icomp, ncomp);
+}
+
+void WarpX::SumBoundaryJ (
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
+    const int lev,
+    const amrex::Periodicity& period)
+{
+    for (int idim=0; idim<3; ++idim)
+    {
+        SumBoundaryJ(current, lev, idim, period);
     }
 }
 
@@ -1011,88 +1046,73 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
     const int lev)
 {
-    ApplyFilterandSumBoundaryJ(J_fp, J_cp, lev, PatchType::fine);
+    const amrex::Periodicity& period = Geom(lev).periodicity();
 
-    if (lev < finest_level) {
+    if (use_filter)
+    {
+        ApplyFilterJ(J_fp, lev);
+    }
+    SumBoundaryJ(J_fp, lev, period);
+
+    if (lev < finest_level)
+    {
         // When there are current buffers, unlike coarse patch,
         // we don't care about the final state of them.
 
-        const amrex::Periodicity& period = Geom(lev).periodicity();
-        for (int idim = 0; idim < 3; ++idim) {
+        for (int idim=0; idim<3; ++idim)
+        {
             MultiFab mf(J_fp[lev][idim]->boxArray(),
                         J_fp[lev][idim]->DistributionMap(), J_fp[lev][idim]->nComp(), 0);
             mf.setVal(0.0);
+
             IntVect ng = J_cp[lev+1][idim]->nGrowVect();
-            IntVect ng_depos_J = get_ng_depos_J();
-            if (WarpX::do_current_centering)
-            {
-#if   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                ng_depos_J[0] += WarpX::current_centering_nox / 2;
-                ng_depos_J[1] += WarpX::current_centering_noz / 2;
-#elif defined(WARPX_DIM_3D)
-                ng_depos_J[0] += WarpX::current_centering_nox / 2;
-                ng_depos_J[1] += WarpX::current_centering_noy / 2;
-                ng_depos_J[2] += WarpX::current_centering_noz / 2;
-#endif
-            }
+
             if (use_filter && current_buf[lev+1][idim])
             {
-                // coarse patch of fine level
-                ng += bilinear_filter.stencil_length_each_dir-1;
-                ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
-                ng_depos_J.min(ng);
-                MultiFab jfc(J_cp[lev+1][idim]->boxArray(),
-                             J_cp[lev+1][idim]->DistributionMap(), J_cp[lev+1][idim]->nComp(), ng);
-                bilinear_filter.ApplyStencil(jfc, *J_cp[lev+1][idim], lev+1);
+                ApplyFilterJ(J_cp, lev+1, idim);
+                ApplyFilterJ(current_buf, lev+1, idim);
 
-                // buffer patch of fine level
-                MultiFab jfb(current_buf[lev+1][idim]->boxArray(),
-                             current_buf[lev+1][idim]->DistributionMap(), current_buf[lev+1][idim]->nComp(), ng);
-                bilinear_filter.ApplyStencil(jfb, *current_buf[lev+1][idim], lev+1);
+                MultiFab::Add(
+                    *current_buf[lev+1][idim], *J_cp[lev+1][idim],
+                    0, 0, current_buf[lev+1][idim]->nComp(), ng);
 
-                MultiFab::Add(jfb, jfc, 0, 0, current_buf[lev+1][idim]->nComp(), ng);
-                ablastr::utils::communication::ParallelAdd(mf, jfb, 0, 0, current_buf[lev + 1][idim]->nComp(),
-                                                           ng, IntVect::TheZeroVector(), WarpX::do_single_precision_comms, period);
-
-                WarpXSumGuardCells(*J_cp[lev+1][idim], jfc, period, ng_depos_J, 0, J_cp[lev+1][idim]->nComp());
+                ablastr::utils::communication::ParallelAdd(
+                    mf, *current_buf[lev+1][idim], 0, 0,
+                    current_buf[lev+1][idim]->nComp(),
+                    ng, amrex::IntVect(0),
+                    do_single_precision_comms, period);
             }
             else if (use_filter) // but no buffer
             {
-                // coarse patch of fine level
-                ng += bilinear_filter.stencil_length_each_dir-1;
-                ng_depos_J += bilinear_filter.stencil_length_each_dir-1;
-                ng_depos_J.min(ng);
-                MultiFab jf(J_cp[lev+1][idim]->boxArray(),
-                            J_cp[lev+1][idim]->DistributionMap(), J_cp[lev+1][idim]->nComp(), ng);
-                bilinear_filter.ApplyStencil(jf, *J_cp[lev+1][idim], lev+1);
+                ApplyFilterJ(J_cp, lev+1, idim);
 
-                ablastr::utils::communication::ParallelAdd(mf, jf, 0, 0, J_cp[lev + 1][idim]->nComp(), ng,
-                                                           IntVect::TheZeroVector(), WarpX::do_single_precision_comms, period);
-                WarpXSumGuardCells(*J_cp[lev+1][idim], jf, period, ng_depos_J, 0, J_cp[lev+1][idim]->nComp());
+                ablastr::utils::communication::ParallelAdd(
+                    mf, *J_cp[lev+1][idim], 0, 0,
+                    J_cp[lev+1][idim]->nComp(),
+                    ng, amrex::IntVect(0),
+                    do_single_precision_comms, period);
             }
             else if (current_buf[lev+1][idim]) // but no filter
             {
-                ng_depos_J.min(ng);
-                MultiFab::Add(*current_buf[lev+1][idim],
-                               *J_cp [lev+1][idim], 0, 0, current_buf[lev+1][idim]->nComp(),
-                               J_cp[lev+1][idim]->nGrowVect());
-                ablastr::utils::communication::ParallelAdd(mf, *current_buf[lev + 1][idim], 0, 0,
-                                                           current_buf[lev + 1][idim]->nComp(),
-                                                           current_buf[lev + 1][idim]->nGrowVect(),
-                                                           IntVect::TheZeroVector(), WarpX::do_single_precision_comms,
-                                                           period);
-                WarpXSumGuardCells(*(J_cp[lev+1][idim]), period, ng_depos_J, 0, J_cp[lev+1][idim]->nComp());
+                MultiFab::Add(
+                    *current_buf[lev+1][idim], *J_cp[lev+1][idim],
+                    0, 0, current_buf[lev+1][idim]->nComp(), ng);
+
+                ablastr::utils::communication::ParallelAdd(
+                    mf, *current_buf[lev+1][idim], 0, 0,
+                    current_buf[lev+1][idim]->nComp(),
+                    ng, amrex::IntVect(0),
+                    do_single_precision_comms, period);
             }
             else // no filter, no buffer
             {
-                ng_depos_J.min(ng);
-                ablastr::utils::communication::ParallelAdd(mf, *J_cp[lev + 1][idim], 0, 0,
-                                                           J_cp[lev + 1][idim]->nComp(),
-                                                           J_cp[lev + 1][idim]->nGrowVect(),
-                                                           IntVect::TheZeroVector(), WarpX::do_single_precision_comms,
-                                                           period);
-                WarpXSumGuardCells(*(J_cp[lev+1][idim]), period, ng_depos_J, 0, J_cp[lev+1][idim]->nComp());
+                ablastr::utils::communication::ParallelAdd(
+                    mf, *J_cp[lev+1][idim], 0, 0,
+                    J_cp[lev+1][idim]->nComp(),
+                    ng, amrex::IntVect(0),
+                    do_single_precision_comms, period);
             }
+            SumBoundaryJ(J_cp, lev+1, idim, period);
             MultiFab::Add(*J_fp[lev][idim], mf, 0, 0, J_fp[lev+1][idim]->nComp(), 0);
         }
     }

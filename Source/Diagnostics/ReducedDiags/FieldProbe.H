@@ -1,5 +1,5 @@
 /* Copyright 2021 Lorenzo Giacomel, Neil Zaim, Yinjian Zhao
- *                Tiberius Rheaume, Axel Huebl
+ *                Elisa Rheaume, Axel Huebl
  *
  * This file is part of WarpX.
  *
@@ -114,6 +114,17 @@ private:
     /** Check if the probe is in the simulation domain boundary
      */
     bool ProbeInDomain () const;
+
+    /**
+     * Simple utility function to normalize the components of a "vector"
+     */
+    void normalize(amrex::Real &AMREX_RESTRICT x, amrex::Real &AMREX_RESTRICT y,
+                   amrex::Real &AMREX_RESTRICT z){
+        amrex::Real mag = std::sqrt(x*x + y*y + z*z);
+        x /= mag;
+        y /= mag;
+        z /= mag;
+    }
 };
 
 #endif // WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDPROBE_H_
