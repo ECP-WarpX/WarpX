@@ -561,7 +561,7 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
                 (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
 
             pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
-            pml[lev]->FillBoundaryE(patch_type);
+            pml[lev]->FillBoundaryE(patch_type, nodal_sync);
         }
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
@@ -618,7 +618,7 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
                 (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
 
             pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
-            pml[lev]->FillBoundaryB(patch_type);
+            pml[lev]->FillBoundaryB(patch_type, nodal_sync);
         }
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
@@ -761,7 +761,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, std::optional<b
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (F_fp[lev]) pml[lev]->ExchangeF(patch_type, F_fp[lev].get(), do_pml_in_domain);
-            pml[lev]->FillBoundaryF(patch_type);
+            pml[lev]->FillBoundaryF(patch_type, nodal_sync);
         }
 
         if (F_fp[lev])
@@ -776,7 +776,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, std::optional<b
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (F_cp[lev]) pml[lev]->ExchangeF(patch_type, F_cp[lev].get(), do_pml_in_domain);
-            pml[lev]->FillBoundaryF(patch_type);
+            pml[lev]->FillBoundaryF(patch_type, nodal_sync);
         }
 
         if (F_cp[lev])
@@ -805,7 +805,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optio
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (G_fp[lev]) pml[lev]->ExchangeG(patch_type, G_fp[lev].get(), do_pml_in_domain);
-            pml[lev]->FillBoundaryG(patch_type);
+            pml[lev]->FillBoundaryG(patch_type, nodal_sync);
         }
 
         if (G_fp[lev])
@@ -820,7 +820,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optio
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (G_cp[lev]) pml[lev]->ExchangeG(patch_type, G_cp[lev].get(), do_pml_in_domain);
-            pml[lev]->FillBoundaryG(patch_type);
+            pml[lev]->FillBoundaryG(patch_type, nodal_sync);
         }
 
         if (G_cp[lev])
