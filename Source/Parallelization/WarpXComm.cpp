@@ -567,7 +567,7 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
         if (pml_rz[lev])
         {
-            pml_rz[lev]->FillBoundaryE(patch_type);
+            pml_rz[lev]->FillBoundaryE(patch_type, nodal_sync);
         }
 #endif
     }
@@ -624,7 +624,7 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
         if (pml_rz[lev])
         {
-            pml_rz[lev]->FillBoundaryB(patch_type);
+            pml_rz[lev]->FillBoundaryB(patch_type, nodal_sync);
         }
 #endif
     }
