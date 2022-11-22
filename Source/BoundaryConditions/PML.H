@@ -188,10 +188,6 @@ public:
     void ExchangeG (amrex::MultiFab* G_fp, amrex::MultiFab* G_cp, int do_pml_in_domain);
     void ExchangeG (PatchType patch_type, amrex::MultiFab* Gp, int do_pml_in_domain);
 
-    void FillBoundaryE ();
-    void FillBoundaryB ();
-    void FillBoundaryF ();
-    void FillBoundaryG ();
     void FillBoundaryE (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
     void FillBoundaryB (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
     void FillBoundaryF (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
