@@ -362,7 +362,7 @@ bool FieldProbe::ProbeInDomain () const
      * and prob_hi[1] refer to z. This is a result of warpx.Geom(lev).
      */
 #if defined(WARPX_DIM_1D_Z)
-    return z_probe >= prob_lo[1] && z_probe < prob_hi[1];
+    return z_probe >= prob_lo[0] && z_probe < prob_hi[0];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     return x_probe >= prob_lo[0] && x_probe < prob_hi[0] &&
            z_probe >= prob_lo[1] && z_probe < prob_hi[1];
