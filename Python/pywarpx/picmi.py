@@ -321,19 +321,30 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
             species.uz = self.centroid_velocity[2]/constants.c
 
 
-class UniformDistribution(picmistandard.PICMI_UniformDistribution):
-    def initialize_inputs(self, species_number, layout, species, density_scale):
+class DensityDistributionBase(object):
+    """This is a base class for several predefined density distributions. It
+    captures universal initialization logic."""
 
+    def set_mangle_dict(self):
+        if not hasattr(self, 'mangle_dict'):
+            self.mangle_dict = None
+
+        if hasattr(self, "user_defined_kw") and self.mangle_dict is None:
+            # Only do this once so that the same variables can be used multiple
+            # times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
+    def set_species_attributes(self, species, layout):
         if isinstance(layout, GriddedLayout):
             # --- Note that the grid attribute of GriddedLayout is ignored
             species.injection_style = "nuniformpercell"
             species.num_particles_per_cell_each_dim = layout.n_macroparticle_per_cell
         elif isinstance(layout, PseudoRandomLayout):
-            assert (layout.n_macroparticles_per_cell is not None), Exception('WarpX only supports n_macroparticles_per_cell for the PseudoRandomLayout with UniformDistribution')
+            assert (layout.n_macroparticles_per_cell is not None), Exception('WarpX only supports n_macroparticles_per_cell for the PseudoRandomLayout with this distribution')
             species.injection_style = "nrandompercell"
             species.num_particles_per_cell = layout.n_macroparticles_per_cell
         else:
-            raise Exception('WarpX does not support the specified layout for UniformDistribution')
+            raise Exception('WarpX does not support the specified layout for this distribution')
 
         species.xmin = self.lower_bound[0]
         species.xmax = self.upper_bound[0]
@@ -341,70 +352,14 @@ class UniformDistribution(picmistandard.PICMI_UniformDistribution):
         species.ymax = self.upper_bound[1]
         species.zmin = self.lower_bound[2]
         species.zmax = self.upper_bound[2]
-
-        # --- Only constant density is supported at this time
-        species.profile = "constant"
-        species.density = self.density
-        if density_scale is not None:
-            species.density *= density_scale
-
-        # --- Note that WarpX takes gamma*beta as input
-        if np.any(np.not_equal(self.rms_velocity, 0.)):
-            species.momentum_distribution_type = "gaussian"
-            species.ux_m = self.directed_velocity[0]/constants.c
-            species.uy_m = self.directed_velocity[1]/constants.c
-            species.uz_m = self.directed_velocity[2]/constants.c
-            species.ux_th = self.rms_velocity[0]/constants.c
-            species.uy_th = self.rms_velocity[1]/constants.c
-            species.uz_th = self.rms_velocity[2]/constants.c
-        else:
-            species.momentum_distribution_type = "constant"
-            species.ux = self.directed_velocity[0]/constants.c
-            species.uy = self.directed_velocity[1]/constants.c
-            species.uz = self.directed_velocity[2]/constants.c
 
         if self.fill_in:
             species.do_continuous_injection = 1
 
-
-class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
-    def init(self, kw):
-        self.mangle_dict = None
-
-    def initialize_inputs(self, species_number, layout, species, density_scale):
-
-        if isinstance(layout, GriddedLayout):
-            # --- Note that the grid attribute of GriddedLayout is ignored
-            species.injection_style = "nuniformpercell"
-            species.num_particles_per_cell_each_dim = layout.n_macroparticle_per_cell
-        elif isinstance(layout, PseudoRandomLayout):
-            assert (layout.n_macroparticles_per_cell is not None), Exception('WarpX only supports n_macroparticles_per_cell for the PseudoRandomLayout with UniformDistribution')
-            species.injection_style = "nrandompercell"
-            species.num_particles_per_cell = layout.n_macroparticles_per_cell
-        else:
-            raise Exception('WarpX does not support the specified layout for UniformDistribution')
-
-        species.xmin = self.lower_bound[0]
-        species.xmax = self.upper_bound[0]
-        species.ymin = self.lower_bound[1]
-        species.ymax = self.upper_bound[1]
-        species.zmin = self.lower_bound[2]
-        species.zmax = self.upper_bound[2]
-
-        if self.mangle_dict is None:
-            # Only do this once so that the same variables are used in this distribution
-            # is used multiple times
-            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
-        expression = pywarpx.my_constants.mangle_expression(self.density_expression, self.mangle_dict)
-
-        species.profile = "parse_density_function"
-        if density_scale is None:
-            species.__setattr__('density_function(x,y,z)', expression)
-        else:
-            species.__setattr__('density_function(x,y,z)', "{}*({})".format(density_scale, expression))
-
         # --- Note that WarpX takes gamma*beta as input
-        if np.any(np.not_equal(self.momentum_expressions, None)):
+        if (hasattr(self, "momentum_expressions")
+            and np.any(np.not_equal(self.momentum_expressions, None))
+        ):
             species.momentum_distribution_type = 'parse_momentum_function'
             self.setup_parse_momentum_functions(species)
         elif np.any(np.not_equal(self.rms_velocity, 0.)):
@@ -421,9 +376,6 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
             species.uy = self.directed_velocity[1]/constants.c
             species.uz = self.directed_velocity[2]/constants.c
 
-        if self.fill_in:
-            species.do_continuous_injection = 1
-
     def setup_parse_momentum_functions(self, species):
         for sdir, idir in zip(['x', 'y', 'z'], [0, 1, 2]):
             if self.momentum_expressions[idir] is not None:
@@ -431,6 +383,56 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
             else:
                 expression = f'{self.directed_velocity[idir]}'
             species.__setattr__(f'momentum_function_u{sdir}(x,y,z)', f'({expression})/{constants.c}')
+
+
+class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, DensityDistributionBase):
+    def initialize_inputs(self, species_number, layout, species, density_scale):
+
+        self.fill_in = False
+        self.set_mangle_dict()
+        self.set_species_attributes(species, layout)
+
+        species.profile = "constant"
+        species.density = self.flux
+        if density_scale is not None:
+            species.density *= density_scale
+        species.flux_normal_axis = self.flux_normal_axis
+        species.surface_flux_pos = self.surface_flux_position
+        species.flux_direction = self.flux_direction
+
+        # --- Use specific attributes for flux injection
+        species.injection_style = "nfluxpercell"
+        assert (isinstance(layout, PseudoRandomLayout)), Exception('UniformFluxDistribution only supports the PseudoRandomLayout in WarpX')
+        if species.momentum_distribution_type == "gaussian":
+            species.momentum_distribution_type = "gaussianflux"
+
+
+class UniformDistribution(picmistandard.PICMI_UniformDistribution, DensityDistributionBase):
+    def initialize_inputs(self, species_number, layout, species, density_scale):
+
+        self.set_mangle_dict()
+        self.set_species_attributes(species, layout)
+
+        # --- Only constant density is supported by this class
+        species.profile = "constant"
+        species.density = self.density
+        if density_scale is not None:
+            species.density *= density_scale
+
+
+class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution, DensityDistributionBase):
+    def initialize_inputs(self, species_number, layout, species, density_scale):
+
+        self.set_mangle_dict()
+        self.set_species_attributes(species, layout)
+
+        species.profile = "parse_density_function"
+        expression = pywarpx.my_constants.mangle_expression(self.density_expression, self.mangle_dict)
+        if density_scale is None:
+            species.__setattr__('density_function(x,y,z)', expression)
+        else:
+            species.__setattr__('density_function(x,y,z)', "{}*({})".format(density_scale, expression))
+
 
 class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
     def init(self, kw):
@@ -1584,16 +1586,11 @@ class Simulation(picmistandard.PICMI_Simulation):
             return
 
         self.warpx_initialized = True
-        pywarpx.warpx.init(mpi_comm)
+        pywarpx.warpx.init(mpi_comm, max_step=self.max_steps, stop_time=self.max_time)
 
     def write_input_file(self, file_name='inputs'):
         self.initialize_inputs()
-        kw = {}
-        if self.max_steps is not None:
-            kw['max_step'] = self.max_steps
-        if self.max_time is not None:
-            kw['stop_time'] = self.max_time
-        pywarpx.warpx.write_inputs(file_name, **kw)
+        pywarpx.warpx.write_inputs(file_name, max_step=self.max_steps, stop_time=self.max_time)
 
     def step(self, nsteps=None, mpi_comm=None):
         self.initialize_inputs()
