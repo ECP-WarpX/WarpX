@@ -1,7 +1,3 @@
-warpx.random_seed = 10
-warpx.do_electrostatic = relativistic
-warpx.const_dt = 1.4e-17 #3.33564095198152e-18
-
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
@@ -25,10 +21,11 @@ boundary.field_hi = periodic periodic periodic
 #################################
 warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
-#warpx.cfl = 0.25
+warpx.const_dt = 1.4e-17
 
 # Order of particle shape factors
 algo.particle_shape = 1
+algo.maxwell_solver = none
 
 #################################
 ############ PLASMA #############

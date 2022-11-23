@@ -21,6 +21,7 @@ import yt
 import glob
 import sys
 import re
+import os
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
@@ -58,7 +59,7 @@ for i in range(nt-1):
     Ty0 = Ty0 + dt*mu*(Tx0-Ty0)
 
 tolerance = 0.05
-error = np.maximum((Tx-Tx0/e)/Tx,(Ty-Ty0/e)/Ty)
+error = np.maximum(abs(Tx-Tx0/e)/Tx,abs(Ty-Ty0/e)/Ty)
 
 print('error = ', error)
 print('tolerance = ', tolerance)
