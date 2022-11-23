@@ -92,13 +92,13 @@ void ElasticCollisionPerez (
     }
     n12 = n12 / dV;
     if ( isSameSpecies ) {
-        for (int i1=I1s; i1<static_cast<int>(I1e); ++i1) { n1 += w1[ I1[i1] ]; }
-        for (int i2=I2s; i2<static_cast<int>(I2e); ++i2) { n1 += w2[ I2[i2] ]; }
+        for ( i1=I1s; i1<static_cast<int>(I1e); ++i1 ) { n1 += w1[ I1[i1] ]; }
+        for ( i2=I2s; i2<static_cast<int>(I2e); ++i2 ) { n1 += w2[ I2[i2] ]; }
         n1 = n1 / dV; n2 = n1;
         n12 *= 2;
     } else {
-        for (int i1=I1s; i1<static_cast<int>(I1e); ++i1) { n1 += w1[ I1[i1] ]; }
-        for (int i2=I2s; i2<static_cast<int>(I2e); ++i2) { n2 += w2[ I2[i2] ]; }
+        for ( i1=I1s; i1<static_cast<int>(I1e); ++i1 ) { n1 += w1[ I1[i1] ]; }
+        for ( i2=I2s; i2<static_cast<int>(I2e); ++i2 ) { n2 += w2[ I2[i2] ]; }
         n1 = n1 / dV; n2 = n2 / dV;
     }
 
