@@ -59,6 +59,9 @@ public:
     amrex::Real m_n0_ref;
     /** Electron pressure scaling exponent */
     amrex::Real m_gamma = 5.0/3.0;
+
+    /** Plasma resistivity */
+    amrex::Real m_eta = 0.0;
 };
 
 /**
@@ -74,8 +77,8 @@ struct ElectronPressure {
                                      amrex::Real const T0,
                                      amrex::Real const gamma,
                                      amrex::Real const rho) {
-        return n0 * T0 * pow((rho/PhysConst::q_e)/n0, gamma);
-        // return T0 * rho / PhysConst::q_e;
+        // return n0 * T0 * pow((rho/PhysConst::q_e)/n0, gamma);
+        return T0 * rho / PhysConst::q_e;
     }
 };
 

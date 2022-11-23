@@ -36,6 +36,7 @@ HybridModel::ReadParameters ()
         Abort("hybridmodel.n0_ref must be specified when using the hybrid solver");
     }
     utils::parser::queryWithParser(pp_hybrid, "gamma", m_gamma);
+    utils::parser::queryWithParser(pp_hybrid, "plasma_resistivity", m_eta);
 
     // convert electron temperature from eV to J
     m_elec_temp *= PhysConst::q_e;

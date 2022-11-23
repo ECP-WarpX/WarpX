@@ -185,6 +185,9 @@ WarpX::Evolve (int numsteps)
         {
             const bool skip_deposition = false;
             PushParticlesandDepose(cur_time, skip_deposition);
+            // Synchronize J and rho:
+            // filter (if used), exchange guard cells, interpolate across MR levels
+            SyncCurrentAndRho();
         }
         // Electromagnetic case: multi-J algorithm
         else if (do_multi_J)

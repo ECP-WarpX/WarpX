@@ -23,29 +23,51 @@ WarpX::HybridEvolveFields ()
     // have rho^{n} in the 0'th index and rho{n+1} in the 1'st index of `rho_fp`,
     // J^{n+1/2} in `current_fp` and J^{n-1/2} in `current_fp_old`.
 
-    // TODO: Firstly, E^{n} is recalculated with the accurate V^{n} since at the end
+    // Firstly, E^{n} is recalculated with the accurate V^{n} since at the end
     // of the last step we had to "guess" V^{n}.
-
+    // HybridSolveE(DtType::Full);
+    // FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
     // TODO: insert Runge-Kutta integration logic to supercycle B update instead
     // of the single update step used here - can test with small timestep using
     // this simpler implementation
 
+    // Push the B field from t=n to t=n+1/2 using the current and density
+    // at t=n, but updating the E field along with B.
+    for (int sub_step = 0; sub_step < 5; sub_step++)
+    {
+        HybridSolveE(DtType::Full);
+        FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
+        EvolveB(0.1_rt * dt[0], DtType::FirstHalf);
+        FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+    }
+
+    // Now push the B field to t=n+1 using the n+1/2 quantities
+    for (int sub_step = 0; sub_step < 5; sub_step++)
+    {
+        HybridSolveE(DtType::FirstHalf);
+        FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
+        EvolveB(0.1_rt * dt[0], DtType::SecondHalf);
+        FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+    }
+
     // First the B field is pushed forward half a timestep
     // to get B^{n+1/2}
-    EvolveB(0.5_rt * dt[0], DtType::FirstHalf);
-    FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+    // EvolveB(0.5_rt * dt[0], DtType::FirstHalf);
+    // FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
-    // Now the E field is updated using the electron momentum equation
-    HybridSolveE(DtType::FirstHalf);
-    FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+    // // Now the E field is updated using the electron momentum equation
+    // HybridSolveE(DtType::FirstHalf);
+    // FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
-    // The B field is pushed forward another half a timestep
-    // to get B^{n+1}
-    EvolveB(0.5_rt * dt[0], DtType::SecondHalf);
-    FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+    // // The B field is pushed forward another half a timestep
+    // // to get B^{n+1}
+    // EvolveB(0.5_rt * dt[0], DtType::SecondHalf);
+    // FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
-    // The E field is updated to E^{n+1}
+    // Update the E field to E^{n+1}
     HybridSolveE(DtType::SecondHalf);
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
