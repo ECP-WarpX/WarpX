@@ -15,15 +15,12 @@
 # tolerance: 0.001
 # Possible running time: ~ 30.0 s
 
+import os
 import sys
 
 import numpy as np
 import scipy.constants as sc
 import yt
-import glob
-import sys
-import re
-import os
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
