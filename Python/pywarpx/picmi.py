@@ -1084,6 +1084,35 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
             ) / constants.c
 
 
+class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
+    def init(self, kw):
+        self.mangle_dict = None
+
+    def initialize_inputs(self):
+        # Note that lower and upper_bound are not used by WarpX
+
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
+        if (self.Ex_expression is not None or
+            self.Ey_expression is not None or
+            self.Ez_expression is not None):
+            pywarpx.warpx.E_ext_grid_init_style = 'parse_e_ext_grid_function'
+            for sdir, expression in zip(['x', 'y', 'z'], [self.Ex_expression, self.Ey_expression, self.Ez_expression]):
+                expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
+                pywarpx.warpx.__setattr__(f'E{sdir}_external_grid_function(x,y,z)', expression)
+
+        if (self.Bx_expression is not None or
+            self.By_expression is not None or
+            self.Bz_expression is not None):
+            pywarpx.warpx.B_ext_grid_init_style = 'parse_b_ext_grid_function'
+            for sdir, expression in zip(['x', 'y', 'z'], [self.Bx_expression, self.By_expression, self.Bz_expression]):
+                expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
+                pywarpx.warpx.__setattr__(f'B{sdir}_external_grid_function(x,y,z)', expression)
+
+
 class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField):
     def initialize_inputs(self):
         # Note that lower and upper_bound are not used by WarpX
