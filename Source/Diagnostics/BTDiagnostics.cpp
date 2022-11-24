@@ -198,7 +198,6 @@ BTDiagnostics::ReadParameters ()
         m_crse_ratio == amrex::IntVect(1),
         "Only support for coarsening ratio of 1 in all directions is included for BTD\n"
         );
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1, "Currently only one mode is supported for BTD");
     // Read list of back-transform diag parameters requested by the user //
     amrex::ParmParse pp_diag_name(m_diag_name);
 
@@ -481,8 +480,12 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     ba.coarsen(m_crse_ratio);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     int ngrow = 1;
+#ifdef WARPX_DIM_RZ
+    int ncomps = WarpX::ncomps * static_cast<int>(m_cellcenter_varnames.size());
+#else
     int ncomps = static_cast<int>(m_cellcenter_varnames.size());
-    m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap, ncomps, ngrow);
+#endif
+    WarpX::AllocInitMultiFab(m_cell_centered_data[lev], ba, dmap, ncomps, amrex::IntVect(ngrow), "cellcentered_BTD",0._rt);
 
 }
 
@@ -520,7 +523,7 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
         int nvars = static_cast<int>(m_varnames.size());
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
                   m_cell_centered_data[lev].get(), lev,
-                  nvars, m_num_buffers, m_varnames);
+                  nvars, m_num_buffers, m_varnames, m_varnames_fields);
     }
 
     // Define all cell-centered functors required to compute cell-centere data
@@ -632,7 +635,8 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
         int nvars = static_cast<int>(m_varnames.size());
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
                                        m_cell_centered_data[lev].get(), lev,
-                                       nvars, m_num_buffers, m_varnames);
+                                       nvars, m_num_buffers, m_varnames,
+                                       m_varnames_fields);
     }
 
     // Reset field functors for cell-center multifab

@@ -1,0 +1,64 @@
+# Maximum number of time steps
+warpx.zmax_plasma_to_compute_max_step = 500e-6
+# number of grid points
+amr.n_cell = 32 256
+
+# Maximum allowable size of each subdomain in the problem domain;
+#    this is used to decompose the domain for parallel calculations.
+amr.max_grid_size = 128
+
+# Maximum level in hierarchy (for now must be 0, i.e., one level in total)
+amr.max_level = 0
+
+# Geometry
+geometry.dims = RZ
+geometry.prob_lo     =  0.e-6 -20.e-6
+geometry.prob_hi     =  40.e-6  0.e-6
+
+boundary.field_lo = none absorbing_silver_mueller
+boundary.field_hi = absorbing_silver_mueller absorbing_silver_mueller
+
+# Boosted frame and moving window
+warpx.do_moving_window = 1
+warpx.moving_window_dir = z
+warpx.moving_window_v = 1.0 # in units of the speed of light
+warpx.gamma_boost = 10.
+warpx.boost_direction = z
+
+
+# Verbosity
+warpx.verbose = 1
+warpx.n_rz_azimuthal_modes = 2
+
+# Algorithms
+warpx.cfl = 1.0
+warpx.use_filter = 0
+
+
+# Order of particle shape factors
+algo.particle_shape = 1
+
+# Laser
+lasers.names        = laser1
+laser1.profile      = Gaussian
+laser1.position     = 0. 0. -1.e-6 # This point is on the laser plane
+laser1.direction    = 0. 0. 1.     # The plane normal direction
+laser1.polarization = 1. 0. 0.     # The main polarization vector
+laser1.a0           = 1.5e1        # Maximum amplitude of the laser field
+laser1.profile_waist = 10.e-6      # The waist of the laser (in meters)
+laser1.profile_duration = 10.e-15  # The duration of the laser (in seconds)
+laser1.profile_t_peak = 20.e-15    # The time at which the laser reaches its peak (in seconds)
+laser1.profile_focal_distance = 1.e-6  # Focal distance from the antenna (in meters)
+laser1.wavelength = 0.8e-6         # The wavelength of the laser (in meters)
+
+# Diagnostics
+diagnostics.diags_names = diag1 back_rz
+diag1.intervals = 50
+diag1.diag_type = Full
+
+back_rz.diag_type = BackTransformed
+back_rz.dt_snapshots_lab = 80.e-15
+back_rz.fields_to_plot = Er Et Ez Br Bt Bz jr jt jz rho
+back_rz.format = openpmd
+back_rz.buffer_size = 32
+back_rz.num_snapshots_lab = 2
