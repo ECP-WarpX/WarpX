@@ -870,6 +870,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         else:
             pywarpx.amr.max_level = 0
 
+
 class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
     """
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
@@ -966,6 +967,31 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.do_pml_in_domain = self.do_pml_in_domain
         pywarpx.warpx.pml_has_particles = self.pml_has_particles
         pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
+
+
+class EMSolver():
+    def __init__(self, grid, method, Te=None, n0=None, gamma=None,
+                 plasma_resistivity=None):
+        self.grid = grid
+        self.method = method
+
+        self.Te = Te
+        self.n0 = n0
+        self.gamma = gamma
+        self.plasma_resistivity = plasma_resistivity
+
+    def initialize_inputs(self):
+
+        self.grid.initialize_inputs()
+
+        pywarpx.algo.maxwell_solver = self.method
+
+        if self.method == 'hybrid':
+            pywarpx.hybridmodel.elec_temp = self.Te
+            pywarpx.hybridmodel.n0_ref = self.n0
+            pywarpx.hybridmodel.gamma = self.gamma
+            pywarpx.hybridmodel.plasma_resistivity = self.plasma_resistivity
+
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     """
@@ -1080,6 +1106,36 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
                 (self.position[1] - laser.centroid_position[1])**2 +
                 (self.position[2] - laser.centroid_position[2])**2
             ) / constants.c
+
+
+class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
+    def init(self, kw):
+        self.mangle_dict = None
+
+    def initialize_inputs(self):
+        # Note that lower and upper_bound are not used by WarpX
+
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
+        if (self.Ex_expression is not None or
+            self.Ey_expression is not None or
+            self.Ez_expression is not None):
+            pywarpx.warpx.E_ext_grid_init_style = 'parse_e_ext_grid_function'
+            for sdir, expression in zip(['x', 'y', 'z'], [self.Ex_expression, self.Ey_expression, self.Ez_expression]):
+                expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
+                pywarpx.warpx.__setattr__(f'E{sdir}_external_grid_function(x,y,z)', expression)
+
+        if (self.Bx_expression is not None or
+            self.By_expression is not None or
+            self.Bz_expression is not None):
+            pywarpx.warpx.B_ext_grid_init_style = 'parse_b_ext_grid_function'
+            for sdir, expression in zip(['x', 'y', 'z'], [self.Bx_expression, self.By_expression, self.Bz_expression]):
+                expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
+                pywarpx.warpx.__setattr__(f'B{sdir}_external_grid_function(x,y,z)', expression)
+
 
 
 class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField):
