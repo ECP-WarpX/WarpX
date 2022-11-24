@@ -83,22 +83,24 @@ void ElasticCollisionPerez (
     T_PR n1  = T_PR(0.0);
     T_PR n2  = T_PR(0.0);
     T_PR n12 = T_PR(0.0);
-    int i1 = I1s; int i2 = I2s;
-    for (int k = 0; k < amrex::max(NI1,NI2); ++k)
     {
-      n12 += amrex::min( w1[ I1[i1] ], w2[ I2[i2] ] );
-      ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
-      ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
+        int i1 = I1s; int i2 = I2s;
+        for (int k = 0; k < amrex::max(NI1,NI2); ++k)
+        {
+          n12 += amrex::min( w1[ I1[i1] ], w2[ I2[i2] ] );
+          ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
+          ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
+        }
     }
     n12 = n12 / dV;
     if ( isSameSpecies ) {
-        for ( i1=I1s; i1<static_cast<int>(I1e); ++i1 ) { n1 += w1[ I1[i1] ]; }
-        for ( i2=I2s; i2<static_cast<int>(I2e); ++i2 ) { n1 += w2[ I2[i2] ]; }
+        for (int i1=I1s; i1<static_cast<int>(I1e); ++i1 ) { n1 += w1[ I1[i1] ]; }
+        for (int i2=I2s; i2<static_cast<int>(I2e); ++i2 ) { n1 += w2[ I2[i2] ]; }
         n1 = n1 / dV; n2 = n1;
         n12 *= 2;
     } else {
-        for ( i1=I1s; i1<static_cast<int>(I1e); ++i1 ) { n1 += w1[ I1[i1] ]; }
-        for ( i2=I2s; i2<static_cast<int>(I2e); ++i2 ) { n2 += w2[ I2[i2] ]; }
+        for (int i1=I1s; i1<static_cast<int>(I1e); ++i1 ) { n1 += w1[ I1[i1] ]; }
+        for (int i2=I2s; i2<static_cast<int>(I2e); ++i2 ) { n2 += w2[ I2[i2] ]; }
         n1 = n1 / dV; n2 = n2 / dV;
     }
 
