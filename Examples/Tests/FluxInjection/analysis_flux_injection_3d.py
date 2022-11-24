@@ -53,23 +53,23 @@ hist_range = [-0.5, 0.5]
 
 # Define function that histogram and check the data
 
-def gaussian_dist(u, u_th, u_m=0):
-    return 1./((2*np.pi)**.5*u_th) * np.exp(-(u-u_m)**2/(2*u_th**2) )
+def gaussian_dist(u, u_th):
+    return 1./((2*np.pi)**.5*u_th) * np.exp(-u**2/(2*u_th**2) )
 
-def gaussian_flux_dist(u, u_th, u_m=0):
+def gaussian_flux_dist(u, u_th, u_m):
     normalization_factor = u_th**2 * np.exp(-u_m**2/(2*u_th**2)) + (np.pi/2)**.5*u_m*u_th * (1 + erf(u_m/(2**.5*u_th)))
     return 1./normalization_factor * np.where( u>0, u * np.exp(-(u-u_m)**2/(2*u_th**2)), 0 )
 
-def compare_gaussian(u, w, u_th, u_m=0, label=''):
+def compare_gaussian(u, w, u_th, label=''):
     du = (hist_range[1]-hist_range[0])/hist_bins
     w_hist, u_hist = np.histogram(u, bins=hist_bins, weights=w/du, range=hist_range)
     u_hist = 0.5*(u_hist[1:]+u_hist[:-1])
-    w_th = Ntot*gaussian_dist(u_hist, u_th, u_m)
+    w_th = Ntot*gaussian_dist(u_hist, u_th)
     plt.plot( u_hist, w_hist, label=label+': simulation' )
     plt.plot( u_hist, w_th, '--', label=label+': theory' )
     assert np.allclose( w_hist, w_th, atol=0.07*w_th.max() )
 
-def compare_gaussian_flux(u, w, u_th, u_m=0, label=''):
+def compare_gaussian_flux(u, w, u_th, u_m, label=''):
     du = (hist_range[1]-hist_range[0])/hist_bins
     w_hist, u_hist = np.histogram(u, bins=hist_bins, weights=w/du, range=hist_range)
     u_hist = 0.5*(u_hist[1:]+u_hist[:-1])

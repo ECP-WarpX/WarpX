@@ -111,6 +111,7 @@ namespace {
             // Use the distribution u*exp(-u**2*(1-u_m/u_th)/(2*u_th**2)) as an approximation
             // and then use the rejection method to correct it
             // ( stop rejecting with probability exp(-u_m/(2*u_th**3)*(u-u_th)**2) )
+            // Note that this is the method that is used in the common case u_m=0
             amrex::Real approx_u_th = u_th/std::sqrt( 1._rt - u_m/u_th );
             amrex::Real reject_prefactor = (u_m/u_th)/(2._rt*u_th*u_th); // To save computation
             bool reject = true;
@@ -129,6 +130,8 @@ namespace {
             // and then use the rejection method to correct it
             // ( stop rejecting with probability (u/u_m)*exp(1-(u/u_m)) ; note
             // that this number is always between 0 and 1 )
+            // Note that in the common case `u_m = 0`, this rejection method
+            // is not used, and the above rejection method is used instead.
             bool reject = true;
             amrex::Real approx_u_m = u_m + u_th*u_th/u_m;
             amrex::Real inv_um = 1._rt/u_m; // To save computation
