@@ -757,7 +757,7 @@ Particle initialization
       ``<species_name>.flux_direction``, for the average momenta along each direction
       ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m``, as
       well as standard deviations along each direction ``<species_name>.ux_th``,
-      ``<species_name>.uy_th`` and ``<species_name>.uz_th``. Note that the average momenta normal to the plane is not used.
+      ``<species_name>.uy_th`` and ``<species_name>.uz_th``.
       ``ux_m``, ``uy_m``, ``uz_m``, ``ux_th``, ``uy_th`` and ``uz_th`` are all ``0.`` by default.
 
     * ``maxwell_boltzmann``: Maxwell-Boltzmann distribution that takes a dimensionless
