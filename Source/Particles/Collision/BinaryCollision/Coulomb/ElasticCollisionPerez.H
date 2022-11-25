@@ -86,6 +86,12 @@ void ElasticCollisionPerez (
     T_PR n12 = T_PR(0.0);
     for (int i1=I1s; i1<static_cast<int>(I1e); ++i1) { n1 += w1[ I1[i1] ]; }
     for (int i2=I2s; i2<static_cast<int>(I2e); ++i2) { n2 += w2[ I2[i2] ]; }
+    // Intra-species: the density is in fact the sum of the density of
+    // each sub-group of particles
+    if ( isSameSpecies ) {
+        n1 = n1 + n2;
+        n2 = n1;
+    }
     n1 = n1 / dV; n2 = n2 / dV;
     {
       int i1 = I1s; int i2 = I2s;
@@ -97,7 +103,7 @@ void ElasticCollisionPerez (
       }
       n12 = n12 / dV;
     }
-    // Apply correction in collision rate for single species
+    // Intra-species: Apply correction in collision rate
     if ( isSameSpecies ) n12 *= T_PR(2.0);
 
     // compute Debye length lmdD
