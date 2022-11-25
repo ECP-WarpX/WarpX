@@ -36,6 +36,7 @@
  *            otherwise will be computed.
  * @param[in] dV is the volume of the corresponding cell.
  * @param[in] engine the random number generator state & factory
+ * @param[in] isSameSpecies whether this is an intra-species collision process
 */
 
 template <typename T_index, typename T_PR, typename T_R, typename SoaData_type>
@@ -83,26 +84,21 @@ void ElasticCollisionPerez (
     T_PR n1  = T_PR(0.0);
     T_PR n2  = T_PR(0.0);
     T_PR n12 = T_PR(0.0);
+    for (int i1=I1s; i1<static_cast<int>(I1e); ++i1) { n1 += w1[ I1[i1] ]; }
+    for (int i2=I2s; i2<static_cast<int>(I2e); ++i2) { n2 += w2[ I2[i2] ]; }
+    n1 = n1 / dV; n2 = n2 / dV;
     {
-        int i1 = I1s; int i2 = I2s;
-        for (int k = 0; k < amrex::max(NI1,NI2); ++k)
-        {
-          n12 += amrex::min( w1[ I1[i1] ], w2[ I2[i2] ] );
-          ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
-          ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
-        }
+      int i1 = I1s; int i2 = I2s;
+      for (int k = 0; k < amrex::max(NI1,NI2); ++k)
+      {
+        n12 += amrex::min( w1[ I1[i1] ], w2[ I2[i2] ] );
+        ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
+        ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
+      }
+      n12 = n12 / dV;
     }
-    n12 = n12 / dV;
-    if ( isSameSpecies ) {
-        for (int i1=I1s; i1<static_cast<int>(I1e); ++i1 ) { n1 += w1[ I1[i1] ]; }
-        for (int i2=I2s; i2<static_cast<int>(I2e); ++i2 ) { n1 += w2[ I2[i2] ]; }
-        n1 = n1 / dV; n2 = n1;
-        n12 *= 2;
-    } else {
-        for (int i1=I1s; i1<static_cast<int>(I1e); ++i1 ) { n1 += w1[ I1[i1] ]; }
-        for (int i2=I2s; i2<static_cast<int>(I2e); ++i2 ) { n2 += w2[ I2[i2] ]; }
-        n1 = n1 / dV; n2 = n2 / dV;
-    }
+    // Apply correction in collision rate for single species
+    if ( isSameSpecies ) n12 *= T_PR(2.0);
 
     // compute Debye length lmdD
     T_PR lmdD;
