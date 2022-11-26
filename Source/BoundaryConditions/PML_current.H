@@ -9,9 +9,12 @@
 #define PML_CURRENT_H_
 
 #include "BoundaryConditions/PMLComponent.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX.H>
 #include <AMReX_FArrayBox.H>
+
+using namespace amrex;
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void push_ex_pml_current (int j, int k, int l,

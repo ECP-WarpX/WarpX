@@ -79,7 +79,8 @@ public:
     SigmaBoxFactory (const amrex::BoxArray& grid_ba, const amrex::Real* dx,
                      const amrex::IntVect& ncell, const amrex::IntVect& delta,
                      const amrex::Box& regular_domain, const amrex::Real v_sigma_sb)
-        : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta), m_regdomain(regular_domain), m_v_sigma_sb(v_sigma_sb) {}
+        : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta), m_regdomain(regular_domain), m_v_sigma_sb(v_sigma_sb)
+        {}
     virtual ~SigmaBoxFactory () = default;
 
     SigmaBoxFactory (const SigmaBoxFactory&) = default;
@@ -169,6 +170,10 @@ public:
 #ifdef WARPX_USE_PSATD
     void PushPSATD (const int lev);
 #endif
+
+    void UpdateEwithCurrents(std::array<amrex::MultiFab*,3> Efield,
+                std::array<amrex::MultiFab*,3> Jfield, const MultiSigmaBox& sigba,
+                amrex::Real dt);
 
     void CopyJtoPMLs (const std::array<amrex::MultiFab*,3>& j_fp,
                     const std::array<amrex::MultiFab*,3>& j_cp);

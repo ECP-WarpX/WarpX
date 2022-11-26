@@ -10,6 +10,7 @@
 
 #include "BoundaryConditions/PML.H"
 #include "BoundaryConditions/PMLComponent.H"
+#include "BoundaryConditions/PML_current.H"
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #endif
@@ -720,7 +721,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     Box single_domain_box = is_single_box_domain ? domain0 : Box();
     // Empty box (i.e., Box()) means it's not a single box domain.
     sigba_fp = std::make_unique<MultiSigmaBox>(ba, dm, grid_ba_reduced, geom->CellSize(),
-                                               IntVect(ncell), IntVect(delta), single_domain_box, v_sigma_sb);
+                                    IntVect(ncell), IntVect(delta), single_domain_box, v_sigma_sb);
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
@@ -830,7 +831,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
         single_domain_box = is_single_box_domain ? cdomain : Box();
         sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba_reduced, cgeom->CellSize(),
-                                                   cncells, cdelta, single_domain_box, v_sigma_sb);
+                                            cncells, cdelta, single_domain_box, v_sigma_sb);
 
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
@@ -1476,3 +1477,60 @@ PushPMLPSATDSinglePatch (
     }
 }
 #endif
+
+void PML::UpdateEwithCurrents(std::array<amrex::MultiFab*,3> Efield,
+                std::array<amrex::MultiFab*,3> Jfield, const MultiSigmaBox& sigba,
+                amrex::Real dt)
+{
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+
+    // Update the E field in the PML, using the current
+    // deposited by the particles in the PML
+    for ( MFIter mfi(*Efield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
+    {
+            auto const& Jx = Jfield[0]->array(mfi);
+            auto const& Jy = Jfield[1]->array(mfi);
+            auto const& Jz = Jfield[2]->array(mfi);
+
+            // Extract field data for this grid/tile
+            auto const& Ex = Efield[0]->array(mfi);
+            auto const& Ey = Efield[1]->array(mfi);
+            auto const& Ez = Efield[2]->array(mfi);
+
+            // Extract tileboxes for which to loop
+            Box const& tex  = mfi.tilebox(Efield[0]->ixType().ixType());
+            Box const& tey  = mfi.tilebox(Efield[1]->ixType().ixType());
+            Box const& tez  = mfi.tilebox(Efield[2]->ixType().ixType());
+
+            const Real* sigmaj_x = sigba[mfi].sigma[0].data();
+            const Real* sigmaj_y = sigba[mfi].sigma[1].data();
+            const Real* sigmaj_z = sigba[mfi].sigma[2].data();
+
+            int const x_lo = sigba[mfi].sigma[0].lo();
+#if defined(WARPX_DIM_3D)
+            int const y_lo = sigba[mfi].sigma[1].lo();
+            int const z_lo = sigba[mfi].sigma[2].lo();
+#else
+            int const y_lo = 0;
+            int const z_lo = sigba[mfi].sigma[1].lo();
+#endif
+            const Real mu_c2_dt = (PhysConst::mu0*PhysConst::c*PhysConst::c) * dt;
+
+            amrex::ParallelFor(tex, tey, tez,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    push_ex_pml_current(i, j, k, Ex, Jx,
+                        sigmaj_y, sigmaj_z, y_lo, z_lo, mu_c2_dt);
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    push_ey_pml_current(i, j, k, Ey, Jy,
+                        sigmaj_x, sigmaj_z, x_lo, z_lo, mu_c2_dt);
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    push_ez_pml_current(i, j, k, Ez, Jz,
+                        sigmaj_x, sigmaj_y, x_lo, y_lo, mu_c2_dt);
+                }
+            );
+        }
+}

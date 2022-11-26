@@ -119,15 +119,12 @@ class FiniteDifferenceSolver
 
        void EvolveEPML ( std::array< amrex::MultiFab*, 3 > Efield,
                       std::array< amrex::MultiFab*, 3 > const Bfield,
-                      std::array< amrex::MultiFab*, 3 > const Jfield,
                       std::array< amrex::MultiFab*, 3 > const edge_lengths,
-                      amrex::MultiFab* const Ffield,
-                      MultiSigmaBox const& sigba,
-                      amrex::Real const dt, bool pml_has_particles );
+                      amrex::MultiFab* const Ffield, amrex::Real const dt);
 
        void EvolveFPML ( amrex::MultiFab* Ffield,
                      std::array< amrex::MultiFab*, 3 > const Efield,
-                     amrex::Real const dt );
+                     amrex::Real const dt);
 
     private:
 
@@ -257,11 +254,8 @@ class FiniteDifferenceSolver
         void EvolveEPMLCartesian (
             std::array< amrex::MultiFab*, 3 > Efield,
             std::array< amrex::MultiFab*, 3 > const Bfield,
-            std::array< amrex::MultiFab*, 3 > const Jfield,
             std::array< amrex::MultiFab*, 3 > const edge_lengths,
-            amrex::MultiFab* const Ffield,
-            MultiSigmaBox const& sigba,
-            amrex::Real const dt, bool pml_has_particles );
+            amrex::MultiFab* const Ffield, amrex::Real const dt);
 
         template< typename T_Algo >
         void EvolveFPMLCartesian ( amrex::MultiFab* Ffield,
