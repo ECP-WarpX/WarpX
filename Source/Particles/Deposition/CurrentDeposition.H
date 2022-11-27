@@ -686,16 +686,16 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 amrex::Real sdxi = 0._rt;
-                sdxi += wq*vx*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
+                sdxi = wq*vx*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
                 amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k_new-1+k, 0, 0, 0), sdxi);
             }
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 amrex::Real sdyj = 0._rt;
-                sdyj += wq*vy*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
+                sdyj = wq*vy*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
                 amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k_new-1+k, 0, 0, 0), sdyj);
             }
+            amrex::Real sdzk = 0._rt;
             for (int k=dkl; k<=depos_order+1-dku; k++) {
-                amrex::Real sdzk = 0._rt;
                 sdzk += wqz*(sz_old[k] - sz_new[k]);
                 amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+k_new-1+k, 0, 0, 0), sdzk);
             }
