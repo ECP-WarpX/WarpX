@@ -2110,8 +2110,8 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     def _handle_field_probe(self, **kw):
         """Utility function to grab required inputs for a field probe from kw"""
         self.probe_geometry = kw.pop("probe_geometry")
-        self.x_probe = kw.pop("x_probe")
-        self.y_probe = kw.pop("y_probe")
+        self.x_probe = kw.pop("x_probe", None)
+        self.y_probe = kw.pop("y_probe", None)
         self.z_probe = kw.pop("z_probe")
 
         self.interp_order = kw.pop("interp_order", None)
@@ -2122,20 +2122,20 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
             self.resolution = kw.pop("resolution")
 
         if self.probe_geometry.lower() == 'line':
-            self.x1_probe = kw.pop("x1_probe")
-            self.y1_probe = kw.pop("y1_probe")
+            self.x1_probe = kw.pop("x1_probe", None)
+            self.y1_probe = kw.pop("y1_probe", None)
             self.z1_probe = kw.pop("z1_probe")
 
         if self.probe_geometry.lower() == 'plane':
             self.detector_radius = kw.pop("detector_radius")
 
-            self.target_normal_x = kw.pop("target_normal_x")
-            self.target_normal_y = kw.pop("target_normal_y")
-            self.target_normal_z = kw.pop("target_normal_z")
+            self.target_normal_x = kw.pop("target_normal_x", None)
+            self.target_normal_y = kw.pop("target_normal_y", None)
+            self.target_normal_z = kw.pop("target_normal_z", None)
 
-            self.target_up_x = kw.pop("target_up_x")
-            self.target_up_y = kw.pop("target_up_y")
-            self.target_up_z = kw.pop("target_up_z")
+            self.target_up_x = kw.pop("target_up_x", None)
+            self.target_up_y = kw.pop("target_up_y", None)
+            self.target_up_z = kw.pop("target_up_z", None)
 
         return kw
 
