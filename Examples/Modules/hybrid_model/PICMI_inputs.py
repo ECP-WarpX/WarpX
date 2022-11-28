@@ -156,7 +156,7 @@ class HybridPICExample(object):
 
         self.grid = grid_object(
             number_of_cells=[self.Nx, self.Nx, self.Nz][-self.dim:],
-            warpx_max_grid_size=128,
+            warpx_max_grid_size=self.Nz,
             lower_bound=[-self.Lx/2.0, -self.Lx/2.0, 0][-self.dim:],
             upper_bound=[self.Lx/2.0, self.Lx/2.0, self.Lz][-self.dim:],
             lower_boundary_conditions=['periodic']*self.dim,
@@ -165,7 +165,7 @@ class HybridPICExample(object):
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
         simulation.load_balance_intervals = self.total_steps // 1000
-        simulation.verbose = self.test
+        simulation.verbose = True # self.test
 
         #######################################################################
         # Field solver and external field                                     #
@@ -222,8 +222,8 @@ class HybridPICExample(object):
         line_diag = picmi.ReducedDiagnostic(
             diag_type='FieldProbe',
             probe_geometry='Line',
-            x_probe=0, y_probe=0, z_probe=0,
-            x1_probe=0, y1_probe=0, z1_probe=self.Lz,
+            z_probe=0,
+            z1_probe=self.Lz,
             resolution=self.Nz - 1,
             name='lineprobe',
             period=self.diag_steps,

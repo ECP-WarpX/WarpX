@@ -20,6 +20,7 @@ with open('sim_parameters.dpkl', 'rb') as f:
 field_idx_dict = {
     'Ex': 5, 'Ey': 6, 'Ez': 7, 'Bx': 8, 'By': 9, 'Bz': 10, 'S': 11
 }
+ana_fields = ['Ey', 'Ez']
 
 data = np.loadtxt("diags/lineprobe.txt", skiprows=1)
 
@@ -32,7 +33,17 @@ num_steps = len(np.unique(step))
 resolution = len(np.where(step == 0)[0]) - 1
 
 # reshape to separate spatial and time coordinates
-data = data.reshape((num_steps, resolution+1, data.shape[1]))
+sim_data = data.reshape((num_steps, resolution+1, data.shape[1]))
+
+z_grid = sim_data[1, :, 4]
+idx = np.argsort(z_grid)[1:]
+dz = np.mean(np.diff(z_grid[idx]))
+dt = np.mean(np.diff(sim_data[:,0,1]))
+
+data = np.zeros((num_steps, resolution, len(ana_fields)))
+for i in range(num_steps):
+    for j, field in enumerate(ana_fields):
+        data[i,:,j] = sim_data[i,idx,field_idx_dict[field]]
 
 
 '''
@@ -41,10 +52,7 @@ files = sorted(glob.glob('diags/field_diag/*.h5'))
 num_steps = len(files)
 resolution = sim.Nz
 
-fld_keys = ['E','B']
-car_keys = ['x','y','z']
-
-data = np.zeros((num_steps, resolution, 3))
+data = np.zeros((num_steps, resolution, len(ana_fields)))
 
 for i, name in enumerate(files):
     with h5py.File(name, 'r') as sim_data:
@@ -52,25 +60,16 @@ for i, name in enumerate(files):
         timestep = str(np.squeeze([key for key in sim_data['data'].keys()]))
         print(timestep)
 
-        data[i,:,0] = sim_data['data'][timestep]['fields']['E']['y']
-        data[i,:,1] = sim_data['data'][timestep]['fields']['E']['z']
-        data[i,:,2] = sim_data['data'][timestep]['fields']['B']['x']
+        for j, field in enumerate(ana_fields):
+            data[i,:,j] = sim_data['data'][timestep]['fields'][field[0]][field[1]]
 '''
-
 
 print(f"Data file contains {num_steps} time snapshots.")
 print(f"Spatial resolution is {resolution}")
 
-idx = np.argsort(data[1, :, 4])[1:]
-
-dz = np.mean(np.diff(data[1, idx, 4]))
-dt = np.mean(np.diff(data[:,0,1]))
-
 EM_kw = {}
-for field in ['Ey', 'Ez', 'Bx']:
-    EM_kw[field] = np.fft.fftshift(
-        np.fft.fft2(data[:,idx, field_idx_dict[field]])
-    )
+for ii, field in enumerate(ana_fields):
+    EM_kw[field] = np.fft.fftshift(np.fft.fft2(data[:, :, ii]))
 
 k_norm = 1.0 / sim.l_i
 w_norm = 2.0 * np.pi * sim.f_ci
@@ -93,9 +92,9 @@ fig, (ax1, ax2) = plt.subplots(
     figsize=(fig_scale * aspect_true_l, fig_scale * aspect_true_h)
 )
 
-Ey = np.abs(EM_kw['Ey'])**2
-Ez = np.abs(EM_kw['Ez'])**2
-
+Ey = np.abs(EM_kw[ana_fields[0]])**2
+Ez = np.abs(EM_kw[ana_fields[1]])**2
+# normalization
 Ey = Ey / np.max(Ey)
 Ez = Ez / np.max(Ez)
 
@@ -134,8 +133,6 @@ ax2.set_ylabel(r'$\omega / \Omega_i$')
 
 ax1.set_title('$E_y$')
 ax2.set_title('$E_z$')
-#plt.tick_params(axis = 'both', which = 'major', pad = 15)
 
-# Final adjustment and saving
-plt.savefig(f"spectrum_1d.png", bbox_inches = 'tight')
+plt.savefig(f"spectrum_{sim.dim}d.png", bbox_inches='tight')
 plt.show()
