@@ -416,12 +416,12 @@ void FieldProbe::ComputeDiags (int step)
          * Prepare interpolation of field components to probe_position
          * The arrays below store the index type (staggering) of each MultiFab.
          */
-        amrex::IndexType const Extype = Ex.ixType();
-        amrex::IndexType const Eytype = Ey.ixType();
-        amrex::IndexType const Eztype = Ez.ixType();
-        amrex::IndexType const Bxtype = Bx.ixType();
-        amrex::IndexType const Bytype = By.ixType();
-        amrex::IndexType const Bztype = Bz.ixType();
+        // amrex::IndexType const Extype = Ex.ixType();
+        // amrex::IndexType const Eytype = Ey.ixType();
+        // amrex::IndexType const Eztype = Ez.ixType();
+        // amrex::IndexType const Bxtype = Bx.ixType();
+        // amrex::IndexType const Bytype = By.ixType();
+        // amrex::IndexType const Bztype = Bz.ixType();
 
         // loop over each particle
         // TODO: add OMP parallel as in PhysicalParticleContainer::Evolve
@@ -541,7 +541,7 @@ void FieldProbe::ComputeDiags (int step)
                     else
                         doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    arrEx, arrEy, arrEz, arrBx, arrBy, arrBz,
-                                   Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
+                                //    Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
                                    dx_arr, xyzmin_arr, lo, temp_modes,
                                    temp_interp_order, false);
 

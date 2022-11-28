@@ -176,7 +176,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                 // first gather E and B to the particle positions
                 doGatherShapeN(x, y, z, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                               ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                            //    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
             }

@@ -2393,12 +2393,12 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             amrex::Array4<const amrex::Real> const& by_arr = byfab.array();
             amrex::Array4<const amrex::Real> const& bz_arr = bzfab.array();
 
-            amrex::IndexType const ex_type = exfab.box().ixType();
-            amrex::IndexType const ey_type = eyfab.box().ixType();
-            amrex::IndexType const ez_type = ezfab.box().ixType();
-            amrex::IndexType const bx_type = bxfab.box().ixType();
-            amrex::IndexType const by_type = byfab.box().ixType();
-            amrex::IndexType const bz_type = bzfab.box().ixType();
+            // amrex::IndexType const ex_type = exfab.box().ixType();
+            // amrex::IndexType const ey_type = eyfab.box().ixType();
+            // amrex::IndexType const ez_type = ezfab.box().ixType();
+            // amrex::IndexType const bx_type = bxfab.box().ixType();
+            // amrex::IndexType const by_type = byfab.box().ixType();
+            // amrex::IndexType const bz_type = bzfab.box().ixType();
 
             auto& attribs = pti.GetAttribs();
             ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
@@ -2431,7 +2431,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                     // first gather E and B to the particle positions
                     doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                   ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                //    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                    nox, galerkin_interpolation);
                 }
@@ -2561,12 +2561,12 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     amrex::Array4<const amrex::Real> const& by_arr = byfab->array();
     amrex::Array4<const amrex::Real> const& bz_arr = bzfab->array();
 
-    amrex::IndexType const ex_type = exfab->box().ixType();
-    amrex::IndexType const ey_type = eyfab->box().ixType();
-    amrex::IndexType const ez_type = ezfab->box().ixType();
-    amrex::IndexType const bx_type = bxfab->box().ixType();
-    amrex::IndexType const by_type = byfab->box().ixType();
-    amrex::IndexType const bz_type = bzfab->box().ixType();
+    // amrex::IndexType const ex_type = exfab->box().ixType();
+    // amrex::IndexType const ey_type = eyfab->box().ixType();
+    // amrex::IndexType const ez_type = ezfab->box().ixType();
+    // amrex::IndexType const bx_type = bxfab->box().ixType();
+    // amrex::IndexType const by_type = byfab->box().ixType();
+    // amrex::IndexType const bz_type = bzfab->box().ixType();
 
     auto& attribs = pti.GetAttribs();
     ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr() + offset;
@@ -2663,7 +2663,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
             // first gather E and B to the particle positions
             doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                            ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                           ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                        //    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                            dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                            nox, galerkin_interpolation);
         }

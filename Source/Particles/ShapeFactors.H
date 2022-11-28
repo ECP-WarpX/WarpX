@@ -27,44 +27,53 @@ struct Compute_shape_factor
 {
     template< typename T >
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    int operator()(
-        T* const sx,
-        T xmid) const
+    amrex::Real operator()(T xmid, int cell_index) const
     {
+        using namespace amrex::literals;
         if constexpr (depos_order == 0){
-            const auto j = static_cast<int>(xmid + T(0.5));
-            sx[0] = T(1.0);
-            return j;
+            return (1.0);
         }
         else if constexpr (depos_order == 1){
-            const auto j = static_cast<int>(xmid);
-            const T xint = xmid - T(j);
-            sx[0] = T(1.0) - xint;
-            sx[1] = xint;
-            return j;
+            const T xint = xmid - static_cast<int>(xmid);
+            if (cell_index==0){
+                return (1.0) - xint;
+            } else if (cell_index == 1){
+                return xint;
+            } else {
+                return 0;
+            }
         }
         else if constexpr (depos_order == 2){
-            const auto j = static_cast<int>(xmid + T(0.5));
-            const T xint = xmid - T(j);
-            sx[0] = T(0.5)*(T(0.5) - xint)*(T(0.5) - xint);
-            sx[1] = T(0.75) - xint*xint;
-            sx[2] = T(0.5)*(T(0.5) + xint)*(T(0.5) + xint);
-            // index of the leftmost cell where particle deposits
-            return j-1;
+            const T xint = xmid - static_cast<int>(xmid + (0.5_rt));
+            if (cell_index==0){
+                return 0.5_rt*((0.5_rt) - xint)*((0.5_rt) - xint);
+            } else if (cell_index==1) {
+                return (0.75_rt) - xint*xint;
+            } else if (cell_index == 2){
+                return (0.5_rt)*((0.5_rt) + xint)*((0.5_rt) + xint);
+            } else {
+                return 0;
+            }
         }
         else if constexpr (depos_order == 3){
-            const auto j = static_cast<int>(xmid);
-            const T xint = xmid - T(j);
-            sx[0] = (T(1.0))/(T(6.0))*(T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - xint);
-            sx[1] = (T(2.0))/(T(3.0)) - xint*xint*(T(1.0) - xint/(T(2.0)));
-            sx[2] = (T(2.0))/(T(3.0)) - (T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - T(0.5)*(T(1.0) - xint));
-            sx[3] = (T(1.0))/(T(6.0))*xint*xint*xint;
-            // index of the leftmost cell where particle deposits
-            return j-1;
+            const T xint = xmid - static_cast<int>(xmid);
+            if (cell_index == 0){
+                return ((1.0_rt))/((6.0_rt))*((1.0_rt) - xint)*((1.0_rt) - xint)*((1.0_rt) - xint);
+            } else if (cell_index == 1) {
+                return ((2.0_rt))/((3.0_rt)) - xint*xint*((1.0_rt) - xint/((2.0_rt)));
+            } else if (cell_index == 2){
+                return ((2.0_rt))/((3.0_rt)) - ((1.0_rt) - xint)*((1.0_rt) - xint)*((1.0_rt) - (0.5_rt)*((1.0_rt) - xint));
+            } else if (cell_index == 3){
+                return ((1.0_rt))/((6.0_rt))*xint*xint*xint;
+            } else {
+                return 0;
+            }
         }
+
         else{
             amrex::Abort("Unknown particle shape selected in Compute_shape_factor");
-            amrex::ignore_unused(sx, xmid);
+            amrex::ignore_unused(xmid);
+            return 0;
         }
         return 0;
     }
@@ -82,43 +91,60 @@ struct Compute_shifted_shape_factor
 {
     template< typename T >
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    int operator()(
-        T* const sx,
-        const T x_old,
+    amrex::Real operator()(
+        const T x_old, int cell_index,
         const int i_new) const
     {
+
         if constexpr (depos_order == 1){
             const auto i = static_cast<int>(x_old);
             const int i_shift = i - i_new;
             const T xint = x_old - T(i);
-            sx[1+i_shift] = T(1.0) - xint;
-            sx[2+i_shift] = xint;
-            return i;
+            if (cell_index == 1+i_shift){
+                return T(1.0) - xint;
+            } else if (cell_index == 2+i_shift){
+                return xint;
+            } else {
+                return 0;
+            }
         }
+
         else if constexpr (depos_order == 2){
             const auto i = static_cast<int>(x_old + T(0.5));
             const int i_shift = i - (i_new + 1);
             const T xint = x_old - T(i);
-            sx[1+i_shift] = T(0.5)*(T(0.5) - xint)*(T(0.5) - xint);
-            sx[2+i_shift] = T(0.75) - xint*xint;
-            sx[3+i_shift] = T(0.5)*(T(0.5) + xint)*(T(0.5) + xint);
-            // index of the leftmost cell where particle deposits
-            return i - 1;
+            if (cell_index ==1+i_shift){
+                return T(0.5)*(T(0.5) - xint)*(T(0.5) - xint);
+            } else if (cell_index == 2+i_shift){
+                return T(0.75) - xint*xint;
+            } else if (cell_index == 3+i_shift){
+                return T(0.5)*(T(0.5) + xint)*(T(0.5) + xint);
+            } else {
+                return 0;
+            }
         }
+
         else if constexpr (depos_order == 3){
             const auto i = static_cast<int>(x_old);
             const int i_shift = i - (i_new + 1);
             const T xint = x_old - i;
-            sx[1+i_shift] = (T(1.0))/(T(6.0))*(T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - xint);
-            sx[2+i_shift] = (T(2.0))/(T(3.0)) - xint*xint*(T(1.0) - xint/(T(2.0)));
-            sx[3+i_shift] = (T(2.0))/(T(3.0)) - (T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - T(0.5)*(T(1.0) - xint));
-            sx[4+i_shift] = (T(1.0))/(T(6.0))*xint*xint*xint;
+            if (cell_index == 1+i_shift){
+                return (T(1.0))/(T(6.0))*(T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - xint);
+            } else if (cell_index == 2+i_shift){
+                return (T(2.0))/(T(3.0)) - xint*xint*(T(1.0) - xint/(T(2.0)));
+            } else if (cell_index == 3+i_shift){
+                return (T(2.0))/(T(3.0)) - (T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - T(0.5)*(T(1.0) - xint));
+            } else if (cell_index == 4+i_shift){
+                return (T(1.0))/(T(6.0))*xint*xint*xint;
+            } else {
+                return 0;
+            }
             // index of the leftmost cell where particle deposits
-            return i - 1;
         }
         else{
             amrex::Abort("Unknown particle shape selected in Compute_shifted_shape_factor");
-            amrex::ignore_unused(sx, x_old, i_new);
+            amrex::ignore_unused(i_new);
+            return 0;
         }
         return 0;
     }
