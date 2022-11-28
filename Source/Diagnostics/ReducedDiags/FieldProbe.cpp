@@ -86,8 +86,6 @@ FieldProbe::FieldProbe (std::string rd_name)
     if (m_probe_geometry_str == "Point")
     {
         m_probe_geometry = DetectorGeometry::Point;
-        x_probe = 0._rt;
-        y_probe = 0._rt;
 #if !defined(WARPX_DIM_1D_Z)
         utils::parser::getWithParser(
             pp_rd_name, "x_probe", x_probe);
@@ -102,17 +100,13 @@ FieldProbe::FieldProbe (std::string rd_name)
     else if (m_probe_geometry_str == "Line")
     {
         m_probe_geometry = DetectorGeometry::Line;
-        x_probe = 0._rt;
-        x1_probe = 0._rt;
-        y_probe = 0._rt;
-        y1_probe = 0._rt;
 #if !defined(WARPX_DIM_1D_Z)
-        utils::parser::getWithParser(pp_rd_name, "x_probe", x_probe);
-        utils::parser::getWithParser(pp_rd_name, "x1_probe", x1_probe);
+        utils::parser::queryWithParser(pp_rd_name, "x_probe", x_probe);
+        utils::parser::queryWithParser(pp_rd_name, "x1_probe", x1_probe);
 #endif
 #if defined(WARPX_DIM_3D)
-        utils::parser::getWithParser(pp_rd_name, "y_probe", y_probe);
-        utils::parser::getWithParser(pp_rd_name, "y1_probe", y1_probe);
+        utils::parser::queryWithParser(pp_rd_name, "y_probe", y_probe);
+        utils::parser::queryWithParser(pp_rd_name, "y1_probe", y1_probe);
 #endif
         utils::parser::getWithParser(pp_rd_name, "z_probe", z_probe);
         utils::parser::getWithParser(pp_rd_name, "z1_probe", z1_probe);
@@ -125,23 +119,18 @@ FieldProbe::FieldProbe (std::string rd_name)
             "ERROR: Plane probe should be used in a 2D or 3D simulation only"));
 #endif
         m_probe_geometry = DetectorGeometry::Plane;
-        y_probe = 0._rt;
-        target_normal_x = 0._rt;
-        target_normal_y = 1._rt;
-        target_normal_z = 0._rt;
-        target_up_y = 0._rt;
 #if defined(WARPX_DIM_3D)
-        utils::parser::getWithParser(pp_rd_name, "y_probe", y_probe);
-        utils::parser::getWithParser(pp_rd_name, "target_normal_x", target_normal_x);
-        utils::parser::getWithParser(pp_rd_name, "target_normal_y", target_normal_y);
-        utils::parser::getWithParser(pp_rd_name, "target_normal_z", target_normal_z);
-        utils::parser::getWithParser(pp_rd_name, "target_up_y", target_up_y);
+        utils::parser::queryWithParser(pp_rd_name, "y_probe", y_probe);
+        utils::parser::queryWithParser(pp_rd_name, "target_normal_x", target_normal_x);
+        utils::parser::queryWithParser(pp_rd_name, "target_normal_y", target_normal_y);
+        utils::parser::queryWithParser(pp_rd_name, "target_normal_z", target_normal_z);
+        utils::parser::queryWithParser(pp_rd_name, "target_up_y", target_up_y);
 #endif
-        utils::parser::getWithParser(pp_rd_name, "x_probe", x_probe);
+        utils::parser::queryWithParser(pp_rd_name, "x_probe", x_probe);
         utils::parser::getWithParser(pp_rd_name, "z_probe", z_probe);
-        utils::parser::getWithParser(pp_rd_name, "target_up_x", target_up_x);
-        utils::parser::getWithParser(pp_rd_name, "target_up_z", target_up_z);
-        utils::parser::getWithParser(pp_rd_name, "detector_radius", detector_radius);
+        utils::parser::queryWithParser(pp_rd_name, "target_up_x", target_up_x);
+        utils::parser::queryWithParser(pp_rd_name, "target_up_z", target_up_z);
+        utils::parser::queryWithParser(pp_rd_name, "detector_radius", detector_radius);
         utils::parser::getWithParser(pp_rd_name, "resolution", m_resolution);
     }
     else
