@@ -724,8 +724,13 @@ WarpX::PushPSATD ()
             PSATDBackwardTransformJ(current_fp, current_cp);
             PSATDSubtractCurrentPartialSumsAvg();
 
-            // Synchronize J and rho (if used)
-            SyncCurrent(current_fp, current_cp);
+            // Synchronize J and rho (if used).
+            // Here we call SumBoundaryJ instead of SyncCurrent, because
+            // filtering has been already applied to D in OneStep_nosub,
+            // by calling SyncCurrentAndRho (see Evolve/WarpXEvolve.cpp).
+            // TODO This works only without mesh refinement
+            const int lev = 0;
+            SumBoundaryJ(current_fp, lev, Geom(lev).periodicity());
             SyncRho();
         }
 
@@ -880,7 +885,7 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     // ECTRhofield must be recomputed at the very end of the Efield update to ensure
     // that ECTRhofield is consistent with Efield
 #ifdef AMREX_USE_EB
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_fp[lev], m_edge_lengths[lev],
                                                 m_face_areas[lev], ECTRhofield[lev], lev);

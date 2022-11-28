@@ -13,7 +13,6 @@
 #define WARPX_H_
 
 #include "BoundaryConditions/PML_fwd.H"
-#include "Diagnostics/BackTransformedDiagnostic_fwd.H"
 #include "Diagnostics/MultiDiagnostics_fwd.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags_fwd.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
@@ -65,6 +64,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <map>
 
 enum struct PatchType : int
 {
@@ -155,7 +155,7 @@ public:
     //! Integer that corresponds to the particle push algorithm (Boris, Vay, Higuera-Cary)
     static short particle_pusher_algo;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
-    static short maxwell_solver_id;
+    static short electromagnetic_solver_id;
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
@@ -273,22 +273,6 @@ public:
     //! If true, the initial conditions from random number generators are serialized (useful for reproducible testing with OpenMP)
     static bool serialize_initial_conditions;
 
-    //! If true, then lab-frame data will be computed for boosted frame simulations
-    //! with customized output format
-    static bool do_back_transformed_diagnostics;
-    //! Name of the back-transformed diagnostics output directory
-    static std::string lab_data_directory;
-    //! Number of back-tranformed snapshots in the lab-frame
-    static int  num_snapshots_lab;
-    //! Time interval in lab-frame between the back-transformed snapshots
-    static amrex::Real dt_snapshots_lab;
-    //! If true, then lab-frame data will be computed for the fields and flushed out
-    //! in customized format
-    static bool do_back_transformed_fields;
-    //! If true, then lab-frame data will be computed for the particles and flushed out
-    //! in customized format
-    static bool do_back_transformed_particles;
-
     //! Lorentz factor of the boosted frame in which a boosted-frame simulation is run
     static amrex::Real gamma_boost;
     //! Beta value corresponding to the Lorentz factor of the boosted frame of the simulation
@@ -331,6 +315,95 @@ public:
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;
+
+    /**
+     * \brief
+     * Allocate and optionally initialize the MultiFab. This also adds the MultiFab
+     * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
+     * interface
+     *
+     * \param mf[out] The MultiFab unique pointer to be allocated
+     * \param ba[in] The BoxArray describing the MultiFab
+     * \param dm[in] The DistributionMapping describing the MultiFab
+     * \param ncomp[in] The number of components in the MultiFab
+     * \param ngrow[in] The number of guard cells in the MultiFab
+     * \param name[in] The name of the MultiFab to use in the map
+     * \param initial_value[in] The optional initial value
+     */
+    static void AllocInitMultiFab (
+        std::unique_ptr<amrex::MultiFab>& mf,
+        const amrex::BoxArray& ba,
+        const amrex::DistributionMapping& dm,
+        const int ncomp,
+        const amrex::IntVect& ngrow,
+        const std::string name,
+        std::optional<const amrex::Real> initial_value = {});
+
+    /**
+     * \brief
+     * Allocate and optionally initialize the iMultiFab. This also adds the iMultiFab
+     * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
+     * interface
+     *
+     * \param mf[out] The iMultiFab unique pointer to be allocated
+     * \param ba[in] The BoxArray describing the iMultiFab
+     * \param dm[in] The DistributionMapping describing the iMultiFab
+     * \param ncomp[in] The number of components in the iMultiFab
+     * \param ngrow[in] The number of guard cells in the iMultiFab
+     * \param name[in] The name of the iMultiFab to use in the map
+     * \param initial_value[in] The optional initial value
+     */
+    static void AllocInitMultiFab (
+        std::unique_ptr<amrex::iMultiFab>& mf,
+        const amrex::BoxArray& ba,
+        const amrex::DistributionMapping& dm,
+        const int ncomp,
+        const amrex::IntVect& ngrow,
+        const std::string name,
+        std::optional<const int> initial_value = {});
+
+    /**
+     * \brief
+     * Create an alias of a MultiFab, adding the alias to the MultiFab map
+     * \param mf[out] The MultiFab to create
+     * \param mf_to_alias[in] The MultiFab to alias
+     * \param scomp[in] The starting component to be aliased
+     * \param ncomp[in] The number of components to alias
+     * \param name[in] The name of the MultiFab to use in the map
+     */
+    static void AliasInitMultiFab (
+        std::unique_ptr<amrex::MultiFab>& mf,
+        const amrex::MultiFab& mf_to_alias,
+        const int scomp,
+        const int ncomp,
+        const std::string name,
+        std::optional<const amrex::Real> initial_value);
+
+    // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)
+    // This is a convenience for the Python interface, allowing all MultiFabs
+    // to be easily referenced from Python.
+    static std::map<std::string, amrex::MultiFab *> multifab_map;
+    static std::map<std::string, amrex::iMultiFab *> imultifab_map;
+
+    /**
+     * \brief
+     * Add the MultiFab to the map of MultiFabs
+     * \param name The name of the MultiFab use to reference the MultiFab
+     * \parame mf The MultiFab to be added to the map (via a pointer to it)
+     */
+    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::MultiFab>& mf) {
+        multifab_map[name] = mf.get();
+    }
+
+    /**
+     * \brief
+     * Add the iMultiFab to the map of MultiFabs
+     * \param name The name of the iMultiFab use to reference the iMultiFab
+     * \parame mf The iMultiFab to be added to the map (via a pointer to it)
+     */
+    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::iMultiFab>& mf) {
+        imultifab_map[name] = mf.get();
+    }
 
     std::array<const amrex::MultiFab* const, 3>
     get_array_Bfield_aux  (const int lev) const {
@@ -461,7 +534,7 @@ public:
 
     /**
      * \brief
-     * Compute the last timestep of the simulation and make max_step and stop_time self-consistent.
+     * Compute the last time step of the simulation
      * Calls computeMaxStepBoostAccelerator() if required.
      */
     void ComputeMaxStep ();
@@ -733,7 +806,7 @@ public:
     static const amrex::iMultiFab* CurrentBufferMasks (int lev);
     static const amrex::iMultiFab* GatherBufferMasks (int lev);
 
-    static int do_electrostatic;
+    static int electrostatic_solver_id;
 
     // Parameters for lab frame electrostatic
     static amrex::Real self_fields_required_precision;
@@ -757,12 +830,6 @@ public:
     static int moving_window_dir;
     static amrex::Real moving_window_v;
     static bool fft_do_time_averaging;
-
-    // slice generation //
-    static int num_slice_snapshots_lab;
-    static amrex::Real dt_slice_snapshots_lab;
-    static amrex::Real particle_slice_width_lab;
-    amrex::RealBox getSliceRealBox() const {return slice_realbox;}
 
     // these should be private, but can't due to Cuda limitations
     static void ComputeDivB (amrex::MultiFab& divB, int const dcomp,
@@ -1077,8 +1144,6 @@ private:
     /** Check the requested resources and write performance hints */
     void PerformanceHints ();
 
-    std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
-
     void BuildBufferMasks ();
     void BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
                                  const amrex::IArrayBox &guard_mask, const int ng );
@@ -1123,6 +1188,7 @@ private:
                         const amrex::IntVect& ngEB, amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const amrex::IntVect& ngG, const bool aux_is_nodal);
+
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
     void AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSolverRZ>>& spectral_solver,
@@ -1150,9 +1216,6 @@ private:
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
     std::unique_ptr<MultiDiagnostics> multi_diags;
-
-    // Boosted Frame Diagnostics
-    std::unique_ptr<BackTransformedDiagnostic> myBFD;
 
     //
     // Fields: First array for level, second for direction

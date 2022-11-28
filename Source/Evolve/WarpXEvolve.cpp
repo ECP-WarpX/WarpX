@@ -11,7 +11,6 @@
 #include "WarpX.H"
 
 #include "BoundaryConditions/PML.H"
-#include "Diagnostics/BackTransformedDiagnostic.H"
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Evolve/WarpXDtType.H"
@@ -69,7 +68,7 @@ WarpX::Evolve (int numsteps)
     if (numsteps < 0) {  // Note that the default argument is numsteps = -1
         numsteps_max = max_step;
     } else {
-        numsteps_max = std::min(istep[0]+numsteps, max_step);
+        numsteps_max = istep[0] + numsteps;
     }
 
     bool early_params_checked = false; // check typos in inputs after step 1
@@ -122,7 +121,7 @@ WarpX::Evolve (int numsteps)
         // Particles have p^{n} and x^{n}.
         // is_synchronized is true.
         if (is_synchronized) {
-            if (do_electrostatic == ElectrostaticSolverAlgo::None) {
+            if (electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
                 // Not called at each iteration, so exchange all guard cells
                 FillBoundaryE(guard_cells.ng_alloc_EB);
                 FillBoundaryB(guard_cells.ng_alloc_EB);
@@ -138,7 +137,7 @@ WarpX::Evolve (int numsteps)
             }
             is_synchronized = false;
         } else {
-            if (do_electrostatic == ElectrostaticSolverAlgo::None) {
+            if (electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
                 // Beyond one step, we have E^{n} and B^{n}.
                 // Particles have p^{n-1/2} and x^{n}.
 
@@ -153,7 +152,7 @@ WarpX::Evolve (int numsteps)
                     FillBoundaryB_avg(guard_cells.ng_FieldGather);
                 }
                 // TODO Remove call to FillBoundaryAux before UpdateAuxilaryData?
-                if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+                if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD)
                     FillBoundaryAux(guard_cells.ng_UpdateAux);
                 UpdateAuxilaryData();
                 FillBoundaryAux(guard_cells.ng_UpdateAux);
@@ -177,7 +176,7 @@ WarpX::Evolve (int numsteps)
         ExecutePythonCallback("particleinjection");
         // Electrostatic case: only gather fields and push particles,
         // deposition and calculation of fields done further below
-        if (do_electrostatic != ElectrostaticSolverAlgo::None)
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None)
         {
             const bool skip_deposition = true;
             PushParticlesandDepose(cur_time, skip_deposition);
@@ -247,15 +246,6 @@ WarpX::Evolve (int numsteps)
 
         ShiftGalileanBoundary();
 
-        if (do_back_transformed_diagnostics) {
-            std::unique_ptr<MultiFab> cell_centered_data = nullptr;
-            if (WarpX::do_back_transformed_fields) {
-                cell_centered_data = GetCellCenteredData();
-            }
-            myBFD->writeLabFrameData(cell_centered_data.get(), *mypc, geom[0], cur_time, dt[0]);
-        }
-
-
         // sync up time
         for (int i = 0; i <= max_level; ++i) {
             t_new[i] = cur_time;
@@ -278,8 +268,8 @@ WarpX::Evolve (int numsteps)
 
         m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
 
-        // Electrostatic solver: particles can move by an arbitrary number of cells
-        if( do_electrostatic != ElectrostaticSolverAlgo::None )
+        // Non-Maxwell solver: particles can move by an arbitrary number of cells
+        if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None )
         {
             mypc->Redistribute();
         } else
@@ -309,7 +299,7 @@ WarpX::Evolve (int numsteps)
             mypc->SortParticlesByBin(sort_bin_size);
         }
 
-        if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
+        if( electrostatic_solver_id != ElectrostaticSolverAlgo::None ) {
             ExecutePythonCallback("beforeEsolve");
             // Electrostatic solver:
             // For each species: deposit charge and add the associated space-charge
@@ -369,10 +359,11 @@ WarpX::Evolve (int numsteps)
 
         // End loop on time steps
     }
-    multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
-
-    if (do_back_transformed_diagnostics) {
-        myBFD->Flush(geom[0]);
+    // This if statement is needed for PICMI, which allows the Evolve routine to be
+    // called multiple times, otherwise diagnostics will be done at every call,
+    // regardless of the diagnostic period parameter provided in the inputs.
+    if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])) {
+        multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
     }
 }
 
@@ -413,7 +404,7 @@ WarpX::OneStep_nosub (Real cur_time)
 
     // Push E and B from {n} to {n+1}
     // (And update guard cells immediately afterwards)
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         if (use_hybrid_QED)
         {
             WarpX::Hybrid_QED_Push(dt);
@@ -486,7 +477,7 @@ WarpX::OneStep_nosub (Real cur_time)
 
 void WarpX::SyncCurrentAndRho ()
 {
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         if (fft_periodic_single_box)
         {
@@ -515,6 +506,13 @@ void WarpX::SyncCurrentAndRho ()
                 SyncCurrent(current_fp, current_cp);
                 SyncRho();
             }
+
+            if (current_deposition_algo == CurrentDepositionAlgo::Vay)
+            {
+                // TODO This works only without mesh refinement
+                const int lev = 0;
+                if (use_filter) ApplyFilterJ(current_fp_vay, lev);
+            }
         }
     }
     else // FDTD
@@ -530,7 +528,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 #ifdef WARPX_USE_PSATD
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD,
+        WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD,
         "multi-J algorithm not implemented for FDTD"
     );
 
@@ -712,7 +710,7 @@ void
 WarpX::OneStep_sub1 (Real curtime)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        do_electrostatic == ElectrostaticSolverAlgo::None,
+        electrostatic_solver_id == ElectrostaticSolverAlgo::None,
         "Electrostatic solver cannot be used with sub-cycling."
     );
 
@@ -926,6 +924,7 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
     }
     else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
+        // Note that Vay deposition is supported only for PSATD and the code currently aborts otherwise
         current_x = current_fp_vay[lev][0].get();
         current_y = current_fp_vay[lev][1].get();
         current_z = current_fp_vay[lev][2].get();

@@ -58,6 +58,8 @@ struct SigmaBox
 
     using SigmaVect = std::array<Sigma,AMREX_SPACEDIM>;
 
+    using value_type = void; // needed by amrex::FabArray
+
     SigmaVect sigma;
     SigmaVect sigma_cumsum;
     SigmaVect sigma_star;

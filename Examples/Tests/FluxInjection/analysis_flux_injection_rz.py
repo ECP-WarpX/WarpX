@@ -55,7 +55,7 @@ w = ad['particle_weight'].to_ndarray()
 # Check that the number of particles matches the expected one
 assert np.allclose( w.sum(), n_tot, rtol=0.05 )
 # Check that the particles are at the right radius
-assert np.all( (r >= 1.5) & (r <=1.9) )
+assert np.all( (r >= 1.48) & (r <=1.92) )
 
 test_name = os.path.split(os.getcwd())[1]
 
