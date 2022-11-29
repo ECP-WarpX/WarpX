@@ -78,7 +78,7 @@ WarpX::EvolveExplicit (int numsteps)
     if (numsteps < 0) {  // Note that the default argument is numsteps = -1
         numsteps_max = max_step;
     } else {
-        numsteps_max = std::min(istep[0]+numsteps, max_step);
+        numsteps_max = istep[0] + numsteps;
     }
 
     bool early_params_checked = false; // check typos in inputs after step 1
@@ -369,7 +369,12 @@ WarpX::EvolveExplicit (int numsteps)
 
         // End loop on time steps
     }
-    multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
+    // This if statement is needed for PICMI, which allows the Evolve routine to be
+    // called multiple times, otherwise diagnostics will be done at every call,
+    // regardless of the diagnostic period parameter provided in the inputs.
+    if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])) {
+        multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
+    }
 }
 
 /* /brief Perform one PIC iteration, without subcycling
