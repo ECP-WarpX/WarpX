@@ -189,7 +189,7 @@ PsatdAlgorithmJConstantInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex By_old = fields(i,j,k,Idx.By);
             const Complex Bz_old = fields(i,j,k,Idx.Bz);
 
-            // Shortcuts for the values of J and rho
+            // Shortcuts for the values of J
             const Complex Jx = fields(i,j,k,Idx.Jx_mid);
             const Complex Jy = fields(i,j,k,Idx.Jy_mid);
             const Complex Jz = fields(i,j,k,Idx.Jz_mid);
