@@ -2892,8 +2892,16 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
     {
         // Position advance starts from the position at the start of the step
         // but uses the most recent velocity.
+#if (AMREX_SPACEDIM >= 2)
         amrex::ParticleReal xp = x_n[ip];
+#else
+        amrex::ParticleReal xp = 0._rt;
+#endif
+#if defined(WARPX_DIM_3D)
         amrex::ParticleReal yp = y_n[ip];
+#else
+        amrex::ParticleReal yp = 0._rt;
+#endif
         amrex::ParticleReal zp = z_n[ip];
 
         UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], 0.5_rt*dt);
