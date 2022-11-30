@@ -295,7 +295,8 @@ RigidInjectedParticleContainer::Evolve (int lev,
                                         MultiFab* rho, MultiFab* crho,
                                         const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                         const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                        Real t, Real dt, DtType a_dt_type, bool skip_deposition)
+                                        Real t, Real dt, DtType a_dt_type, bool skip_deposition,
+                                        PushType push_type)
 {
 
     // Update location of injection plane in the boosted frame
@@ -320,7 +321,7 @@ RigidInjectedParticleContainer::Evolve (int lev,
                                        rho, crho,
                                        cEx, cEy, cEz,
                                        cBx, cBy, cBz,
-                                       t, dt, a_dt_type, skip_deposition);
+                                       t, dt, a_dt_type, skip_deposition, push_type);
 }
 
 void

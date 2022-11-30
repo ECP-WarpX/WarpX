@@ -11,6 +11,7 @@
 #define WARPX_PhysicalParticleContainer_H_
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Initialization/PlasmaInjector.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
@@ -124,7 +125,8 @@ public:
                          amrex::Real t,
                          amrex::Real dt,
                          DtType a_dt_type=DtType::Full,
-                         bool skip_deposition=false ) override;
+                         bool skip_deposition=false,
+                         PushType push_type=PushType::Explicit) override;
 
     virtual void PushPX (WarpXParIter& pti,
                          amrex::FArrayBox const * exfab,
@@ -139,6 +141,20 @@ public:
                          int lev, int gather_lev,
                          amrex::Real dt, ScaleFields scaleFields,
                          DtType a_dt_type=DtType::Full);
+
+    virtual void ImplicitPushXP (WarpXParIter& pti,
+                                 amrex::FArrayBox const * exfab,
+                                 amrex::FArrayBox const * eyfab,
+                                 amrex::FArrayBox const * ezfab,
+                                 amrex::FArrayBox const * bxfab,
+                                 amrex::FArrayBox const * byfab,
+                                 amrex::FArrayBox const * bzfab,
+                                 const amrex::IntVect ngEB, const int /*e_is_nodal*/,
+                                 const long offset,
+                                 const long np_to_push,
+                                 int lev, int gather_lev,
+                                 amrex::Real dt, ScaleFields scaleFields,
+                                 DtType a_dt_type=DtType::Full);
 
     virtual void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& Ex,

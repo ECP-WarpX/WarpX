@@ -61,6 +61,8 @@ WarpX::Evolve (int numsteps)
 {
     if (evolve_scheme == EvolveScheme::Explicit) {
         EvolveExplicit(numsteps);
+    } else if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+        EvolveImplicitPicard(numsteps);
     } else {
         amrex::Abort(Utils::TextMsg::Err("Unknown evolve scheme"));
     }
@@ -910,17 +912,18 @@ WarpX::doQEDEvents (int lev)
 #endif
 
 void
-WarpX::PushParticlesandDepose (amrex::Real cur_time, bool skip_deposition)
+WarpX::PushParticlesandDepose (amrex::Real cur_time, bool skip_deposition, PushType push_type)
 {
     // Evolve particles to p^{n+1/2} and x^{n+1}
     // Depose current, j^{n+1/2}
     for (int lev = 0; lev <= finest_level; ++lev) {
-        PushParticlesandDepose(lev, cur_time, DtType::Full, skip_deposition);
+        PushParticlesandDepose(lev, cur_time, DtType::Full, skip_deposition, push_type);
     }
 }
 
 void
-WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_deposition)
+WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_deposition,
+                               PushType push_type)
 {
     amrex::MultiFab* current_x = nullptr;
     amrex::MultiFab* current_y = nullptr;
@@ -954,7 +957,7 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
                  rho_fp[lev].get(), charge_buf[lev].get(),
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
-                 cur_time, dt[lev], a_dt_type, skip_deposition);
+                 cur_time, dt[lev], a_dt_type, skip_deposition, push_type);
 #ifdef WARPX_DIM_RZ
     if (! skip_deposition) {
         // This is called after all particles have deposited their current and charge.

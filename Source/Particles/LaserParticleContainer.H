@@ -10,6 +10,7 @@
 #define WARPX_LaserParticleContainer_H_
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Laser/LaserProfiles.H"
 #include "WarpXParticleContainer.H"
 
@@ -69,7 +70,7 @@ public:
                          const amrex::MultiFab*, const amrex::MultiFab*, const amrex::MultiFab*,
                          const amrex::MultiFab*, const amrex::MultiFab*, const amrex::MultiFab*,
                          amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full,
-                         bool skip_deposition=false) final;
+                         bool skip_deposition=false, PushType push_type=PushType::Explicit) final;
 
     virtual void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& ,

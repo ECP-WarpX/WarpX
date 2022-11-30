@@ -24,6 +24,7 @@
 
 const std::map<std::string, int> evolve_scheme_to_int = {
     {"explicit",        EvolveScheme::Explicit },
+    {"implicit_picard", EvolveScheme::ImplicitPicard },
     {"default",         EvolveScheme::Explicit }
 };
 

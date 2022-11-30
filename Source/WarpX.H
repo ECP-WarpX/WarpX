@@ -31,6 +31,7 @@
 #   endif
 #endif
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "FieldSolver/ElectrostaticSolver.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
@@ -94,6 +95,13 @@ public:
 
     void Evolve (int numsteps = -1);
     void EvolveExplicit (int numsteps = -1);
+
+    void EvolveImplicitPicard (int numsteps = -1);
+    void EvolveImplicitPicardInit (const int lev);
+    void SaveParticlesAtStepStart (WarpXParticleContainer& pc, const int lev);
+    void FinishImplicitParticleUpdate (WarpXParticleContainer& pc, const int lev);
+    void FinishImplicitFieldUpdate(amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield_fp,
+                                   amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield_n);
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
@@ -381,6 +389,24 @@ public:
         const int ncomp,
         const std::string name,
         std::optional<const amrex::Real> initial_value);
+
+    /**
+     * \brief
+     * Allocate the MultiFab so that is like the specified MultiFab (same ba and dm)
+     * and optionally initialize it. This also adds the MultiFab
+     * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
+     * interface
+     *
+     * \param mf[out] The MultiFab unique pointer to be allocated
+     * \param mf_model[in] The MultiFab to model
+     * \param name[in] The name of the MultiFab to use in the map
+     * \param initial_value[in] The optional initial value
+     */
+    static void AllocInitMultiFabFromModel (
+        std::unique_ptr<amrex::MultiFab>& mf,
+        amrex::MultiFab& mf_model,
+        const std::string name,
+        std::optional<const amrex::Real> initial_value = {});
 
     // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)
     // This is a convenience for the Python interface, allowing all MultiFabs
@@ -693,8 +719,10 @@ public:
     void doQEDEvents (int lev);
 #endif
 
-    void PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full, bool skip_current=false);
-    void PushParticlesandDepose (         amrex::Real cur_time, bool skip_current=false);
+    void PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full, bool skip_current=false,
+                                 PushType push_type=PushType::Explicit);
+    void PushParticlesandDepose (         amrex::Real cur_time, bool skip_current=false,
+                                 PushType push_type=PushType::Explicit);
 
     // This function does aux(lev) = fp(lev) + I(aux(lev-1)-cp(lev)).
     // Caller must make sure fp and cp have ghost cells filled.
@@ -1239,6 +1267,11 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
+
+    // Implicit, fields at start of step and temporary value
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_n;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_n;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_save;
 
     //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;

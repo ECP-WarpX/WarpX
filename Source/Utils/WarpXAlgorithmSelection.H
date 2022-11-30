@@ -29,6 +29,7 @@ struct MediumForEM {
 struct EvolveScheme {
     enum {
         Explicit = 0,
+        ImplicitPicard = 1
     };
 };
 

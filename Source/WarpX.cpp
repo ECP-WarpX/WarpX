@@ -1763,6 +1763,10 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 
     AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
                   guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F, guard_cells.ng_alloc_G, aux_is_nodal);
+
+    if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+        EvolveImplicitPicardInit(lev);
+    }
 }
 
 void
@@ -2868,6 +2872,22 @@ WarpX::AliasInitMultiFab (
     std::optional<const amrex::Real> initial_value)
 {
     mf = std::make_unique<amrex::MultiFab>(mf_to_alias, amrex::make_alias, scomp, ncomp);
+    if (initial_value) {
+        mf->setVal(*initial_value);
+    }
+    WarpX::AddToMultiFabMap(name, mf);
+}
+
+void
+WarpX::AllocInitMultiFabFromModel (
+    std::unique_ptr<amrex::MultiFab>& mf,
+    amrex::MultiFab& mf_model,
+    const std::string name,
+    std::optional<const amrex::Real> initial_value)
+{
+    const auto tag = amrex::MFInfo().SetTag(std::move(name));
+    mf = std::make_unique<amrex::MultiFab>(mf_model.boxArray(), mf_model.DistributionMap(),
+                                           mf_model.nComp(), mf_model.nGrowVect(), tag);
     if (initial_value) {
         mf->setVal(*initial_value);
     }
