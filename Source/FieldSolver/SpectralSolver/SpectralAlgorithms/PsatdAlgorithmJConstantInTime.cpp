@@ -165,10 +165,18 @@ PsatdAlgorithmJConstantInTime::pushSpectralFields (SpectralFieldData& f) const
 
         // Extract pointers for the k vectors
         const amrex::Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* modified_kx_arr_c = modified_kx_vec_centered[mfi].dataPtr();
 #if defined(WARPX_DIM_3D)
         const amrex::Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* modified_ky_arr_c = modified_ky_vec_centered[mfi].dataPtr();
 #endif
         const amrex::Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* modified_kz_arr_c = modified_kz_vec_centered[mfi].dataPtr();
+
+        // Galilean velocity
+        const amrex::Real vgx = m_v_galilean[0];
+        const amrex::Real vgy = m_v_galilean[1];
+        const amrex::Real vgz = m_v_galilean[2];
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -181,12 +189,10 @@ PsatdAlgorithmJConstantInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex By_old = fields(i,j,k,Idx.By);
             const Complex Bz_old = fields(i,j,k,Idx.Bz);
 
-            // Shortcuts for the values of J and rho
+            // Shortcuts for the values of J
             const Complex Jx = fields(i,j,k,Idx.Jx);
             const Complex Jy = fields(i,j,k,Idx.Jy);
             const Complex Jz = fields(i,j,k,Idx.Jz);
-            const Complex rho_old = fields(i,j,k,Idx.rho_old);
-            const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
             Complex F_old;
             if (dive_cleaning)
@@ -202,15 +208,21 @@ PsatdAlgorithmJConstantInTime::pushSpectralFields (SpectralFieldData& f) const
 
             // k vector values
             const amrex::Real kx = modified_kx_arr[i];
+            const amrex::Real kx_c = modified_kx_arr_c[i];
 #if defined(WARPX_DIM_3D)
             const amrex::Real ky = modified_ky_arr[j];
+            const amrex::Real ky_c = modified_ky_arr_c[j];
             const amrex::Real kz = modified_kz_arr[k];
+            const amrex::Real kz_c = modified_kz_arr_c[k];
 #else
             constexpr amrex::Real ky = 0._rt;
+            constexpr amrex::Real ky_c = 0._rt;
             const     amrex::Real kz = modified_kz_arr[j];
+            const     amrex::Real kz_c = modified_kz_arr_c[j];
 #endif
             // Physical constants and imaginary unit
             constexpr Real c2 = PhysConst::c * PhysConst::c;
+            constexpr Real ep0 = PhysConst::ep0;
             constexpr Real inv_ep0 = 1._rt / PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
@@ -223,44 +235,45 @@ PsatdAlgorithmJConstantInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex X4 = (is_galilean) ? X4_arr(i,j,k) : - S_ck / PhysConst::ep0;
             const Complex T2 = (is_galilean) ? T2_arr(i,j,k) : 1.0_rt;
 
-            // Update equations for E in the formulation with rho
-            // T2 = 1 always with standard PSATD (zero Galilean velocity)
-
+            // Shortcuts for the values of rho
+            Complex rho_old, rho_new;
             if (update_with_rho)
             {
-                fields(i,j,k,Idx.Ex) = T2 * C * Ex_old
-                                       + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
-                                       + X4 * Jx - I * (X2 * rho_new - T2 * X3 * rho_old) * kx;
+                rho_old = fields(i,j,k,Idx.rho_old);
+                rho_new = fields(i,j,k,Idx.rho_new);
+            }
+            else // update_with_rho = 0
+            {
+                const amrex::Real kc_dot_vg = kx_c*vgx + ky_c*vgy + kz_c*vgz;
+                const Complex k_dot_E = kx*Ex_old + ky*Ey_old + kz*Ez_old;
+                const Complex k_dot_J = kx*Jx + ky*Jy + kz*Jz;
 
-                fields(i,j,k,Idx.Ey) = T2 * C * Ey_old
-                                       + I * c2 * T2 * S_ck * (kz * Bx_old - kx * Bz_old)
-                                       + X4 * Jy - I * (X2 * rho_new - T2 * X3 * rho_old) * ky;
+                rho_old = I*ep0*k_dot_E;
 
-                fields(i,j,k,Idx.Ez) = T2 * C * Ez_old
-                                       + I * c2 * T2 * S_ck * (kx * By_old - ky * Bx_old)
-                                       + X4 * Jz - I * (X2 * rho_new - T2 * X3 * rho_old) * kz;
+                if (kc_dot_vg == 0._rt)
+                {
+                    rho_new = rho_old - I*k_dot_J*dt;
+                }
+                else // Galilean PSATD
+                {
+                    rho_new = T2*rho_old + (1._rt-T2)*k_dot_J/kc_dot_vg;
+                }
             }
 
-            // Update equations for E in the formulation without rho
+            // Update equations for E
             // T2 = 1 always with standard PSATD (zero Galilean velocity)
 
-            else {
+            fields(i,j,k,Idx.Ex) = T2 * C * Ex_old
+                                   + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
+                                   + X4 * Jx - I * (X2 * rho_new - T2 * X3 * rho_old) * kx;
 
-                Complex k_dot_J = kx * Jx + ky * Jy + kz * Jz;
-                Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
+            fields(i,j,k,Idx.Ey) = T2 * C * Ey_old
+                                   + I * c2 * T2 * S_ck * (kz * Bx_old - kx * Bz_old)
+                                   + X4 * Jy - I * (X2 * rho_new - T2 * X3 * rho_old) * ky;
 
-                fields(i,j,k,Idx.Ex) = T2 * C * Ex_old
-                                       + I * c2 * T2 * S_ck * (ky * Bz_old - kz * By_old)
-                                       + X4 * Jx + X2 * k_dot_E * kx + X3 * k_dot_J * kx;
-
-                fields(i,j,k,Idx.Ey) = T2 * C * Ey_old
-                                       + I * c2 * T2 * S_ck * (kz * Bx_old - kx * Bz_old)
-                                       + X4 * Jy + X2 * k_dot_E * ky + X3 * k_dot_J * ky;
-
-                fields(i,j,k,Idx.Ez) = T2 * C * Ez_old
-                                       + I * c2 * T2 * S_ck * (kx * By_old - ky * Bx_old)
-                                       + X4 * Jz + X2 * k_dot_E * kz + X3 * k_dot_J * kz;
-            }
+            fields(i,j,k,Idx.Ez) = T2 * C * Ez_old
+                                   + I * c2 * T2 * S_ck * (kx * By_old - ky * Bx_old)
+                                   + X4 * Jz - I * (X2 * rho_new - T2 * X3 * rho_old) * kz;
 
             // Update equations for B
             // T2 = 1 always with standard PSATD (zero Galilean velocity)
@@ -345,7 +358,6 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
     const amrex::DistributionMapping& dm,
     const amrex::Real dt)
 {
-    const bool update_with_rho = m_update_with_rho;
     const bool is_galilean     = m_is_galilean;
 
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
@@ -405,7 +417,6 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
 
             const amrex::Real c2 = std::pow(c, 2);
             const amrex::Real dt2 = std::pow(dt, 2);
-            const amrex::Real dt3 = std::pow(dt, 3);
 
             // Calculate the dot product of the k vector with the Galilean velocity.
             // This has to be computed always with the centered (that is, nodal) finite-order
@@ -467,69 +478,39 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
                 X1(i,j,k) = 0.5_rt * dt2 / ep0;
             }
 
-            // X2 (multiplies rho_new      if update_with_rho = 1 in the update equation for E)
-            // X2 (multiplies ([k] \dot E) if update_with_rho = 0 in the update equation for E)
-            if (update_with_rho)
+            // X2 (multiplies rho_new in the update equation for E)
+            if (w_c != 0.)
             {
-                if (w_c != 0.)
-                {
-                    X2(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c * tmp)
-                                / (theta_c_star - theta_c);
-                }
-                else // w_c = 0
-                {
-                    if (om_s != 0.)
-                    {
-                        X2(i,j,k) = c2 * (dt - S_ck(i,j,k)) / (ep0 * dt * om2_s);
-                    }
-                    else // om_s = 0 and w_c = 0
-                    {
-                        X2(i,j,k) = c2 * dt2 / (6._rt * ep0);
-                    }
-                }
+                X2(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c * tmp)
+                            / (theta_c_star - theta_c);
             }
-            else // update_with_rho = 0
+            else // w_c = 0
             {
-                X2(i,j,k) = c2 * ep0 * theta2_c * tmp;
+                if (om_s != 0.)
+                {
+                    X2(i,j,k) = c2 * (dt - S_ck(i,j,k)) / (ep0 * dt * om2_s);
+                }
+                else // om_s = 0 and w_c = 0
+                {
+                    X2(i,j,k) = c2 * dt2 / (6._rt * ep0);
+                }
             }
 
-            // X3 (multiplies rho_old      if update_with_rho = 1 in the update equation for E)
-            // X3 (multiplies ([k] \dot J) if update_with_rho = 0 in the update equation for E)
-            if (update_with_rho)
+            // X3 (multiplies rho_old in the update equation for E)
+            if (w_c != 0.)
             {
-                if (w_c != 0.)
-                {
-                    X3(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c_star * tmp)
-                                / (theta_c_star - theta_c);
-                }
-                else // w_c = 0
-                {
-                    if (om_s != 0.)
-                    {
-                        X3(i,j,k) = c2 * (dt * C(i,j,k) - S_ck(i,j,k)) / (ep0 * dt * om2_s);
-                    }
-                    else // om_s = 0 and w_c = 0
-                    {
-                        X3(i,j,k) = - c2 * dt2 / (3._rt * ep0);
-                    }
-                }
+                X3(i,j,k) = c2 * (theta_c_star * X1(i,j,k) - theta_c_star * tmp)
+                            / (theta_c_star - theta_c);
             }
-            else // update_with_rho = 0
+            else // w_c = 0
             {
-                if (w_c != 0.)
+                if (om_s != 0.)
                 {
-                    X3(i,j,k) = I * c2 * (theta2_c * tmp - X1(i,j,k)) / w_c;
+                    X3(i,j,k) = c2 * (dt * C(i,j,k) - S_ck(i,j,k)) / (ep0 * dt * om2_s);
                 }
-                else // w_c = 0
+                else // om_s = 0 and w_c = 0
                 {
-                    if (om_s != 0.)
-                    {
-                        X3(i,j,k) = c2 * (S_ck(i,j,k) - dt) / (ep0 * om2_s);
-                    }
-                    else // om_s = 0 and w_c = 0
-                    {
-                        X3(i,j,k) = - c2 * dt3 / (6._rt * ep0);
-                    }
+                    X3(i,j,k) = - c2 * dt2 / (3._rt * ep0);
                 }
             }
 
