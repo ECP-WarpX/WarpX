@@ -235,7 +235,7 @@ Places in the WarpX loop where callbacks are available include:
 ``afterinit``, ``beforecollisions``, ``aftercollisions``, ``beforeEsolve``, ``afterEsolve``,
 ``beforedeposition``, ``afterdeposition``, ``beforestep``, ``afterstep``, ``afterdiagnostics``,
 ``afterrestart`` and ``oncheckpointsignal``.
-See the examples in *Examples/Tests/ParticleDataPython* for references on how to use
+See the examples in *Examples/ParticleDataPython* for references on how to use
 ``callbacks``.
 
 There are several "hooks" available via the ``libwarpx`` shared library to access and manipulate
@@ -300,7 +300,7 @@ New components can be added via Python.
 Various diagnostics are also accessible from Python.
 This includes getting the deposited or total charge density from a given species
 as well as accessing the scraped particle buffer. See the example in
-*Examples/Modules/ParticleBoudaryScrape* for a reference on how to interact
+*Examples/ParticleBoudaryScrape* for a reference on how to interact
 with scraped particle data.
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.get_species_charge_sum

@@ -1163,7 +1163,7 @@ Laser initialization
 
         * field_data (double[nt * nx * ny], with nt being the slowest coordinate).
 
-      A file at this format can be generated from Python, see an example at ``Examples/Modules/laser_injection_from_file``
+      A file at this format can be generated from Python, see an example at ``Examples/laser_injection_from_file``
 
 
 * ``<laser_name>.profile_t_peak`` (`float`; in seconds)
@@ -2530,7 +2530,7 @@ Reduced Diagnostics
         values of the 1st bin, the 2nd bin, ..., the nth bin.
         An example input file and a loading python script of
         using the histogram reduced diagnostics
-        are given in ``Examples/Tests/initial_distribution/``.
+        are given in ``Examples/initial_distribution/``.
 
     * ``ParticleExtrema``
         This type computes the minimum and maximum values of

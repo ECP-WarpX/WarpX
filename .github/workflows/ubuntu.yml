@@ -38,7 +38,7 @@ jobs:
           -DWarpX_MPI=OFF              \
           -DWarpX_QED=OFF
         cmake --build build_3D -j 2
-        ./build_3D/bin/warpx Examples/Physics_applications/laser_acceleration/inputs_3d
+        ./build_3D/bin/warpx Examples/laser_acceleration/inputs_3d
 
         cmake -S . -B build_RZ         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
@@ -47,7 +47,7 @@ jobs:
           -DWarpX_MPI=OFF              \
           -DWarpX_QED=OFF
         cmake --build build_RZ -j 2
-        ./build_RZ/bin/warpx Examples/Physics_applications/laser_acceleration/inputs_rz
+        ./build_RZ/bin/warpx Examples/laser_acceleration/inputs_rz
 
   build_gcc_ablastr:
     name: GCC ABLASTR w/o MPI
@@ -125,4 +125,4 @@ jobs:
     - name: run pywarpx
       run: |
         export OMP_NUM_THREADS=1
-        mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
+        mpirun -n 2 Examples/laser_acceleration/PICMI_inputs_3d.py

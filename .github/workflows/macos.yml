@@ -85,4 +85,4 @@ jobs:
     - name: run pywarpx
       run: |
         export OMP_NUM_THREADS=1
-        mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
+        mpirun -n 2 Examples/laser_acceleration/PICMI_inputs_3d.py

@@ -18,42 +18,42 @@ Beam-driven electron acceleration
 
 AMReX ``inputs``:
 
-* :download:`2D case <../../../Examples/Physics_applications/plasma_acceleration/inputs_2d>`
-* :download:`2D case in boosted frame <../../../Examples/Physics_applications/plasma_acceleration/inputs_2d_boost>`
-* :download:`3D case in boosted frame <../../../Examples/Physics_applications/plasma_acceleration/inputs_3d_boost>`
+* :download:`2D case <../../../Examples/plasma_acceleration/inputs_2d>`
+* :download:`2D case in boosted frame <../../../Examples/plasma_acceleration/inputs_2d_boost>`
+* :download:`3D case in boosted frame <../../../Examples/plasma_acceleration/inputs_3d_boost>`
 
 PICMI:
 
-* :download:`Without mesh refinement <../../../Examples/Physics_applications/plasma_acceleration/PICMI_inputs_plasma_acceleration.py>`
-* :download:`With mesh refinement <../../../Examples/Physics_applications/plasma_acceleration/PICMI_inputs_plasma_acceleration_mr.py>`
+* :download:`Without mesh refinement <../../../Examples/plasma_acceleration/PICMI_inputs_plasma_acceleration.py>`
+* :download:`With mesh refinement <../../../Examples/plasma_acceleration/PICMI_inputs_plasma_acceleration_mr.py>`
 
 Laser-driven electron acceleration
 ----------------------------------
 
 AMReX ``inputs``:
 
-* :download:`1D case <../../../Examples/Physics_applications/laser_acceleration/inputs_1d>`
-* :download:`2D case <../../../Examples/Physics_applications/laser_acceleration/inputs_2d>`
-* :download:`2D case in boosted frame <../../../Examples/Physics_applications/laser_acceleration/inputs_2d_boost>`
-* :download:`3D case <../../../Examples/Physics_applications/laser_acceleration/inputs_3d>`
-* :download:`RZ case <../../../Examples/Physics_applications/laser_acceleration/inputs_rz>`
+* :download:`1D case <../../../Examples/laser_acceleration/inputs_1d>`
+* :download:`2D case <../../../Examples/laser_acceleration/inputs_2d>`
+* :download:`2D case in boosted frame <../../../Examples/laser_acceleration/inputs_2d_boost>`
+* :download:`3D case <../../../Examples/laser_acceleration/inputs_3d>`
+* :download:`RZ case <../../../Examples/laser_acceleration/inputs_rz>`
 
 PICMI (Python) scripts:
 
-* :download:`1D case <../../../Examples/Physics_applications/laser_acceleration/PICMI_inputs_1d.py>`
-* :download:`2D case with mesh refinement <../../../Examples/Physics_applications/laser_acceleration/PICMI_inputs_2d.py>`
-* :download:`3D case <../../../Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py>`
-* :download:`RZ case <../../../Examples/Physics_applications/laser_acceleration/PICMI_inputs_rz.py>`
+* :download:`1D case <../../../Examples/laser_acceleration/PICMI_inputs_1d.py>`
+* :download:`2D case with mesh refinement <../../../Examples/laser_acceleration/PICMI_inputs_2d.py>`
+* :download:`3D case <../../../Examples/laser_acceleration/PICMI_inputs_3d.py>`
+* :download:`RZ case <../../../Examples/laser_acceleration/PICMI_inputs_rz.py>`
 
 Plasma mirror
 -------------
 
-:download:`2D case <../../../Examples/Physics_applications/plasma_mirror/inputs_2d>`
+:download:`2D case <../../../Examples/plasma_mirror/inputs_2d>`
 
 Laser-ion acceleration
 ----------------------
 
-:download:`2D case <../../../Examples/Physics_applications/laser_ion/inputs>`
+:download:`2D case <../../../Examples/laser_ion/inputs>`
 
 .. note::
 
@@ -69,8 +69,8 @@ Laser-ion acceleration
 Uniform plasma
 --------------
 
-:download:`2D case <../../../Examples/Physics_applications/uniform_plasma/inputs_2d>`
-:download:`3D case <../../../Examples/Physics_applications/uniform_plasma/inputs_3d>`
+:download:`2D case <../../../Examples/uniform_plasma/inputs_2d>`
+:download:`3D case <../../../Examples/uniform_plasma/inputs_3d>`
 
 Capacitive discharge
 --------------------
@@ -90,7 +90,7 @@ To run a given case ``-n``, from 1 to 4, execute:
 
 Once the simulation completes an output file ``avg_ion_density.npy`` will be created which can be compared to the literature results as in the plot above. Running case 1 on 4 processors takes roughly 20 minutes to complete.
 
-* :download:`input file <../../../Examples/Physics_applications/capacitive_discharge/PICMI_inputs_1d.py>`
+* :download:`input file <../../../Examples/capacitive_discharge/PICMI_inputs_1d.py>`
 
 .. note::
 
@@ -106,18 +106,18 @@ Test cases
 
 PICMI (Python) test cases included that can be used as a reference:
 
-* :download:`Gaussian beam <../../../Examples/Modules/gaussian_beam/PICMI_inputs_gaussian_beam.py>`
-* :download:`Langmuir plasma wave test in 3d <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir_rt.py>`
-* :download:`Langmuir plasma wave test in RZ <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir_rz_multimode_analyze.py>`
-* :download:`Langmuir plasma wave test in 2D <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir2d.py>`
+* :download:`Gaussian beam <../../../Examples/gaussian_beam/PICMI_inputs_gaussian_beam.py>`
+* :download:`Langmuir plasma wave test in 3d <../../../Examples/Langmuir/PICMI_inputs_langmuir_rt.py>`
+* :download:`Langmuir plasma wave test in RZ <../../../Examples/Langmuir/PICMI_inputs_langmuir_rz_multimode_analyze.py>`
+* :download:`Langmuir plasma wave test in 2D <../../../Examples/Langmuir/PICMI_inputs_langmuir2d.py>`
 
 Manipulating fields via Python
 ------------------------------
 
 An example of using Python to access the simulation charge density, solve the Poisson equation (using ``superLU``) and write the resulting electrostatic potential back to the simulation is given in the input file below. This example uses the ``fields.py`` module included in the ``pywarpx`` library.
 
-* :download:`Direct Poisson solver example <../../../Examples/Physics_applications/capacitive_discharge/PICMI_inputs_2d.py>`
+* :download:`Direct Poisson solver example <../../../Examples/capacitive_discharge/PICMI_inputs_2d.py>`
 
 An example of initializing the fields by accessing their data through Python, advancing the simulation for a chosen number of time steps, and plotting the fields again through Python. The simulation runs with 128 regular cells, 8 guard cells, and 10 PML cells, in each direction. Moreover, it uses div(E) and div(B) cleaning both in the regular grid and in the PML and initializes all available electromagnetic fields (E,B,F,G) identically.
 
-* :download:`Unit pulse with PML <../../../Examples/Tests/PythonWrappers/PICMI_inputs_2d.py>`
+* :download:`Unit pulse with PML <../../../Examples/PythonWrappers/PICMI_inputs_2d.py>`

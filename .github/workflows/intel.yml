@@ -120,7 +120,7 @@ jobs:
         source /opt/intel/oneapi/setvars.sh
         set -e
         export OMP_NUM_THREADS=2
-        Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
+        Examples/laser_acceleration/PICMI_inputs_3d.py
 
   build_dpcc:
     name: oneAPI DPC++ SP
