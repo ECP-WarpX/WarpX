@@ -60,6 +60,7 @@ namespace ParticleUtils {
      *
      * @param[in] u2 square of particle speed (i.e. u dot u where u = gamma*v)
      * @param[in] m, M mass of projectile and target, respectively
+     * @param[out] gamma relativistic factor of the particle
      * @param[out] energy particle energy in eV
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE

@@ -31,6 +31,7 @@ namespace utils::parser
         * Any of these integers may be omitted in which case it will be equal to their default value
         * (0 for the starting point, std::numeric_limits<int>::max() for the stopping point and 1 for
         * the period). For example SliceParser(":1000:") is equivalent to SliceParser("0:1000:1").
+        * @param[in] isBTD whether this is a back-transformed diagnostic
         */
         SliceParser (const std::string& instr, bool isBTD=false);
 

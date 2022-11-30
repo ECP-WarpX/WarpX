@@ -44,11 +44,12 @@ public:
         bool isLastBTDFlush = false,
         const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const override;
 
+#ifdef AMREX_USE_ASCENT
     /** \brief Do in-situ visualization for particle data.
      * \param[in] particle_diags Each element of this vector handles output of 1 species.
+     * \param[in] a_bp_mesh (NEEDS DESCRIPTION)
      * Only compile if AMREX_USE_ASCENT because we need to pass a conduit class
      */
-#ifdef AMREX_USE_ASCENT
     void WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags, conduit::Node& a_bp_mesh) const;
 #endif
 

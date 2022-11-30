@@ -140,10 +140,6 @@ class SpectralSolver
          * declared in the base class SpectralBaseAlgorithm and defined in its
          * derived classes, from objects of class SpectralSolver through the private
          * unique pointer \c algorithm.
-         *
-         * \param[in]     lev     The mesh refinement level
-         * \param[in,out] current Array of unique pointers to \c MultiFab storing
-         *                        the three components of the current density
          */
         void VayDeposition ()
         {

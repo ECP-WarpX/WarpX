@@ -192,6 +192,7 @@ public:
 
     /** Perform all binary collisions within a tile
      *
+     * \param[in] dt time step size
      * \param[in] lev the mesh-refinement level
      * \param[in] mfi iterator for multifab
      * \param species_1 first species container

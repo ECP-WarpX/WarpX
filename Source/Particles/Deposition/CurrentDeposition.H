@@ -36,7 +36,6 @@ using namespace amrex::literals;
                          ion_lev is a null pointer.
  * \param jx_fab,jy_fab,jz_fab FArrayBox of current density, either full array or tile.
  * \param np_to_depose Number of particles for which current is deposited.
- * \param dt           Time step for particle level
  * \param relative_time Time at which to deposit J, relative to the time of the
  *                      current positions of the particles. When different than 0,
  *                      the particle position will be temporarily modified to match
