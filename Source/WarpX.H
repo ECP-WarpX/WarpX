@@ -370,6 +370,7 @@ public:
      * \param[in] scomp The starting component to be aliased
      * \param[in] ncomp The number of components to alias
      * \param[in] name The name of the MultiFab to use in the map
+     * \param[in] initial_value optional initial value for MultiFab
      */
     static void AliasInitMultiFab (
         std::unique_ptr<amrex::MultiFab>& mf,
@@ -588,7 +589,7 @@ public:
     /** apply QED correction on electric field for level lev and patch type patch_type
      *
      * \param lev mesh refinement level
-     * \param dt patch_type which MR patch: PatchType::fine or PatchType::coarse
+     * \param patch_type which MR patch: PatchType::fine or PatchType::coarse
      * \param dt time step
      */
     void Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real dt);
@@ -918,7 +919,7 @@ public:
      * EBs such as edge lengths, face areas, distance to EB, etc. It also
      * appropriately communicates EB data to guard cells.
      *
-     * \param[in] lev, level of the Multifabs that is initialized
+     * \param[in] lev level of the Multifabs that is initialized
      */
     void InitializeEBGridData(int lev);
 

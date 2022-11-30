@@ -145,7 +145,7 @@ public:
    *
    * @param varnames variable names in each multifab
    * @param mf multifab for each level
-   * @param geometry for each level
+   * @param geom for each level
    * @param output_levels the finest level to output, <= maxLevel
    * @param iteration the current iteration or reconstructed labframe station number
    * @param time the current simulation time in the lab frame

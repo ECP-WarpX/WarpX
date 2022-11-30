@@ -111,8 +111,9 @@ public:
      * @param mypc Container of species involved
      *
      */
-    void doCollisions (amrex::Real /*cur_time*/, amrex::Real dt, MultiParticleContainer* mypc) override
+    void doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleContainer* mypc) override
     {
+        amrex::ignore_unused(cur_time);
 
         auto& species1 = mypc->GetParticleContainerFromName(m_species_names[0]);
         auto& species2 = mypc->GetParticleContainerFromName(m_species_names[1]);

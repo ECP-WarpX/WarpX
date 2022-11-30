@@ -327,14 +327,14 @@ public:
      */
     void IncreaseBoxArraySize ( const int add_size) { m_ba_size += add_size;}
     /** Returns box corresponding to the ith box in the BoxArray, m_ba.
-     *  \param[in] ibox, index of the box in the BoxArray.
+     *  \param[in] ibox index of the box in the BoxArray.
      */
     amrex::Box ba_box (int ibox) {return m_ba[ibox]; }
     /** Resize boxArray, m_ba, to size, m_ba_size. */
     void ResizeBoxArray () { m_ba.resize(m_ba_size); }
     /** Set Box indices of the ith-box in Box Array, m_ba, to the new Box, ba_box.
-     *  \param[in] ibox, index of the ith box in BoxArray, m_ba.
-     *  \param[in] box dimensions corresponding to the ith Fab.
+     *  \param[in] ibox index of the ith box in BoxArray, m_ba.
+     *  \param[in] ba_box dimensions corresponding to the ith Fab.
      */
     void SetBox (int ibox, amrex::Box ba_box) { m_ba.set(ibox, ba_box); }
     /** Size of BoxArray, m_ba*/

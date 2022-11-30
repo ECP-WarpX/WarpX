@@ -47,7 +47,7 @@ public:
 #ifdef AMREX_USE_ASCENT
     /** \brief Do in-situ visualization for particle data.
      * \param[in] particle_diags Each element of this vector handles output of 1 species.
-     * \param[in] a_bp_mesh (NEEDS DESCRIPTION)
+     * \param[out] a_bp_mesh blueprint mesh generated from the container
      * Only compile if AMREX_USE_ASCENT because we need to pass a conduit class
      */
     void WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags, conduit::Node& a_bp_mesh) const;
