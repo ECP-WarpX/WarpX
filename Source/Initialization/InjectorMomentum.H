@@ -14,6 +14,7 @@
 #include "TemperatureProperties.H"
 #include "VelocityProperties.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX.H>
 #include <AMReX_Config.H>
@@ -86,6 +87,69 @@ private:
     amrex::Real m_ux_th, m_uy_th, m_uz_th;
 };
 
+namespace {
+    /** Return u sampled according to the probability distribution:
+      * p(u) \propto u \exp(-(u-u_m)^2/2u_th^2)
+      *
+      * @param u_m Central momentum
+      * @param u_th Momentum spread
+      * @param engine Object used to generate random numbers
+      */
+    AMREX_GPU_HOST_DEVICE
+    amrex::Real
+    generateGaussianFluxDist( amrex::Real u_m, amrex::Real u_th, amrex::RandomEngine const& engine ) {
+
+        using namespace amrex::literals;
+
+        // Momentum to be returned at the end of this function
+        amrex::Real u = 0._rt;
+
+        if (u_th == 0._rt) {
+            u = u_m; // Trivial case ; avoids division by 0 in the rest of the code below
+        } else if (u_m < 0.6*u_th) {
+            // Mean velocity is lower than thermal velocity
+            // Use the distribution u*exp(-u**2*(1-u_m/u_th)/(2*u_th**2)) as an approximation
+            // and then use the rejection method to correct it
+            // ( stop rejecting with probability exp(-u_m/(2*u_th**3)*(u-u_th)**2) )
+            // Note that this is the method that is used in the common case u_m=0
+            amrex::Real approx_u_th = u_th/std::sqrt( 1._rt - u_m/u_th );
+            amrex::Real reject_prefactor = (u_m/u_th)/(2._rt*u_th*u_th); // To save computation
+            bool reject = true;
+            while (reject) {
+                // Generates u according to u*exp(-u**2/(2*approx_u_th**2),
+                // using the method of the inverse cumulative function
+                amrex::Real xrand = 1._rt - amrex::Random(engine); // ensures urand > 0
+                u = approx_u_th * std::sqrt(2._rt*std::log(1._rt/xrand));
+                // Rejection method
+                xrand = amrex::Random(engine);
+                if (xrand < std::exp(-reject_prefactor*(u-u_th)*(u-u_th))) reject = false;
+            }
+        } else {
+            // Mean velocity is greater than thermal velocity
+            // Use the distribution exp(-(u-u_m-u_th**2/u_m)**2/(2*u_th**2)) as an approximation
+            // and then use the rejection method to correct it
+            // ( stop rejecting with probability (u/u_m)*exp(1-(u/u_m)) ; note
+            // that this number is always between 0 and 1 )
+            // Note that in the common case `u_m = 0`, this rejection method
+            // is not used, and the above rejection method is used instead.
+            bool reject = true;
+            amrex::Real approx_u_m = u_m + u_th*u_th/u_m;
+            amrex::Real inv_um = 1._rt/u_m; // To save computation
+            while (reject) {
+                // Approximate distribution: normal distribution, where we only retain positive u
+                u = -1._rt;
+                while (u < 0) {
+                    u = amrex::RandomNormal(approx_u_m, u_th, engine);
+                }
+                // Rejection method
+                amrex::Real xrand = amrex::Random(engine);
+                if (xrand < u*inv_um* std::exp(1._rt - u*inv_um)) reject = false;
+            }
+        }
+
+        return u;
+    }
+}
 
 // struct whose getMomentum returns momentum for 1 particle, from random
 // gaussian flux distribution in the specified direction.
@@ -101,7 +165,15 @@ struct InjectorMomentumGaussianFlux
           m_ux_th(a_ux_th), m_uy_th(a_uy_th), m_uz_th(a_uz_th),
           m_flux_normal_axis(a_flux_normal_axis),
           m_flux_direction(a_flux_direction)
-        {}
+    {
+        // For now, do not allow negative `u_m` along the flux axis
+        bool raise_error = false;
+        if ((m_flux_normal_axis == 0) && (m_ux_m < 0)) raise_error = true;
+        if ((m_flux_normal_axis == 1) && (m_uy_m < 0)) raise_error = true;
+        if ((m_flux_normal_axis == 2) && (m_uz_m < 0)) raise_error = true;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( raise_error==false,
+            "When using the `gaussianflux` distribution, the central momentum along the flux axis must be positive or zero." );
+    }
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
@@ -109,17 +181,28 @@ struct InjectorMomentumGaussianFlux
                  amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex::literals;
-        // Generate the v*Gaussian distribution.
-        amrex::Real const urand = 1._rt - amrex::Random(engine);
-        amrex::Real ur = std::sqrt(2._rt*std::log(1._rt/urand));
-        if (m_flux_direction < 0) ur = -ur;
+
+        // Generate the distribution in the direction of the flux
+        amrex::Real u_m = 0, u_th = 0;
+        if (m_flux_normal_axis == 0) {
+            u_m = m_ux_m;
+            u_th = m_ux_th;
+        } else if (m_flux_normal_axis == 1) {
+            u_m = m_uy_m;
+            u_th = m_uy_th;
+        } else if (m_flux_normal_axis == 2) {
+            u_m = m_uz_m;
+            u_th = m_uz_th;
+        }
+        amrex::Real u = generateGaussianFluxDist(u_m, u_th, engine);
+        if (m_flux_direction < 0) u = -u;
 
         // Note: Here, in RZ geometry, the variables `ux` and `uy` actually
         // correspond to the radial and azimuthal component of the momentum
         // (and e.g.`m_flux_normal_axis==1` corresponds to v*Gaussian along theta)
-        amrex::Real const ux = (m_flux_normal_axis == 0 ? m_ux_th*ur : amrex::RandomNormal(m_ux_m, m_ux_th, engine));
-        amrex::Real const uy = (m_flux_normal_axis == 1 ? m_uy_th*ur : amrex::RandomNormal(m_uy_m, m_uy_th, engine));
-        amrex::Real const uz = (m_flux_normal_axis == 2 ? m_uz_th*ur : amrex::RandomNormal(m_uz_m, m_uz_th, engine));
+        amrex::Real const ux = (m_flux_normal_axis == 0 ? u : amrex::RandomNormal(m_ux_m, m_ux_th, engine));
+        amrex::Real const uy = (m_flux_normal_axis == 1 ? u : amrex::RandomNormal(m_uy_m, m_uy_th, engine));
+        amrex::Real const uz = (m_flux_normal_axis == 2 ? u : amrex::RandomNormal(m_uz_m, m_uz_th, engine));
         return amrex::XDim3{ux, uy, uz};
     }
 

@@ -47,6 +47,7 @@ public:
     BackTransformFunctor ( const amrex::MultiFab * const mf_src, const int lev,
                            const int ncomp, const int num_buffers,
                            amrex::Vector< std::string > varnames,
+                           amrex::Vector< std::string > varnames_fields,
                            const amrex::IntVect crse_ratio= amrex::IntVect(1));
 
     /** \brief Lorentz-transform mf_src for the ith buffer and write the result in mf_dst.
@@ -118,6 +119,8 @@ private:
     amrex::Vector<int> m_k_index_zlab;
     /** Vector of user-defined field names to be stored in the output multifab */
     amrex::Vector< std::string > m_varnames;
+    /** Vector of user-defined field names without modifications for rz modes */
+    amrex::Vector< std::string > m_varnames_fields;
 
     /** max grid size used to generate BoxArray to define output MultiFabs */
     int m_max_box_size = 256;
