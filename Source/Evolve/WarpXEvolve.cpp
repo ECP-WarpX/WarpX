@@ -548,7 +548,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
 
     // 3) Deposit rho (in rho_new, since it will be moved during the loop)
-    if (WarpX::update_with_rho)
+    //    (after checking that pointer to rho_fp on MR level 0 is not null)
+    if (rho_fp[0])
     {
         // Deposit rho at relative time -dt
         // (dt[0] denotes the time step on mesh refinement level 0)
@@ -612,7 +613,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         PSATDForwardTransformJ(current_fp, current_cp);
 
         // Deposit new rho
-        if (WarpX::update_with_rho)
+        // (after checking that pointer to rho_fp on MR level 0 is not null)
+        if (rho_fp[0])
         {
             // Move rho deposited previously, from new to old
             PSATDMoveRhoNewToRhoOld();
