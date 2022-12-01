@@ -135,6 +135,7 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
             constexpr amrex::Real c2 = c*c;
+            constexpr amrex::Real inv_c = 1._rt/c;
             constexpr amrex::Real mu0 = PhysConst::mu0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
@@ -184,9 +185,9 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
                 C10 = (div_cleaning) ? 0._rt : mu0*c*kx*ky*(knorm*S-dt*c*knorm2)*inv_knorm4;
                 C11 = (div_cleaning) ? 0._rt : mu0*c*kx*kz*(knorm*S-dt*c*knorm2)*inv_knorm4;
                 C12 = 0._rt; // This is not redundant, do not remove this
-                if (J_linear) C12 = (div_cleaning) ? mu0*(C-1._rt)*inv_knorm2 : mu0*(2._rt*ky2*(C-1._rt)+2._rt*kz2*(C-1._rt)-dt2*c2*kx2*knorm2)*inv_knorm4/2._rt;
-                C13 = (J_linear && !div_cleaning) ? mu0*kx*ky*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4/2._rt : 0._rt;
-                C14 = (J_linear && !div_cleaning) ? mu0*kx*kz*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4/2._rt : 0._rt;
+                if (J_linear) C12 = (div_cleaning) ? mu0*(C-1._rt)*inv_knorm2 : mu0*(2._rt*ky2*(C-1._rt)+2._rt*kz2*(C-1._rt)-dt2*c2*kx2*knorm2)*inv_knorm4*0.5_rt;
+                C13 = (J_linear && !div_cleaning) ? mu0*kx*ky*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4*0.5_rt : 0._rt;
+                C14 = (J_linear && !div_cleaning) ? mu0*kx*kz*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4*0.5_rt : 0._rt;
                 C15 = (div_cleaning) ? I*mu0*c2*kx*(C-1._rt)*inv_knorm2 : 0._rt;
                 C16 = (div_cleaning && rho_linear) ? I*mu0*c*kx*(knorm*S-dt*c*knorm2)*inv_knorm4 : 0._rt;
 
@@ -209,10 +210,10 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
                 C09 = (div_cleaning) ? 0._rt : mu0*c*kx*ky*(knorm*S-dt*c*knorm2)*inv_knorm4;
                 C10 = (div_cleaning) ? -mu0*c*S*inv_knorm : -mu0*c*(dt*c*ky2*knorm2+kx2*knorm*S+kz2*knorm*S)*inv_knorm4;
                 C11 = (div_cleaning) ? 0._rt : mu0*c*ky*kz*(knorm*S-dt*c*knorm2)*inv_knorm4;
-                C12 = (J_linear && !div_cleaning) ? mu0*kx*ky*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4/2._rt : 0._rt;
+                C12 = (J_linear && !div_cleaning) ? mu0*kx*ky*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4*0.5_rt : 0._rt;
                 C13 = 0._rt; // This is not redundant, do not remove this
-                if (J_linear) C13 = (div_cleaning) ? mu0*(C-1._rt)*inv_knorm2 : mu0*(2._rt*kx2*(C-1._rt)+2._rt*kz2*(C-1._rt)-dt2*c2*ky2*knorm2)*inv_knorm4/2._rt;
-                C14 = (J_linear && !div_cleaning) ? mu0*ky*kz*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4/2._rt : 0._rt;
+                if (J_linear) C13 = (div_cleaning) ? mu0*(C-1._rt)*inv_knorm2 : mu0*(2._rt*kx2*(C-1._rt)+2._rt*kz2*(C-1._rt)-dt2*c2*ky2*knorm2)*inv_knorm4*0.5_rt;
+                C14 = (J_linear && !div_cleaning) ? mu0*ky*kz*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4*0.5_rt : 0._rt;
                 C15 = (div_cleaning) ? I*mu0*c2*ky*(C-1._rt)*inv_knorm2 : 0._rt;
                 C16 = (div_cleaning && rho_linear) ? I*mu0*c*ky*(knorm*S-dt*c*knorm2)*inv_knorm4 : 0._rt;
 
@@ -235,10 +236,10 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
                 C09 = (div_cleaning) ? 0._rt : mu0*c*kx*kz*(knorm*S-dt*c*knorm2)*inv_knorm4;
                 C10 = (div_cleaning) ? 0._rt : mu0*c*ky*kz*(knorm*S-dt*c*knorm2)*inv_knorm4;
                 C11 = (div_cleaning) ? -mu0*c*S*inv_knorm : -mu0*c*(dt*c*kz2*knorm2+kx2*knorm*S+ky2*knorm*S)*inv_knorm4;
-                C12 = (J_linear && !div_cleaning) ? mu0*kx*kz*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4/2._rt : 0._rt;
-                C13 = (J_linear && !div_cleaning) ? mu0*ky*kz*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4/2._rt : 0._rt;
+                C12 = (J_linear && !div_cleaning) ? mu0*kx*kz*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4*0.5_rt : 0._rt;
+                C13 = (J_linear && !div_cleaning) ? mu0*ky*kz*(2._rt*(1._rt-C)-dt2*c2*knorm2)*inv_knorm4*0.5_rt : 0._rt;
                 C14 = 0._rt; // This is not redundant, do not remove this
-                if (J_linear) C14 = (div_cleaning) ? mu0*(C-1._rt)*inv_knorm2 : mu0*(2._rt*kx2*(C-1._rt)+2._rt*ky2*(C-1._rt)-dt2*c2*kz2*knorm2)*inv_knorm4/2._rt;
+                if (J_linear) C14 = (div_cleaning) ? mu0*(C-1._rt)*inv_knorm2 : mu0*(2._rt*kx2*(C-1._rt)+2._rt*ky2*(C-1._rt)-dt2*c2*kz2*knorm2)*inv_knorm4*0.5_rt;
                 C15 = (div_cleaning) ? I*mu0*c2*kz*(C-1._rt)*inv_knorm2 : 0._rt;
                 C16 = (div_cleaning && rho_linear) ? I*mu0*c*kz*(knorm*S-dt*c*knorm2)*inv_knorm4 : 0._rt;
 
@@ -252,18 +253,18 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
 
                 // Bx
                 C01 = 0._rt;
-                C02 = I*kz*S*inv_knorm/c;
-                C03 = -I*ky*S*inv_knorm/c;
+                C02 = I*kz*S*inv_knorm*inv_c;
+                C03 = -I*ky*S*inv_knorm*inv_c;
                 C04 = (div_cleaning) ? C : (kx2+ky2*C+kz2*C)*inv_knorm2;
                 C05 = (div_cleaning) ? 0._rt : kx*ky*(1._rt-C)*inv_knorm2;
                 C06 = (div_cleaning) ? 0._rt : kx*kz*(1._rt-C)*inv_knorm2;
-                C08 = (div_cleaning) ? I*kx*S*inv_knorm/c : 0._rt;
+                C08 = (div_cleaning) ? I*kx*S*inv_knorm*inv_c : 0._rt;
                 C09 = 0._rt;
                 C10 = I*mu0*kz*(C-1._rt)*inv_knorm2;
                 C11 = -I*mu0*ky*(C-1._rt)*inv_knorm2;
                 C12 = 0._rt;
-                C13 = (J_linear) ? I*mu0*kz*(knorm*S-dt*c*knorm2)*inv_knorm4/c : 0._rt;
-                C14 = (J_linear) ? -I*mu0*ky*(knorm*S-dt*c*knorm2)*inv_knorm4/c : 0._rt;
+                C13 = (J_linear) ? I*mu0*kz*(knorm*S-dt*c*knorm2)*inv_knorm4*inv_c : 0._rt;
+                C14 = (J_linear) ? -I*mu0*ky*(knorm*S-dt*c*knorm2)*inv_knorm4*inv_c : 0._rt;
 
                 fields(i,j,k,Idx.Bx) = C01*Ex_old + C02*Ey_old + C03*Ez_old
                                      + C04*Bx_old + C05*By_old + C06*Bz_old
@@ -272,19 +273,19 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
                                      + C12*Jx_c1 + C13*Jy_c1 + C14*Jz_c1; // only with J linear in time
 
                 // By
-                C01 = -I*kz*S*inv_knorm/c;
+                C01 = -I*kz*S*inv_knorm*inv_c;
                 C02 = 0._rt;
-                C03 = I*kx*S*inv_knorm/c;
+                C03 = I*kx*S*inv_knorm*inv_c;
                 C04 = (div_cleaning) ? 0._rt : kx*ky*(1._rt-C)*inv_knorm2;
                 C05 = (div_cleaning) ? C : (kx2*C+ky2+kz2*C)*inv_knorm2;
                 C06 = (div_cleaning) ? 0._rt : ky*kz*(1._rt-C)*inv_knorm2;
-                C08 = (div_cleaning) ? I*ky*S*inv_knorm/c : 0._rt;
+                C08 = (div_cleaning) ? I*ky*S*inv_knorm*inv_c : 0._rt;
                 C09 = -I*mu0*kz*(C-1._rt)*inv_knorm2;
                 C10 = 0._rt;
                 C11 = I*mu0*kx*(C-1._rt)*inv_knorm2;
-                C12 = (J_linear) ? -I*mu0*kz*(knorm*S-dt*c*knorm2)*inv_knorm4/c : 0._rt;
+                C12 = (J_linear) ? -I*mu0*kz*(knorm*S-dt*c*knorm2)*inv_knorm4*inv_c : 0._rt;
                 C13 = 0._rt;
-                C14 = (J_linear) ? I*mu0*kx*(knorm*S-dt*c*knorm2)*inv_knorm4/c : 0._rt;
+                C14 = (J_linear) ? I*mu0*kx*(knorm*S-dt*c*knorm2)*inv_knorm4*inv_c : 0._rt;
 
                 fields(i,j,k,Idx.By) = C01*Ex_old + C02*Ey_old + C03*Ez_old
                                      + C04*Bx_old + C05*By_old + C06*Bz_old
@@ -293,18 +294,18 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
                                      + C12*Jx_c1 + C13*Jy_c1 + C14*Jz_c1; // only with J linear in time
 
                 // Bz
-                C01 = I*ky*S*inv_knorm/c;
-                C02 = -I*kx*S*inv_knorm/c;
+                C01 = I*ky*S*inv_knorm*inv_c;
+                C02 = -I*kx*S*inv_knorm*inv_c;
                 C03 = 0._rt;
                 C04 = (div_cleaning) ? 0._rt : kx*kz*(1._rt-C)*inv_knorm2;
                 C05 = (div_cleaning) ? 0._rt : ky*kz*(1._rt-C)*inv_knorm2;
                 C06 = (div_cleaning) ? C : (kx2*C+ky2*C+kz2)*inv_knorm2;
-                C08 = (div_cleaning) ? I*kz*S*inv_knorm/c : 0._rt;
+                C08 = (div_cleaning) ? I*kz*S*inv_knorm*inv_c : 0._rt;
                 C09 = I*mu0*ky*(C-1._rt)*inv_knorm2;
                 C10 = -I*mu0*kx*(C-1._rt)*inv_knorm2;
                 C11 = 0._rt;
-                C12 = (J_linear) ? I*mu0*ky*(knorm*S-dt*c*knorm2)*inv_knorm4/c : 0._rt;
-                C13 = (J_linear) ? -I*mu0*kx*(knorm*S-dt*c*knorm2)*inv_knorm4/c : 0._rt;
+                C12 = (J_linear) ? I*mu0*ky*(knorm*S-dt*c*knorm2)*inv_knorm4*inv_c : 0._rt;
+                C13 = (J_linear) ? -I*mu0*kx*(knorm*S-dt*c*knorm2)*inv_knorm4*inv_c : 0._rt;
                 C14 = 0._rt;
 
                 fields(i,j,k,Idx.Bz) = C01*Ex_old + C02*Ey_old + C03*Ez_old
@@ -316,16 +317,16 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
                 if (div_cleaning)
                 {
                     // F
-                    C01 = I*kx*S*inv_knorm/c;
-                    C02 = I*ky*S*inv_knorm/c;
-                    C03 = I*kz*S*inv_knorm/c;
+                    C01 = I*kx*S*inv_knorm*inv_c;
+                    C02 = I*ky*S*inv_knorm*inv_c;
+                    C03 = I*kz*S*inv_knorm*inv_c;
                     C07 = C;
                     C09 = I*mu0*kx*(C-1._rt)*inv_knorm2;
                     C10 = I*mu0*ky*(C-1._rt)*inv_knorm2;
                     C11 = I*mu0*kz*(C-1._rt)*inv_knorm2;
-                    C12 = (J_linear) ? I*mu0*kx*(knorm*S-dt*c*knorm2)*inv_knorm4/c : 0._rt;
-                    C13 = (J_linear) ? I*mu0*ky*(knorm*S-dt*c*knorm2)*inv_knorm4/c : 0._rt;
-                    C14 = (J_linear) ? I*mu0*kz*(knorm*S-dt*c*knorm2)*inv_knorm4/c : 0._rt;
+                    C12 = (J_linear) ? I*mu0*kx*(knorm*S-dt*c*knorm2)*inv_knorm4*inv_c : 0._rt;
+                    C13 = (J_linear) ? I*mu0*ky*(knorm*S-dt*c*knorm2)*inv_knorm4*inv_c : 0._rt;
+                    C14 = (J_linear) ? I*mu0*kz*(knorm*S-dt*c*knorm2)*inv_knorm4*inv_c : 0._rt;
                     C15 = -mu0*c*S*inv_knorm;
                     C16 = (rho_linear) ? mu0*(C-1._rt)*inv_knorm2 : 0._rt;
 
