@@ -15,7 +15,6 @@ boundary.field_lo = periodic periodic periodic
 # diag1
 diag1.diag_type = Full
 diag1.intervals = 300
-diag1.fields_to_plot = Bx By Bz divE Ex Ey Ez F G jx jy jz rho
 
 # diagnostics
 diagnostics.diags_names = diag1
@@ -73,16 +72,9 @@ particles.species_names = electrons ions
 psatd.nox = 8
 psatd.noy = 8
 psatd.noz = 8
-psatd.solution_type = first-order
-psatd.J_in_time = constant
-psatd.rho_in_time = constant
 
 # warpx
 warpx.cfl = 1.
-warpx.do_dive_cleaning = 1
-warpx.do_divb_cleaning = 1
-warpx.do_multi_J = 1
-warpx.do_multi_J_n_depositions = 1
 warpx.do_nodal = 1
 warpx.numprocs = 1 1 2
 warpx.use_filter = 1
