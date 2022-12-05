@@ -249,9 +249,9 @@ jobs:
       git clone https://github.com/spack/spack.git
       . spack/share/spack/setup-env.sh
       spack compiler find
-      spack install -v --fail-fast py-warpx %gcc@9.4.0
-      spack install -v --fail-fast py-warpx %gcc@9.4.0 ^warpx dims=2
-      spack install -v --fail-fast py-warpx %gcc@9.4.0 ^warpx dims=rz
+      spack install -v --fail-fast py-warpx %gcc@9.5.0
+      spack install -v --fail-fast py-warpx %gcc@9.5.0 ^warpx dims=2
+      spack install -v --fail-fast py-warpx %gcc@9.5.0 ^warpx dims=rz
 
       spack load py-warpx ^warpx dims=rz
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
@@ -272,11 +272,11 @@ jobs:
       . spack/share/spack/setup-env.sh
       spack compiler find
 
-      spack install -v --fail-fast py-warpx %gcc@9.4.0 ^warpx compute=cuda dims=rz
+      spack install -v --fail-fast py-warpx %gcc@9.5.0 ^warpx compute=cuda dims=rz
       spack load py-warpx ^warpx compute=cuda dims=rz
 
-#      spack install -v --fail-fast py-warpx %gcc@9.4.0 ^warpx compute=cuda
-#      spack install -v --fail-fast py-warpx %gcc@9.4.0 ^warpx compute=cuda dims=2
+#      spack install -v --fail-fast py-warpx %gcc@9.5.0 ^warpx compute=cuda
+#      spack install -v --fail-fast py-warpx %gcc@9.5.0 ^warpx compute=cuda dims=2
 
 - job: linux_spack_nompi
   displayName: Ubuntu spack w/o MPI
@@ -285,6 +285,8 @@ jobs:
     vmImage: ubuntu-latest
   steps:
   - script: |
+      sudo apt-get update
+      sudo apt-get install -y gfortran
       export SYSTEM=$(uname -s)
       git clone https://github.com/spack/spack.git
       . spack/share/spack/setup-env.sh
