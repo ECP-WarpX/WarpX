@@ -90,8 +90,8 @@ Add a test to the suite
 
 There are three steps to follow to add a new automated test (illustrated here for PML boundary conditions):
 
-* An input file for your test, in folder `Example/Tests/...`. For the PML test, the input file is at ``Examples/Tests/PML/inputs_2d``. You can also re-use an existing input file (even better!) and pass specific parameters at runtime (see below).
-* A Python script that reads simulation output and tests correctness versus theory or calibrated results. For the PML test, see ``Examples/Tests/PML/analysis_pml_yee.py``. It typically ends with Python statement ``assert( error<0.01 )``.
+* An input file for your test, in folder `Example/Tests/...`. For the PML test, the input file is at ``Examples/Tests/pml/inputs_2d``. You can also re-use an existing input file (even better!) and pass specific parameters at runtime (see below).
+* A Python script that reads simulation output and tests correctness versus theory or calibrated results. For the PML test, see ``Examples/Tests/pml/analysis_pml_yee.py``. It typically ends with Python statement ``assert( error<0.01 )``.
 * If you need a new Python package dependency for testing, add it in ``Regression/requirements.txt``
 * Add an entry to ``Regression/WarpX-tests.ini``, so that a WarpX simulation runs your test in the continuous integration process, and the Python script is executed to assess the correctness. For the PML test, the entry is
 
@@ -99,7 +99,7 @@ There are three steps to follow to add a new automated test (illustrated here fo
 
    [pml_x_yee]
    buildDir = .
-   inputFile = Examples/Tests/PML/inputs2d
+   inputFile = Examples/Tests/pml/inputs2d
    runtime_params = warpx.do_dynamic_scheduling=0 algo.maxwell_solver=yee
    dim = 2
    addToCompileString =
@@ -111,7 +111,7 @@ There are three steps to follow to add a new automated test (illustrated here fo
    numthreads = 1
    compileTest = 0
    doVis = 0
-   analysisRoutine = Examples/Tests/PML/analysis_pml_yee.py
+   analysisRoutine = Examples/Tests/pml/analysis_pml_yee.py
 
 If you re-use an existing input file, you can add arguments to ``runtime_params``, like ``runtime_params = amr.max_level=1 amr.n_cell=32 512 max_step=100 plasma_e.zmin=-200.e-6``.
 
