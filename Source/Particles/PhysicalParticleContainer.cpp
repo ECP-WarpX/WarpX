@@ -1019,8 +1019,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             amrex::ignore_unused(j,k);
 #endif
         });
-        // Need synchronize since we have tmp xlim, ylim, zlim arrays
-        amrex::Gpu::synchronize();
 
         // Max number of new particles. All of them are created,
         // and invalid ones are then discarded
