@@ -167,7 +167,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
         for (int adim=0; adim<3; adim++) {
             // Solve the Poisson equation
             // This is solving the self fields using the magnetostatic solver in the lab frame
-        
+
             // Note: this assumes that beta is zero
             linop[adim]->setSigma({AMREX_D_DECL(1._rt, 1._rt, 1._rt)});
 
@@ -209,7 +209,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
                 // Copy from A[lev] to A_cp (in parallel)
                 const amrex::IntVect& ng = amrex::IntVect::TheUnitVector();
                 const amrex::Periodicity& crse_period = geom[lev].periodicity();
-                
+
                 ablastr::utils::communication::ParallelCopy(
                     A_cp,
                     *A[lev][adim],

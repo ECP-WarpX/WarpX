@@ -15,8 +15,8 @@
 namespace MagnetostaticSolver {
 
     /** Boundary Handler for the Vector Potential Poisson Solver
-     * This only will handle homogeneous Dirichlet boundary conditions on 
-     * embedded boundaries, and homogeneous dirichlet/Neumann or periodic boundary conditions 
+     * This only will handle homogeneous Dirichlet boundary conditions on
+     * embedded boundaries, and homogeneous dirichlet/Neumann or periodic boundary conditions
      */
     class VectorPoissonBoundaryHandler {
     public:
@@ -50,9 +50,9 @@ namespace MagnetostaticSolver {
                                            const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& A,
                                            const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& A_old,
                                            const amrex::Real dt)
-                : m_e_field(e_field), 
-                  m_b_field(b_field), 
-                  m_grad_buf_e_stag(grad_buf_e_stag), 
+                : m_e_field(e_field),
+                  m_b_field(b_field),
+                  m_grad_buf_e_stag(grad_buf_e_stag),
                   m_grad_buf_b_stag(grad_buf_b_stag),
                   m_A(A),
                   m_A_old(A_old),

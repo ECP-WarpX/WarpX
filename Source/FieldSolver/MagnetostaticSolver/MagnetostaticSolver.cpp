@@ -105,7 +105,7 @@ WarpX::AddCurrentDensityFieldLabFrame()
             species.DepositCurrent(current_fp_nodal, dt[0], 0.);
         }
     }
- 
+
     // This will interpolate to staggered grid, filter, and synchronize
     SyncCurrent(current_fp, current_cp); // Apply filter, perform MPI exchange, interpolate across levels
 
@@ -177,7 +177,7 @@ WarpX::AddCurrentDensityFieldLabFrame()
     // Compute the potential phi, by solving the Poisson equation
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallBackInstalled("poissonsolver"),
         "Python Level Poisson Solve not supported for Magnetostatic implementation.");
-        
+
     computeVectorPotential( current_fp_nodal, vector_potential_fp_nodal, self_fields_required_precision,
                      self_fields_absolute_tolerance, self_fields_max_iters,
                      self_fields_verbosity );
@@ -222,12 +222,12 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
 
 #if defined(AMREX_USE_EB)
     std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation({Efield_fp,
-                                                                                               Bfield_fp, 
+                                                                                               Bfield_fp,
                                                                                                vector_potential_grad_buf_e_stag,
                                                                                                vector_potential_grad_buf_b_stag,
                                                                                                vector_potential_fp_nodal,
                                                                                                vector_potential_old_fp_nodal,
-                                                                                               dt[0]}); 
+                                                                                               dt[0]});
 
     amrex::Vector<amrex::EBFArrayBoxFactory const *> factories;
     for (int lev = 0; lev <= finest_level; ++lev) {
@@ -475,7 +475,7 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doEfieldCalc(const
             {
                 // Calculate E-field contribution (-1/c dA/dt)
                 Efield_arr(j,k,l) -= (A_arr(j,k,l)-A_old_arr(j,k,l))*cdti;
-                
+
                 // Update old buffer
                 A_old_arr(j,k,l) = A_arr(j,k,l);
             });
@@ -487,10 +487,10 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
 {
     using namespace amrex::literals;
 
-    // This operator gets the gradient solution on the cell edges, aligned with E field staggered grid 
-    // This routine interpolates to the B-field staggered grid, 
+    // This operator gets the gradient solution on the cell edges, aligned with E field staggered grid
+    // This routine interpolates to the B-field staggered grid,
 
-    amrex::Array<amrex::MultiFab*, AMREX_SPACEDIM> buf_ptr = 
+    amrex::Array<amrex::MultiFab*, AMREX_SPACEDIM> buf_ptr =
     {
 #if defined(WARPX_DIM_3D)
         m_grad_buf_e_stag[lev][0].get(),
