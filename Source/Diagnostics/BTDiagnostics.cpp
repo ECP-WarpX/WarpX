@@ -135,7 +135,7 @@ void BTDiagnostics::DerivedInitData ()
     const amrex::Real dz_snapshot_grid = dz_lab(dt_boosted_frame, ref_ratio);
     // Need enough buffers so the snapshot length is longer than the lab frame length
     // num_buffers * m_buffer_size * dz_snapshot_grid >= Lz
-    const int num_buffers = ceil(Lz_lab / m_buffer_size / dz_snapshot_grid);
+    const int num_buffers = static_cast<int>(std::ceil(Lz_lab / m_buffer_size / dz_snapshot_grid));
     const int final_snapshot_iteration = m_intervals.GetFinalIteration();
 
     // the final snapshot starts filling when the
@@ -156,7 +156,7 @@ void BTDiagnostics::DerivedInitData ()
     // if j = final snapshot starting step, then we want to solve
     // j dt_boosted_frame >= t_intersect_boost = i * dt_snapshot / gamma / (1+beta)
     // j >= i / gamma / (1+beta) * dt_snapshot / dt_boosted_frame
-    const int final_snapshot_starting_step = ceil(final_snapshot_iteration / warpx.gamma_boost / (1._rt+warpx.beta_boost) * m_dt_snapshots_lab / dt_boosted_frame);
+    const int final_snapshot_starting_step = static_cast<int>(std::ceil(final_snapshot_iteration / warpx.gamma_boost / (1._rt+warpx.beta_boost) * m_dt_snapshots_lab / dt_boosted_frame));
     const int final_snapshot_fill_iteration = final_snapshot_starting_step + num_buffers * m_buffer_size - 1;
     if (final_snapshot_fill_iteration > warpx.maxStep()) {
         std::string warn_string =
@@ -198,7 +198,6 @@ BTDiagnostics::ReadParameters ()
         m_crse_ratio == amrex::IntVect(1),
         "Only support for coarsening ratio of 1 in all directions is included for BTD\n"
         );
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1, "Currently only one mode is supported for BTD");
     // Read list of back-transform diag parameters requested by the user //
     amrex::ParmParse pp_diag_name(m_diag_name);
 
@@ -481,8 +480,12 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     ba.coarsen(m_crse_ratio);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     int ngrow = 1;
+#ifdef WARPX_DIM_RZ
+    int ncomps = WarpX::ncomps * static_cast<int>(m_cellcenter_varnames.size());
+#else
     int ncomps = static_cast<int>(m_cellcenter_varnames.size());
-    m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap, ncomps, ngrow);
+#endif
+    WarpX::AllocInitMultiFab(m_cell_centered_data[lev], ba, dmap, ncomps, amrex::IntVect(ngrow), "cellcentered_BTD",0._rt);
 
 }
 
@@ -520,7 +523,7 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
         int nvars = static_cast<int>(m_varnames.size());
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
                   m_cell_centered_data[lev].get(), lev,
-                  nvars, m_num_buffers, m_varnames);
+                  nvars, m_num_buffers, m_varnames, m_varnames_fields);
     }
 
     // Define all cell-centered functors required to compute cell-centere data
@@ -632,7 +635,8 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
         int nvars = static_cast<int>(m_varnames.size());
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
                                        m_cell_centered_data[lev].get(), lev,
-                                       nvars, m_num_buffers, m_varnames);
+                                       nvars, m_num_buffers, m_varnames,
+                                       m_varnames_fields);
     }
 
     // Reset field functors for cell-center multifab

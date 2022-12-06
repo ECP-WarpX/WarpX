@@ -127,8 +127,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 #endif
 
     auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
-    int do_copy = (WarpX::do_back_transformed_diagnostics &&
-                   do_back_transformed_diagnostics && a_dt_type!=DtType::SecondHalf);
+    int do_copy = (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf) );
 
     const auto GetPosition = GetParticlePosition(pti, offset);
     auto SetPosition = SetParticlePosition(pti, offset);

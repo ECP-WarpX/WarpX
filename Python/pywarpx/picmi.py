@@ -321,19 +321,30 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
             species.uz = self.centroid_velocity[2]/constants.c
 
 
-class UniformDistribution(picmistandard.PICMI_UniformDistribution):
-    def initialize_inputs(self, species_number, layout, species, density_scale):
+class DensityDistributionBase(object):
+    """This is a base class for several predefined density distributions. It
+    captures universal initialization logic."""
 
+    def set_mangle_dict(self):
+        if not hasattr(self, 'mangle_dict'):
+            self.mangle_dict = None
+
+        if hasattr(self, "user_defined_kw") and self.mangle_dict is None:
+            # Only do this once so that the same variables can be used multiple
+            # times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
+    def set_species_attributes(self, species, layout):
         if isinstance(layout, GriddedLayout):
             # --- Note that the grid attribute of GriddedLayout is ignored
             species.injection_style = "nuniformpercell"
             species.num_particles_per_cell_each_dim = layout.n_macroparticle_per_cell
         elif isinstance(layout, PseudoRandomLayout):
-            assert (layout.n_macroparticles_per_cell is not None), Exception('WarpX only supports n_macroparticles_per_cell for the PseudoRandomLayout with UniformDistribution')
+            assert (layout.n_macroparticles_per_cell is not None), Exception('WarpX only supports n_macroparticles_per_cell for the PseudoRandomLayout with this distribution')
             species.injection_style = "nrandompercell"
             species.num_particles_per_cell = layout.n_macroparticles_per_cell
         else:
-            raise Exception('WarpX does not support the specified layout for UniformDistribution')
+            raise Exception('WarpX does not support the specified layout for this distribution')
 
         species.xmin = self.lower_bound[0]
         species.xmax = self.upper_bound[0]
@@ -341,70 +352,14 @@ class UniformDistribution(picmistandard.PICMI_UniformDistribution):
         species.ymax = self.upper_bound[1]
         species.zmin = self.lower_bound[2]
         species.zmax = self.upper_bound[2]
-
-        # --- Only constant density is supported at this time
-        species.profile = "constant"
-        species.density = self.density
-        if density_scale is not None:
-            species.density *= density_scale
-
-        # --- Note that WarpX takes gamma*beta as input
-        if np.any(np.not_equal(self.rms_velocity, 0.)):
-            species.momentum_distribution_type = "gaussian"
-            species.ux_m = self.directed_velocity[0]/constants.c
-            species.uy_m = self.directed_velocity[1]/constants.c
-            species.uz_m = self.directed_velocity[2]/constants.c
-            species.ux_th = self.rms_velocity[0]/constants.c
-            species.uy_th = self.rms_velocity[1]/constants.c
-            species.uz_th = self.rms_velocity[2]/constants.c
-        else:
-            species.momentum_distribution_type = "constant"
-            species.ux = self.directed_velocity[0]/constants.c
-            species.uy = self.directed_velocity[1]/constants.c
-            species.uz = self.directed_velocity[2]/constants.c
 
         if self.fill_in:
             species.do_continuous_injection = 1
 
-
-class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
-    def init(self, kw):
-        self.mangle_dict = None
-
-    def initialize_inputs(self, species_number, layout, species, density_scale):
-
-        if isinstance(layout, GriddedLayout):
-            # --- Note that the grid attribute of GriddedLayout is ignored
-            species.injection_style = "nuniformpercell"
-            species.num_particles_per_cell_each_dim = layout.n_macroparticle_per_cell
-        elif isinstance(layout, PseudoRandomLayout):
-            assert (layout.n_macroparticles_per_cell is not None), Exception('WarpX only supports n_macroparticles_per_cell for the PseudoRandomLayout with UniformDistribution')
-            species.injection_style = "nrandompercell"
-            species.num_particles_per_cell = layout.n_macroparticles_per_cell
-        else:
-            raise Exception('WarpX does not support the specified layout for UniformDistribution')
-
-        species.xmin = self.lower_bound[0]
-        species.xmax = self.upper_bound[0]
-        species.ymin = self.lower_bound[1]
-        species.ymax = self.upper_bound[1]
-        species.zmin = self.lower_bound[2]
-        species.zmax = self.upper_bound[2]
-
-        if self.mangle_dict is None:
-            # Only do this once so that the same variables are used in this distribution
-            # is used multiple times
-            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
-        expression = pywarpx.my_constants.mangle_expression(self.density_expression, self.mangle_dict)
-
-        species.profile = "parse_density_function"
-        if density_scale is None:
-            species.__setattr__('density_function(x,y,z)', expression)
-        else:
-            species.__setattr__('density_function(x,y,z)', "{}*({})".format(density_scale, expression))
-
         # --- Note that WarpX takes gamma*beta as input
-        if np.any(np.not_equal(self.momentum_expressions, None)):
+        if (hasattr(self, "momentum_expressions")
+            and np.any(np.not_equal(self.momentum_expressions, None))
+        ):
             species.momentum_distribution_type = 'parse_momentum_function'
             self.setup_parse_momentum_functions(species)
         elif np.any(np.not_equal(self.rms_velocity, 0.)):
@@ -421,9 +376,6 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
             species.uy = self.directed_velocity[1]/constants.c
             species.uz = self.directed_velocity[2]/constants.c
 
-        if self.fill_in:
-            species.do_continuous_injection = 1
-
     def setup_parse_momentum_functions(self, species):
         for sdir, idir in zip(['x', 'y', 'z'], [0, 1, 2]):
             if self.momentum_expressions[idir] is not None:
@@ -431,6 +383,56 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
             else:
                 expression = f'{self.directed_velocity[idir]}'
             species.__setattr__(f'momentum_function_u{sdir}(x,y,z)', f'({expression})/{constants.c}')
+
+
+class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, DensityDistributionBase):
+    def initialize_inputs(self, species_number, layout, species, density_scale):
+
+        self.fill_in = False
+        self.set_mangle_dict()
+        self.set_species_attributes(species, layout)
+
+        species.profile = "constant"
+        species.density = self.flux
+        if density_scale is not None:
+            species.density *= density_scale
+        species.flux_normal_axis = self.flux_normal_axis
+        species.surface_flux_pos = self.surface_flux_position
+        species.flux_direction = self.flux_direction
+
+        # --- Use specific attributes for flux injection
+        species.injection_style = "nfluxpercell"
+        assert (isinstance(layout, PseudoRandomLayout)), Exception('UniformFluxDistribution only supports the PseudoRandomLayout in WarpX')
+        if species.momentum_distribution_type == "gaussian":
+            species.momentum_distribution_type = "gaussianflux"
+
+
+class UniformDistribution(picmistandard.PICMI_UniformDistribution, DensityDistributionBase):
+    def initialize_inputs(self, species_number, layout, species, density_scale):
+
+        self.set_mangle_dict()
+        self.set_species_attributes(species, layout)
+
+        # --- Only constant density is supported by this class
+        species.profile = "constant"
+        species.density = self.density
+        if density_scale is not None:
+            species.density *= density_scale
+
+
+class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution, DensityDistributionBase):
+    def initialize_inputs(self, species_number, layout, species, density_scale):
+
+        self.set_mangle_dict()
+        self.set_species_attributes(species, layout)
+
+        species.profile = "parse_density_function"
+        expression = pywarpx.my_constants.mangle_expression(self.density_expression, self.mangle_dict)
+        if density_scale is None:
+            species.__setattr__('density_function(x,y,z)', expression)
+        else:
+            species.__setattr__('density_function(x,y,z)', "{}*({})".format(density_scale, expression))
+
 
 class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
     def init(self, kw):
@@ -1086,6 +1088,35 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
             ) / constants.c
 
 
+class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
+    def init(self, kw):
+        self.mangle_dict = None
+
+    def initialize_inputs(self):
+        # Note that lower and upper_bound are not used by WarpX
+
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
+        if (self.Ex_expression is not None or
+            self.Ey_expression is not None or
+            self.Ez_expression is not None):
+            pywarpx.warpx.E_ext_grid_init_style = 'parse_e_ext_grid_function'
+            for sdir, expression in zip(['x', 'y', 'z'], [self.Ex_expression, self.Ey_expression, self.Ez_expression]):
+                expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
+                pywarpx.warpx.__setattr__(f'E{sdir}_external_grid_function(x,y,z)', expression)
+
+        if (self.Bx_expression is not None or
+            self.By_expression is not None or
+            self.Bz_expression is not None):
+            pywarpx.warpx.B_ext_grid_init_style = 'parse_b_ext_grid_function'
+            for sdir, expression in zip(['x', 'y', 'z'], [self.Bx_expression, self.By_expression, self.Bz_expression]):
+                expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
+                pywarpx.warpx.__setattr__(f'B{sdir}_external_grid_function(x,y,z)', expression)
+
+
 class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField):
     def initialize_inputs(self):
         # Note that lower and upper_bound are not used by WarpX
@@ -1588,16 +1619,11 @@ class Simulation(picmistandard.PICMI_Simulation):
             return
 
         self.warpx_initialized = True
-        pywarpx.warpx.init(mpi_comm)
+        pywarpx.warpx.init(mpi_comm, max_step=self.max_steps, stop_time=self.max_time)
 
     def write_input_file(self, file_name='inputs'):
         self.initialize_inputs()
-        kw = {}
-        if self.max_steps is not None:
-            kw['max_step'] = self.max_steps
-        if self.max_time is not None:
-            kw['stop_time'] = self.max_time
-        pywarpx.warpx.write_inputs(file_name, **kw)
+        pywarpx.warpx.write_inputs(file_name, max_step=self.max_steps, stop_time=self.max_time)
 
     def step(self, nsteps=None, mpi_comm=None):
         self.initialize_inputs()
@@ -1930,9 +1956,6 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
 
     Parameters
     ----------
-    warpx_new_BTD: bool, optional
-        Use the new BTD diagnostics
-
     warpx_format: string, optional
         Passed to <diagnostic name>.format
 
@@ -1955,36 +1978,16 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         Passed to <diagnostic name>.upper_bound
     """
     def init(self, kw):
-        self.use_new_BTD = kw.pop('warpx_new_BTD', False)
-        if self.use_new_BTD:
-            # The user is using the new BTD
-            self.format = kw.pop('warpx_format', None)
-            self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
-            self.file_prefix = kw.pop('warpx_file_prefix', None)
-            self.file_min_digits = kw.pop('warpx_file_min_digits', None)
-            self.buffer_size = kw.pop('warpx_buffer_size', None)
-            self.lower_bound = kw.pop('warpx_lower_bound', None)
-            self.upper_bound = kw.pop('warpx_upper_bound', None)
+        # The user is using the new BTD
+        self.format = kw.pop('warpx_format', None)
+        self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.file_min_digits = kw.pop('warpx_file_min_digits', None)
+        self.buffer_size = kw.pop('warpx_buffer_size', None)
+        self.lower_bound = kw.pop('warpx_lower_bound', None)
+        self.upper_bound = kw.pop('warpx_upper_bound', None)
 
     def initialize_inputs(self):
-        if self.use_new_BTD:
-            self.initialize_inputs_new()
-        else:
-            self.initialize_inputs_old()
-
-    def initialize_inputs_old(self):
-
-        pywarpx.warpx.check_consistency('num_snapshots_lab', self.num_snapshots, 'The number of snapshots must be the same in all lab frame diagnostics')
-        pywarpx.warpx.check_consistency('dt_snapshots_lab', self.dt_snapshots, 'The time between snapshots must be the same in all lab frame diagnostics')
-        pywarpx.warpx.check_consistency('lab_data_directory', self.write_dir, 'The write directory must be the same in all lab frame diagnostics')
-
-        pywarpx.warpx.do_back_transformed_diagnostics = 1
-        pywarpx.warpx.num_snapshots_lab = self.num_snapshots
-        pywarpx.warpx.dt_snapshots_lab = self.dt_snapshots
-        pywarpx.warpx.do_back_transformed_fields = 1
-        pywarpx.warpx.lab_data_directory = self.write_dir
-
-    def initialize_inputs_new(self):
 
         self.add_diagnostic()
 
@@ -2032,30 +2035,6 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
             self.diagnostic.fields_to_plot = fields_to_plot
 
         self.set_write_dir()
-
-
-class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic):
-    def initialize_inputs(self):
-
-        pywarpx.warpx.check_consistency('num_snapshots_lab', self.num_snapshots, 'The number of snapshots must be the same in all lab frame diagnostics')
-        pywarpx.warpx.check_consistency('dt_snapshots_lab', self.dt_snapshots, 'The time between snapshots must be the same in all lab frame diagnostics')
-        pywarpx.warpx.check_consistency('lab_data_directory', self.write_dir, 'The write directory must be the same in all lab frame diagnostics')
-
-        pywarpx.warpx.do_back_transformed_diagnostics = 1
-
-        if isinstance(self.species, Species):
-            self.species.do_back_transformed_diagnostics = 1
-        else:
-            try:
-                for specie in self.species:
-                    specie.do_back_transformed_diagnostics = 1
-            except TypeError:
-                pass
-
-        pywarpx.warpx.num_snapshots_lab = self.num_snapshots
-        pywarpx.warpx.dt_snapshots_lab = self.dt_snapshots
-        pywarpx.warpx.lab_data_directory = self.write_dir
-
 
 class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     """
@@ -2139,8 +2118,8 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     def _handle_field_probe(self, **kw):
         """Utility function to grab required inputs for a field probe from kw"""
         self.probe_geometry = kw.pop("probe_geometry")
-        self.x_probe = kw.pop("x_probe")
-        self.y_probe = kw.pop("y_probe")
+        self.x_probe = kw.pop("x_probe", None)
+        self.y_probe = kw.pop("y_probe", None)
         self.z_probe = kw.pop("z_probe")
 
         self.interp_order = kw.pop("interp_order", None)
@@ -2151,20 +2130,20 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
             self.resolution = kw.pop("resolution")
 
         if self.probe_geometry.lower() == 'line':
-            self.x1_probe = kw.pop("x1_probe")
-            self.y1_probe = kw.pop("y1_probe")
+            self.x1_probe = kw.pop("x1_probe", None)
+            self.y1_probe = kw.pop("y1_probe", None)
             self.z1_probe = kw.pop("z1_probe")
 
         if self.probe_geometry.lower() == 'plane':
             self.detector_radius = kw.pop("detector_radius")
 
-            self.target_normal_x = kw.pop("target_normal_x")
-            self.target_normal_y = kw.pop("target_normal_y")
-            self.target_normal_z = kw.pop("target_normal_z")
+            self.target_normal_x = kw.pop("target_normal_x", None)
+            self.target_normal_y = kw.pop("target_normal_y", None)
+            self.target_normal_z = kw.pop("target_normal_z", None)
 
-            self.target_up_x = kw.pop("target_up_x")
-            self.target_up_y = kw.pop("target_up_y")
-            self.target_up_z = kw.pop("target_up_z")
+            self.target_up_x = kw.pop("target_up_x", None)
+            self.target_up_y = kw.pop("target_up_y", None)
+            self.target_up_z = kw.pop("target_up_z", None)
 
         return kw
 
