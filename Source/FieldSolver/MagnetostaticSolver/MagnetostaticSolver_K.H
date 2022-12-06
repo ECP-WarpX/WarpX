@@ -19,10 +19,7 @@
 #include <AMReX_MLLinOp.H>
 #include <AMReX_Vector.H>
 #include <AMReX_Array.H>
-#include <AMReX_MLNodeTensorLaplacian.H>
-#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
-#   include <AMReX_MLEBNodeFDLaplacian.H>
-#endif
+#include <AMReX_MLEBNodeFDLaplacian.H>
 #ifdef AMREX_USE_EB
 #   include <AMReX_EBFabFactory.H>
 #endif
@@ -150,13 +147,13 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
 #if defined(AMREX_USE_EB)
                 , {eb_farray_box_factory.value()[lev]}
 #endif
-        );
+            );
         amrex::MLEBNodeFDLaplacian linopy(
             {geom[lev]}, {grids[lev]}, {dmap[lev]}, info
 #if defined(AMREX_USE_EB)
                 , {eb_farray_box_factory.value()[lev]}
 #endif
-        );
+            );
         amrex::MLEBNodeFDLaplacian linopz(
             {geom[lev]}, {grids[lev]}, {dmap[lev]}, info
 #if defined(AMREX_USE_EB)
@@ -164,14 +161,13 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
 #endif
         );
 
-        amrex::Array<amrex::MLEBNodeFDLaplacian*,3> linop = {AMREX_D_DECL(&linopx,&linopy,&linopz)};
+        amrex::Array<amrex::MLEBNodeFDLaplacian*,3> linop = {&linopx,&linopy,&linopz};
         amrex::Array<std::unique_ptr<amrex::MLMG>,3> mlmg;
 
         for (int adim=0; adim<3; adim++) {
             // Solve the Poisson equation
             // This is solving the self fields using the magnetostatic solver in the lab frame
         
-
             // Note: this assumes that beta is zero
             linop[adim]->setSigma({AMREX_D_DECL(1._rt, 1._rt, 1._rt)});
 

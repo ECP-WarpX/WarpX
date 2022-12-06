@@ -105,14 +105,17 @@ WarpX::AddCurrentDensityFieldLabFrame()
             species.DepositCurrent(current_fp_nodal, dt[0], 0.);
         }
     }
-#ifdef WARPX_DIM_RZ
-    for (int lev = 0; lev <= max_level; lev++) {
-        ApplyInverseVolumeScalingToCurrentDensity(current_fp_nodal[lev].get(), lev);
-    }
-#endif
-    // NOTE: (SEC 11/11/22) Is this required?  
+ 
     // This will interpolate to staggered grid, filter, and synchronize
     SyncCurrent(current_fp, current_cp); // Apply filter, perform MPI exchange, interpolate across levels
+
+#ifdef WARPX_DIM_RZ
+    for (int lev = 0; lev <= max_level; lev++) {
+        ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(),
+                                                  current_fp[lev][1].get(),
+                                                  current_fp[lev][2].get(), lev);
+    }
+#endif
 
     // NOTE:  (SEC 12/2/22)
     // Interpolate fields back to nodal current
@@ -157,12 +160,13 @@ WarpX::AddCurrentDensityFieldLabFrame()
                 });
             }
 
-                // Synchronize the ghost cells, do halo exchange
-                ablastr::utils::communication::FillBoundary(*(current_fp_nodal[lev][idim]),
-                                                            current_fp_nodal[lev][idim]->nGrowVect(),
-                                                            WarpX::do_single_precision_comms,
-                                                            amrex::Periodicity::NonPeriodic(),
-                                                            true);
+            const amrex::Periodicity& curr_period = geom[lev].periodicity();
+            // Synchronize the ghost cells, do halo exchange
+            ablastr::utils::communication::FillBoundary(*(current_fp_nodal[lev][idim]),
+                                                        current_fp_nodal[lev][idim]->nGrowVect(),
+                                                        WarpX::do_single_precision_comms,
+                                                        curr_period,
+                                                        true);
 
         }
     }
@@ -345,6 +349,12 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
         }
 #endif
         for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
+            bool ndotA = (adim == idim);
+
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            if (idim == 1) ndotA = (adim == 2);
+#endif
+
             if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic
                 && WarpX::field_boundary_hi[idim] == FieldBoundaryType::Periodic ) {
                 lobc[adim][idim] = LinOpBCType::Periodic;
@@ -355,7 +365,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
             else {
                 has_non_periodic = true;
                 if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC ) {
-                    if (adim == idim) {
+                    if (ndotA) {
                         lobc[adim][idim] = LinOpBCType::Neumann;
                         dirichlet_flag[adim][idim*2] = false;
                     } else {
@@ -376,7 +386,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                 }
 
                 if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC ) {
-                    if (adim == idim) {
+                    if (ndotA) {
                         hibc[adim][idim] = LinOpBCType::Neumann;
                         dirichlet_flag[adim][idim*2+1] = false;
                     } else {
@@ -459,9 +469,7 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doEfieldCalc(const
 
             IntVect const stag = m_e_field[lev][adim]->ixType().toIntVect();
 
-            // Loop includes ghost cells (`growntilebox`)
-
-            Box bx = mfi.tilebox(stag, m_e_field[lev][adim]->nGrowVect());
+            Box bx = mfi.tilebox(stag);
 
             ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
@@ -482,9 +490,17 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
     // This operator gets the gradient solution on the cell edges, aligned with E field staggered grid 
     // This routine interpolates to the B-field staggered grid, 
 
-    amrex::Array<amrex::MultiFab*, 3> buf_ptr;
-    for (int idim=0; idim<3; idim++) 
-        buf_ptr[idim] = m_grad_buf_e_stag[lev][idim].get();
+    amrex::Array<amrex::MultiFab*, AMREX_SPACEDIM> buf_ptr = 
+    {
+#if defined(WARPX_DIM_3D)
+        m_grad_buf_e_stag[lev][0].get(),
+        m_grad_buf_e_stag[lev][1].get(),
+        m_grad_buf_e_stag[lev][2].get()
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        m_grad_buf_e_stag[lev][0].get(),
+        m_grad_buf_e_stag[lev][2].get()
+#endif
+    };
 
     // This will grab the gradient values for Ax
     mlmg[0]->getGradSolution({buf_ptr});

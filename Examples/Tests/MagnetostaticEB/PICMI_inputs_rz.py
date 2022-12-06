@@ -10,13 +10,13 @@ from pywarpx.Algo import algo
 
 GB = 1024**3
 
-warpx.add_new_attr("numprocs", [1,1,2])
+warpx.add_new_attr("numprocs", [1,1,1])
 warpx.add_new_attr("do_current_centering", 1)
 
 amrex.add_new_attr("the_arena_is_managed", 0)
 amrex.add_new_attr("the_arena_init_size", 40*GB)
-# amrex.add_new_attr("throw_exception", 0)
-# amrex.add_new_attr("signal_handling", 0)
+amrex.add_new_attr("throw_exception", 1)
+amrex.add_new_attr("signal_handling", 0)
 
 ##########################
 # physics parameters
@@ -54,20 +54,15 @@ zmax = 0.5
 # numerics components
 ##########################
 
-grid = picmi.Cartesian3DGrid(
-    number_of_cells = [nx, ny, nz],
-    lower_bound = [xmin, ymin, zmin],
-    upper_bound = [xmax, ymax, zmax],
-    lower_boundary_conditions = ['neumann', 'neumann', 'dirichlet'],
-    upper_boundary_conditions = ['neumann', 'neumann', 'neumann'],
-    lower_boundary_conditions_particles = ['absorbing', 'absorbing', 'absorbing'],
-    upper_boundary_conditions_particles = ['absorbing', 'absorbing', 'absorbing'],
-    # warpx_potential_lo_x = V_domain_boundary,
-    # warpx_potential_hi_x = V_domain_boundary,
-    # warpx_potential_lo_y = V_domain_boundary,
-    # warpx_potential_hi_y = V_domain_boundary,
+grid = picmi.CylindricalGrid(
+    number_of_cells = [nx, nz],
+    lower_bound = [0., zmin],
+    upper_bound = [xmax, zmax],
+    lower_boundary_conditions = ['none', 'dirichlet'],
+    upper_boundary_conditions = ['neumann', 'neumann'],
+    lower_boundary_conditions_particles = ['reflecting', 'absorbing'],
+    upper_boundary_conditions_particles = ['absorbing', 'absorbing'],
     warpx_potential_lo_z = V_domain_boundary,
-    # warpx_potential_hi_z = V_domain_boundary,
     warpx_blocking_factor=8,
     warpx_max_grid_size = 128
 )
