@@ -8,7 +8,7 @@ Monte Carlo Collisions
 
 The Monte Carlo collisions (MCC) module can be found in *Source/Particles/Collisions/BackgroundMCC/*.
 Several types of collisions between simulation particles and a neutral background gas are supported including elastic scattering, back scattering, charge exchange, excitation collisions and impact ionization.
-An instance of the class :cpp:class:`MCCProcess` is created for each type of collision included in a simulation. This class saves information about the type of collision and the collision cross-section as a function of energy.
+An instance of the class :cpp:class:`ScatteringProcess` is created for each type of collision included in a simulation. This class saves information about the type of collision and the collision cross-section as a function of energy.
 
 The so-called null collision strategy is used in order to minimize the computational burden of the MCC module.
 This strategy is standard in PIC-MCC and a detailed description can be found elsewhere, for example in :cite:t:`b-Birdsall1991`.
