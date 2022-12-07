@@ -41,5 +41,5 @@ in the  sub-folder ``qed_tools``. We report here the help message displayed by t
 
 These tools are meant to be compatible with WarpX: ``qed_table_generator`` should generate
 tables that can be loaded into WarpX and ``qed_table_reader`` should be able to read tables generated with WarpX.
-It is not safe to use these tools to generate a table on a machine using a different endianess with respect to
+It is not safe to use these tools to generate a table on a machine using a different endianness with respect to
 the machine where the table is used.
