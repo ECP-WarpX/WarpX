@@ -1000,10 +1000,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     for (const auto& x : xlim)
                         for (const auto& y : ylim)
                             for (const auto& z : zlim)
-                                if (inj_pos->insideBounds(x,y,z)) {
-                                    if (inj_rho->getDensity(x,y,z) > 0) return 1;
+                                if (inj_pos->insideBounds(x,y,z) and (inj_rho->getDensity(x,y,z) > 0) )
+                                    return 1;
+                                } else {
+                                    return 0;
                                 }
-                    return 0;
                 };
                 const int flag_pcount = checker();
                 if (flag_pcount == 1) {
