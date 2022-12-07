@@ -20,7 +20,7 @@ namespace ArgParser
     /* The type of a possible command line argument */
     using Key = std::tuple<std::string, ArgType, std::string>;
 
-    /* The type of the map of the parsed  command line arguments */
+    /* The type of the map of the parsed command line arguments */
     using ParsedArgs = std::unordered_map<std::string, ArgVal>;
 
     /**
