@@ -3,7 +3,9 @@
 import numpy as np
 import scipy.constants as con
 
-from pywarpx import picmi
+import matplotlib.pyplot as plt
+
+from pywarpx import picmi, fields
 from pywarpx.Amrex import amrex
 from pywarpx.WarpX import warpx
 from pywarpx.Algo import algo
@@ -30,7 +32,7 @@ V_embedded_boundary = 1.0
 # numerics parameters
 ##########################
 
-dt = 1e-11
+dt = 1e-12
 
 # --- Nb time steps
 
@@ -38,33 +40,32 @@ max_steps = 1
 
 # --- grid
 
-nx = 64
-ny = 64
-nz = 64
+nr = 128
+nz = 512
 
-xmin = -0.25
-xmax = 0.25
-ymin = -0.25
-ymax = 0.25
+rmin = 0.
+rmax = 0.25
+
 zmin = 0.
-zmax = 0.5
+zmax = 1
 
+r_pipe = 0.2
 
 ##########################
 # numerics components
 ##########################
 
 grid = picmi.CylindricalGrid(
-    number_of_cells = [nx, nz],
-    lower_bound = [0., zmin],
-    upper_bound = [xmax, zmax],
+    number_of_cells = [nr, nz],
+    lower_bound = [rmin, zmin],
+    upper_bound = [rmax, zmax],
     lower_boundary_conditions = ['none', 'dirichlet'],
     upper_boundary_conditions = ['neumann', 'neumann'],
     lower_boundary_conditions_particles = ['reflecting', 'absorbing'],
     upper_boundary_conditions_particles = ['absorbing', 'absorbing'],
     warpx_potential_lo_z = V_domain_boundary,
     warpx_blocking_factor=8,
-    warpx_max_grid_size = 128
+    warpx_max_grid_size = 512
 )
 
 solver = picmi.ElectrostaticSolver(
@@ -74,7 +75,7 @@ solver = picmi.ElectrostaticSolver(
 embedded_boundary = picmi.EmbeddedBoundary(
     implicit_function="(x**2+y**2-radius**2)",
     potential=V_embedded_boundary,
-    radius = 0.15
+    radius = r_pipe
 )
 
 
@@ -133,3 +134,88 @@ sim.add_diagnostic(field_diag)
 ##########################
 
 sim.step(max_steps)
+
+##########################
+# Testing
+##########################
+
+Er = fields.ExWrapper()
+r_vec = Er.mesh('r')
+z_vec = Er.mesh('z')
+
+@np.vectorize
+def Er_an(r):
+    if r < beam_r:
+        er = -current * r / (2.*np.pi*beam_r**2*con.epsilon_0*vz)
+    elif r >= beam_r and r < r_pipe:
+        er = -current / (2.*np.pi*r*con.epsilon_0*vz)
+    else:
+        er = np.zeros_like(r)
+    return er
+
+# compare to region from 0.5*zmax to 0.9*zmax
+z_idx = ((z_vec >= 0.5*zmax) & (z_vec < 0.9*zmax));
+z_sub = z_vec[z_idx]
+
+Er_dat = Er[...]
+
+r_idx = (r_vec < 0.9*r_pipe);
+r_sub = r_vec[r_idx]
+
+# Average Er along z_sub
+Er_mean = Er_dat[:,z_idx].mean(axis=1)
+
+plt.figure(1)
+plt.plot(r_vec, Er_an(r_vec))
+plt.plot(r_vec, Er_mean)
+plt.legend(['Analytical', 'Electrostatic'])
+
+er_err = np.abs(Er_mean[r_idx] - Er_an(r_sub)).max()/np.abs(Er_an(r_sub)).max()
+
+plt.title("Max % Error: {} %".format(er_err*100.))
+plt.savefig('er_rz.png')
+
+assert (er_err < 0.02), "Er Error increased above 2%"
+
+########################
+# Check B field
+########################
+
+Bth = fields.ByWrapper()
+
+r_vec = Bth.mesh('r')
+z_vec = Bth.mesh('z')
+
+@np.vectorize
+def Bth_an(r):
+    if r < beam_r:
+        bt = -current * r * con.mu_0 / (2.*np.pi*beam_r**2)
+    elif r >= beam_r and r < r_pipe:
+        bt = -current * con.mu_0 / (2.*np.pi*r)
+    else:
+        bt = np.zeros_like(r)
+    return bt
+
+# compare to region from 0.25*zmax to 0.75*zmax
+z_idx = ((z_vec >= 0.25*zmax) & (z_vec < 0.75*zmax));
+z_sub = z_vec[z_idx]
+
+Bth_dat = Bth[...]
+
+r_idx = (r_vec < 0.9*beam_r);
+r_sub = r_vec[r_idx]
+
+# Average Bth along z_idx
+Bth_mean = Bth_dat[:,z_idx].mean(axis=1)
+
+plt.figure(2)
+plt.plot(r_vec, Bth_an(r_vec))
+plt.plot(r_vec, Bth_mean)
+plt.legend(['Analytical', 'Magnetostatic'])
+
+bth_err = np.abs(Bth_mean[r_idx] - Bth_an(r_sub)).max()/np.abs(Bth_an(r_sub)).max()
+
+plt.title("Max % Error: {} %".format(bth_err*100.))
+plt.savefig('bth_rz.png')
+
+assert (bth_err < 0.02), "Bth Error increased above 2%"
