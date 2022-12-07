@@ -10,11 +10,11 @@ from pywarpx.Algo import algo
 
 GB = 1024**3
 
-warpx.add_new_attr("numprocs", [1,1,1])
+# warpx.add_new_attr("numprocs", [1,1,1])
 warpx.add_new_attr("do_current_centering", 1)
 
-amrex.add_new_attr("the_arena_is_managed", 0)
-amrex.add_new_attr("the_arena_init_size", 40*GB)
+# amrex.add_new_attr("the_arena_is_managed", 0)
+# amrex.add_new_attr("the_arena_init_size", 40*GB)
 # amrex.add_new_attr("throw_exception", 0)
 # amrex.add_new_attr("signal_handling", 0)
 
