@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as con
-import matplotlib.pyplot as plt
 
-from pywarpx import picmi, fields
+from pywarpx import fields, picmi
+from pywarpx.Algo import algo
 from pywarpx.Amrex import amrex
 from pywarpx.WarpX import warpx
-from pywarpx.Algo import algo
 
 GB = 1024**3
 
