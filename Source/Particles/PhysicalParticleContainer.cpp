@@ -1003,7 +1003,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                                 if (inj_pos->insideBounds(x,y,z) and (inj_rho->getDensity(x,y,z) > 0) ) {
                                     return 1;
                                 }
-                                return 0;
+                    return 0;
                 };
                 const int flag_pcount = checker();
                 if (flag_pcount == 1) {
