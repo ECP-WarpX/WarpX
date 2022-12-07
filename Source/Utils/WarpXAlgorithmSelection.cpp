@@ -63,6 +63,12 @@ const std::map<std::string, int> gathering_algo_to_int = {
     {"default",             GatheringAlgo::EnergyConserving }
 };
 
+const std::map<std::string, int> psatd_solution_type_to_int = {
+    {"first-order", PSATDSolutionType::FirstOrder},
+    {"second-order", PSATDSolutionType::SecondOrder},
+    {"default", PSATDSolutionType::SecondOrder}
+};
+
 const std::map<std::string, int> J_in_time_to_int = {
     {"constant", JInTime::Constant},
     {"linear", JInTime::Linear},
@@ -70,8 +76,8 @@ const std::map<std::string, int> J_in_time_to_int = {
 };
 
 const std::map<std::string, int> rho_in_time_to_int = {
+    {"constant", RhoInTime::Constant},
     {"linear", RhoInTime::Linear},
-    {"quadratic", RhoInTime::Quadratic},
     {"default", RhoInTime::Linear}
 };
 
@@ -145,6 +151,8 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = charge_deposition_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "field_gathering")) {
         algo_to_int = gathering_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "solution_type")) {
+        algo_to_int = psatd_solution_type_to_int;
     } else if (0 == std::strcmp(pp_search_key, "J_in_time")) {
         algo_to_int = J_in_time_to_int;
     } else if (0 == std::strcmp(pp_search_key, "rho_in_time")) {
