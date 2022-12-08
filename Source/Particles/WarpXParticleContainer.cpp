@@ -419,7 +419,6 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     Array4<Real> const& jx_arr = local_jx[thread_num].array();
     Array4<Real> const& jy_arr = local_jy[thread_num].array();
     Array4<Real> const& jz_arr = local_jz[thread_num].array();
-
 #endif
 
     const auto GetPosition = GetParticlePosition(pti, offset);
