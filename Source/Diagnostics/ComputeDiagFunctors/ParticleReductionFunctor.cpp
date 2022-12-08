@@ -4,8 +4,9 @@
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/CoarsenIO.H"
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_BLassert.H>
@@ -153,5 +154,5 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
     }
 
     // Coarsen and interpolate from ppc_mf to the output diagnostic MultiFab, mf_dst.
-    CoarsenIO::Coarsen(mf_dst, red_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
+    ablastr::coarsen::sample::Coarsen(mf_dst, red_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
 }
