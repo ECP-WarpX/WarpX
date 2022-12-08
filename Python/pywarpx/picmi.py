@@ -73,6 +73,9 @@ class Species(picmistandard.PICMI_Species):
         Whether or not to deposit the charge and current density for
         for this species
 
+    warpx_do_not_push: bool, default=False
+        Whether or not to push this species
+
     warpx_reflection_model_xlo: string, default='0.'
         Expression (in terms of the velocity "v") specifying the probability
         that the particle will reflect on the lower x boundary
@@ -170,6 +173,7 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
         self.save_previous_position = kw.pop('warpx_save_previous_position', None)
         self.do_not_deposit = kw.pop('warpx_do_not_deposit', None)
+        self.do_not_push = kw.pop('warpx_do_not_push', None)
 
         # For particle reflection
         self.reflection_model_xlo = kw.pop('warpx_reflection_model_xlo', None)
@@ -221,7 +225,8 @@ class Species(picmistandard.PICMI_Species):
                                              save_particles_at_zhi = self.save_particles_at_zhi,
                                              save_particles_at_eb = self.save_particles_at_eb,
                                              save_previous_position = self.save_previous_position,
-                                             do_not_deposit = self.do_not_deposit)
+                                             do_not_deposit = self.do_not_deposit,
+                                             do_not_push = self.do_not_push)
 
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
@@ -1719,6 +1724,9 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
     warpx_plot_raw_fields_guards: bool, optional
         Flag whether the raw fields should include the guard cells
 
+    warpx_write_species: bool, optional
+        Flag whether to output particle data with the diagnostic
+
     warpx_format: {plotfile, checkpoint, openpmd, ascent, sensei}, optional
         Diagnostic file format
 
@@ -1740,6 +1748,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.plot_raw_fields_guards = kw.pop('warpx_plot_raw_fields_guards', None)
         self.plot_finepatch = kw.pop('warpx_plot_finepatch', None)
         self.plot_crsepatch = kw.pop('warpx_plot_crsepatch', None)
+        self.write_species = kw.pop('warpx_write_species', None)
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
@@ -1810,6 +1819,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
         self.diagnostic.plot_finepatch = self.plot_finepatch
         self.diagnostic.plot_crsepatch = self.plot_crsepatch
+        self.diagnostic.write_species = self.write_species
 
         self.set_write_dir()
 
