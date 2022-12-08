@@ -17,7 +17,6 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
-#include <ablastr/coarsen/sample.H>
 #include <ablastr/utils/Communication.H>
 
 #ifdef AMREX_USE_SENSEI_INSITU
