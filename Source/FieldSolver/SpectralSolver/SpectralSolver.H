@@ -58,6 +58,8 @@ class SpectralSolver
          *                                (no domain decomposition)
          * \param[in] update_with_rho whether rho is used in the field update equations
          * \param[in] fft_do_time_averaging whether the time averaging algorithm is used
+         * \param[in] psatd_solution_type whether the PSATD equations are derived
+         *                                from a first-order or second-order model
          * \param[in] J_in_time integer that corresponds to the time dependency of J
          *                      (constant, linear) for the PSATD algorithm
          * \param[in] rho_in_time integer that corresponds to the time dependency of rho
@@ -80,6 +82,7 @@ class SpectralSolver
                         const bool periodic_single_box,
                         const bool update_with_rho,
                         const bool fft_do_time_averaging,
+                        const int psatd_solution_type,
                         const int J_in_time,
                         const int rho_in_time,
                         const bool dive_cleaning,

@@ -103,9 +103,9 @@ PsatdAlgorithmComoving::pushSpectralFields (SpectralFieldData& f) const
             const Complex Bz_old = fields(i,j,k,Idx.Bz);
 
             // Shortcuts for the values of J and rho
-            const Complex Jx = fields(i,j,k,Idx.Jx);
-            const Complex Jy = fields(i,j,k,Idx.Jy);
-            const Complex Jz = fields(i,j,k,Idx.Jz);
+            const Complex Jx = fields(i,j,k,Idx.Jx_mid);
+            const Complex Jy = fields(i,j,k,Idx.Jy_mid);
+            const Complex Jz = fields(i,j,k,Idx.Jz_mid);
             const Complex rho_old = fields(i,j,k,Idx.rho_old);
             const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
@@ -447,9 +447,9 @@ void PsatdAlgorithmComoving::CurrentCorrection (SpectralFieldData& field_data)
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Shortcuts for the values of J and rho
-            const Complex Jx = fields(i,j,k,Idx.Jx);
-            const Complex Jy = fields(i,j,k,Idx.Jy);
-            const Complex Jz = fields(i,j,k,Idx.Jz);
+            const Complex Jx = fields(i,j,k,Idx.Jx_mid);
+            const Complex Jy = fields(i,j,k,Idx.Jy_mid);
+            const Complex Jz = fields(i,j,k,Idx.Jz_mid);
             const Complex rho_old = fields(i,j,k,Idx.rho_old);
             const Complex rho_new = fields(i,j,k,Idx.rho_new);
 
@@ -482,15 +482,15 @@ void PsatdAlgorithmComoving::CurrentCorrection (SpectralFieldData& field_data)
                     const Complex theta = amrex::exp(- I * k_dot_v * dt * 0.5_rt);
                     const Complex den = 1._rt - theta * theta;
 
-                    fields(i,j,k,Idx.Jx) = Jx - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kx_mod / (knorm_mod * knorm_mod);
-                    fields(i,j,k,Idx.Jy) = Jy - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * ky_mod / (knorm_mod * knorm_mod);
-                    fields(i,j,k,Idx.Jz) = Jz - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kz_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jx_mid) = Jx - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kx_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jy_mid) = Jy - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * ky_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jz_mid) = Jz - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kz_mod / (knorm_mod * knorm_mod);
 
                 } else {
 
-                    fields(i,j,k,Idx.Jx) = Jx - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kx_mod / (knorm_mod * knorm_mod);
-                    fields(i,j,k,Idx.Jy) = Jy - (kmod_dot_J - I * (rho_new - rho_old) / dt) * ky_mod / (knorm_mod * knorm_mod);
-                    fields(i,j,k,Idx.Jz) = Jz - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kz_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jx_mid) = Jx - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kx_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jy_mid) = Jy - (kmod_dot_J - I * (rho_new - rho_old) / dt) * ky_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx.Jz_mid) = Jz - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kz_mod / (knorm_mod * knorm_mod);
                 }
             }
         });

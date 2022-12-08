@@ -1084,6 +1084,35 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
             ) / constants.c
 
 
+class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
+    def init(self, kw):
+        self.mangle_dict = None
+
+    def initialize_inputs(self):
+        # Note that lower and upper_bound are not used by WarpX
+
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
+        if (self.Ex_expression is not None or
+            self.Ey_expression is not None or
+            self.Ez_expression is not None):
+            pywarpx.warpx.E_ext_grid_init_style = 'parse_e_ext_grid_function'
+            for sdir, expression in zip(['x', 'y', 'z'], [self.Ex_expression, self.Ey_expression, self.Ez_expression]):
+                expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
+                pywarpx.warpx.__setattr__(f'E{sdir}_external_grid_function(x,y,z)', expression)
+
+        if (self.Bx_expression is not None or
+            self.By_expression is not None or
+            self.Bz_expression is not None):
+            pywarpx.warpx.B_ext_grid_init_style = 'parse_b_ext_grid_function'
+            for sdir, expression in zip(['x', 'y', 'z'], [self.Bx_expression, self.By_expression, self.Bz_expression]):
+                expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
+                pywarpx.warpx.__setattr__(f'B{sdir}_external_grid_function(x,y,z)', expression)
+
+
 class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField):
     def initialize_inputs(self):
         # Note that lower and upper_bound are not used by WarpX
@@ -2081,8 +2110,8 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     def _handle_field_probe(self, **kw):
         """Utility function to grab required inputs for a field probe from kw"""
         self.probe_geometry = kw.pop("probe_geometry")
-        self.x_probe = kw.pop("x_probe")
-        self.y_probe = kw.pop("y_probe")
+        self.x_probe = kw.pop("x_probe", None)
+        self.y_probe = kw.pop("y_probe", None)
         self.z_probe = kw.pop("z_probe")
 
         self.interp_order = kw.pop("interp_order", None)
@@ -2093,20 +2122,20 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
             self.resolution = kw.pop("resolution")
 
         if self.probe_geometry.lower() == 'line':
-            self.x1_probe = kw.pop("x1_probe")
-            self.y1_probe = kw.pop("y1_probe")
+            self.x1_probe = kw.pop("x1_probe", None)
+            self.y1_probe = kw.pop("y1_probe", None)
             self.z1_probe = kw.pop("z1_probe")
 
         if self.probe_geometry.lower() == 'plane':
             self.detector_radius = kw.pop("detector_radius")
 
-            self.target_normal_x = kw.pop("target_normal_x")
-            self.target_normal_y = kw.pop("target_normal_y")
-            self.target_normal_z = kw.pop("target_normal_z")
+            self.target_normal_x = kw.pop("target_normal_x", None)
+            self.target_normal_y = kw.pop("target_normal_y", None)
+            self.target_normal_z = kw.pop("target_normal_z", None)
 
-            self.target_up_x = kw.pop("target_up_x")
-            self.target_up_y = kw.pop("target_up_y")
-            self.target_up_z = kw.pop("target_up_z")
+            self.target_up_x = kw.pop("target_up_x", None)
+            self.target_up_y = kw.pop("target_up_y", None)
+            self.target_up_z = kw.pop("target_up_z", None)
 
         return kw
 

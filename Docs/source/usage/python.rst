@@ -300,7 +300,7 @@ New components can be added via Python.
 Various diagnostics are also accessible from Python.
 This includes getting the deposited or total charge density from a given species
 as well as accessing the scraped particle buffer. See the example in
-*Examples/Modules/ParticleBoudaryScrape* for a reference on how to interact
+*Examples/Tests/ParticleBoudaryScrape* for a reference on how to interact
 with scraped particle data.
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.get_species_charge_sum
