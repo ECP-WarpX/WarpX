@@ -57,9 +57,7 @@ PsatdAlgorithmGalilean::PsatdAlgorithmGalilean(
     m_v_galilean(v_galilean),
     m_dt(dt),
     m_update_with_rho(update_with_rho),
-    m_time_averaging(time_averaging),
-    m_dive_cleaning(dive_cleaning),
-    m_divb_cleaning(divb_cleaning)
+    m_time_averaging(time_averaging)
 {
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -196,7 +194,6 @@ PsatdAlgorithmGalilean::pushSpectralFields (SpectralFieldData& f) const
             // Physical constants and imaginary unit
             constexpr Real c2 = PhysConst::c * PhysConst::c;
             constexpr Real ep0 = PhysConst::ep0;
-            constexpr Real inv_ep0 = 1._rt / PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
             // These coefficients are initialized in the function InitializeSpectralCoefficients

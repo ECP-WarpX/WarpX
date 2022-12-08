@@ -137,8 +137,6 @@ class PsatdAlgorithmGalilean : public SpectralBaseAlgorithm
         amrex::Real m_dt;
         bool m_update_with_rho;
         bool m_time_averaging;
-        bool m_dive_cleaning;
-        bool m_divb_cleaning;
 };
 #endif // WARPX_USE_PSATD
 #endif // WARPX_PSATD_ALGORITHM_GALILEAN_H_
