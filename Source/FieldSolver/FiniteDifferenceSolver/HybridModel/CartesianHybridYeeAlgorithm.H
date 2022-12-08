@@ -120,7 +120,8 @@ struct CartesianHybridYeeAlgorithm {
                 - CoarsenIO::Interp(By, By_stag, dest_stag, coarsen, i, j, k, ncomp)
             );
         }
-
+        if (std::abs(dyBz) < 1e-6) dyBz = 0._rt;
+        if (std::abs(dzBy) < 1e-6) dzBy = 0._rt;
         return (dyBz - dzBy) / PhysConst::mu0;
     }
 
@@ -209,6 +210,8 @@ struct CartesianHybridYeeAlgorithm {
                 - CoarsenIO::Interp(Bx, Bx_stag, dest_stag, coarsen, i, j, k, ncomp)
             );
         }
+        if (std::abs(dzBx) < 1e-6) dzBx = 0._rt;
+        if (std::abs(dxBz) < 1e-6) dxBz = 0._rt;
         return (dzBx - dxBz) / PhysConst::mu0;
     }
 
@@ -264,8 +267,8 @@ struct CartesianHybridYeeAlgorithm {
 
 #if (defined WARPX_DIM_1D_Z) || (defined WARPX_DIM_XZ)
         ignore_unused(Bx, Bx_stag, coefs_y);
-        return dxBy / PhysConst::mu0; // the y-derivative is 0 in 1d and 2d
-#endif
+        auto dyBx = 0._rt; // the y-derivative is 0 in 1d and 2d
+#else
         Real const inv_dy = coefs_y[0];
         Real dyBx;
         dest_stag = target_stag;
@@ -289,6 +292,9 @@ struct CartesianHybridYeeAlgorithm {
                 - CoarsenIO::Interp(Bx, Bx_stag, dest_stag, coarsen, i, j, k, ncomp)
             );
         }
+#endif
+        if (std::abs(dxBy) < 1e-6) dxBy = 0._rt;
+        if (std::abs(dyBx) < 1e-6) dyBx = 0._rt;
         return (dxBy - dyBx) / PhysConst::mu0;
     }
 

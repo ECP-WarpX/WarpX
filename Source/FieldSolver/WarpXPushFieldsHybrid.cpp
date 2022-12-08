@@ -18,6 +18,14 @@ using namespace amrex;
 void
 WarpX::HybridEvolveFields ()
 {
+    // HybridSolveE(DtType::FirstHalf);
+    // FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
+    // EvolveB(dt[0], DtType::FirstHalf);
+    // FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
+    // return;
+
     // During the particle push and deposition (which already happened) the
     // charge density and current density was updated. So at this time we
     // have rho^{n} in the 0'th index and rho{n+1} in the 1'st index of `rho_fp`,

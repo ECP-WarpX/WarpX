@@ -127,6 +127,7 @@ WarpX::Evolve (int numsteps)
                 UpdateAuxilaryData();
                 FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
+
             // on first step, push p by -0.5*dt
             for (int lev = 0; lev <= finest_level; ++lev)
             {
@@ -134,7 +135,18 @@ WarpX::Evolve (int numsteps)
                             *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
             }
+
+            // With the hybrid solver the ion current is interpolated to the
+            // next timestep, so we deposit the ion current now in the "old"
+            // current multifab
+            if (electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
+            {
+                mypc->DepositCurrent(current_fp_old, dt[0], 0.0);
+                SyncCurrent(current_fp_old, current_cp);
+            }
+
             is_synchronized = false;
+
         } else {
             if (electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
                 // Beyond one step, we have E^{n} and B^{n}.
