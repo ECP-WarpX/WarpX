@@ -1330,6 +1330,14 @@ WarpX::ReadParameters ()
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 v_comoving_is_zero,
                 "psatd.J_in_time=linear not implemented with comoving PSATD");
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                !current_correction,
+                "psatd.current_correction=1 not implemented with psatd.J_in_time=linear");
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                current_deposition_algo != CurrentDepositionAlgo::Vay,
+                "algo.current_deposition=vay not implemented with psatd.J_in_time=linear");
         }
 
         for (int dir = 0; dir < AMREX_SPACEDIM; dir++)

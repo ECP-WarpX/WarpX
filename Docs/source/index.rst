@@ -35,13 +35,13 @@ We also have a `discussion page <https://github.com/ECP-WarpX/WarpX/discussions>
    /* front page: hide chapter titles
     * needed for consistent HTML-PDF-EPUB chapters
     */
-   div#installation.section,
-   div#usage.section,
-   div#theory.section,
-   div#data-analysis.section,
-   div#development.section,
-   div#maintenance.section,
-   div#epilogue.section {
+   section#installation,
+   section#usage,
+   section#theory,
+   section#data-analysis,
+   section#development,
+   section#maintenance,
+   section#epilogue {
        display:none;
    }
    </style>

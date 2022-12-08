@@ -340,9 +340,11 @@ void WarpX::PSATDBackwardTransformJ (
     {
         Idx = spectral_solver_fp[lev]->m_spectral_index;
 
-        idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_old) : static_cast<int>(Idx.Jx_mid);
-        idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_old) : static_cast<int>(Idx.Jy_mid);
-        idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_old) : static_cast<int>(Idx.Jz_mid);
+        // Note that these backward FFTs are currently called only
+        // with algorithms that do not support J linear in time
+        idx_jx = static_cast<int>(Idx.Jx_mid);
+        idx_jy = static_cast<int>(Idx.Jy_mid);
+        idx_jz = static_cast<int>(Idx.Jz_mid);
 
         BackwardTransformVect(lev, *spectral_solver_fp[lev], J_fp[lev],
                               idx_jx, idx_jy, idx_jz, m_fill_guards_current);
@@ -351,9 +353,11 @@ void WarpX::PSATDBackwardTransformJ (
         {
             Idx = spectral_solver_cp[lev]->m_spectral_index;
 
-            idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_old) : static_cast<int>(Idx.Jx_mid);
-            idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_old) : static_cast<int>(Idx.Jy_mid);
-            idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_old) : static_cast<int>(Idx.Jz_mid);
+            // Note that these backward FFTs are currently called only
+            // with algorithms that do not support J linear in time
+            idx_jx = static_cast<int>(Idx.Jx_mid);
+            idx_jy = static_cast<int>(Idx.Jy_mid);
+            idx_jz = static_cast<int>(Idx.Jz_mid);
 
             BackwardTransformVect(lev, *spectral_solver_cp[lev], J_cp[lev],
                                   idx_jx, idx_jy, idx_jz, m_fill_guards_current);
