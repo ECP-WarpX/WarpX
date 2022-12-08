@@ -419,6 +419,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     Array4<Real> const& jx_arr = local_jx[thread_num].array();
     Array4<Real> const& jy_arr = local_jy[thread_num].array();
     Array4<Real> const& jz_arr = local_jz[thread_num].array();
+
 #endif
 
     const auto GetPosition = GetParticlePosition(pti, offset);
@@ -463,6 +464,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 WarpX::load_balance_costs_update_algo);
         }
     } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+        // jx_fab, jy_fab and jz_fab are Vay currents (D), not physical currents (j) 
         if        (WarpX::nox == 1){
             doVayDepositionShapeN<1>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
