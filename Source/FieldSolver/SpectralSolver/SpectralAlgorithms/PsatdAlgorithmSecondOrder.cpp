@@ -28,7 +28,7 @@
 
 using namespace amrex::literals;
 
-PsatdAlgorithmSecondOrder::PsatdAlgorithmSecondOrder(
+PsatdAlgorithmSecondOrder::PsatdAlgorithmSecondOrder (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const SpectralFieldIndex& spectral_index,
@@ -74,8 +74,7 @@ PsatdAlgorithmSecondOrder::PsatdAlgorithmSecondOrder(
     }
 }
 
-void
-PsatdAlgorithmSecondOrder::pushSpectralFields (SpectralFieldData& f) const
+void PsatdAlgorithmSecondOrder::pushSpectralFields (SpectralFieldData& f) const
 {
     const bool update_with_rho = m_update_with_rho;
     const bool time_averaging = m_time_averaging;
@@ -519,8 +518,7 @@ void PsatdAlgorithmSecondOrder::CurrentCorrection (SpectralFieldData& field_data
     }
 }
 
-void
-PsatdAlgorithmSecondOrder::VayDeposition (SpectralFieldData& field_data)
+void PsatdAlgorithmSecondOrder::VayDeposition (SpectralFieldData& field_data)
 {
     // Profiling
     BL_PROFILE("PsatdAlgorithmSecondOrder::VayDeposition()");
