@@ -169,6 +169,22 @@ namespace ParticleUtils {
         uy = y * vp;
         uz = z * vp;
     }
+
+    /* \brief Determines whether the point is within the tilebox, inclusive of the boundaries.
+     *        Note that this routine is needed since tilebox.contains excludes the boundaries.
+     * \param[in] tilebox The tilebox being checked
+     * \param[in] point The point being checked
+     * \result true if the point with within the boundary, otherwise false
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_INLINE
+    bool containsInclusive (amrex::RealBox const& tilebox, amrex::XDim3 const point) {
+        const auto xlo = tilebox.lo();
+        const auto xhi = tilebox.hi();
+        return  AMREX_D_TERM((xlo[0] <= point.x) && (point.x <= xhi[0]),
+                          && (xlo[1] <= point.y) && (point.y <= xhi[1]),
+                          && (xlo[2] <= point.z) && (point.z <= xhi[2]));
+    }
+
 }
 
 #endif // WARPX_PARTICLE_UTILS_H_
