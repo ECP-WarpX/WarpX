@@ -18,6 +18,7 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <ablastr/coarsen/sample.H>
