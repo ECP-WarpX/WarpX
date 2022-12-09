@@ -43,7 +43,7 @@ max_steps = 1
 # --- grid
 
 nr = 128
-nz = 128 
+nz = 128
 rmin = 0.
 rmax = 0.25
 

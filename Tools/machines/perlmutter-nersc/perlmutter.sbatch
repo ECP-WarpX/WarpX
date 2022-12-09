@@ -30,7 +30,7 @@ export MPICH_OFI_NIC_POLICY=GPU
 export SRUN_CPUS_PER_TASK=32
 
 # depends on https://github.com/ECP-WarpX/WarpX/issues/2009
-#GPU_AWARE_MPI="amrex.the_arena_is_managed=1 amrex.use_gpu_aware_mpi=1"
+#GPU_AWARE_MPI="amrex.the_arena_is_managed=0 amrex.use_gpu_aware_mpi=1"
 GPU_AWARE_MPI=""
 
 # CUDA visible devices are ordered inverse to local task IDs

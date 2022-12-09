@@ -8,10 +8,11 @@
 #   include "FiniteDifferenceAlgorithms/FieldAccessorFunctors.H"
 #endif
 #include "MacroscopicProperties/MacroscopicProperties.H"
-#include "Utils/CoarsenIO.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -112,7 +113,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     amrex::MultiFab& epsilon_mf = macroscopic_properties->getepsilon_mf();
     amrex::MultiFab& mu_mf = macroscopic_properties->getmu_mf();
 
-    // Index type required for calling CoarsenIO::Interp to interpolate macroscopic
+    // Index type required for calling ablastr::coarsen::sample::Interp to interpolate macroscopic
     // properties from their respective staggering to the Ex, Ey, Ez locations
     amrex::GpuArray<int, 3> const& sigma_stag = macroscopic_properties->sigma_IndexType;
     amrex::GpuArray<int, 3> const& epsilon_stag = macroscopic_properties->epsilon_IndexType;
@@ -178,11 +179,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 if (lx(i, j, k) <= 0) return;
 #endif
                 // Interpolate conductivity, sigma, to Ex position on the grid
-                amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
-                                           Ex_stag, macro_cr, i, j, k, scomp);
+                amrex::Real const sigma_interp = ablastr::coarsen::sample::Interp(sigma_arr, sigma_stag,
+                                                                                  Ex_stag, macro_cr, i, j, k, scomp);
                 // Interpolated permittivity, epsilon, to Ex position on the grid
-                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
-                                           Ex_stag, macro_cr, i, j, k, scomp);
+                amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp(eps_arr, epsilon_stag,
+                                                                                    Ex_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
                 Ex(i, j, k) = alpha * Ex(i, j, k)
@@ -202,11 +203,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 #endif
 #endif
                 // Interpolate conductivity, sigma, to Ey position on the grid
-                amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
-                                           Ey_stag, macro_cr, i, j, k, scomp);
+                amrex::Real const sigma_interp = ablastr::coarsen::sample::Interp(sigma_arr, sigma_stag,
+                                                                                  Ey_stag, macro_cr, i, j, k, scomp);
                 // Interpolated permittivity, epsilon, to Ey position on the grid
-                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
-                                           Ey_stag, macro_cr, i, j, k, scomp);
+                amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp(eps_arr, epsilon_stag,
+                                                                                    Ey_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
@@ -222,11 +223,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 if (lz(i,j,k) <= 0) return;
 #endif
                 // Interpolate conductivity, sigma, to Ez position on the grid
-                amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
-                                           Ez_stag, macro_cr, i, j, k, scomp);
+                amrex::Real const sigma_interp = ablastr::coarsen::sample::Interp(sigma_arr, sigma_stag,
+                                                                                  Ez_stag, macro_cr, i, j, k, scomp);
                 // Interpolated permittivity, epsilon, to Ez position on the grid
-                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
-                                           Ez_stag, macro_cr, i, j, k, scomp);
+                amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp(eps_arr, epsilon_stag,
+                                                                                    Ez_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 

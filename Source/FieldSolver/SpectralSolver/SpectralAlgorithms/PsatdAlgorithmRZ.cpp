@@ -83,7 +83,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 
     const bool update_with_rho = m_update_with_rho;
     const bool time_averaging = m_time_averaging;
-    const bool J_in_time_linear = (m_J_in_time == JInTime::Linear) ? true : false;
+    const bool J_linear = (m_J_in_time == JInTime::Linear) ? true : false;
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
@@ -112,7 +112,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 
         amrex::Array4<const amrex::Real> X5_arr;
         amrex::Array4<const amrex::Real> X6_arr;
-        if (time_averaging && J_in_time_linear)
+        if (time_averaging && J_linear)
         {
             X5_arr = X5_coef[mfi].array();
             X6_arr = X6_coef[mfi].array();
@@ -131,6 +131,9 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
         amrex::ParallelFor(bx, modes,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
+            int idx_jx = (J_linear) ? static_cast<int>(Idx.Jx_old) : static_cast<int>(Idx.Jx_mid);
+            int idx_jy = (J_linear) ? static_cast<int>(Idx.Jy_old) : static_cast<int>(Idx.Jy_mid);
+            int idx_jz = (J_linear) ? static_cast<int>(Idx.Jz_old) : static_cast<int>(Idx.Jz_mid);
 
             // All of the fields of each mode are grouped together
             int const Ep_m = Idx.Ex + Idx.n_fields*mode;
@@ -139,9 +142,9 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             int const Bp_m = Idx.Bx + Idx.n_fields*mode;
             int const Bm_m = Idx.By + Idx.n_fields*mode;
             int const Bz_m = Idx.Bz + Idx.n_fields*mode;
-            int const Jp_m = Idx.Jx + Idx.n_fields*mode;
-            int const Jm_m = Idx.Jy + Idx.n_fields*mode;
-            int const Jz_m = Idx.Jz + Idx.n_fields*mode;
+            int const Jp_m = idx_jx + Idx.n_fields*mode;
+            int const Jm_m = idx_jy + Idx.n_fields*mode;
+            int const Jz_m = idx_jz + Idx.n_fields*mode;
             int const rho_old_m = Idx.rho_old + Idx.n_fields*mode;
             int const rho_new_m = Idx.rho_new + Idx.n_fields*mode;
 
@@ -238,7 +241,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
                 G_old = fields(i,j,k,G_m);
             }
 
-            if (J_in_time_linear)
+            if (J_linear)
             {
                 const int Jp_m_new = Idx.Jx_new + Idx.n_fields*mode;
                 const int Jm_m_new = Idx.Jy_new + Idx.n_fields*mode;
@@ -335,7 +338,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
 {
     const bool time_averaging = m_time_averaging;
-    const bool J_in_time_linear = (m_J_in_time == JInTime::Linear) ? true : false;
+    const bool J_linear = (m_J_in_time == JInTime::Linear) ? true : false;
 
     // Fill them with the right values:
     // Loop over boxes and allocate the corresponding coefficients
@@ -356,7 +359,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 
         amrex::Array4<amrex::Real> X5;
         amrex::Array4<amrex::Real> X6;
-        if (time_averaging && J_in_time_linear)
+        if (time_averaging && J_linear)
         {
             X5 = X5_coef[mfi].array();
             X6 = X6_coef[mfi].array();
@@ -395,7 +398,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
                 X3(i,j,k,mode) = - c*c * dt*dt / (3._rt*ep0);
             }
 
-            if (time_averaging && J_in_time_linear)
+            if (time_averaging && J_linear)
             {
                 constexpr amrex::Real c2 = PhysConst::c;
                 const amrex::Real dt3 = dt * dt * dt;
@@ -450,9 +453,9 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
             // All of the fields of each mode are grouped together
-            auto const Jp_m = Idx.Jx + Idx.n_fields*mode;
-            auto const Jm_m = Idx.Jy + Idx.n_fields*mode;
-            auto const Jz_m = Idx.Jz + Idx.n_fields*mode;
+            auto const Jp_m = Idx.Jx_mid + Idx.n_fields*mode;
+            auto const Jm_m = Idx.Jy_mid + Idx.n_fields*mode;
+            auto const Jz_m = Idx.Jz_mid + Idx.n_fields*mode;
             auto const rho_old_m = Idx.rho_old + Idx.n_fields*mode;
             auto const rho_new_m = Idx.rho_new + Idx.n_fields*mode;
 

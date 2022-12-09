@@ -150,11 +150,6 @@
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Weber, Gunther H.",
-        "orcid": "0000-0002-1794-1398"
-      },
-      {
-        "affiliation": "Lawrence Berkeley National Laboratory",
         "name": "Yang, Eloise",
         "orcid": "0000-0002-9319-4216"
       },
@@ -185,6 +180,11 @@
       }
     ],
     "contributors": [
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Weber, Gunther H.",
+        "orcid": "0000-0002-1794-1398"
+      },
       {
         "type": "Other",
         "affiliation": "Intel",
