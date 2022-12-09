@@ -990,6 +990,27 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     r = 1;
                 }
                 pcounts[index] = num_ppc*r;
+                // update pcount by checking if cell-corners or cell-center
+                // has non-zero density
+                const auto xlim = GpuArray<Real, 3>{lo.x,(lo.x+hi.x)/2._rt,hi.x};
+                const auto ylim = GpuArray<Real, 3>{lo.y,(lo.y+hi.y)/2._rt,hi.y};
+                const auto zlim = GpuArray<Real, 3>{lo.z,(lo.z+hi.z)/2._rt,hi.z};
+
+                const auto checker = [&](){
+                    for (const auto& x : xlim)
+                        for (const auto& y : ylim)
+                            for (const auto& z : zlim)
+                                if (inj_pos->insideBounds(x,y,z) and (inj_rho->getDensity(x,y,z) > 0) ) {
+                                    return 1;
+                                }
+                    return 0;
+                };
+                const int flag_pcount = checker();
+                if (flag_pcount == 1) {
+                    pcounts[index] = num_ppc*r;
+                } else {
+                    pcounts[index] = 0;
+                }
             }
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             amrex::ignore_unused(k);

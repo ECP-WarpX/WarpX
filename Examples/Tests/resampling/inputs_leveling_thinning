@@ -40,10 +40,10 @@ resampled_part1.resampling_trigger_max_avg_ppc = 395
 resampled_part2.species_type = electron
 resampled_part2.injection_style = NRandomPerCell
 resampled_part2.num_particles_per_cell = 100000
-resampled_part2.zmin = 0.
-resampled_part2.zmax = 1.
-resampled_part2.xmin = 0.
-resampled_part2.xmax = 1.
+resampled_part2.zmin = 0.001
+resampled_part2.zmax = 0.999
+resampled_part2.xmin = 0.001
+resampled_part2.xmax = 0.999
 resampled_part2.profile = parse_density_function
 # Trick to get a Gaussian weight distribution is to do a Box-Muller transform using the position
 # within the cell as the two random variables. Here, we have a distribution with standard deviation
