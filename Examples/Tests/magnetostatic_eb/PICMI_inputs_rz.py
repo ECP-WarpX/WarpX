@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
+import matplotlib
+matplotlib.use('agg')
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as con
 
 from pywarpx import fields, picmi
-from pywarpx.Algo import algo
-from pywarpx.Amrex import amrex
+# from pywarpx.Algo import algo
+# from pywarpx.Amrex import amrex
 from pywarpx.WarpX import warpx
 
 GB = 1024**3
@@ -40,8 +43,7 @@ max_steps = 1
 # --- grid
 
 nr = 128
-nz = 512
-
+nz = 128 
 rmin = 0.
 rmax = 0.25
 
@@ -95,7 +97,7 @@ beam_dist = picmi.AnalyticDistribution(
     directed_velocity=[0., 0., beam_gamma*vz],
 )
 beam = picmi.Species(particle_type='electron', name='beam', initial_distribution=beam_dist)
-beam_layout = picmi.PseudoRandomLayout(n_macroparticles_per_cell=[2,2,2], grid=grid)
+beam_layout = picmi.PseudoRandomLayout(n_macroparticles_per_cell=[2,2], grid=grid)
 
 ##########################
 # diagnostics
@@ -171,7 +173,10 @@ plt.legend(['Analytical', 'Electrostatic'])
 
 er_err = np.abs(Er_mean[r_idx] - Er_an(r_sub)).max()/np.abs(Er_an(r_sub)).max()
 
+plt.ylabel('$E_r$ (V/m)')
+plt.xlabel('r (m)')
 plt.title("Max % Error: {} %".format(er_err*100.))
+plt.tight_layout()
 plt.savefig('er_rz.png')
 
 assert (er_err < 0.02), "Er Error increased above 2%"
@@ -184,6 +189,9 @@ Bth = fields.ByWrapper()
 
 r_vec = Bth.mesh('r')
 z_vec = Bth.mesh('z')
+
+dr = r_vec[1]-r_vec[0]
+r_vec = r_vec + dr/2.
 
 @np.vectorize
 def Bth_an(r):
@@ -214,7 +222,10 @@ plt.legend(['Analytical', 'Magnetostatic'])
 
 bth_err = np.abs(Bth_mean[r_idx] - Bth_an(r_sub)).max()/np.abs(Bth_an(r_sub)).max()
 
+plt.ylabel('$B_{\Theta}$ (T)')
+plt.xlabel('r (m)')
 plt.title("Max % Error: {} %".format(bth_err*100.))
+plt.tight_layout()
 plt.savefig('bth_rz.png')
 
 assert (bth_err < 0.02), "Bth Error increased above 2%"

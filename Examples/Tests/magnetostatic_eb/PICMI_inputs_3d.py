@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
+import matplotlib
+matplotlib.use('agg')
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as con
 
 from pywarpx import fields, picmi
-from pywarpx.Algo import algo
-from pywarpx.Amrex import amrex
+# from pywarpx.Algo import algo
+# from pywarpx.Amrex import amrex
 from pywarpx.WarpX import warpx
 
 GB = 1024**3
@@ -39,9 +42,9 @@ max_steps = 1
 
 # --- grid
 
-nx = 128
-ny = 128
-nz = 128
+nx = 64
+ny = 64
+nz = 64
 
 xmin = -0.25
 xmax = 0.25
@@ -168,11 +171,21 @@ Ey_dat = Ey[...]
 Ex_mean = Ex_dat[:,:,z_idx].mean(axis=2).T
 Ey_mean = Ey_dat[:,:,z_idx].mean(axis=2).T
 
+# Interpolate Ex to nodal points excluding last mesh point
+# Ex_nodal = (Ex_mean[1:,:-1] + Ex_mean[:-1,:-1])/2.
+# x_vec = x_vec[:-1]
+
+# Ey_nodal = (Ey_mean[:-1,1:] + Ey_mean[:-1,:-1])/2.
+# y_vec = y_vec[:-1]
+
+Ex_nodal = Ex_mean
+Ey_nodal = Ey_mean
+
 XM, YM = np.meshgrid(x_vec, y_vec, indexing='xy')
 RM = np.sqrt(XM**2 + YM**2)
 THM = np.arctan2(YM,XM)
 
-Er_mean = np.cos(THM) * Ex_mean + np.sin(THM) * Ey_mean
+Er_mean = np.cos(THM) * Ex_nodal + np.sin(THM) * Ey_nodal
 
 r_vec = np.sqrt(x_vec**2 + y_vec**2)
 
@@ -186,10 +199,13 @@ plt.legend(['Analytical', 'Electrostatic'])
 
 er_err = np.abs(Er_mean[r_idx] - Er_an(r_sub)).max()/np.abs(Er_an(r_sub)).max()
 
+plt.ylabel('$E_r$ (V/m)')
+plt.xlabel('r (m)')
 plt.title("Max % Error: {} %".format(er_err*100.))
+plt.tight_layout()
 plt.savefig('er_3d.png')
 
-assert (er_err < 0.02), "Er Error increased above 2%"
+assert (er_err < 0.05), "Er Max Error increased above 5%"
 
 ########################
 # Check B field
@@ -201,6 +217,11 @@ By = fields.ByWrapper()
 x_vec = Bx.mesh('x') + xmin
 y_vec = Bx.mesh('y') + ymin
 z_vec = Bx.mesh('z') + zmin
+
+dx = x_vec[1] - x_vec[0]
+dy = y_vec[1] - y_vec[0]
+x_vec = x_vec + dx/2.
+y_vec = y_vec + dy/2.
 
 @np.vectorize
 def Bt_an(r):
@@ -222,11 +243,20 @@ By_dat = By[...]
 Bx_mean = Bx_dat[:,:,z_idx].mean(axis=2).T
 By_mean = By_dat[:,:,z_idx].mean(axis=2).T
 
+# Interpolate B mesh to nodal points excluding last mesh point
+Bx_nodal = (Bx_mean[:-1,1:] + Bx_mean[:-1,:-1])/2.
+By_nodal = (By_mean[:-1,:-1] + By_mean[1:,:-1])/2.
+
+x_vec = x_vec[:-1]
+y_vec = y_vec[:-1]
+
+
 XM, YM = np.meshgrid(x_vec, y_vec, indexing='xy')
 RM = np.sqrt(XM**2 + YM**2)
 THM = np.arctan2(YM,XM)
 
-Bt_mean = - np.sin(THM) * Bx_mean + np.cos(THM) * By_mean
+Bt_mean = - np.sin(THM) * Bx_nodal + np.cos(THM) * By_nodal
+
 
 r_vec = np.sqrt(x_vec**2 + y_vec**2)
 
@@ -240,7 +270,10 @@ plt.legend(['Analytical', 'Magnetostatic'])
 
 bt_err = np.abs(Bt_mean[r_idx] - Bt_an(r_sub)).max()/np.abs(Bt_an(r_sub)).max()
 
+plt.ylabel('$B_{\Theta}$ (T)')
+plt.xlabel('r (m)')
 plt.title("Max % Error: {} %".format(bt_err*100.))
+plt.tight_layout()
 plt.savefig('bt_3d.png')
 
-assert (bt_err < 0.04), "Bt Error increased above 4%"
+assert (bt_err < 0.05), "Bt Max Error increased above 5%"
