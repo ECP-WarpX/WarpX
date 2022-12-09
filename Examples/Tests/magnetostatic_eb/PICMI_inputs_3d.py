@@ -113,7 +113,7 @@ field_diag = picmi.FieldDiagnostic(
     period = 1,
     data_list = ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz','Ax', 'Ay', 'Az', 'Jx', 'Jy', 'Jz', 'phi', 'rho'],
     write_dir = '.',
-    warpx_file_prefix = 'Python_MagnetostaticEB_plt'
+    warpx_file_prefix = 'Python_magnetostatic_eb_3d_plt'
 )
 
 ##########################
@@ -127,7 +127,8 @@ sim = picmi.Simulation(
     warpx_embedded_boundary=embedded_boundary,
     warpx_field_gathering_algo='momentum-conserving',
     warpx_current_deposition_algo='direct',
-    warpx_use_filter=False
+    warpx_use_filter=False,
+    warpx_serialize_initial_conditions = 1
 )
 
 sim.add_species(beam, layout=beam_layout, initialize_self_field=True)
