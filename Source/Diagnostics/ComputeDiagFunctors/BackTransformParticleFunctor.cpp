@@ -9,6 +9,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -80,6 +81,9 @@ BackTransformParticleFunctor::BackTransformParticleFunctor (
 void
 BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int &totalParticleCounter, int i_buffer) const
 {
+    WARPX_PROFILE("BTDiagnostics::ParticleOperator()");
+    WARPX_PROFILE_VAR_NS("BTDiagnostics::ParticleOperatorCompute()", btd_labp);
+    WARPX_PROFILE_VAR_START(btd_labp);
     if (m_perform_backtransform[i_buffer] == 0) return;
     auto &warpx = WarpX::GetInstance();
     // get particle slice
@@ -150,6 +154,7 @@ BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst
         }
     }
     totalParticleCounter = pc_dst.TotalNumberOfParticles();
+    WARPX_PROFILE_VAR_STOP(btd_labp);
 }
 
 

@@ -18,6 +18,7 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <ablastr/coarsen/sample.H>
@@ -746,6 +747,9 @@ BTDiagnostics::UpdateBufferData ()
 void
 BTDiagnostics::PrepareFieldDataForOutput ()
 {
+    WARPX_PROFILE("BTDiagnostics::PrepFieldData()");
+    WARPX_PROFILE_VAR_NS("BTDiagnostics::PrepFieldDataForOuput()", btd_fieldprep);
+    WARPX_PROFILE_VAR_START(btd_fieldprep);
     // Initialize fields functors only if do_back_transformed_fields is selected
     if (m_do_back_transformed_fields == false) return;
 
@@ -817,6 +821,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
             }
         }
     }
+    WARPX_PROFILE_VAR_STOP(btd_fieldprep);
 }
 
 
@@ -955,6 +960,10 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
 void
 BTDiagnostics::Flush (int i_buffer)
 {
+    WARPX_PROFILE("BTDiagnostics::Flush()");
+    WARPX_PROFILE_VAR_NS("BTDiagnostics::AllFlush()", btd_flush);
+    WARPX_PROFILE_VAR_START(btd_flush);
+    WARPX_PROFILE_VAR_NS("BTDiagnostics::AllFlushRedistribute()", btd_predistribute);
     auto & warpx = WarpX::GetInstance();
     std::string file_name = m_file_prefix;
     if (m_format=="plotfile") {
@@ -1000,7 +1009,9 @@ BTDiagnostics::Flush (int i_buffer)
             m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], buffer_ba);
         }
     }
+    WARPX_PROFILE_VAR_START(btd_predistribute);
     RedistributeParticleBuffer(i_buffer);
+    WARPX_PROFILE_VAR_STOP(btd_predistribute);
 
     // Reset buffer box and particle box array
     if (m_format == "openpmd") {
@@ -1058,6 +1069,7 @@ BTDiagnostics::Flush (int i_buffer)
     // For example, for buffer size of 256, if the first buffer extent was [256,511]
     // then the next buffer will be from [0,255]. That is, the hi-index of the following buffer is 256-1
     m_buffer_k_index_hi[i_buffer] = m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) - 1;
+    WARPX_PROFILE_VAR_STOP(btd_flush);
 }
 
 void BTDiagnostics::RedistributeParticleBuffer (const int i_buffer)
@@ -1378,6 +1390,10 @@ BTDiagnostics::InitializeParticleBuffer ()
 void
 BTDiagnostics::PrepareParticleDataForOutput()
 {
+    WARPX_PROFILE("BTDiagnostics::PrepParticleData()");
+    WARPX_PROFILE_VAR_NS("BTDiagnostics::PrepParticleDataForOuput()", btd_partprep);
+    WARPX_PROFILE_VAR_START(btd_partprep);
+    auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev < nlev_output; ++lev) {
         for (int i = 0; i < m_all_particle_functors.size(); ++i)
         {
@@ -1409,6 +1425,7 @@ BTDiagnostics::PrepareParticleDataForOutput()
             }
         }
     }
+    WARPX_PROFILE_VAR_STOP(btd_partprep);
 }
 
 void

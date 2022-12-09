@@ -8,6 +8,7 @@
 
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <ablastr/utils/Communication.H>
@@ -45,6 +46,9 @@ BackTransformFunctor::BackTransformFunctor (amrex::MultiFab const * mf_src, int 
 void
 BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const int i_buffer) const
 {
+    WARPX_PROFILE("BTDiagnostics::FieldOperator()");
+    WARPX_PROFILE_VAR_NS("BTDiagnostics::operator()", btd_labfield);
+    WARPX_PROFILE_VAR_START(btd_labfield);
     // Perform back-transformation only if z slice is within the domain stored as 0/1
     // in m_perform_backtransform[i_buffer]
     if ( m_perform_backtransform[i_buffer] == 1) {
@@ -148,6 +152,7 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         slice = nullptr;
         tmp_slice_ptr = nullptr;
     }
+    WARPX_PROFILE_VAR_START(btd_labfield);
 
 }
 
