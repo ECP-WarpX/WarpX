@@ -49,6 +49,7 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
+          config-file: ./.github/codeql/warpx-codeql.yml
           languages: ${{ matrix.language }}
           queries: +security-and-quality
 
@@ -65,3 +66,23 @@ jobs:
         uses: github/codeql-action/analyze@v2
         with:
           category: "/language:${{ matrix.language }}"
+          upload: False
+          output: sarif-results
+
+      - name: filter-sarif
+        uses: advanced-security/filter-sarif@v1
+        with:
+          patterns: |
+            -build/_deps/*/*
+            -build/_deps/*/*/*
+            -build/_deps/*/*/*/*
+            -build/_deps/*/*/*/*/*
+            -build/_deps/*/*/*/*/*/*
+            -build/_deps/*/*/*/*/*/*/*
+          input: sarif-results/${{ matrix.language }}.sarif
+          output: sarif-results/${{ matrix.language }}.sarif
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: sarif-results/${{ matrix.language }}.sarif
