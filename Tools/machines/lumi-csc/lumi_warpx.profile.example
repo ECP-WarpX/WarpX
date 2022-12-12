@@ -2,7 +2,7 @@
 #export proj=<yourProject>
 
 # optional: just an additional text editor
-module load nano
+# module load nano
 
 # required dependencies
 module load CrayEnv
