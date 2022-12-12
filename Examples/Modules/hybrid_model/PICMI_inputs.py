@@ -207,17 +207,19 @@ class HybridPICExample(object):
         # Add diagnostics                                                     #
         #######################################################################
 
-        # field_diag = picmi.FieldDiagnostic(
-        #     name='field_diag',
-        #     grid=self.grid,
-        #     period=self.diag_steps,
-        #     data_list=['B', 'E'],
-        #     # write_dir=('.' if self.test else 'diags'),
-        #     # warpx_file_prefix='Python_hybrid_PIC_plt',
-        #     warpx_format = 'openpmd',
-        #     warpx_openpmd_backend = 'h5'
-        # )
-        # simulation.add_diagnostic(field_diag)
+        if self.test:
+            field_diag = picmi.FieldDiagnostic(
+                name='field_diag',
+                grid=self.grid,
+                period=5,
+                data_list=['B', 'rho'],
+                write_dir='.',
+                warpx_file_prefix='Python_hybrid_PIC_plt',
+                warpx_format='openpmd',
+                warpx_openpmd_backend='h5',
+                warpx_write_species=False
+            )
+            simulation.add_diagnostic(field_diag)
 
         line_diag = picmi.ReducedDiagnostic(
             diag_type='FieldProbe',

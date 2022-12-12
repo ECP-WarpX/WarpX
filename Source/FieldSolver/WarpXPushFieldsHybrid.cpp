@@ -21,6 +21,9 @@ WarpX::HybridEvolveFields ()
     // HybridSolveE(DtType::FirstHalf);
     // FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
+    // // EvolveG(dt[0], DtType::FirstHalf);
+    // // FillBoundaryG(guard_cells.ng_FieldSolverG);
+
     // EvolveB(dt[0], DtType::FirstHalf);
     // FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
@@ -42,22 +45,22 @@ WarpX::HybridEvolveFields ()
 
     // Push the B field from t=n to t=n+1/2 using the current and density
     // at t=n, but updating the E field along with B.
-    for (int sub_step = 0; sub_step < 5; sub_step++)
+    for (int sub_step = 0; sub_step < 50; sub_step++)
     {
         HybridSolveE(DtType::Full);
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
-        EvolveB(0.1_rt * dt[0], DtType::FirstHalf);
+        EvolveB(0.01_rt * dt[0], DtType::FirstHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 
     // Now push the B field to t=n+1 using the n+1/2 quantities
-    for (int sub_step = 0; sub_step < 5; sub_step++)
+    for (int sub_step = 0; sub_step < 50; sub_step++)
     {
         HybridSolveE(DtType::FirstHalf);
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
-        EvolveB(0.1_rt * dt[0], DtType::SecondHalf);
+        EvolveB(0.01_rt * dt[0], DtType::SecondHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 

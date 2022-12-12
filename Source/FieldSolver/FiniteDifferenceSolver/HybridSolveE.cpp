@@ -25,8 +25,8 @@ void FiniteDifferenceSolver::HybridSolveE (
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !m_do_nodal, "hybrid E-solve does not work for nodal");
+    // WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+    //     !m_do_nodal, "hybrid E-solve does not work for nodal");
 
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Hybrid) {
 #ifdef WARPX_DIM_RZ
@@ -182,10 +182,11 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                     rho_interp = CoarsenIO::Interp(rho, rho_stag, Ex_stag, coarsen, i, j, k, 1);
                 }
 
-                if (rho_interp == 0._rt) {
-                    Ex(i, j, k) = 0._rt;
-                    return;
-                }
+                // if (rho_interp == 0._rt) {
+                //     Ex(i, j, k) = 0._rt;
+                //     return;
+                // }
+                // rho_interp = n0 * PhysConst::q_e;
 
                 // get the appropriate ion velocity
                 if (a_dt_type == DtType::Full) {
@@ -253,18 +254,18 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
 #endif
 
                 // calculate the full current
-                auto const Jx =  T_Algo::Jx(
-                        By, Bz, Bx_stag, By_stag, coefs_y, coefs_z, Ex_stag, i, j, k
-                );
-                auto const Jy =  T_Algo::Jy(
-                        Bx, Bz, Bx_stag, Bz_stag, coefs_x, coefs_z, Ex_stag, i, j, k
-                );
-                auto const Jz = T_Algo::Jz(
-                        Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, Ex_stag, i, j, k
-                );
-                // auto const Jx = 0._rt;
-                // auto const Jy = 0._rt;
-                // auto const Jz = 0._rt;
+                // auto const Jx =  T_Algo::Jx(
+                //         By, Bz, Bx_stag, By_stag, coefs_y, coefs_z, Ex_stag, i, j, k
+                // );
+                // auto const Jy =  T_Algo::Jy(
+                //         Bx, Bz, Bx_stag, Bz_stag, coefs_x, coefs_z, Ex_stag, i, j, k
+                // );
+                // auto const Jz = T_Algo::Jz(
+                //         Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, Ex_stag, i, j, k
+                // );
+                auto const Jx = 0._rt;
+                auto const Jy = 0._rt;
+                auto const Jz = 0._rt;
 
                 Ex(i, j, k) = (
                     (Jy - jy_interp) * Bz_interp - (Jz - jz_interp) * By_interp
@@ -312,10 +313,11 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                     rho_interp = CoarsenIO::Interp(rho, rho_stag, Ey_stag, coarsen, i, j, k, 1);
                 }
 
-                if (rho_interp == 0._rt) {
-                    Ey(i, j, k) = 0._rt;
-                    return;
-                }
+                // if (rho_interp == 0._rt) {
+                //     Ey(i, j, k) = 0._rt;
+                //     return;
+                // }
+                // rho_interp = n0 * PhysConst::q_e;
 
                 // get the appropriate ion current
                 if (a_dt_type == DtType::Full) {
@@ -382,18 +384,18 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
 #endif
 
                 // calculate the full current
-                auto const Jx =  T_Algo::Jx(
-                        By, Bz, By_stag, Bz_stag, coefs_y, coefs_z, Ey_stag, i, j, k
-                );
-                auto const Jy =  T_Algo::Jy(
-                        Bx, Bz, Bx_stag, Bz_stag, coefs_x, coefs_z, Ey_stag, i, j, k
-                );
-                auto const Jz = T_Algo::Jz(
-                        Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, Ey_stag, i, j, k
-                );
-                // auto const Jx = 0._rt;
-                // auto const Jy = 0._rt;
-                // auto const Jz = 0._rt;
+                // auto const Jx =  T_Algo::Jx(
+                //         By, Bz, By_stag, Bz_stag, coefs_y, coefs_z, Ey_stag, i, j, k
+                // );
+                // auto const Jy =  T_Algo::Jy(
+                //         Bx, Bz, Bx_stag, Bz_stag, coefs_x, coefs_z, Ey_stag, i, j, k
+                // );
+                // auto const Jz = T_Algo::Jz(
+                //         Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, Ey_stag, i, j, k
+                // );
+                auto const Jx = 0._rt;
+                auto const Jy = 0._rt;
+                auto const Jz = 0._rt;
 
                 Ey(i, j, k) = (
                     (Jz - jz_interp) * Bx_interp - (Jx - jx_interp) * Bz_interp
@@ -427,10 +429,10 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                     rho_interp = CoarsenIO::Interp(rho, rho_stag, Ez_stag, coarsen, i, j, k, 1);
                 }
 
-                if (rho_interp == 0._rt) {
-                    Ez(i, j, k) = 0._rt;
-                    return;
-                }
+                // if (rho_interp == 0._rt) {
+                //     Ez(i, j, k) = 0._rt;
+                //     return;
+                // }
                 // rho_interp = n0 * PhysConst::q_e;
 
                 // get the appropriate ion velocity
@@ -510,18 +512,18 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 }
 
                 // calculate the full current
-                auto const Jx =  T_Algo::Jx(
-                        By, Bz, By_stag, Bz_stag, coefs_y, coefs_z, Ez_stag, i, j, k
-                );
-                auto const Jy = T_Algo::Jy(
-                        Bx, Bz, Bx_stag, Bz_stag, coefs_x, coefs_z, Ez_stag, i, j, k
-                );
-                auto const Jz = T_Algo::Jz(
-                        Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, Ez_stag, i, j, k
-                );
-                // auto const Jx = 0._rt;
-                // auto const Jy = 0._rt;
-                // auto const Jz = 0._rt;
+                // auto const Jx =  T_Algo::Jx(
+                //         By, Bz, By_stag, Bz_stag, coefs_y, coefs_z, Ez_stag, i, j, k
+                // );
+                // auto const Jy = T_Algo::Jy(
+                //         Bx, Bz, Bx_stag, Bz_stag, coefs_x, coefs_z, Ez_stag, i, j, k
+                // );
+                // auto const Jz = T_Algo::Jz(
+                //         Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, Ez_stag, i, j, k
+                // );
+                auto const Jx = 0._rt;
+                auto const Jy = 0._rt;
+                auto const Jz = 0._rt;
 
                 Ez(i, j, k) = (
                     (Jx - jx_interp) * By_interp - (Jy - jy_interp) * Bx_interp

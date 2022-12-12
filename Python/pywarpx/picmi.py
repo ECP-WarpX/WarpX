@@ -976,7 +976,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
 class EMSolver():
     def __init__(self, grid, method, Te=None, n0=None, gamma=None,
-                 plasma_resistivity=None):
+                 plasma_resistivity=None, do_nodal=False):
         self.grid = grid
         self.method = method
 
@@ -985,11 +985,14 @@ class EMSolver():
         self.gamma = gamma
         self.plasma_resistivity = plasma_resistivity
 
+        self.do_nodal = do_nodal
+
     def initialize_inputs(self):
 
         self.grid.initialize_inputs()
 
         pywarpx.algo.maxwell_solver = self.method
+        pywarpx.warpx.do_nodal = self.do_nodal
 
         if self.method == 'hybrid':
             pywarpx.hybridmodel.elec_temp = self.Te
