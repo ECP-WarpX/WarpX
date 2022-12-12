@@ -86,8 +86,8 @@ Known System Issues
 
 .. warning::
 
-   December 12th, 2022 :
-   There is a caching bug in Libfrabric that causes WarpX simulations to occasionally hang on LUMI on more than 1 node.
+   December 12th, 2022:
+   There is a caching bug in libFabric that causes WarpX simulations to occasionally hang on LUMI on more than 1 node.
 
    As a work-around, please export the following environment variable in your job scripts until the issue is fixed:
 
