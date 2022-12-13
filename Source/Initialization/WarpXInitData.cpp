@@ -1043,8 +1043,8 @@ WarpX::PerformanceHints ()
             << "each GPU's memory sufficiently. If you do not rely on dynamic "
             << "load-balancing, then one large box per GPU is ideal.\n"
 #endif
-            << "Consider decreasing the amr.blocking_factor and"
-            << "amr.max_grid_size parameters and/or using less MPI ranks.\n"
+            << "Consider decreasing the amr.blocking_factor and "
+            << "amr.max_grid_size parameters and/or using fewer MPI ranks.\n"
             << "  More information:\n"
             << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
 
