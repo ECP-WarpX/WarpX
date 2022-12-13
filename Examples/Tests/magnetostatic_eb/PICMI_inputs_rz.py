@@ -108,7 +108,7 @@ field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
     period = 1,
-    data_list = ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz','Ax', 'Ay', 'Az', 'Jx', 'Jy', 'Jz', 'phi', 'rho'],
+    data_list = ['Ex', 'Ez', 'By','Ax', 'Az', 'Jx', 'Jz', 'phi', 'rho'],
     write_dir = '.',
     warpx_file_prefix = 'Python_magnetostatic_eb_rz_plt'
 )
