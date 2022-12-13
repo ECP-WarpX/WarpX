@@ -79,6 +79,7 @@ jobs:
             -build/_deps/*/*/*/*/*
             -build/_deps/*/*/*/*/*/*
             -build/_deps/*/*/*/*/*/*/*
+            -build/_deps/*/*/*/*/*/*/*/*
           input: sarif-results/${{ matrix.language }}.sarif
           output: sarif-results/${{ matrix.language }}.sarif
 
