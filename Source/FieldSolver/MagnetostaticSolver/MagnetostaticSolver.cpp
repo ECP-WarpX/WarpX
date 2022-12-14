@@ -420,7 +420,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
 
 
 
-void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const std::unique_ptr<amrex::MultiFab> &src, 
+void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const std::unique_ptr<amrex::MultiFab> &src,
                                                                        const std::unique_ptr<amrex::MultiFab> &dst)
 {
     WarpX &warpx = WarpX::GetInstance();
@@ -554,7 +554,7 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
     mlmg[0]->getGradSolution({buf_ptr});
 
     // Interpolate dAx/dz to By grid buffer, then add to By
-    this->doInterp(m_grad_buf_e_stag[lev][2], 
+    this->doInterp(m_grad_buf_e_stag[lev][2],
                    m_grad_buf_b_stag[lev][1]);
     MultiFab::Add(*(m_b_field[lev][1]), *(m_grad_buf_b_stag[lev][1]), 0, 0, 1, m_b_field[lev][1]->nGrowVect() );
 

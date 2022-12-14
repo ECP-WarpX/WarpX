@@ -2019,7 +2019,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
         const int rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
         AllocInitMultiFab(rho_fp[lev], amrex::convert(ba, rho_nodal_flag), dm, rho_ncomps, ngRho, tag("rho_fp"), 0.0_rt);
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic) 
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
         {
             AllocInitMultiFab(current_fp_nodal[lev][0],  amrex::convert(ba, rho_nodal_flag), dm, rho_ncomps, ngRho, tag("current_fp_nodal[x]"), 0.0_rt);
             AllocInitMultiFab(current_fp_nodal[lev][1],  amrex::convert(ba, rho_nodal_flag), dm, rho_ncomps, ngRho, tag("current_fp_nodal[y]"), 0.0_rt);
