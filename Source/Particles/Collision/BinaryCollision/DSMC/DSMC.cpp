@@ -306,6 +306,9 @@ DSMC::doCollisionsWithinTile(
         }
     );
 
+    auto const num_p_tile1 = ptile_1.numParticles();
+    auto const num_p_tile2 = ptile_2.numParticles();
+
     // Create the new product particles and define their initial values
     // num_added: how many particles of each product species have been created
     const int num_added = splitScatteringParticles(
@@ -317,6 +320,6 @@ DSMC::doCollisionsWithinTile(
         p_pair_indices_1, p_pair_indices_2,
         p_pair_reaction_weight);
 
-    setNewParticleIDs(ptile_1, ptile_1.numParticles(), num_added);
-    // setNewParticleIDs(ptile_2, ptile_2.numParticles(), num_added);
+    setNewParticleIDs(ptile_1, num_p_tile1, num_added);
+    setNewParticleIDs(ptile_2, num_p_tile2, num_added);
 }
