@@ -35,10 +35,8 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::n_rz_azimuthal_modes==1,
         "RZ mode `warpx.n_rz_azimuthal_modes` must be 1 when using the binary collision module.");
 
-        // For legacy, pairwisecoulomb is the default
-        std::string type = "pairwisecoulomb";
-
-        pp_collision_name.query("type", type);
+        std::string type;
+        pp_collision_name.get("type", type);
         collision_types[i] = type;
 
         if (type == "pairwisecoulomb") {
