@@ -6,6 +6,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "CollisionFilterFunc.H"
 #include "DSMC.H"
 #include "SplitAndScatterFunc.H"
 
@@ -159,8 +160,8 @@ DSMC::doCollisionsWithinTile(
     using namespace amrex::literals;
 
     // get collision processes
-    // auto scattering_processes = m_scattering_processes_exe.data();
-    // int const process_count   = m_scattering_processes_exe.size();
+    auto scattering_processes = m_scattering_processes_exe.data();
+    int const process_count   = m_scattering_processes_exe.size();
 
     // Extract particles in the tile that `mfi` points to
     ParticleTileType& ptile_1 = species_1.ParticlesAt(lev, mfi);
@@ -296,13 +297,14 @@ DSMC::doCollisionsWithinTile(
             // Call the function in order to perform collisions
             // If there are product species, p_mask, p_pair_indices_1/2, and
             // p_pair_reaction_weight are filled here
-            collision_filter(
+            CollisionFilter(
                 cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
                 indices_1, indices_2,
                 soa_1, soa_2, get_position_1, get_position_2,
                 q1, q2, m1, m2, dt, dV,
                 cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
-                p_pair_reaction_weight, engine );
+                p_pair_reaction_weight,
+                process_count, scattering_processes, engine );
         }
     );
 
