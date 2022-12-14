@@ -37,7 +37,7 @@ Index splitScatteringParticles (
     Gpu::DeviceVector<Index> offsets(n_total_pairs);
     auto p_offsets = offsets.dataPtr();
     Index offset = 0;
-    for (int i=0; i<n_total_pairs; i++)
+    for (Index i=0; i<n_total_pairs; i++)
     {
         p_offsets[i] = offset;
         if (mask[i])
