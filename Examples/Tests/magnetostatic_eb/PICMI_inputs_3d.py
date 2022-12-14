@@ -15,7 +15,6 @@ from pywarpx.WarpX import warpx
 
 GB = 1024**3
 
-# warpx.add_new_attr("numprocs", [1,1,1])
 warpx.add_new_attr("do_current_centering", 1)
 
 # amrex.add_new_attr("the_arena_is_managed", 0)
@@ -69,7 +68,7 @@ grid = picmi.Cartesian3DGrid(
     upper_boundary_conditions_particles = ['absorbing', 'absorbing', 'absorbing'],
     warpx_potential_lo_z = V_domain_boundary,
     warpx_blocking_factor=8,
-    warpx_max_grid_size = 256
+    warpx_max_grid_size = 32
 )
 
 solver = picmi.ElectrostaticSolver(
@@ -129,7 +128,8 @@ sim = picmi.Simulation(
     warpx_field_gathering_algo='momentum-conserving',
     warpx_current_deposition_algo='direct',
     warpx_use_filter=False,
-    warpx_serialize_initial_conditions = 1
+    warpx_serialize_initial_conditions=True,
+    warpx_do_dynamic_scheduling=False
 )
 
 sim.add_species(beam, layout=beam_layout, initialize_self_field=True)
@@ -165,7 +165,7 @@ def Er_an(r):
 
 # compare to region from 0.5*zmax to 0.9*zmax
 z_idx = ((z_vec >= 0.5*zmax) & (z_vec < 0.9*zmax))
-z_sub = z_vec[z_idx]
+# z_sub = z_vec[z_idx]
 
 Ex_dat = Ex[...]
 Ey_dat = Ey[...]
@@ -267,7 +267,7 @@ r_sub = RM[r_idx]
 
 plt.figure(2)
 plt.plot(r_vec, Bt_an(r_vec))
-plt.plot(RM.flatten(), Bt_mean.flatten(), '.')
+plt.plot(RM[r_idx].flatten(), Bt_mean[r_idx].flatten(), '.')
 plt.legend(['Analytical', 'Magnetostatic'])
 
 bt_err = np.abs(Bt_mean[r_idx] - Bt_an(r_sub)).max()/np.abs(Bt_an(r_sub)).max()

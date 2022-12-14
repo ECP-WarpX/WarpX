@@ -137,6 +137,16 @@ WarpX::AddCurrentDensityFieldLabFrame()
     {
         for (int idim = 0; idim<3; idim++)
         {
+            const amrex::Periodicity& curr_period = geom[lev].periodicity();
+
+            // Synchronize the ghost cells, do halo exchange
+            // This synchronization is required to get ghost cells set appropriately for interpolation
+            ablastr::utils::communication::FillBoundary(*(current_fp[lev][idim]),
+                                                        current_fp[lev][idim]->nGrowVect(),
+                                                        WarpX::do_single_precision_comms,
+                                                        curr_period,
+                                                        true);
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -148,10 +158,7 @@ WarpX::AddCurrentDensityFieldLabFrame()
                 Array4<amrex::Real const> const& src_arr = current_fp[lev][idim]->const_array(mfi);
                 Array4<amrex::Real> const& dst_arr = current_fp_nodal[lev][idim]->array(mfi);
 
-                // Loop includes ghost cells (`growntilebox`)
-                // (input arrays will be padded with zeros beyond ghost cells
-                // for out-of-bound accesses due to large-stencil operations)
-                Box bx = mfi.tilebox(dst_stag, current_fp_nodal[lev][idim]->nGrowVect());
+                Box bx = mfi.growntilebox(current_fp_nodal[lev][idim]->nGrowVect());
 
                 ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
@@ -160,7 +167,6 @@ WarpX::AddCurrentDensityFieldLabFrame()
                 });
             }
 
-            const amrex::Periodicity& curr_period = geom[lev].periodicity();
             // Synchronize the ghost cells, do halo exchange
             ablastr::utils::communication::FillBoundary(*(current_fp_nodal[lev][idim]),
                                                         current_fp_nodal[lev][idim]->nGrowVect(),
@@ -171,8 +177,9 @@ WarpX::AddCurrentDensityFieldLabFrame()
         }
     }
 
-    // set the boundary potentials appropriately
-    setVectorPotentialBC(current_fp_nodal);
+    // set the boundary and current density potentials
+    setVectorPotentialBC(vector_potential_fp_nodal);
+    // setVectorPotentialBC(current_fp_nodal);
 
     // Compute the potential phi, by solving the Poisson equation
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallBackInstalled("poissonsolver"),
@@ -289,7 +296,7 @@ WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::
                 // Extract the vector potential
                 auto A_arr = A[lev][adim]->array(mfi);
                 // Extract tileboxes for which to loop
-                const Box& tb  = mfi.tilebox( A[lev][adim]->ixType().toIntVect() );
+                const Box& tb  = mfi.tilebox( A[lev][adim]->ixType().toIntVect(), A[lev][adim]->nGrowVect() );
 
                 // loop over dimensions
                 for (int idim=0; idim<AMREX_SPACEDIM; idim++){
@@ -411,9 +418,11 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
 }
 
 
-void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const int isrc, const int idst, const int lev)
-{
 
+
+void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const std::unique_ptr<amrex::MultiFab> &src, 
+                                                                       const std::unique_ptr<amrex::MultiFab> &dst)
+{
     WarpX &warpx = WarpX::GetInstance();
 
     // Grab Interpolation Coefficients
@@ -427,21 +436,23 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const int
     amrex::Real const * stencil_coeffs_y = warpx.device_field_centering_stencil_coeffs_y.data();
     amrex::Real const * stencil_coeffs_z = warpx.device_field_centering_stencil_coeffs_z.data();
 
+    // Synchronize the ghost cells, do halo exchange
+    ablastr::utils::communication::FillBoundary(*src,
+                                                src->nGrowVect(),
+                                                WarpX::do_single_precision_comms);
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(*(m_grad_buf_b_stag[lev][idst]), TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    for (MFIter mfi(*dst, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        IntVect const src_stag = m_grad_buf_e_stag[lev][isrc]->ixType().toIntVect();
-        IntVect const dst_stag = m_grad_buf_b_stag[lev][idst]->ixType().toIntVect();
+        IntVect const src_stag = src->ixType().toIntVect();
+        IntVect const dst_stag = dst->ixType().toIntVect();
 
-        Array4<amrex::Real const> const& src_arr = m_grad_buf_e_stag[lev][isrc]->const_array(mfi);
-        Array4<amrex::Real> const& dst_arr = m_grad_buf_b_stag[lev][idst]->array(mfi);
+        Array4<amrex::Real const> const& src_arr = src->const_array(mfi);
+        Array4<amrex::Real> const& dst_arr = dst->array(mfi);
 
-        // Loop includes ghost cells (`growntilebox`)
-        // (input arrays will be padded with zeros beyond ghost cells
-        // for out-of-bound accesses due to large-stencil operations)
-        Box bx = mfi.tilebox(dst_stag, m_grad_buf_b_stag[lev][idst]->nGrowVect());
+        Box bx = mfi.growntilebox(dst->nGrowVect());
 
         ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
         {
@@ -449,6 +460,11 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const int
                 stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
         });
     }
+
+    // Synchronize the ghost cells, do halo exchange
+    ablastr::utils::communication::FillBoundary(*dst,
+                                                dst->nGrowVect(),
+                                                WarpX::do_single_precision_comms);
 }
 
 void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doEfieldCalc(const int lev)
@@ -458,24 +474,56 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doEfieldCalc(const
 
     for (int adim=0; adim<3; adim++)
     {
+        doInterp(m_A[lev][adim], m_grad_buf_e_stag[lev][adim]);
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
         for (MFIter mfi(*(m_e_field[lev][adim]), TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
             Array4<amrex::Real> const& Efield_arr = m_e_field[lev][adim]->array(mfi);
-            Array4<amrex::Real const> const& A_arr = m_A[lev][adim]->const_array(mfi);
-            Array4<amrex::Real> const& A_old_arr = m_A_old[lev][adim]->array(mfi);
+            Array4<amrex::Real const> const& A_arr = m_grad_buf_e_stag[lev][adim]->const_array(mfi);
 
-            IntVect const stag = m_e_field[lev][adim]->ixType().toIntVect();
-
-            Box bx = mfi.tilebox(stag);
+            Box bx = mfi.growntilebox(m_e_field[lev][adim]->nGrowVect());
 
             ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
                 // Calculate E-field contribution (-1/c dA/dt)
-                Efield_arr(j,k,l) -= (A_arr(j,k,l)-A_old_arr(j,k,l))*cdti;
+                Efield_arr(j,k,l) -= A_arr(j,k,l)*cdti;
+            });
+        }
 
+        doInterp(m_A_old[lev][adim], m_grad_buf_e_stag[lev][adim]);
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+        for (MFIter mfi(*(m_e_field[lev][adim]), TilingIfNotGPU()); mfi.isValid(); ++mfi)
+        {
+            Array4<amrex::Real> const& Efield_arr = m_e_field[lev][adim]->array(mfi);
+            Array4<amrex::Real const> const& A_old_arr = m_grad_buf_e_stag[lev][adim]->const_array(mfi);
+
+            Box bx = mfi.growntilebox(m_e_field[lev][adim]->nGrowVect());
+
+            ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+            {
+                // Calculate E-field contribution (-1/c dA/dt)
+                Efield_arr(j,k,l) += A_old_arr(j,k,l)*cdti;
+            });
+        }
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+        for (MFIter mfi(*(m_A_old[lev][adim]), TilingIfNotGPU()); mfi.isValid(); ++mfi)
+        {
+            Array4<amrex::Real const> const& A_arr = m_A[lev][adim]->const_array(mfi);
+            Array4<amrex::Real> const& A_old_arr = m_A_old[lev][adim]->array(mfi);
+
+            Box bx = mfi.growntilebox(m_A_old[lev][adim]->nGrowVect());
+
+            ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+            {
                 // Update old buffer
                 A_old_arr(j,k,l) = A_arr(j,k,l);
             });
@@ -506,38 +554,58 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
     mlmg[0]->getGradSolution({buf_ptr});
 
     // Interpolate dAx/dz to By grid buffer, then add to By
-    this->doInterp(2,1,lev);
+    this->doInterp(m_grad_buf_e_stag[lev][2], 
+                   m_grad_buf_b_stag[lev][1]);
     MultiFab::Add(*(m_b_field[lev][1]), *(m_grad_buf_b_stag[lev][1]), 0, 0, 1, m_b_field[lev][1]->nGrowVect() );
 
     // Interpolate dAx/dy to Bz grid buffer, then subtract from Bz
-    this->doInterp(1,2,lev);
-    m_grad_buf_b_stag[lev][2]->mult(-1._rt);
+    this->doInterp(m_grad_buf_e_stag[lev][1],
+                   m_grad_buf_b_stag[lev][2]);
+    m_grad_buf_b_stag[lev][2]->mult(-1._rt,2);
     MultiFab::Add(*(m_b_field[lev][2]), *(m_grad_buf_b_stag[lev][2]), 0, 0, 1, m_b_field[lev][2]->nGrowVect() );
 
     // This will grab the gradient values for Ay
     mlmg[1]->getGradSolution({buf_ptr});
 
     // Interpolate dAy/dx to Bz grid buffer, then add to Bz
-    this->doInterp(0,2,lev);
+    this->doInterp(m_grad_buf_e_stag[lev][0],
+                   m_grad_buf_b_stag[lev][2]);
     MultiFab::Add(*(m_b_field[lev][2]), *(m_grad_buf_b_stag[lev][2]), 0, 0, 1, m_b_field[lev][2]->nGrowVect() );
 
     // Interpolate dAy/dz to Bx grid buffer, then subtract from Bx
-    this->doInterp(2,0,lev);
-    m_grad_buf_b_stag[lev][0]->mult(-1._rt);
+    this->doInterp(m_grad_buf_e_stag[lev][2],
+                   m_grad_buf_b_stag[lev][0]);
+    m_grad_buf_b_stag[lev][0]->mult(-1._rt,2);
     MultiFab::Add(*(m_b_field[lev][0]), *(m_grad_buf_b_stag[lev][0]), 0, 0, 1, m_b_field[lev][0]->nGrowVect() );
 
     // This will grab the gradient values for Az
     mlmg[2]->getGradSolution({buf_ptr});
 
     // Interpolate dAz/dy to Bx grid buffer, then add to Bx
-    this->doInterp(1,0,lev);
+    this->doInterp(m_grad_buf_e_stag[lev][1],
+                   m_grad_buf_b_stag[lev][0]);
     MultiFab::Add(*(m_b_field[lev][0]), *(m_grad_buf_b_stag[lev][0]), 0, 0, 1, m_b_field[lev][0]->nGrowVect() );
 
     // Interpolate dAz/dx to By grid buffer, then subtract from By
-    this->doInterp(0,1,lev);
-    m_grad_buf_b_stag[lev][1]->mult(-1._rt);
+    this->doInterp(m_grad_buf_e_stag[lev][0],
+                   m_grad_buf_b_stag[lev][1]);
+    m_grad_buf_b_stag[lev][1]->mult(-1._rt,2);
     MultiFab::Add(*(m_b_field[lev][1]), *(m_grad_buf_b_stag[lev][1]), 0, 0, 1, m_b_field[lev][1]->nGrowVect() );
 
     // Additionally compute the -1/c dA/dt term and add to Efield
     this->doEfieldCalc(lev);
+
+    // Synchronize E & B fields
+    for (int idim = 0; idim < 3; idim++)
+    {
+        // Synchronize the ghost cells, do halo exchange
+        ablastr::utils::communication::FillBoundary(*(m_e_field[lev][idim]),
+                                                    m_e_field[lev][idim]->nGrowVect(),
+                                                    WarpX::do_single_precision_comms);
+
+        // Synchronize the ghost cells, do halo exchange
+        ablastr::utils::communication::FillBoundary(*(m_b_field[lev][idim]),
+                                                    m_b_field[lev][idim]->nGrowVect(),
+                                                    WarpX::do_single_precision_comms);
+    }
 }

@@ -434,6 +434,7 @@ public:
     amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_current_fp_nodal  (int lev, int direction) const { return current_fp_nodal[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
     amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
     amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }

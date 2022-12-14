@@ -122,7 +122,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
     amrex::Real max_comp_J = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
         for (int adim=0; adim<3; adim++) {
-            curr[lev][adim]->mult(-1._rt*PhysConst::mu0); // TODO: when do we "un-multiply" this? We need to document this side-effect!
+            curr[lev][adim]->mult(-1._rt*PhysConst::mu0,2); // TODO: when do we "un-multiply" this? We need to document this side-effect!
             max_comp_J = amrex::max(max_comp_J, curr[lev][adim]->norm0());
         }
     }

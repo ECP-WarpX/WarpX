@@ -15,7 +15,6 @@ from pywarpx.WarpX import warpx
 
 GB = 1024**3
 
-# warpx.add_new_attr("numprocs", [1,1,1])
 warpx.add_new_attr("do_current_centering", 1)
 
 # amrex.add_new_attr("the_arena_is_managed", 0)
@@ -67,7 +66,7 @@ grid = picmi.CylindricalGrid(
     upper_boundary_conditions_particles = ['absorbing', 'absorbing'],
     warpx_potential_lo_z = V_domain_boundary,
     warpx_blocking_factor=8,
-    warpx_max_grid_size = 512
+    warpx_max_grid_size = 32
 )
 
 solver = picmi.ElectrostaticSolver(
@@ -108,7 +107,7 @@ field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
     period = 1,
-    data_list = ['Ex', 'Ez', 'By','Ax', 'Az', 'Jx', 'Jz', 'phi', 'rho'],
+    data_list = ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz','Ax', 'Ay', 'Az', 'Jx', 'Jy', 'Jz', 'phi', 'rho'],
     write_dir = '.',
     warpx_file_prefix = 'Python_magnetostatic_eb_rz_plt'
 )
@@ -125,7 +124,8 @@ sim = picmi.Simulation(
     warpx_field_gathering_algo='momentum-conserving',
     warpx_current_deposition_algo='direct',
     warpx_use_filter=False,
-    warpx_serialize_initial_conditions = 1
+    warpx_serialize_initial_conditions=True,
+    warpx_do_dynamic_scheduling=False
 )
 
 sim.add_species(beam, layout=beam_layout, initialize_self_field=True)
@@ -158,11 +158,11 @@ def Er_an(r):
 
 # compare to region from 0.5*zmax to 0.9*zmax
 z_idx = ((z_vec >= 0.5*zmax) & (z_vec < 0.9*zmax));
-z_sub = z_vec[z_idx]
+# z_sub = z_vec[z_idx]
 
 Er_dat = Er[...]
 
-r_idx = (r_vec < 0.9*r_pipe);
+r_idx = (r_vec < 0.95*r_pipe);
 r_sub = r_vec[r_idx]
 
 # Average Er along z_sub
@@ -170,7 +170,7 @@ Er_mean = Er_dat[:,z_idx].mean(axis=1)
 
 plt.figure(1)
 plt.plot(r_vec, Er_an(r_vec))
-plt.plot(r_vec, Er_mean)
+plt.plot(r_vec, Er_mean,'--')
 plt.legend(['Analytical', 'Electrostatic'])
 
 er_err = np.abs(Er_mean[r_idx] - Er_an(r_sub)).max()/np.abs(Er_an(r_sub)).max()
@@ -211,7 +211,7 @@ z_sub = z_vec[z_idx]
 
 Bth_dat = Bth[...]
 
-r_idx = (r_vec < 0.9*beam_r);
+r_idx = (r_vec < 0.95*r_pipe);
 r_sub = r_vec[r_idx]
 
 # Average Bth along z_idx
@@ -219,7 +219,7 @@ Bth_mean = Bth_dat[:,z_idx].mean(axis=1)
 
 plt.figure(2)
 plt.plot(r_vec, Bth_an(r_vec))
-plt.plot(r_vec, Bth_mean)
+plt.plot(r_vec, Bth_mean,'--')
 plt.legend(['Analytical', 'Magnetostatic'])
 
 bth_err = np.abs(Bth_mean[r_idx] - Bth_an(r_sub)).max()/np.abs(Bth_an(r_sub)).max()

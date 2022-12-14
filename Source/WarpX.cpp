@@ -1906,7 +1906,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     AllocInitMultiFab(current_fp[lev][1], amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, tag("current_fp[y]"), 0.0_rt);
     AllocInitMultiFab(current_fp[lev][2], amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, tag("current_fp[z]"), 0.0_rt);
 
-    if (do_current_centering)
+    if (do_current_centering && electrostatic_solver_id != ElectrostaticSolverAlgo::RelativisticMagnetostatic)
     {
         amrex::BoxArray const& nodal_ba = amrex::convert(ba, amrex::IntVect::TheNodeVector());
         AllocInitMultiFab(current_fp_nodal[lev][0], nodal_ba, dm, ncomps, ngJ, tag("current_fp_nodal[x]"), 0.0_rt);
@@ -1924,18 +1924,18 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
     {
         AllocInitMultiFab(vector_potential_fp_nodal[lev][0], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngJ, tag("vector_potential_fp_nodal[x]"), 0.0_rt);
+            dm, ncomps, ngRho, tag("vector_potential_fp_nodal[x]"), 0.0_rt);
         AllocInitMultiFab(vector_potential_fp_nodal[lev][1], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngJ, tag("vector_potential_fp_nodal[y]"), 0.0_rt);
+            dm, ncomps, ngRho, tag("vector_potential_fp_nodal[y]"), 0.0_rt);
         AllocInitMultiFab(vector_potential_fp_nodal[lev][2], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngJ, tag("vector_potential_fp_nodal[z]"), 0.0_rt);
+            dm, ncomps, ngRho, tag("vector_potential_fp_nodal[z]"), 0.0_rt);
 
         AllocInitMultiFab(vector_potential_old_fp_nodal[lev][0], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngJ, tag("vector_potential_old_fp_nodal[x]"), 0.0_rt);
+            dm, ncomps, ngRho, tag("vector_potential_old_fp_nodal[x]"), 0.0_rt);
         AllocInitMultiFab(vector_potential_old_fp_nodal[lev][1], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngJ, tag("vector_potential_old_fp_nodal[y]"), 0.0_rt);
+            dm, ncomps, ngRho, tag("vector_potential_old_fp_nodal[y]"), 0.0_rt);
         AllocInitMultiFab(vector_potential_old_fp_nodal[lev][2], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngJ, tag("vector_potential_old_fp_nodal[z]"), 0.0_rt);
+            dm, ncomps, ngRho, tag("vector_potential_old_fp_nodal[z]"), 0.0_rt);
 
         AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][0], amrex::convert(ba, Ex_nodal_flag),
             dm, ncomps, ngEB, tag("vector_potential_grad_buf_e_stag[x]"), 0.0_rt);
@@ -2019,6 +2019,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
         const int rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
         AllocInitMultiFab(rho_fp[lev], amrex::convert(ba, rho_nodal_flag), dm, rho_ncomps, ngRho, tag("rho_fp"), 0.0_rt);
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic) 
+        {
+            AllocInitMultiFab(current_fp_nodal[lev][0],  amrex::convert(ba, rho_nodal_flag), dm, rho_ncomps, ngRho, tag("current_fp_nodal[x]"), 0.0_rt);
+            AllocInitMultiFab(current_fp_nodal[lev][1],  amrex::convert(ba, rho_nodal_flag), dm, rho_ncomps, ngRho, tag("current_fp_nodal[y]"), 0.0_rt);
+            AllocInitMultiFab(current_fp_nodal[lev][2],  amrex::convert(ba, rho_nodal_flag), dm, rho_ncomps, ngRho, tag("current_fp_nodal[z]"), 0.0_rt);
+        }
     }
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
