@@ -75,6 +75,7 @@ Usage
    :hidden:
 
    usage/how_to_run
+   usage/domain_decomposition
    usage/parameters
    usage/python
    usage/examples
