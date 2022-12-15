@@ -89,7 +89,7 @@ Overall simulation parameters
 
     * ``relativistic-magnetostatic``: Poisson's equation is solved in the lab frame with
       the charge density of all species combined.  Additionally the 3-component vector potential
-      is solved in the Coulomb Gauge with the current density of all species combined 
+      is solved in the Coulomb Gauge with the current density of all species combined
       to include self magnetic fields.
 
     See the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#>`_
