@@ -181,7 +181,7 @@ WarpX::AddCurrentDensityFieldLabFrame()
     setVectorPotentialBC(vector_potential_fp_nodal);
     // setVectorPotentialBC(current_fp_nodal);
 
-    // Compute the potential phi, by solving the Poisson equation
+    // Compute the vector potential A, by solving the Poisson equation
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallBackInstalled("poissonsolver"),
         "Python Level Poisson Solve not supported for Magnetostatic implementation.");
 
