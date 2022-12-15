@@ -7,7 +7,6 @@
 #include "WarpX.H"
 
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
-#include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver_K.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -21,6 +20,7 @@
 
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
+#include <ablastr/fields/VectorPoissonSolver.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -179,7 +179,6 @@ WarpX::AddCurrentDensityFieldLabFrame()
 
     // set the boundary and current density potentials
     setVectorPotentialBC(vector_potential_fp_nodal);
-    // setVectorPotentialBC(current_fp_nodal);
 
     // Compute the vector potential A, by solving the Poisson equation
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallBackInstalled("poissonsolver"),
@@ -194,10 +193,10 @@ WarpX::AddCurrentDensityFieldLabFrame()
    a source.
    This uses the amrex solver.
 
-   More specifically, this solves the equation
-   \f[
-       \vec{\nabla}^2 r \phi - (\vec{\beta}\cdot\vec{\nabla})^2 r \phi = -\frac{r \rho}{\epsilon_0}
-   \f]
+    More specifically, this solves the equation
+    \f[
+        \vec{\nabla}^2 r \vec{A} - (\vec{\beta}\cdot\vec{\nabla})^2 r \vec{A} = - r \mu_0 \vec{J}
+ \f]
 
    \param[in] curr The current density
    \param[out] A The vector potential to be computed by this function
@@ -245,7 +244,7 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
     std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > eb_farray_box_factory;
 #endif
 
-    Magnetostatic::computeVectorPotential(
+    ablastr::fields::computeVectorPotential(
         sorted_curr,
         sorted_A,
         required_precision,

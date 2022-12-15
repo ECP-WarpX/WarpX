@@ -87,6 +87,11 @@ Overall simulation parameters
       is mapped to the simulation frame and will produce both E and B
       fields.
 
+    * ``relativistic-magnetostatic``: Poisson's equation is solved in the lab frame with
+      the charge density of all species combined.  Additionally the 3-component vector potential
+      is solved in the Coulomb Gauge with the current density of all species combined 
+      to include self magnetic fields.
+
     See the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#>`_
     for details of the MLMG solver (the default solver used with electrostatic
     simulations). The default behavior of the code is to check whether there is

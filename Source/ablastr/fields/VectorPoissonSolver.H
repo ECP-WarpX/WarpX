@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef MAGNETOSTATICSOLVER_K_H_
-#define MAGNETOSTATICSOLVER_K_H_
+#ifndef ABLASTR_VECTOR_POISSON_SOLVER_H
+#define ABLASTR_VECTOR_POISSON_SOLVER_H
 
 #include "Utils/WarpXConst.H"
 #include "Utils/Parser/ParserUtils.H"
@@ -54,7 +54,7 @@
 #include <array>
 #include <optional>
 
-namespace Magnetostatic {
+namespace ablastr::fields {
 
 /** Compute the vector potential `A` by solving the Poisson equation
  *
