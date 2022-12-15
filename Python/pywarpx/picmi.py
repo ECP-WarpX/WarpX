@@ -73,6 +73,10 @@ class Species(picmistandard.PICMI_Species):
         Whether or not to deposit the charge and current density for
         for this species
 
+    warpx_random_theta: bool, default=True
+        Whether or not to add random angle to the particles in theta
+        when in 2D-RZ mode.
+
     warpx_reflection_model_xlo: string, default='0.'
         Expression (in terms of the velocity "v") specifying the probability
         that the particle will reflect on the lower x boundary
@@ -170,6 +174,7 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
         self.save_previous_position = kw.pop('warpx_save_previous_position', None)
         self.do_not_deposit = kw.pop('warpx_do_not_deposit', None)
+        self.random_theta = kw.pop('warpx_random_theta', None)
 
         # For particle reflection
         self.reflection_model_xlo = kw.pop('warpx_reflection_model_xlo', None)
@@ -221,7 +226,8 @@ class Species(picmistandard.PICMI_Species):
                                              save_particles_at_zhi = self.save_particles_at_zhi,
                                              save_particles_at_eb = self.save_particles_at_eb,
                                              save_previous_position = self.save_previous_position,
-                                             do_not_deposit = self.do_not_deposit)
+                                             do_not_deposit = self.do_not_deposit,
+                                             random_theta = self.random_theta)
 
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)

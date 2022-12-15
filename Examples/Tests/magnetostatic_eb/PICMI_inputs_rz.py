@@ -96,7 +96,7 @@ beam_dist = picmi.AnalyticDistribution(
     n0=n0,
     directed_velocity=[0., 0., beam_gamma*vz],
 )
-beam = picmi.Species(particle_type='electron', name='beam', initial_distribution=beam_dist)
+beam = picmi.Species(particle_type='electron', name='beam', initial_distribution=beam_dist, warpx_random_theta=False)
 beam_layout = picmi.GriddedLayout(n_macroparticle_per_cell=[2,2,2], grid=grid)
 
 ##########################
