@@ -156,7 +156,7 @@ WarpX::Evolve (int numsteps)
                     FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
             UpdateAuxilaryData();
-            FillBoundaryAux(guard_cells.ng_UpdateAux);            
+            FillBoundaryAux(guard_cells.ng_UpdateAux);
         }
 
         // Run multi-physics modules:
