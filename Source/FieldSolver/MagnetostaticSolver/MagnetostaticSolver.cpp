@@ -199,9 +199,8 @@ WarpX::AddCurrentDensityFieldLabFrame()
        \vec{\nabla}^2 r \phi - (\vec{\beta}\cdot\vec{\nabla})^2 r \phi = -\frac{r \rho}{\epsilon_0}
    \f]
 
-   \param[in] rho The charge density a given species
-   \param[out] phi The potential to be computed by this function
-   \param[in] beta Represents the velocity of the source of `phi`
+   \param[in] curr The current density
+   \param[out] A The vector potential to be computed by this function
    \param[in] required_precision The relative convergence threshold for the MLMG solver
    \param[in] absolute_tolerance The absolute convergence threshold for the MLMG solver
    \param[in] max_iters The maximum number of iterations allowed for the MLMG solver
