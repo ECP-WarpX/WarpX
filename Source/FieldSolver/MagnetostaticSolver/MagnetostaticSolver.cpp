@@ -61,10 +61,6 @@ WarpX::ComputeCurrentDensityField()
     WARPX_PROFILE("WarpX::ComputeCurrentDensityField");
     // Fields have been reset in Electrostatic solver for this time step, these fields
     // are added into the E & B fields after electrostatic solve
-
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(do_current_centering == true,
-                                     "Error: Magnetostatic solver requires warpx.do_current_centering=true");
-
     AddCurrentDensityFieldLabFrame();
 
     // Transfer fields from 'fp' array to 'aux' array.
@@ -94,7 +90,7 @@ WarpX::AddCurrentDensityFieldLabFrame()
     // reset current_fp before depositing current density for this step
     for (int lev = 0; lev <= max_level; lev++) {
         for (int dim=0; dim < 3; dim++) {
-            current_fp_nodal[lev][dim]->setVal(0.);
+            current_fp[lev][dim]->setVal(0.);
         }
     }
 
@@ -102,7 +98,7 @@ WarpX::AddCurrentDensityFieldLabFrame()
     for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
         WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
         if (!species.do_not_deposit) {
-            species.DepositCurrent(current_fp_nodal, dt[0], 0.);
+            species.DepositCurrent(current_fp, dt[0], 0.);
         }
     }
 
@@ -117,66 +113,6 @@ WarpX::AddCurrentDensityFieldLabFrame()
     }
 #endif
 
-    // NOTE:  (SEC 12/2/22)
-    // Interpolate fields back to nodal current
-    // This could be done faster, but want to check if answer is right
-    WarpX &warpx = WarpX::GetInstance();
-
-    // Grab Interpolation Coefficients
-    // Order of finite-order centering of fields
-    const int fg_nox = WarpX::field_centering_nox;
-    const int fg_noy = WarpX::field_centering_noy;
-    const int fg_noz = WarpX::field_centering_noz;
-
-    // Device vectors of stencil coefficients used for finite-order centering of fields
-    amrex::Real const * stencil_coeffs_x = warpx.device_field_centering_stencil_coeffs_x.data();
-    amrex::Real const * stencil_coeffs_y = warpx.device_field_centering_stencil_coeffs_y.data();
-    amrex::Real const * stencil_coeffs_z = warpx.device_field_centering_stencil_coeffs_z.data();
-
-    for (int lev=0; lev<=finest_level; lev++)
-    {
-        for (int idim = 0; idim<3; idim++)
-        {
-            const amrex::Periodicity& curr_period = geom[lev].periodicity();
-
-            // Synchronize the ghost cells, do halo exchange
-            // This synchronization is required to get ghost cells set appropriately for interpolation
-            ablastr::utils::communication::FillBoundary(*(current_fp[lev][idim]),
-                                                        current_fp[lev][idim]->nGrowVect(),
-                                                        WarpX::do_single_precision_comms,
-                                                        curr_period,
-                                                        true);
-
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-            for (MFIter mfi(*(current_fp_nodal[lev][idim]), TilingIfNotGPU()); mfi.isValid(); ++mfi)
-            {
-                IntVect const src_stag = current_fp[lev][idim]->ixType().toIntVect();
-                IntVect const dst_stag = current_fp_nodal[lev][idim]->ixType().toIntVect();
-
-                Array4<amrex::Real const> const& src_arr = current_fp[lev][idim]->const_array(mfi);
-                Array4<amrex::Real> const& dst_arr = current_fp_nodal[lev][idim]->array(mfi);
-
-                Box bx = mfi.growntilebox(current_fp_nodal[lev][idim]->nGrowVect());
-
-                ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                {
-                    warpx_interp(j, k, l, dst_arr, src_arr, dst_stag, src_stag, fg_nox, fg_noy, fg_noz,
-                        stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
-                });
-            }
-
-            // Synchronize the ghost cells, do halo exchange
-            ablastr::utils::communication::FillBoundary(*(current_fp_nodal[lev][idim]),
-                                                        current_fp_nodal[lev][idim]->nGrowVect(),
-                                                        WarpX::do_single_precision_comms,
-                                                        curr_period,
-                                                        true);
-
-        }
-    }
-
     // set the boundary and current density potentials
     setVectorPotentialBC(vector_potential_fp_nodal);
 
@@ -184,7 +120,7 @@ WarpX::AddCurrentDensityFieldLabFrame()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallBackInstalled("poissonsolver"),
         "Python Level Poisson Solve not supported for Magnetostatic implementation.");
 
-    computeVectorPotential( current_fp_nodal, vector_potential_fp_nodal, self_fields_required_precision,
+    computeVectorPotential( current_fp, vector_potential_fp_nodal, self_fields_required_precision,
                      self_fields_absolute_tolerance, self_fields_max_iters,
                      self_fields_verbosity );
 }

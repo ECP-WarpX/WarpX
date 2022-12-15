@@ -1179,8 +1179,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 Real theta;
                 if (nmodes == 1) {
                     // With only 1 mode, the angle doesn't matter so
-                    // choose it randomly.
-                    theta = 2._rt*MathConst::pi*amrex::Random(engine);
+                    // choose it randomly if m_rz_random_theta is true
+                    if (m_rz_random_theta)
+                        theta = 2._rt*MathConst::pi*amrex::Random(engine);
+                    else
+                        theta = 0.;
                 } else {
                     theta = 2._rt*MathConst::pi*r.y + theta_offset;
                 }
@@ -1695,8 +1698,11 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 Real theta;
                 if (nmodes == 1) {
                     // With only 1 mode, the angle doesn't matter so
-                    // choose it randomly.
-                    theta = 2._prt*MathConst::pi*amrex::Random(engine);
+                    // choose it randomly if m_rz_random_theta is true
+                    if (m_rz_random_theta)
+                        theta = 2._prt*MathConst::pi*amrex::Random(engine);
+                    else
+                        theta = 0.;
                 } else {
                     theta = 2._prt*MathConst::pi*r.y;
                 }

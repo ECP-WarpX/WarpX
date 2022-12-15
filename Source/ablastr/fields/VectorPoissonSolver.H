@@ -118,11 +118,11 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
 
     int const finest_level = curr.size() - 1u;
 
-    // scale J appropriately; also determine if rho is zero everywhere
+    // scale J appropriately; also determine if current is zero everywhere
     amrex::Real max_comp_J = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
         for (int adim=0; adim<3; adim++) {
-            curr[lev][adim]->mult(-1._rt*PhysConst::mu0,2); // TODO: when do we "un-multiply" this? We need to document this side-effect!
+            curr[lev][adim]->mult(-1._rt*PhysConst::mu0,2); // Unscaled below
             max_comp_J = amrex::max(max_comp_J, curr[lev][adim]->norm0());
         }
     }
@@ -240,6 +240,9 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
                 }
 
             }
+
+            // Unscale current
+            curr[lev][adim]->mult(-1._rt/PhysConst::mu0,2);
         } // Loop over adim
         // Run additional operations, such as calculation of the B fields for embedded boundaries
         if constexpr (!std::is_same<T_PostACalculationFunctor, std::nullopt_t>::value)
