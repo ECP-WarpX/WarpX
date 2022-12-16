@@ -62,13 +62,6 @@ WarpX::ComputeCurrentDensityField()
     // Fields have been reset in Electrostatic solver for this time step, these fields
     // are added into the E & B fields after electrostatic solve
     AddCurrentDensityFieldLabFrame();
-
-    // Transfer fields from 'fp' array to 'aux' array.
-    // This is needed when using momentum conservation
-    // since they are different arrays in that case.
-    UpdateAuxilaryData();
-    FillBoundaryAux(guard_cells.ng_UpdateAux);
-
 }
 
 void
