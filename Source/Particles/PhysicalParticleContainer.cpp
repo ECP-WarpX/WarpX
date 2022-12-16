@@ -32,6 +32,7 @@
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
+#include "Utils/ParticleUtils.H"
 #include "Utils/Physics/IonizationEnergiesTable.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -990,6 +991,27 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     r = 1;
                 }
                 pcounts[index] = num_ppc*r;
+                // update pcount by checking if cell-corners or cell-center
+                // has non-zero density
+                const auto xlim = GpuArray<Real, 3>{lo.x,(lo.x+hi.x)/2._rt,hi.x};
+                const auto ylim = GpuArray<Real, 3>{lo.y,(lo.y+hi.y)/2._rt,hi.y};
+                const auto zlim = GpuArray<Real, 3>{lo.z,(lo.z+hi.z)/2._rt,hi.z};
+
+                const auto checker = [&](){
+                    for (const auto& x : xlim)
+                        for (const auto& y : ylim)
+                            for (const auto& z : zlim)
+                                if (inj_pos->insideBounds(x,y,z) and (inj_rho->getDensity(x,y,z) > 0) ) {
+                                    return 1;
+                                }
+                    return 0;
+                };
+                const int flag_pcount = checker();
+                if (flag_pcount == 1) {
+                    pcounts[index] = num_ppc*r;
+                } else {
+                    pcounts[index] = 0;
+                }
             }
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             amrex::ignore_unused(k);
@@ -1661,29 +1683,31 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 pu.y *= PhysConst::c;
                 pu.z *= PhysConst::c;
 
+                // The containsInclusive is used to allow the case of the flux surface
+                // being on the boundary of the domain. After the UpdatePosition below,
+                // the particles will be within the domain.
 #if defined(WARPX_DIM_3D)
-                if (!tile_realbox.contains(XDim3{ppos.x,ppos.y,ppos.z})) {
+                if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.x,ppos.y,ppos.z})) {
                     p.id() = -1;
                     continue;
                 }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
-                if (!tile_realbox.contains(XDim3{ppos.x,ppos.z,0.0_prt})) {
+                if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.x,ppos.z,0.0_prt})) {
                     p.id() = -1;
                     continue;
                 }
 #else
                 amrex::ignore_unused(j,k);
-                if (!tile_realbox.contains(XDim3{ppos.z,0.0_prt,0.0_prt})) {
+                if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.z,0.0_prt,0.0_prt})) {
                     p.id() = -1;
                     continue;
                 }
 #endif
                 // Lab-frame simulation
-                // If the particle is not within the species's
-                // xmin, xmax, ymin, ymax, zmin, zmax, go to
-                // the next generated particle.
-                if (!inj_pos->insideBounds(ppos.x, ppos.y, ppos.z)) {
+                // If the particle's initial position is not within or on the species's
+                // xmin, xmax, ymin, ymax, zmin, zmax, go to the next generated particle.
+                if (!inj_pos->insideBoundsInclusive(ppos.x, ppos.y, ppos.z)) {
                     p.id() = -1;
                     continue;
                 }

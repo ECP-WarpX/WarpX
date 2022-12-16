@@ -463,6 +463,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 WarpX::load_balance_costs_update_algo);
         }
     } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+        // jx_fab, jy_fab and jz_fab are Vay currents (D), not physical currents (j)
         if        (WarpX::nox == 1){
             doVayDepositionShapeN<1>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,

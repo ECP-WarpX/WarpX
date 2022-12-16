@@ -125,9 +125,9 @@ WarpX::Evolve (int numsteps)
                 // Not called at each iteration, so exchange all guard cells
                 FillBoundaryE(guard_cells.ng_alloc_EB);
                 FillBoundaryB(guard_cells.ng_alloc_EB);
-                UpdateAuxilaryData();
-                FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
+            UpdateAuxilaryData();
+            FillBoundaryAux(guard_cells.ng_UpdateAux);
             // on first step, push p by -0.5*dt
             for (int lev = 0; lev <= finest_level; ++lev)
             {
@@ -154,9 +154,9 @@ WarpX::Evolve (int numsteps)
                 // TODO Remove call to FillBoundaryAux before UpdateAuxilaryData?
                 if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD)
                     FillBoundaryAux(guard_cells.ng_UpdateAux);
-                UpdateAuxilaryData();
-                FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
+            UpdateAuxilaryData();
+            FillBoundaryAux(guard_cells.ng_UpdateAux);
         }
 
         // Run multi-physics modules:

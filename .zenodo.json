@@ -181,6 +181,7 @@
     ],
     "contributors": [
       {
+        "type": "Other",
         "affiliation": "Lawrence Berkeley National Laboratory",
         "name": "Weber, Gunther H.",
         "orcid": "0000-0002-1794-1398"
