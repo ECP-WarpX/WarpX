@@ -34,28 +34,22 @@ namespace MagnetostaticSolver {
      */
     class EBCalcBfromVectorPotentialPerLevel {
       private:
-        const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& m_e_field;
         const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& m_b_field;
         const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& m_grad_buf_e_stag;
         const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& m_grad_buf_b_stag;
         const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& m_A;
-        const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& m_A_old;
         const amrex::Real m_dt;
 
       public:
-        EBCalcBfromVectorPotentialPerLevel(const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& e_field,
-                                           const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& b_field,
+        EBCalcBfromVectorPotentialPerLevel(const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& b_field,
                                            const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& grad_buf_e_stag,
                                            const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& grad_buf_b_stag,
                                            const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& A,
-                                           const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3>>& A_old,
                                            const amrex::Real dt)
-                : m_e_field(e_field),
-                  m_b_field(b_field),
+                : m_b_field(b_field),
                   m_grad_buf_e_stag(grad_buf_e_stag),
                   m_grad_buf_b_stag(grad_buf_b_stag),
                   m_A(A),
-                  m_A_old(A_old),
                   m_dt(dt)
         {}
 
@@ -63,7 +57,6 @@ namespace MagnetostaticSolver {
 
         // Function to perform interpolation from E-staggered fields to B-staggered fields
         void doInterp(const std::unique_ptr<amrex::MultiFab> &src, const std::unique_ptr<amrex::MultiFab> &dst);
-        void doEfieldCalc(const int lev);
     };
 } // namespace MagnetostaticSolver
 

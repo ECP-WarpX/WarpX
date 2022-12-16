@@ -161,7 +161,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
     // scale rho appropriately; also determine if rho is zero everywhere
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
-        rho[lev]->mult(-1._rt/PhysConst::ep0); // Unscaled below
+        rho[lev]->mult(-1._rt/PhysConst::ep0); // TODO: when do we "un-multiply" this? We need to document this side-effect!
         max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
@@ -310,9 +310,6 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             }
 
         }
-
-        // Unscale rho
-        rho[lev]->mult(-1._rt*PhysConst::ep0);
 
         // Run additional operations, such as calculation of the E field for embedded boundaries
         if constexpr (!std::is_same<T_PostPhiCalculationFunctor, std::nullopt_t>::value)

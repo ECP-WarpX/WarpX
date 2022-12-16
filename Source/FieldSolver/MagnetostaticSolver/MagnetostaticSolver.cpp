@@ -162,12 +162,10 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
     }
 
 #if defined(AMREX_USE_EB)
-    std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation({Efield_fp,
-                                                                                               Bfield_fp,
+    std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation({Bfield_fp,
                                                                                                vector_potential_grad_buf_e_stag,
                                                                                                vector_potential_grad_buf_b_stag,
                                                                                                vector_potential_fp_nodal,
-                                                                                               vector_potential_old_fp_nodal,
                                                                                                dt[0]});
 
     amrex::Vector<amrex::EBFArrayBoxFactory const *> factories;
@@ -351,9 +349,6 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
     bcs_set = true;
 }
 
-
-
-
 void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const std::unique_ptr<amrex::MultiFab> &src,
                                                                        const std::unique_ptr<amrex::MultiFab> &dst)
 {
@@ -399,70 +394,6 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const std
     ablastr::utils::communication::FillBoundary(*dst,
                                                 dst->nGrowVect(),
                                                 WarpX::do_single_precision_comms);
-}
-
-void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doEfieldCalc(const int lev)
-{
-    amrex::Real c = PhysConst::c;
-    amrex::Real cdti = 1_rt/(c*m_dt);
-
-    for (int adim=0; adim<3; adim++)
-    {
-        doInterp(m_A[lev][adim], m_grad_buf_e_stag[lev][adim]);
-
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-        for (MFIter mfi(*(m_e_field[lev][adim]), TilingIfNotGPU()); mfi.isValid(); ++mfi)
-        {
-            Array4<amrex::Real> const& Efield_arr = m_e_field[lev][adim]->array(mfi);
-            Array4<amrex::Real const> const& A_arr = m_grad_buf_e_stag[lev][adim]->const_array(mfi);
-
-            Box bx = mfi.growntilebox(m_e_field[lev][adim]->nGrowVect());
-
-            ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-            {
-                // Calculate E-field contribution (-1/c dA/dt)
-                Efield_arr(j,k,l) -= A_arr(j,k,l)*cdti;
-            });
-        }
-
-        doInterp(m_A_old[lev][adim], m_grad_buf_e_stag[lev][adim]);
-
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-        for (MFIter mfi(*(m_e_field[lev][adim]), TilingIfNotGPU()); mfi.isValid(); ++mfi)
-        {
-            Array4<amrex::Real> const& Efield_arr = m_e_field[lev][adim]->array(mfi);
-            Array4<amrex::Real const> const& A_old_arr = m_grad_buf_e_stag[lev][adim]->const_array(mfi);
-
-            Box bx = mfi.growntilebox(m_e_field[lev][adim]->nGrowVect());
-
-            ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-            {
-                // Calculate E-field contribution (-1/c dA/dt)
-                Efield_arr(j,k,l) += A_old_arr(j,k,l)*cdti;
-            });
-        }
-
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-        for (MFIter mfi(*(m_A_old[lev][adim]), TilingIfNotGPU()); mfi.isValid(); ++mfi)
-        {
-            Array4<amrex::Real const> const& A_arr = m_A[lev][adim]->const_array(mfi);
-            Array4<amrex::Real> const& A_old_arr = m_A_old[lev][adim]->array(mfi);
-
-            Box bx = mfi.growntilebox(m_A_old[lev][adim]->nGrowVect());
-
-            ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-            {
-                // Update old buffer
-                A_old_arr(j,k,l) = A_arr(j,k,l);
-            });
-        }
-    }
 }
 
 void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::Array<std::unique_ptr<amrex::MLMG>,3> & mlmg, int const lev)
@@ -526,17 +457,9 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
     m_grad_buf_b_stag[lev][1]->mult(-1._rt,2);
     MultiFab::Add(*(m_b_field[lev][1]), *(m_grad_buf_b_stag[lev][1]), 0, 0, 1, m_b_field[lev][1]->nGrowVect() );
 
-    // Additionally compute the -1/c dA/dt term and add to Efield
-    this->doEfieldCalc(lev);
-
-    // Synchronize E & B fields
+    // Synchronize B fields
     for (int idim = 0; idim < 3; idim++)
     {
-        // Synchronize the ghost cells, do halo exchange
-        ablastr::utils::communication::FillBoundary(*(m_e_field[lev][idim]),
-                                                    m_e_field[lev][idim]->nGrowVect(),
-                                                    WarpX::do_single_precision_comms);
-
         // Synchronize the ghost cells, do halo exchange
         ablastr::utils::communication::FillBoundary(*(m_b_field[lev][idim]),
                                                     m_b_field[lev][idim]->nGrowVect(),

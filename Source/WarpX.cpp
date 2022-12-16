@@ -287,7 +287,6 @@ WarpX::WarpX ()
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
     {
         vector_potential_fp_nodal.resize(nlevs_max);
-        vector_potential_old_fp_nodal.resize(nlevs_max);
         vector_potential_grad_buf_e_stag.resize(nlevs_max);
         vector_potential_grad_buf_b_stag.resize(nlevs_max);
     }
@@ -1675,7 +1674,6 @@ WarpX::ClearLevel (int lev)
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
         {
             vector_potential_fp_nodal[lev][i].reset();
-            vector_potential_old_fp_nodal[lev][i].reset();
             vector_potential_grad_buf_e_stag[lev][i].reset();
             vector_potential_grad_buf_b_stag[lev][i].reset();
         }
@@ -1936,13 +1934,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             dm, ncomps, ngRho, tag("vector_potential_fp_nodal[y]"), 0.0_rt);
         AllocInitMultiFab(vector_potential_fp_nodal[lev][2], amrex::convert(ba, rho_nodal_flag),
             dm, ncomps, ngRho, tag("vector_potential_fp_nodal[z]"), 0.0_rt);
-
-        AllocInitMultiFab(vector_potential_old_fp_nodal[lev][0], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngRho, tag("vector_potential_old_fp_nodal[x]"), 0.0_rt);
-        AllocInitMultiFab(vector_potential_old_fp_nodal[lev][1], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngRho, tag("vector_potential_old_fp_nodal[y]"), 0.0_rt);
-        AllocInitMultiFab(vector_potential_old_fp_nodal[lev][2], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngRho, tag("vector_potential_old_fp_nodal[z]"), 0.0_rt);
 
         AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][0], amrex::convert(ba, Ex_nodal_flag),
             dm, ncomps, ngEB, tag("vector_potential_grad_buf_e_stag[x]"), 0.0_rt);
