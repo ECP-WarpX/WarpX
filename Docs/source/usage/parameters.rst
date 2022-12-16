@@ -467,13 +467,23 @@ Distribution across MPI ranks and parallelization
     Particle weight factor used in `Heuristic` strategy for costs update; if running on GPU,
     the particle weight is set to a value determined from single-GPU tests on Summit,
     depending on the choice of solver (FDTD or PSATD) and order of the particle shape.
-    If running on CPU, the default value is `0.9`.
+    If running on CPU, the default value is `0.9`. If running on GPU, the default value is
+
+    |      | Particle shape factor ||
+    |      | 1 | 2 | 3 |
+    | FDTD/CKC | 0.599 | 0.732 | 0.855 |
+    | PSATD | 0.425 | 0.595 | 0.75 |
 
 * ``algo.costs_heuristic_cells_wt`` (`float`) optional
     Cell weight factor used in `Heuristic` strategy for costs update; if running on GPU,
     the cell weight is set to a value determined from single-GPU tests on Summit,
     depending on the choice of solver (FDTD or PSATD) and order of the particle shape.
-    If running on CPU, the default value is `0.1`.
+    If running on CPU, the default value is `0.1`. If running on GPU, the default value is
+
+    |      | Particle shape factor ||
+    |      | 1 | 2 | 3 |
+    | FDTD/CKC | 0.401 | 0.268 | 0.145 |
+    | PSATD | 0.575 | 0.405 | 0.25 |
 
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
