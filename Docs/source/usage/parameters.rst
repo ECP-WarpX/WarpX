@@ -546,6 +546,10 @@ Particle initialization
     The name of each species. This is then used in the rest of the input deck ;
     in this documentation we use `<species_name>` as a placeholder.
 
+* ``particles.photon_species`` (`strings`, separated by spaces)
+    List of species that are photon species, if any. 
+    **This is required when compiling with QED=TRUE.**
+
 * ``particles.use_fdtd_nci_corr`` (`0` or `1`) optional (default `0`)
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
     Not currently available in the RZ configuration.
@@ -2637,7 +2641,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
         * ``qed_qs.tab_em_frac_min`` (`float`): minimum value to be considered for the second axis of lookup table 2
 
-        * ``qed_bw.save_table_in`` (`string`): where to save the lookup table
+        * ``qed_qs.save_table_in`` (`string`): where to save the lookup table
 
     * ``load``: a lookup table is loaded from a pre-generated binary file. The following parameter
       must be specified:
