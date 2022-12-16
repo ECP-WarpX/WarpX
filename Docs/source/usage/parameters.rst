@@ -547,7 +547,7 @@ Particle initialization
     in this documentation we use `<species_name>` as a placeholder.
 
 * ``particles.photon_species`` (`strings`, separated by spaces)
-    List of species that are photon species, if any. 
+    List of species that are photon species, if any.
     **This is required when compiling with QED=TRUE.**
 
 * ``particles.use_fdtd_nci_corr`` (`0` or `1`) optional (default `0`)
