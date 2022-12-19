@@ -124,7 +124,6 @@ void BTDiagnostics::DerivedInitData ()
     }
     m_particles_buffer.resize(m_num_buffers);
     m_totalParticles_flushed_already.resize(m_num_buffers);
-    m_totalParticles_in_buffer.resize(m_num_buffers);
 
     // check that simulation can fill all BTD snapshots
     const int lev = 0;
@@ -1051,7 +1050,6 @@ BTDiagnostics::Flush (int i_buffer)
     // if particles are selected for output then update and reset counters
     if (m_output_species_names.size() > 0) {
         UpdateTotalParticlesFlushed(i_buffer);
-        ResetTotalParticlesInBuffer(i_buffer);
         ClearParticleBuffer(i_buffer);
     }
     // Setting hi k-index for the next buffer, such that, the index is one less than the lo-index of previous buffer
@@ -1360,10 +1358,8 @@ BTDiagnostics::InitializeParticleBuffer ()
     for (int i = 0; i < m_num_buffers; ++i) {
         m_particles_buffer[i].resize(m_output_species_names.size());
         m_totalParticles_flushed_already[i].resize(m_output_species_names.size());
-        m_totalParticles_in_buffer[i].resize(m_output_species_names.size());
         for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
             m_totalParticles_flushed_already[i][isp] = 0;
-            m_totalParticles_in_buffer[i][isp] = 0;
             m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(WarpX::GetInstance().GetParGDB());
             const int idx = mpc.getSpeciesID(m_output_species_names[isp]);
             m_output_species[i].push_back(ParticleDiag(m_diag_name,
@@ -1386,21 +1382,19 @@ BTDiagnostics::PrepareParticleDataForOutput()
                 // Check if the zslice is in domain
                 bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
                 if (ZSliceInDomain) {
-                    if ( m_totalParticles_in_buffer[i_buffer][i] == 0) {
-                        if (!m_do_back_transformed_fields || m_varnames_fields.size()==0) {
-                            if ( m_buffer_flush_counter[i_buffer] == 0) {
-                                DefineSnapshotGeometry(i_buffer, lev);
-                            }
-                            DefineFieldBufferMultiFab(i_buffer, lev);
+                    if (!m_do_back_transformed_fields || m_varnames_fields.size()==0) {
+                        if ( m_buffer_flush_counter[i_buffer] == 0) {
+                            DefineSnapshotGeometry(i_buffer, lev);
                         }
-                        amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
-                        amrex::BoxArray buffer_ba( particle_buffer_box );
-                        buffer_ba.maxSize(m_max_box_size);
-                        amrex::DistributionMapping buffer_dmap(buffer_ba);
-                        m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
-                        m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);
-                        m_particles_buffer[i_buffer][i]->SetParticleGeometry(lev, m_geom_snapshot[i_buffer][lev]);
+                        DefineFieldBufferMultiFab(i_buffer, lev);
                     }
+                    amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
+                    amrex::BoxArray buffer_ba( particle_buffer_box );
+                    buffer_ba.maxSize(m_max_box_size);
+                    amrex::DistributionMapping buffer_dmap(buffer_ba);
+                    m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
+                    m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);
+                    m_particles_buffer[i_buffer][i]->SetParticleGeometry(lev, m_geom_snapshot[i_buffer][lev]);
                 }
                 m_all_particle_functors[i]->PrepareFunctorData (
                                              i_buffer, ZSliceInDomain, m_old_z_boost[i_buffer],
@@ -1416,14 +1410,6 @@ BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
 {
     for (int isp = 0; isp < m_totalParticles_flushed_already[i_buffer].size(); ++isp) {
         m_totalParticles_flushed_already[i_buffer][isp] += m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles();
-    }
-}
-
-void
-BTDiagnostics::ResetTotalParticlesInBuffer(int i_buffer)
-{
-    for (int isp = 0; isp < m_totalParticles_in_buffer[i_buffer].size(); ++isp) {
-        m_totalParticles_in_buffer[i_buffer][isp] = 0;
     }
 }
 
