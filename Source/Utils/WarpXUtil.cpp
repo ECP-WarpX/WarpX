@@ -234,13 +234,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
         const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev, 0._rt)[WARPX_ZINDEX];
         amrex::Real dz  = WarpX::CellSize(lev)[WARPX_ZINDEX];
         // Get box lower index in the z direction
-#if defined(WARPX_DIM_3D)
-        const int lo_ind = bx.loVect()[2];
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        const int lo_ind = bx.loVect()[1];
-#else
-        const int lo_ind = bx.loVect()[0];
-#endif
+        const int lo_ind = bx.loVect()[WARPX_ZINDEX];
         // Check if box intersect with [zmin, zmax]
         if ( (zmax>zmin_box && zmin<=zmax_box) ){
             Array4<Real> arr = mf[mfi].array();
