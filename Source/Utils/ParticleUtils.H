@@ -60,6 +60,7 @@ namespace ParticleUtils {
      *
      * @param[in] u2 square of particle speed (i.e. u dot u where u = gamma*v)
      * @param[in] m, M mass of projectile and target, respectively
+     * @param[out] gamma relativistic factor of the particle
      * @param[out] energy particle energy in eV
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -82,7 +83,7 @@ namespace ParticleUtils {
      * \brief Perform a Lorentz transformation of the given velocity
      * to a frame moving with velocity (Vx, Vy, Vz) relative to the present one.
      *
-     * @param[in/out] ux,uy,uz components of velocity vector in the current
+     * @param[in,out] ux,uy,uz components of velocity vector in the current
                       frame - importantly these quantities are gamma * velocity
      * @param[in] Vx,Vy,Vz velocity of the new frame relative to the current one,
                       NOT gamma*velocity!
@@ -150,7 +151,7 @@ namespace ParticleUtils {
      * random velocity vector with given magnitude. This is used in isotropic
      * collision events.
      *
-     * @param[in/out] ux, uy, uz colliding particle's velocity
+     * @param[in,out] ux, uy, uz colliding particle's velocity
      * @param[in] vp velocity magnitude of the colliding particle after collision.
      * @param[in] engine the random-engine
      */

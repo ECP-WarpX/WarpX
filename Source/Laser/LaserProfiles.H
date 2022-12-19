@@ -58,7 +58,6 @@ public:
      * member variables of the laser profile class.
      *
      * @param[in] ppl should be amrex::ParmParse(laser_name)
-     * @param[in] ppc should be amrex::ParmParse("my_constants")
      * @param[in] params common laser profile parameters
      */
     virtual void

@@ -327,13 +327,13 @@ public:
      * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
      * interface
      *
-     * \param mf[out] The MultiFab unique pointer to be allocated
-     * \param ba[in] The BoxArray describing the MultiFab
-     * \param dm[in] The DistributionMapping describing the MultiFab
-     * \param ncomp[in] The number of components in the MultiFab
-     * \param ngrow[in] The number of guard cells in the MultiFab
-     * \param name[in] The name of the MultiFab to use in the map
-     * \param initial_value[in] The optional initial value
+     * \param[out] mf The MultiFab unique pointer to be allocated
+     * \param[in] ba The BoxArray describing the MultiFab
+     * \param[in] dm The DistributionMapping describing the MultiFab
+     * \param[in] ncomp The number of components in the MultiFab
+     * \param[in] ngrow The number of guard cells in the MultiFab
+     * \param[in] name The name of the MultiFab to use in the map
+     * \param[in] initial_value The optional initial value
      */
     static void AllocInitMultiFab (
         std::unique_ptr<amrex::MultiFab>& mf,
@@ -350,13 +350,13 @@ public:
      * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
      * interface
      *
-     * \param mf[out] The iMultiFab unique pointer to be allocated
-     * \param ba[in] The BoxArray describing the iMultiFab
-     * \param dm[in] The DistributionMapping describing the iMultiFab
-     * \param ncomp[in] The number of components in the iMultiFab
-     * \param ngrow[in] The number of guard cells in the iMultiFab
-     * \param name[in] The name of the iMultiFab to use in the map
-     * \param initial_value[in] The optional initial value
+     * \param[out] mf The iMultiFab unique pointer to be allocated
+     * \param[in] ba The BoxArray describing the iMultiFab
+     * \param[in] dm The DistributionMapping describing the iMultiFab
+     * \param[in] ncomp The number of components in the iMultiFab
+     * \param[in] ngrow The number of guard cells in the iMultiFab
+     * \param[in] name The name of the iMultiFab to use in the map
+     * \param[in] initial_value The optional initial value
      */
     static void AllocInitMultiFab (
         std::unique_ptr<amrex::iMultiFab>& mf,
@@ -370,11 +370,12 @@ public:
     /**
      * \brief
      * Create an alias of a MultiFab, adding the alias to the MultiFab map
-     * \param mf[out] The MultiFab to create
-     * \param mf_to_alias[in] The MultiFab to alias
-     * \param scomp[in] The starting component to be aliased
-     * \param ncomp[in] The number of components to alias
-     * \param name[in] The name of the MultiFab to use in the map
+     * \param[out] mf The MultiFab to create
+     * \param[in] mf_to_alias The MultiFab to alias
+     * \param[in] scomp The starting component to be aliased
+     * \param[in] ncomp The number of components to alias
+     * \param[in] name The name of the MultiFab to use in the map
+     * \param[in] initial_value optional initial value for MultiFab
      */
     static void AliasInitMultiFab (
         std::unique_ptr<amrex::MultiFab>& mf,
@@ -394,7 +395,7 @@ public:
      * \brief
      * Add the MultiFab to the map of MultiFabs
      * \param name The name of the MultiFab use to reference the MultiFab
-     * \parame mf The MultiFab to be added to the map (via a pointer to it)
+     * \param mf The MultiFab to be added to the map (via a pointer to it)
      */
     static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::MultiFab>& mf) {
         multifab_map[name] = mf.get();
@@ -404,7 +405,7 @@ public:
      * \brief
      * Add the iMultiFab to the map of MultiFabs
      * \param name The name of the iMultiFab use to reference the iMultiFab
-     * \parame mf The iMultiFab to be added to the map (via a pointer to it)
+     * \param mf The iMultiFab to be added to the map (via a pointer to it)
      */
     static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::iMultiFab>& mf) {
         imultifab_map[name] = mf.get();
@@ -593,7 +594,7 @@ public:
     /** apply QED correction on electric field for level lev and patch type patch_type
      *
      * \param lev mesh refinement level
-     * \param dt patch_type which MR patch: PatchType::fine or PatchType::coarse
+     * \param patch_type which MR patch: PatchType::fine or PatchType::coarse
      * \param dt time step
      */
     void Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real dt);
@@ -896,16 +897,16 @@ public:
      * on the staggered yee-grid or cell-centered grid, in the interior cells
      * and guard cells.
      *
-     * \param[in] mfx, x-component of the field to be initialized
-     * \param[in] mfy, y-component of the field to be initialized
-     * \param[in] mfz, z-component of the field to be initialized
-     * \param[in] xfield_parser, parser function to initialize x-field
-     * \param[in] yfield_parser, parser function to initialize y-field
-     * \param[in] zfield_parser, parser function to initialize z-field
-     * \param[in] edge_lengths, edge lengths information
-     * \param[in] face_areas, face areas information
-     * \param[in] field, flag indicating which field is being initialized ('E' for electric, 'B' for magnetic)
-     * \param[in] lev, level of the Multifabs that is initialized
+     * \param[in] mfx x-component of the field to be initialized
+     * \param[in] mfy y-component of the field to be initialized
+     * \param[in] mfz z-component of the field to be initialized
+     * \param[in] xfield_parser parser function to initialize x-field
+     * \param[in] yfield_parser parser function to initialize y-field
+     * \param[in] zfield_parser parser function to initialize z-field
+     * \param[in] edge_lengths edge lengths information
+     * \param[in] face_areas face areas information
+     * \param[in] field flag indicating which field is being initialized ('E' for electric, 'B' for magnetic)
+     * \param[in] lev level of the Multifabs that is initialized
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
@@ -923,7 +924,7 @@ public:
      * EBs such as edge lengths, face areas, distance to EB, etc. It also
      * appropriately communicates EB data to guard cells.
      *
-     * \param[in] lev, level of the Multifabs that is initialized
+     * \param[in] lev level of the Multifabs that is initialized
      */
     void InitializeEBGridData(int lev);
 
@@ -1248,7 +1249,7 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
 
     /** EB: for every mesh face flag_info_face contains a:
-     *           * 0 if the face needs to be extended
+     *          * 0 if the face needs to be extended
      *          * 1 if the face is large enough to lend area to other faces
      *          * 2 if the face is actually intruded by other face
      * It is initialized in WarpX::MarkCells

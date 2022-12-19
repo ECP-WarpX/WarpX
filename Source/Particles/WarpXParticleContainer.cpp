@@ -144,9 +144,9 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
                                        int n, const amrex::ParticleReal* x,
                                        const amrex::ParticleReal* y,
                                        const amrex::ParticleReal* z,
-                                       const amrex::ParticleReal* vx,
-                                       const amrex::ParticleReal* vy,
-                                       const amrex::ParticleReal* vz,
+                                       const amrex::ParticleReal* ux,
+                                       const amrex::ParticleReal* uy,
+                                       const amrex::ParticleReal* uz,
                                        const int nattr_real, const amrex::ParticleReal* attr_real,
                                        const int nattr_int, const int* attr_int,
                                        int uniqueparticles, amrex::Long id)
@@ -226,9 +226,9 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     if (np > 0)
     {
         pinned_tile.push_back_real(PIdx::w , weight.data(), weight.data() + np);
-        pinned_tile.push_back_real(PIdx::ux,     vx + ibegin,     vx + iend);
-        pinned_tile.push_back_real(PIdx::uy,     vy + ibegin,     vy + iend);
-        pinned_tile.push_back_real(PIdx::uz,     vz + ibegin,     vz + iend);
+        pinned_tile.push_back_real(PIdx::ux,     ux + ibegin,     ux + iend);
+        pinned_tile.push_back_real(PIdx::uy,     uy + ibegin,     uy + iend);
+        pinned_tile.push_back_real(PIdx::uz,     uz + ibegin,     uz + iend);
 
         if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
             DefineAndReturnParticleTile(0, 0, 0);

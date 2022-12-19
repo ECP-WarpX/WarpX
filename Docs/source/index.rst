@@ -98,7 +98,6 @@ Data Analysis
    dataanalysis/visit
    dataanalysis/visualpic
    dataanalysis/picviewer
-   dataanalysis/backtransformed_diags
    dataanalysis/reduced_diags
 
 Theory

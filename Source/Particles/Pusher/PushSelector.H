@@ -33,7 +33,7 @@
  * \param Bx, By, Bz                Magnetic field on particles.
  * \param ion_lev                   Ionization level of this particle (0 if ioniziation not on)
  * \param m                         Mass of this species.
- * \param q                         Charge of this species.
+ * \param a_q                       Charge of this species.
  * \param pusher_algo               0: Boris, 1: Vay, 2: HigueraCary
  * \param do_crr                    Whether to do the classical radiation reaction
  * \param do_copy                   Whether to copy the old x and u for the BTD
