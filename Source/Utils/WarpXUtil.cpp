@@ -230,9 +230,9 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
     for(amrex::MFIter mfi(mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi){
         const amrex::Box& bx = mfi.tilebox();
         // Get box lower and upper physical z bound, and dz
-        const amrex::Real zmin_box = WarpX::LowerCorner(bx, lev, 0._rt)[2];
-        const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev, 0._rt)[2];
-        amrex::Real dz  = WarpX::CellSize(lev)[2];
+        const amrex::Real zmin_box = WarpX::LowerCorner(bx, lev, 0._rt)[WARPX_ZINDEX];
+        const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev, 0._rt)[WARPX_ZINDEX];
+        amrex::Real dz  = WarpX::CellSize(lev)[WARPX_ZINDEX];
         // Get box lower index in the z direction
 #if defined(WARPX_DIM_3D)
         const int lo_ind = bx.loVect()[2];
