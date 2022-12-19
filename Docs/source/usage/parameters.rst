@@ -1397,7 +1397,7 @@ WarpX provides several particle collision models, using varying degrees of appro
     in this documentation we use ``<collision_name>`` as a placeholder.
 
 * ``<collision_name>.type`` (`string`) optional
-    The type of collsion. The types implemented are:
+    The type of collision. The types implemented are:
 
     - ``pairwisecoulomb`` for pairwise Coulomb collisions, the default if unspecified.
       This provides a pair-wise relativistic elastic Monte Carlo binary Coulomb collision model,
@@ -1405,7 +1405,7 @@ WarpX provides several particle collision models, using varying degrees of appro
       When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
       since the current implementation of the collision module assumes axisymmetry.
     - ``nuclearfusion`` for fusion reactions.
-      This implements the pair-wise fusion model by `Higginson et al. (JCP 388, 439-453, 2019) <https://www.sciencedirect.com/science/article/pii/S0021999119302037>`_.
+      This implements the pair-wise fusion model by `Higginson et al. (JCP 388, 439-453, 2019) <https://doi.org/10.1016/j.jcp.2019.03.020>`_.
       Currently, WarpX supports deuterium-deuterium, deuterium-tritium, deuterium-helium and proton-boron fusion.
       When initializing the reactant and product species, you need to use ``species_type`` (see the documentation
       for this parameter), so that WarpX can identify the type of reaction to use.
@@ -1455,7 +1455,7 @@ WarpX provides several particle collision models, using varying degrees of appro
     More specifically, in a fusion reaction between two macroparticles with weight ``w_1`` and ``w_2``,
     the weight of the product macroparticles will be ``min(w_1,w_2)/fusion_multipler``.
     (And the weights of the reactant macroparticles are reduced correspondingly after the reaction.)
-    See `Higginson et al. (JCP 388, 439-453, 2019) <https://www.sciencedirect.com/science/article/pii/S0021999119302037>`_
+    See `Higginson et al. (JCP 388, 439-453, 2019) <https://doi.org/10.1016/j.jcp.2019.03.020>`_
     for more details. The default value of ``fusion_multiplier`` is 1.
 
 * ``<collision_name>.fusion_probability_threshold``(`float`) optional.
