@@ -2777,6 +2777,10 @@ When developing, testing and :ref:`debugging WarpX <debugging_warpx>`, the follo
     When set to ``1``, this option causes simulation to fail *after* its completion if there were unused parameters.
     It is mainly intended for continuous integration and automated testing to check that all tests and inputs are adapted to API changes.
 
+* ``amrex.use_profiler_syncs`` (``0`` or ``1``; default is ``0`` for false)
+    Adds a synchronization at the start of communication, so any load balance will be caught there (the timer is called ``SyncBeforeComms``), then the comm operation will run.
+    This will slow down the run.
+
 * ``warpx.serialize_initial_conditions`` (`0` or `1`) optional (default `0`)
     Serialize the initial conditions for reproducible testing, e.g, in our continuous integration tests.
     Mainly whether or not to use OpenMP threading for particle initialization.
