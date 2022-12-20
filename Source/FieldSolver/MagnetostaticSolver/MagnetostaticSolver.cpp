@@ -61,6 +61,9 @@ WarpX::ComputeCurrentDensityField()
     WARPX_PROFILE("WarpX::ComputeCurrentDensityField");
     // Fields have been reset in Electrostatic solver for this time step, these fields
     // are added into the E & B fields after electrostatic solve
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(this->max_level == 0, "Magnetostatic solver not implemented with mesh refinement.");
+
     AddCurrentDensityFieldLabFrame();
 }
 
@@ -157,9 +160,7 @@ WarpX::computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<
 #if defined(AMREX_USE_EB)
     std::optional<MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel> post_A_calculation({Bfield_fp,
                                                                                                vector_potential_grad_buf_e_stag,
-                                                                                               vector_potential_grad_buf_b_stag,
-                                                                                               vector_potential_fp_nodal,
-                                                                                               dt[0]});
+                                                                                               vector_potential_grad_buf_b_stag});
 
     amrex::Vector<amrex::EBFArrayBoxFactory const *> factories;
     for (int lev = 0; lev <= finest_level; ++lev) {
@@ -221,7 +222,7 @@ WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::
                 // Extract the vector potential
                 auto A_arr = A[lev][adim]->array(mfi);
                 // Extract tileboxes for which to loop
-                const Box& tb  = mfi.tilebox( A[lev][adim]->ixType().toIntVect(), A[lev][adim]->nGrowVect() );
+                const Box& tb  = mfi.tilebox( A[lev][adim]->ixType().toIntVect());
 
                 // loop over dimensions
                 for (int idim=0; idim<AMREX_SPACEDIM; idim++){
@@ -419,7 +420,7 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
     // Interpolate dAx/dy to Bz grid buffer, then subtract from Bz
     this->doInterp(m_grad_buf_e_stag[lev][1],
                    m_grad_buf_b_stag[lev][2]);
-    m_grad_buf_b_stag[lev][2]->mult(-1._rt,2);
+    m_grad_buf_b_stag[lev][2]->mult(-1._rt);
     MultiFab::Add(*(m_b_field[lev][2]), *(m_grad_buf_b_stag[lev][2]), 0, 0, 1, m_b_field[lev][2]->nGrowVect() );
 
     // This will grab the gradient values for Ay
@@ -433,7 +434,7 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
     // Interpolate dAy/dz to Bx grid buffer, then subtract from Bx
     this->doInterp(m_grad_buf_e_stag[lev][2],
                    m_grad_buf_b_stag[lev][0]);
-    m_grad_buf_b_stag[lev][0]->mult(-1._rt,2);
+    m_grad_buf_b_stag[lev][0]->mult(-1._rt);
     MultiFab::Add(*(m_b_field[lev][0]), *(m_grad_buf_b_stag[lev][0]), 0, 0, 1, m_b_field[lev][0]->nGrowVect() );
 
     // This will grab the gradient values for Az
@@ -447,7 +448,7 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
     // Interpolate dAz/dx to By grid buffer, then subtract from By
     this->doInterp(m_grad_buf_e_stag[lev][0],
                    m_grad_buf_b_stag[lev][1]);
-    m_grad_buf_b_stag[lev][1]->mult(-1._rt,2);
+    m_grad_buf_b_stag[lev][1]->mult(-1._rt);
     MultiFab::Add(*(m_b_field[lev][1]), *(m_grad_buf_b_stag[lev][1]), 0, 0, 1, m_b_field[lev][1]->nGrowVect() );
 
     // Synchronize B fields

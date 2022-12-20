@@ -311,7 +311,7 @@ WarpX::Evolve (int numsteps)
             ComputeSpaceChargeField( reset_fields );
             if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic) {
                 // Call Magnetostatic SOlver to solver for the vector potential A and compute the
-                // B field, as well as the contribution to the E field from time varying A.
+                // B field.  Time varying A contribution to E field is neglected.
                 // This is currently a lab frame calculation.
                 ComputeCurrentDensityField();
             }

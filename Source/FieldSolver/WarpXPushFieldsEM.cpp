@@ -1252,7 +1252,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         const int irmin = lo.x;
 
         // For ishift, 1 means cell centered, 0 means node centered
-        int const ishift_r = (rmint > rmin ? 1 : 0);
+        int const ishift_r = (rminr > rmin ? 1 : 0);
         int const ishift_t = (rmint > rmin ? 1 : 0);
         int const ishift_z = (rminz > rmin ? 1 : 0);
 

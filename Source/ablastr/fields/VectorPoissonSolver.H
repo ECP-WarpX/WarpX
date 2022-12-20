@@ -13,6 +13,7 @@
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
+#include <ablastr/fields/PoissonSolver.H>
 
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
@@ -122,7 +123,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
     amrex::Real max_comp_J = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
         for (int adim=0; adim<3; adim++) {
-            curr[lev][adim]->mult(-1._rt*PhysConst::mu0,2); // Unscaled below
+            curr[lev][adim]->mult(-1._rt*PhysConst::mu0); // Unscaled below
             max_comp_J = amrex::max(max_comp_J, curr[lev][adim]->norm0());
         }
     }
@@ -192,6 +193,13 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
             mlmg[adim]->solve( {A[lev][adim]}, {curr[lev][adim]},
                         relative_tolerance, absolute_tolerance );
 
+            // Synchronize the ghost cells, do halo exchange
+            ablastr::utils::communication::FillBoundary(*A[lev][adim],
+                                                        A[lev][adim]->nGrowVect(),
+                                                        WarpX::do_single_precision_comms,
+                                                        geom[lev].periodicity(),
+                                                        false);
+
             // needed for solving the levels by levels:
             // - coarser level is initial guess for finer level
             // - coarser level provides boundary values for finer level patch
@@ -231,18 +239,16 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
                     amrex::Array4<amrex::Real> const& A_fp_arr = A[lev+1][adim]->array(mfi);
                     amrex::Array4<amrex::Real> const& A_cp_arr = A_cp.array(mfi);
 
-                    amrex::Box const& b = mfi.tilebox(A[lev+1][adim]->ixType().toIntVect());
-                    amrex::ParallelFor( b,
-                                        [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                    {
-                        amrex::mf_nodebilin_interp(i, j, k, 0, A_fp_arr, 0, A_cp_arr, 0, refratio);
-                    });
+                    details::PoissonInterpCPtoFP const interp(A_fp_arr, A_cp_arr, refratio);
+
+                    amrex::Box const b = mfi.tilebox(A[lev + 1][adim]->ixType().toIntVect());
+                    amrex::ParallelFor(b, interp);
                 }
 
             }
 
             // Unscale current
-            curr[lev][adim]->mult(-1._rt/PhysConst::mu0,2);
+            curr[lev][adim]->mult(-1._rt/PhysConst::mu0);
         } // Loop over adim
         // Run additional operations, such as calculation of the B fields for embedded boundaries
         if constexpr (!std::is_same<T_PostACalculationFunctor, std::nullopt_t>::value)

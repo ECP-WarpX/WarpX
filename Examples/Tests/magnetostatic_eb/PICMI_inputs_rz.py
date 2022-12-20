@@ -11,7 +11,7 @@ import scipy.constants as con
 from pywarpx import fields, picmi
 # from pywarpx.Algo import algo
 # from pywarpx.Amrex import amrex
-from pywarpx.WarpX import warpx
+# from pywarpx.WarpX import warpx
 
 GB = 1024**3
 
