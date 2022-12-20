@@ -1,4 +1,7 @@
-# Accelerator lattice
+.. _accelerator_lattice:
+
+Accelerator lattice
+===================
 
 The files in this directory handle the accelerator lattice. These are fields of various types and configurations.
 The lattice is laid out along the z-axis.
@@ -10,7 +13,8 @@ that allow rapidly determining which elements the particles are in.
 
 The classes for each element type are in the subdirectory LatticeElements.
 
-## Host and device classes
+Host and device classes
+-----------------------
 
 The LatticeElementFinder and each of the element types have two classes, one
 that lives on the host and one that can be trivially copied to the device.
@@ -21,7 +25,8 @@ data. The host classes copy the data to the device and maintain the pointers
 to that data on the device. The device level classes grab pointers to the
 appropriate data (on the device) needed when fetching the data for the particles.  
 
-## External fields
+External fields
+---------------
 
 The lattice fields are applied to the particles from the GetExternalEBField
 class. If a lattice is defined, the GetExternalEBField class gets the lattice
@@ -29,7 +34,8 @@ element finder device level instance associated with the grid being operated
 on. The fields are applied from that instance, which calls the "get_field"
 method for each lattice element type that is defined for each particle.  
 
-## Adding new element types
+Adding new element types
+------------------------
 
 A number of places need to be touched when adding a new element types. The
 best method is to look for every place where the "quad" element is referenced
