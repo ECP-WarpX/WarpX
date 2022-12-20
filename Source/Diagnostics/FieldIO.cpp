@@ -7,8 +7,9 @@
  */
 #include "FieldIO.H"
 
-#include "Utils/CoarsenIO.H"
 #include "Utils/TextMsg.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX.H>
 #include <AMReX_IntVect.H>
@@ -183,9 +184,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
     const std::array<std::unique_ptr<MultiFab>,3> &vector_total = vector_field;
 #endif
 
-    CoarsenIO::Coarsen( mf_avg, *(vector_total[0]), dcomp  , 0, 1, ngrow );
-    CoarsenIO::Coarsen( mf_avg, *(vector_total[1]), dcomp+1, 0, 1, ngrow );
-    CoarsenIO::Coarsen( mf_avg, *(vector_total[2]), dcomp+2, 0, 1, ngrow );
+    ablastr::coarsen::sample::Coarsen(mf_avg, *(vector_total[0]), dcomp  , 0, 1, ngrow );
+    ablastr::coarsen::sample::Coarsen(mf_avg, *(vector_total[1]), dcomp + 1, 0, 1, ngrow );
+    ablastr::coarsen::sample::Coarsen(mf_avg, *(vector_total[2]), dcomp + 2, 0, 1, ngrow );
 }
 
 /** \brief Take a MultiFab `scalar_field`
@@ -220,7 +221,7 @@ AverageAndPackScalarField (MultiFab& mf_avg,
         MultiFab::Copy( mf_avg, *scalar_total, 0, dcomp, 1, ngrow);
     } else if ( scalar_total->is_nodal() ){
         // - Fully nodal
-        CoarsenIO::Coarsen( mf_avg, *scalar_total, dcomp, 0, 1, ngrow );
+        ablastr::coarsen::sample::Coarsen(mf_avg, *scalar_total, dcomp, 0, 1, ngrow );
     } else {
         amrex::Abort(Utils::TextMsg::Err("Unknown staggering."));
     }

@@ -40,6 +40,13 @@ cat > romio-hints << EOL
    cb_nodes ${NUM_HOSTS}
 EOL
 
+# OpenMPI file locks are slow and not needed
+# https://github.com/open-mpi/ompi/issues/10053
+export OMPI_MCA_sharedfp=^lockedfile,individual
+
+# HDF5: disable slow locks (promise not to open half-written files)
+export HDF5_USE_FILE_LOCKING=FALSE
+
 # OpenMP: 1 thread per MPI rank
 export OMP_NUM_THREADS=1
 

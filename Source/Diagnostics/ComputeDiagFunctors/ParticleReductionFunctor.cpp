@@ -4,8 +4,9 @@
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/CoarsenIO.H"
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_BLassert.H>
@@ -27,13 +28,15 @@ ParticleReductionFunctor::ParticleReductionFunctor (const amrex::MultiFab* mf_sr
     AMREX_ALWAYS_ASSERT(ncomp == 1);
 
     // Allocate and compile a parser based on the input string fn_str
-    m_map_fn_parser = std::make_unique<amrex::Parser>(makeParser(
-                fn_str, {"x", "y", "z", "ux", "uy", "uz"}));
+    m_map_fn_parser = std::make_unique<amrex::Parser>(
+        utils::parser::makeParser(
+            fn_str, {"x", "y", "z", "ux", "uy", "uz"}));
     m_map_fn = m_map_fn_parser->compile<6>();
     // Do the same for filter function, if it exists
     if (m_do_filter) {
-        m_filter_fn_parser = std::make_unique<amrex::Parser>(makeParser(
-               filter_str, {"x", "y", "z", "ux", "uy", "uz"}));
+        m_filter_fn_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(
+            filter_str, {"x", "y", "z", "ux", "uy", "uz"}));
         m_filter_fn = m_filter_fn_parser->compile<6>();
     }
 }
@@ -151,5 +154,5 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
     }
 
     // Coarsen and interpolate from ppc_mf to the output diagnostic MultiFab, mf_dst.
-    CoarsenIO::Coarsen(mf_dst, red_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
+    ablastr::coarsen::sample::Coarsen(mf_dst, red_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
 }

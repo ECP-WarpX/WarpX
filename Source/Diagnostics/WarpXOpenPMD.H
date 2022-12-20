@@ -106,6 +106,8 @@ public:
    * @param filetype file backend, e.g. "bp" or "h5"
    * @param operator_type openPMD-api backend operator (compressor) for ADIOS2
    * @param operator_parameters openPMD-api backend operator parameters for ADIOS2
+   * @param engine_type ADIOS engine for output
+   * @param engine_parameters map of parameters for the engine
    * @param fieldPMLdirections PML field solver, @see WarpX::getPMLdirections()
    */
   WarpXOpenPMDPlot (openPMD::IterationEncoding ie,
@@ -143,7 +145,7 @@ public:
    *
    * @param varnames variable names in each multifab
    * @param mf multifab for each level
-   * @param geometry for each level
+   * @param geom for each level
    * @param output_levels the finest level to output, <= maxLevel
    * @param iteration the current iteration or reconstructed labframe station number
    * @param time the current simulation time in the lab frame
@@ -262,6 +264,7 @@ private:
    * @param[in] write_int_comp The int attribute ids, from WarpX
    * @param[in] int_comp_names The int attribute names, from WarpX
    * @param[in] np  Number of particles
+   * @param[in] isBTD whether this is a back-transformed diagnostic
    */
   void SetupRealProperties (ParticleContainer const * pc,
                openPMD::ParticleSpecies& currSpecies,

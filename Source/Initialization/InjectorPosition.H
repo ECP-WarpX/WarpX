@@ -175,7 +175,11 @@ struct InjectorPosition
         };
     }
 
-    // bool: whether position specified is within bounds.
+    /* \brief Flags whether the point (x, y, z) is inside the plasma region
+     *        or on the lower boundary
+     * \param x, y, z the point to check
+     * \returns bool flag
+     */
     AMREX_GPU_HOST_DEVICE
     bool
     insideBounds (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
@@ -183,6 +187,20 @@ struct InjectorPosition
         return (x < xmax and x >= xmin and
                 y < ymax and y >= ymin and
                 z < zmax and z >= zmin);
+    }
+
+    /* \brief Flags whether the point (x, y, z) is inside the plasma region
+     *        or on the lower or upper boundary
+     * \param x, y, z the point to check
+     * \returns bool flag
+     */
+    AMREX_GPU_HOST_DEVICE
+    bool
+    insideBoundsInclusive (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    {
+        return (x <= xmax and x >= xmin and
+                y <= ymax and y >= ymin and
+                z <= zmax and z >= zmin);
     }
 
     // bool: whether the region defined by lo and hi overaps with the plasma region

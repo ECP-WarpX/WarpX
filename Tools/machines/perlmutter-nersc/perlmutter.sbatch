@@ -1,51 +1,41 @@
 #!/bin/bash -l
 
-# Copyright 2021 Axel Huebl, Kevin Gott
+# Copyright 2021-2022 Axel Huebl, Kevin Gott
 #
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
 
-#SBATCH -t 01:00:00
-#SBATCH -N 4
+#SBATCH -t 00:10:00
+#SBATCH -N 2
 #SBATCH -J WarpX
 #    note: <proj> must end on _g
 #SBATCH -A <proj>
-# for m3906_g LBNL/AMP users: for large runs, comment in
-##SBATCH -q early_science
+#SBATCH -q regular
 #SBATCH -C gpu
-#SBATCH -c 32
-#SBATCH --ntasks-per-node=4
-#SBATCH --gpus-per-task=1
-#SBATCH --gpu-bind=single:1
+#SBATCH --exclusive
+#SBATCH --gpu-bind=none
+#SBATCH --gpus-per-node=4
 #SBATCH -o WarpX.o%j
 #SBATCH -e WarpX.e%j
 
-# ============
-# -N =                 nodes
-# -n =                 tasks (MPI ranks, usually = G)
-# -G =                 GPUs (full Perlmutter node, 4)
-# -c =                 CPU per task (128 total threads on CPU, 32 per GPU)
-#
-# --ntasks-per-node=   number of tasks (MPI ranks) per node (full node, 4)
-# --gpus-per-task=     number of GPUs per task (MPI rank) (full node, 4)
-# --gpus-per-node=     number of GPUs per node (full node, 4)
-#
-# --gpu-bind=single:1  sets only one GPU to be visible to each MPI rank
-#                         (quiets AMReX init warnings)
-#
-# Recommend using --ntasks-per-node=4, --gpus-per-task=1 and --gpu-bind=single:1,
-# as they are fixed values and allow for easy scaling with less adjustments.
-#
-# ============
-
-# GPU-aware MPI
-export MPICH_GPU_SUPPORT_ENABLED=1
-
+# executable & inputs file or python interpreter & PICMI script here
 EXE=./warpx
-#EXE=../WarpX/build/bin/warpx.3d.MPI.CUDA.DP.OPMD.QED
-#EXE=./main3d.gnu.TPROF.MPI.CUDA.ex
 INPUTS=inputs_small
 
-srun ${EXE} ${INPUTS} \
+# pin to closest NIC to GPU
+export MPICH_OFI_NIC_POLICY=GPU
+
+# threads for OpenMP and threaded compressors per MPI rank
+export SRUN_CPUS_PER_TASK=32
+
+# depends on https://github.com/ECP-WarpX/WarpX/issues/2009
+#GPU_AWARE_MPI="amrex.the_arena_is_managed=0 amrex.use_gpu_aware_mpi=1"
+GPU_AWARE_MPI=""
+
+# CUDA visible devices are ordered inverse to local task IDs
+#   Reference: nvidia-smi topo -m
+srun --cpu-bind=cores bash -c "
+    export CUDA_VISIBLE_DEVICES=\$((3-SLURM_LOCALID));
+    ${EXE} ${INPUTS} ${GPU_AWARE_MPI}" \
   > output.txt

@@ -35,7 +35,8 @@ using namespace amrex;
 
 SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
                                         const bool time_averaging,
-                                        const bool do_multi_J,
+                                        const int J_in_time,
+                                        const int rho_in_time,
                                         const bool dive_cleaning,
                                         const bool divb_cleaning,
                                         const bool pml,
@@ -50,10 +51,8 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
     {
         Ex = c++; Ey = c++; Ez = c++;
         Bx = c++; By = c++; Bz = c++;
-        Jx = c++; Jy = c++; Jz = c++;
 
         // TODO Allocate rho_old and rho_new only when needed
-        rho_old = c++; rho_new = c++;
 
         // Reuse data corresponding to index Bx = 3 to avoid storing extra memory
         divE = 3;
@@ -68,11 +67,24 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
 
         if (divb_cleaning) G = c++;
 
-        if (do_multi_J)
+        if (J_in_time == JInTime::Constant)
         {
-            Jx_new = c++;
-            Jy_new = c++;
-            Jz_new = c++;
+            Jx_mid = c++; Jy_mid = c++; Jz_mid = c++;
+        }
+        else if (J_in_time == JInTime::Linear)
+        {
+            Jx_old = c++; Jy_old = c++; Jz_old = c++;
+            Jx_new = c++; Jy_new = c++; Jz_new = c++;
+        }
+
+        if (rho_in_time == RhoInTime::Constant)
+        {
+            rho_mid = c++;
+        }
+        else if (rho_in_time == RhoInTime::Linear)
+        {
+            rho_old = c++;
+            rho_new = c++;
         }
 
         if (pml_rz)
@@ -310,8 +322,8 @@ void
 SpectralFieldData::BackwardTransform (const int lev,
                                       MultiFab& mf,
                                       const int field_index,
-                                      const int i_comp,
-                                      const amrex::IntVect& fill_guards)
+                                      const amrex::IntVect& fill_guards,
+                                      const int i_comp)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
     bool do_costs = WarpXUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());

@@ -29,6 +29,7 @@
 #include <AMReX_INT.H>
 #include <AMReX_ParIter.H>
 #include <AMReX_Particles.H>
+#include <AMReX_Random.H>
 #include <AMReX_REAL.H>
 #include <AMReX_StructOfArrays.H>
 #include <AMReX_Vector.H>
@@ -136,12 +137,18 @@ public:
 
     virtual void PostRestart () = 0;
 
-    virtual void GetParticleSlice(const int /*direction*/, const amrex::Real /*z_old*/,
-                                  const amrex::Real /*z_new*/, const amrex::Real /*t_boost*/,
-                                  const amrex::Real /*t_lab*/, const amrex::Real /*dt*/,
-                                  DiagnosticParticles& /*diagnostic_particles*/) {}
-
     void AllocData ();
+
+    /**
+     * \brief Virtual method to initialize runtime attributes. Must be overriden by each derived
+     * class.
+     */
+    virtual void DefaultInitializeRuntimeAttributes (
+                        amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
+                                            NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                        const int n_external_attr_real,
+                        const int n_external_attr_int,
+                        const amrex::RandomEngine& engine) = 0;
 
     ///
     /// This pushes the particle positions by one half time step.
@@ -246,29 +253,51 @@ public:
 
     amrex::ParticleReal maxParticleVelocity(bool local = false);
 
+    /**
+     * \brief Adds n particles to the simulation
+     *
+     * @param[in] lev refinement level (unused)
+     * @param[in] n the number of particles to add
+     * @param[in] x x component of the position of particles to be added
+     * @param[in] y y component of the position of particles to be added
+     * @param[in] z z component of the position of particles to be added
+     * @param[in] ux x component of the momentum of particles to be added
+     * @param[in] uy y component of the momentum of particles to be added
+     * @param[in] uz z component of the momentum of particles to be added
+     * @param[in] nattr_real number of runtime real attributes to initialize with the attr_real
+     * array. (particle weight is treated as a real attribute in this routine). The remaining
+     * runtime real attributes are initialized in the method DefaultInitializeRuntimeAttributes.
+     * @param[in] attr_real value of real attributes to initialize
+     * @param[in] nattr_int number of runtime int attributes to initialize with the attr_int array.
+     * The remaining runtime int attributes are initialized in the method
+     * DefaultInitializeRuntimeAttributes.
+     * @param[in] attr_int value of int attributes to initialize
+     * @param[in] uniqueparticles if true, each MPI rank calling this function creates n
+     * particles. Else, all MPI ranks work together to create n particles in total.
+     * @param[in] id if different than -1, this id will be assigned to the particles (used for
+     * particle tagging in some routines, e.g. SplitParticle)
+     */
     void AddNParticles (int lev,
                         int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
-                        const amrex::ParticleReal* vx, const amrex::ParticleReal* vy, const amrex::ParticleReal* vz,
-                        int nattr, const amrex::ParticleReal* attr, int uniqueparticles, amrex::Long id=-1);
+                        const amrex::ParticleReal* ux, const amrex::ParticleReal* uy, const amrex::ParticleReal* uz,
+                        const int nattr_real, const amrex::ParticleReal* attr_real,
+                        const int nattr_int, const int* attr_int,
+                        int uniqueparticles, amrex::Long id=-1);
 
     virtual void ReadHeader (std::istream& is) = 0;
 
     virtual void WriteHeader (std::ostream& os) const = 0;
-
-    virtual void ConvertUnits (ConvertDirection /*convert_dir*/){}
 
     static void ReadParameters ();
 
     static void BackwardCompatibility ();
 
     /** \brief Apply particle BC.
-     *
-     * \param[in] boundary_conditions Type of boundary conditions. For now, only absorbing or none
-     * are supported
      */
     void ApplyBoundaryConditions ();
 
     bool do_splitting = false;
+    int do_not_deposit = 0;
     bool initialize_self_fields = false;
     amrex::Real self_fields_required_precision = amrex::Real(1.e-11);
     amrex::Real self_fields_absolute_tolerance = amrex::Real(0.0);
@@ -278,7 +307,6 @@ public:
     // split along diagonals (0) or axes (1)
     int split_type = 0;
 
-    int doBackTransformedDiagnostics () const { return do_back_transformed_diagnostics; }
     /** Whether back-transformed diagnostics need to be performed for a particular species.
      *
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
@@ -350,7 +378,6 @@ protected:
     bool m_gather_from_main_grid = false;
 
     int do_not_push = 0;
-    int do_not_deposit = 0;
     int do_not_gather = 0;
 
     // Whether to allow particles outside of the simulation domain to be
@@ -372,7 +399,6 @@ protected:
 
     int do_resampling = 0;
 
-    int do_back_transformed_diagnostics = 1;
     /** Whether back-transformed diagnostics is turned on for the corresponding species.*/
     bool m_do_back_transformed_particles = false;
 

@@ -1,7 +1,8 @@
 #include "DivBFunctor.H"
 
-#include "Utils/CoarsenIO.H"
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
@@ -25,7 +26,7 @@ DivBFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer
     amrex::MultiFab divB( warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), warpx.ncomps, ng );
     warpx.ComputeDivB(divB, 0, m_arr_mf_src, WarpX::CellSize(m_lev) );
     // // Coarsen and Interpolate from divB to coarsened/reduced_domain mf_dst
-    // CoarsenIO::Coarsen( mf_dst, divB, dcomp, 0, nComp(), 0, m_crse_ratio);
+    // ablastr::coarsen::sample::Coarsen( mf_dst, divB, dcomp, 0, nComp(), 0, m_crse_ratio);
 #ifdef WARPX_DIM_RZ
     if (m_convertRZmodes2cartesian) {
         // In cylindrical geometry, sum real part of all modes of divE in
@@ -41,15 +42,15 @@ DivBFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer
             amrex::MultiFab::Add(mf_dst_stag, divB, ic, 0, 1, divB.nGrowVect());
         }
         // TODO check if coarsening is needed, otherwise copy
-        CoarsenIO::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
+        ablastr::coarsen::sample::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
     } else {
         // TODO check if coarsening is needed, otherwise copy
-        CoarsenIO::Coarsen( mf_dst, divB, dcomp, 0, nComp(), 0, m_crse_ratio);
+        ablastr::coarsen::sample::Coarsen( mf_dst, divB, dcomp, 0, nComp(), 0, m_crse_ratio);
     }
 #else
     // In cartesian geometry, coarsen and interpolate from simulation MultiFab, divE,
     // to output diagnostic MultiFab, mf_dst.
-    CoarsenIO::Coarsen( mf_dst, divB, dcomp, 0, nComp(), 0, m_crse_ratio);
+    ablastr::coarsen::sample::Coarsen(mf_dst, divB, dcomp, 0, nComp(), 0, m_crse_ratio);
     amrex::ignore_unused(m_convertRZmodes2cartesian);
 #endif
 }

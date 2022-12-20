@@ -35,13 +35,12 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     const int norder_y,
     const int norder_z,
     const bool nodal,
-    const amrex::IntVect& fill_guards,
     const amrex::Real dt,
     const bool time_averaging,
     const bool dive_cleaning,
     const bool divb_cleaning)
     // Initializer list
-    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal, fill_guards),
+    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal),
     m_spectral_index(spectral_index),
     m_dt(dt),
     m_time_averaging(time_averaging),
@@ -121,9 +120,9 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex Bz_old = fields(i,j,k,Idx.Bz);
 
             // Shortcuts for the values of J and rho
-            const Complex Jx_old = fields(i,j,k,Idx.Jx);
-            const Complex Jy_old = fields(i,j,k,Idx.Jy);
-            const Complex Jz_old = fields(i,j,k,Idx.Jz);
+            const Complex Jx_old = fields(i,j,k,Idx.Jx_old);
+            const Complex Jy_old = fields(i,j,k,Idx.Jy_old);
+            const Complex Jz_old = fields(i,j,k,Idx.Jz_old);
             const Complex Jx_new = fields(i,j,k,Idx.Jx_new);
             const Complex Jy_new = fields(i,j,k,Idx.Jy_new);
             const Complex Jz_new = fields(i,j,k,Idx.Jz_new);

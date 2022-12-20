@@ -99,7 +99,7 @@ On an :ref:`HPC system <install-hpc>`, you would instead submit the :ref:`job sc
 By default, WarpX will write a status update to the terminal (``stdout``).
 On :ref:`HPC systems <install-hpc>`, we usually store a copy of this in a file called ``outputs.txt``.
 
-We also store by default an exact copy of all explicitly and implicitly used inputs parameters in a file called ``warpx_used_inputs``.
+We also store by default an exact copy of all explicitly and implicitly used inputs parameters in a file called ``warpx_used_inputs`` (this file name can be changed).
 This is important for reproducibility, since as we wrote in the previous paragraph, the options in the input file can be extended and overwritten from the command line.
 
 :ref:`Further configured diagnostics <running-cpp-parameters-diagnostics>` are explained in the next sections.
