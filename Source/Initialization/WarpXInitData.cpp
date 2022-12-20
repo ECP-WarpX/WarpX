@@ -70,7 +70,9 @@
 #include <string>
 #include <utility>
 
-#include <openPMD/openPMD.hpp>
+#ifdef WARPX_USE_OPENPMD
+#   include <openPMD/openPMD.hpp>
+#endif
 
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 
@@ -1259,6 +1261,7 @@ void WarpX::CheckKnownIssues()
         }
 }
 
+#ifdef WARPX_USE_OPENPMD
 void
 WarpX::ReadExternalFieldsFromFile (std::string read_fields_from_path, MultiFab* mf,
 std::string F_name, std::string F_component)
@@ -1385,3 +1388,10 @@ std::string F_name, std::string F_component)
     } // End loop over boxes.
 
 } // End function WarpX::ReadExternalFieldsFromFile
+#else // WARPX_USE_OPENPMD
+void
+WarpX::ReadExternalFieldsFromFile (std::string , MultiFab* ,std::string, std::string)
+{
+    Abort(Utils::TextMsg::Err("OpenPMD support is not enabled"));
+}
+#endif // WARPX_USE_OPENPMD
