@@ -12,6 +12,9 @@
 #include "LatticeElements/HardEdgedQuadrupole.H"
 #include "LatticeElements/HardEdgedPlasmaLens.H"
 
+#include <memory>
+#include <string>
+
 /* \brief AcceleratorLattice contains the lattice elements
  */
 class AcceleratorLattice
