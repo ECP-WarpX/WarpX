@@ -380,7 +380,6 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) override final;
 
     //No update needed

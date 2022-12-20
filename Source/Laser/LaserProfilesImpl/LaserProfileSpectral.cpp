@@ -6,6 +6,7 @@
  */
 #include "Laser/LaserProfiles.H"
 
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -34,7 +35,6 @@ using namespace amrex;
 void
 WarpXLaserProfiles::SpectralLaserProfile::init (
     const amrex::ParmParse& ppl,
-    const amrex::ParmParse& /* ppc */,
     CommonLaserParameters params)
 {
 
@@ -53,10 +53,10 @@ WarpXLaserProfiles::SpectralLaserProfile::init (
     m_common_params = params;
 
     // Parse the properties of the Gaussian profile
-    getWithParser(ppl, "profile_waist", m_params.waist);
+    utils::parser::getWithParser(ppl, "profile_waist", m_params.waist);
     // getWithParser(ppl, "profile_duration", m_params.duration);
-    getWithParser(ppl, "profile_t_peak", m_params.t_peak);
-    getWithParser(ppl, "profile_focal_distance", m_params.focal_distance);
+    utils::parser::getWithParser(ppl, "profile_t_peak", m_params.t_peak);
+    utils::parser::getWithParser(ppl, "profile_focal_distance", m_params.focal_distance);
     // queryWithParser(ppl, "zeta", m_params.zeta);
     // queryWithParser(ppl, "beta", m_params.beta);
     // queryWithParser(ppl, "phi2", m_params.phi2);
