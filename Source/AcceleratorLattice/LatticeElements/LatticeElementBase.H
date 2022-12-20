@@ -12,6 +12,7 @@
 #include <AMReX_GpuContainers.H>
 
 #include <string>
+#include <vector>
 
 struct LatticeElementBase
 {
