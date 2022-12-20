@@ -159,6 +159,7 @@ jobs:
         set -e
         export CXX=$(which icpx)
         export CC=$(which icx)
+        export CXXFLAGS="-fsycl ${CXXFLAGS}"
 
         cmake -S . -B build_sp         \
           -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
