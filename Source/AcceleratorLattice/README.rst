@@ -23,7 +23,7 @@ describing both the accelerator elements and the index lookup tables. The
 host level classes manage the data structures, reading in and setting up the
 data. The host classes copy the data to the device and maintain the pointers
 to that data on the device. The device level classes grab pointers to the
-appropriate data (on the device) needed when fetching the data for the particles.  
+appropriate data (on the device) needed when fetching the data for the particles.
 
 External fields
 ---------------
@@ -32,7 +32,7 @@ The lattice fields are applied to the particles from the GetExternalEBField
 class. If a lattice is defined, the GetExternalEBField class gets the lattice
 element finder device level instance associated with the grid being operated
 on. The fields are applied from that instance, which calls the "get_field"
-method for each lattice element type that is defined for each particle.  
+method for each lattice element type that is defined for each particle.
 
 Adding new element types
 ------------------------
@@ -40,4 +40,4 @@ Adding new element types
 A number of places need to be touched when adding a new element types. The
 best method is to look for every place where the "quad" element is referenced
 and duplicate the code for the new element type. Changes will only be needed
-within the AcceleratorLattice directory.  
+within the AcceleratorLattice directory.
