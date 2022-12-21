@@ -257,6 +257,14 @@ WarpX::Evolve (int numsteps)
         // We might need to move j because we are going to make a plotfile.
         int num_moved = MoveWindow(step+1, move_j);
 
+        // Update the accelerator lattice element finder if the window has moved,
+        // from either a moving window or a boosted frame
+        if (num_moved != 0 || gamma_boost > 1) {
+            for (int lev = 0; lev <= finest_level; ++lev) {
+                m_accelerator_lattice[lev]->UpdateElementFinder(lev);
+            }
+        }
+
         mypc->ContinuousFluxInjection(cur_time, dt[0]);
 
         mypc->ApplyBoundaryConditions();

@@ -34,6 +34,7 @@
 #include "FieldSolver/ElectrostaticSolver.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
+#include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
@@ -962,6 +963,9 @@ public:
     //! Tagging cells for refinement
     virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
 
+    // Return the accelerator lattice instance defined at the given refinement level
+    const AcceleratorLattice& get_accelerator_lattice (int lev) {return *(m_accelerator_lattice[lev]);}
+
 protected:
 
     /**
@@ -1438,6 +1442,9 @@ private:
 
     //! particle buffer for scraped particles on the boundaries
     std::unique_ptr<ParticleBoundaryBuffer> m_particle_boundary_buffer;
+
+    // Accelerator lattice elements
+    amrex::Vector< std::unique_ptr<AcceleratorLattice> > m_accelerator_lattice;
 
     //
     // Embedded Boundary

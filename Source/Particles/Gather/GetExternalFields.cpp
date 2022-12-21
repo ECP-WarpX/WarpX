@@ -1,5 +1,7 @@
 #include "Particles/Gather/GetExternalFields.H"
 
+#include "AcceleratorLattice/AcceleratorLattice.H"
+
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/TextMsg.H"
@@ -15,6 +17,13 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
 {
     auto& warpx = WarpX::GetInstance();
     auto& mypc = warpx.GetPartContainer();
+
+    int lev = a_pti.GetLevel();
+
+    AcceleratorLattice const & accelerator_lattice = warpx.get_accelerator_lattice(lev);
+    if (accelerator_lattice.m_lattice_defined) {
+        d_lattice_element_finder = accelerator_lattice.GetFinderDeviceInstance(a_pti, a_offset);
+    }
 
     m_gamma_boost = WarpX::gamma_boost;
     m_uz_boost = std::sqrt(WarpX::gamma_boost*WarpX::gamma_boost - 1._prt)*PhysConst::c;

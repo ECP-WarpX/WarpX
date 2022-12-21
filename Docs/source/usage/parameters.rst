@@ -1279,6 +1279,9 @@ Laser initialization
 External fields
 ---------------
 
+Grid initialization
+^^^^^^^^^^^^^^^^^^^
+
 * ``warpx.B_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
     magnetic field. The "default" style initializes the
@@ -1335,6 +1338,9 @@ External fields
     the field solver. In particular, do not use any other boundary condition
     than periodic.
 
+Applied to Particles
+^^^^^^^^^^^^^^^^^^^^
+
 * ``particles.E_ext_particle_init_style`` & ``particles.B_ext_particle_init_style`` (string) optional (default "none")
     These parameters determine the type of the external electric and
     magnetic fields respectively that are applied directly to the particles at every timestep.
@@ -1387,6 +1393,54 @@ External fields
       The fields are of the form :math:`E_x = \mathrm{strength} \cdot x`, :math:`E_y = \mathrm{strength} \cdot y`,
       and :math:`E_z = 0`, and
       :math:`B_x = \mathrm{strength} \cdot y`, :math:`B_y = -\mathrm{strength} \cdot x`, and :math:`B_z = 0`.
+
+Accelerator Lattice
+^^^^^^^^^^^^^^^^^^^
+
+Several accelerator lattice elements can be defined as described below.
+The elements are defined relative to the `z` axis and in the lab frame, starting at `z = 0`.
+They are described using a simplified MAD like syntax.
+Note that elements of the same type cannot overlap each other.
+
+* ``lattice.elements`` (``list of strings``) optional (default: no elements)
+    A list of names (one name per lattice element), in the order that they
+    appear in the lattice.
+
+* ``<element_name>.type`` (``string``)
+    Indicates the element type for this lattice element. This should be one of:
+
+        * ``drift`` for free drift. This requires this additional parameter:
+
+            * ``<element_name>.ds`` (``float``, in meters) the segment length
+
+        * ``quad`` for a hard edged quadrupole.
+          This applies a quadrupole field that is uniform within the `z` extent of the element with a sharp cut off at the ends.
+          This uses residence corrections, with the field scaled by the amount of time within the element for particles entering
+          or leaving it, to increase the accuracy.
+          This requires these additional parameters:
+
+            * ``<element_name>.ds`` (``float``, in meters) the segment length
+
+            * ``<element_name>.dEdx`` (``float``, in volts/meter^2) optional (default: 0.) the electric quadrupole field gradient
+              The field applied to the particles will be `Ex = dEdx*x` and `Ey = -dEdx*y`.
+
+            * ``<element_name>.dBdx`` (``float``, in Tesla/meter) optional (default: 0.) the magnetic quadrupole field gradient
+              The field applied to the particles will be `Bx = dBdx*y` and `By = dBdx*x`.
+
+        * ``plasmalens`` for a field modeling a plasma lens
+          This applies a radially directed plasma lens field that is uniform within the `z` extent of the element with
+          a sharp cut off at the ends.
+          This uses residence corrections, with the field scaled by the amount of time within the element for particles entering
+          or leaving it, to increase the accuracy.
+          This requires these additional parameters:
+
+            * ``<element_name>.ds`` (``float``, in meters) the segment length
+
+            * ``<element_name>.dEdx`` (``float``, in volts/meter^2) optional (default: 0.) the electric field gradient
+              The field applied to the particles will be `Ex = dEdx*x` and `Ey = dEdx*y`.
+
+            * ``<element_name>.dBdx`` (``float``, in Tesla/meter) optional (default: 0.) the magnetic field gradient
+              The field applied to the particles will be `Bx = dBdx*y` and `By = -dBdx*x`.
 
 .. _running-cpp-parameters-collision:
 

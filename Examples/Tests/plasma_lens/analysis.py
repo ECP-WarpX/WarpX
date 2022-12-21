@@ -66,11 +66,30 @@ except TypeError:
     # vel_z is not saved in my_constants with the PICMI version
     vel_z = 0.5*c
 
-plasma_lens_period = float(ds.parameters.get('particles.repeated_plasma_lens_period'))
-plasma_lens_starts = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_starts').split()]
-plasma_lens_lengths = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_lengths').split()]
-plasma_lens_strengths_E = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths_E').split()]
-plasma_lens_strengths_B = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths_B').split()]
+if 'particles.repeated_plasma_lens_period' in ds.parameters:
+    plasma_lens_period = float(ds.parameters.get('particles.repeated_plasma_lens_period'))
+    plasma_lens_starts = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_starts').split()]
+    plasma_lens_lengths = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_lengths').split()]
+    plasma_lens_strengths_E = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths_E').split()]
+    plasma_lens_strengths_B = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths_B').split()]
+elif 'lattice.elements' in ds.parameters:
+    lattice_elements = ds.parameters.get('lattice.elements').split()
+    plasma_lens_zstarts = []
+    plasma_lens_lengths = []
+    plasma_lens_strengths_E = []
+    z_location = 0.
+    for element in lattice_elements:
+        element_type = ds.parameters.get(f'{element}.type')
+        length = float(ds.parameters.get(f'{element}.ds'))
+        if element_type == 'plasmalens':
+            plasma_lens_zstarts.append(z_location)
+            plasma_lens_lengths.append(length)
+            plasma_lens_strengths_E.append(float(ds.parameters.get(f'{element}.dEdx')))
+        z_location += length
+
+    plasma_lens_period = 0.5
+    plasma_lens_starts = plasma_lens_zstarts - plasma_lens_period*np.arange(len(plasma_lens_zstarts))
+    plasma_lens_strengths_B = np.zeros(len(plasma_lens_zstarts))
 
 
 x0 = float(ds.parameters.get('electrons.multiple_particles_pos_x').split()[0])
