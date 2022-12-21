@@ -2836,7 +2836,7 @@ class LibWarpX():
 
     def get_Az_nodal_flag(self):
         '''
-        This returns a 1d array of the nodal flags for Bz along each direction. A 1 means node centered, and 0 cell centered.
+        This returns a 1d array of the nodal flags for Az along each direction. A 1 means node centered, and 0 cell centered.
         '''
         return self._get_nodal_flag(self.libwarpx_so.warpx_getAz_nodal_flag)
 
