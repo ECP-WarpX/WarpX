@@ -121,6 +121,7 @@ short WarpX::field_gathering_algo;
 short WarpX::particle_pusher_algo;
 short WarpX::electromagnetic_solver_id;
 short WarpX::evolve_scheme;
+int WarpX::n_picard_iterations = 1;
 short WarpX::J_in_time;
 short WarpX::rho_in_time;
 short WarpX::load_balance_costs_update_algo;
@@ -942,6 +943,7 @@ WarpX::ReadParameters ()
         charge_deposition_algo = GetAlgorithmInteger(pp_algo, "charge_deposition");
         particle_pusher_algo = GetAlgorithmInteger(pp_algo, "particle_pusher");
         evolve_scheme = GetAlgorithmInteger(pp_algo, "evolve_scheme");
+        pp_algo.query("n_picard_iterations", n_picard_iterations);
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             current_deposition_algo != CurrentDepositionAlgo::Esirkepov ||

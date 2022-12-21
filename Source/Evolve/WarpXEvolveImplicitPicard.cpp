@@ -178,7 +178,7 @@ WarpX::EvolveImplicitPicard (int numsteps)
         amrex::MultiFab::Copy(*Bfield_n[0][2], *Bfield_fp[0][2], 0, 0, 1, Bfield_fp[0][2]->nGrowVect());
 
         // Start the iterations
-        for (int iteration_count = 0 ; iteration_count < 3 ; iteration_count++) {
+        for (int iteration_count = 0 ; iteration_count < n_picard_iterations ; iteration_count++) {
 
             // Advance the particle positions by 1/2 dt,
             // particle velocities by dt, then take average of old and new

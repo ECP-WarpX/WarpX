@@ -167,6 +167,7 @@ public:
     static short electromagnetic_solver_id;
     //! Integer that corresponds to the evolve scheme (explicit, implicit_picard)
     static short evolve_scheme;
+    static int n_picard_iterations;
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
