@@ -46,7 +46,7 @@ WarpX::ComputeDt ()
     amrex::Real deltat = 0.;
 
     if (m_const_dt.has_value()) {
-        deltat = m_const_dt;
+        deltat = m_const_dt.value();
     } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         // Computation of dt for spectral algorithm
         // (determined by the minimum cell size in all directions)
