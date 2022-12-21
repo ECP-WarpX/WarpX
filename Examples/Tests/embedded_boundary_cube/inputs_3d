@@ -6,7 +6,6 @@ amr.max_level = 0
 geometry.dims = 3
 geometry.prob_lo     = -0.8 -0.8 -0.8
 geometry.prob_hi     =  0.8  0.8  0.8
-warpx.const_dt = 1e-6
 warpx.cfl = 1
 
 boundary.field_lo = pec pec pec
