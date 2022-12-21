@@ -6,7 +6,7 @@ Users
 .. raw:: html
 
    <style>
-   .rst-content .section>img {
+   .rst-content section>img {
        width: 30px;
        margin-bottom: 0;
        margin-top: 0;
