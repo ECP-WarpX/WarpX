@@ -77,7 +77,7 @@ Diagnostics::BaseReadParameters ()
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrame ||
             warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::RelativisticMagnetostatic,
-            "plot phi only works if do_electrostatic = labframe");
+            "plot phi only works if do_electrostatic = labframe or do_electrostatic = relativistic-magnetostatic");
     }
 
     // Sanity check if user requests to plot A
