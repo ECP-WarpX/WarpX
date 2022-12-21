@@ -133,7 +133,7 @@ public:
          int ncell, int delta, amrex::IntVect ref_ratio,
          amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
          int do_moving_window, int pml_has_particles, int do_pml_in_domain,
-         const int J_in_time, const int rho_in_time,
+         const int psatd_solution_type, const int J_in_time, const int rho_in_time,
          const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
          const amrex::IntVect& fill_guards_fields,
          const amrex::IntVect& fill_guards_current,

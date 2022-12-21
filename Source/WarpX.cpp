@@ -30,6 +30,7 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
+#include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -122,6 +123,7 @@ short WarpX::particle_pusher_algo;
 short WarpX::electromagnetic_solver_id;
 short WarpX::evolve_scheme;
 int WarpX::n_picard_iterations = 1;
+short WarpX::psatd_solution_type;
 short WarpX::J_in_time;
 short WarpX::rho_in_time;
 short WarpX::load_balance_costs_update_algo;
@@ -351,7 +353,6 @@ WarpX::WarpX ()
         m_macroscopic_properties = std::make_unique<MacroscopicProperties>();
     }
 
-
     // Set default values for particle and cell weights for costs update;
     // Default values listed here for the case AMREX_USE_GPU are determined
     // from single-GPU tests on Summit.
@@ -428,6 +429,9 @@ WarpX::WarpX ()
             use_fdtd_nci_corr == 0,
             "The NCI corrector should only be used with Esirkepov deposition");
     }
+
+    m_accelerator_lattice.resize(nlevs_max);
+
 }
 
 WarpX::~WarpX ()
@@ -670,7 +674,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
 
-        utils::parser::queryWithParser(pp_warpx, "const_dt", const_dt);
+        utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
         // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
@@ -1152,6 +1156,11 @@ WarpX::ReadParameters ()
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(noz_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
         }
 
+        // Integer that corresponds to the order of the PSATD solution
+        // (whether the PSATD equations are derived from first-order or
+        // second-order solution)
+        psatd_solution_type = GetAlgorithmInteger(pp_psatd, "solution_type");
+
         // Integers that correspond to the time dependency of J (constant, linear)
         // and rho (linear, quadratic) for the PSATD algorithm
         J_in_time = GetAlgorithmInteger(pp_psatd, "J_in_time");
@@ -1315,13 +1324,6 @@ WarpX::ReadParameters ()
             );
         }
 
-        if (J_in_time == JInTime::Constant)
-        {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                rho_in_time == RhoInTime::Linear,
-                "psatd.J_in_time=constant supports only psatd.rho_in_time=linear");
-        }
-
         if (J_in_time == JInTime::Linear)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1335,6 +1337,14 @@ WarpX::ReadParameters ()
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 v_comoving_is_zero,
                 "psatd.J_in_time=linear not implemented with comoving PSATD");
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                !current_correction,
+                "psatd.current_correction=1 not implemented with psatd.J_in_time=linear");
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                current_deposition_algo != CurrentDepositionAlgo::Vay,
+                "algo.current_deposition=vay not implemented with psatd.J_in_time=linear");
         }
 
         for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
@@ -1769,6 +1779,10 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     if (evolve_scheme == EvolveScheme::ImplicitPicard) {
         EvolveImplicitPicardInit(lev);
     }
+
+    m_accelerator_lattice[lev] = std::make_unique<AcceleratorLattice>();
+    m_accelerator_lattice[lev]->InitElementFinder(lev, ba, dm);
+
 }
 
 void
@@ -2342,6 +2356,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 fft_periodic_single_box,
                                                 update_with_rho,
                                                 fft_do_time_averaging,
+                                                psatd_solution_type,
                                                 J_in_time,
                                                 rho_in_time,
                                                 do_dive_cleaning,

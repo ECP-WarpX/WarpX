@@ -43,7 +43,7 @@ jobs:
         cmake --build build --config Debug --target pip_install
         if(!$?) { Exit $LASTEXITCODE }
 
-        python3 Examples\Modules\gaussian_beam\PICMI_inputs_gaussian_beam.py
+        python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py
 # JSON writes are currently very slow (50min) with MSVC
 #  --diagformat=openpmd
 
@@ -90,5 +90,5 @@ jobs:
         cmake --build build --config Release --target pip_install
         if errorlevel 1 exit 1
 
-        python3 Examples\Modules\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
+        python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
         if errorlevel 1 exit 1

@@ -281,7 +281,7 @@ public:
      */
     void AddNParticles (int lev,
                         int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
-                        const amrex::ParticleReal* vx, const amrex::ParticleReal* vy, const amrex::ParticleReal* vz,
+                        const amrex::ParticleReal* ux, const amrex::ParticleReal* uy, const amrex::ParticleReal* uz,
                         const int nattr_real, const amrex::ParticleReal* attr_real,
                         const int nattr_int, const int* attr_int,
                         int uniqueparticles, amrex::Long id=-1);
@@ -295,9 +295,6 @@ public:
     static void BackwardCompatibility ();
 
     /** \brief Apply particle BC.
-     *
-     * \param[in] boundary_conditions Type of boundary conditions. For now, only absorbing or none
-     * are supported
      */
     void ApplyBoundaryConditions ();
 

@@ -2,15 +2,14 @@
 #export proj=<yourProject>
 
 # optional: just an additional text editor
-module load nano
+# module load nano
 
 # required dependencies
-module load LUMI/22.08  partition/G
-module load buildtools
+module load CrayEnv
 module load craype-accel-amd-gfx90a
-module load rocm/5.0.2
 module load cray-mpich
-module load cce/14.0.2
+module load rocm
+module load buildtools/22.08
 
 # optional: faster re-builds
 #module load ccache
@@ -41,6 +40,9 @@ fi
 # an alias to run a command on a batch node for up to 30min
 #   usage: nrun <command>
 #alias runNode="..."
+
+# GPU-aware MPI
+export MPICH_GPU_SUPPORT_ENABLED=1
 
 # optimize ROCm compilation for MI250X
 export AMREX_AMD_ARCH=gfx90a
