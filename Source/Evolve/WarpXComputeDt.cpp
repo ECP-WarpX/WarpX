@@ -36,7 +36,7 @@ WarpX::ComputeDt ()
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value(), "warpx.const_dt must be specified with the electrostatic solver.");
         for (int lev=0; lev<=max_level; lev++) {
-            dt[lev] = m_const_dt;
+            dt[lev] = m_const_dt.value();
         }
         return;
     }
