@@ -49,7 +49,7 @@ namespace MagnetostaticSolver {
 
         void operator()(amrex::Array<std::unique_ptr<amrex::MLMG>,3> & mlmg, int const lev);
 
-        // Function to perform interpolation from E-staggered fields to B-staggered fields
+        // Function to perform interpolation from cell edges to cell faces
         void doInterp(const std::unique_ptr<amrex::MultiFab> &src, const std::unique_ptr<amrex::MultiFab> &dst);
     };
 } // namespace MagnetostaticSolver
