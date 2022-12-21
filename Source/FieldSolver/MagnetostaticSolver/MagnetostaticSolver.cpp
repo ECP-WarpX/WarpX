@@ -60,7 +60,7 @@ WarpX::ComputeCurrentDensityField()
 {
     WARPX_PROFILE("WarpX::ComputeCurrentDensityField");
     // Fields have been reset in Electrostatic solver for this time step, these fields
-    // are added into the E & B fields after electrostatic solve
+    // are added into the B fields after electrostatic solve
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(this->max_level == 0, "Magnetostatic solver not implemented with mesh refinement.");
 
