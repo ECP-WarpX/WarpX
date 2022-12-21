@@ -1037,7 +1037,7 @@ class LibWarpX():
             ctypes.c_char_p(species_name.encode('utf-8')), local
         )
 
-    def get_particle_boundary_buffer_size(self, species_name, boundary):
+    def get_particle_boundary_buffer_size(self, species_name, boundary, local=False):
         '''
         This returns the number of particles that have been scraped so far in the simulation
         from the specified boundary and of the specified species.
@@ -1051,11 +1051,15 @@ class LibWarpX():
         boundary       : str
             The boundary from which to get the scraped particle data in the
             form x/y/z_hi/lo
+
+        local          : bool
+            Whether to only return the number of particles in the current
+            processor's buffer
         '''
 
         return self.libwarpx_so.warpx_getParticleBoundaryBufferSize(
             ctypes.c_char_p(species_name.encode('utf-8')),
-            self._get_boundary_number(boundary)
+            self._get_boundary_number(boundary), local
         )
 
     def get_particle_boundary_buffer_structs(self, species_name, boundary, level):
