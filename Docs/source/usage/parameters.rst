@@ -1444,10 +1444,10 @@ Note that elements of the same type cannot overlap each other.
 
 .. _running-cpp-parameters-collision:
 
-Collision initialization
-------------------------
+Collision models
+----------------
 
-WarpX provides several particle collions models, using varying degrees of approximation.
+WarpX provides several particle collision models, using varying degrees of approximation.
 
 * ``collisions.collision_names`` (`strings`, separated by spaces)
     The name of each collision type.
@@ -1455,13 +1455,19 @@ WarpX provides several particle collions models, using varying degrees of approx
     in this documentation we use ``<collision_name>`` as a placeholder.
 
 * ``<collision_name>.type`` (`string`) optional
-    The type of collsion. The types implemented are:
+    The type of collision. The types implemented are:
 
     - ``pairwisecoulomb`` for pairwise Coulomb collisions, the default if unspecified.
       This provides a pair-wise relativistic elastic Monte Carlo binary Coulomb collision model,
-      following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+      following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`__.
       When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
       since the current implementation of the collision module assumes axisymmetry.
+    - ``nuclearfusion`` for fusion reactions.
+      This implements the pair-wise fusion model by `Higginson et al. (JCP 388, 439-453, 2019) <https://doi.org/10.1016/j.jcp.2019.03.020>`__.
+      Currently, WarpX supports deuterium-deuterium, deuterium-tritium, deuterium-helium and proton-boron fusion.
+      When initializing the reactant and product species, you need to use ``species_type`` (see the documentation
+      for this parameter), so that WarpX can identify the type of reaction to use.
+      (e.g. ``<species_name>.species_type = 'deuterium'``)
     - ``background_mcc`` for collisions between particles and a neutral background.
       This is a relativistic Monte Carlo treatment for particles colliding
       with a neutral background gas. The implementation follows the so-called
@@ -1473,12 +1479,18 @@ WarpX provides several particle collions models, using varying degrees of approx
       from Goldston and Rutherford, section 14.2.
 
 * ``<collision_name>.species`` (`strings`)
-    If using ``pairwisecoulomb`` type this should be the names of two species,
-    between which the collision will be considered.
-    The number of provided ``<collision_name>.species`` should match
-    the number of collision names, i.e. ``collisions.collision_names``.
-    If using ``background_mcc`` or ``background_stopping`` type this should be the name of the species for which collisions will be included.
-    Only one species name should be given.
+    If using ``pairwisecoulomb`` or ``nuclearfusion``, this should be the name(s) of the species,
+    between which the collision will be considered. (Provide only one name for intra-species collisions.)
+    If using ``background_mcc`` or ``background_stopping`` type this should be the name of the
+    species for which collisions with a background will be included.
+    In this case, only one species name should be given.
+
+* ``<collision_name>.product_species`` (`strings`)
+    Only for ``nuclearfusion``. The name(s) of the species in which to add
+    the new macroparticles created by the reaction.
+
+* ``<collision_name>.ndt`` (`int`) optional
+    Execute collision every # time steps. The default value is 1.
 
 * ``<collision_name>.CoulombLog`` (`float`) optional
     Only for ``pairwisecoulomb``. A provided fixed Coulomb logarithm of the
@@ -1490,10 +1502,34 @@ WarpX provides several particle collions models, using varying degrees of approx
     :math:`A` is the mass number.
     If this is not provided, or if a non-positive value is provided,
     a Coulomb logarithm will be computed automatically according to the algorithm in
-    `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+    `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`__.
 
-* ``<collision_name>.ndt`` (`int`) optional
-    Execute collision every # time steps. The default value is 1.
+* ``<collision_name>.fusion_multiplier`` (`float`) optional.
+    Only for ``nuclearfusion``.
+    Increasing ``fusion_multiplier`` creates more macroparticles of fusion
+    products, but with lower weight (in such a way that the corresponding
+    total number of physical particle remains the same). This can improve
+    the statistics of the simulation, in the case where fusion reactions are very rare.
+    More specifically, in a fusion reaction between two macroparticles with weight ``w_1`` and ``w_2``,
+    the weight of the product macroparticles will be ``min(w_1,w_2)/fusion_multipler``.
+    (And the weights of the reactant macroparticles are reduced correspondingly after the reaction.)
+    See `Higginson et al. (JCP 388, 439-453, 2019) <https://doi.org/10.1016/j.jcp.2019.03.020>`__
+    for more details. The default value of ``fusion_multiplier`` is 1.
+
+* ``<collision_name>.fusion_probability_threshold``(`float`) optional.
+    Only for ``nuclearfusion``.
+    If the fusion multiplier is too high and results in a fusion probability
+    that approaches 1 (for a given collision between two macroparticles), then
+    there is a risk of underestimating the total fusion yield. In these cases,
+    WarpX reduces the fusion multiplier used in that given collision.
+    ``m_probability_threshold`` is the fusion probability threshold above
+    which WarpX reduces the fusion multiplier.
+
+* ``<collision_name>.fusion_probability_target_value`` (`float`) optional.
+    Only for ``nuclearfusion``.
+    When the probability of fusion for a given collision exceeds
+    ``fusion_probability_threshold``, WarpX reduces the fusion multiplier for
+    that collisions such that the fusion probability approches ``fusion_probability_target_value``.
 
 * ``<collision_name>.background_density`` (`float`)
     Only for ``background_mcc`` and ``background_stopping``. The density of the background in :math:`m^{-3}`.
@@ -1546,7 +1582,6 @@ WarpX provides several particle collions models, using varying degrees of approx
     :math:`\lambda_{di}` is the DeBye length, and :math:`M` is the background ion mass.
     The equation is integrated over a time step, giving :math:`W_b(t+dt) = ((W_b(t)^{3/2}) - 3/2\beta{dt})^{2/3}`
     where :math:`\beta` is the term on the r.h.s except :math:`W_b`.
-
 
 * ``<collision_name>.scattering_processes`` (`strings` separated by spaces)
     Only for ``background_mcc``. The MCC scattering processes that should be
