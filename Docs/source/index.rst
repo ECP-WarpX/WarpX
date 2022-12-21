@@ -75,6 +75,7 @@ Usage
    :hidden:
 
    usage/how_to_run
+   usage/domain_decomposition
    usage/parameters
    usage/python
    usage/examples
@@ -97,7 +98,6 @@ Data Analysis
    dataanalysis/visit
    dataanalysis/visualpic
    dataanalysis/picviewer
-   dataanalysis/backtransformed_diags
    dataanalysis/reduced_diags
 
 Theory

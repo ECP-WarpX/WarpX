@@ -232,6 +232,7 @@ if(WarpX_APP)
 endif()
 
 add_subdirectory(Source/ablastr)
+add_subdirectory(Source/AcceleratorLattice)
 add_subdirectory(Source/BoundaryConditions)
 add_subdirectory(Source/Diagnostics)
 add_subdirectory(Source/EmbeddedBoundary)

@@ -1103,8 +1103,8 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
 /*
  * Set up parameter for mesh container using the geometry (from level 0)
  *
- * @param [IN] meshes: openPMD-api mesh container
- * @param [IN] full_geom: field geometry
+ * @param [in] meshes: openPMD-api mesh container
+ * @param [in] full_geom: field geometry
  *
  */
 void
@@ -1177,9 +1177,9 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
 
 /*
  * Setup component properties  for a field mesh
- * @param [IN]: mesh          a mesh field
- * @param [IN]: full_geom     geometry for the mesh
- * @param [IN]: mesh_comp     a component for the mesh
+ * @param [in]: mesh          a mesh field
+ * @param [in]: full_geom     geometry for the mesh
+ * @param [in]: mesh_comp     a component for the mesh
  */
 void
 WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,

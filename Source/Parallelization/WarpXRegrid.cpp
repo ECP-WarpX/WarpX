@@ -331,6 +331,9 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 BuildBufferMasks();
         }
 
+        // Re-initialize the lattice element finder with the new ba and dm.
+        m_accelerator_lattice[lev]->InitElementFinder(lev, ba, dm);
+
         if (costs[lev] != nullptr)
         {
             costs[lev] = std::make_unique<LayoutData<Real>>(ba, dm);
