@@ -289,7 +289,6 @@ namespace
     WARPX_GET_FIELD(warpx_getCurrentDensityCP, WarpX::GetInstance().get_pointer_current_cp)
     WARPX_GET_FIELD(warpx_getCurrentDensityFP, WarpX::GetInstance().get_pointer_current_fp)
 
-    WARPX_GET_FIELD(warpx_getCurrentDensityFPNodal, WarpX::GetInstance().get_pointer_current_fp_nodal)
     WARPX_GET_FIELD(warpx_getVectorPotentialFP, WarpX::GetInstance().get_pointer_vector_potential_fp)
 
     WARPX_GET_LOVECTS(warpx_getEfieldLoVects, WarpX::GetInstance().get_pointer_Efield_aux)
@@ -303,7 +302,6 @@ namespace
     WARPX_GET_LOVECTS(warpx_getCurrentDensityLoVects, WarpX::GetInstance().get_pointer_current_fp)
     WARPX_GET_LOVECTS(warpx_getCurrentDensityCPLoVects, WarpX::GetInstance().get_pointer_current_cp)
     WARPX_GET_LOVECTS(warpx_getCurrentDensityFPLoVects, WarpX::GetInstance().get_pointer_current_fp)
-    WARPX_GET_LOVECTS(warpx_getCurrentDensityFPNodalLoVects, WarpX::GetInstance().get_pointer_current_fp_nodal)
     WARPX_GET_LOVECTS(warpx_getVectorPotentialFPLoVects, WarpX::GetInstance().get_pointer_vector_potential_fp)
 
     WARPX_GET_LOVECTS(warpx_getEdgeLengthsLoVects, WarpX::GetInstance().get_pointer_edge_lengths)
@@ -318,9 +316,6 @@ namespace
     int* warpx_getJx_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_current_fp(0,0) );}
     int* warpx_getJy_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_current_fp(0,1) );}
     int* warpx_getJz_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_current_fp(0,2) );}
-    int* warpx_getJxNodal_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_current_fp_nodal(0,0) );}
-    int* warpx_getJyNodal_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_current_fp_nodal(0,1) );}
-    int* warpx_getJzNodal_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_current_fp_nodal(0,2) );}
     int* warpx_getAx_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_vector_potential_fp(0,0) );}
     int* warpx_getAy_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_vector_potential_fp(0,1) );}
     int* warpx_getAz_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_vector_potential_fp(0,2) );}

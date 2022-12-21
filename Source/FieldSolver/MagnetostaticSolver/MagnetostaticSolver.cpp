@@ -56,21 +56,21 @@
 using namespace amrex;
 
 void
-WarpX::ComputeCurrentDensityField()
+WarpX::ComputeMagnetostaticField()
 {
-    WARPX_PROFILE("WarpX::ComputeCurrentDensityField");
+    WARPX_PROFILE("WarpX::ComputeMagnetostaticField");
     // Fields have been reset in Electrostatic solver for this time step, these fields
     // are added into the B fields after electrostatic solve
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(this->max_level == 0, "Magnetostatic solver not implemented with mesh refinement.");
 
-    AddCurrentDensityFieldLabFrame();
+    AddMagnetostaticFieldLabFrame();
 }
 
 void
-WarpX::AddCurrentDensityFieldLabFrame()
+WarpX::AddMagnetostaticFieldLabFrame()
 {
-    WARPX_PROFILE("WarpX::AddCurrentDensityFieldLabFrame");
+    WARPX_PROFILE("WarpX::AddMagnetostaticFieldLabFrame");
 
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
@@ -98,9 +98,6 @@ WarpX::AddCurrentDensityFieldLabFrame()
         }
     }
 
-    // This will interpolate to staggered grid, filter, and synchronize
-    SyncCurrent(current_fp, current_cp); // Apply filter, perform MPI exchange, interpolate across levels
-
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev <= max_level; lev++) {
         ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(),
@@ -109,6 +106,8 @@ WarpX::AddCurrentDensityFieldLabFrame()
     }
 #endif
 
+    SyncCurrent(current_fp, current_cp); // Apply filter, perform MPI exchange, interpolate across levels
+
     // set the boundary and current density potentials
     setVectorPotentialBC(vector_potential_fp_nodal);
 
@@ -116,8 +115,10 @@ WarpX::AddCurrentDensityFieldLabFrame()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallBackInstalled("poissonsolver"),
         "Python Level Poisson Solve not supported for Magnetostatic implementation.");
 
+    amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;
+
     computeVectorPotential( current_fp, vector_potential_fp_nodal, self_fields_required_precision,
-                     self_fields_absolute_tolerance, self_fields_max_iters,
+                     magnetostatic_absolute_tolerance, self_fields_max_iters,
                      self_fields_verbosity );
 }
 
@@ -127,7 +128,7 @@ WarpX::AddCurrentDensityFieldLabFrame()
 
     More specifically, this solves the equation
     \f[
-        \vec{\nabla}^2 r \vec{A} - (\vec{\beta}\cdot\vec{\nabla})^2 r \vec{A} = - r \mu_0 \vec{J}
+        \vec{\nabla}^2 r \vec{A} = - r \mu_0 \vec{J}
  \f]
 
    \param[in] curr The current density
@@ -383,11 +384,6 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const std
                 stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
         });
     }
-
-    // Synchronize the ghost cells, do halo exchange
-    ablastr::utils::communication::FillBoundary(*dst,
-                                                dst->nGrowVect(),
-                                                WarpX::do_single_precision_comms);
 }
 
 void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::Array<std::unique_ptr<amrex::MLMG>,3> & mlmg, int const lev)
@@ -415,13 +411,13 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
     // Interpolate dAx/dz to By grid buffer, then add to By
     this->doInterp(m_grad_buf_e_stag[lev][2],
                    m_grad_buf_b_stag[lev][1]);
-    MultiFab::Add(*(m_b_field[lev][1]), *(m_grad_buf_b_stag[lev][1]), 0, 0, 1, m_b_field[lev][1]->nGrowVect() );
+    MultiFab::Add(*(m_b_field[lev][1]), *(m_grad_buf_b_stag[lev][1]), 0, 0, 1, 0 );
 
     // Interpolate dAx/dy to Bz grid buffer, then subtract from Bz
     this->doInterp(m_grad_buf_e_stag[lev][1],
                    m_grad_buf_b_stag[lev][2]);
     m_grad_buf_b_stag[lev][2]->mult(-1._rt);
-    MultiFab::Add(*(m_b_field[lev][2]), *(m_grad_buf_b_stag[lev][2]), 0, 0, 1, m_b_field[lev][2]->nGrowVect() );
+    MultiFab::Add(*(m_b_field[lev][2]), *(m_grad_buf_b_stag[lev][2]), 0, 0, 1, 0 );
 
     // This will grab the gradient values for Ay
     mlmg[1]->getGradSolution({buf_ptr});
@@ -429,13 +425,13 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
     // Interpolate dAy/dx to Bz grid buffer, then add to Bz
     this->doInterp(m_grad_buf_e_stag[lev][0],
                    m_grad_buf_b_stag[lev][2]);
-    MultiFab::Add(*(m_b_field[lev][2]), *(m_grad_buf_b_stag[lev][2]), 0, 0, 1, m_b_field[lev][2]->nGrowVect() );
+    MultiFab::Add(*(m_b_field[lev][2]), *(m_grad_buf_b_stag[lev][2]), 0, 0, 1, 0 );
 
     // Interpolate dAy/dz to Bx grid buffer, then subtract from Bx
     this->doInterp(m_grad_buf_e_stag[lev][2],
                    m_grad_buf_b_stag[lev][0]);
     m_grad_buf_b_stag[lev][0]->mult(-1._rt);
-    MultiFab::Add(*(m_b_field[lev][0]), *(m_grad_buf_b_stag[lev][0]), 0, 0, 1, m_b_field[lev][0]->nGrowVect() );
+    MultiFab::Add(*(m_b_field[lev][0]), *(m_grad_buf_b_stag[lev][0]), 0, 0, 1, 0 );
 
     // This will grab the gradient values for Az
     mlmg[2]->getGradSolution({buf_ptr});
@@ -443,20 +439,11 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::operator()(amrex::
     // Interpolate dAz/dy to Bx grid buffer, then add to Bx
     this->doInterp(m_grad_buf_e_stag[lev][1],
                    m_grad_buf_b_stag[lev][0]);
-    MultiFab::Add(*(m_b_field[lev][0]), *(m_grad_buf_b_stag[lev][0]), 0, 0, 1, m_b_field[lev][0]->nGrowVect() );
+    MultiFab::Add(*(m_b_field[lev][0]), *(m_grad_buf_b_stag[lev][0]), 0, 0, 1, 0 );
 
     // Interpolate dAz/dx to By grid buffer, then subtract from By
     this->doInterp(m_grad_buf_e_stag[lev][0],
                    m_grad_buf_b_stag[lev][1]);
     m_grad_buf_b_stag[lev][1]->mult(-1._rt);
-    MultiFab::Add(*(m_b_field[lev][1]), *(m_grad_buf_b_stag[lev][1]), 0, 0, 1, m_b_field[lev][1]->nGrowVect() );
-
-    // Synchronize B fields
-    for (int idim = 0; idim < 3; idim++)
-    {
-        // Synchronize the ghost cells, do halo exchange
-        ablastr::utils::communication::FillBoundary(*(m_b_field[lev][idim]),
-                                                    m_b_field[lev][idim]->nGrowVect(),
-                                                    WarpX::do_single_precision_comms);
-    }
+    MultiFab::Add(*(m_b_field[lev][1]), *(m_grad_buf_b_stag[lev][1]), 0, 0, 1, 0 );
 }

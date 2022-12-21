@@ -321,7 +321,7 @@ WarpX::Evolve (int numsteps)
                 // Call Magnetostatic Solver to solve for the vector potential A and compute the
                 // B field.  Time varying A contribution to E field is neglected.
                 // This is currently a lab frame calculation.
-                ComputeCurrentDensityField();
+                ComputeMagnetostaticField();
             }
             ExecutePythonCallback("afterEsolve");
         }

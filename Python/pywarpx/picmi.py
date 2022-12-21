@@ -75,7 +75,7 @@ class Species(picmistandard.PICMI_Species):
 
     warpx_random_theta: bool, default=True
         Whether or not to add random angle to the particles in theta
-        when in 2D-RZ mode.
+        when in RZ mode.
 
     warpx_reflection_model_xlo: string, default='0.'
         Expression (in terms of the velocity "v") specifying the probability

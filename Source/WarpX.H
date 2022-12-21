@@ -894,8 +894,8 @@ public:
 
     // Magnetostatic Solver Interface
     MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;
-    void ComputeCurrentDensityField ();
-    void AddCurrentDensityFieldLabFrame ();
+    void ComputeMagnetostaticField ();
+    void AddMagnetostaticFieldLabFrame ();
     void computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& curr,
                                  amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A,
                                  amrex::Real const required_precision=amrex::Real(1.e-11),

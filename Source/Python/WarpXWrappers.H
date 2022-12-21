@@ -171,7 +171,6 @@ extern "C" {
   amrex::Real** warpx_getCurrentDensityCP (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
   amrex::Real** warpx_getCurrentDensityFP (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
 
-  amrex::Real** warpx_getCurrentDensityFPNodal (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
   amrex::Real** warpx_getVectorPotentialFP (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
 
   int* warpx_getEfieldLoVects (int lev, int direction, int *return_size, int **ngrowvect);
@@ -185,7 +184,6 @@ extern "C" {
   int* warpx_getCurrentDensityLoVects (int lev, int direction, int *return_size, int **ngrowvect);
   int* warpx_getCurrentDensityCPLoVects (int lev, int direction, int *return_size, int **ngrowvect);
   int* warpx_getCurrentDensityFPLoVects (int lev, int direction, int *return_size, int **ngrowvect);
-  int* warpx_getCurrentDensityFPNodalLoVects (int lev, int direction, int *return_size, int **ngrowvect);
 
   int* warpx_getVectorPotentialFPLoVects (int lev, int direction, int *return_size, int **ngrowvect);
 
@@ -207,9 +205,6 @@ extern "C" {
   int* warpx_getJx_nodal_flag ();
   int* warpx_getJy_nodal_flag ();
   int* warpx_getJz_nodal_flag ();
-  int* warpx_getJxNodal_nodal_flag ();
-  int* warpx_getJyNodal_nodal_flag ();
-  int* warpx_getJzNodal_nodal_flag ();
   int* warpx_getRho_nodal_flag ();
   int* warpx_getPhi_nodal_flag ();
   int* warpx_getF_nodal_flag ();

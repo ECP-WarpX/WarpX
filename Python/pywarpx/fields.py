@@ -669,27 +669,6 @@ def PhiFPWrapper(level=0, include_ghosts=False):
                             get_nodal_flag=libwarpx.get_Phi_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
 
-def JxNodalWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(direction=0,
-                            get_lovects=libwarpx.get_mesh_current_density_fp_nodal_lovects,
-                            get_fabs=libwarpx.get_mesh_current_density_fp_nodal,
-                            get_nodal_flag=libwarpx.get_JxNodal_nodal_flag,
-                            level=level, include_ghosts=include_ghosts)
-
-def JyNodalWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(direction=1,
-                            get_lovects=libwarpx.get_mesh_current_density_fp_nodal_lovects,
-                            get_fabs=libwarpx.get_mesh_current_density_fp_nodal,
-                            get_nodal_flag=libwarpx.get_Jy_nodal_flag,
-                            level=level, include_ghosts=include_ghosts)
-
-def JzNodalWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(direction=2,
-                            get_lovects=libwarpx.get_mesh_current_density_fp_nodal_lovects,
-                            get_fabs=libwarpx.get_mesh_current_density_fp_nodal,
-                            get_nodal_flag=libwarpx.get_Jz_nodal_flag,
-                            level=level, include_ghosts=include_ghosts)
-
 def AxFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(direction=0,
                             get_lovects=libwarpx.get_mesh_vector_potential_fp_lovects,

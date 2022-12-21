@@ -196,8 +196,6 @@ class LibWarpX():
         self.libwarpx_so.warpx_getCurrentDensityCPLoVects.restype = _LP_c_int
         self.libwarpx_so.warpx_getCurrentDensityFP.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getCurrentDensityFPLoVects.restype = _LP_c_int
-        self.libwarpx_so.warpx_getCurrentDensityFPNodal.restype = _LP_LP_c_real
-        self.libwarpx_so.warpx_getCurrentDensityFPNodalLoVects.restype = _LP_c_int
         self.libwarpx_so.warpx_getCurrentDensityCP_PML.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getCurrentDensityCPLoVects_PML.restype = _LP_c_int
         self.libwarpx_so.warpx_getCurrentDensityFP_PML.restype = _LP_LP_c_real
@@ -246,9 +244,6 @@ class LibWarpX():
         self.libwarpx_so.warpx_getJx_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getJy_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getJz_nodal_flag.restype = _LP_c_int
-        self.libwarpx_so.warpx_getJxNodal_nodal_flag.restype = _LP_c_int
-        self.libwarpx_so.warpx_getJyNodal_nodal_flag.restype = _LP_c_int
-        self.libwarpx_so.warpx_getJzNodal_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getAx_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getAy_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getAz_nodal_flag.restype = _LP_c_int
@@ -1633,32 +1628,6 @@ class LibWarpX():
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getCurrentDensityFP, level, direction, include_ghosts)
 
-    def get_mesh_current_density_fp_nodal(self, level, direction, include_ghosts=True):
-        '''
-
-        This returns a list of numpy arrays containing the mesh current density
-        data on each grid for this process. This version returns the density on
-        the fine patch for the given level.
-
-        The data for the numpy arrays are not copied, but share the underlying
-        memory buffer with WarpX. The numpy arrays are fully writeable.
-
-        Parameters
-        ----------
-
-            level          : the AMR level to get the data for
-            direction      : the component of the data you want
-            include_ghosts : whether to include ghost zones or not
-
-        Returns
-        -------
-
-            A List of numpy arrays.
-
-        '''
-
-        return self._get_mesh_field_list(self.libwarpx_so.warpx_getCurrentDensityFPNodal, level, direction, include_ghosts)
-
     def get_mesh_current_density_cp_pml(self, level, direction, include_ghosts=True):
         '''
 
@@ -2393,27 +2362,6 @@ class LibWarpX():
         '''
         return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getCurrentDensityFPLoVects)
 
-    def get_mesh_current_density_fp_nodal_lovects(self, level, direction, include_ghosts=True):
-        '''
-
-        This returns a list of the lo vectors of the arrays containing the mesh electric field
-        data on each grid for this process.
-
-        Parameters
-        ----------
-
-            level          : the AMR level to get the data for
-            direction      : the component of the data you want
-            include_ghosts : whether to include ghost zones or not
-
-        Returns
-        -------
-
-            A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
-
-        '''
-        return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getCurrentDensityFPNodalLoVects)
-
     def get_mesh_current_density_cp_lovects_pml(self, level, direction, include_ghosts=True):
         '''
 
@@ -2803,24 +2751,6 @@ class LibWarpX():
         This returns a 1d array of the nodal flags for Jz along each direction. A 1 means node centered, and 0 cell centered.
         '''
         return self._get_nodal_flag(self.libwarpx_so.warpx_getJz_nodal_flag)
-
-    def get_JxNodal_nodal_flag(self):
-        '''
-        This returns a 1d array of the nodal flags for Jx along each direction. A 1 means node centered, and 0 cell centered.
-        '''
-        return self._get_nodal_flag(self.libwarpx_so.warpx_getJxNodal_nodal_flag)
-
-    def get_JyNodal_nodal_flag(self):
-        '''
-        This returns a 1d array of the nodal flags for Jy along each direction. A 1 means node centered, and 0 cell centered.
-        '''
-        return self._get_nodal_flag(self.libwarpx_so.warpx_getJyNodal_nodal_flag)
-
-    def get_JzNodal_nodal_flag(self):
-        '''
-        This returns a 1d array of the nodal flags for Jz along each direction. A 1 means node centered, and 0 cell centered.
-        '''
-        return self._get_nodal_flag(self.libwarpx_so.warpx_getJzNodal_nodal_flag)
 
     def get_Ax_nodal_flag(self):
         '''

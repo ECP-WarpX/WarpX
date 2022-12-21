@@ -1,4 +1,24 @@
 #!/usr/bin/env python3
+#
+# Copyright 2022 S. Eric Clark, LLNL
+#
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
+"""
+This script tests the magnetostatic solver in a beampipe by initializing a 
+uniform electron beam with relativistic gamma of 10, and a beam current of 1 kA.
+The MLMG soltution from WarpX is computed and compared to the simple analytic
+solution.  The analytic and simulated values are plotted over one another for the
+electric field and magnetic field solutions after taking the gradient of phi and
+the curl of the vector potential A.  This runs in 3 dimensions, has a PEC boundary
+at z=0, and a Neumann boundary at z=1.  This exercises the domain boundary conditions
+as well as the embedded boundary conditions and will fail if the maximum error is too large.
+The script additionally outputs png images with the average fields in a subset of the beampipe
+as well as the analytical solution.
+"""
 
 import matplotlib
 
@@ -10,24 +30,12 @@ import scipy.constants as con
 
 from pywarpx import fields, picmi
 
-# from pywarpx.Algo import algo
-# from pywarpx.Amrex import amrex
-# from pywarpx.WarpX import warpx
-
-GB = 1024**3
-
-# amrex.add_new_attr("the_arena_is_managed", 0)
-# amrex.add_new_attr("the_arena_init_size", 40*GB)
-# amrex.add_new_attr("throw_exception", 0)
-# amrex.add_new_attr("signal_handling", 0)
-
 ##########################
 # physics parameters
 ##########################
 
 V_domain_boundary = 0.0
 V_embedded_boundary = 1.0
-
 
 ##########################
 # numerics parameters
@@ -51,7 +59,6 @@ ymin = -0.25
 ymax = 0.25
 zmin = 0.
 zmax = 1.0
-
 
 ##########################
 # numerics components
@@ -164,20 +171,12 @@ def Er_an(r):
 
 # compare to region from 0.5*zmax to 0.9*zmax
 z_idx = ((z_vec >= 0.5*zmax) & (z_vec < 0.9*zmax))
-# z_sub = z_vec[z_idx]
 
 Ex_dat = Ex[...]
 Ey_dat = Ey[...]
 
 Ex_mean = Ex_dat[:,:,z_idx].mean(axis=2).T
 Ey_mean = Ey_dat[:,:,z_idx].mean(axis=2).T
-
-# Interpolate Ex to nodal points excluding last mesh point
-# Ex_nodal = (Ex_mean[1:,:-1] + Ex_mean[:-1,:-1])/2.
-# x_vec = x_vec[:-1]
-
-# Ey_nodal = (Ey_mean[:-1,1:] + Ey_mean[:-1,:-1])/2.
-# y_vec = y_vec[:-1]
 
 Ex_nodal = Ex_mean
 Ey_nodal = Ey_mean

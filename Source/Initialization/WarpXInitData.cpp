@@ -422,7 +422,7 @@ WarpX::InitData ()
         bool const reset_fields = false; // Do not erase previous user-specified values on the grid
         ComputeSpaceChargeField(reset_fields);
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
-            ComputeCurrentDensityField();
+            ComputeMagnetostaticField();
 
         // Write full diagnostics before the first iteration.
         multi_diags->FilterComputePackFlush( -1 );
