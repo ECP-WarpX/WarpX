@@ -1323,7 +1323,7 @@ Grid initialization
     then the constants `Bo` and `delta` required in the above equation
     can be set using ``my_constants.Bo=`` and ``my_constants.delta=`` in the
     input file. For a two-dimensional simulation, it is assumed that the first dimension
-    is `x` and the second dimension in `z`, and the value of `y` is set to zero.
+    is `x` and the second dimension is `z`, and the value of `y` is set to zero.
     Note that the current implementation of the parser for external B-field
     does not work with RZ and the code will abort with an error message.
 
@@ -1347,7 +1347,7 @@ Grid initialization
     then the constants `Bo` and `delta` required in the above equation
     can be set using ``my_constants.Eo=`` and ``my_constants.delta=`` in the
     input file. For a two-dimensional simulation, it is assumed that the first
-    dimension is `x` and the second dimension in `z`,
+    dimension is `x` and the second dimension is `z`,
     and the value of `y` is set to zero.
     Note that the current implementation of the parser for external E-field
     does not work with RZ and the code will abort with an error message.
@@ -1644,12 +1644,12 @@ Numerics and algorithms
     The ratio between the actual timestep that is used in the simulation
     and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
     the timestep will be exactly equal to the CFL limit.)
-    This parameter will only be used with the electromagnatic solver.
+    This parameter will only be used with the electromagnetic solver.
 
 * ``warpx.const_dt`` (`float`)
     Allows direct specification of the time step size, in units of seconds.
     When the electrostatic solver is being used, this must be supplied.
-    This can be used with the electromagnatic solver, overriding ``warpx.cfl``, but
+    This can be used with the electromagnetic solver, overriding ``warpx.cfl``, but
     it is up to the user to ensure that the CFL condition is met.
 
 * ``warpx.use_filter`` (`0` or `1`; default: `1`, except for RZ FDTD)
