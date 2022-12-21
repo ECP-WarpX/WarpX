@@ -1339,7 +1339,7 @@ private:
     int num_injected_species = -1;
     amrex::Vector<int> injected_plasma_species;
 
-    amrex::Real std::optional<amrex::Real> m_const_dt;
+    std::optional<amrex::Real> m_const_dt;
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
