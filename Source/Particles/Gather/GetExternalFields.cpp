@@ -21,8 +21,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
     int lev = a_pti.GetLevel();
 
     AcceleratorLattice const & accelerator_lattice = warpx.get_accelerator_lattice(lev);
-    m_accelerator_lattice_defined = accelerator_lattice.m_lattice_defined;
-    if (m_accelerator_lattice_defined) {
+    if (accelerator_lattice.m_lattice_defined) {
         d_lattice_element_finder = accelerator_lattice.GetFinderDeviceInstance(a_pti, a_offset);
     }
 
