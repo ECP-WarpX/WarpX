@@ -570,31 +570,38 @@ void FieldProbe::ComputeDiags (int step)
                 });// ParallelFor Close
                 // this check is here because for m_field_probe_integrate == True, we always compute
                 // but we only write when we truly are in an output interval step
-                if (m_intervals.contains(step+1))
+                if (m_intervals.contains(step+1) && np > 0)
                 {
-                    for (auto ip=0; ip < np; ip++)
+                    // This could be optimized by using shared memory.
+                    amrex::Gpu::DeviceVector<amrex::Real> dv(np*noutputs);
+                    amrex::Real* dvp = dv.data();
+                    amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (long ip)
                     {
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
-
-                        // push to output vector
-                        m_data.push_back(xp);
-                        m_data.push_back(yp);
-                        m_data.push_back(zp);
-                        m_data.push_back(part_Ex[ip]);
-                        m_data.push_back(part_Ey[ip]);
-                        m_data.push_back(part_Ez[ip]);
-                        m_data.push_back(part_Bx[ip]);
-                        m_data.push_back(part_By[ip]);
-                        m_data.push_back(part_Bz[ip]);
-                        m_data.push_back(part_S[ip]);
-                    }
+                        long idx = ip*noutputs;
+                        dvp[idx++] = xp;
+                        dvp[idx++] = yp;
+                        dvp[idx++] = zp;
+                        dvp[idx++] = part_Ex[ip];
+                        dvp[idx++] = part_Ey[ip];
+                        dvp[idx++] = part_Ez[ip];
+                        dvp[idx++] = part_Bx[ip];
+                        dvp[idx++] = part_By[ip];
+                        dvp[idx++] = part_Bz[ip];
+                        dvp[idx++] = part_S[ip];
+                    });
+                    auto oldsize = m_data.size();
+                    m_data.resize(oldsize + dv.size());
+                    amrex::Gpu::copyAsync(amrex::Gpu::deviceToHost,
+                                          dv.begin(), dv.end(), &m_data[oldsize]);
+                    Gpu::streamSynchronize();
                 /* m_data now contains up-to-date values for:
                  *  [x, y, z, Ex, Ey, Ez, Bx, By, Bz, and S] */
                 }
             }
         } // end particle iterator loop
-        Gpu::synchronize();
+
         if (m_intervals.contains(step+1))
         {
             // returns total number of mpi notes into mpisize
