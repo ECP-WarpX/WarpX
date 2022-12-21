@@ -1475,7 +1475,7 @@ class LibWarpX():
     def get_mesh_vector_potential_fp(self, level, direction, include_ghosts=True):
         '''
 
-        This returns a list of numpy arrays containing the mesh magnetic field
+        This returns a list of numpy arrays containing the mesh vector potential
         data on each grid for this process. This version returns the field on
         the fine patch for the given level.
 
