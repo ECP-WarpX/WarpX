@@ -10,6 +10,7 @@ import re
 from . import Particles
 from .Algo import algo
 from .Amr import amr
+from .Amrex import amrex
 from .Boundary import boundary
 from .Bucket import Bucket
 from .Collisions import collisions, collisions_list
@@ -40,6 +41,7 @@ class WarpX(Bucket):
         argv += warpx.attrlist()
         argv += my_constants.attrlist()
         argv += amr.attrlist()
+        argv += amrex.attrlist()
         argv += geometry.attrlist()
         argv += boundary.attrlist()
         argv += algo.attrlist()
