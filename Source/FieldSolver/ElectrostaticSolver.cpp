@@ -69,7 +69,8 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         }
     }
 
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
         AddSpaceChargeFieldLabFrame();
     }
     else {
@@ -305,7 +306,8 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #if defined(AMREX_USE_EB)
     // EB: use AMReX to directly calculate the electric field since with EB's the
     // simple finite difference scheme in WarpX::computeE sometimes fails
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
         // TODO: maybe make this a helper function or pass Efield_fp directly
         amrex::Vector<
@@ -449,7 +451,7 @@ WarpX::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
    The electric field is calculated by assuming that the source that
    produces the `phi` potential is moving with a constant speed \f$\vec{\beta}\f$:
    \f[
-    \vec{E} = -\vec{\nabla}\phi + (\vec{\beta}\cdot\vec{\beta})\phi \vec{\beta}
+    \vec{E} = -\vec{\nabla}\phi + \vec{\beta}(\vec{\beta} \cdot \vec{\nabla}\phi)
    \f]
    (where the second term represent the term \f$\partial_t \vec{A}\f$, in
     the case of a moving source)
