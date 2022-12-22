@@ -8,7 +8,7 @@
 # License: BSD-3-Clause-LBNL
 
 """
-This script tests the magnetostatic solver in a beampipe by initializing a 
+This script tests the magnetostatic solver in a beampipe by initializing a
 uniform electron beam with relativistic gamma of 10, and a beam current of 1 kA.
 The MLMG soltution from WarpX is computed and compared to the simple analytic
 solution.  The analytic and simulated values are plotted over one another for the
