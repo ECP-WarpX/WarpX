@@ -872,6 +872,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
     // Reading external fields from data file
     if (B_ext_grid_s=="read_from_file" && lev==0) {
+        add_external_B_field = true;
         std::string read_fields_from_path="./";
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
 #if defined(WARPX_DIM_RZ)
@@ -885,6 +886,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #endif
     }
     if (E_ext_grid_s=="read_from_file" && lev==0) {
+        add_external_E_field = true;
         std::string read_fields_from_path="./";
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
 #if defined(WARPX_DIM_RZ)
@@ -1266,14 +1268,6 @@ void
 WarpX::ReadExternalFieldsFromFile (std::string read_fields_from_path, MultiFab* mf,
 std::string F_name, std::string F_component)
 {
-    //! add_external: 0 for no exteranl field loading; 1/2/3 for E/B/both.
-    if (E_ext_grid_s=="read_from_file" && B_ext_grid_s=="read_from_file") {
-        add_external_fields = 3;
-    } else {
-        if (E_ext_grid_s=="read_from_file") { add_external_fields = 1; }
-        if (B_ext_grid_s=="read_from_file") { add_external_fields = 2; }
-    }
-
     // Get WarpX domain info
     auto& warpx = WarpX::GetInstance();
     amrex::Geometry const& geom = warpx.Geom(0);

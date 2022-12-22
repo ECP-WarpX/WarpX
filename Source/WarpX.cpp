@@ -88,7 +88,8 @@ Vector<Real> WarpX::B_external_grid(3, 0.0);
 std::string WarpX::authors = "";
 std::string WarpX::B_ext_grid_s = "default";
 std::string WarpX::E_ext_grid_s = "default";
-int WarpX::add_external_fields = 0;
+bool WarpX::add_external_E_field = false;
+bool WarpX::add_external_B_field = false;
 
 // Parser for B_external on the grid
 std::string WarpX::str_Bx_ext_grid_function;
