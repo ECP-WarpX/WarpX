@@ -376,7 +376,7 @@ void MagnetostaticSolver::EBCalcBfromVectorPotentialPerLevel::doInterp(const std
         Array4<amrex::Real const> const& src_arr = src->const_array(mfi);
         Array4<amrex::Real> const& dst_arr = dst->array(mfi);
 
-        Box bx = mfi.growntilebox(dst->nGrowVect());
+        Box bx = mfi.tilebox();
 
         ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
         {
