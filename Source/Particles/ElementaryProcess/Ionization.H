@@ -8,6 +8,8 @@
 #ifndef IONIZATION_H_
 #define IONIZATION_H_
 
+#include "WarpX.H"
+
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -46,6 +48,13 @@ struct IonizationFilterFunc
     amrex::Array4<const amrex::Real> m_bx_arr;
     amrex::Array4<const amrex::Real> m_by_arr;
     amrex::Array4<const amrex::Real> m_bz_arr;
+
+    amrex::Array4<const amrex::Real> m_ex_arr_ext;
+    amrex::Array4<const amrex::Real> m_ey_arr_ext;
+    amrex::Array4<const amrex::Real> m_ez_arr_ext;
+    amrex::Array4<const amrex::Real> m_bx_arr_ext;
+    amrex::Array4<const amrex::Real> m_by_arr_ext;
+    amrex::Array4<const amrex::Real> m_bz_arr_ext;
 
     amrex::IndexType m_ex_type;
     amrex::IndexType m_ey_type;
@@ -100,9 +109,10 @@ struct IonizationFilterFunc
 
             doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
                            m_ex_arr, m_ey_arr, m_ez_arr, m_bx_arr, m_by_arr, m_bz_arr,
+                           m_ex_arr_ext, m_ey_arr_ext, m_ez_arr_ext, m_bx_arr_ext, m_by_arr_ext, m_bz_arr_ext,
                            m_ex_type, m_ey_type, m_ez_type, m_bx_type, m_by_type, m_bz_type,
                            m_dx_arr, m_xyzmin_arr, m_lo, m_n_rz_azimuthal_modes,
-                           m_nox, m_galerkin_interpolation);
+                           m_nox, m_galerkin_interpolation, WarpX::add_external_fields);
 
             // Compute electric field amplitude in the particle's frame of
             // reference (particularly important when in boosted frame).

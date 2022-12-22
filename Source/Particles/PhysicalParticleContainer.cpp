@@ -1898,6 +1898,8 @@ void
 PhysicalParticleContainer::Evolve (int lev,
                                    const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                    const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                                   const MultiFab& Ex_ext, const MultiFab& Ey_ext, const MultiFab& Ez_ext,
+                                   const MultiFab& Bx_ext, const MultiFab& By_ext, const MultiFab& Bz_ext,
                                    MultiFab& jx, MultiFab& jy, MultiFab& jz,
                                    MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
                                    MultiFab* rho, MultiFab* crho,
@@ -1971,6 +1973,13 @@ PhysicalParticleContainer::Evolve (int lev,
             FArrayBox const* byfab = &By[pti];
             FArrayBox const* bzfab = &Bz[pti];
 
+            FArrayBox const* exfab_ext = &Ex_ext[pti];
+            FArrayBox const* eyfab_ext = &Ey_ext[pti];
+            FArrayBox const* ezfab_ext = &Ez_ext[pti];
+            FArrayBox const* bxfab_ext = &Bx_ext[pti];
+            FArrayBox const* byfab_ext = &By_ext[pti];
+            FArrayBox const* bzfab_ext = &Bz_ext[pti];
+
             Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
 
             if (WarpX::use_fdtd_nci_corr)
@@ -2031,8 +2040,8 @@ PhysicalParticleContainer::Evolve (int lev,
                 // Gather and push for particles not in the buffer
                 //
                 WARPX_PROFILE_VAR_START(blp_fg);
-                PushPX(pti, exfab, eyfab, ezfab,
-                       bxfab, byfab, bzfab,
+                PushPX(pti, exfab, eyfab, ezfab, bxfab, byfab, bzfab,
+                       exfab_ext, eyfab_ext, ezfab_ext, bxfab_ext, byfab_ext, bzfab_ext,
                        Ex.nGrowVect(), e_is_nodal,
                        0, np_gather, lev, lev, dt, ScaleFields(false), a_dt_type);
 
@@ -2065,8 +2074,8 @@ PhysicalParticleContainer::Evolve (int lev,
 
                     // Field gather and push for particles in gather buffers
                     e_is_nodal = cEx->is_nodal() and cEy->is_nodal() and cEz->is_nodal();
-                    PushPX(pti, cexfab, ceyfab, cezfab,
-                           cbxfab, cbyfab, cbzfab,
+                    PushPX(pti, cexfab, ceyfab, cezfab, cbxfab, cbyfab, cbzfab,
+                           cexfab, ceyfab, cezfab, cbxfab, cbyfab, cbzfab,
                            cEx->nGrowVect(), e_is_nodal,
                            nfine_gather, np-nfine_gather,
                            lev, lev-1, dt, ScaleFields(false), a_dt_type);
@@ -2407,7 +2416,10 @@ PhysicalParticleContainer::SplitParticles (int lev)
 void
 PhysicalParticleContainer::PushP (int lev, Real dt,
                                   const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
-                                  const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz)
+                                  const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                                  const MultiFab& Ex_ext, const MultiFab& Ey_ext, const MultiFab& Ez_ext,
+                                  const MultiFab& Bx_ext, const MultiFab& By_ext, const MultiFab& Bz_ext)
+
 {
     WARPX_PROFILE("PhysicalParticleContainer::PushP()");
 
@@ -2434,6 +2446,14 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const FArrayBox& byfab = By[pti];
             const FArrayBox& bzfab = Bz[pti];
 
+            // External data on the grid
+            const FArrayBox& exfab_ext = Ex_ext[pti];
+            const FArrayBox& eyfab_ext = Ey_ext[pti];
+            const FArrayBox& ezfab_ext = Ez_ext[pti];
+            const FArrayBox& bxfab_ext = Bx_ext[pti];
+            const FArrayBox& byfab_ext = By_ext[pti];
+            const FArrayBox& bzfab_ext = Bz_ext[pti];
+
             const auto getPosition = GetParticlePosition(pti);
 
             const auto getExternalEB = GetExternalEBField(pti);
@@ -2455,6 +2475,13 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             amrex::Array4<const amrex::Real> const& bx_arr = bxfab.array();
             amrex::Array4<const amrex::Real> const& by_arr = byfab.array();
             amrex::Array4<const amrex::Real> const& bz_arr = bzfab.array();
+
+            amrex::Array4<const amrex::Real> const& ex_arr_ext = exfab_ext.array();
+            amrex::Array4<const amrex::Real> const& ey_arr_ext = eyfab_ext.array();
+            amrex::Array4<const amrex::Real> const& ez_arr_ext = ezfab_ext.array();
+            amrex::Array4<const amrex::Real> const& bx_arr_ext = bxfab_ext.array();
+            amrex::Array4<const amrex::Real> const& by_arr_ext = byfab_ext.array();
+            amrex::Array4<const amrex::Real> const& bz_arr_ext = bzfab_ext.array();
 
             amrex::IndexType const ex_type = exfab.box().ixType();
             amrex::IndexType const ey_type = eyfab.box().ixType();
@@ -2501,9 +2528,10 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                     // first gather E and B to the particle positions
                     doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                   ex_arr_ext, ey_arr_ext, ez_arr_ext, bx_arr_ext, by_arr_ext, bz_arr_ext,
                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                                   nox, galerkin_interpolation);
+                                   nox, galerkin_interpolation, WarpX::add_external_fields);
                 }
 
                 // Externally applied E and B-field in Cartesian co-ordinates
@@ -2581,6 +2609,12 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                    amrex::FArrayBox const * bxfab,
                                    amrex::FArrayBox const * byfab,
                                    amrex::FArrayBox const * bzfab,
+                                   amrex::FArrayBox const * exfab_ext,
+                                   amrex::FArrayBox const * eyfab_ext,
+                                   amrex::FArrayBox const * ezfab_ext,
+                                   amrex::FArrayBox const * bxfab_ext,
+                                   amrex::FArrayBox const * byfab_ext,
+                                   amrex::FArrayBox const * bzfab_ext,
                                    const amrex::IntVect ngEB, const int /*e_is_nodal*/,
                                    const long offset,
                                    const long np_to_push,
@@ -2633,6 +2667,13 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     amrex::Array4<const amrex::Real> const& bx_arr = bxfab->array();
     amrex::Array4<const amrex::Real> const& by_arr = byfab->array();
     amrex::Array4<const amrex::Real> const& bz_arr = bzfab->array();
+
+    amrex::Array4<const amrex::Real> const& ex_arr_ext = exfab_ext->array();
+    amrex::Array4<const amrex::Real> const& ey_arr_ext = eyfab_ext->array();
+    amrex::Array4<const amrex::Real> const& ez_arr_ext = ezfab_ext->array();
+    amrex::Array4<const amrex::Real> const& bx_arr_ext = bxfab_ext->array();
+    amrex::Array4<const amrex::Real> const& by_arr_ext = byfab_ext->array();
+    amrex::Array4<const amrex::Real> const& bz_arr_ext = bzfab_ext->array();
 
     amrex::IndexType const ex_type = exfab->box().ixType();
     amrex::IndexType const ey_type = eyfab->box().ixType();
@@ -2737,9 +2778,10 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
             // first gather E and B to the particle positions
             doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                            ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                           ex_arr_ext, ey_arr_ext, ez_arr_ext, bx_arr_ext, by_arr_ext, bz_arr_ext,
                            ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                            dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                           nox, galerkin_interpolation);
+                           nox, galerkin_interpolation, WarpX::add_external_fields);
         }
 
         if constexpr (exteb_control == has_exteb) {

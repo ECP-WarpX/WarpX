@@ -158,6 +158,12 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                         amrex::FArrayBox const * bxfab,
                                         amrex::FArrayBox const * byfab,
                                         amrex::FArrayBox const * bzfab,
+                                        amrex::FArrayBox const * exfab_ext,
+                                        amrex::FArrayBox const * eyfab_ext,
+                                        amrex::FArrayBox const * ezfab_ext,
+                                        amrex::FArrayBox const * bxfab_ext,
+                                        amrex::FArrayBox const * byfab_ext,
+                                        amrex::FArrayBox const * bzfab_ext,
                                         const amrex::IntVect ngEB, const int e_is_nodal,
                                         const long offset,
                                         const long np_to_push,
@@ -238,6 +244,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     const bool do_scale = not done_injecting_lev;
     const Real v_boost = WarpX::beta_boost*PhysConst::c;
     PhysicalParticleContainer::PushPX(pti, exfab, eyfab, ezfab, bxfab, byfab, bzfab,
+                                      exfab_ext, eyfab_ext, ezfab_ext, bxfab_ext, byfab_ext, bzfab_ext,
                                       ngEB, e_is_nodal, offset, np_to_push, lev, gather_lev, dt,
                                       ScaleFields(do_scale, dt, zinject_plane_lev_previous,
                                                   vzbeam_ave_boosted, v_boost),
@@ -290,6 +297,8 @@ void
 RigidInjectedParticleContainer::Evolve (int lev,
                                         const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                         const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                                        const MultiFab& Ex_ext, const MultiFab& Ey_ext, const MultiFab& Ez_ext,
+                                        const MultiFab& Bx_ext, const MultiFab& By_ext, const MultiFab& Bz_ext,
                                         MultiFab& jx, MultiFab& jy, MultiFab& jz,
                                         MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
                                         MultiFab* rho, MultiFab* crho,
@@ -315,6 +324,8 @@ RigidInjectedParticleContainer::Evolve (int lev,
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,
                                        Bx, By, Bz,
+                                       Ex_ext, Ey_ext, Ez_ext,
+                                       Bx_ext, By_ext, Bz_ext,
                                        jx, jy, jz,
                                        cjx, cjy, cjz,
                                        rho, crho,
@@ -326,7 +337,9 @@ RigidInjectedParticleContainer::Evolve (int lev,
 void
 RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                        const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
-                                       const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz)
+                                       const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                                       const MultiFab& Ex_ext, const MultiFab& Ey_ext, const MultiFab& Ez_ext,
+                                       const MultiFab& Bx_ext, const MultiFab& By_ext, const MultiFab& Bz_ext)
 {
     WARPX_PROFILE("RigidInjectedParticleContainer::PushP");
 
@@ -429,9 +442,10 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                 // first gather E and B to the particle positions
                 doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                               ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                               nox, galerkin_interpolation);
+                               nox, galerkin_interpolation, WarpX::add_external_fields);
 
                 if constexpr (exteb_control == has_exteb) {
                     getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);

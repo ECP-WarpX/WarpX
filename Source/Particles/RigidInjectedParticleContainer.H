@@ -61,6 +61,12 @@ public:
                          const amrex::MultiFab& Bx,
                          const amrex::MultiFab& By,
                          const amrex::MultiFab& Bz,
+                         const amrex::MultiFab& Ex_ext,
+                         const amrex::MultiFab& Ey_ext,
+                         const amrex::MultiFab& Ez_ext,
+                         const amrex::MultiFab& Bx_ext,
+                         const amrex::MultiFab& By_ext,
+                         const amrex::MultiFab& Bz_ext,
                          amrex::MultiFab& jx,
                          amrex::MultiFab& jy,
                          amrex::MultiFab& jz,
@@ -87,6 +93,12 @@ public:
                          amrex::FArrayBox const * bxfab,
                          amrex::FArrayBox const * byfab,
                          amrex::FArrayBox const * bzfab,
+                         amrex::FArrayBox const * exfab_ext,
+                         amrex::FArrayBox const * eyfab_ext,
+                         amrex::FArrayBox const * ezfab_ext,
+                         amrex::FArrayBox const * bxfab_ext,
+                         amrex::FArrayBox const * byfab_ext,
+                         amrex::FArrayBox const * bzfab_ext,
                          const amrex::IntVect ngEB, const int /*e_is_nodal*/,
                          const long offset,
                          const long np_to_push,
@@ -100,7 +112,13 @@ public:
                         const amrex::MultiFab& Ez,
                         const amrex::MultiFab& Bx,
                         const amrex::MultiFab& By,
-                        const amrex::MultiFab& Bz) override;
+                        const amrex::MultiFab& Bz,
+                        const amrex::MultiFab& Ex_ext,
+                        const amrex::MultiFab& Ey_ext,
+                        const amrex::MultiFab& Ez_ext,
+                        const amrex::MultiFab& Bx_ext,
+                        const amrex::MultiFab& By_ext,
+                        const amrex::MultiFab& Bz_ext) override;
 
     virtual void ReadHeader (std::istream& is) override;
 

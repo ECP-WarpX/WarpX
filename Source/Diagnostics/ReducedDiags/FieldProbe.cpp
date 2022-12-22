@@ -530,9 +530,10 @@ void FieldProbe::ComputeDiags (int step)
                     else
                         doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    arrEx, arrEy, arrEz, arrBx, arrBy, arrBz,
+                                   arrEx, arrEy, arrEz, arrBx, arrBy, arrBz,
                                    Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
                                    dx_arr, xyzmin_arr, lo, temp_modes,
-                                   temp_interp_order, false);
+                                   temp_interp_order, false, WarpX::add_external_fields);
 
                     //Calculate the Poynting Vector S
                     amrex::ParticleReal const sraw[3]{

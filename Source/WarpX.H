@@ -68,6 +68,8 @@
 #include <vector>
 #include <map>
 
+#include <openPMD/openPMD.hpp>
+
 enum struct PatchType : int
 {
     fine,
@@ -120,6 +122,9 @@ public:
     static std::string B_ext_grid_s;
     //! Initialization type for external electric field on the grid
     static std::string E_ext_grid_s;
+
+    //! 0 for no exteranl field loading; 1/2/3 for E/B/both.
+    static int add_external_fields;
 
     //! String storing parser function to initialize x-component of the magnetic field on the grid
     static std::string str_Bx_ext_grid_function;
@@ -442,6 +447,7 @@ public:
 
     amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
+
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_current_fp_nodal  (int lev, int direction) const { return current_fp_nodal[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
@@ -945,6 +951,9 @@ public:
          const char field,
          const int lev, PatchType patch_type);
 
+    void ReadExternalFieldsFromFile (std::string read_fields_from_path, amrex::MultiFab* mf,
+        std::string F_name, std::string F_component);
+
     /**
      * \brief
      * This function initializes and calculates grid quantities used along with
@@ -1279,6 +1288,10 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_fp_nodal;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_e_stag;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_b_stag;
+
+    // Same as Bfield_fp/Efield_fp for reading external field data
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp_external;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp_external;
 
     //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
