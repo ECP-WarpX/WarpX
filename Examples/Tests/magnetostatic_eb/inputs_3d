@@ -19,7 +19,7 @@ my_constants.rmax = 0.1
 my_constants.n0 = 666041719496846.5
 my_constants.radius = 0.2
 
-warpx.do_electrostatic = relativistic-magnetostatic
+warpx.do_electrostatic = labframe-electromagnetostatic
 warpx.eb_implicit_function = "(x**2+y**2-radius**2)"
 warpx.eb_potential(x,y,z,t) = "1."
 warpx.self_fields_required_precision = 1.e-7

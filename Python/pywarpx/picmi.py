@@ -1004,7 +1004,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
             pywarpx.warpx.do_electrostatic = 'relativistic'
         else:
             if self.magnetostatic:
-                pywarpx.warpx.do_electrostatic = 'relativistic-magnetostatic'
+                pywarpx.warpx.do_electrostatic = 'labframe-electromagnetostatic'
             else:
                 pywarpx.warpx.do_electrostatic = 'labframe'
             pywarpx.warpx.self_fields_required_precision = self.required_precision
