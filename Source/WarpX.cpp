@@ -285,7 +285,7 @@ WarpX::WarpX ()
     Bfield_fp.resize(nlevs_max);
 
     // Only allocate vector potential arrays when using the Magnetostatic Solver
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
         vector_potential_fp_nodal.resize(nlevs_max);
         vector_potential_grad_buf_e_stag.resize(nlevs_max);
@@ -659,7 +659,7 @@ WarpX::ReadParameters ()
 #endif
 
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
-            electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
+            electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
         {
             // Note that with the relativistic version, these parameters would be
             // input for each species.
@@ -1674,7 +1674,7 @@ WarpX::ClearLevel (int lev)
             current_fp_vay[lev][i].reset();
         }
 
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
         {
             vector_potential_fp_nodal[lev][i].reset();
             vector_potential_grad_buf_e_stag[lev][i].reset();
@@ -1841,7 +1841,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     jy_nodal_flag = IntVect(1,0,1);
     jz_nodal_flag = IntVect(1,1,0);
 #endif
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
         jx_nodal_flag  = IntVect::TheNodeVector();
         jy_nodal_flag  = IntVect::TheNodeVector();
@@ -1933,7 +1933,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(current_fp_vay[lev][2], amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, tag("current_fp_vay[z]"), 0.0_rt);
     }
 
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
         AllocInitMultiFab(vector_potential_fp_nodal[lev][0], amrex::convert(ba, rho_nodal_flag),
             dm, ncomps, ngRho, tag("vector_potential_fp_nodal[x]"), 0.0_rt);
@@ -2015,7 +2015,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #endif
 
     bool deposit_charge = do_dive_cleaning || (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame  ||
-                                               electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic);
+                                               electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic);
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         deposit_charge = do_dive_cleaning || update_with_rho || current_correction;
     }
@@ -2027,7 +2027,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
-        electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic)
+        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
         IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
         AllocInitMultiFab(phi_fp[lev], amrex::convert(ba, phi_nodal_flag), dm, ncomps, ngPhi, tag("phi_fp"), 0.0_rt);

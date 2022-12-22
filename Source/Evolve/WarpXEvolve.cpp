@@ -317,7 +317,7 @@ WarpX::Evolve (int numsteps)
             // and so that the fields are at the correct time in the output.
             bool const reset_fields = true;
             ComputeSpaceChargeField( reset_fields );
-            if (electrostatic_solver_id == ElectrostaticSolverAlgo::RelativisticMagnetostatic) {
+            if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
                 // Call Magnetostatic Solver to solve for the vector potential A and compute the
                 // B field.  Time varying A contribution to E field is neglected.
                 // This is currently a lab frame calculation.
