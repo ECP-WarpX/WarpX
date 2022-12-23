@@ -1266,6 +1266,10 @@ void
 WarpX::ReadExternalFieldsFromFile (std::string read_fields_from_path, MultiFab* mf,
 std::string F_name, std::string F_component)
 {
+#if defined(WARPX_DIM_1D)
+    Abort(Utils::TextMsg::Err("Reading fields from openPMD files is not supported in 1D");
+#endif
+
     // Get WarpX domain info
     auto& warpx = WarpX::GetInstance();
     amrex::Geometry const& geom0 = warpx.Geom(0);
@@ -1361,7 +1365,7 @@ std::string F_name, std::string F_component)
                                FC_data[(ix1  )+(ix0+1)*chunk_extent[1]]*(    ddx0)*(1.0-ddx1) +
                                FC_data[(ix1+1)+(ix0  )*chunk_extent[1]]*(1.0-ddx0)*(    ddx1) +
                                FC_data[(ix1+1)+(ix0+1)*chunk_extent[1]]*(    ddx0)*(    ddx1);
-#else // 3D
+#elif defined(WARPX_DIM_3D)
                 int ext_2 = chunk_extent[2];
                 int ext_12 = chunk_extent[1]*chunk_extent[2];
                 mffab(i,j,k) = FC_data[(ix2  )+(ix1  )*ext_2+(ix0  )*ext_12]*(1.0-ddx0)*(1.0-ddx1)*(1.0-ddx2) +
