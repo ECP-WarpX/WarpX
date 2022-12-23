@@ -8,8 +8,6 @@
 #ifndef QED_PHOTON_EMISSION_H_
 #define QED_PHOTON_EMISSION_H_
 
-#include "WarpX.H"
-
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -149,10 +147,9 @@ public:
 
         doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
                        m_ex_arr, m_ey_arr, m_ez_arr, m_bx_arr, m_by_arr, m_bz_arr,
-                       m_ex_arr_ext, m_ey_arr_ext, m_ez_arr_ext, m_bx_arr_ext, m_by_arr_ext, m_bz_arr_ext,
                        m_ex_type, m_ey_type, m_ez_type, m_bx_type, m_by_type, m_bz_type,
                        m_dx_arr, m_xyzmin_arr, m_lo, m_n_rz_azimuthal_modes,
-                       m_nox, m_galerkin_interpolation, WarpX::add_external_fields);
+                       m_nox, m_galerkin_interpolation);
 
         auto& ux = src.m_rdata[PIdx::ux][i_src];
         auto& uy = src.m_rdata[PIdx::uy][i_src];
@@ -190,13 +187,6 @@ private:
     amrex::Array4<const amrex::Real> m_bx_arr;
     amrex::Array4<const amrex::Real> m_by_arr;
     amrex::Array4<const amrex::Real> m_bz_arr;
-
-    amrex::Array4<const amrex::Real> m_ex_arr_ext;
-    amrex::Array4<const amrex::Real> m_ey_arr_ext;
-    amrex::Array4<const amrex::Real> m_ez_arr_ext;
-    amrex::Array4<const amrex::Real> m_bx_arr_ext;
-    amrex::Array4<const amrex::Real> m_by_arr_ext;
-    amrex::Array4<const amrex::Real> m_bz_arr_ext;
 
     amrex::IndexType m_ex_type;
     amrex::IndexType m_ey_type;
