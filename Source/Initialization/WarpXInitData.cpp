@@ -1280,13 +1280,23 @@ std::string F_name, std::string F_component)
     // Loop over boxes
     for (MFIter mfi(*mf, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-
         // Read external field openPMD data
         auto series = openPMD::Series(read_fields_from_path, openPMD::Access::READ_ONLY);
         auto iseries = series.iterations.begin()->second;
         auto F = iseries.meshes[F_name];
         auto offset = F.gridGlobalOffset();
+        auto offset0 = offset[0];
+        auto offset1 = offset[1];
+#if defined(WARPX_DIM_3D)
+        auto offset2 = offset[2];
+#endif
         auto d = F.gridSpacing<long double>();
+        auto d0 = d[0];
+        auto d1 = d[1];
+#if defined(WARPX_DIM_3D)
+        auto d2 = d[2];
+#endif
+
         auto FC = F[F_component];
         auto extent = FC.getExtent();
 
@@ -1304,10 +1314,12 @@ std::string F_name, std::string F_component)
         auto FC_data_host = FC_chunk_data.get();
 
         // Load data to GPU
+        auto extent1 = extent[1];
+        auto extent2 = extent[2];
         size_t total_extent = size_t(extent[0]) * extent[1] * extent[2];
         amrex::Gpu::DeviceVector<double> FC_data_gpu(total_extent);
-        amrex::Gpu::copy(amrex::Gpu::hostToDevice, FC_data_host, FC_data_host + total_extent, FC_data.data());
         auto FC_data = FC_data_gpu.data();
+        amrex::Gpu::copy(amrex::Gpu::hostToDevice, FC_data_host, FC_data_host + total_extent, FC_data);
 
         const amrex::Box& tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
         auto const& mffab = mf->array(mfi);
@@ -1339,36 +1351,36 @@ std::string F_name, std::string F_component)
                 else { x1 = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
 
                 // Get index of the external field array
-                int const ix0 = floor( (x0-offset[0])/d[0] );
-                int const ix1 = floor( (x1-offset[1])/d[1] );
+                int const ix0 = floor( (x0-offset0)/d0 );
+                int const ix1 = floor( (x1-offset1)/d1 );
 
                 // Get coordinates of external grid point
-                amrex::Real const xx0 = offset[0] + ix0*d[0];
-                amrex::Real const xx1 = offset[1] + ix1*d[1];
+                amrex::Real const xx0 = offset0 + ix0*d0;
+                amrex::Real const xx1 = offset1 + ix1*d1;
 
                 // Get portion ratio for linear interpolatioin
-                amrex::Real const ddx0 = (x0-xx0)/d[0];
-                amrex::Real const ddx1 = (x1-xx1)/d[1];
+                amrex::Real const ddx0 = (x0-xx0)/d0;
+                amrex::Real const ddx1 = (x1-xx1)/d1;
 
 #if defined(WARPX_DIM_3D)
                 amrex::Real x2;
                 if ( box.type(2)==1 )
                      { x2 = real_box.lo(2) + k*dx[2]; }
                 else { x2 = real_box.lo(2) + k*dx[2] + 0.5*dx[2]; }
-                int const ix2 = floor( (x2-offset[2])/d[2] );
-                amrex::Real const xx2 = offset[2] + ix2*d[2];
-                amrex::Real const ddx2 = (x2-xx2)/d[2];
+                int const ix2 = floor( (x2-offset2)/d2 );
+                amrex::Real const xx2 = offset2 + ix2*d2;
+                amrex::Real const ddx2 = (x2-xx2)/d2;
 #endif
 
                 // Assign the values through linear interpolation
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                mffab(i,j,k) = FC_data[(ix1  )+(ix0  )*chunk_extent[1]]*(1.0-ddx0)*(1.0-ddx1) +
-                               FC_data[(ix1  )+(ix0+1)*chunk_extent[1]]*(    ddx0)*(1.0-ddx1) +
-                               FC_data[(ix1+1)+(ix0  )*chunk_extent[1]]*(1.0-ddx0)*(    ddx1) +
-                               FC_data[(ix1+1)+(ix0+1)*chunk_extent[1]]*(    ddx0)*(    ddx1);
+                mffab(i,j,k) = FC_data[(ix1  )+(ix0  )*extent1]*(1.0-ddx0)*(1.0-ddx1) +
+                               FC_data[(ix1  )+(ix0+1)*extent1]*(    ddx0)*(1.0-ddx1) +
+                               FC_data[(ix1+1)+(ix0  )*extent1]*(1.0-ddx0)*(    ddx1) +
+                               FC_data[(ix1+1)+(ix0+1)*extent1]*(    ddx0)*(    ddx1);
 #elif defined(WARPX_DIM_3D)
-                int ext_2 = chunk_extent[2];
-                int ext_12 = chunk_extent[1]*chunk_extent[2];
+                int ext_2 = extent2;
+                int ext_12 = extent1*extent2;
                 mffab(i,j,k) = FC_data[(ix2  )+(ix1  )*ext_2+(ix0  )*ext_12]*(1.0-ddx0)*(1.0-ddx1)*(1.0-ddx2) +
                                FC_data[(ix2  )+(ix1  )*ext_2+(ix0+1)*ext_12]*(    ddx0)*(1.0-ddx1)*(1.0-ddx2) +
                                FC_data[(ix2  )+(ix1+1)*ext_2+(ix0  )*ext_12]*(1.0-ddx0)*(    ddx1)*(1.0-ddx2) +
