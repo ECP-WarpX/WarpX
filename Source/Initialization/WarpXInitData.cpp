@@ -1315,7 +1315,7 @@ std::string F_name, std::string F_component)
 
         // Load data to GPU
         auto extent1 = extent[1];
-        auto extent2 = extent[2];
+        auto extent2 [[maybe_unused]] = extent[2];
         size_t total_extent = size_t(extent[0]) * extent[1] * extent[2];
         amrex::Gpu::DeviceVector<double> FC_data_gpu(total_extent);
         auto FC_data = FC_data_gpu.data();
