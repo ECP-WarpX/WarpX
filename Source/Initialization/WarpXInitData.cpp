@@ -1297,7 +1297,12 @@ std::string F_name, std::string F_component)
 
         auto FC_chunk_data = FC.loadChunk<double>(chunk_offset,chunk_extent);
         series.flush();
-        auto FC_data = FC_chunk_data.get();
+        auto FC_data_host = FC_chunk_data.get();
+
+        // Load data to GPU
+        size_t total_extent = size_t(extent[0]) * extent[1] * extent[2];
+        amrex::Gpu::DeviceVector<double> FC_data(total_extent);
+        amrex::Gpu::copy(amrex::Gpu::hostToDevice, FC_data_host, FC_data_host + total_extent, FC_data.data());
 
         const amrex::Box& tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
         auto const& mffab = mf->array(mfi);
