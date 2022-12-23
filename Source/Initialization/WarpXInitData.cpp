@@ -1350,6 +1350,7 @@ std::string F_name, std::string F_component)
                      { x1 = real_box.lo(1) + j*dx[1]; }
                 else { x1 = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
 
+#if !defined(WARPX_DIM_1D_Z) // Avoid unused variable warnings
                 // Get index of the external field array
                 int const ix0 = floor( (x0-offset0)/d0 );
                 int const ix1 = floor( (x1-offset1)/d1 );
@@ -1361,6 +1362,7 @@ std::string F_name, std::string F_component)
                 // Get portion ratio for linear interpolatioin
                 amrex::Real const ddx0 = (x0-xx0)/d0;
                 amrex::Real const ddx1 = (x1-xx1)/d1;
+#endif
 
 #if defined(WARPX_DIM_3D)
                 amrex::Real x2;
