@@ -1268,9 +1268,9 @@ std::string F_name, std::string F_component)
 {
     // Get WarpX domain info
     auto& warpx = WarpX::GetInstance();
-    amrex::Geometry const& geom = warpx.Geom(0);
-    const amrex::RealBox& real_box = geom.ProbDomain();
-    const auto dx = geom.CellSizeArray();
+    amrex::Geometry const& geom0 = warpx.Geom(0);
+    const amrex::RealBox& real_box = geom0.ProbDomain();
+    const auto dx = geom0.CellSizeArray();
     amrex::IntVect nodal_flag = mf->ixType().toIntVect();
 
     // Loop over boxes
@@ -1287,10 +1287,6 @@ std::string F_name, std::string F_component)
         auto extent = FC.getExtent();
 
         auto box = mfi.growntilebox();
-        auto lo = lbound(box);
-        auto hi = ubound(box);
-        const amrex::RealBox& real_box = geom.ProbDomain();
-        const auto dx = geom.CellSizeArray();
 
         // Determine the chunk data that will be loaded.
         // Now, the full range of data is loaded.
