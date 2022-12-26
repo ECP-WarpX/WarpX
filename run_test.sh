@@ -75,8 +75,7 @@ cd amrex && git checkout --detach 1ffc6e427e3aea9302602190c8fc1cfbea0c9725 && cd
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 # openPMD-example-datasets contains various required data sets
-wget https://github.com/openPMD/openPMD-example-datasets/blob/draft/example-femm-3d.h5
-wget https://github.com/openPMD/openPMD-example-datasets/blob/draft/example-femm-thetaMode.h5
+git clone --depth 1 --branch draft https://github.com/openPMD/openPMD-example-datasets
 
 # Clone the AMReX regression test utility
 git clone https://github.com/AMReX-Codes/regression_testing.git
