@@ -1261,15 +1261,11 @@ void WarpX::CheckKnownIssues()
         }
 }
 
-#ifdef WARPX_USE_OPENPMD
+#if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z)
 void
 WarpX::ReadExternalFieldsFromFile (std::string read_fields_from_path, MultiFab* mf,
 std::string F_name, std::string F_component)
 {
-#if defined(WARPX_DIM_1D)
-    Abort(Utils::TextMsg::Err("Reading fields from openPMD files is not supported in 1D");
-#endif
-
     // Get WarpX domain info
     auto& warpx = WarpX::GetInstance();
     amrex::Geometry const& geom0 = warpx.Geom(0);
@@ -1350,7 +1346,6 @@ std::string F_name, std::string F_component)
                      { x1 = real_box.lo(1) + j*dx[1]; }
                 else { x1 = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
 
-#if !defined(WARPX_DIM_1D_Z) // Avoid unused variable warnings
                 // Get index of the external field array
                 int const ix0 = floor( (x0-offset0)/d0 );
                 int const ix1 = floor( (x1-offset1)/d1 );
@@ -1362,7 +1357,6 @@ std::string F_name, std::string F_component)
                 // Get portion ratio for linear interpolatioin
                 amrex::Real const ddx0 = (x0-xx0)/d0;
                 amrex::Real const ddx1 = (x1-xx1)/d1;
-#endif
 
 #if defined(WARPX_DIM_3D)
                 amrex::Real x2;
@@ -1400,10 +1394,14 @@ std::string F_name, std::string F_component)
     } // End loop over boxes.
 
 } // End function WarpX::ReadExternalFieldsFromFile
-#else // WARPX_USE_OPENPMD
+#else // WARPX_USE_OPENPMD && !WARPX_DIM_1D_Z
 void
 WarpX::ReadExternalFieldsFromFile (std::string , MultiFab* ,std::string, std::string)
 {
-    Abort(Utils::TextMsg::Err("OpenPMD support is not enabled"));
+#if defined(WARPX_DIM_1D)
+    Abort(Utils::TextMsg::Err("Reading fields from openPMD files is not supported in 1D");
+#elif !defined(WARPX_USE_OPENPMD)
+    Abort(Utils::TextMsg::Err("OpenPMD field reading requires OpenPMD support to be enabled"));
+#endif
 }
 #endif // WARPX_USE_OPENPMD
