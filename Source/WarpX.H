@@ -1385,6 +1385,14 @@ private:
      * `load_balance_knapsack_factor=2` limits the maximum number of boxes that can
      * be assigned to a rank to 8. */
     amrex::Real load_balance_knapsack_factor = amrex::Real(1.24);
+    /** Controls the fraction of loads that should be kept on the original
+     * process. This number is in the range of [0,1).  The higher it is, the
+     * less freedom the knapsack load balancer has.  If it's zero, a process
+     * may be assigned a completely different set of boxes and particles,
+     * resulting in high cost in data movement.  The purpose of this
+     * parameter is to reduce the load blance cost.
+     */
+    amrex::Real load_balance_knapsack_keep_fraction = amrex::Real(0.0);
     /** Threshold value that controls whether to adopt the proposed distribution
      * mapping during load balancing.  The new distribution mapping is adopted
      * if the ratio of proposed distribution mapping efficiency to current

@@ -90,7 +90,9 @@ WarpX::LoadBalance ()
                                                 currentEfficiency, proposedEfficiency,
                                                 nmax,
                                                 false,
-                                                ParallelDescriptor::IOProcessorNumber());
+                                                ParallelDescriptor::IOProcessorNumber(),
+                                                load_balance_knapsack_keep_fraction);
+
         // As specified in the above calls to makeSFC and makeKnapSack, the new
         // distribution mapping is NOT communicated to all ranks; the loadbalanced
         // dm is up-to-date only on root, and we can decide whether to broadcast
@@ -105,19 +107,18 @@ WarpX::LoadBalance ()
 
         if (doLoadBalance)
         {
-            Vector<int> pmap;
             if (ParallelDescriptor::MyProc() == ParallelDescriptor::IOProcessorNumber())
             {
-                pmap = newdm.ProcessorMap();
-            } else
-            {
-                pmap.resize(static_cast<std::size_t>(nboxes));
+                auto const& pmap = newdm.ProcessorMap();
+                ParallelDescriptor::Bcast(const_cast<int*>(pmap.data()), pmap.size(),
+                                          ParallelDescriptor::IOProcessorNumber());
             }
-            ParallelDescriptor::Bcast(pmap.data(), pmap.size(), ParallelDescriptor::IOProcessorNumber());
-
-            if (ParallelDescriptor::MyProc() != ParallelDescriptor::IOProcessorNumber())
+            else
             {
-                newdm = DistributionMapping(pmap);
+                Vector<int> pmap(static_cast<std::size_t>(nboxes));
+                ParallelDescriptor::Bcast(pmap.data(), pmap.size(),
+                                          ParallelDescriptor::IOProcessorNumber());
+                newdm = DistributionMapping(std::move(pmap));
             }
 
             RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
