@@ -859,10 +859,9 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
 
     }
 
-    // Copy phi1d to phi, including the x guard cell
-    const IntVect xghost(AMREX_D_DECL(1,0,0));
-    phi[lev]->ParallelCopy(phi1d_mf, 0, 0, 1, xghost, xghost, Geom(lev).periodicity());
-
+    // Copy phi1d to phi
+    phi[lev]->ParallelCopy(phi1d_mf, 0, 0, 1);
+    phi[lev]->FillBoundary(Geom(lev).periodicity());
 }
 
 void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
