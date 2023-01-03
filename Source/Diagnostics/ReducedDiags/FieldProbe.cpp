@@ -86,8 +86,6 @@ FieldProbe::FieldProbe (std::string rd_name)
     if (m_probe_geometry_str == "Point")
     {
         m_probe_geometry = DetectorGeometry::Point;
-        x_probe = 0._rt;
-        y_probe = 0._rt;
 #if !defined(WARPX_DIM_1D_Z)
         utils::parser::getWithParser(
             pp_rd_name, "x_probe", x_probe);
@@ -102,17 +100,13 @@ FieldProbe::FieldProbe (std::string rd_name)
     else if (m_probe_geometry_str == "Line")
     {
         m_probe_geometry = DetectorGeometry::Line;
-        x_probe = 0._rt;
-        x1_probe = 0._rt;
-        y_probe = 0._rt;
-        y1_probe = 0._rt;
 #if !defined(WARPX_DIM_1D_Z)
-        utils::parser::getWithParser(pp_rd_name, "x_probe", x_probe);
-        utils::parser::getWithParser(pp_rd_name, "x1_probe", x1_probe);
+        utils::parser::queryWithParser(pp_rd_name, "x_probe", x_probe);
+        utils::parser::queryWithParser(pp_rd_name, "x1_probe", x1_probe);
 #endif
 #if defined(WARPX_DIM_3D)
-        utils::parser::getWithParser(pp_rd_name, "y_probe", y_probe);
-        utils::parser::getWithParser(pp_rd_name, "y1_probe", y1_probe);
+        utils::parser::queryWithParser(pp_rd_name, "y_probe", y_probe);
+        utils::parser::queryWithParser(pp_rd_name, "y1_probe", y1_probe);
 #endif
         utils::parser::getWithParser(pp_rd_name, "z_probe", z_probe);
         utils::parser::getWithParser(pp_rd_name, "z1_probe", z1_probe);
@@ -125,23 +119,18 @@ FieldProbe::FieldProbe (std::string rd_name)
             "ERROR: Plane probe should be used in a 2D or 3D simulation only"));
 #endif
         m_probe_geometry = DetectorGeometry::Plane;
-        y_probe = 0._rt;
-        target_normal_x = 0._rt;
-        target_normal_y = 1._rt;
-        target_normal_z = 0._rt;
-        target_up_y = 0._rt;
 #if defined(WARPX_DIM_3D)
-        utils::parser::getWithParser(pp_rd_name, "y_probe", y_probe);
-        utils::parser::getWithParser(pp_rd_name, "target_normal_x", target_normal_x);
-        utils::parser::getWithParser(pp_rd_name, "target_normal_y", target_normal_y);
-        utils::parser::getWithParser(pp_rd_name, "target_normal_z", target_normal_z);
-        utils::parser::getWithParser(pp_rd_name, "target_up_y", target_up_y);
+        utils::parser::queryWithParser(pp_rd_name, "y_probe", y_probe);
+        utils::parser::queryWithParser(pp_rd_name, "target_normal_x", target_normal_x);
+        utils::parser::queryWithParser(pp_rd_name, "target_normal_y", target_normal_y);
+        utils::parser::queryWithParser(pp_rd_name, "target_normal_z", target_normal_z);
+        utils::parser::queryWithParser(pp_rd_name, "target_up_y", target_up_y);
 #endif
-        utils::parser::getWithParser(pp_rd_name, "x_probe", x_probe);
+        utils::parser::queryWithParser(pp_rd_name, "x_probe", x_probe);
         utils::parser::getWithParser(pp_rd_name, "z_probe", z_probe);
-        utils::parser::getWithParser(pp_rd_name, "target_up_x", target_up_x);
-        utils::parser::getWithParser(pp_rd_name, "target_up_z", target_up_z);
-        utils::parser::getWithParser(pp_rd_name, "detector_radius", detector_radius);
+        utils::parser::queryWithParser(pp_rd_name, "target_up_x", target_up_x);
+        utils::parser::queryWithParser(pp_rd_name, "target_up_z", target_up_z);
+        utils::parser::queryWithParser(pp_rd_name, "detector_radius", detector_radius);
         utils::parser::getWithParser(pp_rd_name, "resolution", m_resolution);
     }
     else
@@ -362,7 +351,7 @@ bool FieldProbe::ProbeInDomain () const
      * and prob_hi[1] refer to z. This is a result of warpx.Geom(lev).
      */
 #if defined(WARPX_DIM_1D_Z)
-    return z_probe >= prob_lo[1] && z_probe < prob_hi[1];
+    return z_probe >= prob_lo[0] && z_probe < prob_hi[0];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     return x_probe >= prob_lo[0] && x_probe < prob_hi[0] &&
            z_probe >= prob_lo[1] && z_probe < prob_hi[1];
@@ -581,31 +570,38 @@ void FieldProbe::ComputeDiags (int step)
                 });// ParallelFor Close
                 // this check is here because for m_field_probe_integrate == True, we always compute
                 // but we only write when we truly are in an output interval step
-                if (m_intervals.contains(step+1))
+                if (m_intervals.contains(step+1) && np > 0)
                 {
-                    for (auto ip=0; ip < np; ip++)
+                    // This could be optimized by using shared memory.
+                    amrex::Gpu::DeviceVector<amrex::Real> dv(np*noutputs);
+                    amrex::Real* dvp = dv.data();
+                    amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (long ip)
                     {
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
-
-                        // push to output vector
-                        m_data.push_back(xp);
-                        m_data.push_back(yp);
-                        m_data.push_back(zp);
-                        m_data.push_back(part_Ex[ip]);
-                        m_data.push_back(part_Ey[ip]);
-                        m_data.push_back(part_Ez[ip]);
-                        m_data.push_back(part_Bx[ip]);
-                        m_data.push_back(part_By[ip]);
-                        m_data.push_back(part_Bz[ip]);
-                        m_data.push_back(part_S[ip]);
-                    }
+                        long idx = ip*noutputs;
+                        dvp[idx++] = xp;
+                        dvp[idx++] = yp;
+                        dvp[idx++] = zp;
+                        dvp[idx++] = part_Ex[ip];
+                        dvp[idx++] = part_Ey[ip];
+                        dvp[idx++] = part_Ez[ip];
+                        dvp[idx++] = part_Bx[ip];
+                        dvp[idx++] = part_By[ip];
+                        dvp[idx++] = part_Bz[ip];
+                        dvp[idx++] = part_S[ip];
+                    });
+                    auto oldsize = m_data.size();
+                    m_data.resize(oldsize + dv.size());
+                    amrex::Gpu::copyAsync(amrex::Gpu::deviceToHost,
+                                          dv.begin(), dv.end(), &m_data[oldsize]);
+                    Gpu::streamSynchronize();
                 /* m_data now contains up-to-date values for:
                  *  [x, y, z, Ex, Ey, Ez, Bx, By, Bz, and S] */
                 }
             }
         } // end particle iterator loop
-        Gpu::synchronize();
+
         if (m_intervals.contains(step+1))
         {
             // returns total number of mpi notes into mpisize

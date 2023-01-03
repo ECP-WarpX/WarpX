@@ -102,10 +102,6 @@ ElectrostaticFieldDiagnostic
 
 Lab-frame diagnostics diagnostics are used when running boosted-frame simulations.
 
-LabFrameParticleDiagnostic
-""""""""""""""""""""""""""
-.. autoclass:: pywarpx.picmi.LabFrameParticleDiagnostic
-
 LabFrameFieldDiagnostic
 """""""""""""""""""""""
 .. autoclass:: pywarpx.picmi.LabFrameFieldDiagnostic
@@ -258,12 +254,6 @@ simulation objects (particles, fields and memory buffers) as well as general pro
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.finalize
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.getistep
-
-.. autofunction:: pywarpx.picmi.Simulation.extension.gett_new
-
-.. autofunction:: pywarpx.picmi.Simulation.extension.evolve
-
 .. autofunction:: pywarpx.picmi.Simulation.extension.getProbLo
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.getProbHi
@@ -300,14 +290,12 @@ New components can be added via Python.
 Various diagnostics are also accessible from Python.
 This includes getting the deposited or total charge density from a given species
 as well as accessing the scraped particle buffer. See the example in
-*Examples/Modules/ParticleBoudaryScrape* for a reference on how to interact
+*Examples/Tests/ParticleBoudaryScrape* for a reference on how to interact
 with scraped particle data.
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.get_species_charge_sum
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.depositChargeDensity
-
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer_size
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer_size
 

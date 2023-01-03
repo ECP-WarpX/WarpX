@@ -1,11 +1,12 @@
 #include "DivEFunctor.H"
 
-#include "Utils/CoarsenIO.H"
 #include "Utils/TextMsg.H"
 #ifdef WARPX_DIM_RZ
 #   include "Utils/WarpXAlgorithmSelection.H"
 #endif
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX.H>
 #include <AMReX_BoxArray.H>
@@ -55,14 +56,14 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_
             // Real part of all modes > 0
             amrex::MultiFab::Add(mf_dst_stag, divE, ic, 0, 1, divE.nGrowVect());
         }
-        CoarsenIO::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
+        ablastr::coarsen::sample::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
     } else {
-        CoarsenIO::Coarsen( mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
+        ablastr::coarsen::sample::Coarsen( mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
     }
 #else
     // In cartesian geometry, coarsen and interpolate from simulation MultiFab, divE,
     // to output diagnostic MultiFab, mf_dst.
-    CoarsenIO::Coarsen( mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
+    ablastr::coarsen::sample::Coarsen(mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
     amrex::ignore_unused(m_convertRZmodes2cartesian);
 #endif
 }

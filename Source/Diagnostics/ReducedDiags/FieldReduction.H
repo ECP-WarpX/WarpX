@@ -9,8 +9,9 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
 
 #include "ReducedDiags.H"
-#include "Utils/CoarsenIO.H"
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_Box.H>
@@ -157,18 +158,18 @@ public:
                 const amrex::Real y = (j + 0.5_rt)*dx[1] + real_box.lo(1);
                 const amrex::Real z = (k + 0.5_rt)*dx[2] + real_box.lo(2);
 #endif
-                const amrex::Real Ex_interp = CoarsenIO::Interp(arrEx, Extype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real Ey_interp = CoarsenIO::Interp(arrEy, Eytype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real Ez_interp = CoarsenIO::Interp(arrEz, Eztype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real Bx_interp = CoarsenIO::Interp(arrBx, Bxtype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real By_interp = CoarsenIO::Interp(arrBy, Bytype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real Bz_interp = CoarsenIO::Interp(arrBz, Bztype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Ex_interp = ablastr::coarsen::sample::Interp(arrEx, Extype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Ey_interp = ablastr::coarsen::sample::Interp(arrEy, Eytype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Ez_interp = ablastr::coarsen::sample::Interp(arrEz, Eztype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Bx_interp = ablastr::coarsen::sample::Interp(arrBx, Bxtype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real By_interp = ablastr::coarsen::sample::Interp(arrBy, Bytype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Bz_interp = ablastr::coarsen::sample::Interp(arrBz, Bztype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
                 return reduction_function_parser(x, y, z, Ex_interp, Ey_interp, Ez_interp,
                                                           Bx_interp, By_interp, Bz_interp);
             });

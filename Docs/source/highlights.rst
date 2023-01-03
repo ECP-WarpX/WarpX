@@ -14,6 +14,11 @@ Plasma-Based Acceleration
 
 Scientific works in laser-plasma and beam-plasma acceleration.
 
+#. Fedeli L, Huebl A, Boillod-Cerneux F, Clark T, Gott K, Hillairet C, Jaure S, Leblanc A, Lehe R, Myers A, Piechurski C, Sato M, Zaim N, Zhang W, Vay J-L, Vincenti H.
+   **Pushing the Frontier in the Design of Laser-Based Electron Accelerators with Groundbreaking Mesh-Refined Particle-In-Cell Simulations on Exascale-Class Supercomputers**.
+   *SC22: International Conference for High Performance Computing, Networking, Storage and Analysis (SC)*. ISSN:2167-4337, pp. 25-36, Dallas, TX, US, 2022.
+   https://www.computer.org/csdl/proceedings-article/sc/2022/544400a025/1I0bSKaoECc
+
 #. Wang J, Zeng M, Li D, Wang X, Lu W, Gao J.
    **Injection induced by coaxial laser interference in laser wakefield accelerators**.
    Matter and Radiation at Extremes 7, 054001, 2022.
@@ -34,6 +39,11 @@ Laser-Plasma Interaction
 ************************
 
 Scientific works in laser-ion acceleration and laser-matter interaction.
+
+#. Fedeli L, Huebl A, Boillod-Cerneux F, Clark T, Gott K, Hillairet C, Jaure S, Leblanc A, Lehe R, Myers A, Piechurski C, Sato M, Zaim N, Zhang W, Vay J-L, Vincenti H.
+   **Pushing the Frontier in the Design of Laser-Based Electron Accelerators with Groundbreaking Mesh-Refined Particle-In-Cell Simulations on Exascale-Class Supercomputers**.
+   *SC22: International Conference for High Performance Computing, Networking, Storage and Analysis (SC)*. ISSN:2167-4337, pp. 25-36, Dallas, TX, US, 2022.
+   https://www.computer.org/csdl/proceedings-article/sc/2022/544400a025/1I0bSKaoECc
 
 #. Hakimi S, Obst-Huebl L, Huebl A, Nakamura K, Bulanov SS, Steinke S, Leemans WP, Kober Z, Ostermayr TM, Schenkel T, Gonsalves AJ, Vay J-L, Tilborg Jv, Toth C, Schroeder CB, Esarey E, Geddes CGR.
    **Laser-solid interaction studies enabled by the new capabilities of the iP2 BELLA PW beamline**.

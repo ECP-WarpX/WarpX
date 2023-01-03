@@ -103,9 +103,9 @@ PsatdAlgorithmGalileanRZ::pushSpectralFields (SpectralFieldDataRZ & f)
             auto const Bp_m = Idx.Bx + Idx.n_fields*mode;
             auto const Bm_m = Idx.By + Idx.n_fields*mode;
             auto const Bz_m = Idx.Bz + Idx.n_fields*mode;
-            auto const Jp_m = Idx.Jx + Idx.n_fields*mode;
-            auto const Jm_m = Idx.Jy + Idx.n_fields*mode;
-            auto const Jz_m = Idx.Jz + Idx.n_fields*mode;
+            auto const Jp_m = Idx.Jx_mid + Idx.n_fields*mode;
+            auto const Jm_m = Idx.Jy_mid + Idx.n_fields*mode;
+            auto const Jz_m = Idx.Jz_mid + Idx.n_fields*mode;
             auto const rho_old_m = Idx.rho_old + Idx.n_fields*mode;
             auto const rho_new_m = Idx.rho_new + Idx.n_fields*mode;
 
@@ -323,9 +323,9 @@ PsatdAlgorithmGalileanRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
             // All of the fields of each mode are grouped together
-            auto const Jp_m = Idx.Jx + Idx.n_fields*mode;
-            auto const Jm_m = Idx.Jy + Idx.n_fields*mode;
-            auto const Jz_m = Idx.Jz + Idx.n_fields*mode;
+            auto const Jp_m = Idx.Jx_mid + Idx.n_fields*mode;
+            auto const Jm_m = Idx.Jy_mid + Idx.n_fields*mode;
+            auto const Jz_m = Idx.Jz_mid + Idx.n_fields*mode;
             auto const rho_old_m = Idx.rho_old + Idx.n_fields*mode;
             auto const rho_new_m = Idx.rho_new + Idx.n_fields*mode;
 

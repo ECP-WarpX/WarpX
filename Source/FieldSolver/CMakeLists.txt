@@ -6,6 +6,7 @@ target_sources(WarpX
 )
 
 add_subdirectory(FiniteDifferenceSolver)
+add_subdirectory(MagnetostaticSolver)
 if(WarpX_PSATD)
     add_subdirectory(SpectralSolver)
 endif()

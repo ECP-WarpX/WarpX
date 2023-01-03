@@ -1,0 +1,89 @@
+name: 🔍 CodeQL
+
+on:
+  push:
+    branches: [ "development" ]
+  pull_request:
+    branches: [ "development" ]
+  schedule:
+    - cron: "27 3 * * 0"
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.head_ref }}-codeql
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ python, cpp ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Packages (C++)
+        if: ${{ matrix.language == 'cpp' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake openmpi-bin libopenmpi-dev libhdf5-openmpi-dev libadios-openmpi-dev
+
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade wheel
+          python -m pip install --upgrade cmake
+          export CMAKE="$HOME/.local/bin/cmake" && echo "CMAKE=$CMAKE" >> $GITHUB_ENV
+
+      - name: Configure (C++)
+        if: ${{ matrix.language == 'cpp' }}
+        run: |
+          $CMAKE -S . -B build -DWarpX_OPENPMD=ON
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          config-file: ./.github/codeql/warpx-codeql.yml
+          languages: ${{ matrix.language }}
+          queries: +security-and-quality
+
+      - name: Build (py)
+        uses: github/codeql-action/autobuild@v2
+        if: ${{ matrix.language == 'python' }}
+
+      - name: Build (C++)
+        if: ${{ matrix.language == 'cpp' }}
+        run: |
+          $CMAKE --build build -j 2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:${{ matrix.language }}"
+          upload: False
+          output: sarif-results
+
+      - name: filter-sarif
+        uses: advanced-security/filter-sarif@v1
+        with:
+          patterns: |
+            -build/_deps/*/*
+            -build/_deps/*/*/*
+            -build/_deps/*/*/*/*
+            -build/_deps/*/*/*/*/*
+            -build/_deps/*/*/*/*/*/*
+            -build/_deps/*/*/*/*/*/*/*
+            -build/_deps/*/*/*/*/*/*/*/*
+          input: sarif-results/${{ matrix.language }}.sarif
+          output: sarif-results/${{ matrix.language }}.sarif
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: sarif-results/${{ matrix.language }}.sarif

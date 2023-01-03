@@ -164,7 +164,11 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
       amrex::Print() << "                      | - relativistic" << "\n";
     }
-    else if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::None) {
+    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic){
+      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+      amrex::Print() << "                      | - laboratory frame, electrostatic + magnetostatic" << "\n";
+    }
+    else{
       amrex::Print() << "Operation mode:       | Electromagnetic" << "\n";
     }
     if (em_solver_medium == MediumForEM::Vacuum ){
@@ -417,6 +421,8 @@ WarpX::InitData ()
         // Loop through species and calculate their space-charge field
         bool const reset_fields = false; // Do not erase previous user-specified values on the grid
         ComputeSpaceChargeField(reset_fields);
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+            ComputeMagnetostaticField();
 
         // Write full diagnostics before the first iteration.
         multi_diags->FilterComputePackFlush( -1 );
@@ -480,7 +486,7 @@ WarpX::InitPML ()
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
                              do_moving_window, pml_has_particles, do_pml_in_domain,
-                             J_in_time, rho_in_time,
+                             psatd_solution_type, J_in_time, rho_in_time,
                              do_pml_dive_cleaning, do_pml_divb_cleaning,
                              amrex::IntVect(0), amrex::IntVect(0),
                              guard_cells.ng_FieldSolver.max(),
@@ -517,7 +523,7 @@ WarpX::InitPML ()
                                    pml_ncell, pml_delta, refRatio(lev-1),
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
-                                   J_in_time, rho_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
+                                   psatd_solution_type, J_in_time, rho_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
                                    amrex::IntVect(0), amrex::IntVect(0),
                                    guard_cells.ng_FieldSolver.max(),
                                    v_particle_pml,
@@ -1043,8 +1049,8 @@ WarpX::PerformanceHints ()
             << "each GPU's memory sufficiently. If you do not rely on dynamic "
             << "load-balancing, then one large box per GPU is ideal.\n"
 #endif
-            << "Consider decreasing the amr.blocking_factor and"
-            << "amr.max_grid_size parameters and/or using less MPI ranks.\n"
+            << "Consider decreasing the amr.blocking_factor and "
+            << "amr.max_grid_size parameters and/or using fewer MPI ranks.\n"
             << "  More information:\n"
             << "  https://warpx.readthedocs.io/en/latest/usage/workflows/parallelization.html\n";
 
