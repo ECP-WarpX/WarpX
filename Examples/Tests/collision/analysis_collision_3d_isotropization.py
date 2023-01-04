@@ -53,7 +53,7 @@ Ty = np.mean(vy**2)*m/e
 nt = 100
 Tx0 = T_par
 Ty0 = T_per
-for i in range(nt-1):
+for _ in range(nt-1):
     Tx0 = Tx0 + dt*mu*(Ty0-Tx0)*2.0
     Ty0 = Ty0 + dt*mu*(Tx0-Ty0)
 
