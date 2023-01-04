@@ -875,7 +875,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     const int nlevs = numLevels();
     static bool refine_injection = false;
     static Box fine_injection_box;
-    static int rrfac = 1;
+    static amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
     // This does not work if the mesh is dynamic.  But in that case, we should
     // not use refined injected either.  We also assume there is only one fine level.
     if (WarpX::moving_window_active(WarpX::GetInstance().getistep(0)+1) and WarpX::refine_plasma
@@ -883,9 +883,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     {
         refine_injection = true;
         fine_injection_box = ParticleBoxArray(1).minimalBox();
-        fine_injection_box.setSmall(WarpX::moving_window_dir, std::numeric_limits<int>::lowest());
-        fine_injection_box.setBig(WarpX::moving_window_dir, std::numeric_limits<int>::max());
-        rrfac = m_gdb->refRatio(0)[0];
+        fine_injection_box.setSmall(WarpX::moving_window_dir, std::numeric_limits<int>::lowest()/2);
+        fine_injection_box.setBig(WarpX::moving_window_dir, std::numeric_limits<int>::max()/2);
+        rrfac = m_gdb->refRatio(0);
         fine_injection_box.coarsen(rrfac);
     }
 
@@ -967,7 +967,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
         auto pcounts = counts.data();
-        int lrrfac = rrfac;
+        amrex::IntVect lrrfac = rrfac;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
             fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
@@ -986,7 +986,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 auto index = overlap_box.index(iv);
                 int r;
                 if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                    r = AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac);
+                    r = AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2]);
                 } else {
                     r = 1;
                 }
@@ -1173,7 +1173,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                   // In the refined injection region: use refinement ratio `lrrfac`
                   inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
-                  inj_pos->getPositionUnitBox(i_part, 1, engine);
+                  inj_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
 #if defined(WARPX_DIM_3D)
@@ -1426,14 +1426,14 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     const int nlevs = numLevels();
     static bool refine_injection = false;
     static Box fine_injection_box;
-    static int rrfac = 1;
+    static amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
     // This does not work if the mesh is dynamic.  But in that case, we should
     // not use refined injected either.  We also assume there is only one fine level.
     if (WarpX::refine_plasma && nlevs == 2)
     {
         refine_injection = true;
         fine_injection_box = ParticleBoxArray(1).minimalBox();
-        rrfac = m_gdb->refRatio(0)[0];
+        rrfac = m_gdb->refRatio(0);
         fine_injection_box.coarsen(rrfac);
     }
 
@@ -1545,7 +1545,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
         auto pcounts = counts.data();
-        int lrrfac = rrfac;
+        amrex::IntVect lrrfac = rrfac;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
             fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
@@ -1563,7 +1563,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 auto index = overlap_box.index(iv);
                 int r;
                 if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                    r = AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac);
+                    r = AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2]);
                 } else {
                     r = 1;
                 }
@@ -1711,7 +1711,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                   // In the refined injection region: use refinement ratio `lrrfac`
                   inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
-                  inj_pos->getPositionUnitBox(i_part, 1, engine);
+                  inj_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
                 auto ppos = PDim3(pos);
 
