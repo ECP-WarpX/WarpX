@@ -51,8 +51,8 @@ mi = me * 5.0
 ## fit.
 
 # exponential fit coefficients
-a =  0.041817463099883
-b = -0.083851393560288
+a =  0.04330638981264072
+b = -0.11588277796546632
 
 last_fn = sys.argv[1]
 # Remove trailing '/' from file name, if necessary
