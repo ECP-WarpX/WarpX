@@ -138,6 +138,14 @@ DSMC::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleContainer
             doCollisionsWithinTile(dt, lev, mfi, species1, species2,
                                    copy_species1, copy_species2);
 
+    //         ParticleTileType& ptile_1 = species1.ParticlesAt(lev, mfi);
+    //         amrex::Particle<0,0> * const particle_ptr_1 = ptile_1.GetArrayOfStructs()().data();
+
+    //         amrex::Print() << "further outside: " << particle_ptr_1[567].id() << " and " << particle_ptr_1[743].id() << std::endl;
+    //     amrex::Print() << "addr: " << std::addressof(particle_ptr_1[567]) << std::endl;
+    // amrex::Print() << "\n";
+
+
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
@@ -145,6 +153,10 @@ DSMC::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleContainer
                 amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
             }
         }
+
+        // Call redistribute to remove particles with negative ids
+        species1.Redistribute(lev, lev, 0, true, true);
+        species2.Redistribute(lev, lev, 0, true, true);
     }
 }
 
@@ -171,32 +183,20 @@ DSMC::doCollisionsWithinTile(
     ParticleBins bins_1 = findParticlesInEachCell( lev, mfi, ptile_1 );
     ParticleBins bins_2 = findParticlesInEachCell( lev, mfi, ptile_2 );
 
-    constexpr int getpos_offset = 0;
-
-    // Loop over cells, and collide the particles in each cell
-
     // Extract low-level data
     int const n_cells = bins_1.numBins();
+
     // - Species 1
-    const auto soa_1 = ptile_1.getParticleTileData();
     index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
     index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
-    amrex::ParticleReal q1 = species_1.getCharge();
     amrex::ParticleReal m1 = species_1.getMass();
-    auto get_position_1  = GetParticlePosition(ptile_1, getpos_offset);
-    // Needed to access the particle id
-    ParticleType * AMREX_RESTRICT
-                            particle_ptr_1 = ptile_1.GetArrayOfStructs()().data();
+    const auto ptd_1 = ptile_1.getParticleTileData();
+
     // - Species 2
-    const auto soa_2 = ptile_2.getParticleTileData();
     index_type* AMREX_RESTRICT indices_2 = bins_2.permutationPtr();
     index_type const* AMREX_RESTRICT cell_offsets_2 = bins_2.offsetsPtr();
-    amrex::ParticleReal q2 = species_2.getCharge();
     amrex::ParticleReal m2 = species_2.getMass();
-    auto get_position_2  = GetParticlePosition(ptile_2, getpos_offset);
-    // Needed to access the particle id
-    ParticleType * AMREX_RESTRICT
-                            particle_ptr_2 = ptile_2.GetArrayOfStructs()().data();
+    const auto ptd_2 = ptile_2.getParticleTileData();
 
     amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
 #if defined WARPX_DIM_1D_Z
@@ -213,7 +213,6 @@ DSMC::doCollisionsWithinTile(
 #elif defined(WARPX_DIM_3D)
     auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
-
 
     // In the following we set up the "mask" used for creating new particles
     // (from splitting events). There is a mask index for every collision
@@ -234,8 +233,7 @@ DSMC::doCollisionsWithinTile(
             if (n_part_in_cell_1 == 0 || n_part_in_cell_2 == 0)
                 p_n_pairs_in_each_cell[i_cell] = 0;
             else
-                p_n_pairs_in_each_cell[i_cell] =
-                                                amrex::max(n_part_in_cell_1,n_part_in_cell_2);
+                p_n_pairs_in_each_cell[i_cell] = amrex::max(n_part_in_cell_1,n_part_in_cell_2);
         }
     );
 
@@ -300,28 +298,31 @@ DSMC::doCollisionsWithinTile(
             CollisionFilter(
                 cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
                 indices_1, indices_2,
-                soa_1, soa_2, get_position_1, get_position_2,
-                q1, q2, m1, m2, dt, dV,
+                ptd_1, ptd_2,
+                m1, m2, dt, dV,
                 cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
                 p_pair_reaction_weight,
                 process_count, scattering_processes, engine );
         }
     );
 
-    auto const num_p_tile1 = ptile_1.numParticles();
-    auto const num_p_tile2 = ptile_2.numParticles();
+    const auto num_p_tile1 = ptile_1.numParticles();
+    const auto num_p_tile2 = ptile_2.numParticles();
 
     // Create the new product particles and define their initial values
     // num_added: how many particles of each product species have been created
     const int num_added = splitScatteringParticles(
         n_total_pairs,
-        ptile_1, ptile_2, ptile_1, ptile_2,
+        ptile_1, ptile_2,
         p_mask,
         copy_species1, copy_species2,
-        particle_ptr_1, particle_ptr_2, m1, m2,
+        m1, m2,
         p_pair_indices_1, p_pair_indices_2,
         p_pair_reaction_weight);
 
     setNewParticleIDs(ptile_1, num_p_tile1, num_added);
     setNewParticleIDs(ptile_2, num_p_tile2, num_added);
+
+    // amrex::Print() << "and then: " << ptd_1.m_aos[567].id() << " and " << ptd_1.m_aos[743].id() << std::endl;
+    // amrex::Print() << "addr: " << std::addressof(ptd_1.m_aos[567]) << std::endl;
 }

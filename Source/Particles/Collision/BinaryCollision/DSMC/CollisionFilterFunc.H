@@ -114,7 +114,7 @@ void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleR
  * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
  * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
  * @param[in] I1,I2 index arrays. They determine all elements that will be used.
- * @param[in] soa_1,soa_2 contain the struct of array data of the two species
+ * @param[in] ptd_1,ptd_2 contain the particle data of the two species
  * @param[in] m1,m2 are masses.
  * @param[in] dt is the time step length between two collision calls.
  * @param[in] dV is the volume of the corresponding cell.
@@ -130,16 +130,14 @@ void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleR
  * product particles.
  * @param[in] engine the random engine.
  */
-template <typename index_type, typename SoaData_type>
+template <typename index_type, typename PData>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void CollisionFilter (
     index_type const I1s, index_type const I1e,
     index_type const I2s, index_type const I2e,
     index_type const* AMREX_RESTRICT I1,
     index_type const* AMREX_RESTRICT I2,
-    SoaData_type soa_1, SoaData_type soa_2,
-    GetParticlePosition /*get_position_1*/, GetParticlePosition /*get_position_2*/,
-    amrex::ParticleReal const  /*q1*/, amrex::ParticleReal const  /*q2*/,
+    PData ptd_1, PData ptd_2,
     amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
     amrex::Real const  dt, amrex::Real const dV,
     index_type const cell_start_pair, index_type* AMREX_RESTRICT p_mask,
@@ -150,15 +148,15 @@ void CollisionFilter (
     amrex::RandomEngine const& engine)
 {
 
-    amrex::ParticleReal * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
-    amrex::ParticleReal * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
-    amrex::ParticleReal * const AMREX_RESTRICT u1y = soa_1.m_rdata[PIdx::uy];
-    amrex::ParticleReal * const AMREX_RESTRICT u1z = soa_1.m_rdata[PIdx::uz];
+    amrex::ParticleReal * const AMREX_RESTRICT w1 = ptd_1.m_rdata[PIdx::w];
+    amrex::ParticleReal * const AMREX_RESTRICT u1x = ptd_1.m_rdata[PIdx::ux];
+    amrex::ParticleReal * const AMREX_RESTRICT u1y = ptd_1.m_rdata[PIdx::uy];
+    amrex::ParticleReal * const AMREX_RESTRICT u1z = ptd_1.m_rdata[PIdx::uz];
 
-    amrex::ParticleReal * const AMREX_RESTRICT w2 = soa_2.m_rdata[PIdx::w];
-    amrex::ParticleReal * const AMREX_RESTRICT u2x = soa_2.m_rdata[PIdx::ux];
-    amrex::ParticleReal * const AMREX_RESTRICT u2y = soa_2.m_rdata[PIdx::uy];
-    amrex::ParticleReal * const AMREX_RESTRICT u2z = soa_2.m_rdata[PIdx::uz];
+    amrex::ParticleReal * const AMREX_RESTRICT w2 = ptd_2.m_rdata[PIdx::w];
+    amrex::ParticleReal * const AMREX_RESTRICT u2x = ptd_2.m_rdata[PIdx::ux];
+    amrex::ParticleReal * const AMREX_RESTRICT u2y = ptd_2.m_rdata[PIdx::uy];
+    amrex::ParticleReal * const AMREX_RESTRICT u2z = ptd_2.m_rdata[PIdx::uz];
 
     // Number of macroparticles of each species
     const int NI1 = I1e - I1s;
@@ -178,8 +176,8 @@ void CollisionFilter (
     const int c2 = amrex::max(NI1/NI2,1);
 
 #if (defined WARPX_DIM_RZ)
-    amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
-    amrex::ParticleReal * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
+    amrex::ParticleReal * const AMREX_RESTRICT theta1 = ptd_1.m_rdata[PIdx::theta];
+    amrex::ParticleReal * const AMREX_RESTRICT theta2 = ptd_2.m_rdata[PIdx::theta];
 #endif
 
     for (int k = 0; k < max_N; ++k)
