@@ -49,7 +49,7 @@ namespace Interpolate
 
                 // - Fully nodal
                 if ( F_fp.is_nodal() ){
-                    IntVect refinement_vector{AMREX_D_DECL(r_ratio[0], r_ratio[1], r_ratio[2])};
+                    amrex::IntVect refinement_vector{AMREX_D_DECL(r_ratio[0], r_ratio[1], r_ratio[2])};
                     node_bilinear_interp.interp(cfab, 0, ffab, 0, 1,
                                                 finebx, refinement_vector, {}, {}, {}, 0, 0, RunOn::Cpu);
                 } else {
