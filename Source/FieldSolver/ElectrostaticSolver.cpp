@@ -718,24 +718,20 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
         nx_solve_max = nx_full_domain;
     }
 
-    // Create a 1-D MultiFab that covers all of x, including guard cells on each end.
+    // Create a 1-D MultiFab that covers all of x.
     // The tridiag solve will be done in this MultiFab and then copied out afterwards.
-    const amrex::IntVect lo_full_domain(AMREX_D_DECL(-1,0,0));
-    const amrex::IntVect hi_full_domain(AMREX_D_DECL(nx_full_domain+1,0,0));
-    const amrex::Box box_full_domain(lo_full_domain, hi_full_domain);
-    const BoxArray ba_full_domain(box_full_domain);
-    amrex::DistributionMapping dm_full_domain;
+    const amrex::IntVect lo_full_domain(AMREX_D_DECL(0,0,0));
+    const amrex::IntVect hi_full_domain(AMREX_D_DECL(nx_full_domain,0,0));
+    const amrex::Box box_full_domain_node(lo_full_domain, hi_full_domain, amrex::IntVect::TheNodeVector());
+    const BoxArray ba_full_domain_node(box_full_domain_node);
     amrex::Vector<int> pmap = {0}; // The data will only be on processor 0
-    dm_full_domain.define(pmap);
-    const int ncomps1d = 1;
-    const amrex::IntVect nguard1d(AMREX_D_DECL(1,0,0));
-    const BoxArray ba_full_domain_node = amrex::convert(ba_full_domain, amrex::IntVect::TheNodeVector());
+    amrex::DistributionMapping dm_full_domain(pmap);
 
     // Put the data in the pinned arena since the tridiag solver will be done on the CPU, but have
     // the data readily accessible from the GPU.
-    auto phi1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, ncomps1d, nguard1d, MFInfo().SetArena(The_Pinned_Arena()));
-    auto zwork1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, ncomps1d, nguard1d, MFInfo().SetArena(The_Pinned_Arena()));
-    auto rho1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, ncomps1d, nguard1d, MFInfo().SetArena(The_Pinned_Arena()));
+    auto phi1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, 1, 0, MFInfo().SetArena(The_Pinned_Arena()));
+    auto zwork1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, 1, 0, MFInfo().SetArena(The_Pinned_Arena()));
+    auto rho1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, 1, 0, MFInfo().SetArena(The_Pinned_Arena()));
 
     // Copy previous phi to get the boundary values
     phi1d_mf.ParallelCopy(*phi[lev], 0, 0, 1, Geom(lev).periodicity());
@@ -843,25 +839,10 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
 
         }
 
-        // Set the value in the guard cells
-        // The periodic case is handled in the ParallelCopy below
-        if (field_boundary_lo0 == FieldBoundaryType::PEC) {
-            phi1d_arr(-1,0,0) = phi1d_arr(0,0,0);
-        } else if (field_boundary_lo0 == FieldBoundaryType::Neumann) {
-            phi1d_arr(-1,0,0) = phi1d_arr(1,0,0);
-        }
-
-        if (field_boundary_hi0 == FieldBoundaryType::PEC) {
-            phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain,0,0);
-        } else if (field_boundary_hi0 == FieldBoundaryType::Neumann) {
-            phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain-1,0,0);
-        }
-
     }
 
     // Copy phi1d to phi
     phi[lev]->ParallelCopy(phi1d_mf, 0, 0, 1);
-    phi[lev]->FillBoundary(Geom(lev).periodicity());
 }
 
 void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
