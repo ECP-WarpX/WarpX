@@ -11,23 +11,14 @@
 # https://smileipic.github.io/tutorials/advanced_collisions.html
 # https://smileipic.github.io/Smilei/Understand/collisions.html#test-cases-for-collisions
 
-# Possible errors:
-# tolerance: 0.001
-# Possible running time: ~ 30.0 s
-
 import os
 import sys
-
 import numpy as np
 import scipy.constants as sc
 import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
-
-fn = sys.argv[1]
-# Remove trailing '/' from file name, if necessary
-fn.rstrip('/')
 
 e = sc.e
 pi = sc.pi
@@ -37,16 +28,18 @@ m = sc.m_e
 dt = 1.4e-17
 ne = 1.116e28
 log = 2.0
-T_par = 5.62 * e
-T_per = 5.1 * e
+T_par = 5.62*e
+T_per = 5.1*e
 
 A = 1.0 - T_per/T_par
-mu = e**4*ne*log/(8.0*pi**1.5*ep0**2*m**0.5*T_par**1.5)*A**(-2)*(-3.0+(3.0-A)*np.arctanh(A**0.5)/A**0.5)
+mu = (e**4*ne*log/(8.0*pi**1.5*ep0**2*m**0.5*T_par**1.5)
+     *A**(-2)*(-3.0+(3.0-A)*np.arctanh(A**0.5)/A**0.5))
 
-ds  = yt.load( fn )
-ad  = ds.all_data()
-vx  = ad['electron', 'particle_momentum_x'].to_ndarray()/m
-vy  = ad['electron', 'particle_momentum_y'].to_ndarray()/m
+fn = sys.argv[1]
+ds = yt.load(fn)
+ad = ds.all_data()
+vx = ad['electron', 'particle_momentum_x'].to_ndarray()/m
+vy = ad['electron', 'particle_momentum_y'].to_ndarray()/m
 Tx = np.mean(vx**2)*m/e
 Ty = np.mean(vy**2)*m/e
 
@@ -58,10 +51,10 @@ for _ in range(nt-1):
     Ty0 = Ty0 + dt*mu*(Tx0-Ty0)
 
 tolerance = 0.05
-error = np.maximum(abs(Tx-Tx0/e)/Tx,abs(Ty-Ty0/e)/Ty)
+error = np.maximum(abs(Tx-Tx0/e)/Tx, abs(Ty-Ty0/e)/Ty)
 
-print('error = ', error)
-print('tolerance = ', tolerance)
+print(f'error = {error}')
+print(f'tolerance = {tolerance}')
 assert(error < tolerance)
 
 test_name = os.path.split(os.getcwd())[1]
