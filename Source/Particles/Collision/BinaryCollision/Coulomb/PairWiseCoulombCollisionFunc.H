@@ -51,9 +51,7 @@ public:
         m_CoulombLog = -1.0_prt;
         utils::parser::queryWithParser(
             pp_collision_name, "CoulombLog", m_CoulombLog);
-
         m_isSameSpecies = isSameSpecies;
-
     }
 
     /**

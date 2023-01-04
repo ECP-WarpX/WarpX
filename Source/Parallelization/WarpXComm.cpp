@@ -13,13 +13,13 @@
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Filter/BilinearFilter.H"
-#include "Utils/CoarsenMR.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpXComm_K.H"
 #include "WarpXSumGuardCells.H"
 
+#include <ablastr/coarsen/average.H>
 #include <ablastr/utils/Communication.H>
 
 #include <AMReX.H>
@@ -887,9 +887,9 @@ WarpX::SyncCurrent (
         std::array<      MultiFab*,3> crse { J_cp[lev][0].get(),
                                              J_cp[lev][1].get(),
                                              J_cp[lev][2].get() };
-        CoarsenMR::Coarsen( *crse[0], *fine[0], refinement_ratio );
-        CoarsenMR::Coarsen( *crse[1], *fine[1], refinement_ratio );
-        CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*crse[0], *fine[0], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*crse[1], *fine[1], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*crse[2], *fine[2], refinement_ratio );
     }
 
     // For each level
@@ -915,7 +915,7 @@ WarpX::SyncRho ()
     {
         rho_cp[lev]->setVal(0.0);
         const IntVect& refinement_ratio = refRatio(lev-1);
-        CoarsenMR::Coarsen( *rho_cp[lev], *rho_fp[lev], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*rho_cp[lev], *rho_fp[lev], refinement_ratio );
     }
 
     // For each level
@@ -947,9 +947,9 @@ void WarpX::RestrictCurrentFromFineToCoarsePatch (
     std::array<      MultiFab*,3> crse { J_cp[lev][0].get(),
                                          J_cp[lev][1].get(),
                                          J_cp[lev][2].get() };
-    CoarsenMR::Coarsen( *crse[0], *fine[0], refinement_ratio );
-    CoarsenMR::Coarsen( *crse[1], *fine[1], refinement_ratio );
-    CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
+    ablastr::coarsen::average::Coarsen(*crse[0], *fine[0], refinement_ratio );
+    ablastr::coarsen::average::Coarsen(*crse[1], *fine[1], refinement_ratio );
+    ablastr::coarsen::average::Coarsen(*crse[2], *fine[2], refinement_ratio );
 }
 
 void WarpX::ApplyFilterJ (
@@ -1126,7 +1126,7 @@ void WarpX::RestrictRhoFromFineToCoarsePatch (
     if (charge_fp[lev]) {
         charge_cp[lev]->setVal(0.0);
         const IntVect& refinement_ratio = refRatio(lev-1);
-        CoarsenMR::Coarsen( *charge_cp[lev], *charge_fp[lev], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*charge_cp[lev], *charge_fp[lev], refinement_ratio );
     }
 }
 

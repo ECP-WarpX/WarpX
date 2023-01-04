@@ -7,9 +7,10 @@
 
 #include "FieldMaximum.H"
 
-#include "Utils/CoarsenIO.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX_Algorithm.H>
 #include <AMReX_Array.H>
@@ -192,65 +193,65 @@ void FieldMaximum::ComputeDiags (int step)
             reduceEx_op.eval(box, reduceEx_data,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
             {
-                const Real Ex_interp = CoarsenIO::Interp(arrEx, Extype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const Real Ex_interp = ablastr::coarsen::sample::Interp(arrEx, Extype, cellCenteredtype,
+                                                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
                 return amrex::Math::abs(Ex_interp);
             });
             reduceEy_op.eval(box, reduceEy_data,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
             {
-                const Real Ey_interp = CoarsenIO::Interp(arrEy, Eytype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const Real Ey_interp = ablastr::coarsen::sample::Interp(arrEy, Eytype, cellCenteredtype,
+                                                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
                 return amrex::Math::abs(Ey_interp);
             });
             reduceEz_op.eval(box, reduceEz_data,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
             {
-                const Real Ez_interp = CoarsenIO::Interp(arrEz, Eztype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const Real Ez_interp = ablastr::coarsen::sample::Interp(arrEz, Eztype, cellCenteredtype,
+                                                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
                 return amrex::Math::abs(Ez_interp);
             });
             reduceBx_op.eval(box, reduceBx_data,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
             {
-                const Real Bx_interp = CoarsenIO::Interp(arrBx, Bxtype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const Real Bx_interp = ablastr::coarsen::sample::Interp(arrBx, Bxtype, cellCenteredtype,
+                                                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
                 return amrex::Math::abs(Bx_interp);
             });
             reduceBy_op.eval(box, reduceBy_data,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
             {
-                const Real By_interp = CoarsenIO::Interp(arrBy, Bytype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const Real By_interp = ablastr::coarsen::sample::Interp(arrBy, Bytype, cellCenteredtype,
+                                                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
                 return amrex::Math::abs(By_interp);
             });
             reduceBz_op.eval(box, reduceBz_data,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
             {
-                const Real Bz_interp = CoarsenIO::Interp(arrBz, Bztype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const Real Bz_interp = ablastr::coarsen::sample::Interp(arrBz, Bztype, cellCenteredtype,
+                                                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
                 return amrex::Math::abs(Bz_interp);
             });
             reduceE_op.eval(box, reduceE_data,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
             {
-                const Real Ex_interp = CoarsenIO::Interp(arrEx, Extype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const Real Ey_interp = CoarsenIO::Interp(arrEy, Eytype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const Real Ez_interp = CoarsenIO::Interp(arrEz, Eztype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const Real Ex_interp = ablastr::coarsen::sample::Interp(arrEx, Extype, cellCenteredtype,
+                                                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const Real Ey_interp = ablastr::coarsen::sample::Interp(arrEy, Eytype, cellCenteredtype,
+                                                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const Real Ez_interp = ablastr::coarsen::sample::Interp(arrEz, Eztype, cellCenteredtype,
+                                                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
                 return Ex_interp*Ex_interp + Ey_interp*Ey_interp + Ez_interp*Ez_interp;
             });
             reduceB_op.eval(box, reduceB_data,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
             {
-                const Real Bx_interp = CoarsenIO::Interp(arrBx, Bxtype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const Real By_interp = CoarsenIO::Interp(arrBy, Bytype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const Real Bz_interp = CoarsenIO::Interp(arrBz, Bztype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const Real Bx_interp = ablastr::coarsen::sample::Interp(arrBx, Bxtype, cellCenteredtype,
+                                                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const Real By_interp = ablastr::coarsen::sample::Interp(arrBy, Bytype, cellCenteredtype,
+                                                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const Real Bz_interp = ablastr::coarsen::sample::Interp(arrBz, Bztype, cellCenteredtype,
+                                                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
                 return Bx_interp*Bx_interp + By_interp*By_interp + Bz_interp*Bz_interp;
             });
         }

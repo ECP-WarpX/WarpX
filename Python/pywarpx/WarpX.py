@@ -30,8 +30,13 @@ class WarpX(Bucket):
     A Python wrapper for the WarpX C++ class
     """
 
-    def create_argv_list(self):
+    def create_argv_list(self, **kw):
         argv = []
+
+        for k, v in kw.items():
+            if v is not None:
+                argv.append(f'{k} = {v}')
+
         argv += warpx.attrlist()
         argv += my_constants.attrlist()
         argv += amr.attrlist()
@@ -86,8 +91,8 @@ class WarpX(Bucket):
 
         return argv
 
-    def init(self, mpi_comm=None):
-        argv = ['warpx'] + self.create_argv_list()
+    def init(self, mpi_comm=None, **kw):
+        argv = ['warpx'] + self.create_argv_list(**kw)
         libwarpx.initialize(argv, mpi_comm=mpi_comm)
 
     def evolve(self, nsteps=-1):
@@ -103,10 +108,7 @@ class WarpX(Bucket):
         return libwarpx.libwarpx_so.warpx_getProbHi(direction)
 
     def write_inputs(self, filename='inputs', **kw):
-        argv = self.create_argv_list()
-
-        for k, v in kw.items():
-            argv.append(f'{k} = {v}')
+        argv = self.create_argv_list(**kw)
 
         # Sort the argv list to make it more human readable
         argv.sort()

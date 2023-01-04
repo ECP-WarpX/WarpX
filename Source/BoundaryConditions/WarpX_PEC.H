@@ -26,7 +26,7 @@ using namespace amrex;
      * \param[in] fboundary  Value containing boundary type
      * \param[in] dir        direction
      *
-     * \param[out] 1 if the boundary type is PEC else 0
+     * \returns 1 if the boundary type is PEC else 0
      */
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     bool is_boundary_PEC (amrex::GpuArray<int, 3> const& fboundary, int dir) {

@@ -30,6 +30,7 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
+#include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -120,6 +121,7 @@ short WarpX::charge_deposition_algo;
 short WarpX::field_gathering_algo;
 short WarpX::particle_pusher_algo;
 short WarpX::electromagnetic_solver_id;
+short WarpX::psatd_solution_type;
 short WarpX::J_in_time;
 short WarpX::rho_in_time;
 short WarpX::load_balance_costs_update_algo;
@@ -282,6 +284,14 @@ WarpX::WarpX ()
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
 
+    // Only allocate vector potential arrays when using the Magnetostatic Solver
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+    {
+        vector_potential_fp_nodal.resize(nlevs_max);
+        vector_potential_grad_buf_e_stag.resize(nlevs_max);
+        vector_potential_grad_buf_b_stag.resize(nlevs_max);
+    }
+
     if (fft_do_time_averaging)
     {
         Efield_avg_fp.resize(nlevs_max);
@@ -348,7 +358,6 @@ WarpX::WarpX ()
         // create object for macroscopic solver
         m_macroscopic_properties = std::make_unique<MacroscopicProperties>();
     }
-
 
     // Set default values for particle and cell weights for costs update;
     // Default values listed here for the case AMREX_USE_GPU are determined
@@ -426,6 +435,9 @@ WarpX::WarpX ()
             use_fdtd_nci_corr == 0,
             "The NCI corrector should only be used with Esirkepov deposition");
     }
+
+    m_accelerator_lattice.resize(nlevs_max);
+
 }
 
 WarpX::~WarpX ()
@@ -646,7 +658,9 @@ WarpX::ReadParameters ()
         "Currently, the embedded boundary in RZ only works for electrostatic solvers (or no solver).");
 #endif
 
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+            electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+        {
             // Note that with the relativistic version, these parameters would be
             // input for each species.
             utils::parser::queryWithParser(
@@ -668,7 +682,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
 
-        utils::parser::queryWithParser(pp_warpx, "const_dt", const_dt);
+        utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
         // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
@@ -1148,6 +1162,11 @@ WarpX::ReadParameters ()
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(noz_fft > 0, "PSATD order must be finite unless psatd.periodic_single_box_fft is used");
         }
 
+        // Integer that corresponds to the order of the PSATD solution
+        // (whether the PSATD equations are derived from first-order or
+        // second-order solution)
+        psatd_solution_type = GetAlgorithmInteger(pp_psatd, "solution_type");
+
         // Integers that correspond to the time dependency of J (constant, linear)
         // and rho (linear, quadratic) for the PSATD algorithm
         J_in_time = GetAlgorithmInteger(pp_psatd, "J_in_time");
@@ -1311,13 +1330,6 @@ WarpX::ReadParameters ()
             );
         }
 
-        if (J_in_time == JInTime::Constant)
-        {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                rho_in_time == RhoInTime::Linear,
-                "psatd.J_in_time=constant supports only psatd.rho_in_time=linear");
-        }
-
         if (J_in_time == JInTime::Linear)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1331,6 +1343,14 @@ WarpX::ReadParameters ()
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 v_comoving_is_zero,
                 "psatd.J_in_time=linear not implemented with comoving PSATD");
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                !current_correction,
+                "psatd.current_correction=1 not implemented with psatd.J_in_time=linear");
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                current_deposition_algo != CurrentDepositionAlgo::Vay,
+                "algo.current_deposition=vay not implemented with psatd.J_in_time=linear");
         }
 
         for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
@@ -1654,6 +1674,13 @@ WarpX::ClearLevel (int lev)
             current_fp_vay[lev][i].reset();
         }
 
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+        {
+            vector_potential_fp_nodal[lev][i].reset();
+            vector_potential_grad_buf_e_stag[lev][i].reset();
+            vector_potential_grad_buf_b_stag[lev][i].reset();
+        }
+
         current_cp[lev][i].reset();
         Efield_cp [lev][i].reset();
         Bfield_cp [lev][i].reset();
@@ -1761,6 +1788,10 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 
     AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
                   guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F, guard_cells.ng_alloc_G, aux_is_nodal);
+
+    m_accelerator_lattice[lev] = std::make_unique<AcceleratorLattice>();
+    m_accelerator_lattice[lev]->InitElementFinder(lev, ba, dm);
+
 }
 
 void
@@ -1810,6 +1841,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     jy_nodal_flag = IntVect(1,0,1);
     jz_nodal_flag = IntVect(1,1,0);
 #endif
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+    {
+        jx_nodal_flag  = IntVect::TheNodeVector();
+        jy_nodal_flag  = IntVect::TheNodeVector();
+        jz_nodal_flag  = IntVect::TheNodeVector();
+        ngJ = ngRho;
+    }
     rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
     phi_nodal_flag = IntVect::TheNodeVector();
     F_nodal_flag = amrex::IntVect::TheNodeVector();
@@ -1895,6 +1933,30 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(current_fp_vay[lev][2], amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, tag("current_fp_vay[z]"), 0.0_rt);
     }
 
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+    {
+        AllocInitMultiFab(vector_potential_fp_nodal[lev][0], amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngRho, tag("vector_potential_fp_nodal[x]"), 0.0_rt);
+        AllocInitMultiFab(vector_potential_fp_nodal[lev][1], amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngRho, tag("vector_potential_fp_nodal[y]"), 0.0_rt);
+        AllocInitMultiFab(vector_potential_fp_nodal[lev][2], amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngRho, tag("vector_potential_fp_nodal[z]"), 0.0_rt);
+
+        AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][0], amrex::convert(ba, Ex_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_e_stag[x]"), 0.0_rt);
+        AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][1], amrex::convert(ba, Ey_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_e_stag[y]"), 0.0_rt);
+        AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][2], amrex::convert(ba, Ez_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_e_stag[z]"), 0.0_rt);
+
+        AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][0], amrex::convert(ba, Bx_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_b_stag[x]"), 0.0_rt);
+        AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][1], amrex::convert(ba, By_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_b_stag[y]"), 0.0_rt);
+        AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][2], amrex::convert(ba, Bz_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_b_stag[z]"), 0.0_rt);
+    }
+
     if (fft_do_time_averaging)
     {
         AllocInitMultiFab(Bfield_avg_fp[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, tag("Bfield_avg_fp[x]"));
@@ -1952,7 +2014,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 #endif
 
-    bool deposit_charge = do_dive_cleaning || (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame);
+    bool deposit_charge = do_dive_cleaning || (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame  ||
+                                               electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic);
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         deposit_charge = do_dive_cleaning || update_with_rho || current_correction;
     }
@@ -1963,7 +2026,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(rho_fp[lev], amrex::convert(ba, rho_nodal_flag), dm, rho_ncomps, ngRho, tag("rho_fp"), 0.0_rt);
     }
 
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
         IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
         AllocInitMultiFab(phi_fp[lev], amrex::convert(ba, phi_nodal_flag), dm, ncomps, ngPhi, tag("phi_fp"), 0.0_rt);
@@ -2334,6 +2398,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 fft_periodic_single_box,
                                                 update_with_rho,
                                                 fft_do_time_averaging,
+                                                psatd_solution_type,
                                                 J_in_time,
                                                 rho_in_time,
                                                 do_dive_cleaning,

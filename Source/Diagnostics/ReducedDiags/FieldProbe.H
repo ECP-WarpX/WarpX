@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+using namespace amrex::literals;
+
 /**
  * This enumeration is used for assigning structural geometry levels (point vs line vs plane)
  */
@@ -67,10 +69,17 @@ public:
     static constexpr int noutputs = FieldProbePIdx::nattribs + 3;
 
 private:
-    amrex::Real x_probe, y_probe, z_probe;
-    amrex::Real x1_probe, y1_probe, z1_probe;
-    amrex::Real target_normal_x, target_normal_y, target_normal_z;
-    amrex::Real target_up_x, target_up_y, target_up_z;
+    amrex::Real x_probe = 0._rt;
+    amrex::Real y_probe = 0._rt;
+    amrex::Real x1_probe = 0._rt;
+    amrex::Real y1_probe = 0._rt;
+    amrex::Real target_normal_x = 0._rt;
+    amrex::Real target_normal_y = 1._rt;
+    amrex::Real target_normal_z = 0._rt;
+    amrex::Real target_up_x = 0._rt;
+    amrex::Real target_up_y = 0._rt;
+    amrex::Real target_up_z = 1._rt;
+    amrex::Real z_probe, z1_probe;
     amrex::Real detector_radius;
 
     //! counts number of particles for all MPI ranks
@@ -114,6 +123,17 @@ private:
     /** Check if the probe is in the simulation domain boundary
      */
     bool ProbeInDomain () const;
+
+    /**
+     * Simple utility function to normalize the components of a "vector"
+     */
+    void normalize(amrex::Real &AMREX_RESTRICT x, amrex::Real &AMREX_RESTRICT y,
+                   amrex::Real &AMREX_RESTRICT z){
+        amrex::Real mag = std::sqrt(x*x + y*y + z*z);
+        x /= mag;
+        y /= mag;
+        z /= mag;
+    }
 };
 
 #endif // WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDPROBE_H_
