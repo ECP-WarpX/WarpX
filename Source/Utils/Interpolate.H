@@ -18,7 +18,7 @@ namespace Interpolate
     std::unique_ptr<MultiFab>
         getInterpolatedScalar(
             const MultiFab& F_cp, const MultiFab& F_fp,
-            const DistributionMapping& dm, const IntVect r_ratio,
+            const DistributionMapping& dm, const amrex::IntVect r_ratio,
             const Real* /*dx*/, const IntVect ngrow );
 
     /** \brief Samples/Interpolates the coarse vector multifab `F*_cp` on the
