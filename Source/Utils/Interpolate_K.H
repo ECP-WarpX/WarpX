@@ -9,7 +9,7 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void interp (int j, int k, int l,
              amrex::Array4<amrex::Real      > const& fine,
              amrex::Array4<amrex::Real const> const& crse,
-             IntVect r_ratio, IntVect const& type) noexcept
+             const amrex::IntVect r_ratio, IntVect const& type) noexcept
 {
     using amrex::Real;
     Real const rrx = 1.0_rt/static_cast<Real>(r_ratio[0]);
