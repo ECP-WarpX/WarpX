@@ -34,8 +34,9 @@ WarpX::ComputeDt ()
 {
     // Handle cases where the timestep is not limited by the speed of light
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value(), "warpx.const_dt must be specified with the electrostatic solver.");
         for (int lev=0; lev<=max_level; lev++) {
-            dt[lev] = const_dt;
+            dt[lev] = m_const_dt.value();
         }
         return;
     }
@@ -44,7 +45,9 @@ WarpX::ComputeDt ()
     const amrex::Real* dx = geom[max_level].CellSize();
     amrex::Real deltat = 0.;
 
-    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+    if (m_const_dt.has_value()) {
+        deltat = m_const_dt.value();
+    } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         // Computation of dt for spectral algorithm
         // (determined by the minimum cell size in all directions)
 #if defined(WARPX_DIM_1D_Z)

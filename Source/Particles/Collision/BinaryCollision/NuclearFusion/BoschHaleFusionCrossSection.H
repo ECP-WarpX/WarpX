@@ -21,6 +21,8 @@
  *
  * @param[in] E_kin_star the kinetic energy of the reactants in their center of mass frame, in SI units.
  * @param[in] fusion_type indicates which fusion reaction to calculate the cross-section for
+ * @param[in] m1 mass of the incoming particle
+ * @param[in] m2 mass of the target particle
  * @return The total cross section in SI units (square meters).
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE

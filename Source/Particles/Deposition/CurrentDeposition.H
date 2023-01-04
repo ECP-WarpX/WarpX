@@ -36,7 +36,6 @@ using namespace amrex::literals;
                          ion_lev is a null pointer.
  * \param jx_fab,jy_fab,jz_fab FArrayBox of current density, either full array or tile.
  * \param np_to_depose Number of particles for which current is deposited.
- * \param dt           Time step for particle level
  * \param relative_time Time at which to deposit J, relative to the time of the
  *                      current positions of the particles. When different than 0,
  *                      the particle position will be temporarily modified to match
@@ -713,7 +712,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
  * \brief Vay current deposition
  * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>)
  * for thread \c thread_num: deposit \c D in real space and store the result in
- * \c jx_fab, \c jy_fab, \c jz_fab
+ * \c Dx_fab, \c Dy_fab, \c Dz_fab
  *
  * \tparam depos_order  deposition order
  * \param[in] GetPosition  Functor that returns the particle position
@@ -722,10 +721,10 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
  * \param[in] ion_lev      Pointer to array of particle ionization level. This is
                            required to have the charge of each macroparticle since \c q
                            is a scalar. For non-ionizable species, \c ion_lev is \c null
- * \param[in,out] jx_fab,jy_fab,jz_fab FArrayBox of current density, either full array or tile
+ * \param[in,out] Dx_fab,Dy_fab,Dz_fab FArrayBox of Vay current density, either full array or tile
  * \param[in] np_to_depose Number of particles for which current is deposited
  * \param[in] dt           Time step for particle level
- * \param[in] relative_time Time at which to deposit J, relative to the time of the
+ * \param[in] relative_time Time at which to deposit D, relative to the time of the
  *                          current positions of the particles. When different than 0,
  *                          the particle position will be temporarily modified to match
  *                          the time of the deposition.
@@ -745,9 +744,9 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
                             const amrex::ParticleReal* const uyp,
                             const amrex::ParticleReal* const uzp,
                             const int* const ion_lev,
-                            amrex::FArrayBox& jx_fab,
-                            amrex::FArrayBox& jy_fab,
-                            amrex::FArrayBox& jz_fab,
+                            amrex::FArrayBox& Dx_fab,
+                            amrex::FArrayBox& Dy_fab,
+                            amrex::FArrayBox& Dz_fab,
                             const long np_to_depose,
                             const amrex::Real dt,
                             const amrex::Real relative_time,
@@ -761,14 +760,14 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 {
 #if defined(WARPX_DIM_RZ)
     amrex::ignore_unused(GetPosition,
-        wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab,
+        wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,
         np_to_depose, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
     amrex::Abort("Vay deposition not implemented in RZ geometry");
 #endif
 
 #if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(GetPosition,
-        wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab,
+        wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,
         np_to_depose, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
     amrex::Abort("Vay deposition not implemented in cartesian 1D geometry");
 #endif
@@ -809,11 +808,11 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 
     // Allocate temporary arrays
 #if defined(WARPX_DIM_3D)
-    AMREX_ALWAYS_ASSERT(jx_fab.box() == jy_fab.box() && jx_fab.box() == jz_fab.box());
-    amrex::FArrayBox temp_fab{jx_fab.box(), 4};
+    AMREX_ALWAYS_ASSERT(Dx_fab.box() == Dy_fab.box() && Dx_fab.box() == Dz_fab.box());
+    amrex::FArrayBox temp_fab{Dx_fab.box(), 4};
 #elif defined(WARPX_DIM_XZ)
-    AMREX_ALWAYS_ASSERT(jx_fab.box() == jz_fab.box());
-    amrex::FArrayBox temp_fab{jx_fab.box(), 2};
+    AMREX_ALWAYS_ASSERT(Dx_fab.box() == Dz_fab.box());
+    amrex::FArrayBox temp_fab{Dx_fab.box(), 2};
 #endif
     temp_fab.setVal<amrex::RunOn::Device>(0._rt);
     amrex::Array4<amrex::Real> const& temp_arr = temp_fab.array();
@@ -822,11 +821,11 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     const amrex::Real invcsq = 1._rt / (PhysConst::c * PhysConst::c);
 
     // Arrays where D will be stored
-    amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
-    amrex::Array4<amrex::Real> const& jy_arr = jy_fab.array();
-    amrex::Array4<amrex::Real> const& jz_arr = jz_fab.array();
+    amrex::Array4<amrex::Real> const& Dx_arr = Dx_fab.array();
+    amrex::Array4<amrex::Real> const& Dy_arr = Dy_fab.array();
+    amrex::Array4<amrex::Real> const& Dz_arr = Dz_fab.array();
 
-    // Loop over particles and deposit (Dx,Dy,Dz) into jx_fab, jy_fab and jz_fab
+    // Loop over particles and deposit (Dx,Dy,Dz) into Dx_fab, Dy_fab and Dz_fab
 #if defined(WARPX_USE_GPUCLOCK)
     amrex::Real* cost_real = nullptr;
     if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
@@ -923,7 +922,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         // sz_old shape factor along z for the centering of each current
         const int k_old = compute_shape_factor(sz_old, z_old);
 
-        // Deposit current into jx_arr, jy_arr and jz_arr
+        // Deposit current into Dx_arr, Dy_arr and Dz_arr
 #if defined(WARPX_DIM_XZ)
 
         for (int k=0; k<=depos_order; k++) {
@@ -937,18 +936,18 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
                 auto const sxo_szo = static_cast<amrex::Real>(sx_old[i] * sz_old[k]);
 
                 if (i_new == i_old && k_new == k_old) {
-                    // temp arrays for Jx and Jz
+                    // temp arrays for Dx and Dz
                     amrex::Gpu::Atomic::AddNoRet(&temp_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
                         wq * invvol * invdt * (sxn_szn - sxo_szo));
 
                     amrex::Gpu::Atomic::AddNoRet(&temp_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 1),
                         wq * invvol * invdt * (sxn_szo - sxo_szn));
 
-                    // Jy
-                    amrex::Gpu::Atomic::AddNoRet(&jy_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
+                    // Dy
+                    amrex::Gpu::Atomic::AddNoRet(&Dy_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
                         wqy * 0.25_rt * (sxn_szn + sxn_szo + sxo_szn + sxo_szo));
                 } else {
-                    // temp arrays for Jx and Jz
+                    // temp arrays for Dx and Dz
                     amrex::Gpu::Atomic::AddNoRet(&temp_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
                         wq * invvol * invdt * sxn_szn);
 
@@ -961,17 +960,17 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
                     amrex::Gpu::Atomic::AddNoRet(&temp_arr(lo.x + i_old + i, lo.y + k_new + k, 0, 1),
                         - wq * invvol * invdt * sxo_szn);
 
-                    // Jy
-                    amrex::Gpu::Atomic::AddNoRet(&jy_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
+                    // Dy
+                    amrex::Gpu::Atomic::AddNoRet(&Dy_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
                         wqy * 0.25_rt * sxn_szn);
 
-                    amrex::Gpu::Atomic::AddNoRet(&jy_arr(lo.x + i_new + i, lo.y + k_old + k, 0, 0),
+                    amrex::Gpu::Atomic::AddNoRet(&Dy_arr(lo.x + i_new + i, lo.y + k_old + k, 0, 0),
                         wqy * 0.25_rt * sxn_szo);
 
-                    amrex::Gpu::Atomic::AddNoRet(&jy_arr(lo.x + i_old + i, lo.y + k_new + k, 0, 0),
+                    amrex::Gpu::Atomic::AddNoRet(&Dy_arr(lo.x + i_old + i, lo.y + k_new + k, 0, 0),
                         wqy * 0.25_rt * sxo_szn);
 
-                    amrex::Gpu::Atomic::AddNoRet(&jy_arr(lo.x + i_old + i, lo.y + k_old + k, 0, 0),
+                    amrex::Gpu::Atomic::AddNoRet(&Dy_arr(lo.x + i_old + i, lo.y + k_old + k, 0, 0),
                         wqy * 0.25_rt * sxo_szo);
                 }
 
@@ -1000,7 +999,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
                     auto const sxo_syo_szo = static_cast<amrex::Real>(sx_old[i]) * syo_szo;
 
                     if (i_new == i_old && j_new == j_old && k_new == k_old) {
-                        // temp arrays for Jx, Jy and Jz
+                        // temp arrays for Dx, Dy and Dz
                         amrex::Gpu::Atomic::AddNoRet(&temp_arr(lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k, 0),
                             wq * invvol * invdt * (sxn_syn_szn - sxo_syo_szo));
 
@@ -1013,7 +1012,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
                         amrex::Gpu::Atomic::AddNoRet(&temp_arr(lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k, 3),
                             wq * invvol * invdt * (sxo_syn_szn - sxn_syo_szo));
                     } else {
-                        // temp arrays for Jx, Jy and Jz
+                        // temp arrays for Dx, Dy and Dz
                         amrex::Gpu::Atomic::AddNoRet(&temp_arr(lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k, 0),
                             wq * invvol * invdt * sxn_syn_szn);
 
@@ -1045,23 +1044,23 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     } );
 
 #if defined(WARPX_DIM_3D)
-    amrex::ParallelFor(jx_fab.box(), [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+    amrex::ParallelFor(Dx_fab.box(), [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
     {
         const amrex::Real t_a = temp_arr(i,j,k,0);
         const amrex::Real t_b = temp_arr(i,j,k,1);
         const amrex::Real t_c = temp_arr(i,j,k,2);
         const amrex::Real t_d = temp_arr(i,j,k,3);
-        jx_arr(i,j,k) += (1._rt/6._rt)*(2_rt*t_a       + t_b       + t_c - 2._rt*t_d);
-        jy_arr(i,j,k) += (1._rt/6._rt)*(2_rt*t_a       + t_b - 2._rt*t_c       + t_d);
-        jz_arr(i,j,k) += (1._rt/6._rt)*(2_rt*t_a - 2._rt*t_b       + t_c       + t_d);
+        Dx_arr(i,j,k) += (1._rt/6._rt)*(2_rt*t_a       + t_b       + t_c - 2._rt*t_d);
+        Dy_arr(i,j,k) += (1._rt/6._rt)*(2_rt*t_a       + t_b - 2._rt*t_c       + t_d);
+        Dz_arr(i,j,k) += (1._rt/6._rt)*(2_rt*t_a - 2._rt*t_b       + t_c       + t_d);
     });
 #elif defined(WARPX_DIM_XZ)
-    amrex::ParallelFor(jx_fab.box(), [=] AMREX_GPU_DEVICE (int i, int j, int) noexcept
+    amrex::ParallelFor(Dx_fab.box(), [=] AMREX_GPU_DEVICE (int i, int j, int) noexcept
     {
         const amrex::Real t_a = temp_arr(i,j,0,0);
         const amrex::Real t_b = temp_arr(i,j,0,1);
-        jx_arr(i,j,0) += (0.5_rt)*(t_a + t_b);
-        jz_arr(i,j,0) += (0.5_rt)*(t_a - t_b);
+        Dx_arr(i,j,0) += (0.5_rt)*(t_a + t_b);
+        Dz_arr(i,j,0) += (0.5_rt)*(t_a - t_b);
     });
 #endif
     // Synchronize so that temp_fab can be safely deallocated in its destructor

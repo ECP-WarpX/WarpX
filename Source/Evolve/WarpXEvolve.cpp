@@ -125,9 +125,9 @@ WarpX::Evolve (int numsteps)
                 // Not called at each iteration, so exchange all guard cells
                 FillBoundaryE(guard_cells.ng_alloc_EB);
                 FillBoundaryB(guard_cells.ng_alloc_EB);
-                UpdateAuxilaryData();
-                FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
+            UpdateAuxilaryData();
+            FillBoundaryAux(guard_cells.ng_UpdateAux);
             // on first step, push p by -0.5*dt
             for (int lev = 0; lev <= finest_level; ++lev)
             {
@@ -154,9 +154,9 @@ WarpX::Evolve (int numsteps)
                 // TODO Remove call to FillBoundaryAux before UpdateAuxilaryData?
                 if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD)
                     FillBoundaryAux(guard_cells.ng_UpdateAux);
-                UpdateAuxilaryData();
-                FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
+            UpdateAuxilaryData();
+            FillBoundaryAux(guard_cells.ng_UpdateAux);
         }
 
         // Run multi-physics modules:
@@ -257,6 +257,14 @@ WarpX::Evolve (int numsteps)
         // We might need to move j because we are going to make a plotfile.
         int num_moved = MoveWindow(step+1, move_j);
 
+        // Update the accelerator lattice element finder if the window has moved,
+        // from either a moving window or a boosted frame
+        if (num_moved != 0 || gamma_boost > 1) {
+            for (int lev = 0; lev <= finest_level; ++lev) {
+                m_accelerator_lattice[lev]->UpdateElementFinder(lev);
+            }
+        }
+
         mypc->ContinuousFluxInjection(cur_time, dt[0]);
 
         mypc->ApplyBoundaryConditions();
@@ -309,6 +317,12 @@ WarpX::Evolve (int numsteps)
             // and so that the fields are at the correct time in the output.
             bool const reset_fields = true;
             ComputeSpaceChargeField( reset_fields );
+            if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
+                // Call Magnetostatic Solver to solve for the vector potential A and compute the
+                // B field.  Time varying A contribution to E field is neglected.
+                // This is currently a lab frame calculation.
+                ComputeMagnetostaticField();
+            }
             ExecutePythonCallback("afterEsolve");
         }
 

@@ -57,8 +57,12 @@ def gaussian_dist(u, u_th):
     return 1./((2*np.pi)**.5*u_th) * np.exp(-u**2/(2*u_th**2) )
 
 def gaussian_flux_dist(u, u_th, u_m):
-    normalization_factor = u_th**2 * np.exp(-u_m**2/(2*u_th**2)) + (np.pi/2)**.5*u_m*u_th * (1 + erf(u_m/(2**.5*u_th)))
-    return 1./normalization_factor * np.where( u>0, u * np.exp(-(u-u_m)**2/(2*u_th**2)), 0 )
+    au_m = np.abs(u_m)
+    normalization_factor = u_th**2 * np.exp(-au_m**2/(2*u_th**2)) + (np.pi/2)**.5*au_m*u_th * (1 + erf(au_m/(2**.5*u_th)))
+    result = 1./normalization_factor * np.where( u>0, u * np.exp(-(u-au_m)**2/(2*u_th**2)), 0 )
+    if u_m < 0.:
+        result = result[::-1]
+    return result
 
 def compare_gaussian(u, w, u_th, label=''):
     du = (hist_range[1]-hist_range[0])/hist_bins
@@ -103,7 +107,7 @@ uy = ad['proton','particle_momentum_y'].to_ndarray()/(m_p*c)
 uz = ad['proton','particle_momentum_z'].to_ndarray()/(m_p*c)
 w = ad['proton', 'particle_weight'].to_ndarray()
 
-compare_gaussian_flux(ux, w, u_th=0.1, u_m=0.05, label='u_x')
+compare_gaussian_flux(ux, w, u_th=0.1, u_m=-0.05, label='u_x')
 compare_gaussian(uy, w, u_th=0.1, label='u_y')
 compare_gaussian(uz, w, u_th=0.1, label='u_z')
 plt.legend(loc=0)

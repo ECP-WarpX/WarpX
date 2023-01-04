@@ -3,7 +3,7 @@
 WarpX
 -----
 
-WarpX is an advanced **electromagnetic Particle-In-Cell** code.
+WarpX is an advanced, time-based, **electromagnetic & electrostatic Particle-In-Cell** code.
 
 It supports many features including:
 
@@ -14,6 +14,7 @@ It supports many features including:
 For details on the algorithms that WarpX implements, see the :ref:`theory section <theory>`.
 
 WarpX is a *highly-parallel and highly-optimized code*, which can run on GPUs and multi-core CPUs, and includes load balancing capabilities.
+WarpX scales to the world's largest supercomputers and was awarded the `2022 ACM Gordon Bell Prize <https://www.exascaleproject.org/ecp-supported-collaborative-teams-win-the-2022-acm-gordon-bell-prize-and-special-prize/>`__.
 In addition, WarpX is also a *multi-platform code* and runs on Linux, macOS and Windows.
 
 .. _contact:
@@ -74,6 +75,7 @@ Usage
    :hidden:
 
    usage/how_to_run
+   usage/domain_decomposition
    usage/parameters
    usage/python
    usage/examples
@@ -96,7 +98,6 @@ Data Analysis
    dataanalysis/visit
    dataanalysis/visualpic
    dataanalysis/picviewer
-   dataanalysis/backtransformed_diags
    dataanalysis/reduced_diags
 
 Theory

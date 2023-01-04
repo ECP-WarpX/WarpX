@@ -75,7 +75,7 @@ repos:
 # Sorts Python imports according to PEP8
 # https://www.python.org/dev/peps/pep-0008/#imports
 - repo: https://github.com/pycqa/isort
-  rev: 5.10.1
+  rev: 5.11.4
   hooks:
   - id: isort
     name: isort (python)

@@ -15,12 +15,12 @@
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "ComputeDiagFunctors/BackTransformParticleFunctor.H"
 #include "Utils/Algorithms/IsIn.H"
-#include "Utils/CoarsenIO.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
+#include <ablastr/coarsen/sample.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/SignalHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -772,8 +772,8 @@ BTDiagnostics::PrepareFieldDataForOutput ()
     // Flattening out MF over levels
 
     for (int lev = warpx.finestLevel(); lev > 0; --lev) {
-        CoarsenIO::Coarsen( *m_cell_centered_data[lev-1], *m_cell_centered_data[lev], 0, 0,
-                             m_cellcenter_varnames.size(), 0, WarpX::RefRatio(lev-1) );
+        ablastr::coarsen::sample::Coarsen(*m_cell_centered_data[lev - 1], *m_cell_centered_data[lev], 0, 0,
+                                          m_cellcenter_varnames.size(), 0, WarpX::RefRatio(lev-1) );
     }
 
     int num_BT_functors = 1;

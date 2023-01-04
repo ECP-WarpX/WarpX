@@ -47,6 +47,8 @@ public:
      * \param do_pml_in_domain whether pml is done in the domain (only used by RZ PSATD)
      * \param pml_ncell number of cells on the pml layer (only used by RZ PSATD)
      * \param ref_ratios mesh refinement ratios between mesh-refinement levels
+     * \param use_filter whether filtering will be done
+     * \param bilinear_filter_stencil_length the size of the stencil for filtering
      */
     void Init(
         const amrex::Real dt,

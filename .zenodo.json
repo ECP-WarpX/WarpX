@@ -34,6 +34,11 @@
         "name": "Blelly, Aurore"
       },
       {
+        "affiliation": "Lawrence Livermore National Laboratory",
+        "name": "Clark, Stephen Eric",
+        "orcid": "0000-0002-0117-776X"
+      },
+      {
         "affiliation": "LIDYL, CEA-Universit\u00e9 Paris-Saclay, CEA Saclay",
         "name": "Fedeli, Luca",
         "orcid": "0000-0002-7215-4178"
@@ -181,6 +186,7 @@
     ],
     "contributors": [
       {
+        "type": "Other",
         "affiliation": "Lawrence Berkeley National Laboratory",
         "name": "Weber, Gunther H.",
         "orcid": "0000-0002-1794-1398"

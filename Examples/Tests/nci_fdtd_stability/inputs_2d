@@ -48,10 +48,10 @@ electrons.ux_th  = 1.e-5
 electrons.uy_th  = 1.e-5
 electrons.uz_th  = 1.e-5
 electrons.uz_m  = 1000.  # Mean momentum along z (unitless)
-electrons.xmin = -10.e-6
-electrons.xmax = +10.e-6
-electrons.ymin = -10.e-6
-electrons.ymax = +10.e-6
+electrons.xmin = -10.e-6 - 1e-7 # adding buffer of fraction of cell-size
+electrons.xmax = +10.e-6 + 1e-7 # adding buffer of fraction of cell-size
+electrons.ymin = -10.e-6 - 1e-7 # adding buffer of fraction of cell-size
+electrons.ymax = +10.e-6 + 1e-7 # adding buffer of fraction of cell-size
 
 ions.charge = q_e
 ions.mass = m_p
@@ -61,10 +61,10 @@ ions.profile = constant
 ions.density = 1.e29  # number of electrons per m^3
 ions.momentum_distribution_type = "constant"
 ions.uz  = 1000.  # Momentum along z (unitless)
-ions.xmin = -10.e-6
-ions.xmax = +10.e-6
-ions.ymin = -10.e-6
-ions.ymax = +10.e-6
+ions.xmin = -10.e-6 - 1e-7 # adding buffer of fraction of cell-size
+ions.xmax = +10.e-6 + 1e-7 # adding buffer of fraction of cell-size
+ions.ymin = -10.e-6 - 1e-7 # adding buffer of fraction of cell-size
+ions.ymax = +10.e-6 + 1e-7 # adding buffer of fraction of cell-size
 
 # Diagnostics
 diagnostics.diags_names = diag1

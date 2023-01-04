@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 22.11)
+project(WarpX VERSION 23.01)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -232,6 +232,7 @@ if(WarpX_APP)
 endif()
 
 add_subdirectory(Source/ablastr)
+add_subdirectory(Source/AcceleratorLattice)
 add_subdirectory(Source/BoundaryConditions)
 add_subdirectory(Source/Diagnostics)
 add_subdirectory(Source/EmbeddedBoundary)
