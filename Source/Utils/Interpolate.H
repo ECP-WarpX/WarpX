@@ -32,7 +32,7 @@ namespace Interpolate
             const MultiFab* Fx_fp,
             const MultiFab* Fy_fp,
             const MultiFab* Fz_fp,
-            const DistributionMapping& dm, const IntVect r_ratio,
+            const DistributionMapping& dm, const amrex::IntVect r_ratio,
             const Real* dx, const IntVect ngrow );
 
 }
