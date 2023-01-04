@@ -69,7 +69,8 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         }
     }
 
-    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
         AddSpaceChargeFieldLabFrame();
     }
     else {
@@ -79,22 +80,16 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
             WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
             if (species.initialize_self_fields ||
-                (do_electrostatic == ElectrostaticSolverAlgo::Relativistic)) {
+                (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic)) {
                 AddSpaceChargeField(species);
             }
         }
 
         // Add the field due to the boundary potentials
-        if (do_electrostatic == ElectrostaticSolverAlgo::Relativistic){
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::Relativistic){
             AddBoundaryField();
         }
     }
-    // Transfer fields from 'fp' array to 'aux' array.
-    // This is needed when using momentum conservation
-    // since they are different arrays in that case.
-    UpdateAuxilaryData();
-    FillBoundaryAux(guard_cells.ng_UpdateAux);
-
 }
 
 /* Compute the potential `phi` by solving the Poisson equation with the
@@ -311,7 +306,8 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #if defined(AMREX_USE_EB)
     // EB: use AMReX to directly calculate the electric field since with EB's the
     // simple finite difference scheme in WarpX::computeE sometimes fails
-    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
         // TODO: maybe make this a helper function or pass Efield_fp directly
         amrex::Vector<
@@ -455,7 +451,7 @@ WarpX::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
    The electric field is calculated by assuming that the source that
    produces the `phi` potential is moving with a constant speed \f$\vec{\beta}\f$:
    \f[
-    \vec{E} = -\vec{\nabla}\phi + (\vec{\beta}\cdot\vec{\beta})\phi \vec{\beta}
+    \vec{E} = -\vec{\nabla}\phi + \vec{\beta}(\vec{\beta} \cdot \vec{\nabla}\phi)
    \f]
    (where the second term represent the term \f$\partial_t \vec{A}\f$, in
     the case of a moving source)
@@ -711,12 +707,12 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
 
     auto field_boundary_lo0 = WarpX::field_boundary_lo[0];
     auto field_boundary_hi0 = WarpX::field_boundary_hi[0];
-    if (field_boundary_lo0 == FieldBoundaryType::None || field_boundary_lo0 == FieldBoundaryType::Periodic) {
+    if (field_boundary_lo0 == FieldBoundaryType::Neumann || field_boundary_lo0 == FieldBoundaryType::Periodic) {
         // Neumann or periodic boundary condition
         // Solve for the point on the lower boundary
         nx_solve_min = 0;
     }
-    if (field_boundary_hi0 == FieldBoundaryType::None || field_boundary_hi0 == FieldBoundaryType::Periodic) {
+    if (field_boundary_hi0 == FieldBoundaryType::Neumann || field_boundary_hi0 == FieldBoundaryType::Periodic) {
         // Neumann or periodic boundary condition
         // Solve for the point on the upper boundary
         nx_solve_max = nx_full_domain;
@@ -766,7 +762,7 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
 
             phi1d_arr(1,0,0) = (phi1d_arr(0,0,0) + rho1d_arr(1,0,0))/diag;
 
-        } else if (field_boundary_lo0 == FieldBoundaryType::None) {
+        } else if (field_boundary_lo0 == FieldBoundaryType::Neumann) {
 
             // Neumann boundary condition
             phi1d_arr(0,0,0) = rho1d_arr(0,0,0)/diag;
@@ -803,7 +799,7 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
             diag = 2._rt - zwork1d_arr(imax,0,0);
             phi1d_arr(imax,0,0) = (phi1d_arr(imax+1,0,0) + rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
 
-        } else if (field_boundary_hi0 == FieldBoundaryType::None) {
+        } else if (field_boundary_hi0 == FieldBoundaryType::Neumann) {
 
             // Neumann boundary condition
             zwork1d_arr(imax,0,0) = 1._rt/diag;
@@ -851,22 +847,21 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
         // The periodic case is handled in the ParallelCopy below
         if (field_boundary_lo0 == FieldBoundaryType::PEC) {
             phi1d_arr(-1,0,0) = phi1d_arr(0,0,0);
-        } else if (field_boundary_lo0 == FieldBoundaryType::None) {
+        } else if (field_boundary_lo0 == FieldBoundaryType::Neumann) {
             phi1d_arr(-1,0,0) = phi1d_arr(1,0,0);
         }
 
         if (field_boundary_hi0 == FieldBoundaryType::PEC) {
             phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain,0,0);
-        } else if (field_boundary_hi0 == FieldBoundaryType::None) {
+        } else if (field_boundary_hi0 == FieldBoundaryType::Neumann) {
             phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain-1,0,0);
         }
 
     }
 
-    // Copy phi1d to phi, including the x guard cell
-    const IntVect xghost(AMREX_D_DECL(1,0,0));
-    phi[lev]->ParallelCopy(phi1d_mf, 0, 0, 1, xghost, xghost, Geom(lev).periodicity());
-
+    // Copy phi1d to phi
+    phi[lev]->ParallelCopy(phi1d_mf, 0, 0, 1);
+    phi[lev]->FillBoundary(Geom(lev).periodicity());
 }
 
 void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
@@ -885,9 +880,15 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
             hibc[0] = LinOpBCType::Dirichlet;
             dirichlet_flag[1] = true;
         }
-        else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::None) {
+        else if (WarpX::field_boundary_hi[0] == FieldBoundaryType::Neumann) {
             hibc[0] = LinOpBCType::Neumann;
             dirichlet_flag[1] = false;
+        }
+        else {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                "Field boundary condition at the outer radius must be either PEC or neumann "
+                "when using the electrostatic solver"
+            );
         }
     }
 #endif
@@ -905,13 +906,13 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
                 lobc[idim] = LinOpBCType::Dirichlet;
                 dirichlet_flag[idim*2] = true;
             }
-            else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::None ) {
+            else if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Neumann ) {
                 lobc[idim] = LinOpBCType::Neumann;
                 dirichlet_flag[idim*2] = false;
             }
             else {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                    "Field boundary conditions have to be either periodic, PEC or none "
+                    "Field boundary conditions have to be either periodic, PEC or neumann "
                     "when using the electrostatic solver"
                 );
             }
@@ -920,13 +921,13 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
                 hibc[idim] = LinOpBCType::Dirichlet;
                 dirichlet_flag[idim*2+1] = true;
             }
-            else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::None ) {
+            else if ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::Neumann ) {
                 hibc[idim] = LinOpBCType::Neumann;
                 dirichlet_flag[idim*2+1] = false;
             }
             else {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                    "Field boundary conditions have to be either periodic, PEC or none "
+                    "Field boundary conditions have to be either periodic, PEC or neumann "
                     "when using the electrostatic solver"
                 );
             }

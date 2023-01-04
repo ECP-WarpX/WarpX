@@ -22,7 +22,6 @@ using namespace amrex;
 void
 WarpXLaserProfiles::HarrisLaserProfile::init (
     const amrex::ParmParse& ppl,
-    const amrex::ParmParse& /* ppc */,
     CommonLaserParameters params)
 {
     // Parse the properties of the Harris profile

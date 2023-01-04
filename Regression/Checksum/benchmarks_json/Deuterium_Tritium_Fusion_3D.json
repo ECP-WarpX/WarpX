@@ -1,5 +1,5 @@
 {
-  "deuterium1": {
+  "deuterium_1": {
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 2.8875978729147693e-13,
@@ -8,7 +8,7 @@
     "particle_position_z": 81919021.52308556,
     "particle_weight": 1024.000000000021
   },
-  "deuterium2": {
+  "deuterium_2": {
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 3.356807324363973e-14,
@@ -17,7 +17,7 @@
     "particle_position_z": 8191737.5566503005,
     "particle_weight": 1.0227810240779905e+29
   },
-  "helium1": {
+  "helium4_1": {
     "particle_momentum_x": 1.7519716491839538e-15,
     "particle_momentum_y": 1.7523289312260283e-15,
     "particle_momentum_z": 1.7480231586369996e-15,
@@ -26,7 +26,7 @@
     "particle_position_z": 325970.4138010667,
     "particle_weight": 4.421535775967805e-28
   },
-  "helium2": {
+  "helium4_2": {
     "particle_momentum_x": 1.5330942227771018e-15,
     "particle_momentum_y": 1.5328473121602395e-15,
     "particle_momentum_z": 1.7635828326228758e-15,
@@ -38,7 +38,7 @@
   "lev=0": {
     "rho": 0.0
   },
-  "neutron1": {
+  "neutron_1": {
     "particle_momentum_x": 1.7519716491839538e-15,
     "particle_momentum_y": 1.7523289312260283e-15,
     "particle_momentum_z": 1.7480231586369996e-15,
@@ -47,7 +47,7 @@
     "particle_position_z": 325970.4138010667,
     "particle_weight": 4.421535775967805e-28
   },
-  "neutron2": {
+  "neutron_2": {
     "particle_momentum_x": 1.5330942227771018e-15,
     "particle_momentum_y": 1.5328473121602395e-15,
     "particle_momentum_z": 1.549297051563983e-15,
@@ -56,7 +56,7 @@
     "particle_position_z": 290143.4673994485,
     "particle_weight": 5.756530048087129e+18
   },
-  "tritium1": {
+  "tritium_1": {
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 2.8875978729147693e-13,
@@ -65,7 +65,7 @@
     "particle_position_z": 81920546.19181262,
     "particle_weight": 1024.000000000021
   },
-  "tritium2": {
+  "tritium_2": {
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,

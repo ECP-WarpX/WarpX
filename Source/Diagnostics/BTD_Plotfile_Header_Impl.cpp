@@ -111,7 +111,6 @@ void
 BTDPlotfileHeaderImpl::WriteHeader ()
 {
     if ( amrex::FileExists(m_Header_path) ) {
-        amrex::Print() << Utils::TextMsg::Info(" removing this file : " + m_Header_path);
         amrex::FileSystem::Remove(m_Header_path);
     }
     std::ofstream HeaderFile;
@@ -262,7 +261,6 @@ void
 BTDMultiFabHeaderImpl::WriteMultiFabHeader ()
 {
     if ( amrex::FileExists(m_Header_path) ) {
-        amrex::Print() << Utils::TextMsg::Info(" removing this file : " + m_Header_path);
         amrex::FileSystem::Remove(m_Header_path);
     }
     std::ofstream FabHeaderFile;

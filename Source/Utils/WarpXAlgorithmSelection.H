@@ -36,12 +36,13 @@ struct MacroscopicSolverAlgo {
     };
 };
 
-struct MaxwellSolverAlgo {
+struct ElectromagneticSolverAlgo {
     enum {
-        Yee = 0,
-        CKC = 1,
-        PSATD = 2,
-        ECT = 3
+        None = 0,
+        Yee = 1,
+        CKC = 2,
+        PSATD = 3,
+        ECT = 4
     };
 };
 
@@ -49,7 +50,8 @@ struct ElectrostaticSolverAlgo {
     enum {
         None = 0,
         Relativistic = 1,
-        LabFrame = 2
+        LabFrameElectroMagnetostatic = 2,
+        LabFrame = 3  // Non relativistic
     };
 };
 
@@ -83,6 +85,13 @@ struct GatheringAlgo {
     };
 };
 
+struct PSATDSolutionType {
+    enum {
+        FirstOrder = 0,
+        SecondOrder = 1
+    };
+};
+
 struct JInTime {
     enum {
         Constant = 0,
@@ -92,8 +101,8 @@ struct JInTime {
 
 struct RhoInTime {
     enum {
-        Linear = 1,
-        Quadratic = 2
+        Constant = 0,
+        Linear = 1
     };
 };
 
@@ -119,7 +128,8 @@ struct FieldBoundaryType {
         Damped = 4,   // Fields in the guard cells are damped for PSATD
                      //in the moving window direction
         Absorbing_SilverMueller = 5, // Silver-Mueller boundary condition
-        None = 6     // The fields values at the boundary are not updated. This is
+        Neumann = 6, // For electrostatic, the normal E is set to zero
+        None = 7     // The fields values at the boundary are not updated. This is
                      // useful for RZ simulations, at r=0.
     };
 };

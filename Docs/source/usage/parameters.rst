@@ -5,6 +5,10 @@ Input Parameters
 
 .. note::
 
+   WarpX input options are read via AMReX `ParmParse <https://amrex-codes.github.io/amrex/docs_html/Basics.html#parmparse>`__.
+
+.. note::
+
    The AMReX parser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist of one or more integers or floats, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted.
 
 .. _running-cpp-parameters-overall:
@@ -23,6 +27,10 @@ Overall simulation parameters
     The maximum physical time of the simulation. Can be provided instead of ``max_step``. If both
     ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
     when the first criterion is hit.
+
+* ``warpx.used_inputs_file`` (`string`; default: ``warpx_used_inputs``)
+    Name of a file that WarpX writes to archive the used inputs.
+    The context of this file will contain an exact copy of all explicitly and implicitly used inputs parameters, including those :ref:`extended and overwritten from the command line <usage_run>`.
 
 * ``warpx.gamma_boost`` (`float`)
     The Lorentz factor of the boosted frame in which the simulation is run.
@@ -49,21 +57,6 @@ Overall simulation parameters
     printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
 
-* ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
-    Controls how much information is printed to the terminal, when running WarpX.
-
-* ``warpx.always_warn_immediately`` (``0`` or ``1``; default is ``0`` for false)
-    If set to ``1``, WarpX immediately prints every warning message as soon as
-    it is generated. It is mainly intended for debug purposes, in case a simulation
-    crashes before a global warning report can be printed.
-
-* ``warpx.abort_on_warning_threshold`` (string: ``low``, ``medium`` or ``high``) optional
-    Optional threshold to abort as soon as a warning is raised.
-    If the threshold is set, warning messages with priority greater than or
-    equal to the threshold trigger an immediate abort.
-    It is mainly intended for debug purposes, and is best used with
-    ``warpx.always_warn_immediately=1``.
-
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
     If provided ``warpx.random_seed = random``, the random seed will be determined
     using `std::random_device` and `std::clock()`,
@@ -83,16 +76,38 @@ Overall simulation parameters
     are recomputed at each iteration from the Poisson equation.
     There is no limitation on the timestep in this case, but
     electromagnetic effects (e.g. propagation of radiation, lasers, etc.)
-    are not captured. There are two options:
+    are not captured. There are several options:
 
     * ``labframe``: Poisson's equation is solved in the lab frame with
-      the charge density of all species combined. There will only be E
-      fields.
+      the charge density of all species combined. More specifically, the code solves:
 
-    * ``relativistic``: Poisson's equation is solved for each species
-      separately taking into account their averaged velocities. The field
-      is mapped to the simulation frame and will produce both E and B
-      fields.
+      .. math::
+
+        \boldsymbol{\nabla}^2 \phi = - \rho/\epsilon_0 \qquad \boldsymbol{E} = - \boldsymbol{\nabla}\phi
+
+    * ``labframe-electromagnetostatic``: Poisson's equation is solved in the lab frame with
+      the charge density of all species combined.  Additionally the 3-component vector potential
+      is solved in the Coulomb Gauge with the current density of all species combined
+      to include self magnetic fields. More specifically, the code solves:
+
+      .. math::
+
+        \boldsymbol{\nabla}^2 \phi = - \rho/\epsilon_0 \qquad \boldsymbol{E} = - \boldsymbol{\nabla}\phi \\
+        \boldsymbol{\nabla}^2 \boldsymbol{A} = - \mu_0 \boldsymbol{j} \qquad \boldsymbol{B} = \boldsymbol{\nabla}\times\boldsymbol{A}
+
+    * ``relativistic``: Poisson's equation is solved **for each species**
+      in their respective rest frame. The corresponding field
+      is mapped back to the simulation frame and will produce both E and B
+      fields. More specifically, in the simulation frame, this is equivalent to solving **for each species**
+
+      .. math::
+
+        \boldsymbol{\nabla}^2 - (\boldsymbol{\beta}\cdot\boldsymbol{\nabla})^2\phi = - \rho/\epsilon_0 \qquad
+        \boldsymbol{E} = -\boldsymbol{\nabla}\phi + \boldsymbol{\beta}(\boldsymbol{\beta} \cdot \boldsymbol{\nabla}\phi)
+        \qquad \boldsymbol{B} = -\frac{1}{c}\boldsymbol{\beta}\times\boldsymbol{\nabla}\phi
+
+      where :math:`\boldsymbol{\beta}` is the average (normalized) velocity of the considered species (which can be relativistic).
+      See e.g. `Vay et al., Physics of Plasmas 15, 056701 (2008) <https://doi.org/10.1063/1.2837054>`__ for more information.
 
     See the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#>`_
     for details of the MLMG solver (the default solver used with electrostatic
@@ -138,10 +153,6 @@ Overall simulation parameters
     This will cause severe performance drops.
     Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
     `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
-
-* ``amrex.abort_on_unused_inputs`` (``0`` or ``1``; default is ``0`` for false)
-    When set to ``1``, this option causes simulation to fail *after* its completion if there were unused parameters.
-    It is mainly intended for continuous integration and automated testing to check that all tests and inputs are adapted to API changes.
 
 Signal Handling
 ^^^^^^^^^^^^^^^
@@ -308,7 +319,9 @@ Domain Boundary Conditions
     * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. For the electromagnetic solve, at PEC, the tangential electric field and the normal magnetic field are set to 0. This boundary can be used to model a dielectric or metallic surface. In the guard-cell region, the tangential electric field is set equal and opposite to the respective field component in the mirror location across the PEC boundary, and the normal electric field is set equal to the field component in the mirror location in the domain across the PEC boundary. Similarly, the tangential (and normal) magnetic field components are set equal (and opposite) to the respective magnetic field components in the mirror locations across the PEC boundary. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
       If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
 
-    * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`. If the electrostatic solver is used, a Neumann boundary condition (with gradient equal to 0) will be applied on the specified boundary.
+    * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`.
+
+    * ``neumann``: For the electrostatic solver, a Neumann boundary condition (with gradient of the potential equal to 0) will be applied on the specified boundary.
 
 * ``boundary.particle_lo`` and ``boundary.particle_hi`` (`2 strings` for 2D, `3 strings` for 3D, `absorbing` by default)
     Options are:
@@ -487,9 +500,6 @@ Distribution across MPI ranks and parallelization
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
 
-* ``warpx.safe_guard_cells`` (`0` or `1`) optional (default `0`)
-    For developers: run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
-
 .. _running-cpp-parameters-parser:
 
 Math parser and user-defined constants
@@ -558,6 +568,10 @@ Particle initialization
     The name of each species. This is then used in the rest of the input deck ;
     in this documentation we use `<species_name>` as a placeholder.
 
+* ``particles.photon_species`` (`strings`, separated by spaces)
+    List of species that are photon species, if any.
+    **This is required when compiling with QED=TRUE.**
+
 * ``particles.use_fdtd_nci_corr`` (`0` or `1`) optional (default `0`)
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
     Not currently available in the RZ configuration.
@@ -580,11 +594,11 @@ Particle initialization
     Type of physical species.
     Currently, the accepted species are
     ``"electron"``, ``"positron"``, ``"muon"``, ``"antimuon"``, ``"photon"``, ``"neutron"``, ``"proton"`` , ``"alpha"``,
-    ``"hydrogen1"`` (a.k.a. ``"protium"``), ``"hydrogen2"`` (a.k.a. ``"deuterium"``), ``"hydrogen3"`` (a.k.a.``"tritium"``),
+    ``"hydrogen1"`` (a.k.a. ``"protium"``), ``"hydrogen2"`` (a.k.a. ``"deuterium"``), ``"hydrogen3"`` (a.k.a. ``"tritium"``),
     ``"helium"``, ``"helium3"``, ``"helium4"``,
-    ``"lithium"``, ``"lithium6"``, ``"lithium7"``, ``"beryllium"``, ``"boron"``, ``"boron10"``, ``"boron11"``,
-    ``"carbon"``, ``"carbon12"``, ``"carbon13"``, ``"nitrogen"``, ``"nitrogen14"``, ``"nitrogen15"``,
-    ``"oxygen"``, ``"oxygen16"``, ``"oxygen17"``, ``"oxygen18"``, ``"fluorine"``, ``"neon"``, ``"neon20"``,
+    ``"lithium"``, ``"lithium6"``, ``"lithium7"``, ``"beryllium"``, ``"beryllium9"``, ``"boron"``, ``"boron10"``, ``"boron11"``,
+    ``"carbon"``, ``"carbon12"``, ``"carbon13"``, ``"carbon14"``, ``"nitrogen"``, ``"nitrogen14"``, ``"nitrogen15"``,
+    ``"oxygen"``, ``"oxygen16"``, ``"oxygen17"``, ``"oxygen18"``, ``"fluorine"``, ``"fluorine19"``, ``"neon"``, ``"neon20"``,
     ``"neon21"``, ``"neon22"``, ``"aluminium"``, ``"argon"``, ``"copper"``, ``"xenon"`` and ``"gold"``.
     The difference between ``"proton"`` and ``"hydrogen1"`` is that the mass of the latter includes also the mass
     of the bound electron (same for ``"alpha"`` and ``"helium4"``). When only the name of an element is specified, the mass
@@ -769,12 +783,12 @@ Particle initialization
       ``<species_name>.flux_direction``, for the average momenta along each direction
       ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m``, as
       well as standard deviations along each direction ``<species_name>.ux_th``,
-      ``<species_name>.uy_th`` and ``<species_name>.uz_th``. Note that the average momenta normal to the plane is not used.
+      ``<species_name>.uy_th`` and ``<species_name>.uz_th``.
       ``ux_m``, ``uy_m``, ``uz_m``, ``ux_th``, ``uy_th`` and ``uz_th`` are all ``0.`` by default.
 
     * ``maxwell_boltzmann``: Maxwell-Boltzmann distribution that takes a dimensionless
       temperature parameter :math:`\theta` as an input, where :math:`\theta = \frac{k_\mathrm{B} \cdot T}{m \cdot c^2}`,
-      "math:`T` is the temperature in Kelvin, :math:`k_\mathrm{B}` is the Boltzmann constant, :math:`c` is the speed of light, and :math:`m` is the mass of the species.
+      :math:`T` is the temperature in Kelvin, :math:`k_\mathrm{B}` is the Boltzmann constant, :math:`c` is the speed of light, and :math:`m` is the mass of the species.
       Theta is specified by a combination of ``<species_name>.theta_distribution_type``, ``<species_name>.theta``, and ``<species_name>.theta_function(x,y,z)`` (see below).
       For values of :math:`\theta > 0.01`, errors due to ignored relativistic terms exceed 1%.
       Temperatures less than zero are not allowed.
@@ -966,15 +980,6 @@ Particle initialization
         buffer will grow unbounded as particles are scraped and therefore could
         lead to memory issues if not periodically cleared. To clear the buffer
         call ``warpx_clearParticleBoundaryBuffer()``.
-
-* ``<species>.do_back_transformed_diagnostics`` (`0` or `1` optional, default `1`)
-    Only used when ``warpx.do_back_transformed_diagnostics=1``. When running in a
-    boosted frame, whether or not to plot back-transformed diagnostics for
-    this species.
-
-* ``warpx.serialize_initial_conditions`` (`0` or `1`) optional (default `0`)
-    Serialize the initial conditions for reproducible testing.
-    Mainly whether or not to use OpenMP threading for particle initialization.
 
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
@@ -1184,7 +1189,7 @@ Laser initialization
 
         * field_data (double[nt * nx * ny], with nt being the slowest coordinate).
 
-      A file at this format can be generated from Python, see an example at ``Examples/Modules/laser_injection_from_file``
+      A file at this format can be generated from Python, see an example at ``Examples/Tests/laser_injection_from_file``
 
 
 * ``<laser_name>.profile_t_peak`` (`float`; in seconds)
@@ -1296,6 +1301,9 @@ Laser initialization
 External fields
 ---------------
 
+Grid initialization
+^^^^^^^^^^^^^^^^^^^
+
 * ``warpx.B_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
     magnetic field. The "default" style initializes the
@@ -1315,7 +1323,7 @@ External fields
     then the constants `Bo` and `delta` required in the above equation
     can be set using ``my_constants.Bo=`` and ``my_constants.delta=`` in the
     input file. For a two-dimensional simulation, it is assumed that the first dimension
-    is `x` and the second dimension in `z`, and the value of `y` is set to zero.
+    is `x` and the second dimension is `z`, and the value of `y` is set to zero.
     Note that the current implementation of the parser for external B-field
     does not work with RZ and the code will abort with an error message.
 
@@ -1339,7 +1347,7 @@ External fields
     then the constants `Bo` and `delta` required in the above equation
     can be set using ``my_constants.Eo=`` and ``my_constants.delta=`` in the
     input file. For a two-dimensional simulation, it is assumed that the first
-    dimension is `x` and the second dimension in `z`,
+    dimension is `x` and the second dimension is `z`,
     and the value of `y` is set to zero.
     Note that the current implementation of the parser for external E-field
     does not work with RZ and the code will abort with an error message.
@@ -1351,6 +1359,9 @@ External fields
     to the grid at initialization. Use with caution as these fields are used for
     the field solver. In particular, do not use any other boundary condition
     than periodic.
+
+Applied to Particles
+^^^^^^^^^^^^^^^^^^^^
 
 * ``particles.E_ext_particle_init_style`` & ``particles.B_ext_particle_init_style`` (string) optional (default "none")
     These parameters determine the type of the external electric and
@@ -1405,12 +1416,60 @@ External fields
       and :math:`E_z = 0`, and
       :math:`B_x = \mathrm{strength} \cdot y`, :math:`B_y = -\mathrm{strength} \cdot x`, and :math:`B_z = 0`.
 
+Accelerator Lattice
+^^^^^^^^^^^^^^^^^^^
+
+Several accelerator lattice elements can be defined as described below.
+The elements are defined relative to the `z` axis and in the lab frame, starting at `z = 0`.
+They are described using a simplified MAD like syntax.
+Note that elements of the same type cannot overlap each other.
+
+* ``lattice.elements`` (``list of strings``) optional (default: no elements)
+    A list of names (one name per lattice element), in the order that they
+    appear in the lattice.
+
+* ``<element_name>.type`` (``string``)
+    Indicates the element type for this lattice element. This should be one of:
+
+        * ``drift`` for free drift. This requires this additional parameter:
+
+            * ``<element_name>.ds`` (``float``, in meters) the segment length
+
+        * ``quad`` for a hard edged quadrupole.
+          This applies a quadrupole field that is uniform within the `z` extent of the element with a sharp cut off at the ends.
+          This uses residence corrections, with the field scaled by the amount of time within the element for particles entering
+          or leaving it, to increase the accuracy.
+          This requires these additional parameters:
+
+            * ``<element_name>.ds`` (``float``, in meters) the segment length
+
+            * ``<element_name>.dEdx`` (``float``, in volts/meter^2) optional (default: 0.) the electric quadrupole field gradient
+              The field applied to the particles will be `Ex = dEdx*x` and `Ey = -dEdx*y`.
+
+            * ``<element_name>.dBdx`` (``float``, in Tesla/meter) optional (default: 0.) the magnetic quadrupole field gradient
+              The field applied to the particles will be `Bx = dBdx*y` and `By = dBdx*x`.
+
+        * ``plasmalens`` for a field modeling a plasma lens
+          This applies a radially directed plasma lens field that is uniform within the `z` extent of the element with
+          a sharp cut off at the ends.
+          This uses residence corrections, with the field scaled by the amount of time within the element for particles entering
+          or leaving it, to increase the accuracy.
+          This requires these additional parameters:
+
+            * ``<element_name>.ds`` (``float``, in meters) the segment length
+
+            * ``<element_name>.dEdx`` (``float``, in volts/meter^2) optional (default: 0.) the electric field gradient
+              The field applied to the particles will be `Ex = dEdx*x` and `Ey = dEdx*y`.
+
+            * ``<element_name>.dBdx`` (``float``, in Tesla/meter) optional (default: 0.) the magnetic field gradient
+              The field applied to the particles will be `Bx = dBdx*y` and `By = -dBdx*x`.
+
 .. _running-cpp-parameters-collision:
 
-Collision initialization
-------------------------
+Collision models
+----------------
 
-WarpX provides several particle collions models, using varying degrees of approximation.
+WarpX provides several particle collision models, using varying degrees of approximation.
 
 * ``collisions.collision_names`` (`strings`, separated by spaces)
     The name of each collision type.
@@ -1418,13 +1477,19 @@ WarpX provides several particle collions models, using varying degrees of approx
     in this documentation we use ``<collision_name>`` as a placeholder.
 
 * ``<collision_name>.type`` (`string`) optional
-    The type of collsion. The types implemented are:
+    The type of collision. The types implemented are:
 
     - ``pairwisecoulomb`` for pairwise Coulomb collisions, the default if unspecified.
       This provides a pair-wise relativistic elastic Monte Carlo binary Coulomb collision model,
-      following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+      following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`__.
       When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
       since the current implementation of the collision module assumes axisymmetry.
+    - ``nuclearfusion`` for fusion reactions.
+      This implements the pair-wise fusion model by `Higginson et al. (JCP 388, 439-453, 2019) <https://doi.org/10.1016/j.jcp.2019.03.020>`__.
+      Currently, WarpX supports deuterium-deuterium, deuterium-tritium, deuterium-helium and proton-boron fusion.
+      When initializing the reactant and product species, you need to use ``species_type`` (see the documentation
+      for this parameter), so that WarpX can identify the type of reaction to use.
+      (e.g. ``<species_name>.species_type = 'deuterium'``)
     - ``background_mcc`` for collisions between particles and a neutral background.
       This is a relativistic Monte Carlo treatment for particles colliding
       with a neutral background gas. The implementation follows the so-called
@@ -1436,12 +1501,18 @@ WarpX provides several particle collions models, using varying degrees of approx
       from Goldston and Rutherford, section 14.2.
 
 * ``<collision_name>.species`` (`strings`)
-    If using ``pairwisecoulomb`` type this should be the names of two species,
-    between which the collision will be considered.
-    The number of provided ``<collision_name>.species`` should match
-    the number of collision names, i.e. ``collisions.collision_names``.
-    If using ``background_mcc`` or ``background_stopping`` type this should be the name of the species for which collisions will be included.
-    Only one species name should be given.
+    If using ``pairwisecoulomb`` or ``nuclearfusion``, this should be the name(s) of the species,
+    between which the collision will be considered. (Provide only one name for intra-species collisions.)
+    If using ``background_mcc`` or ``background_stopping`` type this should be the name of the
+    species for which collisions with a background will be included.
+    In this case, only one species name should be given.
+
+* ``<collision_name>.product_species`` (`strings`)
+    Only for ``nuclearfusion``. The name(s) of the species in which to add
+    the new macroparticles created by the reaction.
+
+* ``<collision_name>.ndt`` (`int`) optional
+    Execute collision every # time steps. The default value is 1.
 
 * ``<collision_name>.CoulombLog`` (`float`) optional
     Only for ``pairwisecoulomb``. A provided fixed Coulomb logarithm of the
@@ -1453,10 +1524,34 @@ WarpX provides several particle collions models, using varying degrees of approx
     :math:`A` is the mass number.
     If this is not provided, or if a non-positive value is provided,
     a Coulomb logarithm will be computed automatically according to the algorithm in
-    `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+    `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`__.
 
-* ``<collision_name>.ndt`` (`int`) optional
-    Execute collision every # time steps. The default value is 1.
+* ``<collision_name>.fusion_multiplier`` (`float`) optional.
+    Only for ``nuclearfusion``.
+    Increasing ``fusion_multiplier`` creates more macroparticles of fusion
+    products, but with lower weight (in such a way that the corresponding
+    total number of physical particle remains the same). This can improve
+    the statistics of the simulation, in the case where fusion reactions are very rare.
+    More specifically, in a fusion reaction between two macroparticles with weight ``w_1`` and ``w_2``,
+    the weight of the product macroparticles will be ``min(w_1,w_2)/fusion_multipler``.
+    (And the weights of the reactant macroparticles are reduced correspondingly after the reaction.)
+    See `Higginson et al. (JCP 388, 439-453, 2019) <https://doi.org/10.1016/j.jcp.2019.03.020>`__
+    for more details. The default value of ``fusion_multiplier`` is 1.
+
+* ``<collision_name>.fusion_probability_threshold``(`float`) optional.
+    Only for ``nuclearfusion``.
+    If the fusion multiplier is too high and results in a fusion probability
+    that approaches 1 (for a given collision between two macroparticles), then
+    there is a risk of underestimating the total fusion yield. In these cases,
+    WarpX reduces the fusion multiplier used in that given collision.
+    ``m_probability_threshold`` is the fusion probability threshold above
+    which WarpX reduces the fusion multiplier.
+
+* ``<collision_name>.fusion_probability_target_value`` (`float`) optional.
+    Only for ``nuclearfusion``.
+    When the probability of fusion for a given collision exceeds
+    ``fusion_probability_threshold``, WarpX reduces the fusion multiplier for
+    that collisions such that the fusion probability approches ``fusion_probability_target_value``.
 
 * ``<collision_name>.background_density`` (`float`)
     Only for ``background_mcc`` and ``background_stopping``. The density of the background in :math:`m^{-3}`.
@@ -1510,7 +1605,6 @@ WarpX provides several particle collions models, using varying degrees of approx
     The equation is integrated over a time step, giving :math:`W_b(t+dt) = ((W_b(t)^{3/2}) - 3/2\beta{dt})^{2/3}`
     where :math:`\beta` is the term on the r.h.s except :math:`W_b`.
 
-
 * ``<collision_name>.scattering_processes`` (`strings` separated by spaces)
     Only for ``background_mcc``. The MCC scattering processes that should be
     included. Available options are ``elastic``, ``back`` & ``charge_exchange``
@@ -1550,6 +1644,13 @@ Numerics and algorithms
     The ratio between the actual timestep that is used in the simulation
     and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
     the timestep will be exactly equal to the CFL limit.)
+    This parameter will only be used with the electromagnetic solver.
+
+* ``warpx.const_dt`` (`float`)
+    Allows direct specification of the time step size, in units of seconds.
+    When the electrostatic solver is being used, this must be supplied.
+    This can be used with the electromagnetic solver, overriding ``warpx.cfl``, but
+    it is up to the user to ensure that the CFL condition is met.
 
 * ``warpx.use_filter`` (`0` or `1`; default: `1`, except for RZ FDTD)
     Whether to smooth the charge and currents on the mesh, after depositing them from the macro-particles.
@@ -1574,6 +1675,7 @@ Numerics and algorithms
     Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
     is ``esirkepov`` for FDTD maxwell solvers and ``direct`` for standard or
     Galilean PSATD solver (that is, with ``algo.maxwell_solver = psatd``).
+    Note that ``vay`` is only available for ``algo.maxwell_solver = psatd``.
 
     1. ``direct``
 
@@ -2083,7 +2185,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Reduce size of the field output by this ratio in each dimension.
     (This is done by averaging the field over 1 or 2 points along each direction, depending on the staggering).
     If ``blocking_factor`` and ``max_grid_size`` are used for the domain decomposition, as detailed in
-    the :ref:`parallelization <parallelization_warpx>` section, ``coarsening_ratio`` should be an integer
+    the :ref:`domain decomposition <usage_domain_decomposition>` section, ``coarsening_ratio`` should be an integer
     divisor of ``blocking_factor``. If ``warpx.numprocs`` is used instead, the total number of cells in a given
     dimension must be a multiple of the ``coarsening_ratio`` multiplied by ``numprocs`` in that dimension.
 
@@ -2151,8 +2253,8 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 .. _running-cpp-parameters-diagnostics-btd:
 
-BackTransformed Diagnostics (with support for Plotfile/openPMD output)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+BackTransformed Diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Note that this diagnostic is not currently supported for RZ.  Additional options for this diagnostic include:
 
@@ -2197,81 +2299,6 @@ BackTransformed Diagnostics (with support for Plotfile/openPMD output)
     to frequent flushes of the lab-frame data. The other option is to keep the default
     value for buffer size and use slices to reduce the memory footprint and maintain
     optimum I/O performance.
-
-Back-Transformed Diagnostics (legacy output)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame
-
-* ``warpx.do_back_transformed_diagnostics`` (`0` or `1`)
-    Whether to use the **back-transformed diagnostics** (i.e. diagnostics that
-    perform on-the-fly conversion to the laboratory frame, when running
-    boosted-frame simulations)
-
-* ``warpx.lab_data_directory`` (`string`)
-    The directory in which to save the lab frame data when using the
-    **back-transformed diagnostics**. If not specified, the default is
-    is `lab_frame_data`.
-
-* ``warpx.num_snapshots_lab`` (`integer`)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The number of lab-frame snapshots that will be written.
-
-* ``warpx.dt_snapshots_lab`` (`float`, in seconds)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The time interval inbetween the lab-frame snapshots (where this
-    time interval is expressed in the laboratory frame).
-
-* ``warpx.dz_snapshots_lab`` (`float`, in meters)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    Distance between the lab-frame snapshots (expressed in the laboratory
-    frame). ``dt_snapshots_lab`` is then computed by
-    ``dt_snapshots_lab = dz_snapshots_lab/c``. Either `dt_snapshots_lab`
-    or `dz_snapshot_lab` is required.
-
-* ``warpx.do_back_transformed_fields`` (`0 or 1`)
-    Whether to use the **back-transformed diagnostics** for the fields.
-
-* ``warpx.back_transformed_diag_fields`` (space-separated list of `string`)
-    Which fields to dumped in back-transformed diagnostics. Choices are
-    'Ex', 'Ey', Ez', 'Bx', 'By', Bz', 'jx', 'jy', jz' and 'rho'. Example:
-    ``warpx.back_transformed_diag_fields = Ex Ez By``. By default, all fields
-    are dumped.
-
-* ``warpx.buffer_size`` (`integer`)
-    The default size of the back transformed diagnostic buffers used to generate lab-frame
-    data is 256. That is, when the multifab with lab-frame data has 256 z-slices,
-    the data will be flushed out. However, if many lab-frame snapshots are required for
-    diagnostics and visualization, the GPU may run out of memory with many large boxes with
-    a size of 256 in the z-direction. This input parameter can then be used to set a
-    smaller buffer-size, preferably multiples of 8, such that, a large number of
-    lab-frame snapshot data can be generated without running out of gpu memory.
-    The downside to using a small buffer size, is that the I/O time may increase due
-    to frequent flushes of the lab-frame data. The other option is to keep the default
-    value for buffer size and use slices to reduce the memory footprint and maintain
-    optimum I/O performance.
-
-* ``slice.num_slice_snapshots_lab`` (`integer`)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The number of back-transformed field and particle data that
-    will be written for the reduced domain defined by ``slice.dom_lo``
-    and ``slice.dom_hi``. Note that the 'slice' is a reduced
-    diagnostic which could be 1D, 2D, or 3D, aligned with the co-ordinate axes.
-    These slices can be visualized using read_raw_data.py and the HDF5 format can
-    be visualized using the h5py library. Please see the documentation on visualization
-    for further details.
-
-* ``slice.dt_slice_snapshots_lab`` (`float`, in seconds)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The time interval between the back-transformed reduced diagnostics (where this
-    time interval is expressed in the laboratory frame).
-
-* ``slice.particle_slice_width_lab`` (`float`, in meters)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1`` and
-    ``slice.num_slice_snapshots_lab`` is non-zero. Particles are
-    copied from the full back-transformed diagnostic to the reduced
-    slice diagnostic if there are within the user-defined width from
-    the slice region defined by ``slice.dom_lo`` and ``slice.dom_hi``.
 
 Boundary Scraping Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2732,7 +2759,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
         * ``qed_qs.tab_em_frac_min`` (`float`): minimum value to be considered for the second axis of lookup table 2
 
-        * ``qed_bw.save_table_in`` (`string`): where to save the lookup table
+        * ``qed_qs.save_table_in`` (`string`): where to save the lookup table
 
     * ``load``: a lookup table is loaded from a pre-generated binary file. The following parameter
       must be specified:
@@ -2840,3 +2867,45 @@ This is essentially the python slicing syntax except that the stop is inclusive
 Note that if a given period is zero or negative, the corresponding slice is disregarded.
 For example, ``something_intervals = -1`` deactivates ``something`` and
 ``something_intervals = ::-1,100:1000:25`` is equivalent to ``something_intervals = 100:1000:25``.
+
+
+.. _running-cpp-parameters-test-debug:
+
+Testing and Debugging
+---------------------
+
+When developing, testing and :ref:`debugging WarpX <debugging_warpx>`, the following options can be considered.
+
+* ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
+    Controls how much information is printed to the terminal, when running WarpX.
+
+* ``warpx.always_warn_immediately`` (``0`` or ``1``; default is ``0`` for false)
+    If set to ``1``, WarpX immediately prints every warning message as soon as
+    it is generated. It is mainly intended for debug purposes, in case a simulation
+    crashes before a global warning report can be printed.
+
+* ``warpx.abort_on_warning_threshold`` (string: ``low``, ``medium`` or ``high``) optional
+    Optional threshold to abort as soon as a warning is raised.
+    If the threshold is set, warning messages with priority greater than or
+    equal to the threshold trigger an immediate abort.
+    It is mainly intended for debug purposes, and is best used with
+    ``warpx.always_warn_immediately=1``.
+
+* ``amrex.abort_on_unused_inputs`` (``0`` or ``1``; default is ``0`` for false)
+    When set to ``1``, this option causes simulation to fail *after* its completion if there were unused parameters.
+    It is mainly intended for continuous integration and automated testing to check that all tests and inputs are adapted to API changes.
+
+* ``amrex.use_profiler_syncs`` (``0`` or ``1``; default is ``0`` for false)
+    Adds a synchronization at the start of communication, so any load balance will be caught there (the timer is called ``SyncBeforeComms``), then the comm operation will run.
+    This will slow down the run.
+
+* ``warpx.serialize_initial_conditions`` (`0` or `1`) optional (default `0`)
+    Serialize the initial conditions for reproducible testing, e.g, in our continuous integration tests.
+    Mainly whether or not to use OpenMP threading for particle initialization.
+
+* ``warpx.safe_guard_cells`` (`0` or `1`) optional (default `0`)
+    Run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
+
+* ``ablastr.fillboundary_always_sync`` (`0` or `1`) optional (default `0`)
+    Run all ``FillBoundary`` operations on ``MultiFab`` to force-synchronize shared nodal points.
+    This slightly increases communication cost and can help to spot missing ``nodal_sync`` flags in these operations.

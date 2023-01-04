@@ -58,13 +58,11 @@ public:
      * member variables of the laser profile class.
      *
      * @param[in] ppl should be amrex::ParmParse(laser_name)
-     * @param[in] ppc should be amrex::ParmParse("my_constants")
      * @param[in] params common laser profile parameters
      */
     virtual void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) = 0;
 
     /** Update Laser Profile
@@ -109,7 +107,6 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) override final;
 
     //No update needed
@@ -152,7 +149,6 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) override final;
 
     //No update needed
@@ -187,7 +183,6 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) override final;
 
     //No update needed
@@ -223,7 +218,6 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) override final;
 
     /** \brief Reads new field data chunk from file if needed

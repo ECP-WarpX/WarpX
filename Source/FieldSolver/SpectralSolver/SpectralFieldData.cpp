@@ -51,10 +51,8 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
     {
         Ex = c++; Ey = c++; Ez = c++;
         Bx = c++; By = c++; Bz = c++;
-        Jx = c++; Jy = c++; Jz = c++;
 
         // TODO Allocate rho_old and rho_new only when needed
-        rho_old = c++; rho_new = c++;
 
         // Reuse data corresponding to index Bx = 3 to avoid storing extra memory
         divE = 3;
@@ -69,16 +67,24 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
 
         if (divb_cleaning) G = c++;
 
-        if (J_in_time == JInTime::Linear)
+        if (J_in_time == JInTime::Constant)
         {
-            Jx_new = c++;
-            Jy_new = c++;
-            Jz_new = c++;
+            Jx_mid = c++; Jy_mid = c++; Jz_mid = c++;
+        }
+        else if (J_in_time == JInTime::Linear)
+        {
+            Jx_old = c++; Jy_old = c++; Jz_old = c++;
+            Jx_new = c++; Jy_new = c++; Jz_new = c++;
         }
 
-        if (rho_in_time == RhoInTime::Quadratic)
+        if (rho_in_time == RhoInTime::Constant)
         {
             rho_mid = c++;
+        }
+        else if (rho_in_time == RhoInTime::Linear)
+        {
+            rho_old = c++;
+            rho_new = c++;
         }
 
         if (pml_rz)

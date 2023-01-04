@@ -13,13 +13,13 @@
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Filter/BilinearFilter.H"
-#include "Utils/CoarsenMR.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpXComm_K.H"
 #include "WarpXSumGuardCells.H"
 
+#include <ablastr/coarsen/average.H>
 #include <ablastr/utils/Communication.H>
 
 #include <AMReX.H>
@@ -65,7 +65,7 @@ void
 WarpX::UpdateAuxilaryDataStagToNodal ()
 {
 #ifndef WARPX_USE_PSATD
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( false,
             "WarpX::UpdateAuxilaryDataStagToNodal: PSATD solver requires "
             "WarpX build with spectral solver support.");
@@ -473,7 +473,7 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
 }
 
 void
-WarpX::FillBoundaryB (IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryB (IntVect ng, std::optional<bool> nodal_sync)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -482,7 +482,7 @@ WarpX::FillBoundaryB (IntVect ng, const bool nodal_sync)
 }
 
 void
-WarpX::FillBoundaryE (IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryE (IntVect ng, std::optional<bool> nodal_sync)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -491,7 +491,7 @@ WarpX::FillBoundaryE (IntVect ng, const bool nodal_sync)
 }
 
 void
-WarpX::FillBoundaryF (IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryF (IntVect ng, std::optional<bool> nodal_sync)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -500,7 +500,7 @@ WarpX::FillBoundaryF (IntVect ng, const bool nodal_sync)
 }
 
 void
-WarpX::FillBoundaryG (IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryG (IntVect ng, std::optional<bool> nodal_sync)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -528,14 +528,14 @@ WarpX::FillBoundaryE_avg (IntVect ng)
 
 
 void
-WarpX::FillBoundaryE (int lev, IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryE (int lev, IntVect ng, std::optional<bool> nodal_sync)
 {
     FillBoundaryE(lev, PatchType::fine, ng, nodal_sync);
     if (lev > 0) FillBoundaryE(lev, PatchType::coarse, ng, nodal_sync);
 }
 
 void
-WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, std::optional<bool> nodal_sync)
 {
     std::array<amrex::MultiFab*,3> mf;
     amrex::Periodicity period;
@@ -585,14 +585,14 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
 }
 
 void
-WarpX::FillBoundaryB (int lev, IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryB (int lev, IntVect ng, std::optional<bool> nodal_sync)
 {
     FillBoundaryB(lev, PatchType::fine, ng, nodal_sync);
     if (lev > 0) FillBoundaryB(lev, PatchType::coarse, ng, nodal_sync);
 }
 
 void
-WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, std::optional<bool> nodal_sync)
 {
     std::array<amrex::MultiFab*,3> mf;
     amrex::Periodicity period;
@@ -747,14 +747,14 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
 }
 
 void
-WarpX::FillBoundaryF (int lev, IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryF (int lev, IntVect ng, std::optional<bool> nodal_sync)
 {
     FillBoundaryF(lev, PatchType::fine, ng, nodal_sync);
     if (lev > 0) FillBoundaryF(lev, PatchType::coarse, ng, nodal_sync);
 }
 
 void
-WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, const bool nodal_sync)
+WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, std::optional<bool> nodal_sync)
 {
     if (patch_type == PatchType::fine)
     {
@@ -788,7 +788,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, const bool noda
     }
 }
 
-void WarpX::FillBoundaryG (int lev, IntVect ng, const bool nodal_sync)
+void WarpX::FillBoundaryG (int lev, IntVect ng, std::optional<bool> nodal_sync)
 {
     FillBoundaryG(lev, PatchType::fine, ng, nodal_sync);
 
@@ -798,7 +798,7 @@ void WarpX::FillBoundaryG (int lev, IntVect ng, const bool nodal_sync)
     }
 }
 
-void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, const bool nodal_sync)
+void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optional<bool> nodal_sync)
 {
     if (patch_type == PatchType::fine)
     {
@@ -887,9 +887,9 @@ WarpX::SyncCurrent (
         std::array<      MultiFab*,3> crse { J_cp[lev][0].get(),
                                              J_cp[lev][1].get(),
                                              J_cp[lev][2].get() };
-        CoarsenMR::Coarsen( *crse[0], *fine[0], refinement_ratio );
-        CoarsenMR::Coarsen( *crse[1], *fine[1], refinement_ratio );
-        CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*crse[0], *fine[0], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*crse[1], *fine[1], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*crse[2], *fine[2], refinement_ratio );
     }
 
     // For each level
@@ -915,7 +915,7 @@ WarpX::SyncRho ()
     {
         rho_cp[lev]->setVal(0.0);
         const IntVect& refinement_ratio = refRatio(lev-1);
-        CoarsenMR::Coarsen( *rho_cp[lev], *rho_fp[lev], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*rho_cp[lev], *rho_fp[lev], refinement_ratio );
     }
 
     // For each level
@@ -947,9 +947,9 @@ void WarpX::RestrictCurrentFromFineToCoarsePatch (
     std::array<      MultiFab*,3> crse { J_cp[lev][0].get(),
                                          J_cp[lev][1].get(),
                                          J_cp[lev][2].get() };
-    CoarsenMR::Coarsen( *crse[0], *fine[0], refinement_ratio );
-    CoarsenMR::Coarsen( *crse[1], *fine[1], refinement_ratio );
-    CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
+    ablastr::coarsen::average::Coarsen(*crse[0], *fine[0], refinement_ratio );
+    ablastr::coarsen::average::Coarsen(*crse[1], *fine[1], refinement_ratio );
+    ablastr::coarsen::average::Coarsen(*crse[2], *fine[2], refinement_ratio );
 }
 
 void WarpX::ApplyFilterJ (
@@ -1126,7 +1126,7 @@ void WarpX::RestrictRhoFromFineToCoarsePatch (
     if (charge_fp[lev]) {
         charge_cp[lev]->setVal(0.0);
         const IntVect& refinement_ratio = refRatio(lev-1);
-        CoarsenMR::Coarsen( *charge_cp[lev], *charge_fp[lev], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*charge_cp[lev], *charge_fp[lev], refinement_ratio );
     }
 }
 
