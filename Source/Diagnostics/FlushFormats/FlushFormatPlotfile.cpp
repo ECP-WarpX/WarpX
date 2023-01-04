@@ -468,7 +468,6 @@ WriteCoarseVector( const std::string field_name,
     } else {
         // Interpolate coarse data onto fine grid
         amrex::IntVect r_ratio = WarpX::GetInstance().refRatio(lev-1);
-        //const int r_ratio = WarpX::GetInstance().refRatio(lev-1)[0];
         const Real* dx = WarpX::GetInstance().Geom(lev-1).CellSize();
         auto F = Interpolate::getInterpolatedVector( Fx_cp, Fy_cp, Fz_cp, Fx_fp, Fy_fp, Fz_fp,
                                     dm, r_ratio, dx, ng );
