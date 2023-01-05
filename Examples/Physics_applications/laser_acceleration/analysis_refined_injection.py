@@ -42,8 +42,9 @@ n_0 = 15
 # number of times moving window moves
 n_move = 99
 
-# ref ratio
-rr = 2
+# ref ratio = 2 1
+# Refined only transversly. Longitudinal spacing between particles in each stream is the same in both coarse and fine regions  
+rr = 1
 
 np_expected = (n_coarse + n_fine*rr)*(n_0 + n_move)
 
