@@ -789,37 +789,37 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
         }
 
         // The last value depend on the boundary condition
-        int const imax = nx_solve_max;
         amrex::Real zwork_product = 1.; // Needed for parallel boundaries
         if (field_boundary_hi0 == FieldBoundaryType::PEC) {
 
-            zwork1d_arr(imax,0,0) = 1._rt/diag;
-            diag = 2._rt - zwork1d_arr(imax,0,0);
-            phi1d_arr(imax,0,0) = (phi1d_arr(imax+1,0,0) + rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
+            int const nxm1 = nx_full_domain - 1;
+            zwork1d_arr(nxm1,0,0) = 1._rt/diag;
+            diag = 2._rt - zwork1d_arr(nxm1,0,0);
+            phi1d_arr(nxm1,0,0) = (phi1d_arr(nxm1+1,0,0) + rho1d_arr(nxm1,0,0) - (-1._rt)*phi1d_arr(nxm1-1,0,0))/diag;
 
         } else if (field_boundary_hi0 == FieldBoundaryType::Neumann) {
 
             // Neumann boundary condition
-            zwork1d_arr(imax,0,0) = 1._rt/diag;
-            diag = 2._rt - 2._rt*zwork1d_arr(imax,0,0);
+            zwork1d_arr(nx_full_domain,0,0) = 1._rt/diag;
+            diag = 2._rt - 2._rt*zwork1d_arr(nx_full_domain,0,0);
             if (diag == 0._rt) {
                 // This happens if the lower boundary is also Neumann.
                 // It this case, the potential is relative to an arbitrary constant,
                 // so set the upper boundary to zero to force a value.
-                phi1d_arr(imax,0,0) = 0.;
+                phi1d_arr(nx_full_domain,0,0) = 0.;
             } else {
-                phi1d_arr(imax,0,0) = (rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
+                phi1d_arr(nx_full_domain,0,0) = (rho1d_arr(nx_full_domain,0,0) - (-1._rt)*phi1d_arr(nx_full_domain-1,0,0))/diag;
             }
 
         } else if (field_boundary_hi0 == FieldBoundaryType::Periodic) {
 
-            zwork1d_arr(imax,0,0) = 1._rt/diag;
+            zwork1d_arr(nx_full_domain,0,0) = 1._rt/diag;
 
-            for (int i = 1 ; i <= nx_solve_max ; i++) {
+            for (int i = 1 ; i <= nx_full_domain ; i++) {
                 zwork_product *= zwork1d_arr(i,0,0);
             }
 
-            diag = 2._rt - zwork1d_arr(imax,0,0) - zwork_product;
+            diag = 2._rt - zwork1d_arr(nx_full_domain,0,0) - zwork_product;
             // Note that rho1d_arr(0,0,0) is used to ensure that the same value is used
             // on both boundaries.
             phi1d_arr(nx_full_domain,0,0) = (rho1d_arr(0,0,0) - (-1._rt)*phi1d_arr(nx_full_domain-1,0,0))/diag;
@@ -830,9 +830,9 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
         if (field_boundary_lo0 == FieldBoundaryType::Periodic) {
 
             // With periodic, the right hand column adds an extra term for all rows
-            for (int i_down = nx_solve_max-1 ; i_down >= nx_solve_min ; i_down--) {
+            for (int i_down = nx_full_domain-1 ; i_down >= 0 ; i_down--) {
                 zwork_product /= zwork1d_arr(i_down+1,0,0);
-                phi1d_arr(i_down,0,0) = phi1d_arr(i_down,0,0) + zwork1d_arr(i_down+1,0,0)*phi1d_arr(i_down+1,0,0) + zwork_product*phi1d_arr(imax,0,0);
+                phi1d_arr(i_down,0,0) = phi1d_arr(i_down,0,0) + zwork1d_arr(i_down+1,0,0)*phi1d_arr(i_down+1,0,0) + zwork_product*phi1d_arr(nx_full_domain,0,0);
             }
 
         } else {
