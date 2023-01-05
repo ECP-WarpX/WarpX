@@ -40,7 +40,7 @@ n_fine = 64
 n_0 = 15
 
 # number of times moving window moves
-n_move = 99
+n_move = 192
 
 # ref ratio = 2 1
 # Refined only transversly. Longitudinal spacing between particles in each stream is the same in both coarse and fine regions  
