@@ -733,9 +733,11 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
     auto zwork1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, 1, 0, MFInfo().SetArena(The_Pinned_Arena()));
     auto rho1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, 1, 0, MFInfo().SetArena(The_Pinned_Arena()));
 
-    // Copy previous phi to get the boundary values
-    phi1d_mf.ParallelCopy(*phi[lev], 0, 0, 1, Geom(lev).periodicity());
-    rho1d_mf.ParallelCopy(*rho[lev], 0, 0, 1, Geom(lev).periodicity());
+    if (field_boundary_lo0 == FieldBoundaryType::PEC || field_boundary_hi0 == FieldBoundaryType::PEC) {
+        // Copy from phi to get the boundary values
+        phi1d_mf.ParallelCopy(*phi[lev], 0, 0, 1);
+    }
+    rho1d_mf.ParallelCopy(*rho[lev], 0, 0, 1);
 
     // Multiplier on the charge density
     const amrex::Real norm = dx[0]*dx[0]/PhysConst::ep0;
@@ -818,7 +820,9 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
             }
 
             diag = 2._rt - zwork1d_arr(imax,0,0) - zwork_product;
-            phi1d_arr(imax,0,0) = (rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
+            // Note that rho1d_arr(0,0,0) is used to ensure that the same value is used
+            // on both boundaries.
+            phi1d_arr(nx_full_domain,0,0) = (rho1d_arr(0,0,0) - (-1._rt)*phi1d_arr(nx_full_domain-1,0,0))/diag;
 
         }
 
