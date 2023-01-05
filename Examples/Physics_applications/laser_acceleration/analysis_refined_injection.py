@@ -44,9 +44,9 @@ n_move = 192
 
 # ref ratio = 2 1
 # Refined only transversly. Longitudinal spacing between particles in each stream is the same in both coarse and fine regions
-rr = 1
+rr_longitudinal = 1
 
-np_expected = (n_coarse + n_fine*rr)*(n_0 + n_move)
+np_expected = (n_coarse + n_fine*rr_longitudinal)*(n_0 + n_move)
 
 assert( np == np_expected )
 
