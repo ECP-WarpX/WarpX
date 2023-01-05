@@ -995,6 +995,7 @@ WarpX::ReadParameters ()
             load_balance_intervals_string_vec);
         pp_algo.query("load_balance_with_sfc", load_balance_with_sfc);
         pp_algo.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
+        pp_algo.query("load_balance_knapsack_keep_fraction", load_balance_knapsack_keep_fraction);
         utils::parser::queryWithParser(pp_algo, "load_balance_efficiency_ratio_threshold",
                         load_balance_efficiency_ratio_threshold);
         load_balance_costs_update_algo = GetAlgorithmInteger(pp_algo, "load_balance_costs_update");
