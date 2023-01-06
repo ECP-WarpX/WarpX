@@ -102,7 +102,7 @@ extern "C" {
 
     amrex::Real warpx_sumParticleCharge(const char* char_species_name, const bool local);
 
-    int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary);
+    int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary, bool local);
 
     int** warpx_getParticleBoundaryBufferScrapedSteps(
         const char* species_name, int boundary, int lev,

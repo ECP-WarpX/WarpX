@@ -565,11 +565,11 @@ namespace
         return myspc.sumParticleCharge(local);
     }
 
-    int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary)
+    int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary, bool local)
     {
         const std::string name(species_name);
         auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
-        return particle_buffers.getNumParticlesInContainer(species_name, boundary);
+        return particle_buffers.getNumParticlesInContainer(species_name, boundary, local);
     }
 
     int** warpx_getParticleBoundaryBufferScrapedSteps(const char* species_name, int boundary, int lev,
