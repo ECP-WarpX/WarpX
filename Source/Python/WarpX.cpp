@@ -46,6 +46,18 @@ void init_WarpX (py::module& m)
             //py::overload_cast< int >(&ImpactX::boxArray, py::const_),
             py::arg("lev")
         )
+        .def("multifab",
+            [](WarpX const & ix, std::string const multifab_name) {
+                if (ix.multifab_map.count(multifab_name) > 0) {
+                    return ix.multifab_map.at(multifab_name);
+                } else {
+                    throw std::runtime_error("The MultiFab '" + multifab_name + "' is unknown or is not allocated!");
+                }
+            },
+            py::arg("multifab_name"),
+            py::return_value_policy::reference_internal,
+            "Return MultiFabs by name, e.g., 'Efield_aux[x][l=0]', 'Efield_cp[x][l=0]', ..."
+        )
     ;
 
     py::class_<warpx::Config>(m, "Config")
