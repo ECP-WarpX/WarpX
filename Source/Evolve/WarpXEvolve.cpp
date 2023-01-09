@@ -451,10 +451,10 @@ WarpX::OneStep_nosub (Real cur_time)
     } else {
         EvolveF(0.5_rt * dt[0], DtType::FirstHalf);
         EvolveG(0.5_rt * dt[0], DtType::FirstHalf);
-        EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
-
         FillBoundaryF(guard_cells.ng_FieldSolverF);
         FillBoundaryG(guard_cells.ng_FieldSolverG);
+
+        EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
         if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
