@@ -4,8 +4,11 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "pyWarpX.H"
+#include "WarpX_py.H"
 
 #include <WarpX.H>
+#include <Initialization/WarpXAMReXInit.H>
+#include <Utils/WarpXUtil.H>
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
@@ -69,4 +72,8 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
     // auto numpy = py::module::import("numpy");
     // auto npversion = numpy.attr("__version__");
     // std::cout << "numpy version: " << py::str(npversion) << std::endl;
+
+    // Expose the python callback function installation and removal functions
+    m.def("add_python_callback", &InstallPythonCallback);
+    m.def("remove_python_callback", &ClearPythonCallback);
 }

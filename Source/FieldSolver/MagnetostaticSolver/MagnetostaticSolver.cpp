@@ -112,7 +112,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
     setVectorPotentialBC(vector_potential_fp_nodal);
 
     // Compute the vector potential A, by solving the Poisson equation
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallBackInstalled("poissonsolver"),
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallbackInstalled("poissonsolver"),
         "Python Level Poisson Solve not supported for Magnetostatic implementation.");
 
     amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;

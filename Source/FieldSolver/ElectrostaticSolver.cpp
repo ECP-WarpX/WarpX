@@ -223,7 +223,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     setPhiBC(phi_fp);
 
     // Compute the potential phi, by solving the Poisson equation
-    if (IsPythonCallBackInstalled("poissonsolver")) {
+    if (IsPythonCallbackInstalled("poissonsolver")) {
 
         // Use the Python level solver (user specified)
         ExecutePythonCallback("poissonsolver");
@@ -247,7 +247,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 #ifndef AMREX_USE_EB
     computeE( Efield_fp, phi_fp, beta );
 #else
-    if ( IsPythonCallBackInstalled("poissonsolver") ) computeE( Efield_fp, phi_fp, beta );
+    if ( IsPythonCallbackInstalled("poissonsolver") ) computeE( Efield_fp, phi_fp, beta );
 #endif
 
     // Compute the magnetic field
