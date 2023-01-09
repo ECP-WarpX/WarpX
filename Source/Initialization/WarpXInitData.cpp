@@ -1211,7 +1211,7 @@ void WarpX::CheckKnownIssues()
             ablastr::warn_manager::WMRecordWarning(
                 "PML",
                 "Using PSATD together with PML may lead to instabilities if the plasma touches the PML region. "
-                "It is recommended to leave enough empty space between the plama boundary and the PML region.",
+                "It is recommended to leave enough empty space between the plasma boundary and the PML region.",
                 ablastr::warn_manager::WarnPriority::low);
         }
 }
