@@ -98,6 +98,8 @@ def read_particle_data(fn, ptype="particle0"):
         fdtype = "(%d,)f8" % header.num_real
     elif header.real_type == np.float32:
         fdtype = "(%d,)f4" % header.num_real
+    else
+        raise ValueError('header.real_type can only be np.float64 or np.float32')
 
     idata = np.empty((header.num_particles, header.num_int ))
     rdata = np.empty((header.num_particles, header.num_real))

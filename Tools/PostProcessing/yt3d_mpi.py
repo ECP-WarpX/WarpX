@@ -50,6 +50,8 @@ def jitter_shift(ds, ad, cfl, iteration):
         dt = 1./scc.c * 1./np.sqrt((1./ad['dx'][-1]**2 + 1./ad['dy'][-1]**2 + 1./ad['dz'][-1]**2))
     elif maxwell_solver == 'ckc':
         dt = cfl * min( [ ad['dx'][-1], ad['dy'][-1], ad['dz'][-1] ] )  / scc.c
+    else
+        raise ValueError('jitter_shift can only handle maxwell_solver=yee or maxwell_solver=ckc')
     z_front = dt * float(iteration) * scc.c + 7.5e-6*yt.units.meter
     z_shift = z_front-ds.domain_right_edge[2]
     return z_shift
@@ -75,6 +77,8 @@ def img_onestep(filename):
     sc = yt.create_scene(ds, field='Ez')
     if use_moving_window:
         z_shift = jitter_shift( ds, ad, cfl, iteration )
+    else
+        z_shift = 0.
     array_shift = z_shift * np.array([0., 0., 1.])
     if plot_mr_patch:
         box_patch = yt.visualization.volume_rendering.render_source.BoxSource(
