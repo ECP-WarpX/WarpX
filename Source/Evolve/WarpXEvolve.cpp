@@ -473,7 +473,6 @@ WarpX::OneStep_nosub (Real cur_time)
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
 
         if (do_pml) {
-            //FillBoundaryF(guard_cells.ng_alloc_F);
             DampPML();
             NodalSyncPML();
             FillBoundaryE(guard_cells.ng_MovingWindow);
