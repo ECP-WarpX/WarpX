@@ -105,7 +105,13 @@ namespace ablastr::coarsen::average
                                            "source MultiFab and destination MultiFab have different IndexType");
 
         // Number of guard cells to fill on coarse patch and number of components
-        const amrex::IntVect ngrow = (mf_src.nGrowVect() + 1) / crse_ratio;
+	amrex::IntVect ngrow;
+
+        for ( int l = 0; l < AMREX_SPACEDIM; ++l ) {
+            if ( crse_ratio[l] == 1 ) ngrow[l] = mf_src.nGrowVect()[l]; // no coarsening
+            else              ngrow[l] = (mf_src.nGrowVect()[l] + 1) / crse_ratio[l];
+        }
+
         const int ncomp = mf_src.nComp();
 
         Loop(mf_dst, mf_src, ncomp, ngrow, crse_ratio);
