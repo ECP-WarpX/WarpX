@@ -55,8 +55,9 @@ If your project uses the specific algorithms, please consider citing the respect
 
 - Huebl A, Lehe R, Mitchell C E, Qiang J, Ryne R D, Sandberg R T, Vay JL.
   **Next Generation Computational Tools for the Modeling and Design of Particle Accelerators at Exascale**.
-  *NAPAC'22*, 2022.
-  `arXiv:2208.02382 <https://arxiv.org/abs/2208.02382>`__
+  2022 North American Particle Accelerator Conference (NAPAC'22), TUYE2, pp. 302-306, 2022.
+  `arXiv:2208.02382 <https://arxiv.org/abs/2208.02382>`__,
+  `DOI:10.18429/JACoW-NAPAC2022-TUYE2 <https://doi.org/10.18429/JACoW-NAPAC2022-TUYE2>`__
 
 - Fedeli L, Zaim N, Sainte-Marie A, Thevenet M, Huebl A, Myers A, Vay JL, Vincenti H.
   **PICSAR-QED: a Monte Carlo module to simulate Strong-Field Quantum Electrodynamics in Particle-In-Cell codes for exascale architectures**.
