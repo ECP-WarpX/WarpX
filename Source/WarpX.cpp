@@ -504,6 +504,10 @@ WarpX::ReadParameters ()
         std::vector<int> numprocs_in;
         utils::parser::queryArrWithParser(
             pp_warpx, "numprocs", numprocs_in, 0, AMREX_SPACEDIM);
+        #ifdef WARPX_DIM_RZ
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( numprocs_in[0] == 1,
+                        "Domain decomposition in RZ works only along z direction");
+        #endif
 
         if (not numprocs_in.empty()) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE
