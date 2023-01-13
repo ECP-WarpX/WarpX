@@ -18,7 +18,7 @@ dt = 1e-6
 
 # --- Nb time steps
 
-max_steps = 1
+max_steps = 2
 
 # --- grid
 
@@ -97,4 +97,8 @@ sim.add_diagnostic(field_diag)
 # simulation run
 ##########################
 
-sim.step(max_steps)
+sim.step(1)
+
+sim.extension.set_potential_EB("2.")
+
+sim.step(1)
