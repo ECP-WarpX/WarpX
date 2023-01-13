@@ -32,15 +32,15 @@ source /opt/intel/oneapi/setvars.sh
 set -eu
 
 # cmake-easyinstall
-sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
-sudo chmod a+x /usr/local/bin/cmake-easyinstall
+sudo curl -L -o /usr/bin/cmake-easyinstall https://git.io/JvLxY
+sudo chmod a+x /usr/bin/cmake-easyinstall
 export CEI_SUDO="sudo"
 export CEI_TMP="/tmp/cei"
 
 # openPMD-api
 CXX=$(which icpc) CC=$(which icc) \
   cmake-easyinstall               \
-  --prefix=/usr/local             \
+  --prefix=/usr             \
   git+https://github.com/openPMD/openPMD-api.git@0.14.3 \
   -DopenPMD_USE_PYTHON=OFF \
   -DBUILD_TESTING=OFF      \

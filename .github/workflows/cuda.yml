@@ -47,7 +47,7 @@ jobs:
       run: |
         export CEI_SUDO="sudo"
         export CEI_TMP="/tmp/cei"
-        cmake-easyinstall --prefix=/usr/local \
+        cmake-easyinstall --prefix=/usr \
           git+https://github.com/openPMD/openPMD-api.git@0.14.3 \
           -DopenPMD_USE_PYTHON=OFF    \
           -DBUILD_TESTING=OFF         \
@@ -57,8 +57,8 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON
     - name: build WarpX
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+        export PATH=/usr/nvidia/bin:/usr/cuda/bin:${PATH}
+        export LD_LIBRARY_PATH=/usr/nvidia/lib:/usr/nvidia/lib64:/usr/cuda/lib64:${LD_LIBRARY_PATH}
         which nvcc || echo "nvcc not in PATH!"
 
         cmake -S . -B build_sp         \
@@ -105,8 +105,8 @@ jobs:
           ccache-cuda-gnumake-
     - name: build WarpX
       run: |
-        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+        export PATH=/usr/nvidia/bin:/usr/cuda/bin:${PATH}
+        export LD_LIBRARY_PATH=/usr/nvidia/lib:/usr/nvidia/lib64:/usr/cuda/lib64:${LD_LIBRARY_PATH}
         which nvcc || echo "nvcc not in PATH!"
 
         git clone https://github.com/AMReX-Codes/amrex.git ../amrex

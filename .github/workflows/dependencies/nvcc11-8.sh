@@ -34,26 +34,26 @@ sudo apt-get install -y          \
     cuda-nvtx-11-8               \
     libcufft-dev-11-8            \
     libcurand-dev-11-8
-sudo ln -s cuda-11.8 /usr/local/cuda
+sudo ln -s cuda-11.8 /usr/cuda
 
 # if we run out of temporary storage in CI:
-#du -sh /usr/local/cuda-11.8
+#du -sh /usr/cuda-11.8
 #echo "+++ REDUCING CUDA Toolkit install size +++"
-#sudo rm -rf /usr/local/cuda-11.8/targets/x86_64-linux/lib/libcu{fft,pti,rand}_static.a
-#sudo rm -rf /usr/local/cuda-11.8/targets/x86_64-linux/lib/libnvperf_host_static.a
-#du -sh /usr/local/cuda-11.8/
+#sudo rm -rf /usr/cuda-11.8/targets/x86_64-linux/lib/libcu{fft,pti,rand}_static.a
+#sudo rm -rf /usr/cuda-11.8/targets/x86_64-linux/lib/libnvperf_host_static.a
+#du -sh /usr/cuda-11.8/
 #df -h
 
 # cmake-easyinstall
 #
-sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
-sudo chmod a+x /usr/local/bin/cmake-easyinstall
+sudo curl -L -o /usr/bin/cmake-easyinstall https://git.io/JvLxY
+sudo chmod a+x /usr/bin/cmake-easyinstall
 export CEI_SUDO="sudo"
 export CEI_TMP="/tmp/cei"
 
 # ccache 4.2+
 #
-CXXFLAGS="" cmake-easyinstall --prefix=/usr/local \
+CXXFLAGS="" cmake-easyinstall --prefix=/usr \
     git+https://github.com/ccache/ccache.git@v4.6 \
     -DCMAKE_BUILD_TYPE=Release        \
     -DENABLE_DOCUMENTATION=OFF        \

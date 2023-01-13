@@ -32,14 +32,14 @@ sudo apt-get install -y \
 
 # cmake-easyinstall
 #
-sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
-sudo chmod a+x /usr/local/bin/cmake-easyinstall
+sudo curl -L -o /usr/bin/cmake-easyinstall https://git.io/JvLxY
+sudo chmod a+x /usr/bin/cmake-easyinstall
 export CEI_SUDO="sudo"
 export CEI_TMP="/tmp/cei"
 
 # BLAS++ & LAPACK++
 cmake-easyinstall \
-  --prefix=/usr/local                      \
+  --prefix=/usr                      \
   git+https://github.com/icl-utk-edu/blaspp.git \
   -Duse_openmp=OFF                         \
   -Dbuild_tests=OFF                        \
@@ -47,7 +47,7 @@ cmake-easyinstall \
   -DCMAKE_VERBOSE_MAKEFILE=ON
 
 cmake-easyinstall \
-  --prefix=/usr/local                        \
+  --prefix=/usr                        \
   git+https://github.com/icl-utk-edu/lapackpp.git \
   -Duse_cmake_find_lapack=ON                 \
   -Dbuild_tests=OFF                          \

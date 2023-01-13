@@ -33,14 +33,14 @@ sudo apt-get install -y --no-install-recommends nvhpc-21-11
 
 # cmake-easyinstall
 #
-sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
-sudo chmod a+x /usr/local/bin/cmake-easyinstall
+sudo curl -L -o /usr/bin/cmake-easyinstall https://git.io/JvLxY
+sudo chmod a+x /usr/bin/cmake-easyinstall
 export CEI_SUDO="sudo"
 export CEI_TMP="/tmp/cei"
 
 # ccache 4.2+
 #
-CXXFLAGS="" cmake-easyinstall --prefix=/usr/local \
+CXXFLAGS="" cmake-easyinstall --prefix=/usr \
     git+https://github.com/ccache/ccache.git@v4.6 \
     -DCMAKE_BUILD_TYPE=Release        \
     -DENABLE_DOCUMENTATION=OFF        \
