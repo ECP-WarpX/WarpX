@@ -309,6 +309,7 @@ class LibWarpX():
         self.libwarpx_so.warpx_gett_new.argtypes = [ctypes.c_int]
         self.libwarpx_so.warpx_sett_new.argtypes = [ctypes.c_int, c_real]
         self.libwarpx_so.warpx_getdt.argtypes = [ctypes.c_int]
+        self.libwarpx_so.warpx_setPotentialEB.argtypes = [ctypes.c_char_p]
 
     def _get_boundary_number(self, boundary):
         '''
@@ -1042,7 +1043,7 @@ class LibWarpX():
             ctypes.c_char_p(species_name.encode('utf-8')), local
         )
 
-    def get_particle_boundary_buffer_size(self, species_name, boundary):
+    def get_particle_boundary_buffer_size(self, species_name, boundary, local=False):
         '''
         This returns the number of particles that have been scraped so far in the simulation
         from the specified boundary and of the specified species.
@@ -1056,11 +1057,15 @@ class LibWarpX():
         boundary       : str
             The boundary from which to get the scraped particle data in the
             form x/y/z_hi/lo
+
+        local          : bool
+            Whether to only return the number of particles in the current
+            processor's buffer
         '''
 
         return self.libwarpx_so.warpx_getParticleBoundaryBufferSize(
             ctypes.c_char_p(species_name.encode('utf-8')),
-            self._get_boundary_number(boundary)
+            self._get_boundary_number(boundary), local
         )
 
     def get_particle_boundary_buffer_structs(self, species_name, boundary, level):
@@ -1204,6 +1209,18 @@ class LibWarpX():
         )
         if sync_rho:
             self.libwarpx_so.warpx_SyncRho()
+
+    def set_potential_EB(self, potential):
+        """
+        Set the expression string for the embedded boundary potential
+
+        Parameters
+        ----------
+
+        potential : str
+            The expression string
+        """
+        self.libwarpx_so.warpx_setPotentialEB(ctypes.c_char_p(potential.encode('utf-8')))
 
     def _get_mesh_field_list(self, warpx_func, level, direction, include_ghosts):
         """

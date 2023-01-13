@@ -977,6 +977,12 @@ WarpX::ReadParameters ()
                 "Vay deposition is implemented only for PSATD");
         }
 
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                do_multi_J == false,
+                "Vay deposition not implemented with multi-J algorithm");
+        }
+
         field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
             // Use same shape factors in all directions, for gathering

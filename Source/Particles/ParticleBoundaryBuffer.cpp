@@ -352,12 +352,12 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 }
 
 int ParticleBoundaryBuffer::getNumParticlesInContainer(
-        const std::string species_name, int boundary) {
+        const std::string species_name, int boundary, bool local) {
 
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
 
-    if (buffer[index].isDefined()) return buffer[index].TotalNumberOfParticles(false);
+    if (buffer[index].isDefined()) return buffer[index].TotalNumberOfParticles(false, local);
     else return 0;
 }
 

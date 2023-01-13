@@ -5,10 +5,10 @@
 module load cmake/3.22.0
 
 # optional: for QED support with detailed tables
-module load boost/1.78.0-gnu
+#module load boost/1.78.0-gnu  # missing
 
 # optional: for openPMD and PSATD+RZ support
-module load cray-hdf5-parallel/1.12.1.5
+module load cray-hdf5-parallel/1.12.2.1
 export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/adios2-2.7.1:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/blaspp-master:$CMAKE_PREFIX_PATH
@@ -20,7 +20,7 @@ export LD_LIBRARY_PATH=$HOME/sw/perlmutter/blaspp-master/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HOME/sw/perlmutter/lapackpp-master/lib64:$LD_LIBRARY_PATH
 
 # optional: for Python bindings or libEnsemble
-module load cray-python/3.9.12.1
+module load cray-python/3.9.13.1
 
 if [ -d "$HOME/sw/perlmutter/venvs/warpx" ]
 then
