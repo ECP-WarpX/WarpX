@@ -300,15 +300,15 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
     Vector<Real> h_E_data(m_params.E_data.size());
 
     if(ParallelDescriptor::IOProcessor()){
-        
+
         auto series = io::Series(m_params.txye_file_name, io::Access::READ_ONLY);
         auto i = series.iterations[0];
         auto E = i.meshes["E"];
-        auto E_laser = i.meshes.E[io::RecordComponent.SCALAR]; //meshes has no member E, type name is not allowed 
-        
+        auto E_laser = i.meshes.E[io::RecordComponent.SCALAR]; //meshes has no member E, type name is not allowed
+
         // alternatively, pass pre-allocated
         std::shared_ptr< double > x_data = E_laser.loadChunk< double >(); //type name is not allowed, expected an expression
-        
+
         /*
         //Read data chunk
         std::ifstream inp(m_params.txye_file_name, std::ios::binary);
