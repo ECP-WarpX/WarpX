@@ -506,10 +506,10 @@ WarpX::ReadParameters ()
             pp_warpx, "numprocs", numprocs_in, 0, AMREX_SPACEDIM);
 
         if (not numprocs_in.empty()) {
-            #ifdef WARPX_DIM_RZ
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( numprocs_in[0] == 1,
-                        "Domain decomposition in RZ works only along z direction");
-            #endif
+#ifdef WARPX_DIM_RZ
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( numprocs_in[0] == 1,
+            "Domain decomposition in RZ works only along z direction");
+#endif
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE
                 (numprocs_in.size() == AMREX_SPACEDIM,
                  "warpx.numprocs, if specified, must have AMREX_SPACEDIM numbers");
