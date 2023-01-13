@@ -48,8 +48,5 @@ EOL
 # OpenMP: 21 threads per MPI rank
 export OMP_NUM_THREADS=21
 
-# store out task host mapping: helps identify broken nodes at scale
-jsrun -n 2 -a 1 -c 21 -r 2 -e prepended hostname > task_host_mapping.txt
-
 # run WarpX
-jsrun -n 2 -a 1 -c 21 -r 2 -l CPU-CPU -d packed -b rs -e prepended <path/to/executable> <input file> > output.txt
+jsrun -n 2 -a 1 -c 21 -r 2 -l CPU-CPU -d packed -b rs <path/to/executable> <input file> > output.txt
