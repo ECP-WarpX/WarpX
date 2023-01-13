@@ -39,7 +39,7 @@ n_fine = 64
 # num particles per stream at time 0
 n_0 = 15
 
-# number of times moving window moves
+# number of times the moving window moves, calculated as n_move = (c*t)/dz where c  is speed of light, t is physical time (nsteps*dt). dz is dz on level 0
 n_move = 192
 
 # ref ratio = 2 1
