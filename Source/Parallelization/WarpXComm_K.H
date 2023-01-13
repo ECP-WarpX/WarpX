@@ -20,6 +20,12 @@ void warpx_interp (int j, int k, int l,
 {
     using namespace amrex;
 
+    // Pad arr_coarse with zeros beyond ghost cells for out-of-bound accesses
+    const auto arr_coarse_zeropad = [arr_coarse] (const int jj, const int kk, const int ll) noexcept
+    {
+        return arr_coarse.contains(jj,kk,ll) ? arr_coarse(jj,kk,ll) : 0.0_rt;
+    };
+
     // NOTE Indices (j,k,l) in the following refer to (z,-,-) in 1D, (x,z,-) in 2D, and (x,y,z) in 3D
 
     // Refinement ratio
@@ -57,7 +63,7 @@ void warpx_interp (int j, int k, int l,
                                           / static_cast<amrex::Real>(rk);
                 wl = (sl == 0) ? 1.0_rt : (rl - amrex::Math::abs(l - (lc + ll) * rl))
                                           / static_cast<amrex::Real>(rl);
-                res += wj * wk * wl * arr_coarse(jc+jj,kc+kk,lc+ll);
+                res += wj * wk * wl * arr_coarse_zeropad(jc+jj,kc+kk,lc+ll);
             }
         }
     }
