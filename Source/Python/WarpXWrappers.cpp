@@ -763,6 +763,12 @@ namespace
         return amrex::ParallelDescriptor::NProcs();
     }
 
+    void warpx_setPotentialEB (const char * char_potential) {
+        WarpX& warpx = WarpX::GetInstance();
+        const std::string potential(char_potential);
+        warpx.m_poisson_boundary_handler.setPotentialEB(potential);
+    }
+
     void mypc_Redistribute () {
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         mypc.Redistribute();
