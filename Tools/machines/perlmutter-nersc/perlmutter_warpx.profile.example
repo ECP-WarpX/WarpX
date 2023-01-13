@@ -19,6 +19,9 @@ export LD_LIBRARY_PATH=$HOME/sw/perlmutter/adios2-2.7.1/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HOME/sw/perlmutter/blaspp-master/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HOME/sw/perlmutter/lapackpp-master/lib64:$LD_LIBRARY_PATH
 
+# optional: CCache
+export PATH=/global/common/software/spackecp/perlmutter/e4s-22.05/78535/spack/opt/spack/cray-sles15-zen3/gcc-11.2.0/ccache-4.5.1-ybl7xefvggn6hov4dsdxxnztji74tolj/bin:$PATH
+
 # optional: for Python bindings or libEnsemble
 module load cray-python/3.9.13.1
 
