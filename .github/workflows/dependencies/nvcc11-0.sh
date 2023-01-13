@@ -56,7 +56,7 @@ export CEI_TMP="/tmp/cei"
 
 # ccache 4.2+
 #
-CXXFLAGS="" cmake-easyinstall --prefix=/usr/local \
+CXXFLAGS="" cmake-easyinstall --prefix=/usr \
     git+https://github.com/ccache/ccache.git@v4.6 \
     -DCMAKE_BUILD_TYPE=Release        \
     -DENABLE_DOCUMENTATION=OFF        \
