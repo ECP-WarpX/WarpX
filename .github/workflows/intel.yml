@@ -17,7 +17,7 @@ jobs:
     #env:
     #  CMAKE_GENERATOR: Ninja
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: install dependencies
       run: |
         .github/workflows/dependencies/icc.sh
@@ -73,7 +73,7 @@ jobs:
     #  CMAKE_GENERATOR: Ninja
     if: github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: install dependencies
       shell: bash
       run: |
@@ -134,7 +134,7 @@ jobs:
     #  CMAKE_GENERATOR: Ninja
     if: github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: install dependencies
       shell: bash
       run: |

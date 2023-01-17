@@ -15,7 +15,7 @@ jobs:
       CMAKE_GENERATOR: Ninja
     if: github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: install dependencies
       shell: bash
       run: .github/workflows/dependencies/hip.sh
@@ -70,7 +70,7 @@ jobs:
       CMAKE_GENERATOR: Ninja
     if: github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: install dependencies
       shell: bash
       run: .github/workflows/dependencies/hip.sh

@@ -20,7 +20,7 @@ jobs:
       #   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
       SETUPTOOLS_USE_DISTUTILS: stdlib
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Brew Cache
       uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
