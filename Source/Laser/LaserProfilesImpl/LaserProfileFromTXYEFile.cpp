@@ -151,8 +151,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
 
 void
 WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_file_name)
-{  
-    
+{
+
     if(ParallelDescriptor::IOProcessor()){
 
         auto series = io::Series(m_params.txye_file_name, io::Access::READ_ONLY);
@@ -166,9 +166,9 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         m_params.nx = extent[1];
         m_params.ny = extent[2];
         }
-    
+
         /*
-    
+
     if(ParallelDescriptor::IOProcessor()){
         std::ifstream inp(txye_file_name, std::ios::binary);
         if(!inp) Abort("Failed to open txye file");
@@ -204,8 +204,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 #elif defined(WARPX_DIM_XZ)
             dbuf_y.resize(1);
 #endif
-        } 
-    
+        }
+
         else{
             dbuf_t.resize(m_params.nt);
             dbuf_x.resize(m_params.nx);
@@ -328,7 +328,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         std::shared_ptr< double > x_data = E_laser.loadChunk< double >();
 
         const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
-        
+
         series.flush();
 
         for (int i=0; i<read_size; i++) {
