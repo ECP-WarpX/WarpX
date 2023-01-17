@@ -1,9 +1,11 @@
 #include "CellCenterFunctor.H"
 
-#include "Utils/CoarsenIO.H"
+#include "Utils/TextMsg.H"
 #ifdef WARPX_DIM_RZ
 #   include "WarpX.H"
 #endif
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX.H>
 #include <AMReX_IntVect.H>
@@ -23,7 +25,7 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_
     if (m_convertRZmodes2cartesian) {
         // In cylindrical geometry, sum real part of all modes of m_mf_src in
         // temporary multifab mf_dst_stag, and cell-center it to mf_dst.
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             nComp()==1,
             "The RZ averaging over modes must write into 1 single component");
         auto& warpx = WarpX::GetInstance();
@@ -34,14 +36,14 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_
             // All modes > 0
             amrex::MultiFab::Add(mf_dst_stag, *m_mf_src, ic, 0, 1, m_mf_src->nGrowVect());
         }
-        CoarsenIO::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
+        ablastr::coarsen::sample::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
     } else {
-        CoarsenIO::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), 0, m_crse_ratio);
+        ablastr::coarsen::sample::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), 0, m_crse_ratio);
     }
 #else
     // In cartesian geometry, coarsen and interpolate from simulation MultiFab, m_mf_src,
     // to output diagnostic MultiFab, mf_dst.
-    CoarsenIO::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), mf_dst.nGrowVect(), m_crse_ratio);
+    ablastr::coarsen::sample::Coarsen(mf_dst, *m_mf_src, dcomp, 0, nComp(), mf_dst.nGrowVect(), m_crse_ratio);
     amrex::ignore_unused(m_lev, m_convertRZmodes2cartesian);
 #endif
 }

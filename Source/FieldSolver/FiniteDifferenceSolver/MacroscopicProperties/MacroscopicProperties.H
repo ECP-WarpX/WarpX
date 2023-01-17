@@ -1,3 +1,10 @@
+/* Copyright 2020 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #ifndef WARPX_MACROSCOPICPROPERTIES_H_
 #define WARPX_MACROSCOPICPROPERTIES_H_
 
@@ -14,6 +21,7 @@
 
 #include <memory>
 #include <string>
+
 
 /**
  * \brief This class contains the macroscopic properties of the medium needed to
@@ -40,8 +48,9 @@ public:
       *  with user-defined functions(x,y,z).
       */
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
-                                              amrex::ParserExecutor<3> const& macro_parser,
-                                              int lev);
+                                  amrex::ParserExecutor<3> const& macro_parser,
+                                  const int lev);
+
      /** Gpu Vector with index type of the conductivity multifab */
      amrex::GpuArray<int, 3> sigma_IndexType;
      /** Gpu Vector with index type of the permittivity multifab */
@@ -58,6 +67,7 @@ public:
      amrex::GpuArray<int, 3> macro_cr_ratio;
 
 private:
+
      /** Conductivity, sigma, of the medium */
      amrex::Real m_sigma = 0.0;
      /** Permittivity, epsilon, of the medium */
@@ -70,6 +80,7 @@ private:
      std::unique_ptr<amrex::MultiFab> m_eps_mf;
      /** Multifab for m_mu */
      std::unique_ptr<amrex::MultiFab> m_mu_mf;
+
      /** Stores initialization type for conductivity : constant or parser */
      std::string m_sigma_s = "constant";
      /** Stores initialization type for permittivity : constant or parser */
@@ -85,6 +96,7 @@ private:
      std::unique_ptr<amrex::Parser> m_sigma_parser;
      std::unique_ptr<amrex::Parser> m_epsilon_parser;
      std::unique_ptr<amrex::Parser> m_mu_parser;
+
 };
 
 /**

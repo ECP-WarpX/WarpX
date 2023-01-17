@@ -13,36 +13,48 @@
 #include <AMReX.H>
 
 /*
- * \brief Set a tilebox so that it only covers the lower/upper half of the guard cells.
+ * \brief Return a tilebox that only covers the outer half of the guard cells.
+ *        For tileboxes that don't include cells beyond the whole domain,
+ *        an empty box is returned.
  *
- * \param[in,out] tb tilebox to be modified
+ * \param[in,out] input_tb tilebox to be modified
  * \param[in] dir direction where the tilebox smallEnd/bigEnd is modified
- * \param[in] n_domain number of cells in the whole simulation domain
- * \param[in] tb_smallEnd smallEnd of the tilebox
- * \param[in] tb_bigEnd bigEnd of the tilebox
+ * \param[in] n_domain number of valid cells in the whole simulation domain
+ * \param[in] tb_smallEnd the lowest index of the tilebox, including guard cells
+ * \param[in] tb_bigEnd the highest index of the tilebox, including guard cells
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void constrain_tilebox_to_guards(
-    amrex::Box& tb,
+amrex::Box constrain_tilebox_to_guards(
+    const amrex::Box& input_tb,
     const int dir,
+    const int iside,
     const int n_domain,
     const int tb_smallEnd,
     const int tb_bigEnd)
 {
     using namespace amrex;
 
-    const int n_tile = tb_bigEnd;
+    amrex::Box constrained_tb = input_tb;
 
-    if (tb_smallEnd < 0)
+    // If the input_tb does not overlap either the lower or upper guard,
+    // an empty box is returned.
+
+    if (iside == 0)
     {
+        // Lower guard
         const int n_guard = -tb_smallEnd;
-        tb.setBig(dir, 0 - n_guard/2 - 1);
+        const int upper_bound = (tb_smallEnd < 0 ? -n_guard/2 : tb_smallEnd);
+        constrained_tb.setBig(dir, upper_bound - 1);
     }
-    else if (n_tile > n_domain)
+    else if (iside == 1)
     {
-        const int n_guard = n_tile - n_domain;
-        tb.setSmall(dir, n_domain + n_guard/2 + 1);
+        // Upper guard
+        const int n_guard = tb_bigEnd - n_domain;
+        const int lower_bound = (tb_bigEnd > n_domain ? n_domain + n_guard/2 : tb_bigEnd);
+        constrained_tb.setSmall(dir, lower_bound + 1);
     }
+
+    return constrained_tb;
 }
 
 /*
@@ -54,9 +66,9 @@ void constrain_tilebox_to_guards(
  * \oaram[in] k index along z (in 3D, \c k = 0 in 2D/RZ)
  * \param[in] icomp index along the fourth component of the array
  * \param]in] dir direction where the field will be damped
- * \param[in] n_domain number of cells in the whole simulation domain
- * \param[in] tb_smallEnd smallEnd of the current tilebox
- * \param[in] tb_bigEnd bigEnd of the current tilebox
+ * \param[in] n_domain number of valid cells in the whole simulation domain
+ * \param[in] tb_smallEnd the lowest index of the tilebox, including guard cells
+ * \param[in] tb_bigEnd the highest index of the tilebox, including guard cells
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void damp_field_in_guards(
@@ -77,9 +89,7 @@ void damp_field_in_guards(
     // dir = 2: idx = k (z in 3D)
     const int idx = ((dir == 0) ? i : ((dir == 1) ? j : k));
 
-    const int n_tile = tb_bigEnd;
-
-    if (tb_smallEnd < 0)
+    if (idx < 0)
     {
         // Apply damping factor in guards cells below the lower end of the domain
         const int n_guard = -tb_smallEnd;
@@ -92,12 +102,12 @@ void damp_field_in_guards(
 
         mf_arr(i,j,k,icomp) *= damp_factor;
     }
-    else if (n_tile > n_domain)
+    else if (idx > n_domain)
     {
         // Apply damping factor in guards cells above the upper end of the domain
-        const int n_guard = n_tile - n_domain;
+        const int n_guard = tb_bigEnd - n_domain;
 
-        const amrex::Real cell = static_cast<amrex::Real>(n_tile - idx);
+        const amrex::Real cell = static_cast<amrex::Real>(tb_bigEnd - idx);
 
         const amrex::Real phase = MathConst::pi * cell / n_guard;
         const amrex::Real sin_phase = std::sin(phase);

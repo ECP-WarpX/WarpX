@@ -8,7 +8,7 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_REDUCEDDIAGS_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_REDUCEDDIAGS_H_
 
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
 
 #include <AMReX_REAL.H>
 
@@ -34,7 +34,7 @@ public:
     std::string m_rd_name;
 
     /// output intervals
-    IntervalsParser m_intervals;
+    utils::parser::IntervalsParser m_intervals;
 
     /// check if it is a restart run
     int m_IsNotRestart = 1;
@@ -49,26 +49,36 @@ public:
      * constructor
      * @param[in] rd_name reduced diags names
      */
-    ReducedDiags(std::string rd_name);
+    ReducedDiags (std::string rd_name);
 
     /**
      * Virtual destructor for polymorphism
      */
-    virtual ~ReducedDiags() = default;
+    virtual ~ReducedDiags () = default;
+
+    /**
+     * function to initialize data after amr
+     * levels are initialized.
+     */
+    virtual void InitData ();
+
+    /** Redistribute parallel data structures during load balance
+     */
+    virtual void LoadBalance ();
 
     /**
      * function to compute diags
      *
      * @param[in] step current time step
      */
-    virtual void ComputeDiags(int step) = 0;
+    virtual void ComputeDiags (int step) = 0;
 
     /**
      * write to file function
      *
      * @param[in] step current time step
      */
-    virtual void WriteToFile(int step) const;
+    virtual void WriteToFile (int step) const;
 
     /** Check if diag should be done */
     bool DoDiags(int step) { return m_intervals.contains(step+1); }

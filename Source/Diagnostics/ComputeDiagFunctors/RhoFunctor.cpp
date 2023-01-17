@@ -8,8 +8,10 @@
 #endif
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/CoarsenIO.H"
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX.H>
 #include <AMReX_IntVect.H>
@@ -55,7 +57,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     // Apply k-space filtering when using the PSATD solver
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         if (WarpX::use_kspace_filter) {
             auto & solver = warpx.get_spectral_solver_fp(m_lev);
@@ -72,7 +74,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     if (m_convertRZmodes2cartesian) {
         // In cylindrical geometry, sum real part of all modes of rho in
         // temporary MultiFab mf_dst_stag, and cell-center it to mf_dst
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             nComp()==1,
             "The RZ averaging over modes must write into one single component");
         amrex::MultiFab mf_dst_stag( rho->boxArray(), warpx.DistributionMap(m_lev), 1, rho->nGrowVect() );
@@ -82,14 +84,14 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
             // Real part of all modes > 0
             amrex::MultiFab::Add( mf_dst_stag, *rho, ic, 0, 1, rho->nGrowVect() );
         }
-        CoarsenIO::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0, m_crse_ratio );
+        ablastr::coarsen::sample::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0, m_crse_ratio );
     } else {
-        CoarsenIO::Coarsen( mf_dst, *rho, dcomp, 0, nComp(), 0, m_crse_ratio );
+        ablastr::coarsen::sample::Coarsen( mf_dst, *rho, dcomp, 0, nComp(), 0, m_crse_ratio );
     }
 #else
     // In Cartesian geometry, coarsen and interpolate from temporary MultiFab rho
     // to output diagnostic MultiFab mf_dst
-    CoarsenIO::Coarsen( mf_dst, *rho, dcomp, 0, nComp(), mf_dst.nGrowVect(), m_crse_ratio );
+    ablastr::coarsen::sample::Coarsen(mf_dst, *rho, dcomp, 0, nComp(), mf_dst.nGrowVect(), m_crse_ratio );
     amrex::ignore_unused(m_convertRZmodes2cartesian);
 #endif
 }

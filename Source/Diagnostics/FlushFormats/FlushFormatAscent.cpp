@@ -1,6 +1,7 @@
 #include "FlushFormatAscent.H"
 
 #include "WarpX.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
@@ -15,14 +16,23 @@ FlushFormatAscent::WriteToFile (
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
-    const std::string prefix, int /*file_min_digits*/, bool plot_raw_fields,
-    bool plot_raw_fields_guards, bool /*plot_raw_rho*/, bool plot_raw_F,
-    bool /*isBTD*/, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/, bool /*isLastBTDFlush*/) const
+    const std::string prefix, int file_min_digits, bool plot_raw_fields,
+    bool plot_raw_fields_guards,
+    const bool /*use_pinned_pc*/,
+    bool isBTD, int /*snapshotID*/, int /*bufferID*/, int /*numBuffers*/,
+    const amrex::Geometry& /*full_BTD_snapshot*/,
+    bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
 {
 #ifdef AMREX_USE_ASCENT
     WARPX_PROFILE("FlushFormatAscent::WriteToFile()");
-
     auto & warpx = WarpX::GetInstance();
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !isBTD,
+        "In-situ visualization is not currently supported for back-transformed diagnostics.");
+
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
+    amrex::Print() << Utils::TextMsg::Info("Writing Ascent file " + filename);
 
     // wrap mesh data
     WARPX_PROFILE_VAR("FlushFormatAscent::WriteToFile::MultiLevelToBlueprint", prof_ascent_mesh_blueprint);
@@ -57,10 +67,9 @@ FlushFormatAscent::WriteToFile (
 
 #else
     amrex::ignore_unused(varnames, mf, geom, iteration, time,
-        particle_diags, nlev);
+        particle_diags, nlev, file_min_digits, isBTD);
 #endif // AMREX_USE_ASCENT
-    amrex::ignore_unused(prefix, plot_raw_fields, plot_raw_fields_guards,
-        plot_raw_F);
+    amrex::ignore_unused(prefix, plot_raw_fields, plot_raw_fields_guards);
 }
 
 #ifdef AMREX_USE_ASCENT
@@ -96,7 +105,7 @@ FlushFormatAscent::WriteParticles(const amrex::Vector<ParticleDiag>& particle_di
             for (; rvn_it != real_comps_map.end(); ++rvn_it)
                 if (rvn_it->second == j)
                     break;
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 rvn_it != real_comps_map.end(),
                 "Ascent: SoA real attribute not found");
             std::string varname = rvn_it->first;

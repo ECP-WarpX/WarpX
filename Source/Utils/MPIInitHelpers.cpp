@@ -6,6 +6,8 @@
  */
 #include "MPIInitHelpers.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX_Config.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Print.H>
@@ -16,14 +18,14 @@
 
 #include <string>
 #include <utility>
+#include <sstream>
 
 namespace utils
 {
-    std::pair< int, int >
-    warpx_mpi_init (int argc, char* argv[])
+    int
+    warpx_mpi_thread_required ()
     {
         int thread_required = -1;
-        int thread_provided = -1;
 #ifdef AMREX_USE_MPI
         thread_required = MPI_THREAD_SINGLE;  // equiv. to MPI_Init
 #   ifdef AMREX_USE_OMP
@@ -32,6 +34,16 @@ namespace utils
 #   ifdef AMREX_MPI_THREAD_MULTIPLE  // i.e. for async_io
         thread_required = MPI_THREAD_MULTIPLE;
 #   endif
+#endif
+        return thread_required;
+    }
+
+    std::pair< int, int >
+    warpx_mpi_init (int argc, char* argv[])
+    {
+        int thread_required = warpx_mpi_thread_required();
+        int thread_provided = -1;
+#ifdef AMREX_USE_MPI
         MPI_Init_thread(&argc, &argv, thread_required, &thread_provided);
 #else
         amrex::ignore_unused(argc, argv);
@@ -40,25 +52,31 @@ namespace utils
     }
 
     void
-    warpx_check_mpi_thread_level (std::pair< int, int > const mpi_thread_levels)
+    warpx_check_mpi_thread_level ()
     {
 #ifdef AMREX_USE_MPI
-        auto const thread_required = mpi_thread_levels.first;
-        auto const thread_provided = mpi_thread_levels.second;
+        int thread_required = warpx_mpi_thread_required();
+        int thread_provided = -1;
+        MPI_Query_thread(&thread_provided);
         auto mtn = amrex::ParallelDescriptor::mpi_level_to_string;
 
-        if( thread_provided < thread_required )
-            amrex::Print() << "WARNING: Provided MPI thread safety level ("
+        std::stringstream ss;
+        if( thread_provided < thread_required ){
+            ss << "WARNING: Provided MPI thread safety level ("
                            << mtn(thread_provided) << ") is LOWER than requested "
                            << mtn(thread_required) << "). This might lead to undefined "
                            << "results in asynchronous operations (e.g. async_io).";
-        if( thread_provided > thread_required )
-            amrex::Print() << "NOTE: Provided MPI thread safety level ("
+            ablastr::warn_manager::WMRecordWarning(
+                    "MPI", ss.str(), ablastr::warn_manager::WarnPriority::high);
+        }
+        if( thread_provided > thread_required ){
+            ss << "NOTE: Provided MPI thread safety level ("
                            << mtn(thread_provided) << ") is stricter than requested "
                            << mtn(thread_required) << "). This might reduce multi-node "
                            << "communication performance.";
-#else
-        amrex::ignore_unused(mpi_thread_levels);
+            ablastr::warn_manager::WMRecordWarning(
+                    "MPI", ss.str());
+        }
 #endif
     }
 

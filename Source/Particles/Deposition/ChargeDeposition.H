@@ -1,4 +1,4 @@
-/* Copyright 2019 Axel Huebl, David Grote, Maxence Thevenet
+/* Copyright 2019 Axel Huebl, Andrew Myers, David Grote, Maxence Thevenet
  * Weiqun Zhang
  *
  * This file is part of WarpX.
@@ -12,6 +12,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #ifdef WARPX_DIM_RZ
 #   include "Utils/WarpX_Complex.H"
 #endif
@@ -58,17 +59,23 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
-    const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real dzi = 1.0_rt/dx[2];
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_1D_Z)
+    const amrex::Real invvol = dzi;
+#endif
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real invvol = dxi*dzi;
-#elif (defined WARPX_DIM_3D)
+#elif defined(WARPX_DIM_3D)
+    const amrex::Real dxi = 1.0_rt/dx[0];
     const amrex::Real dyi = 1.0_rt/dx[1];
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
 
+#if (AMREX_SPACEDIM >= 2)
     const amrex::Real xmin = xyzmin[0];
-#if (defined WARPX_DIM_3D)
+#endif
+#if defined(WARPX_DIM_3D)
     const amrex::Real ymin = xyzmin[1];
 #endif
     const amrex::Real zmin = xyzmin[2];
@@ -76,7 +83,6 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::Array4<amrex::Real> const& rho_arr = rho_fab.array();
     amrex::IntVect const rho_type = rho_fab.box().type();
 
-    constexpr int zdir = (AMREX_SPACEDIM - 1);
     constexpr int NODE = amrex::IndexType::NODE;
     constexpr int CELL = amrex::IndexType::CELL;
 
@@ -105,9 +111,11 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
             GetPosition(ip, xp, yp, zp);
 
             // --- Compute shape factors
+            Compute_shape_factor< depos_order > const compute_shape_factor;
+#if (AMREX_SPACEDIM >= 2)
             // x direction
             // Get particle position in grid coordinates
-#if (defined WARPX_DIM_RZ)
+#if defined(WARPX_DIM_RZ)
             const amrex::Real rp = std::sqrt(xp*xp + yp*yp);
             amrex::Real costheta;
             amrex::Real sintheta;
@@ -128,14 +136,13 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
             // i: leftmost grid point that the particle touches
             amrex::Real sx[depos_order + 1] = {0._rt};
             int i = 0;
-            Compute_shape_factor< depos_order > const compute_shape_factor;
             if (rho_type[0] == NODE) {
                 i = compute_shape_factor(sx, x);
             } else if (rho_type[0] == CELL) {
                 i = compute_shape_factor(sx, x - 0.5_rt);
             }
-
-#if (defined WARPX_DIM_3D)
+#endif //AMREX_SPACEDIM >= 2
+#if defined(WARPX_DIM_3D)
             // y direction
             const amrex::Real y = (yp - ymin)*dyi;
             amrex::Real sy[depos_order + 1] = {0._rt};
@@ -150,20 +157,27 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
             const amrex::Real z = (zp - zmin)*dzi;
             amrex::Real sz[depos_order + 1] = {0._rt};
             int k = 0;
-            if (rho_type[zdir] == NODE) {
+            if (rho_type[WARPX_ZINDEX] == NODE) {
                 k = compute_shape_factor(sz, z);
-            } else if (rho_type[zdir] == CELL) {
+            } else if (rho_type[WARPX_ZINDEX] == CELL) {
                 k = compute_shape_factor(sz, z - 0.5_rt);
             }
 
             // Deposit charge into rho_arr
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+#if defined(WARPX_DIM_1D_Z)
+            for (int iz=0; iz<=depos_order; iz++){
+                amrex::Gpu::Atomic::AddNoRet(
+                    &rho_arr(lo.x+k+iz, 0, 0, 0),
+                    sz[iz]*wq);
+            }
+#endif
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
                     amrex::Gpu::Atomic::AddNoRet(
                         &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 0),
                         sx[ix]*sz[iz]*wq);
-#if (defined WARPX_DIM_RZ)
+#if defined(WARPX_DIM_RZ)
                     Complex xy = xy0; // Throughout the following loop, xy takes the value e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                         // The factor 2 on the weighting comes from the normalization of the modes
@@ -174,7 +188,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
                 }
             }
-#elif (defined WARPX_DIM_3D)
+#elif defined(WARPX_DIM_3D)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int iy=0; iy<=depos_order; iy++){
                     for (int ix=0; ix<=depos_order; ix++){

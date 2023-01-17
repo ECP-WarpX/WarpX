@@ -13,6 +13,7 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_REAL.H>
 
+enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
 
 /** Convert particle momentum to/from SI
  *
@@ -25,7 +26,7 @@
  * unit vector).
  *
  * @tparam T_ParticleContainer a WarpX particle container or AmrParticleContainer
- * @param convert_dir convert to or from SI
+ * @param convert_direction convert to or from SI
  * @param pc the particle container to manipulate
  * @param mass the particle rest mass to use for conversion
  */
@@ -49,10 +50,13 @@ particlesConvertUnits (ConvertDirection convert_direction, T_ParticleContainer* 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti)
+        for (ParIter pti(*pc, lev); pti.isValid(); ++pti)
         {
             // - momenta are stored as a struct of array, in `attribs`
-            auto& attribs = pti.GetAttribs();
+            // The GetStructOfArrays is called directly since the convenience routine GetAttribs
+            // is only available in WarpXParIter. ParIter is used here since the pc passed in
+            // will sometimes be a PinnedMemoryParticleContainer (not derived from a WarpXParticleContainer).
+            auto& attribs = pti.GetStructOfArrays().GetRealData();
             ParticleReal* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
             ParticleReal* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
             ParticleReal* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();

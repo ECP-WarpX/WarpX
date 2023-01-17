@@ -8,8 +8,11 @@
 # requirements:
 # - module load python/3.7.0-anaconda3-5.3.0
 
-import os, copy
+import copy
+import os
+
 from functions_perftest import test_element
+
 
 def executable_name(compiler,architecture):
     return 'perf_tests3d.' + compiler + '.TPROF.MTMPI.CUDA.QED.GPUCLOCK.ex'

@@ -14,6 +14,7 @@
 #include "WarpXParticleContainer.H"
 
 #include <AMReX_Extension.H>
+#include <AMReX_Random.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 #include <AMReX_Vector.H>
@@ -44,6 +45,20 @@ public:
     virtual ~LaserParticleContainer () {}
 
     virtual void InitData () final;
+
+    /**
+     * \brief Method to initialize runtime attributes. Does nothing for LaserParticleContainer.
+     */
+    virtual void DefaultInitializeRuntimeAttributes (
+                        amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
+                                            NArrayInt,amrex::PinnedArenaAllocator>& /*pinned_tile*/,
+                        const int /*n_external_attr_real*/,
+                        const int /*n_external_attr_int*/,
+                        const amrex::RandomEngine& /*engine*/) override final {}
+
+    virtual void ReadHeader (std::istream& is) final;
+
+    virtual void WriteHeader (std::ostream& os) const final;
 
     virtual void Evolve (int lev,
                          const amrex::MultiFab&, const amrex::MultiFab&, const amrex::MultiFab&,
@@ -87,7 +102,6 @@ private:
     amrex::Vector<amrex::Real> m_nvec; //! Normal of the plane of the antenna
     amrex::Vector<amrex::Real> m_p_X;// ! Polarization
 
-    long                      m_pusher_algo = -1;
     amrex::Real               m_e_max       = std::numeric_limits<amrex::Real>::quiet_NaN();
     amrex::Real               m_wavelength  = std::numeric_limits<amrex::Real>::quiet_NaN();
 

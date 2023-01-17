@@ -1,12 +1,12 @@
-max_step = 500
+max_step = 400
 
 amr.max_level = 0
-amr.n_cell = 96 704
+amr.n_cell = 48 704
 warpx.numprocs = 1 2
 
-geometry.coord_sys = 0
-geometry.prob_lo = -90.e-6 -70.e-6
-geometry.prob_hi =  90.e-6   0.e-6
+geometry.dims = 2
+geometry.prob_lo = -70.e-6 -50.e-6
+geometry.prob_hi =  70.e-6   0.e-6
 
 #################################
 ###### Boundary Condition #######
@@ -23,7 +23,7 @@ algo.particle_pusher = vay
 # Order of particle shape factors
 algo.particle_shape = 3
 
-psatd.v_comoving = 0. 0. -0.9970370305242862
+psatd.use_default_v_comoving = 1
 
 warpx.cfl = 1.
 
@@ -38,7 +38,7 @@ warpx.moving_window_v = 1.0
 
 warpx.use_filter = 1
 
-warpx.serialize_ics = 1
+warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
 
 interpolation.field_centering_nox = 8
@@ -56,8 +56,8 @@ electrons.momentum_distribution_type = "gaussian"
 electrons.ux_th = 0.0001
 electrons.uy_th = 0.0001
 electrons.uz_th = 0.0001
-electrons.xmin = -85.e-6
-electrons.xmax =  85.e-6
+electrons.xmin = -45.e-6
+electrons.xmax =  45.e-6
 electrons.zmin = 0.
 electrons.zmax = 15000.e-6
 electrons.profile = "predefined"
@@ -69,9 +69,9 @@ ions.charge = q_e
 ions.mass = m_p
 ions.injection_style = NUniformPerCell
 ions.num_particles_per_cell_each_dim = 2 2
-ions.momentum_distribution_type = "gaussian"
-ions.xmin = -85.e-6
-ions.xmax =  85.e-6
+ions.momentum_distribution_type = "at_rest"
+ions.xmin = -45.e-6
+ions.xmax =  45.e-6
 ions.zmin = 0.
 ions.zmax = 15000.e-6
 ions.profile = "predefined"
@@ -99,8 +99,6 @@ beam.uy_th = 2.
 beam.uz_th = 0.
 beam.zinject_plane = 0.5e-3
 beam.rigid_advance = true
-beam.projected = true
-beam.focused = false
 
 lasers.names = laser1
 laser1.profile = Gaussian
@@ -115,6 +113,6 @@ laser1.profile_focal_distance = 0.5e-3
 laser1.wavelength = 0.81e-6
 
 diagnostics.diags_names = diag1
-diag1.intervals = 500
+diag1.intervals = 400
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho

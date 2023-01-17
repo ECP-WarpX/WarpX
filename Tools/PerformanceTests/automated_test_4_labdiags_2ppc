@@ -7,7 +7,7 @@ amr.max_grid_size = 64
 amr.max_level = 0
 
 # Geometry
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 3
 geometry.prob_lo     = -150.e-6   -150.e-6  -80.e-6    # physical domain
 geometry.prob_hi     =  150.e-6    150.e-6    0.
 
@@ -34,11 +34,6 @@ warpx.moving_window_v = 1.0 # in units of the speed of light
 warpx.gamma_boost = 15.
 warpx.boost_direction = z
 
-# Diagnostics
-warpx.do_back_transformed_diagnostics = 1
-warpx.num_snapshots_lab = 20
-warpx.dt_snapshots_lab = 7.0e-14
-
 # Species
 particles.species_names = electrons ions
 
@@ -53,7 +48,7 @@ electrons.zmin =   0.e-6
 electrons.num_particles_per_cell_each_dim = 1 1 1
 electrons.profile = constant
 electrons.density = 1.
-electrons.momentum_distribution_type = "constant"
+electrons.momentum_distribution_type = "at_rest"
 electrons.do_continuous_injection = 1
 
 ions.charge = q_e
@@ -67,7 +62,7 @@ ions.zmin =   0.e-6
 ions.num_particles_per_cell_each_dim = 1 1 1
 ions.profile = constant
 ions.density = 1.
-ions.momentum_distribution_type = "constant"
+ions.momentum_distribution_type = "at_rest"
 ions.do_continuous_injection = 1
 
 # Laser

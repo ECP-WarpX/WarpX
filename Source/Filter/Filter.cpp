@@ -7,6 +7,7 @@
  */
 #include "Filter.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX_Array4.H>
@@ -51,26 +52,9 @@ Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int
         const auto& src = srcmf.array(mfi);
         const auto& dst = dstmf.array(mfi);
         const Box& tbx = mfi.growntilebox();
-        const Box& gbx = amrex::grow(tbx,stencil_length_each_dir-1);
-
-        // tmpfab has enough ghost cells for the stencil
-        FArrayBox tmp_fab(gbx,ncomp);
-        Elixir tmp_eli = tmp_fab.elixir();  // Prevent the tmp data from being deleted too early
-        auto const& tmp = tmp_fab.array();
-
-        // Copy values in srcfab into tmpfab
-        const Box& ibx = gbx & srcmf[mfi].box();
-        AMREX_PARALLEL_FOR_4D ( gbx, ncomp, i, j, k, n,
-        {
-            if (ibx.contains(IntVect(AMREX_D_DECL(i,j,k)))) {
-                tmp(i,j,k,n) = src(i,j,k,n+scomp);
-            } else {
-                tmp(i,j,k,n) = 0.0;
-            }
-        });
 
         // Apply filter
-        DoFilter(tbx, tmp, dst, 0, dcomp, ncomp);
+        DoFilter(tbx, src, dst, scomp, dcomp, ncomp);
 
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -97,58 +81,101 @@ Filter::ApplyStencil (FArrayBox& dstfab, const FArrayBox& srcfab,
     ncomp = std::min(ncomp, srcfab.nComp());
     const auto& src = srcfab.array();
     const auto& dst = dstfab.array();
-    const Box& gbx = amrex::grow(tbx,stencil_length_each_dir-1);
-
-    // tmpfab has enough ghost cells for the stencil
-    FArrayBox tmp_fab(gbx,ncomp);
-    Elixir tmp_eli = tmp_fab.elixir();  // Prevent the tmp data from being deleted too early
-    auto const& tmp = tmp_fab.array();
-
-    // Copy values in srcfab into tmpfab
-    const Box& ibx = gbx & srcfab.box();
-    AMREX_PARALLEL_FOR_4D ( gbx, ncomp, i, j, k, n,
-        {
-            if (ibx.contains(IntVect(AMREX_D_DECL(i,j,k)))) {
-                tmp(i,j,k,n) = src(i,j,k,n+scomp);
-            } else {
-                tmp(i,j,k,n) = 0.0;
-            }
-        });
 
     // Apply filter
-    DoFilter(tbx, tmp, dst, 0, dcomp, ncomp);
+    DoFilter(tbx, src, dst, scomp, dcomp, ncomp);
 }
 
 /* \brief Apply stencil (2D/3D, CPU/GPU)
  */
 void Filter::DoFilter (const Box& tbx,
-                       Array4<Real const> const& tmp,
+                       Array4<Real const> const& src,
                        Array4<Real      > const& dst,
                        int scomp, int dcomp, int ncomp)
 {
+#if (AMREX_SPACEDIM >= 2)
     amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
     amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
 #endif
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
     Dim3 slen_local = slen;
-#if (AMREX_SPACEDIM == 3)
+
+#if defined(WARPX_DIM_3D)
     AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
+
+        // Pad source array with zeros beyond ghost cells
+        // for out-of-bound accesses due to large-stencil operations
+        const auto src_zeropad = [src] (const int jj, const int kk, const int ll, const int nn) noexcept
+        {
+            return src.contains(jj,kk,ll) ? src(jj,kk,ll,nn) : 0.0_rt;
+        };
 
         for         (int iz=0; iz < slen_local.z; ++iz){
             for     (int iy=0; iy < slen_local.y; ++iy){
                 for (int ix=0; ix < slen_local.x; ++ix){
                     Real sss = sx[ix]*sy[iy]*sz[iz];
-                    d += sss*( tmp(i-ix,j-iy,k-iz,scomp+n)
-                              +tmp(i+ix,j-iy,k-iz,scomp+n)
-                              +tmp(i-ix,j+iy,k-iz,scomp+n)
-                              +tmp(i+ix,j+iy,k-iz,scomp+n)
-                              +tmp(i-ix,j-iy,k+iz,scomp+n)
-                              +tmp(i+ix,j-iy,k+iz,scomp+n)
-                              +tmp(i-ix,j+iy,k+iz,scomp+n)
-                              +tmp(i+ix,j+iy,k+iz,scomp+n));
+                    d += sss*( src_zeropad(i-ix,j-iy,k-iz,scomp+n)
+                              +src_zeropad(i+ix,j-iy,k-iz,scomp+n)
+                              +src_zeropad(i-ix,j+iy,k-iz,scomp+n)
+                              +src_zeropad(i+ix,j+iy,k-iz,scomp+n)
+                              +src_zeropad(i-ix,j-iy,k+iz,scomp+n)
+                              +src_zeropad(i+ix,j-iy,k+iz,scomp+n)
+                              +src_zeropad(i-ix,j+iy,k+iz,scomp+n)
+                              +src_zeropad(i+ix,j+iy,k+iz,scomp+n));
+                }
+            }
+        }
+
+        dst(i,j,k,dcomp+n) = d;
+    });
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
+    {
+        Real d = 0.0;
+
+        // Pad source array with zeros beyond ghost cells
+        // for out-of-bound accesses due to large-stencil operations
+        const auto src_zeropad = [src] (const int jj, const int kk, const int ll, const int nn) noexcept
+        {
+            return src.contains(jj,kk,ll) ? src(jj,kk,ll,nn) : 0.0_rt;
+        };
+
+        for         (int iz=0; iz < slen_local.z; ++iz){
+            for     (int iy=0; iy < slen_local.y; ++iy){
+                for (int ix=0; ix < slen_local.x; ++ix){
+                    Real sss = sx[ix]*sz[iy];
+                    d += sss*( src_zeropad(i-ix,j-iy,k,scomp+n)
+                              +src_zeropad(i+ix,j-iy,k,scomp+n)
+                              +src_zeropad(i-ix,j+iy,k,scomp+n)
+                              +src_zeropad(i+ix,j+iy,k,scomp+n));
+                }
+            }
+        }
+
+        dst(i,j,k,dcomp+n) = d;
+    });
+#elif defined(WARPX_DIM_1D_Z)
+    AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
+    {
+        Real d = 0.0;
+
+        // Pad source array with zeros beyond ghost cells
+        // for out-of-bound accesses due to large-stencil operations
+        const auto src_zeropad = [src] (const int jj, const int kk, const int ll, const int nn) noexcept
+        {
+            return src.contains(jj,kk,ll) ? src(jj,kk,ll,nn) : 0.0_rt;
+        };
+
+        for         (int iz=0; iz < slen_local.z; ++iz){
+            for     (int iy=0; iy < slen_local.y; ++iy){
+                for (int ix=0; ix < slen_local.x; ++ix){
+                    Real sss = sz[iy];
+                    d += sss*( src_zeropad(i-ix,j,k,scomp+n)
+                              +src_zeropad(i+ix,j,k,scomp+n));
                 }
             }
         }
@@ -156,24 +183,8 @@ void Filter::DoFilter (const Box& tbx,
         dst(i,j,k,dcomp+n) = d;
     });
 #else
-    AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
-    {
-        Real d = 0.0;
-
-        for         (int iz=0; iz < slen_local.z; ++iz){
-            for     (int iy=0; iy < slen_local.y; ++iy){
-                for (int ix=0; ix < slen_local.x; ++ix){
-                    Real sss = sx[ix]*sz[iy];
-                    d += sss*( tmp(i-ix,j-iy,k,scomp+n)
-                              +tmp(i+ix,j-iy,k,scomp+n)
-                              +tmp(i-ix,j+iy,k,scomp+n)
-                              +tmp(i+ix,j+iy,k,scomp+n));
-                }
-            }
-        }
-
-        dst(i,j,k,dcomp+n) = d;
-    });
+    amrex::Abort(Utils::TextMsg::Err(
+        "Filter not implemented for the current geometry!"));
 #endif
 }
 
@@ -266,8 +277,10 @@ void Filter::DoFilter (const Box& tbx,
     const auto lo = amrex::lbound(tbx);
     const auto hi = amrex::ubound(tbx);
     // tmp and dst are of type Array4 (Fortran ordering)
+#if (AMREX_SPACEDIM >= 2)
     amrex::Real const* AMREX_RESTRICT sx = stencil_x.data();
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
     amrex::Real const* AMREX_RESTRICT sy = stencil_y.data();
 #endif
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
@@ -284,17 +297,19 @@ void Filter::DoFilter (const Box& tbx,
         for         (int iz=0; iz < slen.z; ++iz){
             for     (int iy=0; iy < slen.y; ++iy){
                 for (int ix=0; ix < slen.x; ++ix){
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                     Real sss = sx[ix]*sy[iy]*sz[iz];
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                     Real sss = sx[ix]*sz[iy];
+#else
+                    Real sss = sz[ix];
 #endif
                     // 3 nested loop on 3D array
                     for         (int k = lo.z; k <= hi.z; ++k) {
                         for     (int j = lo.y; j <= hi.y; ++j) {
                             AMREX_PRAGMA_SIMD
                             for (int i = lo.x; i <= hi.x; ++i) {
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j-iy,k-iz,scomp+n)
                                                           +tmp(i+ix,j-iy,k-iz,scomp+n)
                                                           +tmp(i-ix,j+iy,k-iz,scomp+n)
@@ -303,11 +318,17 @@ void Filter::DoFilter (const Box& tbx,
                                                           +tmp(i+ix,j-iy,k+iz,scomp+n)
                                                           +tmp(i-ix,j+iy,k+iz,scomp+n)
                                                           +tmp(i+ix,j+iy,k+iz,scomp+n));
-#else
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j-iy,k,scomp+n)
                                                           +tmp(i+ix,j-iy,k,scomp+n)
                                                           +tmp(i-ix,j+iy,k,scomp+n)
                                                           +tmp(i+ix,j+iy,k,scomp+n));
+#elif defined(WARPX_DIM_1D_Z)
+                                dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j,k,scomp+n)
+                                                          +tmp(i+ix,j,k,scomp+n));
+#else
+    amrex::Abort(Utils::TextMsg::Err(
+        "Filter not implemented for the current geometry!"));
 #endif
                             }
                         }

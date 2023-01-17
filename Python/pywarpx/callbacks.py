@@ -29,6 +29,7 @@ Functions can be called at the following times:
  - afterdeposition <installafterdeposition>: after particle deposition (for charge and/or current)
  - beforestep <installbeforestep>: before the time step
  - afterstep <installafterstep>: after the time step
+ - afterdiagnostics <installafterdiagnostics>: after diagnostic output
  - particlescraper <installparticlescraper>: just after the particle boundary conditions are applied
                                              but before lost particles are processed
  - particleloader <installparticleloader>: at the time that the standard particle loader is called
@@ -53,14 +54,16 @@ installafterstep(myplots)
 """
 from __future__ import generators
 
-import types
 import copy
-import time
 import ctypes
 import sys
+import time
+import types
+
 import numpy
 
 from ._libwarpx import libwarpx
+
 
 class CallbackFunctions(object):
     """
@@ -68,12 +71,12 @@ class CallbackFunctions(object):
 
     Note that for functions passed in that are methods of a class instance,
     a full reference of the instance is saved. This extra reference means
-    that the object will not actually deleted if the user deletes the
+    that the object will not actually be deleted if the user deletes the
     original reference. This is good since the user does not need to keep
     the reference to the object (for example it can be created using a local
     variable in a function). It may be bad if the user thinks an object was
     deleted, but it actually isn't since it had (unkown to the user)
-    installed a method in one of the call back lists
+    installed a method in one of the call back lists.
     """
 
     def __init__(self,name=None,lcallonce=0):
@@ -84,32 +87,36 @@ class CallbackFunctions(object):
         self.lcallonce = lcallonce
 
     def __call__(self,*args,**kw):
-        "Call all of the functions in the list"
+        """Call all of the functions in the list"""
         tt = self.callfuncsinlist(*args,**kw)
         self.time = self.time + tt
         if self.lcallonce: self.funcs = []
 
     def clearlist(self):
+        """Unregister/clear out all registered C callbacks"""
         self.funcs = []
+        libwarpx.libwarpx_so.warpx_clear_callback_py(
+            ctypes.c_char_p(self.name.encode('utf-8'))
+        )
 
-    def __nonzero__(self):
-        "Returns True if functions are installed, otherwise False"
+    def __bool__(self):
+        """Returns True if functions are installed, otherwise False"""
         return self.hasfuncsinstalled()
 
     def __len__(self):
-        "Returns number of functions installed"
+        """Returns number of functions installed"""
         return len(self.funcs)
 
     def hasfuncsinstalled(self):
-        "Checks if there are any functions installed"
+        """Checks if there are any functions installed"""
         return len(self.funcs) > 0
 
     def _getmethodobject(self,func):
-        "For call backs that are methods, returns the method's instance"
+        """For call backs that are methods, returns the method's instance"""
         return func[0]
 
     def callbackfunclist(self):
-        "Generator returning callable functions from the list"
+        """Generator returning callable functions from the list"""
         funclistcopy = copy.copy(self.funcs)
         for f in funclistcopy:
             if isinstance(f,list):
@@ -145,7 +152,16 @@ class CallbackFunctions(object):
             yield result
 
     def installfuncinlist(self,f):
-        "Check if the specified function is installed"
+        """Check if the specified function is installed"""
+        if len(self.funcs) == 0:
+            # If this is the first function installed, set the callback in the C++
+            # to call this class instance.
+            # Note that the _c_func must be saved.
+            _CALLBACK_FUNC_0 = ctypes.CFUNCTYPE(None)
+            self._c_func = _CALLBACK_FUNC_0(self)
+            libwarpx.libwarpx_so.warpx_set_callback_py(
+                ctypes.c_char_p(self.name.encode('utf-8')), self._c_func
+            )
         if isinstance(f,types.MethodType):
             # --- If the function is a method of a class instance, then save a full
             # --- reference to that instance and the method name.
@@ -167,7 +183,7 @@ class CallbackFunctions(object):
             self.funcs.append(f)
 
     def uninstallfuncinlist(self,f):
-        "Uninstall the specified function"
+        """Uninstall the specified function"""
         # --- An element by element search is needed
         # --- f can be a function or method object, or a name (string).
         # --- Note that method objects can not be removed by name.
@@ -175,27 +191,34 @@ class CallbackFunctions(object):
         for func in funclistcopy:
             if f == func:
                 self.funcs.remove(f)
-                return
+                break
             elif isinstance(func,list) and isinstance(f,types.MethodType):
                 object = self._getmethodobject(func)
-                if f.im_self is object and f.__name__ == func[1]:
+                if f.__self__ is object and f.__name__ == func[1]:
                     self.funcs.remove(func)
-                    return
+                    break
             elif isinstance(func,str):
                 if f.__name__ == func:
                     self.funcs.remove(func)
-                    return
+                    break
             elif isinstance(f,str):
                 if isinstance(func,str): funcname = func
                 elif isinstance(func,list): funcname = None
                 else:                        funcname = func.__name__
                 if f == funcname:
                     self.funcs.remove(func)
-                    return
-        raise Exception('Warning: no such function had been installed')
+                    break
+
+        # check that a function was removed
+        if len(self.funcs) == len(funclistcopy):
+            raise Exception(f'Warning: no function, {f}, had been installed')
+
+        # if there are no functions left, remove the C callback
+        if not self.hasfuncsinstalled():
+            self.clearlist()
 
     def isinstalledfuncinlist(self,f):
-        "Checks if the specified function is installed"
+        """Checks if the specified function is installed"""
         # --- An element by element search is needed
         funclistcopy = copy.copy(self.funcs)
         for func in funclistcopy:
@@ -203,7 +226,7 @@ class CallbackFunctions(object):
                 return 1
             elif isinstance(func,list) and isinstance(f,types.MethodType):
                 object = self._getmethodobject(func)
-                if f.im_self is object and f.__name__ == func[1]:
+                if f.__self__ is object and f.__name__ == func[1]:
                     return 1
             elif isinstance(func,str):
                 if f.__name__ == func:
@@ -211,7 +234,7 @@ class CallbackFunctions(object):
         return 0
 
     def callfuncsinlist(self,*args,**kw):
-        "Call the functions in the list"
+        """Call the functions in the list"""
         bb = time.time()
         for f in self.callbackfunclist():
             #barrier()
@@ -228,6 +251,8 @@ class CallbackFunctions(object):
 
 # --- Now create the actual instances.
 _afterinit = CallbackFunctions('afterinit')
+_beforecollisions = CallbackFunctions('beforecollisions')
+_aftercollisions = CallbackFunctions('aftercollisions')
 _beforeEsolve = CallbackFunctions('beforeEsolve')
 _poissonsolver = CallbackFunctions('poissonsolver')
 _afterEsolve = CallbackFunctions('afterEsolve')
@@ -237,38 +262,12 @@ _particlescraper = CallbackFunctions('particlescraper')
 _particleloader = CallbackFunctions('particleloader')
 _beforestep = CallbackFunctions('beforestep')
 _afterstep = CallbackFunctions('afterstep')
+_afterdiagnostics = CallbackFunctions('afterdiagnostics')
 _afterrestart = CallbackFunctions('afterrestart',lcallonce=1)
+_oncheckpointsignal = CallbackFunctions('oncheckpointsignal')
 _particleinjection = CallbackFunctions('particleinjection')
 _appliedfields = CallbackFunctions('appliedfields')
 
-# --- Create the objects that can be called from C.
-# --- Note that each of the CFUNCTYPE instances need to be saved
-_CALLBACK_FUNC_0 = ctypes.CFUNCTYPE(None)
-_c_afterinit = _CALLBACK_FUNC_0(_afterinit)
-libwarpx.warpx_set_callback_py_afterinit(_c_afterinit)
-_c_beforeEsolve = _CALLBACK_FUNC_0(_beforeEsolve)
-libwarpx.warpx_set_callback_py_beforeEsolve(_c_beforeEsolve)
-_c_poissonsolver = _CALLBACK_FUNC_0(_poissonsolver)
-_c_afterEsolve = _CALLBACK_FUNC_0(_afterEsolve)
-libwarpx.warpx_set_callback_py_afterEsolve(_c_afterEsolve)
-_c_beforedeposition = _CALLBACK_FUNC_0(_beforedeposition)
-libwarpx.warpx_set_callback_py_beforedeposition(_c_beforedeposition)
-_c_afterdeposition = _CALLBACK_FUNC_0(_afterdeposition)
-libwarpx.warpx_set_callback_py_afterdeposition(_c_afterdeposition)
-_c_particlescraper = _CALLBACK_FUNC_0(_particlescraper)
-libwarpx.warpx_set_callback_py_particlescraper(_c_particlescraper)
-_c_particleloader = _CALLBACK_FUNC_0(_particleloader)
-libwarpx.warpx_set_callback_py_particleloader(_c_particleloader)
-_c_beforestep = _CALLBACK_FUNC_0(_beforestep)
-libwarpx.warpx_set_callback_py_beforestep(_c_beforestep)
-_c_afterstep = _CALLBACK_FUNC_0(_afterstep)
-libwarpx.warpx_set_callback_py_afterstep(_c_afterstep)
-_c_afterrestart = _CALLBACK_FUNC_0(_afterrestart)
-libwarpx.warpx_set_callback_py_afterrestart(_c_afterrestart)
-_c_particleinjection = _CALLBACK_FUNC_0(_particleinjection)
-libwarpx.warpx_set_callback_py_particleinjection(_c_particleinjection)
-_c_appliedfields = _CALLBACK_FUNC_0(_appliedfields)
-libwarpx.warpx_set_callback_py_appliedfields(_c_appliedfields)
 
 #=============================================================================
 def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
@@ -283,6 +282,7 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
               _particlescraper,
               _particleloader,
               _beforestep,_afterstep,
+              _afterdiagnostics,
               _afterrestart,
               _particleinjection,
               _appliedfields]:
@@ -299,7 +299,7 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
                 vmin = numpy.min(vlist)
                 vmax = numpy.max(vlist)
                 ff.write('  %10.4f  %10.4f'%(vmin,vmax))
-            it = libwarpx.warpx_getistep(0)
+            it = libwarpx.libwarpx_so.warpx_getistep(0)
             if it > 0:
                 ff.write('   %10.4f'%(vsum/npes/(it)))
             ff.write('\n')
@@ -320,6 +320,34 @@ def isinstalledafterinit(f):
     return _afterinit.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
+def callfrombeforecollisions(f):
+    installbeforecollisions(f)
+    return f
+def installbeforecollisions(f):
+    "Adds a function to the list of functions called before collisions"
+    _beforecollisions.installfuncinlist(f)
+def uninstallbeforecollisions(f):
+    "Removes the function from the list of functions called before collisions"
+    _beforecollisions.uninstallfuncinlist(f)
+def isinstalledbeforecollisions(f):
+    "Checks if the function is called before collisions"
+    return _beforecollisions.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def callfromaftercollisions(f):
+    installaftercollisions(f)
+    return f
+def installaftercollisions(f):
+    "Adds a function to the list of functions called after collisions"
+    _aftercollisions.installfuncinlist(f)
+def uninstallaftercollisions(f):
+    "Removes the function from the list of functions called after collisions"
+    _aftercollisions.uninstallfuncinlist(f)
+def isinstalledaftercollisions(f):
+    "Checks if the function is called after collisions"
+    return _aftercollisions.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
 def callfrombeforeEsolve(f):
     installbeforeEsolve(f)
     return f
@@ -338,17 +366,15 @@ def callfrompoissonsolver(f):
     installpoissonsolver(f)
     return f
 def installpoissonsolver(f):
-    """Adds a function to solve Poisson's equation. Note that the C++ object
-    warpx_py_poissonsolver is declared as a nullptr but once the call to set it
-    to _c_poissonsolver below is executed it is no longer a nullptr, and therefore
-    if (warpx_py_poissonsolver) evaluates to True. For this reason a poissonsolver
-    cannot be uninstalled with the uninstallfuncinlist functionality at present."""
+    """Installs an external function to solve Poisson's equation"""
     if _poissonsolver.hasfuncsinstalled():
-        raise RuntimeError('Only one field solver can be installed.')
-    libwarpx.warpx_set_callback_py_poissonsolver(_c_poissonsolver)
+        raise RuntimeError("Only one external Poisson solver can be installed.")
     _poissonsolver.installfuncinlist(f)
+def uninstallpoissonsolver(f):
+    """Removes the external function to solve Poisson's equation"""
+    _poissonsolver.uninstallfuncinlist(f)
 def isinstalledpoissonsolver(f):
-    """Checks if the function is called for a field solve"""
+    """Checks if the function is called to solve Poisson's equation"""
     return _poissonsolver.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
@@ -450,6 +476,20 @@ def isinstalledafterstep(f):
     return _afterstep.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
+def callfromafterdiagnostics(f):
+    installafterdiagnostics(f)
+    return f
+def installafterdiagnostics(f):
+    "Adds a function to the list of functions called after diagnostic output"
+    _afterdiagnostics.installfuncinlist(f)
+def uninstallafterdiagnostics(f):
+    "Removes the function from the list of functions called after diagnostic output"
+    _afterdiagnostics.uninstallfuncinlist(f)
+def isinstalledafterdiagnostics(f):
+    "Checks if the function is called after diagnostic output"
+    return _afterdiagnostics.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
 def callfromafterrestart(f):
     raise Exception('restart call back not implemented yet')
     installafterrestart(f)
@@ -466,6 +506,20 @@ def isinstalledafterrestart(f):
     "Checks if the function is called immediately after a restart"
     raise Exception('restart call back not implemented yet')
     return _afterrestart.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def oncheckpointsignal(f):
+    installoncheckpointsignal(f)
+    return f
+def installoncheckpointsignal(f):
+    "Adds a function to the list of functions called on checkpoint signal"
+    _oncheckpointsignal.installfuncinlist(f)
+def uninstalloncheckpointsignal(f):
+    "Removes the function from the list of functions called on checkpoint signal"
+    _oncheckpointsignal.uninstallfuncinlist(f)
+def isinstalledoncheckpointsignal(f):
+    "Checks if the function is called on checkpoint signal"
+    return _oncheckpointsignal.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
 def callfromparticleinjection(f):
@@ -505,4 +559,3 @@ def isinstalledappliedfields(f):
     "Checks if the function is called when which applies fields"
     raise Exception('applied fields call back not implemented yet')
     return _appliedfields.isinstalledfuncinlist(f)
-

@@ -1,3 +1,9 @@
+/* Copyright 2021 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef BTD_PLOTFILE_HEADER_IMPL_H
 #define BTD_PLOTFILE_HEADER_IMPL_H
 
@@ -22,7 +28,7 @@ class BTDPlotfileHeaderImpl
 {
 public:
     /** Constructor.
-     * \param[in] string containing path of Headerfile
+     * \param[in] Headerfile_path string containing path of Headerfile
      */
     BTDPlotfileHeaderImpl (std::string const& Headerfile_path);
     /** Destructor */
@@ -56,13 +62,13 @@ public:
     int numFabs () const noexcept {return m_numFabs; }
 
     /** Returns physical co-ordinates of the lower-corner for the i-th Fab.
-     *  \param[in] iFab, id of the ith Fab in the list of Multifabs
-     *  \param[out] Array of lower-corner physical co-ordinates corresponding to the ith Fab
+     *  \param[in] iFab id of the ith Fab in the list of Multifabs
+     *  \returns   Array of lower-corner physical co-ordinates corresponding to the ith Fab
      */
     amrex::Array<amrex::Real, AMREX_SPACEDIM> FabLo (int iFab) const noexcept {return m_glo[iFab]; }
     /** Returns physical co-ordinates of the lower-corner for the i-th Fab.
-     *  \param[in] iFab, id of the ith Fab in the list of Multifabs
-     *  \param[out] Array of lower-corner physical co-ordinates corresponding to the ith Fab
+     *  \param[in] iFab id of the ith Fab in the list of Multifabs
+     *  \returns   Array of lower-corner physical co-ordinates corresponding to the ith Fab
      */
     amrex::Array<amrex::Real, AMREX_SPACEDIM> FabHi (int iFab) const noexcept {return m_ghi[iFab]; }
     /** Returns path to location of multifabs */
@@ -74,25 +80,25 @@ public:
     void WriteHeader ();
 
     /** Sets the physical simulation time, m_time, in the Header file to a new_time.
-     *  \param[in] Real new_time
+     *  \param[in] new_time current time in the boosted-frame read from Header plotfile
      **/
     void set_time ( amrex::Real new_time) { m_time = new_time;}
     /** Sets the timestep, m_timestep, in the Header file to a new_timestep
-     *  \param[in] int new_timestep
+     *  \param[in] new_timestep current timestep in the boosted-frame (read from the Header file of the newly flushed buffer)
      **/
     void set_timestep (int new_timestep) { m_timestep = new_timestep; }
     /** Set the ith-dimension physical co-ordinate of the lower corner.
-     *  \param[in] int dim, dimension modified.
-     *  \param[in] Real lo, lower-corner physical coordinate to be stored in dimension, dim.
+     *  \param[in] dim dimension modified.
+     *  \param[in] lo  lower-corner physical coordinate to be stored in dimension, dim.
      **/
     void set_problo (int dim, amrex::Real lo) { m_prob_lo[dim] = lo;}
     /** Set the ith-dimension physical co-ordinate of the upper corner.
-     *  \param[in] int dim, dimension modified.
-     *  \param[in] Real hi, upper-corner physical coordinate to be stored in dimension, dim.
+     *  \param[in] dim dimension modified.
+     *  \param[in] hi  upper-corner physical coordinate to be stored in dimension, dim.
      **/
     void set_probhi (int dim, amrex::Real hi) { m_prob_hi[dim] = hi;}
     /** Set the Domain box spanning the plotfile data in the modified plotfile and Header.
-     *  \param[in] amrex::Box domainBox spanning the domain corresponding to the plotfile.
+     * \param[in] domainBox spanning the domain corresponding to the plotfile.
      */
     void set_probDomain (amrex::Box domainBox) {m_prob_domain = domainBox; }
     /** Increments the number of fabs stored in the plotfile by one. */
@@ -101,14 +107,14 @@ public:
     void ResizeFabHi () { m_ghi.resize(m_numFabs); }
     /** Append array of lower-corner physical coordinates corresponding to a new fab to
      *  the existing list of coordinates, m_glo.
-     *  \param[in] amrex::Array<Real,AMREX_SPACEDIM> newFabLo containing physical coordinates
-     *             of the newly appended fab-data to the plotfile.
+     *  \param[in] newFabLo contains physical coordinates
+     *                      of the newly appended fab-data to the plotfile.
      */
     void AppendNewFabLo (amrex::Array<amrex::Real, AMREX_SPACEDIM> newFabLo);
     /** Append array of upper-corner physical coordinates corresponding to a new fab to
      *  the existing list of coordinates, m_ghi.
-     *  \param[in] amrex::Array<Real,AMREX_SPACEDIM> newFabHi containing physical coordinates
-     *             of the newly appended fab-data to the plotfile.
+     *  \param[in] newFabHi contains physical coordinates
+     *                      of the newly appended fab-data to the plotfile.
      */
     void AppendNewFabHi (amrex::Array<amrex::Real, AMREX_SPACEDIM> newFabHi);
 private:
@@ -157,7 +163,7 @@ class BTDMultiFabHeaderImpl
 {
     public:
     /** Constructor.
-     * \param[in] string containing path of Headerfile
+     * \param[in] Headerfile_path string containing path of Headerfile
      */
     BTDMultiFabHeaderImpl (std::string const& Headerfile_path);
     ~BTDMultiFabHeaderImpl () = default;
@@ -169,11 +175,11 @@ class BTDMultiFabHeaderImpl
     /** Returns size, m_ba_size, of the Box Array, m_ba.*/
     int ba_size () {return m_ba_size;}
     /** Returns box corresponding to the ith box in the BoxArray, m_ba.
-     *  \param[in] int ibox, index of the box in the BoxArray.
+     *  \param[in] ibox index of the box in the BoxArray.
      */
     amrex::Box ba_box (int ibox) {return m_ba[ibox]; }
     /** Returns prefix of the ith-fab on disk, i.e., ith fab of the MultiFab data.
-     *  \param[int] ifab, index of the ith fab in the MultiFab data.
+     *  \param[in] ifab index of the ith fab in the MultiFab data.
      */
     std::string fodPrefix (int ifab) {return m_FabOnDiskPrefix[ifab]; }
     /** Returns name of the ith fab stored in the MultiFab. */
@@ -186,13 +192,13 @@ class BTDMultiFabHeaderImpl
     amrex::Vector<amrex::Real> maxval(int ifab) { return m_maxval[ifab];}
     void ResizeFabData ();
     /** Increments MultiFab size, m_ba_size, by add_mf_size.
-     *  \param[in] int add_mf_size, number of new multifabs to be appended to the existing
+     *  \param[in] add_mf_size number of new multifabs to be appended to the existing
      *             Box Array.
      */
     void IncreaseMultiFabSize (int add_mf_size) {m_ba_size += add_mf_size;}
     /** Set Box indices of the ith-box in Box Array, m_ba, to the new Box, ba_box.
-     *  \param[in] int ibox, index of the ith box in BoxArray, m_ba.
-     *  \param[in] amrex::Box box dimensions corresponding to the ith Fab.
+     *  \param[in] ibox   index of the ith box in BoxArray, m_ba.
+     *  \param[in] ba_box dimensions corresponding to the ith Fab.
      */
     void SetBox (int ibox, amrex::Box ba_box) { m_ba.set(ibox, ba_box); }
     /** Set Fab name of the ith fab to be written in the multifab Header file.*/
@@ -229,5 +235,114 @@ class BTDMultiFabHeaderImpl
                   amrex::Vector<amrex::Real> src);
 };
 
-#endif
+/**
+ * \brief Class to read, modify, and write species header when
+ * back-transformed diag format is selected as plotfile.
+ * This class enables multiple BTD particle buffers to be interweaved and stitched into
+ * a single plotfile with a single Header.
+ */
+class BTDSpeciesHeaderImpl
+{
+public:
+    /** Constructor.
+     * \param[in] Headerfile_path string containing path of Headerfile
+     * \param[in] species_name string containing species name
+     */
+    BTDSpeciesHeaderImpl (std::string const& Headerfile_path, std::string const& species_name);
+    ~BTDSpeciesHeaderImpl () = default;
+    /** Reads the Header file for BTD species*/
+    void ReadHeader ();
+    /** Writes the meta-data of species Header file, with path, m_Header_path*/
+    void WriteHeader ();
+    /** Set data Index of the data-file, DATAXXXXX, that the particles belong to*/
+    void set_DataIndex (const int lev, const int box_id, const int data_index);
+    /** Add new_particles to existing to obtain the total number of particles of the species.
+        \param[in] new_particles total particles in the new buffer
+     */
+    void AddTotalParticles (const int new_particles) { m_total_particles += new_particles;}
+    /** Increment number of boxes in a box array by 1, with every flush. */
+    void IncrementParticleBoxArraySize () { m_particleBoxArray_size[m_finestLevel]++; }
+    /** Append particle info of the newly added box, namely,
+        m_which_data, m_particles_per_box, m_offset_per_box.
+     */
+    void AppendParticleInfoForNewBox (const int data_index, const int particles_per_box, const int offset);
+    /** Vector of data indices of all particle data for each level*/
+    amrex::Vector< amrex::Vector<int> > m_which_data;
+    /** Vector of particles per box for each level*/
+    amrex::Vector< amrex::Vector<int> > m_particles_per_box;
+    /** Vector of particle offset per box of each particle data file for each level*/
+    amrex::Vector< amrex::Vector<int> > m_offset_per_box;
+    /** Vector of box array size per for each level*/
+    amrex::Vector<int> m_particleBoxArray_size;
+    /** Total number of particles of species, m_species_name, in the particle output*/
+    int m_total_particles;
+    /** Id of the next particle*/
+    int m_nextid;
+    /** finest level of the particle output*/
+    int m_finestLevel;
+    private:
+    /** Path of the headerfile */
+    std::string m_Header_path;
+    /** Species name of the particles flushed out */
+    std::string m_species_name;
+    /** String containing file version of the species output */
+    std::string m_file_version;
+    /** Number of dimensions stored in the plotfile, should be same as AMREX_SPACEDIM */
+    int m_spacedim;
+    /** Number of real attributes*/
+    int m_num_output_real;
+    /** Number of integer attributes*/
+    int m_num_output_int;
+    /** The real attribute names*/
+    amrex::Vector<std::string> m_real_comp_names;
+    /** The real integer names*/
+    amrex::Vector<std::string> m_int_comp_names;
+    /** if the output is a checkpoint */
+    bool m_is_checkpoint;
+};
 
+/**
+ * \brief Class to read, modify, and write particle header file, Particle_H, when
+ * back-transformed diag format is selected as plotfile.
+ * This class enables multiple particle buffers to be interweaved and stitched into
+ * a single plotfile with a single Particle_H file.
+ */
+class BTDParticleDataHeaderImpl
+{
+public:
+    /** Constructor.
+     * \param[in] Headerfile_path containing path of Headerfile
+     */
+    BTDParticleDataHeaderImpl (std::string const& Headerfile_path);
+    /** Destructor */
+    ~BTDParticleDataHeaderImpl () = default;
+    /** Reads the particle header file at m_Header_path and stores its data*/
+    void ReadHeader ();
+    /** Writes the meta-data of particle box array in header file, with path, m_Header_path*/
+    void WriteHeader ();
+    /** Returns the size of the box array, m_ba_size */
+    int ba_size () {return m_ba_size; }
+    /** Increases Box array size, m_ba_size, by add_size
+     *  \param[in] add_size
+     */
+    void IncreaseBoxArraySize ( const int add_size) { m_ba_size += add_size;}
+    /** Returns box corresponding to the ith box in the BoxArray, m_ba.
+     *  \param[in] ibox index of the box in the BoxArray.
+     */
+    amrex::Box ba_box (int ibox) {return m_ba[ibox]; }
+    /** Resize boxArray, m_ba, to size, m_ba_size. */
+    void ResizeBoxArray () { m_ba.resize(m_ba_size); }
+    /** Set Box indices of the ith-box in Box Array, m_ba, to the new Box, ba_box.
+     *  \param[in] ibox index of the ith box in BoxArray, m_ba.
+     *  \param[in] ba_box dimensions corresponding to the ith Fab.
+     */
+    void SetBox (int ibox, amrex::Box ba_box) { m_ba.set(ibox, ba_box); }
+    /** Size of BoxArray, m_ba*/
+    int m_ba_size;
+    /** BoxArray for particle output*/
+    amrex::BoxArray m_ba;
+    /** string containing path of the particle output of species, species_name.*/
+    std::string m_Header_path;
+};
+
+#endif

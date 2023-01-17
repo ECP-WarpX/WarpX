@@ -70,16 +70,4 @@ class SpectralKSpace
         amrex::RealVect dx;
 };
 
-/**
- * \brief Returns an array of coefficients (Fornberg coefficients), corresponding
- * to the weight of each point in a finite-difference approximation of a derivative
- * (up to order \c n_order).
- *
- * \param[in] n_order order of the finite-difference approximation
- * \param[in] nodal   whether the finite-difference approximation is computed
- *                    on a nodal grid or a staggered grid
- */
-amrex::Vector<amrex::Real>
-getFornbergStencilCoefficients(const int n_order, const bool nodal);
-
 #endif

@@ -23,6 +23,7 @@ sudo apt-get install -y \
     liblapack-dev       \
     libopenmpi-dev      \
     make                \
+    ninja-build         \
     pkg-config          \
     python3             \
     python3-pip         \
@@ -34,18 +35,21 @@ sudo apt-get install -y \
 sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
 sudo chmod a+x /usr/local/bin/cmake-easyinstall
 export CEI_SUDO="sudo"
+export CEI_TMP="/tmp/cei"
 
 # BLAS++ & LAPACK++
 cmake-easyinstall \
   --prefix=/usr/local                      \
-  git+https://bitbucket.org/icl/blaspp.git \
+  git+https://github.com/icl-utk-edu/blaspp.git \
   -Duse_openmp=OFF                         \
   -Dbuild_tests=OFF                        \
+  -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
   -DCMAKE_VERBOSE_MAKEFILE=ON
 
 cmake-easyinstall \
   --prefix=/usr/local                        \
-  git+https://bitbucket.org/icl/lapackpp.git \
+  git+https://github.com/icl-utk-edu/lapackpp.git \
   -Duse_cmake_find_lapack=ON                 \
   -Dbuild_tests=OFF                          \
+  -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
   -DCMAKE_VERBOSE_MAKEFILE=ON

@@ -1,3 +1,31 @@
+# Set C++17 for the whole build if not otherwise requested
+#
+# This is the easiest way to push up a C++17 requirement for AMReX, PICSAR and
+# openPMD-api until they increase their requirement.
+#
+macro(set_cxx17_superbuild)
+    if(NOT DEFINED CMAKE_CXX_STANDARD)
+        set(CMAKE_CXX_STANDARD 17)
+    endif()
+    if(NOT DEFINED CMAKE_CXX_EXTENSIONS)
+        set(CMAKE_CXX_EXTENSIONS OFF)
+    endif()
+    if(NOT DEFINED CMAKE_CXX_STANDARD_REQUIRED)
+        set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    endif()
+
+    if(NOT DEFINED CMAKE_CUDA_STANDARD)
+        set(CMAKE_CUDA_STANDARD 17)
+    endif()
+    if(NOT DEFINED CMAKE_CUDA_EXTENSIONS)
+        set(CMAKE_CUDA_EXTENSIONS OFF)
+    endif()
+    if(NOT DEFINED CMAKE_CUDA_STANDARD_REQUIRED)
+        set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    endif()
+endmacro()
+
+
 # find the CCache tool and use it if found
 #
 macro(set_ccache)
@@ -46,7 +74,7 @@ macro(set_default_install_dirs)
     if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
         include(GNUInstallDirs)
         if(NOT CMAKE_INSTALL_CMAKEDIR)
-            set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/WarpX"
+            set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake"
                     CACHE PATH "CMake config package location for installed targets")
             if(WIN32)
                 set(CMAKE_INSTALL_LIBDIR Lib
@@ -55,6 +83,12 @@ macro(set_default_install_dirs)
             endif()
             mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
         endif()
+    endif()
+
+    if(WIN32)
+        set(WarpX_INSTALL_CMAKEDIR "${CMAKE_INSTALL_CMAKEDIR}")
+    else()
+        set(WarpX_INSTALL_CMAKEDIR "${CMAKE_INSTALL_CMAKEDIR}/WarpX")
     endif()
 endmacro()
 
@@ -130,7 +164,7 @@ endfunction()
 # Take an <imported_target> and expose it as INTERFACE target with
 # WarpX::thirdparty::<propagated_name> naming and SYSTEM includes.
 #
-function(make_third_party_includes_system imported_target propagated_name)
+function(warpx_make_third_party_includes_system imported_target propagated_name)
     add_library(WarpX::thirdparty::${propagated_name} INTERFACE IMPORTED)
     target_link_libraries(WarpX::thirdparty::${propagated_name} INTERFACE ${imported_target})
 
@@ -158,14 +192,12 @@ function(set_warpx_binary_name)
     if(WarpX_LIB)
         list(APPEND warpx_bin_names shared)
     endif()
-    foreach(tgt IN LISTS _ALL_TARGETS)
+    foreach(tgt IN LISTS warpx_bin_names)
         set_target_properties(${tgt} PROPERTIES OUTPUT_NAME "warpx")
-        if(WarpX_DIMS STREQUAL 3)
-            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".3d")
-        elseif(WarpX_DIMS STREQUAL 2)
-            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".2d")
-        elseif(WarpX_DIMS STREQUAL RZ)
+        if(WarpX_DIMS STREQUAL RZ)
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".RZ")
+        else()
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".${WarpX_DIMS}d")
         endif()
 
         if(WarpX_MPI)
@@ -180,6 +212,12 @@ function(set_warpx_binary_name)
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".DP")
         else()
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".SP")
+        endif()
+
+        if(WarpX_PARTICLE_PRECISION STREQUAL "DOUBLE")
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".PDP")
+        else()
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".PSP")
         endif()
 
         if(WarpX_ASCENT)
@@ -226,12 +264,10 @@ function(set_warpx_binary_name)
     endif()
     if(WarpX_LIB)
         # alias to the latest build; this is the one expected by Python bindings
-        if(WarpX_DIMS STREQUAL 3)
-            set(lib_suffix "3d")
-        elseif(WarpX_DIMS STREQUAL 2)
-            set(lib_suffix "2d")
-        elseif(WarpX_DIMS STREQUAL RZ)
+        if(WarpX_DIMS STREQUAL RZ)
             set(lib_suffix "rz")
+        else()
+            set(lib_suffix "${WarpX_DIMS}d")
         endif()
         if(WIN32)
             set(mod_ext "dll")
@@ -241,7 +277,7 @@ function(set_warpx_binary_name)
         add_custom_command(TARGET shared POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E create_symlink
                 $<TARGET_FILE_NAME:shared>
-                ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libwarpx.${lib_suffix}.${mod_ext}
+                $<TARGET_FILE_DIR:shared>/libwarpx.${lib_suffix}.${mod_ext}
         )
     endif()
 endfunction()
@@ -286,7 +322,7 @@ function(get_source_version NAME SOURCE_DIR)
         execute_process(COMMAND git describe --abbrev=12 --dirty --always --tags
             WORKING_DIRECTORY ${SOURCE_DIR}
             OUTPUT_VARIABLE _tmp)
-        string( STRIP ${_tmp} _tmp)
+        string( STRIP "${_tmp}" _tmp)
     endif()
 
     # Is there a CMake project version?
@@ -315,10 +351,7 @@ function(warpx_print_summary)
     message("        bin: ${CMAKE_INSTALL_BINDIR}")
     message("        lib: ${CMAKE_INSTALL_LIBDIR}")
     message("    include: ${CMAKE_INSTALL_INCLUDEDIR}")
-    message("      cmake: ${CMAKE_INSTALL_CMAKEDIR}")
-    if(WarpX_HAVE_PYTHON)
-        message("     python: ${CMAKE_INSTALL_PYTHONDIR}")
-    endif()
+    message("      cmake: ${WarpX_INSTALL_CMAKEDIR}")
     message("")
     set(BLD_TYPE_UNKNOWN "")
     if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR AND
@@ -350,6 +383,7 @@ function(warpx_print_summary)
     endif()
     message("    PSATD: ${WarpX_PSATD}")
     message("    PRECISION: ${WarpX_PRECISION}")
+    message("    PARTICLE PRECISION: ${WarpX_PARTICLE_PRECISION}")
     message("    OPENPMD: ${WarpX_OPENPMD}")
     message("    QED: ${WarpX_QED}")
     message("    QED table generation: ${WarpX_QED_TABLE_GEN}")

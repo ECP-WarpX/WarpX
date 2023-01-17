@@ -26,7 +26,7 @@ using namespace amrex;
      * \param[in] fboundary  Value containing boundary type
      * \param[in] dir        direction
      *
-     * \param[out] 1 if the boundary type is PEC else 0
+     * \returns 1 if the boundary type is PEC else 0
      */
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     bool is_boundary_PEC (amrex::GpuArray<int, 3> const& fboundary, int dir) {
@@ -223,7 +223,7 @@ using namespace amrex;
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             // Loop over sides, iside = 0 (lo), iside = 1 (hi)
             for (int iside = 0; iside < 2; ++iside) {
-                const int isPECBoundary = ( (iside == 0 )
+                const bool isPECBoundary = ( (iside == 0 )
                                         ? is_boundary_PEC(fbndry_lo, idim)
                                         : is_boundary_PEC(fbndry_hi, idim) );
                 if (isPECBoundary == true) {
@@ -276,12 +276,15 @@ using namespace amrex;
      *        The guard cell values are set equal and opposite to the valid cell
      *        field value at the respective mirror locations.
      *
-     * \param[in,out] Efield     Boundary values of tangential Efield are set to zero.
-     * \param[in]     lev        level of the Multifab
-     * \param[in]     patch_type coarse or fine
+     * \param[in,out] Efield          Boundary values of tangential Efield are set to zero
+     * \param[in]     lev             level of the Multifab
+     * \param[in]     patch_type      coarse or fine
+     * \param[in]     split_pml_field whether pml the multifab is the regular Efield or
+     *                                split pml field
      */
-    void ApplyPECtoEfield ( std::array<std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-                            const int lev, PatchType patch_type);
+    void ApplyPECtoEfield ( std::array<amrex::MultiFab*, 3> Efield,
+                            const int lev, PatchType patch_type,
+                            const bool split_pml_field = false);
     /**
      * \brief Sets the normal component of the magnetic field at the PEC boundary to zero.
      *        The guard cell values are set equal and opposite to the valid cell
@@ -291,7 +294,7 @@ using namespace amrex;
      * \param[in]     lev        level of the Multifab
      * \param[in]     patch_type coarse or fine
      */
-    void ApplyPECtoBfield ( std::array<std::unique_ptr<amrex::MultiFab>, 3>& Bfield,
+    void ApplyPECtoBfield ( std::array<amrex::MultiFab*, 3> Bfield,
                             const int lev, PatchType patch_type);
 }
 

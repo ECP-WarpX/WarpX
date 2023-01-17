@@ -29,7 +29,7 @@ WarpX is built with the single command
 
 This will build the 3-D version of WarpX using the ``development`` branch.
 At the very end of the output from build sequence, Spack tells you where the WarpX executable has been placed.
-Alternatively, ``spack load -r warpx`` can be called, which will put the executable in your ``PATH`` environment variable.
+Alternatively, ``spack load warpx`` can be called, which will put the executable in your ``PATH`` environment variable.
 
 WarpX can be built in several variants, see
 

@@ -5,10 +5,10 @@
 #
 # License: BSD-3-Clause-LBNL
 
-from glob import glob
-import os
-import numpy as np
 from collections import namedtuple
+from glob import glob
+
+import numpy as np
 
 HeaderInfo = namedtuple('HeaderInfo', ['version', 'how', 'ncomp', 'nghost'])
 
@@ -37,7 +37,7 @@ def read_data(plt_file):
 
     '''
     all_data = []
-    raw_files = glob(plt_file + "/raw_fields/Level_*/")
+    raw_files = sorted(glob(plt_file + "/raw_fields/Level_*/"))
     for raw_file in raw_files:
         field_names = _get_field_names(raw_file)
 
@@ -49,81 +49,6 @@ def read_data(plt_file):
 
     return all_data
 
-
-def read_lab_snapshot(snapshot, global_header):
-    '''
-
-    This reads the data from one of the lab frame snapshots generated when
-    WarpX is run with boosted frame diagnostics turned on. It returns a
-    dictionary of numpy arrays, where each key corresponds to one of the
-    data fields ("Ex", "By,", etc... ). These values are cell-centered.
-
-    '''
-    global_info = _read_global_Header(global_header)
-
-    hdrs = glob(snapshot + "/Level_0/buffer*_H")
-    hdrs.sort()
-
-    boxes, file_names, offsets, header = _read_header(hdrs[0])
-    dom_lo, dom_hi = _combine_boxes(boxes)
-    domain_size = dom_hi - dom_lo + 1
-    space_dim = len(dom_lo)
-
-    local_info = _read_local_Header(snapshot + "/Header", space_dim)
-    ncellz_snapshots = local_info['nz']
-    dzcell_snapshots = (local_info['zmax']-local_info['zmin'])/local_info['nz']
-    _component_names = local_info['field_names']
-    field1 = _component_names[0]
-
-    if space_dim == 2:
-        direction = 1
-    else:
-        direction = 2
-
-    buffer_fullsize = 0
-    buffer_allsizes = [0]
-    for i, hdr in enumerate(hdrs):
-        buffer_data = _read_buffer(snapshot, hdr, _component_names)
-        buffer_fullsize += buffer_data[field1].shape[direction]
-        buffer_allsizes.append(buffer_data[field1].shape[direction])
-    buffer_allstarts = np.cumsum(buffer_allsizes)
-
-    data = {}
-    for i in range(header.ncomp):
-        if space_dim == 3:
-            data[_component_names[i]] = np.zeros((domain_size[0], domain_size[1], buffer_fullsize))
-        elif space_dim == 2:
-            data[_component_names[i]] = np.zeros((domain_size[0], buffer_fullsize))
-
-    for i, hdr in enumerate(hdrs):
-        buffer_data = _read_buffer(snapshot, hdr, _component_names)
-        if data is None:
-            data = buffer_data
-        else:
-            for k,v in buffer_data.items():
-                data[k][..., buffer_allstarts[i]:buffer_allstarts[i+1]] = v[...]
-
-
-    info = local_info
-    # Add some handy info
-    x = np.linspace(local_info['xmin'], local_info['xmax'], local_info['nx'])
-    y = np.linspace(local_info['ymin'], local_info['ymax'], local_info['ny'])
-    z = np.linspace(local_info['zmin'], local_info['zmax'], local_info['nz'])
-    info.update({ 'x' : x, 'y' : y, 'z' : z })
-    return data, info
-
-# For the moment, the back-transformed diagnostics must be read with
-# custom functions like this one.
-# It should be OpenPMD-compliant hdf5 files soon, making this part outdated.
-def get_particle_field(snapshot, species, field):
-    fn = snapshot + '/' + species
-    files = glob(os.path.join(fn, field + '_*'))
-    files.sort()
-    all_data = np.array([])
-    for f in files:
-        data = np.fromfile(f)
-        all_data = np.concatenate((all_data, data))
-    return all_data
 
 def _get_field_names(raw_file):
     header_files = glob(raw_file + "*_H")
@@ -261,21 +186,28 @@ def _read_field(raw_file, field_name):
     header_file = raw_file + field_name + "_H"
     boxes, file_names, offsets, header = _read_header(header_file)
 
-    ng = header.nghost
     dom_lo, dom_hi = _combine_boxes(boxes)
-    data = np.zeros(dom_hi - dom_lo + 1)
+    data_shape = dom_hi - dom_lo + 1
+    if header.ncomp > 1:
+        data_shape = np.append(data_shape, header.ncomp)
+    data = np.zeros(data_shape)
 
     for box, fn, offset in zip(boxes, file_names, offsets):
         lo = box[0] - dom_lo
         hi = box[1] - dom_lo
         shape = hi - lo + 1
+        if header.ncomp > 1:
+            shape = np.append(shape, header.ncomp)
         with open(raw_file + fn, "rb") as f:
             f.seek(offset)
             if (header.version == 1):
                 f.readline()  # skip the first line
             arr = np.fromfile(f, 'float64', np.product(shape))
             arr = arr.reshape(shape, order='F')
-            data[tuple(slice(l,h+1) for l, h in zip(lo, hi))] = arr
+            box_shape = [slice(l,h+1) for l, h in zip(lo, hi)]
+            if header.ncomp > 1:
+                box_shape += [slice(None)]
+            data[tuple(box_shape)] = arr
 
     return data
 
@@ -285,7 +217,6 @@ def _read_buffer(snapshot, header_fn, _component_names):
 
     boxes, file_names, offsets, header = _read_header(header_fn)
 
-    ng = header.nghost
     dom_lo, dom_hi = _combine_boxes(boxes)
 
     all_data = {}
@@ -369,6 +300,3 @@ def read_reduced_diags_histogram(filename, delimiter=' '):
     else:
         bin_data  = data[:,2:]
     return metadata_dict, data_dict, bin_value, bin_data
-
-if __name__ == "__main__":
-    data = read_lab_snapshot("lab_frame_data/snapshot00012", "lab_frame_data/Header");

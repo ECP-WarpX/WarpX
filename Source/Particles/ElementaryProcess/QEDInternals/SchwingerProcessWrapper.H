@@ -33,6 +33,7 @@
  *            pairs is below this parameter, a Poisson distribution is used
  *            to draw the number of created pairs. Otherwise a Gaussian
  *            distribution is used.
+ * @param[in] engine the random number generator state & factory
  * @return the number of pairs generated via the Schwinger process
  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE

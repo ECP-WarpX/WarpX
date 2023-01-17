@@ -6,7 +6,7 @@ Users
 .. raw:: html
 
    <style>
-   .rst-content .section>img {
+   .rst-content section>img {
        width: 30px;
        margin-bottom: 0;
        margin-top: 0;
@@ -64,7 +64,7 @@ The package ``warpx`` installs executables and the package ``py-warpx`` includes
 
    # optional:            -mpi ^warpx dims=2 compute=cuda
    spack install py-warpx
-   spack load -r py-warpx
+   spack load py-warpx
 
 See ``spack info warpx`` or ``spack info py-warpx`` and `the official Spack tutorial <https://spack-tutorial.readthedocs.io>`__ for more information.
 

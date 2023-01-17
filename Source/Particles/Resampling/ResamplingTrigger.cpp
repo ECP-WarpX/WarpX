@@ -6,7 +6,7 @@
  */
 #include "ResamplingTrigger.H"
 
-#include "Utils/WarpXUtil.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "WarpX.H"
 
 #include <AMReX_BoxArray.H>
@@ -20,9 +20,10 @@ ResamplingTrigger::ResamplingTrigger (const std::string species_name)
 
     std::vector<std::string> resampling_trigger_int_string_vec = {"0"};
     pp_species_name.queryarr("resampling_trigger_intervals", resampling_trigger_int_string_vec);
-    m_resampling_intervals = IntervalsParser(resampling_trigger_int_string_vec);
+    m_resampling_intervals = utils::parser::IntervalsParser(resampling_trigger_int_string_vec);
 
-    queryWithParser(pp_species_name, "resampling_trigger_max_avg_ppc", m_max_avg_ppc);
+    utils::parser::queryWithParser(
+        pp_species_name, "resampling_trigger_max_avg_ppc", m_max_avg_ppc);
 }
 
 bool ResamplingTrigger::triggered (const int timestep, const amrex::Real global_numparts) const

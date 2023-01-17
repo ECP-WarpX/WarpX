@@ -24,11 +24,19 @@ void UpdatePositionPhoton(
     const amrex::ParticleReal ux, const amrex::ParticleReal uy, const amrex::ParticleReal uz,
     const amrex::Real dt )
 {
-    // Compute speed of light over inverse of momentum modulus
-    const amrex::Real c_over_umod = PhysConst::c/std::sqrt(ux*ux + uy*uy + uz*uz);
+    using namespace amrex::literals;
+
+    // Compute speed of light over inverse of momentum modulus, avoiding a division by zero in the
+    // case where the photon has exactly zero momentum
+    const amrex::ParticleReal u_norm = std::sqrt(ux*ux + uy*uy + uz*uz);
+    const amrex::ParticleReal c_over_umod = (u_norm == 0._prt) ? 0._prt: PhysConst::c/u_norm;
 
     // Update positions over one time step
+#if (AMREX_SPACEDIM >= 2)
     x += ux * c_over_umod * dt;
+#else
+    amrex::ignore_unused(x);
+#endif
 #if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ) // RZ pushes particles in 3D
     y += uy * c_over_umod * dt;
 #else

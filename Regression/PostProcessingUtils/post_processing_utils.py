@@ -9,6 +9,7 @@
 import numpy as np
 import yt
 
+
 ## This is a generic function to test a particle filter. We reproduce the filter in python and
 ## verify that the results are the same as with the WarpX filtered diagnostic.
 def check_particle_filter(fn, filtered_fn, filter_expression, dim, species_name):

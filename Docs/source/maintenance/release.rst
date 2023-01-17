@@ -50,6 +50,6 @@ In order to create a GitHub release, you need to:
 
     .. code-block:: sh
 
-       git log <last-release-tag>.. | grep -A 3 "Author: " | grep -B 1 "\-\-" | sed '/--/d' | sed -e 's/^    /- /'
+       git log <last-release-tag>.. --format='- %s'
 
  3. Optional/future: create a ``release-<version>`` branch, write a changelog, and backport bug-fixes for a few days.

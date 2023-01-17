@@ -74,8 +74,13 @@ struct CartesianNodalAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
+#if (defined WARPX_DIM_1D_Z)
+        ignore_unused(i, j, k, coefs_x, ncomp, F);
+        return 0._rt; // 1D Cartesian: derivative along x is 0
+#else
         Real const inv_dx = coefs_x[0];
         return 0.5_rt*inv_dx*( F(i+1,j,k,ncomp) - F(i-1,j,k,ncomp) );
+#endif
     }
 
     /**
@@ -88,8 +93,14 @@ struct CartesianNodalAlgorithm {
         amrex::Real const * const coefs_x, int const n_coefs_x,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
+        using namespace amrex;
+#if (defined WARPX_DIM_1D_Z)
+        ignore_unused(i, j, k, coefs_x, n_coefs_x, ncomp, F);
+        return 0._rt; // 1D Cartesian: derivative along x is 0
+#else
         return UpwardDx( F, coefs_x, n_coefs_x, i, j, k ,ncomp);
         // For CartesianNodalAlgorithm, UpwardDx and DownwardDx are equivalent
+#endif
     }
 
     /**
@@ -106,9 +117,9 @@ struct CartesianNodalAlgorithm {
 #if defined WARPX_DIM_3D
         Real const inv_dy = coefs_y[0];
         return 0.5_rt*inv_dy*( F(i,j+1,k,ncomp) - F(i,j-1,k,ncomp) );
-#elif (defined WARPX_DIM_XZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
         ignore_unused(i, j, k, coefs_y, ncomp, F);
-        return 0._rt; // 2D Cartesian: derivative along y is 0
+        return 0._rt; // 1D and 2D Cartesian: derivative along y is 0
 #endif
     }
 
@@ -142,6 +153,8 @@ struct CartesianNodalAlgorithm {
         return 0.5_rt*inv_dz*( F(i,j,k+1,ncomp) - F(i,j,k-1,ncomp) );
 #elif (defined WARPX_DIM_XZ)
         return 0.5_rt*inv_dz*( F(i,j+1,k,ncomp) - F(i,j-1,k,ncomp) );
+#elif (defined WARPX_DIM_1D_Z)
+        return 0.5_rt*inv_dz*( F(i+1,j,k,ncomp) - F(i-1,j,k,ncomp) );
 #endif
     }
 
