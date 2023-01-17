@@ -304,13 +304,13 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         auto series = io::Series(m_params.txye_file_name, io::Access::READ_ONLY);
         auto i = series.iterations[0];
         auto E = i.meshes["E"];
-        auto E_laser = E[io::RecordComponent::SCALAR]; 
+        auto E_laser = E[io::RecordComponent::SCALAR];
 
         // alternatively, pass pre-allocated
-        std::shared_ptr< double > x_data = E_laser.loadChunk< double >(); 
-                
+        std::shared_ptr< double > x_data = E_laser.loadChunk< double >();
+
         const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
-        
+
         for (int i=0; i<read_size; i++) {
             h_E_data[i] = x_data.get()[i];
         }
