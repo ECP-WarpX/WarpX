@@ -47,7 +47,7 @@ jobs:
       run: |
         export CEI_SUDO="sudo"
         export CEI_TMP="/tmp/cei"
-        cmake-easyinstall --prefix=/usr \
+        cmake-easyinstall --prefix=/usr/local \
           git+https://github.com/openPMD/openPMD-api.git@0.14.3 \
           -DopenPMD_USE_PYTHON=OFF    \
           -DBUILD_TESTING=OFF         \
