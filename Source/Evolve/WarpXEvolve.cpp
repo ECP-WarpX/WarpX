@@ -311,17 +311,15 @@ WarpX::Evolve (int numsteps)
                 (multi_diags->DoComputeAndPack(step) ||
                  reduced_diags->DoDiags(step)))) {
             // At the end of last step, push p by 0.5*dt to synchronize
-            if (do_electrostatic == ElectrostaticSolverAlgo::None) {
-                FillBoundaryE(guard_cells.ng_FieldGather);
-                FillBoundaryB(guard_cells.ng_FieldGather);
-                if (fft_do_time_averaging)
-                {
-                    FillBoundaryE_avg(guard_cells.ng_FieldGather);
-                    FillBoundaryB_avg(guard_cells.ng_FieldGather);
-                }
-                UpdateAuxilaryData();
-                FillBoundaryAux(guard_cells.ng_UpdateAux);
+            FillBoundaryE(guard_cells.ng_FieldGather);
+            FillBoundaryB(guard_cells.ng_FieldGather);
+            if (fft_do_time_averaging)
+            {
+                FillBoundaryE_avg(guard_cells.ng_FieldGather);
+                FillBoundaryB_avg(guard_cells.ng_FieldGather);
             }
+            UpdateAuxilaryData();
+            FillBoundaryAux(guard_cells.ng_UpdateAux);
             for (int lev = 0; lev <= finest_level; ++lev) {
                 mypc->PushP(lev, 0.5_rt*dt[lev],
                             *Efield_aux[lev][0],*Efield_aux[lev][1],
@@ -330,11 +328,6 @@ WarpX::Evolve (int numsteps)
                             *Bfield_aux[lev][2]);
             }
             is_synchronized = true;
-        }
-
-        // sync up time
-        for (int i = 0; i <= max_level; ++i) {
-            t_new[i] = cur_time;
         }
 
         // afterstep callback runs with the updated global time. It is included
