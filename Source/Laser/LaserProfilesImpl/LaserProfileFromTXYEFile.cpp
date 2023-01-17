@@ -151,7 +151,24 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
 
 void
 WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_file_name)
-{
+{  
+    
+    if(ParallelDescriptor::IOProcessor()){
+
+        auto series = io::Series(m_params.txye_file_name, io::Access::READ_ONLY);
+        auto i = series.iterations[0];
+        auto E = i.meshes["E"];
+        auto E_laser = E[io::RecordComponent::SCALAR];
+
+        auto extent = E_laser.getExtent();
+
+        m_params.nt = extent[0];
+        m_params.nx = extent[1];
+        m_params.ny = extent[2];
+        }
+    
+        /*
+    
     if(ParallelDescriptor::IOProcessor()){
         std::ifstream inp(txye_file_name, std::ios::binary);
         if(!inp) Abort("Failed to open txye file");
@@ -187,7 +204,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 #elif defined(WARPX_DIM_XZ)
             dbuf_y.resize(1);
 #endif
-        }
+        } 
+    
         else{
             dbuf_t.resize(m_params.nt);
             dbuf_x.resize(m_params.nx);
@@ -218,7 +236,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
             [](auto x) {return static_cast<amrex::Real>(x);} );
         std::transform(dbuf_y.begin(), dbuf_y.end(), m_params.h_y_coords.begin(),
             [](auto x) {return static_cast<amrex::Real>(x);} );
-    }
+    } */
 
     //Broadcast grid uniformity
     char is_grid_uniform = m_params.is_grid_uniform;
@@ -310,6 +328,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         std::shared_ptr< double > x_data = E_laser.loadChunk< double >();
 
         const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
+        
+        series.flush();
 
         for (int i=0; i<read_size; i++) {
             h_E_data[i] = x_data.get()[i];
