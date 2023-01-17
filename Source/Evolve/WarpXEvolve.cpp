@@ -310,7 +310,8 @@ WarpX::Evolve (int numsteps)
             (synchronize_velocity_for_diagnostics &&
                 (multi_diags->DoComputeAndPack(step) ||
                  reduced_diags->DoDiags(step)))) {
-            // At the end of last step, push p by 0.5*dt to synchronize
+            // At the end of last step or if the diagnostics require synchronization,
+            // push p by 0.5*dt to synchronize
             FillBoundaryE(guard_cells.ng_FieldGather);
             FillBoundaryB(guard_cells.ng_FieldGather);
             if (fft_do_time_averaging)
