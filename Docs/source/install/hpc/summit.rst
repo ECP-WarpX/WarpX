@@ -21,6 +21,7 @@ If you are new to this system, **please see the following resources**:
   * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days
   * Note that the ``$HOME`` directory is mounted as read-only on compute nodes.
     That means you cannot run in your ``$HOME``.
+  * ``/ccs/$proj/``: another, non-GPFS, file system for software and smaller data.
 
 
 Installation
@@ -263,6 +264,9 @@ Known System Issues
    Sep 20th, 2022 (OLCFHELP-8992):
    The above **HDF5 Jupyter read** work-around for OLCFHELP-3685 does not work anymore, due to the way that GPFS is mounted via NSF on Jupyter nodes.
    As a work-around until this is fixed, please copy your HDF5 data to ``/ccs``, ``$HOME`` or use ADIOS2 BP instead of HDF5 files.
+
+   Jan 18th, 2023:
+   The work-around above works again with GPFS data.
 
 .. warning::
 
