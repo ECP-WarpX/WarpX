@@ -16,12 +16,12 @@ If you are new to this system, **please see the following resources**:
 * `Jupyter service <https://jupyter.olcf.ornl.gov>`__
 * `Production directories <https://docs.olcf.ornl.gov/data/index.html#data-storage-and-transfers>`_:
 
-  * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days (recommended)
-  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days (usually smaller quota)
-  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days
+  * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days, GPFS (recommended)
+  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days, GPFS (usually smaller quota)
+  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days, GPFS
+  * ``/ccs/$proj/``: another, non-GPFS, file system for software and smaller data.
   * Note that the ``$HOME`` directory is mounted as read-only on compute nodes.
     That means you cannot run in your ``$HOME``.
-  * ``/ccs/$proj/``: another, non-GPFS, file system for software and smaller data.
 
 
 Installation
