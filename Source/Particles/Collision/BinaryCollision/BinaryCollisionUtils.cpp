@@ -108,11 +108,16 @@ namespace BinaryCollisionUtils{
             amrex::ParmParse pp_collision_name(collision_name);
             std::string type;
             pp_collision_name.get("type", type);
+            amrex::Print() << "PRINT COLL NAME 2" << type << "\n";
+
             if (type == "nuclearfusion") {
                 NuclearFusionType fusion_type = get_nuclear_fusion_type(collision_name, mypc);
                 return nuclear_fusion_type_to_collision_type(fusion_type);
             }
-            amrex::Abort(type + " is not a valid type of collision that creates new particles");
+            if (type == "photonphoton") {
+                return CollisionType::PhotonPhotonToElectronPositron;
+            }
+            amrex::Abort(type + " is not a valid type of collision that create new particles");
             return CollisionType::Undefined;
         }
 

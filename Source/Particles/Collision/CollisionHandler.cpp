@@ -11,6 +11,7 @@
 #include "Particles/Collision/BinaryCollision/Coulomb/PairWiseCoulombCollisionFunc.H"
 #include "Particles/Collision/BinaryCollision/BinaryCollision.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
+#include "Particles/Collision/BinaryCollision/PhotonPhoton/PhotonPhotonCollisionFunc.H"
 #include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
 #include "Utils/TextMsg.H"
 
@@ -55,6 +56,12 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
         else if (type == "nuclearfusion") {
             allcollisions[i] =
                std::make_unique<BinaryCollision<NuclearFusionFunc, ParticleCreationFunc>>(
+                                                                        collision_names[i], mypc);
+        }
+        else if (type == "photonphoton") {
+            amrex::Print() <<  "PRINTING IF TYPE IS photonphoton" << "\n";  
+            allcollisions[i] =
+               std::make_unique<BinaryCollision<PhotonPhotonCollisionFunc, ParticleCreationFunc>>(
                                                                         collision_names[i], mypc);
         }
         else{
