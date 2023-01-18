@@ -9,6 +9,7 @@
 
 #include "Particles/Collision/BinaryCollision/Coulomb/PairWiseCoulombCollisionFunc.H"
 #include "Particles/Collision/BinaryCollision/NuclearFusion/NuclearFusionFunc.H"
+#include "Particles/Collision/BinaryCollision/PhotonPhoton/PhotonPhotonCollisionFunc.H"
 #include "Particles/Collision/BinaryCollision/ParticleCreationFunc.H"
 #include "Particles/Collision/BinaryCollision/ShuffleFisherYates.H"
 #include "Particles/Collision/CollisionBase.H"
