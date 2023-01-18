@@ -276,8 +276,11 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 std::pair<int,int>
 WarpXLaserProfiles::FromTXYEFileLaserProfile::find_left_right_time_indices(amrex::Real t) const
 {
-    int idx_t_right = std::distance(m_params.t_coords.begin(),
-        std::upper_bound(m_params.t_coords.begin(),m_params.t_coords.end(), t));
+    int idx_t_right;
+    const auto t_min = m_params.t_coords.front();
+    const auto t_max = m_params.t_coords.back();
+    const auto temp_idx_t_right = static_cast<int>(std::ceil( (m_params.nt-1)*(t-t_min)/(t_max-t_min)));
+    idx_t_right = max(min(temp_idx_t_right, m_params.nt-1),1);
     
     return std::make_pair(idx_t_right-1, idx_t_right);
 }
