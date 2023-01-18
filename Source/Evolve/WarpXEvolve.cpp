@@ -217,7 +217,7 @@ WarpX::Evolve (int numsteps)
             // B : guard cells are NOT up-to-date
         }
 
-        if ((cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || istep[0]+1 == max_step) &&
+        if ((cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) &&
             !synchronize_velocity_for_diagnostics) {
             // At the end of last step, push p by 0.5*dt to synchronize
             // Note that this is potentially buggy since the PushP will do a field gather
