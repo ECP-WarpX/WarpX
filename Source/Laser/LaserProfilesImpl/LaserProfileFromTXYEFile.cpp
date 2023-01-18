@@ -138,7 +138,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
     if(idx_t_left <  m_params.first_time_index){
         Abort("Something bad has happened with the simulation time");
     }
-    
+
     internal_fill_amplitude_uniform(idx_t_left, np, Xp, Yp, t, amplitude);
 }
 
@@ -158,7 +158,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         m_params.nt = extent[0];
         m_params.nx = extent[1];
         m_params.ny = extent[2];
-        
+
         if(m_params.nt <= 1) Abort("nt in txye file must be >=2");
         if(m_params.nx <= 1) Abort("nx in txye file must be >=2");
 #if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
@@ -169,7 +169,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 
         //Coordinates
         Vector<double> dbuf_t, dbuf_x, dbuf_y;
-        
+
         dbuf_t.resize(m_params.nt);
         dbuf_x.resize(m_params.nx);
         dbuf_y.resize(m_params.ny);
@@ -205,7 +205,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
             dbuf_t.resize(m_params.nt);
             dbuf_x.resize(m_params.nx);
             dbuf_y.resize(m_params.ny);
-        
+
 
         inp.read(reinterpret_cast<char*>(dbuf_t.dataPtr()),
             dbuf_t.size()*sizeof(double));
@@ -278,7 +278,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::find_left_right_time_indices(amrex
 {
     int idx_t_right = std::distance(m_params.t_coords.begin(),
         std::upper_bound(m_params.t_coords.begin(),m_params.t_coords.end(), t));
-    
+
     return std::make_pair(idx_t_right-1, idx_t_right);
 }
 
