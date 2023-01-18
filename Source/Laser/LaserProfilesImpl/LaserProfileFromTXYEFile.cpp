@@ -148,7 +148,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 
     if(ParallelDescriptor::IOProcessor()){
 
-        auto series = io::Series(m_params.txye_file_name, io::Access::READ_ONLY);
+        auto series = io::Series(txye_file_name, io::Access::READ_ONLY);
         auto i = series.iterations[0];
         auto E = i.meshes["E"];
         auto E_laser = E[io::RecordComponent::SCALAR];
@@ -167,16 +167,28 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         if(m_params.ny != 1) Abort("ny in txye file must be 1 in 2D");
 #endif
 
-        //Coordinates
-        Vector<double> dbuf_t, dbuf_x, dbuf_y;
+        // Allocate arrays that contain min/max
+        // of the grid in each direction
+        m_params.t_coords.resize(2);
+        m_params.h_x_coords.resize(2);
+#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+        m_params.h_y_coords.resize(2);
+#elif defined(WARPX_DIM_XZ)
+        m_params.h_y_coords.resize(1);
+#endif
 
-        dbuf_t.resize(m_params.nt);
-        dbuf_x.resize(m_params.nx);
-        dbuf_y.resize(m_params.ny);
-        m_params.t_coords.resize(dbuf_t.size());
-        m_params.h_x_coords.resize(dbuf_x.size());
-        m_params.h_y_coords.resize(dbuf_y.size());
-        }
+        // Extract grid offset and grid spacing
+        std::vector<double> offset = E.gridGlobalOffset();
+        std::vector<double> spacing = E.gridSpacing<double>();
+
+        // Calculate the min and max of the grid
+        m_params.t_coords[0] = offset[0];
+        m_params.t_coords[1] = offset[0] + m_params.nt*spacing[0];
+        m_params.h_x_coords[0] = offset[1];
+        m_params.h_x_coords[1] = offset[1] + m_params.nx*spacing[1];
+        m_params.h_y_coords[0] = offset[2];
+        m_params.h_y_coords[1] = offset[2] + m_params.ny*spacing[2];
+    }
 
         /*
 
@@ -202,11 +214,13 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         //Coordinates
         Vector<double> dbuf_t, dbuf_x, dbuf_y;
 
-            dbuf_t.resize(m_params.nt);
-            dbuf_x.resize(m_params.nx);
-            dbuf_y.resize(m_params.ny);
-
-
+        dbuf_t.resize(2);
+        dbuf_x.resize(2);
+#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+        dbuf_y.resize(2);
+#elif defined(WARPX_DIM_XZ)
+        dbuf_y.resize(1);
+#endif
         inp.read(reinterpret_cast<char*>(dbuf_t.dataPtr()),
             dbuf_t.size()*sizeof(double));
         inp.read(reinterpret_cast<char*>(dbuf_x.dataPtr()),
