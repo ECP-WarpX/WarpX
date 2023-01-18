@@ -305,8 +305,7 @@ WarpX::Evolve (int numsteps)
             ExecutePythonCallback("afterEsolve");
         }
 
-        if ((cur_time >= stop_time - 1.e-3*dt[0]) ||
-            (step == numsteps_max-1) ||
+        if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time) ||
             (synchronize_velocity_for_diagnostics &&
                 (multi_diags->DoComputeAndPack(step) ||
                  reduced_diags->DoDiags(step)))) {
