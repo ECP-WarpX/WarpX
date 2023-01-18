@@ -281,7 +281,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::find_left_right_time_indices(amrex
     const auto t_max = m_params.t_coords.back();
     const auto temp_idx_t_right = static_cast<int>(std::ceil( (m_params.nt-1)*(t-t_min)/(t_max-t_min)));
     idx_t_right = max(min(temp_idx_t_right, m_params.nt-1),1);
-    
+
     return std::make_pair(idx_t_right-1, idx_t_right);
 }
 
