@@ -217,6 +217,35 @@ WarpX::Evolve (int numsteps)
             // B : guard cells are NOT up-to-date
         }
 
+        if ((cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || istep[0]+1 == max_step) &&
+            !synchronize_velocity_for_diagnostics) {
+            // At the end of last step, push p by 0.5*dt to synchronize
+            // Note that this is potentially buggy since the PushP will do a field gather
+            // using particles that have been pushed but not yet checked at the boundaries.
+            // Also, this PushP may be inconsistent with the PushP backwards above since
+            // the fields may change between the two (mainly effecting the Python version when
+            // using electrostatics).
+            // When synchronize_velocity_for_diagnostics is true, the PushP at the end of the
+            // step is used so that the correct behavior is obtained.
+            FillBoundaryE(guard_cells.ng_FieldGather);
+            FillBoundaryB(guard_cells.ng_FieldGather);
+            if (fft_do_time_averaging)
+            {
+                FillBoundaryE_avg(guard_cells.ng_FieldGather);
+                FillBoundaryB_avg(guard_cells.ng_FieldGather);
+            }
+            UpdateAuxilaryData();
+            FillBoundaryAux(guard_cells.ng_UpdateAux);
+            for (int lev = 0; lev <= finest_level; ++lev) {
+                mypc->PushP(lev, 0.5_rt*dt[lev],
+                            *Efield_aux[lev][0],*Efield_aux[lev][1],
+                            *Efield_aux[lev][2],
+                            *Bfield_aux[lev][0],*Bfield_aux[lev][1],
+                            *Bfield_aux[lev][2]);
+            }
+            is_synchronized = true;
+        }
+
         for (int lev = 0; lev <= max_level; ++lev) {
             ++istep[lev];
         }
@@ -305,12 +334,11 @@ WarpX::Evolve (int numsteps)
             ExecutePythonCallback("afterEsolve");
         }
 
-        if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time) ||
-            (synchronize_velocity_for_diagnostics &&
-                (multi_diags->DoComputeAndPack(step) ||
-                 reduced_diags->DoDiags(step)))) {
-            // At the end of last step or if the diagnostics require synchronization,
-            // push p by 0.5*dt to synchronize
+        if (synchronize_velocity_for_diagnostics &&
+            (multi_diags->DoComputeAndPack(step) || reduced_diags->DoDiags(step))) {
+            // When the diagnostics require synchronization, push p by 0.5*dt to synchronize.
+            // Note that this will be undone at the start of the next step by the half v-push
+            // backwards.
             FillBoundaryE(guard_cells.ng_FieldGather);
             FillBoundaryB(guard_cells.ng_FieldGather);
             if (fft_do_time_averaging)
