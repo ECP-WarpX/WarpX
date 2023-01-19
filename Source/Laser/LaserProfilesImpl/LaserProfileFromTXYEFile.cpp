@@ -180,15 +180,16 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 
         // Extract grid offset and grid spacing
         std::vector<double> offset = E.gridGlobalOffset();
+        std::vector<double> position = E.position();
         std::vector<double> spacing = E.gridSpacing<double>();
 
         // Calculate the min and max of the grid
-        m_params.t_coords[0] = offset[0];
-        m_params.t_coords[1] = offset[0] + m_params.nt*spacing[0];
-        m_params.h_x_coords[0] = offset[1];
-        m_params.h_x_coords[1] = offset[1] + m_params.nx*spacing[1];
-        m_params.h_y_coords[0] = offset[2];
-        m_params.h_y_coords[1] = offset[2] + m_params.ny*spacing[2];
+        m_params.t_coords[0] = offset[0] + position[0]*spacing[0];
+        m_params.t_coords[1] = m_params.t_coords[0] + (m_params.nt-1)*spacing[0];
+        m_params.h_x_coords[0] = offset[1] + position[1]*spacing[1];
+        m_params.h_x_coords[1] = m_params.h_x_coords[0] + (m_params.nx-1)*spacing[1];
+        m_params.h_y_coords[0] = offset[2] + position[2]*spacing[2];
+        m_params.h_y_coords[1] = m_params.h_y_coords[0] + (m_params.ny-1)*spacing[2];
     }
 
         /*
