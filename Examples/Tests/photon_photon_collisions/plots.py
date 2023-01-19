@@ -1,16 +1,18 @@
-import os 
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.constants import micron,milli,c,pi,centi,femto,e,pico,m_e,eV 
-import openpmd_api as io
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from matplotlib.colors import LogNorm, Normalize
-from matplotlib import use, cm, rcParams
+import os
+
+from matplotlib import cm, rcParams, use
 import matplotlib.colors
+from matplotlib.colors import LogNorm, Normalize
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import numpy as np
+import openpmd_api as io
+from scipy.constants import (c, centi, e, eV, femto, m_e, micron, milli, pi,
+                             pico)
 
 use('AGG')
 rcParams.update({'font.size': 8})
-MeV=1e6*eV 
+MeV=1e6*eV
 
 # create plot directory
 plot_dir = './plots'
@@ -54,20 +56,20 @@ def plot_one_panel(ax,data,cmap,title):
 
 for n,ts in enumerate(np.asarray(series.iterations)):
     print("timestep = %d" % ts)
-    
-    # plot images    
+
+    # plot images
     fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(1000./my_dpi, 1000./my_dpi), dpi=my_dpi)
     divider = make_axes_locatable(ax)
-    
+
     j = series.iterations[ts]
-    time = j.time      
-    
+    time = j.time
+
     '''
     rho_e = j.meshes["rho_beam_e"][io.Mesh_Record_Component.SCALAR]
     rho_p = j.meshes["rho_beam_p"][io.Mesh_Record_Component.SCALAR]
     rho_e_data = rho_e.load_chunk()
     rho_p_data = rho_p.load_chunk()
-    series.flush() 
+    series.flush()
     charge_density = rho_e_data+rho_p_data
     print(np.min(charge_density), np.max(charge_density))
     im=ax.imshow(charge_density, cmap=cmap_rho, aspect='equal', extent=[xmin,xmax,zmin,zmax], vmin=-20, vmax=20)
@@ -76,24 +78,24 @@ for n,ts in enumerate(np.asarray(series.iterations)):
     E = j.meshes["E"]
     Ez = E["z"]
     data = Ez.load_chunk()
-    series.flush() 
+    series.flush()
     emax = data.max()
-    emin = data.min() 
+    emin = data.min()
     alphas = Normalize(0,emax, clip=True)(np.abs(data))
-    alphas = np.clip(alphas, 0.1, 0.8) 
+    alphas = np.clip(alphas, 0.1, 0.8)
     colors = Normalize(emin, emax)(data)
     colors = cmapE(colors) #cm.seismic(colors)
     colors[..., -1] = alphas
     im=ax.imshow(colors, cmap=cmapE, aspect='equal', extent=[xmin,xmax,zmin,zmax], vmin=emin, vmax=emax)
     cax = divider.append_axes('right', size='2%', pad=0.7)
     fig.colorbar(im, cax=cax, orientation='vertical', label=r'$E_z [V/m]$')
-    del charge_density, colors 
+    del charge_density, colors
     '''
-    
-    for ps in j.particles:
-        print("\t {0}".format(ps))          
 
-    ps = j.particles["photon1"]   
+    for ps in j.particles:
+        print("\t {0}".format(ps))
+
+    ps = j.particles["photon1"]
     x = ps["position"]["x"].load_chunk()
     z = ps["position"]["z"].load_chunk()
     px = ps["momentum"]["x"].load_chunk()
@@ -102,30 +104,30 @@ for n,ts in enumerate(np.asarray(series.iterations)):
     series.flush()
     ekin = c*np.sqrt(px**2+py**2+pz**2)/MeV
     index = np.argsort(ekin)
-    
+
     if ekin.size:
         print('array is not empty')
         print(np.max(ekin))
 
         im = ax.scatter(x[index], z[index], s=1) #, c=ekin[index], cmap=cmap_pho, vmin=0, vmax=ekin.max(), zorder=12, alpha=0.8)
         #cax = divider.append_axes('right', size='2%', pad=0.75)
-        #fig.colorbar(im, cax=cax, orientation='vertical', label=r'photon energy [MeV]')    
+        #fig.colorbar(im, cax=cax, orientation='vertical', label=r'photon energy [MeV]')
 
-        
+
     del x, z, px, py, pz, ekin
-                
-  
+
+
     ax.set_xlabel(r'x [mm]')
     ax.set_ylabel(r'y [mm]')
     ax.set_aspect('equal')
-    
+
     ax.set_title("time = %.03f ps" %(time/pico));
     #plt.subplots_adjust(left=0.,bottom=0., right=0.5, top=1., hspace=0., wspace=0.)
     #__________________________________________________________
     # save image
     image_file_name =plot_dir+'/frame_%04d.png' % n
     plt.tight_layout()
-    plt.savefig(image_file_name,dpi=my_dpi) 
+    plt.savefig(image_file_name,dpi=my_dpi)
     plt.close("all")
- 
+
 del series
