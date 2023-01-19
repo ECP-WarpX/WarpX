@@ -1499,6 +1499,11 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     warpx_checkpoint_signals: list of strings
         Signals on which to write out a checkpoint
+
+    warpx_synchronize_velocity: bool, default=False
+        Flags whether the particle velocities are synchronized in time with
+        the positions in the diagnostics. When False, the particles are
+        one half step behind the positions (except for the final diagnostic).
     """
 
     # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
@@ -1532,6 +1537,8 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         self.break_signals = kw.pop('warpx_break_signals', None)
         self.checkpoint_signals = kw.pop('warpx_checkpoint_signals', None)
+
+        self.synchronize_velocity = kw.pop('warpx_synchronize_velocity', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -1575,6 +1582,8 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         pywarpx.warpx.break_signals = self.break_signals
         pywarpx.warpx.checkpoint_signals = self.checkpoint_signals
+
+        pywarpx.warpx.synchronize_velocity_for_diagnostics = self.synchronize_velocity
 
         particle_shape = self.particle_shape
         for s in self.species:
