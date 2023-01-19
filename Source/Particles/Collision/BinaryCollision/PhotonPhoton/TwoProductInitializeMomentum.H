@@ -46,7 +46,7 @@ namespace {
      * @param[in] m2_in mass of second colliding species
      * @param[in] m1_out mass of first product species
      * @param[in] m2_out mass of second product species
-     * @param[in] E_fusion energy released in the fusion reaction // REMOVED 
+     * @param[in] E_fusion energy released in the fusion reaction // REMOVED
      * @param[in] engine the random engine
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -89,7 +89,7 @@ namespace {
         soa2_out.m_rdata[PIdx::ux][idx2_out_start + 1] = ux2_out;
         soa2_out.m_rdata[PIdx::uy][idx2_out_start + 1] = uy2_out;
         soa2_out.m_rdata[PIdx::uz][idx2_out_start + 1] = uz2_out;
-        amrex::Print() << "TwoProductInitMomH ..." << uz2_out << "\n" ;  
+        amrex::Print() << "TwoProductInitMomH ..." << uz2_out << "\n" ;
     }
 }
 

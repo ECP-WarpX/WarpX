@@ -93,7 +93,7 @@ namespace {
         const amrex::ParticleReal p1_in = std::sqrt(pow2(p1x_in)+pow2(p1y_in)+pow2(p1z_in));
         const amrex::ParticleReal p2_in = std::sqrt(pow2(p2x_in)+pow2(p2y_in)+pow2(p2z_in));
 
-        // Compute angle between photon momenta in the lab frame 
+        // Compute angle between photon momenta in the lab frame
         const amrex::ParticleReal cos_ang = (p1x_in*p2x_in+p1y_in*p2y_in+p1z_in*p2z_in)/(p1_in*p2_in);
 
         // Square norm of the total (sum between the two particles) momenta in the lab frame
@@ -103,7 +103,7 @@ namespace {
 
         // Total energy of incident macroparticles in the lab frame
         const amrex::ParticleReal E_lab = std::sqrt(p_total_sq*c_sq); //(m1_in * g1_in + m2_in * g2_in) * c_sq;
-        
+
         // Total energy squared of proton+boron in the center of mass frame, calculated using the
         // Lorentz invariance of the four-momentum norm
         const amrex::ParticleReal E_star_sq = one_half_pr*c_sq*p1_in*p2_in*(one_pr - cos_ang); //E_lab*E_lab - c_sq*p_total_sq;
@@ -174,7 +174,7 @@ namespace {
         u2x_out = p2x_out/me; //m2_out;
         u2y_out = p2y_out/me;
         u2z_out = p2z_out/me;
-        amrex::Print() << "COLL MOM " << u2z_out << "\n"; 
+        amrex::Print() << "COLL MOM " << u2z_out << "\n";
     }
 }
 

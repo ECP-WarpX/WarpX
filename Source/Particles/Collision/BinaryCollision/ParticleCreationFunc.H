@@ -115,8 +115,8 @@ public:
                     ) const
     {
         if (n_total_pairs == 0) return amrex::Vector<int>(m_num_product_species, 0);
-        amrex::Print() << "tot pairs ..." << n_total_pairs << "\n" ;  
-        amrex::Print() << "pmask0 ..." << p_mask[0] << "\n" ;  
+        amrex::Print() << "tot pairs ..." << n_total_pairs << "\n" ;
+        amrex::Print() << "pmask0 ..." << p_mask[0] << "\n" ;
 
         // Compute offset array and allocate memory for the produced species
         amrex::Gpu::DeviceVector<index_type> offsets(n_total_pairs);
@@ -249,13 +249,13 @@ public:
                         m1, m2, products_mass_data[0], products_mass_data[1], fusion_energy, engine);
                 }
                 else if(t_collision_type == CollisionType::PhotonPhotonToElectronPositron){
-                    amrex::Print() << "before TwoProductInitializeMomentum " << "\n"; 
+                    amrex::Print() << "before TwoProductInitializeMomentum " << "\n";
                     TwoProductInitializeMomentum(soa_1, soa_2,
                         soa_products_data[0], soa_products_data[1],
                         p_pair_indices_1[i], p_pair_indices_2[i],
                         products_np_data[0] + 2*p_offsets[i]*p_num_products_device[0],
                         products_np_data[1] + 2*p_offsets[i]*p_num_products_device[1],
-                        m1, m2, products_mass_data[0], products_mass_data[1], engine);                   
+                        m1, m2, products_mass_data[0], products_mass_data[1], engine);
                 }
 
             }

@@ -3,13 +3,13 @@
 #################################
 ## With these parameters, each cell has a size of exactly 1 by 1
 max_step = 2
-amr.n_cell = 16 8 
+amr.n_cell = 16 8
 amr.max_grid_size = 8
 amr.blocking_factor = 8
 amr.max_level = 0
 geometry.dims   = 2
 my_constants.Lx = 16
-my_constants.Ly = 8 
+my_constants.Ly = 8
 geometry.prob_lo     = -0.5*Lx    -0.5*Ly
 geometry.prob_hi     = 0.5*Lx   0.5*Ly
 
@@ -36,8 +36,8 @@ particles.species_names = photon1 photon2 electron positron
 photon1.species_type = photon
 #photon1.injection_style = gaussian_beam
 #photon1.x_rms = 0.
-#photon1.y_rms =	0.1
-#photon1.z_rms =	0.
+#photon1.y_rms =    0.1
+#photon1.z_rms =    0.
 #photon1.x_m = -0.25*Lx
 #photon1.y_m = 0.
 #photon1.z_m = 0.
@@ -110,7 +110,7 @@ electron.do_not_push = 1
 electron.do_not_deposit = 1
 
 positron.species_type = positron
-positron.injection_style = none 
+positron.injection_style = none
 positron.do_not_push = 1
 positron.do_not_deposit = 1
 
@@ -123,20 +123,20 @@ LBW.product_species = electron positron
 LBW.type = photonphoton
 LBW.fusion_multiplier = 1.e60
 
-# Full diagnostics 
+# Full diagnostics
 diagnostics.diags_names = particles
 particles.intervals = 1
 particles.diag_type = Full
 particles.fields_to_plot = none
 particles.write_species = 1
-particles.species = photon1 photon2 electron positron 
+particles.species = photon1 photon2 electron positron
 particles.format = openpmd
 particles.openpmd_backend = bp
 particles.dump_last_timestep = 1
 
 
-my_constants.out_freq_red = 1 
-# Reduced diagnostics 
+my_constants.out_freq_red = 1
+# Reduced diagnostics
 warpx.reduced_diags_names = FieldEnergy FieldMomentum FieldMaximum ParticleExtrema_photon1 ParticleExtrema_photon2 ParticleExtrema_electron ParticleExtrema_positron ParticleEnergy ParticleMomentum RhoMaximum ParticleNumber BeamRelevant_photon1 BeamRelevant_photon2 BeamRelevant_electron BeamRelevant_positron
 
 FieldEnergy.type = FieldEnergy
@@ -189,5 +189,5 @@ BeamRelevant_electron.species = electron
 BeamRelevant_electron.intervals = out_freq_red
 
 BeamRelevant_positron.type = BeamRelevant
-BeamRelevant_positron.species =	positron
+BeamRelevant_positron.species =    positron
 BeamRelevant_positron.intervals = out_freq_red

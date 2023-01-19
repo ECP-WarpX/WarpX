@@ -59,7 +59,7 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
                                                                         collision_names[i], mypc);
         }
         else if (type == "photonphoton") {
-            amrex::Print() <<  "PRINTING IF TYPE IS photonphoton" << "\n";  
+            amrex::Print() <<  "PRINTING IF TYPE IS photonphoton" << "\n";
             allcollisions[i] =
                std::make_unique<BinaryCollision<PhotonPhotonCollisionFunc, ParticleCreationFunc>>(
                                                                         collision_names[i], mypc);

@@ -84,7 +84,7 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     const amrex::ParticleReal g1 = std::sqrt( one_pr + (u1x*u1x+u1y*u1y+u1z*u1z)*inv_csq );
     const amrex::ParticleReal g2 = std::sqrt( one_pr + (u2x*u2x+u2y*u2y+u2z*u2z)*inv_csq );
 
-    // Compute momenta in the lab frame 
+    // Compute momenta in the lab frame
     const amrex::ParticleReal p1x = u1x * me;
     const amrex::ParticleReal p1y = u1y * me;
     const amrex::ParticleReal p1z = u1z * me;
@@ -94,7 +94,7 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     const amrex::ParticleReal p1 = std::sqrt(pow2(p1x)+pow2(p1y)+pow2(p1z));
     const amrex::ParticleReal p2 = std::sqrt(pow2(p2x)+pow2(p2y)+pow2(p2z));
 
-    // Compute angle between photon momenta in the lab frame 
+    // Compute angle between photon momenta in the lab frame
     const amrex::ParticleReal cos_ang = (p1x*p2x+p1y*p2y+p1z*p2z)/(p1*p2);
 
     // Square norm of the total (sum between the two particles) momenta in the lab frame
@@ -114,10 +114,10 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
 
     // Compute linear Breit Wheeler cross section as a function of kinetic energy in the center of mass frame
     auto lbw_cross_section = amrex::ParticleReal(0.);
-    
+
     lbw_cross_section = LinearBreitWheelerCrossSection(E_star);
 
-    
+
     // Square of the norm of the momentum of one of the particles in the center of mass frame
     // Formula obtained by inverting E^2 = p^2*c^2 + m^2*c^4 in the COM frame for each particle
     // The expression below is specifically written in a form that avoids returning
@@ -179,7 +179,7 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     // Get a random number
     amrex::ParticleReal random_number = amrex::Random(engine);
 
-    amrex::Print() << "randon number = " << random_number << "::: probability = " << probability << "\n";    
+    amrex::Print() << "randon number = " << random_number << "::: probability = " << probability << "\n";
     // If we have a fusion event, set the mask the true and fill the product weight array
     if (random_number < probability)
     {
