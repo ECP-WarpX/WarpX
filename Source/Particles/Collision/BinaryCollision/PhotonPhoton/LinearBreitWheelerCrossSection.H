@@ -48,7 +48,7 @@ amrex::ParticleReal LinearBreitWheelerCrossSection (const amrex::ParticleReal& E
     const amrex::ParticleReal term2 = 2._prt*beta*(pow2(beta)-2._prt);
     const amrex::ParticleReal cross_section = one_half_pr*pi*re2*(1._prt-pow2(beta))*(term1+term2);
     
-    amrex::Print() <<  "PRINTING CROSS SECTION" << cross_section << "\n";  
+    //amrex::Print() <<  "PRINTING CROSS SECTION" << cross_section << "\n";  
 
     return cross_section;
 }

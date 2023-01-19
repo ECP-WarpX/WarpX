@@ -116,6 +116,7 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     auto lbw_cross_section = amrex::ParticleReal(0.);
     
     lbw_cross_section = LinearBreitWheelerCrossSection(E_star);
+
     
     // Square of the norm of the momentum of one of the particles in the center of mass frame
     // Formula obtained by inverting E^2 = p^2*c^2 + m^2*c^4 in the COM frame for each particle
@@ -178,6 +179,7 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     // Get a random number
     amrex::ParticleReal random_number = amrex::Random(engine);
 
+    amrex::Print() << "randon number = " << random_number << "::: probability = " << probability << "\n";    
     // If we have a fusion event, set the mask the true and fill the product weight array
     if (random_number < probability)
     {

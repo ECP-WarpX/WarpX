@@ -174,6 +174,7 @@ namespace {
         u2x_out = p2x_out/me; //m2_out;
         u2y_out = p2y_out/me;
         u2z_out = p2z_out/me;
+        amrex::Print() << "COLL MOM " << u2z_out << "\n"; 
     }
 }
 
