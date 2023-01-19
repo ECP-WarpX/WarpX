@@ -89,6 +89,7 @@ namespace {
         soa2_out.m_rdata[PIdx::ux][idx2_out_start + 1] = ux2_out;
         soa2_out.m_rdata[PIdx::uy][idx2_out_start + 1] = uy2_out;
         soa2_out.m_rdata[PIdx::uz][idx2_out_start + 1] = uz2_out;
+        amrex::Print() << "TwoProductInitMomH ..." << uz2_out << "\n" ;  
     }
 }
 

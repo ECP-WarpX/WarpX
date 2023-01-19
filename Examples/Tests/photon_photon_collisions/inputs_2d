@@ -1,0 +1,193 @@
+#################################
+####### GENERAL PARAMETERS ######
+#################################
+## With these parameters, each cell has a size of exactly 1 by 1
+max_step = 2
+amr.n_cell = 16 8 
+amr.max_grid_size = 8
+amr.blocking_factor = 8
+amr.max_level = 0
+geometry.dims   = 2
+my_constants.Lx = 16
+my_constants.Ly = 8 
+geometry.prob_lo     = -0.5*Lx    -0.5*Ly
+geometry.prob_hi     = 0.5*Lx   0.5*Ly
+
+#################################
+###### Boundary Condition #######
+#################################
+boundary.field_lo = periodic periodic
+boundary.field_hi = periodic periodic
+
+#################################
+############ NUMERICS ###########
+#################################
+warpx.verbose = 1
+warpx.cfl = 1.0
+
+# Order of particle shape factors
+algo.particle_shape = 1
+
+#################################
+############ PLASMA #############
+#################################
+particles.species_names = photon1 photon2 electron positron
+
+photon1.species_type = photon
+#photon1.injection_style = gaussian_beam
+#photon1.x_rms = 0.
+#photon1.y_rms =	0.1
+#photon1.z_rms =	0.
+#photon1.x_m = -0.25*Lx
+#photon1.y_m = 0.
+#photon1.z_m = 0.
+#photon1.npart = 100
+#photon1.q_tot = 0.
+#photon1.momentum_distribution_type = gaussian
+#photon1.ux_m = 1000.
+#photon1.uy_m = 0.
+#photon1.uz_m = 0.
+#photon1.ux_th = 0.
+#photon1.uy_th = 0.
+#photon1.uz_th = 0.
+
+photon2.species_type = photon
+#photon2.injection_style = gaussian_beam
+#photon2.x_rms = 0.
+#photon2.y_rms = 0.1
+#photon2.z_rms = 0.
+#photon2.x_m = 0.25*Lx
+#photon2.y_m = 0.
+#photon2.z_m = 0.
+#photon2.npart = 100
+#photon2.q_tot = 0.
+#photon2.momentum_distribution_type = gaussian
+#photon2.ux_m = -1000.
+#photon2.uy_m = 0.
+#photon2.uz_m = 0.
+#photon2.ux_th = 0.
+#photon2.uy_th = 0.
+#photon2.uz_th = 0.
+
+
+
+photon1.injection_style = "NRandomPerCell"
+photon1.num_particles_per_cell = 100
+photon1.profile = constant
+photon1.density = 1.
+#photon1.xmin = -7
+#photon1.xmax = -5
+#photon1.zmin = -1
+#photon1.zmax = 1
+photon1.momentum_distribution_type = "parse_momentum_function"
+photon1.momentum_function_ux(x,y,z) = 0.
+photon1.momentum_function_uy(x,y,z) = 0.
+# Thanks to the floor, all particles in the same cell have the exact same momentum
+photon1.momentum_function_uz(x,y,z) = 100000. #sqrt(2*m_reduced*Energy_step*(floor(z)**2))/(m_p*clight)
+photon1.do_not_push = 1
+photon1.do_not_deposit = 1
+
+photon2.species_type = photon
+photon2.injection_style = "NRandomPerCell"
+photon2.num_particles_per_cell = 100
+photon2.profile = constant
+photon2.density = 1.
+#photon2.xmin = 5
+#photon2.xmax = 7
+#photon2.zmin = -1
+#photon2.zmax = 1
+photon2.momentum_distribution_type = "parse_momentum_function"
+photon2.momentum_function_ux(x,y,z) = 0.
+photon2.momentum_function_uy(x,y,z) = 0.
+# Thanks to the floor, all particles in the same cell have the exact same momentum
+photon2.momentum_function_uz(x,y,z) = -100000. #-sqrt(2*m_reduced*Energy_step*(floor(z)**2))/(m_b11*clight)
+photon2.do_not_push = 1
+photon2.do_not_deposit = 1
+
+electron.species_type = electron
+electron.injection_style = none
+electron.do_not_push = 1
+electron.do_not_deposit = 1
+
+positron.species_type = positron
+positron.injection_style = none 
+positron.do_not_push = 1
+positron.do_not_deposit = 1
+
+#################################
+############ COLLISION ##########
+#################################
+collisions.collision_names = LBW
+LBW.species = photon1 photon2
+LBW.product_species = electron positron
+LBW.type = photonphoton
+LBW.fusion_multiplier = 1.e60
+
+# Full diagnostics 
+diagnostics.diags_names = particles
+particles.intervals = 1
+particles.diag_type = Full
+particles.fields_to_plot = none
+particles.write_species = 1
+particles.species = photon1 photon2 electron positron 
+particles.format = openpmd
+particles.openpmd_backend = bp
+particles.dump_last_timestep = 1
+
+
+my_constants.out_freq_red = 1 
+# Reduced diagnostics 
+warpx.reduced_diags_names = FieldEnergy FieldMomentum FieldMaximum ParticleExtrema_photon1 ParticleExtrema_photon2 ParticleExtrema_electron ParticleExtrema_positron ParticleEnergy ParticleMomentum RhoMaximum ParticleNumber BeamRelevant_photon1 BeamRelevant_photon2 BeamRelevant_electron BeamRelevant_positron
+
+FieldEnergy.type = FieldEnergy
+FieldEnergy.intervals = out_freq_red
+
+FieldMomentum.type = FieldMomentum
+FieldMomentum.intervals = out_freq_red
+
+FieldMaximum.type = FieldMaximum
+FieldMaximum.intervals = out_freq_red
+
+ParticleExtrema_photon1.type = ParticleExtrema
+ParticleExtrema_photon1.intervals = out_freq_red
+ParticleExtrema_photon1.species = photon1
+
+ParticleExtrema_photon2.type = ParticleExtrema
+ParticleExtrema_photon2.intervals = out_freq_red
+ParticleExtrema_photon2.species = photon2
+
+ParticleExtrema_electron.type = ParticleExtrema
+ParticleExtrema_electron.intervals = out_freq_red
+ParticleExtrema_electron.species = electron
+
+ParticleExtrema_positron.type = ParticleExtrema
+ParticleExtrema_positron.intervals = out_freq_red
+ParticleExtrema_positron.species = positron
+
+ParticleEnergy.type = ParticleEnergy
+ParticleEnergy.intervals = out_freq_red
+
+ParticleMomentum.type = ParticleMomentum
+ParticleMomentum.intervals = out_freq_red
+
+RhoMaximum.type = RhoMaximum
+RhoMaximum.intervals = out_freq_red
+
+ParticleNumber.type = ParticleNumber
+ParticleNumber.intervals = out_freq_red
+
+BeamRelevant_photon1.type = BeamRelevant
+BeamRelevant_photon1.species = photon1
+BeamRelevant_photon1.intervals = out_freq_red
+
+BeamRelevant_photon2.type = BeamRelevant
+BeamRelevant_photon2.species = photon2
+BeamRelevant_photon2.intervals = out_freq_red
+
+BeamRelevant_electron.type = BeamRelevant
+BeamRelevant_electron.species = electron
+BeamRelevant_electron.intervals = out_freq_red
+
+BeamRelevant_positron.type = BeamRelevant
+BeamRelevant_positron.species =	positron
+BeamRelevant_positron.intervals = out_freq_red
