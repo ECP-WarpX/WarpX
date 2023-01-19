@@ -150,7 +150,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 
         auto series = io::Series(txye_file_name, io::Access::READ_ONLY);
         auto i = series.iterations[0];
-        auto E = i.meshes["E"];
+        auto E = i.meshes["E_real"];
         auto E_laser = E[io::RecordComponent::SCALAR];
 
         auto extent = E_laser.getExtent();
@@ -318,7 +318,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
 
         auto series = io::Series(m_params.txye_file_name, io::Access::READ_ONLY);
         auto i = series.iterations[0];
-        auto E = i.meshes["E"];
+        auto E = i.meshes["E_real"];
         auto E_laser = E[io::RecordComponent::SCALAR];
 
         // alternatively, pass pre-allocated
