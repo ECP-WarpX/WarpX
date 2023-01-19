@@ -11,6 +11,7 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpX_Complex.H"
+#include "Utils/WarpXConst.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -378,6 +379,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
     const auto tmp_e_max = m_common_params.e_max;
+    const amrex::Real cos_omega_t = std::cos(
+            2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength );
     const auto tmp_x_min = m_params.h_x_coords.front();
     const auto tmp_x_max = m_params.h_x_coords.back();
 #if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
@@ -479,6 +482,11 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         amrex::ignore_unused(x_0, x_1, tmp_e_max, p_E_data, tmp_idx_first_time,
                              t_left, t_right, Xp, Yp, t, idx_x_left);
 #endif
+
+        // The interpolated amplitude was only the envelope.
+        // Here we add the laser oscillations.
+        amplitude[i] *= cos_omega_t;
+
         }
     );
 }
