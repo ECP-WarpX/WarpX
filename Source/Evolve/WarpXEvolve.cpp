@@ -335,7 +335,8 @@ WarpX::Evolve (int numsteps)
         }
 
         if (synchronize_velocity_for_diagnostics &&
-            (multi_diags->DoComputeAndPack(step) || reduced_diags->DoDiags(step))) {
+            (multi_diags->DoComputeAndPack(step) || reduced_diags->DoDiags(step) ||
+             (cur_time + dt[0] >= stop_time - 1.e-3*dt[0]) || step == numsteps_max-1)) {
             // When the diagnostics require synchronization, push p by 0.5*dt to synchronize.
             // Note that this will be undone at the start of the next step by the half v-push
             // backwards.
