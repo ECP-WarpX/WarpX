@@ -9,9 +9,7 @@
 
 #include <AMReX.H>
 
-#ifdef AMREX_USE_MPI
-#   include <mpi.h>
-#endif
+#include <AMReX_ccse-mpi.H>
 
 /** Call amrex::Initialize
  *
