@@ -102,7 +102,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
 void
 WarpXLaserProfiles::FromTXYEFileLaserProfile::update (amrex::Real t)
 {
-    t -= m_params.t_delay;
+    t += m_params.t_coords[0] - m_params.t_delay;
 
     if(t >= m_params.t_coords.back())
         return;
@@ -123,7 +123,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {
-    t -= m_params.t_delay;
+    t += m_params.t_coords[0] - m_params.t_delay;
 
     //Amplitude is 0 if time is out of range
     if(t < m_params.t_coords.front() ||  t > m_params.t_coords.back()){
@@ -378,7 +378,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
 {
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
-    const auto tmp_e_max = m_common_params.e_max;
     const amrex::Real cos_omega_t = std::cos(
             2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength );
     const auto tmp_x_min = m_params.h_x_coords.front();
@@ -461,7 +460,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             p_E_data[idx(idx_t_right, idx_x_left, idx_y_right)],
             p_E_data[idx(idx_t_right, idx_x_right, idx_y_left)],
             p_E_data[idx(idx_t_right, idx_x_right, idx_y_right)],
-            t, Xp[i], Yp[i])*tmp_e_max;
+            t, Xp[i], Yp[i]);
 
 #elif defined(WARPX_DIM_XZ)
         //Interpolate amplitude
@@ -475,11 +474,11 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             p_E_data[idx(idx_t_left, idx_x_right)],
             p_E_data[idx(idx_t_right, idx_x_left)],
             p_E_data[idx(idx_t_right, idx_x_right)],
-            t, Xp[i])*tmp_e_max;
+            t, Xp[i]);
         amrex::ignore_unused(Yp);
 #else
         // TODO: implement WARPX_DIM_1D_Z
-        amrex::ignore_unused(x_0, x_1, tmp_e_max, p_E_data, tmp_idx_first_time,
+        amrex::ignore_unused(x_0, x_1, p_E_data, tmp_idx_first_time,
                              t_left, t_right, Xp, Yp, t, idx_x_left);
 #endif
 
