@@ -192,64 +192,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         m_params.h_y_coords[1] = m_params.h_y_coords[0] + (m_params.ny-1)*spacing[2];
     }
 
-        /*
-
-    if(ParallelDescriptor::IOProcessor()){
-        std::ifstream inp(txye_file_name, std::ios::binary);
-        if(!inp) Abort("Failed to open txye file");
-        inp.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-
-        //Grid points along t, x and y
-        inp.read(reinterpret_cast<char*>(&m_params.nt), sizeof(uint32_t));
-        inp.read(reinterpret_cast<char*>(&m_params.nx), sizeof(uint32_t));
-        inp.read(reinterpret_cast<char*>(&m_params.ny), sizeof(uint32_t));
-        if(!inp) Abort("Failed to read sizes from txye file");
-
-        if(m_params.nt <= 1) Abort("nt in txye file must be >=2");
-        if(m_params.nx <= 1) Abort("nx in txye file must be >=2");
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
-        if(m_params.ny <= 1) Abort("ny in txye file must be >=2 in 3D");
-#elif defined(WARPX_DIM_XZ)
-        if(m_params.ny != 1) Abort("ny in txye file must be 1 in 2D");
-#endif
-
-        //Coordinates
-        Vector<double> dbuf_t, dbuf_x, dbuf_y;
-
-        dbuf_t.resize(2);
-        dbuf_x.resize(2);
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
-        dbuf_y.resize(2);
-#elif defined(WARPX_DIM_XZ)
-        dbuf_y.resize(1);
-#endif
-        inp.read(reinterpret_cast<char*>(dbuf_t.dataPtr()),
-            dbuf_t.size()*sizeof(double));
-        inp.read(reinterpret_cast<char*>(dbuf_x.dataPtr()),
-            dbuf_x.size()*sizeof(double));
-        inp.read(reinterpret_cast<char*>(dbuf_y.dataPtr()),
-            dbuf_y.size()*sizeof(double));
-        if(!inp) Abort("Failed to read coords from txye file");
-
-        m_params.t_coords.resize(dbuf_t.size());
-        m_params.h_x_coords.resize(dbuf_x.size());
-        m_params.h_y_coords.resize(dbuf_y.size());
-
-        if (!std::is_sorted(dbuf_t.begin(), dbuf_t.end()) ||
-            !std::is_sorted(dbuf_x.begin(), dbuf_x.end()) ||
-            !std::is_sorted(dbuf_y.begin(), dbuf_y.end()))
-            Abort("Coordinates are not sorted  in txye file");
-
-        // Convert from double to amrex::Real
-        std::transform(dbuf_t.begin(), dbuf_t.end(), m_params.t_coords.begin(),
-            [](auto x) {return static_cast<amrex::Real>(x);} );
-        std::transform(dbuf_x.begin(), dbuf_x.end(), m_params.h_x_coords.begin(),
-            [](auto x) {return static_cast<amrex::Real>(x);} );
-        std::transform(dbuf_y.begin(), dbuf_y.end(), m_params.h_y_coords.begin(),
-            [](auto x) {return static_cast<amrex::Real>(x);} );
-    } */
-
-
     //Broadcast grid size and coordinate sizes
     //When a non-uniform grid is used, nt, nx and ny are identical
     //to t_coords.size(), x_coords.size() and y_coords.size().
@@ -333,29 +275,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         for (int j=0; j<read_size; j++) {
             h_E_data[j] = x_data.get()[j];
         }
-
-        /*
-        //Read data chunk
-        std::ifstream inp(m_params.txye_file_name, std::ios::binary);
-        if(!inp) Abort("Failed to open txye file");
-        inp.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-
-        auto skip_amount = 1 +
-            3*sizeof(uint32_t) +
-            m_params.t_coords.size()*sizeof(double) +
-            m_params.h_x_coords.size()*sizeof(double) +
-            m_params.h_y_coords.size()*sizeof(double) +
-            sizeof(double)*t_begin*m_params.nx*m_params.ny;
-        inp.seekg(skip_amount);
-        if(!inp) Abort("Failed to read field data from txye file");
-        const int read_size = (i_last - i_first + 1)*
-            m_params.nx*m_params.ny;
-        Vector<double> buf_e(read_size);
-        inp.read(reinterpret_cast<char*>(buf_e.dataPtr()), read_size*sizeof(double));
-        if(!inp) Abort("Failed to read field data from txye file");
-        std::transform(buf_e.begin(), buf_e.end(), h_E_data.begin(),
-            [](auto x) {return static_cast<amrex::Real>(x);} );
-            */
     }
 
     //Broadcast E_data
