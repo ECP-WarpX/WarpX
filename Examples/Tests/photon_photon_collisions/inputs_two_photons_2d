@@ -2,13 +2,13 @@
 ####### GENERAL PARAMETERS ######
 #################################
 max_step = 400
-amr.n_cell = 8 8 
+amr.n_cell = 8 8
 amr.max_grid_size = 8
 amr.blocking_factor = 8
 amr.max_level = 0
 geometry.dims = 2
 geometry.prob_lo = -4 -4
-geometry.prob_hi = 4 4 
+geometry.prob_hi = 4 4
 
 #################################
 ##### BOUNDARY CONDITIONS #######
@@ -31,16 +31,16 @@ particles.photon_species = photonA photonB
 
 photonA.species_type = photon
 photonA.injection_style = "SingleParticle"
-photonA.single_particle_pos = 0 0 0 
-photonA.single_particle_vel = 2.7 0 0 # gamma times beta 
+photonA.single_particle_pos = 0 0 0
+photonA.single_particle_vel = 2.7 0 0 # gamma times beta
 photonA.single_particle_weight = 1e53
 photonA.do_not_push = 1
 photonA.do_not_deposit = 1
 
 photonB.species_type = photon
 photonB.injection_style = "SingleParticle"
-photonB.single_particle_pos = 0 0 0 
-photonB.single_particle_vel = -2.7 0 0 # gamma times beta 
+photonB.single_particle_pos = 0 0 0
+photonB.single_particle_vel = -2.7 0 0 # gamma times beta
 photonB.single_particle_weight = 1e53
 photonB.do_not_push = 1
 photonB.do_not_deposit = 1
@@ -51,7 +51,7 @@ electron.do_not_push = 1
 electron.do_not_deposit = 1
 
 positron.species_type = positron
-positron.injection_style = none 
+positron.injection_style = none
 positron.do_not_push = 1
 positron.do_not_deposit = 1
 
@@ -65,20 +65,20 @@ LBW.type = photonphoton
 LBW.fusion_multiplier = 1.
 LBW.fusion_probability_threshold = 0.1
 
-# Full diagnostics 
+# Full diagnostics
 diagnostics.diags_names = particles
 particles.intervals = 1
 particles.diag_type = Full
 particles.fields_to_plot = none
 particles.write_species = 1
-particles.species = photonA photonB electron positron 
+particles.species = photonA photonB electron positron
 particles.format = openpmd
 particles.openpmd_backend = bp
 particles.dump_last_timestep = 1
 
 
-my_constants.out_freq_red = 1 
-# Reduced diagnostics 
+my_constants.out_freq_red = 1
+# Reduced diagnostics
 warpx.reduced_diags_names = FieldEnergy FieldMomentum FieldMaximum ParticleExtrema_photonA ParticleExtrema_photonB ParticleExtrema_electron ParticleExtrema_positron ParticleEnergy ParticleMomentum RhoMaximum ParticleNumber BeamRelevant_photonA BeamRelevant_photonB BeamRelevant_electron BeamRelevant_positron
 
 FieldEnergy.type = FieldEnergy
@@ -131,5 +131,5 @@ BeamRelevant_electron.species = electron
 BeamRelevant_electron.intervals = out_freq_red
 
 BeamRelevant_positron.type = BeamRelevant
-BeamRelevant_positron.species =	positron
+BeamRelevant_positron.species =    positron
 BeamRelevant_positron.intervals = out_freq_red
