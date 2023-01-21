@@ -51,8 +51,8 @@ amrex::ParticleReal LinearBreitWheelerCrossSection (const amrex::ParticleReal& E
 
     //amrex::Print() <<  "PRINTING CROSS SECTION" << cross_section << "\n";
 =======
-    
-    amrex::Print() <<  "PRINTING CROSS SECTION" << cross_section << "\n";  
+
+    amrex::Print() <<  "PRINTING CROSS SECTION" << cross_section << "\n";
 >>>>>>> 09a889ee (added temporary prints)
 
     return cross_section;
