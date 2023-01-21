@@ -108,13 +108,24 @@ namespace BinaryCollisionUtils{
             amrex::ParmParse pp_collision_name(collision_name);
             std::string type;
             pp_collision_name.get("type", type);
-            amrex::Print() << "PRINT COLL NAME 2" << type << "\n";
+            amrex::Vector<std::string> product_species_name;
+            pp_collision_name.getarr("product_species", product_species_name);
 
             if (type == "nuclearfusion") {
                 NuclearFusionType fusion_type = get_nuclear_fusion_type(collision_name, mypc);
                 return nuclear_fusion_type_to_collision_type(fusion_type);
             }
             if (type == "photonphoton") {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    product_species_name.size() == 2u,
+                    "ERROR: Photon-photon collisions must contain exactly two product species");
+                auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
+                auto& product_species2 = mypc->GetParticleContainerFromName(product_species_name[1]);
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    (product_species1.AmIA<PhysicalSpecies::electron>() && product_species2.AmIA<PhysicalSpecies::positron>())
+                    ||
+                    (product_species1.AmIA<PhysicalSpecies::positron>() && product_species2.AmIA<PhysicalSpecies::electron>()),
+                    "ERROR: Product species of photon-photon collisions must be of type electron and positron");
                 return CollisionType::PhotonPhotonToElectronPositron;
             }
             amrex::Abort(type + " is not a valid type of collision that create new particles");
