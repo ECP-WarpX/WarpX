@@ -110,6 +110,10 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
 
     // Kinetic energy in the center of mass frame
     const amrex::ParticleReal E_star = std::sqrt(E_star_sq);
+    amrex::Print() << "p1" << p1 << "\n";
+    amrex::Print() << "p2" << p2 << "\n";
+
+    amrex::Print() << "estarrrrrrrrrrrr" << E_star << "\n";
     // const amrex::ParticleReal E_kin_star = E_star - (m1 + m2)*c_sq;
 
     // Compute linear Breit Wheeler cross section as a function of kinetic energy in the center of mass frame
@@ -147,6 +151,9 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     // Effective fusion multiplier
     amrex::ParticleReal fusion_multiplier_eff = fusion_multiplier;
 
+    amrex::Print() << "probability_threshold = " << probability_threshold << "::: probability_estimate = " << probability_estimate << "\n";    
+
+
     // If the fusion probability is too high and the fusion multiplier greater than one, we risk to
     // systematically underestimate the fusion yield. In this case, we reduce the fusion multiplier
     // to reduce the fusion probability
@@ -158,6 +165,8 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
                                          probability_target_value / probability_estimate , one_pr);
         probability_estimate *= fusion_multiplier_eff/fusion_multiplier;
     }
+
+    amrex::Print() << "probability_estimate = " << probability_estimate << "\n";    
 
     // Compute actual fusion probability that is always between zero and one
     // In principle this is obtained by computing 1 - exp(-probability_estimate)
@@ -179,12 +188,19 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     // Get a random number
     amrex::ParticleReal random_number = amrex::Random(engine);
 
+<<<<<<< HEAD
     amrex::Print() << "randon number = " << random_number << "::: probability = " << probability << "\n";
+=======
+    amrex::Print() << "cross section = " << lbw_cross_section << "::: randon number = " << random_number << "::: probability = " << probability << "\n";    
+>>>>>>> 09a889ee (added temporary prints)
     // If we have a fusion event, set the mask the true and fill the product weight array
     if (random_number < probability)
     {
+        amrex::Print() << "WEIGHTSSSS = " << w_min << " lll " << fusion_multiplier_eff << "\n";    
         p_mask[pair_index] = true;
         p_pair_reaction_weight[pair_index] = w_min/fusion_multiplier_eff;
+        amrex::Print() << "WEIGHTSSSS = " << w_min << " lll " << fusion_multiplier_eff << "\n";    
+
     }
     else
     {
