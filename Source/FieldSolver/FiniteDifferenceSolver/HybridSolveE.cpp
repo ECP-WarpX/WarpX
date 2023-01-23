@@ -3,7 +3,8 @@
 #ifdef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
-#   include "HybridModel/CartesianHybridYeeAlgorithm.H"
+#   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #endif
 #include "HybridModel/HybridModel.H"
 #include "Utils/CoarsenIO.H"
@@ -13,10 +14,11 @@
 using namespace amrex;
 
 void FiniteDifferenceSolver::HybridSolveE (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield_old,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield_old,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, std::unique_ptr<HybridModel> const& hybrid_model,
@@ -31,14 +33,22 @@ void FiniteDifferenceSolver::HybridSolveE (
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Hybrid) {
 #ifdef WARPX_DIM_RZ
         HybridSolveECylindrical <CylindricalYeeAlgorithm> (
-            Efield, Bfield, Jfield, Jfield_old, rhofield, edge_lengths, lev,
-            hybrid_model, a_dt_type
+            Efield, Jfield, Bfield, Jifield, Jifield_old, rhofield,
+            edge_lengths, lev, hybrid_model, a_dt_type
         );
 #else
-        HybridSolveECartesian <CartesianHybridYeeAlgorithm> (
-            Efield, Bfield, Jfield, Jfield_old, rhofield, edge_lengths, lev,
-            hybrid_model, a_dt_type
-        );
+        if (m_do_nodal) {
+            HybridSolveECartesian <CartesianNodalAlgorithm> (
+                Efield, Jfield, Bfield, Jifield, Jifield_old, rhofield,
+                edge_lengths, lev, hybrid_model, a_dt_type
+            );
+        }
+        else {
+            HybridSolveECartesian <CartesianYeeAlgorithm> (
+                Efield, Jfield, Bfield, Jifield, Jifield_old, rhofield,
+                edge_lengths, lev, hybrid_model, a_dt_type
+            );
+        }
 #endif
     } else {
         amrex::Abort(Utils::TextMsg::Err(
@@ -49,10 +59,11 @@ void FiniteDifferenceSolver::HybridSolveE (
 #ifdef WARPX_DIM_RZ
 template<typename T_Algo>
 void FiniteDifferenceSolver::HybridSolveECylindrical (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield_old,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield_old,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, std::unique_ptr<HybridModel> const& hybrid_model,
@@ -61,7 +72,7 @@ void FiniteDifferenceSolver::HybridSolveECylindrical (
 #ifndef AMREX_USE_EB
     amrex::ignore_unused(edge_lengths);
 #endif
-    amrex::ignore_unused(Efield, Bfield, Jfield, rhofield, edge_lengths);
+    amrex::ignore_unused(Efield, Bfield, Jifield, rhofield, edge_lengths);
     amrex::Abort(Utils::TextMsg::Err(
         "currently hybrid E-solve does not work for RZ"));
 }
@@ -70,10 +81,11 @@ void FiniteDifferenceSolver::HybridSolveECylindrical (
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::HybridSolveECartesian (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield_old,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield_old,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, std::unique_ptr<HybridModel> const& hybrid_model,
@@ -123,17 +135,20 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
         Array4<Real> const& Ex = Efield[0]->array(mfi);
         Array4<Real> const& Ey = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
+        Array4<Real> const& Jx = Jfield[0]->array(mfi);
+        Array4<Real> const& Jy = Jfield[1]->array(mfi);
+        Array4<Real> const& Jz = Jfield[2]->array(mfi);
         Array4<Real> const& Bx = Bfield[0]->array(mfi);
         Array4<Real> const& By = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
-        Array4<Real> const& jx = Jfield[0]->array(mfi);
-        Array4<Real> const& jy = Jfield[1]->array(mfi);
-        Array4<Real> const& jz = Jfield[2]->array(mfi);
+        Array4<Real> const& Jix = Jifield[0]->array(mfi);
+        Array4<Real> const& Jiy = Jifield[1]->array(mfi);
+        Array4<Real> const& Jiz = Jifield[2]->array(mfi);
         Array4<Real> const& rho = rhofield->array(mfi);
 
-        Array4<Real> const& jx_old = Jfield_old[0]->array(mfi);
-        Array4<Real> const& jy_old = Jfield_old[1]->array(mfi);
-        Array4<Real> const& jz_old = Jfield_old[2]->array(mfi);
+        Array4<Real> const& Jix_old = Jifield_old[0]->array(mfi);
+        Array4<Real> const& Jiy_old = Jifield_old[1]->array(mfi);
+        Array4<Real> const& Jiz_old = Jifield_old[2]->array(mfi);
 
 #ifdef AMREX_USE_EB
         amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
@@ -150,22 +165,73 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
         int const n_coefs_z = m_stencil_coefs_z.size();
 
         // Extract tileboxes for which to loop
+        Box const& tjx  = mfi.tilebox(Jfield[0]->ixType().toIntVect());
+        Box const& tjy  = mfi.tilebox(Jfield[1]->ixType().toIntVect());
+        Box const& tjz  = mfi.tilebox(Jfield[2]->ixType().toIntVect());
+
+        // First calculate the total current using Ampere's law on the
+        // same grid as the E-field
+        amrex::ParallelFor(tjx, tjy, tjz,
+
+            // Jx calculation
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip if this cell is fully covered by embedded boundaries
+                if (lx(i, j, k) <= 0) return;
+#endif
+                Jx(i, j, k) = (
+                    - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
+                    + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k)
+                ) / PhysConst::mu0;
+            },
+
+            // Jy calculation
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+#ifdef WARPX_DIM_3D
+                if (ly(i,j,k) <= 0) return;
+#elif defined(WARPX_DIM_XZ)
+                // In XZ Jy is associated with a mesh node, so we need to check if the mesh node is covered
+                amrex::ignore_unused(ly);
+                if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
+#endif
+#endif
+                Jy(i, j, k) = (
+                    - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
+                    + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
+                ) / PhysConst::mu0;
+            },
+
+            // Jz calculation
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip if this cell is fully covered by embedded boundaries
+                if (lz(i,j,k) <= 0) return;
+#endif
+                Jz(i, j, k) = (
+                    - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
+                    + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k)
+                ) / PhysConst::mu0;
+            }
+        );
+
         Box const& tex  = mfi.tilebox(Efield[0]->ixType().toIntVect());
         Box const& tey  = mfi.tilebox(Efield[1]->ixType().toIntVect());
         Box const& tez  = mfi.tilebox(Efield[2]->ixType().toIntVect());
 
-        // Loop over the cells and update the fields
+        // Loop over the cells and update the E field
         amrex::ParallelFor(tex, tey, tez,
 
             // Ex calculation
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
-                // Skip field solve if this cell is fully covered by embedded boundaries
+                // Skip if this cell is fully covered by embedded boundaries
                 if (lx(i, j, k) <= 0) return;
 #endif
 
-                // allocate variables for all interpolated (onto correct grid) field quantities
-                Real rho_interp, jy_interp, jz_interp, grad_p;
+                // allocate variables for all field quantities (interpolated onto the correct grid)
+                Real rho_interp, jey_interp, jez_interp, jy_interp, jz_interp, grad_p;
 
                 // get the appropriate charge density
                 if (a_dt_type == DtType::Full) {
@@ -182,37 +248,41 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                     rho_interp = CoarsenIO::Interp(rho, rho_stag, Ex_stag, coarsen, i, j, k, 1);
                 }
 
-                // if (rho_interp == 0._rt) {
-                //     Ex(i, j, k) = 0._rt;
-                //     return;
-                // }
+                if (rho_interp == 0._rt) {
+                    Ex(i, j, k) = 0._rt;
+                    return;
+                }
                 // rho_interp = n0 * PhysConst::q_e;
 
-                // get the appropriate ion velocity
+                // interpolate the total current to the appropriate grid
+                jy_interp = CoarsenIO::Interp(Jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
+                jz_interp = CoarsenIO::Interp(Jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
+
+                // get the electron current at the appropriate time and location
                 if (a_dt_type == DtType::Full) {
                     // use J^{n}
-                    jy_interp = 0.5_rt * (
-                        CoarsenIO::Interp(jy_old, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
+                    jey_interp = jy_interp - 0.5_rt * (
+                        CoarsenIO::Interp(Jiy_old, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(Jiy, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
                     );
-                    jz_interp = 0.5_rt * (
-                        CoarsenIO::Interp(jz_old, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
+                    jez_interp = jz_interp - 0.5_rt * (
+                        CoarsenIO::Interp(Jiz_old, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(Jiz, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
                     );
                 } else if (a_dt_type == DtType::FirstHalf) {
                     // use J^{n+1/2}
-                    jy_interp = CoarsenIO::Interp(jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
-                    jz_interp = CoarsenIO::Interp(jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
+                    jey_interp = jy_interp - CoarsenIO::Interp(Jiy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
+                    jez_interp = jz_interp - CoarsenIO::Interp(Jiz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
                 }
                 else if (a_dt_type == DtType::SecondHalf) {
                     // use J^{n+1}
-                    jy_interp = 0.5_rt * (
-                        3._rt * CoarsenIO::Interp(jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
-                        - CoarsenIO::Interp(jy_old, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
+                    jey_interp = jy_interp - 0.5_rt * (
+                        3._rt * CoarsenIO::Interp(Jiy, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
+                        - CoarsenIO::Interp(Jiy_old, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
                     );
-                    jz_interp = 0.5_rt * (
-                        3._rt * CoarsenIO::Interp(jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
-                        - CoarsenIO::Interp(jz_old, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
+                    jez_interp = jz_interp - 0.5_rt * (
+                        3._rt * CoarsenIO::Interp(Jiz, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
+                        - CoarsenIO::Interp(Jiz_old, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
                     );
                 }
 
@@ -263,14 +333,14 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 // auto const Jz = T_Algo::Jz(
                 //         Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, Ex_stag, i, j, k
                 // );
-                auto const Jx = 0._rt;
-                auto const Jy = 0._rt;
-                auto const Jz = 0._rt;
+                // auto const Jx = 0._rt;
+                // auto const Jy = 0._rt;
+                // auto const Jz = 0._rt;
 
                 Ex(i, j, k) = (
-                    (Jy - jy_interp) * Bz_interp - (Jz - jz_interp) * By_interp
+                    jey_interp * Bz_interp - jez_interp * By_interp
                     - grad_p
-                ) / rho_interp + eta * Jx;
+                ) / rho_interp + eta * Jx(i, j, k);
 
                 // if (i < 100) {
                 //     amrex::Print() << Ex(i,j,k) << "  "
@@ -295,7 +365,7 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
 #endif
 
                 // allocate variables for all interpolated (onto correct grid) field quantities
-                Real rho_interp, jx_interp, jz_interp, grad_p;
+                Real rho_interp, jex_interp, jez_interp, jx_interp, jz_interp, grad_p;
 
                 // get the appropriate charge density
                 if (a_dt_type == DtType::Full) {
@@ -313,36 +383,40 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                     rho_interp = CoarsenIO::Interp(rho, rho_stag, Ey_stag, coarsen, i, j, k, 1);
                 }
 
-                // if (rho_interp == 0._rt) {
-                //     Ey(i, j, k) = 0._rt;
-                //     return;
-                // }
+                if (rho_interp == 0._rt) {
+                    Ey(i, j, k) = 0._rt;
+                    return;
+                }
                 // rho_interp = n0 * PhysConst::q_e;
 
-                // get the appropriate ion current
+                // interpolate the total current to the appropriate grid
+                jx_interp = CoarsenIO::Interp(Jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0);
+                jz_interp = CoarsenIO::Interp(Jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0);
+
+                // get the electron current at the appropriate time and location
                 if (a_dt_type == DtType::Full) {
                     // use J^{n}
-                    jx_interp = 0.5_rt * (
-                        CoarsenIO::Interp(jx_old, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
+                    jex_interp = jx_interp - 0.5_rt * (
+                        CoarsenIO::Interp(Jix_old, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(Jix, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
                     );
-                    jz_interp = 0.5_rt * (
-                        CoarsenIO::Interp(jz_old, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
+                    jez_interp = jz_interp - 0.5_rt * (
+                        CoarsenIO::Interp(Jiz_old, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(Jiz, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
                     );
                 } else if (a_dt_type == DtType::FirstHalf) {
                     // use J^{n+1/2}
-                    jx_interp = CoarsenIO::Interp(jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0);
-                    jz_interp = CoarsenIO::Interp(jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0);
+                    jex_interp = jx_interp - CoarsenIO::Interp(Jix, Jx_stag, Ey_stag, coarsen, i, j, k, 0);
+                    jez_interp = jz_interp - CoarsenIO::Interp(Jiz, Jz_stag, Ey_stag, coarsen, i, j, k, 0);
                 } else if (a_dt_type == DtType::SecondHalf) {
                     // use J^{n+1}
-                    jx_interp = 0.5_rt * (
-                        3._rt * CoarsenIO::Interp(jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
-                        - CoarsenIO::Interp(jx_old, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
+                    jex_interp = jx_interp - 0.5_rt * (
+                        3._rt * CoarsenIO::Interp(Jix, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
+                        - CoarsenIO::Interp(Jix_old, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
                     );
-                    jz_interp = 0.5_rt * (
-                        3._rt * CoarsenIO::Interp(jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
-                        - CoarsenIO::Interp(jz_old, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
+                    jez_interp = jz_interp - 0.5_rt * (
+                        3._rt * CoarsenIO::Interp(Jiz, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
+                        - CoarsenIO::Interp(Jiz_old, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
                     );
                 }
 
@@ -393,14 +467,14 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 // auto const Jz = T_Algo::Jz(
                 //         Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, Ey_stag, i, j, k
                 // );
-                auto const Jx = 0._rt;
-                auto const Jy = 0._rt;
-                auto const Jz = 0._rt;
+                // auto const Jx = 0._rt;
+                // auto const Jy = 0._rt;
+                // auto const Jz = 0._rt;
 
                 Ey(i, j, k) = (
-                    (Jz - jz_interp) * Bx_interp - (Jx - jx_interp) * Bz_interp
+                    jez_interp * Bx_interp - jex_interp * Bz_interp
                     - grad_p
-                ) / rho_interp + eta * Jy;
+                ) / rho_interp + eta * Jy(i, j, k);
             },
 
             // Ez calculation
@@ -412,7 +486,7 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
 #endif
 
                 // allocate variables for all interpolated (onto correct grid) field quantities
-                Real rho_interp, jx_interp, jy_interp, grad_p;
+                Real rho_interp, jex_interp, jey_interp, jx_interp, jy_interp, grad_p;
 
                 // get the appropriate charge density
                 if (a_dt_type == DtType::Full) {
@@ -429,37 +503,41 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                     rho_interp = CoarsenIO::Interp(rho, rho_stag, Ez_stag, coarsen, i, j, k, 1);
                 }
 
-                // if (rho_interp == 0._rt) {
-                //     Ez(i, j, k) = 0._rt;
-                //     return;
-                // }
+                if (rho_interp == 0._rt) {
+                    Ez(i, j, k) = 0._rt;
+                    return;
+                }
                 // rho_interp = n0 * PhysConst::q_e;
 
-                // get the appropriate ion velocity
+                // interpolate the total current to the appropriate grid
+                jx_interp = CoarsenIO::Interp(Jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0);
+                jy_interp = CoarsenIO::Interp(Jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0);
+
+                // get the electron current at the appropriate time and location
                 if (a_dt_type == DtType::Full) {
                     // use J^{n}
-                    jx_interp = 0.5_rt * (
-                        CoarsenIO::Interp(jx_old, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
+                    jex_interp = jx_interp - 0.5_rt * (
+                        CoarsenIO::Interp(Jix_old, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(Jix, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
                     );
-                    jy_interp = 0.5_rt * (
-                        CoarsenIO::Interp(jy_old, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
+                    jey_interp = jy_interp - 0.5_rt * (
+                        CoarsenIO::Interp(Jiy_old, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(Jiy, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
                     );
                 } else if (a_dt_type == DtType::FirstHalf) {
                     // use J^{n+1/2}
-                    jx_interp = CoarsenIO::Interp(jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0);
-                    jy_interp = CoarsenIO::Interp(jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0);
+                    jex_interp = jx_interp - CoarsenIO::Interp(Jix, Jx_stag, Ez_stag, coarsen, i, j, k, 0);
+                    jey_interp = jy_interp - CoarsenIO::Interp(Jiy, Jy_stag, Ez_stag, coarsen, i, j, k, 0);
                 }
                 else if (a_dt_type == DtType::SecondHalf) {
                     // use J^{n+1}
-                    jx_interp = 0.5_rt * (
-                        3._rt * CoarsenIO::Interp(jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
-                        - CoarsenIO::Interp(jx_old, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
+                    jex_interp = jx_interp - 0.5_rt * (
+                        3._rt * CoarsenIO::Interp(Jix, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
+                        - CoarsenIO::Interp(Jix_old, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
                     );
-                    jy_interp = 0.5_rt * (
-                        3._rt * CoarsenIO::Interp(jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
-                        - CoarsenIO::Interp(jy_old, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
+                    jey_interp = jy_interp - 0.5_rt * (
+                        3._rt * CoarsenIO::Interp(Jiy, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
+                        - CoarsenIO::Interp(Jiy_old, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
                     );
                 }
 
@@ -521,14 +599,14 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 // auto const Jz = T_Algo::Jz(
                 //         Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, Ez_stag, i, j, k
                 // );
-                auto const Jx = 0._rt;
-                auto const Jy = 0._rt;
-                auto const Jz = 0._rt;
+                // auto const Jx = 0._rt;
+                // auto const Jy = 0._rt;
+                // auto const Jz = 0._rt;
 
                 Ez(i, j, k) = (
-                    (Jx - jx_interp) * By_interp - (Jy - jy_interp) * Bx_interp
+                    jex_interp * By_interp - jey_interp * Bx_interp
                     - grad_p
-                ) / rho_interp + eta * Jz;
+                ) / rho_interp + eta * Jz(i, j, k);
 
                 // amrex::Print() << "[ " << i << ", " << j << "]  " << Ez(i, j, k) << "  " << rho_interp << "  " << Jy << "  " << grad_p << "  " << Bx_interp << std::endl;
 

@@ -143,9 +143,10 @@ class FiniteDifferenceSolver
           */
 
         void HybridSolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield_old,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield_old,
                       std::unique_ptr<amrex::MultiFab> const& rhofield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                       int lev, std::unique_ptr<HybridModel> const& hybrid_model,
@@ -210,9 +211,10 @@ class FiniteDifferenceSolver
         template<typename T_Algo>
         void HybridSolveECylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield_old,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield_old,
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             int lev, std::unique_ptr<HybridModel> const& hybrid_model,
@@ -305,9 +307,10 @@ class FiniteDifferenceSolver
         template<typename T_Algo>
         void HybridSolveECartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield_old,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield_old,
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             int lev, std::unique_ptr<HybridModel> const& hybrid_model,

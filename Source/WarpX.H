@@ -1182,6 +1182,7 @@ private:
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_old;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_ampere;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_vay;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;

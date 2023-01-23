@@ -325,6 +325,7 @@ WarpX::WarpX ()
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
     {
         current_fp_old.resize(nlevs_max);
+        current_fp_ampere.resize(nlevs_max);
     }
 
     F_cp.resize(nlevs_max);
@@ -1666,6 +1667,7 @@ WarpX::ClearLevel (int lev)
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
         {
             current_fp_old[lev][i].reset();
+            current_fp_ampere[lev][i].reset();
         }
 
         current_cp[lev][i].reset();
@@ -1912,8 +1914,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             dm, ncomps, ngJ, tag("current_fp_vay[z]"));
     }
 
-    // allocate the "old" current multifab used to store the current density from the previous
-    // step as this is need by the hybrid PIC algorithm
+    // Allocate the "old" current multifab used to store the ion current density from the previous
+    // step as this is need by the hybrid PIC algorithm. Also allocate a multifab to
+    // store the total current calculated using Ampere's law.
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
     {
         current_fp_old[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, jx_nodal_flag),
@@ -1922,6 +1925,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             dm, ncomps, ngJ, tag("current_fp_old[y]"));
         current_fp_old[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, jz_nodal_flag),
             dm, ncomps, ngJ, tag("current_fp_old[z]"));
+        current_fp_ampere[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, jx_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_ampere[x]"));
+        current_fp_ampere[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, jy_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_ampere[y]"));
+        current_fp_ampere[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, jz_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_ampere[z]"));
+
+        current_fp_ampere[lev][0]->setVal(0.);
+        current_fp_ampere[lev][1]->setVal(0.);
+        current_fp_ampere[lev][2]->setVal(0.);
     }
 
     if (fft_do_time_averaging)
