@@ -695,8 +695,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         auto const eb_fact = fieldEBFactory();
 
         WarpX::ComputeEdgeLengths(pml_edge_lengths, eb_fact);
-        std::array<amrex::Real,3> cellsize = {AMREX_D_DECL(geom->CellSize()[0],geom->CellSize()[1],geom->CellSize()[2])};
-        WarpX::ScaleEdges(pml_edge_lengths, cellsize);
+        WarpX::ScaleEdges(pml_edge_lengths, WarpX::CellSize(lev));
 
     }
 #endif
