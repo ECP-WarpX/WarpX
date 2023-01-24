@@ -43,6 +43,8 @@ A package for WarpX is available via the `Conda <https://conda.io>`_ package man
 
 .. code-block:: bash
 
+   # optional:        for OpenMPI support    =*=mpi_openmpi*
+   # optional:          for MPICH support    =*=mpi_mpich
    conda create -n warpx -c conda-forge warpx
    conda activate warpx
 
