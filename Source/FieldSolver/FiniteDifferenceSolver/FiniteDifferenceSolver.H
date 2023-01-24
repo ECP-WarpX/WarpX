@@ -137,8 +137,11 @@ class FiniteDifferenceSolver
           * https://link.springer.com/chapter/10.1007/3-540-36530-3_8
           *
           * \param[out] Efield  vector of electric field MultiFabs updated at a given level
+          * \param[in] Jfield   vector of total current MultiFabs at a given level
           * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
-          * \param[in] Jfield   vector of current density MultiFabs at a given level
+          * \param[in] Jifield   vector of ion current density MultiFabs at a given level
+          * \param[in] Jifield_old   vector of ion current density MultiFabs at a given level
+          *     on the previous timestep
           * \param[in] rhofield scalar ion chrge density Multifabs at a given level
           */
 
@@ -219,6 +222,14 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             int lev, std::unique_ptr<HybridModel> const& hybrid_model,
             DtType a_dt_type );
+
+        template<typename T_Algo>
+        void CalculateTotalCurrentCylindrical (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev
+        );
 
 #else
         template< typename T_Algo >
@@ -315,6 +326,14 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             int lev, std::unique_ptr<HybridModel> const& hybrid_model,
             DtType a_dt_type );
+
+        template<typename T_Algo>
+        void CalculateTotalCurrentCartesian (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev
+        );
 #endif
 
 };

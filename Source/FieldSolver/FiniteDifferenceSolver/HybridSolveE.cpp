@@ -32,18 +32,27 @@ void FiniteDifferenceSolver::HybridSolveE (
 
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Hybrid) {
 #ifdef WARPX_DIM_RZ
+        CalculateTotalCurrentCylindrical <CylindricalYeeAlgorithm> (
+            Jfield, Bfield, edge_lengths, lev
+        );
         HybridSolveECylindrical <CylindricalYeeAlgorithm> (
             Efield, Jfield, Bfield, Jifield, Jifield_old, rhofield,
             edge_lengths, lev, hybrid_model, a_dt_type
         );
 #else
         if (m_do_nodal) {
+            CalculateTotalCurrentCartesian <CartesianNodalAlgorithm> (
+                Jfield, Bfield, edge_lengths, lev
+            );
             HybridSolveECartesian <CartesianNodalAlgorithm> (
                 Efield, Jfield, Bfield, Jifield, Jifield_old, rhofield,
                 edge_lengths, lev, hybrid_model, a_dt_type
             );
         }
         else {
+            CalculateTotalCurrentCartesian <CartesianYeeAlgorithm> (
+                Jfield, Bfield, edge_lengths, lev
+            );
             HybridSolveECartesian <CartesianYeeAlgorithm> (
                 Efield, Jfield, Bfield, Jifield, Jifield_old, rhofield,
                 edge_lengths, lev, hybrid_model, a_dt_type
@@ -55,6 +64,132 @@ void FiniteDifferenceSolver::HybridSolveE (
             "HybridSolveE: The hybrid electromagnetic solver algorithm must be used"));
     }
 }
+
+// /**
+//   * \brief Calculate total current from Ampere's law without displacement
+//   * current i.e. J = curl B. This is used in the hybrid algorithm to
+//   * calculate the electron current.
+//   *
+//   * \param[out] Jfield   vector of total current MultiFabs at a given level
+//   * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
+//   */
+#ifdef WARPX_DIM_RZ
+
+template<typename T_Algo>
+void FiniteDifferenceSolver::CalculateTotalCurrentCylindrical (
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    int lev
+)
+{
+    amrex::Abort(Utils::TextMsg::Err(
+        "currently hybrid E-solve does not work for RZ"));
+}
+#else
+
+template<typename T_Algo>
+void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    int lev
+)
+{
+    // for the profiler
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
+#ifndef AMREX_USE_EB
+    amrex::ignore_unused(edge_lengths);
+#endif
+
+    // Loop through the grids, and over the tiles within each grid
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*Jfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
+
+        // Extract field data for this grid/tile
+        Array4<Real> const& Jx = Jfield[0]->array(mfi);
+        Array4<Real> const& Jy = Jfield[1]->array(mfi);
+        Array4<Real> const& Jz = Jfield[2]->array(mfi);
+        Array4<Real> const& Bx = Bfield[0]->array(mfi);
+        Array4<Real> const& By = Bfield[1]->array(mfi);
+        Array4<Real> const& Bz = Bfield[2]->array(mfi);
+
+#ifdef AMREX_USE_EB
+        amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
+#endif
+
+        // Extract stencil coefficients
+        Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
+        int const n_coefs_x = m_stencil_coefs_x.size();
+        Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
+        int const n_coefs_y = m_stencil_coefs_y.size();
+        Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+        int const n_coefs_z = m_stencil_coefs_z.size();
+
+        // Extract tileboxes for which to loop
+        Box const& tjx  = mfi.tilebox(Jfield[0]->ixType().toIntVect());
+        Box const& tjy  = mfi.tilebox(Jfield[1]->ixType().toIntVect());
+        Box const& tjz  = mfi.tilebox(Jfield[2]->ixType().toIntVect());
+
+        // First calculate the total current using Ampere's law on the
+        // same grid as the E-field
+        amrex::ParallelFor(tjx, tjy, tjz,
+
+            // Jx calculation
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip if this cell is fully covered by embedded boundaries
+                if (lx(i, j, k) <= 0) return;
+#endif
+                Jx(i, j, k) = (
+                    - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
+                    + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k)
+                ) / PhysConst::mu0;
+            },
+
+            // Jy calculation
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
+#ifdef WARPX_DIM_3D
+                if (ly(i,j,k) <= 0) return;
+#elif defined(WARPX_DIM_XZ)
+                // In XZ Jy is associated with a mesh node, so we need to check if the mesh node is covered
+                amrex::ignore_unused(ly);
+                if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
+#endif
+#endif
+                Jy(i, j, k) = (
+                    - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
+                    + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
+                ) / PhysConst::mu0;
+            },
+
+            // Jz calculation
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+#ifdef AMREX_USE_EB
+                // Skip if this cell is fully covered by embedded boundaries
+                if (lz(i,j,k) <= 0) return;
+#endif
+                Jz(i, j, k) = (
+                    - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
+                    + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k)
+                ) / PhysConst::mu0;
+            }
+        );
+    }
+}
+#endif
 
 #ifdef WARPX_DIM_RZ
 template<typename T_Algo>
@@ -163,58 +298,6 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
         int const n_coefs_y = m_stencil_coefs_y.size();
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
         int const n_coefs_z = m_stencil_coefs_z.size();
-
-        // Extract tileboxes for which to loop
-        Box const& tjx  = mfi.tilebox(Jfield[0]->ixType().toIntVect());
-        Box const& tjy  = mfi.tilebox(Jfield[1]->ixType().toIntVect());
-        Box const& tjz  = mfi.tilebox(Jfield[2]->ixType().toIntVect());
-
-        // First calculate the total current using Ampere's law on the
-        // same grid as the E-field
-        amrex::ParallelFor(tjx, tjy, tjz,
-
-            // Jx calculation
-            [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                // Skip if this cell is fully covered by embedded boundaries
-                if (lx(i, j, k) <= 0) return;
-#endif
-                Jx(i, j, k) = (
-                    - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
-                    + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k)
-                ) / PhysConst::mu0;
-            },
-
-            // Jy calculation
-            [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                // Skip field push if this cell is fully covered by embedded boundaries
-#ifdef WARPX_DIM_3D
-                if (ly(i,j,k) <= 0) return;
-#elif defined(WARPX_DIM_XZ)
-                // In XZ Jy is associated with a mesh node, so we need to check if the mesh node is covered
-                amrex::ignore_unused(ly);
-                if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
-#endif
-#endif
-                Jy(i, j, k) = (
-                    - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
-                    + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
-                ) / PhysConst::mu0;
-            },
-
-            // Jz calculation
-            [=] AMREX_GPU_DEVICE (int i, int j, int k){
-#ifdef AMREX_USE_EB
-                // Skip if this cell is fully covered by embedded boundaries
-                if (lz(i,j,k) <= 0) return;
-#endif
-                Jz(i, j, k) = (
-                    - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
-                    + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k)
-                ) / PhysConst::mu0;
-            }
-        );
 
         Box const& tex  = mfi.tilebox(Efield[0]->ixType().toIntVect());
         Box const& tey  = mfi.tilebox(Efield[1]->ixType().toIntVect());
