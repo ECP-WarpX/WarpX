@@ -57,18 +57,12 @@ void warpx_interp (int j, int k, int l,
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
-                wj = (sj == 0) ? (rj - amrex::Math::abs(j + 0.5 - (jc + jj + 0.5) * rj))
-                                          / static_cast<amrex::Real>(rj)
-				 : (rj - amrex::Math::abs(j - (jc + jj) * rj))
-                                          / static_cast<amrex::Real>(rj);
-                wk = (sk == 0) ? (rk - amrex::Math::abs(k + 0.5 - (kc + kk + 0.5) * rk))
-                                          / static_cast<amrex::Real>(rk)
-				 : (rk - amrex::Math::abs(k - (kc + kk) * rk))
-                                          / static_cast<amrex::Real>(rk);
-                wl = (sl == 0) ? (rl - amrex::Math::abs(l + 0.5 - (lc + ll + 0.5) * rl))
-                                          / static_cast<amrex::Real>(rl)
-				 : (rl - amrex::Math::abs(l - (lc + ll) * rl))
-                                          / static_cast<amrex::Real>(rl);
+		wj = (sj == 0) ? (rj - amrex::Math::abs(j + 0.5_rt - (jc + jj + 0.5_rt) * rj)) / static_cast<amrex::Real>(rj)
+                               : (rj - amrex::Math::abs(j          - (jc + jj         ) * rj)) / static_cast<amrex::Real>(rj);
+                wk = (sk == 0) ? (rk - amrex::Math::abs(k + 0.5_rt - (kc + kk + 0.5_rt) * rk)) / static_cast<amrex::Real>(rk)
+                               : (rk - amrex::Math::abs(k          - (kc + kk         ) * rk)) / static_cast<amrex::Real>(rk);
+                wl = (sl == 0) ? (rl - amrex::Math::abs(l + 0.5_rt - (lc + ll + 0.5_rt) * rl)) / static_cast<amrex::Real>(rl)
+                               : (rl - amrex::Math::abs(l          - (lc + ll         ) * rl)) / static_cast<amrex::Real>(rl);
                 res += wj * wk * wl * arr_coarse_zeropad(jc+jj,kc+kk,lc+ll);
             }
         }
