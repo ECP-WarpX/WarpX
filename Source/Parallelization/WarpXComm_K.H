@@ -57,7 +57,7 @@ void warpx_interp (int j, int k, int l,
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
-        wj = (sj == 0) ? (rj - amrex::Math::abs(j + 0.5_rt - (jc + jj + 0.5_rt) * rj)) / static_cast<amrex::Real>(rj)
+                wj = (sj == 0) ? (rj - amrex::Math::abs(j + 0.5_rt - (jc + jj + 0.5_rt) * rj)) / static_cast<amrex::Real>(rj)
                                : (rj - amrex::Math::abs(j          - (jc + jj         ) * rj)) / static_cast<amrex::Real>(rj);
                 wk = (sk == 0) ? (rk - amrex::Math::abs(k + 0.5_rt - (kc + kk + 0.5_rt) * rk)) / static_cast<amrex::Real>(rk)
                                : (rk - amrex::Math::abs(k          - (kc + kk         ) * rk)) / static_cast<amrex::Real>(rk);
