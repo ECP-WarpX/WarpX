@@ -187,8 +187,8 @@ WarpX::EvolveImplicitPicard (int numsteps)
         amrex::MultiFab::Copy(*Bfield_n[0][2], *Bfield_fp[0][2], 0, 0, 1, Bfield_fp[0][2]->nGrowVect());
 
         // Start the iterations
-        amrex::Real deltaE = 1.;
-        amrex::Real deltaB = 1.;
+        amrex::Real deltaE = 1._rt;
+        amrex::Real deltaB = 1._rt;
         int iteration_count = 0;
         while (iteration_count < max_picard_iterations &&
                (deltaE > picard_iteration_tolerance || deltaB > picard_iteration_tolerance)) {
@@ -246,9 +246,9 @@ WarpX::EvolveImplicitPicard (int numsteps)
             Efield_save[0][0]->minus(*Efield_fp[0][0], 0, 1, 0);
             Efield_save[0][1]->minus(*Efield_fp[0][1], 0, 1, 0);
             Efield_save[0][2]->minus(*Efield_fp[0][2], 0, 1, 0);
-            amrex::Real maxE0 = std::max(1., Efield_fp[0][0]->norm0(0, 0));
-            amrex::Real maxE1 = std::max(1., Efield_fp[0][1]->norm0(0, 0));
-            amrex::Real maxE2 = std::max(1., Efield_fp[0][2]->norm0(0, 0));
+            amrex::Real maxE0 = std::max(1._rt, Efield_fp[0][0]->norm0(0, 0));
+            amrex::Real maxE1 = std::max(1._rt, Efield_fp[0][1]->norm0(0, 0));
+            amrex::Real maxE2 = std::max(1._rt, Efield_fp[0][2]->norm0(0, 0));
             amrex::Real deltaE0 = Efield_save[0][0]->norm0(0, 0)/maxE0;
             amrex::Real deltaE1 = Efield_save[0][1]->norm0(0, 0)/maxE1;
             amrex::Real deltaE2 = Efield_save[0][2]->norm0(0, 0)/maxE2;
@@ -257,9 +257,9 @@ WarpX::EvolveImplicitPicard (int numsteps)
             Bfield_save[0][0]->minus(*Bfield_fp[0][0], 0, 1, 0);
             Bfield_save[0][1]->minus(*Bfield_fp[0][1], 0, 1, 0);
             Bfield_save[0][2]->minus(*Bfield_fp[0][2], 0, 1, 0);
-            amrex::Real maxB0 = std::max(1., Bfield_fp[0][0]->norm0(0, 0));
-            amrex::Real maxB1 = std::max(1., Bfield_fp[0][1]->norm0(0, 0));
-            amrex::Real maxB2 = std::max(1., Bfield_fp[0][2]->norm0(0, 0));
+            amrex::Real maxB0 = std::max(1._rt, Bfield_fp[0][0]->norm0(0, 0));
+            amrex::Real maxB1 = std::max(1._rt, Bfield_fp[0][1]->norm0(0, 0));
+            amrex::Real maxB2 = std::max(1._rt, Bfield_fp[0][2]->norm0(0, 0));
             amrex::Real deltaB0 = Bfield_save[0][0]->norm0(0, 0)/maxB0;
             amrex::Real deltaB1 = Bfield_save[0][1]->norm0(0, 0)/maxB1;
             amrex::Real deltaB2 = Bfield_save[0][2]->norm0(0, 0)/maxB2;
