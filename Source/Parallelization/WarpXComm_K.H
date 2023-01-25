@@ -51,8 +51,8 @@ void warpx_interp (int j, int k, int l,
     amrex::Real wk;
     amrex::Real wl;
 
-    // Interpolate from coarse grid to fine grid using either 1 point with weight 1, if both grids
-    // are cell-centered, or 2 points with weights depending on the distance, if both grids are nodal
+    // Interpolate from coarse grid to fine grid using 2 points 
+    // with weights depending on the distance, for both nodal and cell-centered grids
     amrex::Real res = 0.0_rt;
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
