@@ -122,7 +122,8 @@ short WarpX::field_gathering_algo;
 short WarpX::particle_pusher_algo;
 short WarpX::electromagnetic_solver_id;
 short WarpX::evolve_scheme;
-int WarpX::n_picard_iterations = 1;
+int WarpX::max_picard_iterations = 1;
+Real WarpX::picard_iteration_tolerance = 1.e-10;
 short WarpX::psatd_solution_type;
 short WarpX::J_in_time;
 short WarpX::rho_in_time;
@@ -947,7 +948,8 @@ WarpX::ReadParameters ()
         charge_deposition_algo = GetAlgorithmInteger(pp_algo, "charge_deposition");
         particle_pusher_algo = GetAlgorithmInteger(pp_algo, "particle_pusher");
         evolve_scheme = GetAlgorithmInteger(pp_algo, "evolve_scheme");
-        pp_algo.query("n_picard_iterations", n_picard_iterations);
+        pp_algo.query("max_picard_iterations", max_picard_iterations);
+        pp_algo.query("picard_iteration_tolerance", picard_iteration_tolerance);
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             current_deposition_algo != CurrentDepositionAlgo::Esirkepov ||
@@ -1704,7 +1706,8 @@ WarpX::ClearLevel (int lev)
 void
 WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& dm)
 {
-    bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
+    bool aux_is_nodal = ((field_gathering_algo == GatheringAlgo::MomentumConserving) &&
+                         (evolve_scheme != EvolveScheme::ImplicitPicard));
 
 #if   defined(WARPX_DIM_1D_Z)
     amrex::RealVect dx(WarpX::CellSize(lev)[2]);

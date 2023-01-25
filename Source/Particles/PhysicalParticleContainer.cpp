@@ -2081,7 +2081,7 @@ PhysicalParticleContainer::Evolve (int lev,
                                cEx->nGrowVect(), e_is_nodal,
                                nfine_gather, np-nfine_gather,
                                lev, lev-1, dt, ScaleFields(false), a_dt_type);
-                    } if (push_type == PushType::Implicit) {
+                    } else if (push_type == PushType::Implicit) {
                         ImplicitPushXP(pti, cexfab, ceyfab, cezfab,
                                        cbxfab, cbyfab, cbzfab,
                                        cEx->nGrowVect(), e_is_nodal,
@@ -2096,7 +2096,12 @@ PhysicalParticleContainer::Evolve (int lev,
                 if (skip_deposition == false)
                 {
                     // Deposit at t_{n+1/2}
-                    amrex::Real relative_time = -0.5_rt * dt;
+                    amrex::Real relative_time;
+                    if (push_type == PushType::Explicit) {
+                        relative_time = -0.5_rt * dt;
+                    } else if (push_type == PushType::Implicit) {
+                        relative_time = 0.0_rt;
+                    }
 
                     int* AMREX_RESTRICT ion_lev;
                     if (do_field_ionization){

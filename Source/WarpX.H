@@ -168,7 +168,10 @@ public:
     static short electromagnetic_solver_id;
     //! Integer that corresponds to the evolve scheme (explicit, implicit_picard)
     static short evolve_scheme;
-    static int n_picard_iterations;
+    //! The maximum number of Picard iterations to do each time step
+    static int max_picard_iterations;
+    //! The tolerance for the Picard iteration convergence
+    static amrex::Real picard_iteration_tolerance;
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
@@ -1283,6 +1286,7 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_n;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_n;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_save;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_save;
 
     //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;

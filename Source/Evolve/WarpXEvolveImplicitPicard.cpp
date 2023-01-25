@@ -77,6 +77,7 @@ WarpX::EvolveImplicitPicardInit (const int lev)
     Efield_n.resize(nlevs_max);
     Bfield_n.resize(nlevs_max);
     Efield_save.resize(nlevs_max);
+    Bfield_save.resize(nlevs_max);
 
     // Strange, the WarpX::DistributionMap(0) is not consistent with Ex_fp.DistributionMap()???
 
@@ -91,6 +92,9 @@ WarpX::EvolveImplicitPicardInit (const int lev)
     AllocInitMultiFabFromModel(Efield_save[lev][0], *Efield_fp[0][0], "Efield_save[0]");
     AllocInitMultiFabFromModel(Efield_save[lev][1], *Efield_fp[0][1], "Efield_save[1]");
     AllocInitMultiFabFromModel(Efield_save[lev][2], *Efield_fp[0][2], "Efield_save[2]");
+    AllocInitMultiFabFromModel(Bfield_save[lev][0], *Bfield_fp[0][0], "Bfield_save[0]");
+    AllocInitMultiFabFromModel(Bfield_save[lev][1], *Bfield_fp[0][1], "Bfield_save[1]");
+    AllocInitMultiFabFromModel(Bfield_save[lev][2], *Bfield_fp[0][2], "Bfield_save[2]");
 
 }
 
@@ -159,8 +163,12 @@ WarpX::EvolveImplicitPicard (int numsteps)
         // Particles have p^{n} and x^{n}.
 
         // E and B are up-to-date inside the domain only
-        FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-        FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+        FillBoundaryE(guard_cells.ng_alloc_EB);
+        FillBoundaryB(guard_cells.ng_alloc_EB);
+
+        // Note that these would likely never be needed since the aux is only
+        // a separate MF when doing momentum conserving which would not be
+        // done in the implicit version.
         /* UpdateAuxilaryData(); */
         /* FillBoundaryAux(guard_cells.ng_UpdateAux); */
 
@@ -169,6 +177,7 @@ WarpX::EvolveImplicitPicard (int numsteps)
         for (auto const& pc : *mypc) {
             SaveParticlesAtStepStart (*pc, 0);
         }
+
         // Save the fields at the start of the step
         amrex::MultiFab::Copy(*Efield_n[0][0], *Efield_fp[0][0], 0, 0, 1, Efield_fp[0][0]->nGrowVect());
         amrex::MultiFab::Copy(*Efield_n[0][1], *Efield_fp[0][1], 0, 0, 1, Efield_fp[0][1]->nGrowVect());
@@ -178,55 +187,52 @@ WarpX::EvolveImplicitPicard (int numsteps)
         amrex::MultiFab::Copy(*Bfield_n[0][2], *Bfield_fp[0][2], 0, 0, 1, Bfield_fp[0][2]->nGrowVect());
 
         // Start the iterations
-        for (int iteration_count = 0 ; iteration_count < n_picard_iterations ; iteration_count++) {
+        amrex::Real deltaE = 1.;
+        amrex::Real deltaB = 1.;
+        int iteration_count = 0;
+        while (iteration_count < max_picard_iterations &&
+               (deltaE > picard_iteration_tolerance || deltaB > picard_iteration_tolerance)) {
+            iteration_count++;
 
             // Advance the particle positions by 1/2 dt,
-            // particle velocities by dt, then take average of old and new
+            // particle velocities by dt, then take average of old and new v,
             // deposit currents, giving J at n+1/2
+            // This uses Efield_fp and Bfield_fp, the field at n+1/2 from the previous iteration.
             bool skip_deposition = false;
             PushType push_type = PushType::Implicit;
             PushParticlesandDepose(cur_time, skip_deposition, push_type);
 
             SyncCurrentAndRho();
 
-            // Save the E at n+1/2 from the previous iteration (needed for B update)
-            // _save will have the previous E at n+1/2, _fp uneeded data
-            Efield_save[0][0].swap(Efield_fp[0][0]);
-            Efield_save[0][1].swap(Efield_fp[0][1]);
-            Efield_save[0][2].swap(Efield_fp[0][2]);
+            // Save the E at n+1/2 from the previous iteration so that the change
+            // in this iteration can be calculated
+            amrex::MultiFab::Copy(*Efield_save[0][0], *Efield_fp[0][0], 0, 0, 1, 0);
+            amrex::MultiFab::Copy(*Efield_save[0][1], *Efield_fp[0][1], 0, 0, 1, 0);
+            amrex::MultiFab::Copy(*Efield_save[0][2], *Efield_fp[0][2], 0, 0, 1, 0);
 
-            // Copy _n into _fp since EvolveE updates _fp in place
+            // Copy Efield_n into Efield_fp since EvolveE updates Efield_fp in place
             amrex::MultiFab::Copy(*Efield_fp[0][0], *Efield_n[0][0], 0, 0, 1, Efield_n[0][0]->nGrowVect());
             amrex::MultiFab::Copy(*Efield_fp[0][1], *Efield_n[0][1], 0, 0, 1, Efield_n[0][1]->nGrowVect());
             amrex::MultiFab::Copy(*Efield_fp[0][2], *Efield_n[0][2], 0, 0, 1, Efield_n[0][2]->nGrowVect());
 
             // Updates Efield_fp so it holds the new E at n+1/2
             EvolveE(0.5_rt*dt[0]);
-            FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+            FillBoundaryE(guard_cells.ng_alloc_EB);
 
-            // Swap so that _save has the new E at n+1/2 and _fp has the old (needed for B update)
-            Efield_save[0][0].swap(Efield_fp[0][0]);
-            Efield_save[0][1].swap(Efield_fp[0][1]);
-            Efield_save[0][2].swap(Efield_fp[0][2]);
+            // Save the B at n+1/2 from the previous iteration so that the change
+            // in this iteration can be calculated
+            amrex::MultiFab::Copy(*Bfield_save[0][0], *Bfield_fp[0][0], 0, 0, 1, 0);
+            amrex::MultiFab::Copy(*Bfield_save[0][1], *Bfield_fp[0][1], 0, 0, 1, 0);
+            amrex::MultiFab::Copy(*Bfield_save[0][2], *Bfield_fp[0][2], 0, 0, 1, 0);
 
-            // Copy _n into _fp since EvolveB updates _fp in place
+            // Copy Bfield_n into Bfield_fp since EvolveB updates Bfield_fp in place
             amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bfield_n[0][0], 0, 0, 1, Bfield_n[0][0]->nGrowVect());
             amrex::MultiFab::Copy(*Bfield_fp[0][1], *Bfield_n[0][1], 0, 0, 1, Bfield_n[0][1]->nGrowVect());
             amrex::MultiFab::Copy(*Bfield_fp[0][2], *Bfield_n[0][2], 0, 0, 1, Bfield_n[0][2]->nGrowVect());
 
             // This updates Bfield_fp so it holds the new B at n+1/2
             EvolveB(0.5_rt*dt[0], DtType::Full);
-            FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-
-            // Swap so that _fp has the new E at n+1/2 and _save has the old (which is no longer needed)
-            // (The swap doesn't work since it seems to mess up the use of Efield_fp elsewhere)
-            /* Efield_save[0][0].swap(Efield_fp[0][0]); */
-            /* Efield_save[0][1].swap(Efield_fp[0][1]); */
-            /* Efield_save[0][2].swap(Efield_fp[0][2]); */
-            // Copy so that _fp has the new E at n+1/2 (and _save is no longer needed)
-            amrex::MultiFab::Copy(*Efield_fp[0][0], *Efield_save[0][0], 0, 0, 1, Efield_save[0][0]->nGrowVect());
-            amrex::MultiFab::Copy(*Efield_fp[0][1], *Efield_save[0][1], 0, 0, 1, Efield_save[0][1]->nGrowVect());
-            amrex::MultiFab::Copy(*Efield_fp[0][2], *Efield_save[0][2], 0, 0, 1, Efield_save[0][2]->nGrowVect());
+            FillBoundaryB(guard_cells.ng_alloc_EB);
 
             // The B field update needs
             if (num_mirrors>0){
@@ -235,7 +241,37 @@ WarpX::EvolveImplicitPicard (int numsteps)
                 // B : guard cells are NOT up-to-date from the mirrors
             }
 
+            // Calculate the change in E and B from this iteration
+            // deltaE = abs(Enew - Eold)/max(abs(Enew))
+            Efield_save[0][0]->minus(*Efield_fp[0][0], 0, 1, 0);
+            Efield_save[0][1]->minus(*Efield_fp[0][1], 0, 1, 0);
+            Efield_save[0][2]->minus(*Efield_fp[0][2], 0, 1, 0);
+            amrex::Real maxE0 = std::max(1., Efield_fp[0][0]->norm0(0, 0));
+            amrex::Real maxE1 = std::max(1., Efield_fp[0][1]->norm0(0, 0));
+            amrex::Real maxE2 = std::max(1., Efield_fp[0][2]->norm0(0, 0));
+            amrex::Real deltaE0 = Efield_save[0][0]->norm0(0, 0)/maxE0;
+            amrex::Real deltaE1 = Efield_save[0][1]->norm0(0, 0)/maxE1;
+            amrex::Real deltaE2 = Efield_save[0][2]->norm0(0, 0)/maxE2;
+            /* std::cout << "deltaE " << iteration_count << " " << deltaE0 << " " << deltaE1 << " " << deltaE2 << "\n"; */
+            deltaE = std::max(std::max(deltaE0, deltaE1), deltaE2);
+            Bfield_save[0][0]->minus(*Bfield_fp[0][0], 0, 1, 0);
+            Bfield_save[0][1]->minus(*Bfield_fp[0][1], 0, 1, 0);
+            Bfield_save[0][2]->minus(*Bfield_fp[0][2], 0, 1, 0);
+            amrex::Real maxB0 = std::max(1., Bfield_fp[0][0]->norm0(0, 0));
+            amrex::Real maxB1 = std::max(1., Bfield_fp[0][1]->norm0(0, 0));
+            amrex::Real maxB2 = std::max(1., Bfield_fp[0][2]->norm0(0, 0));
+            amrex::Real deltaB0 = Bfield_save[0][0]->norm0(0, 0)/maxB0;
+            amrex::Real deltaB1 = Bfield_save[0][1]->norm0(0, 0)/maxB1;
+            amrex::Real deltaB2 = Bfield_save[0][2]->norm0(0, 0)/maxB2;
+            /* std::cout << "deltaB " << iteration_count << " " << deltaB0 << " " << deltaB1 << " " << deltaB2 << "\n"; */
+            deltaB = std::max(std::max(deltaB0, deltaB1), deltaB2);
+            /* std::cout << "Max delta " << iteration_count << " " << deltaE << " " << deltaB << "\n"; */
+
+            // Now, the particle positions and velocities and the Efield_fp and Bfield_fp hold
+            // the new values at n+1/2
         }
+
+        std::cout << "Picard iterations = " << iteration_count << ", Eerror =  " << deltaE << ", Berror =  " << deltaB << "\n";
 
         // Advance particles to step n+1
         for (auto const& pc : *mypc) {
@@ -445,7 +481,7 @@ WarpX::FinishImplicitParticleUpdate (WarpXParticleContainer& pc, const int lev)
         amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
         {
             amrex::ParticleReal xp, yp, zp;
-            getPosition.AsStored(ip, xp, yp, zp);
+            getPosition(ip, xp, yp, zp);
 
 #if (AMREX_SPACEDIM >= 2)
             xp = 2._rt*xp - x_n[ip];
