@@ -568,6 +568,16 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             const int k_new = compute_shape_factor(sz_new+1, z_new);
             const int k_old = compute_shifted_shape_factor(sz_old, z_old, k_new);
 
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            // Special arrays for direct deposition, for Jy in 2D
+            const double xmid = ((xp - xmin) + relative_time*vx)*dxi;
+            double sx_mid[depos_order + 1] = {0.};
+            int i_mid = compute_shape_factor(sx_mid, xmid);
+            const double zmid = ((zp - zmin) + relative_time*vz)*dzi;
+            double sz_mid[depos_order + 1] = {0.};
+            int k_mid = compute_shape_factor(sz_mid, zmid);
+#endif
+
             // computes min/max positions of current contributions
 #if !defined(WARPX_DIM_1D_Z)
             int dil = 1, diu = 1;
@@ -638,12 +648,16 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
                 }
             }
+
+            for (int k=0; k<=depos_order; k++){
+                for (int i=0; i<=depos_order; i++){
+                    amrex::Gpu::Atomic::AddNoRet(
+                        &jy_arr(lo.x+i_mid+i, lo.y+k_mid+k, 0, 0),
+                        sx_mid[i]*sz_mid[k]*wq*vy*invvol);
+                }
+            }
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 for (int i=dil; i<=depos_order+2-diu; i++) {
-                    Real const sdyj = wq*vy*invvol*(
-                        one_third*(sx_new[i]*sz_new[k] + sx_old[i]*sz_old[k])
-                       +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
-                    amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdyj);
 #if defined(WARPX_DIM_RZ)
                     Complex xy_new = xy_new0;
                     Complex xy_mid = xy_mid0;
