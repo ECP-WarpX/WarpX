@@ -56,9 +56,9 @@ void warpx_interp (int j, int k, int l,
     amrex::Real hj = (sj == 0) ? 0.5_rt : 0._rt;
     amrex::Real hk = (sk == 0) ? 0.5_rt : 0._rt;
     amrex::Real hl = (sl == 0) ? 0.5_rt : 0._rt;
-    
+
     amrex::Real res = 0.0_rt;
-    
+
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
