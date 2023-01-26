@@ -570,10 +570,10 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             // Special arrays for direct deposition, for Jy in 2D
-            const double xmid = ((xp - xmin) + relative_time*vx)*dxi;
+            const double xmid = ((xp - xmin) + relative_time*uxp[ip]*gaminv)*dxi;
             double sx_mid[depos_order + 1] = {0.};
             int i_mid = compute_shape_factor(sx_mid, xmid);
-            const double zmid = ((zp - zmin) + relative_time*vz)*dzi;
+            const double zmid = ((zp - zmin) + relative_time*uzp[ip]*gaminv)*dzi;
             double sz_mid[depos_order + 1] = {0.};
             int k_mid = compute_shape_factor(sz_mid, zmid);
 #endif
@@ -652,7 +652,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             for (int k=0; k<=depos_order; k++){
                 for (int i=0; i<=depos_order; i++){
                     amrex::Gpu::Atomic::AddNoRet(
-                        &jy_arr(lo.x+i_mid+i, lo.y+k_mid+k, 0, 0),
+                        &Jy_arr(lo.x+i_mid+i, lo.y+k_mid+k, 0, 0),
                         sx_mid[i]*sz_mid[k]*wq*vy*invvol);
                 }
             }
