@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Mirroring Modules/ParticleBoundaryScrape setup, this tests that restarting
+# Mirroring Tests/ParticleBoundaryScrape setup, this tests that restarting
 # with an EB works properly.
 
 import sys

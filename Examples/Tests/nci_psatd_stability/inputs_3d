@@ -1,0 +1,81 @@
+# algo
+algo.current_deposition = direct
+algo.maxwell_solver = psatd
+algo.particle_pusher = vay
+algo.particle_shape = 3
+
+# amr
+amr.max_level = 0
+amr.n_cell = 32 32 32
+
+# boundary
+boundary.field_hi = periodic periodic periodic
+boundary.field_lo = periodic periodic periodic
+
+# diag1
+diag1.diag_type = Full
+diag1.intervals = 300
+
+# diagnostics
+diagnostics.diags_names = diag1
+
+# electrons
+electrons.charge = -q_e
+electrons.density = 282197938148984.7
+electrons.injection_style = "NUniformPerCell"
+electrons.mass = m_e
+electrons.momentum_distribution_type = "gaussian"
+electrons.num_particles_per_cell_each_dim = 1 1 1
+electrons.profile = constant
+electrons.ux_th = 0.0001
+electrons.uy_th = 0.0001
+electrons.uz_m = 9.9498743710661994
+electrons.uz_th = 0.0001
+electrons.xmax =  9.67
+electrons.xmin = -9.67
+electrons.ymax =  9.67
+electrons.ymin = -9.67
+electrons.zmax =  9.67
+electrons.zmin = -9.67
+
+# geometry
+geometry.dims = 3
+geometry.prob_hi =  9.67  9.67  9.67
+geometry.prob_lo = -9.67 -9.67 -9.67
+
+# ions
+ions.charge = q_e
+ions.density = 282197938148984.7
+ions.injection_style = "NUniformPerCell"
+ions.mass = m_p
+ions.momentum_distribution_type = "gaussian"
+ions.num_particles_per_cell_each_dim = 1 1 1
+ions.profile = constant
+ions.ux_th = 0.0001
+ions.uy_th = 0.0001
+ions.uz_m = 9.9498743710661994
+ions.uz_th = 0.0001
+ions.xmax =  9.67
+ions.xmin = -9.67
+ions.ymax =  9.67
+ions.ymin = -9.67
+ions.zmax =  9.67
+ions.zmin = -9.67
+
+# max_step
+max_step = 300
+
+# particles
+particles.species_names = electrons ions
+
+# psatd
+psatd.nox = 8
+psatd.noy = 8
+psatd.noz = 8
+
+# warpx
+warpx.cfl = 1.
+warpx.do_nodal = 1
+warpx.numprocs = 1 1 2
+warpx.use_filter = 1
+warpx.verbose = 1

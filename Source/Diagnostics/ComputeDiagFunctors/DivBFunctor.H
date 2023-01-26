@@ -19,6 +19,8 @@ public:
      * \param[in] lev level of multifab.
      * \param[in] crse_ratio for interpolating field values from simulation MultiFabs
                   to the output diagnostic MultiFab, mf_dst.
+     * \param[in] convertRZmodes2cartesian whether to generate the result in Cartesian coordinates
+     *            (summing over modes)
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
     DivBFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, amrex::IntVect crse_ratio,

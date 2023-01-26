@@ -71,7 +71,7 @@ python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
 
 # Clone AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout --detach 4d6413c45fa0e1aa6f366a02d75a9e2382c73850 && cd -
+cd amrex && git checkout --detach d5ddf3b22e949e7cc346a2f8660d1c73edfa391a && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 

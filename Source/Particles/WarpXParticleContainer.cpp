@@ -15,13 +15,13 @@
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
 #include "ParticleBoundaries_K.H"
-#include "Utils/CoarsenMR.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <ablastr/coarsen/average.H>
 #include <ablastr/utils/Communication.H>
 
 #include <AMReX.H>
@@ -144,9 +144,9 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
                                        int n, const amrex::ParticleReal* x,
                                        const amrex::ParticleReal* y,
                                        const amrex::ParticleReal* z,
-                                       const amrex::ParticleReal* vx,
-                                       const amrex::ParticleReal* vy,
-                                       const amrex::ParticleReal* vz,
+                                       const amrex::ParticleReal* ux,
+                                       const amrex::ParticleReal* uy,
+                                       const amrex::ParticleReal* uz,
                                        const int nattr_real, const amrex::ParticleReal* attr_real,
                                        const int nattr_int, const int* attr_int,
                                        int uniqueparticles, amrex::Long id)
@@ -226,9 +226,9 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     if (np > 0)
     {
         pinned_tile.push_back_real(PIdx::w , weight.data(), weight.data() + np);
-        pinned_tile.push_back_real(PIdx::ux,     vx + ibegin,     vx + iend);
-        pinned_tile.push_back_real(PIdx::uy,     vy + ibegin,     vy + iend);
-        pinned_tile.push_back_real(PIdx::uz,     vz + ibegin,     vz + iend);
+        pinned_tile.push_back_real(PIdx::ux,     ux + ibegin,     ux + iend);
+        pinned_tile.push_back_real(PIdx::uy,     uy + ibegin,     uy + iend);
+        pinned_tile.push_back_real(PIdx::uz,     uz + ibegin,     uz + iend);
 
         if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
             DefineAndReturnParticleTile(0, 0, 0);
@@ -463,6 +463,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 WarpX::load_balance_costs_update_algo);
         }
     } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+        // jx_fab, jy_fab and jz_fab are Vay currents (D), not physical currents (j)
         if        (WarpX::nox == 1){
             doVayDepositionShapeN<1>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
@@ -714,7 +715,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
             MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), ngrow );
             coarsened_fine_data.setVal(0.0);
 
-            CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], m_gdb->refRatio(lev) );
+            ablastr::coarsen::average::Coarsen(coarsened_fine_data, *rho[lev + 1], m_gdb->refRatio(lev) );
             ablastr::utils::communication::ParallelAdd(*rho[lev], coarsened_fine_data, 0, 0,
                                                        rho[lev]->nComp(),
                                                        amrex::IntVect::TheZeroVector(),

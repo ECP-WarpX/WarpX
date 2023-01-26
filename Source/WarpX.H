@@ -32,8 +32,10 @@
 #endif
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/ElectrostaticSolver.H"
+#include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
+#include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
@@ -187,6 +189,11 @@ public:
      */
     static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
 
+    //! Integer that corresponds to the order of the PSATD solution
+    //! (whether the PSATD equations are derived from first-order or
+    //! second-order solution)
+    static short psatd_solution_type;
+
     //! Integers that correspond to the time dependency of J (constant, linear)
     //! and rho (linear, quadratic) for the PSATD algorithm
     static short J_in_time;
@@ -322,13 +329,13 @@ public:
      * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
      * interface
      *
-     * \param mf[out] The MultiFab unique pointer to be allocated
-     * \param ba[in] The BoxArray describing the MultiFab
-     * \param dm[in] The DistributionMapping describing the MultiFab
-     * \param ncomp[in] The number of components in the MultiFab
-     * \param ngrow[in] The number of guard cells in the MultiFab
-     * \param name[in] The name of the MultiFab to use in the map
-     * \param initial_value[in] The optional initial value
+     * \param[out] mf The MultiFab unique pointer to be allocated
+     * \param[in] ba The BoxArray describing the MultiFab
+     * \param[in] dm The DistributionMapping describing the MultiFab
+     * \param[in] ncomp The number of components in the MultiFab
+     * \param[in] ngrow The number of guard cells in the MultiFab
+     * \param[in] name The name of the MultiFab to use in the map
+     * \param[in] initial_value The optional initial value
      */
     static void AllocInitMultiFab (
         std::unique_ptr<amrex::MultiFab>& mf,
@@ -345,13 +352,13 @@ public:
      * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
      * interface
      *
-     * \param mf[out] The iMultiFab unique pointer to be allocated
-     * \param ba[in] The BoxArray describing the iMultiFab
-     * \param dm[in] The DistributionMapping describing the iMultiFab
-     * \param ncomp[in] The number of components in the iMultiFab
-     * \param ngrow[in] The number of guard cells in the iMultiFab
-     * \param name[in] The name of the iMultiFab to use in the map
-     * \param initial_value[in] The optional initial value
+     * \param[out] mf The iMultiFab unique pointer to be allocated
+     * \param[in] ba The BoxArray describing the iMultiFab
+     * \param[in] dm The DistributionMapping describing the iMultiFab
+     * \param[in] ncomp The number of components in the iMultiFab
+     * \param[in] ngrow The number of guard cells in the iMultiFab
+     * \param[in] name The name of the iMultiFab to use in the map
+     * \param[in] initial_value The optional initial value
      */
     static void AllocInitMultiFab (
         std::unique_ptr<amrex::iMultiFab>& mf,
@@ -365,11 +372,12 @@ public:
     /**
      * \brief
      * Create an alias of a MultiFab, adding the alias to the MultiFab map
-     * \param mf[out] The MultiFab to create
-     * \param mf_to_alias[in] The MultiFab to alias
-     * \param scomp[in] The starting component to be aliased
-     * \param ncomp[in] The number of components to alias
-     * \param name[in] The name of the MultiFab to use in the map
+     * \param[out] mf The MultiFab to create
+     * \param[in] mf_to_alias The MultiFab to alias
+     * \param[in] scomp The starting component to be aliased
+     * \param[in] ncomp The number of components to alias
+     * \param[in] name The name of the MultiFab to use in the map
+     * \param[in] initial_value optional initial value for MultiFab
      */
     static void AliasInitMultiFab (
         std::unique_ptr<amrex::MultiFab>& mf,
@@ -389,7 +397,7 @@ public:
      * \brief
      * Add the MultiFab to the map of MultiFabs
      * \param name The name of the MultiFab use to reference the MultiFab
-     * \parame mf The MultiFab to be added to the map (via a pointer to it)
+     * \param mf The MultiFab to be added to the map (via a pointer to it)
      */
     static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::MultiFab>& mf) {
         multifab_map[name] = mf.get();
@@ -399,7 +407,7 @@ public:
      * \brief
      * Add the iMultiFab to the map of MultiFabs
      * \param name The name of the iMultiFab use to reference the iMultiFab
-     * \parame mf The iMultiFab to be added to the map (via a pointer to it)
+     * \param mf The iMultiFab to be added to the map (via a pointer to it)
      */
     static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::iMultiFab>& mf) {
         imultifab_map[name] = mf.get();
@@ -428,10 +436,12 @@ public:
     amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_current_fp_nodal  (int lev, int direction) const { return current_fp_nodal[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
     amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
     amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }
     amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
+    amrex::MultiFab * get_pointer_vector_potential_fp  (int lev, int direction) const { return vector_potential_fp_nodal[lev][direction].get(); }
 
     amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_cp  (int lev, int direction) const { return Bfield_cp[lev][direction].get(); }
@@ -588,7 +598,7 @@ public:
     /** apply QED correction on electric field for level lev and patch type patch_type
      *
      * \param lev mesh refinement level
-     * \param dt patch_type which MR patch: PatchType::fine or PatchType::coarse
+     * \param patch_type which MR patch: PatchType::fine or PatchType::coarse
      * \param dt time step
      */
     void Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real dt);
@@ -882,6 +892,19 @@ public:
     void computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
 
+    // Magnetostatic Solver Interface
+    MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;
+    void ComputeMagnetostaticField ();
+    void AddMagnetostaticFieldLabFrame ();
+    void computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& curr,
+                                 amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A,
+                                 amrex::Real const required_precision=amrex::Real(1.e-11),
+                                 amrex::Real absolute_tolerance=amrex::Real(0.0),
+                                 const int max_iters=200,
+                                 const int verbosity=2) const;
+
+    void setVectorPotentialBC (amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A) const;
+
     /**
      * \brief
      * This function initializes the E and B fields on each level
@@ -891,16 +914,16 @@ public:
      * on the staggered yee-grid or cell-centered grid, in the interior cells
      * and guard cells.
      *
-     * \param[in] mfx, x-component of the field to be initialized
-     * \param[in] mfy, y-component of the field to be initialized
-     * \param[in] mfz, z-component of the field to be initialized
-     * \param[in] xfield_parser, parser function to initialize x-field
-     * \param[in] yfield_parser, parser function to initialize y-field
-     * \param[in] zfield_parser, parser function to initialize z-field
-     * \param[in] edge_lengths, edge lengths information
-     * \param[in] face_areas, face areas information
-     * \param[in] field, flag indicating which field is being initialized ('E' for electric, 'B' for magnetic)
-     * \param[in] lev, level of the Multifabs that is initialized
+     * \param[in] mfx x-component of the field to be initialized
+     * \param[in] mfy y-component of the field to be initialized
+     * \param[in] mfz z-component of the field to be initialized
+     * \param[in] xfield_parser parser function to initialize x-field
+     * \param[in] yfield_parser parser function to initialize y-field
+     * \param[in] zfield_parser parser function to initialize z-field
+     * \param[in] edge_lengths edge lengths information
+     * \param[in] face_areas face areas information
+     * \param[in] field flag indicating which field is being initialized ('E' for electric, 'B' for magnetic)
+     * \param[in] lev level of the Multifabs that is initialized
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
@@ -918,7 +941,7 @@ public:
      * EBs such as edge lengths, face areas, distance to EB, etc. It also
      * appropriately communicates EB data to guard cells.
      *
-     * \param[in] lev, level of the Multifabs that is initialized
+     * \param[in] lev level of the Multifabs that is initialized
      */
     void InitializeEBGridData(int lev);
 
@@ -955,6 +978,9 @@ public:
     // This needs to be public for CUDA.
     //! Tagging cells for refinement
     virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
+
+    // Return the accelerator lattice instance defined at the given refinement level
+    const AcceleratorLattice& get_accelerator_lattice (int lev) {return *(m_accelerator_lattice[lev]);}
 
 protected:
 
@@ -1237,13 +1263,19 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
+    // Memory buffers for computing magnetostatic fields
+    // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_fp_nodal;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_e_stag;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_b_stag;
+
     //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
     //! EB: Areas of the mesh faces
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
 
     /** EB: for every mesh face flag_info_face contains a:
-     *           * 0 if the face needs to be extended
+     *          * 0 if the face needs to be extended
      *          * 1 if the face is large enough to lend area to other faces
      *          * 2 if the face is actually intruded by other face
      * It is initialized in WarpX::MarkCells
@@ -1334,7 +1366,7 @@ private:
     int num_injected_species = -1;
     amrex::Vector<int> injected_plasma_species;
 
-    amrex::Real const_dt = amrex::Real(0.5e-11);
+    std::optional<amrex::Real> m_const_dt;
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
@@ -1432,6 +1464,9 @@ private:
 
     //! particle buffer for scraped particles on the boundaries
     std::unique_ptr<ParticleBoundaryBuffer> m_particle_boundary_buffer;
+
+    // Accelerator lattice elements
+    amrex::Vector< std::unique_ptr<AcceleratorLattice> > m_accelerator_lattice;
 
     //
     // Embedded Boundary
@@ -1639,7 +1674,7 @@ private:
         const int icomp, const int dcomp, const bool apply_kspace_filter=true);
 
     /**
-     * \brief Copy rho_new to rho_old in spectral space
+     * \brief Copy rho_new to rho_old in spectral space (when rho is linear in time)
      */
     void PSATDMoveRhoNewToRhoOld ();
 

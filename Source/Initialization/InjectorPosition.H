@@ -20,7 +20,7 @@ struct InjectorPositionRandom
 {
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getPositionUnitBox (int /*i_part*/, int /*ref_fac*/,
+    getPositionUnitBox (int /*i_part*/, amrex::IntVect const /*ref_fac*/,
                         amrex::RandomEngine const& engine) const noexcept
     {
         return amrex::XDim3{amrex::Random(engine), amrex::Random(engine), amrex::Random(engine)};
@@ -35,7 +35,7 @@ struct InjectorPositionRandomPlane
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getPositionUnitBox (int /*i_part*/, int /*ref_fac*/,
+    getPositionUnitBox (int /*i_part*/, amrex::IntVect const /*ref_fac*/,
                         amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex::literals;
@@ -72,16 +72,26 @@ struct InjectorPositionRegular
     // is a_ppc*(ref_fac**AMREX_SPACEDIM).
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getPositionUnitBox (int const i_part, int const ref_fac,
+    getPositionUnitBox (int const i_part, amrex::IntVect const ref_fac,
                         amrex::RandomEngine const&) const noexcept
     {
         using namespace amrex;
 
-        int const nx = ref_fac*ppc.x;
-        int const ny = ref_fac*ppc.y;
-#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
-        int const nz = ref_fac*ppc.z;
-#else
+#if (defined WARPX_DIM_3D)
+        int const nx = ref_fac[0]*ppc.x;
+        int const ny = ref_fac[1]*ppc.y;
+        int const nz = ref_fac[2]*ppc.z;
+#elif (defined WARPX_DIM_RZ)
+        int const nx = ref_fac[0]*ppc.x;
+        int const ny = ref_fac[1]*ppc.y;
+        int const nz = ppc.z; // Number of particles in theta ; no refinement
+#elif (defined WARPX_DIM_XZ)
+        int const nx = ref_fac[0]*ppc.x;
+        int const ny = ref_fac[1]*ppc.y;
+        int const nz = 1;
+#elif (defined WARPX_DIM_1D_Z)
+        int const nx = ref_fac[0]*ppc.x;
+        int const ny = 1;
         int const nz = 1;
 #endif
         int const ix_part = i_part / (ny*nz);  // written this way backward compatibility
@@ -155,7 +165,7 @@ struct InjectorPosition
     // (the union is called Object, and the instance is called object).
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getPositionUnitBox (int const i_part, int const ref_fac,
+    getPositionUnitBox (int const i_part, amrex::IntVect const ref_fac,
                         amrex::RandomEngine const& engine) const noexcept
     {
         switch (type)
@@ -175,7 +185,11 @@ struct InjectorPosition
         };
     }
 
-    // bool: whether position specified is within bounds.
+    /* \brief Flags whether the point (x, y, z) is inside the plasma region
+     *        or on the lower boundary
+     * \param x, y, z the point to check
+     * \returns bool flag
+     */
     AMREX_GPU_HOST_DEVICE
     bool
     insideBounds (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
@@ -183,6 +197,20 @@ struct InjectorPosition
         return (x < xmax and x >= xmin and
                 y < ymax and y >= ymin and
                 z < zmax and z >= zmin);
+    }
+
+    /* \brief Flags whether the point (x, y, z) is inside the plasma region
+     *        or on the lower or upper boundary
+     * \param x, y, z the point to check
+     * \returns bool flag
+     */
+    AMREX_GPU_HOST_DEVICE
+    bool
+    insideBoundsInclusive (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    {
+        return (x <= xmax and x >= xmin and
+                y <= ymax and y >= ymin and
+                z <= zmax and z >= zmin);
     }
 
     // bool: whether the region defined by lo and hi overaps with the plasma region

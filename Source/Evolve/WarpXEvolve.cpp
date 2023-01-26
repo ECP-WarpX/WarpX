@@ -125,9 +125,9 @@ WarpX::Evolve (int numsteps)
                 // Not called at each iteration, so exchange all guard cells
                 FillBoundaryE(guard_cells.ng_alloc_EB);
                 FillBoundaryB(guard_cells.ng_alloc_EB);
-                UpdateAuxilaryData();
-                FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
+            UpdateAuxilaryData();
+            FillBoundaryAux(guard_cells.ng_UpdateAux);
             // on first step, push p by -0.5*dt
             for (int lev = 0; lev <= finest_level; ++lev)
             {
@@ -154,9 +154,9 @@ WarpX::Evolve (int numsteps)
                 // TODO Remove call to FillBoundaryAux before UpdateAuxilaryData?
                 if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD)
                     FillBoundaryAux(guard_cells.ng_UpdateAux);
-                UpdateAuxilaryData();
-                FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
+            UpdateAuxilaryData();
+            FillBoundaryAux(guard_cells.ng_UpdateAux);
         }
 
         // Run multi-physics modules:
@@ -257,6 +257,14 @@ WarpX::Evolve (int numsteps)
         // We might need to move j because we are going to make a plotfile.
         int num_moved = MoveWindow(step+1, move_j);
 
+        // Update the accelerator lattice element finder if the window has moved,
+        // from either a moving window or a boosted frame
+        if (num_moved != 0 || gamma_boost > 1) {
+            for (int lev = 0; lev <= finest_level; ++lev) {
+                m_accelerator_lattice[lev]->UpdateElementFinder(lev);
+            }
+        }
+
         mypc->ContinuousFluxInjection(cur_time, dt[0]);
 
         mypc->ApplyBoundaryConditions();
@@ -309,6 +317,12 @@ WarpX::Evolve (int numsteps)
             // and so that the fields are at the correct time in the output.
             bool const reset_fields = true;
             ComputeSpaceChargeField( reset_fields );
+            if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
+                // Call Magnetostatic Solver to solve for the vector potential A and compute the
+                // B field.  Time varying A contribution to E field is neglected.
+                // This is currently a lab frame calculation.
+                ComputeMagnetostaticField();
+            }
             ExecutePythonCallback("afterEsolve");
         }
 
@@ -548,14 +562,15 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
 
     // 3) Deposit rho (in rho_new, since it will be moved during the loop)
-    if (WarpX::update_with_rho)
+    //    (after checking that pointer to rho_fp on MR level 0 is not null)
+    if (rho_fp[0] && rho_in_time == RhoInTime::Linear)
     {
         // Deposit rho at relative time -dt
         // (dt[0] denotes the time step on mesh refinement level 0)
         mypc->DepositCharge(rho_fp, -dt[0]);
         // Filter, exchange boundary, and interpolate across levels
         SyncRho();
-        // Forward FFT of rho_new
+        // Forward FFT of rho
         PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
     }
 
@@ -586,17 +601,14 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     // Loop over multi-J depositions
     for (int i_depose = 0; i_depose < n_loop; i_depose++)
     {
-        // Move J deposited previously, from new to old
-        if (J_in_time == JInTime::Linear)
-        {
-            PSATDMoveJNewToJOld();
-        }
+        // Move J from new to old if J is linear in time
+        if (J_in_time == JInTime::Linear) PSATDMoveJNewToJOld();
 
         const amrex::Real t_depose_current = (J_in_time == JInTime::Linear) ?
             (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5_rt)*sub_dt;
 
-        // TODO Update this when rho quadratic in time is implemented
-        const amrex::Real t_depose_charge = (i_depose-n_depose+1)*sub_dt;
+        const amrex::Real t_depose_charge = (rho_in_time == RhoInTime::Linear) ?
+            (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5_rt)*sub_dt;
 
         // Deposit new J at relative time t_depose_current with time step dt
         // (dt[0] denotes the time step on mesh refinement level 0)
@@ -612,16 +624,17 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         PSATDForwardTransformJ(current_fp, current_cp);
 
         // Deposit new rho
-        if (WarpX::update_with_rho)
+        // (after checking that pointer to rho_fp on MR level 0 is not null)
+        if (rho_fp[0])
         {
-            // Move rho deposited previously, from new to old
-            PSATDMoveRhoNewToRhoOld();
+            // Move rho from new to old if rho is linear in time
+            if (rho_in_time == RhoInTime::Linear) PSATDMoveRhoNewToRhoOld();
 
             // Deposit rho at relative time t_depose_charge
             mypc->DepositCharge(rho_fp, t_depose_charge);
             // Filter, exchange boundary, and interpolate across levels
             SyncRho();
-            // Forward FFT of rho_new
+            // Forward FFT of rho
             PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
         }
 

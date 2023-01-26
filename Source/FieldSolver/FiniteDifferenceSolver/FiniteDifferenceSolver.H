@@ -101,10 +101,10 @@ class FiniteDifferenceSolver
           * \param[out] Efield  vector of electric field MultiFabs updated at a given level
           * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
           * \param[in] Jfield   vector of current density MultiFabs at a given level
+          * \param[in] edge_lengths length of edges along embedded boundaries
           * \param[in] dt       timestep of the simulation
           * \param[in] macroscopic_properties contains user-defined properties of the medium.
           */
-
         void MacroscopicEvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,

@@ -42,6 +42,7 @@ public:
                         and store in destination multifab.
      * \param[in] num_buffers number of user-defined snapshots in the back-transformed lab-frame
      * \param[in] varnames names of the field-components as defined by the user for back-transformed diagnostics.
+     * \param[in] varnames_fields base names of field-components for the RZ modes
      * \param[in] crse_ratio the coarsening ratio for fields
      */
     BackTransformFunctor ( const amrex::MultiFab * const mf_src, const int lev,

@@ -128,7 +128,7 @@ And install ADIOS2, BLAS++ and LAPACK++:
    cmake --build src/blaspp-haswell-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
-   git clone https://github.com/icl-utk-edu/blaspp.git src/lapackpp
+   git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-haswell-build
    CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-haswell-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/haswell/lapackpp-master-install
    cmake --build src/lapackpp-haswell-build --target install --parallel 16

@@ -23,8 +23,8 @@ jobs:
       #   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
       SETUPTOOLS_USE_DISTUTILS: stdlib
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
       name: Install Python
       with:
         python-version: '3.x'
@@ -32,7 +32,7 @@ jobs:
       run: |
         .github/workflows/dependencies/nvcc11-0.sh
     - name: CCache Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
       # - for a refresh the key has to change, e.g., hash of a tracked file in the key
       with:
@@ -87,12 +87,12 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: install dependencies
       run: |
         .github/workflows/dependencies/nvcc11-8.sh
     - name: CCache Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
       # - for a refresh the key has to change, e.g., hash of a tracked file in the key
       with:
@@ -110,7 +110,7 @@ jobs:
         which nvcc || echo "nvcc not in PATH!"
 
         git clone https://github.com/AMReX-Codes/amrex.git ../amrex
-        cd amrex && git checkout --detach 4d6413c45fa0e1aa6f366a02d75a9e2382c73850 && cd -
+        cd amrex && git checkout --detach d5ddf3b22e949e7cc346a2f8660d1c73edfa391a && cd -
         make COMP=gcc QED=FALSE USE_MPI=TRUE USE_GPU=TRUE USE_OMP=FALSE USE_PSATD=TRUE USE_CCACHE=TRUE -j 2
 
   build_nvhpc21-11-nvcc:
@@ -125,11 +125,11 @@ jobs:
       #   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
       SETUPTOOLS_USE_DISTUTILS: stdlib
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Dependencies
       run: .github/workflows/dependencies/nvhpc.sh
     - name: CCache Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
       # - for a refresh the key has to change, e.g., hash of a tracked file in the key
       with:
