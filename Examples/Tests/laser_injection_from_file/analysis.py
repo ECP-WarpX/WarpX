@@ -44,7 +44,7 @@ x_c = 0.*um
 t_c = 20.*fs
 foc_dist = 10*um
 E_max = 1e12
-rot_angle = -np.pi/4.0
+rot_angle = 0
 
 #Parameters of the tx grid
 x_l = -12.0*um
@@ -80,7 +80,7 @@ def gauss(T,X,Y,opt):
     return np.real(pre_fact * np.exp(exp_arg))
 
 # Function for the envelope
-def gauss_env(T,XX,ZZ):
+def gauss_env(T,XX, YY, ZZ):
     '''Function to compute the theory for the envelope
     '''
 
@@ -89,76 +89,31 @@ def gauss_env(T,XX,ZZ):
 
     inv_tau2 = 1./tt/tt
     inv_w_2 = 1.0/(w0*w0)
-    exp_arg = - (X*X)*inv_w_2 - inv_tau2 / c/c * (Z-T*c)*(Z-T*c)
+    exp_arg = - (X*X)*inv_w_2 - (Y*Y)*inv_w_2- inv_tau2 / c/c * (Z-T*c)*(Z-T*c)
     return E_max * np.real(np.exp(exp_arg))
-
-def write_file(fname, x, y, t, E):
-    """ For a given filename fname, space coordinates x and y, time coordinate t
-    and field E, write a WarpX-compatible input binary file containing the
-    profile of the laser pulse
-    """
-
-    with open(fname, 'wb') as file:
-        flag_unif = 0
-        file.write(flag_unif.to_bytes(1, byteorder='little'))
-        file.write((len(t)).to_bytes(4, byteorder='little', signed=False))
-        file.write((len(x)).to_bytes(4, byteorder='little', signed=False))
-        file.write((len(y)).to_bytes(4, byteorder='little', signed=False))
-        file.write(t.tobytes())
-        file.write(x.tobytes())
-        file.write(y.tobytes())
-        file.write(E.tobytes())
-
-
-def write_file_unf(fname, x, y, t, E):
-    """ For a given filename fname, space coordinates x and y, time coordinate t
-    and field E, write a WarpX-compatible input binary file containing the
-    profile of the laser pulse. This function should be used in the case
-    of a uniform spatio-temporal mesh
-    """
-
-    with open(fname, 'wb') as file:
-        flag_unif = 1
-        file.write(flag_unif.to_bytes(1, byteorder='little'))
-        file.write((len(t)).to_bytes(4, byteorder='little', signed=False))
-        file.write((len(x)).to_bytes(4, byteorder='little', signed=False))
-        file.write((len(y)).to_bytes(4, byteorder='little', signed=False))
-        file.write(t[0].tobytes())
-        file.write(t[-1].tobytes())
-        file.write(x[0].tobytes())
-        file.write(x[-1].tobytes())
-        if len(y) == 1 :
-            file.write(y[0].tobytes())
-        else :
-            file.write(y[0].tobytes())
-            file.write(y[-1].tobytes())
-        file.write(E.tobytes())
-
-def create_gaussian_2d():
-   T, X, Y = np.meshgrid(tcoords, xcoords, np.array([0.0]), indexing='ij')
-   E_t = gauss(T,X,Y,'2d')
-   write_file("gauss_2d.txye", xcoords, np.array([0.0]), tcoords, E_t)
-   write_file_unf("gauss_2d_unf.txye", xcoords, np.array([0.0]), tcoords, E_t)
-
 
 def do_analysis(fname, compname, steps):
     ds = yt.load(fname)
 
     dt = ds.current_time.to_value()/steps
 
-    # Define 2D meshes
+    # Define 3D meshes
     x = np.linspace(
         ds.domain_left_edge[0],
         ds.domain_right_edge[0],
         ds.domain_dimensions[0]).v
+    y = np.linspace(
+        ds.domain_left_edge[1],
+        ds.domain_right_edge[1],
+        ds.domain_dimensions[1]).v
     z = np.linspace(
         ds.domain_left_edge[ds.dimensionality-1],
         ds.domain_right_edge[ds.dimensionality-1],
         ds.domain_dimensions[ds.dimensionality-1]).v
-    X, Z = np.meshgrid(x, z, sparse=False, indexing='ij')
+    X, Y, Z = np.meshgrid(x, y, z, sparse=False, indexing='ijk')
 
     # Compute the theory for envelope
-    env_theory = gauss_env(+t_c-ds.current_time.to_value(), X,Z)+gauss_env(-t_c+ds.current_time.to_value(), X,Z)
+    env_theory = gauss_env(+t_c-ds.current_time.to_value(), X,Y,Z)+gauss_env(-t_c+ds.current_time.to_value(), X,Y,Z)
 
     # Read laser field in PIC simulation, and compute envelope
     all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
@@ -209,12 +164,8 @@ def do_analysis(fname, compname, steps):
 
 
 def launch_analysis(executable):
-    create_gaussian_2d()
-    os.system("./" + executable + " inputs.2d_test_txye diag1.file_prefix=diags/plotfiles/plt")
+    os.system("./" + executable + " inputs.3d_test_txye diag1.file_prefix=diags/plotfiles/plt")
     do_analysis("diags/plotfiles/plt000250/", "comp_unf.pdf", 250)
-    os.system("sed 's/gauss_2d_unf.txye/gauss_2d.txye/g' inputs.2d_test_txye > inputs.2d_test_txye_non_unf")
-    os.system("./" + executable + " inputs.2d_test_txye_non_unf diag1.file_prefix=diags/plotfiles/plt")
-    do_analysis("diags/plotfiles/plt000250/", "comp_non_unf.pdf", 250)
 
 
 def main() :
