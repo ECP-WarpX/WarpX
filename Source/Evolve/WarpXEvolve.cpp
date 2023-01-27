@@ -141,8 +141,8 @@ WarpX::Evolve (int numsteps)
             // current multifab
             if (electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
             {
-                mypc->DepositCurrent(current_fp_old, dt[0], 0.0);
-                SyncCurrent(current_fp_old, current_cp);
+                mypc->DepositCurrent(current_fp_temp, dt[0], 0.0);
+                SyncCurrent(current_fp_temp, current_cp);
             }
 
             is_synchronized = false;

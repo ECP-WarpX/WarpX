@@ -2,7 +2,7 @@
  *
  * This file is part of WarpX.
  *
- * Authors: Roelof Groenewald
+ * Authors: Roelof Groenewald (TAE Technologies)
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -13,6 +13,7 @@
 #include "HybridModel_fwd.H"
 
 #include "Utils/WarpXConst.H"
+#include "WarpX.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_REAL.H>
@@ -22,8 +23,7 @@
  * \brief This class contains the parameters needed to evaluate hybrid field
  * solutions (kinetic ions with fluid electrons).
  */
-class
-HybridModel
+class HybridModel
 {
 public:
     HybridModel (); // constructor
@@ -32,8 +32,19 @@ public:
 
     void InitData ();
 
-    /** Gpu Vector with index type of the charge density multifab */
-    amrex::GpuArray<int, 3> rho_IndexType;
+    /**
+     * \brief Fill the electron pressure multifab given the kinetic particle
+     * charge density (and assumption of quasi-neutrality) using the user
+     * specified electron equation of state.
+     *
+     * \param[out] Pe   scalar electron pressure MultiFab at a given level
+     * \param[in] rhofield scalar ion chrge density Multifab at a given level
+     */
+    void FillElectronPressureMF (
+        std::unique_ptr<amrex::MultiFab> const& Pe,
+        std::unique_ptr<amrex::MultiFab> const& rhofield,
+        DtType a_dt_type );
+
     /** Gpu Vector with index type of the Jx multifab */
     amrex::GpuArray<int, 3> Jx_IndexType;
     /** Gpu Vector with index type of the Jy multifab */
@@ -52,6 +63,9 @@ public:
     amrex::GpuArray<int, 3> Ey_IndexType;
     /** Gpu Vector with index type of the Ez multifab */
     amrex::GpuArray<int, 3> Ez_IndexType;
+
+    /** Number of substeps to take when evolving B */
+    int m_substeps = 50;
 
     /** Electron temperature in eV */
     amrex::Real m_elec_temp;

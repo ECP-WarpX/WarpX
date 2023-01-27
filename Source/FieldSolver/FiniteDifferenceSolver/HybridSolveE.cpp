@@ -3,7 +3,6 @@
 #ifdef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
-#   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #endif
 #include "HybridModel/HybridModel.H"
@@ -16,48 +15,39 @@ using namespace amrex;
 void FiniteDifferenceSolver::HybridSolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield_old,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
+    std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, std::unique_ptr<HybridModel> const& hybrid_model,
     DtType a_dt_type )
 {
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !m_do_nodal, "hybrid E-solve does not work with do_nodal=true");
+
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-    // WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-    //     !m_do_nodal, "hybrid E-solve does not work for nodal");
-
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Hybrid) {
 #ifdef WARPX_DIM_RZ
         CalculateTotalCurrentCylindrical <CylindricalYeeAlgorithm> (
             Jfield, Bfield, edge_lengths, lev
         );
+
         HybridSolveECylindrical <CylindricalYeeAlgorithm> (
-            Efield, Jfield, Bfield, Jifield, Jifield_old, rhofield,
+            Efield, Jfield, Ji_field, Bfield, rhofield, Pefield,
             edge_lengths, lev, hybrid_model, a_dt_type
         );
 #else
-        if (m_do_nodal) {
-            CalculateTotalCurrentCartesian <CartesianNodalAlgorithm> (
-                Jfield, Bfield, edge_lengths, lev
-            );
-            HybridSolveECartesian <CartesianNodalAlgorithm> (
-                Efield, Jfield, Bfield, Jifield, Jifield_old, rhofield,
-                edge_lengths, lev, hybrid_model, a_dt_type
-            );
-        }
-        else {
-            CalculateTotalCurrentCartesian <CartesianYeeAlgorithm> (
-                Jfield, Bfield, edge_lengths, lev
-            );
-            HybridSolveECartesian <CartesianYeeAlgorithm> (
-                Efield, Jfield, Bfield, Jifield, Jifield_old, rhofield,
-                edge_lengths, lev, hybrid_model, a_dt_type
-            );
-        }
+        CalculateTotalCurrentCartesian <CartesianYeeAlgorithm> (
+            Jfield, Bfield, edge_lengths, lev
+        );
+
+        HybridSolveECartesian <CartesianYeeAlgorithm> (
+            Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
+            edge_lengths, lev, hybrid_model, a_dt_type
+        );
 #endif
     } else {
         amrex::Abort(Utils::TextMsg::Err(
@@ -66,15 +56,13 @@ void FiniteDifferenceSolver::HybridSolveE (
 }
 
 // /**
-//   * \brief Calculate total current from Ampere's law without displacement
-//   * current i.e. J = curl B. This is used in the hybrid algorithm to
-//   * calculate the electron current.
+//   * \brief Calculate electron current from Ampere's law without displacement
+//   * current and the kinetically tracked ion currents i.e. J_e = curl B.
 //   *
-//   * \param[out] Jfield   vector of total current MultiFabs at a given level
+//   * \param[out] Jfield  vector of electron current MultiFabs at a given level
 //   * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
 //   */
 #ifdef WARPX_DIM_RZ
-
 template<typename T_Algo>
 void FiniteDifferenceSolver::CalculateTotalCurrentCylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
@@ -87,7 +75,6 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCylindrical (
         "currently hybrid E-solve does not work for RZ"));
 }
 #else
-
 template<typename T_Algo>
 void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
@@ -118,9 +105,9 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
         Array4<Real> const& Jx = Jfield[0]->array(mfi);
         Array4<Real> const& Jy = Jfield[1]->array(mfi);
         Array4<Real> const& Jz = Jfield[2]->array(mfi);
-        Array4<Real> const& Bx = Bfield[0]->array(mfi);
-        Array4<Real> const& By = Bfield[1]->array(mfi);
-        Array4<Real> const& Bz = Bfield[2]->array(mfi);
+        Array4<Real const> const& Bx = Bfield[0]->const_array(mfi);
+        Array4<Real const> const& By = Bfield[1]->const_array(mfi);
+        Array4<Real const> const& Bz = Bfield[2]->const_array(mfi);
 
 #ifdef AMREX_USE_EB
         amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
@@ -188,6 +175,10 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
             }
         );
     }
+
+    // fill ghost cells with appropriate values
+    auto & warpx = WarpX::GetInstance();
+    for (int i=0; i<3; i++) Jfield[i]->FillBoundary(warpx.Geom(lev).periodicity());
 }
 #endif
 
@@ -196,10 +187,10 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::HybridSolveECylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jifield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield_old,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
+    std::unique_ptr<amrex::MultiFab> const& Pe,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, std::unique_ptr<HybridModel> const& hybrid_model,
     DtType a_dt_type )
@@ -217,11 +208,11 @@ void FiniteDifferenceSolver::HybridSolveECylindrical (
 template<typename T_Algo>
 void FiniteDifferenceSolver::HybridSolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield_old,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
+    std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, std::unique_ptr<HybridModel> const& hybrid_model,
     DtType a_dt_type )
@@ -235,27 +226,120 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
 
     // get hybrid model parameters
     auto n0 = hybrid_model->m_n0_ref;
-    auto T0 = hybrid_model->m_elec_temp;
-    auto gamma = hybrid_model->m_gamma;
     auto eta = hybrid_model->m_eta;
 
     // Index type required for calling CoarsenIO::Interp to interpolate fields
     // from their respective staggering to the Ex, Ey, Ez locations
-    amrex::GpuArray<int, 3> const& rho_stag = hybrid_model->rho_IndexType;
+    amrex::GpuArray<int, 3> const& Ex_stag = hybrid_model->Ex_IndexType;
+    amrex::GpuArray<int, 3> const& Ey_stag = hybrid_model->Ey_IndexType;
+    amrex::GpuArray<int, 3> const& Ez_stag = hybrid_model->Ez_IndexType;
     amrex::GpuArray<int, 3> const& Jx_stag = hybrid_model->Jx_IndexType;
     amrex::GpuArray<int, 3> const& Jy_stag = hybrid_model->Jy_IndexType;
     amrex::GpuArray<int, 3> const& Jz_stag = hybrid_model->Jz_IndexType;
     amrex::GpuArray<int, 3> const& Bx_stag = hybrid_model->Bx_IndexType;
     amrex::GpuArray<int, 3> const& By_stag = hybrid_model->By_IndexType;
     amrex::GpuArray<int, 3> const& Bz_stag = hybrid_model->Bz_IndexType;
-    amrex::GpuArray<int, 3> const& Ex_stag = hybrid_model->Ex_IndexType;
-    amrex::GpuArray<int, 3> const& Ey_stag = hybrid_model->Ey_IndexType;
-    amrex::GpuArray<int, 3> const& Ez_stag = hybrid_model->Ez_IndexType;
 
+    // Parameters for `interp` that maps from Yee to nodal mesh and back
+    amrex::GpuArray<int, 3> const& nodal = {1, 1, 1};
     // The "coarsening is just 1 i.e. no coarsening"
     amrex::GpuArray<int, 3> const& coarsen = {1, 1, 1};
 
-    // Loop through the grids, and over the tiles within each grid
+    // The E-field calculation is done in 2 steps:
+    // 1) The J x B term is calculated on a nodal mesh in order to ensure
+    //    energy conservation.
+    // 2) The nodal E-field values are averaged onto the Yee grid and the
+    //    electron pressure & resistivity terms are added (these terms are
+    //    naturally located on the Yee grid).
+
+    // Create a temporary multifab to hold the nodal E-field values
+    // Note the multifab has 3 values for Ex, Ey and Ez which we can do here
+    // since all three components will be calculated on the same grid.
+    auto const& ba = convert(Efield[0]->boxArray(), IntVect::TheNodeVector());
+    MultiFab enE_nodal_mf(ba, Efield[0]->DistributionMap(), 3, Efield[0]->nGrow());
+
+    // Loop through the grids, and over the tiles within each grid for the
+    // initial, nodal calculation of E
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(enE_nodal_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
+
+        Array4<Real> const& enE_nodal = enE_nodal_mf.array(mfi);
+        Array4<Real const> const& Jx = Jfield[0]->const_array(mfi);
+        Array4<Real const> const& Jy = Jfield[1]->const_array(mfi);
+        Array4<Real const> const& Jz = Jfield[2]->const_array(mfi);
+        Array4<Real const> const& Jix = Jifield[0]->const_array(mfi);
+        Array4<Real const> const& Jiy = Jifield[1]->const_array(mfi);
+        Array4<Real const> const& Jiz = Jifield[2]->const_array(mfi);
+        Array4<Real const> const& Bx = Bfield[0]->const_array(mfi);
+        Array4<Real const> const& By = Bfield[1]->const_array(mfi);
+        Array4<Real const> const& Bz = Bfield[2]->const_array(mfi);
+
+        Box const& bx  = mfi.tilebox();
+
+        // Loop over the cells and update the nodal E field
+        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+            // interpolate the total current to a nodal grid
+            auto const jx_interp = CoarsenIO::Interp(
+                Jx, Jx_stag, nodal, coarsen, i, j, k, 0);
+            auto const jy_interp = CoarsenIO::Interp(
+                Jy, Jy_stag, nodal, coarsen, i, j, k, 0);
+            auto const jz_interp = CoarsenIO::Interp(
+                Jz, Jz_stag, nodal, coarsen, i, j, k, 0);
+
+            // interpolate the ion current to a nodal grid
+            auto const jix_interp = CoarsenIO::Interp(
+                Jix, Jx_stag, nodal, coarsen, i, j, k, 0);
+            auto const jiy_interp = CoarsenIO::Interp(
+                Jiy, Jy_stag, nodal, coarsen, i, j, k, 0);
+            auto const jiz_interp = CoarsenIO::Interp(
+                Jiz, Jz_stag, nodal, coarsen, i, j, k, 0);
+
+            // interpolate the B field to a nodal grid
+            auto const Bx_interp = CoarsenIO::Interp(
+                Bx, Bx_stag, nodal, coarsen, i, j, k, 0);
+            auto const By_interp = CoarsenIO::Interp(
+                By, By_stag, nodal, coarsen, i, j, k, 0);
+            auto const Bz_interp = CoarsenIO::Interp(
+                Bz, Bz_stag, nodal, coarsen, i, j, k, 0);
+
+            // calculate enE = (J - Ji) x B
+            enE_nodal(i, j, k, 0) = (
+                (jy_interp - jiy_interp) * Bz_interp
+                - (jz_interp - jiz_interp) * By_interp
+            );
+            enE_nodal(i, j, k, 1) = (
+                (jz_interp - jiz_interp) * Bx_interp
+                - (jx_interp - jix_interp) * Bz_interp
+            );
+            enE_nodal(i, j, k, 2) = (
+                (jx_interp - jix_interp) * By_interp
+                - (jy_interp - jiy_interp) * Bx_interp
+            );
+        });
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
+
+    }
+
+    // fill ghost cells with appropriate values
+    auto & warpx = WarpX::GetInstance();
+    enE_nodal_mf.FillBoundary(warpx.Geom(lev).periodicity());
+
+    // Loop through the grids, and over the tiles within each grid again
+    // for the Yee grid calculation of the E field
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -270,20 +354,12 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
         Array4<Real> const& Ex = Efield[0]->array(mfi);
         Array4<Real> const& Ey = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
-        Array4<Real> const& Jx = Jfield[0]->array(mfi);
-        Array4<Real> const& Jy = Jfield[1]->array(mfi);
-        Array4<Real> const& Jz = Jfield[2]->array(mfi);
-        Array4<Real> const& Bx = Bfield[0]->array(mfi);
-        Array4<Real> const& By = Bfield[1]->array(mfi);
-        Array4<Real> const& Bz = Bfield[2]->array(mfi);
-        Array4<Real> const& Jix = Jifield[0]->array(mfi);
-        Array4<Real> const& Jiy = Jifield[1]->array(mfi);
-        Array4<Real> const& Jiz = Jifield[2]->array(mfi);
-        Array4<Real> const& rho = rhofield->array(mfi);
-
-        Array4<Real> const& Jix_old = Jifield_old[0]->array(mfi);
-        Array4<Real> const& Jiy_old = Jifield_old[1]->array(mfi);
-        Array4<Real> const& Jiz_old = Jifield_old[2]->array(mfi);
+        Array4<Real const> const& Jx = Jfield[0]->const_array(mfi);
+        Array4<Real const> const& Jy = Jfield[1]->const_array(mfi);
+        Array4<Real const> const& Jz = Jfield[2]->const_array(mfi);
+        Array4<Real const> const& enE = enE_nodal_mf.const_array(mfi);
+        Array4<Real const> const& rho = rhofield->const_array(mfi);
+        Array4<Real> const& Pe = Pefield->array(mfi);
 
 #ifdef AMREX_USE_EB
         amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
@@ -312,126 +388,42 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 // Skip if this cell is fully covered by embedded boundaries
                 if (lx(i, j, k) <= 0) return;
 #endif
+                // allocate variable for density
+                Real rho_val;
 
-                // allocate variables for all field quantities (interpolated onto the correct grid)
-                Real rho_interp, jey_interp, jez_interp, jy_interp, jz_interp, grad_p;
-
-                // get the appropriate charge density
+                // get the appropriate charge density in space and time
                 if (a_dt_type == DtType::Full) {
                     // use rho^{n}
-                    rho_interp = CoarsenIO::Interp(rho, rho_stag, Ex_stag, coarsen, i, j, k, 0);
+                    rho_val = CoarsenIO::Interp(
+                        rho, nodal, Ex_stag, coarsen, i, j, k, 0
+                    );
                 } else if (a_dt_type == DtType::FirstHalf) {
                     // use rho^{n+1/2}
-                    rho_interp = 0.5_rt * (
-                        CoarsenIO::Interp(rho, rho_stag, Ex_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(rho, rho_stag, Ex_stag, coarsen, i, j, k, 1)
+                    rho_val = 0.5_rt * (
+                        CoarsenIO::Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 1)
                     );
                 } else if (a_dt_type == DtType::SecondHalf) {
                     // use rho^{n+1}
-                    rho_interp = CoarsenIO::Interp(rho, rho_stag, Ex_stag, coarsen, i, j, k, 1);
+                    rho_val = CoarsenIO::Interp(
+                        rho, nodal, Ex_stag, coarsen, i, j, k, 1
+                    );
                 }
 
-                if (rho_interp == 0._rt) {
+                if (rho_val == 0._rt) {
                     Ex(i, j, k) = 0._rt;
                     return;
                 }
-                // rho_interp = n0 * PhysConst::q_e;
+                // rho_val = n0 * PhysConst::q_e;
 
-                // interpolate the total current to the appropriate grid
-                jy_interp = CoarsenIO::Interp(Jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
-                jz_interp = CoarsenIO::Interp(Jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
+                // Get the gradient of the electron pressure
+                auto grad_Pe = 0.0; //T_Algo::UpwardDx(Pe, coefs_x, n_coefs_x, i, j, k);
 
-                // get the electron current at the appropriate time and location
-                if (a_dt_type == DtType::Full) {
-                    // use J^{n}
-                    jey_interp = jy_interp - 0.5_rt * (
-                        CoarsenIO::Interp(Jiy_old, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(Jiy, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
-                    );
-                    jez_interp = jz_interp - 0.5_rt * (
-                        CoarsenIO::Interp(Jiz_old, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(Jiz, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
-                    );
-                } else if (a_dt_type == DtType::FirstHalf) {
-                    // use J^{n+1/2}
-                    jey_interp = jy_interp - CoarsenIO::Interp(Jiy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
-                    jez_interp = jz_interp - CoarsenIO::Interp(Jiz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
-                }
-                else if (a_dt_type == DtType::SecondHalf) {
-                    // use J^{n+1}
-                    jey_interp = jy_interp - 0.5_rt * (
-                        3._rt * CoarsenIO::Interp(Jiy, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
-                        - CoarsenIO::Interp(Jiy_old, Jy_stag, Ex_stag, coarsen, i, j, k, 0)
-                    );
-                    jez_interp = jz_interp - 0.5_rt * (
-                        3._rt * CoarsenIO::Interp(Jiz, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
-                        - CoarsenIO::Interp(Jiz_old, Jz_stag, Ex_stag, coarsen, i, j, k, 0)
-                    );
-                }
+                // interpolate the nodal neE values to the Yee grid
+                auto enE_x = CoarsenIO::Interp(enE, nodal, Ex_stag, coarsen, i, j, k, 0);
 
-                auto const By_interp = CoarsenIO::Interp(
-                    By, By_stag, Ex_stag, coarsen, i, j, k, 0
-                );
-                auto const Bz_interp = CoarsenIO::Interp(
-                    Bz, Bz_stag, Ex_stag, coarsen, i, j, k, 0
-                );
-
-#if (defined WARPX_DIM_1D_Z)
-                grad_p = 0._rt; // 1D Cartesian: derivative along x is 0
-#else
-                if (a_dt_type == DtType::Full) {
-                    // use rho^{n}
-                    grad_p = coefs_x[0]*(
-                        ElectronPressure::get_pressure(n0, T0, gamma, rho(i+1, j, k, 0))
-                        - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 0))
-                    );
-                } else if (a_dt_type == DtType::FirstHalf) {
-                    // use rho^{n+1/2}
-                    grad_p = coefs_x[0]*(
-                        ElectronPressure::get_pressure(
-                            n0, T0, gamma,
-                            0.5_rt * (rho(i+1, j, k, 1) + rho(i+1, j, k, 0))
-                        )
-                        - ElectronPressure::get_pressure(
-                            n0, T0, gamma,
-                            0.5_rt * (rho(i, j, k, 1) + rho(i, j, k, 0))
-                        )
-                    );
-                } else if (a_dt_type == DtType::SecondHalf) {
-                    // use rho^{n+1}
-                    grad_p = coefs_x[0]*(
-                        ElectronPressure::get_pressure(n0, T0, gamma, rho(i+1, j, k, 1))
-                        - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 1))
-                    );
-                }
-#endif
-
-                // calculate the full current
-                // auto const Jx =  T_Algo::Jx(
-                //         By, Bz, Bx_stag, By_stag, coefs_y, coefs_z, Ex_stag, i, j, k
-                // );
-                // auto const Jy =  T_Algo::Jy(
-                //         Bx, Bz, Bx_stag, Bz_stag, coefs_x, coefs_z, Ex_stag, i, j, k
-                // );
-                // auto const Jz = T_Algo::Jz(
-                //         Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, Ex_stag, i, j, k
-                // );
-                // auto const Jx = 0._rt;
-                // auto const Jy = 0._rt;
-                // auto const Jz = 0._rt;
-
-                Ex(i, j, k) = (
-                    jey_interp * Bz_interp - jez_interp * By_interp
-                    - grad_p
-                ) / rho_interp + eta * Jx(i, j, k);
-
-                // if (i < 100) {
-                //     amrex::Print() << Ex(i,j,k) << "  "
-                //         << Jx << "   " <<  Jy << "  " <<  Jz << "  "
-                //         << jz_interp << "   " <<  jy_interp << "  "
-                //         << Bz_interp
-                //     << std::endl;
-                // }
+                Ex(i, j, k) = (enE_x - grad_Pe) / rho_val + eta * Jx(i, j, k);
+                // Print() << Ex(i, j, k) << "   " <<  grad_Pe / rho_val << "   " << Jx(i, j, k) << std::endl;
             },
 
             // Ey calculation
@@ -446,118 +438,42 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
 #endif
 #endif
+                // allocate variable for density
+                Real rho_val;
 
-                // allocate variables for all interpolated (onto correct grid) field quantities
-                Real rho_interp, jex_interp, jez_interp, jx_interp, jz_interp, grad_p;
-
-                // get the appropriate charge density
+                // get the appropriate charge density in space and time
                 if (a_dt_type == DtType::Full) {
                     // use rho^{n}
-                    rho_interp = CoarsenIO::Interp(rho, rho_stag, Ey_stag, coarsen, i, j, k, 0);
+                    rho_val = CoarsenIO::Interp(
+                        rho, nodal, Ey_stag, coarsen, i, j, k, 0
+                    );
                 } else if (a_dt_type == DtType::FirstHalf) {
                     // use rho^{n+1/2}
-                    rho_interp = 0.5_rt * (
-                        CoarsenIO::Interp(rho, rho_stag, Ey_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(rho, rho_stag, Ey_stag, coarsen, i, j, k, 1)
+                    rho_val = 0.5_rt * (
+                        CoarsenIO::Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 1)
+                    );
+                } else if (a_dt_type == DtType::SecondHalf) {
+                    // use rho^{n+1}
+                    rho_val = CoarsenIO::Interp(
+                        rho, nodal, Ey_stag, coarsen, i, j, k, 1
                     );
                 }
-                else if (a_dt_type == DtType::SecondHalf) {
-                    // use rho^{n+1}
-                    rho_interp = CoarsenIO::Interp(rho, rho_stag, Ey_stag, coarsen, i, j, k, 1);
-                }
 
-                if (rho_interp == 0._rt) {
+                if (rho_val == 0._rt) {
                     Ey(i, j, k) = 0._rt;
                     return;
                 }
-                // rho_interp = n0 * PhysConst::q_e;
+                // rho_val = n0 * PhysConst::q_e;
 
-                // interpolate the total current to the appropriate grid
-                jx_interp = CoarsenIO::Interp(Jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0);
-                jz_interp = CoarsenIO::Interp(Jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0);
+                // Get the gradient of the electron pressure
+                auto grad_Pe = 0.0; //T_Algo::UpwardDy(Pe, coefs_y, n_coefs_y, i, j, k);
 
-                // get the electron current at the appropriate time and location
-                if (a_dt_type == DtType::Full) {
-                    // use J^{n}
-                    jex_interp = jx_interp - 0.5_rt * (
-                        CoarsenIO::Interp(Jix_old, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(Jix, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
-                    );
-                    jez_interp = jz_interp - 0.5_rt * (
-                        CoarsenIO::Interp(Jiz_old, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(Jiz, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
-                    );
-                } else if (a_dt_type == DtType::FirstHalf) {
-                    // use J^{n+1/2}
-                    jex_interp = jx_interp - CoarsenIO::Interp(Jix, Jx_stag, Ey_stag, coarsen, i, j, k, 0);
-                    jez_interp = jz_interp - CoarsenIO::Interp(Jiz, Jz_stag, Ey_stag, coarsen, i, j, k, 0);
-                } else if (a_dt_type == DtType::SecondHalf) {
-                    // use J^{n+1}
-                    jex_interp = jx_interp - 0.5_rt * (
-                        3._rt * CoarsenIO::Interp(Jix, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
-                        - CoarsenIO::Interp(Jix_old, Jx_stag, Ey_stag, coarsen, i, j, k, 0)
-                    );
-                    jez_interp = jz_interp - 0.5_rt * (
-                        3._rt * CoarsenIO::Interp(Jiz, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
-                        - CoarsenIO::Interp(Jiz_old, Jz_stag, Ey_stag, coarsen, i, j, k, 0)
-                    );
-                }
+                // interpolate the nodal neE values to the Yee grid
+                auto enE_y = CoarsenIO::Interp(enE, nodal, Ey_stag, coarsen, i, j, k, 1);
 
-                auto const Bx_interp = CoarsenIO::Interp(
-                    Bx, Bx_stag, Ey_stag, coarsen, i, j, k, 0
-                );
-                auto const Bz_interp = CoarsenIO::Interp(
-                    Bz, Bz_stag, Ey_stag, coarsen, i, j, k, 0
-                );
+                Ey(i, j, k) = (enE_y - grad_Pe) / rho_val + eta * Jy(i, j, k);
 
-#if (defined WARPX_DIM_1D_Z) || (defined WARPX_DIM_XZ)
-                grad_p = 0._rt; // 1D and 2D Cartesian: derivative along y is 0
-#else
-                if (a_dt_type == DtType::Full) {
-                    // use rho^{n}
-                    grad_p = coefs_y[0]*(
-                        ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j+1, k, 0))
-                        - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 0))
-                    );
-                } else if (a_dt_type == DtType::FirstHalf) {
-                    // use rho^{n+1/2}
-                    grad_p = coefs_y[0]*(
-                        ElectronPressure::get_pressure(
-                            n0, T0, gamma,
-                            0.5_rt * (rho(i, j+1, k, 1) + rho(i, j+1, k, 0))
-                        )
-                        - ElectronPressure::get_pressure(
-                            n0, T0, gamma,
-                            0.5_rt * (rho(i, j, k, 1) + rho(i, j, k, 0))
-                        )
-                    );
-                } else if (a_dt_type == DtType::SecondHalf) {
-                    // use rho^{n+1}
-                    grad_p = coefs_y[0]*(
-                        ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j+1, k, 1))
-                        - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 1))
-                    );
-                }
-#endif
-
-                // calculate the full current
-                // auto const Jx =  T_Algo::Jx(
-                //         By, Bz, By_stag, Bz_stag, coefs_y, coefs_z, Ey_stag, i, j, k
-                // );
-                // auto const Jy =  T_Algo::Jy(
-                //         Bx, Bz, Bx_stag, Bz_stag, coefs_x, coefs_z, Ey_stag, i, j, k
-                // );
-                // auto const Jz = T_Algo::Jz(
-                //         Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, Ey_stag, i, j, k
-                // );
-                // auto const Jx = 0._rt;
-                // auto const Jy = 0._rt;
-                // auto const Jz = 0._rt;
-
-                Ey(i, j, k) = (
-                    jez_interp * Bx_interp - jex_interp * Bz_interp
-                    - grad_p
-                ) / rho_interp + eta * Jy(i, j, k);
             },
 
             // Ez calculation
@@ -567,134 +483,43 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 // Skip field solve if this cell is fully covered by embedded boundaries
                 if (lz(i,j,k) <= 0) return;
 #endif
+                // allocate variable for density
+                Real rho_val;
 
-                // allocate variables for all interpolated (onto correct grid) field quantities
-                Real rho_interp, jex_interp, jey_interp, jx_interp, jy_interp, grad_p;
-
-                // get the appropriate charge density
+                // get the appropriate charge density in space and time
                 if (a_dt_type == DtType::Full) {
                     // use rho^{n}
-                    rho_interp = CoarsenIO::Interp(rho, rho_stag, Ez_stag, coarsen, i, j, k, 0);
+                    rho_val = CoarsenIO::Interp(
+                        rho, nodal, Ez_stag, coarsen, i, j, k, 0
+                    );
                 } else if (a_dt_type == DtType::FirstHalf) {
                     // use rho^{n+1/2}
-                    rho_interp = 0.5_rt * (
-                        CoarsenIO::Interp(rho, rho_stag, Ez_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(rho, rho_stag, Ez_stag, coarsen, i, j, k, 1)
+                    rho_val = 0.5_rt * (
+                        CoarsenIO::Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0)
+                        + CoarsenIO::Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 1)
                     );
                 } else if (a_dt_type == DtType::SecondHalf) {
                     // use rho^{n+1}
-                    rho_interp = CoarsenIO::Interp(rho, rho_stag, Ez_stag, coarsen, i, j, k, 1);
+                    rho_val = CoarsenIO::Interp(
+                        rho, nodal, Ez_stag, coarsen, i, j, k, 1
+                    );
                 }
 
-                if (rho_interp == 0._rt) {
+                if (rho_val == 0._rt) {
                     Ez(i, j, k) = 0._rt;
                     return;
                 }
-                // rho_interp = n0 * PhysConst::q_e;
+                // rho_val = n0 * PhysConst::q_e;
 
-                // interpolate the total current to the appropriate grid
-                jx_interp = CoarsenIO::Interp(Jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0);
-                jy_interp = CoarsenIO::Interp(Jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0);
+                // Get the gradient of the electron pressure
+                auto grad_Pe = 0.0; //T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, k);
 
-                // get the electron current at the appropriate time and location
-                if (a_dt_type == DtType::Full) {
-                    // use J^{n}
-                    jex_interp = jx_interp - 0.5_rt * (
-                        CoarsenIO::Interp(Jix_old, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(Jix, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
-                    );
-                    jey_interp = jy_interp - 0.5_rt * (
-                        CoarsenIO::Interp(Jiy_old, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(Jiy, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
-                    );
-                } else if (a_dt_type == DtType::FirstHalf) {
-                    // use J^{n+1/2}
-                    jex_interp = jx_interp - CoarsenIO::Interp(Jix, Jx_stag, Ez_stag, coarsen, i, j, k, 0);
-                    jey_interp = jy_interp - CoarsenIO::Interp(Jiy, Jy_stag, Ez_stag, coarsen, i, j, k, 0);
-                }
-                else if (a_dt_type == DtType::SecondHalf) {
-                    // use J^{n+1}
-                    jex_interp = jx_interp - 0.5_rt * (
-                        3._rt * CoarsenIO::Interp(Jix, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
-                        - CoarsenIO::Interp(Jix_old, Jx_stag, Ez_stag, coarsen, i, j, k, 0)
-                    );
-                    jey_interp = jy_interp - 0.5_rt * (
-                        3._rt * CoarsenIO::Interp(Jiy, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
-                        - CoarsenIO::Interp(Jiy_old, Jy_stag, Ez_stag, coarsen, i, j, k, 0)
-                    );
-                }
+                // interpolate the nodal neE values to the Yee grid
+                auto enE_z = CoarsenIO::Interp(enE, nodal, Ez_stag, coarsen, i, j, k, 2);
 
-                auto const Bx_interp = CoarsenIO::Interp(
-                    Bx, Bx_stag, Ez_stag, coarsen, i, j, k, 0
-                );
-                auto const By_interp = CoarsenIO::Interp(
-                    By, By_stag, Ez_stag, coarsen, i, j, k, 0
-                );
-
-#if (defined WARPX_DIM_1D_Z)
-                auto i1 = i+1;
-                auto j1 = j;
-                auto k1 = k;
-#elif (defined WARPX_DIM_XZ)
-                auto i1 = i;
-                auto j1 = j+1;
-                auto k1 = k;
-#else
-                auto i1 = i;
-                auto j1 = j;
-                auto k1 = k+1;
-#endif
-                if (a_dt_type == DtType::Full) {
-                    // use rho^{n}
-                    grad_p = coefs_z[0]*(
-                        ElectronPressure::get_pressure(n0, T0, gamma, rho(i1, j1, k1, 0))
-                        - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 0))
-                    );
-                }
-                else if (a_dt_type == DtType::FirstHalf) {
-                    // use rho^{n+1/2}
-                    grad_p = coefs_z[0]*(
-                        ElectronPressure::get_pressure(
-                            n0, T0, gamma,
-                            0.5_rt * (rho(i1, j1, k1, 1) + rho(i1, j1, k1, 0))
-                        )
-                        - ElectronPressure::get_pressure(
-                            n0, T0, gamma,
-                            0.5_rt * (rho(i, j, k, 1) + rho(i, j, k, 0))
-                        )
-                    );
-                }
-                else if (a_dt_type == DtType::SecondHalf) {
-                    // use rho^{n+1}
-                    grad_p = coefs_z[0]*(
-                        ElectronPressure::get_pressure(n0, T0, gamma, rho(i1, j1, k1, 1))
-                        - ElectronPressure::get_pressure(n0, T0, gamma, rho(i, j, k, 1))
-                    );
-                }
-
-                // calculate the full current
-                // auto const Jx =  T_Algo::Jx(
-                //         By, Bz, By_stag, Bz_stag, coefs_y, coefs_z, Ez_stag, i, j, k
-                // );
-                // auto const Jy = T_Algo::Jy(
-                //         Bx, Bz, Bx_stag, Bz_stag, coefs_x, coefs_z, Ez_stag, i, j, k
-                // );
-                // auto const Jz = T_Algo::Jz(
-                //         Bx, By, Bx_stag, By_stag, coefs_x, coefs_y, Ez_stag, i, j, k
-                // );
-                // auto const Jx = 0._rt;
-                // auto const Jy = 0._rt;
-                // auto const Jz = 0._rt;
-
-                Ez(i, j, k) = (
-                    jex_interp * By_interp - jey_interp * Bx_interp
-                    - grad_p
-                ) / rho_interp + eta * Jz(i, j, k);
-
-                // amrex::Print() << "[ " << i << ", " << j << "]  " << Ez(i, j, k) << "  " << rho_interp << "  " << Jy << "  " << grad_p << "  " << Bx_interp << std::endl;
+                Ez(i, j, k) = (enE_z - grad_Pe) / rho_val + eta * Jz(i, j, k);
 
             }
-
         );
 
         // // If F is not a null pointer, further update E using the grad(F) term

@@ -138,19 +138,17 @@ class FiniteDifferenceSolver
           *
           * \param[out] Efield  vector of electric field MultiFabs updated at a given level
           * \param[in] Jfield   vector of total current MultiFabs at a given level
+          * \param[in] Jifield  vector of ion current density MultiFabs at a given level
           * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
-          * \param[in] Jifield   vector of ion current density MultiFabs at a given level
-          * \param[in] Jifield_old   vector of ion current density MultiFabs at a given level
-          *     on the previous timestep
-          * \param[in] rhofield scalar ion chrge density Multifabs at a given level
+          * \param[in] rhofield scalar ion chrge density Multifab at a given level
+          * \param[in] Pefield  scalar electron pressure MultiFab at a given level
           */
-
         void HybridSolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield_old,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                       std::unique_ptr<amrex::MultiFab> const& rhofield,
+                      std::unique_ptr<amrex::MultiFab> const& Pefield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                       int lev, std::unique_ptr<HybridModel> const& hybrid_model,
                       DtType a_dt_type );
@@ -215,10 +213,10 @@ class FiniteDifferenceSolver
         void HybridSolveECylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jifield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield_old,
             std::unique_ptr<amrex::MultiFab> const& rhofield,
+            std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             int lev, std::unique_ptr<HybridModel> const& hybrid_model,
             DtType a_dt_type );
@@ -318,11 +316,11 @@ class FiniteDifferenceSolver
         template<typename T_Algo>
         void HybridSolveECartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield_old,
             std::unique_ptr<amrex::MultiFab> const& rhofield,
+            std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             int lev, std::unique_ptr<HybridModel> const& hybrid_model,
             DtType a_dt_type );

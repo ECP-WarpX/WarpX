@@ -2,16 +2,13 @@
  *
  * This file is part of WarpX.
  *
- * Authors: Roelof Groenewald
+ * Authors: Roelof Groenewald (TAE Technologies)
  *
  * License: BSD-3-Clause-LBNL
  */
 
 #include "HybridModel.H"
-
-#include "Utils/WarpXConst.H"
 #include "Utils/Parser/ParserUtils.H"
-#include "WarpX.H"
 
 
 using namespace amrex;
@@ -25,6 +22,10 @@ void
 HybridModel::ReadParameters ()
 {
     ParmParse pp_hybrid("hybridmodel");
+
+    // The B-field update is subcycled to improve stability - the number
+    // of sub steps can be specified by the user (defaults to 50).
+    utils::parser::queryWithParser(pp_hybrid, "substeps", m_substeps);
 
     // The hybrid model requires an electron temperature, reference density
     // and exponent to be given. These values will be used to calculate the
@@ -48,7 +49,6 @@ HybridModel::InitData ()
     auto & warpx = WarpX::GetInstance();
 
     // Get the grid staggering of the fields involved in calculating E
-    amrex::IntVect rho_stag = warpx.getrho_fp(0).ixType().toIntVect();
     amrex::IntVect Jx_stag = warpx.getcurrent_fp(0,0).ixType().toIntVect();
     amrex::IntVect Jy_stag = warpx.getcurrent_fp(0,1).ixType().toIntVect();
     amrex::IntVect Jz_stag = warpx.getcurrent_fp(0,2).ixType().toIntVect();
@@ -61,7 +61,6 @@ HybridModel::InitData ()
 
     // copy data to device
     for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        rho_IndexType[idim]   = rho_stag[idim];
         Jx_IndexType[idim]    = Jx_stag[idim];
         Jy_IndexType[idim]    = Jy_stag[idim];
         Jz_IndexType[idim]    = Jz_stag[idim];
@@ -72,28 +71,79 @@ HybridModel::InitData ()
         Ey_IndexType[idim]    = Ey_stag[idim];
         Ez_IndexType[idim]    = Ez_stag[idim];
     }
+
+    // Below we set all the unused dimensions to have nodal values for J, B & E
+    // since these values will be interpolated onto a nodal grid - if this is
+    // not done the Interp function returns nonsense values.
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_1D_Z)
-        rho_IndexType[2]   = 0;
-        Jx_IndexType[2]    = 0;
-        Jy_IndexType[2]    = 0;
-        Jz_IndexType[2]    = 0;
-        Bx_IndexType[2]    = 0;
-        By_IndexType[2]    = 0;
-        Bz_IndexType[2]    = 0;
-        Ex_IndexType[2]    = 0;
-        Ey_IndexType[2]    = 0;
-        Ez_IndexType[2]    = 0;
+    Jx_IndexType[2]    = 1;
+    Jy_IndexType[2]    = 1;
+    Jz_IndexType[2]    = 1;
+    Bx_IndexType[2]    = 1;
+    By_IndexType[2]    = 1;
+    Bz_IndexType[2]    = 1;
+    Ex_IndexType[2]    = 1;
+    Ey_IndexType[2]    = 1;
+    Ez_IndexType[2]    = 1;
 #endif
 #if defined(WARPX_DIM_1D_Z)
-        rho_IndexType[1]   = 0;
-        Jx_IndexType[1]    = 0;
-        Jy_IndexType[1]    = 0;
-        Jz_IndexType[1]    = 0;
-        Bx_IndexType[1]    = 0;
-        By_IndexType[1]    = 0;
-        Bz_IndexType[1]    = 0;
-        Ex_IndexType[1]    = 0;
-        Ey_IndexType[1]    = 0;
-        Ez_IndexType[1]    = 0;
+    Jx_IndexType[1]    = 1;
+    Jy_IndexType[1]    = 1;
+    Jz_IndexType[1]    = 1;
+    Bx_IndexType[1]    = 1;
+    By_IndexType[1]    = 1;
+    Bz_IndexType[1]    = 1;
+    Ex_IndexType[1]    = 1;
+    Ey_IndexType[1]    = 1;
+    Ez_IndexType[1]    = 1;
 #endif
+
+    // store the periodicity of the simulation since it is used to fill
+    // ghost cells for the nodal E multifab
+    // m_periodicity.resize(warpx.finestLevel());
+    // for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
+    // {
+    //     m_periodicity[lev] = std::make_unique<amrex::Periodicity>(warpx.Geom(lev).periodicity());
+    // }
+}
+
+void HybridModel::FillElectronPressureMF (
+    std::unique_ptr<amrex::MultiFab> const& Pe_field,
+    std::unique_ptr<amrex::MultiFab> const& rho_field,
+    DtType a_dt_type )
+{
+    // Loop through the grids, and over the tiles within each grid
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*Pe_field, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+    {
+        // Extract field data for this grid/tile
+        Array4<Real const> const& rho = rho_field->const_array(mfi);
+        Array4<Real> const& Pe = Pe_field->array(mfi);
+
+        // Extract tileboxes for which to loop
+        const Box& tilebox  = mfi.tilebox();
+
+        ParallelFor(tilebox, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+
+            Real rho_val;
+            if (a_dt_type == DtType::FirstHalf) {
+                // use rho^{n}
+                rho_val = rho(i, j, k, 0);
+            }
+            else if (a_dt_type == DtType::SecondHalf) {
+                // use rho^{n+1/2}
+                rho_val = 0.5 * (rho(i, j, k, 0) + rho(i, j, k, 1));
+            }
+            else {
+                // use rho^{n+1}
+                rho_val = rho(i, j, k, 1);
+            }
+
+            Pe(i, j, k) = ElectronPressure::get_pressure(
+                m_n0_ref, m_elec_temp, m_gamma, rho_val
+            );
+        });
+    }
 }

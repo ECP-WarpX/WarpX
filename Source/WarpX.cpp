@@ -324,7 +324,8 @@ WarpX::WarpX ()
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
     {
-        current_fp_old.resize(nlevs_max);
+        electron_pressure_fp.resize(nlevs_max);
+        current_fp_temp.resize(nlevs_max);
         current_fp_ampere.resize(nlevs_max);
     }
 
@@ -1666,7 +1667,8 @@ WarpX::ClearLevel (int lev)
 
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
         {
-            current_fp_old[lev][i].reset();
+            electron_pressure_fp[lev].reset();
+            current_fp_temp[lev][i].reset();
             current_fp_ampere[lev][i].reset();
         }
 
@@ -1919,12 +1921,17 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     // store the total current calculated using Ampere's law.
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
     {
-        current_fp_old[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, jx_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_old[x]"));
-        current_fp_old[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, jy_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_old[y]"));
-        current_fp_old[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, jz_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_old[z]"));
+
+        electron_pressure_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngRho, tag("electron_pressure_fp"));
+        electron_pressure_fp[lev]->setVal(0.);
+
+        current_fp_temp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, jx_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_temp[x]"));
+        current_fp_temp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, jy_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_temp[y]"));
+        current_fp_temp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba, jz_nodal_flag),
+            dm, ncomps, ngJ, tag("current_fp_temp[z]"));
         current_fp_ampere[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba, jx_nodal_flag),
             dm, ncomps, ngJ, tag("current_fp_ampere[x]"));
         current_fp_ampere[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba, jy_nodal_flag),

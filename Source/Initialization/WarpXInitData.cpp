@@ -748,7 +748,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
         {
-            current_fp_old[lev][i]->setVal(0.0);
+            current_fp_temp[lev][i]->setVal(0.0);
         }
 
         if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
