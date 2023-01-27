@@ -223,7 +223,7 @@ Setting up the field mesh
     Note that this value has to match the :ref:`WarpX_DIMS <building-cmake-options>` compile-time option.
     If you installed WarpX from a :ref:`package manager <install-users>`, then pick the right executable by name.
 
-* ``geometry.n_rz_azimuthal_modes`` (`integer`; 1 by default)
+* ``warpx.n_rz_azimuthal_modes`` (`integer`; 1 by default)
     When using the RZ version, this is the number of azimuthal modes.
     The default is ``1``, which corresponds to a perfectly axisymmetric simulation.
 
