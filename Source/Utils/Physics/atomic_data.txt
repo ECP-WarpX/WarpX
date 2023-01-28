@@ -217,7 +217,7 @@ At. num | Sp. Name      | Ion Charge |        Ionization Energy (eV)        |
      18 | Ar XVI        |        +15 |         (918.375)                    |
      18 | Ar XVII       |        +16 |        (4120.6656)                   |
      18 | Ar XVIII      |        +17 |        (4426.2228)                   |
-     22 | Ti I 	        |          0 | 	          6.828120                  |
+     22 | Ti I          |          0 |            6.828120                  |
      22 | Ti II         |         +1 |           13.5755                    |
      22 | Ti III        |         +2 |           27.49171                   |
      22 | Ti IV         |         +3 |           43.26717                   |
