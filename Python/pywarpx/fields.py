@@ -669,6 +669,27 @@ def PhiFPWrapper(level=0, include_ghosts=False):
                             get_nodal_flag=libwarpx.get_Phi_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
 
+def AxFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=0,
+                            get_lovects=libwarpx.get_mesh_vector_potential_fp_lovects,
+                            get_fabs=libwarpx.get_mesh_vector_potential_fp,
+                            get_nodal_flag=libwarpx.get_Ax_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def AyFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=1,
+                            get_lovects=libwarpx.get_mesh_vector_potential_fp_lovects,
+                            get_fabs=libwarpx.get_mesh_vector_potential_fp,
+                            get_nodal_flag=libwarpx.get_Ay_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def AzFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=2,
+                            get_lovects=libwarpx.get_mesh_vector_potential_fp_lovects,
+                            get_fabs=libwarpx.get_mesh_vector_potential_fp,
+                            get_nodal_flag=libwarpx.get_Az_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
 def FFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(direction=None,
                             get_lovects=libwarpx.get_mesh_F_fp_lovects,

@@ -6,9 +6,10 @@
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #endif
 #include "HybridModel/HybridModel.H"
-#include "Utils/CoarsenIO.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 using namespace amrex;
 
@@ -26,6 +27,7 @@ void FiniteDifferenceSolver::HybridSolveE (
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !m_do_nodal, "hybrid E-solve does not work with do_nodal=true");
+
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
@@ -228,7 +230,7 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
     auto n0 = hybrid_model->m_n0_ref;
     auto eta = hybrid_model->m_eta;
 
-    // Index type required for calling CoarsenIO::Interp to interpolate fields
+    // Index type required for calling ablastr::coarsen::sample::Interp to interpolate fields
     // from their respective staggering to the Ex, Ey, Ez locations
     amrex::GpuArray<int, 3> const& Ex_stag = hybrid_model->Ex_IndexType;
     amrex::GpuArray<int, 3> const& Ey_stag = hybrid_model->Ey_IndexType;
@@ -287,27 +289,27 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k){
 
             // interpolate the total current to a nodal grid
-            auto const jx_interp = CoarsenIO::Interp(
+            auto const jx_interp = ablastr::coarsen::sample::Interp(
                 Jx, Jx_stag, nodal, coarsen, i, j, k, 0);
-            auto const jy_interp = CoarsenIO::Interp(
+            auto const jy_interp = ablastr::coarsen::sample::Interp(
                 Jy, Jy_stag, nodal, coarsen, i, j, k, 0);
-            auto const jz_interp = CoarsenIO::Interp(
+            auto const jz_interp = ablastr::coarsen::sample::Interp(
                 Jz, Jz_stag, nodal, coarsen, i, j, k, 0);
 
             // interpolate the ion current to a nodal grid
-            auto const jix_interp = CoarsenIO::Interp(
+            auto const jix_interp = ablastr::coarsen::sample::Interp(
                 Jix, Jx_stag, nodal, coarsen, i, j, k, 0);
-            auto const jiy_interp = CoarsenIO::Interp(
+            auto const jiy_interp = ablastr::coarsen::sample::Interp(
                 Jiy, Jy_stag, nodal, coarsen, i, j, k, 0);
-            auto const jiz_interp = CoarsenIO::Interp(
+            auto const jiz_interp = ablastr::coarsen::sample::Interp(
                 Jiz, Jz_stag, nodal, coarsen, i, j, k, 0);
 
             // interpolate the B field to a nodal grid
-            auto const Bx_interp = CoarsenIO::Interp(
+            auto const Bx_interp = ablastr::coarsen::sample::Interp(
                 Bx, Bx_stag, nodal, coarsen, i, j, k, 0);
-            auto const By_interp = CoarsenIO::Interp(
+            auto const By_interp = ablastr::coarsen::sample::Interp(
                 By, By_stag, nodal, coarsen, i, j, k, 0);
-            auto const Bz_interp = CoarsenIO::Interp(
+            auto const Bz_interp = ablastr::coarsen::sample::Interp(
                 Bz, Bz_stag, nodal, coarsen, i, j, k, 0);
 
             // calculate enE = (J - Ji) x B
@@ -394,18 +396,18 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 // get the appropriate charge density in space and time
                 if (a_dt_type == DtType::Full) {
                     // use rho^{n}
-                    rho_val = CoarsenIO::Interp(
+                    rho_val = ablastr::coarsen::sample::Interp(
                         rho, nodal, Ex_stag, coarsen, i, j, k, 0
                     );
                 } else if (a_dt_type == DtType::FirstHalf) {
                     // use rho^{n+1/2}
                     rho_val = 0.5_rt * (
-                        CoarsenIO::Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 1)
+                        ablastr::coarsen::sample::Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 0)
+                        + ablastr::coarsen::sample::Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 1)
                     );
                 } else if (a_dt_type == DtType::SecondHalf) {
                     // use rho^{n+1}
-                    rho_val = CoarsenIO::Interp(
+                    rho_val = ablastr::coarsen::sample::Interp(
                         rho, nodal, Ex_stag, coarsen, i, j, k, 1
                     );
                 }
@@ -420,7 +422,7 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 auto grad_Pe = 0.0; //T_Algo::UpwardDx(Pe, coefs_x, n_coefs_x, i, j, k);
 
                 // interpolate the nodal neE values to the Yee grid
-                auto enE_x = CoarsenIO::Interp(enE, nodal, Ex_stag, coarsen, i, j, k, 0);
+                auto enE_x = ablastr::coarsen::sample::Interp(enE, nodal, Ex_stag, coarsen, i, j, k, 0);
 
                 Ex(i, j, k) = (enE_x - grad_Pe) / rho_val + eta * Jx(i, j, k);
                 // Print() << Ex(i, j, k) << "   " <<  grad_Pe / rho_val << "   " << Jx(i, j, k) << std::endl;
@@ -444,18 +446,18 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 // get the appropriate charge density in space and time
                 if (a_dt_type == DtType::Full) {
                     // use rho^{n}
-                    rho_val = CoarsenIO::Interp(
+                    rho_val = ablastr::coarsen::sample::Interp(
                         rho, nodal, Ey_stag, coarsen, i, j, k, 0
                     );
                 } else if (a_dt_type == DtType::FirstHalf) {
                     // use rho^{n+1/2}
                     rho_val = 0.5_rt * (
-                        CoarsenIO::Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 1)
+                        ablastr::coarsen::sample::Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 0)
+                        + ablastr::coarsen::sample::Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 1)
                     );
                 } else if (a_dt_type == DtType::SecondHalf) {
                     // use rho^{n+1}
-                    rho_val = CoarsenIO::Interp(
+                    rho_val = ablastr::coarsen::sample::Interp(
                         rho, nodal, Ey_stag, coarsen, i, j, k, 1
                     );
                 }
@@ -464,13 +466,12 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                     Ey(i, j, k) = 0._rt;
                     return;
                 }
-                // rho_val = n0 * PhysConst::q_e;
 
                 // Get the gradient of the electron pressure
                 auto grad_Pe = 0.0; //T_Algo::UpwardDy(Pe, coefs_y, n_coefs_y, i, j, k);
 
                 // interpolate the nodal neE values to the Yee grid
-                auto enE_y = CoarsenIO::Interp(enE, nodal, Ey_stag, coarsen, i, j, k, 1);
+                auto enE_y = ablastr::coarsen::sample::Interp(enE, nodal, Ey_stag, coarsen, i, j, k, 1);
 
                 Ey(i, j, k) = (enE_y - grad_Pe) / rho_val + eta * Jy(i, j, k);
 
@@ -489,18 +490,18 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 // get the appropriate charge density in space and time
                 if (a_dt_type == DtType::Full) {
                     // use rho^{n}
-                    rho_val = CoarsenIO::Interp(
+                    rho_val = ablastr::coarsen::sample::Interp(
                         rho, nodal, Ez_stag, coarsen, i, j, k, 0
                     );
                 } else if (a_dt_type == DtType::FirstHalf) {
                     // use rho^{n+1/2}
                     rho_val = 0.5_rt * (
-                        CoarsenIO::Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0)
-                        + CoarsenIO::Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 1)
+                        ablastr::coarsen::sample::Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0)
+                        + ablastr::coarsen::sample::Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 1)
                     );
                 } else if (a_dt_type == DtType::SecondHalf) {
                     // use rho^{n+1}
-                    rho_val = CoarsenIO::Interp(
+                    rho_val = ablastr::coarsen::sample::Interp(
                         rho, nodal, Ez_stag, coarsen, i, j, k, 1
                     );
                 }
@@ -509,13 +510,12 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                     Ez(i, j, k) = 0._rt;
                     return;
                 }
-                // rho_val = n0 * PhysConst::q_e;
 
                 // Get the gradient of the electron pressure
                 auto grad_Pe = 0.0; //T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, k);
 
                 // interpolate the nodal neE values to the Yee grid
-                auto enE_z = CoarsenIO::Interp(enE, nodal, Ez_stag, coarsen, i, j, k, 2);
+                auto enE_z = ablastr::coarsen::sample::Interp(enE, nodal, Ez_stag, coarsen, i, j, k, 2);
 
                 Ez(i, j, k) = (enE_z - grad_Pe) / rho_val + eta * Jz(i, j, k);
 

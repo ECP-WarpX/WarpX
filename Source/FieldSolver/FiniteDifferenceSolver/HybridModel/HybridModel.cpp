@@ -97,14 +97,6 @@ HybridModel::InitData ()
     Ey_IndexType[1]    = 1;
     Ez_IndexType[1]    = 1;
 #endif
-
-    // store the periodicity of the simulation since it is used to fill
-    // ghost cells for the nodal E multifab
-    // m_periodicity.resize(warpx.finestLevel());
-    // for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
-    // {
-    //     m_periodicity[lev] = std::make_unique<amrex::Periodicity>(warpx.Geom(lev).periodicity());
-    // }
 }
 
 void HybridModel::FillElectronPressureMF (

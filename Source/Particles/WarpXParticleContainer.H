@@ -137,11 +137,6 @@ public:
 
     virtual void PostRestart () = 0;
 
-    virtual void GetParticleSlice(const int /*direction*/, const amrex::Real /*z_old*/,
-                                  const amrex::Real /*z_new*/, const amrex::Real /*t_boost*/,
-                                  const amrex::Real /*t_lab*/, const amrex::Real /*dt*/,
-                                  DiagnosticParticles& /*diagnostic_particles*/) {}
-
     void AllocData ();
 
     /**
@@ -284,7 +279,7 @@ public:
      */
     void AddNParticles (int lev,
                         int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
-                        const amrex::ParticleReal* vx, const amrex::ParticleReal* vy, const amrex::ParticleReal* vz,
+                        const amrex::ParticleReal* ux, const amrex::ParticleReal* uy, const amrex::ParticleReal* uz,
                         const int nattr_real, const amrex::ParticleReal* attr_real,
                         const int nattr_int, const int* attr_int,
                         int uniqueparticles, amrex::Long id=-1);
@@ -298,9 +293,6 @@ public:
     static void BackwardCompatibility ();
 
     /** \brief Apply particle BC.
-     *
-     * \param[in] boundary_conditions Type of boundary conditions. For now, only absorbing or none
-     * are supported
      */
     void ApplyBoundaryConditions ();
 
@@ -315,7 +307,6 @@ public:
     // split along diagonals (0) or axes (1)
     int split_type = 0;
 
-    int doBackTransformedDiagnostics () const { return do_back_transformed_diagnostics; }
     /** Whether back-transformed diagnostics need to be performed for a particular species.
      *
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
@@ -408,7 +399,6 @@ protected:
 
     int do_resampling = 0;
 
-    int do_back_transformed_diagnostics = 1;
     /** Whether back-transformed diagnostics is turned on for the corresponding species.*/
     bool m_do_back_transformed_particles = false;
 

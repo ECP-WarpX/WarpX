@@ -69,7 +69,8 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         }
     }
 
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
         AddSpaceChargeFieldLabFrame();
     }
     else {
@@ -89,12 +90,6 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
             AddBoundaryField();
         }
     }
-    // Transfer fields from 'fp' array to 'aux' array.
-    // This is needed when using momentum conservation
-    // since they are different arrays in that case.
-    UpdateAuxilaryData();
-    FillBoundaryAux(guard_cells.ng_UpdateAux);
-
 }
 
 /* Compute the potential `phi` by solving the Poisson equation with the
@@ -311,7 +306,8 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 #if defined(AMREX_USE_EB)
     // EB: use AMReX to directly calculate the electric field since with EB's the
     // simple finite difference scheme in WarpX::computeE sometimes fails
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
         // TODO: maybe make this a helper function or pass Efield_fp directly
         amrex::Vector<
@@ -455,7 +451,7 @@ WarpX::setPhiBC ( amrex::Vector<std::unique_ptr<amrex::MultiFab>>& phi ) const
    The electric field is calculated by assuming that the source that
    produces the `phi` potential is moving with a constant speed \f$\vec{\beta}\f$:
    \f[
-    \vec{E} = -\vec{\nabla}\phi + (\vec{\beta}\cdot\vec{\beta})\phi \vec{\beta}
+    \vec{E} = -\vec{\nabla}\phi + \vec{\beta}(\vec{\beta} \cdot \vec{\nabla}\phi)
    \f]
    (where the second term represent the term \f$\partial_t \vec{A}\f$, in
     the case of a moving source)
@@ -722,28 +718,26 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
         nx_solve_max = nx_full_domain;
     }
 
-    // Create a 1-D MultiFab that covers all of x, including guard cells on each end.
+    // Create a 1-D MultiFab that covers all of x.
     // The tridiag solve will be done in this MultiFab and then copied out afterwards.
-    const amrex::IntVect lo_full_domain(AMREX_D_DECL(-1,0,0));
-    const amrex::IntVect hi_full_domain(AMREX_D_DECL(nx_full_domain+1,0,0));
-    const amrex::Box box_full_domain(lo_full_domain, hi_full_domain);
-    const BoxArray ba_full_domain(box_full_domain);
-    amrex::DistributionMapping dm_full_domain;
+    const amrex::IntVect lo_full_domain(AMREX_D_DECL(0,0,0));
+    const amrex::IntVect hi_full_domain(AMREX_D_DECL(nx_full_domain,0,0));
+    const amrex::Box box_full_domain_node(lo_full_domain, hi_full_domain, amrex::IntVect::TheNodeVector());
+    const BoxArray ba_full_domain_node(box_full_domain_node);
     amrex::Vector<int> pmap = {0}; // The data will only be on processor 0
-    dm_full_domain.define(pmap);
-    const int ncomps1d = 1;
-    const amrex::IntVect nguard1d(AMREX_D_DECL(1,0,0));
-    const BoxArray ba_full_domain_node = amrex::convert(ba_full_domain, amrex::IntVect::TheNodeVector());
+    amrex::DistributionMapping dm_full_domain(pmap);
 
     // Put the data in the pinned arena since the tridiag solver will be done on the CPU, but have
     // the data readily accessible from the GPU.
-    auto phi1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, ncomps1d, nguard1d, MFInfo().SetArena(The_Pinned_Arena()));
-    auto zwork1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, ncomps1d, nguard1d, MFInfo().SetArena(The_Pinned_Arena()));
-    auto rho1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, ncomps1d, nguard1d, MFInfo().SetArena(The_Pinned_Arena()));
+    auto phi1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, 1, 0, MFInfo().SetArena(The_Pinned_Arena()));
+    auto zwork1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, 1, 0, MFInfo().SetArena(The_Pinned_Arena()));
+    auto rho1d_mf = MultiFab(ba_full_domain_node, dm_full_domain, 1, 0, MFInfo().SetArena(The_Pinned_Arena()));
 
-    // Copy previous phi to get the boundary values
-    phi1d_mf.ParallelCopy(*phi[lev], 0, 0, 1, Geom(lev).periodicity());
-    rho1d_mf.ParallelCopy(*rho[lev], 0, 0, 1, Geom(lev).periodicity());
+    if (field_boundary_lo0 == FieldBoundaryType::PEC || field_boundary_hi0 == FieldBoundaryType::PEC) {
+        // Copy from phi to get the boundary values
+        phi1d_mf.ParallelCopy(*phi[lev], 0, 0, 1);
+    }
+    rho1d_mf.ParallelCopy(*rho[lev], 0, 0, 1);
 
     // Multiplier on the charge density
     const amrex::Real norm = dx[0]*dx[0]/PhysConst::ep0;
@@ -795,38 +789,40 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
         }
 
         // The last value depend on the boundary condition
-        int const imax = nx_solve_max;
         amrex::Real zwork_product = 1.; // Needed for parallel boundaries
         if (field_boundary_hi0 == FieldBoundaryType::PEC) {
 
-            zwork1d_arr(imax,0,0) = 1._rt/diag;
-            diag = 2._rt - zwork1d_arr(imax,0,0);
-            phi1d_arr(imax,0,0) = (phi1d_arr(imax+1,0,0) + rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
+            int const nxm1 = nx_full_domain - 1;
+            zwork1d_arr(nxm1,0,0) = 1._rt/diag;
+            diag = 2._rt - zwork1d_arr(nxm1,0,0);
+            phi1d_arr(nxm1,0,0) = (phi1d_arr(nxm1+1,0,0) + rho1d_arr(nxm1,0,0) - (-1._rt)*phi1d_arr(nxm1-1,0,0))/diag;
 
         } else if (field_boundary_hi0 == FieldBoundaryType::Neumann) {
 
             // Neumann boundary condition
-            zwork1d_arr(imax,0,0) = 1._rt/diag;
-            diag = 2._rt - 2._rt*zwork1d_arr(imax,0,0);
+            zwork1d_arr(nx_full_domain,0,0) = 1._rt/diag;
+            diag = 2._rt - 2._rt*zwork1d_arr(nx_full_domain,0,0);
             if (diag == 0._rt) {
                 // This happens if the lower boundary is also Neumann.
                 // It this case, the potential is relative to an arbitrary constant,
                 // so set the upper boundary to zero to force a value.
-                phi1d_arr(imax,0,0) = 0.;
+                phi1d_arr(nx_full_domain,0,0) = 0.;
             } else {
-                phi1d_arr(imax,0,0) = (rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
+                phi1d_arr(nx_full_domain,0,0) = (rho1d_arr(nx_full_domain,0,0) - (-1._rt)*phi1d_arr(nx_full_domain-1,0,0))/diag;
             }
 
         } else if (field_boundary_hi0 == FieldBoundaryType::Periodic) {
 
-            zwork1d_arr(imax,0,0) = 1._rt/diag;
+            zwork1d_arr(nx_full_domain,0,0) = 1._rt/diag;
 
-            for (int i = 1 ; i <= nx_solve_max ; i++) {
+            for (int i = 1 ; i <= nx_full_domain ; i++) {
                 zwork_product *= zwork1d_arr(i,0,0);
             }
 
-            diag = 2._rt - zwork1d_arr(imax,0,0) - zwork_product;
-            phi1d_arr(imax,0,0) = (rho1d_arr(imax,0,0) - (-1._rt)*phi1d_arr(imax-1,0,0))/diag;
+            diag = 2._rt - zwork1d_arr(nx_full_domain,0,0) - zwork_product;
+            // Note that rho1d_arr(0,0,0) is used to ensure that the same value is used
+            // on both boundaries.
+            phi1d_arr(nx_full_domain,0,0) = (rho1d_arr(0,0,0) - (-1._rt)*phi1d_arr(nx_full_domain-1,0,0))/diag;
 
         }
 
@@ -834,9 +830,9 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
         if (field_boundary_lo0 == FieldBoundaryType::Periodic) {
 
             // With periodic, the right hand column adds an extra term for all rows
-            for (int i_down = nx_solve_max-1 ; i_down >= nx_solve_min ; i_down--) {
+            for (int i_down = nx_full_domain-1 ; i_down >= 0 ; i_down--) {
                 zwork_product /= zwork1d_arr(i_down+1,0,0);
-                phi1d_arr(i_down,0,0) = phi1d_arr(i_down,0,0) + zwork1d_arr(i_down+1,0,0)*phi1d_arr(i_down+1,0,0) + zwork_product*phi1d_arr(imax,0,0);
+                phi1d_arr(i_down,0,0) = phi1d_arr(i_down,0,0) + zwork1d_arr(i_down+1,0,0)*phi1d_arr(i_down+1,0,0) + zwork_product*phi1d_arr(nx_full_domain,0,0);
             }
 
         } else {
@@ -847,26 +843,10 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
 
         }
 
-        // Set the value in the guard cells
-        // The periodic case is handled in the ParallelCopy below
-        if (field_boundary_lo0 == FieldBoundaryType::PEC) {
-            phi1d_arr(-1,0,0) = phi1d_arr(0,0,0);
-        } else if (field_boundary_lo0 == FieldBoundaryType::Neumann) {
-            phi1d_arr(-1,0,0) = phi1d_arr(1,0,0);
-        }
-
-        if (field_boundary_hi0 == FieldBoundaryType::PEC) {
-            phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain,0,0);
-        } else if (field_boundary_hi0 == FieldBoundaryType::Neumann) {
-            phi1d_arr(nx_full_domain+1,0,0) = phi1d_arr(nx_full_domain-1,0,0);
-        }
-
     }
 
-    // Copy phi1d to phi, including the x guard cell
-    const IntVect xghost(AMREX_D_DECL(1,0,0));
-    phi[lev]->ParallelCopy(phi1d_mf, 0, 0, 1, xghost, xghost, Geom(lev).periodicity());
-
+    // Copy phi1d to phi
+    phi[lev]->ParallelCopy(phi1d_mf, 0, 0, 1);
 }
 
 void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
@@ -949,7 +929,6 @@ void ElectrostaticSolver::PoissonBoundaryHandler::buildParsers ()
     potential_yhi_parser = utils::parser::makeParser(potential_yhi_str, {"t"});
     potential_zlo_parser = utils::parser::makeParser(potential_zlo_str, {"t"});
     potential_zhi_parser = utils::parser::makeParser(potential_zhi_str, {"t"});
-    potential_eb_parser  = utils::parser::makeParser(potential_eb_str, {"x", "y", "z", "t"});
 
     potential_xlo = potential_xlo_parser.compile<1>();
     potential_xhi = potential_xhi_parser.compile<1>();
@@ -957,6 +936,13 @@ void ElectrostaticSolver::PoissonBoundaryHandler::buildParsers ()
     potential_yhi = potential_yhi_parser.compile<1>();
     potential_zlo = potential_zlo_parser.compile<1>();
     potential_zhi = potential_zhi_parser.compile<1>();
+
+    buildParsersEB();
+}
+
+void ElectrostaticSolver::PoissonBoundaryHandler::buildParsersEB ()
+{
+    potential_eb_parser  = utils::parser::makeParser(potential_eb_str, {"x", "y", "z", "t"});
 
     // check if the EB potential is a function of space or only of time
     std::set<std::string> eb_symbols = potential_eb_parser.symbols();

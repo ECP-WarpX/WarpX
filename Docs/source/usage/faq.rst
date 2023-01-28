@@ -6,16 +6,27 @@ FAQ
 This section lists frequently asked usage questions.
 
 
-What is MPI thread support level?
----------------------------------
+What is "MPI initialized with thread support level ..."?
+--------------------------------------------------------
 
-We report this in output on startup together with other information.
+When we start up WarpX, we report a couple of information on used MPI processes across parallel compute processes, CPU threads or GPUs and further capabilities.
+For instance, a parallel, multi-process, multi-threaded CPU run could output::
 
-That is the `MPI support for threaded execution <https://www.mpich.org/static/docs/v3.1/www3/MPI_Init_thread.html>`__, e.g., with OpenMP or system threads.
+   MPI initialized with 4 MPI processes
+   MPI initialized with thread support level 3
+   OMP initialized with 8 OMP threads
+   AMReX (22.10-20-g3082028e4287) initialized
+   ...
 
+The 1st line is the number of parallel MPI processes (also called *MPI ranks*).
+
+The 2nd line reports on the `support level of MPI functions to be called from threads <https://www.mpich.org/static/docs/v3.1/www3/MPI_Init_thread.html>`__.
 We currently only use this for optional, :ref:`async IO with AMReX plotfiles <running-cpp-parameters-diagnostics>`.
 In the past, requesting MPI threading support had performance penalties, but we have not seen such anymore on recent systems.
-Thus, we request it by default but you can overwrite it with a compile time option if it ever becomes needed.
+Thus, we request it by default but you can overwrite it with a :ref:`compile time option <building-cmake-options>` if it ever becomes needed.
+
+The 3rd line is the number of CPU OpenMP (OMP) threads per MPI process.
+After that, information on software versions follow.
 
 
 How do I suppress tiny profiler output if I do not care to see it?

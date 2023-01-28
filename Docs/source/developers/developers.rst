@@ -11,6 +11,7 @@ Implementation Details
    dimensionality
    fields
    particles
+   accelerator_lattice
    initialization
    diagnostics
    moving_window

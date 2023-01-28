@@ -66,10 +66,11 @@ Running
 MI250X GPUs (2x64 GB)
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. note::
+In non-interactive runs:
 
-   TODO: Add batch script template.
-
+.. literalinclude:: ../../../../Tools/machines/lumi-csc/submit.sh
+   :language: bash
+   :caption: You can copy this file from ``Tools/machines/lumi-csc/submit.sh``.
 
 .. _post-processing-lumi:
 
@@ -79,3 +80,19 @@ Post-Processing
 .. note::
 
    TODO: Document any Jupyter or data services.
+
+Known System Issues
+-------------------
+
+.. warning::
+
+   December 12th, 2022:
+   There is a caching bug in libFabric that causes WarpX simulations to occasionally hang on LUMI on more than 1 node.
+
+   As a work-around, please export the following environment variable in your job scripts until the issue is fixed:
+
+   .. code-block:: bash
+
+      #export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching
+      # or, less invasive:
+      export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor

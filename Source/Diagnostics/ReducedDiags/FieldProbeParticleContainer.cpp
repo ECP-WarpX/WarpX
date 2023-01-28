@@ -12,7 +12,6 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/ParticleBoundaries_K.H"
-#include "Utils/CoarsenMR.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"

@@ -1,7 +1,5 @@
 target_sources(WarpX
   PRIVATE
-    CoarsenIO.cpp
-    CoarsenMR.cpp
     Interpolate.cpp
     MPIInitHelpers.cpp
     ParticleUtils.cpp
