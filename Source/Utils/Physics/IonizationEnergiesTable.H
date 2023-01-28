@@ -30,25 +30,26 @@ namespace utils::physics
         {"S", 15},
         {"Cl", 16},
         {"Ar", 17},
-        {"Cu", 18},
-        {"Kr", 19},
-        {"Rb", 20},
-        {"Xe", 21},
-        {"Rn", 22} };
+        {"Ti", 18},
+        {"Cu", 19},
+        {"Kr", 20},
+        {"Rb", 21},
+        {"Xe", 22},
+        {"Rn", 23} };
 
-    constexpr int nelements = 23;
+    constexpr int nelements = 24;
 
     constexpr int ion_atomic_numbers[nelements] = {
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-        11, 12, 13, 14, 15, 16, 17, 18, 29, 36,
-        37, 54, 86};
+        11, 12, 13, 14, 15, 16, 17, 18, 22, 29,
+        36, 37, 54, 86};
 
     constexpr int ion_energy_offsets[nelements] = {
         0, 1, 3, 6, 10, 15, 21, 28, 36, 45,
-        55, 66, 78, 91, 105, 120, 136, 153, 171, 200,
-        236, 273, 327};
+        55, 66, 78, 91, 105, 120, 136, 153, 171, 193,
+        222, 258, 295, 349};
 
-    constexpr int energies_tab_length = 413;
+    constexpr int energies_tab_length = 435;
 
     constexpr amrex::Real table_ionization_energies[energies_tab_length]{
         // H
@@ -132,6 +133,15 @@ namespace utils::physics
         amrex::Real(479.76), amrex::Real(540.4), amrex::Real(619.0),
         amrex::Real(685.5), amrex::Real(755.13), amrex::Real(855.5),
         amrex::Real(918.375), amrex::Real(4120.6656), amrex::Real(4426.2228),
+        // Ti
+        amrex::Real(6.828120), amrex::Real(13.5755), amrex::Real(27.49171),
+        amrex::Real(43.26717), amrex::Real(99.299), amrex::Real(119.533),
+        amrex::Real(140.68), amrex::Real(170.5), amrex::Real(192.1),
+        amrex::Real(215.92), amrex::Real(265.07), amrex::Real(291.500),
+        amrex::Real(787.67), amrex::Real(864.0), amrex::Real(944.5),
+        amrex::Real(1042.5), amrex::Real(1130.2), amrex::Real(1220.3),
+        amrex::Real(1346.3), amrex::Real(1425.257), amrex::Real(6249.0226),
+        amrex::Real(6625.81023),
         // Cu
         amrex::Real(7.726380), amrex::Real(20.29239), amrex::Real(36.841),
         amrex::Real(57.38), amrex::Real(79.8), amrex::Real(103.0),
