@@ -65,9 +65,12 @@ Scientific works in particle and beam modeling.
 Microelectronics
 ****************
 
-.. note::
+`ARTEMIS (Adaptive mesh Refinement Time-domain ElectrodynaMIcs Solver) <https://ccse.lbl.gov/Research/Microelectronics/>`__ is based on WarpX and couples the Maxwell's equations implementation in WarpX with classical equations that describe quantum material behavior (such as, LLG equation for micromagnetics and London equation for superconducting materials) for quantifying the performance of `next-generation microelectronics <https://www.lbl.gov/research/microelectronics-and-beyond/>`__.
 
-  Link ARTEMIS publications.
+#. Sawant SS, Yao Z, Jambunathan R, Nonaka A.
+   **Characterization of Transmission Lines in Microelectronic Circuits Using the ARTEMIS Solver**.
+   IEEE Journal on Multiscale and Multiphysics Computational Techniques, vol. 8, pp. 31-39, 2023.
+   `DOI:10.1109/JMMCT.2022.3228281 <https://doi.org/10.1109/JMMCT.2022.3228281>`__
 
 
 High-Performance Computing and Numerics
