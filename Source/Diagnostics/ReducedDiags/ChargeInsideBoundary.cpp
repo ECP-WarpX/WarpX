@@ -78,11 +78,18 @@ void ChargeInsideBoundary::ComputeDiags (int step)
     const MultiFab & Ey = warpx.getEfield(lev,1);
     const MultiFab & Ez = warpx.getEfield(lev,2);
 
-    // get EB structure
+    // get EB structures
     amrex::EBFArrayBoxFactory const& eb_box_factory = warpx.fieldEBFactory(lev);
+    amrex::FabArray<amrex::EBCellFlagFab> const& eb_flag = eb_box_factory.getMultiEBCellFlagFab();
+    amrex::MultiCutFab const& eb_bnd_cent = eb_box_factory.getBndryCent();
+    amrex::MultiCutFab const& eb_bnd_normal = eb_box_factory.getBndryNormal();
+    amrex::Array<const amrex::MultiCutFab*,AMREX_SPACEDIM> eb_area_fraction = eb_box_factory.getAreaFrac();
 
-    // get cell size
+    // get surface integration element
     auto cell_size = WarpX::CellSize(lev);
+    amrex::Real const dSx = cell_size[1]*cell_size[2];
+    amrex::Real const dSy = cell_size[2]*cell_size[0];
+    amrex::Real const dSz = cell_size[0]*cell_size[1];
 
     // Integral to calculate
     amrex::Gpu::Buffer<amrex::Real> surface_integral({0.0_rt});
@@ -103,12 +110,17 @@ void ChargeInsideBoundary::ComputeDiags (int step)
         const amrex::Array4<const amrex::Real> & Ey_arr = Ey[mfi].array();
         const amrex::Array4<const amrex::Real> & Ez_arr = Ez[mfi].array();
 
+        // Extract data for EB
+        const amrex::Array4<const amrex::Real> & dSx_fraction_arr = eb_area_fraction[0]->array(mfi);
+        const amrex::Array4<const amrex::Real> & dSy_fraction_arr = eb_area_fraction[1]->array(mfi);
+        const amrex::Array4<const amrex::Real> & dSz_fraction_arr = eb_area_fraction[2]->array(mfi);
+
         amrex::ParallelFor( box,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::Real local_integral_contribution = 0;
-                local_integral_contribution += Ex_arr(i,j,k)*cell_size[1]*cell_size[2];
-                local_integral_contribution += Ey_arr(i,j,k)*cell_size[2]*cell_size[0];
-                local_integral_contribution += Ez_arr(i,j,k)*cell_size[0]*cell_size[1];
+                local_integral_contribution += Ex_arr(i,j,k)*dSx*dSx_fraction_arr(i,j,k);
+                local_integral_contribution += Ey_arr(i,j,k)*dSy*dSy_fraction_arr(i,j,k);
+                local_integral_contribution += Ez_arr(i,j,k)*dSz*dSz_fraction_arr(i,j,k);
                 amrex::Gpu::Atomic::AddNoRet( surface_integral_pointer, local_integral_contribution );
         });
     }
