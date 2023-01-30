@@ -112,6 +112,8 @@ void ChargeInsideBoundary::ComputeDiags (int step)
 
         // Extract data for EB
         auto const& eb_flag_arr = eb_flag.array(mfi);
+        const amrex::Array4<const amrex::Real> & eb_bnd_normal_arr = eb_bnd_normal.array(mfi);
+        const amrex::Array4<const amrex::Real> & eb_bnd_cent_arr = eb_bnd_cent.array(mfi);
         const amrex::Array4<const amrex::Real> & dSx_fraction_arr = eb_area_fraction[0]->array(mfi);
         const amrex::Array4<const amrex::Real> & dSy_fraction_arr = eb_area_fraction[1]->array(mfi);
         const amrex::Array4<const amrex::Real> & dSz_fraction_arr = eb_area_fraction[2]->array(mfi);
@@ -119,14 +121,32 @@ void ChargeInsideBoundary::ComputeDiags (int step)
         amrex::ParallelFor( box,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 
-                // Only cells that are cut by the boundary do contribute to the integral
+                // Only cells that are partially covered do contribute to the integral
                 if (eb_flag_arr(i,j,k).isRegular() || eb_flag_arr(i,j,k).isCovered()) return;
 
-                amrex::Real local_integral_contribution = 0;
+                // Find nodal point which is outside of the EB
+                // (eb_normal points towards the *interior* of the EB)
+                int const i_n = (eb_bnd_normal_arr(i,j,k,0) > 0)? i : i+1;
+                int const j_n = (eb_bnd_normal_arr(i,j,k,1) > 0)? j : j+1;
+                int const k_n = (eb_bnd_normal_arr(i,j,k,2) > 0)? k : k+1;
 
-                local_integral_contribution += Ex_arr(i,j,k)*dSx*dSx_fraction_arr(i,j,k);
-                local_integral_contribution += Ey_arr(i,j,k)*dSy*dSy_fraction_arr(i,j,k);
-                local_integral_contribution += Ez_arr(i,j,k)*dSz*dSz_fraction_arr(i,j,k);
+                // Find cell-centered point which is outside of the EB
+                // (eb_normal points towards the *interior* of the EB)
+                int i_c = i;
+                if ((eb_bnd_normal_arr(i,j,k,0)>0) && (eb_bnd_cent_arr(i,j,k,0)<=0)) i_c -= 1;
+                if ((eb_bnd_normal_arr(i,j,k,0)<0) && (eb_bnd_cent_arr(i,j,k,0)>=0)) i_c += 1;
+                int j_c = j;
+                if ((eb_bnd_normal_arr(i,j,k,1)>0) && (eb_bnd_cent_arr(i,j,k,1)<=0)) j_c -= 1;
+                if ((eb_bnd_normal_arr(i,j,k,1)<0) && (eb_bnd_cent_arr(i,j,k,1)>=0)) j_c += 1;
+                int k_c = k;
+                if ((eb_bnd_normal_arr(i,j,k,2)>0) && (eb_bnd_cent_arr(i,j,k,2)<=0)) k_c -= 1;
+                if ((eb_bnd_normal_arr(i,j,k,2)<0) && (eb_bnd_cent_arr(i,j,k,2)>=0)) k_c += 1;
+
+                // Compute contribution to the surface integral $\int dS \cdot E$)
+                amrex::Real local_integral_contribution = 0;
+                local_integral_contribution += Ex_arr(i_c,j_n,k_n)*dSx*dSx_fraction_arr(i,j,k);
+                local_integral_contribution += Ey_arr(i_n,j_c,k_n)*dSy*dSy_fraction_arr(i,j,k);
+                local_integral_contribution += Ez_arr(i_n,j_n,k_c)*dSz*dSz_fraction_arr(i,j,k);
                 amrex::Gpu::Atomic::AddNoRet( surface_integral_pointer, local_integral_contribution );
         });
     }
