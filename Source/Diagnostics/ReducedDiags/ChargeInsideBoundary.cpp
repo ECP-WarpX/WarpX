@@ -12,6 +12,7 @@
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
+#include <AMReX_GpuAtomic.H>
 #include <AMReX_Config.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_MultiFab.H>
@@ -29,10 +30,10 @@ using namespace amrex;
 ChargeInsideBoundary::ChargeInsideBoundary (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-    // RZ coordinate is not working
-#if (defined WARPX_DIM_RZ)
+    // Only 3D is working for now
+#if !(defined WARPX_DIM_3D)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-        "ChargeInsideBoundary reduced diagnostics does not work for RZ coordinate.");
+        "ChargeInsideBoundary reduced diagnostics only works in 3D");
 #endif
 
     // resize data array
@@ -69,53 +70,55 @@ void ChargeInsideBoundary::ComputeDiags (int step)
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
-    // get number of level
-    const auto nLevel = warpx.finestLevel() + 1;
+    // Only compute the integral on level 0
+    int const lev = 0;
 
-    // loop over refinement levels
-    for (int lev = 0; lev < nLevel; ++lev)
-    {
-        // get MultiFab data at lev
-        const MultiFab & Ex = warpx.getEfield(lev,0);
-        const MultiFab & Ey = warpx.getEfield(lev,1);
-        const MultiFab & Ez = warpx.getEfield(lev,2);
-        const MultiFab & Bx = warpx.getBfield(lev,0);
-        const MultiFab & By = warpx.getBfield(lev,1);
-        const MultiFab & Bz = warpx.getBfield(lev,2);
+    // get MultiFab data at lev
+    const MultiFab & Ex = warpx.getEfield(lev,0);
+    const MultiFab & Ey = warpx.getEfield(lev,1);
+    const MultiFab & Ez = warpx.getEfield(lev,2);
 
-        // get cell size
-        Geometry const & geom = warpx.Geom(lev);
-#if defined(WARPX_DIM_1D_Z)
-        auto dV = geom.CellSize(0);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
-        auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
+    // get EB structure
+    amrex::EBFArrayBoxFactory const& eb_box_factory = warpx.fieldEBFactory(lev);
+
+    // get cell size
+    auto cell_size = WarpX::CellSize(lev);
+
+    // Integral to calculate
+    amrex::Gpu::Buffer<amrex::Real> surface_integral({0.0_rt});
+    amrex::Real* surface_integral_pointer = surface_integral.data();
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
+    // Loop over boxes
+    for (amrex::MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    {
+        const amrex::Box & box = enclosedCells(mfi.nodaltilebox());
 
-        // compute E squared
-        Real const tmpEx = Ex.norm2(0,geom.periodicity());
-        Real const tmpEy = Ey.norm2(0,geom.periodicity());
-        Real const tmpEz = Ez.norm2(0,geom.periodicity());
-        Real const Es = tmpEx*tmpEx + tmpEy*tmpEy + tmpEz*tmpEz;
+        // TODO: Skip boxes that are fully covered
 
-        // compute B squared
-        Real const tmpBx = Bx.norm2(0,geom.periodicity());
-        Real const tmpBy = By.norm2(0,geom.periodicity());
-        Real const tmpBz = Bz.norm2(0,geom.periodicity());
-        Real const Bs = tmpBx*tmpBx + tmpBy*tmpBy + tmpBz*tmpBz;
+        // Extract data for electric field
+        const amrex::Array4<const amrex::Real> & Ex_arr = Ex[mfi].array();
+        const amrex::Array4<const amrex::Real> & Ey_arr = Ey[mfi].array();
+        const amrex::Array4<const amrex::Real> & Ez_arr = Ez[mfi].array();
 
-        constexpr int noutputs = 3; // total energy, E-field energy and B-field energy
-        constexpr int index_total = 0;
-        constexpr int index_E = 1;
-        constexpr int index_B = 2;
-
-        // save data
-        m_data[lev*noutputs+index_E] = 0.5_rt * Es * PhysConst::ep0 * dV;
-        m_data[lev*noutputs+index_B] = 0.5_rt * Bs / PhysConst::mu0 * dV;
-        m_data[lev*noutputs+index_total] = m_data[lev*noutputs+index_E] +
-                                           m_data[lev*noutputs+index_B];
+        amrex::ParallelFor( box,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                amrex::Real local_integral_contribution = 0;
+                local_integral_contribution += Ex_arr(i,j,k)*cell_size[1]*cell_size[2];
+                local_integral_contribution += Ey_arr(i,j,k)*cell_size[2]*cell_size[0];
+                local_integral_contribution += Ez_arr(i,j,k)*cell_size[0]*cell_size[1];
+                amrex::Gpu::Atomic::AddNoRet( surface_integral_pointer, local_integral_contribution );
+        });
     }
 
+    // Reduce across MPI ranks
+    surface_integral.copyToHost();
+    amrex::Real surface_integral_value = *(surface_integral.hostData());
+    amrex::ParallelDescriptor::ReduceRealSum( surface_integral_value );
+
+    // save data
+    m_data[0] = PhysConst::ep0 * surface_integral_value;
 }
 // end void ChargeInsideBoundary::ComputeDiags
