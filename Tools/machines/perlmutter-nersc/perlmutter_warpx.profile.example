@@ -1,31 +1,14 @@
 # please set your project account
-#export proj="<yourProject>_g"  # change me
+export proj="<yourProject>_g"  # change me
 
-# required dependencies
-module load cmake/3.22.0
+# load E4S & Spack
+module load e4s/22.05
 
-# optional: for QED support with detailed tables
-#module load boost/1.78.0-gnu  # missing
-
-# optional: for openPMD and PSATD+RZ support
-module load cray-hdf5-parallel/1.12.2.1
-export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/adios2-2.7.1:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/blaspp-master:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=$HOME/sw/perlmutter/lapackpp-master:$CMAKE_PREFIX_PATH
-
-export LD_LIBRARY_PATH=$HOME/sw/perlmutter/c-blosc-1.21.1/lib64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$HOME/sw/perlmutter/adios2-2.7.1/lib64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$HOME/sw/perlmutter/blaspp-master/lib64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$HOME/sw/perlmutter/lapackpp-master/lib64:$LD_LIBRARY_PATH
-
-# optional: for Python bindings or libEnsemble
-module load cray-python/3.9.13.1
-
-if [ -d "$HOME/sw/perlmutter/venvs/warpx" ]
-then
-  source $HOME/sw/perlmutter/venvs/warpx/bin/activate
+mySWenvDir="/global/common/software/${proj%_g}/$USER/spack-envs/warpx-perlmutter-cuda"
+if [ ! -d "${mySWenvDir}" ]
+  spack env create -d ${mySWenvDir} spack-perlmutter-cuda.yaml
 fi
+spack env activate ${mySWenvDir}
 
 # an alias to request an interactive batch node for one hour
 #   for parallel execution, start on the batch node: srun <command>
@@ -46,8 +29,8 @@ export AMREX_CUDA_ARCH=8.0
 #export CFLAGS="-march=znver3"
 
 # compiler environment hints
-export CC=cc
-export CXX=CC
-export FC=ftn
+export CC=$(which gcc)
+export CXX=$(which g++)
+export FC=$(which gfortran)
 export CUDACXX=$(which nvcc)
-export CUDAHOSTCXX=CC
+export CUDAHOSTCXX=${CXX}
