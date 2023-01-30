@@ -106,18 +106,24 @@ void ChargeInsideBoundary::ComputeDiags (int step)
         // TODO: Skip boxes that are fully covered
 
         // Extract data for electric field
-        const amrex::Array4<const amrex::Real> & Ex_arr = Ex[mfi].array();
-        const amrex::Array4<const amrex::Real> & Ey_arr = Ey[mfi].array();
-        const amrex::Array4<const amrex::Real> & Ez_arr = Ez[mfi].array();
+        const amrex::Array4<const amrex::Real> & Ex_arr = Ex.array(mfi);
+        const amrex::Array4<const amrex::Real> & Ey_arr = Ey.array(mfi);
+        const amrex::Array4<const amrex::Real> & Ez_arr = Ez.array(mfi);
 
         // Extract data for EB
+        auto const& eb_flag_arr = eb_flag.array(mfi);
         const amrex::Array4<const amrex::Real> & dSx_fraction_arr = eb_area_fraction[0]->array(mfi);
         const amrex::Array4<const amrex::Real> & dSy_fraction_arr = eb_area_fraction[1]->array(mfi);
         const amrex::Array4<const amrex::Real> & dSz_fraction_arr = eb_area_fraction[2]->array(mfi);
 
         amrex::ParallelFor( box,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+
+                // Only cells that are cut by the boundary do contribute to the integral
+                if (eb_flag_arr(i,j,k).isRegular() || eb_flag_arr(i,j,k).isCovered()) return;
+
                 amrex::Real local_integral_contribution = 0;
+
                 local_integral_contribution += Ex_arr(i,j,k)*dSx*dSx_fraction_arr(i,j,k);
                 local_integral_contribution += Ey_arr(i,j,k)*dSy*dSy_fraction_arr(i,j,k);
                 local_integral_contribution += Ez_arr(i,j,k)*dSz*dSz_fraction_arr(i,j,k);
