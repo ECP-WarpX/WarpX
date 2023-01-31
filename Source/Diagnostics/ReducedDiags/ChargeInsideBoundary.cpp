@@ -69,10 +69,10 @@ ChargeInsideBoundary::ChargeInsideBoundary (std::string rd_name)
 // function that computes the charge inside a boundary
 void ChargeInsideBoundary::ComputeDiags (int step)
 {
-#if ((defined WARPX_DIM_3D) && (defined AMREX_USE_EB))
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
+#if ((defined WARPX_DIM_3D) && (defined AMREX_USE_EB))
     // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
