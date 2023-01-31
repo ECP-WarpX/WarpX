@@ -168,6 +168,6 @@ void ChargeInsideBoundary::ComputeDiags (int step)
 
     // save data
     m_data[0] = PhysConst::ep0 * surface_integral_value;
-#endif    
+#endif
 }
 // end void ChargeInsideBoundary::ComputeDiags
