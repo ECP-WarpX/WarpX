@@ -10,6 +10,17 @@ sys.path.append('../../../../warpx/Regression/Checksum/')
 
 import checksumAPI
 
+# Check reduced diagnostics for charge on EB
+import numpy as np
+from scipy.constants import epsilon_0
+data = np.loadtxt('diags/reducedfiles/eb_charge.txt')
+q_sim = data[1,2]
+# Theoretical charge on the embedded boundary, for sphere at potential phi_0
+phi_0 = 1. # V
+R = 0.3 # m
+q_th = -4*np.pi*epsilon_0*phi_0*R
+assert abs((q_sim-q_th)/q_th) < 0.03
+
 # The first step is the same as in inputs_3d
 my_check = checksumAPI.evaluate_checksum(
     'ElectrostaticSphereEB', 'Python_ElectrostaticSphereEB_plt000001',
