@@ -150,8 +150,6 @@ namespace
 
         AMREX_GPU_HOST_DEVICE
         PDim3& operator=(const PDim3&) = default;
-        AMREX_GPU_HOST_DEVICE
-        PDim3& operator=(const amrex::XDim3 &a) { x = a.x; y = a.y; z = a.z; return *this; }
     };
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
