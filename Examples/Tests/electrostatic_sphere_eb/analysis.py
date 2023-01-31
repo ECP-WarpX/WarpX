@@ -9,10 +9,10 @@ import sys
 sys.path.append('../../../../warpx/Regression/Checksum/')
 
 import checksumAPI
-
 # Check reduced diagnostics for charge on EB
 import numpy as np
 from scipy.constants import epsilon_0
+
 data = np.loadtxt('diags/reducedfiles/eb_charge.txt')
 q_sim = data[1,2]
 # Theoretical charge on the embedded boundary, for sphere at potential phi_0
