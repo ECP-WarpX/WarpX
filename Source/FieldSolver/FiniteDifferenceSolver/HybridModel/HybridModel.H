@@ -65,7 +65,7 @@ public:
     amrex::GpuArray<int, 3> Ez_IndexType;
 
     /** Number of substeps to take when evolving B */
-    int m_substeps = 50;
+    int m_substeps = 100;
 
     /** Electron temperature in eV */
     amrex::Real m_elec_temp;
@@ -91,8 +91,8 @@ struct ElectronPressure {
                                      amrex::Real const T0,
                                      amrex::Real const gamma,
                                      amrex::Real const rho) {
-        // return n0 * T0 * pow((rho/PhysConst::q_e)/n0, gamma);
-        return T0 * rho / PhysConst::q_e;
+        return n0 * T0 * pow((rho/PhysConst::q_e)/n0, gamma);
+        // return T0 * rho / PhysConst::q_e;
     }
 };
 

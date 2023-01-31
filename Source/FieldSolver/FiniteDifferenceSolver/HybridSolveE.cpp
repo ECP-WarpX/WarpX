@@ -419,13 +419,12 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 // rho_val = n0 * PhysConst::q_e;
 
                 // Get the gradient of the electron pressure
-                auto grad_Pe = 0.0; //T_Algo::UpwardDx(Pe, coefs_x, n_coefs_x, i, j, k);
+                auto grad_Pe = T_Algo::UpwardDx(Pe, coefs_x, n_coefs_x, i, j, k);
 
                 // interpolate the nodal neE values to the Yee grid
                 auto enE_x = ablastr::coarsen::sample::Interp(enE, nodal, Ex_stag, coarsen, i, j, k, 0);
 
                 Ex(i, j, k) = (enE_x - grad_Pe) / rho_val + eta * Jx(i, j, k);
-                // Print() << Ex(i, j, k) << "   " <<  grad_Pe / rho_val << "   " << Jx(i, j, k) << std::endl;
             },
 
             // Ey calculation
@@ -468,13 +467,12 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 }
 
                 // Get the gradient of the electron pressure
-                auto grad_Pe = 0.0; //T_Algo::UpwardDy(Pe, coefs_y, n_coefs_y, i, j, k);
+                auto grad_Pe = T_Algo::UpwardDy(Pe, coefs_y, n_coefs_y, i, j, k);
 
                 // interpolate the nodal neE values to the Yee grid
                 auto enE_y = ablastr::coarsen::sample::Interp(enE, nodal, Ey_stag, coarsen, i, j, k, 1);
 
                 Ey(i, j, k) = (enE_y - grad_Pe) / rho_val + eta * Jy(i, j, k);
-
             },
 
             // Ez calculation
@@ -512,39 +510,14 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 }
 
                 // Get the gradient of the electron pressure
-                auto grad_Pe = 0.0; //T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, k);
+                auto grad_Pe = T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, k);
 
                 // interpolate the nodal neE values to the Yee grid
                 auto enE_z = ablastr::coarsen::sample::Interp(enE, nodal, Ez_stag, coarsen, i, j, k, 2);
 
                 Ez(i, j, k) = (enE_z - grad_Pe) / rho_val + eta * Jz(i, j, k);
-
             }
         );
-
-        // // If F is not a null pointer, further update E using the grad(F) term
-        // // (hyperbolic correction for errors in charge conservation)
-        // if (Ffield) {
-
-        //     // Extract field data for this grid/tile
-        //     Array4<Real> F = Ffield->array(mfi);
-
-        //     // Loop over the cells and update the fields
-        //     amrex::ParallelFor(tex, tey, tez,
-
-        //         [=] AMREX_GPU_DEVICE (int i, int j, int k){
-        //             Ex(i, j, k) += c2 * dt * T_Algo::UpwardDx(F, coefs_x, n_coefs_x, i, j, k);
-        //         },
-        //         [=] AMREX_GPU_DEVICE (int i, int j, int k){
-        //             Ey(i, j, k) += c2 * dt * T_Algo::UpwardDy(F, coefs_y, n_coefs_y, i, j, k);
-        //         },
-        //         [=] AMREX_GPU_DEVICE (int i, int j, int k){
-        //             Ez(i, j, k) += c2 * dt * T_Algo::UpwardDz(F, coefs_z, n_coefs_z, i, j, k);
-        //         }
-
-        //     );
-
-        // }
 
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -553,6 +526,5 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
-
 }
 #endif

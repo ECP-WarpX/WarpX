@@ -70,6 +70,11 @@ WarpX::HybridEvolveFields ()
                 }
             );
         }
+
+        // fill ghost cells with appropriate values
+        current_fp_temp[lev][0]->FillBoundary(Geom(lev).periodicity());
+        current_fp_temp[lev][1]->FillBoundary(Geom(lev).periodicity());
+        current_fp_temp[lev][2]->FillBoundary(Geom(lev).periodicity());
     }
 
     // Calculate the electron pressure at t=n using rho^n
@@ -78,6 +83,7 @@ WarpX::HybridEvolveFields ()
         m_hybrid_model->FillElectronPressureMF(
             electron_pressure_fp[lev], rho_fp[lev], DtType::FirstHalf
         );
+        electron_pressure_fp[lev]->FillBoundary(Geom(lev).periodicity());
     }
 
     // Push the B field from t=n to t=n+1/2 using the current and density
@@ -98,6 +104,7 @@ WarpX::HybridEvolveFields ()
         m_hybrid_model->FillElectronPressureMF(
             electron_pressure_fp[lev], rho_fp[lev], DtType::SecondHalf
         );
+        electron_pressure_fp[lev]->FillBoundary(Geom(lev).periodicity());
     }
 
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
@@ -116,6 +123,7 @@ WarpX::HybridEvolveFields ()
         m_hybrid_model->FillElectronPressureMF(
             electron_pressure_fp[lev], rho_fp[lev], DtType::Full
         );
+        electron_pressure_fp[lev]->FillBoundary(Geom(lev).periodicity());
     }
 
     // Extrapolate the ion current density to t=n+1 to calculate a projected
@@ -143,18 +151,23 @@ WarpX::HybridEvolveFields ()
 
             amrex::ParallelFor(tjx, tjy, tjz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    Jx(i, j, k) = 2.0 * Jx_adv(i, j, k) - 0.5 * Jx(i, j, k);
+                    Jx(i, j, k) = 2.0 * Jx_adv(i, j, k) - Jx(i, j, k);
                 },
 
                 [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    Jy(i, j, k) = 2.0 * Jy_adv(i, j, k) - 0.5 * Jy(i, j, k);
+                    Jy(i, j, k) = 2.0 * Jy_adv(i, j, k) - Jy(i, j, k);
                 },
 
                 [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    Jz(i, j, k) = 2.0 * Jz_adv(i, j, k) - 0.5 * Jz(i, j, k);
+                    Jz(i, j, k) = 2.0 * Jz_adv(i, j, k) - Jz(i, j, k);
                 }
             );
         }
+
+        // fill ghost cells with appropriate values
+        current_fp_temp[lev][0]->FillBoundary(Geom(lev).periodicity());
+        current_fp_temp[lev][1]->FillBoundary(Geom(lev).periodicity());
+        current_fp_temp[lev][2]->FillBoundary(Geom(lev).periodicity());
     }
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
