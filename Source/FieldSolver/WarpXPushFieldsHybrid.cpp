@@ -32,7 +32,8 @@ WarpX::HybridEvolveFields ()
     // this simpler implementation
 
     // Note: E^{n} is recalculated with the accurate J_i^{n} since at the end
-    // of the last step we had to "guess" J_i^{n}.
+    // of the last step we had to "guess" J_i^{n}. It also needs to be
+    // recalculated to include the resistivity before evolving B.
 
     // Firstly J_i^{n} is calculated as the average of J_i^{n-1/2} and J_i^{n+1/2}
     for (int lev = 0; lev <= finest_level; ++lev)
@@ -91,7 +92,7 @@ WarpX::HybridEvolveFields ()
     // momentum equation
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
-        HybridSolveE(DtType::Full);
+        HybridSolveE(DtType::FirstHalf);
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
         EvolveB(0.5 / sub_steps * dt[0], DtType::FirstHalf);
@@ -110,7 +111,7 @@ WarpX::HybridEvolveFields ()
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
-        HybridSolveE(DtType::FirstHalf);
+        HybridSolveE(DtType::SecondHalf);
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
         EvolveB(0.5 / sub_steps * dt[0], DtType::SecondHalf);
@@ -171,7 +172,7 @@ WarpX::HybridEvolveFields ()
     }
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
-    HybridSolveE(DtType::SecondHalf);
+    HybridSolveE(DtType::Full);
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
     // Copy the J_i^{n+1/2} values to current_fp_temp since at the next step
@@ -212,7 +213,7 @@ WarpX::HybridSolveE (int lev, PatchType patch_type, DtType a_dt_type)
 {
     // Solve E field in regular cells
     if (patch_type == PatchType::fine) {
-        if (a_dt_type == DtType::FirstHalf) {
+        if (a_dt_type == DtType::SecondHalf) {
             m_fdtd_solver_fp[lev]->HybridSolveE(
                 Efield_fp[lev], current_fp_ampere[lev], current_fp[lev],
                 Bfield_fp[lev], rho_fp[lev], electron_pressure_fp[lev],

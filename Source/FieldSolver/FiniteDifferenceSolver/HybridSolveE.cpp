@@ -295,6 +295,9 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 Jy, Jy_stag, nodal, coarsen, i, j, k, 0);
             auto const jz_interp = ablastr::coarsen::sample::Interp(
                 Jz, Jz_stag, nodal, coarsen, i, j, k, 0);
+            // auto const jx_interp = 0.0;
+            // auto const jy_interp = 0.0;
+            // auto const jz_interp = 0.0;
 
             // interpolate the ion current to a nodal grid
             auto const jix_interp = ablastr::coarsen::sample::Interp(
@@ -394,18 +397,18 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 Real rho_val;
 
                 // get the appropriate charge density in space and time
-                if (a_dt_type == DtType::Full) {
+                if (a_dt_type == DtType::FirstHalf) {
                     // use rho^{n}
                     rho_val = ablastr::coarsen::sample::Interp(
                         rho, nodal, Ex_stag, coarsen, i, j, k, 0
                     );
-                } else if (a_dt_type == DtType::FirstHalf) {
+                } else if (a_dt_type == DtType::SecondHalf) {
                     // use rho^{n+1/2}
                     rho_val = 0.5_rt * (
                         ablastr::coarsen::sample::Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 0)
                         + ablastr::coarsen::sample::Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 1)
                     );
-                } else if (a_dt_type == DtType::SecondHalf) {
+                } else if (a_dt_type == DtType::Full) {
                     // use rho^{n+1}
                     rho_val = ablastr::coarsen::sample::Interp(
                         rho, nodal, Ex_stag, coarsen, i, j, k, 1
@@ -424,7 +427,10 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 // interpolate the nodal neE values to the Yee grid
                 auto enE_x = ablastr::coarsen::sample::Interp(enE, nodal, Ex_stag, coarsen, i, j, k, 0);
 
-                Ex(i, j, k) = (enE_x - grad_Pe) / rho_val + eta * Jx(i, j, k);
+                Ex(i, j, k) = (enE_x - grad_Pe) / rho_val;
+
+                // Add resistivity only if E field value is used to update B
+                if (a_dt_type != DtType::Full) Ex(i, j, k) += eta * Jx(i, j, k);
             },
 
             // Ey calculation
@@ -443,18 +449,18 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 Real rho_val;
 
                 // get the appropriate charge density in space and time
-                if (a_dt_type == DtType::Full) {
+                if (a_dt_type == DtType::FirstHalf) {
                     // use rho^{n}
                     rho_val = ablastr::coarsen::sample::Interp(
                         rho, nodal, Ey_stag, coarsen, i, j, k, 0
                     );
-                } else if (a_dt_type == DtType::FirstHalf) {
+                } else if (a_dt_type == DtType::SecondHalf) {
                     // use rho^{n+1/2}
                     rho_val = 0.5_rt * (
                         ablastr::coarsen::sample::Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 0)
                         + ablastr::coarsen::sample::Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 1)
                     );
-                } else if (a_dt_type == DtType::SecondHalf) {
+                } else if (a_dt_type == DtType::Full) {
                     // use rho^{n+1}
                     rho_val = ablastr::coarsen::sample::Interp(
                         rho, nodal, Ey_stag, coarsen, i, j, k, 1
@@ -472,7 +478,10 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 // interpolate the nodal neE values to the Yee grid
                 auto enE_y = ablastr::coarsen::sample::Interp(enE, nodal, Ey_stag, coarsen, i, j, k, 1);
 
-                Ey(i, j, k) = (enE_y - grad_Pe) / rho_val + eta * Jy(i, j, k);
+                Ey(i, j, k) = (enE_y - grad_Pe) / rho_val;
+
+                // Add resistivity only if E field value is used to update B
+                if (a_dt_type != DtType::Full) Ey(i, j, k) += eta * Jy(i, j, k);
             },
 
             // Ez calculation
@@ -486,18 +495,18 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 Real rho_val;
 
                 // get the appropriate charge density in space and time
-                if (a_dt_type == DtType::Full) {
+                if (a_dt_type == DtType::FirstHalf) {
                     // use rho^{n}
                     rho_val = ablastr::coarsen::sample::Interp(
                         rho, nodal, Ez_stag, coarsen, i, j, k, 0
                     );
-                } else if (a_dt_type == DtType::FirstHalf) {
+                } else if (a_dt_type == DtType::SecondHalf) {
                     // use rho^{n+1/2}
                     rho_val = 0.5_rt * (
                         ablastr::coarsen::sample::Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0)
                         + ablastr::coarsen::sample::Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 1)
                     );
-                } else if (a_dt_type == DtType::SecondHalf) {
+                } else if (a_dt_type == DtType::Full) {
                     // use rho^{n+1}
                     rho_val = ablastr::coarsen::sample::Interp(
                         rho, nodal, Ez_stag, coarsen, i, j, k, 1
@@ -515,7 +524,10 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 // interpolate the nodal neE values to the Yee grid
                 auto enE_z = ablastr::coarsen::sample::Interp(enE, nodal, Ez_stag, coarsen, i, j, k, 2);
 
-                Ez(i, j, k) = (enE_z - grad_Pe) / rho_val + eta * Jz(i, j, k);
+                Ez(i, j, k) = (enE_z - grad_Pe) / rho_val;
+
+                // Add resistivity only if E field value is used to update B
+                if (a_dt_type != DtType::Full) Ez(i, j, k) += eta * Jz(i, j, k);
             }
         );
 
