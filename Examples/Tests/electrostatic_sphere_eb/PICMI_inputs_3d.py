@@ -79,6 +79,11 @@ field_diag = picmi.FieldDiagnostic(
     warpx_file_prefix = 'Python_ElectrostaticSphereEB_plt'
 )
 
+reduced_diag = picmi.ReducedDiagnostic(
+    diag_type = 'ChargeInsideBoundary',
+    name = 'eb_charge',
+    period = 1)
+
 ##########################
 # simulation setup
 ##########################
@@ -92,6 +97,7 @@ sim = picmi.Simulation(
 )
 
 sim.add_diagnostic(field_diag)
+sim.add_diagnostic(reduced_diag)
 
 ##########################
 # simulation run
