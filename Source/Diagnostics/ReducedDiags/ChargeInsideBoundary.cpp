@@ -36,6 +36,11 @@ ChargeInsideBoundary::ChargeInsideBoundary (std::string rd_name)
         "ChargeInsideBoundary reduced diagnostics only works in 3D");
 #endif
 
+#if !(defined AMREX_USE_EB)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+        "ChargeInsideBoundary reduced diagnostics only works when compiling with EB support");
+#endif
+
     // resize data array
     m_data.resize(1, 0.0_rt);
 
@@ -64,6 +69,7 @@ ChargeInsideBoundary::ChargeInsideBoundary (std::string rd_name)
 // function that computes the charge inside a boundary
 void ChargeInsideBoundary::ComputeDiags (int step)
 {
+#if ((defined WARPX_DIM_3D) && (defined AMREX_USE_EB))
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
@@ -162,5 +168,6 @@ void ChargeInsideBoundary::ComputeDiags (int step)
 
     // save data
     m_data[0] = PhysConst::ep0 * surface_integral_value;
+#endif    
 }
 // end void ChargeInsideBoundary::ComputeDiags
