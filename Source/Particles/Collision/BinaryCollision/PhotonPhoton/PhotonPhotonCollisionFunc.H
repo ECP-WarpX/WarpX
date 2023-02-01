@@ -53,7 +53,7 @@ public:
      * @param[in] mypc pointer to the MultiParticleContainer
      * @param[in] isSameSpecies whether the two colliding species are the same
      */
-    PhotonPhotonCollisionFunc (const std::string collision_name, MultiParticleContainer const * const mypc,
+    PhotonPhotonCollisionFunc (const std::string collision_name, MultiParticleContainer const * const /*mypc*/,
                        const bool isSameSpecies) : m_isSameSpecies(isSameSpecies)
     {
         using namespace amrex::literals;
@@ -62,26 +62,24 @@ public:
         amrex::Abort("Photon-photon collision module does not currently work with single precision");
 #endif
 
-        //m_fusion_type = BinaryCollisionUtils::get_nuclear_fusion_type(collision_name, mypc);
-
         amrex::ParmParse pp_collision_name(collision_name);
-        // default fusion multiplier
-        m_fusion_multiplier = 1.0_prt;
+        // default event multiplier
+        m_event_multiplier = 1.0_prt;
         utils::parser::queryWithParser(
-            pp_collision_name, "fusion_multiplier", m_fusion_multiplier);
-        // default fusion probability threshold
+            pp_collision_name, "event_multiplier", m_event_multiplier);
+        // default probability threshold
         m_probability_threshold = 0.02_prt;
         utils::parser::queryWithParser(
-            pp_collision_name, "fusion_probability_threshold", m_probability_threshold);
-        // default fusion probability target_value
+            pp_collision_name, "probability_threshold", m_probability_threshold);
+        // default probability target_value
         m_probability_target_value = 0.002_prt;
         utils::parser::queryWithParser(
-            pp_collision_name, "fusion_probability_target_value",
+            pp_collision_name, "probability_target_value",
             m_probability_target_value);
     }
 
     /**
-     * \brief operator() of the NuclearFusionFunc class. Performs nuclear fusions at the cell level
+     * \brief operator() of the PhotonPhotonCollisionFunc class. Performs nuclear fusions at the cell level
      * using the algorithm described in Higginson et al., Journal of Computational Physics 388,
      * 439-453 (2019). Note that this function does not yet create the product particles, but
      * instead fills an array p_mask that stores which collisions result in a fusion event.
@@ -125,14 +123,13 @@ public:
         SoaData_type soa_1, SoaData_type soa_2,
         GetParticlePosition /*get_position_1*/, GetParticlePosition /*get_position_2*/,
         amrex::ParticleReal const  /*q1*/, amrex::ParticleReal const  /*q2*/,
-        amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
+        amrex::ParticleReal const  /*m1*/, amrex::ParticleReal const  /*m2*/,
         amrex::Real const  dt, amrex::Real const dV,
         index_type const cell_start_pair, index_type* AMREX_RESTRICT p_mask,
         index_type* AMREX_RESTRICT p_pair_indices_1, index_type* AMREX_RESTRICT p_pair_indices_2,
         amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
         amrex::RandomEngine const& engine) const
         {
-
             amrex::ParticleReal * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
             amrex::ParticleReal * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
             amrex::ParticleReal * const AMREX_RESTRICT u1y = soa_1.m_rdata[PIdx::uy];
@@ -203,7 +200,7 @@ public:
                     u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
                     w1[ I1[i1] ]/c1k, w2[ I2[i2] ]/c2k,
                     dt, dV, pair_index, p_mask, p_pair_reaction_weight,
-                    m_fusion_multiplier, multiplier_ratio,
+                    m_event_multiplier, multiplier_ratio,
                     m_probability_threshold,
                     m_probability_target_value,
                     engine); // removed : m1, m2, m_fusion_type
@@ -226,7 +223,7 @@ public:
 private:
     // Factor used to increase the number of fusion reaction by decreasing the weight of the
     // produced particles
-    amrex::ParticleReal m_fusion_multiplier;
+    amrex::ParticleReal m_event_multiplier;
     // If the fusion multiplier is too high and results in a fusion probability that approaches
     // 1, there is a risk of underestimating the total fusion yield. In these cases, we reduce
     // the fusion multiplier used in a given collision. m_probability_threshold is the fusion

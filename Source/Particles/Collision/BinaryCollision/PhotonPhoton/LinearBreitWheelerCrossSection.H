@@ -41,19 +41,18 @@ amrex::ParticleReal LinearBreitWheelerCrossSection (const amrex::ParticleReal& E
     auto constexpr pow2 = [](double const x) { return x*x; };
     auto constexpr pow4 = [](double const x) { return x*x*x*x; };
 
-    const amrex::ParticleReal s = E_star/(me * c_sq);
+    const amrex::ParticleReal s = pow2(E_star/(me * c_sq));
     const amrex::ParticleReal beta = std::sqrt(1._prt-1._prt/s);
 
     const amrex::ParticleReal term1 = (3._prt-pow4(beta))*std::log((1._prt+beta)/(1._prt-beta));
     const amrex::ParticleReal term2 = 2._prt*beta*(pow2(beta)-2._prt);
     const amrex::ParticleReal cross_section = one_half_pr*pi*re2*(1._prt-pow2(beta))*(term1+term2);
-<<<<<<< HEAD
 
-    //amrex::Print() <<  "PRINTING CROSS SECTION" << cross_section << "\n";
-=======
 
-    amrex::Print() <<  "PRINTING CROSS SECTION" << cross_section << "\n";
->>>>>>> 09a889ee (added temporary prints)
+    //amrex::Print() << "HHHHHHHHHHH --" << term1 << " - " << term2 << " - \n";
+    //amrex::Print() << "HHHHHHHHHHH --" << s << " - " << beta << " - \n";
+    //amrex::Print() << "HHHHHHHHHHH --" << cross_section << " - " << E_star << " - \n";
+
 
     return cross_section;
 }

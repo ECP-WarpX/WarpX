@@ -48,19 +48,15 @@ namespace {
                             const amrex::ParticleReal& u1x_in,
                             const amrex::ParticleReal& u1y_in,
                             const amrex::ParticleReal& u1z_in,
-                            const amrex::ParticleReal& m1_in,
                             const amrex::ParticleReal& u2x_in,
                             const amrex::ParticleReal& u2y_in,
                             const amrex::ParticleReal& u2z_in,
-                            const amrex::ParticleReal& m2_in,
                             amrex::ParticleReal& u1x_out,
                             amrex::ParticleReal& u1y_out,
                             amrex::ParticleReal& u1z_out,
-                            const amrex::ParticleReal& m1_out,
                             amrex::ParticleReal& u2x_out,
                             amrex::ParticleReal& u2y_out,
                             amrex::ParticleReal& u2z_out,
-                            const amrex::ParticleReal& m2_out,
                             const amrex::RandomEngine& engine )
     {
         using namespace amrex::literals;
@@ -72,41 +68,22 @@ namespace {
         constexpr auto one_half_pr = amrex::ParticleReal(1./2.);
         constexpr auto one_pr = amrex::ParticleReal(1.);
 
-        // Rest energy of incident particles
-        //const amrex::ParticleReal E_rest_in = (m1_in + m2_in)*c_sq;
-        // Rest energy of products
-        const amrex::ParticleReal E_rest_out =  2._prt*me*c_sq; //(m1_out + m2_out)*c_sq;
-
-        // Compute Lorentz factor gamma in the lab frame
-        const amrex::ParticleReal g1_in = std::sqrt( 1._prt
-            + (u1x_in*u1x_in + u1y_in*u1y_in + u1z_in*u1z_in)*inv_csq );
-        const amrex::ParticleReal g2_in = std::sqrt( 1._prt
-            + (u2x_in*u2x_in + u2y_in*u2y_in + u2z_in*u2z_in)*inv_csq );
-
         // Compute momenta
-        const amrex::ParticleReal p1x_in = u1x_in * me; //m1_in;
-        const amrex::ParticleReal p1y_in = u1y_in * me; //m1_in;
-        const amrex::ParticleReal p1z_in = u1z_in * me; //m1_in;
-        const amrex::ParticleReal p2x_in = u2x_in * me; //m2_in;
-        const amrex::ParticleReal p2y_in = u2y_in * me; //m2_in;
-        const amrex::ParticleReal p2z_in = u2z_in * me; //m2_in;
+        const amrex::ParticleReal p1x_in = u1x_in * me;
+        const amrex::ParticleReal p1y_in = u1y_in * me;
+        const amrex::ParticleReal p1z_in = u1z_in * me;
+        const amrex::ParticleReal p2x_in = u2x_in * me;
+        const amrex::ParticleReal p2y_in = u2y_in * me;
+        const amrex::ParticleReal p2z_in = u2z_in * me;
         const amrex::ParticleReal p1_in = std::sqrt(pow2(p1x_in)+pow2(p1y_in)+pow2(p1z_in));
         const amrex::ParticleReal p2_in = std::sqrt(pow2(p2x_in)+pow2(p2y_in)+pow2(p2z_in));
 
         // Compute angle between photon momenta in the lab frame
         const amrex::ParticleReal cos_ang = (p1x_in*p2x_in+p1y_in*p2y_in+p1z_in*p2z_in)/(p1_in*p2_in);
 
-        // Square norm of the total (sum between the two particles) momenta in the lab frame
-        const amrex::ParticleReal p_total_sq =  pow2(p1x_in+p2x_in) +
-                                                pow2(p1y_in+p2y_in) +
-                                                pow2(p1z_in+p2z_in);
-
-        // Total energy of incident macroparticles in the lab frame
-        const amrex::ParticleReal E_lab = std::sqrt(p_total_sq*c_sq); //(m1_in * g1_in + m2_in * g2_in) * c_sq;
-
         // Total energy squared of proton+boron in the center of mass frame, calculated using the
         // Lorentz invariance of the four-momentum norm
-        const amrex::ParticleReal E_star_sq = one_half_pr*c_sq*p1_in*p2_in*(one_pr - cos_ang); //E_lab*E_lab - c_sq*p_total_sq;
+        const amrex::ParticleReal E_star_sq = one_half_pr*c_sq*p1_in*p2_in*(one_pr - cos_ang); 
         // Total energy squared of the products in the center of mass frame
         // In principle, the term - E_rest_in + E_rest_out + E_fusion is not needed and equal to
         // zero (i.e. the energy liberated during fusion is equal to the mass difference). However,
@@ -174,7 +151,6 @@ namespace {
         u2x_out = p2x_out/me; //m2_out;
         u2y_out = p2y_out/me;
         u2z_out = p2z_out/me;
-        amrex::Print() << "COLL MOM " << u2z_out << "\n";
     }
 }
 
