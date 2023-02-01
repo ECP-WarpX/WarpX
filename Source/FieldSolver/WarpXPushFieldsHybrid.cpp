@@ -27,8 +27,8 @@ WarpX::HybridEvolveFields ()
     // have rho^{n} in the 0'th index and rho{n+1} in the 1'st index of `rho_fp`,
     // J_i^{n+1/2} in `current_fp` and J_i^{n-1/2} in `current_fp_temp`.
 
-    // TODO: insert Runge-Kutta integration logic to supercycle B update instead
-    // of the single update step used here - can test with small timestep using
+    // TODO: insert Runge-Kutta integration logic for B update instead
+    // of the substep update used here - can test with small timestep using
     // this simpler implementation
 
     // Note: E^{n} is recalculated with the accurate J_i^{n} since at the end
