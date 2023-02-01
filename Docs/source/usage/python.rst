@@ -305,6 +305,10 @@ with scraped particle data.
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.clearParticleBoundaryBuffer
 
+The embedded boundary conditions can be modified when using the electrostatic solver.
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.set_potential_EB
+
 Using Python input as a preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

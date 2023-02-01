@@ -7,7 +7,9 @@
 #ifndef WARPX_AMREX_INIT_H_
 #define WARPX_AMREX_INIT_H_
 
-#include <AMReX.H>
+#include <AMReX_ccse-mpi.H>
+
+#include <AMReX_BaseFwd.H>
 
 /** Call amrex::Initialize
  *

@@ -929,7 +929,6 @@ void ElectrostaticSolver::PoissonBoundaryHandler::buildParsers ()
     potential_yhi_parser = utils::parser::makeParser(potential_yhi_str, {"t"});
     potential_zlo_parser = utils::parser::makeParser(potential_zlo_str, {"t"});
     potential_zhi_parser = utils::parser::makeParser(potential_zhi_str, {"t"});
-    potential_eb_parser  = utils::parser::makeParser(potential_eb_str, {"x", "y", "z", "t"});
 
     potential_xlo = potential_xlo_parser.compile<1>();
     potential_xhi = potential_xhi_parser.compile<1>();
@@ -937,6 +936,13 @@ void ElectrostaticSolver::PoissonBoundaryHandler::buildParsers ()
     potential_yhi = potential_yhi_parser.compile<1>();
     potential_zlo = potential_zlo_parser.compile<1>();
     potential_zhi = potential_zhi_parser.compile<1>();
+
+    buildParsersEB();
+}
+
+void ElectrostaticSolver::PoissonBoundaryHandler::buildParsersEB ()
+{
+    potential_eb_parser  = utils::parser::makeParser(potential_eb_str, {"x", "y", "z", "t"});
 
     // check if the EB potential is a function of space or only of time
     std::set<std::string> eb_symbols = potential_eb_parser.symbols();

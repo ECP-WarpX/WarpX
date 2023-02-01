@@ -156,6 +156,7 @@ extern "C" {
   int warpx_getMyProc ();
   int warpx_getNProcs ();
 
+  void warpx_setPotentialEB (const char * char_potential);
 
   void mypc_Redistribute ();
 

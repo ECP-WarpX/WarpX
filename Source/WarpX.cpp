@@ -1004,14 +1004,18 @@ WarpX::ReadParameters ()
         load_balance_intervals = utils::parser::IntervalsParser(
             load_balance_intervals_string_vec);
         pp_algo.query("load_balance_with_sfc", load_balance_with_sfc);
-        pp_algo.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
+        // Knapsack factor only used with non-SFC strategy
+        if (!load_balance_with_sfc)
+            pp_algo.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
         utils::parser::queryWithParser(pp_algo, "load_balance_efficiency_ratio_threshold",
                         load_balance_efficiency_ratio_threshold);
         load_balance_costs_update_algo = GetAlgorithmInteger(pp_algo, "load_balance_costs_update");
-        utils::parser::queryWithParser(
-            pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
-        utils::parser::queryWithParser(
-            pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
+        if (WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic) {
+            utils::parser::queryWithParser(
+                pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
+            utils::parser::queryWithParser(
+                pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
+        }
 
         // Parse algo.particle_shape and check that input is acceptable
         // (do this only if there is at least one particle or laser species)

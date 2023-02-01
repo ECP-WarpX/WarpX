@@ -14,12 +14,12 @@ jobs:
     env:
       CXXFLAGS: "-Werror"
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: install dependencies
       run: |
         .github/workflows/dependencies/gcc.sh
     - name: CCache Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
       # - for a refresh the key has to change, e.g., hash of a tracked file in the key
       with:
@@ -57,13 +57,13 @@ jobs:
       CMAKE_GENERATOR: Ninja
       CXXFLAGS: "-Werror"
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: install dependencies
       run: |
         .github/workflows/dependencies/gcc.sh
         sudo apt-get install -y libopenmpi-dev openmpi-bin
     - name: CCache Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
       # - for a refresh the key has to change, e.g., hash of a tracked file in the key
       with:
@@ -94,12 +94,12 @@ jobs:
       #   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
       SETUPTOOLS_USE_DISTUTILS: stdlib
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: install dependencies
       run: |
         .github/workflows/dependencies/pyfull.sh
     - name: CCache Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
       # - for a refresh the key has to change, e.g., hash of a tracked file in the key
       with:
