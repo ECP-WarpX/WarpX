@@ -176,7 +176,7 @@ namespace
 #else
         pos.x = 0.0_rt;
         pos.y = 0.0_rt;
-        pos.z = lo_corner[0] + (iv[0]+r.z)*dx[0];
+        pos.z = lo_corner[0] + (iv[0]+r.x)*dx[0];
 #endif
         return pos;
     }
