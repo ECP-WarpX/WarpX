@@ -744,29 +744,19 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     m_Series->flush();
 
     // dump individual particles
-    bool contributed_particles = false;
+    bool contributed_particles = false;  // did the local MPI rank contribute particles?
     for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++) {
         uint64_t offset = static_cast<uint64_t>( counter.m_ParticleOffsetAtRank[currentLevel] );
         // For BTD, the offset include the number of particles already flushed
         if (isBTD) offset += ParticleFlushOffset;
-        // int num_tiles = pc->numLocalTilesAtLevel(currentLevel);
         for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
-        // for (auto pti = pc->MakeMFIter(currentLevel); pti.isValid(); ++pti) {  // does not skip empty tiles but lacks all particle methods
             auto const numParticleOnTile = pti.numParticles();
             uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
 
             // Do not call storeChunk() with zero-sized particle tiles:
             //   https://github.com/openPMD/openPMD-api/issues/1147
             //   https://github.com/ECP-WarpX/WarpX/pull/1898#discussion_r745008290
-            // unless we append in ADIOS2:
-            //   https://github.com/ECP-WarpX/WarpX/issues/3389
-            //   https://github.com/ornladios/ADIOS2/issues/3455
-            //   BP4 (ADIOS 2.8): last MPI rank's `Put` meta-data wins
-            //   BP5 (ADIOS 2.8): everyone has to write an empty block
-            bool write_empty_blocks = false;
-            if (m_Series->backend() == "ADIOS2")
-                write_empty_blocks = isBTD;
-            if (numParticleOnTile == 0 && !write_empty_blocks) continue;
+            if (numParticleOnTile == 0) continue;
 
             contributed_particles = true;
 
@@ -850,13 +840,54 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
         } // pti
     } // currentLevel
 
-    // work-around for BTD particle resize
+    // work-around for BTD particle resize in ADIOS2
+    //
+    // This issues an empty ADIOS2 Put to make sure the new global shape
+    // meta-data is committed for each variable.
+    //
+    // Refs.:
     //   https://github.com/ECP-WarpX/WarpX/issues/3389
     //   https://github.com/ornladios/ADIOS2/issues/3455
     //   BP4 (ADIOS 2.8): last MPI rank's `Put` meta-data wins
     //   BP5 (ADIOS 2.8): everyone has to write an empty block
-    if (!contributed_particles && isBTD && m_Series->backend() == "ADIOS2") {
-        // do empty Put calls for ADIOS2.
+    if (is_resizing_flush && !contributed_particles && isBTD && m_Series->backend() == "ADIOS2") {
+        for( auto & [record_name, record] : currSpecies ) {
+            for( auto & [comp_name, comp] : record ) {
+                if (comp.constant()) continue;
+
+                auto dtype = comp.getDatatype();
+                switch (dtype) {
+                    case openPMD::Datatype::FLOAT :
+                        [[fallthrough]];
+                    case openPMD::Datatype::DOUBLE : {
+                        auto empty_data = std::make_shared<amrex::ParticleReal>();
+                        comp.storeChunk(empty_data, {uint64_t(0)}, {uint64_t(0)});
+                        break;
+                    }
+                    case openPMD::Datatype::UINT : {
+                        auto empty_data = std::make_shared<unsigned int>();
+                        comp.storeChunk(empty_data, {uint64_t(0)}, {uint64_t(0)});
+                        break;
+                    }
+                    case openPMD::Datatype::ULONG : {
+                        auto empty_data = std::make_shared<unsigned long>();
+                        comp.storeChunk(empty_data, {uint64_t(0)}, {uint64_t(0)});
+                        break;
+                    }
+                    case openPMD::Datatype::ULONGLONG : {
+                        auto empty_data = std::make_shared<unsigned long long>();
+                        comp.storeChunk(empty_data, {uint64_t(0)}, {uint64_t(0)});
+                        break;
+                    }
+                    default : {
+                        std::string msg = "WarpX openPMD ADIOS2 work-around has unknown dtype: ";
+                        msg += datatypeToString(dtype);
+                        amrex::Abort(msg);
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     m_Series->flush();
