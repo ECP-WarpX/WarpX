@@ -14,7 +14,7 @@ geometry.prob_hi = 1e-6 1e-6 1e-6
 ##### BOUNDARY CONDITIONS #######
 #################################
 boundary.field_lo = periodic periodic periodic
-boundary.field_hi = periodic periodic periodic 
+boundary.field_hi = periodic periodic periodic
 
 #################################
 ############ NUMERICS ###########
@@ -22,8 +22,8 @@ boundary.field_hi = periodic periodic periodic
 warpx.verbose = 1
 warpx.cfl = 1
 algo.particle_shape = 1
-algo.maxwell_solver = yee 
-algo.current_deposition = esirkepov 
+algo.maxwell_solver = yee
+algo.current_deposition = esirkepov
 algo.field_gathering = energy-conserving
 algo.particle_pusher = boris
 
@@ -64,7 +64,7 @@ electron.do_not_push = 1
 electron.do_not_deposit = 1
 
 positron.species_type = positron
-positron.injection_style = none 
+positron.injection_style = none
 positron.do_not_push = 1
 positron.do_not_deposit = 1
 
@@ -79,19 +79,19 @@ lbw.event_multiplier = 1.
 lbw.probability_threshold = 0.5
 lbw.probability_target_values = 0.02
 
-# Full diagnostics 
+# Full diagnostics
 diagnostics.diags_names = diag1
 diag1.intervals = 1
 diag1.diag_type = Full
-diag1.fields_to_plot = rho rho_electron rho_positron 
+diag1.fields_to_plot = rho rho_electron rho_positron
 diag1.write_species = 1
-diag1.species = photonA photonB electron positron 
+diag1.species = photonA photonB electron positron
 #diag1.format = openpmd
 #diag1.openpmd_backend = bp
 diag1.dump_last_timestep = 1
 
-my_constants.out_freq_red = 1 
-# Reduced diagnostics 
+my_constants.out_freq_red = 1
+# Reduced diagnostics
 warpx.reduced_diags_names = FieldEnergy FieldMomentum FieldMaximum ParticleExtrema_photonA ParticleExtrema_photonB ParticleExtrema_electron ParticleExtrema_positron ParticleEnergy ParticleMomentum RhoMaximum ParticleNumber BeamRelevant_photonA BeamRelevant_photonB BeamRelevant_electron BeamRelevant_positron
 
 FieldEnergy.type = FieldEnergy
@@ -144,5 +144,5 @@ BeamRelevant_electron.species = electron
 BeamRelevant_electron.intervals = out_freq_red
 
 BeamRelevant_positron.type = BeamRelevant
-BeamRelevant_positron.species =	positron
+BeamRelevant_positron.species = positron
 BeamRelevant_positron.intervals = out_freq_red
