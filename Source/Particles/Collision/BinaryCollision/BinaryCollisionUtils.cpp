@@ -128,7 +128,7 @@ namespace BinaryCollisionUtils{
                     "ERROR: Product species of photon-photon collisions must be of type electron and positron");
                 return CollisionType::PhotonPhotonToElectronPositron;
             }
-            amrex::Abort(type + " is not a valid type of collision that create new particles");
+            amrex::Abort(type + " is not a valid type of collision that creates new particles");
             return CollisionType::Undefined;
         }
 

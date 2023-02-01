@@ -55,8 +55,6 @@ namespace {
                             SoaData_type& soa1_out, SoaData_type& soa2_out,
                             const index_type& idx1_in, const index_type& idx2_in,
                             const index_type& idx1_out_start, const index_type& idx2_out_start,
-                            const amrex::ParticleReal& m1_in, const amrex::ParticleReal& m2_in,
-                            const amrex::ParticleReal& m1_out, const amrex::ParticleReal& m2_out,
                             const amrex::RandomEngine& engine)
     {
         using namespace amrex::literals;
@@ -67,12 +65,12 @@ namespace {
         TwoProductComputeProductMomenta(
             soa1_in.m_rdata[PIdx::ux][idx1_in],
             soa1_in.m_rdata[PIdx::uy][idx1_in],
-            soa1_in.m_rdata[PIdx::uz][idx1_in], m1_in,
+            soa1_in.m_rdata[PIdx::uz][idx1_in],
             soa2_in.m_rdata[PIdx::ux][idx2_in],
             soa2_in.m_rdata[PIdx::uy][idx2_in],
-            soa2_in.m_rdata[PIdx::uz][idx2_in], m2_in,
-            ux1_out, uy1_out, uz1_out, m1_out,
-            ux2_out, uy2_out, uz2_out, m2_out,
+            soa2_in.m_rdata[PIdx::uz][idx2_in],
+            ux1_out, uy1_out, uz1_out,
+            ux2_out, uy2_out, uz2_out,
             engine);
 
         // Fill momentum of product species (note that we actually
@@ -89,7 +87,6 @@ namespace {
         soa2_out.m_rdata[PIdx::ux][idx2_out_start + 1] = ux2_out;
         soa2_out.m_rdata[PIdx::uy][idx2_out_start + 1] = uy2_out;
         soa2_out.m_rdata[PIdx::uz][idx2_out_start + 1] = uz2_out;
-        amrex::Print() << "TwoProductInitMomH ..." << uz2_out << "\n" ;
     }
 }
 

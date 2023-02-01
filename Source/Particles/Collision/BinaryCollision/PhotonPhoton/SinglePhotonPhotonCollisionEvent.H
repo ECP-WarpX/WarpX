@@ -37,7 +37,7 @@
  * @param[in] pair_index is the index of the colliding pair
  * @param[out] p_mask is a mask that will be set to true if fusion occurs for that pair
  * @param[out] p_pair_reaction_weight stores the weight of the product particles
- * @param[in] fusion_multiplier factor used to increase the number of fusion events by
+ * @param[in] event_multiplier factor used to increase the number of fusion events by
  * decreasing the weight of the produced particles
  * @param[in] multiplier_ratio factor used to take into account unsampled pairs (i.e. the fact
  * that a particle only collides with one or few particles of the other species)
@@ -57,7 +57,7 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
                                const amrex::Real& dt, const amrex::ParticleReal& dV, const int& pair_index,
                                index_type* AMREX_RESTRICT p_mask,
                                amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
-                               const amrex::ParticleReal& fusion_multiplier,
+                               const amrex::ParticleReal& event_multiplier,
                                const int& multiplier_ratio,
                                const amrex::ParticleReal& probability_threshold,
                                const amrex::ParticleReal& probability_target_value,
@@ -75,15 +75,11 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     constexpr auto one_pr = amrex::ParticleReal(1.);
     constexpr auto two_pr = amrex::ParticleReal(2.);
     constexpr auto one_half_pr = amrex::ParticleReal(1./2.);
-    constexpr amrex::ParticleReal c_sq = PhysConst::c * PhysConst::c;
-    constexpr amrex::ParticleReal inv_csq = one_pr / ( c_sq );
+    constexpr amrex::ParticleReal c = PhysConst::c;
+    constexpr amrex::ParticleReal c_sq = c*c;
     constexpr amrex::ParticleReal me = PhysConst::m_e;
     auto constexpr pow2 = [](double const x) { return x*x; };
-
-    // Compute Lorentz factor gamma in the lab frame
-    const amrex::ParticleReal g1 = std::sqrt( one_pr + (u1x*u1x+u1y*u1y+u1z*u1z)*inv_csq );
-    const amrex::ParticleReal g2 = std::sqrt( one_pr + (u2x*u2x+u2y*u2y+u2z*u2z)*inv_csq );
-
+  
     // Compute momenta in the lab frame
     const amrex::ParticleReal p1x = u1x * me;
     const amrex::ParticleReal p1y = u1y * me;
@@ -94,48 +90,35 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     const amrex::ParticleReal p1 = std::sqrt(pow2(p1x)+pow2(p1y)+pow2(p1z));
     const amrex::ParticleReal p2 = std::sqrt(pow2(p2x)+pow2(p2y)+pow2(p2z));
 
+    // Compute Lorentz factor gamma in the lab frame 
+    const amrex::ParticleReal g1 = p1 / ( me * c );
+    const amrex::ParticleReal g2 = p2 / ( me * c );
+
     // Compute angle between photon momenta in the lab frame
     const amrex::ParticleReal cos_ang = (p1x*p2x+p1y*p2y+p1z*p2z)/(p1*p2);
-
-    // Square norm of the total (sum between the two particles) momenta in the lab frame
-    const amrex::ParticleReal p_total_sq = pow2(p1x+p2x) +
-                                           pow2(p1y+p2y) +
-                                           pow2(p1z+p2z);
-
-    // Total energy in the lab frame
-    const amrex::ParticleReal E_lab_sq =  p_total_sq*c_sq; //(me * g1 + me * g2) * c_sq;
-    // Total energy squared in the center of mass frame, calculated using the Lorentz invariance
-    // of the four-momentum norm
+    
+    // Energy squared of each of the particles (both photons, electron and positron) 
+    // in the center of mass frame (they are all equal),
+    // calculated using the Lorentz invariance of the total four-momentum norm
     const amrex::ParticleReal E_star_sq = one_half_pr*c_sq*p1*p2*(one_pr - cos_ang);
 
-    // Kinetic energy in the center of mass frame
-    const amrex::ParticleReal E_star = std::sqrt(E_star_sq);
-    amrex::Print() << "p1" << p1 << "\n";
-    amrex::Print() << "p2" << p2 << "\n";
+    //amrex::Print() << "energy with gamma = " << g1 * me * c_sq << ", ...energy with p = " << p1 * PhysConst::c << "\n";
+    //amrex::Print() << "energy with gamma = " << g2 * me * c_sq << ", ...energy with p = " << p2 * PhysConst::c << "\n";
 
-    amrex::Print() << "estarrrrrrrrrrrr" << E_star << "\n";
-    // const amrex::ParticleReal E_kin_star = E_star - (m1 + m2)*c_sq;
+    // Kinetic energy of each particle in the center of mass frame 
+    const amrex::ParticleReal E_star = std::sqrt(E_star_sq);
 
     // Compute linear Breit Wheeler cross section as a function of kinetic energy in the center of mass frame
     auto lbw_cross_section = amrex::ParticleReal(0.);
 
     lbw_cross_section = LinearBreitWheelerCrossSection(E_star);
 
-
-    // Square of the norm of the momentum of one of the particles in the center of mass frame
-    // Formula obtained by inverting E^2 = p^2*c^2 + m^2*c^4 in the COM frame for each particle
-    // The expression below is specifically written in a form that avoids returning
-    // small negative numbers due to machine precision errors, for low-energy particles
-    //const amrex::ParticleReal E_ratio = E_star/((m1 + m2)*c_sq);
-    //const amrex::ParticleReal p_star_sq = m1*m2*c_sq * ( pow2(E_ratio) - one_pr )
-    //        + pow2(m1 - m2)*c_sq*inv_four_pr * pow2( E_ratio - 1._prt/E_ratio );
-
     // Lorentz factors in the center of mass frame
-    const amrex::ParticleReal g1_star = one_half_pr*E_star; //std::sqrt(one_pr + p_star_sq / (m1_sq*c_sq));
-    const amrex::ParticleReal g2_star = g1_star; //std::sqrt(one_pr + p_star_sq / (m2_sq*c_sq));
+    const amrex::ParticleReal g1_star = E_star / (me*c_sq); 
+    const amrex::ParticleReal g2_star = g1_star; 
 
     // relative velocity in the center of mass frame
-    const amrex::ParticleReal v_rel = two_pr*PhysConst::c; //std::sqrt(p_star_sq) * (one_pr/(m1*g1_star) + one_pr/(m2*g2_star));
+    const amrex::ParticleReal v_rel = two_pr*c; 
 
     // Fusion cross section and relative velocity are computed in the center of mass frame.
     // On the other hand, the particle densities (weight over volume) in the lab frame are used. To
@@ -145,13 +128,16 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     const amrex::ParticleReal lab_to_COM_factor = g1_star*g2_star/(g1*g2);
 
     // First estimate of probability to have fusion reaction
-    amrex::ParticleReal probability_estimate = multiplier_ratio * fusion_multiplier *
+    amrex::ParticleReal probability_estimate = multiplier_ratio * event_multiplier *
                                 lab_to_COM_factor * w_max * lbw_cross_section * v_rel * dt / dV;
 
     // Effective fusion multiplier
-    amrex::ParticleReal fusion_multiplier_eff = fusion_multiplier;
+    amrex::ParticleReal event_multiplier_eff = event_multiplier;
 
-    amrex::Print() << "probability_threshold = " << probability_threshold << "::: probability_estimate = " << probability_estimate << "\n";
+    //amrex::Print() << " multiplier = " << event_multiplier << "\n";
+
+    //amrex::Print() << " lab to com factor = " << lab_to_COM_factor << "\n";
+    //amrex::Print() << "probability_threshold = " << probability_threshold << "::: probability_estimate = " << probability_estimate << "\n";
 
 
     // If the fusion probability is too high and the fusion multiplier greater than one, we risk to
@@ -160,13 +146,13 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     if (probability_estimate > probability_threshold)
     {
         // We aim for a fusion probability of probability_target_value but take into account
-        // the constraint that the fusion_multiplier cannot be smaller than one
-        fusion_multiplier_eff  = amrex::max(fusion_multiplier *
+        // the constraint that the event_multiplier cannot be smaller than one
+        event_multiplier_eff  = amrex::max(event_multiplier *
                                          probability_target_value / probability_estimate , one_pr);
-        probability_estimate *= fusion_multiplier_eff/fusion_multiplier;
+        probability_estimate *= event_multiplier_eff/event_multiplier;
     }
 
-    amrex::Print() << "probability_estimate = " << probability_estimate << "\n";
+    //amrex::Print() << "probability_estimate = " << probability_estimate << "\n";
 
     // Compute actual fusion probability that is always between zero and one
     // In principle this is obtained by computing 1 - exp(-probability_estimate)
@@ -187,19 +173,15 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
 
     // Get a random number
     amrex::ParticleReal random_number = amrex::Random(engine);
+    //amrex::Print() << "cross section = " << lbw_cross_section << ".... randon number = " << random_number << "::: probability = " << probability << "\n";
 
-<<<<<<< HEAD
-    amrex::Print() << "randon number = " << random_number << "::: probability = " << probability << "\n";
-=======
-    amrex::Print() << "cross section = " << lbw_cross_section << "::: randon number = " << random_number << "::: probability = " << probability << "\n";
->>>>>>> 09a889ee (added temporary prints)
     // If we have a fusion event, set the mask the true and fill the product weight array
     if (random_number < probability)
     {
-        amrex::Print() << "WEIGHTSSSS = " << w_min << " lll " << fusion_multiplier_eff << "\n";
         p_mask[pair_index] = true;
-        p_pair_reaction_weight[pair_index] = w_min/fusion_multiplier_eff;
-        amrex::Print() << "WEIGHTSSSS = " << w_min << " lll " << fusion_multiplier_eff << "\n";
+        p_pair_reaction_weight[pair_index] = w_min/event_multiplier_eff;
+        //amrex::Print() << "product weight = " << p_pair_reaction_weight[pair_index] << "\n";
+
 
     }
     else
