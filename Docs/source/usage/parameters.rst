@@ -1024,8 +1024,8 @@ Particle initialization
     must be either electrons or positrons. Boris pusher must be used for the
     simulation. If both ``<species>.do_classical_radiation_reaction`` and
     ``<species>.do_qed_quantum_sync`` are enabled, then the classical module
-    will be used when the particle's chi parameter is below ``qed_qs.chi_min``, 
-    the discrete quantum module otherwise. 
+    will be used when the particle's chi parameter is below ``qed_qs.chi_min``,
+    the discrete quantum module otherwise.
 
 * ``<species>.do_qed_quantum_sync`` (`int`) optional (default `0`)
     Enables Quantum synchrotron emission for this species.
