@@ -83,7 +83,7 @@ namespace {
 
         // Total energy squared of proton+boron in the center of mass frame, calculated using the
         // Lorentz invariance of the four-momentum norm
-        const amrex::ParticleReal E_star_sq = one_half_pr*c_sq*p1_in*p2_in*(one_pr - cos_ang); 
+        const amrex::ParticleReal E_star_sq = one_half_pr*c_sq*p1_in*p2_in*(one_pr - cos_ang);
         // Total energy squared of the products in the center of mass frame
         // In principle, the term - E_rest_in + E_rest_out + E_fusion is not needed and equal to
         // zero (i.e. the energy liberated during fusion is equal to the mass difference). However,

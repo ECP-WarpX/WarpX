@@ -79,7 +79,7 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     constexpr amrex::ParticleReal c_sq = c*c;
     constexpr amrex::ParticleReal me = PhysConst::m_e;
     auto constexpr pow2 = [](double const x) { return x*x; };
-  
+
     // Compute momenta in the lab frame
     const amrex::ParticleReal p1x = u1x * me;
     const amrex::ParticleReal p1y = u1y * me;
@@ -90,14 +90,14 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     const amrex::ParticleReal p1 = std::sqrt(pow2(p1x)+pow2(p1y)+pow2(p1z));
     const amrex::ParticleReal p2 = std::sqrt(pow2(p2x)+pow2(p2y)+pow2(p2z));
 
-    // Compute Lorentz factor gamma in the lab frame 
+    // Compute Lorentz factor gamma in the lab frame
     const amrex::ParticleReal g1 = p1 / ( me * c );
     const amrex::ParticleReal g2 = p2 / ( me * c );
 
     // Compute angle between photon momenta in the lab frame
     const amrex::ParticleReal cos_ang = (p1x*p2x+p1y*p2y+p1z*p2z)/(p1*p2);
-    
-    // Energy squared of each of the particles (both photons, electron and positron) 
+
+    // Energy squared of each of the particles (both photons, electron and positron)
     // in the center of mass frame (they are all equal),
     // calculated using the Lorentz invariance of the total four-momentum norm
     const amrex::ParticleReal E_star_sq = one_half_pr*c_sq*p1*p2*(one_pr - cos_ang);
@@ -105,7 +105,7 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     //amrex::Print() << "energy with gamma = " << g1 * me * c_sq << ", ...energy with p = " << p1 * PhysConst::c << "\n";
     //amrex::Print() << "energy with gamma = " << g2 * me * c_sq << ", ...energy with p = " << p2 * PhysConst::c << "\n";
 
-    // Kinetic energy of each particle in the center of mass frame 
+    // Kinetic energy of each particle in the center of mass frame
     const amrex::ParticleReal E_star = std::sqrt(E_star_sq);
 
     // Compute linear Breit Wheeler cross section as a function of kinetic energy in the center of mass frame
@@ -114,11 +114,11 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     lbw_cross_section = LinearBreitWheelerCrossSection(E_star);
 
     // Lorentz factors in the center of mass frame
-    const amrex::ParticleReal g1_star = E_star / (me*c_sq); 
-    const amrex::ParticleReal g2_star = g1_star; 
+    const amrex::ParticleReal g1_star = E_star / (me*c_sq);
+    const amrex::ParticleReal g2_star = g1_star;
 
     // relative velocity in the center of mass frame
-    const amrex::ParticleReal v_rel = two_pr*c; 
+    const amrex::ParticleReal v_rel = two_pr*c;
 
     // Fusion cross section and relative velocity are computed in the center of mass frame.
     // On the other hand, the particle densities (weight over volume) in the lab frame are used. To

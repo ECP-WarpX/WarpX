@@ -14,7 +14,7 @@ geometry.prob_hi = 1e-6 1e-6 1e-6
 ##### BOUNDARY CONDITIONS #######
 #################################
 boundary.field_lo = periodic periodic periodic
-boundary.field_hi = periodic periodic periodic 
+boundary.field_hi = periodic periodic periodic
 
 #################################
 ############ NUMERICS ###########
@@ -31,16 +31,16 @@ particles.photon_species = photonA photonB
 
 photonA.species_type = photon
 photonA.injection_style = "SingleParticle"
-photonA.single_particle_pos = 0 0 0 
-photonA.single_particle_vel = 2.8 0 0 # gamma times beta 
+photonA.single_particle_pos = 0 0 0
+photonA.single_particle_vel = 2.8 0 0 # gamma times beta
 photonA.single_particle_weight = 1e14
 photonA.do_not_push = 1
 photonA.do_not_deposit = 1
 
 photonB.species_type = photon
 photonB.injection_style = "SingleParticle"
-photonB.single_particle_pos = 0 0 0 
-photonB.single_particle_vel = -2.8 0 0 # gamma times beta 
+photonB.single_particle_pos = 0 0 0
+photonB.single_particle_vel = -2.8 0 0 # gamma times beta
 photonB.single_particle_weight = 1e14
 photonB.do_not_push = 1
 photonB.do_not_deposit = 1
@@ -51,7 +51,7 @@ electron.do_not_push = 1
 electron.do_not_deposit = 1
 
 positron.species_type = positron
-positron.injection_style = none 
+positron.injection_style = none
 positron.do_not_push = 1
 positron.do_not_deposit = 1
 
@@ -66,21 +66,21 @@ lbw.fusion_multiplier = 1.
 lbw.fusion_probability_threshold = 0.5
 lbw.fusion_probability_target_values = 0.02
 
-# Full diagnostics 
+# Full diagnostics
 diagnostics.diags_names = diag1
 diag1.intervals = 1
 diag1.diag_type = Full
-diag1.fields_to_plot = rho rho_electron rho_positron 
+diag1.fields_to_plot = rho rho_electron rho_positron
 diag1.write_species = 1
-diag1.species = photonA photonB electron positron 
+diag1.species = photonA photonB electron positron
 #fields_particles.format = openpmd
 #fields_particles.openpmd_backend = bp
 fields_particles.dump_last_timestep = 1
 
 
 
-my_constants.out_freq_red = 1 
-# Reduced diagnostics 
+my_constants.out_freq_red = 1
+# Reduced diagnostics
 warpx.reduced_diags_names = FieldEnergy FieldMomentum FieldMaximum ParticleExtrema_photonA ParticleExtrema_photonB ParticleExtrema_electron ParticleExtrema_positron ParticleEnergy ParticleMomentum RhoMaximum ParticleNumber BeamRelevant_photonA BeamRelevant_photonB BeamRelevant_electron BeamRelevant_positron
 
 FieldEnergy.type = FieldEnergy
@@ -133,5 +133,5 @@ BeamRelevant_electron.species = electron
 BeamRelevant_electron.intervals = out_freq_red
 
 BeamRelevant_positron.type = BeamRelevant
-BeamRelevant_positron.species =	positron
+BeamRelevant_positron.species = positron
 BeamRelevant_positron.intervals = out_freq_red
