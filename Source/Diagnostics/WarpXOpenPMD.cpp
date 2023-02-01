@@ -744,11 +744,14 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     m_Series->flush();
 
     // dump individual particles
+    bool contributed_particles = false;
     for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++) {
         uint64_t offset = static_cast<uint64_t>( counter.m_ParticleOffsetAtRank[currentLevel] );
         // For BTD, the offset include the number of particles already flushed
         if (isBTD) offset += ParticleFlushOffset;
+        // int num_tiles = pc->numLocalTilesAtLevel(currentLevel);
         for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
+        // for (auto pti = pc->MakeMFIter(currentLevel); pti.isValid(); ++pti) {  // does not skip empty tiles but lacks all particle methods
             auto const numParticleOnTile = pti.numParticles();
             uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
 
@@ -764,6 +767,8 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
             if (m_Series->backend() == "ADIOS2")
                 write_empty_blocks = isBTD;
             if (numParticleOnTile == 0 && !write_empty_blocks) continue;
+
+            contributed_particles = true;
 
             // get position and particle ID from aos
             // note: this implementation iterates the AoS 4x...
@@ -842,8 +847,18 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                              write_int_comp, int_comp_names);
 
             offset += numParticleOnTile64;
-        }
+        } // pti
+    } // currentLevel
+
+    // work-around for BTD particle resize
+    //   https://github.com/ECP-WarpX/WarpX/issues/3389
+    //   https://github.com/ornladios/ADIOS2/issues/3455
+    //   BP4 (ADIOS 2.8): last MPI rank's `Put` meta-data wins
+    //   BP5 (ADIOS 2.8): everyone has to write an empty block
+    if (!contributed_particles && isBTD && m_Series->backend() == "ADIOS2") {
+        // do empty Put calls for ADIOS2.
     }
+
     m_Series->flush();
 }
 
