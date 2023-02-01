@@ -20,8 +20,13 @@ boundary.field_hi = periodic periodic periodic
 ############ NUMERICS ###########
 #################################
 warpx.verbose = 1
-warpx.cfl = 1.0
+warpx.cfl = 1
 algo.particle_shape = 1
+algo.maxwell_solver = yee 
+algo.current_deposition = esirkepov 
+algo.field_gathering = energy-conserving
+algo.particle_pusher = boris
+
 
 #################################
 ############ PLASMA #############
@@ -30,18 +35,26 @@ particles.species_names = photonA photonB electron positron
 particles.photon_species = photonA photonB
 
 photonA.species_type = photon
-photonA.injection_style = "SingleParticle"
-photonA.single_particle_pos = 0 0 0 
-photonA.single_particle_vel = 2.8 0 0 # gamma times beta 
-photonA.single_particle_weight = 1e14
+photonA.injection_style = "NRandomPerCell"
+photonA.num_particles_per_cell = 10
+photonA.profile = constant
+photonA.density = 1.e35
+photonA.momentum_distribution_type = "constant"
+photonA.ux = 2.8
+photonA.uy = 0.
+photonA.uz = 0.
 photonA.do_not_push = 1
 photonA.do_not_deposit = 1
 
 photonB.species_type = photon
-photonB.injection_style = "SingleParticle"
-photonB.single_particle_pos = 0 0 0 
-photonB.single_particle_vel = -2.8 0 0 # gamma times beta 
-photonB.single_particle_weight = 1e14
+photonB.injection_style = "NRandomPerCell"
+photonB.num_particles_per_cell = 10
+photonB.profile = constant
+photonB.density = 1.e35
+photonB.momentum_distribution_type = "constant"
+photonB.ux = -2.8
+photonB.uy = 0.
+photonB.uz = 0.
 photonB.do_not_push = 1
 photonB.do_not_deposit = 1
 
@@ -62,9 +75,9 @@ collisions.collision_names = lbw # linear Breit-Wheeler
 lbw.species = photonA photonB
 lbw.product_species = electron positron
 lbw.type = photonphoton
-lbw.fusion_multiplier = 1.
-lbw.fusion_probability_threshold = 0.5
-lbw.fusion_probability_target_values = 0.02
+lbw.event_multiplier = 1.
+lbw.probability_threshold = 0.5
+lbw.probability_target_values = 0.02
 
 # Full diagnostics 
 diagnostics.diags_names = diag1
@@ -73,11 +86,9 @@ diag1.diag_type = Full
 diag1.fields_to_plot = rho rho_electron rho_positron 
 diag1.write_species = 1
 diag1.species = photonA photonB electron positron 
-#fields_particles.format = openpmd
-#fields_particles.openpmd_backend = bp
-fields_particles.dump_last_timestep = 1
-
-
+#diag1.format = openpmd
+#diag1.openpmd_backend = bp
+diag1.dump_last_timestep = 1
 
 my_constants.out_freq_red = 1 
 # Reduced diagnostics 
