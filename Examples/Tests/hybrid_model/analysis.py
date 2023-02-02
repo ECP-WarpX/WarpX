@@ -42,16 +42,11 @@ idx = np.argsort(z_grid)[1:]
 dz = np.mean(np.diff(z_grid[idx]))
 dt = np.mean(np.diff(sim_data[:,0,1]))
 
-data = np.zeros((num_steps, resolution, (sim.B_dir == 'z')+1))
+data = np.zeros((num_steps, resolution, 3))
 for i in range(num_steps):
-    if sim.B_dir == 'z':
-        data[i,:,0] = sim_data[i,idx,field_idx_dict['Bx']]
-        data[i,:,1] = sim_data[i,idx,field_idx_dict['By']]
-    else:
-        data[i,:,0] = sim_data[i,idx,field_idx_dict['Ez']]
-
-if sim.B_dir == 'z':
-    data = (data[:, :, 0] + 1j * data[:, :, 1]) / np.sqrt(2)
+    data[i,:,0] = sim_data[i,idx,field_idx_dict['Bx']]
+    data[i,:,1] = sim_data[i,idx,field_idx_dict['By']]
+    data[i,:,2] = sim_data[i,idx,field_idx_dict['Ez']]
 
 '''
 files = sorted(glob.glob('diags/field_diag/*.h5'))
@@ -91,13 +86,15 @@ else:
         / ((3.0/2)*sim.n_plasma*sim.T_plasma*constants.q_e)
     )
 
-# B_R = (data[:, :, 0] - 1j * data[:, :, 1]) / np.sqrt(2)
-# B_L = (data[:, :, 0] + 1j * data[:, :, 1]) / np.sqrt(2)
-field_kw = np.fft.fftshift(np.fft.fft2(data))
+if sim.B_dir == 'z':
+    Bl = (data[:, :, 0] + 1j * data[:, :, 1]) / np.sqrt(2)
+    field_kw = np.fft.fftshift(np.fft.fft2(Bl))
+else:
+    field_kw = np.fft.fftshift(np.fft.fft2(data[:, :, 2]))
 
 w_norm = sim.w_ci
 if sim.B_dir == 'z':
-    k_norm = 2.0 * np.pi / sim.l_i
+    k_norm = 1.0 / sim.l_i
 else:
     k_norm = 1.0 / sim.rho_i
 
@@ -116,8 +113,8 @@ if sim.B_dir == 'z':
     vmin = -3
     vmax = 3.5
 else:
-    vmin = -3
-    vmax = 4
+    vmin = -6
+    vmax = 3
 
 im = ax1.imshow(
     np.log10(np.abs(field_kw)**2 * global_norm), extent=extent,

@@ -47,17 +47,17 @@ class EMModes(object):
     Nx          = 8 # number of cells in x (and y) direction for >1 dimensions
 
     # Temporal domain (if not run as a CI test)
-    LT          = 200.0 # 600.0 # Simulation temporal length (ion cyclotron periods)
+    LT          = 600.0 # Simulation temporal length (ion cyclotron periods)
 
     # Numerical parameters
     NPPC        = [1024, 512, 128] # Seed number of particles per cell
-    DZ          = [1.0/10.0, 1.0/30.0] # Cell size (ion skin depths)
+    DZ          = 1.0 / 10.0 # Cell size (ion skin depths)
     DT          = [5e-3, 4e-3] # Time step (ion cyclotron periods)
 
     # Plasma resistivity - used to dampen the parallel mode excitation
-    eta = [1e-7, 0.0]
+    eta = 1e-7
     # Number of substeps used to update B
-    substeps = 200
+    substeps = 400
 
     def __init__(self, test, dim, B_dir):
         """Get input parameters for the specific case desired."""
@@ -100,7 +100,7 @@ class EMModes(object):
         if comm.rank == 0:
             print(
                 f"Initializing simulation with input parameters:\n"
-                f"\tT = {self.T_plasma*1e3:.1f} meV\n"
+                f"\tT = {self.T_plasma:.3f} eV\n"
                 f"\tn = {self.n_plasma:.1e} m^-3\n"
                 f"\tB0 = {self.B0:.2f} T\n"
                 f"\tM/m = {self.m_ion:.0f}\n"
@@ -139,9 +139,7 @@ class EMModes(object):
         self.vA_over_c = self.vA_over_c[idx]
         self.Nz = self.Nz[idx]
         self.NPPC = self.NPPC[self.dim-1]
-        self.DZ = self.DZ[idx]
         self.DT = self.DT[idx]
-        self.eta = self.eta[idx]
 
     def get_plasma_quantities(self):
         """Calculate various plasma parameters based on the simulation input."""
@@ -164,7 +162,7 @@ class EMModes(object):
         )
 
         # Skin depth (m)
-        self.l_i = 2.0 * np.pi * constants.c / self.w_pi
+        self.l_i = constants.c / self.w_pi
 
         # Ion thermal velocity (m/s) from beta = 2 * (v_ti / vA)**2
         self.v_ti = np.sqrt(self.beta / 2.0) * self.vA
@@ -174,24 +172,6 @@ class EMModes(object):
 
         # Larmor radius (m)
         self.rho_i = self.v_ti / self.w_ci
-
-        # Coulomb_log = 15.0
-        # nu = (
-        #     constants.q_e**4 * self.n_plasma * Coulomb_log
-        #     / (2.0*np.pi*constants.ep0)**2
-        #     / np.sqrt(constants.m_e * (self.T_plasma * constants.q_e)**3)
-        # )
-        # print(nu)
-        # print(4.18e-12*self.n_plasma*Coulomb_log/(self.T_plasma**1.5))
-        # self.eta = constants.m_e * nu / (constants.q_e**2 * self.n_plasma)
-        # print(self.eta)
-
-        # print("spitzer: ",
-        #     4.0 * np.sqrt(2.0*np.pi*constants.m_e) / 3.0 * constants.q_e**2 * Coulomb_log
-        #     / ((4.0 * np.pi * constants.ep0)**2*(self.T_plasma*constants.q_e)**1.5)
-        #     / 1.96
-        # )
-        # exit()
 
     def setup_run(self):
         """Setup simulation components."""
@@ -260,17 +240,18 @@ class EMModes(object):
         # Add diagnostics                                                     #
         #######################################################################
 
-        # field_diag = picmi.FieldDiagnostic(
-        #     name='field_diag',
-        #     grid=self.grid,
-        #     period=self.diag_steps,
-        #     data_list=['B', 'E'],
-        #     # write_dir=('.' if self.test else 'diags'),
-        #     # warpx_file_prefix='Python_hybrid_PIC_plt',
-        #     warpx_format = 'openpmd',
-        #     warpx_openpmd_backend = 'h5'
-        # )
-        # simulation.add_diagnostic(field_diag)
+        if self.test:
+            field_diag = picmi.FieldDiagnostic(
+                name='field_diag',
+                grid=self.grid,
+                period=self.diag_steps,
+                data_list=['B', 'E'],
+                # write_dir=('.' if self.test else 'diags'),
+                # warpx_file_prefix='Python_hybrid_PIC_plt',
+                warpx_format = 'openpmd',
+                warpx_openpmd_backend = 'h5'
+            )
+            simulation.add_diagnostic(field_diag)
 
         line_diag = picmi.ReducedDiagnostic(
             diag_type='FieldProbe',
