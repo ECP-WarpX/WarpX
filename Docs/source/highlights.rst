@@ -81,6 +81,7 @@ Microelectronics
    The International Journal of High Performance Computing Applications, 36(2):167-181, 2022.
    `DOI:10.1177/10943420211057906 <https://doi.org/10.1177/10943420211057906>`__
 
+
 High-Performance Computing and Numerics
 ***************************************
 
