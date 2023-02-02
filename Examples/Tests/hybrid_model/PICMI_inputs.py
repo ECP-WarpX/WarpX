@@ -8,12 +8,12 @@
 # --- using the 1d version.
 
 import argparse
-import dill
 import os
 import sys
 
-import numpy as np
+import dill
 from mpi4py import MPI as mpi
+import numpy as np
 
 from pywarpx import callbacks, fields, picmi
 

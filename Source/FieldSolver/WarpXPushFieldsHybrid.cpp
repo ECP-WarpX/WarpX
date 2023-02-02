@@ -256,4 +256,3 @@ void WarpX::CalculateElectronPressure(DtType a_dt_type)
         electron_pressure_fp[lev]->FillBoundary(Geom(lev).periodicity());
     }
 }
-
