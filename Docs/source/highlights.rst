@@ -71,13 +71,13 @@ Microelectronics
    **Characterization of Transmission Lines in Microelectronic Circuits Using the ARTEMIS Solver**.
    IEEE Journal on Multiscale and Multiphysics Computational Techniques, vol. 8, pp. 31-39, 2023.
    `DOI:10.1109/JMMCT.2022.3228281 <https://doi.org/10.1109/JMMCT.2022.3228281>`__
-#. Kumar P, Nonaka A, Jambunathan R, Pahwa G and Salahuddin S, Yao Z. 
-   **FerroX: A GPU-accelerated, 3D Phase-Field Simulation Framework for Modeling Ferroelectric Devices**. 
-   arXiv preprint, 2022. 
+#. Kumar P, Nonaka A, Jambunathan R, Pahwa G and Salahuddin S, Yao Z.
+   **FerroX: A GPU-accelerated, 3D Phase-Field Simulation Framework for Modeling Ferroelectric Devices**.
+   arXiv preprint, 2022.
    `arXiv:2210.15668 <https://doi.org/10.48550/arXiv.2210.15668>`__
 
-#. Yao Z, Jambunathan R, Zeng Y, Nonaka A. 
-   **A Massively Parallel Time-Domain Coupled Electrodynamics–Micromagnetics Solver**. 
+#. Yao Z, Jambunathan R, Zeng Y, Nonaka A.
+   **A Massively Parallel Time-Domain Coupled Electrodynamics–Micromagnetics Solver**.
    The International Journal of High Performance Computing Applications, 36(2):167-181, 2022.
    `DOI:10.1177/10943420211057906 <https://doi.org/10.1177/10943420211057906>`__
 
