@@ -156,7 +156,6 @@ using namespace amrex;
                         if (is_tangent_to_PEC == true) sign *= -1._rt;
                     }
                 } // is PEC boundary
-	        //amrex::Print() << "ijk_vec = " << ijk_vec << ", idim = " << idim << ", icomp = " << icomp << ", OnPECBoundary = " << OnPECBoundary << ". GuardCell = " << GuardCell << "\n";
             } // loop over iside
         } // loop over dimensions
         if (OnPECBoundary == true) {
