@@ -2,30 +2,29 @@
  *
  * This file is part of WarpX.
  *
- * Authors: Roelof Groenewald
+ * Authors: Roelof Groenewald (TAE Technologies)
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpX.H"
-
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridModel/HybridModel.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX.H"
 
 using namespace amrex;
 
-void
-WarpX::HybridEvolveFields ()
+void WarpX::HybridEvolveFields ()
 {
     // get requested number of substeps to use
     int sub_steps = m_hybrid_model->m_substeps / 2;
 
     // During the particle push and deposition (which already happened) the
-    // charge density and current density was updated. So at this time we
-    // have rho^{n} in the 0'th index and rho{n+1} in the 1'st index of `rho_fp`,
-    // J_i^{n+1/2} in `current_fp` and J_i^{n-1/2} in `current_fp_temp`.
+    // charge density and current density were updated. So that at this time we
+    // have rho^{n} in the 0'th index and rho{n+1} in the 1'st index of
+    // `rho_fp`, J_i^{n+1/2} in `current_fp` and J_i^{n-1/2} in
+    // `current_fp_temp`.
 
     // TODO: insert Runge-Kutta integration logic for B update instead
     // of the substep update used here - can test with small timestep using
@@ -79,13 +78,7 @@ WarpX::HybridEvolveFields ()
     }
 
     // Calculate the electron pressure at t=n using rho^n
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
-        m_hybrid_model->FillElectronPressureMF(
-            electron_pressure_fp[lev], rho_fp[lev], DtType::FirstHalf
-        );
-        electron_pressure_fp[lev]->FillBoundary(Geom(lev).periodicity());
-    }
+    CalculateElectronPressure(DtType::FirstHalf);
 
     // Push the B field from t=n to t=n+1/2 using the current and density
     // at t=n, while updating the E field along with B using the electron
@@ -100,13 +93,7 @@ WarpX::HybridEvolveFields ()
     }
 
     // Calculate the electron pressure at t=n+1/2
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
-        m_hybrid_model->FillElectronPressureMF(
-            electron_pressure_fp[lev], rho_fp[lev], DtType::SecondHalf
-        );
-        electron_pressure_fp[lev]->FillBoundary(Geom(lev).periodicity());
-    }
+    CalculateElectronPressure(DtType::SecondHalf);
 
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
@@ -119,13 +106,7 @@ WarpX::HybridEvolveFields ()
     }
 
     // Calculate the electron pressure at t=n+1
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
-        m_hybrid_model->FillElectronPressureMF(
-            electron_pressure_fp[lev], rho_fp[lev], DtType::Full
-        );
-        electron_pressure_fp[lev]->FillBoundary(Geom(lev).periodicity());
-    }
+    CalculateElectronPressure(DtType::Full);
 
     // Extrapolate the ion current density to t=n+1 to calculate a projected
     // E at t=n+1
@@ -186,8 +167,7 @@ WarpX::HybridEvolveFields ()
     }
 }
 
-void
-WarpX::HybridSolveE (DtType a_dt_type)
+void WarpX::HybridSolveE (DtType a_dt_type)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -195,8 +175,7 @@ WarpX::HybridSolveE (DtType a_dt_type)
     }
 }
 
-void
-WarpX::HybridSolveE (int lev, DtType a_dt_type)
+void WarpX::HybridSolveE (int lev, DtType a_dt_type)
 {
     WARPX_PROFILE("WarpX::HybridSolveE()");
     HybridSolveE(lev, PatchType::fine, a_dt_type);
@@ -208,8 +187,7 @@ WarpX::HybridSolveE (int lev, DtType a_dt_type)
     }
 }
 
-void
-WarpX::HybridSolveE (int lev, PatchType patch_type, DtType a_dt_type)
+void WarpX::HybridSolveE (int lev, PatchType patch_type, DtType a_dt_type)
 {
     // Solve E field in regular cells
     if (patch_type == PatchType::fine) {
@@ -267,3 +245,15 @@ WarpX::HybridSolveE (int lev, PatchType patch_type, DtType a_dt_type)
 //     }
 // #endif
 }
+
+void WarpX::CalculateElectronPressure(DtType a_dt_type)
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        m_hybrid_model->FillElectronPressureMF(
+            electron_pressure_fp[lev], rho_fp[lev], a_dt_type
+        );
+        electron_pressure_fp[lev]->FillBoundary(Geom(lev).periodicity());
+    }
+}
+

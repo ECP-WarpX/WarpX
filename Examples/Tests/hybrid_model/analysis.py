@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 #
-# --- Analysis script for the hybrid-PIC example producing ion-Bernstein modes.
+# --- Analysis script for the hybrid-PIC example producing EM modes.
 
 import dill
-import h5py
-import matplotlib
-from matplotlib import colors as clr
-import matplotlib.pyplot as plt
+
 import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 
 from pywarpx import picmi
-
 constants = picmi.constants
 
 matplotlib.rcParams.update({'font.size': 20})
@@ -20,12 +18,12 @@ with open('sim_parameters.dpkl', 'rb') as f:
     sim = dill.load(f)
 
 field_idx_dict = {
-    'Ex': 5, 'Ey': 6, 'Ez': 7, 'Bx': 8, 'By': 9, 'Bz': 10, 'S': 11
+    'Ez': 3, 'Bx': 4, 'By': 5
 }
 
-data = np.loadtxt("diags/lineprobe.txt", skiprows=1)
+data = np.loadtxt("diags/lineprobe.dat", skiprows=1)
 
-# step, t, x, y, z, Ex, Ey, Ez, Bx, By, Bz, S = raw_data.T
+# step, t, z, Ez, Bx, By = raw_data.T
 step = data[:,0]
 
 num_steps = len(np.unique(step))
@@ -36,7 +34,7 @@ resolution = len(np.where(step == 0)[0]) - 1
 # reshape to separate spatial and time coordinates
 sim_data = data.reshape((num_steps, resolution+1, data.shape[1]))
 
-z_grid = sim_data[1, :, 4]
+z_grid = sim_data[1, :, 2]
 idx = np.argsort(z_grid)[1:]
 dz = np.mean(np.diff(z_grid[idx]))
 dt = np.mean(np.diff(sim_data[:,0,1]))
@@ -112,8 +110,8 @@ if sim.B_dir == 'z':
     vmin = -3
     vmax = 3.5
 else:
-    vmin = -6
-    vmax = 3
+    vmin = -4
+    vmax = 4
 
 im = ax1.imshow(
     np.log10(np.abs(field_kw)**2 * global_norm), extent=extent,
@@ -177,7 +175,7 @@ if sim.B_dir == 'z':
 else:
     ax1.set_xlabel(r'$k \rho_i$')
     ax1.set_title('$E_z(k, \omega)$')
-    fig.suptitle("Perpendicular EM modes (ion Bernstein)")
+    fig.suptitle(f"Perpendicular EM modes (ion Bernstein) - {sim.dim}D")
     ax1.set_xlim(-3, 3)
     ax1.set_ylim(0, 8)
     dir_str = 'perp'

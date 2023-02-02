@@ -590,6 +590,14 @@ public:
 
     /**
      * \brief
+     * Function to calculate the electron pressure at a given timestep type
+     * using the simulation charge density. Used in the Ohm's law solver
+     * (kinetic-fluid hybrid model).
+     */
+    void CalculateElectronPressure (DtType a_dt_type);
+
+    /**
+     * \brief
      * This function contains the logic involved in evolving the electric and
      * magnetic fields in the hybrid PIC algorithm.
      */

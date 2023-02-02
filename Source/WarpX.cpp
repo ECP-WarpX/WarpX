@@ -1705,7 +1705,6 @@ WarpX::ClearLevel (int lev)
 
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
         {
-            electron_pressure_fp[lev].reset();
             current_fp_temp[lev][i].reset();
             current_fp_ampere[lev][i].reset();
         }
@@ -1723,6 +1722,11 @@ WarpX::ClearLevel (int lev)
         Efield_cax[lev][i].reset();
         Bfield_cax[lev][i].reset();
         current_buf[lev][i].reset();
+    }
+
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
+    {
+        electron_pressure_fp[lev].reset();
     }
 
     charge_buf[lev].reset();

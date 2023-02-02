@@ -294,9 +294,8 @@ WarpX::Evolve (int numsteps)
 
         m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
 
-        // Non-explicit Maxwell solver: particles can move by an arbitrary number of cells
-        if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
-            electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid )
+        // Electrostatic solver: particles can move by an arbitrary number of cells
+        if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None )
         {
             mypc->Redistribute();
         } else

@@ -176,6 +176,13 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
                 ) / PhysConst::mu0;
             }
         );
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
     }
 
     // fill ghost cells with appropriate values
@@ -227,7 +234,6 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     // get hybrid model parameters
-    auto n0 = hybrid_model->m_n0_ref;
     auto eta = hybrid_model->m_eta;
 
     // Index type required for calling ablastr::coarsen::sample::Interp to interpolate fields
@@ -336,7 +342,6 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
             wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
-
     }
 
     // fill ghost cells with appropriate values
@@ -394,7 +399,7 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 if (lx(i, j, k) <= 0) return;
 #endif
                 // allocate variable for density
-                Real rho_val;
+                Real rho_val = 0._rt;
 
                 // get the appropriate charge density in space and time
                 if (a_dt_type == DtType::FirstHalf) {
@@ -419,7 +424,6 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                     Ex(i, j, k) = 0._rt;
                     return;
                 }
-                // rho_val = n0 * PhysConst::q_e;
 
                 // Get the gradient of the electron pressure
                 auto grad_Pe = T_Algo::UpwardDx(Pe, coefs_x, n_coefs_x, i, j, k);
@@ -446,7 +450,7 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
 #endif
 #endif
                 // allocate variable for density
-                Real rho_val;
+                Real rho_val = 0._rt;
 
                 // get the appropriate charge density in space and time
                 if (a_dt_type == DtType::FirstHalf) {
@@ -492,7 +496,7 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 if (lz(i,j,k) <= 0) return;
 #endif
                 // allocate variable for density
-                Real rho_val;
+                Real rho_val = 0._rt;
 
                 // get the appropriate charge density in space and time
                 if (a_dt_type == DtType::FirstHalf) {

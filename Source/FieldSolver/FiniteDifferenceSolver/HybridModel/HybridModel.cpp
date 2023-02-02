@@ -104,6 +104,10 @@ void HybridModel::FillElectronPressureMF (
     std::unique_ptr<amrex::MultiFab> const& rho_field,
     DtType a_dt_type )
 {
+    const auto n0_ref = m_n0_ref;
+    const auto elec_temp = m_elec_temp;
+    const auto gamma = m_gamma;
+
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -134,7 +138,7 @@ void HybridModel::FillElectronPressureMF (
             }
 
             Pe(i, j, k) = ElectronPressure::get_pressure(
-                m_n0_ref, m_elec_temp, m_gamma, rho_val
+                n0_ref, elec_temp, gamma, rho_val
             );
         });
     }
