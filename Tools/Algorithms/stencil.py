@@ -427,7 +427,9 @@ def run_main(dx, dy, dz, dt, nox, noy, noz, gamma=1., galilean=False, path='.', 
         + '\nof each simulation grid, along x, y, and z.')
     print('\nIt is recommended to choose a number of ghost cells that corresponds to'
         + '\na truncation of the signal between single and double machine precision.'
-        + '\nThe more guard cells, the more accurate, yet expensive, results.')
+        + '\nThe more ghost cells, the more accurate, yet expensive, results.'
+        + '\nFor each stencil the region of accuracy between single and double precision'
+        + '\nis shaded to help you identify a suitable number of ghost cells.')
     print('\nFor a nodal simulation, choose:')
     print(f'- between {gcmin_x_nodal} and {gcmax_x_nodal} ghost cells along x')
     print(f'- between {gcmin_y_nodal} and {gcmax_y_nodal} ghost cells along y')
