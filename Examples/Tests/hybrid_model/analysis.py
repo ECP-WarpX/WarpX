@@ -3,15 +3,14 @@
 # --- Analysis script for the hybrid-PIC example producing ion-Bernstein modes.
 
 import dill
-import glob
 import h5py
-
-import numpy as np
 import matplotlib
-import matplotlib.pyplot as plt
 from matplotlib import colors as clr
+import matplotlib.pyplot as plt
+import numpy as np
 
 from pywarpx import picmi
+
 constants = picmi.constants
 
 matplotlib.rcParams.update({'font.size': 20})
