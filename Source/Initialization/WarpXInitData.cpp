@@ -880,7 +880,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 {
 
     auto dx_lev = geom[lev].CellSizeArray();
-    amrex::IntVect refratio = ( (lev > 0 ) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+    amrex::IntVect refratio = (lev > 0 ) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1);
     if (patch_type == PatchType::coarse) {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             dx_lev[idim] = dx_lev[idim] * refratio[idim];
