@@ -756,7 +756,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  m_edge_lengths[lev],
                                                  m_face_areas[lev],
                                                  'B',
-                                                 lev);
+                                                 lev, PatchType::fine);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Bfield_aux[lev][0].get(),
                                                     Bfield_aux[lev][1].get(),
@@ -767,7 +767,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     m_edge_lengths[lev],
                                                     m_face_areas[lev],
                                                     'B',
-                                                    lev);
+                                                    lev, PatchType::fine);
 
           InitializeExternalFieldsOnGridUsingParser(Bfield_cp[lev][0].get(),
                                                     Bfield_cp[lev][1].get(),
@@ -778,7 +778,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     m_edge_lengths[lev],
                                                     m_face_areas[lev],
                                                     'B',
-                                                    lev);
+                                                    lev, PatchType::coarse);
        }
     }
 
@@ -815,7 +815,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  m_edge_lengths[lev],
                                                  m_face_areas[lev],
                                                  'E',
-                                                 lev);
+                                                 lev, PatchType::fine);
 
 #ifdef AMREX_USE_EB
         // We initialize ECTRhofield consistently with the Efield
@@ -836,7 +836,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     m_edge_lengths[lev],
                                                     m_face_areas[lev],
                                                     'E',
-                                                    lev);
+                                                    lev, PatchType::fine);
 
           InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
                                                     Efield_cp[lev][1].get(),
@@ -847,7 +847,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     m_edge_lengths[lev],
                                                     m_face_areas[lev],
                                                     'E',
-                                                    lev);
+                                                    lev, PatchType::coarse);
 #ifdef AMREX_USE_EB
            if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                // We initialize ECTRhofield consistently with the Efield
@@ -876,10 +876,16 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
        const char field,
-       const int lev)
+       const int lev, PatchType patch_type)
 {
 
-    const auto dx_lev = geom[lev].CellSizeArray();
+    auto dx_lev = geom[lev].CellSizeArray();
+    amrex::IntVect ref_ratio = ( (lev > 0 ) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+    if (patch_type == PatchType::coarse) {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            dx_lev[idim] = dx_lev[idim] * ref_ratio[idim];
+        }
+    }
     const RealBox& real_box = geom[lev].ProbDomain();
     amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
     amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
