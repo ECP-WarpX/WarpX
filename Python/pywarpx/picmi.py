@@ -450,9 +450,9 @@ class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
         species.multiple_particles_pos_x = self.x
         species.multiple_particles_pos_y = self.y
         species.multiple_particles_pos_z = self.z
-        species.multiple_particles_vel_x = np.array(self.ux)/constants.c
-        species.multiple_particles_vel_y = np.array(self.uy)/constants.c
-        species.multiple_particles_vel_z = np.array(self.uz)/constants.c
+        species.multiple_particles_mom_x = np.array(self.ux)/constants.c
+        species.multiple_particles_mom_y = np.array(self.uy)/constants.c
+        species.multiple_particles_mom_z = np.array(self.uz)/constants.c
         species.multiple_particles_weight = self.weight
         if density_scale is not None:
             species.multiple_particles_weight = self.weight*density_scale
