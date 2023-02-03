@@ -38,6 +38,7 @@ HPC Systems
    hpc/lxplus
    hpc/lumi
    hpc/taurus
+   hpc/lonestar6
 
 .. tip::
 
