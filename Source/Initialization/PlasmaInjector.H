@@ -72,16 +72,16 @@ public:
 
     bool add_single_particle = false;
     amrex::Vector<amrex::ParticleReal> single_particle_pos;
-    amrex::Vector<amrex::ParticleReal> single_particle_mom;
+    amrex::Vector<amrex::ParticleReal> single_particle_u;
     amrex::ParticleReal single_particle_weight;
 
     bool add_multiple_particles = false;
     amrex::Vector<amrex::ParticleReal> multiple_particles_pos_x;
     amrex::Vector<amrex::ParticleReal> multiple_particles_pos_y;
     amrex::Vector<amrex::ParticleReal> multiple_particles_pos_z;
-    amrex::Vector<amrex::ParticleReal> multiple_particles_mom_x;
-    amrex::Vector<amrex::ParticleReal> multiple_particles_mom_y;
-    amrex::Vector<amrex::ParticleReal> multiple_particles_mom_z;
+    amrex::Vector<amrex::ParticleReal> multiplt_particle_ux;
+    amrex::Vector<amrex::ParticleReal> multiplt_particle_uy;
+    amrex::Vector<amrex::ParticleReal> multiplt_particle_uz;
     amrex::Vector<amrex::ParticleReal> multiple_particles_weight;
 
     bool gaussian_beam = false;
