@@ -55,10 +55,10 @@ class EMModes(object):
     DZ          = 1.0 / 10.0 # Cell size (ion skin depths)
     DT          = [5e-3, 4e-3] # Time step (ion cyclotron periods)
 
-    # Plasma resistivity - used to dampen the parallel mode excitation
-    eta = [1e-7, 1e-4, 0.1]
+    # Plasma resistivity - used to dampen the mode excitation
+    eta = [[1e-7, 1e-7], [1e-7, 1e-5], [1e-7, 1e-4]]
     # Number of substeps used to update B
-    substeps = 400
+    substeps = [[250, 500], [250, 750], [250, 1000]]
 
     def __init__(self, test, dim, B_dir):
         """Get input parameters for the specific case desired."""
@@ -81,20 +81,18 @@ class EMModes(object):
         self.Lx = self.Nx * self.dz
 
         self.dt = self.DT * self.t_ci
-        # self.dt = self.DT * self.dz / self.vA
-        # self.dt = self.CFL_FACTOR * self.dz / constants.c
 
         if not self.test:
             self.total_steps = int(np.ceil(self.LT * self.t_ci / self.dt))
             self.diag_steps = int(1/20 * self.t_ci / self.dt)
         else:
             # if this is a test case run for only a small number of steps
-            self.total_steps = 500
-            self.diag_steps = 50
+            self.total_steps = 1000
+            self.diag_steps = 25
 
         # dump all the current attributes to a dill pickle file
         if comm.rank == 0:
-            with open('sim_parameters.dpkl', 'wb') as f:
+            with open(f'sim_parameters_{self.B_dir}.dpkl', 'wb') as f:
                 dill.dump(self, f)
 
         # print out plasma parameters
@@ -129,10 +127,17 @@ class EMModes(object):
         if self.B_dir == 'z':
             idx = 0
             self.Bx = 0.0
+            self.By = 0.0
             self.Bz = self.B0
+        elif self.B_dir == 'y':
+            idx = 1
+            self.Bx = 0.0
+            self.By = self.B0
+            self.Bz = 0.0
         else:
             idx = 1
             self.Bx = self.B0
+            self.By = 0.0
             self.Bz = 0.0
 
         self.beta = self.beta[idx]
@@ -143,7 +148,8 @@ class EMModes(object):
         self.DT = self.DT[idx]
 
         self.NPPC = self.NPPC[self.dim-1]
-        self.eta = self.eta[self.dim-1]
+        self.eta = self.eta[self.dim-1][idx]
+        self.substeps = self.substeps[self.dim-1][idx]
 
     def get_plasma_quantities(self):
         """Calculate various plasma parameters based on the simulation input."""
@@ -201,7 +207,7 @@ class EMModes(object):
         )
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
-        simulation.load_balance_intervals = self.total_steps // 200
+        simulation.load_balance_intervals = self.total_steps // 100
         simulation.verbose = True #self.test
 
         #######################################################################
@@ -217,7 +223,7 @@ class EMModes(object):
 
         B_ext = picmi.AnalyticInitialField(
             Bx_expression=self.Bx,
-            By_expression=0.0,
+            By_expression=self.By,
             Bz_expression=self.Bz
         )
         simulation.add_applied_field(B_ext)
@@ -244,6 +250,11 @@ class EMModes(object):
         # Add diagnostics                                                     #
         #######################################################################
 
+        if self.B_dir == 'z':
+            self.output_file_name = 'par_field_data.txt'
+        else:
+            self.output_file_name = 'perp_field_data.txt'
+
         if self.test:
             field_diag = picmi.FieldDiagnostic(
                 name='field_diag',
@@ -251,24 +262,36 @@ class EMModes(object):
                 period=self.diag_steps,
                 data_list=['B', 'E'],
                 # write_dir=('.' if self.test else 'diags'),
-                # warpx_file_prefix='Python_hybrid_PIC_plt',
+                warpx_file_prefix='Python_hybrid_PIC_plt',
+                warpx_format = 'openpmd',
+                warpx_openpmd_backend = 'h5'
             )
             simulation.add_diagnostic(field_diag)
 
+        if self.B_dir == 'z' or self.dim == 1:
             line_diag = picmi.ReducedDiagnostic(
                 diag_type='FieldProbe',
                 probe_geometry='Line',
                 z_probe=0,
                 z1_probe=self.Lz,
                 resolution=self.Nz - 1,
-                name='lineprobe',
+                name=self.output_file_name[:-4],
                 period=self.diag_steps,
                 path='diags/'
             )
             simulation.add_diagnostic(line_diag)
-
-        # install a custom "reduced diagnostic" to save the average field
-        callbacks.installafterEsolve(self._record_average_fields)
+        else:
+            # install a custom "reduced diagnostic" to save the average field
+            callbacks.installafterEsolve(self._record_average_fields)
+            try:
+                os.mkdir("diags")
+            except OSError:
+                pass
+            with open(f"diags/{self.output_file_name}", 'w') as f:
+                f.write(
+                   "[0]step() [1]time(s) [2]z_coord(m) "
+                   "[3]Ez_lev0-(V/m) [4]Bx_lev0-(T) [5]By_lev0-(T)\n"
+                )
 
         #######################################################################
         # Initialize simulation                                               #
@@ -287,41 +310,26 @@ class EMModes(object):
         if step % self.diag_steps != 0:
             return
 
-        Bx_warpx = fields.BxFPWrapper()[...]
-        By_warpx = fields.BxFPWrapper()[...]
-        Ez_warpx = fields.EzFPWrapper()[...]
+        Bx_warpx = fields.BxWrapper()[...]
+        By_warpx = fields.BxWrapper()[...]
+        Ez_warpx = fields.EzWrapper()[...]
 
         if sim_ext.getMyProc() != 0:
             return
 
-        if step == 0:
-            try:
-                os.mkdir("diags")
-            except OSError:
-                pass
-            with open("diags/lineprobe.dat", 'w') as f:
-                f.write(
-                   "[0]step() [1]time(s) [2]z_coord(m) "
-                   "[3]Ez_lev0-(V/m) [4]Bx_lev0-(T) [5]By_lev0-(T)\n"
-                )
-
         t = step * self.dt
-        z_vals = np.linspace(0, self.Lz, self.Nz)
+        z_vals = np.linspace(0, self.Lz, self.Nz, endpoint=False)
 
-        if self.dim == 1:
-            Ez = Ez_warpx
-            Bx = Bx_warpx
-            By = By_warpx
-        elif self.dim == 2:
+        if self.dim == 2:
             Ez = np.mean(Ez_warpx[:-1], axis=0)
             Bx = np.mean(Bx_warpx[:-1], axis=0)
             By = np.mean(By_warpx[:-1], axis=0)
         else:
-            Ez = np.mean(Ez_warpx[:-1, :-1], axis=[0, 1])
-            Bx = np.mean(Bx_warpx[:-1], axis=[0, 1])
-            By = np.mean(By_warpx[:-1], axis=[0, 1])
+            Ez = np.mean(Ez_warpx[:-1, :-1], axis=(0, 1))
+            Bx = np.mean(Bx_warpx[:-1], axis=(0, 1))
+            By = np.mean(By_warpx[:-1], axis=(0, 1))
 
-        with open("diags/lineprobe.dat", 'a') as f:
+        with open(f"diags/{self.output_file_name}", 'a') as f:
             for ii in range(self.Nz):
                 f.write(
                     f"{step:05d} {t:.10e} {z_vals[ii]:.10e} {Ez[ii]:+.10e} "
@@ -344,7 +352,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--bdir', help='Direction of the B-field', required=False,
-    choices=['x', 'z'], default='z'
+    choices=['x', 'y', 'z'], default='z'
 )
 args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1]+left

@@ -13,15 +13,21 @@ constants = picmi.constants
 
 matplotlib.rcParams.update({'font.size': 20})
 
+B_dir = 'z'
+
 # load simulation parameters
-with open('sim_parameters.dpkl', 'rb') as f:
+with open(f'sim_parameters_{B_dir}.dpkl', 'rb') as f:
     sim = dill.load(f)
 
-field_idx_dict = {
-    'Ez': 3, 'Bx': 4, 'By': 5
-}
-
-data = np.loadtxt("diags/lineprobe.dat", skiprows=1)
+if sim.B_dir == 'z':
+    field_idx_dict = {'z': 4, 'Ez': 7, 'Bx': 8, 'By': 9}
+    data = np.loadtxt("diags/par_field_data.txt", skiprows=1)
+else:
+    if sim.dim == 1:
+        field_idx_dict = {'z': 4, 'Ez': 7, 'Bx': 8, 'By': 9}
+    else:
+        field_idx_dict = {'z': 2, 'Ez': 3, 'Bx': 4, 'By': 5}
+    data = np.loadtxt("diags/perp_field_data.txt", skiprows=1)
 
 # step, t, z, Ez, Bx, By = raw_data.T
 step = data[:,0]
@@ -34,7 +40,7 @@ resolution = len(np.where(step == 0)[0]) - 1
 # reshape to separate spatial and time coordinates
 sim_data = data.reshape((num_steps, resolution+1, data.shape[1]))
 
-z_grid = sim_data[1, :, 2]
+z_grid = sim_data[1, :, field_idx_dict['z']]
 idx = np.argsort(z_grid)[1:]
 dz = np.mean(np.diff(z_grid[idx]))
 dt = np.mean(np.diff(sim_data[:,0,1]))
@@ -44,24 +50,6 @@ for i in range(num_steps):
     data[i,:,0] = sim_data[i,idx,field_idx_dict['Bx']]
     data[i,:,1] = sim_data[i,idx,field_idx_dict['By']]
     data[i,:,2] = sim_data[i,idx,field_idx_dict['Ez']]
-
-'''
-files = sorted(glob.glob('diags/field_diag/*.h5'))
-
-num_steps = len(files)
-resolution = sim.Nz
-
-data = np.zeros((num_steps, resolution, len(ana_fields)))
-
-for i, name in enumerate(files):
-    with h5py.File(name, 'r') as sim_data:
-
-        timestep = str(np.squeeze([key for key in sim_data['data'].keys()]))
-        print(timestep)
-
-        for j, field in enumerate(ana_fields):
-            data[i,:,j] = sim_data['data'][timestep]['fields'][field[0]][field[1]]
-'''
 
 print(f"Data file contains {num_steps} time snapshots.")
 print(f"Spatial resolution is {resolution}")
@@ -84,7 +72,7 @@ else:
     )
 
 if sim.B_dir == 'z':
-    Bl = (data[:, :, 0] + 1j * data[:, :, 1]) / np.sqrt(2)
+    Bl = (data[:, :, 0] + 1.0j * data[:, :, 1]) / np.sqrt(2.0)
     field_kw = np.fft.fftshift(np.fft.fft2(Bl))
 else:
     field_kw = np.fft.fftshift(np.fft.fft2(data[:, :, 2]))
@@ -107,14 +95,14 @@ fig, ax1 = plt.subplots(
 )
 
 if sim.B_dir == 'z':
-    vmin = -3
-    vmax = 3.5
+    vmin = None # -3
+    vmax = None # 3.5
 else:
-    vmin = -4
-    vmax = 4
+    vmin = None #-4
+    vmax = None # 4
 
 im = ax1.imshow(
-    np.log10(np.abs(field_kw)**2 * global_norm), extent=extent,
+    np.log10(np.abs(field_kw**2) * global_norm), extent=extent,
     aspect="equal", cmap='inferno', vmin=vmin, vmax=vmax
 )
 
