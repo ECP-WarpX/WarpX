@@ -875,26 +875,26 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         std::string read_fields_from_path="./";
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
 #if defined(WARPX_DIM_RZ)
-        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp[lev][0].get(), "B", "r");
-        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp[lev][1].get(), "B", "t");
-        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp[lev][2].get(), "B", "z");
+        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp_external[lev][0].get(), "B", "r");
+        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp_external[lev][1].get(), "B", "t");
+        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp_external[lev][2].get(), "B", "z");
 #else
-        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp[lev][0].get(), "B", "x");
-        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp[lev][1].get(), "B", "y");
-        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp[lev][2].get(), "B", "z");
+        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp_external[lev][0].get(), "B", "x");
+        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp_external[lev][1].get(), "B", "y");
+        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp_external[lev][2].get(), "B", "z");
 #endif
     }
     if (add_external_E_field && lev == 0) {
         std::string read_fields_from_path="./";
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
 #if defined(WARPX_DIM_RZ)
-        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp[lev][0].get(), "E", "r");
-        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp[lev][1].get(), "E", "t");
-        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp[lev][2].get(), "E", "z");
+        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp_external[lev][0].get(), "E", "r");
+        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp_external[lev][1].get(), "E", "t");
+        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp_external[lev][2].get(), "E", "z");
 #else
-        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp[lev][0].get(), "E", "x");
-        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp[lev][1].get(), "E", "y");
-        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp[lev][2].get(), "E", "z");
+        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp_external[lev][0].get(), "E", "x");
+        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp_external[lev][1].get(), "E", "y");
+        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp_external[lev][2].get(), "E", "z");
 #endif
     }
 
