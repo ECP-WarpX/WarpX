@@ -179,7 +179,8 @@ void ParticleBoundaryBuffer::redistribute () {
         {
             auto& species_buffer = buffer[ispecies];
             if (species_buffer.isDefined()) {
-                species_buffer.Redistribute();
+                // do not remove particles with negative ids
+                species_buffer.Redistribute(0, -1, 0, 0, false);
             }
         }
     }
