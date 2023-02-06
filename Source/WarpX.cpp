@@ -1029,9 +1029,9 @@ WarpX::ReadParameters ()
         // In that case we should throw a specific warning since
         // representation of a laser pulse in cylindrical coordinates
         // requires at least 2 azimuthal modes
-        if ((lasers_names.size() > 0) && (n_rz_azimuthal_modes < 2)) {
+        if (lasers_names.size() > 0 && n_rz_azimuthal_modes < 2) {
             ablastr::warn_manager::WMRecordWarning("Laser",
-            "Laser representation in RZ requires at least 2 azimuthal modes ",
+            "Laser pulse representation in RZ requires at least 2 azimuthal modes",
             ablastr::warn_manager::WarnPriority::high);
         }
 #endif
