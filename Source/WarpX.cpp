@@ -685,18 +685,6 @@ WarpX::ReadParameters ()
             electromagnetic_solver_id = ElectromagneticSolverAlgo::None;
         }
 
-        if (add_external_B_field) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(electromagnetic_solver_id == ElectromagneticSolverAlgo::None
-                                             && (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame
-                                                 || electrostatic_solver_id == ElectrostaticSolverAlgo::None),
-                                             "External B field is mutually exclusive with B field solution");
-        }
-        if (add_external_E_field) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(electromagnetic_solver_id == ElectromagneticSolverAlgo::None
-                                             && electrostatic_solver_id == ElectrostaticSolverAlgo::None,
-                                             "External E field is mutually exclusive with E field solution");
-        }
-
 #if defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         electromagnetic_solver_id==ElectromagneticSolverAlgo::None,
