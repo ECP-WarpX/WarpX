@@ -26,12 +26,12 @@
 #include <AMReX_Vector.H>
 
 /**
- * \brief This functor does binary nuclear fusions on a single cell.
- *  Particles of the two reacting species are paired with each other and for each pair we compute
- *  if a fusion event occurs. If so, we fill a mask (input parameter p_mask) with true so that
+ * \brief This functor does two-photon binary collisions on a single cell.
+ *  Particles of the two colliding species are paired with each other and for each pair we compute
+ *  if a pair-production event occurs. If so, we fill a mask (input parameter p_mask) with true so that
  *  product particles corresponding to a given pair can be effectively created in the particle
  *  creation functor.
- *  This functor also reads and contains the fusion multiplier.
+ *  This functor also reads and contains the event multiplier.
  */
 class PhotonPhotonCollisionFunc{
     // Define shortcuts for frequently-used type names
@@ -50,7 +50,6 @@ public:
      * \brief Constructor of the PhotonPhotonCollisionFunc class
      *
      * @param[in] collision_name the name of the collision
-     * @param[in] mypc pointer to the MultiParticleContainer
      * @param[in] isSameSpecies whether the two colliding species are the same
      */
     PhotonPhotonCollisionFunc (const std::string collision_name, MultiParticleContainer const * const /*mypc*/,
@@ -79,21 +78,26 @@ public:
     }
 
     /**
-     * \brief operator() of the PhotonPhotonCollisionFunc class. Performs nuclear fusions at the cell level
-     * using the algorithm described in Higginson et al., Journal of Computational Physics 388,
-     * 439-453 (2019). Note that this function does not yet create the product particles, but
-     * instead fills an array p_mask that stores which collisions result in a fusion event.
+     * \brief operator() of the PhotonPhotonCollisionFunc class. Performs two-photon collisions 
+     * at the cell level using the algorithm described in 
+     * Higginson et al., Journal of Computational Physics 388, 439-453 (2019). 
+     * Note that this function does not yet create the product particles, but
+     * instead fills an array p_mask that stores which collisions result in a pair-producing event
+     * (electron and positron).
      *
      * Also note that there are three main differences between this implementation and the
      * algorithm described in Higginson's paper:
      * - 1) The transformation from the lab frame to the center of mass frame is nonrelativistic
      * in Higginson's paper. Here, we implement a relativistic generalization.
-     * - 2) The behaviour when the estimated fusion probability is greater than one is not
+     * - 2) The behaviour when the estimated probability is greater than one is not
      * specified in Higginson's paper. Here, we provide an implementation using two runtime
-     * dependent parameters (fusion probability threshold and fusion probability target value). See
+     * dependent parameters (probability threshold and probability target value). See
      * documentation for more details.
      * - 3) Here, we divide the weight of a particle by the number of times it is paired with other
      * particles. This was not explicitly specified in Higginson's paper.
+     * 
+     * In the following, the word <<pair>> refers to the pairs of colliding macrophotons in a 
+     * given cell, not to the electron-positron products of each collision. 
      *
      * @param[in] I1s,I2s is the start index for I1,I2 (inclusive).
      * @param[in] I1e,I2e is the stop index for I1,I2 (exclusive).
@@ -103,7 +107,7 @@ public:
      * @param[in] dt is the time step length between two collision calls.
      * @param[in] dV is the volume of the corresponding cell.
      * @param[in] cell_start_pair is the start index of the pairs in that cell.
-     * @param[out] p_mask is a mask that will be set to true if a fusion event occurs for a given
+     * @param[out] p_mask is a mask that will be set to true if a collision occurs for a given
      * pair. It is only needed here to store information that will be used later on when actually
      * creating the product particles.
      * @param[out] p_pair_indices_1,p_pair_indices_2 arrays that store the indices of the
@@ -203,7 +207,7 @@ public:
                     m_event_multiplier, multiplier_ratio,
                     m_probability_threshold,
                     m_probability_target_value,
-                    engine); // removed : m1, m2, m_fusion_type
+                    engine);
 
 #if (defined WARPX_DIM_RZ)
                 amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];
@@ -221,18 +225,18 @@ public:
         }
 
 private:
-    // Factor used to increase the number of fusion reaction by decreasing the weight of the
+    // Factor used to increase the number of collisions by decreasing the weight of the
     // produced particles
     amrex::ParticleReal m_event_multiplier;
-    // If the fusion multiplier is too high and results in a fusion probability that approaches
-    // 1, there is a risk of underestimating the total fusion yield. In these cases, we reduce
-    // the fusion multiplier used in a given collision. m_probability_threshold is the fusion
-    // probability threshold above which we reduce the fusion multiplier.
+    // If the event multiplier is too high and results in a collision probability that approaches
+    // 1, there is a risk of underestimating the total yield of electrons and positrons. 
+    // In these cases, we reduce the event multiplier used in a given collision. 
+    // m_probability_threshold is the probability above which we reduce the event multiplier.
     // m_probability_target_value is the target probability used to determine by how much
-    // the fusion multiplier should be reduced.
+    // the event multiplier should be reduced.
     amrex::ParticleReal m_probability_threshold;
     amrex::ParticleReal m_probability_target_value;
-    //NuclearFusionType m_fusion_type;
+
     bool m_isSameSpecies;
 };
 
