@@ -3,9 +3,9 @@ Python script to compute the minimum number of guard cells for a given
 error threshold, based on the measurement of the PSATD stencil extent
 (that is, the minimum number of guard cells such that the stencil
 measure is not larger than the error threshold).
-Reference: https://arxiv.org/abs/2106.12919
+Reference: https://doi.org/10.1016/j.cpc.2022.108457
 
-Run the script simply with "python Stencil.py" (or with "run Stencil.py"
+Run the script simply with "python stencil.py" (or with "run stencil.py"
 using IPython). The user can modify the input parameters set in the main
 function at the end of the file.
 """
@@ -24,16 +24,14 @@ dp = np.finfo(np.float64).eps
 
 def get_Fornberg_coeffs(order, staggered):
     """
-    Compute the centered or staggered
-    Fornberg coefficients at finite order.
+    Compute the centered or staggered Fornberg coefficients at finite order.
 
     Parameters
     ----------
     order : int
         Finite order of the approximation.
     staggered : bool
-        Whether to compute the centered or staggered
-        Fornberg coefficients.
+        Whether to compute the centered or staggered Fornberg coefficients.
 
     Returns
     -------
@@ -60,8 +58,7 @@ def get_Fornberg_coeffs(order, staggered):
 
 def modified_k(kx, dx, order, staggered):
     """
-    Compute the centered or staggered
-    modified wave vector at finite order.
+    Compute the centered or staggered modified wave vector at finite order.
 
     Parameters
     ----------
@@ -72,8 +69,7 @@ def modified_k(kx, dx, order, staggered):
     order : int
         Finite order of the approximation.
     staggered : bool
-        Whether to compute the centered or staggered
-        modified wave vector.
+        Whether to compute the centered or staggered modified wave vector.
 
     Returns
     -------
@@ -100,18 +96,17 @@ def modified_k(kx, dx, order, staggered):
 
 def func_cosine(om, w_c, dt):
     """
-    Compute the leading spectral coefficient of the general
-    PSATD equations: theta_c**2*cos(om*dt), where
-    theta_c = exp(i*w_c*dt/2), w_c = v_gal*[kz]_c,
-    om_s = c*|[k]| (and [k] or [kz] denote the centered or
-    staggered modified wave vector or vector component).
+    Compute the leading spectral coefficient of the general PSATD equations:
+    theta_c**2*cos(om*dt), where theta_c = exp(i*w_c*dt/2), w_c = v_gal*[kz]_c,
+    om_s = c*|[k]| (and [k] or [kz] denote the centered or staggered modified
+    wave vector or vector component).
 
     Parameters
     ----------
     om : numpy.ndarray
         Array of centered or staggered modified frequencies.
     w_c : numpy.ndarray
-        Array of values of v_gal * [kz]_c.
+        Array of values of v_gal*[kz]_c.
     dt : float
         Time step.
 
@@ -131,13 +126,11 @@ def compute_stencils(coeff_nodal, coeff_stagg, axis):
     Parameters
     ----------
     coeff_nodal : numpy.ndarray
-        Leading spectral nodal coefficient of the general
-        PSATD equations.
+        Leading spectral nodal coefficient of the general PSATD equations.
     coeff_stagg : numpy.ndarray
-        Leading spectral staggered coefficient of the general
-        PSATD equations.
+        Leading spectral staggered coefficient of the general PSATD equations.
     axis : int
-        Axis or direction.
+        Axis or direction (must be 0, 1, or 2).
 
     Returns
     -------
@@ -248,9 +241,9 @@ def compute_all(dx, dy, dz, dt, nox, noy, noz, v_gal, nx=256, ny=256, nz=256):
 
 def compute_guard_cells(errmin, errmax, stencil):
     """
-    Compute the minimum number of guard cells for a given
-    error threshold (number of guard cells such that the
-    stencil measure is not larger than the error threshold).
+    Compute the minimum number of guard cells for a given error threshold
+    (number of guard cells such that the stencil measure is not larger
+    than the error threshold).
 
     Parameters
     ----------
@@ -345,17 +338,6 @@ def run_main(dx, dy, dz, dt, nox, noy, noz, gamma=1., galilean=False, path='.', 
         Path where figures are saved.
     name : str, optional (default = '')
         Common label for figure names.
-
-    Returns
-    -------
-    stencils : dict
-        Dictionary of nodal and staggered stencils along all directions.
-        Its element of the dictionary is a dictionary itself,
-        containing numpy.ndarray objects.
-        Keys: stencils.keys() = dict_keys(['x', 'y', 'z'])
-              stencils['x'].keys() = dict_keys(['nodal', 'stagg'])
-              stencils['y'].keys() = dict_keys(['nodal', 'stagg'])
-              stencils['z'].keys() = dict_keys(['nodal', 'stagg'])
     """
     # Galilean velocity (default = 0.)
     v_gal = 0.
@@ -440,7 +422,7 @@ def run_main(dx, dy, dz, dt, nox, noy, noz, gamma=1., galilean=False, path='.', 
     print(f'- between {gcmin_z_stagg} and {gcmax_z_stagg} ghost cells along z')
     print()
 
-    return stencils
+    return
 
 if __name__ == '__main__':
 
@@ -469,4 +451,4 @@ if __name__ == '__main__':
 
     # Run main function (some arguments are optional,
     # see definition of run_main function for help)
-    stencils = run_main(dx, dy, dz, dt, nox, noy, noz, gamma, galilean, path, name)
+    run_main(dx, dy, dz, dt, nox, noy, noz, gamma, galilean, path, name)
