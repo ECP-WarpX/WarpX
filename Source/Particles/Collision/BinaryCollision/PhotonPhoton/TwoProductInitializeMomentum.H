@@ -29,24 +29,19 @@ namespace {
 
     /**
      * \brief This function initializes the momentum of the product particles,
-     * in a fusion event where only two products are produced.
+     * in a pair-production event. Here only two products are produced.
      * (In this case, conservation of energy and momentum determines
      * the amplitude of the momentum of the particles exactly.)
-     * We assume that the emission of the product is isotropic in the center-of-mass frame
+     * We assume that the emission of the product is isotropic in the center-of-momentum frame.
      *
-     * @param[in] soa1_in struct of array data of the first colliding species
-     * @param[in] soa2_in struct of array data of the second colliding species
+     * @param[in] soa1_in struct of array data of the first colliding photon species
+     * @param[in] soa2_in struct of array data of the second colliding photon species
      * @param[out] soa1_out struct of array data of the first product species
      * @param[out] soa2_out struct of array data of the first product species
-     * @param[in] idx1_in index of first colliding macroparticle
-     * @param[in] idx2_in index of second colliding macroparticle
-     * @param[in] idx1_out_start index of first product macroparticle
-     * @param[in] idx2_out_start index of second product macroparticle
-     * @param[in] m1_in mass of first colliding species
-     * @param[in] m2_in mass of second colliding species
-     * @param[in] m1_out mass of first product species
-     * @param[in] m2_out mass of second product species
-     * @param[in] E_fusion energy released in the fusion reaction // REMOVED
+     * @param[in] idx1_in index of first colliding macrophoton
+     * @param[in] idx2_in index of second colliding macrophoton
+     * @param[in] idx1_out_start index of first macrophoton
+     * @param[in] idx2_out_start index of second macrophoton
      * @param[in] engine the random engine
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
