@@ -77,13 +77,13 @@ namespace {
         // Compute cosine of the angle between the two photon momenta in the lab frame
         const amrex::ParticleReal cos_ang = (p1x_in*p2x_in+p1y_in*p2y_in+p1z_in*p2z_in)/(p1_in*p2_in);
 
-        // Energy squared of each of the two colliding photons in the center of momentum frame, 
+        // Energy squared of each of the two colliding photons in the center of momentum frame,
         // calculated using the Lorentz invariance of the total four-momentum norm
-        const amrex::ParticleReal E_star_sq = one_half_pr*c_sq*p1_in*p2_in*(one_pr - cos_ang); 
-        
+        const amrex::ParticleReal E_star_sq = one_half_pr*c_sq*p1_in*p2_in*(one_pr - cos_ang);
+
         // Square of the norm of the momentum of the products in the center of mass frame
         // Formula obtained by inverting E^2 = p^2*c^2 + m^2*c^4 in the COM frame for each particle:
-        // p_star_sq = E_star_sq/c_sq - me*me*c_sq;        
+        // p_star_sq = E_star_sq/c_sq - me*me*c_sq;
         // The expression below is specifically written in a form that avoids returning
         // small negative numbers due to machine precision errors, for low-energy particles
         const amrex::ParticleReal E_ratio = std::sqrt(E_star_sq)/(2._prt*me*c_sq);
@@ -97,8 +97,8 @@ namespace {
 
         // Next step is to convert momenta to lab frame
         amrex::ParticleReal p1x_out, p1y_out, p1z_out;
-        // Preliminary calculation: compute velocity of the center of momentum frame: 
-        // v = (p1 + p2) / | p1 + p2 | * c 
+        // Preliminary calculation: compute velocity of the center of momentum frame:
+        // v = (p1 + p2) / | p1 + p2 | * c
         const amrex::ParticleReal vcx    = (p1x_in+p2x_in) * PhysConst::c / (p1_in + p2_in);
         const amrex::ParticleReal vcy    = (p1y_in+p2y_in) * PhysConst::c / (p1_in + p2_in);
         const amrex::ParticleReal vcz    = (p1z_in+p2z_in) * PhysConst::c / (p1_in + p2_in);
