@@ -435,6 +435,11 @@ WarpX::InitData ()
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
             ComputeMagnetostaticField();
 
+        // Set up an invariant that any code besides the field solver
+        // that looks at field values will see the composite of the
+        // field solution and any external field
+        AddExternalFields();
+
         // Write full diagnostics before the first iteration.
         multi_diags->FilterComputePackFlush( -1 );
 
@@ -449,6 +454,23 @@ WarpX::InitData ()
     PerformanceHints();
 
     CheckKnownIssues();
+}
+
+void
+WarpX::AddExternalFields () {
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        // FIXME: RZ multimode has more than one component for all these
+        if (add_external_E_field) {
+            amrex::MultiFab::Add(*Efield_aux[lev][0], *Efield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_aux[lev][0], *Efield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Efield_aux[lev][0], *Efield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+        }
+        if (add_external_B_field) {
+            amrex::MultiFab::Add(*Bfield_aux[lev][0], *Bfield_fp_external[lev][0], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_aux[lev][0], *Bfield_fp_external[lev][1], 0, 0, 1, guard_cells.ng_alloc_EB);
+            amrex::MultiFab::Add(*Bfield_aux[lev][0], *Bfield_fp_external[lev][2], 0, 0, 1, guard_cells.ng_alloc_EB);
+        }
+    }
 }
 
 void

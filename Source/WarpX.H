@@ -1076,6 +1076,8 @@ private:
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
 
+    void AddExternalFields ();
+
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
 
