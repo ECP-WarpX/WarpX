@@ -309,6 +309,7 @@ class LibWarpX():
         self.libwarpx_so.warpx_gett_new.argtypes = [ctypes.c_int]
         self.libwarpx_so.warpx_sett_new.argtypes = [ctypes.c_int, c_real]
         self.libwarpx_so.warpx_getdt.argtypes = [ctypes.c_int]
+        self.libwarpx_so.warpx_setPotentialEB.argtypes = [ctypes.c_char_p]
 
     def _get_boundary_number(self, boundary):
         '''
@@ -1208,6 +1209,18 @@ class LibWarpX():
         )
         if sync_rho:
             self.libwarpx_so.warpx_SyncRho()
+
+    def set_potential_EB(self, potential):
+        """
+        Set the expression string for the embedded boundary potential
+
+        Parameters
+        ----------
+
+        potential : str
+            The expression string
+        """
+        self.libwarpx_so.warpx_setPotentialEB(ctypes.c_char_p(potential.encode('utf-8')))
 
     def _get_mesh_field_list(self, warpx_func, level, direction, include_ghosts):
         """

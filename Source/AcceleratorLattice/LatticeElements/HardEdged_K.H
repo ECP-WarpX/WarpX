@@ -20,7 +20,7 @@
  * @param[in] zpvdt the estimated future location of the particle, z + v*dt
  * @param[in] zs the start of the lattice element
  * @param[in] ze the end of the lattice element
- * @param[out] the fraction is returned
+ * @return the fraction is returned
  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::ParticleReal hard_edged_fraction(const amrex::ParticleReal z,

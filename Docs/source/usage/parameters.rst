@@ -223,7 +223,7 @@ Setting up the field mesh
     Note that this value has to match the :ref:`WarpX_DIMS <building-cmake-options>` compile-time option.
     If you installed WarpX from a :ref:`package manager <install-users>`, then pick the right executable by name.
 
-* ``geometry.n_rz_azimuthal_modes`` (`integer`; 1 by default)
+* ``warpx.n_rz_azimuthal_modes`` (`integer`; 1 by default)
     When using the RZ version, this is the number of azimuthal modes.
     The default is ``1``, which corresponds to a perfectly axisymmetric simulation.
 
@@ -489,13 +489,33 @@ Distribution across MPI ranks and parallelization
     Particle weight factor used in `Heuristic` strategy for costs update; if running on GPU,
     the particle weight is set to a value determined from single-GPU tests on Summit,
     depending on the choice of solver (FDTD or PSATD) and order of the particle shape.
-    If running on CPU, the default value is `0.9`.
+    If running on CPU, the default value is `0.9`. If running on GPU, the default value is
+
+    +----------+-----------------------+
+    |          | Particle shape factor |
+    +----------+-------+-------+-------+
+    |          | 1     | 2     | 3     |
+    +==========+=======+=======+=======+
+    | FDTD/CKC | 0.599 | 0.732 | 0.855 |
+    +----------+-------+-------+-------+
+    | PSATD    | 0.425 | 0.595 | 0.75  |
+    +----------+-------+-------+-------+
 
 * ``algo.costs_heuristic_cells_wt`` (`float`) optional
     Cell weight factor used in `Heuristic` strategy for costs update; if running on GPU,
     the cell weight is set to a value determined from single-GPU tests on Summit,
     depending on the choice of solver (FDTD or PSATD) and order of the particle shape.
-    If running on CPU, the default value is `0.1`.
+    If running on CPU, the default value is `0.1`. If running on GPU, the default value is
+
+    +----------+-----------------------+
+    |          | Particle shape factor |
+    +----------+-------+-------+-------+
+    |          | 1     | 2     | 3     |
+    +==========+=======+=======+=======+
+    | FDTD/CKC | 0.401 | 0.268 | 0.145 |
+    +----------+-------+-------+-------+
+    | PSATD    | 0.575 | 0.405 | 0.25  |
+    +----------+-------+-------+-------+
 
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
@@ -987,7 +1007,7 @@ Particle initialization
 * ``<species>.physical_element`` (`string`)
     Only read if `do_field_ionization = 1`. Symbol of chemical element for
     this species. Example: for Helium, use ``physical_element = He``.
-    Elements up to atomic number Z=86 (Radon) are supported, let us know if you need higher Z.
+    All the elements up to atomic number Z=100 (Fermium) are supported.
 
 * ``<species>.ionization_product_species`` (`string`)
     Only read if `do_field_ionization = 1`. Name of species in which ionized
@@ -1002,7 +1022,10 @@ Particle initialization
 * ``<species>.do_classical_radiation_reaction`` (`int`) optional (default `0`)
     Enables Radiation Reaction (or Radiation Friction) for the species. Species
     must be either electrons or positrons. Boris pusher must be used for the
-    simulation
+    simulation. If both ``<species>.do_classical_radiation_reaction`` and
+    ``<species>.do_qed_quantum_sync`` are enabled, then the classical module
+    will be used when the particle's chi parameter is below ``qed_qs.chi_min``,
+    the discrete quantum module otherwise.
 
 * ``<species>.do_qed_quantum_sync`` (`int`) optional (default `0`)
     Enables Quantum synchrotron emission for this species.

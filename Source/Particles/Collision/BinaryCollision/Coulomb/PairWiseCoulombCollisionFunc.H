@@ -40,9 +40,11 @@ public:
      * \brief Constructor of the PairWiseCoulombCollisionFunc class
      *
      * @param[in] collision_name the name of the collision
+     * @param[in] mypc the particle container (unused)
+     * @param[in] isSameSpecies true if this is an intra-species colission
      */
     PairWiseCoulombCollisionFunc (const std::string collision_name,
-                                  MultiParticleContainer const * const /*mypc*/,
+                                  [[maybe_unused]] MultiParticleContainer const * const mypc,
                                   const bool isSameSpecies)
     {
         using namespace amrex::literals;
