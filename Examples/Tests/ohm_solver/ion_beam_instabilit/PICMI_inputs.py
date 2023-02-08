@@ -7,15 +7,14 @@
 # --- Matthews (1994) and Section 4.4 of Munoz et al. (2018).
 
 import argparse
-import dill
 import os
 import sys
 import time
 
-import numpy as np
-from mpi4py import MPI as mpi
-
+import dill
 import matplotlib.pyplot as plt
+from mpi4py import MPI as mpi
+import numpy as np
 
 from pywarpx import callbacks, fields, picmi
 
