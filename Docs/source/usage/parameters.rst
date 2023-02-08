@@ -662,9 +662,9 @@ Particle initialization
       ``<species_name>.multiple_particles_pos_x`` (list of `doubles`, X positions of the particles [meter])
       ``<species_name>.multiple_particles_pos_y`` (list of `doubles`, Y positions of the particles [meter])
       ``<species_name>.multiple_particles_pos_z`` (list of `doubles`, Z positions of the particles [meter])
-      ``<species_name>.multiplt_particle_ux`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
-      ``<species_name>.multiplt_particle_uy`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
-      ``<species_name>.multiplt_particle_uz`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
+      ``<species_name>.multiple_particles_ux`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
+      ``<species_name>.multiple_particles_uy`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
+      ``<species_name>.multiple_particles_uz`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
       ``<species_name>.multiple_particles_weight`` (list of `doubles`, macroparticle weights, i.e. number of physical particles each represents)
 
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in

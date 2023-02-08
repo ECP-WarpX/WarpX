@@ -79,9 +79,9 @@ public:
     amrex::Vector<amrex::ParticleReal> multiple_particles_pos_x;
     amrex::Vector<amrex::ParticleReal> multiple_particles_pos_y;
     amrex::Vector<amrex::ParticleReal> multiple_particles_pos_z;
-    amrex::Vector<amrex::ParticleReal> multiplt_particle_ux;
-    amrex::Vector<amrex::ParticleReal> multiplt_particle_uy;
-    amrex::Vector<amrex::ParticleReal> multiplt_particle_uz;
+    amrex::Vector<amrex::ParticleReal> multiple_particles_ux;
+    amrex::Vector<amrex::ParticleReal> multiple_particles_uy;
+    amrex::Vector<amrex::ParticleReal> multiple_particles_uz;
     amrex::Vector<amrex::ParticleReal> multiple_particles_weight;
 
     bool gaussian_beam = false;

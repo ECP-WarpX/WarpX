@@ -806,18 +806,18 @@ PhysicalParticleContainer::AddParticles (int lev)
                 MapParticletoBoostedFrame(plasma_injector->multiple_particles_pos_x[i],
                                           plasma_injector->multiple_particles_pos_y[i],
                                           plasma_injector->multiple_particles_pos_z[i],
-                                          plasma_injector->multiplt_particle_ux[i],
-                                          plasma_injector->multiplt_particle_uy[i],
-                                          plasma_injector->multiplt_particle_uz[i]);
+                                          plasma_injector->multiple_particles_ux[i],
+                                          plasma_injector->multiple_particles_uy[i],
+                                          plasma_injector->multiple_particles_uz[i]);
             }
         }
         AddNParticles(lev, plasma_injector->multiple_particles_pos_x.size(),
                       plasma_injector->multiple_particles_pos_x.dataPtr(),
                       plasma_injector->multiple_particles_pos_y.dataPtr(),
                       plasma_injector->multiple_particles_pos_z.dataPtr(),
-                      plasma_injector->multiplt_particle_ux.dataPtr(),
-                      plasma_injector->multiplt_particle_uy.dataPtr(),
-                      plasma_injector->multiplt_particle_uz.dataPtr(),
+                      plasma_injector->multiple_particles_ux.dataPtr(),
+                      plasma_injector->multiple_particles_uy.dataPtr(),
+                      plasma_injector->multiple_particles_uz.dataPtr(),
                       1, plasma_injector->multiple_particles_weight.dataPtr(), 0, nullptr, 0);
         return;
     }
