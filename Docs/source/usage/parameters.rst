@@ -1007,7 +1007,7 @@ Particle initialization
 * ``<species>.physical_element`` (`string`)
     Only read if `do_field_ionization = 1`. Symbol of chemical element for
     this species. Example: for Helium, use ``physical_element = He``.
-    Elements up to atomic number Z=86 (Radon) are supported, let us know if you need higher Z.
+    All the elements up to atomic number Z=100 (Fermium) are supported.
 
 * ``<species>.ionization_product_species`` (`string`)
     Only read if `do_field_ionization = 1`. Name of species in which ionized
@@ -1022,7 +1022,10 @@ Particle initialization
 * ``<species>.do_classical_radiation_reaction`` (`int`) optional (default `0`)
     Enables Radiation Reaction (or Radiation Friction) for the species. Species
     must be either electrons or positrons. Boris pusher must be used for the
-    simulation
+    simulation. If both ``<species>.do_classical_radiation_reaction`` and
+    ``<species>.do_qed_quantum_sync`` are enabled, then the classical module
+    will be used when the particle's chi parameter is below ``qed_qs.chi_min``,
+    the discrete quantum module otherwise.
 
 * ``<species>.do_qed_quantum_sync`` (`int`) optional (default `0`)
     Enables Quantum synchrotron emission for this species.

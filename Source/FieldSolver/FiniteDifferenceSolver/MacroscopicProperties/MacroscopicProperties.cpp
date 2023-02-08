@@ -218,17 +218,25 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Shift x, y, z position based on index type
-                amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
-                amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                amrex::Real y = 0._rt;
-                amrex::Real fac_z = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
-                amrex::Real z = j * dx_lev[1] + real_box.lo(1) + fac_z;
+
+#if defined(WARPX_DIM_1D_Z)
+                const amrex::Real x = 0._rt;
+                const amrex::Real y = 0._rt;
+                const amrex::Real fac_z = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
+                const amrex::Real z = j * dx_lev[0] + real_box.lo(0) + fac_z;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                const amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
+                const amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
+                const amrex::Real y = 0._rt;
+                const amrex::Real fac_z = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
+                const amrex::Real z = j * dx_lev[1] + real_box.lo(1) + fac_z;
 #else
-                amrex::Real fac_y = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
-                amrex::Real y = j * dx_lev[1] + real_box.lo(1) + fac_y;
-                amrex::Real fac_z = (1._rt - iv[2]) * dx_lev[2] * 0.5_rt;
-                amrex::Real z = k * dx_lev[2] + real_box.lo(2) + fac_z;
+                const amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
+                const amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
+                const amrex::Real fac_y = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
+                const amrex::Real y = j * dx_lev[1] + real_box.lo(1) + fac_y;
+                const amrex::Real fac_z = (1._rt - iv[2]) * dx_lev[2] * 0.5_rt;
+                const amrex::Real z = k * dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // initialize the macroparameter
                 macro_fab(i,j,k) = macro_parser(x,y,z);

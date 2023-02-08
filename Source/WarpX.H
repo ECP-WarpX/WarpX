@@ -945,6 +945,7 @@ public:
      * \param[in] face_areas face areas information
      * \param[in] field flag indicating which field is being initialized ('E' for electric, 'B' for magnetic)
      * \param[in] lev level of the Multifabs that is initialized
+     * \param[in] patch_type PatchType on which the field is initialized (fine or coarse)
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
@@ -954,7 +955,7 @@ public:
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
          const char field,
-         const int lev);
+         const int lev, PatchType patch_type);
 
     /**
      * \brief

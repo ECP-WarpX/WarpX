@@ -5,7 +5,7 @@
 module load cmake/3.22.0
 
 # optional: for QED support with detailed tables
-#module load boost/1.78.0-gnu  # missing
+export BOOST_ROOT=/global/common/software/spackecp/perlmutter/e4s-22.05/78535/spack/opt/spack/cray-sles15-zen3/gcc-11.2.0/boost-1.79.0-lmdngktoeuwdi6ty55noznunah2mvk5w
 
 # optional: for openPMD and PSATD+RZ support
 module load cray-hdf5-parallel/1.12.2.1
