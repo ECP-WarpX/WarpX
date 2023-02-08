@@ -1641,7 +1641,7 @@ WarpX::BackwardCompatibility ()
             "Please use the renamed variables multiple_particles_u<x,y,z>.");
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            !pp_species.queryarr("single_particles_vel", backward_vel),
+            !pp_species.queryarr("single_particle_vel", backward_vel),
             "single_particles_vel is not supported anymore. "
             "Please use the renamed variables single_particles_u.");
     }
