@@ -1626,7 +1626,7 @@ WarpX::BackwardCompatibility ()
             "particles.nspecies is ignored. Just use particles.species_names please.",
             ablastr::warn_manager::WarnPriority::low);
     }
-    
+
     std::vector<std::string> backward_sp_names;
     pp_particles.queryarr("species_names", backward_sp_names);
     for(std::string speciesiter : backward_sp_names){
