@@ -58,7 +58,7 @@ void FiniteDifferenceSolver::EvolveF (
         EvolveFCylindrical <CylindricalYeeAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         EvolveFCartesian <CartesianNodalAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 

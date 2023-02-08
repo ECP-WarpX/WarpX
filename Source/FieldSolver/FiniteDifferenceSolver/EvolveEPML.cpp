@@ -59,7 +59,7 @@ void FiniteDifferenceSolver::EvolveEPML (
     amrex::Abort(Utils::TextMsg::Err(
         "PML are not implemented in cylindrical geometry."));
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         EvolveEPMLCartesian <CartesianNodalAlgorithm> (
             Efield, Bfield, Jfield, edge_lengths, Ffield, sigba, dt, pml_has_particles );

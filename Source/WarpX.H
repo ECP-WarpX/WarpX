@@ -317,8 +317,9 @@ public:
     //! and current onto the lower refinement level instead of the refinement patch itself
     static int n_current_deposition_buffer;
 
-    //! If true, all fields are evaluated on a nodal grid and all MultiFabs have a nodal index type
-    static bool do_nodal;
+    //! Integer that corresponds to the type of grid used in the simulation
+    //! (collocated, staggered, hybrid)
+    static short grid_type;
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;

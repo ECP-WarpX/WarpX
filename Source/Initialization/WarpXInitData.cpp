@@ -267,14 +267,15 @@ WarpX::PrintMainPICparameters ()
     }
   #endif // WARPX_USE_PSATD
 
-  if (do_nodal==1){
-    amrex::Print() << "                      | - nodal mode \n";
+  if (grid_type == GridType::Collocated){
+    amrex::Print() << "                      | - collocated grid \n";
   }
   #ifdef WARPX_USE_PSATD
-    if ( (do_nodal==0) && (field_gathering_algo == GatheringAlgo::EnergyConserving) ){
-      amrex::Print()<<"                      | - staggered mode " << "\n";
+    if ( (grid_type == GridType::Staggered) && (field_gathering_algo == GatheringAlgo::EnergyConserving) ){
+      amrex::Print()<<"                      | - staggered grid " << "\n";
     }
-    else if ( (do_nodal==0) && (field_gathering_algo == GatheringAlgo::MomentumConserving) ){
+    else if ( (grid_type == GridType::Hybrid) && (field_gathering_algo == GatheringAlgo::MomentumConserving) ){
+    amrex::Print()<<"                      | - hybrid grid " << "\n";
     if (dims=="3"){
       amrex::Print() << "                      |   - field_centering_nox = " << WarpX::field_centering_nox << "\n";
       amrex::Print() << "                      |   - field_centering_noy = " << WarpX::field_centering_noy << "\n";
@@ -484,7 +485,7 @@ WarpX::InitPML ()
         // to the PML, for example in the presence of mesh refinement patches)
         pml[0] = std::make_unique<PML>(0, boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
-                             dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
+                             dt[0], nox_fft, noy_fft, noz_fft, grid_type,
                              do_moving_window, pml_has_particles, do_pml_in_domain,
                              psatd_solution_type, J_in_time, rho_in_time,
                              do_pml_dive_cleaning, do_pml_divb_cleaning,
@@ -521,7 +522,7 @@ WarpX::InitPML ()
             pml[lev] = std::make_unique<PML>(lev, boxArray(lev), DistributionMap(lev),
                                    &Geom(lev), &Geom(lev-1),
                                    pml_ncell, pml_delta, refRatio(lev-1),
-                                   dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
+                                   dt[lev], nox_fft, noy_fft, noz_fft, grid_type,
                                    do_moving_window, pml_has_particles, do_pml_in_domain,
                                    psatd_solution_type, J_in_time, rho_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
                                    amrex::IntVect(0), amrex::IntVect(0),

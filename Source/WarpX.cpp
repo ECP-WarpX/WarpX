@@ -191,7 +191,7 @@ IntVect WarpX::filter_npass_each_dir(1);
 int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
-bool WarpX::do_nodal = false;
+short WarpX::grid_type;
 amrex::IntVect m_rho_nodal_flag;
 
 int WarpX::do_similar_dm_pml = 1;
@@ -899,9 +899,12 @@ WarpX::ReadParameters ()
 
         pp_warpx.query("do_dynamic_scheduling", do_dynamic_scheduling);
 
-        pp_warpx.query("do_nodal", do_nodal);
+        // Integer that corresponds to the type of grid used in the simulation
+        // (collocated, staggered, hybrid)
+        grid_type = GetAlgorithmInteger(pp_warpx, "grid_type");
+
         // Use same shape factors in all directions, for gathering
-        if (do_nodal) galerkin_interpolation = false;
+        if (grid_type == GridType::Collocated) galerkin_interpolation = false;
 
 #ifdef WARPX_DIM_RZ
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
@@ -910,11 +913,12 @@ WarpX::ReadParameters ()
             "The number of azimuthal modes (n_rz_azimuthal_modes) must be at least 1");
 #endif
 
-        // If true, the current is deposited on a nodal grid and centered onto a staggered grid.
-        // Setting warpx.do_current_centering = 1 makes sense only if warpx.do_nodal = 0. Instead,
-        // if warpx.do_nodal = 1, Maxwell's equations are solved on a nodal grid and the current
-        // should not be centered onto a staggered grid.
-        if (WarpX::do_nodal == 0)
+        // If true, the current is deposited on a nodal grid and centered onto
+        // a staggered grid. Setting warpx.do_current_centering=1 makes sense
+        // only if warpx.grid_type=hybrid. Instead, if warpx.grid_type=nodal or
+        // warpx.grid_type=staggered, Maxwell's equations are solved on a
+        // collocated or staggered grid (without current centering).
+        if (grid_type == GridType::Hybrid)
         {
             pp_warpx.query("do_current_centering", do_current_centering);
         }
@@ -948,9 +952,9 @@ WarpX::ReadParameters ()
         }
 
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
-            // Force do_nodal=true (that is, not staggered) and
-            // use same shape factors in all directions, for gathering
-            do_nodal = true;
+            // Force grid_type=collocated (neither staggered nor hybrid)
+            // and use same shape factors in all directions for gathering
+            grid_type = GridType::Collocated;
             galerkin_interpolation = false;
         }
 #endif
@@ -1086,12 +1090,12 @@ WarpX::ReadParameters ()
         pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
 
         // Read order of finite-order centering of fields (staggered to nodal).
-        // Read this only if warpx.do_nodal = 0. Instead, if warpx.do_nodal = 1,
+        // Read this only if warpx.grid_type=hybrid. If warpx.grid_type=collocated,
         // Maxwell's equations are solved on a nodal grid and the electromagnetic
         // forces are gathered from a nodal grid, hence the fields do not need to
         // be centered onto a nodal grid.
         if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
-            WarpX::do_nodal == 0)
+            WarpX::grid_type != GridType::Collocated)
         {
             utils::parser::queryWithParser(
                 pp_interpolation, "field_centering_nox", field_centering_nox);
@@ -1113,8 +1117,8 @@ WarpX::ReadParameters ()
         }
 
         // Finite-order centering is not implemented with mesh refinement
-        // (note that when WarpX::do_nodal = 1 finite-order centering is not used anyways)
-        if (maxLevel() > 0 && WarpX::do_nodal == 0)
+        // (note that when warpx.grid_type=collocated, finite-order centering is not used anyways)
+        if (maxLevel() > 0 && WarpX::grid_type == GridType::Hybrid)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
@@ -1122,7 +1126,7 @@ WarpX::ReadParameters ()
         }
 
         if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
-            WarpX::do_nodal == 0)
+            WarpX::grid_type != GridType::Collocated)
         {
             AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
                                           device_field_centering_stencil_coeffs_y,
@@ -1755,7 +1759,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         dx,
         do_subcycling,
         WarpX::use_fdtd_nci_corr,
-        do_nodal,
+        grid_type,
         do_moving_window,
         moving_window_dir,
         WarpX::nox,
@@ -1870,7 +1874,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     G_nodal_flag = amrex::IntVect::TheCellVector();
 
     // Overwrite nodal flags if necessary
-    if (do_nodal) {
+    if (grid_type == GridType::Collocated) {
         Ex_nodal_flag  = IntVect::TheNodeVector();
         Ey_nodal_flag  = IntVect::TheNodeVector();
         Ez_nodal_flag  = IntVect::TheNodeVector();
@@ -2121,13 +2125,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #endif
     } // ElectromagneticSolverAlgo::PSATD
     else {
-        m_fdtd_solver_fp[lev] = std::make_unique<FiniteDifferenceSolver>(electromagnetic_solver_id, dx, do_nodal);
+        m_fdtd_solver_fp[lev] = std::make_unique<FiniteDifferenceSolver>(electromagnetic_solver_id, dx, grid_type);
     }
 
     //
     // The Aux patch (i.e., the full solution)
     //
-    if (aux_is_nodal and !do_nodal)
+    if (aux_is_nodal and grid_type != GridType::Collocated)
     {
         // Create aux multifabs on Nodal Box Array
         BoxArray const nba = amrex::convert(ba,IntVect::TheNodeVector());
@@ -2216,11 +2220,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
         if (do_divb_cleaning)
         {
-            if (do_nodal)
+            if (grid_type == GridType::Collocated)
             {
                 AllocInitMultiFab(G_cp[lev], amrex::convert(cba, IntVect::TheUnitVector()), dm, ncomps, ngG, tag("G_cp"), 0.0_rt);
             }
-            else // do_nodal = 0
+            else // grid_type=staggered or grid_type=hybrid
             {
                 AllocInitMultiFab(G_cp[lev], amrex::convert(cba, IntVect::TheZeroVector()), dm, ncomps, ngG, tag("G_cp"), 0.0_rt);
             }
@@ -2264,7 +2268,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         } // ElectromagneticSolverAlgo::PSATD
         else {
             m_fdtd_solver_cp[lev] = std::make_unique<FiniteDifferenceSolver>(electromagnetic_solver_id, cdx,
-                                                                             do_nodal);
+                                                                             grid_type);
         }
     }
 
@@ -2351,7 +2355,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   dm,
                                                   n_rz_azimuthal_modes,
                                                   noz_fft,
-                                                  do_nodal,
+                                                  grid_type,
                                                   m_v_galilean,
                                                   dx_vect,
                                                   solver_dt,
@@ -2405,7 +2409,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 nox_fft,
                                                 noy_fft,
                                                 noz_fft,
-                                                do_nodal,
+                                                grid_type,
                                                 m_v_galilean,
                                                 m_v_comoving,
                                                 dx_vect,
@@ -2507,9 +2511,8 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
-        "ComputeDivB not implemented with do_nodal."
-        "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(grid_type != GridType::Collocated,
+        "ComputeDivB not implemented with warpx.grid_type=Collocated.");
 
     Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
 
@@ -2545,9 +2548,8 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx, IntVect const ngrow)
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
-        "ComputeDivB not implemented with do_nodal."
-        "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(grid_type != GridType::Collocated,
+        "ComputeDivB not implemented with warpx.grid_type=collocated.");
 
     Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
 
