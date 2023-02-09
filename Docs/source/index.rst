@@ -114,6 +114,7 @@ Theory
    theory/boosted_frame
    theory/input_output
    theory/collisions
+   theory/kinetic_fluid_hybrid_model
 
 Development
 -----------

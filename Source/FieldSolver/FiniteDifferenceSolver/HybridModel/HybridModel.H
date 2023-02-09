@@ -92,7 +92,6 @@ struct ElectronPressure {
                                      amrex::Real const gamma,
                                      amrex::Real const rho) {
         return n0 * T0 * pow((rho/PhysConst::q_e)/n0, gamma);
-        // return T0 * rho / PhysConst::q_e;
     }
 };
 

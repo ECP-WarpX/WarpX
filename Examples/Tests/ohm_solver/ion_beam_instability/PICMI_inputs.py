@@ -12,7 +12,6 @@ import sys
 import time
 
 import dill
-import matplotlib.pyplot as plt
 from mpi4py import MPI as mpi
 import numpy as np
 
@@ -175,7 +174,7 @@ class HybridPICBeamInstability(object):
             grid_object = picmi.Cartesian1DGrid
         elif self.dim == 2:
             grid_object = picmi.Cartesian2DGrid
-        elif self.dim == 3:
+        else:
             grid_object = picmi.Cartesian3DGrid
 
         self.grid = grid_object(
@@ -293,6 +292,7 @@ class HybridPICBeamInstability(object):
             try:
                 os.mkdir("diags")
             except OSError:
+                # diags directory already exists
                 pass
             with open(f"diags/{self.output_file_name}", 'w') as f:
                 f.write(
