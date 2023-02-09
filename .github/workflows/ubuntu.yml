@@ -49,7 +49,7 @@ jobs:
         cmake --build build_RZ -j 2
         ./build_RZ/bin/warpx Examples/Physics_applications/laser_acceleration/inputs_rz
 
-  build_2D_rz:
+  build_1D_2D:
     name: GCC 1D & 2D w/ MPI
     runs-on: ubuntu-22.04
     if: github.event.pull_request.draft == false
