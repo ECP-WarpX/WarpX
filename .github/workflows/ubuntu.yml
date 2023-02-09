@@ -80,7 +80,7 @@ jobs:
           -GNinja                      \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_DIMS=1               \
-          -DWarpX_EB=ON                \
+          -DWarpX_EB=OFF               \
           -DWarpX_PSATD=ON             \
           -DWarpX_QED_TABLE_GEN=ON
         cmake --build build_1D -j 2
@@ -90,7 +90,7 @@ jobs:
           -GNinja                      \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_DIMS=2               \
-          -DWarpX_EB=ON                \
+          -DWarpX_EB=OFF               \
           -DWarpX_PSATD=ON             \
           -DWarpX_QED_TABLE_GEN=ON
         cmake --build build_2D -j 2
