@@ -62,12 +62,22 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
 
     constexpr int spacedim = AMREX_SPACEDIM;
 
+#if defined(WARPX_DIM_1D_Z)
+    const Real zlo_global = geom.ProbLo(0);
+    const Real dz         = geom.CellSize(0);
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     const Real xlo_global = geom.ProbLo(0);
     const Real dx         = geom.CellSize(0);
-    const Real ylo_global = (spacedim == 3) ? geom.ProbLo(1) : amrex::Real(0.);
-    const Real dy         = (spacedim == 3) ? geom.CellSize(1) : amrex::Real(0.);
-    const Real zlo_global = (spacedim == 3) ? geom.ProbLo(2) : geom.ProbLo(1);
-    const Real dz         = (spacedim == 3) ? geom.CellSize(2) : geom.CellSize(1);
+    const Real zlo_global = geom.ProbLo(1);
+    const Real dz         = geom.CellSize(1);
+#elif defined(WARPX_DIM_3D)
+    const Real xlo_global = geom.ProbLo(0);
+    const Real dx         = geom.CellSize(0);
+    const Real ylo_global = geom.ProbLo(1);
+    const Real dy         = geom.CellSize(1);
+    const Real zlo_global = geom.ProbLo(2);
+    const Real dz         = geom.CellSize(2);
+#endif
 
     const auto arrNumPartCreation = src_FAB->array();
     Gpu::DeviceVector<Index> offsets(ncells);
@@ -91,14 +101,24 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
         {
             const IntVect iv = box.atOffset(i);
             const int j = iv[0];
-            const int k = iv[1];
+            const int k = (spacedim >= 2) ? iv[1] : 0;
             const int l = (spacedim == 3) ? iv[2] : 0;
 
             // Currently all particles are created on nodes. This makes it useless
             // to use N>1 (for now).
-            const Real x = xlo_global + j*dx;
-            const Real y = ylo_global + k*dy;
-            const Real z = (spacedim == 3) ? zlo_global + l*dz : zlo_global + k*dz;
+#if defined(WARPX_DIM_1D_Z)
+            Real const x = 0.0;
+            Real const y = 0.0;
+            Real const z = zlo_global + j*dz;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            Real const x = xlo_global + j*dx;
+            Real const y = 0.0;
+            Real const z = zlo_global + k*dz;
+#elif defined(WARPX_DIM_3D)
+            Real const x = xlo_global + j*dx;
+            Real const y = ylo_global + k*dy;
+            Real const z = zlo_global + l*dz;
+#endif
 
             for (int n = 0; n < N; ++n)
             {
