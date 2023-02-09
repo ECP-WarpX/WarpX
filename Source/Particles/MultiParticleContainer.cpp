@@ -1311,7 +1311,7 @@ MultiParticleContainer::doQEDSchwinger ()
 
     auto & warpx = WarpX::GetInstance();
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.grid_type ||
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.grid_type == GridType::Collocated ||
        warpx.field_gathering_algo == GatheringAlgo::MomentumConserving,
           "ERROR: Schwinger process only implemented for warpx.grid_type=collocated"
                                  "or algo.field_gathering = momentum-conserving");
