@@ -59,7 +59,7 @@ psatd.update_with_rho = 0
 
 # warpx
 warpx.cfl = 0.9999
-warpx.do_nodal = 1
+warpx.grid_type = collocated
 warpx.serialize_initial_conditions = 1
 warpx.use_filter = 1
 warpx.verbose = 1

@@ -25,7 +25,7 @@ psatd.use_default_v_galilean = 1
 
 warpx.cfl = 1.
 
-warpx.do_nodal = 0
+warpx.grid_type = hybrid
 
 warpx.gamma_boost = 13.
 warpx.boost_direction = z
