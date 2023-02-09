@@ -59,5 +59,3 @@ be calculated, the model is fully constrained.
 
 Implementation details
 ----------------------
-
-
