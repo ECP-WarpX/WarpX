@@ -21,12 +21,12 @@ PsatdAlgorithmGalileanRZ::PsatdAlgorithmGalileanRZ (SpectralKSpaceRZ const & spe
                                                     amrex::DistributionMapping const & dm,
                                                     const SpectralFieldIndex& spectral_index,
                                                     int const n_rz_azimuthal_modes, int const norder_z,
-                                                    bool const nodal,
+                                                    short const grid_type,
                                                     const amrex::Vector<amrex::Real>& v_galilean,
                                                     amrex::Real const dt,
                                                     bool const update_with_rho)
      // Initialize members of base class
-     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, nodal),
+     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, grid_type),
        m_spectral_index(spectral_index),
        m_dt(dt),
        m_v_galilean(v_galilean),

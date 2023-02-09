@@ -965,7 +965,7 @@ public:
      * \param[in] nodal   whether the finite-difference approximation is computed
      *                    on a nodal grid or a staggered grid
      */
-    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const bool nodal);
+    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const short grid_type);
 
     // Device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;

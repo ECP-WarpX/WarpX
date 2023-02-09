@@ -7,6 +7,7 @@
 #include "PsatdAlgorithmJConstantInTime.H"
 
 #include "Utils/TextMsg.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpX_Complex.H"
 
@@ -34,7 +35,7 @@ PsatdAlgorithmJConstantInTime::PsatdAlgorithmJConstantInTime(
     const int norder_x,
     const int norder_y,
     const int norder_z,
-    const bool nodal,
+    const short grid_type,
     const amrex::Vector<amrex::Real>& v_galilean,
     const amrex::Real dt,
     const bool update_with_rho,
@@ -42,17 +43,17 @@ PsatdAlgorithmJConstantInTime::PsatdAlgorithmJConstantInTime(
     const bool dive_cleaning,
     const bool divb_cleaning)
     // Initializer list
-    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal),
+    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
     m_spectral_index(spectral_index),
     // Initialize the centered finite-order modified k vectors:
     // these are computed always with the assumption of centered grids
-    // (argument nodal = true), for both nodal and staggered simulations
-    modified_kx_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_x, true)),
+    // (argument grid_type=GridType::Collocated), for both collocated and staggered grids
+    modified_kx_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_x, GridType::Collocated)),
 #if defined(WARPX_DIM_3D)
-    modified_ky_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_y, true)),
-    modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_z, true)),
+    modified_ky_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_y, GridType::Collocated)),
+    modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_z, GridType::Collocated)),
 #else
-    modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, true)),
+    modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, GridType::Collocated)),
 #endif
     m_v_galilean(v_galilean),
     m_dt(dt),
@@ -419,8 +420,8 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
             const amrex::Real dt2 = std::pow(dt, 2);
 
             // Calculate the dot product of the k vector with the Galilean velocity.
-            // This has to be computed always with the centered (that is, nodal) finite-order
-            // modified k vectors, to work correctly for both nodal and staggered simulations.
+            // This has to be computed always with the centered (collocated) finite-order
+            // modified k vectors, to work correctly for both collocated and staggered grids.
             // w_c = 0 always with standard PSATD (zero Galilean velocity).
             const amrex::Real w_c = kx_c[i]*vg_x +
 #if defined(WARPX_DIM_3D)
@@ -580,8 +581,8 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficientsAveraging (
             const amrex::Real dt2 = std::pow(dt, 2);
 
             // Calculate the dot product of the k vector with the Galilean velocity.
-            // This has to be computed always with the centered (that is, nodal) finite-order
-            // modified k vectors, to work correctly for both nodal and staggered simulations.
+            // This has to be computed always with the centered (collocated) finite-order
+            // modified k vectors, to work correctly for both collocated and staggered grids.
             // w_c = 0 always with standard PSATD (zero Galilean velocity).
             const amrex::Real w_c = kx_c[i]*vg_x +
 #if defined(WARPX_DIM_3D)

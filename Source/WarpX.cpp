@@ -2747,7 +2747,7 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
 #endif
 }
 
-amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_order, const bool nodal)
+amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_order, const short grid_type)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
 
@@ -2759,8 +2759,8 @@ amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_ord
     // an overflow when evaluated numerically. One way to avoid the overflow is
     // to calculate the coefficients by recurrence.
 
-    // Coefficients for nodal (centered) finite-difference approximation
-    if (nodal == true)
+    // Coefficients for collocated (nodal) finite-difference approximation
+    if (grid_type == GridType::Collocated)
     {
        // First coefficient
        coeffs.at(0) = m * 2. / (m+1);
