@@ -19,6 +19,17 @@ B_dir = 'z'
 with open(f'sim_parameters_{B_dir}.dpkl', 'rb') as f:
     sim = dill.load(f)
 
+if sim.test:
+    import os
+    import sys
+    sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+    import checksumAPI
+
+    # this will be the name of the plot file
+    fn = sys.argv[1]
+    test_name = os.path.split(os.getcwd())[1]
+    checksumAPI.evaluate_checksum(test_name, fn)
+
 if sim.B_dir == 'z':
     field_idx_dict = {'z': 4, 'Ez': 7, 'Bx': 8, 'By': 9}
     data = np.loadtxt("diags/par_field_data.txt", skiprows=1)
@@ -90,9 +101,7 @@ w = -np.flipud(w)
 # aspect = (xmax-xmin)/(ymax-ymin) / aspect_true
 extent = [k[0], k[-1], w[0], w[-1]]
 
-fig, ax1 = plt.subplots(
-    1, 1, figsize=(10, 7.25)
-)
+fig, ax1 = plt.subplots(1, 1, figsize=(10, 7.25))
 
 if sim.B_dir == 'z':
     vmin = None # -3
@@ -130,6 +139,7 @@ if sim.B_dir == 'z':
     ax1.plot(k,1.0-3.0*sim.v_ti/w_norm*k*k_norm, c='limegreen', ls=':', lw=1.25)
 
 else:
+    # digitized values from Munoz et al. (2018)
     x = [0.006781609195402272, 0.1321379310344828, 0.2671034482758621, 0.3743678160919539, 0.49689655172413794, 0.6143908045977011, 0.766022988505747, 0.885448275862069, 1.0321149425287355, 1.193862068965517, 1.4417701149425288, 1.7736781609195402]
     y = [-0.033194664836814436, 0.5306857657503109, 1.100227301968521, 1.5713856842646996, 2.135780760818287, 2.675601492473303, 3.3477291246729854, 3.8469357121413563, 4.4317021915340735, 5.1079898786293265, 6.10275764463696, 7.310074194793499]
     ax1.plot(x, y, c='limegreen', ls='-.', lw=1.5, label="X mode")
@@ -174,4 +184,5 @@ plt.savefig(
     f"spectrum_{dir_str}_{sim.dim}d_{sim.substeps}_substeps_{sim.eta}_eta.png",
     bbox_inches='tight'
 )
-plt.show()
+if not sim.test:
+    plt.show()

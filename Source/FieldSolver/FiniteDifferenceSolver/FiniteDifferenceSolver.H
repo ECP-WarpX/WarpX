@@ -212,8 +212,8 @@ class FiniteDifferenceSolver
         template<typename T_Algo>
         void HybridSolveECylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jifield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             std::unique_ptr<amrex::MultiFab> const& Pefield,

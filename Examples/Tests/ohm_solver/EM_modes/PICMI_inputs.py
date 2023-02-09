@@ -34,7 +34,6 @@ class EMModes(object):
     for EM modes. This input is based on the EM modes tests as described by
     Munoz et al. (2018) and tests done by Scott Nicks at TAE Technologies.
     '''
-
     # Applied field parameters
     B0          = 0.25 # Initial magnetic field strength (T)
     beta        = [0.01, 0.1] # Plasma beta, used to calculate temperature
@@ -84,11 +83,10 @@ class EMModes(object):
 
         if not self.test:
             self.total_steps = int(np.ceil(self.LT * self.t_ci / self.dt))
-            self.diag_steps = int(1/20 * self.t_ci / self.dt)
         else:
             # if this is a test case run for only a small number of steps
-            self.total_steps = 1000
-            self.diag_steps = 25
+            self.total_steps = 250
+        self.diag_steps = int(1/20 * self.t_ci / self.dt)
 
         # dump all the current attributes to a dill pickle file
         if comm.rank == 0:
@@ -207,8 +205,8 @@ class EMModes(object):
         )
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
-        simulation.load_balance_intervals = self.total_steps // 100
-        simulation.verbose = True #self.test
+        simulation.load_balance_intervals = self.total_steps // 20
+        simulation.verbose = self.test
 
         #######################################################################
         # Field solver and external field                                     #
@@ -259,12 +257,12 @@ class EMModes(object):
             field_diag = picmi.FieldDiagnostic(
                 name='field_diag',
                 grid=self.grid,
-                period=self.diag_steps,
+                period=self.total_steps,
                 data_list=['B', 'E'],
-                # write_dir=('.' if self.test else 'diags'),
-                warpx_file_prefix='Python_hybrid_PIC_plt',
-                warpx_format = 'openpmd',
-                warpx_openpmd_backend = 'h5'
+                write_dir=('.' if self.test else 'diags'),
+                warpx_file_prefix='Python_ohms_law_solver_EM_modes_1d_plt',
+                # warpx_format = 'openpmd',
+                # warpx_openpmd_backend = 'h5'
             )
             simulation.add_diagnostic(field_diag)
 

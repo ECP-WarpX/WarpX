@@ -38,7 +38,7 @@ void FiniteDifferenceSolver::HybridSolveE (
         );
 
         HybridSolveECylindrical <CylindricalYeeAlgorithm> (
-            Efield, Jfield, Ji_field, Bfield, rhofield, Pefield,
+            Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
             edge_lengths, lev, hybrid_model, a_dt_type
         );
 #else
@@ -195,11 +195,11 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
 template<typename T_Algo>
 void FiniteDifferenceSolver::HybridSolveECylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jifield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
-    std::unique_ptr<amrex::MultiFab> const& Pe,
+    std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, std::unique_ptr<HybridModel> const& hybrid_model,
     DtType a_dt_type )

@@ -31,7 +31,6 @@ class HybridPICBeamInstability(object):
     '''This input is based on the ion beam R instability test as described by
     Munoz et al. (2018).
     '''
-
     # Applied field parameters
     B0          = 0.25 # Initial magnetic field strength (T)
     beta        = 1.0 # Plasma beta, used to calculate temperature
@@ -97,7 +96,7 @@ class HybridPICBeamInstability(object):
 
         # if this is a test case run for only 4 cyclotron periods
         if self.test:
-            self.LT = 4.0
+            self.LT = 1.0
         self.total_steps = int(np.ceil(self.LT / self.DT))
 
         self.dt = self.DT / self.w_ci # self.DT * self.t_ci
@@ -198,7 +197,7 @@ class HybridPICBeamInstability(object):
 
         self.solver = picmi.EMSolver(
             grid=self.grid, method='hybrid',
-            Te=0.0, #self.T_plasma/10.0,
+            Te=self.T_plasma/10.0,
             n0=self.n_plasma+self.n_beam,
             plasma_resistivity=self.eta, substeps=self.substeps
         )
@@ -252,21 +251,30 @@ class HybridPICBeamInstability(object):
         callbacks.installafterstep(self.energy_diagnostic)
         callbacks.installafterstep(self.text_diag)
 
-        self.output_file_name = 'field_data.txt'
+        if self.test:
+            field_diag = picmi.FieldDiagnostic(
+                name='field_diag',
+                grid=self.grid,
+                period=100,
+                write_dir='.',
+                warpx_file_prefix='Python_ohms_law_solver_ion_beam_1d_plt',
+            )
+            simulation.add_diagnostic(field_diag)
 
         # output the full particle data at t*w_ci = 40
         step = int(40.0 / self.DT)
-        field_diag = picmi.ParticleDiagnostic(
+        parts_diag = picmi.ParticleDiagnostic(
             name='parts_diag',
             period=f"{step}:{step}",
             species=[self.ions, self.beam_ions],
-            # write_dir=('.' if self.test else 'diags'),
+            write_dir='diags',
             warpx_file_prefix='Python_hybrid_PIC_plt',
             warpx_format = 'openpmd',
             warpx_openpmd_backend = 'h5'
         )
-        simulation.add_diagnostic(field_diag)
+        simulation.add_diagnostic(parts_diag)
 
+        self.output_file_name = 'field_data.txt'
         if self.dim == 1:
             line_diag = picmi.ReducedDiagnostic(
                 diag_type='FieldProbe',
@@ -297,8 +305,6 @@ class HybridPICBeamInstability(object):
         # Initialize simulation                                               #
         #######################################################################
 
-        # simulation.current_deposition_algo = 'direct'
-
         simulation.initialize_inputs()
         simulation.initialize_warpx()
 
@@ -309,7 +315,7 @@ class HybridPICBeamInstability(object):
 
         if sim_ext.getMyProc() == 0:
             # allocate arrays for storing energy values
-            self.energy_vals = np.zeros((self.total_steps//self.diag_steps+1, 6))
+            self.energy_vals = np.zeros((self.total_steps//self.diag_steps, 4))
 
     def text_diag(self):
         """Diagnostic function to print out timing data and particle numbers."""
@@ -361,8 +367,6 @@ class HybridPICBeamInstability(object):
         # get the simulation energies
         Ec_par, Ec_perp = self._get_kinetic_energy(self.ions)
         Eb_par, Eb_perp = self._get_kinetic_energy(self.beam_ions)
-        magnetic_energy = self._get_magnetic_energy()
-        electric_energy = self._get_electric_energy()
 
         if sim_ext.getMyProc() != 0:
             return
@@ -371,8 +375,9 @@ class HybridPICBeamInstability(object):
         self.energy_vals[idx, 1] = Ec_perp
         self.energy_vals[idx, 2] = Eb_par
         self.energy_vals[idx, 3] = Eb_perp
-        self.energy_vals[idx, 4] = magnetic_energy
-        self.energy_vals[idx, 5] = electric_energy
+
+        if step == self.total_steps:
+            np.save('diags/energies.npy', run.energy_vals)
 
     def _get_kinetic_energy(self, species):
         """Utility function to retrieve the total kinetic energy in the
@@ -393,43 +398,6 @@ class HybridPICBeamInstability(object):
 
         return E_par, E_perp
 
-    def _get_magnetic_energy(self):
-        Bx = fields.BxFPWrapper()[...].copy()
-        By = fields.ByFPWrapper()[...].copy()
-        Bz = fields.BzFPWrapper()[...].copy()
-
-        if self.dim == 1:
-            Bz = Bz[:-1]
-        elif self.dim == 2:
-            Bx = Bx[:-1, :]
-            Bz = Bz[:, :-1]
-
-        E_M = (
-            # 0.5 * np.sum(Bx**2 + By**2 + Bz**2) / constants.mu0
-            np.sum(Bx**2 + By**2 + Bz**2) / constants.mu0
-            * (self.volume / self.N_cells) # / constants.q_e
-        )
-        return E_M
-
-    def _get_electric_energy(self):
-        Ex = fields.ExFPWrapper()[...].copy()
-        Ey = fields.EyFPWrapper()[...].copy()
-        Ez = fields.EzFPWrapper()[...].copy()
-
-        if self.dim == 1:
-            Ex = Ex[:-1]
-            Ey = Ey[:-1]
-        elif self.dim == 2:
-            Ex = Ex[:, :-1]
-            Ey = Ey[:-1, :-1]
-            Ez = Ez[:-1]
-
-        E_E = (
-            0.5 * constants.ep0 * np.sum(Ex**2 + Ey**2 + Ez**2)
-            * self.volume / self.N_cells # / constants.q_e
-        )
-        return E_E
-
     def _record_average_fields(self):
         """A custom reduced diagnostic to store the average E&M fields in a
         similar format as the reduced diagnostic so that the same analysis
@@ -440,9 +408,7 @@ class HybridPICBeamInstability(object):
         if step % self.diag_steps != 0:
             return
 
-        Bx_warpx = fields.BxWrapper()[...]
         By_warpx = fields.BxWrapper()[...]
-        Ez_warpx = fields.EzWrapper()[...]
 
         if sim_ext.getMyProc() != 0:
             return
@@ -451,19 +417,14 @@ class HybridPICBeamInstability(object):
         z_vals = np.linspace(0, self.Lz, self.Nz, endpoint=False)
 
         if self.dim == 2:
-            Ez = np.mean(Ez_warpx[:-1], axis=0)
-            Bx = np.mean(Bx_warpx[:-1], axis=0)
             By = np.mean(By_warpx[:-1], axis=0)
         else:
-            Ez = np.mean(Ez_warpx[:-1, :-1], axis=(0, 1))
-            Bx = np.mean(Bx_warpx[:-1], axis=(0, 1))
             By = np.mean(By_warpx[:-1], axis=(0, 1))
 
         with open(f"diags/{self.output_file_name}", 'a') as f:
             for ii in range(self.Nz):
                 f.write(
-                    f"{step:05d} {t:.10e} {z_vals[ii]:.10e} {Ez[ii]:+.10e} "
-                    f"{Bx[ii]:+.10e} {By[ii]:+.10e}\n"
+                    f"{step:05d} {t:.10e} {z_vals[ii]:.10e} {By[ii]:+.10e}\n"
                 )
 
 
@@ -491,25 +452,3 @@ run = HybridPICBeamInstability(
     test=args.test, dim=args.dim, resonant=args.resonant
 )
 simulation.step()
-
-if sim_ext.getMyProc() == 0:
-
-    np.save('diags/energies.npy', run.energy_vals)
-
-    beam_init = run.energy_vals[0,2] + run.energy_vals[0,3]
-
-    t_grid = np.linspace(0, run.LT, run.energy_vals.shape[0])
-    plt.plot(t_grid, run.energy_vals[:, 0] / beam_init, '-', label='$W_{c,||}$')
-    plt.plot(t_grid, run.energy_vals[:, 1] / beam_init, '--', label='$W_{c,\perp}$')
-    plt.plot(t_grid, run.energy_vals[:, 2] / beam_init, '-', label='$W_{b,||}$')
-    plt.plot(t_grid, run.energy_vals[:, 3] / beam_init, '--', label='$W_{b,\perp}$')
-    # plt.plot(t_grid, run.energy_vals[:, 1], 'o-', label='Magnetic')
-    # plt.plot(t_grid, run.energy_vals[:, 2], 'o-', label='Electric')
-    # plt.plot(t_grid, np.sum(run.energy_vals, axis=1), label='Total')
-
-    plt.xlabel("Time ($\Omega_i$)")
-    plt.ylabel("Energies")
-    plt.grid()
-    plt.legend()
-    plt.savefig("diags/energies.png")
-    plt.show()
