@@ -70,7 +70,7 @@ void FiniteDifferenceSolver::EvolveB (
         ignore_unused(Gfield, face_areas);
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
 #else
-    if(m_grid_type == GridType::Collocated or m_fdtd_algo != ElectromagneticSolverAlgo::ECT){
+    if(m_grid_type == GridType::Collocated || m_fdtd_algo != ElectromagneticSolverAlgo::ECT){
         amrex::ignore_unused(face_areas);
     }
 
