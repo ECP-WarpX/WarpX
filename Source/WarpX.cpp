@@ -1118,7 +1118,7 @@ WarpX::ReadParameters ()
 
         // Finite-order centering is not implemented with mesh refinement
         // (note that when warpx.grid_type=collocated, finite-order centering is not used anyways)
-        if (maxLevel() > 0 && WarpX::grid_type == GridType::Hybrid)
+        if (maxLevel() > 0 && WarpX::grid_type != GridType::Collocated)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
