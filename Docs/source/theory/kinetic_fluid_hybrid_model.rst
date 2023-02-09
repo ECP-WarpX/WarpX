@@ -55,7 +55,79 @@ can be obtained from the above as:
         \vec{E} = -\frac{1}{en_e}\left( \vec{J}_e\times\vec{B} + \nabla\cdot\vec{P}_e \right)+en_e\vec{\eta}\cdot\vec{J}.
 
 Lastly, if an electron temperature is given from which the electron pressure can
-be calculated, the model is fully constrained.
+be calculated, the model is fully constrained and can be evolved given initial
+conditions.
 
 Implementation details
 ----------------------
+
+The kinetic-fluid hybrid extension mostly uses the same routines as the standard
+PIC algorithm with the only exception that the E-field is calculated from the
+above equation rather than it being integrated from a differential equation. The
+function `WarpX::HybridEvolveFields()` handles the logic to update the E&M fields
+when the "hybrid" model is used. This function is executed after particle pushing
+and deposition (charge and current density) has been completed. Therefore, based
+on the usual time-staggering in the PIC algorithm, when `HybridEvolveFields()` is called
+at timestep :math:`t=n`, the quantities :math:`\rho^n`, :math:`\rho^{n+1}`, :math:`\vec{J}_i^{n-1/2}`
+and  :math:`\vec{J}_i^{n+1/2}` are all known.
+
+Field update
+^^^^^^^^^^^^
+
+The field update is done in three steps as described below.
+
+First half step
+"""""""""""""""
+
+Firstly the E-field at :math:`t=n` is calculated for which the current density needs to
+be interpolated to the correct time, using :math:`\vec{J}_i^n = 1/2(\vec{J}_i^{n-1/2}+ \vec{J}_i^{n+1/2})`.
+The electron pressure is simply calculated using :math:`\rho^n` and the B-field is also already
+known at the correct time since it was calculated for :math:`t=n` at the end of the last step.
+Once :math:`\vec{E}^n` is calculated, it is used to push :math:`\vec{B}^n` forward in time
+(using Faraday's law i.e. the same as in the regular PIC routine with `WarpX::EvolveB()`)
+to :math:`\vec{B}^{n+1/2}`.
+
+Second half step
+""""""""""""""""
+
+Next, the E-field is recalculated to get :math:`\vec{E}^{n+1/2}`. This is done
+using the known fields :math:`\vec{B}^{n+1/2}`, :math:`\vec{J}_i^{n+1/2}` and
+interpolated charge density :math:`\rho^{n+1/2}=1/2(\rho^n+\rho^{n+1})` (which is
+also used to calculate the electron pressure). Similarly as before, the B-field
+is then pushed forward to get :math:`\vec{B}^{n+1}` using the newly calculated
+:math:`\vec{E}^{n+1/2}` field.
+
+Extrapolation step
+""""""""""""""""""
+
+Obtaining the E-field at timestep :math:`t=n+1` is a well document issue for
+the hybrid model. Currently the approach in WarpX is to simply extrapolate
+:math:`\vec{J}_i` foward in time, using
+
+    .. math::
+
+        \vec{J}_i^{n+1} = \frac{3}{2}\vec{J}_i^{n+1/2} - \frac{1}{2}\vec{J}_i^{n-1/2}.
+
+With this extrapolation all fields required to calculate :math:`\vec{E}^{n+1}`
+are known and the simulation can proceed.
+
+Sub-stepping
+^^^^^^^^^^^^
+
+It is also well known that hybrid PIC routines require the B-field to be
+updated with a smaller timestep than needed for the particles. The update steps
+as outlined above are therefore wrapped in loops that enable the B-field to be
+sub-stepped. The exact number of sub-steps used can be specified by the user
+through a runtime simulation parameter (see :ref:`input parameters section <running-cpp-parameters-hybrid-model>`).
+
+.. _theory-hybrid-model-elec-temp:
+
+Electron pressure
+^^^^^^^^^^^^^^^^^
+
+The electron pressure is assumed a scalar quantity and calculated using the given
+input parameters, :math:`T_e`, :math:`n_0` and :math:`\gamma` using
+
+    .. math::
+
+        P_e = n_0T_e\left( \frac{n_e}{n_0} \right)^\gamma.

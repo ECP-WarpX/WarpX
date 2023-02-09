@@ -103,12 +103,12 @@ extent = [k[0], k[-1], w[0], w[-1]]
 
 fig, ax1 = plt.subplots(1, 1, figsize=(10, 7.25))
 
-if sim.B_dir == 'z':
-    vmin = None # -3
-    vmax = None # 3.5
+if sim.B_dir == 'z' and sim.dim == 1:
+    vmin = -3
+    vmax = 3.5
 else:
-    vmin = None #-4
-    vmax = None # 4
+    vmin = None
+    vmax = None
 
 im = ax1.imshow(
     np.log10(np.abs(field_kw**2) * global_norm), extent=extent,

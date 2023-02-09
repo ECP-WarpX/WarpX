@@ -1,4 +1,4 @@
-/* Copyright 2022 The WarpX Community
+/* Copyright 2023 The WarpX Community
  *
  * This file is part of WarpX.
  *
@@ -66,15 +66,15 @@ void WarpX::HybridEvolveFields ()
                 },
 
                 [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    Jy(i, j, k) = 0.5 * (Jy(i, j, k) + Jy_adv(i, j, k));
+                    Jz(i, j, k) = 0.5 * (Jz(i, j, k) + Jz_adv(i, j, k));
                 }
             );
         }
 
         // fill ghost cells with appropriate values
-        current_fp_temp[lev][0]->FillBoundary(Geom(lev).periodicity());
-        current_fp_temp[lev][1]->FillBoundary(Geom(lev).periodicity());
-        current_fp_temp[lev][2]->FillBoundary(Geom(lev).periodicity());
+        for (int idim = 0; idim < 3; ++idim) {
+            current_fp_temp[lev][idim]->FillBoundary(Geom(lev).periodicity());
+        }
     }
 
     // Calculate the electron pressure at t=n using rho^n
@@ -147,9 +147,9 @@ void WarpX::HybridEvolveFields ()
         }
 
         // fill ghost cells with appropriate values
-        current_fp_temp[lev][0]->FillBoundary(Geom(lev).periodicity());
-        current_fp_temp[lev][1]->FillBoundary(Geom(lev).periodicity());
-        current_fp_temp[lev][2]->FillBoundary(Geom(lev).periodicity());
+        for (int idim = 0; idim < 3; ++idim) {
+            current_fp_temp[lev][idim]->FillBoundary(Geom(lev).periodicity());
+        }
     }
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
