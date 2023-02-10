@@ -1760,13 +1760,13 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                     for field_name in E_fields_list:
                         fields_to_plot.add(field_name)
                 elif dataname == 'B':
-                    for field_name in E_fields_list:
+                    for field_name in B_fields_list:
                         fields_to_plot.add(field_name)
                 elif dataname == 'J':
-                    for field_name in E_fields_list:
+                    for field_name in J_fields_list:
                         fields_to_plot.add(field_name.lower())
                 elif dataname == 'A':
-                    for field_name in E_fields_list:
+                    for field_name in A_fields_list:
                         fields_to_plot.add(field_name)
                 elif dataname in E_fields_list:
                     fields_to_plot.add(dataname)
