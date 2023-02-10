@@ -2,9 +2,8 @@
 #
 # --- Test script for the kinetic-fluid hybrid model in WarpX wherein ions are
 # --- treated as kinetic particles and electrons as an isothermal, inertialess
-# --- background fluid. The script simulates an ion beam instability wherein a
-# --- low density ion beam interacts with background plasma. See Section 6.5 of
-# --- Matthews (1994) and Section 4.4 of Munoz et al. (2018).
+# --- background fluid. The script simulates ion Landau damping as descibed
+# --- in section 4.5 of Munoz et al. (2018).
 
 import argparse
 import os
@@ -26,44 +25,45 @@ simulation = picmi.Simulation(verbose=0)
 sim_ext = simulation.extension
 
 
-class HybridPICBeamInstability(object):
-    '''This input is based on the ion beam R instability test as described by
+class IonLandauDamping(object):
+    '''This input is based on the ion Landau damping test as described by
     Munoz et al. (2018).
     '''
     # Applied field parameters
-    B0          = 0.25 # Initial magnetic field strength (T)
-    beta        = 1.0 # Plasma beta, used to calculate temperature
+    B0          = 0.1 # Initial magnetic field strength (T)
+    beta        = 2.0 # Plasma beta, used to calculate temperature
 
     # Plasma species parameters
     m_ion      = 100.0 # Ion mass (electron masses)
-    vA_over_c  = 1e-4 # ratio of Alfven speed and the speed of light
+    vA_over_c  = 1e-3 # ratio of Alfven speed and the speed of light
 
     # Spatial domain
-    Nz          = 1024 # number of cells in z direction
-    Nx          = 8 # number of cells in x (and y) direction for >1 dimensions
+    Nz          = 256 # number of cells in z direction
+    Nx          = 4 # number of cells in x (and y) direction for >1 dimensions
 
     # Temporal domain (if not run as a CI test)
-    LT          = 120.0 # Simulation temporal length (ion cyclotron periods)
+    LT          = 40.0 # Simulation temporal length (ion cyclotron periods)
 
     # Numerical parameters
-    NPPC        = [1024, 256, 64] # Seed number of particles per cell
-    DZ          = 1.0 / 4.0 # Cell size (ion skin depths)
-    DT          = 0.01 # Time step (ion cyclotron periods)
+    NPPC        = [8192, 4096, 1024] # Seed number of particles per cell
+    DZ          = 1.0 / 6.0 # Cell size (ion skin depths)
+    DT          = 1e-3 # Time step (ion cyclotron periods)
+
+    # density perturbation strength
+    epsilon = 0.03
 
     # Plasma resistivity - used to dampen the mode excitation
     eta = 1e-7
     # Number of substeps used to update B
-    substeps = 400
+    substeps = 100
 
-    # Beam parameters
-    n_beam = [0.02, 0.1]
-    U_bc = 10.0 # relative drifts between beam and core in Alfven speeds
 
-    def __init__(self, test, dim, resonant):
+    def __init__(self, test, dim, m, T_ratio):
         """Get input parameters for the specific case desired."""
         self.test = test
         self.dim = int(dim)
-        self.resonant = resonant
+        self.m = m
+        self.T_ratio = T_ratio
 
         # sanity check
         assert (dim > 0 and dim < 4), f"{dim}-dimensions not a valid input"
@@ -71,32 +71,17 @@ class HybridPICBeamInstability(object):
         # calculate various plasma parameters based on the simulation input
         self.get_plasma_quantities()
 
-        self.n_beam = self.n_beam[1 - int(resonant)]
-        self.u_beam = 1.0 / (1.0 + self.n_beam) * self.U_bc * self.vA
-        self.u_c = -1.0 * self.n_beam / (1.0 + self.n_beam) * self.U_bc * self.vA
-        self.n_beam = self.n_beam * self.n_plasma
-
         self.dz = self.DZ * self.l_i
         self.Lz = self.Nz * self.dz
         self.Lx = self.Nx * self.dz
 
-        if self.dim == 3:
-            self.volume = self.Lx * self.Lx * self.Lz
-            self.N_cells = self.Nx * self.Nx * self.Nz
-        elif self.dim == 2:
-            self.volume = self.Lx * self.Lz
-            self.N_cells = self.Nx * self.Nz
-        else:
-            self.volume = self.Lz
-            self.N_cells = self.Nz
-
-        diag_period = 1 / 4.0 # Output interval (ion cyclotron periods)
+        diag_period = 1 / 16.0 # Output interval (ion cyclotron periods)
         self.diag_steps = int(diag_period / self.DT)
 
-        # if this is a test case run for only 1 cyclotron period
-        if self.test:
-            self.LT = 1.0
         self.total_steps = int(np.ceil(self.LT / self.DT))
+        # if this is a test case run for only 100 steps
+        if self.test:
+            self.total_steps = 100
 
         self.dt = self.DT / self.w_ci # self.DT * self.t_ci
 
@@ -183,7 +168,8 @@ class HybridPICBeamInstability(object):
             lower_bound=[-self.Lx/2.0, -self.Lx/2.0, 0][-self.dim:],
             upper_bound=[self.Lx/2.0, self.Lx/2.0, self.Lz][-self.dim:],
             lower_boundary_conditions=['periodic']*self.dim,
-            upper_boundary_conditions=['periodic']*self.dim
+            upper_boundary_conditions=['periodic']*self.dim,
+            warpx_blocking_factor=4
         )
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
@@ -196,29 +182,22 @@ class HybridPICBeamInstability(object):
 
         self.solver = picmi.EMSolver(
             grid=self.grid, method='hybrid', gamma=1.0,
-            Te=self.T_plasma/10.0,
-            n0=self.n_plasma+self.n_beam,
+            Te=self.T_plasma/self.T_ratio,
+            n0=self.n_plasma,
             plasma_resistivity=self.eta, substeps=self.substeps
         )
         simulation.solver = self.solver
-
-        B_ext = picmi.AnalyticInitialField(
-            Bx_expression=0.0,
-            By_expression=0.0,
-            Bz_expression=self.B0
-        )
-        simulation.add_applied_field(B_ext)
 
         #######################################################################
         # Particle types setup                                                #
         #######################################################################
 
+        k_m = 2.0*np.pi*self.m / self.Lz
         self.ions = picmi.Species(
             name='ions', charge='q_e', mass=self.M,
-            initial_distribution=picmi.UniformDistribution(
-                density=self.n_plasma,
-                rms_velocity=[self.v_ti]*3,
-                directed_velocity=[0, 0, self.u_c]
+            initial_distribution=picmi.AnalyticDistribution(
+                density_expression=f"{self.n_plasma}*(1+{self.epsilon}*cos({k_m}*z))",
+                rms_velocity=[self.v_ti]*3
             )
         )
         simulation.add_species(
@@ -227,27 +206,11 @@ class HybridPICBeamInstability(object):
                 grid=self.grid, n_macroparticles_per_cell=self.NPPC[self.dim-1]
             )
         )
-        self.beam_ions = picmi.Species(
-            name='beam_ions', charge='q_e', mass=self.M,
-            initial_distribution=picmi.UniformDistribution(
-                density=self.n_beam,
-                rms_velocity=[self.v_ti]*3,
-                directed_velocity=[0, 0, self.u_beam]
-            )
-        )
-        simulation.add_species(
-            self.beam_ions,
-            layout=picmi.PseudoRandomLayout(
-                grid=self.grid,
-                n_macroparticles_per_cell=self.NPPC[self.dim-1]/2
-            )
-        )
 
         #######################################################################
         # Add diagnostics                                                     #
         #######################################################################
 
-        callbacks.installafterstep(self.energy_diagnostic)
         callbacks.installafterstep(self.text_diag)
 
         if self.test:
@@ -256,47 +219,24 @@ class HybridPICBeamInstability(object):
                 grid=self.grid,
                 period=100,
                 write_dir='.',
-                warpx_file_prefix='Python_ohms_law_solver_ion_beam_1d_plt',
+                warpx_file_prefix=f'Python_ohms_law_solver_landau_damping_{self.dim}d_plt',
             )
             simulation.add_diagnostic(field_diag)
 
-        # output the full particle data at t*w_ci = 40
-        step = int(40.0 / self.DT)
-        parts_diag = picmi.ParticleDiagnostic(
-            name='parts_diag',
-            period=f"{step}:{step}",
-            species=[self.ions, self.beam_ions],
-            write_dir='diags',
-            warpx_file_prefix='Python_hybrid_PIC_plt',
-            warpx_format = 'openpmd',
-            warpx_openpmd_backend = 'h5'
-        )
-        simulation.add_diagnostic(parts_diag)
-
         self.output_file_name = 'field_data.txt'
-        if self.dim == 1:
-            line_diag = picmi.ReducedDiagnostic(
-                diag_type='FieldProbe',
-                probe_geometry='Line',
-                z_probe=0,
-                z1_probe=self.Lz,
-                resolution=self.Nz - 1,
-                name=self.output_file_name[:-4],
-                period=self.diag_steps,
-                path='diags/'
-            )
-            simulation.add_diagnostic(line_diag)
-        else:
-            # install a custom "reduced diagnostic" to save the average field
-            callbacks.installafterEsolve(self._record_average_fields)
-            try:
-                os.mkdir("diags")
-            except OSError:
-                # diags directory already exists
-                pass
-            with open(f"diags/{self.output_file_name}", 'w') as f:
-                f.write("[0]step() [1]time(s) [2]z_coord(m) [3]By_lev0-(T)\n")
+        # install a custom "reduced diagnostic" to save the average field
+        callbacks.installafterEsolve(self._record_average_fields)
+        try:
+            os.mkdir("diags")
+        except OSError:
+            # diags directory already exists
+            pass
+        with open(f"diags/{self.output_file_name}", 'w') as f:
+            f.write("[0]step() [1]time(s) [2]z_coord(m) [3]Ez_lev0-(V/m)\n")
 
+        self.prev_time = time.time()
+        self.start_time = self.prev_time
+        self.prev_step = 0
 
         #######################################################################
         # Initialize simulation                                               #
@@ -304,15 +244,6 @@ class HybridPICBeamInstability(object):
 
         simulation.initialize_inputs()
         simulation.initialize_warpx()
-
-    def _create_data_arrays(self):
-        self.prev_time = time.time()
-        self.start_time = self.prev_time
-        self.prev_step = 0
-
-        if sim_ext.getMyProc() == 0:
-            # allocate arrays for storing energy values
-            self.energy_vals = np.zeros((self.total_steps//self.diag_steps, 4))
 
     def text_diag(self):
         """Diagnostic function to print out timing data and particle numbers."""
@@ -326,7 +257,6 @@ class HybridPICBeamInstability(object):
 
         status_dict = {
             'step': step,
-            'nplive beam ions': sim_ext.get_particle_count('beam_ions', False),
             'nplive ions': sim_ext.get_particle_count('ions', False),
             'wall_time': wall_time,
             'step_rate': step_rate,
@@ -336,7 +266,6 @@ class HybridPICBeamInstability(object):
 
         diag_string = (
             "Step #{step:6d}; "
-            "{nplive beam ions} beam ions; "
             "{nplive ions} core ions; "
             "{wall_time:6.1f} s wall time; "
             "{step_rate:4.2f} steps/s"
@@ -348,53 +277,6 @@ class HybridPICBeamInstability(object):
         self.prev_time = time.time()
         self.prev_step = step
 
-    def energy_diagnostic(self):
-        """Diangostic to get the total, magnetic and kinetic energies in the
-        simulation."""
-
-        step = sim_ext.getistep(0)
-        if step % self.diag_steps != 1:
-            return
-
-        idx = (step - 1) // self.diag_steps
-
-        if not hasattr(self, "prev_time"):
-            self._create_data_arrays()
-
-        # get the simulation energies
-        Ec_par, Ec_perp = self._get_kinetic_energy(self.ions)
-        Eb_par, Eb_perp = self._get_kinetic_energy(self.beam_ions)
-
-        if sim_ext.getMyProc() != 0:
-            return
-
-        self.energy_vals[idx, 0] = Ec_par
-        self.energy_vals[idx, 1] = Ec_perp
-        self.energy_vals[idx, 2] = Eb_par
-        self.energy_vals[idx, 3] = Eb_perp
-
-        if step == self.total_steps:
-            np.save('diags/energies.npy', run.energy_vals)
-
-    def _get_kinetic_energy(self, species):
-        """Utility function to retrieve the total kinetic energy in the
-        simulation."""
-        try:
-            ux = np.concatenate(sim_ext.get_particle_ux(species.name))
-            uy = np.concatenate(sim_ext.get_particle_uy(species.name))
-            uz = np.concatenate(sim_ext.get_particle_uz(species.name))
-            w = np.concatenate(sim_ext.get_particle_weight(species.name))
-        except ValueError:
-            return 0.0, 0.0
-
-        my_E_perp = 0.5 * self.M * np.sum(w * (ux**2 + uy**2))
-        E_perp = comm.allreduce(my_E_perp, op=mpi.SUM)
-
-        my_E_par = 0.5 * self.M * np.sum(w * uz**2)
-        E_par = comm.allreduce(my_E_par, op=mpi.SUM)
-
-        return E_par, E_perp
-
     def _record_average_fields(self):
         """A custom reduced diagnostic to store the average E&M fields in a
         similar format as the reduced diagnostic so that the same analysis
@@ -405,7 +287,7 @@ class HybridPICBeamInstability(object):
         if step % self.diag_steps != 0:
             return
 
-        By_warpx = fields.BxWrapper()[...]
+        Ez_warpx = fields.EzWrapper()[...]
 
         if sim_ext.getMyProc() != 0:
             return
@@ -413,15 +295,17 @@ class HybridPICBeamInstability(object):
         t = step * self.dt
         z_vals = np.linspace(0, self.Lz, self.Nz, endpoint=False)
 
-        if self.dim == 2:
-            By = np.mean(By_warpx[:-1], axis=0)
+        if self.dim == 1:
+            Ez = Ez_warpx
+        elif self.dim == 2:
+            Ez = np.mean(Ez_warpx, axis=0)
         else:
-            By = np.mean(By_warpx[:-1], axis=(0, 1))
+            Ez = np.mean(Ez_warpx, axis=(0, 1))
 
         with open(f"diags/{self.output_file_name}", 'a') as f:
             for ii in range(self.Nz):
                 f.write(
-                    f"{step:05d} {t:.10e} {z_vals[ii]:.10e} {By[ii]:+.10e}\n"
+                    f"{step:05d} {t:.10e} {z_vals[ii]:.10e} {Ez[ii]:+.10e}\n"
                 )
 
 
@@ -439,13 +323,17 @@ parser.add_argument(
     default=1
 )
 parser.add_argument(
-    '-r', '--resonant', help='Run the resonant case', required=False,
-    action='store_true',
+    '-m', help='Mode number to excite', required=False, type=int,
+    default=4
+)
+parser.add_argument(
+    '--temp_ratio', help='Mode number to excite', required=False, type=float,
+    default=1.0/3
 )
 args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1]+left
 
-run = HybridPICBeamInstability(
-    test=args.test, dim=args.dim, resonant=args.resonant
+run = IonLandauDamping(
+    test=args.test, dim=args.dim, m=args.m, T_ratio=args.temp_ratio
 )
 simulation.step()

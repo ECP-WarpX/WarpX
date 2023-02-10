@@ -1,4 +1,4 @@
-/* Copyright 2022 The WarpX Community
+/* Copyright 2023 The WarpX Community
  *
  * This file is part of WarpX.
  *
@@ -18,8 +18,7 @@ HybridModel::HybridModel ()
     ReadParameters();
 }
 
-void
-HybridModel::ReadParameters ()
+void HybridModel::ReadParameters ()
 {
     ParmParse pp_hybrid("hybridmodel");
 
@@ -43,8 +42,7 @@ HybridModel::ReadParameters ()
     m_elec_temp *= PhysConst::q_e;
 }
 
-void
-HybridModel::InitData ()
+void HybridModel::InitData ()
 {
     auto & warpx = WarpX::GetInstance();
 

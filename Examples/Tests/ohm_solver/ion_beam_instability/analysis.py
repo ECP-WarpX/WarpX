@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# --- Analysis script for the hybrid-PIC example producing EM modes.
+# --- Analysis script for the hybrid-PIC example of ion beam R instability.
 
 import dill
 import h5py

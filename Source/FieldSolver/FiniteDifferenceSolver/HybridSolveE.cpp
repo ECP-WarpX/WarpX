@@ -1,3 +1,12 @@
+/* Copyright 2023 The WarpX Community
+ *
+ * This file is part of WarpX.
+ *
+ * Authors: Roelof Groenewald (TAE Technologies)
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #include "FiniteDifferenceSolver.H"
 
 #ifdef WARPX_DIM_RZ
@@ -73,6 +82,7 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCylindrical (
     int lev
 )
 {
+    amrex::ignore_unused(Jfield, Bfield, edge_lengths, lev);
     amrex::Abort(Utils::TextMsg::Err(
         "currently hybrid E-solve does not work for RZ"));
 }
@@ -207,7 +217,10 @@ void FiniteDifferenceSolver::HybridSolveECylindrical (
 #ifndef AMREX_USE_EB
     amrex::ignore_unused(edge_lengths);
 #endif
-    amrex::ignore_unused(Efield, Bfield, Jifield, rhofield, edge_lengths);
+    amrex::ignore_unused(
+        Efield, Jfield, Jifield, Bfield, rhofield, Pefield, edge_lengths,
+        lev, hybrid_model, a_dt_type
+    );
     amrex::Abort(Utils::TextMsg::Err(
         "currently hybrid E-solve does not work for RZ"));
 }
@@ -301,9 +314,6 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 Jy, Jy_stag, nodal, coarsen, i, j, k, 0);
             auto const jz_interp = ablastr::coarsen::sample::Interp(
                 Jz, Jz_stag, nodal, coarsen, i, j, k, 0);
-            // auto const jx_interp = 0.0;
-            // auto const jy_interp = 0.0;
-            // auto const jz_interp = 0.0;
 
             // interpolate the ion current to a nodal grid
             auto const jix_interp = ablastr::coarsen::sample::Interp(

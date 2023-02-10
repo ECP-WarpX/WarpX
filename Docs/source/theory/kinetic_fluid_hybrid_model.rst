@@ -61,6 +61,11 @@ conditions.
 Implementation details
 ----------------------
 
+.. note::
+
+    Various verification tests of the hybrid model implementation can be found in
+    the :ref:`examples section <examples-hybrid-model>`.
+
 The kinetic-fluid hybrid extension mostly uses the same routines as the standard
 PIC algorithm with the only exception that the E-field is calculated from the
 above equation rather than it being integrated from a differential equation. The
