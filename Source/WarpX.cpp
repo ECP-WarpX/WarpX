@@ -577,11 +577,15 @@ WarpX::ReadParameters ()
             if ( random_seed == "random" ) {
                 std::random_device rd;
                 std::uniform_int_distribution<int> dist(2, INT_MAX);
-                unsigned long seed = myproc_1 * dist(rd);
-                ResetRandomSeed(seed);
+                unsigned long cpu_seed = myproc_1 * dist(rd);
+                unsigned long gpu_seed = myproc_1 * dist(rd);
+                ResetRandomSeed(cpu_seed, gpu_seed);
             } else if ( std::stoi(random_seed) > 0 ) {
-                unsigned long seed = myproc_1 * std::stoul(random_seed);
-                ResetRandomSeed(seed);
+                unsigned long nprocs = ParallelDescriptor::NProcs();
+                unsigned long seed_long = std::stoul(random_seed);
+                unsigned long cpu_seed = myproc_1 * seed_long;
+                unsigned long gpu_seed = (myproc_1 + nprocs) * seed_long;
+                ResetRandomSeed(cpu_seed, gpu_seed);
             } else {
                 Abort(Utils::TextMsg::Err(
                     "warpx.random_seed must be \"default\", \"random\" or an integer > 0."));
