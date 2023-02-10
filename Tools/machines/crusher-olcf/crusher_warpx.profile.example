@@ -6,9 +6,9 @@
 module load cpe/22.08
 module load cmake/3.23.2
 module load craype-accel-amd-gfx90a
-module load rocm/5.2.0
-module load cray-mpich
-module load cce/14.0.2  # must be loaded after rocm
+module load rocm/5.3.0
+module load cray-mpich/8.1.23
+module load cce/15.0.0  # must be loaded after rocm
 
 # optional: faster builds
 module load ccache
@@ -29,11 +29,19 @@ export LD_LIBRARY_PATH=$HOME/sw/crusher/lapackpp-master/lib64:$LD_LIBRARY_PATH
 #module load boost/1.78.0-cxx17
 
 # optional: for openPMD support
-module load adios2/2.8.1
-module load cray-hdf5-parallel/1.12.1.5
+#module load adios2/2.8.3
+# need to build adios manually currently
+export CMAKE_PREFIX_PATH=$HOME/sw/crusher/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=$HOME/sw/crusher/adios2-2.8.3:$CMAKE_PREFIX_PATH
+export LD_LIBRARY_PATH=$HOME/sw/crusher/c-blosc-1.21.1/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$HOME/sw/crusher/adios2-2.8.3/lib64:$LD_LIBRARY_PATH
+module load cray-hdf5-parallel/1.12.2.1
 
 # optional: for Python bindings or libEnsemble
 module load cray-python/3.9.12.1
+
+# suggested by HPE
+module unload xalt/1.3.0
 
 # fix system defaults: do not escape $ with a \ on tab completion
 shopt -s direxpand
