@@ -118,14 +118,14 @@ namespace BinaryCollisionUtils{
             if (type == "photonphoton") {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     product_species_name.size() == 2u,
-                    "ERROR: Photon-photon collisions must contain exactly two product species");
+                    "Photon-photon collisions must contain exactly two product species");
                 auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
                 auto& product_species2 = mypc->GetParticleContainerFromName(product_species_name[1]);
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     (product_species1.AmIA<PhysicalSpecies::electron>() && product_species2.AmIA<PhysicalSpecies::positron>())
                     ||
                     (product_species1.AmIA<PhysicalSpecies::positron>() && product_species2.AmIA<PhysicalSpecies::electron>()),
-                    "ERROR: Product species of photon-photon collisions must be of type electron and positron");
+                    "Product species of photon-photon collisions must be of type electron and positron");
                 return CollisionType::PhotonPhotonToElectronPositron;
             }
             amrex::Abort(type + " is not a valid type of collision that creates new particles");
