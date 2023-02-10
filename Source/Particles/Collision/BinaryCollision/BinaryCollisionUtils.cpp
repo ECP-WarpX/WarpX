@@ -15,6 +15,8 @@
 
 #include <string>
 
+#include "Utils/TextMsg.H"
+
 namespace BinaryCollisionUtils{
 
     NuclearFusionType get_nuclear_fusion_type (const std::string collision_name,
@@ -128,7 +130,7 @@ namespace BinaryCollisionUtils{
                     "Product species of photon-photon collisions must be of type electron and positron");
                 return CollisionType::PhotonPhotonToElectronPositron;
             }
-            amrex::Abort(type + " is not a valid type of collision that creates new particles");
+            amrex::Abort(Utils::TextMsg::Err(type + " is not a valid type of collision that creates new particles"));
             return CollisionType::Undefined;
         }
 
