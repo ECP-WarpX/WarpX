@@ -160,7 +160,7 @@ ion-Bernstein modes as indicated below.
 
    .. code-block:: bash
 
-      python3 PICMI_inputs_1d.py -dim {1/2/3} --bdir {x/y/z}
+      python3 PICMI_inputs.py -dim {1/2/3} --bdir {x/y/z}
 
 Ion beam R instability
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -182,3 +182,36 @@ The input file for these examples and the corresponding analysis can be found at
 
 * :download:`Ion beam R instability input <../../../Examples/Tests/ohm_solver/ion_beam_instability/PICMI_inputs.py>`
 * :download:`Analysis script <../../../Examples/Tests/ohm_solver/ion_beam_instability/analysis.py>`
+
+The same input script can be used for 1d, 2d or 3d simulations as well as replicating either the resonant or non-resonant
+condition as indicated below.
+
+   .. code-block:: bash
+
+      python3 PICMI_inputs.py -dim {1/2/3} --resonant
+
+Ion Landau damping
+^^^^^^^^^^^^^^^^^^
+
+Landau damping is a well known process in which electrostatic (acoustic) waves
+are damped by transferring energy to particles satisfying a resonance condition.
+The process can be simulated by seeding a plasma with a specific acoustic mode
+(density perturbation) and tracking the strength of the mode as a function of
+time. The figure below shows a set of such simulations with parameters matching
+those described in section 4.5 of Munoz et al. (2018).
+
+.. figure:: https://user-images.githubusercontent.com/40245517/218038587-84bbda5b-8dfd-4f13-8b0f-6def2daec9c1.png
+   :alt: Ion Landau damping
+   :width: 70%
+
+The input file for these examples and the corresponding analysis can be found at:
+
+* :download:`Ion Landau damping input <../../../Examples/Tests/ohm_solver/ion_Landau_damping/PICMI_inputs.py>`
+* :download:`Analysis script <../../../Examples/Tests/ohm_solver/ion_Landau_damping/analysis.py>`
+
+The same input script can be used for 1d, 2d or 3d simulations and to sweep different
+temperature ratios.
+
+   .. code-block:: bash
+
+      python3 PICMI_inputs.py -dim {1/2/3} --temp_ratio {value}

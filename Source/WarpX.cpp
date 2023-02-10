@@ -2002,9 +2002,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             dm, ncomps, ngEB, tag("vector_potential_grad_buf_b_stag[z]"), 0.0_rt);
     }
 
-    // Allocate the "old" current multifab used to store the ion current density from the previous
-    // step as this is need by the hybrid PIC algorithm. Also allocate a multifab to
-    // store the total current calculated using Ampere's law.
+    // Allocate extra multifabs needed by the kinetic-fluid hybrid algorithm.
+    // The "current_fp_temp" multifab is used to store the ion current density
+    // interpolated or extrapolated to appropriate timesteps.
+    // The "current_fp_ampere" multifab stores the total current calculated as
+    // the curl of B.
+    // The "electron_pressure_fp" multifab stores the electron pressure calculated
+    // from the specified equation of state.
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
     {
         AllocInitMultiFab(electron_pressure_fp[lev], amrex::convert(ba, rho_nodal_flag),

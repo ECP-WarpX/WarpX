@@ -166,9 +166,9 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "                      | - relativistic" << "\n";
     }
     else if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic){
-        amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
-        amrex::Print() << "                      | - laboratory frame, electrostatic + magnetostatic" << "\n";
-      }
+      amrex::Print() << "Operation mode:       | Electrostatic" << "\n";
+      amrex::Print() << "                      | - laboratory frame, electrostatic + magnetostatic" << "\n";
+    }
     else{
       amrex::Print() << "Operation mode:       | Electromagnetic" << "\n";
     }
@@ -458,9 +458,12 @@ void
 WarpX::InitFromScratch ()
 {
     const Real time = 0.0;
+
     AmrCore::InitFromScratch(time);  // This will call MakeNewLevelFromScratch
+
     mypc->AllocData();
     mypc->InitData();
+
     InitPML();
 }
 
