@@ -16,7 +16,7 @@
 
 /**
  * \brief Computes the linear Breit-Wheeler cross section (refer to, for example,
- * [Gould and Schréder Phys. Rev. 155, 1404 (1967)]) as a function of E_star.
+ * [Gould and Schreder Phys. Rev. 155, 1404 (1967)]) as a function of E_star.
  * E_star is the kinetic energy of each photon in the center of momentum frame.
  * If E_star < m_e * c^2, then the total kinetic energy in the center of momentum
  * frame is not enough to produce a pair, hence the cross-section is zero.
