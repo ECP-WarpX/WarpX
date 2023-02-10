@@ -256,24 +256,24 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
     if(i_last-i_first+1 > static_cast<int>(m_params.E_data.size()))
         Abort("Data chunk to read from file is too large");
 
-    Vector<Real> h_E_data(m_params.E_data.size());
+    Vector<Complex> h_E_data(m_params.E_data.size());
 
     if(ParallelDescriptor::IOProcessor()){
 
         auto series = io::Series(m_params.txye_file_name, io::Access::READ_ONLY);
         auto i = series.iterations[0];
-        auto E = i.meshes["E_real"];
+        auto E = i.meshes["laserEnvelope"];
         auto E_laser = E[io::RecordComponent::SCALAR];
 
         // alternatively, pass pre-allocated
-        std::shared_ptr< double > x_data = E_laser.loadChunk< double >();
+        std::shared_ptr< std::complex<double> > x_data = E_laser.loadChunk< std::complex<double> >();
 
         const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
 
         series.flush();
 
         for (int j=0; j<read_size; j++) {
-            h_E_data[j] = x_data.get()[j];
+            h_E_data[j] = Complex{ x_data.get()[j].real(), x_data.get()[j].imag() };
         }
     }
 
@@ -298,8 +298,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
 {
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
-    const amrex::Real cos_omega_t = std::cos(
-            2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength );
+    const amrex::Real omega_t = 2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
+    const Complex exp_omega_t = Complex{ std::cos(-omega_t), std::sin(-omega_t) };
     const auto tmp_x_min = m_params.h_x_coords.front();
     const auto tmp_x_max = m_params.h_x_coords.back();
 #if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
@@ -368,7 +368,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
                 (i_interp-tmp_idx_first_time)*tmp_nx*tmp_ny+
                 j_interp*tmp_ny + k_interp;
         };
-        amplitude[i] = utils::algorithms::trilinear_interp(
+        Complex val = utils::algorithms::trilinear_interp(
             t_left, t_right,
             x_0, x_1,
             y_0, y_1,
@@ -387,7 +387,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         const auto idx = [=](int i_interp, int j_interp){
             return (i_interp-tmp_idx_first_time) * tmp_nx + j_interp;
         };
-        amplitude[i] = utils::algorithms::bilinear_interp(
+        Complex val = utils::algorithms::bilinear_interp(
             t_left, t_right,
             x_0, x_1,
             p_E_data[idx(idx_t_left, idx_x_left)],
@@ -404,7 +404,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
 
         // The interpolated amplitude was only the envelope.
         // Here we add the laser oscillations.
-        amplitude[i] *= cos_omega_t;
+        amplitude[i] = (val*exp_omega_t).real();
 
         }
     );
