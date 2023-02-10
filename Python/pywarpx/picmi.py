@@ -1744,27 +1744,39 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
 
+        if pywarpx.geometry.dims == 'RZ':
+            E_fields_list = ['Er', 'Et', 'Ez']
+            B_fields_list = ['Br', 'Bt', 'Bz']
+            J_fields_list = ['Jr', 'Jt', 'Jz']
+            A_fields_list = ['Ar', 'At', 'Az']
+        else:
+            E_fields_list = ['Ex', 'Ey', 'Ez']
+            B_fields_list = ['Bx', 'By', 'Bz']
+            J_fields_list = ['Jx', 'Jy', 'Jz']
+            A_fields_list = ['Ax', 'Ay', 'Az']
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'E':
-                    fields_to_plot.add('Ex')
-                    fields_to_plot.add('Ey')
-                    fields_to_plot.add('Ez')
+                    for field_name in E_fields_list:
+                        fields_to_plot.add(field_name)
                 elif dataname == 'B':
-                    fields_to_plot.add('Bx')
-                    fields_to_plot.add('By')
-                    fields_to_plot.add('Bz')
+                    for field_name in E_fields_list:
+                        fields_to_plot.add(field_name)
                 elif dataname == 'J':
-                    fields_to_plot.add('jx')
-                    fields_to_plot.add('jy')
-                    fields_to_plot.add('jz')
+                    for field_name in E_fields_list:
+                        fields_to_plot.add(field_name.lower())
                 elif dataname == 'A':
-                    fields_to_plot.add('Ax')
-                    fields_to_plot.add('Ay')
-                    fields_to_plot.add('Az')
-                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Ax', 'Ay', 'Az', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+                    for field_name in E_fields_list:
+                        fields_to_plot.add(field_name)
+                elif dataname in E_fields_list:
                     fields_to_plot.add(dataname)
-                elif dataname in ['Jx', 'Jy', 'Jz']:
+                elif dataname in B_fields_list:
+                    fields_to_plot.add(dataname)
+                elif dataname in A_fields_list:
+                    fields_to_plot.add(dataname)
+                elif dataname in ['rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+                    fields_to_plot.add(dataname)
+                elif dataname in J_fields_list:
                     fields_to_plot.add(dataname.lower())
                 elif dataname.startswith('rho_'):
                     # Adds rho_species diagnostic
