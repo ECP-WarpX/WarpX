@@ -10,6 +10,8 @@
 
 #include "ReducedDiags.H"
 
+#include <AMReX_Parser.H>
+
 #include <string>
 
 /**
@@ -18,7 +20,10 @@
  *  of the embedded boundary, by using the formula
  *  $Q_{tot} = \epsilon_0 \iint dS \cdot E$
  *  where the integral is performed over the
- *  surface of the embedded boundary.s
+ *  surface of the embedded boundary.
+ *
+ *  If a weighting function is provided, this computes
+ *  $Q_{tot} = \epsilon_0 \iint dS \cdot E \times weighting(x, y, z)
  */
 class ChargeOnEB : public ReducedDiags
 {
@@ -38,6 +43,12 @@ public:
      * @param[in] step current time step
      */
     virtual void ComputeDiags(int step) override final;
+
+private:
+    /// Optional parser to add weight inside the integral
+    std::unique_ptr<amrex::Parser> m_parser_weighting;
+    /// Whether the weighting is activated
+    bool m_do_parser_weighting = false;
 
 };
 

@@ -10,6 +10,7 @@
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "WarpX.H"
 
 #include <AMReX_GpuAtomic.H>
@@ -43,6 +44,18 @@ ChargeOnEB::ChargeOnEB (std::string rd_name)
 
     // resize data array
     m_data.resize(1, 0.0_rt);
+
+    // Read optional weighting
+    std::string buf;
+    ParmParse pp_rd_name(rd_name);
+    m_do_parser_weighting = pp_rd_name.query("weighting_function(x,y,z)", buf);
+    if (m_do_parser_weighting) {
+        std::string weighting_string = "";
+        utils::parser::Store_parserString(
+            pp_rd_name,"weighting_function(x,y,z)", weighting_string);
+        m_parser_weighting = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(weighting_string,{"x","y","z"}));
+    }
 
     if (ParallelDescriptor::IOProcessor())
     {
