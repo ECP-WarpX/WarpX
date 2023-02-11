@@ -80,7 +80,7 @@ field_diag = picmi.FieldDiagnostic(
 )
 
 reduced_diag = picmi.ReducedDiagnostic(
-    diag_type = 'ChargeInsideBoundary',
+    diag_type = 'ChargeOnEB',
     name = 'eb_charge',
     period = 1)
 

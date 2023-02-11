@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_CHARGEINSIDEBOUNDARY_H_
-#define WARPX_DIAGNOSTICS_REDUCEDDIAGS_CHARGEINSIDEBOUNDARY_H_
+#ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_CHARGEONEB_H_
+#define WARPX_DIAGNOSTICS_REDUCEDDIAGS_CHARGEONEB_H_
 
 #include "ReducedDiags.H"
 
@@ -18,7 +18,7 @@
  *  using Gauss's theorem: $Q_{int} = \epsilon_0 \iint dS \cdot E$
  *  where the integral is performed over that boundary
  */
-class ChargeInsideBoundary : public ReducedDiags
+class ChargeOnEB : public ReducedDiags
 {
 public:
 
@@ -26,7 +26,7 @@ public:
      * constructor
      * @param[in] rd_name reduced diags names
      */
-    ChargeInsideBoundary(std::string rd_name);
+    ChargeOnEB(std::string rd_name);
 
     /**
      * This function computes the charge inside a given boundary:

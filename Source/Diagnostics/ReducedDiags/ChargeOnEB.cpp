@@ -5,7 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "ChargeInsideBoundary.H"
+#include "ChargeOnEB.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Utils/TextMsg.H"
@@ -27,18 +27,18 @@
 using namespace amrex;
 
 // constructor
-ChargeInsideBoundary::ChargeInsideBoundary (std::string rd_name)
+ChargeOnEB::ChargeOnEB (std::string rd_name)
 : ReducedDiags{rd_name}
 {
     // Only 3D is working for now
 #if !(defined WARPX_DIM_3D)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-        "ChargeInsideBoundary reduced diagnostics only works in 3D");
+        "ChargeOnEB reduced diagnostics only works in 3D");
 #endif
 
 #if !(defined AMREX_USE_EB)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-        "ChargeInsideBoundary reduced diagnostics only works when compiling with EB support");
+        "ChargeOnEB reduced diagnostics only works when compiling with EB support");
 #endif
 
     // resize data array
@@ -67,7 +67,7 @@ ChargeInsideBoundary::ChargeInsideBoundary (std::string rd_name)
 // end constructor
 
 // function that computes the charge inside a boundary
-void ChargeInsideBoundary::ComputeDiags (int step)
+void ChargeOnEB::ComputeDiags (int step)
 {
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
@@ -170,4 +170,4 @@ void ChargeInsideBoundary::ComputeDiags (int step)
     m_data[0] = PhysConst::ep0 * surface_integral_value;
 #endif
 }
-// end void ChargeInsideBoundary::ComputeDiags
+// end void ChargeOnEB::ComputeDiags
