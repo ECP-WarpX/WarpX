@@ -105,10 +105,18 @@ void ChargeOnEB::ComputeDiags (int step)
     amrex::Array<const amrex::MultiCutFab*,AMREX_SPACEDIM> eb_area_fraction = eb_box_factory.getAreaFrac();
 
     // get surface integration element
-    auto cell_size = WarpX::CellSize(lev);
-    amrex::Real const dSx = cell_size[1]*cell_size[2];
-    amrex::Real const dSy = cell_size[2]*cell_size[0];
-    amrex::Real const dSz = cell_size[0]*cell_size[1];
+    const auto dx = geom[lev].CellSizeArray();
+    amrex::Real const dSx = dx[1]*dx[2];
+    amrex::Real const dSy = dx[2]*dx[0];
+    amrex::Real const dSz = dx[0]*dx[1];
+
+    // Required for parser
+    const auto& warpx_instance = WarpX::GetInstance();
+    const RealBox& real_box = warpx_instance.Geom(lev).ProbDomain();
+    if (m_do_parser_weighting) {
+        auto fun_weightingparser =
+            utils::parser::compileParser<3>(m_parser_weighting.get());
+    }
 
     // Integral to calculate
     amrex::Gpu::Buffer<amrex::Real> surface_integral({0.0_rt});
@@ -170,6 +178,15 @@ void ChargeOnEB::ComputeDiags (int step)
                 local_integral_contribution += Ex_arr(i_c,j_n,k_n)*dSx*dSx_fraction_arr(i,j,k);
                 local_integral_contribution += Ey_arr(i_n,j_c,k_n)*dSy*dSy_fraction_arr(i,j,k);
                 local_integral_contribution += Ez_arr(i_n,j_n,k_c)*dSz*dSz_fraction_arr(i,j,k);
+
+                // Add weighting if requested by user
+                if (m_do_parser_weighting) {
+                    amrex::Real x = i*dx[0] + real_box.lo(0);
+                    amrex::Real y = j*dx[1] + real_box.lo(1);
+                    amrex::Real z = k*dx[2] + real_box.lo(2);
+                    local_integral_contribution *= fun_weightingparser(x, y, z);
+                }
+
                 amrex::Gpu::Atomic::AddNoRet( surface_integral_pointer, local_integral_contribution );
         });
     }
