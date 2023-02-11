@@ -181,9 +181,11 @@ void ChargeOnEB::ComputeDiags (int step)
 
                 // Add weighting if requested by user
                 if (m_do_parser_weighting) {
-                    amrex::Real x = i*dx[0] + real_box.lo(0);
-                    amrex::Real y = j*dx[1] + real_box.lo(1);
-                    amrex::Real z = k*dx[2] + real_box.lo(2);
+                    // Get the 3D position of the centroid of surface element
+                    amrex::Real x = (i + 0.5_rt + eb_bnd_cent_arr(i,j,k,0))*dx[0] + real_box.lo(0);
+                    amrex::Real y = (j + 0.5_rt + eb_bnd_cent_arr(i,j,k,1))*dx[1] + real_box.lo(1);
+                    amrex::Real z = (k + 0.5_rt + eb_bnd_cent_arr(i,j,k,2))*dx[2] + real_box.lo(2);
+                    // Apply weighting
                     local_integral_contribution *= fun_weightingparser(x, y, z);
                 }
 
