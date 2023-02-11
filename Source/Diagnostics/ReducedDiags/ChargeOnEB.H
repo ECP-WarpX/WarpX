@@ -14,9 +14,11 @@
 
 /**
  *  This class mainly contains a function that
- *  computes the charge inside a given boundary, by
- *  using Gauss's theorem: $Q_{int} = \epsilon_0 \iint dS \cdot E$
- *  where the integral is performed over that boundary
+ *  computes the total charge at the surface
+ *  of the embedded boundary, by using the formula
+ *  $Q_{tot} = \epsilon_0 \iint dS \cdot E$
+ *  where the integral is performed over the
+ *  surface of the embedded boundary.s
  */
 class ChargeOnEB : public ReducedDiags
 {
@@ -29,9 +31,9 @@ public:
     ChargeOnEB(std::string rd_name);
 
     /**
-     * This function computes the charge inside a given boundary:
-     * $Q_{int} = \epsilon_0 \iint dS \cdot E$
-     *  where the integral is performed over that boundary
+     * This function computes the charge at the surface of the EB:
+     * $Q_{tot} = \epsilon_0 \iint dS \cdot E$
+     *  where the integral is performed over the EB surface
      *
      * @param[in] step current time step
      */

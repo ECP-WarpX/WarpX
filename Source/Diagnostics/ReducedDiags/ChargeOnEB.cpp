@@ -66,10 +66,10 @@ ChargeOnEB::ChargeOnEB (std::string rd_name)
 }
 // end constructor
 
-// function that computes the charge inside a boundary
+// function that computes the charge at the surface of the EB
 void ChargeOnEB::ComputeDiags (int step)
 {
-    // Judge if the diags should be done
+    // Judge whether the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
 #if ((defined WARPX_DIM_3D) && (defined AMREX_USE_EB))
