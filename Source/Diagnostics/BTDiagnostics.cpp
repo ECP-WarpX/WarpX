@@ -367,12 +367,16 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
             (diag_ba.getCellCenteredBox( diag_ba.size()-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
     }
 
+    // When restarting boosted simulations, use correct positions for the moving window
+    amrex::Real boosted_moving_window_v = (warpx.moving_window_v - m_beta_boost*PhysConst::c)
+                                        / (1._rt - m_beta_boost * warpx.moving_window_v/PhysConst::c)
+
     // Define buffer_domain in lab-frame for the i^th snapshot.
     // Replace z-dimension with lab-frame co-ordinates.
-    amrex::Real zmin_buffer_lab = diag_dom.lo(m_moving_window_dir)
-                                 / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-    amrex::Real zmax_buffer_lab = diag_dom.hi(m_moving_window_dir)
-                                 / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
+    amrex::Real zmin_buffer_lab = ( diag_dom.lo(m_moving_window_dir) - boosted_moving_window_v * warpx.gett_new(0) )
+                                / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
+    amrex::Real zmax_buffer_lab = ( diag_dom.hi(m_moving_window_dir) - boosted_moving_window_v * warpx.gett_new(0) )
+                                / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
 
 
     // Initialize buffer counter and z-positions of the  i^th snapshot in
