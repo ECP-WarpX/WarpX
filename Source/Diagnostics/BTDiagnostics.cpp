@@ -369,7 +369,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
 
     // When restarting boosted simulations, use correct positions for the moving window
     amrex::Real boosted_moving_window_v = (warpx.moving_window_v - m_beta_boost*PhysConst::c)
-                                        / (1._rt - m_beta_boost * warpx.moving_window_v/PhysConst::c)
+                                        / (1._rt - m_beta_boost * warpx.moving_window_v/PhysConst::c);
 
     // Define buffer_domain in lab-frame for the i^th snapshot.
     // Replace z-dimension with lab-frame co-ordinates.
