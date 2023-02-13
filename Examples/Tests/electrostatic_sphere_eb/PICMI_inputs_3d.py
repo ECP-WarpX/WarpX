@@ -86,7 +86,7 @@ reduced_diag = picmi.ReducedDiagnostic(
 
 reduced_diag = picmi.ReducedDiagnostic(
     diag_type = 'ChargeOnEB',
-    name = 'eb_charge_one_eighth',    
+    name = 'eb_charge_one_eighth',
     period = 1)
 
 ##########################
