@@ -113,6 +113,7 @@ void ChargeOnEB::ComputeDiags (int step)
 
     // Required for parser
     const RealBox& real_box = warpx_instance.Geom(lev).ProbDomain();
+    const bool do_parser_weighting = m_do_parser_weighting;
     auto fun_weightingparser =
             utils::parser::compileParser<3>(m_parser_weighting.get());
 
@@ -178,7 +179,7 @@ void ChargeOnEB::ComputeDiags (int step)
                 local_integral_contribution += Ez_arr(i_n,j_n,k_c)*dSz*dSz_fraction_arr(i,j,k);
 
                 // Add weighting if requested by user
-                if (m_do_parser_weighting) {
+                if (do_parser_weighting) {
                     // Get the 3D position of the centroid of surface element
                     amrex::Real x = (i + 0.5_rt + eb_bnd_cent_arr(i,j,k,0))*dx[0] + real_box.lo(0);
                     amrex::Real y = (j + 0.5_rt + eb_bnd_cent_arr(i,j,k,1))*dx[1] + real_box.lo(1);
