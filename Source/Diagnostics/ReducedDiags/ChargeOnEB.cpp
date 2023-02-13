@@ -105,18 +105,16 @@ void ChargeOnEB::ComputeDiags (int step)
     amrex::Array<const amrex::MultiCutFab*,AMREX_SPACEDIM> eb_area_fraction = eb_box_factory.getAreaFrac();
 
     // get surface integration element
-    const auto dx = geom[lev].CellSizeArray();
+    const auto& warpx_instance = WarpX::GetInstance();
+    const auto dx = warpx_instance.Geom(lev).CellSizeArray();
     amrex::Real const dSx = dx[1]*dx[2];
     amrex::Real const dSy = dx[2]*dx[0];
     amrex::Real const dSz = dx[0]*dx[1];
 
     // Required for parser
-    const auto& warpx_instance = WarpX::GetInstance();
     const RealBox& real_box = warpx_instance.Geom(lev).ProbDomain();
-    if (m_do_parser_weighting) {
-        auto fun_weightingparser =
+    auto fun_weightingparser =
             utils::parser::compileParser<3>(m_parser_weighting.get());
-    }
 
     // Integral to calculate
     amrex::Gpu::Buffer<amrex::Real> surface_integral({0.0_rt});
