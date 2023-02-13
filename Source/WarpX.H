@@ -962,8 +962,7 @@ public:
      * (up to order \c n_order).
      *
      * \param[in] n_order order of the finite-difference approximation
-     * \param[in] nodal   whether the finite-difference approximation is computed
-     *                    on a nodal grid or a staggered grid
+     * \param[in] grid_type type of grid (collocated or not)
      */
     static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const short grid_type);
 
