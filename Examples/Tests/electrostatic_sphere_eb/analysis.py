@@ -4,11 +4,11 @@
 # using the same reference file as for the non-PICMI test since the two
 # tests are otherwise the same.
 
-import sys, os
+import os
+import sys
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
-
 # Check reduced diagnostics for charge on EB
 import numpy as np
 from scipy.constants import epsilon_0
