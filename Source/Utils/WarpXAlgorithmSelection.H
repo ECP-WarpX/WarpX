@@ -38,9 +38,10 @@ struct MacroscopicSolverAlgo {
 
 struct GridType {
     enum {
-        Collocated = 0,
+        // FIXME
+        Hybrid = 0,
         Staggered = 1,
-        Hybrid = 2
+        Collocated = 2
     };
 };
 
