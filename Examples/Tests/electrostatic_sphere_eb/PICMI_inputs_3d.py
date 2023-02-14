@@ -84,11 +84,6 @@ reduced_diag = picmi.ReducedDiagnostic(
     name = 'eb_charge',
     period = 1)
 
-reduced_diag2 = picmi.ReducedDiagnostic(
-    diag_type = 'ChargeOnEB',
-    name = 'eb_charge_one_eighth',
-    period = 1)
-
 ##########################
 # simulation setup
 ##########################
@@ -103,7 +98,6 @@ sim = picmi.Simulation(
 
 sim.add_diagnostic(field_diag)
 sim.add_diagnostic(reduced_diag)
-sim.add_diagnostic(reduced_diag2)
 
 ##########################
 # simulation run
