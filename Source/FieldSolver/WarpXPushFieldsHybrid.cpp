@@ -230,20 +230,6 @@ void WarpX::HybridSolveE (int lev, PatchType patch_type, DtType a_dt_type)
     // }
 
     ApplyEfieldBoundary(lev, patch_type);
-
-    // ECTRhofield must be recomputed at the very end of the Efield update to ensure
-    // that ECTRhofield is consistent with Efield
-// #ifdef AMREX_USE_EB
-//     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
-//         if (patch_type == PatchType::fine) {
-//             m_fdtd_solver_fp[lev]->EvolveECTRho(Efield_fp[lev], m_edge_lengths[lev],
-//                                                 m_face_areas[lev], ECTRhofield[lev], lev);
-//         } else {
-//             m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
-//                                                 m_face_areas[lev], ECTRhofield[lev], lev);
-//         }
-//     }
-// #endif
 }
 
 void WarpX::CalculateElectronPressure(DtType a_dt_type)

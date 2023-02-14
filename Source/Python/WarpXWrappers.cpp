@@ -289,6 +289,8 @@ namespace
     WARPX_GET_FIELD(warpx_getCurrentDensityCP, WarpX::GetInstance().get_pointer_current_cp)
     WARPX_GET_FIELD(warpx_getCurrentDensityFP, WarpX::GetInstance().get_pointer_current_fp)
 
+    WARPX_GET_FIELD(warpx_getCurrentDensityFP_Ampere, WarpX::GetInstance().get_pointer_current_fp_ampere)
+
     WARPX_GET_FIELD(warpx_getVectorPotentialFP, WarpX::GetInstance().get_pointer_vector_potential_fp)
 
     WARPX_GET_LOVECTS(warpx_getEfieldLoVects, WarpX::GetInstance().get_pointer_Efield_aux)

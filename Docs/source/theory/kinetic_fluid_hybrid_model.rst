@@ -136,3 +136,6 @@ input parameters, :math:`T_e`, :math:`n_0` and :math:`\gamma` using
     .. math::
 
         P_e = n_0T_e\left( \frac{n_e}{n_0} \right)^\gamma.
+
+The isothermal limit is given by :math:`\gamma = 1` while :math:`\gamma = 5/3`
+(default) produces the adiabatic limit.
