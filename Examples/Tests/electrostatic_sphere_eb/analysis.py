@@ -19,7 +19,7 @@ q_sim = data[1,2]
 q_sim_eighth = data_eighth[1,2]
 # Theoretical charge on the embedded boundary, for sphere at potential phi_0
 phi_0 = 1. # V
-R = 0.3 # m
+R = 0.1 # m
 q_th = -4*np.pi*epsilon_0*phi_0*R
 assert abs((q_sim-q_th)/q_th) < 0.03
 assert abs((q_sim_eighth-q_th/8)/(q_th/8)) < 0.03
