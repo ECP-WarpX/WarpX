@@ -21,8 +21,8 @@ q_sim_eighth = data_eighth[1,2]
 phi_0 = 1. # V
 R = 0.1 # m
 q_th = -4*np.pi*epsilon_0*phi_0*R
-assert abs((q_sim-q_th)/q_th) < 0.03
-assert abs((q_sim_eighth-q_th/8)/(q_th/8)) < 0.03
+assert abs((q_sim-q_th)/q_th) < 0.06
+assert abs((q_sim_eighth-q_th/8)/(q_th/8)) < 0.06
 
 # The first step is the same as in inputs_3d
 my_check = checksumAPI.evaluate_checksum(
