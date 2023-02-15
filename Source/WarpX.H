@@ -962,9 +962,9 @@ public:
      * (up to order \c n_order).
      *
      * \param[in] n_order order of the finite-difference approximation
-     * \param[in] grid_type type of grid (collocated or not)
+     * \param[in] a_grid_type type of grid (collocated or not)
      */
-    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const short grid_type);
+    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const short a_grid_type);
 
     // Device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
@@ -1203,13 +1203,15 @@ private:
      * \param[in] centering_nox order of the finite-order centering along x
      * \param[in] centering_noy order of the finite-order centering along y
      * \param[in] centering_noz order of the finite-order centering along z
+     * \param[in] a_grid_type type of grid (collocated or not)
      */
     void AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_x,
                                         amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_y,
                                         amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_z,
                                         const int centering_nox,
                                         const int centering_noy,
-                                        const int centering_noz);
+                                        const int centering_noz,
+                                        const short a_grid_type);
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngEB, amrex::IntVect& ngJ,

@@ -916,11 +916,14 @@ WarpX::ReadParameters ()
         // If true, the current is deposited on a nodal grid and centered onto
         // a staggered grid. Setting warpx.do_current_centering=1 makes sense
         // only if warpx.grid_type=hybrid. Instead, if warpx.grid_type=nodal or
-        // warpx.grid_type=staggered, Maxwell's equations are solved on a
-        // collocated or staggered grid (without current centering).
-        if (grid_type == GridType::Hybrid)
+        // warpx.grid_type=staggered, Maxwell's equations are solved either on a
+        // collocated grid or on a staggered grid without current centering.
+        pp_warpx.query("do_current_centering", do_current_centering);
+        if (do_current_centering)
         {
-            pp_warpx.query("do_current_centering", do_current_centering);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                grid_type == GridType::Hybrid,
+                "warpx.do_current_centering=1 can be used only with warpx.grid_type=hybrid");
         }
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1103,6 +1106,14 @@ WarpX::ReadParameters ()
                 pp_interpolation, "field_centering_noy", field_centering_noy);
             utils::parser::queryWithParser(
                 pp_interpolation, "field_centering_noz", field_centering_noz);
+
+            AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
+                                          device_field_centering_stencil_coeffs_y,
+                                          device_field_centering_stencil_coeffs_z,
+                                          field_centering_nox,
+                                          field_centering_noy,
+                                          field_centering_noz,
+                                          grid_type);
         }
 
         // Read order of finite-order centering of currents (nodal to staggered)
@@ -1114,6 +1125,14 @@ WarpX::ReadParameters ()
                 pp_interpolation, "current_centering_noy", current_centering_noy);
             utils::parser::queryWithParser(
                 pp_interpolation, "current_centering_noz", current_centering_noz);
+
+            AllocateCenteringCoefficients(device_current_centering_stencil_coeffs_x,
+                                          device_current_centering_stencil_coeffs_y,
+                                          device_current_centering_stencil_coeffs_z,
+                                          current_centering_nox,
+                                          current_centering_noy,
+                                          current_centering_noz,
+                                          grid_type);
         }
 
         // Finite-order centering is not implemented with mesh refinement
@@ -1123,27 +1142,6 @@ WarpX::ReadParameters ()
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
                 "High-order centering of fields (order > 2) is not implemented with mesh refinement");
-        }
-
-        if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
-            WarpX::grid_type != GridType::Collocated)
-        {
-            AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
-                                          device_field_centering_stencil_coeffs_y,
-                                          device_field_centering_stencil_coeffs_z,
-                                          field_centering_nox,
-                                          field_centering_noy,
-                                          field_centering_noz);
-        }
-
-        if (WarpX::do_current_centering)
-        {
-            AllocateCenteringCoefficients(device_current_centering_stencil_coeffs_x,
-                                          device_current_centering_stencil_coeffs_y,
-                                          device_current_centering_stencil_coeffs_z,
-                                          current_centering_nox,
-                                          current_centering_noy,
-                                          current_centering_noz);
         }
     }
 
@@ -2808,7 +2806,8 @@ void WarpX::AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>
                                            amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_z,
                                            const int centering_nox,
                                            const int centering_noy,
-                                           const int centering_noz)
+                                           const int centering_noz,
+                                           const short a_grid_type)
 {
     // Vectors of Fornberg stencil coefficients
     amrex::Vector<amrex::Real> Fornberg_stencil_coeffs_x;
@@ -2820,9 +2819,9 @@ void WarpX::AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>
     amrex::Vector<amrex::Real> host_centering_stencil_coeffs_y;
     amrex::Vector<amrex::Real> host_centering_stencil_coeffs_z;
 
-    Fornberg_stencil_coeffs_x = getFornbergStencilCoefficients(centering_nox, grid_type);
-    Fornberg_stencil_coeffs_y = getFornbergStencilCoefficients(centering_noy, grid_type);
-    Fornberg_stencil_coeffs_z = getFornbergStencilCoefficients(centering_noz, grid_type);
+    Fornberg_stencil_coeffs_x = getFornbergStencilCoefficients(centering_nox, a_grid_type);
+    Fornberg_stencil_coeffs_y = getFornbergStencilCoefficients(centering_noy, a_grid_type);
+    Fornberg_stencil_coeffs_z = getFornbergStencilCoefficients(centering_noz, a_grid_type);
 
     host_centering_stencil_coeffs_x.resize(centering_nox);
     host_centering_stencil_coeffs_y.resize(centering_noy);
