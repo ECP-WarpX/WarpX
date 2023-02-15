@@ -2820,9 +2820,9 @@ void WarpX::AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>
     amrex::Vector<amrex::Real> host_centering_stencil_coeffs_y;
     amrex::Vector<amrex::Real> host_centering_stencil_coeffs_z;
 
-    Fornberg_stencil_coeffs_x = getFornbergStencilCoefficients(centering_nox, false);
-    Fornberg_stencil_coeffs_y = getFornbergStencilCoefficients(centering_noy, false);
-    Fornberg_stencil_coeffs_z = getFornbergStencilCoefficients(centering_noz, false);
+    Fornberg_stencil_coeffs_x = getFornbergStencilCoefficients(centering_nox, grid_type);
+    Fornberg_stencil_coeffs_y = getFornbergStencilCoefficients(centering_noy, grid_type);
+    Fornberg_stencil_coeffs_z = getFornbergStencilCoefficients(centering_noz, grid_type);
 
     host_centering_stencil_coeffs_x.resize(centering_nox);
     host_centering_stencil_coeffs_y.resize(centering_noy);
