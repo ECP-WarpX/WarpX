@@ -328,6 +328,9 @@ void CheckGriddingForRZSpectral ()
     }
     blocking_factor_x[0] = k;
     max_grid_size_x[0] = k;
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_cell[0] == k,
+        "With RZ spectral, the number of cells in r must be a power of 2.");
+
 
     for (int lev=1 ; lev <= max_level ; lev++) {
         // For this to be correct, this needs to read in any user specified refinement ratios.
