@@ -913,6 +913,21 @@ WarpX::ReadParameters ()
             "The number of azimuthal modes (n_rz_azimuthal_modes) must be at least 1");
 #endif
 
+        // Set default parameters with hybrid grid (parsed later below)
+        if (grid_type == GridType::Hybrid)
+        {
+            // Finite-order centering of fields
+            field_gathering_algo = GatheringAlgo::MomentumConserving;
+            field_centering_nox = 8;
+            field_centering_noy = 8;
+            field_centering_noz = 8;
+            // Finite-order centering of currents
+            do_current_centering = true;
+            current_centering_nox = 8;
+            current_centering_noy = 8;
+            current_centering_noz = 8;
+        }
+
         // If true, the current is deposited on a nodal grid and centered onto
         // a staggered grid. Setting warpx.do_current_centering=1 makes sense
         // only if warpx.grid_type=hybrid. Instead, if warpx.grid_type=nodal or
@@ -924,6 +939,21 @@ WarpX::ReadParameters ()
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 grid_type == GridType::Hybrid,
                 "warpx.do_current_centering=1 can be used only with warpx.grid_type=hybrid");
+
+            utils::parser::queryWithParser(
+                pp_warpx, "current_centering_nox", current_centering_nox);
+            utils::parser::queryWithParser(
+                pp_warpx, "current_centering_noy", current_centering_noy);
+            utils::parser::queryWithParser(
+                pp_warpx, "current_centering_noz", current_centering_noz);
+
+            AllocateCenteringCoefficients(device_current_centering_stencil_coeffs_x,
+                                          device_current_centering_stencil_coeffs_y,
+                                          device_current_centering_stencil_coeffs_z,
+                                          current_centering_nox,
+                                          current_centering_noy,
+                                          current_centering_noz,
+                                          grid_type);
         }
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1091,21 +1121,26 @@ WarpX::ReadParameters ()
         ParmParse pp_interpolation("interpolation");
 
         pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
+    }
 
-        // Read order of finite-order centering of fields (staggered to nodal).
-        // Read this only if warpx.grid_type=hybrid. If warpx.grid_type=collocated,
-        // Maxwell's equations are solved on a nodal grid and the electromagnetic
-        // forces are gathered from a nodal grid, hence the fields do not need to
-        // be centered onto a nodal grid.
+    {
+        ParmParse pp_warpx("warpx");
+
+        // If warpx.grid_type=staggered or warpx.grid_type=hybrid,
+        // and algo.field_gathering=momentum-conserving, the fields are solved
+        // on a staggered grid and centered onto a nodal grid for gathering.
+        // Instead, if warpx.grid_type=collocated, the momentum-conserving and
+        // energy conserving field gathering algorithms are equivalent (forces
+        // gathered from the collocated grid) and no fields centering occurs.
         if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
             WarpX::grid_type != GridType::Collocated)
         {
             utils::parser::queryWithParser(
-                pp_interpolation, "field_centering_nox", field_centering_nox);
+                pp_warpx, "field_centering_nox", field_centering_nox);
             utils::parser::queryWithParser(
-                pp_interpolation, "field_centering_noy", field_centering_noy);
+                pp_warpx, "field_centering_noy", field_centering_noy);
             utils::parser::queryWithParser(
-                pp_interpolation, "field_centering_noz", field_centering_noz);
+                pp_warpx, "field_centering_noz", field_centering_noz);
 
             AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
                                           device_field_centering_stencil_coeffs_y,
@@ -1113,25 +1148,6 @@ WarpX::ReadParameters ()
                                           field_centering_nox,
                                           field_centering_noy,
                                           field_centering_noz,
-                                          grid_type);
-        }
-
-        // Read order of finite-order centering of currents (nodal to staggered)
-        if (WarpX::do_current_centering)
-        {
-            utils::parser::queryWithParser(
-                pp_interpolation, "current_centering_nox", current_centering_nox);
-            utils::parser::queryWithParser(
-                pp_interpolation, "current_centering_noy", current_centering_noy);
-            utils::parser::queryWithParser(
-                pp_interpolation, "current_centering_noz", current_centering_noz);
-
-            AllocateCenteringCoefficients(device_current_centering_stencil_coeffs_x,
-                                          device_current_centering_stencil_coeffs_y,
-                                          device_current_centering_stencil_coeffs_z,
-                                          current_centering_nox,
-                                          current_centering_noy,
-                                          current_centering_noz,
                                           grid_type);
         }
 
