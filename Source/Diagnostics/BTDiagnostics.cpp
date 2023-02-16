@@ -158,6 +158,7 @@ void BTDiagnostics::DerivedInitData ()
     // j >= i / gamma / (1+beta) * dt_snapshot / dt_boosted_frame
     const int final_snapshot_starting_step = static_cast<int>(std::ceil(final_snapshot_iteration / warpx.gamma_boost / (1._rt+warpx.beta_boost) * m_dt_snapshots_lab / dt_boosted_frame));
     const int final_snapshot_fill_iteration = final_snapshot_starting_step + num_buffers * m_buffer_size - 1;
+
     if (final_snapshot_fill_iteration > warpx.maxStep()) {
         if (warpx.do_compute_max_step_from_btd) {
             warpx.updateMaxStep(final_snapshot_fill_iteration);
@@ -172,6 +173,10 @@ void BTDiagnostics::DerivedInitData ()
                 "BTD", warn_string,
                 ablastr::warn_manager::WarnPriority::low);
         }
+    } else if (warpx.maxStep() == INT_MAX && warpx.do_compute_max_step_from_btd) {
+            warpx.updateMaxStep(final_snapshot_fill_iteration);
+            amrex::Print()<<"max_step unspecified.  Setting to "
+                <<final_snapshot_fill_iteration<< " to fill all BTD snapshots." << std::endl;
     }
 #ifdef WARPX_DIM_RZ
     UpdateVarnamesForRZopenPMD();
