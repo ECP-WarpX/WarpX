@@ -12,7 +12,6 @@ import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
-
 from scipy.integrate import cumtrapz
 
 # some constants
@@ -97,8 +96,8 @@ def get_input_parameters(test):
         E_star = np.sqrt(0.5*c**2*pA*pB*(1.- cos_ang))
         g_star = E_star / (m_e*c**2)
         V = (xmax-xmin)*(ymax-ymin)*(zmax-zmin)
-        NA0 = dens * V 
-        NB0 = dens * V 
+        NA0 = dens * V
+        NB0 = dens * V
         return EA, EB, theta, dt, V, num_steps, NA0, NB0
 
 def is_close(val1, val2, rtol=default_tol, atol=0.):
@@ -181,24 +180,24 @@ def cross_section(E1_lab, E2_lab, theta):
 def check_pair_rate(test):
     if test == 'many_photons_test':
         EA_lab, EB_lab, theta, dt, V, num_steps, NA0, NB0 = get_input_parameters(test)
-        
-        t = np.arange(num_steps+1)*dt 
+
+        t = np.arange(num_steps+1)*dt
         sigma = cross_section(EA_lab, EB_lab, theta)
-        
-        # estimated number of real photons of species photonA in time 
-        NA_est = NA0 / (1. + 2.*sigma* c * t / V * NA0) 
+
+        # estimated number of real photons of species photonA in time
+        NA_est = NA0 / (1. + 2.*sigma* c * t / V * NA0)
         # number of photons of species photonA in time from simulation
         NA = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,8]
 
-        # estimated number of real photons of species photonB in time 
-        NB_est = NB0 / (1. + 2.*sigma* c * t / V * NB0) 
+        # estimated number of real photons of species photonB in time
+        NB_est = NB0 / (1. + 2.*sigma* c * t / V * NB0)
         # number of photons of species photonA in time from simulation
         NB = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,8]
 
         Nplus_est = 2.*sigma*c/V*cumtrapz(NA_est*NB_est, x=t, dx=dt, initial=0)
         # number of positrons in time from simulation
         Nplus = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,11]
-        
+
         assert(np.all(is_close(Nplus_est, Nplus, rtol=1e-1)))
         assert(np.all(is_close(NA_est, NA, rtol=1e-1)))
         assert(np.all(is_close(NB_est, NB, rtol=1e-1)))
