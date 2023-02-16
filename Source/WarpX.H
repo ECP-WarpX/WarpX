@@ -782,6 +782,7 @@ public:
     bool getis_synchronized() const {return is_synchronized;}
 
     int maxStep () const {return max_step;}
+    void updateMaxStep (int const new_max_step) {max_step = new_max_step;}
     amrex::Real stopTime () const {return stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
