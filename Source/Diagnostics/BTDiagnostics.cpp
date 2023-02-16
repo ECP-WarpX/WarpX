@@ -160,7 +160,7 @@ void BTDiagnostics::DerivedInitData ()
     const int final_snapshot_fill_iteration = final_snapshot_starting_step + num_buffers * m_buffer_size - 1;
 
     if (final_snapshot_fill_iteration > warpx.maxStep()) {
-        if (warpx.do_compute_max_step_from_btd) {
+        if (warpx.compute_max_step_from_btd) {
             warpx.updateMaxStep(final_snapshot_fill_iteration);
             amrex::Print()<<"max_step insufficient to fill all BTD snapshots. Automatically increased to: "
                 <<final_snapshot_fill_iteration<<std::endl;

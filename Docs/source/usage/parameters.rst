@@ -57,7 +57,7 @@ Overall simulation parameters
     printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
 
-* ``warpx.do_compute_max_step_from_btd`` (`integer`; 0 by default) optional
+* ``warpx.compute_max_step_from_btd`` (`integer`; 0 by default) optional
     Can be useful when computing back-transformed diagnostics.  If specified,
     automatically calculates the number of iterations required in the boosted
     frame for all back-transformed diagnostics to be completed. If ``max_step``

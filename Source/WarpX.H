@@ -296,7 +296,7 @@ public:
     static bool do_compute_max_step_from_zmax;
 
     //! If true, the code will compute max_step from the back transformed diagnostics
-    static bool do_compute_max_step_from_btd;
+    static bool compute_max_step_from_btd;
 
     static bool do_dynamic_scheduling;
     static bool refine_plasma;
