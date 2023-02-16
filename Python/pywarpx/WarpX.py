@@ -84,7 +84,8 @@ class WarpX(Bucket):
         reduced_diagnostics.reduced_diags_names = reduced_diagnostics._diagnostics_dict.keys()
         argv += reduced_diagnostics.attrlist()
         for diagnostic in reduced_diagnostics._diagnostics_dict.values():
-            diagnostic.species = diagnostic._species_dict.keys()
+            if 'species' in diagnostic._species_dict:
+                diagnostic.species = diagnostic._species_dict.keys()
             argv += diagnostic.attrlist()
             for species_diagnostic in diagnostic._species_dict.values():
                 argv += species_diagnostic.attrlist()
