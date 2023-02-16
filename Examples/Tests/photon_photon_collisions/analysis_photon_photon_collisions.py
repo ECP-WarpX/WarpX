@@ -13,6 +13,8 @@ import yt
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
+from scipy.integrate import cumtrapz
+
 # some constants
 r_e = physical_constants["classical electron radius"][0]
 default_tol = 1.e-12
@@ -57,41 +59,47 @@ def get_input_parameters(test):
                 if 'geometry.prob_hi' in line:
                     xmax, ymax, zmax = find_num_in_line(line)
                 if 'photonA.ux' in line:
-                    u1x = find_num_in_line(line)
+                    uAx = find_num_in_line(line)
                 if 'photonA.uy' in line:
-                    u1y = find_num_in_line(line)
+                    uAy = find_num_in_line(line)
                 if 'photonA.uz' in line:
-                    u1z = find_num_in_line(line)
+                    uAz = find_num_in_line(line)
+                if 'photonA.density' in line:
+                    dens = find_num_in_line(line)
+                if 'photonB.density' in line:
+                    dens = find_num_in_line(line)
                 if 'photonB.ux' in line:
-                    u2x = find_num_in_line(line)
+                    uBx = find_num_in_line(line)
                 if 'photonB.uy' in line:
-                    u2y = find_num_in_line(line)
+                    uBy = find_num_in_line(line)
                 if 'photonB.uz' in line:
-                    u2z = find_num_in_line(line)
+                    uBz = find_num_in_line(line)
                 if 'amr.n_cell' in line:
                     nx, ny, nz = find_num_in_line(line)
                 if 'LBW.event_multiplier' in line:
                     event_multiplier = find_num_in_line(line)
 
-        p1x, p1y, p1z = u1x * m_e * c, u1y * m_e * c, u1z * m_e * c
-        p2x, p2y, p2z = u2x * m_e * c, u2y * m_e * c, u2z * m_e * c
-        E1, E2 = np.sqrt(p1x**2+p1y**2+p1z**2) * c, np.sqrt(p2x**2+p2y**2+p2z**2) * c
+        pAx, pAy, pAz = uAx * m_e * c, uAy * m_e * c, uAz * m_e * c
+        pBx, pBy, pBz = uBx * m_e * c, uBy * m_e * c, uBz * m_e * c
+        EA, EB = np.sqrt(pAx**2+pAy**2+pAz**2) * c, np.sqrt(pBx**2+pBy**2+pBz**2) * c
         dx = (xmax-xmin)/nx
         dy = (ymax-ymin)/ny
         dz = (zmax-zmin)/ny
         dt = cfl / c / np.sqrt(1./dx**2+1./dy**2+1./dz**2)
         simulation_time = num_steps * dt
         dV = dx*dy*dz
-        p1 = np.sqrt(p1x**2 + p1y**2 + p1z**2)
-        p2 = np.sqrt(p2x**2 + p2y**2 + p2z**2)
-        g1 = E1/(m_e*c**2)
-        g2 = E2/(m_e*c**2)
-        cos_ang = (p1x*p2x+p1y*p2y+p1z*p2z)/(p1*p2)
+        pA = np.sqrt(pAx**2 + pAy**2 + pAz**2)
+        pB = np.sqrt(pBx**2 + pBy**2 + pBz**2)
+        gA = EA/(m_e*c**2)
+        gB = EB/(m_e*c**2)
+        cos_ang = (pAx*pBx+pAy*pBy+pAz*pBz)/(pA*pB)
         theta = np.arccos(cos_ang)
-        E_star = np.sqrt(0.5*c**2*p1*p2*(1.- cos_ang))
+        E_star = np.sqrt(0.5*c**2*pA*pB*(1.- cos_ang))
         g_star = E_star / (m_e*c**2)
         V = (xmax-xmin)*(ymax-ymin)*(zmax-zmin)
-        return E1, E2, theta, dt, V
+        NA0 = dens * V 
+        NB0 = dens * V 
+        return EA, EB, theta, dt, V, num_steps, NA0, NB0
 
 def is_close(val1, val2, rtol=default_tol, atol=0.):
     # wrapper around numpy.isclose, used to override the default tolerances
@@ -172,18 +180,28 @@ def cross_section(E1_lab, E2_lab, theta):
 
 def check_pair_rate(test):
     if test == 'many_photons_test':
-        E1_lab, E2_lab, theta, dt, V  = get_input_parameters(test)
-        # number of real photons of species photonA
-        N1 = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,8]
-        # number of real photons of species photonB
-        N2 = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,9]
-        steps = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,0]
-        estimated_number_of_positrons = 0
-        for ts in steps.astype(int):
-            estimated_number_of_positrons += (1.-np.cos(theta))*c*N1[ts]*N2[ts]*cross_section(E1_lab, E2_lab, theta)/V*dt
-        obtained_number_of_positron = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[-1,11]
-        assert(is_close(obtained_number_of_positron, estimated_number_of_positrons, rtol=1e-1))
+        EA_lab, EB_lab, theta, dt, V, num_steps, NA0, NB0 = get_input_parameters(test)
+        
+        t = np.arange(num_steps+1)*dt 
+        sigma = cross_section(EA_lab, EB_lab, theta)
+        
+        # estimated number of real photons of species photonA in time 
+        NA_est = NA0 / (1. + 2.*sigma* c * t / V * NA0) 
+        # number of photons of species photonA in time from simulation
+        NA = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,8]
 
+        # estimated number of real photons of species photonB in time 
+        NB_est = NB0 / (1. + 2.*sigma* c * t / V * NB0) 
+        # number of photons of species photonA in time from simulation
+        NB = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,8]
+
+        Nplus_est = 2.*sigma*c/V*cumtrapz(NA_est*NB_est, x=t, dx=dt, initial=0)
+        # number of positrons in time from simulation
+        Nplus = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,11]
+        
+        assert(np.all(is_close(Nplus_est, Nplus, rtol=1e-1)))
+        assert(np.all(is_close(NA_est, NA, rtol=1e-1)))
+        assert(np.all(is_close(NB_est, NB, rtol=1e-1)))
 
 def main():
     check_final_macroparticles(test)
