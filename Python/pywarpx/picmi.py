@@ -2024,23 +2024,30 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
 
+        if pywarpx.geometry.dims == 'RZ':
+            E_fields_list = ['Er', 'Et', 'Ez']
+            B_fields_list = ['Br', 'Bt', 'Bz']
+            J_fields_list = ['Jr', 'Jt', 'Jz']
+        else:
+            E_fields_list = ['Ex', 'Ey', 'Ez']
+            B_fields_list = ['Bx', 'By', 'Bz']
+            J_fields_list = ['Jx', 'Jy', 'Jz']
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'E':
-                    fields_to_plot.add('Ex')
-                    fields_to_plot.add('Ey')
-                    fields_to_plot.add('Ez')
+                    for field_name in E_fields_list:
+                        fields_to_plot.add(field_name)
                 elif dataname == 'B':
-                    fields_to_plot.add('Bx')
-                    fields_to_plot.add('By')
-                    fields_to_plot.add('Bz')
+                    for field_name in B_fields_list:
+                        fields_to_plot.add(field_name)
                 elif dataname == 'J':
-                    fields_to_plot.add('jx')
-                    fields_to_plot.add('jy')
-                    fields_to_plot.add('jz')
-                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho']:
+                    for field_name in J_fields_list:
+                        fields_to_plot.add(field_name.lower())
+                elif dataname in E_fields_list:
                     fields_to_plot.add(dataname)
-                elif dataname in ['Jx', 'Jy', 'Jz']:
+                elif dataname in B_fields_list:
+                    fields_to_plot.add(dataname)
+                elif dataname in J_fields_list:
                     fields_to_plot.add(dataname.lower())
                 elif dataname.startswith('rho_'):
                     # Adds rho_species diagnostic
