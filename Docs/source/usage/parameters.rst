@@ -61,8 +61,8 @@ Overall simulation parameters
     Can be useful when computing back-transformed diagnostics.  If specified,
     automatically calculates the number of iterations required in the boosted
     frame for all back-transformed diagnostics to be completed. If ``max_step``
-    or ``zmax_plasma_to_compute_max_step`` are not specified or the current 
-    value of ``max_step`` is too low to fill all BTD, the value of ``max_step`` 
+    or ``zmax_plasma_to_compute_max_step`` are not specified or the current
+    value of ``max_step`` is too low to fill all BTD, the value of ``max_step``
     is overwritten with the new value and printed to standard output.
 
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
