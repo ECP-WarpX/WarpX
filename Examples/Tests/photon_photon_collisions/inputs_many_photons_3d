@@ -3,8 +3,8 @@
 #################################
 max_step = 100
 amr.n_cell = 16 16 16
-amr.max_grid_size = 16
-amr.blocking_factor = 4
+amr.max_grid_size = 8
+amr.blocking_factor = 2
 amr.max_level = 0
 geometry.dims = 3
 geometry.prob_lo = -1e-6 -1e-6 -1e-6
@@ -27,7 +27,6 @@ algo.current_deposition = esirkepov
 algo.field_gathering = energy-conserving
 algo.particle_pusher = boris
 
-
 #################################
 ############ PLASMA #############
 #################################
@@ -36,7 +35,7 @@ particles.photon_species = photonA photonB
 
 photonA.species_type = photon
 photonA.injection_style = "NRandomPerCell"
-photonA.num_particles_per_cell = 10
+photonA.num_particles_per_cell = 100
 photonA.profile = constant
 photonA.density = 1.e35
 photonA.momentum_distribution_type = "constant"
@@ -48,7 +47,7 @@ photonA.do_not_deposit = 1
 
 photonB.species_type = photon
 photonB.injection_style = "NRandomPerCell"
-photonB.num_particles_per_cell = 10
+photonB.num_particles_per_cell = 100
 photonB.profile = constant
 photonB.density = 1.e35
 photonB.momentum_distribution_type = "constant"
