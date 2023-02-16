@@ -173,7 +173,7 @@ void BTDiagnostics::DerivedInitData ()
                 "BTD", warn_string,
                 ablastr::warn_manager::WarnPriority::low);
         }
-    } else if (warpx.maxStep() == std::numeric_limits<int>::max() && warpx.do_compute_max_step_from_btd) {
+    } else if (warpx.maxStep() == std::numeric_limits<int>::max() && warpx.compute_max_step_from_btd) {
             warpx.updateMaxStep(final_snapshot_fill_iteration);
             amrex::Print()<<"max_step unspecified.  Setting to "
                 <<final_snapshot_fill_iteration<< " to fill all BTD snapshots." << std::endl;
