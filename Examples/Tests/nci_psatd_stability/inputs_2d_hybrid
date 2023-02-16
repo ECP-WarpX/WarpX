@@ -15,7 +15,6 @@ boundary.field_hi = periodic damped
 algo.maxwell_solver = psatd
 algo.current_deposition = direct
 algo.charge_deposition = standard
-algo.field_gathering = momentum-conserving
 algo.particle_pusher = vay
 
 # Order of particle shape factors

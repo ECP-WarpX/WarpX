@@ -916,12 +916,12 @@ WarpX::ReadParameters ()
         // Set default parameters with hybrid grid (parsed later below)
         if (grid_type == GridType::Hybrid)
         {
-            // Finite-order centering of fields
-            field_gathering_algo = GatheringAlgo::MomentumConserving;
+            // Finite-order centering of fields (staggered to nodal)
+            // Default field gathering algorithm will be set below
             field_centering_nox = 8;
             field_centering_noy = 8;
             field_centering_noz = 8;
-            // Finite-order centering of currents
+            // Finite-order centering of currents (nodal to staggered)
             do_current_centering = true;
             current_centering_nox = 8;
             current_centering_noy = 8;
@@ -1026,11 +1026,39 @@ WarpX::ReadParameters ()
                 "Vay deposition not implemented with multi-J algorithm");
         }
 
+        // Query algo.field_gathering from input, set field_gathering_algo to
+        // "default" if not found (default defined in Utils/WarpXAlgorithmSelection.cpp)
         field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
-        if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
-            // Use same shape factors in all directions, for gathering
-            galerkin_interpolation = false;
+
+        // Set default field gathering algorithm for hybrid grids (momentum-conserving)
+        std::string tmp_algo;
+        // - algo.field_gathering not found in the input
+        // - field_gathering_algo set to "default" above
+        //   (default defined in Utils/WarpXAlgorithmSelection.cpp)
+        // - reset default value here for hybrid grids
+        if (pp_algo.query("field_gathering", tmp_algo) == false)
+        {
+            if (grid_type == GridType::Hybrid)
+            {
+                field_gathering_algo = GatheringAlgo::MomentumConserving;
+            }
         }
+        // - algo.field_gathering found in the input
+        // - field_gathering_algo read above and set to user-defined value
+        else
+        {
+            if (grid_type == GridType::Hybrid)
+            {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    field_gathering_algo == GatheringAlgo::MomentumConserving,
+                    "Hybrid grid (warpx.grid_type=hybrid) should be used only with "
+                    "momentum-conserving field gathering algorithm "
+                    "(algo.field_gathering=momentum-conserving)");
+            }
+        }
+
+        // Use same shape factors in all directions, for gathering
+        if (field_gathering_algo == GatheringAlgo::MomentumConserving) galerkin_interpolation = false;
 
         em_solver_medium = GetAlgorithmInteger(pp_algo, "em_solver_medium");
         if (em_solver_medium == MediumForEM::Macroscopic ) {
