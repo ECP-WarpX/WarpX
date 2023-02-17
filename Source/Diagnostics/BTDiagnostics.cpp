@@ -171,20 +171,18 @@ void BTDiagnostics::DerivedInitData ()
                 << final_snapshot_fill_time << std::endl;
 
         } else if (warpx.maxStep() == std::numeric_limits<int>::max() && warpx.stopTime() == std::numeric_limits<amrex::Real>::max()) {
-            amrex::Print()<<"max_step unspecified.  Setting to "
+            amrex::Print()<<"max_step unspecified and stop time unspecified.  Setting max step to "
                 <<final_snapshot_fill_iteration<< " to fill all BTD snapshots." << std::endl;
             warpx.updateMaxStep(final_snapshot_fill_iteration);
-            amrex::Print()<<"stop_time unspecified.  Setting to "
-                <<final_snapshot_fill_time<< " to fill all BTD snapshots." << std::endl;
-            warpx.updateMaxStep(final_snapshot_fill_time);
-
         }
 
     } else if (final_snapshot_fill_iteration > warpx.maxStep() || final_snapshot_fill_time > warpx.stopTime()) {
         std::string warn_string =
             "\nSimulation might not run long enough to fill all BTD snapshots.\n"
             "Final step: " + std::to_string(warpx.maxStep()) + "\n"
-            "Last BTD snapshot fills around step: " + std::to_string(final_snapshot_fill_iteration);
+            "Stop time: " + std::to_string(warpx.stopTime()) + "\n"
+            "Last BTD snapshot fills around step: " + std::to_string(final_snapshot_fill_iteration) + "\n"
+            " or time: " + std::to_string(final_snapshot_fill_time) + "\n";
         ablastr::warn_manager::WMRecordWarning(
             "BTD", warn_string,
             ablastr::warn_manager::WarnPriority::low);
