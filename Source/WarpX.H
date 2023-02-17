@@ -784,6 +784,7 @@ public:
     int maxStep () const {return max_step;}
     void updateMaxStep (int const new_max_step) {max_step = new_max_step;}
     amrex::Real stopTime () const {return stop_time;}
+    void updateStopTime (int amrex::Real new_stop_time) {stop_time = new_stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, const amrex::IntVect ngrow) const;
