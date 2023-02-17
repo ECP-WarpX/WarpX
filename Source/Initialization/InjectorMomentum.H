@@ -220,6 +220,49 @@ private:
     int m_flux_direction;
 };
 
+
+// struct whose getMomentum returns momentum for 1 particle, from random
+// waterbag distribution (i.e. a uniform distribution u_min < u < u_max)
+struct InjectorMomentumWaterbag
+{
+    InjectorMomentumWaterbag (amrex::Real a_ux_min, amrex::Real a_uy_min,
+                              amrex::Real a_uz_min, amrex::Real a_ux_max,
+                              amrex::Real a_uy_max, amrex::Real a_uz_max) noexcept
+        : m_ux_min(a_ux_min), m_uy_min(a_uy_min), m_uz_min(a_uz_min),
+          m_ux_max(a_ux_max), m_uy_max(a_uy_max), m_uz_max(a_uz_max)
+        {
+            m_Dux = m_ux_max - m_ux_min;
+            m_Duy = m_uy_max - m_uy_min;
+            m_Duz = m_uz_max - m_uz_min;
+            m_ux_h = 0.5 * (m_ux_max - m_ux_min);
+            m_uy_h = 0.5 * (m_uy_max - m_uy_min);
+            m_uz_h = 0.5 * (m_uz_max - m_uz_min);
+        }
+
+    AMREX_GPU_HOST_DEVICE
+    amrex::XDim3
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
+                 amrex::RandomEngine const& engine) const noexcept
+    {
+        return amrex::XDim3{m_ux_min + amrex::Random(engine) * m_Dux,
+                            m_uy_min + amrex::Random(engine) * m_Duy,
+                            m_uz_min + amrex::Random(engine) * m_Duz};
+    }
+
+    AMREX_GPU_HOST_DEVICE
+    amrex::XDim3
+    getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
+    {
+        return amrex::XDim3{m_ux_h, m_uy_h, m_uz_h};
+    }
+
+private:
+    amrex::Real m_ux_min, m_uy_min, m_uz_min;
+    amrex::Real m_ux_max, m_uy_max, m_uz_max;
+    amrex::Real m_ux_h, m_uy_h, m_uz_h;
+    amrex::Real m_Dux, m_Duy, m_Duz;
+};
+
 // struct whose getMomentum returns momentum for 1 particle with relativistic
 // drift velocity beta, from the Maxwell-Boltzmann distribution.
 struct InjectorMomentumBoltzmann
@@ -506,6 +549,14 @@ struct InjectorMomentum
           object(t,a_ux_m,a_uy_m,a_uz_m,a_ux_th,a_uy_th,a_uz_th,a_flux_normal_axis,a_flux_direction)
     { }
 
+    // This constructor stores a InjectorMomentumWaterbag in union object.
+    InjectorMomentum (InjectorMomentumWaterbag* t,
+                      amrex::Real a_ux_min, amrex::Real a_uy_min, amrex::Real a_uz_min,
+                      amrex::Real a_ux_max, amrex::Real a_uy_max, amrex::Real a_uz_max)
+        : type(Type::waterbag),
+          object(t,a_ux_min,a_uy_min,a_uz_min,a_ux_max,a_uy_max,a_uz_max)
+    { }
+
     InjectorMomentum (InjectorMomentumBoltzmann* t,
                        GetTemperature const& temperature, GetVelocity const& velocity)
          : type(Type::boltzmann),
@@ -563,6 +614,10 @@ struct InjectorMomentum
         {
             return object.gaussianflux.getMomentum(x,y,z,engine);
         }
+        case Type::waterbag:
+        {
+            return object.waterbag.getMomentum(x,y,z,engine);
+        }
         case Type::boltzmann:
         {
             return object.boltzmann.getMomentum(x,y,z,engine);
@@ -611,6 +666,10 @@ struct InjectorMomentum
         {
             return object.gaussianflux.getBulkMomentum(x,y,z);
         }
+        case Type::waterbag:
+        {
+            return object.waterbag.getBulkMomentum(x,y,z);
+        }
         case Type::boltzmann:
         {
             return object.boltzmann.getBulkMomentum(x,y,z);
@@ -639,7 +698,7 @@ struct InjectorMomentum
         }
     }
 
-    enum struct Type { constant, custom, gaussian, gaussianflux, boltzmann, juttner, radial_expansion, parser};
+    enum struct Type { constant, custom, gaussian, gaussianflux, waterbag, boltzmann, juttner, radial_expansion, parser };
     Type type;
 
 private:
@@ -665,6 +724,11 @@ private:
                 amrex::Real a_uy_th, amrex::Real a_uz_th,
                 int a_flux_normal_axis, int a_flux_direction) noexcept
             : gaussianflux(a_ux_m,a_uy_m,a_uz_m,a_ux_th,a_uy_th,a_uz_th,a_flux_normal_axis,a_flux_direction) {}
+        Object (InjectorMomentumWaterbag*,
+                amrex::Real a_ux_min, amrex::Real a_uy_min,
+                amrex::Real a_uz_min, amrex::Real a_ux_max,
+                amrex::Real a_uy_max, amrex::Real a_uz_max) noexcept
+            : waterbag(a_ux_min,a_uy_min,a_uz_min,a_ux_max,a_uy_max,a_uz_max) {}
         Object (InjectorMomentumBoltzmann*,
                 GetTemperature const& t, GetVelocity const& b) noexcept
             : boltzmann(t,b) {}
@@ -683,6 +747,7 @@ private:
         InjectorMomentumCustom   custom;
         InjectorMomentumGaussian gaussian;
         InjectorMomentumGaussianFlux gaussianflux;
+        InjectorMomentumWaterbag waterbag;
         InjectorMomentumBoltzmann boltzmann;
         InjectorMomentumJuttner juttner;
         InjectorMomentumRadialExpansion radial_expansion;

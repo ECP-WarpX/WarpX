@@ -16,6 +16,7 @@ void InjectorMomentum::clear ()
     case Type::parser:
     case Type::gaussian:
     case Type::gaussianflux:
+    case Type::waterbag:
     case Type::boltzmann:
     case Type::juttner:
     case Type::constant:
