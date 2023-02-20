@@ -2288,13 +2288,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         BoxArray const nba = amrex::convert(ba,IntVect::TheNodeVector());
         if (add_external_B_field) {
             AllocInitMultiFab(Bfield_fp_external[lev][0], nba, dm, ncomps, ngEB, tag("Bfield_fp_external[x]"), 0.0_rt);
-            AllocInitMultiFab(Bfield_fp_external[lev][0], nba, dm, ncomps, ngEB, tag("Bfield_fp_external[y]"), 0.0_rt);
-            AllocInitMultiFab(Bfield_fp_external[lev][0], nba, dm, ncomps, ngEB, tag("Bfield_fp_external[z]"), 0.0_rt);
+            AllocInitMultiFab(Bfield_fp_external[lev][1], nba, dm, ncomps, ngEB, tag("Bfield_fp_external[y]"), 0.0_rt);
+            AllocInitMultiFab(Bfield_fp_external[lev][2], nba, dm, ncomps, ngEB, tag("Bfield_fp_external[z]"), 0.0_rt);
         }
         if (add_external_E_field) {
             AllocInitMultiFab(Efield_fp_external[lev][0], nba, dm, ncomps, ngEB, tag("Efield_fp_external[x]"), 0.0_rt);
-            AllocInitMultiFab(Efield_fp_external[lev][0], nba, dm, ncomps, ngEB, tag("Efield_fp_external[y]"), 0.0_rt);
-            AllocInitMultiFab(Efield_fp_external[lev][0], nba, dm, ncomps, ngEB, tag("Efield_fp_external[z]"), 0.0_rt);
+            AllocInitMultiFab(Efield_fp_external[lev][1], nba, dm, ncomps, ngEB, tag("Efield_fp_external[y]"), 0.0_rt);
+            AllocInitMultiFab(Efield_fp_external[lev][2], nba, dm, ncomps, ngEB, tag("Efield_fp_external[z]"), 0.0_rt);
         }
     } else {
         if (add_external_B_field) {
