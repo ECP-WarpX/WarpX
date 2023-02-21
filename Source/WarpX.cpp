@@ -1650,6 +1650,34 @@ WarpX::BackwardCompatibility ()
             ablastr::warn_manager::WarnPriority::low);
     }
 
+    std::vector<std::string> backward_sp_names;
+    pp_particles.queryarr("species_names", backward_sp_names);
+    for(std::string speciesiter : backward_sp_names){
+        ParmParse pp_species(speciesiter);
+        std::vector<amrex::Real> backward_vel;
+        std::stringstream ssspecies;
+
+        ssspecies << "'" << speciesiter << ".multiple_particles_vel_<x,y,z>'";
+        ssspecies << " are not supported anymore. ";
+        ssspecies << "Please use the renamed variables ";
+        ssspecies << "'" << speciesiter << ".multiple_particles_u<x,y,z>' .";
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !pp_species.queryarr("multiple_particles_vel_x", backward_vel) &&
+            !pp_species.queryarr("multiple_particles_vel_y", backward_vel) &&
+            !pp_species.queryarr("multiple_particles_vel_z", backward_vel),
+            ssspecies.str());
+
+        ssspecies.str("");
+        ssspecies.clear();
+        ssspecies << "'" << speciesiter << ".single_particle_vel'";
+        ssspecies << " is not supported anymore. ";
+        ssspecies << "Please use the renamed variable ";
+        ssspecies << "'" << speciesiter << ".single_particle_u' .";
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !pp_species.queryarr("single_particle_vel", backward_vel),
+            ssspecies.str());
+    }
+
     ParmParse pp_collisions("collisions");
     int ncollisions;
     if (pp_collisions.query("ncollisions", ncollisions)){
