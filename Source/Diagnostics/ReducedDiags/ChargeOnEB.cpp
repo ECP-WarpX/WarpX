@@ -47,7 +47,7 @@ ChargeOnEB::ChargeOnEB (std::string rd_name)
 
     // Read optional weighting
     std::string buf;
-    ParmParse pp_rd_name(rd_name);
+    amrex::ParmParse pp_rd_name(rd_name);
     m_do_parser_weighting = pp_rd_name.query("weighting_function(x,y,z)", buf);
     if (m_do_parser_weighting) {
         std::string weighting_string = "";
@@ -80,7 +80,7 @@ ChargeOnEB::ChargeOnEB (std::string rd_name)
 // end constructor
 
 // function that computes the charge at the surface of the EB
-void ChargeOnEB::ComputeDiags (int step)
+void ChargeOnEB::ComputeDiags (const int step)
 {
     // Judge whether the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
@@ -93,9 +93,9 @@ void ChargeOnEB::ComputeDiags (int step)
     int const lev = 0;
 
     // get MultiFab data at lev
-    const MultiFab & Ex = warpx.getEfield(lev,0);
-    const MultiFab & Ey = warpx.getEfield(lev,1);
-    const MultiFab & Ez = warpx.getEfield(lev,2);
+    const amrex::MultiFab & Ex = warpx.getEfield(lev,0);
+    const amrex::MultiFab & Ey = warpx.getEfield(lev,1);
+    const amrex::MultiFab & Ez = warpx.getEfield(lev,2);
 
     // get EB structures
     amrex::EBFArrayBoxFactory const& eb_box_factory = warpx.fieldEBFactory(lev);
@@ -105,14 +105,13 @@ void ChargeOnEB::ComputeDiags (int step)
     amrex::Array<const amrex::MultiCutFab*,AMREX_SPACEDIM> eb_area_fraction = eb_box_factory.getAreaFrac();
 
     // get surface integration element
-    const auto& warpx_instance = WarpX::GetInstance();
-    const auto dx = warpx_instance.Geom(lev).CellSizeArray();
+    const amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> dx = warpx.Geom(lev).CellSizeArray();
     amrex::Real const dSx = dx[1]*dx[2];
     amrex::Real const dSy = dx[2]*dx[0];
     amrex::Real const dSz = dx[0]*dx[1];
 
     // Required for parser
-    const RealBox& real_box = warpx_instance.Geom(lev).ProbDomain();
+    const amrex::RealBox& real_box = warpx.Geom(lev).ProbDomain();
     const bool do_parser_weighting = m_do_parser_weighting;
     auto fun_weightingparser =
             utils::parser::compileParser<3>(m_parser_weighting.get());
@@ -129,7 +128,7 @@ void ChargeOnEB::ComputeDiags (int step)
     {
         const amrex::Box & box = enclosedCells(mfi.nodaltilebox());
 
-        // Skip boxes that are do not intersect with the embedded boundary
+        // Skip boxes that do not intersect with the embedded boundary
         // (i.e. either fully covered or fully regular)
         amrex::FabType fab_type = eb_flag[mfi].getType(box);
         if (fab_type == amrex::FabType::regular) continue;

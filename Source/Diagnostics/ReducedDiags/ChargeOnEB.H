@@ -33,7 +33,7 @@ public:
      * constructor
      * @param[in] rd_name reduced diags names
      */
-    ChargeOnEB(std::string rd_name);
+    ChargeOnEB (std::string rd_name);
 
     /**
      * This function computes the charge at the surface of the EB:
@@ -42,7 +42,7 @@ public:
      *
      * @param[in] step current time step
      */
-    virtual void ComputeDiags(int step) override final;
+    virtual void ComputeDiags (const int step) override final;
 
 private:
     /// Optional parser to add weight inside the integral
