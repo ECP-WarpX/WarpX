@@ -190,9 +190,12 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
     bool const apply_hi_y = (field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller);
     bool const apply_lo_z = (field_boundary_lo[2] == FieldBoundaryType::Absorbing_SilverMueller);
     bool const apply_hi_z = (field_boundary_hi[2] == FieldBoundaryType::Absorbing_SilverMueller);
-#else
+#elif WARPX_DIM_XZ
     bool const apply_lo_z = (field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller);
     bool const apply_hi_z = (field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller);
+#else
+    bool const apply_lo_z = (field_boundary_lo[0] == FieldBoundaryType::Absorbing_SilverMueller);
+    bool const apply_hi_z = (field_boundary_hi[0] == FieldBoundaryType::Absorbing_SilverMueller);
 #endif
 
     // Loop through the grids, and over the tiles within each grid
