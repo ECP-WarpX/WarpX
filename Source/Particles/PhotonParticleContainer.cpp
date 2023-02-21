@@ -162,9 +162,29 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto t_do_not_gather = do_not_gather;
 
-    amrex::ParallelFor(
-        np_to_push,
-        [=] AMREX_GPU_DEVICE (long i) {
+    enum exteb_flags : int { no_exteb, has_exteb };
+    enum qed_flags : int { no_qed, has_qed };
+
+    int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
+#ifdef WARPX_QED
+    int qed_runtime_flag = (local_has_breit_wheeler) ? has_qed : no_qed;
+#else
+    int qed_runtime_flag = no_qed;
+#endif
+
+    amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
+                                CompileTimeOptions<no_qed  ,has_qed>>{},
+                       {exteb_runtime_flag, qed_runtime_flag},
+                       np_to_push,
+#ifdef WARPX_QED
+                       [=, getExternalEB=getExternalEB,
+                        evolve_opt=evolve_opt, ux=ux, uy=uy, uz=uz, dt=dt,
+                        p_optical_depth_BW=p_optical_depth_BW]
+#else
+                       [=, getExternalEB=getExternalEB]
+#endif
+                       AMREX_GPU_DEVICE (long i, auto exteb_control,
+                                         [[maybe_unused]] auto qed_control) {
             if (do_copy) copyAttribs(i);
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
@@ -180,10 +200,13 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
             }
-            getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+
+            if constexpr (exteb_control == has_exteb) {
+                getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+            }
 
 #ifdef WARPX_QED
-            if (local_has_breit_wheeler) {
+            if constexpr (qed_control == has_qed) {
                 evolve_opt(ux[i], uy[i], uz[i], Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                     dt, p_optical_depth_BW[i]);
             }
