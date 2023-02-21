@@ -50,11 +50,32 @@ layout = picmi.GriddedLayout(
 )
 
 # Reduced diagnostic
-reduced_diag = picmi.ReducedDiagnostic(
+reduced_diags = []
+reduced_diags.append(picmi.ReducedDiagnostic(
     diag_type='LoadBalanceCosts',
     period=1,
     name='LBC'
-)
+))
+
+reduced_diags.append(picmi.ReducedDiagnostic(
+    diag_type='FieldReduction',
+    period=1,
+    name='FR',
+    reduction_type='Maximum',
+    reduced_function = 'Ez'
+))
+
+reduced_diags.append(picmi.ReducedDiagnostic(
+    diag_type='ParticleHistogram',
+    period=1,
+    name='PH',
+    species = electrons,
+    bin_number = 10,
+    bin_min=0.,
+    bin_max = xmax,
+    normalization = 'unity_particle_weight',
+    histogram_function = 'x'
+))
 
 # Diagnostic
 diag = picmi.FieldDiagnostic(
@@ -79,7 +100,8 @@ sim = picmi.Simulation(
 sim.add_species(electrons, layout=layout)
 
 # Add reduced diagnostics
-sim.add_diagnostic(reduced_diag)
+for reduced_diag in reduced_diags:
+    sim.add_diagnostic(reduced_diag)
 
 # Add diagnostics
 sim.add_diagnostic(diag)

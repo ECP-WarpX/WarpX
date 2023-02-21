@@ -1678,8 +1678,6 @@ class WarpXDiagnosticBase(object):
             )
             bucket._diagnostics_dict[self.name] = self.diagnostic
 
-
-
     def set_write_dir(self):
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
@@ -2075,6 +2073,65 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
 
     separator: string
         The separator between row values in the output file.
+
+    species: species instance
+        The name of the species for which to calculate the diagnostic, required for
+        diagnostic types 'BeamRelevant', 'ParticleHistogram', and 'ParticleExtrema'
+
+    bin_number: integer
+        For diagnostic type 'ParticleHistogram', the number of bins used for the histogram
+
+    bin_max: float
+        For diagnostic type 'ParticleHistogram', the maximum value of the bins
+
+    bin_min: float
+        For diagnostic type 'ParticleHistogram', the minimum value of the bins
+
+    normalization: {'unity_particle_weight', 'max_to_unity', 'area_to_unity'}, optional
+        For diagnostic type 'ParticleHistogram', normalization method of the histogram.
+
+    histogram_function: string
+        For diagnostic type 'ParticleHistogram', the function evaluated to produce the histogram data
+
+    filter_function: string, optional
+        For diagnostic type 'ParticleHistogram', the function to filter whether particles are included in the histogram
+
+    reduced_function: string
+        For diagnostic type 'FieldReduction', the function of the fields to evaluate
+
+    reduction_type: {'Maximum', 'Minimum', or 'Integral'}
+        For diagnostic type 'FieldReduction', the type of reduction
+
+    probe_geometry: {'Point', 'Line', 'Plane'}, defaut='Point'
+        For diagnostic type 'FieldProbe', the geometry of the probe
+
+    integrate: bool, default=false
+        For diagnostic type 'FieldProbe', whether the field is integrated
+
+    do_moving_window_FP: bool, default=False
+        For diagnostic type 'FieldProbe', whether the moving window is followed
+
+    x_probe, y_probe, z_probe: floats
+        For diagnostic type 'FieldProbe', a probe location. For 'Point', the location of the point. For 'Line', the start of the
+        line. For 'Plane', the center of the square detector.
+
+    interp_order: integer
+        For diagnostic type 'FieldProbe', the interpolation order for 'Line' and 'Plane'
+
+    resolution: integer
+        For diagnostic type 'FieldProbe', the number of points along the 'Line' or along each edge of the square 'Plane'
+
+    x1_probe, y1_probe, z1_probe: floats
+        For diagnostic type 'FieldProbe', the end point for 'Line'
+
+    detector_radius: float
+        For diagnostic type 'FieldProbe', the detector "radius" (half edge length) of the 'Plane'
+
+    target_normal_x, target_normal_y, target_normal_z: floats
+        For diagnostic type 'FieldProbe', the normal vector to the 'Plane'. Only applicable in 3D
+
+    target_up_x, target_up_y, target_up_z: floats
+        For diagnostic type 'FieldProbe', the vector specifying up in the 'Plane'
     """
 
     def __init__(self, diag_type, name=None, period=1, path=None,
@@ -2087,11 +2144,10 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
         self.extension = extension
         self.separator = separator
 
-        self._species = kw.pop('species', None)
+        self.user_defined_kw = {}
 
         # Now we need to handle all the specific inputs required for the
         # different reduced diagnostic types.
-        # Note: only a limited number are presently supported.
 
         # The simple diagnostics do not require any additional arguments
         self._simple_reduced_diagnostics = [
@@ -2107,17 +2163,14 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
         if self.type in self._simple_reduced_diagnostics:
             pass
         elif self.type in self._species_reduced_diagnostics:
-            if self._species is None:
-                raise AttributeError(
-                    f"{self.type} reduced diagnostic requires a species."
-                )
+            species = kw.pop('species')
+            self.species = species.name
             if self.type == 'ParticleHistogram':
-                raise NotImplementedError(
-                    f"{self.type} reduced diagnostic is not yet supported "
-                    "in pywarpx."
-                )
+                kw = self._handle_particle_histogram(**kw)
         elif self.type == "FieldProbe":
             kw = self._handle_field_probe(**kw)
+        elif self.type == "FieldReduction":
+            kw = self._handle_field_reduction(**kw)
         else:
             raise RuntimeError(
                 f"{self.type} reduced diagnostic is not yet supported "
@@ -2158,14 +2211,55 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
 
         return kw
 
+    def _handle_particle_histogram(self, **kw):
+        self.bin_number = kw.pop("bin_number")
+        self.bin_max = kw.pop("bin_max")
+        self.bin_min = kw.pop("bin_min")
+        self.normalization = kw.pop("normalization", None)
+        if self.normalization not in [None, "unity_particle_weight", "max_to_unity", "area_to_unity"]:
+            raise AttributeError(
+               "The ParticleHistogram normalization must be one of 'unity_particle_weight', 'max_to_unity', or 'area_to_unity'")
+
+        histogram_function = kw.pop("histogram_function")
+        filter_function = kw.pop("filter_function", None)
+
+        self.__setattr__("histogram_function(t,x,y,z,ux,uy,uz)", histogram_function)
+        self.__setattr__("filter_function(t,x,y,z,ux,uy,uz)", filter_function)
+
+        # Check the reduced function expressions for constants
+        for k in list(kw.keys()):
+            if (re.search(r'\b%s\b'%k, histogram_function) or
+                (filter_function is not None and re.search(r'\b%s\b'%k, filter_function))):
+                self.user_defined_kw[k] = kw[k]
+                del kw[k]
+
+        return kw
+
+    def _handle_field_reduction(self, **kw):
+        self.reduction_type = kw.pop("reduction_type")
+        reduced_function = kw.pop("reduced_function")
+
+        self.__setattr__("reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)", reduced_function)
+
+        # Check the reduced function expression for constants
+        for k in list(kw.keys()):
+            if re.search(r'\b%s\b'%k, reduced_function):
+                self.user_defined_kw[k] = kw[k]
+                del kw[k]
+
+        return kw
+
     def initialize_inputs(self):
 
         self.add_diagnostic()
 
-        for key in self.__dict__.keys():
-            if not key.startswith('_') and key not in ['name', 'diagnostic']:
-                self.diagnostic.__setattr__(key, self.__dict__[key])
+        self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
-        if self._species is not None:
-            diag = pywarpx.Bucket.Bucket(self.name + '.' + self._species.name)
-            self.diagnostic._species_dict[self._species.name] = diag
+        for key, value in self.__dict__.items():
+            if not key.startswith('_') and key not in ['name', 'diagnostic']:
+                if key.endswith(")"):
+                    # Analytic expressions require processing to deal with constants
+                    expression = pywarpx.my_constants.mangle_expression(value, self.mangle_dict)
+                    self.diagnostic.__setattr__(key, expression)
+                else:
+                    self.diagnostic.__setattr__(key, value)
