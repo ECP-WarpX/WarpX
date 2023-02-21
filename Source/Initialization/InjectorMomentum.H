@@ -292,7 +292,7 @@ struct InjectorMomentumBoltzmann
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
         const Real beta = velocity(x,y,z);
         int const dir = velocity.direction();
-        const Real gamma = static_cast<amrex::Real>(1./sqrt(1+beta*beta));
+        const Real gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
         u[dir] = gamma*beta;
         return XDim3 {u[0],u[1],u[2]};
     }
@@ -377,7 +377,7 @@ struct InjectorMomentumJuttner
         // This Lorentz transform is equation 17 in Zenitani.
         // It transforms the integral d3u' -> d3u
         // where d3u' is the volume element for momentum in the boosted frame.
-        u[dir] = 1/std::sqrt(1-beta*beta)*(u[dir]+gamma*beta);
+        u[dir] = 1._rt/std::sqrt(1._rt-beta*beta)*(u[dir]+gamma*beta);
         // Note that if beta = 0 then the flipping method and Lorentz transform
         // have no effect on the u[dir] direction.
         return amrex::XDim3 {u[0],u[1],u[2]};
@@ -392,7 +392,7 @@ struct InjectorMomentumJuttner
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
         Real const beta = velocity(x,y,z);
         int const dir = velocity.direction();
-        const Real gamma = static_cast<Real>(1./sqrt(1.+beta*beta));
+        const Real gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
         u[dir] = gamma*beta;
         return XDim3 {u[0],u[1],u[2]};
     }
