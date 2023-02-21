@@ -37,9 +37,9 @@ reflecting_particles.injection_style = "MultipleParticles"
 reflecting_particles.multiple_particles_pos_x = -0.9 +0.91
 reflecting_particles.multiple_particles_pos_y = 0. 0.
 reflecting_particles.multiple_particles_pos_z = 0. 0.
-reflecting_particles.multiple_particles_vel_x = -0.9 +0.91
-reflecting_particles.multiple_particles_vel_y = 0. 0.
-reflecting_particles.multiple_particles_vel_z = 0. 0.
+reflecting_particles.multiple_particles_ux = -0.9 +0.91
+reflecting_particles.multiple_particles_uy = 0. 0.
+reflecting_particles.multiple_particles_uz = 0. 0.
 reflecting_particles.multiple_particles_weight = 1. 1.
 
 absorbing_particles.charge = 0.
@@ -48,9 +48,9 @@ absorbing_particles.injection_style = "MultipleParticles"
 absorbing_particles.multiple_particles_pos_x = 0. 0. 0.
 absorbing_particles.multiple_particles_pos_y = -0.92 +0.93 0.
 absorbing_particles.multiple_particles_pos_z = 0. 0. 0.
-absorbing_particles.multiple_particles_vel_x = 0. 0. 0.
-absorbing_particles.multiple_particles_vel_y = -0.92 +0.93 0.
-absorbing_particles.multiple_particles_vel_z = 0. 0. 0.
+absorbing_particles.multiple_particles_ux = 0. 0. 0.
+absorbing_particles.multiple_particles_uy = -0.92 +0.93 0.
+absorbing_particles.multiple_particles_uz = 0. 0. 0.
 absorbing_particles.multiple_particles_weight = 1. 1. 1.
 
 periodic_particles.charge = 0.
@@ -59,9 +59,9 @@ periodic_particles.injection_style = "MultipleParticles"
 periodic_particles.multiple_particles_pos_x = 0. 0.
 periodic_particles.multiple_particles_pos_y = 0. 0.
 periodic_particles.multiple_particles_pos_z = -0.94 +0.95
-periodic_particles.multiple_particles_vel_x = 0. 0.
-periodic_particles.multiple_particles_vel_y = 0. 0.
-periodic_particles.multiple_particles_vel_z = -0.94 +0.95
+periodic_particles.multiple_particles_ux = 0. 0.
+periodic_particles.multiple_particles_uy = 0. 0.
+periodic_particles.multiple_particles_uz = -0.94 +0.95
 periodic_particles.multiple_particles_weight = 1. 1.
 
 # Diagnostics

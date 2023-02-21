@@ -39,30 +39,32 @@ void warpx_interp (int j, int k, int l,
     const int sl = (AMREX_SPACEDIM <= 2) ? 0 : arr_stag[2];
 
     // Number of points used for interpolation from coarse grid to fine grid
-    const int nj = (sj == 0) ? 1 : 2;
-    const int nk = (sk == 0) ? 1 : 2;
-    const int nl = (sl == 0) ? 1 : 2;
+    const int nj = 2;
+    const int nk = 2;
+    const int nl = 2;
 
-    const int jc = amrex::coarsen(j, rj);
-    const int kc = amrex::coarsen(k, rk);
-    const int lc = amrex::coarsen(l, rl);
+    const int jc = (sj == 0) ? amrex::coarsen(j - rj/2, rj) : amrex::coarsen(j, rj);
+    const int kc = (sk == 0) ? amrex::coarsen(k - rk/2, rk) : amrex::coarsen(k, rk);
+    const int lc = (sl == 0) ? amrex::coarsen(l - rl/2, rl) : amrex::coarsen(l, rl);
 
     amrex::Real wj;
     amrex::Real wk;
     amrex::Real wl;
 
-    // Interpolate from coarse grid to fine grid using either 1 point with weight 1, if both grids
-    // are cell-centered, or 2 points with weights depending on the distance, if both grids are nodal
+    // Interpolate from coarse grid to fine grid using 2 points
+    // with weights depending on the distance, for both nodal and cell-centered grids
+    amrex::Real hj = (sj == 0) ? 0.5_rt : 0._rt;
+    amrex::Real hk = (sk == 0) ? 0.5_rt : 0._rt;
+    amrex::Real hl = (sl == 0) ? 0.5_rt : 0._rt;
+
     amrex::Real res = 0.0_rt;
+
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
-                wj = (sj == 0) ? 1.0_rt : (rj - amrex::Math::abs(j - (jc + jj) * rj))
-                                          / static_cast<amrex::Real>(rj);
-                wk = (sk == 0) ? 1.0_rt : (rk - amrex::Math::abs(k - (kc + kk) * rk))
-                                          / static_cast<amrex::Real>(rk);
-                wl = (sl == 0) ? 1.0_rt : (rl - amrex::Math::abs(l - (lc + ll) * rl))
-                                          / static_cast<amrex::Real>(rl);
+                wj = (rj - amrex::Math::abs(j + hj - (jc + jj + hj) * rj)) / static_cast<amrex::Real>(rj);
+                wk = (rk - amrex::Math::abs(k + hk - (kc + kk + hk) * rk)) / static_cast<amrex::Real>(rk);
+                wl = (rl - amrex::Math::abs(l + hl - (lc + ll + hl) * rl)) / static_cast<amrex::Real>(rl);
                 res += wj * wk * wl * arr_coarse_zeropad(jc+jj,kc+kk,lc+ll);
             }
         }

@@ -56,6 +56,11 @@ cmake-build-*/
 .kdev?/
 *.kdev?
 
+##########
+# VsCode #
+##########
+.vscode
+
 # File-based project format:
 *.iws
 
