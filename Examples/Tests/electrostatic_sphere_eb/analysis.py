@@ -24,10 +24,9 @@ q_sim = data[1,2]
 print('Simulation charge: ', q_sim)
 assert abs((q_sim-q_th)/q_th) < 0.06
 
-if os.path.exists('diags/reducedfiles/eb_charge_one_eighth.txt'):
-    data_eighth = np.loadtxt('diags/reducedfiles/eb_charge_one_eighth.txt')
-    q_sim_eighth = data_eighth[1,2]
-    assert abs((q_sim_eighth-q_th/8)/(q_th/8)) < 0.06
+data_eighth = np.loadtxt('diags/reducedfiles/eb_charge_one_eighth.txt')
+q_sim_eighth = data_eighth[1,2]
+assert abs((q_sim_eighth-q_th/8)/(q_th/8)) < 0.06
 
 filename = sys.argv[1]
 test_name = os.path.split(os.getcwd())[1]
