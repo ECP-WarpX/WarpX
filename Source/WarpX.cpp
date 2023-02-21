@@ -1033,6 +1033,19 @@ WarpX::ReadParameters ()
         std::vector<std::string> lasers_names;
         pp_lasers.queryarr("names", lasers_names);
 
+#ifdef WARPX_DIM_RZ
+        // Here we check if the simulation includes laser and the number of
+        // azimuthal modes is less than 2.
+        // In that case we should throw a specific warning since
+        // representation of a laser pulse in cylindrical coordinates
+        // requires at least 2 azimuthal modes
+        if (lasers_names.size() > 0 && n_rz_azimuthal_modes < 2) {
+            ablastr::warn_manager::WMRecordWarning("Laser",
+            "Laser pulse representation in RZ requires at least 2 azimuthal modes",
+            ablastr::warn_manager::WarnPriority::high);
+        }
+#endif
+
         std::vector<std::string> sort_intervals_string_vec = {"-1"};
         int particle_shape;
         if (!species_names.empty() || !lasers_names.empty()) {
