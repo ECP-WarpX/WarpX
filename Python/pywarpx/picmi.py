@@ -2160,7 +2160,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
         ]
         # The species diagnostics require a species to be provided
         self._species_reduced_diagnostics = [
-            'BeamRelevant', 'ParticleHistogram', 'ParticleExtrema', 'ChargeOnEB'
+            'BeamRelevant', 'ParticleHistogram', 'ParticleExtrema'
         ]
 
         if self.type in self._simple_reduced_diagnostics:
