@@ -2242,7 +2242,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
 
     def _handle_field_reduction(self, **kw):
         self.reduction_type = kw.pop("reduction_type")
-        reduced_function = kw.pop("reduced_function", None)
+        reduced_function = kw.pop("reduced_function")
 
         self.__setattr__("reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)", reduced_function)
 
@@ -2255,7 +2255,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
         return kw
 
     def _handle_charge_on_eb(self, **kw):
-        weighting_function = kw.pop("weighting_function")
+        weighting_function = kw.pop("weighting_function", None)
 
         self.__setattr__("weighting_function(x,y,z)", weighting_function)
 
