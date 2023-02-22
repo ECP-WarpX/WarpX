@@ -42,7 +42,7 @@
 #include <cmath>
 #include <cstdio>
 #include <memory>
-#include <string>
+#include <sstream>
 #include <vector>
 
 using namespace amrex::literals;
@@ -165,26 +165,28 @@ void BTDiagnostics::DerivedInitData ()
             amrex::Print()<<"max_step insufficient to fill all BTD snapshots. Automatically increased to: "
                 << final_snapshot_fill_iteration << std::endl;
 
-        } else if (final_snapshot_fill_time > warpx.stopTime()) {
+        }
+        if (final_snapshot_fill_time > warpx.stopTime()) {
             warpx.updateStopTime(final_snapshot_fill_time);
             amrex::Print()<<"stop_time insufficient to fill all BTD snapshots. Automatically increased to: "
                 << final_snapshot_fill_time << std::endl;
 
-        } else if (warpx.maxStep() == std::numeric_limits<int>::max() && warpx.stopTime() == std::numeric_limits<amrex::Real>::max()) {
+        }
+        if (warpx.maxStep() == std::numeric_limits<int>::max() && warpx.stopTime() == std::numeric_limits<amrex::Real>::max()) {
             amrex::Print()<<"max_step unspecified and stop time unspecified.  Setting max step to "
                 <<final_snapshot_fill_iteration<< " to fill all BTD snapshots." << std::endl;
             warpx.updateMaxStep(final_snapshot_fill_iteration);
         }
 
     } else if (final_snapshot_fill_iteration > warpx.maxStep() || final_snapshot_fill_time > warpx.stopTime()) {
-        std::string warn_string =
-            "\nSimulation might not run long enough to fill all BTD snapshots.\n"
-            "Final step: " + std::to_string(warpx.maxStep()) + "\n"
-            "Stop time: " + std::to_string(warpx.stopTime()) + "\n"
-            "Last BTD snapshot fills around step: " + std::to_string(final_snapshot_fill_iteration) + "\n"
-            " or time: " + std::to_string(final_snapshot_fill_time) + "\n";
+        std::stringstream warn_string;
+            warn_string << "\nSimulation might not run long enough to fill all BTD snapshots.\n"
+            << "Final step: " << warpx.maxStep() << "\n"
+            <<"Stop time: " << warpx.stopTime() << "\n"
+            <<"Last BTD snapshot fills around step: " << final_snapshot_fill_iteration << "\n"
+            <<" or time: " << final_snapshot_fill_time << "\n";
         ablastr::warn_manager::WMRecordWarning(
-            "BTD", warn_string,
+            "BTD", warn_string.str(),
             ablastr::warn_manager::WarnPriority::low);
     }
 

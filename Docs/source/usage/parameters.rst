@@ -60,10 +60,11 @@ Overall simulation parameters
 * ``warpx.compute_max_step_from_btd`` (`integer`; 0 by default) optional
     Can be useful when computing back-transformed diagnostics.  If specified,
     automatically calculates the number of iterations required in the boosted
-    frame for all back-transformed diagnostics to be completed. If ``max_step``
-    or ``zmax_plasma_to_compute_max_step`` are not specified or the current
-    value of ``max_step`` is too low to fill all BTD, the value of ``max_step``
-    is overwritten with the new value and printed to standard output.
+    frame for all back-transformed diagnostics to be completed. If ``max_step``,
+    ``stop_time``, or ``warpx.zmax_plasma_to_compute_max_step`` are not specified,
+    or the current values of ``max_step`` and/or ``stop_time`` are too low to fill
+    all BTD snapshots, the values of ``max_step`` and/or ``stop_time`` are 
+    overwritten with the new values and printed to standard output.
 
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
     If provided ``warpx.random_seed = random``, the random seed will be determined
