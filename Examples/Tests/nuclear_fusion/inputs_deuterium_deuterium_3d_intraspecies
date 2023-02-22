@@ -1,3 +1,13 @@
+# Initialize a deuterium-deuterium thermal plasma similar to that in
+# section 4.1 of [1], with fusion multiplication factor 1e10,
+# 1e4 particles per cell, density 1e20/cm^3, temperature 20 keV.
+#
+# Reference:
+# [1] Higginson, D.P., Link, A. and Schmidt, A., 2019.
+#     A pairwise nuclear fusion algorithm for weighted particle-in-cell
+#     plasma simulations. Journal of Computational Physics, 388, pp.439-453.
+#     DOI: https://doi.org/10.1016/j.jcp.2019.03.020
+
 # algo
 algo.particle_shape = 3
 
@@ -24,15 +34,18 @@ deuterium.do_not_deposit = 1
 deuterium.do_not_push = 1
 deuterium.injection_style = "NRandomPerCell"
 deuterium.momentum_distribution_type = "gaussian"
-deuterium.num_particles_per_cell = 20000
+deuterium.num_particles_per_cell = 10000
 deuterium.profile = constant
 deuterium.species_type = deuterium
 deuterium.ux_m = 0.
 deuterium.uy_m = 0.
 deuterium.uz_m = 0.
-deuterium.ux_th = 0.003182336054828087
-deuterium.uy_th = 0.003182336054828087
-deuterium.uz_th = 0.003182336054828087
+# the standard deviation for the thermal momentum distribution is computed
+# from the plasma temperature as sqrt(kB*T/(mD*c**2)), where kB*T = 20 keV
+# and mD = 2.01410177812 u = 2.01410177812 * 931.49410242 MeV/c**2
+deuterium.ux_th = 0.003265007901313691
+deuterium.uy_th = 0.003265007901313691
+deuterium.uz_th = 0.003265007901313691
 deuterium.xmax =  1e-3
 deuterium.xmin = -1e-3
 deuterium.ymax =  1e-3
