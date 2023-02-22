@@ -187,6 +187,9 @@ void ChargeOnEB::ComputeDiags (const int step)
                     local_integral_contribution *= fun_weightingparser(x, y, z);
                 }
 
+                // Given that only a tiny fraction of the cells have a non-zero contribution
+                // (the ones that intersect with the EB), it is not clear whether ReduceOpSum
+                // or AtomicAdd would be faster. However, the implementation with AtomicAdd is easier.
                 amrex::Gpu::Atomic::AddNoRet( surface_integral_pointer, local_integral_contribution );
         });
     }
