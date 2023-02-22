@@ -160,6 +160,12 @@ To run a simulation, copy the lines above to a file ``perlmutter.sbatch`` and ru
 
 to submit the job.
 
+A100 GPUs (80 GB)
+^^^^^^^^^^^^^^^^^
+
+Perlmutter has 256 nodes that provide 80 GB HBM per A100 GPU.
+Replace ``-C gpu`` with ``-C gpu&hbm80g`` in the above job script to use these large-memory GPUs.
+
 
 .. _post-processing-perlmutter:
 
