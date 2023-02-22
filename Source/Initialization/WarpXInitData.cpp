@@ -1361,10 +1361,10 @@ std::string F_name, std::string F_component)
                 // 0,1,2 denote x,y,z in 3D xyz.
                 // 0,1 denote r,z in 2D rz.
                 amrex::Real x0, x1;
-                if ( box.type(0)==1 )
+                if ( box.type(0)==amrex::IndexType::CellIndex::NODE )
                      { x0 = real_box.lo(0) + ii*dx[0]; }
                 else { x0 = real_box.lo(0) + ii*dx[0] + 0.5*dx[0]; }
-                if ( box.type(1)==1 )
+                if ( box.type(1)==amrex::IndexType::CellIndex::NODE )
                      { x1 = real_box.lo(1) + j*dx[1]; }
                 else { x1 = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
 
@@ -1382,7 +1382,7 @@ std::string F_name, std::string F_component)
 
 #if defined(WARPX_DIM_3D)
                 amrex::Real x2;
-                if ( box.type(2)==1 )
+                if ( box.type(2)==amrex::IndexType::CellIndex::NODE )
                      { x2 = real_box.lo(2) + k*dx[2]; }
                 else { x2 = real_box.lo(2) + k*dx[2] + 0.5*dx[2]; }
                 int const ix2 = floor( (x2-offset2)/d2 );
