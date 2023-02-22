@@ -4,11 +4,11 @@ export proj="<yourProject>_g"  # change me
 # load E4S & Spack
 module load e4s/22.05
 
-mySWenvDir="/global/common/software/${proj%_g}/$USER/spack-envs/warpx-perlmutter-cuda"
+mySWenvDir="/global/common/software/${proj%_g}/$USER/spack-22.05-envs/warpx-perlmutter-cuda"
 if [ ! -d "${mySWenvDir}" ]
   spack env create -d ${mySWenvDir} spack-perlmutter-cuda.yaml
 fi
-spack env activate ${mySWenvDir}
+spack env activate -d ${mySWenvDir}
 
 # an alias to request an interactive batch node for one hour
 #   for parallel execution, start on the batch node: srun <command>
