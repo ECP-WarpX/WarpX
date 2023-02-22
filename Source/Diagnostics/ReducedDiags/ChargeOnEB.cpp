@@ -126,7 +126,7 @@ void ChargeOnEB::ComputeDiags (const int step)
     // Loop over boxes
     for (amrex::MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        const amrex::Box & box = enclosedCells(mfi.nodaltilebox());
+      const amrex::Box & box = mfi.tilebox( amrex::IntVect::TheCellVector() );
 
         // Skip boxes that do not intersect with the embedded boundary
         // (i.e. either fully covered or fully regular)
