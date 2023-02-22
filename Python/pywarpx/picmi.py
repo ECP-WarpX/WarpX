@@ -2242,7 +2242,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
 
     def _handle_field_reduction(self, **kw):
         self.reduction_type = kw.pop("reduction_type")
-        reduced_function = kw.pop("reduced_function")
+        reduced_function = kw.pop("reduced_function", None)
 
         self.__setattr__("reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)", reduced_function)
 
