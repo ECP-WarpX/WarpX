@@ -2099,6 +2099,9 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     reduced_function: string
         For diagnostic type 'FieldReduction', the function of the fields to evaluate
 
+    weighting_function: string, optional
+        For diagnostic type 'ChargeOnEB', the function to weight contributions to the total charge
+
     reduction_type: {'Maximum', 'Minimum', or 'Integral'}
         For diagnostic type 'FieldReduction', the type of reduction
 
@@ -2153,11 +2156,11 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
         self._simple_reduced_diagnostics = [
             'ParticleEnergy', 'ParticleMomentum', 'FieldEnergy',
             'FieldMomentum', 'FieldMaximum', 'RhoMaximum', 'ParticleNumber',
-            'LoadBalanceCosts', 'LoadBalanceEfficiency',
+            'LoadBalanceCosts', 'LoadBalanceEfficiency'
         ]
         # The species diagnostics require a species to be provided
         self._species_reduced_diagnostics = [
-            'BeamRelevant', 'ParticleHistogram', 'ParticleExtrema',
+            'BeamRelevant', 'ParticleHistogram', 'ParticleExtrema'
         ]
 
         if self.type in self._simple_reduced_diagnostics:
@@ -2171,6 +2174,8 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
             kw = self._handle_field_probe(**kw)
         elif self.type == "FieldReduction":
             kw = self._handle_field_reduction(**kw)
+        elif self.type == "ChargeOnEB":
+            kw = self._handle_charge_on_eb(**kw)
         else:
             raise RuntimeError(
                 f"{self.type} reduced diagnostic is not yet supported "
@@ -2244,6 +2249,19 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
         # Check the reduced function expression for constants
         for k in list(kw.keys()):
             if re.search(r'\b%s\b'%k, reduced_function):
+                self.user_defined_kw[k] = kw[k]
+                del kw[k]
+
+        return kw
+
+    def _handle_charge_on_eb(self, **kw):
+        weighting_function = kw.pop("weighting_function", None)
+
+        self.__setattr__("weighting_function(x,y,z)", weighting_function)
+
+        # Check the reduced function expression for constants
+        for k in list(kw.keys()):
+            if re.search(r'\b%s\b'%k, weighting_function):
                 self.user_defined_kw[k] = kw[k]
                 del kw[k]
 

@@ -2706,6 +2706,26 @@ Reduced Diagnostics
         so the time of the diagnostic may be long
         depending on the simulation size.
 
+* ``ChargeOnEB``
+    This type computes the total surface charge on the embedded boundary
+    (in Coulombs), by using the formula
+
+    .. math::
+
+        Q_{tot} = \epsilon_0 \iint dS \cdot E
+
+    where the integral is performed over the surface of the embedded boundary.
+
+    When providing ``<reduced_diags_name>.weighting_function(x,y,z)``, the
+    computed integral is weighted:
+    .. math::
+
+        Q = \epsilon_0 \iint dS \cdot E \times weighting(x, y, z)
+
+    In particular, by choosing a weighting function which returns either
+    1 or 0, it is possible to compute the charge on only some part of the
+    embedded boundary.
+
 * ``<reduced_diags_name>.intervals`` (`string`)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
     diagnostics are written to file.

@@ -1485,6 +1485,7 @@ private:
         return *m_field_factory[lev];
     }
 #ifdef AMREX_USE_EB
+public:
     amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
     }
