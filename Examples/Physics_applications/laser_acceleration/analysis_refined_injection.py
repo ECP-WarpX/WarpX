@@ -39,13 +39,14 @@ n_fine = 64
 # num particles per stream at time 0
 n_0 = 15
 
-# number of times moving window moves
-n_move = 99
+# number of times the moving window moves, calculated as n_move = (c*t)/dz where c  is speed of light, t is physical time (nsteps*dt). dz is dz on level 0
+n_move = 192
 
-# ref ratio
-rr = 2
+# ref ratio = 2 1
+# Refined only transversly. Longitudinal spacing between particles in each stream is the same in both coarse and fine regions
+rr_longitudinal = 1
 
-np_expected = (n_coarse + n_fine*rr)*(n_0 + n_move)
+np_expected = (n_coarse + n_fine*rr_longitudinal)*(n_0 + n_move)
 
 assert( np == np_expected )
 

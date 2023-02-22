@@ -12,9 +12,9 @@ jobs:
     runs-on: windows-latest
     if: github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: CCache Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
       # - for a refresh the key has to change, e.g., hash of a tracked file in the key
       with:
@@ -52,9 +52,9 @@ jobs:
     runs-on: windows-2019
     if: github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: CCache Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
       # - for a refresh the key has to change, e.g., hash of a tracked file in the key
       with:

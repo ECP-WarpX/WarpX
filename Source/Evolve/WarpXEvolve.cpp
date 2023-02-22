@@ -329,6 +329,12 @@ WarpX::EvolveExplicit (int numsteps)
             // and so that the fields are at the correct time in the output.
             bool const reset_fields = true;
             ComputeSpaceChargeField( reset_fields );
+            if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
+                // Call Magnetostatic Solver to solve for the vector potential A and compute the
+                // B field.  Time varying A contribution to E field is neglected.
+                // This is currently a lab frame calculation.
+                ComputeMagnetostaticField();
+            }
             ExecutePythonCallback("afterEsolve");
         }
 
@@ -988,31 +994,37 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
  * The mirror normal direction has to be parallel to the z axis.
  */
 void
-WarpX::applyMirrors(Real time){
+WarpX::applyMirrors(Real time)
+{
     // Loop over the mirrors
-    for(int i_mirror=0; i_mirror<num_mirrors; ++i_mirror){
+    for(int i_mirror=0; i_mirror<num_mirrors; ++i_mirror)
+    {
         // Get mirror properties (lower and upper z bounds)
-        Real z_min = mirror_z[i_mirror];
-        Real z_max_tmp = z_min + mirror_z_width[i_mirror];
+        amrex::Real z_min = mirror_z[i_mirror];
+        amrex::Real z_max_tmp = z_min + mirror_z_width[i_mirror];
+
         // Boost quantities for boosted frame simulations
-        if (gamma_boost>1){
+        if (gamma_boost>1)
+        {
             z_min = z_min/gamma_boost - PhysConst::c*beta_boost*time;
             z_max_tmp = z_max_tmp/gamma_boost - PhysConst::c*beta_boost*time;
         }
+
         // Loop over levels
-        for(int lev=0; lev<=finest_level; lev++){
-            // Make sure that the mirror contains at least
-            // mirror_z_npoints[i_mirror] cells
-            Real dz = WarpX::CellSize(lev)[2];
-            Real z_max = std::max(z_max_tmp,
-                                  z_min+mirror_z_npoints[i_mirror]*dz);
+        for(int lev=0; lev<=finest_level; lev++)
+        {
+            // Mirror must contain at least mirror_z_npoints[i_mirror] cells
+            amrex::Real dz = WarpX::CellSize(lev)[2];
+            amrex::Real z_max = std::max(z_max_tmp, z_min+mirror_z_npoints[i_mirror]*dz);
+
             // Get fine patch field MultiFabs
-            MultiFab& Ex = *Efield_fp[lev][0].get();
-            MultiFab& Ey = *Efield_fp[lev][1].get();
-            MultiFab& Ez = *Efield_fp[lev][2].get();
-            MultiFab& Bx = *Bfield_fp[lev][0].get();
-            MultiFab& By = *Bfield_fp[lev][1].get();
-            MultiFab& Bz = *Bfield_fp[lev][2].get();
+            amrex::MultiFab& Ex = *Efield_fp[lev][0].get();
+            amrex::MultiFab& Ey = *Efield_fp[lev][1].get();
+            amrex::MultiFab& Ez = *Efield_fp[lev][2].get();
+            amrex::MultiFab& Bx = *Bfield_fp[lev][0].get();
+            amrex::MultiFab& By = *Bfield_fp[lev][1].get();
+            amrex::MultiFab& Bz = *Bfield_fp[lev][2].get();
+
             // Set each field to zero between z_min and z_max
             NullifyMF(Ex, lev, z_min, z_max);
             NullifyMF(Ey, lev, z_min, z_max);
@@ -1020,14 +1032,21 @@ WarpX::applyMirrors(Real time){
             NullifyMF(Bx, lev, z_min, z_max);
             NullifyMF(By, lev, z_min, z_max);
             NullifyMF(Bz, lev, z_min, z_max);
-            if (lev>0){
+
+            // If div(E)/div(B) cleaning are used, set F/G field to zero
+            if (F_fp[lev]) NullifyMF(*F_fp[lev].get(), lev, z_min, z_max);
+            if (G_fp[lev]) NullifyMF(*G_fp[lev].get(), lev, z_min, z_max);
+
+            if (lev>0)
+            {
                 // Get coarse patch field MultiFabs
-                MultiFab& cEx = *Efield_cp[lev][0].get();
-                MultiFab& cEy = *Efield_cp[lev][1].get();
-                MultiFab& cEz = *Efield_cp[lev][2].get();
-                MultiFab& cBx = *Bfield_cp[lev][0].get();
-                MultiFab& cBy = *Bfield_cp[lev][1].get();
-                MultiFab& cBz = *Bfield_cp[lev][2].get();
+                amrex::MultiFab& cEx = *Efield_cp[lev][0].get();
+                amrex::MultiFab& cEy = *Efield_cp[lev][1].get();
+                amrex::MultiFab& cEz = *Efield_cp[lev][2].get();
+                amrex::MultiFab& cBx = *Bfield_cp[lev][0].get();
+                amrex::MultiFab& cBy = *Bfield_cp[lev][1].get();
+                amrex::MultiFab& cBz = *Bfield_cp[lev][2].get();
+
                 // Set each field to zero between z_min and z_max
                 NullifyMF(cEx, lev, z_min, z_max);
                 NullifyMF(cEy, lev, z_min, z_max);
@@ -1035,6 +1054,10 @@ WarpX::applyMirrors(Real time){
                 NullifyMF(cBx, lev, z_min, z_max);
                 NullifyMF(cBy, lev, z_min, z_max);
                 NullifyMF(cBz, lev, z_min, z_max);
+
+                // If div(E)/div(B) cleaning are used, set F/G field to zero
+                if (F_cp[lev]) NullifyMF(*F_cp[lev].get(), lev, z_min, z_max);
+                if (G_cp[lev]) NullifyMF(*G_cp[lev].get(), lev, z_min, z_max);
             }
         }
     }

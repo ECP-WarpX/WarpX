@@ -80,16 +80,38 @@ Overall simulation parameters
     are recomputed at each iteration from the Poisson equation.
     There is no limitation on the timestep in this case, but
     electromagnetic effects (e.g. propagation of radiation, lasers, etc.)
-    are not captured. There are two options:
+    are not captured. There are several options:
 
     * ``labframe``: Poisson's equation is solved in the lab frame with
-      the charge density of all species combined. There will only be E
-      fields.
+      the charge density of all species combined. More specifically, the code solves:
 
-    * ``relativistic``: Poisson's equation is solved for each species
-      separately taking into account their averaged velocities. The field
-      is mapped to the simulation frame and will produce both E and B
-      fields.
+      .. math::
+
+        \boldsymbol{\nabla}^2 \phi = - \rho/\epsilon_0 \qquad \boldsymbol{E} = - \boldsymbol{\nabla}\phi
+
+    * ``labframe-electromagnetostatic``: Poisson's equation is solved in the lab frame with
+      the charge density of all species combined.  Additionally the 3-component vector potential
+      is solved in the Coulomb Gauge with the current density of all species combined
+      to include self magnetic fields. More specifically, the code solves:
+
+      .. math::
+
+        \boldsymbol{\nabla}^2 \phi = - \rho/\epsilon_0 \qquad \boldsymbol{E} = - \boldsymbol{\nabla}\phi \\
+        \boldsymbol{\nabla}^2 \boldsymbol{A} = - \mu_0 \boldsymbol{j} \qquad \boldsymbol{B} = \boldsymbol{\nabla}\times\boldsymbol{A}
+
+    * ``relativistic``: Poisson's equation is solved **for each species**
+      in their respective rest frame. The corresponding field
+      is mapped back to the simulation frame and will produce both E and B
+      fields. More specifically, in the simulation frame, this is equivalent to solving **for each species**
+
+      .. math::
+
+        \boldsymbol{\nabla}^2 - (\boldsymbol{\beta}\cdot\boldsymbol{\nabla})^2\phi = - \rho/\epsilon_0 \qquad
+        \boldsymbol{E} = -\boldsymbol{\nabla}\phi + \boldsymbol{\beta}(\boldsymbol{\beta} \cdot \boldsymbol{\nabla}\phi)
+        \qquad \boldsymbol{B} = -\frac{1}{c}\boldsymbol{\beta}\times\boldsymbol{\nabla}\phi
+
+      where :math:`\boldsymbol{\beta}` is the average (normalized) velocity of the considered species (which can be relativistic).
+      See e.g. `Vay et al., Physics of Plasmas 15, 056701 (2008) <https://doi.org/10.1063/1.2837054>`__ for more information.
 
     See the `AMReX documentation <https://amrex-codes.github.io/amrex/docs_html/LinearSolvers.html#>`_
     for details of the MLMG solver (the default solver used with electrostatic
@@ -205,7 +227,7 @@ Setting up the field mesh
     Note that this value has to match the :ref:`WarpX_DIMS <building-cmake-options>` compile-time option.
     If you installed WarpX from a :ref:`package manager <install-users>`, then pick the right executable by name.
 
-* ``geometry.n_rz_azimuthal_modes`` (`integer`; 1 by default)
+* ``warpx.n_rz_azimuthal_modes`` (`integer`; 1 by default)
     When using the RZ version, this is the number of azimuthal modes.
     The default is ``1``, which corresponds to a perfectly axisymmetric simulation.
 
@@ -471,13 +493,33 @@ Distribution across MPI ranks and parallelization
     Particle weight factor used in `Heuristic` strategy for costs update; if running on GPU,
     the particle weight is set to a value determined from single-GPU tests on Summit,
     depending on the choice of solver (FDTD or PSATD) and order of the particle shape.
-    If running on CPU, the default value is `0.9`.
+    If running on CPU, the default value is `0.9`. If running on GPU, the default value is
+
+    +----------+-----------------------+
+    |          | Particle shape factor |
+    +----------+-------+-------+-------+
+    |          | 1     | 2     | 3     |
+    +==========+=======+=======+=======+
+    | FDTD/CKC | 0.599 | 0.732 | 0.855 |
+    +----------+-------+-------+-------+
+    | PSATD    | 0.425 | 0.595 | 0.75  |
+    +----------+-------+-------+-------+
 
 * ``algo.costs_heuristic_cells_wt`` (`float`) optional
     Cell weight factor used in `Heuristic` strategy for costs update; if running on GPU,
     the cell weight is set to a value determined from single-GPU tests on Summit,
     depending on the choice of solver (FDTD or PSATD) and order of the particle shape.
-    If running on CPU, the default value is `0.1`.
+    If running on CPU, the default value is `0.1`. If running on GPU, the default value is
+
+    +----------+-----------------------+
+    |          | Particle shape factor |
+    +----------+-------+-------+-------+
+    |          | 1     | 2     | 3     |
+    +==========+=======+=======+=======+
+    | FDTD/CKC | 0.401 | 0.268 | 0.145 |
+    +----------+-------+-------+-------+
+    | PSATD    | 0.575 | 0.405 | 0.25  |
+    +----------+-------+-------+-------+
 
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
@@ -616,7 +658,7 @@ Particle initialization
     * ``SingleParticle``: Inject a single macroparticle.
       This requires the additional parameters:
       ``<species_name>.single_particle_pos`` (`3 doubles`, particle 3D position [meter])
-      ``<species_name>.single_particle_vel`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
+      ``<species_name>.single_particle_u`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
       ``<species_name>.single_particle_weight`` ( `double`, macroparticle weight, i.e. number of physical particles it represents)
 
     * ``MultipleParticles``: Inject multiple macroparticles.
@@ -624,9 +666,9 @@ Particle initialization
       ``<species_name>.multiple_particles_pos_x`` (list of `doubles`, X positions of the particles [meter])
       ``<species_name>.multiple_particles_pos_y`` (list of `doubles`, Y positions of the particles [meter])
       ``<species_name>.multiple_particles_pos_z`` (list of `doubles`, Z positions of the particles [meter])
-      ``<species_name>.multiple_particles_vel_x`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
-      ``<species_name>.multiple_particles_vel_y`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
-      ``<species_name>.multiple_particles_vel_z`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
+      ``<species_name>.multiple_particles_ux`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
+      ``<species_name>.multiple_particles_uy`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
+      ``<species_name>.multiple_particles_uz`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
       ``<species_name>.multiple_particles_weight`` (list of `doubles`, macroparticle weights, i.e. number of physical particles each represents)
 
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in
@@ -969,7 +1011,7 @@ Particle initialization
 * ``<species>.physical_element`` (`string`)
     Only read if `do_field_ionization = 1`. Symbol of chemical element for
     this species. Example: for Helium, use ``physical_element = He``.
-    Elements up to atomic number Z=86 (Radon) are supported, let us know if you need higher Z.
+    All the elements up to atomic number Z=100 (Fermium) are supported.
 
 * ``<species>.ionization_product_species`` (`string`)
     Only read if `do_field_ionization = 1`. Name of species in which ionized
@@ -984,7 +1026,10 @@ Particle initialization
 * ``<species>.do_classical_radiation_reaction`` (`int`) optional (default `0`)
     Enables Radiation Reaction (or Radiation Friction) for the species. Species
     must be either electrons or positrons. Boris pusher must be used for the
-    simulation
+    simulation. If both ``<species>.do_classical_radiation_reaction`` and
+    ``<species>.do_qed_quantum_sync`` are enabled, then the classical module
+    will be used when the particle's chi parameter is below ``qed_qs.chi_min``,
+    the discrete quantum module otherwise.
 
 * ``<species>.do_qed_quantum_sync`` (`int`) optional (default `0`)
     Enables Quantum synchrotron emission for this species.
@@ -1305,7 +1350,7 @@ Grid initialization
     then the constants `Bo` and `delta` required in the above equation
     can be set using ``my_constants.Bo=`` and ``my_constants.delta=`` in the
     input file. For a two-dimensional simulation, it is assumed that the first dimension
-    is `x` and the second dimension in `z`, and the value of `y` is set to zero.
+    is `x` and the second dimension is `z`, and the value of `y` is set to zero.
     Note that the current implementation of the parser for external B-field
     does not work with RZ and the code will abort with an error message.
 
@@ -1329,7 +1374,7 @@ Grid initialization
     then the constants `Bo` and `delta` required in the above equation
     can be set using ``my_constants.Eo=`` and ``my_constants.delta=`` in the
     input file. For a two-dimensional simulation, it is assumed that the first
-    dimension is `x` and the second dimension in `z`,
+    dimension is `x` and the second dimension is `z`,
     and the value of `y` is set to zero.
     Note that the current implementation of the parser for external E-field
     does not work with RZ and the code will abort with an error message.
@@ -1626,12 +1671,12 @@ Numerics and algorithms
     The ratio between the actual timestep that is used in the simulation
     and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
     the timestep will be exactly equal to the CFL limit.)
-    This parameter will only be used with the electromagnatic solver.
+    This parameter will only be used with the electromagnetic solver.
 
 * ``warpx.const_dt`` (`float`)
     Allows direct specification of the time step size, in units of seconds.
     When the electrostatic solver is being used, this must be supplied.
-    This can be used with the electromagnatic solver, overriding ``warpx.cfl``, but
+    This can be used with the electromagnetic solver, overriding ``warpx.cfl``, but
     it is up to the user to ensure that the CFL condition is met.
 
 * ``warpx.use_filter`` (`0` or `1`; default: `1`, except for RZ FDTD)

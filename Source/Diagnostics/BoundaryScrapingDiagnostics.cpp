@@ -136,7 +136,7 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
 
     int n_particles = 0;
     for (auto const& species_name : m_output_species_names) {
-        n_particles += particle_buffer.getNumParticlesInContainer(species_name, i_buffer);
+        n_particles += particle_buffer.getNumParticlesInContainer(species_name, i_buffer, false);
     }
 
     // If the saving of the particles was not set up for any of the species for this boundary

@@ -83,8 +83,8 @@ For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you als
 Spack (macOS/Linux)
 ^^^^^^^^^^^^^^^^^^^
 
-First, download a `Spack desktop development environment <https://github.com/ECP-WarpX/WarpX/blob/development/Tools/machines/desktop>`__ of your choice.
-For most desktop development, pick the OpenMP environment for CPUs unless you have a supported GPU.
+First, download a `WarpX Spack desktop development environment <https://github.com/ECP-WarpX/WarpX/blob/development/Tools/machines/desktop>`__ of your choice.
+For most desktop developments, pick the OpenMP environment for CPUs unless you have a supported GPU.
 
 * **Debian/Ubuntu** Linux:
 
@@ -95,6 +95,15 @@ For most desktop development, pick the OpenMP environment for CPUs unless you ha
 * **macOS**: first, prepare with ``brew install gpg2; brew install gcc``
 
   * OpenMP: ``system=macos; compute=openmp``
+
+If you already `installed Spack <https://spack.io>`__, we recommend to activate its `binary caches <https://spack.io/spack-binary-packages/>`__ for faster builds:
+
+.. code-block:: bash
+
+   spack mirror add rolling https://binaries.spack.io/develop
+   spack buildcache keys --install --trust
+
+Now install the WarpX dependencies in a new WarpX development environment:
 
 .. code-block:: bash
 
