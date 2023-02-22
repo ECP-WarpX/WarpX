@@ -21,10 +21,9 @@ import os
 import sys
 
 import matplotlib.pyplot as plt
-import yt
-
 import numpy as np
 import scipy.constants
+import yt
 
 yt.funcs.mylog.setLevel(0)
 
