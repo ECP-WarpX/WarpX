@@ -114,6 +114,7 @@ Real WarpX::gamma_boost = 1._rt;
 Real WarpX::beta_boost = 0._rt;
 Vector<int> WarpX::boost_direction = {0,0,0};
 bool WarpX::do_compute_max_step_from_zmax = false;
+bool WarpX::compute_max_step_from_btd = false;
 Real WarpX::zmax_plasma_to_compute_max_step = 0._rt;
 
 short WarpX::current_deposition_algo;
@@ -621,6 +622,9 @@ WarpX::ReadParameters ()
         do_compute_max_step_from_zmax = utils::parser::queryWithParser(
             pp_warpx, "zmax_plasma_to_compute_max_step",
             zmax_plasma_to_compute_max_step);
+
+        pp_warpx.query("compute_max_step_from_btd",
+            compute_max_step_from_btd);
 
         pp_warpx.query("do_moving_window", do_moving_window);
         if (do_moving_window)
