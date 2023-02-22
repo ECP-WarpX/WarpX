@@ -63,7 +63,7 @@ Overall simulation parameters
     frame for all back-transformed diagnostics to be completed. If ``max_step``,
     ``stop_time``, or ``warpx.zmax_plasma_to_compute_max_step`` are not specified,
     or the current values of ``max_step`` and/or ``stop_time`` are too low to fill
-    all BTD snapshots, the values of ``max_step`` and/or ``stop_time`` are 
+    all BTD snapshots, the values of ``max_step`` and/or ``stop_time`` are
     overwritten with the new values and printed to standard output.
 
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
