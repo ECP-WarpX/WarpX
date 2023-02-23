@@ -1392,10 +1392,12 @@ std::string F_name, std::string F_component)
 
                 // Assign the values through linear interpolation
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                mffab(i,j,k) = FC_data[(ix1  )+(ix0  )*extent1]*(1.0-ddx0)*(1.0-ddx1) +
-                               FC_data[(ix1  )+(ix0+1)*extent1]*(    ddx0)*(1.0-ddx1) +
-                               FC_data[(ix1+1)+(ix0  )*extent1]*(1.0-ddx0)*(    ddx1) +
-                               FC_data[(ix1+1)+(ix0+1)*extent1]*(    ddx0)*(    ddx1);
+                amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent[0], extent[2], extent[1]}, 1);
+                mffab(i,j,k) =
+                    fc_array(0, ix1  , ix0  )*(1.0-ddx0)*(1.0-ddx1) +
+                    fc_array(0, ix1  , ix0+1)*(    ddx0)*(1.0-ddx1) +
+                    fc_array(0, ix1+1, ix0  )*(1.0-ddx0)*(    ddx1) +
+                    fc_array(0, ix1+1, ix0+1)*(    ddx0)*(    ddx1);
 #elif defined(WARPX_DIM_3D)
                 int ext_2 = extent2;
                 int ext_12 = extent1*extent2;
