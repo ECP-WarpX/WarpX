@@ -281,7 +281,7 @@ Setting up the field mesh
     enough to hold the particle shape, on the fine grid
 
 * ``warpx.n_field_gather_buffer`` (`integer`, optional)
-    Default: ``n_current_deposition_buffer + 1`` (one cell larger than ``n_current_deposition_buffer`` on the fine grid).
+    Default: ``warpx.n_field_gather_buffer = n_current_deposition_buffer + 1`` (one cell larger than ``n_current_deposition_buffer`` on the fine grid).
 
     When using mesh refinement, particles that are located inside a refinement patch, but within ``n_field_gather_buffer`` cells of the edge of the patch, gather the fields from the lower refinement level, instead of gathering the fields from the refinement patch itself.
     This avoids some of the spurious effects that can occur inside the refinement patch, close to its edge.
