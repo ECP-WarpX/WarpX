@@ -29,13 +29,14 @@ repos:
     - id: check-toml
     - id: check-yaml
     - id: check-added-large-files
+      args: ['--maxkb=40']
     - id: requirements-txt-fixer
 #  - id: fix-encoding-pragma
 #    exclude: ^noxfile.py$
 
 # documentation files: .rst
 -   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
 #    - id: rst-backticks
     - id: rst-directive-colons
@@ -48,7 +49,7 @@ repos:
 
 # Changes tabs to spaces
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.3.1
+  rev: v1.4.2
   hooks:
   - id: remove-tabs
     exclude: 'Make.WarpX|Make.package|Makefile|GNUmake'
@@ -67,7 +68,7 @@ repos:
 
 # Autoremoves unused Python imports
 - repo: https://github.com/hadialqattan/pycln
-  rev: v2.1.2
+  rev: v2.1.3
   hooks:
   - id: pycln
     name: pycln (python)
@@ -75,7 +76,7 @@ repos:
 # Sorts Python imports according to PEP8
 # https://www.python.org/dev/peps/pep-0008/#imports
 - repo: https://github.com/pycqa/isort
-  rev: v5.11.3
+  rev: 5.12.0
   hooks:
   - id: isort
     name: isort (python)
@@ -102,6 +103,16 @@ repos:
 #  - id: blacken-docs
 #    additional_dependencies:
 #    - black==21.10b0 # keep in sync with black hook
+
+# Jupyter Notebooks: clean up all cell outputs
+- repo: https://github.com/roy-ht/pre-commit-jupyter
+  rev: v1.2.1
+  hooks:
+  - id: jupyter-notebook-cleanup
+    args:
+      - --pin-patterns
+      - "[pin];[donotremove]"
+      # - --remove-kernel-metadata
 
 # Checks the manifest for missing files (native support)
 - repo: https://github.com/mgedmin/check-manifest

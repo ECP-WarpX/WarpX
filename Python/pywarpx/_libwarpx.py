@@ -206,6 +206,8 @@ class LibWarpX():
         self.libwarpx_so.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
         self.libwarpx_so.warpx_getPhiFP.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getPhiFPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getVectorPotentialFP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getVectorPotentialFPLoVects.restype = _LP_c_int
         self.libwarpx_so.warpx_getFfieldCP.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getFfieldCPLoVects.restype = _LP_c_int
         self.libwarpx_so.warpx_getFfieldFP.restype = _LP_LP_c_real
@@ -242,6 +244,9 @@ class LibWarpX():
         self.libwarpx_so.warpx_getJx_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getJy_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getJz_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getAx_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getAy_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getAz_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getRho_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getPhi_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getF_nodal_flag.restype = _LP_c_int
@@ -304,6 +309,7 @@ class LibWarpX():
         self.libwarpx_so.warpx_gett_new.argtypes = [ctypes.c_int]
         self.libwarpx_so.warpx_sett_new.argtypes = [ctypes.c_int, c_real]
         self.libwarpx_so.warpx_getdt.argtypes = [ctypes.c_int]
+        self.libwarpx_so.warpx_setPotentialEB.argtypes = [ctypes.c_char_p]
 
     def _get_boundary_number(self, boundary):
         '''
@@ -1037,7 +1043,7 @@ class LibWarpX():
             ctypes.c_char_p(species_name.encode('utf-8')), local
         )
 
-    def get_particle_boundary_buffer_size(self, species_name, boundary):
+    def get_particle_boundary_buffer_size(self, species_name, boundary, local=False):
         '''
         This returns the number of particles that have been scraped so far in the simulation
         from the specified boundary and of the specified species.
@@ -1051,11 +1057,15 @@ class LibWarpX():
         boundary       : str
             The boundary from which to get the scraped particle data in the
             form x/y/z_hi/lo
+
+        local          : bool
+            Whether to only return the number of particles in the current
+            processor's buffer
         '''
 
         return self.libwarpx_so.warpx_getParticleBoundaryBufferSize(
             ctypes.c_char_p(species_name.encode('utf-8')),
-            self._get_boundary_number(boundary)
+            self._get_boundary_number(boundary), local
         )
 
     def get_particle_boundary_buffer_structs(self, species_name, boundary, level):
@@ -1199,6 +1209,18 @@ class LibWarpX():
         )
         if sync_rho:
             self.libwarpx_so.warpx_SyncRho()
+
+    def set_potential_EB(self, potential):
+        """
+        Set the expression string for the embedded boundary potential
+
+        Parameters
+        ----------
+
+        potential : str
+            The expression string
+        """
+        self.libwarpx_so.warpx_setPotentialEB(ctypes.c_char_p(potential.encode('utf-8')))
 
     def _get_mesh_field_list(self, warpx_func, level, direction, include_ghosts):
         """
@@ -1461,6 +1483,32 @@ class LibWarpX():
         '''
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getBfieldFP, level, direction, include_ghosts)
+
+    def get_mesh_vector_potential_fp(self, level, direction, include_ghosts=True):
+        '''
+
+        This returns a list of numpy arrays containing the mesh vector potential
+        data on each grid for this process. This version returns the field on
+        the fine patch for the given level.
+
+        The data for the numpy arrays are not copied, but share the underlying
+        memory buffer with WarpX. The numpy arrays are fully writeable.
+
+        Parameters
+        ----------
+
+            level          : the AMR level to get the data for
+            direction      : the component of the data you want
+            include_ghosts : whether to include ghost zones or not
+
+        Returns
+        -------
+
+            A List of numpy arrays.
+
+        '''
+
+        return self._get_mesh_field_list(self.libwarpx_so.warpx_getVectorPotentialFP, level, direction, include_ghosts)
 
     def get_mesh_magnetic_field_cp_pml(self, level, direction, include_ghosts=True):
         '''
@@ -2199,6 +2247,27 @@ class LibWarpX():
         '''
         return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getBfieldFPLoVects)
 
+    def get_mesh_vector_potential_fp_lovects(self, level, direction, include_ghosts=True):
+        '''
+
+        This returns a list of the lo vectors of the arrays containing the mesh vector potential field
+        data on each grid for this process.
+
+        Parameters
+        ----------
+
+            level          : the AMR level to get the data for
+            direction      : the component of the data you want
+            include_ghosts : whether to include ghost zones or not
+
+        Returns
+        -------
+
+            A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
+
+        '''
+        return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getVectorPotentialFPLoVects)
+
     def get_mesh_magnetic_field_cp_lovects_pml(self, level, direction, include_ghosts=True):
         '''
 
@@ -2699,6 +2768,24 @@ class LibWarpX():
         This returns a 1d array of the nodal flags for Jz along each direction. A 1 means node centered, and 0 cell centered.
         '''
         return self._get_nodal_flag(self.libwarpx_so.warpx_getJz_nodal_flag)
+
+    def get_Ax_nodal_flag(self):
+        '''
+        This returns a 1d array of the nodal flags for Ax along each direction. A 1 means node centered, and 0 cell centered.
+        '''
+        return self._get_nodal_flag(self.libwarpx_so.warpx_getAx_nodal_flag)
+
+    def get_Ay_nodal_flag(self):
+        '''
+        This returns a 1d array of the nodal flags for Ay along each direction. A 1 means node centered, and 0 cell centered.
+        '''
+        return self._get_nodal_flag(self.libwarpx_so.warpx_getAy_nodal_flag)
+
+    def get_Az_nodal_flag(self):
+        '''
+        This returns a 1d array of the nodal flags for Az along each direction. A 1 means node centered, and 0 cell centered.
+        '''
+        return self._get_nodal_flag(self.libwarpx_so.warpx_getAz_nodal_flag)
 
     def get_Rho_nodal_flag(self):
         '''

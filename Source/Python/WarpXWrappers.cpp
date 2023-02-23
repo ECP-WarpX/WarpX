@@ -289,6 +289,8 @@ namespace
     WARPX_GET_FIELD(warpx_getCurrentDensityCP, WarpX::GetInstance().get_pointer_current_cp)
     WARPX_GET_FIELD(warpx_getCurrentDensityFP, WarpX::GetInstance().get_pointer_current_fp)
 
+    WARPX_GET_FIELD(warpx_getVectorPotentialFP, WarpX::GetInstance().get_pointer_vector_potential_fp)
+
     WARPX_GET_LOVECTS(warpx_getEfieldLoVects, WarpX::GetInstance().get_pointer_Efield_aux)
     WARPX_GET_LOVECTS(warpx_getEfieldCPLoVects, WarpX::GetInstance().get_pointer_Efield_cp)
     WARPX_GET_LOVECTS(warpx_getEfieldFPLoVects, WarpX::GetInstance().get_pointer_Efield_fp)
@@ -300,6 +302,7 @@ namespace
     WARPX_GET_LOVECTS(warpx_getCurrentDensityLoVects, WarpX::GetInstance().get_pointer_current_fp)
     WARPX_GET_LOVECTS(warpx_getCurrentDensityCPLoVects, WarpX::GetInstance().get_pointer_current_cp)
     WARPX_GET_LOVECTS(warpx_getCurrentDensityFPLoVects, WarpX::GetInstance().get_pointer_current_fp)
+    WARPX_GET_LOVECTS(warpx_getVectorPotentialFPLoVects, WarpX::GetInstance().get_pointer_vector_potential_fp)
 
     WARPX_GET_LOVECTS(warpx_getEdgeLengthsLoVects, WarpX::GetInstance().get_pointer_edge_lengths)
     WARPX_GET_LOVECTS(warpx_getFaceAreasLoVects, WarpX::GetInstance().get_pointer_face_areas)
@@ -313,6 +316,9 @@ namespace
     int* warpx_getJx_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_current_fp(0,0) );}
     int* warpx_getJy_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_current_fp(0,1) );}
     int* warpx_getJz_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_current_fp(0,2) );}
+    int* warpx_getAx_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_vector_potential_fp(0,0) );}
+    int* warpx_getAy_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_vector_potential_fp(0,1) );}
+    int* warpx_getAz_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_vector_potential_fp(0,2) );}
     int* warpx_getRho_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_rho_fp(0) );}
     int* warpx_getPhi_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_phi_fp(0) );}
     int* warpx_getF_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().get_pointer_F_fp(0) );}
@@ -559,11 +565,11 @@ namespace
         return myspc.sumParticleCharge(local);
     }
 
-    int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary)
+    int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary, bool local)
     {
         const std::string name(species_name);
         auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
-        return particle_buffers.getNumParticlesInContainer(species_name, boundary);
+        return particle_buffers.getNumParticlesInContainer(species_name, boundary, local);
     }
 
     int** warpx_getParticleBoundaryBufferScrapedSteps(const char* species_name, int boundary, int lev,
@@ -755,6 +761,12 @@ namespace
 
     int warpx_getNProcs () {
         return amrex::ParallelDescriptor::NProcs();
+    }
+
+    void warpx_setPotentialEB (const char * char_potential) {
+        WarpX& warpx = WarpX::GetInstance();
+        const std::string potential(char_potential);
+        warpx.m_poisson_boundary_handler.setPotentialEB(potential);
     }
 
     void mypc_Redistribute () {

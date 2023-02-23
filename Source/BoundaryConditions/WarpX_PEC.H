@@ -67,6 +67,15 @@ using namespace amrex;
      *            where, x-boundary is along the line z at x=xmin and x=xmax
      *                   z-boundary is along the line x at z=zmin and z=zmax
      *
+     *        For 1D : WarpX uses Z as the only dimension
+     *            x component is tangential to the z-boundary
+     *            y component is tangential to the z-boundary
+     *            z component is not tangential to the z-boundary
+     *            x component is not normal to any boundary (Only z dimension in 1D)
+     *            y component is not normal to any boundary (Only z dimension in 1D)
+     *            z component is normal to the z-boundary
+     *            where, z-boundary is a point at z=zmin and z=zmax
+     *
      *        For RZ : WarpX uses R-Z as the two dimensions
      *            r component is tangential to the z-boundary
      *            theta_component is tangential to the r-boundary and z-boundary
@@ -121,6 +130,10 @@ using namespace amrex;
                 //          The logic below ensures that the flags are set right for 2D
                 const bool is_tangent_to_PEC = ( (icomp == AMREX_SPACEDIM*idim)
                                              ? false : true );
+#elif (defined WARPX_DIM_1D_Z)
+                // For 1D : icomp=0 and icomp=1 (Ex and Ey are tangential to the z boundary)
+                //          The logic below ensures that the flags are set right for 1D
+                const bool is_tangent_to_PEC = ( ( icomp == idim+2) ? false : true );
 #else
                 const bool is_tangent_to_PEC = ( ( icomp == idim) ? false : true );
 #endif
@@ -182,6 +195,15 @@ using namespace amrex;
      *            where, x-boundary is along the line z at x=xmin and x=xmax
      *                   z-boundary is along the line x at z=zmin and z=zmax
      *
+     *        For 1D : WarpX uses Z as the only dimension
+     *            x component is tangential to the z-boundary
+     *            y component is tangential to the z-boundary
+     *            z component is not tangential to the z-boundary
+     *            x component is not normal to any boundary (Only z dimension in 1D)
+     *            y component is not normal to any boundary (Only z dimension in 1D)
+     *            z component is normal to the z-boundary
+     *            where, z-boundary is a point at z=zmin and z=zmax
+     *
      *        For RZ : WarpX uses R-Z as the two dimensions
      *            r component is tangential to the z-boundary
      *            theta_component is tangential to the r-boundary and z-boundary
@@ -233,6 +255,10 @@ using namespace amrex;
                     //          The logic below ensures that the flags are set right for 2D
                     const bool is_normal_to_PEC = ( (icomp == AMREX_SPACEDIM*idim)
                                                 ? true : false );
+#elif (defined WARPX_DIM_1D_Z)
+                    // For 1D : icomp=0 and icomp=1 (Bx and By are not normal to the z boundary)
+                    //          The logic below ensures that the flags are set right for 1D
+                    const bool is_normal_to_PEC = ( ( icomp == idim+2) ? true : false );
 #else
                     const bool is_normal_to_PEC = ( ( icomp == idim) ? true : false );
 #endif

@@ -150,8 +150,6 @@ namespace
 
         AMREX_GPU_HOST_DEVICE
         PDim3& operator=(const PDim3&) = default;
-        AMREX_GPU_HOST_DEVICE
-        PDim3& operator=(const amrex::XDim3 &a) { x = a.x; y = a.y; z = a.z; return *this; }
     };
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -176,7 +174,7 @@ namespace
 #else
         pos.x = 0.0_rt;
         pos.y = 0.0_rt;
-        pos.z = lo_corner[0] + (iv[0]+r.z)*dx[0];
+        pos.z = lo_corner[0] + (iv[0]+r.x)*dx[0];
 #endif
         return pos;
     }
@@ -785,17 +783,17 @@ PhysicalParticleContainer::AddParticles (int lev)
             MapParticletoBoostedFrame(plasma_injector->single_particle_pos[0],
                                       plasma_injector->single_particle_pos[1],
                                       plasma_injector->single_particle_pos[2],
-                                      plasma_injector->single_particle_vel[0],
-                                      plasma_injector->single_particle_vel[1],
-                                      plasma_injector->single_particle_vel[2]);
+                                      plasma_injector->single_particle_u[0],
+                                      plasma_injector->single_particle_u[1],
+                                      plasma_injector->single_particle_u[2]);
         }
         AddNParticles(lev, 1,
                       &(plasma_injector->single_particle_pos[0]),
                       &(plasma_injector->single_particle_pos[1]),
                       &(plasma_injector->single_particle_pos[2]),
-                      &(plasma_injector->single_particle_vel[0]),
-                      &(plasma_injector->single_particle_vel[1]),
-                      &(plasma_injector->single_particle_vel[2]),
+                      &(plasma_injector->single_particle_u[0]),
+                      &(plasma_injector->single_particle_u[1]),
+                      &(plasma_injector->single_particle_u[2]),
                       1, &(plasma_injector->single_particle_weight), 0, nullptr, 0);
         return;
     }
@@ -806,18 +804,18 @@ PhysicalParticleContainer::AddParticles (int lev)
                 MapParticletoBoostedFrame(plasma_injector->multiple_particles_pos_x[i],
                                           plasma_injector->multiple_particles_pos_y[i],
                                           plasma_injector->multiple_particles_pos_z[i],
-                                          plasma_injector->multiple_particles_vel_x[i],
-                                          plasma_injector->multiple_particles_vel_y[i],
-                                          plasma_injector->multiple_particles_vel_z[i]);
+                                          plasma_injector->multiple_particles_ux[i],
+                                          plasma_injector->multiple_particles_uy[i],
+                                          plasma_injector->multiple_particles_uz[i]);
             }
         }
         AddNParticles(lev, plasma_injector->multiple_particles_pos_x.size(),
                       plasma_injector->multiple_particles_pos_x.dataPtr(),
                       plasma_injector->multiple_particles_pos_y.dataPtr(),
                       plasma_injector->multiple_particles_pos_z.dataPtr(),
-                      plasma_injector->multiple_particles_vel_x.dataPtr(),
-                      plasma_injector->multiple_particles_vel_y.dataPtr(),
-                      plasma_injector->multiple_particles_vel_z.dataPtr(),
+                      plasma_injector->multiple_particles_ux.dataPtr(),
+                      plasma_injector->multiple_particles_uy.dataPtr(),
+                      plasma_injector->multiple_particles_uz.dataPtr(),
                       1, plasma_injector->multiple_particles_weight.dataPtr(), 0, nullptr, 0);
         return;
     }
@@ -875,7 +873,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     const int nlevs = numLevels();
     static bool refine_injection = false;
     static Box fine_injection_box;
-    static int rrfac = 1;
+    static amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
     // This does not work if the mesh is dynamic.  But in that case, we should
     // not use refined injected either.  We also assume there is only one fine level.
     if (WarpX::moving_window_active(WarpX::GetInstance().getistep(0)+1) and WarpX::refine_plasma
@@ -883,9 +881,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     {
         refine_injection = true;
         fine_injection_box = ParticleBoxArray(1).minimalBox();
-        fine_injection_box.setSmall(WarpX::moving_window_dir, std::numeric_limits<int>::lowest());
-        fine_injection_box.setBig(WarpX::moving_window_dir, std::numeric_limits<int>::max());
-        rrfac = m_gdb->refRatio(0)[0];
+        fine_injection_box.setSmall(WarpX::moving_window_dir, std::numeric_limits<int>::lowest()/2);
+        fine_injection_box.setBig(WarpX::moving_window_dir, std::numeric_limits<int>::max()/2);
+        rrfac = m_gdb->refRatio(0);
         fine_injection_box.coarsen(rrfac);
     }
 
@@ -967,7 +965,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
         auto pcounts = counts.data();
-        int lrrfac = rrfac;
+        amrex::IntVect lrrfac = rrfac;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
             fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
@@ -986,7 +984,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 auto index = overlap_box.index(iv);
                 int r;
                 if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                    r = AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac);
+                    r = AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2]);
                 } else {
                     r = 1;
                 }
@@ -1173,7 +1171,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                   // In the refined injection region: use refinement ratio `lrrfac`
                   inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
-                  inj_pos->getPositionUnitBox(i_part, 1, engine);
+                  inj_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
 #if defined(WARPX_DIM_3D)
@@ -1426,14 +1424,14 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     const int nlevs = numLevels();
     static bool refine_injection = false;
     static Box fine_injection_box;
-    static int rrfac = 1;
+    static amrex::IntVect rrfac(AMREX_D_DECL(1,1,1));
     // This does not work if the mesh is dynamic.  But in that case, we should
     // not use refined injected either.  We also assume there is only one fine level.
     if (WarpX::refine_plasma && nlevs == 2)
     {
         refine_injection = true;
         fine_injection_box = ParticleBoxArray(1).minimalBox();
-        rrfac = m_gdb->refRatio(0)[0];
+        rrfac = m_gdb->refRatio(0);
         fine_injection_box.coarsen(rrfac);
     }
 
@@ -1545,7 +1543,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
         auto pcounts = counts.data();
-        int lrrfac = rrfac;
+        amrex::IntVect lrrfac = rrfac;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
             fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
@@ -1563,7 +1561,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 auto index = overlap_box.index(iv);
                 int r;
                 if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                    r = AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac);
+                    r = AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2]);
                 } else {
                     r = 1;
                 }
@@ -1711,7 +1709,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                   // In the refined injection region: use refinement ratio `lrrfac`
                   inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
-                  inj_pos->getPositionUnitBox(i_part, 1, engine);
+                  inj_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
                 auto ppos = PDim3(pos);
 
@@ -2484,7 +2482,14 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const auto t_do_not_gather = do_not_gather;
 
-            amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+            enum exteb_flags : int { no_exteb, has_exteb };
+
+            int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
+
+            amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>>{},
+                               {exteb_runtime_flag},
+                               np, [=,getExternalEB=getExternalEB]
+                               AMREX_GPU_DEVICE (long ip, auto exteb_control)
             {
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
@@ -2500,8 +2505,11 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                    nox, galerkin_interpolation);
                 }
+
                 // Externally applied E and B-field in Cartesian co-ordinates
-                getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+                if constexpr (exteb_control == has_exteb) {
+                    getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+                }
 
                 if (do_crr) {
                     amrex::Real qp = q;
@@ -2705,8 +2713,9 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
                                 CompileTimeOptions<no_qed  ,has_qed>>{},
                        {exteb_runtime_flag, qed_runtime_flag},
-                       np_to_push, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
-                                                         [[maybe_unused]] auto qed_control)
+                       np_to_push, [=,getExternalEB=getExternalEB]
+                       AMREX_GPU_DEVICE (long ip, auto exteb_control,
+                                         [[maybe_unused]] auto qed_control)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
@@ -2733,9 +2742,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                            nox, galerkin_interpolation);
         }
 
-        auto const& externeb_fn = getExternalEB; // Have to do this for nvcc
         if constexpr (exteb_control == has_exteb) {
-            externeb_fn(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+            getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
         }
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);

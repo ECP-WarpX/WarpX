@@ -7,7 +7,8 @@
 #SBATCH -t 00:10:00
 #SBATCH -p batch
 #SBATCH --ntasks-per-node=8
-#SBATCH --cpus-per-task=8
+# broken since 01/2023
+#S BATCH --cpus-per-task=8
 #SBATCH --gpus-per-task=1
 #SBATCH --gpu-bind=closest
 #SBATCH -N 1

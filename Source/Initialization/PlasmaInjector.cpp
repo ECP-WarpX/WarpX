@@ -185,8 +185,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         utils::parser::getArrWithParser(
             pp_species_name, "single_particle_pos", single_particle_pos, 0, 3);
         utils::parser::getArrWithParser(
-            pp_species_name, "single_particle_vel", single_particle_vel, 0, 3);
-        for (auto& x : single_particle_vel) {
+            pp_species_name, "single_particle_u", single_particle_u, 0, 3);
+        for (auto& x : single_particle_u) {
             x *= PhysConst::c;
         }
         utils::parser::getWithParser(
@@ -201,24 +201,24 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         utils::parser::getArrWithParser(
             pp_species_name, "multiple_particles_pos_z", multiple_particles_pos_z);
         utils::parser::getArrWithParser(
-            pp_species_name, "multiple_particles_vel_x", multiple_particles_vel_x);
+            pp_species_name, "multiple_particles_ux", multiple_particles_ux);
         utils::parser::getArrWithParser(
-            pp_species_name, "multiple_particles_vel_y", multiple_particles_vel_y);
+            pp_species_name, "multiple_particles_uy", multiple_particles_uy);
         utils::parser::getArrWithParser(
-            pp_species_name, "multiple_particles_vel_z", multiple_particles_vel_z);
+            pp_species_name, "multiple_particles_uz", multiple_particles_uz);
         utils::parser::getArrWithParser(
             pp_species_name, "multiple_particles_weight", multiple_particles_weight);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             ((multiple_particles_pos_x.size() == multiple_particles_pos_y.size()) &&
              (multiple_particles_pos_x.size() == multiple_particles_pos_z.size()) &&
-             (multiple_particles_pos_x.size() == multiple_particles_vel_x.size()) &&
-             (multiple_particles_pos_x.size() == multiple_particles_vel_y.size()) &&
-             (multiple_particles_pos_x.size() == multiple_particles_vel_z.size()) &&
+             (multiple_particles_pos_x.size() == multiple_particles_ux.size()) &&
+             (multiple_particles_pos_x.size() == multiple_particles_uy.size()) &&
+             (multiple_particles_pos_x.size() == multiple_particles_uz.size()) &&
              (multiple_particles_pos_x.size() == multiple_particles_weight.size())),
             "Error: The multiple particles source quantities must all have the same number of elements");
-        for (auto& vx : multiple_particles_vel_x) { vx *= PhysConst::c; }
-        for (auto& vy : multiple_particles_vel_y) { vy *= PhysConst::c; }
-        for (auto& vz : multiple_particles_vel_z) { vz *= PhysConst::c; }
+        for (auto& vx : multiple_particles_ux) { vx *= PhysConst::c; }
+        for (auto& vy : multiple_particles_uy) { vy *= PhysConst::c; }
+        for (auto& vz : multiple_particles_uz) { vz *= PhysConst::c; }
         add_multiple_particles = true;
         return;
     } else if (injection_style == "gaussian_beam") {

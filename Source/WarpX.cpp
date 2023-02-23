@@ -30,6 +30,7 @@
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
+#include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -113,6 +114,7 @@ Real WarpX::gamma_boost = 1._rt;
 Real WarpX::beta_boost = 0._rt;
 Vector<int> WarpX::boost_direction = {0,0,0};
 bool WarpX::do_compute_max_step_from_zmax = false;
+bool WarpX::compute_max_step_from_btd = false;
 Real WarpX::zmax_plasma_to_compute_max_step = 0._rt;
 
 short WarpX::current_deposition_algo;
@@ -283,6 +285,14 @@ WarpX::WarpX ()
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
 
+    // Only allocate vector potential arrays when using the Magnetostatic Solver
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+    {
+        vector_potential_fp_nodal.resize(nlevs_max);
+        vector_potential_grad_buf_e_stag.resize(nlevs_max);
+        vector_potential_grad_buf_b_stag.resize(nlevs_max);
+    }
+
     if (fft_do_time_averaging)
     {
         Efield_avg_fp.resize(nlevs_max);
@@ -349,7 +359,6 @@ WarpX::WarpX ()
         // create object for macroscopic solver
         m_macroscopic_properties = std::make_unique<MacroscopicProperties>();
     }
-
 
     // Set default values for particle and cell weights for costs update;
     // Default values listed here for the case AMREX_USE_GPU are determined
@@ -427,6 +436,9 @@ WarpX::WarpX ()
             use_fdtd_nci_corr == 0,
             "The NCI corrector should only be used with Esirkepov deposition");
     }
+
+    m_accelerator_lattice.resize(nlevs_max);
+
 }
 
 WarpX::~WarpX ()
@@ -495,6 +507,12 @@ WarpX::ReadParameters ()
             pp_warpx, "numprocs", numprocs_in, 0, AMREX_SPACEDIM);
 
         if (not numprocs_in.empty()) {
+#ifdef WARPX_DIM_RZ
+            if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(numprocs_in[0] == 1,
+                    "Domain decomposition in RZ with spectral solvers works only along z direction");
+            }
+#endif
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE
                 (numprocs_in.size() == AMREX_SPACEDIM,
                  "warpx.numprocs, if specified, must have AMREX_SPACEDIM numbers");
@@ -560,11 +578,15 @@ WarpX::ReadParameters ()
             if ( random_seed == "random" ) {
                 std::random_device rd;
                 std::uniform_int_distribution<int> dist(2, INT_MAX);
-                unsigned long seed = myproc_1 * dist(rd);
-                ResetRandomSeed(seed);
+                unsigned long cpu_seed = myproc_1 * dist(rd);
+                unsigned long gpu_seed = myproc_1 * dist(rd);
+                ResetRandomSeed(cpu_seed, gpu_seed);
             } else if ( std::stoi(random_seed) > 0 ) {
-                unsigned long seed = myproc_1 * std::stoul(random_seed);
-                ResetRandomSeed(seed);
+                unsigned long nprocs = ParallelDescriptor::NProcs();
+                unsigned long seed_long = std::stoul(random_seed);
+                unsigned long cpu_seed = myproc_1 * seed_long;
+                unsigned long gpu_seed = (myproc_1 + nprocs) * seed_long;
+                ResetRandomSeed(cpu_seed, gpu_seed);
             } else {
                 Abort(Utils::TextMsg::Err(
                     "warpx.random_seed must be \"default\", \"random\" or an integer > 0."));
@@ -600,6 +622,9 @@ WarpX::ReadParameters ()
         do_compute_max_step_from_zmax = utils::parser::queryWithParser(
             pp_warpx, "zmax_plasma_to_compute_max_step",
             zmax_plasma_to_compute_max_step);
+
+        pp_warpx.query("compute_max_step_from_btd",
+            compute_max_step_from_btd);
 
         pp_warpx.query("do_moving_window", do_moving_window);
         if (do_moving_window)
@@ -647,7 +672,9 @@ WarpX::ReadParameters ()
         "Currently, the embedded boundary in RZ only works for electrostatic solvers (or no solver).");
 #endif
 
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+            electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+        {
             // Note that with the relativistic version, these parameters would be
             // input for each species.
             utils::parser::queryWithParser(
@@ -669,7 +696,7 @@ WarpX::ReadParameters ()
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
 
-        utils::parser::queryWithParser(pp_warpx, "const_dt", const_dt);
+        utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
         // (see https://github.com/ECP-WarpX/WarpX/issues/1943)
@@ -964,6 +991,12 @@ WarpX::ReadParameters ()
                 "Vay deposition is implemented only for PSATD");
         }
 
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                do_multi_J == false,
+                "Vay deposition not implemented with multi-J algorithm");
+        }
+
         field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
             // Use same shape factors in all directions, for gathering
@@ -981,14 +1014,18 @@ WarpX::ReadParameters ()
         load_balance_intervals = utils::parser::IntervalsParser(
             load_balance_intervals_string_vec);
         pp_algo.query("load_balance_with_sfc", load_balance_with_sfc);
-        pp_algo.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
+        // Knapsack factor only used with non-SFC strategy
+        if (!load_balance_with_sfc)
+            pp_algo.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
         utils::parser::queryWithParser(pp_algo, "load_balance_efficiency_ratio_threshold",
                         load_balance_efficiency_ratio_threshold);
         load_balance_costs_update_algo = GetAlgorithmInteger(pp_algo, "load_balance_costs_update");
-        utils::parser::queryWithParser(
-            pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
-        utils::parser::queryWithParser(
-            pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
+        if (WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic) {
+            utils::parser::queryWithParser(
+                pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
+            utils::parser::queryWithParser(
+                pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
+        }
 
         // Parse algo.particle_shape and check that input is acceptable
         // (do this only if there is at least one particle or laser species)
@@ -999,6 +1036,19 @@ WarpX::ReadParameters ()
         ParmParse pp_lasers("lasers");
         std::vector<std::string> lasers_names;
         pp_lasers.queryarr("names", lasers_names);
+
+#ifdef WARPX_DIM_RZ
+        // Here we check if the simulation includes laser and the number of
+        // azimuthal modes is less than 2.
+        // In that case we should throw a specific warning since
+        // representation of a laser pulse in cylindrical coordinates
+        // requires at least 2 azimuthal modes
+        if (lasers_names.size() > 0 && n_rz_azimuthal_modes < 2) {
+            ablastr::warn_manager::WMRecordWarning("Laser",
+            "Laser pulse representation in RZ requires at least 2 azimuthal modes",
+            ablastr::warn_manager::WarnPriority::high);
+        }
+#endif
 
         std::vector<std::string> sort_intervals_string_vec = {"-1"};
         int particle_shape;
@@ -1604,6 +1654,34 @@ WarpX::BackwardCompatibility ()
             ablastr::warn_manager::WarnPriority::low);
     }
 
+    std::vector<std::string> backward_sp_names;
+    pp_particles.queryarr("species_names", backward_sp_names);
+    for(std::string speciesiter : backward_sp_names){
+        ParmParse pp_species(speciesiter);
+        std::vector<amrex::Real> backward_vel;
+        std::stringstream ssspecies;
+
+        ssspecies << "'" << speciesiter << ".multiple_particles_vel_<x,y,z>'";
+        ssspecies << " are not supported anymore. ";
+        ssspecies << "Please use the renamed variables ";
+        ssspecies << "'" << speciesiter << ".multiple_particles_u<x,y,z>' .";
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !pp_species.queryarr("multiple_particles_vel_x", backward_vel) &&
+            !pp_species.queryarr("multiple_particles_vel_y", backward_vel) &&
+            !pp_species.queryarr("multiple_particles_vel_z", backward_vel),
+            ssspecies.str());
+
+        ssspecies.str("");
+        ssspecies.clear();
+        ssspecies << "'" << speciesiter << ".single_particle_vel'";
+        ssspecies << " is not supported anymore. ";
+        ssspecies << "Please use the renamed variable ";
+        ssspecies << "'" << speciesiter << ".single_particle_u' .";
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !pp_species.queryarr("single_particle_vel", backward_vel),
+            ssspecies.str());
+    }
+
     ParmParse pp_collisions("collisions");
     int ncollisions;
     if (pp_collisions.query("ncollisions", ncollisions)){
@@ -1659,6 +1737,13 @@ WarpX::ClearLevel (int lev)
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
             current_fp_vay[lev][i].reset();
+        }
+
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+        {
+            vector_potential_fp_nodal[lev][i].reset();
+            vector_potential_grad_buf_e_stag[lev][i].reset();
+            vector_potential_grad_buf_b_stag[lev][i].reset();
         }
 
         current_cp[lev][i].reset();
@@ -1768,6 +1853,10 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 
     AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
                   guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F, guard_cells.ng_alloc_G, aux_is_nodal);
+
+    m_accelerator_lattice[lev] = std::make_unique<AcceleratorLattice>();
+    m_accelerator_lattice[lev]->InitElementFinder(lev, ba, dm);
+
 }
 
 void
@@ -1817,6 +1906,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     jy_nodal_flag = IntVect(1,0,1);
     jz_nodal_flag = IntVect(1,1,0);
 #endif
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+    {
+        jx_nodal_flag  = IntVect::TheNodeVector();
+        jy_nodal_flag  = IntVect::TheNodeVector();
+        jz_nodal_flag  = IntVect::TheNodeVector();
+        ngJ = ngRho;
+    }
     rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
     phi_nodal_flag = IntVect::TheNodeVector();
     F_nodal_flag = amrex::IntVect::TheNodeVector();
@@ -1902,6 +1998,30 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(current_fp_vay[lev][2], amrex::convert(ba, rho_nodal_flag), dm, ncomps, ngJ, tag("current_fp_vay[z]"), 0.0_rt);
     }
 
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+    {
+        AllocInitMultiFab(vector_potential_fp_nodal[lev][0], amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngRho, tag("vector_potential_fp_nodal[x]"), 0.0_rt);
+        AllocInitMultiFab(vector_potential_fp_nodal[lev][1], amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngRho, tag("vector_potential_fp_nodal[y]"), 0.0_rt);
+        AllocInitMultiFab(vector_potential_fp_nodal[lev][2], amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngRho, tag("vector_potential_fp_nodal[z]"), 0.0_rt);
+
+        AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][0], amrex::convert(ba, Ex_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_e_stag[x]"), 0.0_rt);
+        AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][1], amrex::convert(ba, Ey_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_e_stag[y]"), 0.0_rt);
+        AllocInitMultiFab(vector_potential_grad_buf_e_stag[lev][2], amrex::convert(ba, Ez_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_e_stag[z]"), 0.0_rt);
+
+        AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][0], amrex::convert(ba, Bx_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_b_stag[x]"), 0.0_rt);
+        AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][1], amrex::convert(ba, By_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_b_stag[y]"), 0.0_rt);
+        AllocInitMultiFab(vector_potential_grad_buf_b_stag[lev][2], amrex::convert(ba, Bz_nodal_flag),
+            dm, ncomps, ngEB, tag("vector_potential_grad_buf_b_stag[z]"), 0.0_rt);
+    }
+
     if (fft_do_time_averaging)
     {
         AllocInitMultiFab(Bfield_avg_fp[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, tag("Bfield_avg_fp[x]"));
@@ -1959,7 +2079,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 #endif
 
-    bool deposit_charge = do_dive_cleaning || (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame);
+    bool deposit_charge = do_dive_cleaning || (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame  ||
+                                               electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic);
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         deposit_charge = do_dive_cleaning || update_with_rho || current_correction;
     }
@@ -1970,7 +2091,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(rho_fp[lev], amrex::convert(ba, rho_nodal_flag), dm, rho_ncomps, ngRho, tag("rho_fp"), 0.0_rt);
     }
 
-    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame)
+    if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
+        electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
         IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
         AllocInitMultiFab(phi_fp[lev], amrex::convert(ba, phi_nodal_flag), dm, ncomps, ngPhi, tag("phi_fp"), 0.0_rt);

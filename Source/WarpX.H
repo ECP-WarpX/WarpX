@@ -32,8 +32,10 @@
 #endif
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/ElectrostaticSolver.H"
+#include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
+#include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
@@ -293,6 +295,9 @@ public:
     //! simulation domain along z reaches #zmax_plasma_to_compute_max_step in the boosted frame
     static bool do_compute_max_step_from_zmax;
 
+    //! If true, the code will compute max_step from the back transformed diagnostics
+    static bool compute_max_step_from_btd;
+
     static bool do_dynamic_scheduling;
     static bool refine_plasma;
 
@@ -434,10 +439,12 @@ public:
     amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_current_fp_nodal  (int lev, int direction) const { return current_fp_nodal[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
     amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
     amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }
     amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
+    amrex::MultiFab * get_pointer_vector_potential_fp  (int lev, int direction) const { return vector_potential_fp_nodal[lev][direction].get(); }
 
     amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_cp  (int lev, int direction) const { return Bfield_cp[lev][direction].get(); }
@@ -775,7 +782,9 @@ public:
     bool getis_synchronized() const {return is_synchronized;}
 
     int maxStep () const {return max_step;}
+    void updateMaxStep (const int new_max_step) {max_step = new_max_step;}
     amrex::Real stopTime () const {return stop_time;}
+    void updateStopTime (const amrex::Real new_stop_time) {stop_time = new_stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, const amrex::IntVect ngrow) const;
@@ -888,6 +897,19 @@ public:
     void computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
 
+    // Magnetostatic Solver Interface
+    MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;
+    void ComputeMagnetostaticField ();
+    void AddMagnetostaticFieldLabFrame ();
+    void computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& curr,
+                                 amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A,
+                                 amrex::Real const required_precision=amrex::Real(1.e-11),
+                                 amrex::Real absolute_tolerance=amrex::Real(0.0),
+                                 const int max_iters=200,
+                                 const int verbosity=2) const;
+
+    void setVectorPotentialBC (amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A) const;
+
     /**
      * \brief
      * This function initializes the E and B fields on each level
@@ -907,6 +929,7 @@ public:
      * \param[in] face_areas face areas information
      * \param[in] field flag indicating which field is being initialized ('E' for electric, 'B' for magnetic)
      * \param[in] lev level of the Multifabs that is initialized
+     * \param[in] patch_type PatchType on which the field is initialized (fine or coarse)
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
@@ -916,7 +939,7 @@ public:
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
          const char field,
-         const int lev);
+         const int lev, PatchType patch_type);
 
     /**
      * \brief
@@ -961,6 +984,9 @@ public:
     // This needs to be public for CUDA.
     //! Tagging cells for refinement
     virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
+
+    // Return the accelerator lattice instance defined at the given refinement level
+    const AcceleratorLattice& get_accelerator_lattice (int lev) {return *(m_accelerator_lattice[lev]);}
 
 protected:
 
@@ -1243,6 +1269,12 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
+    // Memory buffers for computing magnetostatic fields
+    // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_fp_nodal;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_e_stag;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_b_stag;
+
     //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
     //! EB: Areas of the mesh faces
@@ -1340,7 +1372,7 @@ private:
     int num_injected_species = -1;
     amrex::Vector<int> injected_plasma_species;
 
-    amrex::Real const_dt = amrex::Real(0.5e-11);
+    std::optional<amrex::Real> m_const_dt;
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
@@ -1439,6 +1471,9 @@ private:
     //! particle buffer for scraped particles on the boundaries
     std::unique_ptr<ParticleBoundaryBuffer> m_particle_boundary_buffer;
 
+    // Accelerator lattice elements
+    amrex::Vector< std::unique_ptr<AcceleratorLattice> > m_accelerator_lattice;
+
     //
     // Embedded Boundary
     //
@@ -1450,6 +1485,7 @@ private:
         return *m_field_factory[lev];
     }
 #ifdef AMREX_USE_EB
+public:
     amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
     }
