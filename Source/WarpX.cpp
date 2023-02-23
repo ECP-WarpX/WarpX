@@ -2048,6 +2048,18 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     AllocInitMultiFab(current_fp[lev][1], amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, tag("current_fp[y]"), 0.0_rt);
     AllocInitMultiFab(current_fp[lev][2], amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, tag("current_fp[z]"), 0.0_rt);
 
+    // Match external field MultiFabs to fine patch
+    if (add_external_B_field) {
+        AllocInitMultiFab(Bfield_fp_external[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[x]"));
+        AllocInitMultiFab(Bfield_fp_external[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[y]"));
+        AllocInitMultiFab(Bfield_fp_external[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[z]"));
+    }
+    if (add_external_E_field) {
+        AllocInitMultiFab(Efield_fp_external[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[x]"));
+        AllocInitMultiFab(Efield_fp_external[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[y]"));
+        AllocInitMultiFab(Efield_fp_external[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[z]"));
+    }
+
     if (do_current_centering)
     {
         amrex::BoxArray const& nodal_ba = amrex::convert(ba, amrex::IntVect::TheNodeVector());
@@ -2280,33 +2292,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(Efield_aux[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, tag("Efield_aux[x]"));
         AllocInitMultiFab(Efield_aux[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, tag("Efield_aux[y]"));
         AllocInitMultiFab(Efield_aux[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, tag("Efield_aux[z]"));
-    }
-
-    // Match external field MultiFabs to aux patch
-    if (aux_is_nodal and !do_nodal)
-    {
-        BoxArray const nba = amrex::convert(ba,IntVect::TheNodeVector());
-        if (add_external_B_field) {
-            AllocInitMultiFab(Bfield_fp_external[lev][0], nba, dm, ncomps, ngEB, tag("Bfield_fp_external[x]"), 0.0_rt);
-            AllocInitMultiFab(Bfield_fp_external[lev][1], nba, dm, ncomps, ngEB, tag("Bfield_fp_external[y]"), 0.0_rt);
-            AllocInitMultiFab(Bfield_fp_external[lev][2], nba, dm, ncomps, ngEB, tag("Bfield_fp_external[z]"), 0.0_rt);
-        }
-        if (add_external_E_field) {
-            AllocInitMultiFab(Efield_fp_external[lev][0], nba, dm, ncomps, ngEB, tag("Efield_fp_external[x]"), 0.0_rt);
-            AllocInitMultiFab(Efield_fp_external[lev][1], nba, dm, ncomps, ngEB, tag("Efield_fp_external[y]"), 0.0_rt);
-            AllocInitMultiFab(Efield_fp_external[lev][2], nba, dm, ncomps, ngEB, tag("Efield_fp_external[z]"), 0.0_rt);
-        }
-    } else {
-        if (add_external_B_field) {
-            AllocInitMultiFab(Bfield_fp_external[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[x]"));
-            AllocInitMultiFab(Bfield_fp_external[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[y]"));
-            AllocInitMultiFab(Bfield_fp_external[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[z]"));
-        }
-        if (add_external_E_field) {
-            AllocInitMultiFab(Efield_fp_external[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[x]"));
-            AllocInitMultiFab(Efield_fp_external[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[y]"));
-            AllocInitMultiFab(Efield_fp_external[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[z]"));
-        }
     }
 
     //
