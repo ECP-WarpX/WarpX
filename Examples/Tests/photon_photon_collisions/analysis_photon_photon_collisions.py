@@ -16,14 +16,14 @@ from scipy.integrate import cumtrapz
 
 # some constants
 r_e = physical_constants["classical electron radius"][0]
-default_tol = 1.e-12
+default_tol = 5.e-11
 
 # check the type of test
 warpx_used_inputs = open('./warpx_used_inputs', 'r').read()
 if re.search('photonA.injection_style = SingleParticle', warpx_used_inputs):
-    test = 'two_photons_test'
+    test = 'two_photon_collision_3d'
 elif re.search('photonA.momentum_distribution_type = constant', warpx_used_inputs):
-    test = 'many_photons_test'
+    test = 'many_photons_collisions_3d'
 
 # extract numbers from a string
 def find_num_in_line(line):
@@ -36,7 +36,7 @@ def find_num_in_line(line):
 
 # get input parameters from warpx_used_inputs
 def get_input_parameters(test):
-    if test == 'two_photons_test':
+    if test == 'two_photon_collision_3d':
         with open('./warpx_used_inputs', 'rt') as f:
             lines = f.readlines()
             for line in lines:
@@ -45,7 +45,7 @@ def get_input_parameters(test):
                 if 'photonB.single_particle_weight' in line:
                     w2 = find_num_in_line(line)
         return w1, w2
-    elif test == 'many_photons_test':
+    elif test == 'many_photons_collisions_3d':
         with open('./warpx_used_inputs', 'rt') as f:
             lines = f.readlines()
             for line in lines:
@@ -84,7 +84,7 @@ def get_input_parameters(test):
         dx = (xmax-xmin)/nx
         dy = (ymax-ymin)/ny
         dz = (zmax-zmin)/ny
-        dt = cfl / c / np.sqrt(1./dx**2+1./dy**2+1./dz**2)
+        dt = cfl / c / np.sqrt(1./dx**2+1./dy**2+1./dz**2) # works for Yee solver
         simulation_time = num_steps * dt
         dV = dx*dy*dz
         pA = np.sqrt(pAx**2 + pAy**2 + pAz**2)
@@ -100,15 +100,11 @@ def get_input_parameters(test):
         NB0 = dens * V
         return EA, EB, theta, dt, V, num_steps, NA0, NB0
 
-def is_close(val1, val2, rtol=default_tol, atol=0.):
-    # wrapper around numpy.isclose, used to override the default tolerances
-    return np.isclose(val1, val2, rtol=rtol, atol=atol)
-
 # check that the photons have been completely transformed into pairs:
 # because the fusion multiplier is 1, as soon as a linear Breit-Wheeler event occurs,
 # the two photons must disappear and 2 electron-positron pairs must be generated
 def check_final_macroparticles(test):
-    if test == 'two_photons_test':
+    if test == 'two_photon_collision_3d':
         w1, w2 = get_input_parameters(test)
         macro_photonA_number = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[-1,3]
         macro_photonA_weight = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[-1,8]
@@ -134,19 +130,19 @@ def check_energy_conservation():
     num_phys_positron = num_data[:,11]
     field_energy = np.loadtxt('diags/reducedfiles/FieldEnergy.txt')[:,2]
     total_energy = ekin_photonA + ekin_photonB + ekin_electron + ekin_positron + m_e*c**2*(num_phys_electron + num_phys_positron) + field_energy
-    assert(np.all(is_close(total_energy, total_energy[0], rtol=5e-12)))
+    assert(np.all(np.isclose(total_energy, total_energy[0], rtol=default_tol, atol=0.)))
 
 def check_momentum_conservation():
     total_momentum_x = np.loadtxt('diags/reducedfiles/ParticleMomentum.txt')[:,2]
     total_momentum_y = np.loadtxt('diags/reducedfiles/ParticleMomentum.txt')[:,3]
     total_momentum_z = np.loadtxt('diags/reducedfiles/ParticleMomentum.txt')[:,4]
-    assert(np.all(is_close(total_momentum_x, total_momentum_x[0])))
-    assert(np.all(is_close(total_momentum_y, total_momentum_y[0])))
-    assert(np.all(is_close(total_momentum_z, total_momentum_z[0])))
+    assert(np.all(np.isclose(total_momentum_x, total_momentum_x[0], rtol=default_tol, atol=0.)))
+    assert(np.all(np.isclose(total_momentum_y, total_momentum_y[0], rtol=default_tol, atol=0.)))
+    assert(np.all(np.isclose(total_momentum_z, total_momentum_z[0], rtol=default_tol, atol=0.)))
 
 def check_charge_conservation():
     rho_max = np.loadtxt('diags/reducedfiles/RhoMaximum.txt')[:,2]
-    assert(is_close(rho_max, rho_max[0]).all())
+    assert(np.all(np.isclose(rho_max, rho_max[0], rtol=default_tol, atol=0.)))
     #series = io.Series("diags/fields_particles/openpmd_%T.bp",io.Access.read_only)
     #iterations = np.asarray(series.iterations)
     #start = series.iterations[iterations[0]]
@@ -165,7 +161,7 @@ def check_charge_conservation():
                                               dims=ds_start.domain_dimensions)
     rho_start = field_data_start["rho"].to_ndarray()
     rho_end = field_data_end["rho"].to_ndarray()
-    assert(np.all(is_close(rho_start, rho_end)))
+    assert(np.all(np.isclose(rho_start, rho_end, rtol=default_tol, atol=0.)))
 
 def cross_section(E1_lab, E2_lab, theta):
     s = E1_lab*E2_lab/(2.*m_e**2*c**4)*(1.-np.cos(theta))
@@ -178,7 +174,7 @@ def cross_section(E1_lab, E2_lab, theta):
     return sigma
 
 def check_pair_rate(test):
-    if test == 'many_photons_test':
+    if test == 'many_photons_collisions_3d':
         EA_lab, EB_lab, theta, dt, V, num_steps, NA0, NB0 = get_input_parameters(test)
 
         t = np.arange(num_steps+1)*dt
@@ -186,21 +182,21 @@ def check_pair_rate(test):
 
         # estimated number of real photons of species photonA in time
         NA_est = NA0 / (1. + 2.*sigma* c * t / V * NA0)
-        # number of photons of species photonA in time from simulation
+        # number of <<real>> photons of species photonA in time from simulation
         NA = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,8]
 
         # estimated number of real photons of species photonB in time
         NB_est = NB0 / (1. + 2.*sigma* c * t / V * NB0)
-        # number of photons of species photonA in time from simulation
-        NB = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,8]
+        # number of <<real>> photons of species photonA in time from simulation
+        NB = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,9]
 
         Nplus_est = 2.*sigma*c/V*cumtrapz(NA_est*NB_est, x=t, dx=dt, initial=0)
-        # number of positrons in time from simulation
+        # number of <<real>> positrons in time from simulation
         Nplus = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,11]
 
-        assert(np.all(is_close(Nplus_est, Nplus, rtol=1e-1)))
-        assert(np.all(is_close(NA_est, NA, rtol=1e-1)))
-        assert(np.all(is_close(NB_est, NB, rtol=1e-1)))
+        assert(np.all(np.isclose(Nplus_est, Nplus, rtol=1e-1, atol=0.)))
+        assert(np.all(np.isclose(NA_est, NA, rtol=1e-1, atol=0.)))
+        assert(np.all(np.isclose(NB_est, NB, rtol=1e-1, atol=0.)))
 
 def main():
     check_final_macroparticles(test)
