@@ -5,7 +5,7 @@ import re
 import sys
 
 import numpy as np
-from scipy.constants import (c, m_e, physical_constants, pi)
+from scipy.constants import c, m_e, physical_constants, pi
 import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
