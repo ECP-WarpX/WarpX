@@ -652,6 +652,13 @@ public:
                                                   int lev);
 #endif
 
+    /**
+     * \brief Depending on the boundary conditions used, the charge density
+     * deposited in the guard cells may have to be reflected back into the
+     * simulation domain. This function performs that logic.
+     */
+    void ApplyRhofieldBoundary (const int lev, amrex::MultiFab* Rho);
+
     void ApplyEfieldBoundary (const int lev, PatchType patch_type);
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
 

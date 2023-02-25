@@ -115,7 +115,6 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
                                            Ez, Ez_nodal, fbndry_lo, fbndry_hi);
             }
         );
-
     }
 }
 
@@ -207,7 +206,93 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
                                      Bz, Bz_nodal, fbndry_lo, fbndry_hi);
             }
         );
-
     }
+}
 
+
+void
+PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev)
+{
+    auto& warpx = WarpX::GetInstance();
+
+    amrex::Box domain_box = warpx.Geom(lev).Domain();
+    amrex::IntVect domain_lo = domain_box.smallEnd();
+    amrex::IntVect domain_hi = domain_box.bigEnd();
+
+    amrex::GpuArray<int, 3> fbndry_lo, fbndry_hi;
+    amrex::GpuArray<ParticleBoundaryType, 3> pbndry_lo, pbndry_hi;
+    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
+        fbndry_lo[idim] = WarpX::field_boundary_lo[idim];
+        fbndry_hi[idim] = WarpX::field_boundary_hi[idim];
+        pbndry_lo[idim] = WarpX::particle_boundary_lo[idim];
+        pbndry_hi[idim] = WarpX::particle_boundary_hi[idim];
+    }
+    amrex::IntVect rho_nodal = rho->ixType().toIntVect();
+    amrex::IntVect ng_fieldgather = rho->nGrowVect();
+
+    const int nComp = rho->nComp();
+
+    amrex::Box tilebox;
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (amrex::MFIter mfi(*rho, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+
+        // Extract field data
+        amrex::Array4<amrex::Real> const& rho_array = rho->array(mfi);
+
+        // amrex::Box const& tb = mfi.tilebox(rho_nodal, ng_fieldgather);
+
+        // Construct a tilebox to loop over the grid
+        tilebox = mfi.tilebox();
+        amrex::Box tb = convert( tilebox, rho_nodal );
+
+        // Grow the tilebox to include the guard cells for the PEC boundaries
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (fbndry_lo[idim] == FieldBoundaryType::PEC)
+                tb.growLo(idim, ng_fieldgather[idim]);
+            if (fbndry_hi[idim] == FieldBoundaryType::PEC)
+                tb.growHi(idim, ng_fieldgather[idim]);
+        }
+
+        // The rho boundary is handled in 2 steps:
+        // 1) The cells internal to the domain are updated using the
+        //    charge deposited in the guard cells
+        // 2) The guard cells are updated with the appropriate image charges
+        //    based on the charge in the valid cells
+        // loop over cells and update fields
+        amrex::ParallelFor(
+            tb, nComp,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#elif (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                PEC::SetRhofieldFromPEC(
+                    domain_lo, domain_hi, ng_fieldgather, iv, n,
+                    rho_array, rho_nodal,
+                    fbndry_lo, fbndry_hi, pbndry_lo, pbndry_hi
+                );
+            }
+        );
+
+        amrex::ParallelFor(
+            tb, nComp,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#elif (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                PEC::SetRhofieldOnPEC(
+                    domain_lo, domain_hi, iv, n, rho_array, rho_nodal,
+                    fbndry_lo, fbndry_hi, pbndry_lo, pbndry_hi
+                );
+            }
+        );
+    }
 }
