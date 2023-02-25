@@ -5,9 +5,7 @@ import re
 import sys
 
 import numpy as np
-import openpmd_api as io
-from scipy.constants import (c, centi, e, eV, femto, m_e, micron, milli,
-                             physical_constants, pi, pico)
+from scipy.constants import (c, m_e, physical_constants, pi)
 import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -83,18 +81,13 @@ def get_input_parameters(test):
         EA, EB = np.sqrt(pAx**2+pAy**2+pAz**2) * c, np.sqrt(pBx**2+pBy**2+pBz**2) * c
         dx = (xmax-xmin)/nx
         dy = (ymax-ymin)/ny
-        dz = (zmax-zmin)/ny
+        dz = (zmax-zmin)/nz
         dt = cfl / c / np.sqrt(1./dx**2+1./dy**2+1./dz**2) # works for Yee solver
-        simulation_time = num_steps * dt
-        dV = dx*dy*dz
         pA = np.sqrt(pAx**2 + pAy**2 + pAz**2)
         pB = np.sqrt(pBx**2 + pBy**2 + pBz**2)
-        gA = EA/(m_e*c**2)
-        gB = EB/(m_e*c**2)
         cos_ang = (pAx*pBx+pAy*pBy+pAz*pBz)/(pA*pB)
         theta = np.arccos(cos_ang)
         E_star = np.sqrt(0.5*c**2*pA*pB*(1.- cos_ang))
-        g_star = E_star / (m_e*c**2)
         V = (xmax-xmin)*(ymax-ymin)*(zmax-zmin)
         NA0 = dens * V
         NB0 = dens * V
