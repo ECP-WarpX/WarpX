@@ -684,7 +684,6 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
         }
 #endif
 
-
 #ifdef WARPX_DIM_RZ
         if (do_rz_volume_scaling)
         {

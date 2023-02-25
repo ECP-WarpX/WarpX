@@ -431,26 +431,217 @@ using namespace amrex;
                     const int ig = ( (iside == 0)
                                  ? (dom_lo[idim] - ijk_vec[idim])
                                  : (ijk_vec[idim] - (dom_hi[idim] + is_nodal[idim]) ) );
-                    if (ig == 0) {
-                        if (is_nodal[idim] == 1) {
-                            OnPECBoundary = true;
-                        }
-                    } else if (ig > 0) {
+
+                    if (ig == 0 && is_nodal[idim] == 1) OnPECBoundary = true;
+                    else if (ig >= 0) {
                         // Find mirror location across PEC boundary
                         ijk_mirror[idim] = ( ( iside == 0)
                                         ? (dom_lo[idim] + ig)
                                         : (dom_hi[idim] + is_nodal[idim] - ig));
                         GuardCell = true;
-                        // tangential components are inverted across PEC boundary
                     }
                 } // is PEC boundary
             } // loop over iside
         } // loop over dimensions
         if (OnPECBoundary == true) {
-            // if ijk_vec is on a PEC boundary in any direction, set Etangential to 0.
+            // if ijk_vec is on a PEC boundary, set rho to 0.
             rho(ijk_vec,n) = 0._rt;
         } else if (GuardCell == true) {
             rho(ijk_vec,n) = -rho(ijk_mirror,n);
+        }
+    }
+
+
+    /**
+     * \brief Sets the J field value in cells close to a PEC boundary. The
+     *        current density deposited in the guard cells are either reflected
+     *        back into the simulation domain (if a reflecting particle
+     *        boundary is used), or the opposite current density is deposited
+     *        back in the domain to capture the effect of an image charge.
+     *
+     *
+     * \param[in] icomp        component of the Jfield being updated
+     *                         (0=x, 1=y, 2=z in Cartesian)
+     *                         (0=r, 1=theta, 2=z in RZ)
+     * \param[in] dom_lo       index value of the lower domain boundary (cell-centered)
+     * \param[in] dom_hi       index value of the higher domain boundary (cell-centered)
+     * \param[in] nguard       number of guard cells along each dimension
+     * \param[in] ijk_vec      indices along the x(i), y(j), z(k) of the rho Array4
+     * \param[in] Jfield       field data to be updated if (ijk) is at the boundary
+                               or a guard cell
+     * \param[in] is_nodal     staggering of the field data being updated.
+     * \param[in] fbndry_lo    Field boundary type at the lower boundaries
+     * \param[in] fbndry_hi    Field boundary type at the upper boundaries
+     * \param[in] pbndry_lo    Particle boundary type at the lower boundaries
+     * \param[in] pbndry_hi    Particle boundary type at the upper boundaries
+     */
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void SetJfieldFromPEC (const int icomp,
+                           const amrex::IntVect & dom_lo,
+                           const amrex::IntVect & dom_hi,
+                           const amrex::IntVect & nguard,
+                           const amrex::IntVect & ijk_vec,
+                           amrex::Array4<amrex::Real> const& Jfield,
+                           const amrex::IntVect & is_nodal,
+                           amrex::GpuArray<int, 3> const& fbndry_lo,
+                           amrex::GpuArray<int, 3> const& fbndry_hi,
+                           amrex::GpuArray<ParticleBoundaryType, 3> const& pbndry_lo,
+                           amrex::GpuArray<ParticleBoundaryType, 3> const& pbndry_hi )
+    {
+        amrex::IntVect ijk_mirror;
+        // Loop over all dimensions
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            ijk_mirror = ijk_vec;
+            // Loop over sides, iside = 0 (lo), iside = 1 (hi)
+            for (int iside = 0; iside < 2; ++iside) {
+                // check if the boundary in this direction is a PEC, otherwise
+                // continue to the next direction
+                if (!( (iside == 0 )
+                    ? is_boundary_PEC(fbndry_lo, idim)
+                    : is_boundary_PEC(fbndry_hi, idim) )) continue;
+
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                // For 2D : for icomp==1, (Ey in XZ, Etheta in RZ),
+                //          icomp=1 is tangential to both x and z boundaries
+                //          The logic below ensures that the flags are set right for 2D
+                const bool is_tangent_to_PEC = ( (icomp == AMREX_SPACEDIM*idim)
+                                             ? false : true );
+#elif (defined WARPX_DIM_1D_Z)
+                // For 1D : icomp=0 and icomp=1 (Ex and Ey are tangential to the z boundary)
+                //          The logic below ensures that the flags are set right for 1D
+                const bool is_tangent_to_PEC = ( ( icomp == idim+2) ? false : true );
+#else
+                const bool is_tangent_to_PEC = ( ( icomp == idim) ? false : true );
+#endif
+
+                // mirror guard cell outside the domain by "ig" number cells, in direction, idim
+                const int ig = ( (iside == 0)
+                                ? (ijk_vec[idim] - dom_lo[idim] + (1 - is_nodal[idim]))
+                                : (dom_hi[idim] + 1 - ijk_vec[idim]) );
+
+                if (ig > 0 && ig <= nguard[idim]) {
+
+                    // Mirror location outside the domain by "ig" number of cells
+                    // across PEC boundary in direction, idim, and side, iside
+                    ijk_mirror[idim] = ( (iside == 0)
+                                     ? (dom_lo[idim] - ig)
+                                     : (dom_hi[idim] + ig + is_nodal[idim]));
+
+                    const bool isReflectingBoundary = ( (iside == 0 )
+                                            ? is_boundary_reflecting(pbndry_lo, idim)
+                                            : is_boundary_reflecting(pbndry_hi, idim) );
+                    if (isReflectingBoundary) {
+                        // reflect density if the particles are reflected
+                        if (is_tangent_to_PEC) Jfield(ijk_vec) += Jfield(ijk_mirror);
+                        else Jfield(ijk_vec) -= Jfield(ijk_mirror);
+                    }
+                    else {
+                        // add image charge density (opposite sign) if
+                        // particles are absorbed
+                        if (is_tangent_to_PEC) Jfield(ijk_vec) -= Jfield(ijk_mirror);
+                        else Jfield(ijk_vec) += Jfield(ijk_mirror);
+                    }
+                }
+            } // loop over sides
+        } // loop of dimensions
+    }
+
+
+    /**
+     * \brief Sets the J field value in guard cells next to a PEC boundary.
+     *        The current density on the PEC boundary is set to 0 while values
+     *        in the guard cells are set equal (and opposite) to their mirror
+     *        location inside the domain - representing image charges - in the
+     *        normal (tangential) direction.
+     *
+     *
+     * \param[in] icomp        component of the Jfield being updated
+     *                         (0=x, 1=y, 2=z in Cartesian)
+     *                         (0=r, 1=theta, 2=z in RZ)
+     * \param[in] dom_lo       index value of the lower domain boundary (cell-centered)
+     * \param[in] dom_hi       index value of the higher domain boundary (cell-centered)
+     * \param[in] nguard       number of guard cells along each dimension
+     * \param[in] ijk_vec      indices along the x(i), y(j), z(k) of the rho Array4
+     * \param[in] Jfield       field data to be updated if (ijk) is at the boundary
+                               or a guard cell
+     * \param[in] is_nodal     staggering of the field data being updated.
+     * \param[in] fbndry_lo    Field boundary type at the lower boundaries
+     * \param[in] fbndry_hi    Field boundary type at the upper boundaries
+     * \param[in] pbndry_lo    Particle boundary type at the lower boundaries
+     * \param[in] pbndry_hi    Particle boundary type at the upper boundaries
+     */
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void SetJfieldOnPEC (const int icomp,
+                           const amrex::IntVect & dom_lo,
+                           const amrex::IntVect & dom_hi,
+                           const amrex::IntVect & nguard,
+                           const amrex::IntVect & ijk_vec,
+                           amrex::Array4<amrex::Real> const& Jfield,
+                           const amrex::IntVect & is_nodal,
+                           amrex::GpuArray<int, 3> const& fbndry_lo,
+                           amrex::GpuArray<int, 3> const& fbndry_hi,
+                           amrex::GpuArray<ParticleBoundaryType, 3> const& pbndry_lo,
+                           amrex::GpuArray<ParticleBoundaryType, 3> const& pbndry_hi )
+    {
+        amrex::IntVect ijk_mirror = ijk_vec;
+        bool OnPECBoundary = false;
+        bool GuardCell = false;
+        amrex::Real sign = 1._rt;
+
+        // Loop over all dimensions
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            // Loop over sides, iside = 0 (lo), iside = 1 (hi)
+            for (int iside = 0; iside < 2; ++iside) {
+                const bool isPECBoundary = ( (iside == 0 )
+                                        ? is_boundary_PEC(fbndry_lo, idim)
+                                        : is_boundary_PEC(fbndry_hi, idim) );
+
+                // check if the boundary in this direction is a PEC, otherwise
+                // continue to the next direction
+                if (!( (iside == 0 )
+                    ? is_boundary_PEC(fbndry_lo, idim)
+                    : is_boundary_PEC(fbndry_hi, idim) )) continue;
+
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                // For 2D : for icomp==1, (Ey in XZ, Etheta in RZ),
+                //          icomp=1 is tangential to both x and z boundaries
+                //          The logic below ensures that the flags are set right for 2D
+                const bool is_tangent_to_PEC = ( (icomp == AMREX_SPACEDIM*idim)
+                                             ? false : true );
+#elif (defined WARPX_DIM_1D_Z)
+                // For 1D : icomp=0 and icomp=1 (Ex and Ey are tangential to the z boundary)
+                //          The logic below ensures that the flags are set right for 1D
+                const bool is_tangent_to_PEC = ( ( icomp == idim+2) ? false : true );
+#else
+                const bool is_tangent_to_PEC = ( ( icomp == idim) ? false : true );
+#endif
+
+                // mirror guard cell outside the domain by "ig" number cells, in direction, idim
+                const int ig = ( (iside == 0)
+                                ? (ijk_vec[idim] - dom_lo[idim] + (1 - is_nodal[idim]))
+                                : (dom_hi[idim] + 1 - ijk_vec[idim]) );
+
+                if (ig == 0 && is_nodal[idim] == 1) OnPECBoundary = true;
+                else if ( ig >= -nguard[idim] && ig <= 0) {
+                    // Mirror location inside the domain by "ig" number of cells
+                    // across PEC boundary in direction, idim, and side, iside
+                    ijk_mirror[idim] = ( (iside == 0)
+                                    ? (dom_lo[idim] -ig)
+                                    : (dom_hi[idim] + is_nodal[idim] + ig));
+                    GuardCell = true;
+                    // Sign of the normal component in guard cell is inverted
+                    if (is_tangent_to_PEC == true) sign *= -1._rt;
+                }
+            } // loop over sides
+        } // loop of dimensions
+
+        if (OnPECBoundary == true) {
+            // if ijk_vec is on a PEC boundary in any direction, set Bnormal to 0.
+            Jfield(ijk_vec) = 0._rt;
+        } else if (GuardCell == true) {
+            // tangential current is set opposite to the value in the mirror
+            // location while the normal current is set equal.
+            Jfield(ijk_vec) = sign * Jfield(ijk_mirror);
         }
     }
 
@@ -491,6 +682,16 @@ using namespace amrex;
      * \param[in]     lev        level of the Multifab
      */
     void ApplyPECtoRhofield(amrex::MultiFab* rho, const int lev);
+
+    /**
+     * \brief Reflects current density deposited over the PEC boundary back into
+     * the simulation domain.
+     *
+     * \param[in,out] Jx, Jy, Jz Multifabs containing the current density
+     * \param[in]     lev        level of the Multifab
+     */
+    void ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
+                          amrex::MultiFab* Jz, const int lev);
 }
 
 #endif // WarpX_PEC_KERNELS_H_
