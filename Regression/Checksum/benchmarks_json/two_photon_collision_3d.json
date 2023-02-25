@@ -1,22 +1,22 @@
 {
-  "lev=0": {
-    "rho": 0.0,
-    "rho_positron": 8203144366079999.0,
-    "rho_electron": 8203144366079999.0
-  },
-    "electron": {
-    "particle_momentum_x": 6.7205534794172e-22,
+  "electron": {
+    "particle_momentum_x": 6.720553479417201e-22,
     "particle_momentum_y": 1.2321298402602995e-21,
-    "particle_momentum_z": 2.658805289871435e-22,
+    "particle_momentum_z": 2.6588052898714356e-22,
     "particle_position_x": 0.0,
     "particle_position_y": 0.0,
     "particle_position_z": 0.0,
     "particle_weight": 100000000000000.0
   },
-    "positron": {
-    "particle_momentum_x": 6.7205534794172e-22,
+  "lev=0": {
+    "rho": 0.0,
+    "rho_electron": 8203144366079999.0,
+    "rho_positron": 8203144366079999.0
+  },
+  "positron": {
+    "particle_momentum_x": 6.720553479417201e-22,
     "particle_momentum_y": 1.2321298402602995e-21,
-    "particle_momentum_z": 2.658805289871435e-22,
+    "particle_momentum_z": 2.6588052898714356e-22,
     "particle_position_x": 0.0,
     "particle_position_y": 0.0,
     "particle_position_z": 0.0,
