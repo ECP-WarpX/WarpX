@@ -986,8 +986,8 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
                  cur_time, dt[lev], a_dt_type, skip_deposition);
-#ifdef WARPX_DIM_RZ
     if (! skip_deposition) {
+#ifdef WARPX_DIM_RZ
         // This is called after all particles have deposited their current and charge.
         ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(), current_fp[lev][1].get(), current_fp[lev][2].get(), lev);
         if (current_buf[lev][0].get()) {
@@ -999,8 +999,14 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
                 ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
             }
         }
-    }
+#else
+        // Set current density at PEC boundaries, if needed.
+        WarpX::GetInstance().ApplyJfieldBoundary(
+            lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
+            current_fp[lev][2].get()
+        );
 #endif
+    }
 }
 
 /* \brief Apply perfect mirror condition inside the box (not at a boundary).

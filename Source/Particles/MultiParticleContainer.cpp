@@ -552,12 +552,17 @@ MultiParticleContainer::DepositCurrent (
         pc->DepositCurrent(J, dt, relative_time);
     }
 
-#ifdef WARPX_DIM_RZ
     for (int lev = 0; lev < J.size(); ++lev)
     {
+#ifdef WARPX_DIM_RZ
         WarpX::GetInstance().ApplyInverseVolumeScalingToCurrentDensity(J[lev][0].get(), J[lev][1].get(), J[lev][2].get(), lev);
-    }
+#else
+        // Set current density at PEC boundaries, if needed.
+        WarpX::GetInstance().ApplyJfieldBoundary(
+            lev, J[lev][0].get(), J[lev][1].get(), J[lev][2].get()
+        );
 #endif
+    }
 }
 
 void

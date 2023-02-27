@@ -690,6 +690,8 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
             WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
         }
 #else
+        // Reflect density over PEC boundaries, if needed.
+        WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho[lev].get());
         ignore_unused(do_rz_volume_scaling);
 #endif
 
@@ -780,6 +782,9 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 
 #ifdef WARPX_DIM_RZ
     WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
+#else
+    // Reflect density over PEC boundaries, if needed.
+    WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho.get());
 #endif
 
     if (local == false) { ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity()); }
