@@ -1332,8 +1332,9 @@ std::string F_name, std::string F_component)
         auto FC_data_host = FC_chunk_data.get();
 
         // Load data to GPU
-        auto extent1 = extent[1];
-        auto extent2 [[maybe_unused]] = extent[2];
+        int extent0 = extent[0];
+        int extent1 = extent[1];
+        int extent2 = extent[2];
         size_t total_extent = size_t(extent[0]) * extent[1] * extent[2];
         amrex::Gpu::DeviceVector<double> FC_data_gpu(total_extent);
         auto FC_data = FC_data_gpu.data();
@@ -1392,13 +1393,14 @@ std::string F_name, std::string F_component)
 
                 // Assign the values through linear interpolation
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent[0], extent[2], extent[1]}, 1);
+                amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent0, extent2, extent1}, 1);
                 mffab(i,j,k) =
                     fc_array(0, ix1  , ix0  )*(1.0-ddx0)*(1.0-ddx1) +
                     fc_array(0, ix1  , ix0+1)*(    ddx0)*(1.0-ddx1) +
                     fc_array(0, ix1+1, ix0  )*(1.0-ddx0)*(    ddx1) +
                     fc_array(0, ix1+1, ix0+1)*(    ddx0)*(    ddx1);
 #elif defined(WARPX_DIM_3D)
+                amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent0, extent2, extent1}, 1);
                 int ext_2 = extent2;
                 int ext_12 = extent1*extent2;
                 mffab(i,j,k) = FC_data[(ix2  )+(ix1  )*ext_2+(ix0  )*ext_12]*(1.0-ddx0)*(1.0-ddx1)*(1.0-ddx2) +
