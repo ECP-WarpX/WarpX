@@ -26,7 +26,8 @@ filename = sys.argv[1]
 ds = yt.load( filename )
 all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 warpx_used_inputs = open('./warpx_used_inputs', 'r').read()
-if re.search('geometry.dims\s*=\s*RZ', warpx_used_inputs):
+geom_RZ = re.search('geometry.dims = RZ', warpx_used_inputs)
+if geom_RZ:
     Er = all_data_level_0['boxlib', 'Er'].v.squeeze()
     Et = all_data_level_0['boxlib', 'Et'].v.squeeze()
     Ez = all_data_level_0['boxlib', 'Ez'].v.squeeze()
@@ -38,7 +39,7 @@ else:
 # Check that the amplitude after reflection is less than 0.01 V/m
 max_reflection_amplitude = 0.01
 
-if re.search('geometry.dims\s*=\s*RZ', warpx_used_inputs):
+if geom_RZ:
     assert np.all( abs(Er) < max_reflection_amplitude )
     assert np.all( abs(Et) < max_reflection_amplitude )
     assert np.all( abs(Ez) < max_reflection_amplitude )
