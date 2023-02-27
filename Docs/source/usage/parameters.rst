@@ -57,6 +57,15 @@ Overall simulation parameters
     printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
 
+* ``warpx.compute_max_step_from_btd`` (`integer`; 0 by default) optional
+    Can be useful when computing back-transformed diagnostics.  If specified,
+    automatically calculates the number of iterations required in the boosted
+    frame for all back-transformed diagnostics to be completed. If ``max_step``,
+    ``stop_time``, or ``warpx.zmax_plasma_to_compute_max_step`` are not specified,
+    or the current values of ``max_step`` and/or ``stop_time`` are too low to fill
+    all BTD snapshots, the values of ``max_step`` and/or ``stop_time`` are
+    overwritten with the new values and printed to standard output.
+
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
     If provided ``warpx.random_seed = random``, the random seed will be determined
     using `std::random_device` and `std::clock()`,
@@ -654,7 +663,7 @@ Particle initialization
     * ``SingleParticle``: Inject a single macroparticle.
       This requires the additional parameters:
       ``<species_name>.single_particle_pos`` (`3 doubles`, particle 3D position [meter])
-      ``<species_name>.single_particle_vel`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
+      ``<species_name>.single_particle_u`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
       ``<species_name>.single_particle_weight`` ( `double`, macroparticle weight, i.e. number of physical particles it represents)
 
     * ``MultipleParticles``: Inject multiple macroparticles.
@@ -662,9 +671,9 @@ Particle initialization
       ``<species_name>.multiple_particles_pos_x`` (list of `doubles`, X positions of the particles [meter])
       ``<species_name>.multiple_particles_pos_y`` (list of `doubles`, Y positions of the particles [meter])
       ``<species_name>.multiple_particles_pos_z`` (list of `doubles`, Z positions of the particles [meter])
-      ``<species_name>.multiple_particles_vel_x`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
-      ``<species_name>.multiple_particles_vel_y`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
-      ``<species_name>.multiple_particles_vel_z`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
+      ``<species_name>.multiple_particles_ux`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
+      ``<species_name>.multiple_particles_uy`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
+      ``<species_name>.multiple_particles_uz`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
       ``<species_name>.multiple_particles_weight`` (list of `doubles`, macroparticle weights, i.e. number of physical particles each represents)
 
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in
@@ -2716,6 +2725,26 @@ Reduced Diagnostics
         field gather is carried out at every output,
         so the time of the diagnostic may be long
         depending on the simulation size.
+
+* ``ChargeOnEB``
+    This type computes the total surface charge on the embedded boundary
+    (in Coulombs), by using the formula
+
+    .. math::
+
+        Q_{tot} = \epsilon_0 \iint dS \cdot E
+
+    where the integral is performed over the surface of the embedded boundary.
+
+    When providing ``<reduced_diags_name>.weighting_function(x,y,z)``, the
+    computed integral is weighted:
+    .. math::
+
+        Q = \epsilon_0 \iint dS \cdot E \times weighting(x, y, z)
+
+    In particular, by choosing a weighting function which returns either
+    1 or 0, it is possible to compute the charge on only some part of the
+    embedded boundary.
 
 * ``<reduced_diags_name>.intervals`` (`string`)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced

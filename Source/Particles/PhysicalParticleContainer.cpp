@@ -783,17 +783,17 @@ PhysicalParticleContainer::AddParticles (int lev)
             MapParticletoBoostedFrame(plasma_injector->single_particle_pos[0],
                                       plasma_injector->single_particle_pos[1],
                                       plasma_injector->single_particle_pos[2],
-                                      plasma_injector->single_particle_vel[0],
-                                      plasma_injector->single_particle_vel[1],
-                                      plasma_injector->single_particle_vel[2]);
+                                      plasma_injector->single_particle_u[0],
+                                      plasma_injector->single_particle_u[1],
+                                      plasma_injector->single_particle_u[2]);
         }
         AddNParticles(lev, 1,
                       &(plasma_injector->single_particle_pos[0]),
                       &(plasma_injector->single_particle_pos[1]),
                       &(plasma_injector->single_particle_pos[2]),
-                      &(plasma_injector->single_particle_vel[0]),
-                      &(plasma_injector->single_particle_vel[1]),
-                      &(plasma_injector->single_particle_vel[2]),
+                      &(plasma_injector->single_particle_u[0]),
+                      &(plasma_injector->single_particle_u[1]),
+                      &(plasma_injector->single_particle_u[2]),
                       1, &(plasma_injector->single_particle_weight), 0, nullptr, 0);
         return;
     }
@@ -804,18 +804,18 @@ PhysicalParticleContainer::AddParticles (int lev)
                 MapParticletoBoostedFrame(plasma_injector->multiple_particles_pos_x[i],
                                           plasma_injector->multiple_particles_pos_y[i],
                                           plasma_injector->multiple_particles_pos_z[i],
-                                          plasma_injector->multiple_particles_vel_x[i],
-                                          plasma_injector->multiple_particles_vel_y[i],
-                                          plasma_injector->multiple_particles_vel_z[i]);
+                                          plasma_injector->multiple_particles_ux[i],
+                                          plasma_injector->multiple_particles_uy[i],
+                                          plasma_injector->multiple_particles_uz[i]);
             }
         }
         AddNParticles(lev, plasma_injector->multiple_particles_pos_x.size(),
                       plasma_injector->multiple_particles_pos_x.dataPtr(),
                       plasma_injector->multiple_particles_pos_y.dataPtr(),
                       plasma_injector->multiple_particles_pos_z.dataPtr(),
-                      plasma_injector->multiple_particles_vel_x.dataPtr(),
-                      plasma_injector->multiple_particles_vel_y.dataPtr(),
-                      plasma_injector->multiple_particles_vel_z.dataPtr(),
+                      plasma_injector->multiple_particles_ux.dataPtr(),
+                      plasma_injector->multiple_particles_uy.dataPtr(),
+                      plasma_injector->multiple_particles_uz.dataPtr(),
                       1, plasma_injector->multiple_particles_weight.dataPtr(), 0, nullptr, 0);
         return;
     }
@@ -2482,7 +2482,14 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const auto t_do_not_gather = do_not_gather;
 
-            amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+            enum exteb_flags : int { no_exteb, has_exteb };
+
+            int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
+
+            amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>>{},
+                               {exteb_runtime_flag},
+                               np, [=,getExternalEB=getExternalEB]
+                               AMREX_GPU_DEVICE (long ip, auto exteb_control)
             {
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
@@ -2498,8 +2505,11 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                    nox, galerkin_interpolation);
                 }
+
                 // Externally applied E and B-field in Cartesian co-ordinates
-                getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+                if constexpr (exteb_control == has_exteb) {
+                    getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+                }
 
                 if (do_crr) {
                     amrex::Real qp = q;
@@ -2703,8 +2713,9 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
                                 CompileTimeOptions<no_qed  ,has_qed>>{},
                        {exteb_runtime_flag, qed_runtime_flag},
-                       np_to_push, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
-                                                         [[maybe_unused]] auto qed_control)
+                       np_to_push, [=,getExternalEB=getExternalEB]
+                       AMREX_GPU_DEVICE (long ip, auto exteb_control,
+                                         [[maybe_unused]] auto qed_control)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
@@ -2731,9 +2742,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                            nox, galerkin_interpolation);
         }
 
-        auto const& externeb_fn = getExternalEB; // Have to do this for nvcc
         if constexpr (exteb_control == has_exteb) {
-            externeb_fn(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+            getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
         }
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);

@@ -100,10 +100,14 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
+   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON
    cmake --build build -j 16
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
+
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-perlmutter>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``$PSCRATCH``.
 
 For a *full PICMI install*, follow the :ref:`instructions for Python (PICMI) bindings <building-cmake-python>`:
 
@@ -155,6 +159,12 @@ To run a simulation, copy the lines above to a file ``perlmutter.sbatch`` and ru
    sbatch perlmutter.sbatch
 
 to submit the job.
+
+A100 GPUs (80 GB)
+^^^^^^^^^^^^^^^^^
+
+Perlmutter has 256 nodes that provide 80 GB HBM per A100 GPU.
+Replace ``-C gpu`` with ``-C gpu&hbm80g`` in the above job script to use these large-memory GPUs.
 
 
 .. _post-processing-perlmutter:

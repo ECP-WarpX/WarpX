@@ -115,6 +115,7 @@ Real WarpX::gamma_boost = 1._rt;
 Real WarpX::beta_boost = 0._rt;
 Vector<int> WarpX::boost_direction = {0,0,0};
 bool WarpX::do_compute_max_step_from_zmax = false;
+bool WarpX::compute_max_step_from_btd = false;
 Real WarpX::zmax_plasma_to_compute_max_step = 0._rt;
 
 short WarpX::current_deposition_algo;
@@ -585,11 +586,15 @@ WarpX::ReadParameters ()
             if ( random_seed == "random" ) {
                 std::random_device rd;
                 std::uniform_int_distribution<int> dist(2, INT_MAX);
-                unsigned long seed = myproc_1 * dist(rd);
-                ResetRandomSeed(seed);
+                unsigned long cpu_seed = myproc_1 * dist(rd);
+                unsigned long gpu_seed = myproc_1 * dist(rd);
+                ResetRandomSeed(cpu_seed, gpu_seed);
             } else if ( std::stoi(random_seed) > 0 ) {
-                unsigned long seed = myproc_1 * std::stoul(random_seed);
-                ResetRandomSeed(seed);
+                unsigned long nprocs = ParallelDescriptor::NProcs();
+                unsigned long seed_long = std::stoul(random_seed);
+                unsigned long cpu_seed = myproc_1 * seed_long;
+                unsigned long gpu_seed = (myproc_1 + nprocs) * seed_long;
+                ResetRandomSeed(cpu_seed, gpu_seed);
             } else {
                 Abort(Utils::TextMsg::Err(
                     "warpx.random_seed must be \"default\", \"random\" or an integer > 0."));
@@ -625,6 +630,9 @@ WarpX::ReadParameters ()
         do_compute_max_step_from_zmax = utils::parser::queryWithParser(
             pp_warpx, "zmax_plasma_to_compute_max_step",
             zmax_plasma_to_compute_max_step);
+
+        pp_warpx.query("compute_max_step_from_btd",
+            compute_max_step_from_btd);
 
         pp_warpx.query("do_moving_window", do_moving_window);
         if (do_moving_window)
@@ -1047,6 +1055,19 @@ WarpX::ReadParameters ()
         ParmParse pp_lasers("lasers");
         std::vector<std::string> lasers_names;
         pp_lasers.queryarr("names", lasers_names);
+
+#ifdef WARPX_DIM_RZ
+        // Here we check if the simulation includes laser and the number of
+        // azimuthal modes is less than 2.
+        // In that case we should throw a specific warning since
+        // representation of a laser pulse in cylindrical coordinates
+        // requires at least 2 azimuthal modes
+        if (lasers_names.size() > 0 && n_rz_azimuthal_modes < 2) {
+            ablastr::warn_manager::WMRecordWarning("Laser",
+            "Laser pulse representation in RZ requires at least 2 azimuthal modes",
+            ablastr::warn_manager::WarnPriority::high);
+        }
+#endif
 
         std::vector<std::string> sort_intervals_string_vec = {"-1"};
         int particle_shape;
@@ -1650,6 +1671,34 @@ WarpX::BackwardCompatibility ()
         ablastr::warn_manager::WMRecordWarning("Species",
             "particles.nspecies is ignored. Just use particles.species_names please.",
             ablastr::warn_manager::WarnPriority::low);
+    }
+
+    std::vector<std::string> backward_sp_names;
+    pp_particles.queryarr("species_names", backward_sp_names);
+    for(std::string speciesiter : backward_sp_names){
+        ParmParse pp_species(speciesiter);
+        std::vector<amrex::Real> backward_vel;
+        std::stringstream ssspecies;
+
+        ssspecies << "'" << speciesiter << ".multiple_particles_vel_<x,y,z>'";
+        ssspecies << " are not supported anymore. ";
+        ssspecies << "Please use the renamed variables ";
+        ssspecies << "'" << speciesiter << ".multiple_particles_u<x,y,z>' .";
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !pp_species.queryarr("multiple_particles_vel_x", backward_vel) &&
+            !pp_species.queryarr("multiple_particles_vel_y", backward_vel) &&
+            !pp_species.queryarr("multiple_particles_vel_z", backward_vel),
+            ssspecies.str());
+
+        ssspecies.str("");
+        ssspecies.clear();
+        ssspecies << "'" << speciesiter << ".single_particle_vel'";
+        ssspecies << " is not supported anymore. ";
+        ssspecies << "Please use the renamed variable ";
+        ssspecies << "'" << speciesiter << ".single_particle_u' .";
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !pp_species.queryarr("single_particle_vel", backward_vel),
+            ssspecies.str());
     }
 
     ParmParse pp_collisions("collisions");
