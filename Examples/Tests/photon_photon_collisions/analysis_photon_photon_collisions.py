@@ -42,7 +42,7 @@ def get_input_parameters(test):
                     w1 = find_num_in_line(line)
                 if 'photonB.single_particle_weight' in line:
                     w2 = find_num_in_line(line)
-        return w1, w2
+        return (w1, w2)
     elif test == 'many_photons_collisions_3d':
         with open('./warpx_used_inputs', 'rt') as f:
             lines = f.readlines()
@@ -87,11 +87,10 @@ def get_input_parameters(test):
         pB = np.sqrt(pBx**2 + pBy**2 + pBz**2)
         cos_ang = (pAx*pBx+pAy*pBy+pAz*pBz)/(pA*pB)
         theta = np.arccos(cos_ang)
-        E_star = np.sqrt(0.5*c**2*pA*pB*(1.- cos_ang))
         V = (xmax-xmin)*(ymax-ymin)*(zmax-zmin)
         NA0 = dens * V
         NB0 = dens * V
-        return EA, EB, theta, dt, V, num_steps, NA0, NB0
+        return (EA, EB, theta, dt, V, num_steps, NA0, NB0)
 
 # check that the photons have been completely transformed into pairs:
 # because the fusion multiplier is 1, as soon as a linear Breit-Wheeler event occurs,
