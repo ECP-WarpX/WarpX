@@ -102,6 +102,11 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
     amrex::ignore_unused(edge_lengths);
 #endif
 
+    // reset Jfield
+    Jfield[0]->setVal(0);
+    Jfield[1]->setVal(0);
+    Jfield[2]->setVal(0);
+
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -197,6 +202,9 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
 
     // fill ghost cells with appropriate values
     auto & warpx = WarpX::GetInstance();
+    // we shouldn't apply the boundary condition to J since J = J_i - J_e but
+    // the boundary correction was already applied to J_i
+    // warpx.ApplyJfieldBoundary(lev, Jfield[0].get(), Jfield[1].get(), Jfield[2].get());
     for (int i=0; i<3; i++) Jfield[i]->FillBoundary(warpx.Geom(lev).periodicity());
 }
 #endif
@@ -247,7 +255,8 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     // get hybrid model parameters
-    auto eta = hybrid_model->m_eta;
+    const auto eta = hybrid_model->m_eta;
+    const auto rho_floor = hybrid_model->m_n_floor * PhysConst::q_e;
 
     // Index type required for calling ablastr::coarsen::sample::Interp to interpolate fields
     // from their respective staggering to the Ex, Ey, Ez locations
@@ -430,10 +439,8 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                     );
                 }
 
-                if (rho_val == 0._rt) {
-                    Ex(i, j, k) = 0._rt;
-                    return;
-                }
+                // safety condition since we divide by rho_val later
+                if (rho_val < rho_floor) rho_val = rho_floor;
 
                 // Get the gradient of the electron pressure
                 auto grad_Pe = T_Algo::UpwardDx(Pe, coefs_x, n_coefs_x, i, j, k);
@@ -444,7 +451,7 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 Ex(i, j, k) = (enE_x - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (a_dt_type != DtType::Full) Ex(i, j, k) += eta * Jx(i, j, k);
+                if (a_dt_type != DtType::Full) Ex(i, j, k) += eta(rho_val) * Jx(i, j, k);
             },
 
             // Ey calculation
@@ -481,10 +488,8 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                     );
                 }
 
-                if (rho_val == 0._rt) {
-                    Ey(i, j, k) = 0._rt;
-                    return;
-                }
+                // safety condition since we divide by rho_val later
+                if (rho_val < rho_floor) rho_val = rho_floor;
 
                 // Get the gradient of the electron pressure
                 auto grad_Pe = T_Algo::UpwardDy(Pe, coefs_y, n_coefs_y, i, j, k);
@@ -495,7 +500,7 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 Ey(i, j, k) = (enE_y - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (a_dt_type != DtType::Full) Ey(i, j, k) += eta * Jy(i, j, k);
+                if (a_dt_type != DtType::Full) Ey(i, j, k) += eta(rho_val) * Jy(i, j, k);
             },
 
             // Ez calculation
@@ -527,10 +532,8 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                     );
                 }
 
-                if (rho_val == 0._rt) {
-                    Ez(i, j, k) = 0._rt;
-                    return;
-                }
+                // safety condition since we divide by rho_val later
+                if (rho_val < rho_floor) rho_val = rho_floor;
 
                 // Get the gradient of the electron pressure
                 auto grad_Pe = T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, k);
@@ -541,7 +544,7 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
                 Ez(i, j, k) = (enE_z - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (a_dt_type != DtType::Full) Ez(i, j, k) += eta * Jz(i, j, k);
+                if (a_dt_type != DtType::Full) Ez(i, j, k) += eta(rho_val) * Jz(i, j, k);
             }
         );
 

@@ -70,12 +70,17 @@ public:
     /** Electron temperature in eV */
     amrex::Real m_elec_temp;
     /** Reference electron density */
-    amrex::Real m_n0_ref;
+    amrex::Real m_n0_ref = 1.0;
     /** Electron pressure scaling exponent */
     amrex::Real m_gamma = 5.0/3.0;
 
+    /** Plasma density floor - if n < n_floor it will be set to n_floor */
+    amrex::Real m_n_floor = 1.0;
+
     /** Plasma resistivity */
-    amrex::Real m_eta = 0.0;
+    std::string m_eta_expression = "0.0";
+    std::unique_ptr<amrex::Parser> m_resistivity_parser;
+    amrex::ParserExecutor<1> m_eta;
 };
 
 /**

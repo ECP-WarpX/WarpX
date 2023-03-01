@@ -984,13 +984,14 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
 class EMSolver():
     def __init__(self, grid, method, Te=None, n0=None, gamma=None,
-                 plasma_resistivity=None, substeps=None):
+                 n_floor=None, plasma_resistivity=None, substeps=None):
         self.grid = grid
         self.method = method
 
         self.Te = Te
         self.n0 = n0
         self.gamma = gamma
+        self.n_floor = n_floor
         self.plasma_resistivity = plasma_resistivity
 
         self.substeps = substeps
@@ -1005,7 +1006,8 @@ class EMSolver():
             pywarpx.hybridmodel.elec_temp = self.Te
             pywarpx.hybridmodel.n0_ref = self.n0
             pywarpx.hybridmodel.gamma = self.gamma
-            pywarpx.hybridmodel.plasma_resistivity = self.plasma_resistivity
+            pywarpx.hybridmodel.n_floor = self.n_floor
+            pywarpx.hybridmodel.__setattr__('plasma_resistivity(rho)', self.plasma_resistivity)
             pywarpx.hybridmodel.substeps = self.substeps
 
 
