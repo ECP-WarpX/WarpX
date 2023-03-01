@@ -287,14 +287,14 @@ struct InjectorMomentumBoltzmann
     amrex::XDim3
     getBulkMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z) const noexcept
     {
-        using namespace amrex;
-        Real u[3];
+        using namespace amrex::literals;
+        amrex::Real u[3];
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
-        const Real beta = velocity(x,y,z);
+        const amrex::Real beta = velocity(x,y,z);
         int const dir = velocity.direction();
-        const Real gamma = static_cast<amrex::Real>(1./sqrt(1+beta*beta));
+        const amrex::Real gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
         u[dir] = gamma*beta;
-        return XDim3 {u[0],u[1],u[2]};
+        return amrex::XDim3 {u[0],u[1],u[2]};
     }
 
 private:
@@ -319,6 +319,7 @@ struct InjectorMomentumJuttner
     getMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z,
                  amrex::RandomEngine const& engine) const noexcept
     {
+        using namespace amrex::literals;
         // Sobol method for sampling MJ Speeds,
         // from Zenitani 2015 (Phys. Plasmas 22, 042116).
         amrex::Real x1, x2, gamma;
@@ -326,25 +327,25 @@ struct InjectorMomentumJuttner
         amrex::Real const theta = temperature(x,y,z);
         // Check if temperature is too low to do sampling method. Abort for now,
         // in future should implement an alternate method e.g. inverse transform
-        if (theta < 0.1) {
+        if (theta < 0.1_rt) {
             amrex::Abort("Temeprature parameter theta is less than minimum 0.1 allowed for Maxwell-Juttner");
         }
         // Calculate local velocity and abort if |beta|>=1
         amrex::Real const beta = velocity(x,y,z);
-        if (beta <= -1 || beta >= 1) {
+        if (beta <= -1._rt || beta >= 1._rt) {
             amrex::Abort("beta = v/c magnitude greater than or equal to 1");
         }
         int const dir = velocity.direction();
-        x1 = static_cast<amrex::Real>(0.);
-        gamma = static_cast<amrex::Real>(0.);
-        u[dir] = static_cast<amrex::Real>(0.);
+        x1 = static_cast<amrex::Real>(0._rt);
+        gamma = static_cast<amrex::Real>(0._rt);
+        u[dir] = static_cast<amrex::Real>(0._rt);
         // This condition is equation 10 in Zenitani,
         // though x1 is defined differently.
         while(u[dir]-gamma <= x1)
         {
             u[dir] = -theta*
                 std::log(amrex::Random(engine)*amrex::Random(engine)*amrex::Random(engine));
-            gamma = std::sqrt(1+u[dir]*u[dir]);
+            gamma = std::sqrt(1._rt+u[dir]*u[dir]);
             x1 = theta*std::log(amrex::Random(engine));
         }
         // The following code samples a random unit vector
@@ -353,10 +354,10 @@ struct InjectorMomentumJuttner
         x2 = amrex::Random(engine);
         // Direction dir is an input parameter that sets the boost direction:
         // 'x' -> d = 0, 'y' -> d = 1, 'z' -> d = 2.
-        u[(dir+1)%3] = 2*u[dir]*std::sqrt(x1*(1-x1))*std::sin(2*MathConst::pi*x2);
-        u[(dir+2)%3] = 2*u[dir]*std::sqrt(x1*(1-x1))*std::cos(2*MathConst::pi*x2);
+        u[(dir+1)%3] = 2._rt*u[dir]*std::sqrt(x1*(1._rt-x1))*std::sin(2._rt*MathConst::pi*x2);
+        u[(dir+2)%3] = 2._rt*u[dir]*std::sqrt(x1*(1._rt-x1))*std::cos(2._rt*MathConst::pi*x2);
         // The value of dir is the boost direction to be transformed.
-        u[dir] = u[dir]*(2*x1-1);
+        u[dir] = u[dir]*(2._rt*x1-1._rt);
         x1 = amrex::Random(engine);
         // The following condition is equtaion 32 in Zenitani, called
         // The flipping method. It transforms the intergral: d3x' -> d3x
@@ -377,7 +378,7 @@ struct InjectorMomentumJuttner
         // This Lorentz transform is equation 17 in Zenitani.
         // It transforms the integral d3u' -> d3u
         // where d3u' is the volume element for momentum in the boosted frame.
-        u[dir] = 1/std::sqrt(1-beta*beta)*(u[dir]+gamma*beta);
+        u[dir] = 1._rt/std::sqrt(1._rt-beta*beta)*(u[dir]+gamma*beta);
         // Note that if beta = 0 then the flipping method and Lorentz transform
         // have no effect on the u[dir] direction.
         return amrex::XDim3 {u[0],u[1],u[2]};
@@ -387,14 +388,14 @@ struct InjectorMomentumJuttner
     amrex::XDim3
     getBulkMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z) const noexcept
     {
-        using namespace amrex;
-        Real u[3];
+        using namespace amrex::literals;
+        amrex::Real u[3];
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
-        Real const beta = velocity(x,y,z);
+        amrex::Real const beta = velocity(x,y,z);
         int const dir = velocity.direction();
-        const Real gamma = static_cast<Real>(1./sqrt(1.+beta*beta));
+        amrex::Real const gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
         u[dir] = gamma*beta;
-        return XDim3 {u[0],u[1],u[2]};
+        return amrex::XDim3 {u[0],u[1],u[2]};
     }
 
 private:

@@ -1,5 +1,5 @@
 # Maximum number of time steps
-warpx.zmax_plasma_to_compute_max_step = 500e-6
+warpx.compute_max_step_from_btd = 1
 # number of grid points
 amr.n_cell = 32 256
 

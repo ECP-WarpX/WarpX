@@ -158,7 +158,7 @@ struct LatticeElementFinderDevice
      * @param[in] a_pti specifies the grid where the finder is defined
      * @param[in] a_offset particle index offset needed to access particle info
      * @param[in] accelerator_lattice a reference to the accelerator lattice at the refinement level
-     * @param[in] The host level instance of the element finder that this is associated with
+     * @param[in] h_finder The host level instance of the element finder that this is associated with
      */
     void
     InitLatticeElementFinderDevice (WarpXParIter const& a_pti, int const a_offset,
@@ -192,7 +192,7 @@ struct LatticeElementFinderDevice
      * \brief Gather the field for the particle from the lattice elements
      *
      * @param[in] i the particle index
-     * @param[out] field_Ex, ..., the gathered E and B fields
+     * @param[out] field_Ex,field_Ey,field_Ez,field_Bx,field_By,field_Bz the gathered E and B fields
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator () (const long i,

@@ -10,6 +10,8 @@
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
 
+#include <memory>
+
 namespace {
     /** Overwrite defaults in AMReX Inputs
      *

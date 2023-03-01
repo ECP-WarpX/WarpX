@@ -57,6 +57,15 @@ Overall simulation parameters
     printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
 
+* ``warpx.compute_max_step_from_btd`` (`integer`; 0 by default) optional
+    Can be useful when computing back-transformed diagnostics.  If specified,
+    automatically calculates the number of iterations required in the boosted
+    frame for all back-transformed diagnostics to be completed. If ``max_step``,
+    ``stop_time``, or ``warpx.zmax_plasma_to_compute_max_step`` are not specified,
+    or the current values of ``max_step`` and/or ``stop_time`` are too low to fill
+    all BTD snapshots, the values of ``max_step`` and/or ``stop_time`` are
+    overwritten with the new values and printed to standard output.
+
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
     If provided ``warpx.random_seed = random``, the random seed will be determined
     using `std::random_device` and `std::clock()`,
@@ -223,7 +232,7 @@ Setting up the field mesh
     Note that this value has to match the :ref:`WarpX_DIMS <building-cmake-options>` compile-time option.
     If you installed WarpX from a :ref:`package manager <install-users>`, then pick the right executable by name.
 
-* ``geometry.n_rz_azimuthal_modes`` (`integer`; 1 by default)
+* ``warpx.n_rz_azimuthal_modes`` (`integer`; 1 by default)
     When using the RZ version, this is the number of azimuthal modes.
     The default is ``1``, which corresponds to a perfectly axisymmetric simulation.
 
@@ -489,13 +498,33 @@ Distribution across MPI ranks and parallelization
     Particle weight factor used in `Heuristic` strategy for costs update; if running on GPU,
     the particle weight is set to a value determined from single-GPU tests on Summit,
     depending on the choice of solver (FDTD or PSATD) and order of the particle shape.
-    If running on CPU, the default value is `0.9`.
+    If running on CPU, the default value is `0.9`. If running on GPU, the default value is
+
+    +----------+-----------------------+
+    |          | Particle shape factor |
+    +----------+-------+-------+-------+
+    |          | 1     | 2     | 3     |
+    +==========+=======+=======+=======+
+    | FDTD/CKC | 0.599 | 0.732 | 0.855 |
+    +----------+-------+-------+-------+
+    | PSATD    | 0.425 | 0.595 | 0.75  |
+    +----------+-------+-------+-------+
 
 * ``algo.costs_heuristic_cells_wt`` (`float`) optional
     Cell weight factor used in `Heuristic` strategy for costs update; if running on GPU,
     the cell weight is set to a value determined from single-GPU tests on Summit,
     depending on the choice of solver (FDTD or PSATD) and order of the particle shape.
-    If running on CPU, the default value is `0.1`.
+    If running on CPU, the default value is `0.1`. If running on GPU, the default value is
+
+    +----------+-----------------------+
+    |          | Particle shape factor |
+    +----------+-------+-------+-------+
+    |          | 1     | 2     | 3     |
+    +==========+=======+=======+=======+
+    | FDTD/CKC | 0.401 | 0.268 | 0.145 |
+    +----------+-------+-------+-------+
+    | PSATD    | 0.575 | 0.405 | 0.25  |
+    +----------+-------+-------+-------+
 
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
@@ -634,7 +663,7 @@ Particle initialization
     * ``SingleParticle``: Inject a single macroparticle.
       This requires the additional parameters:
       ``<species_name>.single_particle_pos`` (`3 doubles`, particle 3D position [meter])
-      ``<species_name>.single_particle_vel`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
+      ``<species_name>.single_particle_u`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
       ``<species_name>.single_particle_weight`` ( `double`, macroparticle weight, i.e. number of physical particles it represents)
 
     * ``MultipleParticles``: Inject multiple macroparticles.
@@ -642,9 +671,9 @@ Particle initialization
       ``<species_name>.multiple_particles_pos_x`` (list of `doubles`, X positions of the particles [meter])
       ``<species_name>.multiple_particles_pos_y`` (list of `doubles`, Y positions of the particles [meter])
       ``<species_name>.multiple_particles_pos_z`` (list of `doubles`, Z positions of the particles [meter])
-      ``<species_name>.multiple_particles_vel_x`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
-      ``<species_name>.multiple_particles_vel_y`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
-      ``<species_name>.multiple_particles_vel_z`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
+      ``<species_name>.multiple_particles_ux`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
+      ``<species_name>.multiple_particles_uy`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
+      ``<species_name>.multiple_particles_uz`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
       ``<species_name>.multiple_particles_weight`` (list of `doubles`, macroparticle weights, i.e. number of physical particles each represents)
 
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in
@@ -987,7 +1016,7 @@ Particle initialization
 * ``<species>.physical_element`` (`string`)
     Only read if `do_field_ionization = 1`. Symbol of chemical element for
     this species. Example: for Helium, use ``physical_element = He``.
-    Elements up to atomic number Z=86 (Radon) are supported, let us know if you need higher Z.
+    All the elements up to atomic number Z=100 (Fermium) are supported.
 
 * ``<species>.ionization_product_species`` (`string`)
     Only read if `do_field_ionization = 1`. Name of species in which ionized
@@ -1002,7 +1031,10 @@ Particle initialization
 * ``<species>.do_classical_radiation_reaction`` (`int`) optional (default `0`)
     Enables Radiation Reaction (or Radiation Friction) for the species. Species
     must be either electrons or positrons. Boris pusher must be used for the
-    simulation
+    simulation. If both ``<species>.do_classical_radiation_reaction`` and
+    ``<species>.do_qed_quantum_sync`` are enabled, then the classical module
+    will be used when the particle's chi parameter is below ``qed_qs.chi_min``,
+    the discrete quantum module otherwise.
 
 * ``<species>.do_qed_quantum_sync`` (`int`) optional (default `0`)
     Enables Quantum synchrotron emission for this species.
@@ -2125,12 +2157,9 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Possible scalar fields: ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe. Also, note that for ``<diag_name>.diag_type = BackTransformed``, the only scalar field currently supported is ``rho``.
     Possible vector field components in Cartesian geometry: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz``.
     Possible vector field components in RZ geometry: ``Er`` ``Et`` ``Ez`` ``Br`` ``Bt`` ``Bz`` ``jr`` ``jt`` ``jz``.
-    Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``,
-    unless in RZ geometry with ``<diag_name>.format == openpmd``,
-    then default is ``<diag_name>.fields_to_plot = Er Et Ez Br Bt Bz jr jt jz``.
+    The default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz`` in Cartesian geometry and ``<diag_name>.fields_to_plot = Er Et Ez Br Bt Bz jr jt jz`` in RZ geometry.
     When the special value ``none`` is specified, no fields are written out.
     Note that the fields are averaged on the cell centers before they are written to file.
-    Also, when ``<diag_name>.format = openpmd``, the RZ modes for all fields are written.
     Otherwise, we reconstruct a 2D Cartesian slice of the fields for output at :math:`\theta=0`.
 
 * ``<diag_name>.dump_rz_modes`` (`0` or `1`) optional (default `0`)
@@ -2673,6 +2702,26 @@ Reduced Diagnostics
         field gather is carried out at every output,
         so the time of the diagnostic may be long
         depending on the simulation size.
+
+* ``ChargeOnEB``
+    This type computes the total surface charge on the embedded boundary
+    (in Coulombs), by using the formula
+
+    .. math::
+
+        Q_{tot} = \epsilon_0 \iint dS \cdot E
+
+    where the integral is performed over the surface of the embedded boundary.
+
+    When providing ``<reduced_diags_name>.weighting_function(x,y,z)``, the
+    computed integral is weighted:
+    .. math::
+
+        Q = \epsilon_0 \iint dS \cdot E \times weighting(x, y, z)
+
+    In particular, by choosing a weighting function which returns either
+    1 or 0, it is possible to compute the charge on only some part of the
+    embedded boundary.
 
 * ``<reduced_diags_name>.intervals`` (`string`)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced

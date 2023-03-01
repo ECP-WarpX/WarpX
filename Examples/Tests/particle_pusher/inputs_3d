@@ -33,7 +33,7 @@ positron.charge = 1.0
 positron.mass = 1.0
 positron.injection_style = "SingleParticle"
 positron.single_particle_pos = 0.0  0.0  0.0
-positron.single_particle_vel = 0.0  19.974984355438178  0.0
+positron.single_particle_u = 0.0  19.974984355438178  0.0
 positron.single_particle_weight = 0.0
 
 # External fields

@@ -62,6 +62,10 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-ookami>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``/lustre/scratch/<netid>``.
+
 
 .. _running-cpp-ookami:
 
