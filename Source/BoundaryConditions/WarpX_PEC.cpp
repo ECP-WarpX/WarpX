@@ -242,8 +242,6 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev)
         // Extract field data
         amrex::Array4<amrex::Real> const& rho_array = rho->array(mfi);
 
-        // amrex::Box const& tb = mfi.tilebox(rho_nodal, ng_fieldgather);
-
         // Construct a tilebox to loop over the grid
         tilebox = mfi.tilebox();
         amrex::Box tb = convert( tilebox, rho_nodal );
@@ -290,7 +288,7 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev)
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 PEC::SetRhofieldOnPEC(
                     domain_lo, domain_hi, iv, n, rho_array, rho_nodal,
-                    fbndry_lo, fbndry_hi, pbndry_lo, pbndry_hi
+                    fbndry_lo, fbndry_hi
                 );
             }
         );
@@ -318,8 +316,9 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
 
     const amrex::IntVect ngJ = Jx->nGrowVect();
 
-
-    constexpr int NODE = amrex::IndexType::NODE;
+    amrex::IntVect Jx_nodal = Jx->ixType().toIntVect();
+    amrex::IntVect Jy_nodal = Jy->ixType().toIntVect();
+    amrex::IntVect Jz_nodal = Jz->ixType().toIntVect();
 
     for ( MFIter mfi(*Jx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
@@ -329,25 +328,9 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
         Array4<Real> const& Jz_arr = Jz->array(mfi);
 
         Box const & tilebox = mfi.tilebox();
-        Box tbx = convert( tilebox, Jx->ixType().toIntVect() );
-        Box tby = convert( tilebox, Jy->ixType().toIntVect() );
-        Box tbz = convert( tilebox, Jz->ixType().toIntVect() );
-
-        // Lower corner of tile box physical domain
-        // Note that this is done before the tilebox.grow so that
-        // these do not include the guard cells.
-        // const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev, 0._rt);
-        // const Real rmin  = xyzmin[0];
-        // const Real rminr = xyzmin[0] + (tbx.type(0) == NODE ? 0. : 0.5*dx[0]);
-        // const Real rmint = xyzmin[0] + (tby.type(0) == NODE ? 0. : 0.5*dx[0]);
-        // const Real rminz = xyzmin[0] + (tbz.type(0) == NODE ? 0. : 0.5*dx[0]);
-        // const Dim3 lo = lbound(tilebox);
-        // const int irmin = lo.x;
-
-        // // For ishift, 1 means cell centered, 0 means node centered
-        // int const ishift_r = (rminr > rmin ? 1 : 0);
-        // int const ishift_t = (rmint > rmin ? 1 : 0);
-        // int const ishift_z = (rminz > rmin ? 1 : 0);
+        Box tbx = convert( tilebox, Jx_nodal );
+        Box tby = convert( tilebox, Jy_nodal );
+        Box tbz = convert( tilebox, Jz_nodal );
 
         // Grow the tileboxes to include the guard cells for the PEC boundaries
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -385,8 +368,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                 const int icomp = 0;
                 PEC::SetJfieldFromPEC(
                     icomp, domain_lo, domain_hi, ngJ, iv, Jx_arr,
-                    Jx->ixType().toIntVect(), fbndry_lo, fbndry_hi, pbndry_lo,
-                    pbndry_hi
+                    Jx_nodal, fbndry_lo, fbndry_hi, pbndry_lo, pbndry_hi
                 );
             },
 
@@ -402,8 +384,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                 const int icomp = 1;
                 PEC::SetJfieldFromPEC(
                     icomp, domain_lo, domain_hi, ngJ, iv, Jy_arr,
-                    Jy->ixType().toIntVect(), fbndry_lo, fbndry_hi, pbndry_lo,
-                    pbndry_hi
+                    Jy_nodal, fbndry_lo, fbndry_hi, pbndry_lo, pbndry_hi
                 );
             },
 
@@ -419,8 +400,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                 const int icomp = 2;
                 PEC::SetJfieldFromPEC(
                     icomp, domain_lo, domain_hi, ngJ, iv, Jz_arr,
-                    Jz->ixType().toIntVect(), fbndry_lo, fbndry_hi, pbndry_lo,
-                    pbndry_hi
+                    Jz_nodal, fbndry_lo, fbndry_hi, pbndry_lo, pbndry_hi
                 );
             }
         );
@@ -439,8 +419,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                 const int icomp = 0;
                 PEC::SetJfieldOnPEC(
                     icomp, domain_lo, domain_hi, ngJ, iv, Jx_arr,
-                    Jx->ixType().toIntVect(), fbndry_lo, fbndry_hi, pbndry_lo,
-                    pbndry_hi
+                    Jx_nodal, fbndry_lo, fbndry_hi
                 );
             },
 
@@ -456,8 +435,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                 const int icomp = 1;
                 PEC::SetJfieldOnPEC(
                     icomp, domain_lo, domain_hi, ngJ, iv, Jy_arr,
-                    Jy->ixType().toIntVect(), fbndry_lo, fbndry_hi, pbndry_lo,
-                    pbndry_hi
+                    Jy_nodal, fbndry_lo, fbndry_hi
                 );
             },
 
@@ -473,8 +451,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                 const int icomp = 2;
                 PEC::SetJfieldOnPEC(
                     icomp, domain_lo, domain_hi, ngJ, iv, Jz_arr,
-                    Jz->ixType().toIntVect(), fbndry_lo, fbndry_hi, pbndry_lo,
-                    pbndry_hi
+                    Jz_nodal, fbndry_lo, fbndry_hi
                 );
             }
         );
