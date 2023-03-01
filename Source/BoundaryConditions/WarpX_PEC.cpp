@@ -242,8 +242,6 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev)
         // Extract field data
         amrex::Array4<amrex::Real> const& rho_array = rho->array(mfi);
 
-        // amrex::Box const& tb = mfi.tilebox(rho_nodal, ng_fieldgather);
-
         // Construct a tilebox to loop over the grid
         tilebox = mfi.tilebox();
         amrex::Box tb = convert( tilebox, rho_nodal );
@@ -318,9 +316,6 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
 
     const amrex::IntVect ngJ = Jx->nGrowVect();
 
-
-    constexpr int NODE = amrex::IndexType::NODE;
-
     for ( MFIter mfi(*Jx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
 
@@ -332,22 +327,6 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
         Box tbx = convert( tilebox, Jx->ixType().toIntVect() );
         Box tby = convert( tilebox, Jy->ixType().toIntVect() );
         Box tbz = convert( tilebox, Jz->ixType().toIntVect() );
-
-        // Lower corner of tile box physical domain
-        // Note that this is done before the tilebox.grow so that
-        // these do not include the guard cells.
-        // const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev, 0._rt);
-        // const Real rmin  = xyzmin[0];
-        // const Real rminr = xyzmin[0] + (tbx.type(0) == NODE ? 0. : 0.5*dx[0]);
-        // const Real rmint = xyzmin[0] + (tby.type(0) == NODE ? 0. : 0.5*dx[0]);
-        // const Real rminz = xyzmin[0] + (tbz.type(0) == NODE ? 0. : 0.5*dx[0]);
-        // const Dim3 lo = lbound(tilebox);
-        // const int irmin = lo.x;
-
-        // // For ishift, 1 means cell centered, 0 means node centered
-        // int const ishift_r = (rminr > rmin ? 1 : 0);
-        // int const ishift_t = (rmint > rmin ? 1 : 0);
-        // int const ishift_z = (rminz > rmin ? 1 : 0);
 
         // Grow the tileboxes to include the guard cells for the PEC boundaries
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {

@@ -163,8 +163,8 @@ using namespace amrex;
                     } else if (ig > 0) {
                         // Find mirror location across PEC boundary
                         ijk_mirror[idim] = ( ( iside == 0)
-                                        ? (dom_lo[idim] + ig)
-                                        : (dom_hi[idim] + is_nodal[idim] - ig));
+                                        ? (dom_lo[idim] + ig - (1 - is_nodal[idim]))
+                                        : (dom_hi[idim] + 1 - ig));
                         GuardCell = true;
                         // tangential components are inverted across PEC boundary
                         if (is_tangent_to_PEC == true) sign *= -1._rt;
@@ -289,8 +289,8 @@ using namespace amrex;
                         // Mirror location inside the domain by "ig" number of cells
                         // across PEC boundary in direction, idim, and side, iside
                         ijk_mirror[idim] = ( (iside == 0)
-                                       ? (dom_lo[idim] + ig)
-                                       : (dom_hi[idim] + is_nodal[idim] - ig));
+                                        ? (dom_lo[idim] + ig - (1 - is_nodal[idim]))
+                                        : (dom_hi[idim] + 1 - ig));
                         GuardCell = true;
                         // Sign of the normal component in guard cell is inverted
                         if (is_normal_to_PEC == true) sign *= -1._rt;
@@ -360,12 +360,12 @@ using namespace amrex;
                                 ? (ijk_vec[idim] - dom_lo[idim])
                                 : (dom_hi[idim] + is_nodal[idim] - ijk_vec[idim]) );
 
-                if (ig > 0 && ig <= nguard[idim]) {
+                if (ig >= is_nodal[idim]  && ig <= nguard[idim]) {
 
                     // Mirror location outside the domain by "ig" number of cells
                     // across PEC boundary in direction, idim, and side, iside
                     ijk_mirror[idim] = ( (iside == 0)
-                                     ? (dom_lo[idim] - ig)
+                                     ? (dom_lo[idim] - (1 - is_nodal[idim]) - ig)
                                      : (dom_hi[idim] + is_nodal[idim]  + ig));
 
                     const bool isReflectingBoundary = ( (iside == 0 )
