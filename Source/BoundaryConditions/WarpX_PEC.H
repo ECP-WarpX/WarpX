@@ -163,8 +163,8 @@ using namespace amrex;
                     } else if (ig > 0) {
                         // Find mirror location across PEC boundary
                         ijk_mirror[idim] = ( ( iside == 0)
-                                        ? (dom_lo[idim] + ig)
-                                        : (dom_hi[idim] + is_nodal[idim] - ig));
+                                        ? (dom_lo[idim] + ig - (1 - is_nodal[idim]))
+                                        : (dom_hi[idim] + 1 - ig));
                         GuardCell = true;
                         // tangential components are inverted across PEC boundary
                         if (is_tangent_to_PEC == true) sign *= -1._rt;
@@ -176,6 +176,90 @@ using namespace amrex;
             // if ijk_vec is on a PEC boundary in any direction, set Etangential to 0.
             Efield(ijk_vec,n) = 0._rt;
         } else if (GuardCell == true) {
+            Efield(ijk_vec,n) = sign * Efield(ijk_mirror,n);
+        }
+    }
+
+    /**
+     * \brief The tangential Efield components in the guard cells outside the
+     *        domain boundary are set equal and opposite to the field in the valid cells
+     *        at their mirrored locations. The normal Efield components in the guard cells
+     *        are set equal to the field in the valid cells at their mirrored locations.
+     *        The number or depth of guard cells updated is equal to the shape factor of
+     *        particles in each dimension.
+     *        This function only differs from the above one in that the cell-centered
+     *        values next to PEC boundaries are overwritten using a one-sided derivative,
+     *        to avoid 1/dx spikes in B.
+     *        The number or depth of guard cells updated is equal to the shape factor of
+     *        particles in each dimension.
+     */
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void SetOhmsLawEfieldOnPEC (const int icomp, const amrex::IntVect & dom_lo,
+                                const amrex::IntVect & dom_hi,
+                                const amrex::IntVect & ijk_vec, const int n,
+                                amrex::Array4<amrex::Real> const& Efield,
+                                const amrex::IntVect & is_nodal,
+                                amrex::GpuArray<int, 3> const& fbndry_lo,
+                                amrex::GpuArray<int, 3> const& fbndry_hi )
+    {
+        // Tangential Efield componentes in guard cells set equal and opposite to cells
+        // in the mirror locations across the PEC boundary, whereas normal E-field
+        // components are set equal to values in the mirror locations across the PEC
+        // boundary. Here we just initialize it.
+        amrex::IntVect ijk_mirror = ijk_vec;
+        bool OnPECBoundary = false;
+        bool GuardCell = false;
+        amrex::Real sign = 1._rt;
+        // Loop over all the dimensions
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            // Loop over sides, iside = 0 (lo), iside = 1 (hi)
+            // Loop over sides, iside = 0 (lo), iside = 1 (hi)
+            for (int iside = 0; iside < 2; ++iside) {
+                const bool isPECBoundary = ( (iside == 0)
+                                        ? is_boundary_PEC(fbndry_lo, idim)
+                                        : is_boundary_PEC(fbndry_hi, idim) );
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                // For 2D : for icomp==1, (Ey in XZ, Etheta in RZ),
+                //          icomp=1 is tangential to both x and z boundaries
+                //          The logic below ensures that the flags are set right for 2D
+                const bool is_tangent_to_PEC = ( (icomp == AMREX_SPACEDIM*idim)
+                                             ? false : true );
+#elif (defined WARPX_DIM_1D_Z)
+                // For 1D : icomp=0 and icomp=1 (Ex and Ey are tangential to the z boundary)
+                //          The logic below ensures that the flags are set right for 1D
+                const bool is_tangent_to_PEC = ( ( icomp == idim+2) ? false : true );
+#else
+                const bool is_tangent_to_PEC = ( ( icomp == idim) ? false : true );
+#endif
+                if (isPECBoundary == true) {
+                    // guard cell outside the domain by "ig" number cells, in direction, idim
+                    const int ig = ( (iside == 0)
+                                 ? (dom_lo[idim] - ijk_vec[idim])
+                                 : (ijk_vec[idim] - (dom_hi[idim] + is_nodal[idim]) ) );
+                    if (ig == 0) {
+                        if (is_tangent_to_PEC == true and is_nodal[idim] == 1) {
+                            OnPECBoundary = true;
+                            const int direc = (iside == 0) ? 1 : -1;
+
+                            ijk_mirror = ijk_vec;
+                            ijk_mirror[idim] += direc;
+                            Efield(ijk_vec, n) = 1.5_rt * Efield(ijk_mirror,n);
+                            ijk_mirror[idim] += direc;
+                            Efield(ijk_vec, n) -= 0.5_rt * Efield(ijk_mirror,n);
+                        }
+                    } else if (ig > 0) {
+                        // Find mirror location across PEC boundary
+                        ijk_mirror[idim] = ( ( iside == 0)
+                                        ? (dom_lo[idim] + ig - (1 - is_nodal[idim]))
+                                        : (dom_hi[idim] + 1 - ig));
+                        GuardCell = true;
+                        // tangential components are inverted across PEC boundary
+                        if (is_tangent_to_PEC == true) sign *= -1._rt;
+                    }
+                } // is PEC boundary
+            } // loop over iside
+        } // loop over dimensions
+        if (OnPECBoundary == false && GuardCell == true) {
             Efield(ijk_vec,n) = sign * Efield(ijk_mirror,n);
         }
     }
@@ -289,8 +373,8 @@ using namespace amrex;
                         // Mirror location inside the domain by "ig" number of cells
                         // across PEC boundary in direction, idim, and side, iside
                         ijk_mirror[idim] = ( (iside == 0)
-                                       ? (dom_lo[idim] + ig)
-                                       : (dom_hi[idim] + is_nodal[idim] - ig));
+                                       ? (dom_lo[idim] + ig - (1 - is_nodal[idim]))
+                                       : (dom_hi[idim] - ig + 1));
                         GuardCell = true;
                         // Sign of the normal component in guard cell is inverted
                         if (is_normal_to_PEC == true) sign *= -1._rt;
@@ -692,6 +776,8 @@ using namespace amrex;
      */
     void ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                           amrex::MultiFab* Jz, const int lev);
-}
 
+    void ApplyOhmsLawPECtoEfield (std::array<amrex::MultiFab*, 3> Efield,
+                                  const int lev, PatchType patch_type);
+}
 #endif // WarpX_PEC_KERNELS_H_

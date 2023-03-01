@@ -588,9 +588,9 @@ public:
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
 
-    void HybridSolveE (DtType a_dt_type);
-    void HybridSolveE (int lev, DtType a_dt_type);
-    void HybridSolveE (int lev, PatchType patch_type, DtType a_dt_type);
+    void HybridSolveE (                               DtType dt_type);
+    void HybridSolveE (int lev,                       DtType dt_type);
+    void HybridSolveE (int lev, PatchType patch_type, DtType dt_type);
 
     /**
      * \brief
@@ -685,6 +685,16 @@ public:
 
     void ApplyEfieldBoundary (const int lev, PatchType patch_type);
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
+
+    /**
+     * \brief When the Ohm's law solver is used, the B-field values next to
+     * PEC boundaries are calculated using one-sided derivatives, since the
+     * E_parallel = 0 boundary condition otherwise causes large spikes in the
+     * B-field (that grows as 1/dx), this function sets the E_parallel value
+     * on the PEC such that the curl x E calculation in evolveB works out
+     * to a one-sided derivative.
+     */
+    void ApplyOhmsLawEfieldBoundary (const int lev, PatchType patch_type);
 
     void DampPML ();
     void DampPML (const int lev);

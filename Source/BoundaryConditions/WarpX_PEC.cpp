@@ -480,3 +480,97 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
         );
     }
 }
+
+void
+PEC::ApplyOhmsLawPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
+                              PatchType patch_type)
+{
+    auto& warpx = WarpX::GetInstance();
+    amrex::Box domain_box = warpx.Geom(lev).Domain();
+    if (patch_type == PatchType::coarse) {
+        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+        domain_box.coarsen(ref_ratio);
+    }
+    amrex::IntVect domain_lo = domain_box.smallEnd();
+    amrex::IntVect domain_hi = domain_box.bigEnd();
+
+    amrex::GpuArray<int, 3> fbndry_lo, fbndry_hi;
+    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
+        fbndry_lo[idim] = WarpX::field_boundary_lo[idim];
+        fbndry_hi[idim] = WarpX::field_boundary_hi[idim];
+    }
+
+    amrex::IntVect Ex_nodal = Efield[0]->ixType().toIntVect();
+    amrex::IntVect Ey_nodal = Efield[1]->ixType().toIntVect();
+    amrex::IntVect Ez_nodal = Efield[2]->ixType().toIntVect();
+    amrex::IntVect ng_fieldgather = warpx.get_ng_fieldgather();
+    // For each Efield multifab, apply PEC boundary condition to ncomponents
+    // If not split E-field, the PEC is applied to the regular Efield used in Maxwell's eq.
+    // If split_pml_field is true, then PEC is applied to all the split field components of the tangential field.
+    int nComp_x = Efield[0]->nComp();
+    int nComp_y = Efield[1]->nComp();
+    int nComp_z = Efield[2]->nComp();
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (amrex::MFIter mfi(*Efield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        // Extract field data
+        amrex::Array4<amrex::Real> const& Ex = Efield[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& Ey = Efield[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& Ez = Efield[2]->array(mfi);
+
+        // Extract tileboxes for which to loop
+        amrex::Box const& tex = mfi.tilebox(Efield[0]->ixType().toIntVect(), ng_fieldgather);
+        amrex::Box const& tey = mfi.tilebox(Efield[1]->ixType().toIntVect(), ng_fieldgather);
+        amrex::Box const& tez = mfi.tilebox(Efield[2]->ixType().toIntVect(), ng_fieldgather);
+
+        // loop over cells and update fields
+        amrex::ParallelFor(
+            tex, nComp_x,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const int icomp = 0;
+                PEC::SetOhmsLawEfieldOnPEC(
+                    icomp, domain_lo, domain_hi, iv, n, Ex, Ex_nodal,
+                    fbndry_lo, fbndry_hi
+                );
+            },
+            tey, nComp_y,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const int icomp = 1;
+                PEC::SetOhmsLawEfieldOnPEC(
+                    icomp, domain_lo, domain_hi, iv, n, Ey, Ey_nodal,
+                    fbndry_lo, fbndry_hi
+                );
+            },
+            tez, nComp_z,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const int icomp = 2;
+                PEC::SetOhmsLawEfieldOnPEC(
+                    icomp, domain_lo, domain_hi, iv, n, Ez, Ez_nodal,
+                    fbndry_lo, fbndry_hi
+                );
+            }
+        );
+    }
+}

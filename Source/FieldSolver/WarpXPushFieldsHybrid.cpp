@@ -86,8 +86,6 @@ void WarpX::HybridEvolveFields ()
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
         HybridSolveE(DtType::FirstHalf);
-        FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-
         EvolveB(0.5 / sub_steps * dt[0], DtType::FirstHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
@@ -99,8 +97,6 @@ void WarpX::HybridEvolveFields ()
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
         HybridSolveE(DtType::SecondHalf);
-        FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-
         EvolveB(0.5 / sub_steps * dt[0], DtType::SecondHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
@@ -154,7 +150,6 @@ void WarpX::HybridEvolveFields ()
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     HybridSolveE(DtType::Full);
-    FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
     // Copy the J_i^{n+1/2} values to current_fp_temp since at the next step
     // those values will be needed as J_i^{n-1/2}.
@@ -173,6 +168,7 @@ void WarpX::HybridSolveE (DtType a_dt_type)
     {
         HybridSolveE(lev, a_dt_type);
     }
+    FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 }
 
 void WarpX::HybridSolveE (int lev, DtType a_dt_type)
@@ -190,24 +186,20 @@ void WarpX::HybridSolveE (int lev, DtType a_dt_type)
 void WarpX::HybridSolveE (int lev, PatchType patch_type, DtType a_dt_type)
 {
     // Solve E field in regular cells
-    if (patch_type == PatchType::fine) {
-        if (a_dt_type == DtType::SecondHalf) {
-            m_fdtd_solver_fp[lev]->HybridSolveE(
-                Efield_fp[lev], current_fp_ampere[lev], current_fp[lev],
-                Bfield_fp[lev], rho_fp[lev], electron_pressure_fp[lev],
-                m_edge_lengths[lev], lev, m_hybrid_model, a_dt_type
-            );
-        }
-        else {
-            m_fdtd_solver_fp[lev]->HybridSolveE(
-                Efield_fp[lev], current_fp_ampere[lev], current_fp_temp[lev],
-                Bfield_fp[lev], rho_fp[lev], electron_pressure_fp[lev],
-                m_edge_lengths[lev], lev, m_hybrid_model, a_dt_type
-            );
-        }
-    } else {
-        amrex::Abort(Utils::TextMsg::Err(
-        "HybridSolveE: Only one level implemented for hybrid solver."));
+    if (a_dt_type == DtType::SecondHalf) {
+        m_fdtd_solver_fp[lev]->HybridSolveE(
+            Efield_fp[lev], current_fp_ampere[lev], current_fp[lev],
+            Bfield_fp[lev], rho_fp[lev], electron_pressure_fp[lev],
+            m_edge_lengths[lev], lev, m_hybrid_model, a_dt_type
+        );
+    }
+    // Solve E field on coarse patch
+    else {
+        m_fdtd_solver_fp[lev]->HybridSolveE(
+            Efield_fp[lev], current_fp_ampere[lev], current_fp_temp[lev],
+            Bfield_fp[lev], rho_fp[lev], electron_pressure_fp[lev],
+            m_edge_lengths[lev], lev, m_hybrid_model, a_dt_type
+        );
     }
 
     // Evolve E field in PML cells
@@ -228,8 +220,8 @@ void WarpX::HybridSolveE (int lev, PatchType patch_type, DtType a_dt_type)
     //             a_dt, pml_has_particles );
     //     }
     // }
-
-    ApplyEfieldBoundary(lev, patch_type);
+    if (a_dt_type == DtType::Full) ApplyEfieldBoundary(lev, patch_type);
+    else ApplyOhmsLawEfieldBoundary(lev, patch_type);
 }
 
 void WarpX::CalculateElectronPressure(DtType a_dt_type)
