@@ -97,7 +97,8 @@ def get_input_parameters(test):
 # the two photons must disappear and 2 electron-positron pairs must be generated
 def check_final_macroparticles(test):
     if test == 'two_photon_collision_3d':
-        w1, w2 = get_input_parameters(test)
+        y = get_input_parameters(test)
+        (w1, w2) = y 
         macro_photonA_number = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[-1,3]
         macro_photonA_weight = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[-1,8]
         macro_photonB_number = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[-1,4]
@@ -167,7 +168,8 @@ def cross_section(E1_lab, E2_lab, theta):
 
 def check_pair_rate(test):
     if test == 'many_photons_collisions_3d':
-        EA_lab, EB_lab, theta, dt, V, num_steps, NA0, NB0 = get_input_parameters(test)
+        y = get_input_parameters(test)
+        (EA_lab, EB_lab, theta, dt, V, num_steps, NA0, NB0) = y  
 
         t = np.arange(num_steps+1)*dt
         sigma = cross_section(EA_lab, EB_lab, theta)
