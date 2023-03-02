@@ -6,13 +6,11 @@ import sys
 import numpy as np
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-from analysis_base import (
-    find_num_in_line,
-    check_energy_conservation,
-    check_momentum_conservation,
-    check_charge_conservation
-)
+from analysis_base import (check_charge_conservation,
+                           check_energy_conservation,
+                           check_momentum_conservation, find_num_in_line)
 import checksumAPI
+
 
 # get input parameters from warpx_used_inputs
 def get_input_parameters():
