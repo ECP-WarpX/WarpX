@@ -233,20 +233,48 @@ WarpX::MoveWindow (const int step, bool move_j)
             }
         }
 
-        // Shift scalar component F for dive cleaning
-        if (do_dive_cleaning) {
+        // Shift scalar field F with div(E) cleaning
+        // TODO: shift F from pml_rz for RZ geometry with PSATD, once implemented
+        if (do_dive_cleaning)
+        {
             // Fine grid
             shiftMF(*F_fp[lev], geom[lev], num_shift, dir, lev, do_update_cost);
-            if (do_pml && pml[lev]->ok()) {
+            if (do_pml && pml[lev]->ok())
+            {
                 amrex::MultiFab* pml_F = pml[lev]->GetF_fp();
                 shiftMF(*pml_F, geom[lev], num_shift, dir, lev, dont_update_cost);
             }
-            if (lev > 0) {
+            if (lev > 0)
+            {
                 // Coarse grid
                 shiftMF(*F_cp[lev], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
-                if (do_pml && pml[lev]->ok()) {
+                if (do_pml && pml[lev]->ok())
+                {
                     amrex::MultiFab* pml_F = pml[lev]->GetF_cp();
                     shiftMF(*pml_F, geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
+                }
+            }
+        }
+
+        // Shift scalar field G with div(B) cleaning
+        // TODO: shift G from pml_rz for RZ geometry with PSATD, once implemented
+        if (do_divb_cleaning)
+        {
+            // Fine grid
+            shiftMF(*G_fp[lev], geom[lev], num_shift, dir, lev, do_update_cost);
+            if (do_pml && pml[lev]->ok())
+            {
+                amrex::MultiFab* pml_G = pml[lev]->GetG_fp();
+                shiftMF(*pml_G, geom[lev], num_shift, dir, lev, dont_update_cost);
+            }
+            if (lev > 0)
+            {
+                // Coarse grid
+                shiftMF(*G_cp[lev], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
+                if (do_pml && pml[lev]->ok())
+                {
+                    amrex::MultiFab* pml_G = pml[lev]->GetG_cp();
+                    shiftMF(*pml_G, geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
                 }
             }
         }
