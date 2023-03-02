@@ -5,10 +5,14 @@ import sys
 
 import numpy as np
 from scipy.constants import c, m_e, physical_constants, pi
-import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-from analysis_base import *
+from analysis_base import (
+    find_num_in_line,
+    check_energy_conservation,
+    check_momentum_conservation,
+    check_charge_conservation
+)
 import checksumAPI
 from scipy.integrate import cumtrapz
 
