@@ -7,10 +7,10 @@ import numpy as np
 import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+from analysis_base import *
 import checksumAPI
 from scipy.integrate import cumtrapz
 
-from analysis_base import *
 
 # get input parameters from warpx_used_inputs
 def get_input_parameters():

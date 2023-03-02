@@ -8,10 +8,9 @@ from scipy.constants import c, m_e, physical_constants, pi
 import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+from analysis_base import *
 import checksumAPI
 from scipy.integrate import cumtrapz
-
-from analysis_base import *
 
 # constants
 r_e = physical_constants["classical electron radius"][0]
