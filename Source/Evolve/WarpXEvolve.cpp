@@ -1000,6 +1000,10 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
             }
         }
 #else
+        if (rho_fp[lev].get()) {
+            // Reflect density over PEC boundaries, if needed.
+            WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho_fp[lev].get());
+        }
         // Set current density at PEC boundaries, if needed.
         WarpX::GetInstance().ApplyJfieldBoundary(
             lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
