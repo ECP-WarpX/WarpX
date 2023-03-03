@@ -133,7 +133,6 @@ using namespace amrex;
         // Loop over all the dimensions
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             // Loop over sides, iside = 0 (lo), iside = 1 (hi)
-            // Loop over sides, iside = 0 (lo), iside = 1 (hi)
             for (int iside = 0; iside < 2; ++iside) {
                 const bool isPECBoundary = ( (iside == 0)
                                         ? is_boundary_PEC(fbndry_lo, idim)
@@ -213,7 +212,6 @@ using namespace amrex;
         // Loop over all the dimensions
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             // Loop over sides, iside = 0 (lo), iside = 1 (hi)
-            // Loop over sides, iside = 0 (lo), iside = 1 (hi)
             for (int iside = 0; iside < 2; ++iside) {
                 const bool isPECBoundary = ( (iside == 0)
                                         ? is_boundary_PEC(fbndry_lo, idim)
@@ -262,6 +260,54 @@ using namespace amrex;
         if (OnPECBoundary == false && GuardCell == true) {
             Efield(ijk_vec,n) = sign * Efield(ijk_mirror,n);
         }
+    }
+
+    /**
+     * \brief This function sets the electron pressure value inside a PEC boundary
+     *        such that when the normal derivative is taken, the calculation
+     *        amounts to a one-sided derivative.
+     *        The number or depth of guard cells updated is equal to the shape factor of
+     *        particles in each dimension.
+     */
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void SetOhmsLawPefieldOnPEC (const amrex::IntVect & dom_lo,
+                                 const amrex::IntVect & dom_hi,
+                                 const amrex::IntVect & ijk_vec, const int n,
+                                 amrex::Array4<amrex::Real> const& Pefield,
+                                 const amrex::IntVect & is_nodal,
+                                 amrex::GpuArray<int, 3> const& fbndry_lo,
+                                 amrex::GpuArray<int, 3> const& fbndry_hi )
+    {
+        // Loop over all the dimensions
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            // Loop over sides, iside = 0 (lo), iside = 1 (hi)
+            for (int iside = 0; iside < 2; ++iside) {
+                // check if the boundary in this direction is a PEC, otherwise
+                // continue to the next direction
+                if (!( (iside == 0 )
+                    ? is_boundary_PEC(fbndry_lo, idim)
+                    : is_boundary_PEC(fbndry_hi, idim) )) continue;
+
+                // guard cell outside the domain by "ig" number cells, in direction, idim
+                const int ig = ( (iside == 0)
+                                ? (dom_lo[idim] - ijk_vec[idim])
+                                : (ijk_vec[idim] - (dom_hi[idim] + is_nodal[idim]) ) );
+                if (ig == 0) {
+                    if (is_nodal[idim] == 1) {
+                        const int direc = (iside == 0) ? 1 : -1;
+
+                        amrex::IntVect ijk_mirror = ijk_vec;
+                        ijk_mirror[idim] += direc;
+                        Pefield(ijk_vec, n) = 1.5_rt * Pefield(ijk_mirror,n);
+                        ijk_mirror[idim] += direc;
+                        Pefield(ijk_vec, n) -= 0.5_rt * Pefield(ijk_mirror,n);
+                    }
+                } else if (ig > 0) {
+                    // set electron pressure to zero
+                    Pefield(ijk_vec, n) = 0._rt;
+                }
+            } // loop over iside
+        } // loop over dimensions
     }
 
     /**
@@ -444,7 +490,7 @@ using namespace amrex;
                                 ? (ijk_vec[idim] - dom_lo[idim])
                                 : (dom_hi[idim] + is_nodal[idim] - ijk_vec[idim]) );
 
-                if (ig >= is_nodal[idim]  && ig <= nguard[idim]) {
+                if (ig >= is_nodal[idim] && ig <= nguard[idim]) {
 
                     // Mirror location outside the domain by "ig" number of cells
                     // across PEC boundary in direction, idim, and side, iside
@@ -767,5 +813,7 @@ using namespace amrex;
 
     void ApplyOhmsLawPECtoEfield (std::array<amrex::MultiFab*, 3> Efield,
                                   const int lev, PatchType patch_type);
+    void ApplyOhmsLawPECtoElectronPressure (amrex::MultiFab* Pefield,
+                                            const int lev, PatchType patch_type);
 }
 #endif // WarpX_PEC_KERNELS_H_

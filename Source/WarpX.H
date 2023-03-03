@@ -448,6 +448,7 @@ public:
     amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }
     amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
     amrex::MultiFab * get_pointer_vector_potential_fp  (int lev, int direction) const { return vector_potential_fp_nodal[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_electron_pressure_fp  (int lev) const { return electron_pressure_fp[lev].get(); }
 
     amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_cp  (int lev, int direction) const { return Bfield_cp[lev][direction].get(); }
@@ -695,6 +696,15 @@ public:
      * to a one-sided derivative.
      */
     void ApplyOhmsLawEfieldBoundary (const int lev, PatchType patch_type);
+
+    /**
+     * \brief When the Ohm's law solver is used, the elctron pressure gradient
+     * values next to PEC boundaries are calculated using one-sided derivatives,
+     * otherwise the E_perp values have large spikes (that grows as 1/dx), this
+     * function sets the electron pressure value on the PEC such that the div Pe
+     * calculation in HybridSolveE works out to a one-sided derivative.
+     */
+    void ApplyElectronPressureBoundary (const int lev, PatchType patch_type);
 
     void DampPML ();
     void DampPML (const int lev);

@@ -104,3 +104,17 @@ void WarpX::ApplyOhmsLawEfieldBoundary (const int lev, PatchType patch_type)
         }
     }
 }
+
+void WarpX::ApplyElectronPressureBoundary (const int lev, PatchType patch_type)
+{
+    if (PEC::isAnyBoundaryPEC()) {
+        if (patch_type == PatchType::fine) {
+            PEC::ApplyOhmsLawPECtoElectronPressure(
+                get_pointer_electron_pressure_fp(lev), lev, patch_type
+            );
+        } else {
+            amrex::Abort(Utils::TextMsg::Err(
+            "ApplyElectronPressureBoundary: Only one level implemented for hybrid solver."));
+        }
+    }
+}

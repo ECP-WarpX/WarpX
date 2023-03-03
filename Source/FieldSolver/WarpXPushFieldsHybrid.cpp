@@ -193,7 +193,6 @@ void WarpX::HybridSolveE (int lev, PatchType patch_type, DtType a_dt_type)
             m_edge_lengths[lev], lev, m_hybrid_model, a_dt_type
         );
     }
-    // Solve E field on coarse patch
     else {
         m_fdtd_solver_fp[lev]->HybridSolveE(
             Efield_fp[lev], current_fp_ampere[lev], current_fp_temp[lev],
@@ -231,6 +230,7 @@ void WarpX::CalculateElectronPressure(DtType a_dt_type)
         m_hybrid_model->FillElectronPressureMF(
             electron_pressure_fp[lev], rho_fp[lev], a_dt_type
         );
+        ApplyElectronPressureBoundary(lev, PatchType::fine);
         electron_pressure_fp[lev]->FillBoundary(Geom(lev).periodicity());
     }
 }

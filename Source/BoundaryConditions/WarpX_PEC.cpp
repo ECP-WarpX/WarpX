@@ -551,3 +551,58 @@ PEC::ApplyOhmsLawPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int 
         );
     }
 }
+
+void
+PEC::ApplyOhmsLawPECtoElectronPressure (amrex::MultiFab* Pefield, const int lev,
+                                        PatchType patch_type)
+{
+    auto& warpx = WarpX::GetInstance();
+    amrex::Box domain_box = warpx.Geom(lev).Domain();
+    if (patch_type == PatchType::coarse) {
+        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+        domain_box.coarsen(ref_ratio);
+    }
+    amrex::IntVect domain_lo = domain_box.smallEnd();
+    amrex::IntVect domain_hi = domain_box.bigEnd();
+
+    amrex::GpuArray<int, 3> fbndry_lo, fbndry_hi;
+    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
+        fbndry_lo[idim] = WarpX::field_boundary_lo[idim];
+        fbndry_hi[idim] = WarpX::field_boundary_hi[idim];
+    }
+
+    amrex::IntVect Pe_nodal = Pefield->ixType().toIntVect();
+    amrex::IntVect ng_fieldgather = Pefield->nGrowVect();
+    // For each Efield multifab, apply PEC boundary condition to ncomponents
+    // If not split E-field, the PEC is applied to the regular Efield used in Maxwell's eq.
+    // If split_pml_field is true, then PEC is applied to all the split field components of the tangential field.
+    int nComp = Pefield->nComp();
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (amrex::MFIter mfi(*Pefield, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        // Extract field data
+        amrex::Array4<amrex::Real> const& Pe = Pefield->array(mfi);
+
+        // Extract tileboxes for which to loop
+        amrex::Box const& tb = mfi.tilebox(Pe_nodal, ng_fieldgather);
+
+        // loop over cells and update fields
+        amrex::ParallelFor(
+            tb, nComp,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                PEC::SetOhmsLawPefieldOnPEC(
+                    domain_lo, domain_hi, iv, n, Pe, Pe_nodal,
+                    fbndry_lo, fbndry_hi
+                );
+            }
+        );
+    }
+}
