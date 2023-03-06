@@ -332,8 +332,15 @@ void
 BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
 {
     auto & warpx = WarpX::GetInstance();
+
+    // When restarting boosted simulations, the code below needs to take
+    // into account the fact that the position of the box at the beginning
+    // of the simulation, is not the one that we had at t=0 (because of the moving window)
+    amrex::Real boosted_moving_window_v = (warpx.moving_window_v - m_beta_boost*PhysConst::c)
+                                        / (1._rt - m_beta_boost * warpx.moving_window_v/PhysConst::c);
+
     // Lab-frame time for the i^th snapshot
-    amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
+    amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir) - boosted_moving_window_v * warpx.gett_new(0);
     m_t_lab.at(i_buffer) = m_intervals.GetBTDIteration(i_buffer) * m_dt_snapshots_lab
         + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
 
