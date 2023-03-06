@@ -552,7 +552,7 @@ public:
      */
     void ComputeMaxStep ();
     // Compute max_step automatically for simulations in a boosted frame.
-    void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
+    void computeMaxStepBoostAccelerator();
 
     /** \brief Move the moving window
      * \param step Time step

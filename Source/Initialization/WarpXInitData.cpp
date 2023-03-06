@@ -549,7 +549,7 @@ void
 WarpX::ComputeMaxStep ()
 {
     if (do_compute_max_step_from_zmax) {
-        computeMaxStepBoostAccelerator(geom[0]);
+        computeMaxStepBoostAccelerator();
     }
 }
 
@@ -560,7 +560,7 @@ WarpX::ComputeMaxStep ()
  * simulation box passes input parameter zmax_plasma_to_compute_max_step.
  */
 void
-WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
+WarpX::computeMaxStepBoostAccelerator() {
     // Sanity checks: can use zmax_plasma_to_compute_max_step only if
     // the moving window and the boost are all in z direction.
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -578,7 +578,8 @@ WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
 
     // Lower end of the simulation domain. All quantities are given in boosted
     // frame except zmax_plasma_to_compute_max_step.
-    const Real zmin_domain_boost = a_geom.ProbLo(WARPX_ZINDEX);
+
+    const Real zmin_domain_boost = geom[0].ProbLo(WARPX_ZINDEX);
     // End of the plasma: Transform input argument
     // zmax_plasma_to_compute_max_step to boosted frame.
     const Real len_plasma_boost = zmax_plasma_to_compute_max_step/gamma_boost;
@@ -596,7 +597,9 @@ WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
         computed_max_step =
             static_cast<int>(interaction_time_boost/dt[maxLevel()]);
     }
-    max_step = computed_max_step;
+    // computed_max_step is the number of steps from restart to terminal condition, so
+    // max step = restart step + computed_max_step
+    max_step = istep[0] + computed_max_step;
     Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
            <<computed_max_step<<std::endl;
 }
