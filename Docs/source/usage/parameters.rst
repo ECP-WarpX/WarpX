@@ -1672,7 +1672,7 @@ WarpX provides several particle collision models, using varying degrees of appro
 Numerics and algorithms
 -----------------------
 
-This section describes the input parameters used to select the preferred numerical methods and algorithms for your simulation setup.
+This section describes the input parameters used to select numerical methods and algorithms for your simulation setup.
 
 Time step
 ^^^^^^^^^
