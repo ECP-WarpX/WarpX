@@ -88,28 +88,11 @@ void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
     if (PEC::isAnyBoundaryPEC()) PEC::ApplyPECtoJfield(Jx, Jy, Jz, lev);
 }
 
-void WarpX::ApplyOhmsLawEfieldBoundary (const int lev, PatchType patch_type)
-{
-    if (PEC::isAnyBoundaryPEC()) {
-        if (patch_type == PatchType::fine) {
-            PEC::ApplyOhmsLawPECtoEfield(
-                {get_pointer_Efield_fp(lev, 0), get_pointer_Efield_fp(lev, 1),
-                get_pointer_Efield_fp(lev, 2)}, lev, patch_type
-            );
-        } else {
-            PEC::ApplyOhmsLawPECtoEfield(
-                {get_pointer_Efield_cp(lev, 0), get_pointer_Efield_cp(lev, 1),
-                get_pointer_Efield_cp(lev, 2)}, lev, patch_type
-            );
-        }
-    }
-}
-
 void WarpX::ApplyElectronPressureBoundary (const int lev, PatchType patch_type)
 {
     if (PEC::isAnyBoundaryPEC()) {
         if (patch_type == PatchType::fine) {
-            PEC::ApplyOhmsLawPECtoElectronPressure(
+            PEC::ApplyPECtoElectronPressure(
                 get_pointer_electron_pressure_fp(lev), lev, patch_type
             );
         } else {

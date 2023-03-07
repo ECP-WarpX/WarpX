@@ -688,21 +688,12 @@ public:
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
 
     /**
-     * \brief When the Ohm's law solver is used, the B-field values next to
-     * PEC boundaries are calculated using one-sided derivatives, since the
-     * E_parallel = 0 boundary condition otherwise causes large spikes in the
-     * B-field (that grows as 1/dx), this function sets the E_parallel value
-     * on the PEC such that the curl x E calculation in evolveB works out
-     * to a one-sided derivative.
-     */
-    void ApplyOhmsLawEfieldBoundary (const int lev, PatchType patch_type);
-
-    /**
-     * \brief When the Ohm's law solver is used, the elctron pressure gradient
-     * values next to PEC boundaries are calculated using one-sided derivatives,
-     * otherwise the E_perp values have large spikes (that grows as 1/dx), this
-     * function sets the electron pressure value on the PEC such that the div Pe
-     * calculation in HybridSolveE works out to a one-sided derivative.
+     * \brief When the Ohm's law solver is used, the elctron pressure values
+     * on PEC boundaries are set to enforce a zero derivative Neumann condition,
+     * otherwise the E_perp values have large spikes (that grows as 1/dx). This
+     * has to be done since the E-field is algebraically calculated instead of
+     * evolved which means the 1/dx growth is not avoided by multiplication
+     * with dt as happens in the B-field evolve.
      */
     void ApplyElectronPressureBoundary (const int lev, PatchType patch_type);
 

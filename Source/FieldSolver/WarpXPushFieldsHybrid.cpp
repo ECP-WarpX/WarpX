@@ -219,8 +219,8 @@ void WarpX::HybridSolveE (int lev, PatchType patch_type, DtType a_dt_type)
     //             a_dt, pml_has_particles );
     //     }
     // }
-    if (a_dt_type == DtType::Full) ApplyEfieldBoundary(lev, patch_type);
-    else ApplyOhmsLawEfieldBoundary(lev, patch_type);
+
+    ApplyEfieldBoundary(lev, patch_type);
 }
 
 void WarpX::CalculateElectronPressure(DtType a_dt_type)
