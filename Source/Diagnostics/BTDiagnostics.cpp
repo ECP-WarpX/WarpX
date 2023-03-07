@@ -329,7 +329,7 @@ BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 }
 
 void
-BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
+BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
 {
     auto & warpx = WarpX::GetInstance();
 
@@ -338,11 +338,15 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     // of the simulation, is not the one that we had at t=0 (because of the moving window)
     amrex::Real boosted_moving_window_v = (warpx.moving_window_v - m_beta_boost*PhysConst::c)
                                         / (1._rt - m_beta_boost * warpx.moving_window_v/PhysConst::c);
-
+    amrex::Print() << " boosted moving window v " <<  boosted_moving_window_v << " ratio : " <<  boosted_moving_window_v/PhysConst::c << "\n";
+    amrex::Print() << " warpx gettnew : " << warpx.gett_new(0) << "\n";
     // Lab-frame time for the i^th snapshot
-    amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir) - boosted_moving_window_v * warpx.gett_new(0);
-    m_t_lab.at(i_buffer) = m_intervals.GetBTDIteration(i_buffer) * m_dt_snapshots_lab
-        + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
+    if (restart == false) {
+        amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
+        m_t_lab.at(i_buffer) = m_intervals.GetBTDIteration(i_buffer) * m_dt_snapshots_lab
+            + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
+    }
+    amrex::Print() << " ibuffer : " << i_buffer << " mtlab : " << m_t_lab[i_buffer] << "\n";
 
     // Define buffer domain in boosted frame at level, lev, with user-defined lo and hi
     amrex::RealBox diag_dom;
@@ -399,11 +403,10 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
 
     // Define buffer_domain in lab-frame for the i^th snapshot.
     // Replace z-dimension with lab-frame co-ordinates.
-    amrex::Real zmin_buffer_lab = diag_dom.lo(m_moving_window_dir)
-                                 / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-    amrex::Real zmax_buffer_lab = diag_dom.hi(m_moving_window_dir)
-                                 / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-
+    amrex::Real zmin_buffer_lab = ( diag_dom.lo(m_moving_window_dir) - boosted_moving_window_v * warpx.gett_new(0) )
+                                / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
+    amrex::Real zmax_buffer_lab = ( diag_dom.hi(m_moving_window_dir) - boosted_moving_window_v * warpx.gett_new(0) )
+                                / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
 
     // Initialize buffer counter and z-positions of the  i^th snapshot in
     // boosted-frame and lab-frame
@@ -494,8 +497,9 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     m_snapshot_box[i_buffer].setSmall( m_moving_window_dir,
                                        snapshot_kindex_hi - (num_z_cells_in_snapshot-1) );
     // Setting hi k-index for the first buffer
-    m_buffer_k_index_hi[i_buffer] = m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir);
-
+    if (restart == false) {
+        m_buffer_k_index_hi[i_buffer] = m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir);
+    }
 }
 
 void
@@ -814,9 +818,11 @@ BTDiagnostics::PrepareFieldDataForOutput ()
             for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer )
             {
                 // Check if the zslice is in domain
+                amrex::Print() << " buffer " << i_buffer << " get z slice in domain " << GetZSliceInDomainFlag (i_buffer, lev) << "\n";
                 bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
                 // Initialize and define field buffer multifab if buffer is empty
                 if (ZSliceInDomain) {
+                    amrex::Print() << " warpx gettnew : " << warpx.gett_new(0) << "\n";
                     if ( buffer_empty(i_buffer) ) {
                         if ( m_buffer_flush_counter[i_buffer] == 0) {
                             // Compute the geometry, snapshot lab-domain extent
@@ -825,6 +831,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                         }
                         DefineFieldBufferMultiFab(i_buffer, lev);
                     }
+                    amrex::Print() << " ibuffer : " << i_buffer << " buiffer lo " << m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) << " buffer hi " << m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir) << " current z lab " << m_current_z_lab[i_buffer] << "\n";
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                         m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
                         m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir),
@@ -887,6 +894,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     auto & warpx = WarpX::GetInstance();
 
     const int hi_k_lab = m_buffer_k_index_hi[i_buffer];
+    amrex::Print() << " i buffer " << i_buffer << " hi k " << hi_k_lab  << "\n";
     m_buffer_box[i_buffer].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
     m_buffer_box[i_buffer].setBig( m_moving_window_dir, hi_k_lab );
     amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
@@ -970,6 +978,7 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
     const amrex::RealBox& boost_domain = warpx.Geom(lev).ProbDomain();
     amrex::Real buffer_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );
     amrex::Real buffer_zmax_lab = m_snapshot_domain_lab[i_buffer].hi( m_moving_window_dir );
+    amrex::Print() << " ibuffer  " << i_buffer << " zboost  " << m_current_z_boost[i_buffer] << " zlab " << m_current_z_lab[i_buffer] << " boost lo " << boost_domain.lo(m_moving_window_dir) << " boost hi " << boost_domain.hi(m_moving_window_dir) << " zmin lab " << buffer_zmin_lab << " zmax lab " << buffer_zmax_lab << "\n";
     if ( ( m_current_z_boost[i_buffer] <= boost_domain.lo(m_moving_window_dir) ) or
          ( m_current_z_boost[i_buffer] >= boost_domain.hi(m_moving_window_dir) ) or
          ( m_current_z_lab[i_buffer] <= buffer_zmin_lab ) or

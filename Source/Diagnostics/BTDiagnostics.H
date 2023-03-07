@@ -130,7 +130,7 @@ private:
      * \param[in] i_buffer i^th snapshot or buffer
      * \param[in] lev mesh-refinement level for which the field and/or particle buffer data is initialized.
      */
-    void InitializeBufferData ( int i_buffer , int lev) override;
+    void InitializeBufferData ( int i_buffer , int lev, bool restart=false) override;
     /** Whether to compute back-tranformed values for field-data.
      *  default value is true.
      */
@@ -169,8 +169,8 @@ private:
     /** max grid size used to generate BoxArray to define output MultiFabs */
     int m_max_box_size = 256;
 
-    /** Vector of lab-frame time corresponding to each snapshot */
-    amrex::Vector<amrex::Real> m_t_lab;
+    ///** Vector of lab-frame time corresponding to each snapshot */
+    //amrex::Vector<amrex::Real> m_t_lab;
     /** Vector of user-defined physical region for diagnostics in lab-frame
      *  for each back-transformed snapshot */
     amrex::Vector<amrex::RealBox> m_snapshot_domain_lab;
@@ -229,7 +229,7 @@ private:
     /** Vector of counters tracking number of times the buffer of multifab is
      *  flushed out and emptied before being refilled again for each snapshot */
     amrex::Vector<int> m_buffer_flush_counter;
-    amrex::Vector<int> m_buffer_k_index_hi;
+//    amrex::Vector<int> m_buffer_k_index_hi;
     /** Multi-level cell-centered multifab with all field-data components, namely,
      *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho.
      *  This cell-centered data extending over the entire domain

@@ -16,6 +16,7 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+#include "Diagnostics/MultiDiagnostics.H"
 
 #include <ablastr/utils/Communication.H>
 
@@ -223,6 +224,29 @@ WarpX::InitFromCheckpoint ()
 
         is >> time_of_last_gal_shift;
         GotoNextLine(is);
+
+
+        auto & warpx = WarpX::GetInstance();
+        for (int idiag = 0; idiag < warpx.GetMultiDiags().GetTotalDiags(); ++idiag)
+        {
+            if( warpx.GetMultiDiags().diagstypes(idiag) == DiagTypes::BackTransformed )
+            {
+                auto& diag = warpx.GetMultiDiags().GetDiag(idiag);
+                diag.InitDataBeforeRestart();
+                for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
+                    amrex::Real tlab;
+                    is >> tlab;
+                    diag.settlab(i_buffer, tlab);
+                    int kindex_hi;
+                    is >> kindex_hi;
+                    diag.set_buffer_k_index_hi(i_buffer, kindex_hi);
+                amrex::Print() << " m num buffers " << warpx.GetMultiDiags().GetDiag(idiag).getnumbuffers() << " tlab " << diag.gettlab(i_buffer) << "\n";
+                }
+                diag.InitDataAfterRestart();
+            } else {
+                warpx.GetMultiDiags().GetDiag(idiag).InitData();
+            }
+        }
     }
 
     const int nlevs = finestLevel()+1;

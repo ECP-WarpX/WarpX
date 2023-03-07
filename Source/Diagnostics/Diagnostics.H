@@ -62,6 +62,8 @@ public:
     virtual void Flush (int i_buffer) = 0;
     /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
     void InitData ();
+    void InitDataBeforeRestart ();
+    void InitDataAfterRestart ();
     /** Initialize functors that store pointers to the fields requested by the user.
      *
      * Derived classes MUST implement this function, and it must allocate m_all_field_functors
@@ -104,7 +106,11 @@ public:
     void FilterComputePackFlush (int step, bool force_flush=false);
     /** Whether the last timestep is always dumped */
     bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
-
+    int getnumbuffers() {return m_num_buffers;}
+    amrex::Real gettlab(int i_buffer) {return m_t_lab[i_buffer];}
+    void settlab(int i_buffer, amrex::Real tlab) {m_t_lab[i_buffer] = tlab;}
+    int get_buffer_k_index_hi(int i_buffer) {return m_buffer_k_index_hi[i_buffer];}
+    void set_buffer_k_index_hi(int i_buffer, int kindex) {m_buffer_k_index_hi[i_buffer] = kindex;}
 protected:
     /** Read Parameters of the base Diagnostics class */
     bool BaseReadParameters ();
@@ -114,7 +120,7 @@ protected:
      * \param[in] i_buffer index of buffer for which the output MultiFab is defined.
      * \param[in] lev level on which the output MultiFab is defined
      */
-    virtual void InitializeBufferData (int i_buffer, int lev) = 0;
+    virtual void InitializeBufferData (int i_buffer, int lev, bool restart=false) = 0;
     /** Initialize member variables and arrays specific to the diagnostics in the
      *  derived classes.(FullDiagnostics, BTDiagnostics)
      */
@@ -241,6 +247,9 @@ protected:
      *  over the total number of species selected for diagnostics.
      */
     amrex::Vector< amrex::Vector <int> > m_totalParticles_in_buffer;
+    /** Vector of lab-frame time corresponding to each snapshot */
+    amrex::Vector<amrex::Real> m_t_lab;
+    amrex::Vector<int> m_buffer_k_index_hi;
 
 };
 
