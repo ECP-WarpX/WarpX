@@ -116,6 +116,7 @@ Vector<int> WarpX::boost_direction = {0,0,0};
 bool WarpX::do_compute_max_step_from_zmax = false;
 bool WarpX::compute_max_step_from_btd = false;
 Real WarpX::zmax_plasma_to_compute_max_step = 0._rt;
+Real WarpX::zmin_domain_boost_step_0 = 0._rt;
 
 short WarpX::current_deposition_algo;
 short WarpX::charge_deposition_algo;
