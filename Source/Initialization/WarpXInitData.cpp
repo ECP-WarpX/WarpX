@@ -375,7 +375,7 @@ WarpX::InitData ()
 
     Print() << utils::logo::get_logo();
 
-    // WarpX::computeMaxStepBoostAccelerator 
+    // WarpX::computeMaxStepBoostAccelerator
     // needs to start from the initial zmin_domain_boost,
     // even if restarting from a checkpoint file
     if (do_compute_max_step_from_zmax) {
