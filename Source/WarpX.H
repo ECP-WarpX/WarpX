@@ -294,6 +294,9 @@ public:
     //! the maximum number of iterations is computed automatically so that the lower end of the
     //! simulation domain along z reaches #zmax_plasma_to_compute_max_step in the boosted frame
     static bool do_compute_max_step_from_zmax;
+    //! store initial value of zmin_domain_boost because WarpX::computeMaxStepBoostAccelerator
+    //! needs the initial value of zmin_domain_boost, even if restarting from a checkpoint file
+    static amrex::Real zmin_domain_boost_step_0;
 
     //! If true, the code will compute max_step from the back transformed diagnostics
     static bool compute_max_step_from_btd;
@@ -552,7 +555,7 @@ public:
      */
     void ComputeMaxStep ();
     // Compute max_step automatically for simulations in a boosted frame.
-    void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
+    void computeMaxStepBoostAccelerator();
 
     /** \brief Move the moving window
      * \param step Time step
