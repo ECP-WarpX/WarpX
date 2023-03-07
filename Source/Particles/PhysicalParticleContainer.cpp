@@ -549,7 +549,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         std::string const ps_name = it.particles.begin()->first;
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
-        auto const npart = ps["position"]["x"].getExtent()[0];
+        auto const npart = ps["position"]["z"].getExtent()[0];
 #if !defined(WARPX_DIM_1D_Z)
         std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
         double const position_unit_x = ps["position"]["x"].unitSI();
@@ -574,6 +574,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
         ParticleReal weight = 1.0_prt;  // base standard: no info means "real" particles
         if (q_tot != 0.0) {
+            // note: needs adjustment/scaling for non-3D
             weight = std::abs(q_tot) / ( std::abs(charge) * ParticleReal(npart) );
             if (ps.contains("weighting")) {
                 std::stringstream ss;

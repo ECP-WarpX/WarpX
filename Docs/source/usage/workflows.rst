@@ -13,4 +13,5 @@ This section collects typical user workflows and best practices for WarpX.
    workflows/plot_timestep_duration
    workflows/plot_distribution_mapping
    workflows/psatd_stencil
+   workflows/openPMD_beam
    workflows/archiving

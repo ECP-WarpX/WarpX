@@ -1,7 +1,7 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 100           # for production, run for longer time, e.g. max_step = 1000
+max_step = 200           # for production, run for longer time, e.g. max_step = 1000
 amr.n_cell = 32 32 256   # for production, run with finer mesh, e.g. amr.n_cell = 64 64 512
 amr.max_grid_size = 64   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 32 # minimum size of each AMReX box, used to decompose the domain
@@ -37,7 +37,7 @@ algo.particle_shape = 3
 #################################
 ############ PLASMA #############
 #################################
-particles.species_names = electrons
+particles.species_names = electrons beam
 
 electrons.charge = -q_e
 electrons.mass = m_e
@@ -57,6 +57,15 @@ electrons.attribute.regionofinterest(x,y,z,ux,uy,uz,t) = "(z>12.0e-6) * (z<13.0e
 electrons.addRealAttributes = initialenergy
 electrons.attribute.initialenergy(x,y,z,ux,uy,uz,t) = " ux*ux + uy*uy + uz*uz"
 
+# injected beam
+my_constants.beam_initial_z = -20.e-6
+
+beam.injection_style = "external_file"
+beam.injection_file = "beam.h5"
+beam.species_type = electron
+beam.q_tot = -2.e-12
+beam.z_shift = beam_initial_z
+
 #################################
 ############ LASER  #############
 #################################
@@ -74,8 +83,9 @@ laser1.wavelength = 0.8e-6               # The wavelength of the laser (in m)
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 100
+diag1.intervals = 50
 diag1.diag_type = Full
+diag1.format = openpmd
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
 
 # Reduced Diagnostics
