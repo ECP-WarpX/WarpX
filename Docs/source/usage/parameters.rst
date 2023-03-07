@@ -1672,6 +1672,11 @@ WarpX provides several particle collision models, using varying degrees of appro
 Numerics and algorithms
 -----------------------
 
+This section describes the input parameters used to select numerical methods and algorithms for your simulation setup.
+
+Time step
+^^^^^^^^^
+
 * ``warpx.cfl`` (`float`) optional (default `0.999`)
     The ratio between the actual timestep that is used in the simulation
     and the Courant-Friedrichs-Lewy (CFL) limit. (e.g. for `warpx.cfl=1`,
@@ -1683,6 +1688,9 @@ Numerics and algorithms
     When the electrostatic solver is being used, this must be supplied.
     This can be used with the electromagnetic solver, overriding ``warpx.cfl``, but
     it is up to the user to ensure that the CFL condition is met.
+
+Filtering
+^^^^^^^^^
 
 * ``warpx.use_filter`` (`0` or `1`; default: `1`, except for RZ FDTD)
     Whether to smooth the charge and currents on the mesh, after depositing them from the macro-particles.
@@ -1701,6 +1709,9 @@ Numerics and algorithms
 * ``warpx.use_filter_compensation`` (`0` or `1`; default: `0`)
     Whether to add compensation when applying filtering.
     This is only supported with the RZ spectral solver.
+
+Particle push, charge and current deposition, field gathering
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.
@@ -1762,6 +1773,11 @@ Numerics and algorithms
 
     Note that this input parameter is not optional and must always be set in all input files provided that there is at least one particle species (set in input as ``particles.species_names``) or one laser species (set in input as ``lasers.names``) in the simulation. No default value is provided automatically.
 
+Maxwell solver
+^^^^^^^^^^^^^^
+
+Two families of Maxwell solvers are implemented in WarpX, based on the Finite-Difference Time-Domain method (FDTD) or the Pseudo-Spectral Analytical Time-Domain method (PSATD), respectively.
+
 * ``algo.maxwell_solver`` (`string`, optional)
     The algorithm for the Maxwell field solver.
     Available options are:
@@ -1784,80 +1800,8 @@ Numerics and algorithms
 
     If ``algo.em_solver_medium`` is not specified, ``vacuum`` is the default.
 
-* ``algo.macroscopic_sigma_method`` (`string`, optional)
-    The algorithm for updating electric field when ``algo.em_solver_medium`` is macroscopic. Available options are:
-
-    - ``backwardeuler`` is a fully-implicit, first-order in time scheme for E-update (default).
-    - ``laxwendroff`` is the semi-implicit, second order in time scheme for E-update.
-
-    Comparing the two methods, Lax-Wendroff is more prone to developing oscillations and requires a smaller timestep for stability. On the other hand, Backward Euler is more robust but it is first-order accurate in time compared to the second-order Lax-Wendroff method.
-
-* ``macroscopic.sigma_function(x,y,z)``, ``macroscopic.epsilon_function(x,y,z)``, ``macroscopic.mu_function(x,y,z)`` (`string`)
-     To initialize spatially varying conductivity, permittivity, and permeability, respectively,
-     using a mathematical function in the input. Constants required in the
-     mathematical expression can be set using ``my_constants``. These parameters are parsed
-     if ``algo.em_solver_medium=macroscopic``.
-
-* ``macroscopic.sigma``, ``macroscopic.epsilon``, ``macroscopic.mu`` (`double`)
-    To initialize a constant conductivity, permittivity, and permeability of the
-    computational medium, respectively. The default values are the corresponding values
-    in vacuum.
-
-* ``interpolation.galerkin_scheme`` (`0` or `1`)
-    Whether to use a Galerkin scheme when gathering fields to particles.
-    When set to `1`, the interpolation orders used for field-gathering are reduced for certain field components along certain directions.
-    For example, :math:`E_z` is gathered using ``algo.particle_shape`` along :math:`(x,y)` and ``algo.particle_shape - 1`` along :math:`z`.
-    See equations (21)-(23) of (`Godfrey and Vay, 2013 <https://doi.org/10.1016/j.jcp.2013.04.006>`_) and associated references for details.
-    Defaults to `1` unless ``warpx.do_nodal = 1`` and/or ``algo.field_gathering = momentum-conserving``.
-
-    .. warning::
-
-        The default behavior should not normally be changed.
-        At present, this parameter is intended mainly for testing and development purposes.
-
-* ``interpolation.field_centering_nox``, ``interpolation.field_centering_noy``, ``interpolation.field_centering_noz`` (default: ``2`` in all directions)
-    The order of interpolation used with staggered grids (``warpx.do_nodal = 0``) and momentum-conserving field gathering (``algo.field_gathering = momentum-conserving``) to interpolate the electric and magnetic fields from the cell centers to the cell nodes, before gathering the fields from the cell nodes to the particle positions. High-order interpolation (order 8 in each direction, at least) is necessary to ensure stability in typical LWFA boosted-frame simulations using the Galilean PSATD or comoving PSATD schemes. This finite-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
-
-* ``interpolation.current_centering_nox``, ``interpolation.current_centering_noy``, ``interpolation.current_centering_noz`` (default: ``2`` in all directions)
-    The order of interpolation used to center the currents from nodal to staggered grids (if ``warpx.do_current_centering = 1``), before pushing the Maxwell fields on staggered grids. This finite-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
-
-* ``warpx.do_current_centering`` (`0` or `1` ; default: 0)
-    If true, the current is deposited on a nodal grid and then centered to a staggered grid (Yee grid), using finite-order interpolation. If ``warpx.do_nodal = 1``, the Maxwell fields are pushed on a nodal grid, it is not necessary to center the currents to a staggered grid, and we set therefore ``warpx.do_current_centering = 0`` automatically, overwriting the user-defined input.
-
-* ``warpx.do_dive_cleaning`` (`0` or `1` ; default: 0)
-    Whether to use modified Maxwell equations that progressively eliminate
-    the error in :math:`div(E)-\rho`. This can be useful when using a current
-    deposition algorithm which is not strictly charge-conserving, or when
-    using mesh refinement. These modified Maxwell equation will cause the error
-    to propagate (at the speed of light) to the boundaries of the simulation
-    domain, where it can be absorbed.
-
-* ``warpx.do_nodal`` (`0` or `1` ; default: 0)
-    Whether to use a nodal grid (i.e. all fields are defined at the
-    same points in space) or a staggered grid (i.e. Yee grid ; different
-    fields are defined at different points in space)
-
-* ``warpx.do_subcycling`` (`0` or `1`; default: 0)
-    Whether or not to use sub-cycling. Different refinement levels have a
-    different cell size, which results in different Courant–Friedrichs–Lewy
-    (CFL) limits for the time step. By default, when using mesh refinement,
-    the same time step is used for all levels. This time step is
-    taken as the CFL limit of the finest level. Hence, for coarser
-    levels, the timestep is only a fraction of the CFL limit for this
-    level, which may lead to numerical artifacts. With sub-cycling, each level
-    evolves with its own time step, set to its own CFL limit. In practice, it
-    means that when level 0 performs one iteration, level 1 performs two
-    iterations. Currently, this option is only supported when
-    ``amr.max_level = 1``. More information can be found at
-    https://ieeexplore.ieee.org/document/8659392.
-
-* ``warpx.do_multi_J`` (`0` or `1`; default: `0`)
-    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``warpx.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. When ``warpx.do_multi_J = 1``, we perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step, instead of using one single current deposited at half time. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
-
-* ``warpx.do_multi_J_n_depositions`` (integer)
-    Number of sub-steps to use with the multi-J algorithm, when ``warpx.do_multi_J = 1``.
-    Note that this input parameter is not optional and must always be set in all input files where ``warpx.do_multi_J = 1``. No default value is provided automatically.
-
+Maxwell solver: PSATD method
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
@@ -1990,6 +1934,89 @@ Numerics and algorithms
 
 * ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
     Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
+
+* ``warpx.do_multi_J`` (`0` or `1`; default: `0`)
+    Whether to use the multi-J algorithm, where current deposition and field update are performed multiple times within each time step. The number of sub-steps is determined by the input parameter ``warpx.do_multi_J_n_depositions``. Unlike sub-cycling, field gathering is performed only once per time step, as in regular PIC cycles. When ``warpx.do_multi_J = 1``, we perform linear interpolation of two distinct currents deposited at the beginning and the end of the time step, instead of using one single current deposited at half time. For simulations with strong numerical Cherenkov instability (NCI), it is recommended to use the multi-J algorithm in combination with ``psatd.do_time_averaging = 1``.
+
+* ``warpx.do_multi_J_n_depositions`` (integer)
+    Number of sub-steps to use with the multi-J algorithm, when ``warpx.do_multi_J = 1``.
+    Note that this input parameter is not optional and must always be set in all input files where ``warpx.do_multi_J = 1``. No default value is provided automatically.
+
+Maxwell solver: macroscopic media
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``algo.macroscopic_sigma_method`` (`string`, optional)
+    The algorithm for updating electric field when ``algo.em_solver_medium`` is macroscopic. Available options are:
+
+    - ``backwardeuler`` is a fully-implicit, first-order in time scheme for E-update (default).
+    - ``laxwendroff`` is the semi-implicit, second order in time scheme for E-update.
+
+    Comparing the two methods, Lax-Wendroff is more prone to developing oscillations and requires a smaller timestep for stability. On the other hand, Backward Euler is more robust but it is first-order accurate in time compared to the second-order Lax-Wendroff method.
+
+* ``macroscopic.sigma_function(x,y,z)``, ``macroscopic.epsilon_function(x,y,z)``, ``macroscopic.mu_function(x,y,z)`` (`string`)
+     To initialize spatially varying conductivity, permittivity, and permeability, respectively,
+     using a mathematical function in the input. Constants required in the
+     mathematical expression can be set using ``my_constants``. These parameters are parsed
+     if ``algo.em_solver_medium=macroscopic``.
+
+* ``macroscopic.sigma``, ``macroscopic.epsilon``, ``macroscopic.mu`` (`double`)
+    To initialize a constant conductivity, permittivity, and permeability of the
+    computational medium, respectively. The default values are the corresponding values
+    in vacuum.
+
+Grid types (collocated, staggered, hybrid)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``warpx.do_nodal`` (`0` or `1` ; default: 0)
+    Whether to use a nodal grid (i.e. all fields are defined at the
+    same points in space) or a staggered grid (i.e. Yee grid ; different
+    fields are defined at different points in space)
+
+* ``interpolation.galerkin_scheme`` (`0` or `1`)
+    Whether to use a Galerkin scheme when gathering fields to particles.
+    When set to `1`, the interpolation orders used for field-gathering are reduced for certain field components along certain directions.
+    For example, :math:`E_z` is gathered using ``algo.particle_shape`` along :math:`(x,y)` and ``algo.particle_shape - 1`` along :math:`z`.
+    See equations (21)-(23) of (`Godfrey and Vay, 2013 <https://doi.org/10.1016/j.jcp.2013.04.006>`_) and associated references for details.
+    Defaults to `1` unless ``warpx.do_nodal = 1`` and/or ``algo.field_gathering = momentum-conserving``.
+
+    .. warning::
+
+        The default behavior should not normally be changed.
+        At present, this parameter is intended mainly for testing and development purposes.
+
+* ``interpolation.field_centering_nox``, ``interpolation.field_centering_noy``, ``interpolation.field_centering_noz`` (default: ``2`` in all directions)
+    The order of interpolation used with staggered grids (``warpx.do_nodal = 0``) and momentum-conserving field gathering (``algo.field_gathering = momentum-conserving``) to interpolate the electric and magnetic fields from the cell centers to the cell nodes, before gathering the fields from the cell nodes to the particle positions. High-order interpolation (order 8 in each direction, at least) is necessary to ensure stability in typical LWFA boosted-frame simulations using the Galilean PSATD or comoving PSATD schemes. This finite-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
+
+* ``interpolation.current_centering_nox``, ``interpolation.current_centering_noy``, ``interpolation.current_centering_noz`` (default: ``2`` in all directions)
+    The order of interpolation used to center the currents from nodal to staggered grids (if ``warpx.do_current_centering = 1``), before pushing the Maxwell fields on staggered grids. This finite-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
+
+* ``warpx.do_current_centering`` (`0` or `1` ; default: 0)
+    If true, the current is deposited on a nodal grid and then centered to a staggered grid (Yee grid), using finite-order interpolation. If ``warpx.do_nodal = 1``, the Maxwell fields are pushed on a nodal grid, it is not necessary to center the currents to a staggered grid, and we set therefore ``warpx.do_current_centering = 0`` automatically, overwriting the user-defined input.
+
+Additional parameters
+^^^^^^^^^^^^^^^^^^^^^
+
+* ``warpx.do_dive_cleaning`` (`0` or `1` ; default: 0)
+    Whether to use modified Maxwell equations that progressively eliminate
+    the error in :math:`div(E)-\rho`. This can be useful when using a current
+    deposition algorithm which is not strictly charge-conserving, or when
+    using mesh refinement. These modified Maxwell equation will cause the error
+    to propagate (at the speed of light) to the boundaries of the simulation
+    domain, where it can be absorbed.
+
+* ``warpx.do_subcycling`` (`0` or `1`; default: 0)
+    Whether or not to use sub-cycling. Different refinement levels have a
+    different cell size, which results in different Courant–Friedrichs–Lewy
+    (CFL) limits for the time step. By default, when using mesh refinement,
+    the same time step is used for all levels. This time step is
+    taken as the CFL limit of the finest level. Hence, for coarser
+    levels, the timestep is only a fraction of the CFL limit for this
+    level, which may lead to numerical artifacts. With sub-cycling, each level
+    evolves with its own time step, set to its own CFL limit. In practice, it
+    means that when level 0 performs one iteration, level 1 performs two
+    iterations. Currently, this option is only supported when
+    ``amr.max_level = 1``. More information can be found at
+    https://ieeexplore.ieee.org/document/8659392.
 
 * ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
