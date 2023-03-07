@@ -379,7 +379,7 @@ WarpX::InitData ()
     // needs to start from the initial zmin_domain_boost,
     // even if restarting from a checkpoint file
     if (do_compute_max_step_from_zmax) {
-      zmin_domain_boost_step_0 = geom[0].ProbLo(WARPX_ZINDEX);
+        zmin_domain_boost_step_0 = geom[0].ProbLo(WARPX_ZINDEX);
     }
     if (restart_chkfile.empty())
     {
