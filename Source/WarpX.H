@@ -405,7 +405,7 @@ public:
      * \param name The name of the MultiFab use to reference the MultiFab
      * \param mf The MultiFab to be added to the map (via a pointer to it)
      */
-    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::MultiFab>& mf) {
+    static void AddToMultiFabMap(const std::string& name, const std::unique_ptr<amrex::MultiFab>& mf) {
         multifab_map[name] = mf.get();
     }
 
@@ -415,7 +415,7 @@ public:
      * \param name The name of the iMultiFab use to reference the iMultiFab
      * \param mf The iMultiFab to be added to the map (via a pointer to it)
      */
-    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::iMultiFab>& mf) {
+    static void AddToMultiFabMap(const std::string& name, const std::unique_ptr<amrex::iMultiFab>& mf) {
         imultifab_map[name] = mf.get();
     }
 
