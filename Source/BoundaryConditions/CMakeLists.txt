@@ -3,7 +3,7 @@ target_sources(WarpX
     PML.cpp
     WarpXEvolvePML.cpp
     WarpXFieldBoundaries.cpp
-    WarpX_PEC.cpp
+    WarpX_PerfectConductivity.cpp
 )
 
 if(WarpX_DIMS STREQUAL RZ)
