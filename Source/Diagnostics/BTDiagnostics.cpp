@@ -921,7 +921,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
         // Box covering the extent of the user-defined diag in the back-transformed frame
         amrex::Box domain = buffer_ba.minimalBox();
-        // define the geometry object for the ith buffer using Physical co-oridnates
+        // define the geometry object for the ith buffer using Physical co-ordinates
         // of m_buffer_domain_lab[i_buffer].
         m_geom_output[i_buffer][lev].define( domain, &m_buffer_domain_lab[i_buffer],
                                              amrex::CoordSys::cartesian,
@@ -942,7 +942,7 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
     if (lev == 0) {
         // Default non-periodic geometry for diags
         amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
-        // Define the geometry object for the ith snapshot using Physical co-oridnates
+        // Define the geometry object for the ith snapshot using Physical co-ordinates
         // of m_snapshot_domain_lab[i_buffer], that corresponds to the full snapshot
         // in the back-transformed frame
         m_geom_snapshot[i_buffer][lev].define( m_snapshot_box[i_buffer],
