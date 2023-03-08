@@ -113,7 +113,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
         costs[lev] = std::make_unique<LayoutData<Real>>(*warpx.getCosts(lev));
     }
 
-    if (warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
+    if (costs && warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
     {
         warpx.ComputeCostsHeuristic(costs);
     }

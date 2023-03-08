@@ -56,7 +56,7 @@ WarpX::LoadBalance ()
     AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
 
 #ifdef AMREX_USE_MPI
-    if (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
+    if (costs && load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
     {
         // compute the costs on a per-rank basis
         ComputeCostsHeuristic(costs);
