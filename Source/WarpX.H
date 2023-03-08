@@ -349,7 +349,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
-        const std::string name,
+        const std::string& name,
         std::optional<const amrex::Real> initial_value = {});
 
     /**
@@ -372,7 +372,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
-        const std::string name,
+        const std::string& name,
         std::optional<const int> initial_value = {});
 
     /**
@@ -390,7 +390,7 @@ public:
         const amrex::MultiFab& mf_to_alias,
         const int scomp,
         const int ncomp,
-        const std::string name,
+        const std::string& name,
         std::optional<const amrex::Real> initial_value);
 
     // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)

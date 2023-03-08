@@ -2958,10 +2958,10 @@ WarpX::AllocInitMultiFab (
     const amrex::DistributionMapping& dm,
     const int ncomp,
     const amrex::IntVect& ngrow,
-    const std::string name,
+    const std::string& name,
     std::optional<const amrex::Real> initial_value)
 {
-    const auto tag = amrex::MFInfo().SetTag(std::move(name));
+    const auto tag = amrex::MFInfo().SetTag(name);
     mf = std::make_unique<amrex::MultiFab>(ba, dm, ncomp, ngrow, tag);
     if (initial_value) {
         mf->setVal(*initial_value);
@@ -2976,10 +2976,10 @@ WarpX::AllocInitMultiFab (
     const amrex::DistributionMapping& dm,
     const int ncomp,
     const amrex::IntVect& ngrow,
-    const std::string name,
+    const std::string& name,
     std::optional<const int> initial_value)
 {
-    const auto tag = amrex::MFInfo().SetTag(std::move(name));
+    const auto tag = amrex::MFInfo().SetTag(name);
     mf = std::make_unique<amrex::iMultiFab>(ba, dm, ncomp, ngrow, tag);
     if (initial_value) {
         mf->setVal(*initial_value);
@@ -2993,7 +2993,7 @@ WarpX::AliasInitMultiFab (
     const amrex::MultiFab& mf_to_alias,
     const int scomp,
     const int ncomp,
-    const std::string name,
+    const std::string& name,
     std::optional<const amrex::Real> initial_value)
 {
     mf = std::make_unique<amrex::MultiFab>(mf_to_alias, amrex::make_alias, scomp, ncomp);
