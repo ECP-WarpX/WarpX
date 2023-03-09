@@ -1804,7 +1804,8 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
         self.diagnostic.plot_finepatch = self.plot_finepatch
         self.diagnostic.plot_crsepatch = self.plot_crsepatch
-        self.diagnostic.write_species = False
+        if not hasattr(self.diagnostic, 'write_species'):
+            self.diagnostic.write_species = False
         self.set_write_dir()
 
 
@@ -1909,7 +1910,8 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         self.diagnostic.openpmd_backend = self.openpmd_backend
         self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.intervals = self.period
-
+        if not hasattr(self.diagnostic, 'fields_to_plot'):
+            self.diagnostic.fields_to_plot = 'none'
         self.set_write_dir()
 
         # --- Use a set to ensure that fields don't get repeated.
@@ -2058,7 +2060,8 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
             fields_to_plot.sort()
             self.diagnostic.fields_to_plot = fields_to_plot
 
-        self.diagnostic.write_species = False
+        if not hasattr(self.diagnostic, 'write_species'):
+            self.diagnostic.write_species = False
         self.set_write_dir()
 
 class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
