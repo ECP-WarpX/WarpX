@@ -427,13 +427,17 @@ void FieldProbe::ComputeDiags (int step)
             // reset m_data vector to clear pushed values. Reserves data
             m_data.clear();
             m_data.shrink_to_fit();
-            m_data.reserve(numparticles * noutputs);
+            // the +1 below is to temporarily store the particle ID in order
+            // to sort the output
+            m_data.reserve(numparticles * (noutputs + 1));
         }
 
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
             const auto getPosition = GetParticlePosition(pti);
             auto setPosition = SetParticlePosition(pti);
+            const auto& aos = pti.GetArrayOfStructs();
+            const auto* AMREX_RESTRICT m_structs = aos().dataPtr();
 
             auto const np = pti.numParticles();
             if (update_particles_moving_window)
@@ -573,13 +577,15 @@ void FieldProbe::ComputeDiags (int step)
                 if (m_intervals.contains(step+1) && np > 0)
                 {
                     // This could be optimized by using shared memory.
-                    amrex::Gpu::DeviceVector<amrex::Real> dv(np*noutputs);
+                    // +1 is for storing the particle ID for sorting
+                    amrex::Gpu::DeviceVector<amrex::Real> dv(np*(noutputs+1));
                     amrex::Real* dvp = dv.data();
                     amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (long ip)
                     {
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
-                        long idx = ip*noutputs;
+                        long idx = ip*(noutputs+1);
+                        dvp[idx++] = m_structs[ip].id();
                         dvp[idx++] = xp;
                         dvp[idx++] = yp;
                         dvp[idx++] = zp;
@@ -635,7 +641,7 @@ void FieldProbe::ComputeDiags (int step)
                     total_data_size += length_vector[i];
                 }
                 // valid particles are counted (for all MPI ranks) to inform output processes as to size of output
-                m_valid_particles = total_data_size / noutputs;
+                m_valid_particles = total_data_size / (noutputs + 1);
                 m_data_out.resize(total_data_size, 0);
             }
             // resize receive buffer (resize, initialize 0)
@@ -652,30 +658,54 @@ void FieldProbe::ComputeDiags (int step)
 
 void FieldProbe::WriteToFile (int step) const
 {
-    if (ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())
+    if (!(ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())) return;
+
+    // Create a new array to store ordered data that will be printed to file.
+    // The sorted data has m_valid_particles fewer entries since the particle
+    // id is not written to file.
+    amrex::Vector<amrex::Real> sorted_data;
+    sorted_data.resize(m_data_out.size() - m_valid_particles);
+
+    long int first_id = m_data_out[0];
+    // loop over num valid particles to find the proper starting ID
+    for (int i = 0; i < m_valid_particles; i++)
     {
-        // open file
-        std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
-                          std::ofstream::out | std::ofstream::app};
+        if (m_data_out[i * (1 + noutputs)] < first_id)
+            first_id = m_data_out[i * (1 + noutputs)];
+    }
 
-        // loop over num valid particles and write
-        for (int i = 0; i < m_valid_particles; i++)
+    // loop over num valid particles and write data into the appropriately
+    // sorted location
+    for (int i = 0; i < m_valid_particles; i++)
+    {
+        int idx = m_data_out[i * (1 + noutputs)] - first_id;
+        for (int k = 0; k < noutputs; k++)
         {
-            ofs << std::fixed << std::defaultfloat;
-            ofs << step + 1;
-            ofs << m_sep;
-            ofs << std::fixed << std::setprecision(14) << std::scientific;
-            // write time
-            ofs << WarpX::GetInstance().gett_new(0);
+            sorted_data[idx * noutputs + k] = m_data_out[i * (1 + noutputs) + 1 + k];
+        }
+    }
 
-            for (int k = 0; k < noutputs; k++)
-            {
-                ofs << m_sep;
-                ofs << m_data_out[i * noutputs + k];
-            }
-            ofs << std::endl;
-        } // end loop over data size
+    // open file
+    std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
+                        std::ofstream::out | std::ofstream::app};
+
+    // loop over num valid particles and write
+    for (int i = 0; i < m_valid_particles; i++)
+    {
+        ofs << std::fixed << std::defaultfloat;
+        ofs << step + 1;
+        ofs << m_sep;
+        ofs << std::fixed << std::setprecision(14) << std::scientific;
+        // write time
+        ofs << WarpX::GetInstance().gett_new(0);
+
+        for (int k = 0; k < noutputs; k++)
+        {
+            ofs << m_sep;
+            ofs << sorted_data[i * noutputs + k];
+        }
+        ofs << std::endl;
+    } // end loop over data size
     // close file
     ofs.close();
-    }
 }
