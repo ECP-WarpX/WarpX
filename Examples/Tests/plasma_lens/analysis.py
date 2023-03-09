@@ -95,9 +95,9 @@ elif 'lattice.elements' in ds.parameters:
 x0 = float(ds.parameters.get('electrons.multiple_particles_pos_x').split()[0])
 y0 = float(ds.parameters.get('electrons.multiple_particles_pos_y').split()[1])
 z0 = float(ds.parameters.get('electrons.multiple_particles_pos_z').split()[0])
-ux0 = float(ds.parameters.get('electrons.multiple_particles_vel_x').split()[0])*c
-uy0 = float(ds.parameters.get('electrons.multiple_particles_vel_y').split()[1])*c
-uz0 = eval(ds.parameters.get('electrons.multiple_particles_vel_z').split()[0])*c
+ux0 = float(ds.parameters.get('electrons.multiple_particles_ux').split()[0])*c
+uy0 = float(ds.parameters.get('electrons.multiple_particles_uy').split()[1])*c
+uz0 = eval(ds.parameters.get('electrons.multiple_particles_uz').split()[0])*c
 
 tt = 0.
 xx = x0

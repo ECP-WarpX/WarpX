@@ -63,7 +63,7 @@ solver = picmi.ElectrostaticSolver(
 embedded_boundary = picmi.EmbeddedBoundary(
     implicit_function="-(x**2+y**2+z**2-radius**2)",
     potential=V_embedded_boundary,
-    radius = 0.3
+    radius = 0.1
 )
 
 ##########################
@@ -79,6 +79,17 @@ field_diag = picmi.FieldDiagnostic(
     warpx_file_prefix = 'Python_ElectrostaticSphereEB_plt'
 )
 
+reduced_diag = picmi.ReducedDiagnostic(
+    diag_type = 'ChargeOnEB',
+    name = 'eb_charge',
+    period = 1)
+
+reduced_diag_one_eighth = picmi.ReducedDiagnostic(
+    diag_type = 'ChargeOnEB',
+    name = 'eb_charge_one_eighth',
+    weighting_function = '(x>0)*(y>0)*(z>0)',
+    period = 1)
+
 ##########################
 # simulation setup
 ##########################
@@ -92,6 +103,8 @@ sim = picmi.Simulation(
 )
 
 sim.add_diagnostic(field_diag)
+sim.add_diagnostic(reduced_diag)
+sim.add_diagnostic(reduced_diag_one_eighth)
 
 ##########################
 # simulation run

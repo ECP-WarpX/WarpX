@@ -44,7 +44,7 @@ If your project leads to a scientific publication, please consider citing the pa
 - Fedeli L, Huebl A, Boillod-Cerneux F, Clark T, Gott K, Hillairet C, Jaure S, Leblanc A, Lehe R, Myers A, Piechurski C, Sato M, Zaim N, Zhang W, Vay J-L, Vincenti H.
   **Pushing the Frontier in the Design of Laser-Based Electron Accelerators with Groundbreaking Mesh-Refined Particle-In-Cell Simulations on Exascale-Class Supercomputers**.
   *SC22: International Conference for High Performance Computing, Networking, Storage and Analysis (SC)*. ISSN:2167-4337, pp. 25-36, Dallas, TX, US, 2022.
-  https://www.computer.org/csdl/proceedings-article/sc/2022/544400a025/1I0bSKaoECc
+  `DOI:10.1109/SC41404.2022.00008 <https://doi.org/10.1109/SC41404.2022.00008>`__ (`preprint here <https://www.computer.org/csdl/proceedings-article/sc/2022/544400a025/1I0bSKaoECc>`__)
 
 .. _acknowledge_warpx_all_refs:
 

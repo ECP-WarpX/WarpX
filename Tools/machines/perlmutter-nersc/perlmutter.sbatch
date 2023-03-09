@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-# Copyright 2021-2022 Axel Huebl, Kevin Gott
+# Copyright 2021-2023 Axel Huebl, Kevin Gott
 #
 # This file is part of WarpX.
 #
@@ -12,7 +12,10 @@
 #    note: <proj> must end on _g
 #SBATCH -A <proj>
 #SBATCH -q regular
+# A100 40GB (most nodes)
 #SBATCH -C gpu
+# A100 80GB (256 nodes)
+#S BATCH -C gpu&hbm80g
 #SBATCH --exclusive
 #SBATCH --gpu-bind=none
 #SBATCH --gpus-per-node=4
