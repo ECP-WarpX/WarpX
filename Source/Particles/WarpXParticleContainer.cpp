@@ -430,8 +430,8 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, 0.5_rt*dt);
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
-        if (WarpX::do_nodal==1) {
-          amrex::Abort("The Esirkepov algorithm cannot be used with a nodal grid.");
+        if (WarpX::grid_type == GridType::Collocated) {
+          amrex::Abort("The Esirkepov algorithm cannot be used with a collocated grid.");
         }
     }
 
