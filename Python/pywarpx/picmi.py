@@ -1489,7 +1489,7 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_zmax_plasma_to_compute_max_step: float, optional
         Sets the simulation run time based on the maximum z value
 
-    warpx_compute_max_step_from_btd: integer, optional
+    warpx_compute_max_step_from_btd: bool, default=0
         If specified, automatically calculates the number of iterations
         required in the boosted frame for all back-transformed diagnostics
         to be completed.
