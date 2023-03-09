@@ -112,6 +112,11 @@ solver = picmi.ElectromagneticSolver(
 
 # Diagnostics
 diag_field_list = ['B', 'E', 'J', 'rho']
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = 200,
+    write_dir = '.',
+    warpx_file_prefix = 'Python_LaserAccelerationMR_plt')
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
@@ -145,6 +150,7 @@ sim.add_laser(
     injection_method = laser_antenna)
 
 # Add diagnostics
+sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
 
 # Write input file that can be used to run with the compiled version

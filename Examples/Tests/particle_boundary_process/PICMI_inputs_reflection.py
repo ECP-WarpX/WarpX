@@ -74,6 +74,13 @@ electrons = picmi.Species(
 # diagnostics
 ##########################
 
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = 10,
+    write_dir = '.',
+    warpx_file_prefix = 'Python_particle_reflection_plt',
+    warpx_write_species=False
+)
 field_diag = picmi.FieldDiagnostic(
     grid=grid,
     name = 'diag1',
@@ -102,6 +109,7 @@ sim.add_species(
         n_macroparticle_per_cell=[5, 2], grid=grid
     )
 )
+sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
 
 ##########################

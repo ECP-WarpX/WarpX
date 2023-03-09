@@ -63,6 +63,12 @@ electrons = picmi.Species(
 # diagnostics
 ##########################
 
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = 10,
+    write_dir = '.',
+    warpx_file_prefix = f'Python_restart_runtime_components_plt'
+)
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
@@ -104,6 +110,7 @@ for arg in sys.argv:
         sim.amr_restart = restart_file_name
         sys.argv.remove(arg)
 
+sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
 sim.add_diagnostic(checkpoint)
 sim.initialize_inputs()
