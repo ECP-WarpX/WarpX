@@ -53,7 +53,7 @@ class LibWarpX():
         atexit.register(self.finalize)
 
     def __getattr__(self, attribute):
-        if attribute == 'warpx_pybind_':
+        if attribute == 'libwarpx_so':
             # If the 'libwarpx_so' is referenced, load it.
             # Once loaded, it gets added to the dictionary so this code won't be called again.
             self.load_library()
@@ -78,9 +78,9 @@ class LibWarpX():
 
     def load_library(self):
 
-        if 'warpx_pybind_' in self.__dict__:
+        if 'libwarpx_so' in self.__dict__:
             raise RuntimeError(
-                "Invalid attempt to load warpx_pybind_... library multiple times."
+                "Invalid attempt to load libwarpx_so... library multiple times."
             )
 
         # --- Use geometry to determine whether to import the 1D, 2D, 3D or RZ version.
@@ -200,25 +200,10 @@ class LibWarpX():
             ctypes.c_char_p(species_name.encode('utf-8')))
 
     def amrex_init(self, argv, mpi_comm=None):
-        # TODO: simplify, part of pyAMReX already
-        # --- Construct the ctype list of strings to pass in
-        argc = len(argv)
-
-        # note: +1 since there is an extra char-string array element,
-        #       that ANSII C requires to be a simple NULL entry
-        #       https://stackoverflow.com/a/39096006/2719194
-        argvC = (_LP_c_char * (argc+1))()
-        for i, arg in enumerate(argv):
-            enc_arg = arg.encode('utf-8')
-            argvC[i] = _LP_c_char(enc_arg)
-        argvC[argc] = _LP_c_char(b"\0")  # +1 element must be NULL
-
         if mpi_comm is None or MPI is None:
-            self.libwarpx_so.amrex_init(argc, argvC)
+            self.libwarpx_so.amrex_init(argv)
         else:
-            comm_ptr = MPI._addressof(mpi_comm)
-            comm_val = _MPI_Comm_type.from_address(comm_ptr)
-            self.libwarpx_so.amrex_init_with_inited_mpi(argc, argvC, comm_val)
+            raise Exception('mpi_comm argument not yet supported')
 
     def initialize(self, argv=None, mpi_comm=None):
         '''
@@ -229,11 +214,16 @@ class LibWarpX():
         if argv is None:
             argv = sys.argv
         self.amrex_init(argv, mpi_comm)
-        self.libwarpx_so.warpx_ConvertLabParamsToBoost()
-        self.libwarpx_so.warpx_ReadBCParams()
+        self.libwarpx_so.convert_lab_params_to_boost()
+        self.libwarpx_so.read_BC_params()
         if self.geometry_dim == 'rz':
-            self.libwarpx_so.warpx_CheckGriddingForRZSpectral()
-        self.libwarpx_so.warpx_init()
+            self.libwarpx_so.check_gridding_for_RZ_spectral()
+        self.warpx = self.libwarpx_so.WarpX()
+        self.warpx.initialize_data()
+        self.libwarpx_so.execute_python_callback("afterinit");
+        self.libwarpx_so.execute_python_callback("particleloader");
+
+        #self.libwarpx_so.warpx_init()
 
         self.initialized = True
 
@@ -245,8 +235,10 @@ class LibWarpX():
         '''
         # TODO: simplify, part of pyAMReX already
         if self.initialized:
-            self.libwarpx_so.warpx_finalize()
-            self.libwarpx_so.amrex_finalize(finalize_mpi)
+            del self.warpx
+            # The call to warpx_finalize causes a crash - don't know why
+            #self.libwarpx_so.warpx_finalize()
+            self.libwarpx_so.amrex_finalize()
 
     def getistep(self, level=0):
         '''
@@ -288,7 +280,7 @@ class LibWarpX():
             The number of steps to take
         '''
 
-        self.libwarpx_so.warpx_evolve(num_steps);
+        self.warpx.evolve(num_steps);
 
     def getProbLo(self, direction):
         '''

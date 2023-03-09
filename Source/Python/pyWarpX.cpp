@@ -73,7 +73,42 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
     // auto npversion = numpy.attr("__version__");
     // std::cout << "numpy version: " << py::str(npversion) << std::endl;
 
+    m.def("amrex_init",
+        [](const py::list args) {
+            amrex::Vector<std::string> cargs;
+            amrex::Vector<char*> argv;
+
+            // Populate the "command line"
+            for (const auto& v: args)
+                cargs.push_back(v.cast<std::string>());
+            for (auto& v: cargs)
+                argv.push_back(&v[0]);
+            int argc = argv.size();
+
+            // note: +1 since there is an extra char-string array element,
+            //       that ANSII C requires to be a simple NULL entry
+            //       https://stackoverflow.com/a/39096006/2719194
+            argv.push_back(NULL);
+            char** tmp = argv.data();
+
+            const bool build_parm_parse = (cargs.size() > 1);
+            // TODO: handle version with MPI
+            return warpx_amrex_init(argc, tmp, build_parm_parse);
+        }, py::return_value_policy::reference,
+        "Initialize AMReX library");
+    m.def("amrex_finalize", [] () {amrex::Finalize();},
+        "Close out the amrex related data");
+    m.def("warpx_finalize", &WarpX::ResetInstance,
+        "Close out the WarpX related data");
+    m.def("convert_lab_params_to_boost",  &ConvertLabParamsToBoost,
+        "Convert input parameters from the lab frame to the boosted frame");
+    m.def("read_BC_params", &ReadBCParams,
+        "Read the boundary condition parametes and check for consistency");
+    m.def("check_gridding_for_RZ_spectral", &CheckGriddingForRZSpectral,
+        "Ensure that the grid is setup appropriately with using the RZ spectral solver");
+
     // Expose the python callback function installation and removal functions
     m.def("add_python_callback", &InstallPythonCallback);
     m.def("remove_python_callback", &ClearPythonCallback);
+    m.def("execute_python_callback", &ExecutePythonCallback, py::arg("name"));
 }

@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 The ImpactX Community
+/* Copyright 2021-2022 The WarpX Community
  *
  * Authors: Axel Huebl
  * License: BSD-3-Clause-LBNL
@@ -30,26 +30,33 @@ void init_WarpX (py::module& m)
     warpx
         .def(py::init<>())
 
+        .def("initialize_data", &WarpX::InitData,
+            "Initializes the WarpX simulation"
+        )
+        .def("evolve", &WarpX::Evolve,
+            "Evolve the simulation the specified number of steps"
+        )
+
         // from AmrCore->AmrMesh
         .def("Geom",
-            //[](ImpactX const & ix, int const lev) { return ix.Geom(lev); },
+            //[](WarpX const & wx, int const lev) { return wx.Geom(lev); },
             py::overload_cast< int >(&WarpX::Geom, py::const_),
             py::arg("lev")
         )
         .def("DistributionMap",
-            [](WarpX const & ix, int const lev) { return ix.DistributionMap(lev); },
-            //py::overload_cast< int >(&ImpactX::DistributionMap, py::const_),
+            [](WarpX const & wx, int const lev) { return wx.DistributionMap(lev); },
+            //py::overload_cast< int >(&WarpX::DistributionMap, py::const_),
             py::arg("lev")
         )
         .def("boxArray",
-            [](WarpX const & ix, int const lev) { return ix.boxArray(lev); },
-            //py::overload_cast< int >(&ImpactX::boxArray, py::const_),
+            [](WarpX const & wx, int const lev) { return wx.boxArray(lev); },
+            //py::overload_cast< int >(&WarpX::boxArray, py::const_),
             py::arg("lev")
         )
         .def("multifab",
-            [](WarpX const & ix, std::string const multifab_name) {
-                if (ix.multifab_map.count(multifab_name) > 0) {
-                    return ix.multifab_map.at(multifab_name);
+            [](WarpX const & wx, std::string const multifab_name) {
+                if (wx.multifab_map.count(multifab_name) > 0) {
+                    return wx.multifab_map.at(multifab_name);
                 } else {
                     throw std::runtime_error("The MultiFab '" + multifab_name + "' is unknown or is not allocated!");
                 }

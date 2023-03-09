@@ -27,8 +27,8 @@ amrex::AMReX*
 warpx_amrex_init(
     int& argc,
     char**& argv,
-    bool const build_parm_parse = true,
-    MPI_Comm const mpi_comm = MPI_COMM_WORLD
+    bool const build_parm_parse = true
+    /* MPI_Comm const mpi_comm = MPI_COMM_WORLD */
 );
 
 #endif
