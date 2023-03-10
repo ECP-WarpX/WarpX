@@ -2059,7 +2059,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
             fields_to_plot = list(fields_to_plot)
             fields_to_plot.sort()
             self.diagnostic.fields_to_plot = fields_to_plot
-        if 'write_species' not self.diagnostic.argvattrs:
+        if 'write_species' not in self.diagnostic.argvattrs:
             self.diagnostic.write_species = False
         self.set_write_dir()
 
