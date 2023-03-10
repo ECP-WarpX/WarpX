@@ -450,9 +450,9 @@ class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
         species.multiple_particles_pos_x = self.x
         species.multiple_particles_pos_y = self.y
         species.multiple_particles_pos_z = self.z
-        species.multiple_particles_vel_x = np.array(self.ux)/constants.c
-        species.multiple_particles_vel_y = np.array(self.uy)/constants.c
-        species.multiple_particles_vel_z = np.array(self.uz)/constants.c
+        species.multiple_particles_ux = np.array(self.ux)/constants.c
+        species.multiple_particles_uy = np.array(self.uy)/constants.c
+        species.multiple_particles_uz = np.array(self.uz)/constants.c
         species.multiple_particles_weight = self.weight
         if density_scale is not None:
             species.multiple_particles_weight = self.weight*density_scale
@@ -1489,6 +1489,11 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_zmax_plasma_to_compute_max_step: float, optional
         Sets the simulation run time based on the maximum z value
 
+    warpx_compute_max_step_from_btd: bool, default=0
+        If specified, automatically calculates the number of iterations
+        required in the boosted frame for all back-transformed diagnostics
+        to be completed.
+
     warpx_collisions: collision instance, optional
         The collision instance specifying the particle collisions
 
@@ -1526,6 +1531,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
         self.amr_restart = kw.pop('warpx_amr_restart', None)
         self.zmax_plasma_to_compute_max_step = kw.pop('warpx_zmax_plasma_to_compute_max_step', None)
+        self.compute_max_step_from_btd = kw.pop('warpx_compute_max_step_from_btd', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
@@ -1551,6 +1557,7 @@ class Simulation(picmistandard.PICMI_Simulation):
             pywarpx.warpx.boost_direction = 'z'
 
         pywarpx.warpx.zmax_plasma_to_compute_max_step = self.zmax_plasma_to_compute_max_step
+        pywarpx.warpx.compute_max_step_from_btd = self.compute_max_step_from_btd
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
@@ -1678,8 +1685,6 @@ class WarpXDiagnosticBase(object):
             )
             bucket._diagnostics_dict[self.name] = self.diagnostic
 
-
-
     def set_write_dir(self):
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
@@ -1698,6 +1703,9 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
 
     warpx_plot_raw_fields_guards: bool, optional
         Flag whether the raw fields should include the guard cells
+
+    warpx_write_species: bool, optional
+        Flag whether to output particle data with the diagnostic
 
     warpx_format: {plotfile, checkpoint, openpmd, ascent, sensei}, optional
         Diagnostic file format
@@ -1720,6 +1728,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.plot_raw_fields_guards = kw.pop('warpx_plot_raw_fields_guards', None)
         self.plot_finepatch = kw.pop('warpx_plot_finepatch', None)
         self.plot_crsepatch = kw.pop('warpx_plot_crsepatch', None)
+        self.write_species = kw.pop('warpx_write_species', None)
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
@@ -1744,27 +1753,39 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
 
+        if pywarpx.geometry.dims == 'RZ':
+            E_fields_list = ['Er', 'Et', 'Ez']
+            B_fields_list = ['Br', 'Bt', 'Bz']
+            J_fields_list = ['Jr', 'Jt', 'Jz']
+            A_fields_list = ['Ar', 'At', 'Az']
+        else:
+            E_fields_list = ['Ex', 'Ey', 'Ez']
+            B_fields_list = ['Bx', 'By', 'Bz']
+            J_fields_list = ['Jx', 'Jy', 'Jz']
+            A_fields_list = ['Ax', 'Ay', 'Az']
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'E':
-                    fields_to_plot.add('Ex')
-                    fields_to_plot.add('Ey')
-                    fields_to_plot.add('Ez')
+                    for field_name in E_fields_list:
+                        fields_to_plot.add(field_name)
                 elif dataname == 'B':
-                    fields_to_plot.add('Bx')
-                    fields_to_plot.add('By')
-                    fields_to_plot.add('Bz')
+                    for field_name in B_fields_list:
+                        fields_to_plot.add(field_name)
                 elif dataname == 'J':
-                    fields_to_plot.add('jx')
-                    fields_to_plot.add('jy')
-                    fields_to_plot.add('jz')
+                    for field_name in J_fields_list:
+                        fields_to_plot.add(field_name.lower())
                 elif dataname == 'A':
-                    fields_to_plot.add('Ax')
-                    fields_to_plot.add('Ay')
-                    fields_to_plot.add('Az')
-                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Ax', 'Ay', 'Az', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+                    for field_name in A_fields_list:
+                        fields_to_plot.add(field_name)
+                elif dataname in E_fields_list:
                     fields_to_plot.add(dataname)
-                elif dataname in ['Jx', 'Jy', 'Jz']:
+                elif dataname in B_fields_list:
+                    fields_to_plot.add(dataname)
+                elif dataname in A_fields_list:
+                    fields_to_plot.add(dataname)
+                elif dataname in ['rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+                    fields_to_plot.add(dataname)
+                elif dataname in J_fields_list:
                     fields_to_plot.add(dataname.lower())
                 elif dataname.startswith('rho_'):
                     # Adds rho_species diagnostic
@@ -1794,6 +1815,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
         self.diagnostic.plot_finepatch = self.plot_finepatch
         self.diagnostic.plot_crsepatch = self.plot_crsepatch
+        self.diagnostic.write_species = self.write_species
 
         self.set_write_dir()
 
@@ -2012,23 +2034,30 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
 
+        if pywarpx.geometry.dims == 'RZ':
+            E_fields_list = ['Er', 'Et', 'Ez']
+            B_fields_list = ['Br', 'Bt', 'Bz']
+            J_fields_list = ['Jr', 'Jt', 'Jz']
+        else:
+            E_fields_list = ['Ex', 'Ey', 'Ez']
+            B_fields_list = ['Bx', 'By', 'Bz']
+            J_fields_list = ['Jx', 'Jy', 'Jz']
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'E':
-                    fields_to_plot.add('Ex')
-                    fields_to_plot.add('Ey')
-                    fields_to_plot.add('Ez')
+                    for field_name in E_fields_list:
+                        fields_to_plot.add(field_name)
                 elif dataname == 'B':
-                    fields_to_plot.add('Bx')
-                    fields_to_plot.add('By')
-                    fields_to_plot.add('Bz')
+                    for field_name in B_fields_list:
+                        fields_to_plot.add(field_name)
                 elif dataname == 'J':
-                    fields_to_plot.add('jx')
-                    fields_to_plot.add('jy')
-                    fields_to_plot.add('jz')
-                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho']:
+                    for field_name in J_fields_list:
+                        fields_to_plot.add(field_name.lower())
+                elif dataname in E_fields_list:
                     fields_to_plot.add(dataname)
-                elif dataname in ['Jx', 'Jy', 'Jz']:
+                elif dataname in B_fields_list:
+                    fields_to_plot.add(dataname)
+                elif dataname in J_fields_list:
                     fields_to_plot.add(dataname.lower())
                 elif dataname.startswith('rho_'):
                     # Adds rho_species diagnostic
@@ -2070,6 +2099,68 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
 
     separator: string
         The separator between row values in the output file.
+
+    species: species instance
+        The name of the species for which to calculate the diagnostic, required for
+        diagnostic types 'BeamRelevant', 'ParticleHistogram', and 'ParticleExtrema'
+
+    bin_number: integer
+        For diagnostic type 'ParticleHistogram', the number of bins used for the histogram
+
+    bin_max: float
+        For diagnostic type 'ParticleHistogram', the maximum value of the bins
+
+    bin_min: float
+        For diagnostic type 'ParticleHistogram', the minimum value of the bins
+
+    normalization: {'unity_particle_weight', 'max_to_unity', 'area_to_unity'}, optional
+        For diagnostic type 'ParticleHistogram', normalization method of the histogram.
+
+    histogram_function: string
+        For diagnostic type 'ParticleHistogram', the function evaluated to produce the histogram data
+
+    filter_function: string, optional
+        For diagnostic type 'ParticleHistogram', the function to filter whether particles are included in the histogram
+
+    reduced_function: string
+        For diagnostic type 'FieldReduction', the function of the fields to evaluate
+
+    weighting_function: string, optional
+        For diagnostic type 'ChargeOnEB', the function to weight contributions to the total charge
+
+    reduction_type: {'Maximum', 'Minimum', or 'Integral'}
+        For diagnostic type 'FieldReduction', the type of reduction
+
+    probe_geometry: {'Point', 'Line', 'Plane'}, defaut='Point'
+        For diagnostic type 'FieldProbe', the geometry of the probe
+
+    integrate: bool, default=false
+        For diagnostic type 'FieldProbe', whether the field is integrated
+
+    do_moving_window_FP: bool, default=False
+        For diagnostic type 'FieldProbe', whether the moving window is followed
+
+    x_probe, y_probe, z_probe: floats
+        For diagnostic type 'FieldProbe', a probe location. For 'Point', the location of the point. For 'Line', the start of the
+        line. For 'Plane', the center of the square detector.
+
+    interp_order: integer
+        For diagnostic type 'FieldProbe', the interpolation order for 'Line' and 'Plane'
+
+    resolution: integer
+        For diagnostic type 'FieldProbe', the number of points along the 'Line' or along each edge of the square 'Plane'
+
+    x1_probe, y1_probe, z1_probe: floats
+        For diagnostic type 'FieldProbe', the end point for 'Line'
+
+    detector_radius: float
+        For diagnostic type 'FieldProbe', the detector "radius" (half edge length) of the 'Plane'
+
+    target_normal_x, target_normal_y, target_normal_z: floats
+        For diagnostic type 'FieldProbe', the normal vector to the 'Plane'. Only applicable in 3D
+
+    target_up_x, target_up_y, target_up_z: floats
+        For diagnostic type 'FieldProbe', the vector specifying up in the 'Plane'
     """
 
     def __init__(self, diag_type, name=None, period=1, path=None,
@@ -2082,37 +2173,35 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
         self.extension = extension
         self.separator = separator
 
-        self._species = kw.pop('species', None)
+        self.user_defined_kw = {}
 
         # Now we need to handle all the specific inputs required for the
         # different reduced diagnostic types.
-        # Note: only a limited number are presently supported.
 
         # The simple diagnostics do not require any additional arguments
         self._simple_reduced_diagnostics = [
             'ParticleEnergy', 'ParticleMomentum', 'FieldEnergy',
             'FieldMomentum', 'FieldMaximum', 'RhoMaximum', 'ParticleNumber',
-            'LoadBalanceCosts', 'LoadBalanceEfficiency',
+            'LoadBalanceCosts', 'LoadBalanceEfficiency'
         ]
         # The species diagnostics require a species to be provided
         self._species_reduced_diagnostics = [
-            'BeamRelevant', 'ParticleHistogram', 'ParticleExtrema',
+            'BeamRelevant', 'ParticleHistogram', 'ParticleExtrema'
         ]
 
         if self.type in self._simple_reduced_diagnostics:
             pass
         elif self.type in self._species_reduced_diagnostics:
-            if self._species is None:
-                raise AttributeError(
-                    f"{self.type} reduced diagnostic requires a species."
-                )
+            species = kw.pop('species')
+            self.species = species.name
             if self.type == 'ParticleHistogram':
-                raise NotImplementedError(
-                    f"{self.type} reduced diagnostic is not yet supported "
-                    "in pywarpx."
-                )
+                kw = self._handle_particle_histogram(**kw)
         elif self.type == "FieldProbe":
             kw = self._handle_field_probe(**kw)
+        elif self.type == "FieldReduction":
+            kw = self._handle_field_reduction(**kw)
+        elif self.type == "ChargeOnEB":
+            kw = self._handle_charge_on_eb(**kw)
         else:
             raise RuntimeError(
                 f"{self.type} reduced diagnostic is not yet supported "
@@ -2153,14 +2242,68 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
 
         return kw
 
+    def _handle_particle_histogram(self, **kw):
+        self.bin_number = kw.pop("bin_number")
+        self.bin_max = kw.pop("bin_max")
+        self.bin_min = kw.pop("bin_min")
+        self.normalization = kw.pop("normalization", None)
+        if self.normalization not in [None, "unity_particle_weight", "max_to_unity", "area_to_unity"]:
+            raise AttributeError(
+               "The ParticleHistogram normalization must be one of 'unity_particle_weight', 'max_to_unity', or 'area_to_unity'")
+
+        histogram_function = kw.pop("histogram_function")
+        filter_function = kw.pop("filter_function", None)
+
+        self.__setattr__("histogram_function(t,x,y,z,ux,uy,uz)", histogram_function)
+        self.__setattr__("filter_function(t,x,y,z,ux,uy,uz)", filter_function)
+
+        # Check the reduced function expressions for constants
+        for k in list(kw.keys()):
+            if (re.search(r'\b%s\b'%k, histogram_function) or
+                (filter_function is not None and re.search(r'\b%s\b'%k, filter_function))):
+                self.user_defined_kw[k] = kw[k]
+                del kw[k]
+
+        return kw
+
+    def _handle_field_reduction(self, **kw):
+        self.reduction_type = kw.pop("reduction_type")
+        reduced_function = kw.pop("reduced_function")
+
+        self.__setattr__("reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)", reduced_function)
+
+        # Check the reduced function expression for constants
+        for k in list(kw.keys()):
+            if re.search(r'\b%s\b'%k, reduced_function):
+                self.user_defined_kw[k] = kw[k]
+                del kw[k]
+
+        return kw
+
+    def _handle_charge_on_eb(self, **kw):
+        weighting_function = kw.pop("weighting_function", None)
+
+        self.__setattr__("weighting_function(x,y,z)", weighting_function)
+
+        # Check the reduced function expression for constants
+        for k in list(kw.keys()):
+            if re.search(r'\b%s\b'%k, weighting_function):
+                self.user_defined_kw[k] = kw[k]
+                del kw[k]
+
+        return kw
+
     def initialize_inputs(self):
 
         self.add_diagnostic()
 
-        for key in self.__dict__.keys():
-            if not key.startswith('_') and key not in ['name', 'diagnostic']:
-                self.diagnostic.__setattr__(key, self.__dict__[key])
+        self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
-        if self._species is not None:
-            diag = pywarpx.Bucket.Bucket(self.name + '.' + self._species.name)
-            self.diagnostic._species_dict[self._species.name] = diag
+        for key, value in self.__dict__.items():
+            if not key.startswith('_') and key not in ['name', 'diagnostic']:
+                if key.endswith(")"):
+                    # Analytic expressions require processing to deal with constants
+                    expression = pywarpx.my_constants.mangle_expression(value, self.mangle_dict)
+                    self.diagnostic.__setattr__(key, expression)
+                else:
+                    self.diagnostic.__setattr__(key, value)

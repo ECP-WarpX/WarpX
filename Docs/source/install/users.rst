@@ -62,7 +62,12 @@ The package ``warpx`` installs executables and the package ``py-warpx`` includes
 
 .. code-block:: bash
 
-   # optional:            -mpi ^warpx dims=2 compute=cuda
+   # optional: activate Spack binary caches
+   spack mirror add rolling https://binaries.spack.io/develop
+   spack buildcache keys --install --trust
+
+   # see `spack info py-warpx` for build options.
+   # optional arguments:  -mpi ^warpx dims=2 compute=cuda
    spack install py-warpx
    spack load py-warpx
 

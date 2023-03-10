@@ -20,7 +20,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
                          amrex::DistributionMapping const & dm,
                          const SpectralFieldIndex& spectral_index,
                          int const n_rz_azimuthal_modes, int const norder_z,
-                         bool const nodal, amrex::Real const dt_step,
+                         short const grid_type, amrex::Real const dt_step,
                          bool const update_with_rho,
                          const bool time_averaging,
                          const int J_in_time,

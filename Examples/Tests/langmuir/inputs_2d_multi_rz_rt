@@ -85,7 +85,7 @@ ions.momentum_distribution_type = at_rest
 diagnostics.diags_names = diag1 diag_parser_filter diag_uniform_filter diag_random_filter
 diag1.intervals = max_step/2
 diag1.diag_type = Full
-diag1.fields_to_plot = jx jz Ex Ez By
+diag1.fields_to_plot = jr jz Er Ez Bt
 
 ## diag_parser_filter is a diag used to test the particle filter function.
 diag_parser_filter.intervals = max_step:max_step:

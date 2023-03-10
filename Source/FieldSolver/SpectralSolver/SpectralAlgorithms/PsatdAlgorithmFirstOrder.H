@@ -37,7 +37,7 @@ class PsatdAlgorithmFirstOrder : public SpectralBaseAlgorithm
          * \param[in] norder_x order of the spectral solver along x
          * \param[in] norder_y order of the spectral solver along y
          * \param[in] norder_z order of the spectral solver along z
-         * \param[in] nodal whether the E and B fields are defined on a fully nodal grid or a Yee grid
+         * \param[in] grid_type type of grid (collocated or not)
          * \param[in] dt time step of the simulation
          * \param[in] div_cleaning whether to use divergence correction for both E and B (thus, F and G)
          * \param[in] J_in_time time dependency of J (currently supported: constant, linear)
@@ -50,7 +50,7 @@ class PsatdAlgorithmFirstOrder : public SpectralBaseAlgorithm
             const int norder_x,
             const int norder_y,
             const int norder_z,
-            const bool nodal,
+            const short grid_type,
             const amrex::Real dt,
             const bool div_cleaning,
             const int J_in_time,

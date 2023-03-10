@@ -16,9 +16,10 @@ If you are new to this system, **please see the following resources**:
 * `Jupyter service <https://jupyter.olcf.ornl.gov>`__
 * `Production directories <https://docs.olcf.ornl.gov/data/index.html#data-storage-and-transfers>`_:
 
-  * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days (recommended)
-  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days (usually smaller quota)
-  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days
+  * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days, GPFS (recommended)
+  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days, GPFS (usually smaller quota)
+  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days, GPFS
+  * ``/ccs/$proj/``: another, non-GPFS, file system for software and smaller data.
   * Note that the ``$HOME`` directory is mounted as read-only on compute nodes.
     That means you cannot run in your ``$HOME``.
 
@@ -257,12 +258,6 @@ Known System Issues
 
       import os
       os.environ['HDF5_USE_FILE_LOCKING'] = "FALSE"
-
-.. warning::
-
-   Sep 20th, 2022 (OLCFHELP-8992):
-   The above **HDF5 Jupyter read** work-around for OLCFHELP-3685 does not work anymore, due to the way that GPFS is mounted via NSF on Jupyter nodes.
-   As a work-around until this is fixed, please copy your HDF5 data to ``/ccs``, ``$HOME`` or use ADIOS2 BP instead of HDF5 files.
 
 .. warning::
 

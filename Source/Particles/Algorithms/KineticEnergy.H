@@ -18,15 +18,9 @@
 
 namespace Algorithms{
 
-    // This marks the gamma threshold to switch between the full relativistic expression
-    // for particle kinetic energy and a Taylor expansion.
-    static constexpr auto gamma_relativistic_threshold =
-        static_cast<amrex::ParticleReal>(1.005);
-
     /**
-     * \brief Computes the kinetic energy of a particle. Below a threshold for the
-     * Lorentz factor (gamma_relativistic_threshold) it uses a Taylor expansion instead of
-     * the full relativistic expression. This method should not be used with photons.
+     * \brief Computes the kinetic energy of a particle.
+     * This method should not be used with photons.
      *
      * @param[in] ux x component of the particle momentum (code units)
      * @param[in] uy y component of the particle momentum (code units)
@@ -42,18 +36,14 @@ namespace Algorithms{
     {
         using namespace amrex;
 
-        constexpr auto c2 = PhysConst::c * PhysConst::c;
-        constexpr auto inv_c2 = 1.0_prt/c2;
+        constexpr auto inv_c2 = 1.0_prt/(PhysConst::c * PhysConst::c);
 
-        const auto u2 = (ux*ux + uy*uy + uz*uz)*inv_c2;
-        const auto gamma = std::sqrt(1.0_prt + u2);
+        // The expression used is derived by reducing the expression
+        // (gamma - 1)*(gamma + 1)/(gamma + 1)
 
-        const auto kk = (gamma > gamma_relativistic_threshold)?
-            (gamma-1.0_prt):
-            (u2*0.5_prt - u2*u2*(1.0_prt/8.0_prt) + u2*u2*u2*(1.0_prt/16.0_prt)-
-            u2*u2*u2*u2*(5.0_prt/128.0_prt) + (7.0_prt/256_prt)*u2*u2*u2*u2*u2); //Taylor expansion
-
-        return kk*mass*c2;
+        const auto u2 = ux*ux + uy*uy + uz*uz;
+        const auto gamma = std::sqrt(1.0_prt + u2*inv_c2);
+        return 1.0_prt/(1.0_prt + gamma)*mass*u2;
     }
 
     /**
