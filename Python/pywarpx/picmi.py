@@ -1688,7 +1688,7 @@ class WarpXDiagnosticBase(object):
             self.diagnostic.fields_to_plot = 'none'
             self.diagnostic.write_species = False
             bucket._diagnostics_dict[self.name] = self.diagnostic
-            
+
     def set_write_dir(self):
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
@@ -1810,7 +1810,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             fields_to_plot = list(fields_to_plot)
             fields_to_plot.sort()
             self.diagnostic.replace_attribute('fields_to_plot', fields_to_plot)
-            
+
         self.diagnostic.plot_raw_fields = self.plot_raw_fields
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
         self.diagnostic.plot_finepatch = self.plot_finepatch
