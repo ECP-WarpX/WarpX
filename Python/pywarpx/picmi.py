@@ -1912,6 +1912,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         self.diagnostic.intervals = self.period
         if 'fields_to_plot' not in self.diagnostic.argvattrs:
             self.diagnostic.fields_to_plot = 'none'
+        self.diagnostic.write_species = True
         self.set_write_dir()
 
         # --- Use a set to ensure that fields don't get repeated.
