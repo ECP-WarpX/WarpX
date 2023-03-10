@@ -1809,7 +1809,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             # --- is the same on all processors.
             fields_to_plot = list(fields_to_plot)
             fields_to_plot.sort()
-            self.diagnostic.replace_attribute('fields_to_plot', fields_to_plot)
+            self.diagnostic.replace_attr('fields_to_plot', fields_to_plot)
             
         self.diagnostic.plot_raw_fields = self.plot_raw_fields
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
@@ -1919,7 +1919,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         self.diagnostic.openpmd_backend = self.openpmd_backend
         self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.intervals = self.period
-        self.diagnostic.replace_attribute('write_species', True)
+        self.diagnostic.replace_attr('write_species', True)
         self.set_write_dir()
 
         # --- Use a set to ensure that fields don't get repeated.
@@ -2066,7 +2066,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
             # --- is the same on all processors.
             fields_to_plot = list(fields_to_plot)
             fields_to_plot.sort()
-            self.diagnostic.replace_attribute('fields_to_plot', fields_to_plot)
+            self.diagnostic.replace_attr('fields_to_plot', fields_to_plot)
         self.set_write_dir()
 
 class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
