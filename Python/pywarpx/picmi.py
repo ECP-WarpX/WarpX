@@ -1489,6 +1489,11 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_zmax_plasma_to_compute_max_step: float, optional
         Sets the simulation run time based on the maximum z value
 
+    warpx_compute_max_step_from_btd: bool, default=0
+        If specified, automatically calculates the number of iterations
+        required in the boosted frame for all back-transformed diagnostics
+        to be completed.
+
     warpx_collisions: collision instance, optional
         The collision instance specifying the particle collisions
 
@@ -1526,6 +1531,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
         self.amr_restart = kw.pop('warpx_amr_restart', None)
         self.zmax_plasma_to_compute_max_step = kw.pop('warpx_zmax_plasma_to_compute_max_step', None)
+        self.compute_max_step_from_btd = kw.pop('warpx_compute_max_step_from_btd', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
@@ -1551,6 +1557,7 @@ class Simulation(picmistandard.PICMI_Simulation):
             pywarpx.warpx.boost_direction = 'z'
 
         pywarpx.warpx.zmax_plasma_to_compute_max_step = self.zmax_plasma_to_compute_max_step
+        pywarpx.warpx.compute_max_step_from_btd = self.compute_max_step_from_btd
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
@@ -1746,27 +1753,39 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
 
+        if pywarpx.geometry.dims == 'RZ':
+            E_fields_list = ['Er', 'Et', 'Ez']
+            B_fields_list = ['Br', 'Bt', 'Bz']
+            J_fields_list = ['Jr', 'Jt', 'Jz']
+            A_fields_list = ['Ar', 'At', 'Az']
+        else:
+            E_fields_list = ['Ex', 'Ey', 'Ez']
+            B_fields_list = ['Bx', 'By', 'Bz']
+            J_fields_list = ['Jx', 'Jy', 'Jz']
+            A_fields_list = ['Ax', 'Ay', 'Az']
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'E':
-                    fields_to_plot.add('Ex')
-                    fields_to_plot.add('Ey')
-                    fields_to_plot.add('Ez')
+                    for field_name in E_fields_list:
+                        fields_to_plot.add(field_name)
                 elif dataname == 'B':
-                    fields_to_plot.add('Bx')
-                    fields_to_plot.add('By')
-                    fields_to_plot.add('Bz')
+                    for field_name in B_fields_list:
+                        fields_to_plot.add(field_name)
                 elif dataname == 'J':
-                    fields_to_plot.add('jx')
-                    fields_to_plot.add('jy')
-                    fields_to_plot.add('jz')
+                    for field_name in J_fields_list:
+                        fields_to_plot.add(field_name.lower())
                 elif dataname == 'A':
-                    fields_to_plot.add('Ax')
-                    fields_to_plot.add('Ay')
-                    fields_to_plot.add('Az')
-                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Ax', 'Ay', 'Az', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+                    for field_name in A_fields_list:
+                        fields_to_plot.add(field_name)
+                elif dataname in E_fields_list:
                     fields_to_plot.add(dataname)
-                elif dataname in ['Jx', 'Jy', 'Jz']:
+                elif dataname in B_fields_list:
+                    fields_to_plot.add(dataname)
+                elif dataname in A_fields_list:
+                    fields_to_plot.add(dataname)
+                elif dataname in ['rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+                    fields_to_plot.add(dataname)
+                elif dataname in J_fields_list:
                     fields_to_plot.add(dataname.lower())
                 elif dataname.startswith('rho_'):
                     # Adds rho_species diagnostic
@@ -2015,23 +2034,30 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
 
+        if pywarpx.geometry.dims == 'RZ':
+            E_fields_list = ['Er', 'Et', 'Ez']
+            B_fields_list = ['Br', 'Bt', 'Bz']
+            J_fields_list = ['Jr', 'Jt', 'Jz']
+        else:
+            E_fields_list = ['Ex', 'Ey', 'Ez']
+            B_fields_list = ['Bx', 'By', 'Bz']
+            J_fields_list = ['Jx', 'Jy', 'Jz']
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'E':
-                    fields_to_plot.add('Ex')
-                    fields_to_plot.add('Ey')
-                    fields_to_plot.add('Ez')
+                    for field_name in E_fields_list:
+                        fields_to_plot.add(field_name)
                 elif dataname == 'B':
-                    fields_to_plot.add('Bx')
-                    fields_to_plot.add('By')
-                    fields_to_plot.add('Bz')
+                    for field_name in B_fields_list:
+                        fields_to_plot.add(field_name)
                 elif dataname == 'J':
-                    fields_to_plot.add('jx')
-                    fields_to_plot.add('jy')
-                    fields_to_plot.add('jz')
-                elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho']:
+                    for field_name in J_fields_list:
+                        fields_to_plot.add(field_name.lower())
+                elif dataname in E_fields_list:
                     fields_to_plot.add(dataname)
-                elif dataname in ['Jx', 'Jy', 'Jz']:
+                elif dataname in B_fields_list:
+                    fields_to_plot.add(dataname)
+                elif dataname in J_fields_list:
                     fields_to_plot.add(dataname.lower())
                 elif dataname.startswith('rho_'):
                     # Adds rho_species diagnostic
@@ -2099,6 +2125,9 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     reduced_function: string
         For diagnostic type 'FieldReduction', the function of the fields to evaluate
 
+    weighting_function: string, optional
+        For diagnostic type 'ChargeOnEB', the function to weight contributions to the total charge
+
     reduction_type: {'Maximum', 'Minimum', or 'Integral'}
         For diagnostic type 'FieldReduction', the type of reduction
 
@@ -2153,11 +2182,11 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
         self._simple_reduced_diagnostics = [
             'ParticleEnergy', 'ParticleMomentum', 'FieldEnergy',
             'FieldMomentum', 'FieldMaximum', 'RhoMaximum', 'ParticleNumber',
-            'LoadBalanceCosts', 'LoadBalanceEfficiency',
+            'LoadBalanceCosts', 'LoadBalanceEfficiency'
         ]
         # The species diagnostics require a species to be provided
         self._species_reduced_diagnostics = [
-            'BeamRelevant', 'ParticleHistogram', 'ParticleExtrema',
+            'BeamRelevant', 'ParticleHistogram', 'ParticleExtrema'
         ]
 
         if self.type in self._simple_reduced_diagnostics:
@@ -2171,6 +2200,8 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
             kw = self._handle_field_probe(**kw)
         elif self.type == "FieldReduction":
             kw = self._handle_field_reduction(**kw)
+        elif self.type == "ChargeOnEB":
+            kw = self._handle_charge_on_eb(**kw)
         else:
             raise RuntimeError(
                 f"{self.type} reduced diagnostic is not yet supported "
@@ -2244,6 +2275,19 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
         # Check the reduced function expression for constants
         for k in list(kw.keys()):
             if re.search(r'\b%s\b'%k, reduced_function):
+                self.user_defined_kw[k] = kw[k]
+                del kw[k]
+
+        return kw
+
+    def _handle_charge_on_eb(self, **kw):
+        weighting_function = kw.pop("weighting_function", None)
+
+        self.__setattr__("weighting_function(x,y,z)", weighting_function)
+
+        # Check the reduced function expression for constants
+        for k in list(kw.keys()):
+            if re.search(r'\b%s\b'%k, weighting_function):
                 self.user_defined_kw[k] = kw[k]
                 del kw[k]
 

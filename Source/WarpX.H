@@ -309,6 +309,12 @@ public:
     //! the maximum number of iterations is computed automatically so that the lower end of the
     //! simulation domain along z reaches #zmax_plasma_to_compute_max_step in the boosted frame
     static bool do_compute_max_step_from_zmax;
+    //! store initial value of zmin_domain_boost because WarpX::computeMaxStepBoostAccelerator
+    //! needs the initial value of zmin_domain_boost, even if restarting from a checkpoint file
+    static amrex::Real zmin_domain_boost_step_0;
+
+    //! If true, the code will compute max_step from the back transformed diagnostics
+    static bool compute_max_step_from_btd;
 
     static bool do_dynamic_scheduling;
     static bool refine_plasma;
@@ -332,8 +338,9 @@ public:
     //! and current onto the lower refinement level instead of the refinement patch itself
     static int n_current_deposition_buffer;
 
-    //! If true, all fields are evaluated on a nodal grid and all MultiFabs have a nodal index type
-    static bool do_nodal;
+    //! Integer that corresponds to the type of grid used in the simulation
+    //! (collocated, staggered, hybrid)
+    static short grid_type;
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;
@@ -358,7 +365,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
-        const std::string name,
+        const std::string& name,
         std::optional<const amrex::Real> initial_value = {});
 
     /**
@@ -381,7 +388,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
-        const std::string name,
+        const std::string& name,
         std::optional<const int> initial_value = {});
 
     /**
@@ -399,7 +406,7 @@ public:
         const amrex::MultiFab& mf_to_alias,
         const int scomp,
         const int ncomp,
-        const std::string name,
+        const std::string& name,
         std::optional<const amrex::Real> initial_value);
 
     /**
@@ -432,7 +439,7 @@ public:
      * \param name The name of the MultiFab use to reference the MultiFab
      * \param mf The MultiFab to be added to the map (via a pointer to it)
      */
-    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::MultiFab>& mf) {
+    static void AddToMultiFabMap(const std::string& name, const std::unique_ptr<amrex::MultiFab>& mf) {
         multifab_map[name] = mf.get();
     }
 
@@ -442,7 +449,7 @@ public:
      * \param name The name of the iMultiFab use to reference the iMultiFab
      * \param mf The iMultiFab to be added to the map (via a pointer to it)
      */
-    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::iMultiFab>& mf) {
+    static void AddToMultiFabMap(const std::string& name, const std::unique_ptr<amrex::iMultiFab>& mf) {
         imultifab_map[name] = mf.get();
     }
 
@@ -582,7 +589,7 @@ public:
      */
     void ComputeMaxStep ();
     // Compute max_step automatically for simulations in a boosted frame.
-    void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
+    void computeMaxStepBoostAccelerator();
 
     /** \brief Move the moving window
      * \param step Time step
@@ -814,7 +821,9 @@ public:
     bool getis_synchronized() const {return is_synchronized;}
 
     int maxStep () const {return max_step;}
+    void updateMaxStep (const int new_max_step) {max_step = new_max_step;}
     amrex::Real stopTime () const {return stop_time;}
+    void updateStopTime (const amrex::Real new_stop_time) {stop_time = new_stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, const amrex::IntVect ngrow) const;
@@ -996,10 +1005,9 @@ public:
      * (up to order \c n_order).
      *
      * \param[in] n_order order of the finite-difference approximation
-     * \param[in] nodal   whether the finite-difference approximation is computed
-     *                    on a nodal grid or a staggered grid
+     * \param[in] a_grid_type type of grid (collocated or not)
      */
-    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const bool nodal);
+    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const short a_grid_type);
 
     // Device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
@@ -1238,13 +1246,15 @@ private:
      * \param[in] centering_nox order of the finite-order centering along x
      * \param[in] centering_noy order of the finite-order centering along y
      * \param[in] centering_noz order of the finite-order centering along z
+     * \param[in] a_grid_type type of grid (collocated or not)
      */
     void AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_x,
                                         amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_y,
                                         amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_z,
                                         const int centering_nox,
                                         const int centering_noy,
-                                        const int centering_noz);
+                                        const int centering_noz,
+                                        const short a_grid_type);
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngEB, amrex::IntVect& ngJ,
@@ -1521,6 +1531,7 @@ private:
         return *m_field_factory[lev];
     }
 #ifdef AMREX_USE_EB
+public:
     amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
     }

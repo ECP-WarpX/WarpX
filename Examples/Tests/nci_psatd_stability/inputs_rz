@@ -34,7 +34,7 @@ algo.particle_shape = 3
 #################################
 particles.species_names = electrons ions
 
-warpx.do_nodal = 1
+warpx.grid_type = collocated
 warpx.use_filter = 1
 
 psatd.nox = 16
@@ -75,4 +75,4 @@ ions.uz_th = 0.0001
 diagnostics.diags_names = diag1
 diag1.intervals = 100
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez By jx jz rho divE
+diag1.fields_to_plot = Er Et Ez Bt jr jz rho divE

@@ -26,6 +26,12 @@ const std::map<std::string, int> evolve_scheme_to_int = {
     {"explicit",        EvolveScheme::Explicit },
     {"implicit_picard", EvolveScheme::ImplicitPicard },
     {"default",         EvolveScheme::Explicit }
+
+const std::map<std::string, int> grid_to_int = {
+    {"collocated", GridType::Collocated},
+    {"staggered", GridType::Staggered},
+    {"hybrid", GridType::Hybrid},
+    {"default", GridType::Staggered}
 };
 
 const std::map<std::string, int> electromagnetic_solver_algo_to_int = {
@@ -148,6 +154,8 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = evolve_scheme_to_int;
     } else if (0 == std::strcmp(pp_search_key, "maxwell_solver")) {
         algo_to_int = electromagnetic_solver_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "grid_type")) {
+        algo_to_int = grid_to_int;
     } else if (0 == std::strcmp(pp_search_key, "do_electrostatic")) {
         algo_to_int = electrostatic_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "particle_pusher")) {

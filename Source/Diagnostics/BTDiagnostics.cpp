@@ -42,7 +42,7 @@
 #include <cmath>
 #include <cstdio>
 #include <memory>
-#include <string>
+#include <sstream>
 #include <vector>
 
 using namespace amrex::literals;
@@ -158,15 +158,38 @@ void BTDiagnostics::DerivedInitData ()
     // j >= i / gamma / (1+beta) * dt_snapshot / dt_boosted_frame
     const int final_snapshot_starting_step = static_cast<int>(std::ceil(final_snapshot_iteration / warpx.gamma_boost / (1._rt+warpx.beta_boost) * m_dt_snapshots_lab / dt_boosted_frame));
     const int final_snapshot_fill_iteration = final_snapshot_starting_step + num_buffers * m_buffer_size - 1;
-    if (final_snapshot_fill_iteration > warpx.maxStep()) {
-        std::string warn_string =
-            "\nSimulation might not run long enough to fill all BTD snapshots.\n"
-            "Final step: " + std::to_string(warpx.maxStep()) + "\n"
-            "Last BTD snapshot fills around step: " + std::to_string(final_snapshot_fill_iteration);
+    const amrex::Real final_snapshot_fill_time = final_snapshot_fill_iteration * dt_boosted_frame;
+    if (warpx.compute_max_step_from_btd) {
+        if (final_snapshot_fill_iteration > warpx.maxStep()) {
+            warpx.updateMaxStep(final_snapshot_fill_iteration);
+            amrex::Print()<<"max_step insufficient to fill all BTD snapshots. Automatically increased to: "
+                << final_snapshot_fill_iteration << std::endl;
+
+        }
+        if (final_snapshot_fill_time > warpx.stopTime()) {
+            warpx.updateStopTime(final_snapshot_fill_time);
+            amrex::Print()<<"stop_time insufficient to fill all BTD snapshots. Automatically increased to: "
+                << final_snapshot_fill_time << std::endl;
+
+        }
+        if (warpx.maxStep() == std::numeric_limits<int>::max() && warpx.stopTime() == std::numeric_limits<amrex::Real>::max()) {
+            amrex::Print()<<"max_step unspecified and stop time unspecified.  Setting max step to "
+                <<final_snapshot_fill_iteration<< " to fill all BTD snapshots." << std::endl;
+            warpx.updateMaxStep(final_snapshot_fill_iteration);
+        }
+
+    } else if (final_snapshot_fill_iteration > warpx.maxStep() || final_snapshot_fill_time > warpx.stopTime()) {
+        std::stringstream warn_string;
+            warn_string << "\nSimulation might not run long enough to fill all BTD snapshots.\n"
+            << "Final step: " << warpx.maxStep() << "\n"
+            <<"Stop time: " << warpx.stopTime() << "\n"
+            <<"Last BTD snapshot fills around step: " << final_snapshot_fill_iteration << "\n"
+            <<" or time: " << final_snapshot_fill_time << "\n";
         ablastr::warn_manager::WMRecordWarning(
-            "BTD", warn_string,
+            "BTD", warn_string.str(),
             ablastr::warn_manager::WarnPriority::low);
     }
+
 #ifdef WARPX_DIM_RZ
     UpdateVarnamesForRZopenPMD();
 #endif
@@ -898,7 +921,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
         // Box covering the extent of the user-defined diag in the back-transformed frame
         amrex::Box domain = buffer_ba.minimalBox();
-        // define the geometry object for the ith buffer using Physical co-oridnates
+        // define the geometry object for the ith buffer using Physical co-ordinates
         // of m_buffer_domain_lab[i_buffer].
         m_geom_output[i_buffer][lev].define( domain, &m_buffer_domain_lab[i_buffer],
                                              amrex::CoordSys::cartesian,
@@ -919,7 +942,7 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
     if (lev == 0) {
         // Default non-periodic geometry for diags
         amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
-        // Define the geometry object for the ith snapshot using Physical co-oridnates
+        // Define the geometry object for the ith snapshot using Physical co-ordinates
         // of m_snapshot_domain_lab[i_buffer], that corresponds to the full snapshot
         // in the back-transformed frame
         m_geom_snapshot[i_buffer][lev].define( m_snapshot_box[i_buffer],

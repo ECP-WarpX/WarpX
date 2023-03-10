@@ -546,7 +546,7 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
 PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& grid_dm,
           const Geometry* geom, const Geometry* cgeom,
           int ncell, int delta, amrex::IntVect ref_ratio,
-          Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
+          Real dt, int nox_fft, int noy_fft, int noz_fft, short grid_type,
           int do_moving_window, int /*pml_has_particles*/, int do_pml_in_domain,
           const int psatd_solution_type, const int J_in_time, const int rho_in_time,
           const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
@@ -613,9 +613,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         // Increase the number of guard cells, in order to fit the extent
         // of the stencil for the spectral solver
-        int ngFFt_x = do_nodal ? nox_fft : nox_fft/2;
-        int ngFFt_y = do_nodal ? noy_fft : noy_fft/2;
-        int ngFFt_z = do_nodal ? noz_fft : noz_fft/2;
+        int ngFFt_x = (grid_type == GridType::Collocated) ? nox_fft : nox_fft/2;
+        int ngFFt_y = (grid_type == GridType::Collocated) ? noy_fft : noy_fft/2;
+        int ngFFt_z = (grid_type == GridType::Collocated) ? noz_fft : noz_fft/2;
 
         ParmParse pp_psatd("psatd");
         utils::parser::queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
@@ -710,8 +710,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     if (m_divb_cleaning)
     {
         // TODO Shall we define a separate guard cells parameter ngG?
-        const amrex::IntVect& G_nodal_flag = (do_nodal) ? amrex::IntVect::TheNodeVector()
-                                                        : amrex::IntVect::TheCellVector();
+        const amrex::IntVect& G_nodal_flag =
+            (grid_type == GridType::Collocated) ? amrex::IntVect::TheNodeVector()
+                                                : amrex::IntVect::TheCellVector();
         const amrex::BoxArray ba_G_nodal = amrex::convert(ba, G_nodal_flag);
         WarpX::AllocInitMultiFab(pml_G_fp, ba_G_nodal, dm, 3, ngf, "pml_G_fp", 0.0_rt);
     }
@@ -742,7 +743,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero,
+            nox_fft, noy_fft, noz_fft, grid_type, v_galilean_zero,
             v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
             fft_do_time_averaging, psatd_solution_type, J_in_time, rho_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif
@@ -814,8 +815,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         if (m_divb_cleaning)
         {
             // TODO Shall we define a separate guard cells parameter ngG?
-            const amrex::IntVect& G_nodal_flag = (do_nodal) ? amrex::IntVect::TheNodeVector()
-                                                            : amrex::IntVect::TheCellVector();
+            const amrex::IntVect& G_nodal_flag =
+                (grid_type == GridType::Collocated) ? amrex::IntVect::TheNodeVector()
+                                                    : amrex::IntVect::TheCellVector();
             const amrex::BoxArray cba_G_nodal = amrex::convert(cba, G_nodal_flag);
             WarpX::AllocInitMultiFab( pml_G_cp, cba_G_nodal, cdm, 3, ngf, "pml_G_cp", 0.0_rt);
         }
@@ -849,7 +851,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
-                nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero,
+                nox_fft, noy_fft, noz_fft, grid_type, v_galilean_zero,
                 v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
                 fft_do_time_averaging, psatd_solution_type, J_in_time, rho_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif

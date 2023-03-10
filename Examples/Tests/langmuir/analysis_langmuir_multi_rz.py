@@ -89,13 +89,13 @@ zz = zmin + (coords[1] + 0.5)*dz
 
 # Check the validity of the fields
 overall_max_error = 0
-Er_sim = data[('mesh','Ex')].to_ndarray()[:,:,0]
+Er_sim = data[('boxlib','Er')].to_ndarray()[:,:,0]
 Er_th = Er(zz, rr, epsilon, k0, w0, wp, t0)
 max_error = abs(Er_sim-Er_th).max()/abs(Er_th).max()
 print('Er: Max error: %.2e' %(max_error))
 overall_max_error = max( overall_max_error, max_error )
 
-Ez_sim = data[('mesh','Ez')].to_ndarray()[:,:,0]
+Ez_sim = data[('boxlib','Ez')].to_ndarray()[:,:,0]
 Ez_th = Ez(zz, rr, epsilon, k0, w0, wp, t0)
 max_error = abs(Ez_sim-Ez_th).max()/abs(Ez_th).max()
 print('Ez: Max error: %.2e' %(max_error))

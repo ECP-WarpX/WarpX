@@ -31,15 +31,15 @@ SpectralBaseAlgorithm::SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspa
     const amrex::DistributionMapping& dm,
     const SpectralFieldIndex& spectral_index,
     const int norder_x, const int norder_y,
-    const int norder_z, const bool nodal):
+    const int norder_z, const short grid_type):
         m_spectral_index(spectral_index),
     // Compute and assign the modified k vectors
-        modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,nodal)),
+        modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,grid_type)),
 #if defined(WARPX_DIM_3D)
-        modified_ky_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_y,nodal)),
-        modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,2,norder_z,nodal))
+        modified_ky_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_y,grid_type)),
+        modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,2,norder_z,grid_type))
 #else
-        modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_z,nodal))
+        modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_z,grid_type))
 #endif
     {
 #if !defined(WARPX_DIM_3D)
