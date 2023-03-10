@@ -23,6 +23,16 @@ class Diagnostic(Bucket):
                                  f'"{self.instancename}": '
                                  f'"{value}" != "{self.argvattrs[name]}"')
             self.argvattrs[name] = value
-
+            
     def __setattr__(self, name, value):
         self.add_new_attr_with_check(name, value)
+
+    def replace_attr(self, name, value):
+        """
+        Explicitly replace an existing attribute
+        """
+        if name.startswith('_'):
+            self._localsetattr(name, value)
+        else:
+            assert name in self.argvattrs
+            self.argvattrs[name] = value
