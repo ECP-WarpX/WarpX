@@ -1489,6 +1489,11 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_zmax_plasma_to_compute_max_step: float, optional
         Sets the simulation run time based on the maximum z value
 
+    warpx_compute_max_step_from_btd: bool, default=0
+        If specified, automatically calculates the number of iterations
+        required in the boosted frame for all back-transformed diagnostics
+        to be completed.
+
     warpx_collisions: collision instance, optional
         The collision instance specifying the particle collisions
 
@@ -1526,6 +1531,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
         self.amr_restart = kw.pop('warpx_amr_restart', None)
         self.zmax_plasma_to_compute_max_step = kw.pop('warpx_zmax_plasma_to_compute_max_step', None)
+        self.compute_max_step_from_btd = kw.pop('warpx_compute_max_step_from_btd', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
@@ -1551,6 +1557,7 @@ class Simulation(picmistandard.PICMI_Simulation):
             pywarpx.warpx.boost_direction = 'z'
 
         pywarpx.warpx.zmax_plasma_to_compute_max_step = self.zmax_plasma_to_compute_max_step
+        pywarpx.warpx.compute_max_step_from_btd = self.compute_max_step_from_btd
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
