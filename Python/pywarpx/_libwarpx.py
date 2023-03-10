@@ -1236,8 +1236,8 @@ class LibWarpX():
             The electric and magnetic focusing strength of the lens
         """
         self.libwarpx_so.warpx_setPlasmaLensStrength(
-            ctypes.c_int(i_lens), c_real(strength_E), c_real(strength_B) ) 
-            
+            ctypes.c_int(i_lens), c_real(strength_E), c_real(strength_B) )
+
 
     def _get_mesh_field_list(self, warpx_func, level, direction, include_ghosts):
         """
