@@ -310,6 +310,7 @@ class LibWarpX():
         self.libwarpx_so.warpx_sett_new.argtypes = [ctypes.c_int, c_real]
         self.libwarpx_so.warpx_getdt.argtypes = [ctypes.c_int]
         self.libwarpx_so.warpx_setPotentialEB.argtypes = [ctypes.c_char_p]
+        self.libwarpx_so.warpx_setPlasmaLensStrength.argtypes = [ctypes.c_int, c_real, c_real]
 
     def _get_boundary_number(self, boundary):
         '''
@@ -1221,6 +1222,22 @@ class LibWarpX():
             The expression string
         """
         self.libwarpx_so.warpx_setPotentialEB(ctypes.c_char_p(potential.encode('utf-8')))
+
+    def set_plasma_lens_strength( self, i_lens, strength_E, strength_B ):
+        """
+        Set the strength of the `i_lens`-th lens
+
+        Parameters
+        ----------
+        i_lens: int
+            Index of the lens to be modified
+
+        strength_E, strength_B: floats
+            The electric and magnetic focusing strength of the lens
+        """
+        self.libwarpx_so.warpx_setPlasmaLensStrength(
+            ctypes.c_int(i_lens), c_real(strength_E), c_real(strength_B) ) 
+            
 
     def _get_mesh_field_list(self, warpx_func, level, direction, include_ghosts):
         """

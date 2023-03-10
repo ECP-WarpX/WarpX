@@ -158,6 +158,8 @@ extern "C" {
 
   void warpx_setPotentialEB (const char * char_potential);
 
+  void warpx_setPlasmaLensStrength (const int i_lens, const amrex::Real strength_E, const amrex::Real strength_B);
+  
   void mypc_Redistribute ();
 
   amrex::Real** warpx_getEfield (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
