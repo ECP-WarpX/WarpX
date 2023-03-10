@@ -901,12 +901,12 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
     warpx_psatd_do_time_averaging: bool, optional
         Whether to do the time averaging for the spectral solver
 
-    warpx_psatd_J_in_time: string, {'constant', 'linear'}, default='constant'
+    warpx_psatd_J_in_time: {'constant', 'linear'}, default='constant'
         This determines whether the current density is assumed to be constant
         or linear in time, within the time step over which the electromagnetic
         fields are evolved.
 
-    warpx_psatd_rho_in_time: string, {'linear'}, default='linear'
+    warpx_psatd_rho_in_time: {'linear'}, default='linear'
         This determines whether the charge density is assumed to be linear
         in time, within the time step over which the electromagnetic fields are evolved.
 
@@ -1465,15 +1465,15 @@ class Simulation(picmistandard.PICMI_Simulation):
         field update are performed multiple times within each time step.
 
     warpx_do_multi_J_n_depositions: integer
-        Number of sub-steps to use with the multi-J algorithm, when warpx_do_multi_J=1.
+        Number of sub-steps to use with the multi-J algorithm, when ``warpx_do_multi_J=1``.
         Note that this input parameter is not optional and must always be set in all
-        input files where warpx.do_multi_J=1. No default value is provided automatically.
+        input files where ``warpx.do_multi_J=1``. No default value is provided automatically.
 
-    warpx_grid_type: string, {'collocated', 'staggered', 'hybrid'}, default='staggered'
+    warpx_grid_type: {'collocated', 'staggered', 'hybrid'}, default='staggered'
         Whether to use a collocated grid (all fields defined at the cell nodes),
         a staggered grid (fields defined on a Yee grid), or a hybrid grid
         (fields and currents are interpolated back and forth between a staggered grid
-        and a nodal grid, must be used with momentum-conserving field gathering algorithm.
+        and a collocated grid, must be used with momentum-conserving field gathering algorithm).
 
     warpx_do_current_centering: bool, optional
         If true, the current is deposited on a nodal grid and then centered
@@ -1481,23 +1481,21 @@ class Simulation(picmistandard.PICMI_Simulation):
         Default: warpx.do_current_centering=0 with collocated or staggered grids,
         warpx.do_current_centering=1 with hybrid grids.
 
-    warpx_field_centering_nox, warpx_field_centering_noy, warpx_field_centering_noz:
-    (integer, optional)
-        The order of interpolation used with staggered or hybrid grids (warpx_grid_type=staggered
-        or warpx_grid_type=hybrid) and momentum-conserving field gathering
-        (warpx_field_gathering_algo=momentum-conserving) to interpolate the
+    warpx_field_centering_nox/noy/noz: integer, optional
+        The order of interpolation used with staggered or hybrid grids (``warpx_grid_type=staggered``
+        or ``warpx_grid_type=hybrid``) and momentum-conserving field gathering
+        (``warpx_field_gathering_algo=momentum-conserving``) to interpolate the
         electric and magnetic fields from the cell centers to the cell nodes,
         before gathering the fields from the cell nodes to the particle positions.
-        Default: warpx_field_centering_no<x,y,z>=2 with staggered grids,
-        warpx_field_centering_no<x,y,z>=8 with hybrid grids (typically necessary
+        Default: ``warpx_field_centering_no<x,y,z>=2`` with staggered grids,
+        ``warpx_field_centering_no<x,y,z>=8`` with hybrid grids (typically necessary
         to ensure stability in boosted-frame simulations of relativistic plasmas and beams).
 
-    warpx_current_centering_nox, warpx_current_centering_noy, warpx_current_centering_noz:
-    (integer, optional)
-        The order of interpolation used with hybrid grids (warpx_grid_type=hybrid)
+    warpx_current_centering_nox/noy/noz: integer, optional
+        The order of interpolation used with hybrid grids (``warpx_grid_type=hybrid``)
         to interpolate the currents from the cell nodes to the cell centers when
-        warpx_do_current_centering=1, before pushing the Maxwell fields on staggered grids.
-        Default: warpx_current_centering_no<x,y,z>=8 with hybrid grids (typically necessary
+        ``warpx_do_current_centering=1``, before pushing the Maxwell fields on staggered grids.
+        Default: ``warpx_current_centering_no<x,y,z>=8`` with hybrid grids (typically necessary
         to ensure stability in boosted-frame simulations of relativistic plasmas and beams).
 
     warpx_serialize_initial_conditions: bool, default=False
