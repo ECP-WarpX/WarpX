@@ -396,7 +396,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
         amrex::The_Managed_Arena()->free(cost_real);
     }
 #endif
-            const amrex::Real wqz = wq*invvol*vz;
+}
 
 /**
  * \brief Direct current deposition for thread thread_num for the implicit scheme
