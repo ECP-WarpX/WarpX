@@ -901,6 +901,15 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
     warpx_psatd_do_time_averaging: bool, optional
         Whether to do the time averaging for the spectral solver
 
+    warpx_psatd_J_in_time: {'constant', 'linear'}, default='constant'
+        This determines whether the current density is assumed to be constant
+        or linear in time, within the time step over which the electromagnetic
+        fields are evolved.
+
+    warpx_psatd_rho_in_time: {'linear'}, default='linear'
+        This determines whether the charge density is assumed to be linear
+        in time, within the time step over which the electromagnetic fields are evolved.
+
     warpx_do_pml_in_domain: bool, default=False
         Whether to do the PML boundaries within the domain (versus
         in the guard cells)
@@ -921,6 +930,8 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             self.psatd_current_correction = kw.pop('warpx_current_correction', None)
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
+            self.psatd_J_in_time = kw.pop('warpx_psatd_J_in_time', None)
+            self.psatd_rho_in_time = kw.pop('warpx_psatd_rho_in_time', None)
 
         self.do_pml_in_domain = kw.pop('warpx_do_pml_in_domain', None)
         self.pml_has_particles = kw.pop('warpx_pml_has_particles', None)
@@ -931,13 +942,14 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         self.grid.initialize_inputs()
 
         pywarpx.warpx.pml_ncell = self.pml_ncell
-        pywarpx.warpx.do_nodal = self.l_nodal
 
         if self.method == 'PSATD':
             pywarpx.psatd.periodic_single_box_fft = self.psatd_periodic_single_box_fft
             pywarpx.psatd.current_correction = self.psatd_current_correction
             pywarpx.psatd.update_with_rho = self.psatd_update_with_rho
             pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
+            pywarpx.psatd.J_in_time = self.psatd_J_in_time
+            pywarpx.psatd.rho_in_time = self.psatd_rho_in_time
 
             if self.grid.guard_cells is not None:
                 pywarpx.psatd.nx_guard = self.grid.guard_cells[0]
@@ -1448,6 +1460,44 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_use_filter: bool, optional
         Whether to use filtering. The default depends on the conditions.
 
+    warpx_do_multi_J: bool, default=0
+        Whether to use the multi-J algorithm, where current deposition and
+        field update are performed multiple times within each time step.
+
+    warpx_do_multi_J_n_depositions: integer
+        Number of sub-steps to use with the multi-J algorithm, when ``warpx_do_multi_J=1``.
+        Note that this input parameter is not optional and must always be set in all
+        input files where ``warpx.do_multi_J=1``. No default value is provided automatically.
+
+    warpx_grid_type: {'collocated', 'staggered', 'hybrid'}, default='staggered'
+        Whether to use a collocated grid (all fields defined at the cell nodes),
+        a staggered grid (fields defined on a Yee grid), or a hybrid grid
+        (fields and currents are interpolated back and forth between a staggered grid
+        and a collocated grid, must be used with momentum-conserving field gathering algorithm).
+
+    warpx_do_current_centering: bool, optional
+        If true, the current is deposited on a nodal grid and then centered
+        to a staggered grid (Yee grid), using finite-order interpolation.
+        Default: warpx.do_current_centering=0 with collocated or staggered grids,
+        warpx.do_current_centering=1 with hybrid grids.
+
+    warpx_field_centering_nox/noy/noz: integer, optional
+        The order of interpolation used with staggered or hybrid grids (``warpx_grid_type=staggered``
+        or ``warpx_grid_type=hybrid``) and momentum-conserving field gathering
+        (``warpx_field_gathering_algo=momentum-conserving``) to interpolate the
+        electric and magnetic fields from the cell centers to the cell nodes,
+        before gathering the fields from the cell nodes to the particle positions.
+        Default: ``warpx_field_centering_no<x,y,z>=2`` with staggered grids,
+        ``warpx_field_centering_no<x,y,z>=8`` with hybrid grids (typically necessary
+        to ensure stability in boosted-frame simulations of relativistic plasmas and beams).
+
+    warpx_current_centering_nox/noy/noz: integer, optional
+        The order of interpolation used with hybrid grids (``warpx_grid_type=hybrid``)
+        to interpolate the currents from the cell nodes to the cell centers when
+        ``warpx_do_current_centering=1``, before pushing the Maxwell fields on staggered grids.
+        Default: ``warpx_current_centering_no<x,y,z>=8`` with hybrid grids (typically necessary
+        to ensure stability in boosted-frame simulations of relativistic plasmas and beams).
+
     warpx_serialize_initial_conditions: bool, default=False
         Controls the random numbers used for initialization.
         This parameter should only be used for testing and continuous integration.
@@ -1518,6 +1568,12 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.field_gathering_algo = kw.pop('warpx_field_gathering_algo', None)
         self.particle_pusher_algo = kw.pop('warpx_particle_pusher_algo', None)
         self.use_filter = kw.pop('warpx_use_filter', None)
+        self.do_multi_J = kw.pop('warpx_do_multi_J', None)
+        self.do_multi_J_n_depositions = kw.pop('warpx_do_multi_J_n_depositions', None)
+        self.grid_type = kw.pop('warpx_grid_type', None)
+        self.do_current_centering = kw.pop('warpx_do_current_centering', None)
+        self.field_centering_order = kw.pop('warpx_field_centering_order', None)
+        self.current_centering_order = kw.pop('warpx_current_centering_order', None)
         self.serialize_initial_conditions = kw.pop('warpx_serialize_initial_conditions', None)
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
         self.load_balance_intervals = kw.pop('warpx_load_balance_intervals', None)
@@ -1571,9 +1627,12 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.algo.costs_heuristic_particles_wt = self.costs_heuristic_particles_wt
         pywarpx.algo.costs_heuristic_cells_wt = self.costs_heuristic_cells_wt
 
+        pywarpx.warpx.grid_type = self.grid_type
+        pywarpx.warpx.do_current_centering = self.do_current_centering
         pywarpx.warpx.use_filter = self.use_filter
+        pywarpx.warpx.do_multi_J = self.do_multi_J
+        pywarpx.warpx.do_multi_J_n_depositions = self.do_multi_J_n_depositions
         pywarpx.warpx.serialize_initial_conditions = self.serialize_initial_conditions
-
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
 
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
@@ -1598,6 +1657,21 @@ class Simulation(picmistandard.PICMI_Simulation):
             pywarpx.algo.particle_shape = interpolation_order
 
         self.solver.initialize_inputs()
+
+        # Initialize warpx.field_centering_no<x,y,z> and warpx.current_centering_no<x,y,z>
+        # if set by the user in the input (need to access grid info from solver attribute)
+        # warpx.field_centering_no<x,y,z>
+        if self.field_centering_order is not None:
+            pywarpx.warpx.field_centering_nox = self.field_centering_order[0]
+            if self.solver.grid.number_of_dimensions == 3:
+                pywarpx.warpx.field_centering_noy = self.field_centering_order[1]
+            pywarpx.warpx.field_centering_noz = self.field_centering_order[-1]
+        # warpx.current_centering_no<x,y,z>
+        if self.current_centering_order is not None:
+            pywarpx.warpx.current_centering_nox = self.current_centering_order[0]
+            if self.solver.grid.number_of_dimensions == 3:
+                pywarpx.warpx.current_centering_noy = self.current_centering_order[1]
+            pywarpx.warpx.current_centering_noz = self.current_centering_order[-1]
 
         for i in range(len(self.species)):
             self.species[i].initialize_inputs(self.layouts[i],
