@@ -229,7 +229,8 @@ public:
                                 int const lev,
                                 int const depos_lev,
                                 amrex::Real const dt,
-                                amrex::Real const relative_time);
+                                amrex::Real const relative_time,
+                                PushType push_type);
 
     // If particles start outside of the domain, ContinuousInjection
     // makes sure that they are initialized when they enter the domain, and

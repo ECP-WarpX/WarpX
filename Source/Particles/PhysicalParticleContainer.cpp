@@ -2110,14 +2110,14 @@ PhysicalParticleContainer::Evolve (int lev,
                     // Deposit inside domains
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                    0, np_current, thread_num,
-                                   lev, lev, dt, relative_time);
+                                   lev, lev, dt, relative_time, push_type);
 
                     if (has_buffer)
                     {
                         // Deposit in buffers
                         DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                        np_current, np-np_current, thread_num,
-                                       lev, lev-1, dt, relative_time);
+                                       lev, lev-1, dt, relative_time, push_type);
                     }
                 } // end of "if electrostatic_solver_id == ElectrostaticSolverAlgo::None"
             } // end of "if do_not_push"
@@ -2972,17 +2972,22 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
         // but uses the most recent velocity.
 #if (AMREX_SPACEDIM >= 2)
         amrex::ParticleReal xp = x_n[ip];
+        amrex::ParticleReal xp_n = x_n[ip];
 #else
         amrex::ParticleReal xp = 0._rt;
+        amrex::ParticleReal xp_n = 0._rt;
 #endif
 #if defined(WARPX_DIM_3D)
         amrex::ParticleReal yp = y_n[ip];
+        amrex::ParticleReal yp_n = y_n[ip];
 #else
         amrex::ParticleReal yp = 0._rt;
+        amrex::ParticleReal yp_n = 0._rt;
 #endif
         amrex::ParticleReal zp = z_n[ip];
+        amrex::ParticleReal zp_n = z_n[ip];
 
-        UpdatePosition(xp, yp, zp, ux[ip], uy[ip], uz[ip], 0.5_rt*dt);
+        UpdatePositionImplicit(xp, yp, zp, ux_n[ip], uy_n[ip], uz_n[ip], ux[ip], uy[ip], uz[ip], 0.5_rt*dt);
         setPosition(ip, xp, yp, zp);
 
         amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
@@ -2990,7 +2995,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 
         if(!t_do_not_gather){
             // first gather E and B to the particle positions
-            doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+            doGatherShapeNImplicit(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                            ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                            ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                            dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,

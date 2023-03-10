@@ -87,8 +87,14 @@ struct Compute_shifted_shape_factor
         const T x_old,
         const int i_new) const
     {
-        if constexpr (depos_order == 1){
-            const auto i = static_cast<int>(x_old);
+        if constexpr (depos_order == 0){
+            const auto i = static_cast<int>(std::floor(x_old + T(0.5)));
+            const int i_shift = i - i_new;
+            sx[1+i_shift] = T(1.0);
+            return i;
+        }
+        else if constexpr (depos_order == 1){
+            const auto i = static_cast<int>(std::floor(x_old));
             const int i_shift = i - i_new;
             const T xint = x_old - T(i);
             sx[1+i_shift] = T(1.0) - xint;

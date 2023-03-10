@@ -424,7 +424,7 @@ public:
     static void AllocInitMultiFabFromModel (
         std::unique_ptr<amrex::MultiFab>& mf,
         amrex::MultiFab& mf_model,
-        const std::string name,
+        const std::string& name,
         std::optional<const amrex::Real> initial_value = {});
 
     // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)
@@ -1309,7 +1309,7 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
-    // Implicit, fields at start of step and temporary value
+    // Implicit, fields at start of step and from the previous iteration
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_n;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_n;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_save;

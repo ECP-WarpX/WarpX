@@ -26,6 +26,7 @@ const std::map<std::string, int> evolve_scheme_to_int = {
     {"explicit",        EvolveScheme::Explicit },
     {"implicit_picard", EvolveScheme::ImplicitPicard },
     {"default",         EvolveScheme::Explicit }
+};
 
 const std::map<std::string, int> grid_to_int = {
     {"collocated", GridType::Collocated},

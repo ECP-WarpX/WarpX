@@ -121,7 +121,8 @@ public:
                                  int const /*lev*/,
                                  int const /*depos_lev*/,
                                  amrex::Real const /*dt*/,
-                                 amrex::Real const /*relative_time*/) override {}
+                                 amrex::Real const /*relative_time*/,
+                                 PushType /*push_type*/) override {}
 };
 
 #endif // #ifndef WARPX_PhotonParticleContainer_H_
