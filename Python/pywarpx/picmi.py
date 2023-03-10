@@ -1676,8 +1676,12 @@ class WarpXDiagnosticBase(object):
             self.diagnostic = pywarpx.Diagnostics.Diagnostic(
                 self.name, _species_dict={}
             )
+            # By default, disable particle output and field output
+            # (This will be reset in FieldDiagnostic and ParticleDiagnostic)
+            self.diagnostic.fields_to_plot = 'none'
+            self.diagnostic.write_species = False
             bucket._diagnostics_dict[self.name] = self.diagnostic
-
+            
     def set_write_dir(self):
         if self.write_dir is not None or self.file_prefix is not None:
             write_dir = (self.write_dir or 'diags')
@@ -1798,14 +1802,12 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             # --- is the same on all processors.
             fields_to_plot = list(fields_to_plot)
             fields_to_plot.sort()
-            self.diagnostic.fields_to_plot = fields_to_plot
-
+            self.diagnostic.replace_attribute('fields_to_plot', fields_to_plot)
+            
         self.diagnostic.plot_raw_fields = self.plot_raw_fields
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
         self.diagnostic.plot_finepatch = self.plot_finepatch
         self.diagnostic.plot_crsepatch = self.plot_crsepatch
-        if 'write_species' not in self.diagnostic.argvattrs:
-            self.diagnostic.write_species = False
         self.set_write_dir()
 
 
@@ -1910,9 +1912,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         self.diagnostic.openpmd_backend = self.openpmd_backend
         self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.intervals = self.period
-        if 'fields_to_plot' not in self.diagnostic.argvattrs:
-            self.diagnostic.fields_to_plot = 'none'
-        self.diagnostic.write_species = True
+        self.diagnostic.replace_attribute('write_species', True)
         self.set_write_dir()
 
         # --- Use a set to ensure that fields don't get repeated.
@@ -2059,9 +2059,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
             # --- is the same on all processors.
             fields_to_plot = list(fields_to_plot)
             fields_to_plot.sort()
-            self.diagnostic.fields_to_plot = fields_to_plot
-        if 'write_species' not in self.diagnostic.argvattrs:
-            self.diagnostic.write_species = False
+            self.diagnostic.replace_attribute('fields_to_plot', fields_to_plot)
         self.set_write_dir()
 
 class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):

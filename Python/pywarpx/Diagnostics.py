@@ -30,9 +30,9 @@ class Diagnostic(Bucket):
     def replace_attr(self, name, value):
         """
         Explicitly replace an existing attribute
+        (since __setattr__ cannot be used in this case
+        as it would raise an Exception)
         """
-        if name.startswith('_'):
-            self._localsetattr(name, value)
-        else:
-            assert name in self.argvattrs
-            self.argvattrs[name] = value
+        assert not name.startswith('_')
+        assert name in self.argvattrs
+        self.argvattrs[name] = value
