@@ -5,7 +5,7 @@ particles.do_tiling = 0
 warpx.B_ext_grid_init_style = "read_from_file"
 warpx.read_fields_from_path = "../../../../openPMD-example-datasets/example-femm-thetaMode.h5"
 
-warpx.do_nodal = 1
+warpx.grid_type = collocated
 warpx.do_electrostatic = labframe
 
 #################################
