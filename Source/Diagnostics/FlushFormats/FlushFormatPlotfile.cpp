@@ -308,6 +308,7 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         HeaderFile << warpx.time_of_last_gal_shift << "\n";
 
+        amrex::Print() << " writing BTD diag for restart chkpt \n";
         for (int idiag = 0; idiag < warpx.GetMultiDiags().GetTotalDiags(); ++idiag)
         {
             if( warpx.GetMultiDiags().diagstypes(idiag) == DiagTypes::BackTransformed )
@@ -316,7 +317,9 @@ FlushFormatPlotfile::WriteWarpXHeader(
                 for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
                     HeaderFile << diag.gettlab(i_buffer) << "\n";
                     HeaderFile << diag.get_buffer_k_index_hi(i_buffer) << "\n";
-                amrex::Print() << " m num buffers " << warpx.GetMultiDiags().GetDiag(idiag).getnumbuffers() << " tlab " << diag.gettlab(i_buffer) << "kindex " << diag.get_buffer_k_index_hi(i_buffer) << "\n";
+                    HeaderFile << diag.get_snapshot_domain_lo(i_buffer, WarpX::moving_window_dir) << "\n";
+                    HeaderFile << diag.get_snapshot_domain_hi(i_buffer, WarpX::moving_window_dir) << "\n";
+                    amrex::Print() << " m num buffers " << warpx.GetMultiDiags().GetDiag(idiag).getnumbuffers() << " tlab " << diag.gettlab(i_buffer) << "kindex " << diag.get_buffer_k_index_hi(i_buffer) << "\n";
                 }
             }
         }

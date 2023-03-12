@@ -403,10 +403,13 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
 
     // Define buffer_domain in lab-frame for the i^th snapshot.
     // Replace z-dimension with lab-frame co-ordinates.
+    amrex::Print() << " dom lo : " << diag_dom.lo(m_moving_window_dir) << " hi: " << diag_dom.hi(m_moving_window_dir) << "\n";
+    amrex::Print() << " prob lo " << warpx.Geom(lev).ProbLo(m_moving_window_dir) << " prob hi " << warpx.Geom(lev).ProbHi(m_moving_window_dir) << "\n";
     amrex::Real zmin_buffer_lab = ( diag_dom.lo(m_moving_window_dir) - boosted_moving_window_v * warpx.gett_new(0) )
                                 / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
     amrex::Real zmax_buffer_lab = ( diag_dom.hi(m_moving_window_dir) - boosted_moving_window_v * warpx.gett_new(0) )
                                 / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
+    amrex::Print() << " zmin buffer lab  " << zmin_buffer_lab << " " << zmax_buffer_lab << "\n";
 
     // Initialize buffer counter and z-positions of the  i^th snapshot in
     // boosted-frame and lab-frame
@@ -459,7 +462,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
 #else
     m_snapshot_ncells_lab[i_buffer] = amrex::IntVect(Nz_lab);
 #endif
-
+    amrex::Print() << " nx nz " << Nx_lab << " nz lab " << Nz_lab << "\n";
 
     // Box covering the extent of the user-defined diag in the back-transformed frame
     // for the ith snapshot
@@ -471,20 +474,25 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     // number of cells in z is modified since each buffer multifab always
     // contains a minimum m_buffer_size=256 cells
     int num_z_cells_in_snapshot = m_max_buffer_multifabs[i_buffer] * m_buffer_size;
-    m_snapshot_domain_lab[i_buffer] = diag_dom;
-    m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir,
-                                  zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
-    m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
-                                  zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
-    // To prevent round off errors, moving the snapshot domain by half a cell so that all the slices
-    // lie close to the cell-centers in the lab-frame grid instead of on the edge of cell.
-    amrex::Real new_hi = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir)
-                       + 0.5_rt * dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
-    m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,new_hi);
-    amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
-                         num_z_cells_in_snapshot *
-                         dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
-    m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_lo);
+    if (restart == false) {
+        m_snapshot_domain_lab[i_buffer] = diag_dom;
+        m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir,
+                                      zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+        m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
+                                      zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+        // To prevent round off errors, moving the snapshot domain by half a cell so that all the slices
+        // lie close to the cell-centers in the lab-frame grid instead of on the edge of cell.
+        amrex::Real new_hi = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir)
+                           + 0.5_rt * dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+        m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,new_hi);
+        amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
+                             num_z_cells_in_snapshot *
+                             dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+        m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_lo);
+    amrex::Print() << " non restarted ibuffer " << i_buffer << " snapshot dom lab lo " << m_snapshot_domain_lab[i_buffer].lo(m_moving_window_dir) << " " << m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) << "\n";
+    } else {
+    amrex::Print() << " ibuffer " << i_buffer << " snapshot dom lab lo " << m_snapshot_domain_lab[i_buffer].lo(m_moving_window_dir) << " " << m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) << "\n";
+    }
     // cell-centered index that corresponds to the hi-end of the lab-frame in the z-direction
     // Adding 0.5 dz_lab so that we obtain the cell-centered index consistent to the hi-end
     int snapshot_kindex_hi = static_cast<int>(floor(
@@ -500,6 +508,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     if (restart == false) {
         m_buffer_k_index_hi[i_buffer] = m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir);
     }
+    amrex::Print() << " ibuffer " << i_buffer << " snapshot dom lab lo " << m_snapshot_domain_lab[i_buffer].lo(m_moving_window_dir) << " " << m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) << "\n";
 }
 
 void
