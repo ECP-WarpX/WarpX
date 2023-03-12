@@ -317,8 +317,12 @@ FlushFormatPlotfile::WriteWarpXHeader(
                 for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
                     HeaderFile << diag.gettlab(i_buffer) << "\n";
                     HeaderFile << diag.get_buffer_k_index_hi(i_buffer) << "\n";
-                    HeaderFile << diag.get_snapshot_domain_lo(i_buffer, WarpX::moving_window_dir) << "\n";
-                    HeaderFile << diag.get_snapshot_domain_hi(i_buffer, WarpX::moving_window_dir) << "\n";
+                    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                        HeaderFile << diag.get_snapshot_domain_lo(i_buffer, idim) << "\n";
+                    }
+                    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                        HeaderFile << diag.get_snapshot_domain_hi(i_buffer, idim) << "\n";
+                    }
                     amrex::Print() << " m num buffers " << warpx.GetMultiDiags().GetDiag(idiag).getnumbuffers() << " tlab " << diag.gettlab(i_buffer) << "kindex " << diag.get_buffer_k_index_hi(i_buffer) << "\n";
                 }
             }

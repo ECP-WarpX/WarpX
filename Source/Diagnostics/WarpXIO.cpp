@@ -241,13 +241,16 @@ WarpX::InitFromCheckpoint ()
                     is >> kindex_hi;
                     diag.set_buffer_k_index_hi(i_buffer, kindex_hi);
 
-                    amrex::Real snapshot_lo;
-                    is >> snapshot_lo;
-                    amrex::Real snapshot_hi;
-                    is >> snapshot_hi;
-                    diag.setSnapshotDomainLo(i_buffer, WarpX::moving_window_dir, snapshot_lo);
-                    diag.setSnapshotDomainHi(i_buffer, WarpX::moving_window_dir, snapshot_hi);
-     
+                    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                        amrex::Real snapshot_lo;
+                        is >> snapshot_lo;
+                        diag.setSnapshotDomainLo(i_buffer, idim, snapshot_lo);
+                    }
+                    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                        amrex::Real snapshot_hi;
+                        is >> snapshot_hi;
+                        diag.setSnapshotDomainHi(i_buffer, idim, snapshot_hi);
+                    } 
 //                    std::getline(is, line);
 //                    {
 //                        std::istringstream lis(line);
