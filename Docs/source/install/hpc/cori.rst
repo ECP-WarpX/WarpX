@@ -392,6 +392,7 @@ In this manual, we often use this ``conda create`` line over the officially docu
 We then follow the `Customizing Kernels with a Helper Shell Script <https://docs.nersc.gov/services/jupyter/#customizing-kernels-with-a-helper-shell-script>`__ section to finalize the setup of using this conda-environment as a custom Jupyter kernel.
 
 ``kernel_helper.sh`` should read:
+
 .. code-block:: bash
 
    #!/bin/bash
