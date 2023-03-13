@@ -1295,51 +1295,50 @@ std::string F_name, std::string F_component)
     const auto dx = geom0.CellSizeArray();
     amrex::IntVect nodal_flag = mf->ixType().toIntVect();
 
+    // Read external field openPMD data
+    auto series = openPMD::Series(read_fields_from_path, openPMD::Access::READ_ONLY);
+    auto iseries = series.iterations.begin()->second;
+    auto F = iseries.meshes[F_name];
+    auto offset = F.gridGlobalOffset();
+    auto offset0 = offset[0];
+    auto offset1 = offset[1];
+#if defined(WARPX_DIM_3D)
+    auto offset2 = offset[2];
+#endif
+    auto d = F.gridSpacing<long double>();
+    auto d0 = d[0];
+    auto d1 = d[1];
+#if defined(WARPX_DIM_3D)
+    auto d2 = d[2];
+#endif
+
+    auto FC = F[F_component];
+    auto extent = FC.getExtent();
+
+    // Determine the chunk data that will be loaded.
+    // Now, the full range of data is loaded.
+    // Loading chunk data can speed up the process.
+    // Thus, `chunk_offset` and `chunk_extent` should be modified accordingly in another PR.
+    openPMD::Offset chunk_offset = {0,0,0};
+    openPMD::Extent chunk_extent = {extent[0],extent[1],extent[2]};
+
+    auto FC_chunk_data = FC.loadChunk<double>(chunk_offset,chunk_extent);
+    series.flush();
+    auto FC_data_host = FC_chunk_data.get();
+
+    // Load data to GPU
+    int extent0 = extent[0];
+    int extent1 = extent[1];
+    int extent2 = extent[2];
+    size_t total_extent = size_t(extent[0]) * extent[1] * extent[2];
+    amrex::Gpu::DeviceVector<double> FC_data_gpu(total_extent);
+    auto FC_data = FC_data_gpu.data();
+    amrex::Gpu::copy(amrex::Gpu::hostToDevice, FC_data_host, FC_data_host + total_extent, FC_data);
+
     // Loop over boxes
     for (MFIter mfi(*mf, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        // Read external field openPMD data
-        auto series = openPMD::Series(read_fields_from_path, openPMD::Access::READ_ONLY);
-        auto iseries = series.iterations.begin()->second;
-        auto F = iseries.meshes[F_name];
-        auto offset = F.gridGlobalOffset();
-        auto offset0 = offset[0];
-        auto offset1 = offset[1];
-#if defined(WARPX_DIM_3D)
-        auto offset2 = offset[2];
-#endif
-        auto d = F.gridSpacing<long double>();
-        auto d0 = d[0];
-        auto d1 = d[1];
-#if defined(WARPX_DIM_3D)
-        auto d2 = d[2];
-#endif
-
-        auto FC = F[F_component];
-        auto extent = FC.getExtent();
-
         auto box = mfi.growntilebox();
-
-        // Determine the chunk data that will be loaded.
-        // Now, the full range of data is loaded.
-        // Loading chunk data can speed up the process.
-        // Thus, `chunk_offset` and `chunk_extent` should be modified accordingly in another PR.
-        openPMD::Offset chunk_offset = {0,0,0};
-        openPMD::Extent chunk_extent = {extent[0],extent[1],extent[2]};
-
-        auto FC_chunk_data = FC.loadChunk<double>(chunk_offset,chunk_extent);
-        series.flush();
-        auto FC_data_host = FC_chunk_data.get();
-
-        // Load data to GPU
-        int extent0 = extent[0];
-        int extent1 = extent[1];
-        int extent2 = extent[2];
-        size_t total_extent = size_t(extent[0]) * extent[1] * extent[2];
-        amrex::Gpu::DeviceVector<double> FC_data_gpu(total_extent);
-        auto FC_data = FC_data_gpu.data();
-        amrex::Gpu::copy(amrex::Gpu::hostToDevice, FC_data_host, FC_data_host + total_extent, FC_data);
-
         const amrex::Box& tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
         auto const& mffab = mf->array(mfi);
 
