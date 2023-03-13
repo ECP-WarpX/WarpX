@@ -37,16 +37,19 @@ public:
         const std::string prefix, int file_min_digits,
         bool plot_raw_fields,
         bool plot_raw_fields_guards,
+        const bool use_pinned_pc = false,
         bool isBTD = false, int snapshotID = -1,
+        int bufferID = 1, int numBuffers = 1,
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
         bool isLastBTDFlush = false,
         const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const override;
 
+#ifdef AMREX_USE_ASCENT
     /** \brief Do in-situ visualization for particle data.
      * \param[in] particle_diags Each element of this vector handles output of 1 species.
+     * \param[out] a_bp_mesh blueprint mesh generated from the container
      * Only compile if AMREX_USE_ASCENT because we need to pass a conduit class
      */
-#ifdef AMREX_USE_ASCENT
     void WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags, conduit::Node& a_bp_mesh) const;
 #endif
 

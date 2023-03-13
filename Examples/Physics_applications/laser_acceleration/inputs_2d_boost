@@ -44,9 +44,6 @@ algo.particle_shape = 3
 #################################
 warpx.gamma_boost = 10.
 warpx.boost_direction = z
-warpx.do_back_transformed_diagnostics = 1
-warpx.num_snapshots_lab = 7
-warpx.dt_snapshots_lab = 1.6678204759907604e-12
 
 #################################
 ############ PLASMA #############
@@ -123,6 +120,12 @@ laser1.wavelength = 0.81e-6         # The wavelength of the laser (in meters)
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.intervals = 100
-diag1.diag_type = Full
+
+diag1.diag_type = BackTransformed
+diag1.do_back_transformed_fields = 1
+diag1.num_snapshots_lab = 3
+diag1.dt_snapshots_lab = 1.6678204759907604e-12
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+diag1.format = plotfile
+diag1.buffer_size = 32
+diag1.write_species = 1

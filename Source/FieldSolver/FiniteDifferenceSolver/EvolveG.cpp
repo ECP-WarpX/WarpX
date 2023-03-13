@@ -47,15 +47,15 @@ void FiniteDifferenceSolver::EvolveG (
     amrex::ignore_unused(Gfield, Bfield, dt);
 #else
     // Select algorithm
-    if (m_do_nodal)
+    if (m_grid_type == GridType::Collocated)
     {
         EvolveGCartesian<CartesianNodalAlgorithm>(Gfield, Bfield, dt);
     }
-    else if (m_fdtd_algo == MaxwellSolverAlgo::Yee)
+    else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee)
     {
         EvolveGCartesian<CartesianYeeAlgorithm>(Gfield, Bfield, dt);
     }
-    else if (m_fdtd_algo == MaxwellSolverAlgo::CKC)
+    else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC)
     {
         EvolveGCartesian<CartesianCKCAlgorithm>(Gfield, Bfield, dt);
     }

@@ -20,7 +20,7 @@
  *
  * \param n_rz_azimuthal_modes Number of azimuthal modes
  * \param norder_z Order of accuracy of the spatial derivatives along z
- * \param nodal    Whether the solver is applied to a nodal or staggered grid
+ * \param grid_type Type of grid (collocated or not)
  * \param dx       Cell size along each dimension
  * \param dt       Time step
  * \param with_pml Whether PML boundary will be used
@@ -29,13 +29,14 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
                                     amrex::BoxArray const & realspace_ba,
                                     amrex::DistributionMapping const & dm,
                                     int const n_rz_azimuthal_modes,
-                                    int const norder_z, bool const nodal,
+                                    int const norder_z, short const grid_type,
                                     const amrex::Vector<amrex::Real>& v_galilean,
                                     amrex::RealVect const dx, amrex::Real const dt,
                                     bool const with_pml,
                                     bool const update_with_rho,
                                     const bool fft_do_time_averaging,
-                                    const bool do_multi_J,
+                                    const int J_in_time,
+                                    const int rho_in_time,
                                     const bool dive_cleaning,
                                     const bool divb_cleaning)
     : k_space(realspace_ba, dm, dx)
@@ -47,24 +48,25 @@ SpectralSolverRZ::SpectralSolverRZ (const int lev,
     //   as well as the value of the corresponding k coordinates.
 
     const bool is_pml = false;
-    m_spectral_index = SpectralFieldIndex(update_with_rho, fft_do_time_averaging,
-                                          do_multi_J, dive_cleaning, divb_cleaning, is_pml, with_pml);
+    m_spectral_index = SpectralFieldIndex(
+        update_with_rho, fft_do_time_averaging, J_in_time, rho_in_time,
+        dive_cleaning, divb_cleaning, is_pml, with_pml);
 
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
     if (with_pml) {
             PML_algorithm = std::make_unique<PsatdAlgorithmPmlRZ>(
-                k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, nodal, dt);
+                k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, grid_type, dt);
     }
     if (v_galilean[2] == 0) {
          // v_galilean is 0: use standard PSATD algorithm
         algorithm = std::make_unique<PsatdAlgorithmRZ>(
-            k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, nodal, dt,
-            update_with_rho, fft_do_time_averaging, do_multi_J, dive_cleaning, divb_cleaning);
+            k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, grid_type, dt,
+            update_with_rho, fft_do_time_averaging, J_in_time, rho_in_time, dive_cleaning, divb_cleaning);
     } else {
         // Otherwise: use the Galilean algorithm
         algorithm = std::make_unique<PsatdAlgorithmGalileanRZ>(
-            k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, nodal, v_galilean, dt, update_with_rho);
+            k_space, dm, m_spectral_index, n_rz_azimuthal_modes, norder_z, grid_type, v_galilean, dt, update_with_rho);
     }
 
     // - Initialize arrays for fields in spectral space + FFT plans

@@ -143,13 +143,13 @@ class LibWarpX():
         # our particle data type, depends on _ParticleReal_size
         _p_struct = (
             [(d, self._numpy_particlereal_dtype) for d in 'xyz'[:self.dim]]
-            + [('id', 'i4'), ('cpu', 'i4')]
+            + [('idcpu', 'u8')]
         )
         self._p_dtype = np.dtype(_p_struct, align=True)
 
         _numpy_to_ctypes = {}
         _numpy_to_ctypes[self._numpy_particlereal_dtype] = c_particlereal
-        _numpy_to_ctypes['i4'] = ctypes.c_int
+        _numpy_to_ctypes['u8'] = ctypes.c_uint64
 
         class Particle(ctypes.Structure):
             _fields_ = [(v[0], _numpy_to_ctypes[v[1]]) for v in _p_struct]
@@ -206,6 +206,8 @@ class LibWarpX():
         self.libwarpx_so.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
         self.libwarpx_so.warpx_getPhiFP.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getPhiFPLoVects.restype = _LP_c_int
+        self.libwarpx_so.warpx_getVectorPotentialFP.restype = _LP_LP_c_real
+        self.libwarpx_so.warpx_getVectorPotentialFPLoVects.restype = _LP_c_int
         self.libwarpx_so.warpx_getFfieldCP.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getFfieldCPLoVects.restype = _LP_c_int
         self.libwarpx_so.warpx_getFfieldFP.restype = _LP_LP_c_real
@@ -242,6 +244,9 @@ class LibWarpX():
         self.libwarpx_so.warpx_getJx_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getJy_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getJz_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getAx_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getAy_nodal_flag.restype = _LP_c_int
+        self.libwarpx_so.warpx_getAz_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getRho_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getPhi_nodal_flag.restype = _LP_c_int
         self.libwarpx_so.warpx_getF_nodal_flag.restype = _LP_c_int
@@ -268,8 +273,15 @@ class LibWarpX():
                                                       _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
                                                       ctypes.c_int,
                                                       _ndpointer(c_particlereal, flags="C_CONTIGUOUS"),
+                                                      ctypes.c_int,
+                                                      _ndpointer(ctypes.c_int, flags="C_CONTIGUOUS"),
                                                       ctypes.c_int)
-
+        self.libwarpx_so.warpx_convert_id_to_long.argtypes = (_ndpointer(ctypes.c_int64, flags="C_CONTIGUOUS"),
+                                                              _ndpointer(Particle, flags="C_CONTIGUOUS"),
+                                                              ctypes.c_int)
+        self.libwarpx_so.warpx_convert_cpu_to_int.argtypes = (_ndpointer(ctypes.c_int32, flags="C_CONTIGUOUS"),
+                                                              _ndpointer(Particle, flags="C_CONTIGUOUS"),
+                                                              ctypes.c_int)
         self.libwarpx_so.warpx_getProbLo.restype = c_real
         self.libwarpx_so.warpx_getProbHi.restype = c_real
         self.libwarpx_so.warpx_getCellSize.restype = c_real
@@ -297,8 +309,9 @@ class LibWarpX():
         self.libwarpx_so.warpx_gett_new.argtypes = [ctypes.c_int]
         self.libwarpx_so.warpx_sett_new.argtypes = [ctypes.c_int, c_real]
         self.libwarpx_so.warpx_getdt.argtypes = [ctypes.c_int]
+        self.libwarpx_so.warpx_setPotentialEB.argtypes = [ctypes.c_char_p]
 
-    def get_boundary_number(self, boundary):
+    def _get_boundary_number(self, boundary):
         '''
 
         Utility function to find the boundary number given a boundary name.
@@ -306,13 +319,14 @@ class LibWarpX():
         Parameters
         ----------
 
-            boundary       : the boundary from which to get the scraped particle data.
-                             In the form x/y/z_hi/lo or eb.
+        boundary       : str
+            The boundary from which to get the scraped particle data. In the
+            form x/y/z_hi/lo or eb.
 
         Returns
         -------
-
-        Integer index in the boundary scraper buffer for the given boundary.
+        int
+            Integer index in the boundary scraper buffer for the given boundary.
         '''
         if self.geometry_dim == '3d':
             dimensions = {'x' : 0, 'y' : 1, 'z' : 2}
@@ -346,7 +360,9 @@ class LibWarpX():
     @staticmethod
     def _array1d_from_pointer(pointer, dtype, size):
         '''
+
         Function for converting a ctypes pointer to a numpy array
+
         '''
         if not pointer:
             raise Exception(f'_array1d_from_pointer: pointer is a nullptr')
@@ -383,7 +399,7 @@ class LibWarpX():
     def get_nattr(self):
         '''
 
-        Get the number of extra attributes.
+        Get the number of extra particle attributes.
 
         '''
         # --- The -3 is because the comps include the velocites
@@ -391,10 +407,15 @@ class LibWarpX():
 
     def get_nattr_species(self, species_name):
         '''
-
         Get the number of real attributes for the given species.
 
+        Parameters
+        ----------
+
+        species_name: str
+            Name of the species
         '''
+
         return self.libwarpx_so.warpx_nCompsSpecies(
             ctypes.c_char_p(species_name.encode('utf-8')))
 
@@ -421,8 +442,7 @@ class LibWarpX():
     def initialize(self, argv=None, mpi_comm=None):
         '''
 
-        Initialize WarpX and AMReX. Must be called before
-        doing anything else.
+        Initialize WarpX and AMReX. Must be called before doing anything else.
 
         '''
         if argv is None:
@@ -448,27 +468,33 @@ class LibWarpX():
 
     def getistep(self, level=0):
         '''
-
         Get the current time step number for the specified level
 
         Parameter
         ---------
 
-        level : the refinement level to reference
+        level : int
+            The refinement level to reference
         '''
+
         return self.libwarpx_so.warpx_getistep(level)
 
     def gett_new(self, level=0):
         '''
 
-        Get the next time for the specified level
+        Get the next time for the specified level.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference
         '''
+
         return self.libwarpx_so.warpx_gett_new(level)
 
     def evolve(self, num_steps=-1):
         '''
-
         Evolve the simulation for num_steps steps. If num_steps=-1,
         the simulation will be run until the end as specified in the
         inputs file.
@@ -476,21 +502,54 @@ class LibWarpX():
         Parameters
         ----------
 
-        num_steps: int, the number of steps to take
-
+        num_steps: int
+            The number of steps to take
         '''
 
         self.libwarpx_so.warpx_evolve(num_steps);
 
     def getProbLo(self, direction):
+        '''
+        Get the values of the lower domain boundary.
+
+        Parameters
+        ----------
+
+        direction    : int
+            Direction of interest
+        '''
+
         assert 0 <= direction < self.dim, 'Inappropriate direction specified'
         return self.libwarpx_so.warpx_getProbLo(direction)
 
     def getProbHi(self, direction):
+        '''
+        Get the values of the upper domain boundary.
+
+        Parameters
+        ----------
+
+        direction    : int
+            Direction of interest
+        '''
+
         assert 0 <= direction < self.dim, 'Inappropriate direction specified'
         return self.libwarpx_so.warpx_getProbHi(direction)
 
     def getCellSize(self, direction, level=0):
+        '''
+        Get the cell size in the given direction and on the given level.
+
+        Parameters
+        ----------
+
+        direction    : int
+            Direction of interest
+
+        level        : int
+            The refinement level to reference
+        '''
+
         assert 0 <= direction < 3, 'Inappropriate direction specified'
         assert 0 <= level and level <= self.libwarpx_so.warpx_finestLevel(), 'Inappropriate level specified'
         return self.libwarpx_so.warpx_getCellSize(direction, level)
@@ -536,25 +595,33 @@ class LibWarpX():
     #
     #    self.libwarpx_so.warpx_ComputePMLFactors(lev, dt)
 
-    def add_particles(self, species_name, x=None, y=None, z=None, ux=None, uy=None, uz=None, w=None,
-                    unique_particles=True, **kwargs):
+    def add_particles(self, species_name, x=None, y=None, z=None, ux=None, uy=None,
+                      uz=None, w=None, unique_particles=True, **kwargs):
         '''
-
         A function for adding particles to the WarpX simulation.
 
         Parameters
         ----------
 
-        species_name     : the species to add the particle to
-        x, y, z          : arrays or scalars of the particle positions (default = 0.)
-        ux, uy, uz       : arrays or scalars of the particle momenta (default = 0.)
-        w                : array or scalar of particle weights (default = 0.)
-        unique_particles : whether the particles are unique or duplicated on
-                        several processes. (default = True)
-        kwargs           : dictionary containing an entry for all the extra particle
-                        attribute arrays. If an attribute is not given it will be
-                        set to 0.
+        species_name     : str
+            The type of species for which particles will be added
 
+        x, y, z          : arrays or scalars
+            The particle positions (default = 0.)
+
+        ux, uy, uz       : arrays or scalars
+            The particle momenta (default = 0.)
+
+        w                : array or scalars
+            Particle weights (default = 0.)
+
+        unique_particles : bool
+            Whether the particles are unique or duplicated on several processes
+            (default = True)
+
+        kwargs           : dict
+            Containing an entry for all the extra particle attribute arrays. If
+            an attribute is not given it will be set to 0.
         '''
 
         # --- Get length of arrays, set to one for scalars
@@ -625,6 +692,9 @@ class LibWarpX():
             # --- The -3 is because components 1 to 3 are velocities
             attr[:,self.get_particle_comp_index(species_name, key)-3] = vals
 
+        nattr_int = 0
+        attr_int = np.empty([0], ctypes.c_int)
+
         # Iff x/y/z/ux/uy/uz are not numpy arrays of the correct dtype, new
         # array copies are made with the correct dtype
         x = x.astype(self._numpy_particlereal_dtype, copy=False)
@@ -636,38 +706,39 @@ class LibWarpX():
 
         self.libwarpx_so.warpx_addNParticles(
             ctypes.c_char_p(species_name.encode('utf-8')), x.size,
-            x, y, z, ux, uy, uz, nattr, attr, unique_particles
+            x, y, z, ux, uy, uz, nattr, attr, nattr_int, attr_int, unique_particles
         )
 
     def get_particle_count(self, species_name, local=False):
         '''
-
-        This returns the number of particles of the specified species in the
-        simulation.
+        Get the number of particles of the specified species in the simulation.
 
         Parameters
         ----------
 
-            species_name : the species name that the number will be returned for
-            local        : If True the particle count on this processor will
-                           be returned.
+        species_name : str
+            The species name that the number will be returned for
+
+        local        : bool
+            If True the particle count on this processor will be returned.
+            Default False.
 
         Returns
         -------
 
+        int
             An integer count of the number of particles
-
         '''
+
         return self.libwarpx_so.warpx_getNumParticles(
             ctypes.c_char_p(species_name.encode('utf-8')), local
         )
 
     def get_particle_structs(self, species_name, level):
         '''
-
         This returns a list of numpy arrays containing the particle struct data
         on each tile for this process. The particle data is represented as a structured
-        numpy array and contains the particle 'x', 'y', 'z', 'id', and 'cpu'.
+        numpy array and contains the particle 'x', 'y', 'z', and 'idcpu'.
 
         The data for the numpy arrays are not copied, but share the underlying
         memory buffer with WarpX. The numpy arrays are fully writeable.
@@ -675,13 +746,17 @@ class LibWarpX():
         Parameters
         ----------
 
-            species_name : the species name that the data will be returned for
+        species_name : str
+            The species name that the data will be returned for
+
+        level        : int
+            The refinement level to reference
 
         Returns
         -------
 
-            A List of numpy arrays.
-
+        List of numpy arrays
+            The requested particle struct data
         '''
 
         particles_per_tile = _LP_c_int()
@@ -704,7 +779,6 @@ class LibWarpX():
 
     def get_particle_arrays(self, species_name, comp_name, level):
         '''
-
         This returns a list of numpy arrays containing the particle array data
         on each tile for this process.
 
@@ -714,14 +788,20 @@ class LibWarpX():
         Parameters
         ----------
 
-            species_name   : the species name that the data will be returned for
-            comp_name      : the component of the array data that will be returned.
+        species_name   : str
+            The species name that the data will be returned for
+
+        comp_name      : str
+            The component of the array data that will be returned
+
+        level        : int
+            The refinement level to reference
 
         Returns
         -------
 
-            A List of numpy arrays.
-
+        List of numpy arrays
+            The requested particle array data
         '''
 
         particles_per_tile = _LP_c_int()
@@ -762,6 +842,8 @@ class LibWarpX():
             return [struct['x'] for struct in structs]
         elif self.geometry_dim == 'rz':
             return [struct['x']*np.cos(theta) for struct, theta in zip(structs, self.get_particle_theta(species_name))]
+        elif self.geometry_dim == '1d':
+            raise Exception('get_particle_x: There is no x coordinate with 1D Cartesian')
 
     def get_particle_y(self, species_name, level=0):
         '''
@@ -771,10 +853,12 @@ class LibWarpX():
 
         '''
         structs = self.get_particle_structs(species_name, level)
-        if self.geometry_dim == '3d' or self.geometry_dim == '2d':
+        if self.geometry_dim == '3d':
             return [struct['y'] for struct in structs]
         elif self.geometry_dim == 'rz':
             return [struct['x']*np.sin(theta) for struct, theta in zip(structs, self.get_particle_theta(species_name))]
+        elif self.geometry_dim == '1d' or self.geometry_dim == '2d':
+            raise Exception('get_particle_y: There is no y coordinate with 1D or 2D Cartesian')
 
     def get_particle_r(self, species_name, level=0):
         '''
@@ -788,8 +872,8 @@ class LibWarpX():
             return [struct['x'] for struct in structs]
         elif self.geometry_dim == '3d':
             return [np.sqrt(struct['x']**2 + struct['y']**2) for struct in structs]
-        elif self.geometry_dim == '2d':
-            raise Exception('get_particle_r: There is no r coordinate with 2D Cartesian')
+        elif self.geometry_dim == '2d' or self.geometry_dim == '1d':
+            raise Exception('get_particle_r: There is no r coordinate with 1D or 2D Cartesian')
 
     def get_particle_z(self, species_name, level=0):
         '''
@@ -803,26 +887,38 @@ class LibWarpX():
             return [struct['z'] for struct in structs]
         elif self.geometry_dim == 'rz' or self.geometry_dim == '2d':
             return [struct['y'] for struct in structs]
+        elif self.geometry_dim == '1d':
+            return [struct['x'] for struct in structs]
 
     def get_particle_id(self, species_name, level=0):
         '''
 
         Return a list of numpy arrays containing the particle 'id'
-        positions on each tile.
+        numbers on each tile.
 
         '''
+        ids = []
         structs = self.get_particle_structs(species_name, level)
-        return [struct['id'] for struct in structs]
+        for ptile_of_structs in structs:
+            arr = np.empty(ptile_of_structs.shape, np.int64)
+            self.libwarpx_so.warpx_convert_id_to_long(arr, ptile_of_structs, arr.size)
+            ids.append(arr)
+        return ids
 
     def get_particle_cpu(self, species_name, level=0):
         '''
 
         Return a list of numpy arrays containing the particle 'cpu'
-        positions on each tile.
+        numbers on each tile.
 
         '''
+        cpus = []
         structs = self.get_particle_structs(species_name, level)
-        return [struct['cpu'] for struct in structs]
+        for ptile_of_structs in structs:
+            arr = np.empty(ptile_of_structs.shape, np.int32)
+            self.libwarpx_so.warpx_convert_cpu_to_int(arr, ptile_of_structs, arr.size)
+            cpus.append(arr)
+        return cpus
 
     def get_particle_weight(self, species_name, level=0):
         '''
@@ -877,12 +973,11 @@ class LibWarpX():
         elif self.geometry_dim == '3d':
             structs = self.get_particle_structs(species_name, level)
             return [np.arctan2(struct['y'], struct['x']) for struct in structs]
-        elif self.geometry_dim == '2d':
-            raise Exception('get_particle_r: There is no theta coordinate with 2D Cartesian')
+        elif self.geometry_dim == '2d' or self.geometry_dim == '1d':
+            raise Exception('get_particle_theta: There is no theta coordinate with 1D or 2D Cartesian')
 
     def get_particle_comp_index(self, species_name, pid_name):
         '''
-
         Get the component index for a given particle attribute. This is useful
         to get the corrent ordering of attributes when adding new particles using
         `add_particles()`.
@@ -890,15 +985,19 @@ class LibWarpX():
         Parameters
         ----------
 
-            species_name   : the species name that the data will be returned for
-            pid_name       : string that is used to identify the new component
+        species_name   : str
+            The name of the species
+
+        pid_name       : str
+            Name of the component for which the index will be returned
 
         Returns
         -------
 
+        int
             Integer corresponding to the index of the requested attribute
-
         '''
+
         return self.libwarpx_so.warpx_getParticleCompIndex(
             ctypes.c_char_p(species_name.encode('utf-8')),
             ctypes.c_char_p(pid_name.encode('utf-8'))
@@ -906,17 +1005,21 @@ class LibWarpX():
 
     def add_real_comp(self, species_name, pid_name, comm=True):
         '''
-
         Add a real component to the particle data array.
 
         Parameters
         ----------
 
-            species_name   : the species name for which the new component will be added
-            pid_name       : string that is used to identify the new component
-            comm           : should the component be communicated
+        species_name   : str
+            The species name for which the new component will be added
 
+        pid_name       : str
+            Name that can be used to identify the new component
+
+        comm           : bool
+            Should the component be communicated
         '''
+
         self.libwarpx_so.warpx_addRealComp(
             ctypes.c_char_p(species_name.encode('utf-8')),
             ctypes.c_char_p(pid_name.encode('utf-8')), comm
@@ -924,51 +1027,53 @@ class LibWarpX():
 
     def get_species_charge_sum(self, species_name, local=False):
         '''
-
         Returns the total charge in the simulation due to the given species.
 
         Parameters
         ----------
 
-            species_name   : the species name for which charge will be summed
-            local          : If True return total charge per processor
+        species_name   : str
+            The species name for which charge will be summed
 
+        local          : bool
+            If True return total charge per processor
         '''
+
         return self.libwarpx_so.warpx_sumParticleCharge(
             ctypes.c_char_p(species_name.encode('utf-8')), local
         )
 
-    def get_particle_boundary_buffer_size(self, species_name, boundary):
+    def get_particle_boundary_buffer_size(self, species_name, boundary, local=False):
         '''
-
         This returns the number of particles that have been scraped so far in the simulation
         from the specified boundary and of the specified species.
 
         Parameters
         ----------
 
-            species_name   : return the number of scraped particles of this species
-            boundary       : the boundary from which to get the scraped particle data.
-                            In the form x/y/z_hi/lo
+        species_name   : str
+            Return the number of scraped particles of this species
 
-        Returns
-        -------
+        boundary       : str
+            The boundary from which to get the scraped particle data in the
+            form x/y/z_hi/lo
 
-            The number of particles scraped so far from a boundary and of a species.
-
+        local          : bool
+            Whether to only return the number of particles in the current
+            processor's buffer
         '''
+
         return self.libwarpx_so.warpx_getParticleBoundaryBufferSize(
             ctypes.c_char_p(species_name.encode('utf-8')),
-            self.get_boundary_number(boundary)
+            self._get_boundary_number(boundary), local
         )
 
     def get_particle_boundary_buffer_structs(self, species_name, boundary, level):
         '''
-
         This returns a list of numpy arrays containing the particle struct data
         for a species that has been scraped by a specific simulation boundary. The
         particle data is represented as a structured numpy array and contains the
-        particle 'x', 'y', 'z', 'id', and 'cpu'.
+        particle 'x', 'y', 'z', and 'idcpu'.
 
         The data for the numpy arrays are not copied, but share the underlying
         memory buffer with WarpX. The numpy arrays are fully writeable.
@@ -976,23 +1081,22 @@ class LibWarpX():
         Parameters
         ----------
 
-            species_name : the species name that the data will be returned for
-            boundary     : the boundary from which to get the scraped particle data.
-                        In the form x/y/z_hi/lo or eb.
-            level        : Which AMR level to retrieve scraped particle data from.
+        species_name : str
+            The species name that the data will be returned for
 
-        Returns
-        -------
+        boundary     : str
+            The boundary from which to get the scraped particle data in the
+            form x/y/z_hi/lo or eb.
 
-            A List of numpy arrays.
-
+        level        : int
+            Which AMR level to retrieve scraped particle data from.
         '''
 
         particles_per_tile = _LP_c_int()
         num_tiles = ctypes.c_int(0)
         data = self.libwarpx_so.warpx_getParticleBoundaryBufferStructs(
                 ctypes.c_char_p(species_name.encode('utf-8')),
-                self.get_boundary_number(boundary), level,
+                self._get_boundary_number(boundary), level,
                 ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
         )
 
@@ -1009,7 +1113,6 @@ class LibWarpX():
 
     def get_particle_boundary_buffer(self, species_name, boundary, comp_name, level):
         '''
-
         This returns a list of numpy arrays containing the particle array data
         for a species that has been scraped by a specific simulation boundary.
 
@@ -1019,33 +1122,34 @@ class LibWarpX():
         Parameters
         ----------
 
-            species_name   : the species name that the data will be returned for.
-            boundary       : the boundary from which to get the scraped particle data.
-                            In the form x/y/z_hi/lo or eb.
-            comp_name      : the component of the array data that will be returned.
-                            If "step_scraped" the special attribute holding the
-                            timestep at which a particle was scraped will be
-                            returned.
-            level          : Which AMR level to retrieve scraped particle data from.
+            species_name   : str
+                The species name that the data will be returned for.
 
-        Returns
-        -------
+            boundary       : str
+                The boundary from which to get the scraped particle data in the
+                form x/y/z_hi/lo or eb.
 
-            A List of numpy arrays.
+            comp_name      : str
+                The component of the array data that will be returned. If
+                "step_scraped" the special attribute holding the timestep at
+                which a particle was scraped will be returned.
 
+            level          : int
+                Which AMR level to retrieve scraped particle data from.
         '''
+
         particles_per_tile = _LP_c_int()
         num_tiles = ctypes.c_int(0)
         if comp_name == 'step_scraped':
             data = self.libwarpx_so.warpx_getParticleBoundaryBufferScrapedSteps(
                 ctypes.c_char_p(species_name.encode('utf-8')),
-                self.get_boundary_number(boundary), level,
+                self._get_boundary_number(boundary), level,
                 ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
             )
         else:
             data = self.libwarpx_so.warpx_getParticleBoundaryBuffer(
                 ctypes.c_char_p(species_name.encode('utf-8')),
-                self.get_boundary_number(boundary), level,
+                self._get_boundary_number(boundary), level,
                 ctypes.byref(num_tiles), ctypes.byref(particles_per_tile),
                 ctypes.c_char_p(comp_name.encode('utf-8'))
             )
@@ -1078,20 +1182,25 @@ class LibWarpX():
 
     def depositChargeDensity(self, species_name, level, clear_rho=True, sync_rho=True):
         '''
-
         Deposit the specified species' charge density in rho_fp in order to
-        access that data via pywarpx.fields.RhoFPWrapper()
+        access that data via pywarpx.fields.RhoFPWrapper().
 
         Parameters
         ----------
 
-            species_name   : the species name that will be deposited.
-            level          : Which AMR level to retrieve scraped particle data from.
-            clear_rho      : If True, zero out rho_fp before deposition.
-            sync_rho       : If True, perform MPI exchange and properly set boundary
-                             cells for rho_fp.
+        species_name   : str
+            The species name that will be deposited.
 
+        level          : int
+            Which AMR level to retrieve scraped particle data from.
+
+        clear_rho      : bool
+            If True, zero out rho_fp before deposition.
+
+        sync_rho       : bool
+            If True, perform MPI exchange and properly set boundary cells for rho_fp.
         '''
+
         if clear_rho:
             from . import fields
             fields.RhoFPWrapper(level, True)[...] = 0.0
@@ -1100,6 +1209,18 @@ class LibWarpX():
         )
         if sync_rho:
             self.libwarpx_so.warpx_SyncRho()
+
+    def set_potential_EB(self, potential):
+        """
+        Set the expression string for the embedded boundary potential
+
+        Parameters
+        ----------
+
+        potential : str
+            The expression string
+        """
+        self.libwarpx_so.warpx_setPotentialEB(ctypes.c_char_p(potential.encode('utf-8')))
 
     def _get_mesh_field_list(self, warpx_func, level, direction, include_ghosts):
         """
@@ -1362,6 +1483,32 @@ class LibWarpX():
         '''
 
         return self._get_mesh_field_list(self.libwarpx_so.warpx_getBfieldFP, level, direction, include_ghosts)
+
+    def get_mesh_vector_potential_fp(self, level, direction, include_ghosts=True):
+        '''
+
+        This returns a list of numpy arrays containing the mesh vector potential
+        data on each grid for this process. This version returns the field on
+        the fine patch for the given level.
+
+        The data for the numpy arrays are not copied, but share the underlying
+        memory buffer with WarpX. The numpy arrays are fully writeable.
+
+        Parameters
+        ----------
+
+            level          : the AMR level to get the data for
+            direction      : the component of the data you want
+            include_ghosts : whether to include ghost zones or not
+
+        Returns
+        -------
+
+            A List of numpy arrays.
+
+        '''
+
+        return self._get_mesh_field_list(self.libwarpx_so.warpx_getVectorPotentialFP, level, direction, include_ghosts)
 
     def get_mesh_magnetic_field_cp_pml(self, level, direction, include_ghosts=True):
         '''
@@ -2100,6 +2247,27 @@ class LibWarpX():
         '''
         return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getBfieldFPLoVects)
 
+    def get_mesh_vector_potential_fp_lovects(self, level, direction, include_ghosts=True):
+        '''
+
+        This returns a list of the lo vectors of the arrays containing the mesh vector potential field
+        data on each grid for this process.
+
+        Parameters
+        ----------
+
+            level          : the AMR level to get the data for
+            direction      : the component of the data you want
+            include_ghosts : whether to include ghost zones or not
+
+        Returns
+        -------
+
+            A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
+
+        '''
+        return self._get_mesh_array_lovects(level, direction, include_ghosts, self.libwarpx_so.warpx_getVectorPotentialFPLoVects)
+
     def get_mesh_magnetic_field_cp_lovects_pml(self, level, direction, include_ghosts=True):
         '''
 
@@ -2600,6 +2768,24 @@ class LibWarpX():
         This returns a 1d array of the nodal flags for Jz along each direction. A 1 means node centered, and 0 cell centered.
         '''
         return self._get_nodal_flag(self.libwarpx_so.warpx_getJz_nodal_flag)
+
+    def get_Ax_nodal_flag(self):
+        '''
+        This returns a 1d array of the nodal flags for Ax along each direction. A 1 means node centered, and 0 cell centered.
+        '''
+        return self._get_nodal_flag(self.libwarpx_so.warpx_getAx_nodal_flag)
+
+    def get_Ay_nodal_flag(self):
+        '''
+        This returns a 1d array of the nodal flags for Ay along each direction. A 1 means node centered, and 0 cell centered.
+        '''
+        return self._get_nodal_flag(self.libwarpx_so.warpx_getAy_nodal_flag)
+
+    def get_Az_nodal_flag(self):
+        '''
+        This returns a 1d array of the nodal flags for Az along each direction. A 1 means node centered, and 0 cell centered.
+        '''
+        return self._get_nodal_flag(self.libwarpx_so.warpx_getAz_nodal_flag)
 
     def get_Rho_nodal_flag(self):
         '''

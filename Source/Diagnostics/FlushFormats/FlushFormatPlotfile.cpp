@@ -1,10 +1,12 @@
 #include "FlushFormatPlotfile.H"
 
+#include "Particles/ParticleIO.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
 #include "Utils/Interpolate.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -59,13 +61,26 @@ FlushFormatPlotfile::WriteToFile (
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,
-    bool isBTD, int /*snapshotID*/, const amrex::Geometry& /*full_BTD_snapshot*/,
-    bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
+    const bool /*use_pinned_pc*/,
+    bool isBTD, int snapshotID,  int bufferID, int numBuffers,
+    const amrex::Geometry& /*full_BTD_snapshot*/,
+    bool isLastBTDFlush, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
 {
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
     const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
-    amrex::Print() << Utils::TextMsg::Info("Writing plotfile " + filename);
+    if (!isBTD)
+    {
+      amrex::Print() << Utils::TextMsg::Info("Writing plotfile " + filename);
+    } else
+    {
+      amrex::Print() << Utils::TextMsg::Info("Writing buffer " + std::to_string(bufferID+1) + " of " + std::to_string(numBuffers)
+                        + " to snapshot " + std::to_string(snapshotID) +  " in plotfile BTD " + prefix );
+      if (isLastBTDFlush)
+      {
+        amrex::Print() << Utils::TextMsg::Info("Finished writing snapshot " + std::to_string(snapshotID) + " in plotfile BTD " + filename);
+      }
+    }
 
     Vector<std::string> rfs;
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
@@ -329,7 +344,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
 
         // plot any "extra" fields by default
-        real_flags = particle_diags[i].plot_flags;
+        real_flags = particle_diags[i].m_plot_flags;
         real_flags.resize(pc->NumRealComps(), 1);
 
         // and the names
@@ -340,14 +355,13 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         // plot by default
         int_flags.resize(pc->NumIntComps(), 1);
 
-        pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
-
+        const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
         RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                          particle_diags[i].m_random_fraction);
         UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                            particle_diags[i].m_uniform_stride);
         ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
-                                   compileParser<ParticleDiag::m_nvars>
+                                   utils::parser::compileParser<ParticleDiag::m_nvars>
                                        (particle_diags[i].m_particle_filter_parser.get()),
                                    pc->getMass());
         parser_filter.m_units = InputUnits::SI;
@@ -355,6 +369,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                              particle_diags[i].m_diag_domain);
 
         if (!isBTD) {
+            particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
             using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
             tmp.copyParticles(*pc,
                               [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
@@ -363,9 +378,11 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                 return random_filter(p, engine) * uniform_filter(p, engine)
                     * parser_filter(p, engine) * geometry_filter(p, engine);
             }, true);
+            particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
         } else {
             PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
             tmp.copyParticles(*pinned_pc, true);
+            particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
         }
         // real_names contains a list of all particle attributes.
         // real_flags & int_flags are 1 or 0, whether quantity is dumped or not.
@@ -373,8 +390,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             dir, particle_diags[i].getSpeciesName(),
             real_flags, int_flags,
             real_names, int_names);
-
-        pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
     }
 }
 
@@ -452,7 +467,7 @@ WriteCoarseVector( const std::string field_name,
         WriteZeroRawMF( *Fz_fp, dm, filename, level_prefix, field_name+"z_cp", lev, ng );
     } else {
         // Interpolate coarse data onto fine grid
-        const int r_ratio = WarpX::GetInstance().refRatio(lev-1)[0];
+        amrex::IntVect r_ratio = WarpX::GetInstance().refRatio(lev-1);
         const Real* dx = WarpX::GetInstance().Geom(lev-1).CellSize();
         auto F = Interpolate::getInterpolatedVector( Fx_cp, Fy_cp, Fz_cp, Fx_fp, Fy_fp, Fz_fp,
                                     dm, r_ratio, dx, ng );
@@ -489,7 +504,7 @@ WriteCoarseScalar( const std::string field_name,
         // Create an alias to the component `icomp` of F_cp
         MultiFab F_comp(*F_cp, amrex::make_alias, icomp, 1);
         // Interpolate coarse data onto fine grid
-        const int r_ratio = WarpX::GetInstance().refRatio(lev-1)[0];
+        const amrex::IntVect r_ratio = WarpX::GetInstance().refRatio(lev-1);
         const Real* dx = WarpX::GetInstance().Geom(lev-1).CellSize();
         auto F = Interpolate::getInterpolatedScalar( F_comp, *F_fp, dm, r_ratio, dx, ng );
         // Write interpolated raw data

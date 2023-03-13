@@ -5,16 +5,21 @@ Summit (OLCF)
 
 The `Summit cluster <https://www.olcf.ornl.gov/summit/>`_ is located at OLCF.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `Summit user guide <https://docs.olcf.ornl.gov/systems/summit_user_guide.html>`_
 * Batch system: `LSF <https://docs.olcf.ornl.gov/systems/summit_user_guide.html#running-jobs>`_
 * `Jupyter service <https://jupyter.olcf.ornl.gov>`__
-* `Production directories <https://docs.olcf.ornl.gov/data/storage_overview.html>`_:
+* `Production directories <https://docs.olcf.ornl.gov/data/index.html#data-storage-and-transfers>`_:
 
-  * ``$PROJWORK/$proj/``: shared with all members of a project (recommended)
-  * ``$MEMBERWORK/$proj/``: single user (usually smaller quota)
-  * ``$WORLDWORK/$proj/``: shared with all users
+  * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days, GPFS (recommended)
+  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days, GPFS (usually smaller quota)
+  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days, GPFS
+  * ``/ccs/$proj/``: another, non-GPFS, file system for software and smaller data.
   * Note that the ``$HOME`` directory is mounted as read-only on compute nodes.
     That means you cannot run in your ``$HOME``.
 
@@ -40,6 +45,22 @@ We recommend to store the above lines in a file, such as ``$HOME/summit_warpx.pr
 .. code-block:: bash
 
    source $HOME/summit_warpx.profile
+
+For PSATD+RZ simulations, you will need to build BLAS++ and LAPACK++:
+
+.. code-block:: bash
+
+  # BLAS++ (for PSATD+RZ)
+  git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
+  rm -rf src/blaspp-summit-build
+  cmake -S src/blaspp -B src/blaspp-summit-build -Duse_openmp=OFF -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/summit/blaspp-master
+  cmake --build src/blaspp-summit-build --target install --parallel 10
+
+  # LAPACK++ (for PSATD+RZ)
+  git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
+  rm -rf src/lapackpp-summit-build
+  cmake -S src/lapackpp -B src/lapackpp-summit-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/summit/lapackpp-master
+  cmake --build src/lapackpp-summit-build --target install --parallel 10
 
 Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` or dynamic ensemble optimizations (:ref:`libEnsemble <libensemble>`):
 
@@ -315,15 +336,16 @@ For post-processing, most users use Python via OLCFs's `Jupyter service <https:/
 We usually just install our software on-the-fly on Summit.
 When starting up a post-processing session, run this in your first cells:
 
+.. note::
+
+   The following software packages are installed only into a temporary directory.
+
 .. code-block:: bash
 
    # work-around for OLCFHELP-4242
    !jupyter serverextension enable --py --sys-prefix dask_labextension
 
-   # next Jupyter cell: install a faster & better conda package manager
-   !conda install -c conda-forge -y mamba
-
-   # next cell: the software you want
-   !mamba install -c conda-forge -y openpmd-api openpmd-viewer ipympl ipywidgets fast-histogram yt
+   # next Jupyter cell: the software you want
+   !mamba install --quiet -c conda-forge -y openpmd-api openpmd-viewer ipympl ipywidgets fast-histogram yt
 
    # restart notebook

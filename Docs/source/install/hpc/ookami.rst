@@ -5,7 +5,11 @@ Ookami (Stony Brook)
 
 The `Ookami cluster <https://www.stonybrook.edu/ookami/>`__ is located at Stony Brook University.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `Ookami documentation <https://www.stonybrook.edu/commcms/ookami/support/index_links_and_docs.php>`__
 * Batch system: `Slurm <https://www.stonybrook.edu/commcms/ookami/support/faq/example-slurm-script>`__ (see `available queues <https://www.stonybrook.edu/commcms/ookami/support/faq/queues_on_ookami>`__)
@@ -57,6 +61,10 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cmake --build build -j 10
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
+
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-ookami>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``/lustre/scratch/<netid>``.
 
 
 .. _running-cpp-ookami:

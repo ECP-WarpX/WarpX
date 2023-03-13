@@ -221,19 +221,24 @@ public:
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uz,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_w);
 
-    virtual void GetParticleSlice (
-        const int direction, const amrex::Real z_old,
-        const amrex::Real z_new, const amrex::Real t_boost,
-        const amrex::Real t_lab, const amrex::Real dt,
-        DiagnosticParticles& diagnostic_particles) final;
-
-    /** Convert particle momentum to/from SI
+    /**
+     * \brief Default initialize runtime attributes in a tile. This routine does not initialize the
+     * first n_external_attr_real real attributes and the first n_external_attr_int integer
+     * attributes, which have been in principle externally set elsewhere.
      *
-     * @see particlesConvertUnits
-     *
-     * @param convert_dir convert to or from SI
+     * @param[inout] pinned_tile the tile in which attributes are initialized
+     * @param[in] n_external_attr_real The number of real attributes that have been externally set.
+     * These are NOT initialized by this function.
+     * @param[in] n_external_attr_int The number of integer attributes that have been externally set.
+     * These are NOT initialized by this function.
+     * @param[in] engine the random engine, used in initialization of QED optical depths
      */
-    virtual void ConvertUnits (ConvertDirection convert_dir) override;
+    virtual void DefaultInitializeRuntimeAttributes (
+                    amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
+                                        NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                    const int n_external_attr_real,
+                    const int n_external_attr_int,
+                    const amrex::RandomEngine& engine) override final;
 
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather

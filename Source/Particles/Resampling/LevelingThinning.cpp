@@ -7,9 +7,9 @@
 #include "LevelingThinning.H"
 
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/ParticleUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXUtil.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -34,7 +34,8 @@ LevelingThinning::LevelingThinning (const std::string species_name)
     using namespace amrex::literals;
 
     amrex::ParmParse pp_species_name(species_name);
-    queryWithParser(pp_species_name, "resampling_algorithm_target_ratio", m_target_ratio);
+    utils::parser::queryWithParser(
+        pp_species_name, "resampling_algorithm_target_ratio", m_target_ratio);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_target_ratio > 0._rt,
                                     "Resampling target ratio should be strictly greater than 0");
     if (m_target_ratio <= 1._rt)
@@ -45,7 +46,8 @@ LevelingThinning::LevelingThinning (const std::string species_name)
             "It is possible that no particle will be removed during resampling");
     }
 
-    queryWithParser(pp_species_name, "resampling_algorithm_min_ppc", m_min_ppc);
+    utils::parser::queryWithParser(
+        pp_species_name, "resampling_algorithm_min_ppc", m_min_ppc);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_min_ppc >= 1,
                                      "Resampling min_ppc should be greater than or equal to 1");
 }

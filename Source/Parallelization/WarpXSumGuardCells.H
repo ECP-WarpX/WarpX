@@ -34,7 +34,7 @@ WarpXSumGuardCells(amrex::MultiFab& mf, const amrex::Periodicity& period,
     amrex::IntVect n_updated_guards;
 
     // Update both valid cells and guard cells
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         n_updated_guards = mf.nGrowVect();
     else  // Update only the valid cells
         n_updated_guards = amrex::IntVect::TheZeroVector();
@@ -65,7 +65,7 @@ WarpXSumGuardCells(amrex::MultiFab& dst, amrex::MultiFab& src,
     amrex::IntVect n_updated_guards;
 
     // Update both valid cells and guard cells
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         n_updated_guards = dst.nGrowVect();
     else  // Update only the valid cells
         n_updated_guards = amrex::IntVect::TheZeroVector();

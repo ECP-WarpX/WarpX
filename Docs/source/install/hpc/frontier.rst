@@ -7,15 +7,19 @@ The `Frontier cluster (see: Crusher) <https://docs.olcf.ornl.gov/systems/crusher
 Each node contains 4 AMD MI250X GPUs, each with 2 Graphics Compute Dies (GCDs) for a total of 8 GCDs per node.
 You can think of the 8 GCDs as 8 separate GPUs, each having 64 GB of high-bandwidth memory (HBM2E).
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `Crusher user guide <https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html>`_
 * Batch system: `Slurm <https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html#running-jobs>`_
-* `Production directories <https://docs.olcf.ornl.gov/data/storage_overview.html>`_:
+* `Production directories <https://docs.olcf.ornl.gov/data/index.html#data-storage-and-transfers>`_:
 
-  * ``$PROJWORK/$proj/``: shared with all members of a project (recommended)
-  * ``$MEMBERWORK/$proj/``: single user (usually smaller quota)
-  * ``$WORLDWORK/$proj/``: shared with all users
+  * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days (recommended)
+  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days (usually smaller quota)
+  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days
   * Note that the ``$HOME`` directory is mounted as read-only on compute nodes.
     That means you cannot run in your ``$HOME``.
 
@@ -65,13 +69,17 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-frontier>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``$PROJWORK/$proj/``.
+
 
 .. _running-cpp-frontier:
 
 Running
 -------
 
-.. _running-cpp-frontier-MI100-GPUs:
+.. _running-cpp-frontier-MI250X-GPUs:
 
 MI250X GPUs (2x64 GB)
 ^^^^^^^^^^^^^^^^^^^^^
@@ -112,4 +120,16 @@ Known System Issues
 
    .. code-block:: bash
 
-      export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching
+      #export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching
+      # or, less invasive:
+      export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
+
+.. warning::
+
+   Sep 2nd, 2022 (OLCFDEV-1079):
+   rocFFT in ROCm 5.1+ tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/library.html#runtime-compilation>`__ in the home area by default.
+   This does not scale, disable it via:
+
+   .. code-block:: bash
+
+      export ROCFFT_RTC_CACHE_PATH=/dev/null

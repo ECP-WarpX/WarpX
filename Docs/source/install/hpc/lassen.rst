@@ -5,7 +5,11 @@ Lassen (LLNL)
 
 The `Lassen V100 GPU cluster <https://hpc.llnl.gov/hardware/platforms/lassen>`_ is located at LLNL.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `LLNL user account <https://lc.llnl.gov/lorenz/mylc/mylc.cgi>`_
 * `Lassen user guide <https://hpc.llnl.gov/training/tutorials/using-lcs-sierra-system>`_
@@ -54,13 +58,13 @@ And since Lassen does not yet provide a module for them, install ADIOS2, BLAS++ 
    cmake --build src/adios2-lassen-build --target install -j 16
 
    # BLAS++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+   git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
    rm -rf src/blaspp-lassen-build
    cmake -S src/blaspp -B src/blaspp-lassen-build -Duse_openmp=ON -Dgpu_backend=CUDA -Duse_cmake_find_blas=ON -DBLA_VENDOR=IBMESSL -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/blaspp-master
    cmake --build src/blaspp-lassen-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+   git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-lassen-build
    CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-lassen-build -Duse_cmake_find_lapack=ON -DBLA_VENDOR=IBMESSL -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/lapackpp-master -DLAPACK_LIBRARIES=/usr/lib64/liblapack.so
    cmake --build src/lapackpp-lassen-build --target install --parallel 16
@@ -72,11 +76,14 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON
    cmake --build build -j 10
 
-This will build an executable in ``build/bin/``.
 The other :ref:`general compile-time options <building-cmake>` apply as usual.
+
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-lassen>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``/p/gpfs1/$(whoami)``.
 
 
 .. _running-cpp-lassen:

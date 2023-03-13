@@ -9,12 +9,17 @@
 
 #include <AMReX_FabArray.H>
 #include <AMReX_Gpu.H>
+#include <AMReX_GpuDevice.H>
 #include <AMReX_iMultiFab.H>
+#include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_Periodicity.H>
 #include <AMReX_TypeTraits.H>
 
 #include "WarpX.H"
+
+#include <optional>
+
 
 namespace ablastr::utils::communication
 {
@@ -64,7 +69,7 @@ void FillBoundary (amrex::MultiFab &mf,
                    amrex::IntVect ng,
                    bool do_single_precision_comms,
                    const amrex::Periodicity &period = amrex::Periodicity::NonPeriodic(),
-                   const bool nodal_sync = false);
+                   std::optional<bool> nodal_sync = std::nullopt);
 
 void FillBoundary (amrex::iMultiFab &mf,
                    const amrex::Periodicity &period = amrex::Periodicity::NonPeriodic());

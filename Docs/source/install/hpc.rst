@@ -36,6 +36,8 @@ HPC Systems
    hpc/lawrencium
    hpc/ookami
    hpc/lxplus
+   hpc/lumi
+   hpc/taurus
 
 .. tip::
 

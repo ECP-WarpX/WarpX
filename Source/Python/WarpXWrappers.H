@@ -62,8 +62,10 @@ extern "C" {
                              amrex::ParticleReal const * vx,
                              amrex::ParticleReal const * vy,
                              amrex::ParticleReal const * vz,
-                             int nattr,
-                             amrex::ParticleReal const * attr,
+                             const int nattr_real,
+                             amrex::ParticleReal const * attr_real,
+                             const int nattr_int,
+                             int const * attr_int,
                              int uniqueparticles);
 
     void warpx_ConvertLabParamsToBoost();
@@ -79,6 +81,10 @@ extern "C" {
     amrex::Real warpx_getCellSize(int dir, int lev);
 
     long warpx_getNumParticles(const char* char_species_name, const bool local);
+
+    void warpx_convert_id_to_long (amrex::Long* ids, const WarpXParticleContainer::ParticleType* pstructs, int size);
+
+    void warpx_convert_cpu_to_int (int* cpus, const WarpXParticleContainer::ParticleType* pstructs, int size);
 
     amrex::ParticleReal** warpx_getParticleStructs(
         const char* char_species_name, int lev, int* num_tiles,
@@ -96,7 +102,7 @@ extern "C" {
 
     amrex::Real warpx_sumParticleCharge(const char* char_species_name, const bool local);
 
-    int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary);
+    int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary, bool local);
 
     int** warpx_getParticleBoundaryBufferScrapedSteps(
         const char* species_name, int boundary, int lev,
@@ -150,6 +156,7 @@ extern "C" {
   int warpx_getMyProc ();
   int warpx_getNProcs ();
 
+  void warpx_setPotentialEB (const char * char_potential);
 
   void mypc_Redistribute ();
 
@@ -165,6 +172,8 @@ extern "C" {
   amrex::Real** warpx_getCurrentDensityCP (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
   amrex::Real** warpx_getCurrentDensityFP (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
 
+  amrex::Real** warpx_getVectorPotentialFP (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
+
   int* warpx_getEfieldLoVects (int lev, int direction, int *return_size, int **ngrowvect);
   int* warpx_getEfieldCPLoVects (int lev, int direction, int *return_size, int **ngrowvect);
   int* warpx_getEfieldFPLoVects (int lev, int direction, int *return_size, int **ngrowvect);
@@ -176,6 +185,8 @@ extern "C" {
   int* warpx_getCurrentDensityLoVects (int lev, int direction, int *return_size, int **ngrowvect);
   int* warpx_getCurrentDensityCPLoVects (int lev, int direction, int *return_size, int **ngrowvect);
   int* warpx_getCurrentDensityFPLoVects (int lev, int direction, int *return_size, int **ngrowvect);
+
+  int* warpx_getVectorPotentialFPLoVects (int lev, int direction, int *return_size, int **ngrowvect);
 
   amrex::Real** warpx_getEdgeLengths (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
   int* warpx_getEdgeLengthsLoVects (int lev, int direction, int *return_size, int **ngrowvect);
@@ -189,6 +200,9 @@ extern "C" {
   int* warpx_getBx_nodal_flag ();
   int* warpx_getBy_nodal_flag ();
   int* warpx_getBz_nodal_flag ();
+  int* warpx_getAx_nodal_flag ();
+  int* warpx_getAy_nodal_flag ();
+  int* warpx_getAz_nodal_flag ();
   int* warpx_getJx_nodal_flag ();
   int* warpx_getJy_nodal_flag ();
   int* warpx_getJz_nodal_flag ();

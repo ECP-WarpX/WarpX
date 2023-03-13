@@ -3,22 +3,21 @@
 Perlmutter (NERSC)
 ==================
 
-.. warning::
-
-   Perlmutter is still in acceptance testing and environments change often.
-   Please reach visit this page often for updates and reach out to us if something needs an update.
-
 The `Perlmutter cluster <https://docs.nersc.gov/systems/perlmutter/>`_ is located at NERSC.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `NERSC user guide <https://docs.nersc.gov/>`__
 * Batch system: `Slurm <https://docs.nersc.gov/systems/perlmutter/#running-jobs>`__
 * `Jupyter service <https://docs.nersc.gov/services/jupyter/>`__
 * `Production directories <https://docs.nersc.gov/filesystems/perlmutter-scratch/>`__:
 
-  * ``$PSCRATCH``: per-user production directory (<TBD>TB)
-  * ``/global/cscratch1/sd/m3239``: shared production directory for users in the project ``m3239`` (50TB)
+  * ``$PSCRATCH``: per-user production directory, purged every 30 days (<TBD>TB)
+  * ``/global/cscratch1/sd/m3239``: shared production directory for users in the project ``m3239``, purged every 30 days (50TB)
   * ``/global/cfs/cdirs/m3239/``: community file system for users in the project ``m3239`` (100TB)
 
 
@@ -60,15 +59,15 @@ And since Perlmutter does not yet provide a module for them, install ADIOS2, BLA
    cmake --build src/adios2-pm-build --target install -j 16
 
    # BLAS++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+   git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
    rm -rf src/blaspp-pm-build
-   CXX=$(which CC) cmake -S src/blaspp -B src/blaspp-pm-build -Duse_openmp=ON -Dgpu_backend=CUDA -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/blaspp-master
+   CXX=$(which CC) cmake -S src/blaspp -B src/blaspp-pm-build -Duse_openmp=OFF -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/blaspp-master
    cmake --build src/blaspp-pm-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+   git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-pm-build
-   CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-pm-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/lapackpp-master
+   CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-pm-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/lapackpp-master
    cmake --build src/lapackpp-pm-build --target install --parallel 16
 
 Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` or dynamic ensemble optimizations (:ref:`libEnsemble <libensemble>`):
@@ -101,10 +100,14 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
+   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON
    cmake --build build -j 16
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
+
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-perlmutter>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``$PSCRATCH``.
 
 For a *full PICMI install*, follow the :ref:`instructions for Python (PICMI) bindings <building-cmake-python>`:
 
@@ -156,6 +159,12 @@ To run a simulation, copy the lines above to a file ``perlmutter.sbatch`` and ru
    sbatch perlmutter.sbatch
 
 to submit the job.
+
+A100 GPUs (80 GB)
+^^^^^^^^^^^^^^^^^
+
+Perlmutter has 256 nodes that provide 80 GB HBM per A100 GPU.
+Replace ``-C gpu`` with ``-C gpu&hbm80g`` in the above job script to use these large-memory GPUs.
 
 
 .. _post-processing-perlmutter:

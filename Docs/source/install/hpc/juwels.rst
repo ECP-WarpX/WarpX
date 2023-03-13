@@ -10,6 +10,12 @@ Juwels (JSC)
 
 The `Juwels supercomputer <https://www.fz-juelich.de/ias/jsc/EN/Expertise/Supercomputers/JUWELS/JUWELS_node.html>`_ is located at JSC.
 
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
+
 See `this page <https://apps.fz-juelich.de/jsc/hps/juwels/quickintro.html>`_ for a quick introduction.
 (Full `user guide <http://www.fz-juelich.de/ias/jsc/EN/Expertise/Supercomputers/JUWELS/UserInfo/UserInfo_node.html>`__).
 
@@ -19,6 +25,7 @@ See `this page <https://apps.fz-juelich.de/jsc/hps/juwels/quickintro.html>`_ for
   * ``$SCRATCH``: Scratch filesystem for `temporary data <http://www.fz-juelich.de/ias/jsc/EN/Expertise/Supercomputers/JUWELS/FAQ/juwels_FAQ_node.html#faq1495160>`__ (90 day purge)
   * ``$FASTDATA/``: Storage location for large data (backed up)
   * Note that the ``$HOME`` directory is not designed for simulation runs and producing output there will impact performance.
+
 
 Installation
 ------------
@@ -50,12 +57,14 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_MPI_THREAD_MULTIPLE=OFF
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_MPI_THREAD_MULTIPLE=OFF
    cmake --build build -j 16
 
 The other :ref:`general compile-time options <install-developers>` apply as usual.
 
-The executable will be generated in ``build/bin/``.
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-juwels>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``$SCRATCH``.
 
 .. note::
 
@@ -66,6 +75,8 @@ The executable will be generated in ``build/bin/``.
       export OMPI_MCA_io=romio321
 
    in your job scripts, before running the ``srun`` command.
+
+.. _running-cpp-juwels:
 
 Running
 -------

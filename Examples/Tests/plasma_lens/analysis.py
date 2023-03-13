@@ -66,19 +66,38 @@ except TypeError:
     # vel_z is not saved in my_constants with the PICMI version
     vel_z = 0.5*c
 
-plasma_lens_period = float(ds.parameters.get('particles.repeated_plasma_lens_period'))
-plasma_lens_starts = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_starts').split()]
-plasma_lens_lengths = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_lengths').split()]
-plasma_lens_strengths_E = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths_E').split()]
-plasma_lens_strengths_B = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths_B').split()]
+if 'particles.repeated_plasma_lens_period' in ds.parameters:
+    plasma_lens_period = float(ds.parameters.get('particles.repeated_plasma_lens_period'))
+    plasma_lens_starts = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_starts').split()]
+    plasma_lens_lengths = [float(x) for x in ds.parameters.get('particles.repeated_plasma_lens_lengths').split()]
+    plasma_lens_strengths_E = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths_E').split()]
+    plasma_lens_strengths_B = [eval(x) for x in ds.parameters.get('particles.repeated_plasma_lens_strengths_B').split()]
+elif 'lattice.elements' in ds.parameters:
+    lattice_elements = ds.parameters.get('lattice.elements').split()
+    plasma_lens_zstarts = []
+    plasma_lens_lengths = []
+    plasma_lens_strengths_E = []
+    z_location = 0.
+    for element in lattice_elements:
+        element_type = ds.parameters.get(f'{element}.type')
+        length = float(ds.parameters.get(f'{element}.ds'))
+        if element_type == 'plasmalens':
+            plasma_lens_zstarts.append(z_location)
+            plasma_lens_lengths.append(length)
+            plasma_lens_strengths_E.append(float(ds.parameters.get(f'{element}.dEdx')))
+        z_location += length
+
+    plasma_lens_period = 0.5
+    plasma_lens_starts = plasma_lens_zstarts - plasma_lens_period*np.arange(len(plasma_lens_zstarts))
+    plasma_lens_strengths_B = np.zeros(len(plasma_lens_zstarts))
 
 
 x0 = float(ds.parameters.get('electrons.multiple_particles_pos_x').split()[0])
 y0 = float(ds.parameters.get('electrons.multiple_particles_pos_y').split()[1])
 z0 = float(ds.parameters.get('electrons.multiple_particles_pos_z').split()[0])
-ux0 = float(ds.parameters.get('electrons.multiple_particles_vel_x').split()[0])*c
-uy0 = float(ds.parameters.get('electrons.multiple_particles_vel_y').split()[1])*c
-uz0 = eval(ds.parameters.get('electrons.multiple_particles_vel_z').split()[0])*c
+ux0 = float(ds.parameters.get('electrons.multiple_particles_ux').split()[0])*c
+uy0 = float(ds.parameters.get('electrons.multiple_particles_uy').split()[1])*c
+uz0 = eval(ds.parameters.get('electrons.multiple_particles_uz').split()[0])*c
 
 tt = 0.
 xx = x0
@@ -120,10 +139,19 @@ print(f'Error in y position is {abs(np.abs((yy - yy_sim)/yy))}, which should be 
 print(f'Error in x velocity is {abs(np.abs((ux - ux_sim)/ux))}, which should be < 0.002')
 print(f'Error in y velocity is {abs(np.abs((uy - uy_sim)/uy))}, which should be < 0.002')
 
-assert abs(np.abs((xx - xx_sim)/xx)) < 0.02, Exception('error in x particle position')
-assert abs(np.abs((yy - yy_sim)/yy)) < 0.02, Exception('error in y particle position')
-assert abs(np.abs((ux - ux_sim)/ux)) < 0.002, Exception('error in x particle velocity')
-assert abs(np.abs((uy - uy_sim)/uy)) < 0.002, Exception('error in y particle velocity')
+if plasma_lens_lengths[0] < 0.01:
+    # The shorter lens requires a larger tolerance since
+    # the calculation becomes less accurate
+    position_tolerance = 0.023
+    velocity_tolerance = 0.003
+else:
+    position_tolerance = 0.02
+    velocity_tolerance = 0.002
+
+assert abs(np.abs((xx - xx_sim)/xx)) < position_tolerance, Exception('error in x particle position')
+assert abs(np.abs((yy - yy_sim)/yy)) < position_tolerance, Exception('error in y particle position')
+assert abs(np.abs((ux - ux_sim)/ux)) < velocity_tolerance, Exception('error in x particle velocity')
+assert abs(np.abs((uy - uy_sim)/uy)) < velocity_tolerance, Exception('error in y particle velocity')
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

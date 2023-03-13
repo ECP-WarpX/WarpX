@@ -7,6 +7,7 @@
 import sys
 
 import numpy as np
+
 from pywarpx import callbacks, picmi
 
 ##########################
