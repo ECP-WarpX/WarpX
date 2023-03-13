@@ -1239,7 +1239,7 @@ class LibWarpX():
             c_real = ctypes.c_double
         else:
             c_real = ctypes.c_float
-        
+
         self.libwarpx_so.warpx_setPlasmaLensStrength(
             ctypes.c_int(i_lens), c_real(strength_E), c_real(strength_B) )
 
