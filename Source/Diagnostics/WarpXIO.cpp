@@ -251,38 +251,6 @@ WarpX::InitFromCheckpoint ()
                         is >> snapshot_hi;
                         diag.setSnapshotDomainHi(i_buffer, idim, snapshot_hi);
                     }
-//                    std::getline(is, line);
-//                    {
-//                        std::istringstream lis(line);
-//                        lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-//                        for (int i = 0; i < BTDsnapshot_lo.size(); ++i) {
-//                            lis >> word;
-//                            //amrex::Print() << "i " << i << " lo read\n";
-//                            //BTDsnapshot_lo.at(i) = static_cast<Real>(std::stod(word));
-//                           // diag.setSnapshotDomainLo(i_buffer, i, BTDsnapshot_lo.at(i));
-//                            //amrex::Print() << " buffer " << i_buffer << " idim " << i << " lo " << BTDsnapshot_lo.at(i) << "\n";
-//                        }
-//                    }
-//
-//                    amrex::Vector<amrex::Real> BTDsnapshot_hi( AMREX_SPACEDIM );
-//                    std::getline(is, line);
-//                    {
-//                        std::istringstream lis(line);
-//                        lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-//                        for (int i = 0; i < BTDsnapshot_hi.size(); ++i) {
-//                            lis >> word;
-//                            ////amrex::Print() << "i " << i << " hi read\n";
-//                            //BTDsnapshot_hi.at(i) = static_cast<Real>(std::stod(word));
-//                            //diag.setSnapshotDomainHi(i_buffer, i, BTDsnapshot_hi.at(i));
-//                    //amrex::Print() << " buffer " << i_buffer << " idim " << i << " hi " << BTDsnapshot_hi.at(i) << "\n";
-//                        }
-//                    }
-                    //diag.setSnapshotDomain(i_buffer,
-                    //                       amrex::RealBox(BTDsnapshot_lo.data(),
-                    //                                      BTDsnapshot_hi.data()));
-                    amrex::Print() << " m num buffers " << warpx.GetMultiDiags().GetDiag(idiag).getnumbuffers() << " tlab " << diag.gettlab(i_buffer) << "\n";
-                    //amrex::Print() << " lo  " << BTDsnapshot_lo[1] << "\n";
-                    //amrex::Print() << " hi  " << BTDsnapshot_hi[1] << "\n";
                 }
                 diag.InitDataAfterRestart();
             } else {

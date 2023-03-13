@@ -308,7 +308,6 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         HeaderFile << warpx.time_of_last_gal_shift << "\n";
 
-        amrex::Print() << " writing BTD diag for restart chkpt \n";
         for (int idiag = 0; idiag < warpx.GetMultiDiags().GetTotalDiags(); ++idiag)
         {
             if( warpx.GetMultiDiags().diagstypes(idiag) == DiagTypes::BackTransformed )
@@ -323,7 +322,6 @@ FlushFormatPlotfile::WriteWarpXHeader(
                     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                         HeaderFile << diag.get_snapshot_domain_hi(i_buffer, idim) << "\n";
                     }
-                    amrex::Print() << " m num buffers " << warpx.GetMultiDiags().GetDiag(idiag).getnumbuffers() << " tlab " << diag.gettlab(i_buffer) << "kindex " << diag.get_buffer_k_index_hi(i_buffer) << "\n";
                 }
             }
         }
