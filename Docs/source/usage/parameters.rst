@@ -280,18 +280,12 @@ Setting up the field mesh
     ``n_current_deposition_buffer`` is automatically set so as to be large
     enough to hold the particle shape, on the fine grid
 
-* ``warpx.n_field_gather_buffer`` (`integer`; 0 by default)
-    When using mesh refinement: the particles that are located inside
-    a refinement patch, but within ``n_field_gather_buffer`` cells of
-    the edge of this patch, will gather the fields from the lower refinement
-    level, instead of gathering the fields from the refinement patch itself.
-    This avoids some of the spurious effects that can occur inside the
-    refinement patch, close to its edge. See the
-    :ref:`mesh-refinement section <theory-amr>` for more details.
-    If this variable is not
-    explicitly set in the input script, ``n_field_gather_buffer`` is
-    automatically set so that it is one cell larger than
-    ``n_current_deposition_buffer``, on the fine grid.
+* ``warpx.n_field_gather_buffer`` (`integer`, optional)
+    Default: ``warpx.n_field_gather_buffer = n_current_deposition_buffer + 1`` (one cell larger than ``n_current_deposition_buffer`` on the fine grid).
+
+    When using mesh refinement, particles that are located inside a refinement patch, but within ``n_field_gather_buffer`` cells of the edge of the patch, gather the fields from the lower refinement level, instead of gathering the fields from the refinement patch itself.
+    This avoids some of the spurious effects that can occur inside the refinement patch, close to its edge.
+    See the section :ref:`Mesh refinement <theory-amr>` for more details.
 
 * ``warpx.do_single_precision_comms`` (`integer`; 0 by default)
     Perform MPI communications for field guard regions in single precision.
