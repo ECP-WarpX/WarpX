@@ -617,16 +617,7 @@ void doGatherShapeNImplicit (
     const int k_B_old = compute_shifted_shape_factor(sz_B_old, z_old + 0.5_rt, k_B_new);
 #endif
 
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    Compute_shape_factor< depos_order-1 > compute_shape_factor_By;
-    Compute_shifted_shape_factor< depos_order-1 > compute_shifted_shape_factor_By;
-    const int i_By_new = compute_shape_factor_By(sx_By_new+1, x_new - 0.5_rt);
-    const int i_By_old = compute_shifted_shape_factor_By(sx_By_old, x_old - 0.5_rt, i_By_new);
-    const int k_By_new = compute_shape_factor_By(sz_By_new+1, z_new - 0.5_rt);
-    const int k_By_old = compute_shifted_shape_factor_By(sz_By_old, z_old - 0.5_rt, k_By_new);
-#endif
-
-            // computes min/max positions of current contributions
+    // computes min/max positions of current contributions
 #if !defined(WARPX_DIM_1D_Z)
     int dil_E = 1, diu_E = 1;
     if (i_E_old < i_E_new) dil_E = 0;
@@ -651,6 +642,21 @@ void doGatherShapeNImplicit (
     int dkl_B = 1, dku_B = 1;
     if (k_B_old < k_B_new) dkl_B = 0;
     if (k_B_old > k_B_new) dku_B = 0;
+#endif
+
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    Compute_shape_factor< depos_order-1 > compute_shape_factor_By;
+    Compute_shifted_shape_factor< depos_order-1 > compute_shifted_shape_factor_By;
+    const int i_By_new = compute_shape_factor_By(sx_By_new+1, x_new - 0.5_rt);
+    const int i_By_old = compute_shifted_shape_factor_By(sx_By_old, x_old - 0.5_rt, i_By_new);
+    const int k_By_new = compute_shape_factor_By(sz_By_new+1, z_new - 0.5_rt);
+    const int k_By_old = compute_shifted_shape_factor_By(sz_By_old, z_old - 0.5_rt, k_By_new);
+    int dil_By = 1, diu_By = 1;
+    if (i_By_old < i_By_new) dil_By = 0;
+    if (i_By_old > i_By_new) diu_By = 0;
+    int dkl_By = 1, dku_By = 1;
+    if (k_By_old < k_By_new) dkl_By = 0;
+    if (k_By_old > k_By_new) dku_By = 0;
 #endif
 
 #if defined(WARPX_DIM_3D)
@@ -796,8 +802,8 @@ void doGatherShapeNImplicit (
 #endif
         }
     }
-    for (int k=dkl_E; k<=depos_order+1-dku_E; k++) {
-        for (int i=dil_E; i<=depos_order+1-diu_E; i++) {
+    for (int k=dkl_By; k<=depos_order+1-dku_By; k++) {
+        for (int i=dil_By; i<=depos_order+1-diu_By; i++) {
             Real const sdyj = (
                 one_third*(sx_By_new[i]*sz_By_new[k] + sx_By_old[i]*sz_By_old[k])
                +one_sixth*(sx_By_new[i]*sz_By_old[k] + sx_By_old[i]*sz_By_new[k]));
