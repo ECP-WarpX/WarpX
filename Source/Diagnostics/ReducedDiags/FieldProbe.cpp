@@ -575,7 +575,6 @@ void FieldProbe::ComputeDiags (int step)
                 if (m_intervals.contains(step+1) && np > 0)
                 {
                     // This could be optimized by using shared memory.
-                    // +1 is for storing the particle ID for sorting
                     amrex::Gpu::DeviceVector<amrex::Real> dv(np*noutputs);
                     amrex::Real* dvp = dv.data();
                     amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (long ip)
@@ -695,6 +694,7 @@ void FieldProbe::WriteToFile (int step) const
         // write time
         ofs << WarpX::GetInstance().gett_new(0);
 
+        // start at k = 1 since the particle id is not written to file
         for (int k = 1; k < noutputs; k++)
         {
             ofs << m_sep;
