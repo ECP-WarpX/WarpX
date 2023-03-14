@@ -1393,7 +1393,6 @@ WarpX::ReadExternalFieldFromFile (
                 amrex::Real const xx2 = offset2 + ix2*d2;
 #endif
 
-                // Assign the values through linear interpolation
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent0, extent2, extent1}, 1);
                 auto
@@ -1401,9 +1400,10 @@ WarpX::ReadExternalFieldFromFile (
                     f01 = fc_array(0, ix1  , ix0+1),
                     f10 = fc_array(0, ix1+1, ix0  ),
                     f11 = fc_array(0, ix1+1, ix0+1);
-                mffab(i,j,k) = utils::algorithms::bilinear_interp(xx0, xx0+d0, xx1, xx1+d1,
-                                                                  f00, f01, f10, f11,
-                                                                  x0, x1);
+                mffab(i,j,k) = utils::algorithms::bilinear_interp<double>
+                    (xx0, xx0+d0, xx1, xx1+d1,
+                     f00, f01, f10, f11,
+                     x0, x1);
 #elif defined(WARPX_DIM_3D)
                 amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent0, extent2, extent1}, 1);
                 auto
@@ -1415,9 +1415,10 @@ WarpX::ReadExternalFieldFromFile (
                     f101 = fc_array(ix0+1, ix1  , ix2+1),
                     f110 = fc_array(ix0+1, ix1+1, ix2  ),
                     f111 = fc_array(ix0+1, ix1+1, ix2+1);
-                mffab(i,j,k) = utils::algorithms::trilinear_interp(xx0, xx0+d0, xx1, xx1+d1, xx2, xx2+d2,
-                                                                   f000, f001, f010, f011, f100, f101, f110, f111,
-                                                                   x0, x1, x2);
+                mffab(i,j,k) = utils::algorithms::trilinear_interp<double>
+                    (xx0, xx0+d0, xx1, xx1+d1, xx2, xx2+d2,
+                     f000, f001, f010, f011, f100, f101, f110, f111,
+                     x0, x1, x2);
 #endif
 
             }
