@@ -900,13 +900,13 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         std::string read_fields_from_path="./";
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
 #if defined(WARPX_DIM_RZ)
-        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp_external[lev][0].get(), "B", "r");
-        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp_external[lev][1].get(), "B", "t");
-        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp_external[lev][2].get(), "B", "z");
+        ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][0].get(), "B", "r");
+        ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][1].get(), "B", "t");
+        ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][2].get(), "B", "z");
 #else
-        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp_external[lev][0].get(), "B", "x");
-        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp_external[lev][1].get(), "B", "y");
-        ReadExternalFieldsFromFile(read_fields_from_path, Bfield_fp_external[lev][2].get(), "B", "z");
+        ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][0].get(), "B", "x");
+        ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][1].get(), "B", "y");
+        ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][2].get(), "B", "z");
 #endif
     }
     if (add_external_E_field) {
@@ -916,13 +916,13 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         std::string read_fields_from_path="./";
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
 #if defined(WARPX_DIM_RZ)
-        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp_external[lev][0].get(), "E", "r");
-        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp_external[lev][1].get(), "E", "t");
-        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp_external[lev][2].get(), "E", "z");
+        ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][0].get(), "E", "r");
+        ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][1].get(), "E", "t");
+        ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][2].get(), "E", "z");
 #else
-        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp_external[lev][0].get(), "E", "x");
-        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp_external[lev][1].get(), "E", "y");
-        ReadExternalFieldsFromFile(read_fields_from_path, Efield_fp_external[lev][2].get(), "E", "z");
+        ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][0].get(), "E", "x");
+        ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][1].get(), "E", "y");
+        ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][2].get(), "E", "z");
 #endif
     }
 
@@ -1291,8 +1291,9 @@ void WarpX::CheckKnownIssues()
 
 #if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z)
 void
-WarpX::ReadExternalFieldsFromFile (std::string read_fields_from_path, MultiFab* mf,
-std::string F_name, std::string F_component)
+WarpX::ReadExternalFieldFromFile (
+       std::string read_fields_from_path, MultiFab* mf,
+       std::string F_name, std::string F_component)
 {
     // Get WarpX domain info
     auto& warpx = WarpX::GetInstance();
@@ -1424,10 +1425,10 @@ std::string F_name, std::string F_component)
 
     } // End loop over boxes.
 
-} // End function WarpX::ReadExternalFieldsFromFile
+} // End function WarpX::ReadExternalFieldFromFile
 #else // WARPX_USE_OPENPMD && !WARPX_DIM_1D_Z
 void
-WarpX::ReadExternalFieldsFromFile (std::string , MultiFab* ,std::string, std::string)
+WarpX::ReadExternalFieldFromFile (std::string , MultiFab* ,std::string, std::string)
 {
 #if defined(WARPX_DIM_1D)
     Abort(Utils::TextMsg::Err("Reading fields from openPMD files is not supported in 1D");
