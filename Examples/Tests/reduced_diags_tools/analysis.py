@@ -4,9 +4,9 @@
 # examples of usage of the reduced diagnostic tools #
 #####################################################
 
-import sys 
+import sys
 
-sys.path.append('../../../Python/pywarpx/diagnostics/data/')  
+sys.path.append('../../../Python/pywarpx/diagnostics/data/')
 mydir = '.'
 
 ##################
@@ -14,7 +14,8 @@ mydir = '.'
 ##################
 
 import ParticleEnergy as PE
-fname = 'EP' # do not add .txt 
+
+fname = 'EP' # do not add .txt
 diag = PE.ParticleEnergyData(mydir, fname)
 
 # extract some general info
@@ -32,7 +33,7 @@ print('species names = {}'.format(species_names))
 
 print('\n')
 
-# extract data 
+# extract data
 data = diag.get_data('electrons', times='all')
 print('asking for total electron energy at all available times')
 print(data)
@@ -89,7 +90,8 @@ print('\n')
 ####################
 
 import ParticleMomentum as PP
-fname = 'PP' # do not add .txt 
+
+fname = 'PP' # do not add .txt
 diag = PP.ParticleMomentumData(mydir, fname)
 
 print(diag.get_valid_args())
@@ -105,7 +107,8 @@ print('\n')
 ###############
 
 import FieldEnergy as FE
-fname = 'EF' # do not add .txt 
+
+fname = 'EF' # do not add .txt
 diag = FE.FieldEnergyData(mydir, fname)
 
 print(diag.get_valid_args())
@@ -121,7 +124,8 @@ print('\n')
 ################
 
 import FieldMaximum as FM
-fname = 'MF' # do not add .txt 
+
+fname = 'MF' # do not add .txt
 diag = FM.FieldMaximumData(mydir, fname)
 
 print(diag.get_valid_args())
@@ -136,7 +140,8 @@ print('\n')
 ##################
 
 import ParticleNumber as PN
-fname = 'NP' # do not add .txt 
+
+fname = 'NP' # do not add .txt
 diag = PN.ParticleNumberData(mydir, fname)
 
 print(diag.get_valid_args())
@@ -149,10 +154,3 @@ data = diag.get_data('protons_macroparticles', 'photons_weight', steps='all')
 print('asking for total electron energy at all steps')
 print(data)
 print('\n')
-
-
-
-
-
-
-

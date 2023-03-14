@@ -74,15 +74,15 @@ photons.uz_th = 0.2
 warpx.reduced_diags_names = EP NP EF PP PF MF MR FP FP_integrate FP_line FP_plane ParticleExtrema_electrons ParticleExtrema_protons ParticleExtrema_photons ParticleExtrema_all
 ParticleExtrema_electrons.type = ParticleExtrema
 ParticleExtrema_electrons.intervals = 20
-ParticleExtrema_electrons.species = electrons 
+ParticleExtrema_electrons.species = electrons
 
 ParticleExtrema_protons.type = ParticleExtrema
 ParticleExtrema_protons.intervals = 20
-ParticleExtrema_protons.species = protons 
+ParticleExtrema_protons.species = protons
 
 ParticleExtrema_photons.type = ParticleExtrema
 ParticleExtrema_photons.intervals = 20
-ParticleExtrema_photons.species = photons 
+ParticleExtrema_photons.species = photons
 
 ParticleExtrema_all.type = ParticleExtrema
 ParticleExtrema_all.intervals = 20
