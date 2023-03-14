@@ -6,11 +6,11 @@
  License: BSD-3-Clause-LBNL
  """
 
+import json
 import sys
 
 from benchmark import Benchmark
 import numpy as np
-import json
 import yt
 
 yt.funcs.mylog.setLevel(50)
