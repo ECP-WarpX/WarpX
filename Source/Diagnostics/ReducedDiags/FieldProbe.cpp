@@ -657,7 +657,7 @@ void FieldProbe::WriteToFile (int step) const
 {
     if (!(ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())) return;
 
-    // loop over num valid particles to find the proper starting ID
+    // loop over num valid particles to find the lowest particle ID for later sorting
     long int first_id = m_data_out[0];
     for (int i = 0; i < m_valid_particles; i++)
     {
@@ -665,7 +665,7 @@ void FieldProbe::WriteToFile (int step) const
             first_id = m_data_out[i*noutputs];
     }
 
-    // Create a new array to store ordered data that will be printed to file.
+    // Create a new array to store probe data ordered by id, which will be printed to file.
     amrex::Vector<amrex::Real> sorted_data;
     sorted_data.resize(m_data_out.size());
 
