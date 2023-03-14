@@ -20,6 +20,7 @@
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Utils/Algorithms/LinearInterpolation.H"
 #include "Utils/Logo/GetLogo.H"
 #include "Utils/MPIInitHelpers.H"
 #include "Utils/Parser/ParserUtils.H"
@@ -1313,10 +1314,10 @@ WarpX::ReadExternalFieldFromFile (
     auto offset2 = offset[2];
 #endif
     auto d = F.gridSpacing<long double>();
-    auto d0 = d[0];
-    auto d1 = d[1];
+    Real d0 = d[0];
+    Real d1 = d[1];
 #if defined(WARPX_DIM_3D)
-    auto d2 = d[2];
+    Real d2 = d[2];
 #endif
 
     auto FC = F[F_component];
@@ -1383,10 +1384,6 @@ WarpX::ReadExternalFieldFromFile (
                 amrex::Real const xx0 = offset0 + ix0*d0;
                 amrex::Real const xx1 = offset1 + ix1*d1;
 
-                // Get portion ratio for linear interpolatioin
-                amrex::Real const ddx0 = (x0-xx0)/d0;
-                amrex::Real const ddx1 = (x1-xx1)/d1;
-
 #if defined(WARPX_DIM_3D)
                 amrex::Real x2;
                 if ( box.type(2)==amrex::IndexType::CellIndex::NODE )
@@ -1394,29 +1391,33 @@ WarpX::ReadExternalFieldFromFile (
                 else { x2 = real_box.lo(2) + k*dx[2] + 0.5*dx[2]; }
                 int const ix2 = floor( (x2-offset2)/d2 );
                 amrex::Real const xx2 = offset2 + ix2*d2;
-                amrex::Real const ddx2 = (x2-xx2)/d2;
 #endif
 
                 // Assign the values through linear interpolation
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent0, extent2, extent1}, 1);
-                mffab(i,j,k) =
-                    fc_array(0, ix1  , ix0  )*(1.0-ddx0)*(1.0-ddx1) +
-                    fc_array(0, ix1  , ix0+1)*(    ddx0)*(1.0-ddx1) +
-                    fc_array(0, ix1+1, ix0  )*(1.0-ddx0)*(    ddx1) +
-                    fc_array(0, ix1+1, ix0+1)*(    ddx0)*(    ddx1);
+                auto
+                    f00 = fc_array(0, ix1  , ix0  ),
+                    f01 = fc_array(0, ix1  , ix0+1),
+                    f10 = fc_array(0, ix1+1, ix0  ),
+                    f11 = fc_array(0, ix1+1, ix0+1);
+                mffab(i,j,k) = utils::algorithms::bilinear_interp(xx0, xx0+d0, xx1, xx1+d1,
+                                                                  f00, f01, f10, f11,
+                                                                  x0, x1);
 #elif defined(WARPX_DIM_3D)
                 amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent0, extent2, extent1}, 1);
-                int ext_2 = extent2;
-                int ext_12 = extent1*extent2;
-                mffab(i,j,k) = FC_data[(ix2  )+(ix1  )*ext_2+(ix0  )*ext_12]*(1.0-ddx0)*(1.0-ddx1)*(1.0-ddx2) +
-                               FC_data[(ix2  )+(ix1  )*ext_2+(ix0+1)*ext_12]*(    ddx0)*(1.0-ddx1)*(1.0-ddx2) +
-                               FC_data[(ix2  )+(ix1+1)*ext_2+(ix0  )*ext_12]*(1.0-ddx0)*(    ddx1)*(1.0-ddx2) +
-                               FC_data[(ix2+1)+(ix1  )*ext_2+(ix0  )*ext_12]*(1.0-ddx0)*(1.0-ddx1)*(    ddx2) +
-                               FC_data[(ix2  )+(ix1+1)*ext_2+(ix0+1)*ext_12]*(    ddx0)*(    ddx1)*(1.0-ddx2) +
-                               FC_data[(ix2+1)+(ix1  )*ext_2+(ix0+1)*ext_12]*(    ddx0)*(1.0-ddx1)*(    ddx2) +
-                               FC_data[(ix2+1)+(ix1+1)*ext_2+(ix0  )*ext_12]*(1.0-ddx0)*(    ddx1)*(    ddx2) +
-                               FC_data[(ix2+1)+(ix1+1)*ext_2+(ix0+1)*ext_12]*(    ddx0)*(    ddx1)*(    ddx2);
+                auto
+                    f000 = fc_array(ix0  , ix1  , ix2  ),
+                    f001 = fc_array(ix0  , ix1  , ix2+1),
+                    f010 = fc_array(ix0  , ix1+1, ix2  ),
+                    f011 = fc_array(ix0  , ix1+1, ix2+1),
+                    f100 = fc_array(ix0+1, ix1  , ix2  ),
+                    f101 = fc_array(ix0+1, ix1  , ix2+1),
+                    f110 = fc_array(ix0+1, ix1+1, ix2  ),
+                    f111 = fc_array(ix0+1, ix1+1, ix2+1);
+                mffab(i,j,k) = utils::algorithms::trilinear_interp(xx0, xx0+d0, xx1, xx1+d1, xx2, xx2+d2,
+                                                                   f000, f001, f010, f011, f100, f101, f110, f111,
+                                                                   x0, x1, x2);
 #endif
 
             }
