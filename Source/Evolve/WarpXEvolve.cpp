@@ -562,6 +562,19 @@ void WarpX::SyncCurrentAndRho ()
         SyncCurrent(current_fp, current_cp);
         SyncRho();
     }
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (rho_fp[lev].get()) {
+            // Reflect density over PEC boundaries, if needed.
+            WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho_fp[lev].get());
+        }
+        // Set current density at PEC boundaries, if needed.
+        WarpX::GetInstance().ApplyJfieldBoundary(
+            lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
+            current_fp[lev][2].get()
+        );
+    }
 }
 
 void
@@ -999,16 +1012,16 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
                 ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
             }
         }
-#else
-        if (rho_fp[lev].get()) {
-            // Reflect density over PEC boundaries, if needed.
-            WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho_fp[lev].get());
-        }
-        // Set current density at PEC boundaries, if needed.
-        WarpX::GetInstance().ApplyJfieldBoundary(
-            lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
-            current_fp[lev][2].get()
-        );
+// #else
+//         if (rho_fp[lev].get()) {
+//             // Reflect density over PEC boundaries, if needed.
+//             WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho_fp[lev].get());
+//         }
+//         // Set current density at PEC boundaries, if needed.
+//         WarpX::GetInstance().ApplyJfieldBoundary(
+//             lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
+//             current_fp[lev][2].get()
+//         );
 #endif
     }
 }
