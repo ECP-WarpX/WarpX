@@ -1311,6 +1311,27 @@ WarpX::ReadExternalFieldFromFile (
     auto series = openPMD::Series(read_fields_from_path, openPMD::Access::READ_ONLY);
     auto iseries = series.iterations.begin()->second;
     auto F = iseries.meshes[F_name];
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(F.getAttribute("dataOrder").get<std::string>() == "C",
+                                     "Reading from files with non-C dataOrder is not implemented");
+
+    auto axisLabels = F.getAttribute("axisLabels").get<std::vector<std::string>>();
+    auto fileGeom = F.getAttribute("geometry").get<std::string>();
+
+#if defined(WARPX_DIM_3D)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "3D can only read from files with cartesian geometry");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "x" && axisLabels[1] == "y" && axisLabels[2] == "z",
+                                     "3D expects axisLabels {x, y, z}");
+#elif defined(WARPX_DIM_XZ)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "XZ can only read from files with cartesian geometry");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "x" && axisLabels[1] == "z",
+                                     "XZ expects axisLabels {x, z}");
+#elif defined(WARPX_DIM_RZ)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "thetaMode", "RZ can only read from files with 'thetaMode'  geometry");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "r" && axisLabels[1] == "z",
+                                     "RZ expects axisLabels {r, z}");
+#endif
+
     auto offset = F.gridGlobalOffset();
     amrex::Real offset0 = offset[0];
     amrex::Real offset1 = offset[1];
