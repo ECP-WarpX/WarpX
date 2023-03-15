@@ -901,6 +901,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         std::string read_fields_from_path="./";
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
 #if defined(WARPX_DIM_RZ)
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                         "External field reading is not implemented for more than one RZ mode");
         ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][0].get(), "B", "r");
         ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][1].get(), "B", "t");
         ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][2].get(), "B", "z");
@@ -917,6 +919,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         std::string read_fields_from_path="./";
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
 #if defined(WARPX_DIM_RZ)
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                         "External field reading is not implemented for more than one RZ mode");
         ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][0].get(), "E", "r");
         ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][1].get(), "E", "t");
         ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][2].get(), "E", "z");
@@ -1293,7 +1297,7 @@ void WarpX::CheckKnownIssues()
 #if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z)
 void
 WarpX::ReadExternalFieldFromFile (
-       std::string read_fields_from_path, MultiFab* mf,
+       std::string read_fields_from_path, amrex::MultiFab* mf,
        std::string F_name, std::string F_component)
 {
     // Get WarpX domain info
@@ -1308,36 +1312,36 @@ WarpX::ReadExternalFieldFromFile (
     auto iseries = series.iterations.begin()->second;
     auto F = iseries.meshes[F_name];
     auto offset = F.gridGlobalOffset();
-    auto offset0 = offset[0];
-    auto offset1 = offset[1];
+    amrex::Real offset0 = offset[0];
+    amrex::Real offset1 = offset[1];
 #if defined(WARPX_DIM_3D)
-    auto offset2 = offset[2];
+    amrex::Real offset2 = offset[2];
 #endif
     auto d = F.gridSpacing<long double>();
-    Real d0 = d[0];
-    Real d1 = d[1];
+    amrex::Real d0 = d[0];
+    amrex::Real d1 = d[1];
 #if defined(WARPX_DIM_3D)
-    Real d2 = d[2];
+    amrex::Real d2 = d[2];
 #endif
 
     auto FC = F[F_component];
     auto extent = FC.getExtent();
+    int extent0 = extent[0];
+    int extent1 = extent[1];
+    int extent2 = extent[2];
 
     // Determine the chunk data that will be loaded.
     // Now, the full range of data is loaded.
     // Loading chunk data can speed up the process.
     // Thus, `chunk_offset` and `chunk_extent` should be modified accordingly in another PR.
     openPMD::Offset chunk_offset = {0,0,0};
-    openPMD::Extent chunk_extent = {extent[0],extent[1],extent[2]};
+    openPMD::Extent chunk_extent = {extent[0], extent[1], extent[2]};
 
     auto FC_chunk_data = FC.loadChunk<double>(chunk_offset,chunk_extent);
     series.flush();
     auto FC_data_host = FC_chunk_data.get();
 
     // Load data to GPU
-    int extent0 = extent[0];
-    int extent1 = extent[1];
-    int extent2 = extent[2];
     size_t total_extent = size_t(extent[0]) * extent[1] * extent[2];
     amrex::Gpu::DeviceVector<double> FC_data_gpu(total_extent);
     auto FC_data = FC_data_gpu.data();
@@ -1346,15 +1350,15 @@ WarpX::ReadExternalFieldFromFile (
     // Loop over boxes
     for (MFIter mfi(*mf, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        auto box = mfi.growntilebox();
-        const amrex::Box& tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
+        amrex::Box box = mfi.growntilebox();
+        amrex::Box tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
         auto const& mffab = mf->array(mfi);
 
         // Start ParallelFor
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                // i,j,k denote x,y,z indicies in 3D xyz.
-                // i,j,k denote r,z,mode indicies in 2D rz.
+                // i,j,k denote x,y,z indices in 3D xyz.
+                // i,j,k denote r,z,mode indices in 2D rz.
 
                 // ii is used for 2D RZ mode
                 int ii = i;
@@ -1395,7 +1399,7 @@ WarpX::ReadExternalFieldFromFile (
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent0, extent2, extent1}, 1);
-                auto
+                double
                     f00 = fc_array(0, ix1  , ix0  ),
                     f01 = fc_array(0, ix1  , ix0+1),
                     f10 = fc_array(0, ix1+1, ix0  ),
@@ -1406,7 +1410,7 @@ WarpX::ReadExternalFieldFromFile (
                      x0, x1);
 #elif defined(WARPX_DIM_3D)
                 amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent2, extent1, extent0}, 1);
-                auto
+                double
                     f000 = fc_array(ix2  , ix1  , ix0  ),
                     f001 = fc_array(ix2+1, ix1  , ix0  ),
                     f010 = fc_array(ix2  , ix1+1, ix0  ),
@@ -1430,7 +1434,7 @@ WarpX::ReadExternalFieldFromFile (
 } // End function WarpX::ReadExternalFieldFromFile
 #else // WARPX_USE_OPENPMD && !WARPX_DIM_1D_Z
 void
-WarpX::ReadExternalFieldFromFile (std::string , MultiFab* ,std::string, std::string)
+WarpX::ReadExternalFieldFromFile (std::string , amrex::MultiFab* ,std::string, std::string)
 {
 #if defined(WARPX_DIM_1D)
     Abort(Utils::TextMsg::Err("Reading fields from openPMD files is not supported in 1D");
