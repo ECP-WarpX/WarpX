@@ -2707,6 +2707,22 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     int qed_runtime_flag = no_qed;
 #endif
 
+    if (save_previous_position) {
+        amrex::ParallelFor(np_to_push,
+            [=] AMREX_GPU_DEVICE (long ip){
+                amrex::ParticleReal xp, yp, zp;
+                getPosition(ip, xp, yp, zp);
+#if (AMREX_SPACEDIM >= 2)
+                x_old[ip] = xp;
+#endif
+#if defined(WARPX_DIM_3D)
+            y_old[ip] = yp;
+#endif
+            z_old[ip] = zp;
+            }
+     );
+    }
+
     // Using this version of ParallelFor with compile time options
     // improves performance when qed or external EB are not used by reducing
     // register pressure.
@@ -2719,16 +2735,6 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
-
-        if (save_previous_position) {
-#if (AMREX_SPACEDIM >= 2)
-            x_old[ip] = xp;
-#endif
-#if defined(WARPX_DIM_3D)
-            y_old[ip] = yp;
-#endif
-            z_old[ip] = zp;
-        }
 
         amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
         amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
@@ -2750,19 +2756,15 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
 #ifdef WARPX_QED
         if (!do_sync)
-#endif
         {
             doParticlePush<0>(getPosition, setPosition, copyAttribs, ip,
                               ux[ip], uy[ip], uz[ip],
                               Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                               ion_lev ? ion_lev[ip] : 0,
                               m, q, pusher_algo, do_crr, do_copy,
-#ifdef WARPX_QED
                               t_chi_max,
-#endif
                               dt);
         }
-#ifdef WARPX_QED
         else {
             if constexpr (qed_control == has_qed) {
                 doParticlePush<1>(getPosition, setPosition, copyAttribs, ip,
@@ -2774,9 +2776,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                   dt);
             }
         }
-#endif
 
-#ifdef WARPX_QED
         auto foo_local_has_quantum_sync = local_has_quantum_sync;
         auto foo_podq = p_optical_depth_QSR;
         auto& evolve_opt_fn = evolve_opt; // have to do all these for nvcc
@@ -2787,7 +2787,15 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                               dt, foo_podq[ip]);
             }
         }
+#else
+        doParticlePush<0>(getPosition, setPosition, copyAttribs, ip,
+                            ux[ip], uy[ip], uz[ip],
+                            Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                            ion_lev ? ion_lev[ip] : 0,
+                            m, q, pusher_algo, do_crr, do_copy,
+                            dt);
 #endif
+
     });
 }
 
