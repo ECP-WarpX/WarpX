@@ -642,15 +642,12 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 void
 WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                                        const bool local, const bool reset,
-                                       const bool do_rz_volume_scaling,
+                                       const bool apply_boundary_and_scale_volume,
                                        const bool interpolate_across_levels,
                                        const int icomp)
 {
     WARPX_PROFILE("WarpXParticleContainer::DepositCharge");
 
-#ifdef WARPX_DIM_RZ
-    (void)do_rz_volume_scaling;
-#endif
     // Loop over the refinement levels
     int const finest_level = rho.size() - 1;
     for (int lev = 0; lev <= finest_level; ++lev)
@@ -684,16 +681,15 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
         }
 #endif
 
+    if (apply_boundary_and_scale_volume)
+    {
 #ifdef WARPX_DIM_RZ
-        if (do_rz_volume_scaling)
-        {
-            WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
-        }
+        WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
 #else
         // Reflect density over PEC boundaries, if needed.
         WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho[lev].get());
-        ignore_unused(do_rz_volume_scaling);
 #endif
+    }
 
         // Exchange guard cells
         if (local == false) {
