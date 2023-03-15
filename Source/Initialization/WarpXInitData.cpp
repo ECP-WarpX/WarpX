@@ -1405,16 +1405,16 @@ WarpX::ReadExternalFieldFromFile (
                      f00, f01, f10, f11,
                      x0, x1);
 #elif defined(WARPX_DIM_3D)
-                amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent0, extent2, extent1}, 1);
+                amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent2, extent1, extent0}, 1);
                 auto
-                    f000 = fc_array(ix0  , ix1  , ix2  ),
-                    f001 = fc_array(ix0  , ix1  , ix2+1),
-                    f010 = fc_array(ix0  , ix1+1, ix2  ),
-                    f011 = fc_array(ix0  , ix1+1, ix2+1),
-                    f100 = fc_array(ix0+1, ix1  , ix2  ),
-                    f101 = fc_array(ix0+1, ix1  , ix2+1),
-                    f110 = fc_array(ix0+1, ix1+1, ix2  ),
-                    f111 = fc_array(ix0+1, ix1+1, ix2+1);
+                    f000 = fc_array(ix2  , ix1  , ix0  ),
+                    f001 = fc_array(ix2+1, ix1  , ix0  ),
+                    f010 = fc_array(ix2  , ix1+1, ix0  ),
+                    f011 = fc_array(ix2+1, ix1+1, ix0  ),
+                    f100 = fc_array(ix2  , ix1  , ix0+1),
+                    f101 = fc_array(ix2+1, ix1  , ix0+1),
+                    f110 = fc_array(ix2  , ix1+1, ix0+1),
+                    f111 = fc_array(ix2+1, ix1+1, ix0+1);
                 mffab(i,j,k) = utils::algorithms::trilinear_interp<double>
                     (xx0, xx0+d0, xx1, xx1+d1, xx2, xx2+d2,
                      f000, f001, f010, f011, f100, f101, f110, f111,
