@@ -5,12 +5,13 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "BackgroundMCCCollision.H"
+
 #include "ImpactIonization.H"
 #include "Particles/ParticleCreation/FilterCopyTransform.H"
 #include "Particles/ParticleCreation/SmartCopy.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/ParticleUtils.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -29,36 +30,42 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
     amrex::ParmParse pp_collision_name(collision_name);
 
     amrex::ParticleReal background_density = 0;
-    if (queryWithParser(pp_collision_name, "background_density", background_density)) {
+    if (utils::parser::queryWithParser(pp_collision_name, "background_density", background_density)) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            (background_density > 0), "The background density must be greater than 0."
-        );
-        m_background_density_parser = makeParser(std::to_string(background_density), {"x", "y", "z", "t"});
+            (background_density > 0),
+            "The background density must be greater than 0.");
+        m_background_density_parser =
+            utils::parser::makeParser(
+                std::to_string(background_density), {"x", "y", "z", "t"});
     }
     else {
         std::string background_density_str;
         pp_collision_name.get("background_density(x,y,z,t)", background_density_str);
-        m_background_density_parser = makeParser(background_density_str, {"x", "y", "z", "t"});
+        m_background_density_parser =
+            utils::parser::makeParser(background_density_str, {"x", "y", "z", "t"});
     }
 
     amrex::ParticleReal background_temperature;
-    if (queryWithParser(pp_collision_name, "background_temperature", background_temperature)) {
+    if (utils::parser::queryWithParser(pp_collision_name, "background_temperature", background_temperature)) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             (background_temperature >= 0), "The background temperature must be positive."
         );
-        m_background_temperature_parser = makeParser(std::to_string(background_temperature), {"x", "y", "z", "t"});
+        m_background_temperature_parser =
+            utils::parser::makeParser(std::to_string(background_temperature), {"x", "y", "z", "t"});
     }
     else {
         std::string background_temperature_str;
         pp_collision_name.get("background_temperature(x,y,z,t)", background_temperature_str);
-        m_background_temperature_parser = makeParser(background_temperature_str, {"x", "y", "z", "t"});
+        m_background_temperature_parser =
+            utils::parser::makeParser(background_temperature_str, {"x", "y", "z", "t"});
     }
 
     // compile parsers for background density and temperature
     m_background_density_func = m_background_density_parser.compile<4>();
     m_background_temperature_func = m_background_temperature_parser.compile<4>();
 
-    queryWithParser(pp_collision_name, "max_background_density", m_max_background_density);
+    utils::parser::queryWithParser(
+        pp_collision_name, "max_background_density", m_max_background_density);
     // if the background density is constant we can use that number to calculate
     // the maximum collision probability, if `max_background_density` was not
     // specified
@@ -75,7 +82,8 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
     // will be used. If no neutral mass is specified and ionization is not
     // included the mass of the colliding species will be used
     m_background_mass = -1;
-    queryWithParser(pp_collision_name, "background_mass", m_background_mass);
+    utils::parser::queryWithParser(
+        pp_collision_name, "background_mass", m_background_mass);
 
     // query for a list of collision processes
     // these could be elastic, excitation, charge_exchange, back, etc.
@@ -95,7 +103,8 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
         if (scattering_process.find("excitation") != std::string::npos ||
             scattering_process.find("ionization") != std::string::npos) {
             std::string kw_energy = scattering_process + "_energy";
-            getWithParser(pp_collision_name, kw_energy.c_str(), energy);
+            utils::parser::getWithParser(
+                pp_collision_name, kw_energy.c_str(), energy);
         }
 
         MCCProcess process(scattering_process, cross_section_file, energy);

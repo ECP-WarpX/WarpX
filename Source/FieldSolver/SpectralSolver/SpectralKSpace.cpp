@@ -141,7 +141,7 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
  * corresponding correcting "shift" factor, along the dimension
  * specified by `i_dim`.
  *
- * (By default, we assume the FFT is done from/to a nodal grid in real space
+ * (By default, we assume the FFT is done from/to a collocated grid in real space
  * It the FFT is performed from/to a cell-centered grid in real space,
  * a correcting "shift" factor must be applied in spectral space.)
  */
@@ -190,14 +190,13 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
  *
  * \param n_order Order of accuracy of the stencil, in discretizing
  *                a spatial derivative
- * \param nodal Whether the stencil is to be applied to a nodal or
-                staggered set of fields
+ * \param grid_type type of grid (collocated or not)
  */
 KVectorComponent
 SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                                        const int i_dim,
                                        const int n_order,
-                                       const bool nodal ) const
+                                       const short grid_type ) const
 {
     // Initialize an empty DeviceVector in each box
     KVectorComponent modified_k_comp(spectralspace_ba, dm);
@@ -217,7 +216,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
     } else {
 
         // Compute real-space stencil coefficients
-        Vector<Real> h_stencil_coef = WarpX::getFornbergStencilCoefficients(n_order, nodal);
+        Vector<Real> h_stencil_coef = WarpX::getFornbergStencilCoefficients(n_order, grid_type);
         Gpu::DeviceVector<Real> d_stencil_coef(h_stencil_coef.size());
         Gpu::copyAsync(Gpu::hostToDevice, h_stencil_coef.begin(), h_stencil_coef.end(),
                        d_stencil_coef.begin());
@@ -243,7 +242,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             {
                 p_modified_k[i] = 0;
                 for (int n=0; n<nstencil; n++){
-                    if (nodal){
+                    if (grid_type == GridType::Collocated){
                         p_modified_k[i] += p_stencil_coef[n]*
                             std::sin( p_k[i]*(n+1)*delta_x )/( (n+1)*delta_x );
                     } else {
@@ -252,12 +251,12 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                     }
                 }
 
-                // By construction, at finite order and for a nodal grid,
+                // By construction, at finite order and for a collocated grid,
                 // the *modified* k corresponding to the Nyquist frequency
                 // (i.e. highest *real* k) is 0. However, the above calculation
                 // based on stencil coefficients does not give 0 to machine precision.
                 // Therefore, we need to enforce the fact that the modified k be 0 here.
-                if (nodal){
+                if (grid_type == GridType::Collocated){
                     if (i_dim == 0){
                         // Because of the real-to-complex FFTs, the first axis (idim=0)
                         // contains only the positive k, and the Nyquist frequency is

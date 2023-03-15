@@ -17,8 +17,11 @@
 
 ## Overview
 
-WarpX is an advanced electromagnetic Particle-In-Cell code.
+WarpX is an advanced **electromagnetic & electrostatic Particle-In-Cell** code.
 It supports many features including Perfectly-Matched Layers (PML), mesh refinement, and the boosted-frame technique.
+
+WarpX is a *highly-parallel and highly-optimized code*, which can run on GPUs and multi-core CPUs, and includes load balancing capabilities.
+WarpX scales to the world's largest supercomputers and was awarded the [2022 ACM Gordon Bell Prize](https://www.exascaleproject.org/ecp-supported-collaborative-teams-win-the-2022-acm-gordon-bell-prize-and-special-prize/).
 
 ## Documentation
 
@@ -45,7 +48,7 @@ Our workflow is described in [CONTRIBUTING.rst](CONTRIBUTING.rst).
 
 ## License
 
-WarpX Copyright (c) 2018-2022, The Regents of the University of California,
+WarpX Copyright (c) 2018-2023, The Regents of the University of California,
 through Lawrence Berkeley National Laboratory (subject to receipt of any
 required approvals from the U.S. Dept. of Energy).  All rights reserved.
 

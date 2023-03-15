@@ -56,20 +56,27 @@ FlushFormatSensei::WriteToFile (
     int nlev, const std::string prefix, int file_min_digits,
     bool plot_raw_fields, bool plot_raw_fields_guards,
     const bool use_pinned_pc,
-    bool isBTD, int snapshotID,
-    const amrex::Geometry& full_BTD_snapshot, bool isLastBTDFlush,
+    bool isBTD, int /*snapshotID*/, int /*bufferID*/, int /*numBuffers*/,
+    const amrex::Geometry& /*full_BTD_snapshot*/, bool /*isLastBTDFlush*/,
     const amrex::Vector<int>& totalParticlesFlushedAlready) const
 {
     amrex::ignore_unused(
         geom, nlev, prefix, file_min_digits,
         plot_raw_fields, plot_raw_fields_guards,
-        use_pinned_pc, isBTD, snapshotID, full_BTD_snapshot,
-        isLastBTDFlush, totalParticlesFlushedAlready);
+        use_pinned_pc,
+        totalParticlesFlushedAlready);
 
 #ifndef AMREX_USE_SENSEI_INSITU
-    amrex::ignore_unused(varnames, mf, iteration, time, particle_diags);
+    amrex::ignore_unused(varnames, mf, iteration, time, particle_diags,
+                         isBTD);
 #else
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !isBTD,
+        "In-situ visualization is not currently supported for back-transformed diagnostics.");
+
     WARPX_PROFILE("FlushFormatSensei::WriteToFile()");
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
+    amrex::Print() << Utils::TextMsg::Info("Writing Sensei file " + filename);
 
     amrex::Vector<amrex::MultiFab> *mf_ptr =
         const_cast<amrex::Vector<amrex::MultiFab>*>(&mf);

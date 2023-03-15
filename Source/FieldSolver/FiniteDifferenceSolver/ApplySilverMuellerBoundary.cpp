@@ -44,7 +44,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 
     // Ensure that we are using the Yee solver
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_fdtd_algo == MaxwellSolverAlgo::Yee,
+        m_fdtd_algo == ElectromagneticSolverAlgo::Yee,
         "The Silver-Mueller boundary conditions can only be used with the Yee solver."
     );
 
@@ -188,12 +188,9 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 #ifdef WARPX_DIM_3D
     bool const apply_lo_y = (field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller);
     bool const apply_hi_y = (field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller);
-    bool const apply_lo_z = (field_boundary_lo[2] == FieldBoundaryType::Absorbing_SilverMueller);
-    bool const apply_hi_z = (field_boundary_hi[2] == FieldBoundaryType::Absorbing_SilverMueller);
-#else
-    bool const apply_lo_z = (field_boundary_lo[1] == FieldBoundaryType::Absorbing_SilverMueller);
-    bool const apply_hi_z = (field_boundary_hi[1] == FieldBoundaryType::Absorbing_SilverMueller);
 #endif
+    bool const apply_lo_z = (field_boundary_lo[WARPX_ZINDEX] == FieldBoundaryType::Absorbing_SilverMueller);
+    bool const apply_hi_z = (field_boundary_hi[WARPX_ZINDEX] == FieldBoundaryType::Absorbing_SilverMueller);
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP

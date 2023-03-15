@@ -18,7 +18,7 @@ If you are new to this system, **please see the following resources**:
 * `Production directories <https://docs.olcf.ornl.gov/data/index.html#data-storage-and-transfers>`_:
 
   * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days (recommended)
-  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days(usually smaller quota)
+  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days (usually smaller quota)
   * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days
   * Note that the ``$HOME`` directory is mounted as read-only on compute nodes.
     That means you cannot run in your ``$HOME``.
@@ -45,6 +45,33 @@ We recommend to store the above lines in a file, such as ``$HOME/crusher_warpx.p
 
    source $HOME/crusher_warpx.profile
 
+And since Crusher does not yet provide a module for them, install BLAS++ and LAPACK++:
+
+.. code-block:: bash
+
+   # c-blosc (I/O compression)
+   git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
+   rm -rf src/c-blosc-crusher-build
+   cmake -S src/c-blosc -B src/c-blosc-crusher-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/crusher/c-blosc-1.21.1
+   cmake --build src/c-blosc-crusher-build --target install --parallel 10
+
+   # ADIOS2
+   git clone -b v2.8.3 https://github.com/ornladios/ADIOS2.git src/adios2
+   rm -rf src/adios2-crusher-build
+   cmake -S src/adios2 -B src/adios2-crusher-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/crusher/adios2-2.8.3
+   cmake --build src/adios2-crusher-build --target install -j 10
+
+   # BLAS++ (for PSATD+RZ)
+   git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
+   rm -rf src/blaspp-crusher-build
+   cmake -S src/blaspp -B src/blaspp-crusher-build -Duse_openmp=OFF -Dgpu_backend=hip -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/crusher/blaspp-master
+   cmake --build src/blaspp-crusher-build --target install --parallel 10
+
+   # LAPACK++ (for PSATD+RZ)
+   git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
+   rm -rf src/lapackpp-crusher-build
+   cmake -S src/lapackpp -B src/lapackpp-crusher-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/crusher/lapackpp-master
+   cmake --build src/lapackpp-crusher-build --target install --parallel 10
 
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
 
@@ -53,10 +80,14 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=HIP
+   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON
    cmake --build build -j 10
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
+
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-crusher-MI100-GPUs>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``$PROJWORK/$proj/``.
 
 
 .. _running-cpp-crusher:
@@ -68,6 +99,8 @@ Running
 
 MI250X GPUs (2x64 GB)
 ^^^^^^^^^^^^^^^^^^^^^
+
+ECP WarpX project members, use the ``aph114`` project ID.
 
 After requesting an interactive node with the ``getNode`` alias above, run a simulation like this, here using 8 MPI ranks and a single node:
 
@@ -105,4 +138,16 @@ Known System Issues
 
    .. code-block:: bash
 
-      export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching
+      #export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching
+      # or, less invasive:
+      export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
+
+.. warning::
+
+   Sep 2nd, 2022 (OLCFDEV-1079):
+   rocFFT in ROCm 5.1+ tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/library.html#runtime-compilation>`__ in the home area by default.
+   This does not scale, disable it via:
+
+   .. code-block:: bash
+
+      export ROCFFT_RTC_CACHE_PATH=/dev/null

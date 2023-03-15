@@ -43,22 +43,17 @@ PML_RZ::PML_RZ (const int lev, const amrex::BoxArray& grid_ba, const amrex::Dist
 
     const amrex::MultiFab & Er_fp = WarpX::GetInstance().getEfield_fp(lev,0);
     const amrex::MultiFab & Et_fp = WarpX::GetInstance().getEfield_fp(lev,1);
-    pml_E_fp[0] = std::make_unique<amrex::MultiFab>( amrex::convert( grid_ba, Er_fp.ixType().toIntVect() ), grid_dm,
-                                                     Er_fp.nComp(), Er_fp.nGrow() );
-    pml_E_fp[1] = std::make_unique<amrex::MultiFab>( amrex::convert( grid_ba, Et_fp.ixType().toIntVect() ), grid_dm,
-                                                     Et_fp.nComp(), Et_fp.nGrow() );
+    const amrex::BoxArray ba_Er = amrex::convert(grid_ba, Er_fp.ixType().toIntVect());
+    const amrex::BoxArray ba_Et = amrex::convert(grid_ba, Et_fp.ixType().toIntVect());
+    WarpX::AllocInitMultiFab(pml_E_fp[0], ba_Er, grid_dm, Er_fp.nComp(), Er_fp.nGrowVect(), "pml_E_fp[0]", 0.0_rt);
+    WarpX::AllocInitMultiFab(pml_E_fp[1], ba_Et, grid_dm, Et_fp.nComp(), Et_fp.nGrowVect(), "pml_E_fp[1]", 0.0_rt);
 
     const amrex::MultiFab & Br_fp = WarpX::GetInstance().getBfield_fp(lev,0);
     const amrex::MultiFab & Bt_fp = WarpX::GetInstance().getBfield_fp(lev,1);
-    pml_B_fp[0] = std::make_unique<amrex::MultiFab>( amrex::convert( grid_ba, Br_fp.ixType().toIntVect() ), grid_dm,
-                                                     Br_fp.nComp(), Br_fp.nGrow() );
-    pml_B_fp[1] = std::make_unique<amrex::MultiFab>( amrex::convert( grid_ba, Bt_fp.ixType().toIntVect() ), grid_dm,
-                                                     Bt_fp.nComp(), Bt_fp.nGrow() );
-
-    pml_E_fp[0]->setVal(0.0);
-    pml_E_fp[1]->setVal(0.0);
-    pml_B_fp[0]->setVal(0.0);
-    pml_B_fp[1]->setVal(0.0);
+    const amrex::BoxArray ba_Br = amrex::convert(grid_ba, Br_fp.ixType().toIntVect());
+    const amrex::BoxArray ba_Bt = amrex::convert(grid_ba, Bt_fp.ixType().toIntVect());
+    WarpX::AllocInitMultiFab(pml_B_fp[0], ba_Br, grid_dm, Br_fp.nComp(), Br_fp.nGrowVect(), "pml_B_fp[0]", 0.0_rt);
+    WarpX::AllocInitMultiFab(pml_B_fp[1], ba_Bt, grid_dm, Bt_fp.nComp(), Bt_fp.nGrowVect(), "pml_B_fp[1]", 0.0_rt);
 
 }
 

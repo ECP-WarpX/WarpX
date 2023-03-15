@@ -70,3 +70,20 @@ What does const int ``/*i_buffer*/`` mean in argument list?
 This is often seen in a derived class, overwriting an interface method.
 It means we do not name the parameter because we do not use it when we overwrite the interface.
 But we add the name as a comment ``/* ... */`` so that we know what we ignored when looking at the definition of the overwritten method.
+
+
+What is Pinned Memory?
+----------------------
+
+We need pinned aka "page locked" host memory when we:
+
+- do asynchronous copies between the host and device
+- want to write to CPU memory from a GPU kernel
+
+A typical use case is initialization of our (filtered/processed) output routines.
+AMReX provides pinned memory via the ``amrex::PinnedArenaAllocator`` , which is the last argument passed to constructors of ``ParticleContainer`` and ``MultiFab``.
+
+Read more on this here: `How to Optimize Data Transfers in CUDA C/C++ <https://developer.nvidia.com/blog/how-optimize-data-transfers-cuda-cc/>`__ (note that pinned memory is a host memory feature and works with all GPU vendors we support)
+
+Bonus: underneath the hood, asynchronous MPI communications also pin and unpin memory.
+One of the benefits of GPU-aware MPI implementations is, besides the possibility to use direct device-device transfers, that MPI and GPU API calls `are aware of each others' pinning ambitions <https://www.open-mpi.org/community/lists/users/2012/11/20659.php>`__ and do not create `data races to unpin the same memory <https://github.com/ComputationalRadiationPhysics/picongpu/pull/438>`__.

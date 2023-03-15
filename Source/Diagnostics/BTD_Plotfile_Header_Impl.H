@@ -245,7 +245,8 @@ class BTDSpeciesHeaderImpl
 {
 public:
     /** Constructor.
-     * \param[in] string containing path of Headerfile
+     * \param[in] Headerfile_path string containing path of Headerfile
+     * \param[in] species_name string containing species name
      */
     BTDSpeciesHeaderImpl (std::string const& Headerfile_path, std::string const& species_name);
     ~BTDSpeciesHeaderImpl () = default;
@@ -256,7 +257,7 @@ public:
     /** Set data Index of the data-file, DATAXXXXX, that the particles belong to*/
     void set_DataIndex (const int lev, const int box_id, const int data_index);
     /** Add new_particles to existing to obtain the total number of particles of the species.
-        \param[in] new_particles, total particles in the new buffer
+        \param[in] new_particles total particles in the new buffer
      */
     void AddTotalParticles (const int new_particles) { m_total_particles += new_particles;}
     /** Increment number of boxes in a box array by 1, with every flush. */
@@ -310,7 +311,7 @@ class BTDParticleDataHeaderImpl
 {
 public:
     /** Constructor.
-     * \param[in] string containing path of Headerfile
+     * \param[in] Headerfile_path containing path of Headerfile
      */
     BTDParticleDataHeaderImpl (std::string const& Headerfile_path);
     /** Destructor */
@@ -326,14 +327,14 @@ public:
      */
     void IncreaseBoxArraySize ( const int add_size) { m_ba_size += add_size;}
     /** Returns box corresponding to the ith box in the BoxArray, m_ba.
-     *  \param[in] int ibox, index of the box in the BoxArray.
+     *  \param[in] ibox index of the box in the BoxArray.
      */
     amrex::Box ba_box (int ibox) {return m_ba[ibox]; }
     /** Resize boxArray, m_ba, to size, m_ba_size. */
     void ResizeBoxArray () { m_ba.resize(m_ba_size); }
     /** Set Box indices of the ith-box in Box Array, m_ba, to the new Box, ba_box.
-     *  \param[in] int ibox, index of the ith box in BoxArray, m_ba.
-     *  \param[in] amrex::Box box dimensions corresponding to the ith Fab.
+     *  \param[in] ibox index of the ith box in BoxArray, m_ba.
+     *  \param[in] ba_box dimensions corresponding to the ith Fab.
      */
     void SetBox (int ibox, amrex::Box ba_box) { m_ba.set(ibox, ba_box); }
     /** Size of BoxArray, m_ba*/

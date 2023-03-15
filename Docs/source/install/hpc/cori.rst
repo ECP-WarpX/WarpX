@@ -59,13 +59,13 @@ And install ADIOS2, BLAS++ and LAPACK++:
    cmake --build src/adios2-knl-build --target install --parallel 16
 
    # BLAS++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+   git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
    rm -rf src/blaspp-knl-build
    cmake -S src/blaspp -B src/blaspp-knl-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/knl/blaspp-master-install
    cmake --build src/blaspp-knl-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+   git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-knl-build
    CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-knl-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/knl/lapackpp-master-install
    cmake --build src/lapackpp-knl-build --target install --parallel 16
@@ -122,13 +122,13 @@ And install ADIOS2, BLAS++ and LAPACK++:
    cmake --build src/adios2-haswell-build --target install --parallel 16
 
    # BLAS++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+   git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
    rm -rf src/blaspp-haswell-build
    cmake -S src/blaspp -B src/blaspp-haswell-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/blaspp-master-haswell-install
    cmake --build src/blaspp-haswell-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+   git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-haswell-build
    CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-haswell-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/haswell/lapackpp-master-install
    cmake --build src/lapackpp-haswell-build --target install --parallel 16
@@ -245,6 +245,12 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    #                       append if you target GPUs:    -DWarpX_COMPUTE=CUDA
    cmake -S . -B build -DWarpX_DIMS=3
    cmake --build build -j 16
+
+The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
+
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-cori>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``$SCRATCH``.
 
 The general :ref:`cmake compile-time options and instructions for Python (PICMI) bindings <building-cmake-python>` apply as usual:
 

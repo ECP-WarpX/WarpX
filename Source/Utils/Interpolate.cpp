@@ -25,7 +25,7 @@ namespace Interpolate
     std::unique_ptr<MultiFab>
     getInterpolatedScalar(
         const MultiFab& F_cp, const MultiFab& F_fp,
-        const DistributionMapping& dm, const int r_ratio,
+        const DistributionMapping& dm, const amrex::IntVect r_ratio,
         const Real* /*dx*/, const IntVect ngrow )
     {
         // Prepare the structure that will contain the returned fields
@@ -49,7 +49,7 @@ namespace Interpolate
 
                 // - Fully nodal
                 if ( F_fp.is_nodal() ){
-                    IntVect refinement_vector{AMREX_D_DECL(r_ratio, r_ratio, r_ratio)};
+                    amrex::IntVect refinement_vector{AMREX_D_DECL(r_ratio[0], r_ratio[1], r_ratio[2])};
                     node_bilinear_interp.interp(cfab, 0, ffab, 0, 1,
                                                 finebx, refinement_vector, {}, {}, {}, 0, 0, RunOn::Cpu);
                 } else {
@@ -72,7 +72,7 @@ namespace Interpolate
         const MultiFab* Fx_fp,
         const MultiFab* Fy_fp,
         const MultiFab* Fz_fp,
-        const DistributionMapping& dm, const int r_ratio,
+        const DistributionMapping& dm, const amrex::IntVect r_ratio,
         const Real* /*dx*/, const IntVect ngrow )
     {
 

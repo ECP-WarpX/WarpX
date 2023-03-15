@@ -39,12 +39,12 @@ class FiniteDifferenceSolver
          *
          * \param fdtd_algo Identifies the chosen algorithm, as defined in WarpXAlgorithmSelection.H
          * \param cell_size Cell size along each dimension, for the chosen refinement level
-         * \param do_nodal  Whether the solver is applied to a nodal or staggered grid
+         * \param grid_type Whether the solver is applied to a collocated or staggered grid
          */
         FiniteDifferenceSolver (
             int const fdtd_algo,
             std::array<amrex::Real,3> cell_size,
-            bool const do_nodal );
+            short const grid_type );
 
         void EvolveB ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
@@ -101,10 +101,10 @@ class FiniteDifferenceSolver
           * \param[out] Efield  vector of electric field MultiFabs updated at a given level
           * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
           * \param[in] Jfield   vector of current density MultiFabs at a given level
+          * \param[in] edge_lengths length of edges along embedded boundaries
           * \param[in] dt       timestep of the simulation
           * \param[in] macroscopic_properties contains user-defined properties of the medium.
           */
-
         void MacroscopicEvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
@@ -132,7 +132,7 @@ class FiniteDifferenceSolver
     private:
 
         int m_fdtd_algo;
-        bool m_do_nodal;
+        short m_grid_type;
 
 #ifdef WARPX_DIM_RZ
         amrex::Real m_dr, m_rmin;

@@ -28,7 +28,7 @@ public:
      * \param dx cell spacing
      * \param do_subcycling bool, whether to use subcycling
      * \param do_fdtd_nci_corr bool, whether to use Godfrey NCI corrector
-     * \param do_nodal bool, whether the field solver is nodal
+     * \param grid_type integer, whether the grid is collocated or staggered
      * \param do_moving_window bool, whether to use moving window
      * \param moving_window_dir direction of moving window
      * \param nox order of current deposition
@@ -36,42 +36,44 @@ public:
      * \param noy_fft order of PSATD in y direction
      * \param noz_fft order of PSATD in z direction
      * \param nci_corr_stencil stencil of NCI corrector
-     * \param maxwell_solver_id if of Maxwell solver
+     * \param electromagnetic_solver_id Integer corresponding to the type of Maxwell solver
      * \param max_level max level of the simulation
      * \param v_galilean Velocity used in the Galilean PSATD scheme
      * \param v_comoving Velocity used in the comoving PSATD scheme
      * \param safe_guard_cells Run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
-     * \param do_electrostatic Whether to run in electrostatic mode i.e. solving the Poisson equation instead of the Maxwell equations.
      * \param do_multi_J Whether to use the multi-J PSATD scheme
      * \param fft_do_time_averaging Whether to average the E and B field in time (with PSATD) before interpolating them onto the macro-particles
      * \param do_pml whether pml is turned on (only used by RZ PSATD)
      * \param do_pml_in_domain whether pml is done in the domain (only used by RZ PSATD)
      * \param pml_ncell number of cells on the pml layer (only used by RZ PSATD)
      * \param ref_ratios mesh refinement ratios between mesh-refinement levels
+     * \param use_filter whether filtering will be done
+     * \param bilinear_filter_stencil_length the size of the stencil for filtering
      */
     void Init(
         const amrex::Real dt,
         const amrex::RealVect dx,
         const bool do_subcycling,
         const bool do_fdtd_nci_corr,
-        const bool do_nodal,
+        const short grid_type,
         const bool do_moving_window,
         const int moving_window_dir,
         const int nox,
         const int nox_fft, const int noy_fft, const int noz_fft,
         const int nci_corr_stencil,
-        const int maxwell_solver_id,
+        const int electromagnetic_solver_id,
         const int max_level,
         const amrex::Vector<amrex::Real> v_galilean,
         const amrex::Vector<amrex::Real> v_comoving,
         const bool safe_guard_cells,
-        const int do_electrostatic,
         const int do_multi_J,
         const bool fft_do_time_averaging,
         const bool do_pml,
         const int do_pml_in_domain,
         const int pml_ncell,
-        const amrex::Vector<amrex::IntVect>& ref_ratios);
+        const amrex::Vector<amrex::IntVect>& ref_ratios,
+        const bool use_filter,
+        const amrex::IntVect& bilinear_filter_stencil_length);
 
     // Guard cells allocated for MultiFabs E and B
     amrex::IntVect ng_alloc_EB = amrex::IntVect::TheZeroVector();

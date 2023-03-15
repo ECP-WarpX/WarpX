@@ -8,7 +8,6 @@
 #define PARTICLEBOUNDARIES_H_
 
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXUtil.H"
 
 #include <AMReX_AmrCore.H>
 #include <AMReX_Parser.H>
