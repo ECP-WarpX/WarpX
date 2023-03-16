@@ -73,9 +73,14 @@ class SpectralFieldDataRZ
          */
         void CopySpectralDataComp (const int src_comp, const int dest_comp)
         {
-            // The last two arguments represent the number of components and
-            // the number of ghost cells to perform this operation
-            Copy(fields, fields, src_comp, dest_comp, n_rz_azimuthal_modes, 0);
+            const int nmodes = n_rz_azimuthal_modes;
+            for (int imode=0 ; imode < nmodes ; imode++)
+            {
+                const int shift_comp = imode * m_n_fields;
+                // The last two arguments represent the number of components and
+                // the number of ghost cells to perform this operation
+                Copy(fields, fields, src_comp + shift_comp, dest_comp + shift_comp, 1, 0);
+            }
         }
 
         /**
