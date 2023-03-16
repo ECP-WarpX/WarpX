@@ -307,6 +307,9 @@ public:
     static utils::parser::IntervalsParser sort_intervals;
     static amrex::IntVect sort_bin_size;
 
+    static bool sort_particles_for_deposition;
+    static amrex::IntVect sort_idx_type;
+
     static bool do_subcycling;
     static bool do_multi_J;
     static int do_multi_J_n_depositions;
