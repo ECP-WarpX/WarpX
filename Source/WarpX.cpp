@@ -172,7 +172,12 @@ int WarpX::num_mirrors = 0;
 utils::parser::IntervalsParser WarpX::sort_intervals;
 amrex::IntVect WarpX::sort_bin_size(AMREX_D_DECL(1,1,1));
 
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
 bool WarpX::sort_particles_for_deposition = true;
+#else
+bool WarpX::sort_particles_for_deposition = false;
+#endif
+
 amrex::IntVect WarpX::sort_idx_type(AMREX_D_DECL(0,0,0));
 
 bool WarpX::do_dynamic_scheduling = true;
