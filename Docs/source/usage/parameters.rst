@@ -212,14 +212,10 @@ Setting up the field mesh
     When using mesh refinement, this is the refinement ratio per level.
     With this option, all directions are fined by the same ratio.
 
-    Note: in development; currently, ``2`` is supported.
-
 * ``amr.ref_ratio_vect`` (`3 integers for x,y,z per refined level`)
     When using mesh refinement, this can be used to set the refinement ratio per direction and level, relative to the previous level.
 
     Example: for three levels, a value of ``2 2 4 8 8 16`` refines the first level by 2-fold in x and y and 4-fold in z compared to the coarsest level (level 0/mother grid); compared to the first level, the second level is refined 8-fold in x and y and 16-fold in z.
-
-    Note: in development; currently allowed value: ``2 2 2``.
 
 * ``geometry.dims`` (`string`)
     The dimensions of the simulation geometry.
