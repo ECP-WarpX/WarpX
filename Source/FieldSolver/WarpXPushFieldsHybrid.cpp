@@ -85,6 +85,7 @@ void WarpX::HybridEvolveFields ()
     // momentum equation
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
+        CalculateCurrentAmpere();
         HybridSolveE(DtType::FirstHalf);
         EvolveB(0.5 / sub_steps * dt[0], DtType::FirstHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
@@ -96,6 +97,7 @@ void WarpX::HybridEvolveFields ()
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
+        CalculateCurrentAmpere();
         HybridSolveE(DtType::SecondHalf);
         EvolveB(0.5 / sub_steps * dt[0], DtType::SecondHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
@@ -149,6 +151,7 @@ void WarpX::HybridEvolveFields ()
     }
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
+    CalculateCurrentAmpere();
     HybridSolveE(DtType::Full);
 
     // Copy the J_i^{n+1/2} values to current_fp_temp since at the next step
@@ -160,6 +163,31 @@ void WarpX::HybridEvolveFields ()
                            0, 0, 1, current_fp_temp[lev][idim]->nGrowVect());
         }
     }
+}
+
+void WarpX::CalculateCurrentAmpere ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        CalculateCurrentAmpere(lev);
+    }
+}
+
+void WarpX::CalculateCurrentAmpere (int lev)
+{
+    WARPX_PROFILE("WarpX::CalculateCurrentAmpere()");
+    m_fdtd_solver_fp[lev]->CalculateCurrentAmpere(
+        current_fp_ampere[lev], Bfield_fp[lev],
+        m_edge_lengths[lev], lev
+    );
+
+    // we shouldn't apply the boundary condition to J since J = J_i - J_e but
+    // the boundary correction was already applied to J_i and the B-field
+    // boundary ensures that J itself complies with the boundary conditions
+    // ApplyJfieldBoundary(lev, Jfield[0].get(), Jfield[1].get(), Jfield[2].get());
+
+    if (use_filter) ApplyFilterJ(current_fp_ampere, lev);
+    for (int i=0; i<3; i++) get_pointer_current_fp_ampere(lev, i)->FillBoundary(Geom(lev).periodicity());
 }
 
 void WarpX::HybridSolveE (DtType a_dt_type)

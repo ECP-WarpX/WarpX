@@ -22,47 +22,30 @@
 
 using namespace amrex;
 
-void FiniteDifferenceSolver::HybridSolveE (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-    std::unique_ptr<amrex::MultiFab> const& rhofield,
-    std::unique_ptr<amrex::MultiFab> const& Pefield,
+void FiniteDifferenceSolver::CalculateCurrentAmpere (
+    std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    int lev, std::unique_ptr<HybridModel> const& hybrid_model,
-    DtType a_dt_type )
+    int lev )
 {
-
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !m_do_nodal, "hybrid E-solve does not work with do_nodal=true");
-
-
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-    if (m_fdtd_algo == ElectromagneticSolverAlgo::Hybrid) {
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee ||
+        m_fdtd_algo == ElectromagneticSolverAlgo::Hybrid) {
 #ifdef WARPX_DIM_RZ
         CalculateTotalCurrentCylindrical <CylindricalYeeAlgorithm> (
             Jfield, Bfield, edge_lengths, lev
         );
 
-        HybridSolveECylindrical <CylindricalYeeAlgorithm> (
-            Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
-            edge_lengths, lev, hybrid_model, a_dt_type
-        );
 #else
         CalculateTotalCurrentCartesian <CartesianYeeAlgorithm> (
             Jfield, Bfield, edge_lengths, lev
         );
 
-        HybridSolveECartesian <CartesianYeeAlgorithm> (
-            Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
-            edge_lengths, lev, hybrid_model, a_dt_type
-        );
 #endif
     } else {
         amrex::Abort(Utils::TextMsg::Err(
-            "HybridSolveE: The hybrid electromagnetic solver algorithm must be used"));
+            "CalculateCurrentAmpere: Unknown algorithm choice."));
     }
 }
 
@@ -199,15 +182,49 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
-
-    // fill ghost cells with appropriate values
-    auto & warpx = WarpX::GetInstance();
-    // we shouldn't apply the boundary condition to J since J = J_i - J_e but
-    // the boundary correction was already applied to J_i
-    // warpx.ApplyJfieldBoundary(lev, Jfield[0].get(), Jfield[1].get(), Jfield[2].get());
-    for (int i=0; i<3; i++) Jfield[i]->FillBoundary(warpx.Geom(lev).periodicity());
 }
 #endif
+
+
+void FiniteDifferenceSolver::HybridSolveE (
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::unique_ptr<amrex::MultiFab> const& rhofield,
+    std::unique_ptr<amrex::MultiFab> const& Pefield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+    int lev, std::unique_ptr<HybridModel> const& hybrid_model,
+    DtType a_dt_type )
+{
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !m_do_nodal, "hybrid E-solve does not work with do_nodal=true");
+
+
+   // Select algorithm (The choice of algorithm is a runtime option,
+   // but we compile code for each algorithm, using templates)
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Hybrid) {
+#ifdef WARPX_DIM_RZ
+
+        HybridSolveECylindrical <CylindricalYeeAlgorithm> (
+            Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
+            edge_lengths, lev, hybrid_model, a_dt_type
+        );
+
+#else
+
+        HybridSolveECartesian <CartesianYeeAlgorithm> (
+            Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
+            edge_lengths, lev, hybrid_model, a_dt_type
+        );
+
+#endif
+    } else {
+        amrex::Abort(Utils::TextMsg::Err(
+            "HybridSolveE: The hybrid electromagnetic solver algorithm must be used"));
+    }
+}
 
 #ifdef WARPX_DIM_RZ
 template<typename T_Algo>

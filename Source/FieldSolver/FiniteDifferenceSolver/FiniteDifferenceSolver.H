@@ -153,6 +153,12 @@ class FiniteDifferenceSolver
                       int lev, std::unique_ptr<HybridModel> const& hybrid_model,
                       DtType a_dt_type );
 
+        void CalculateCurrentAmpere (
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                      int lev );
+
     private:
 
         int m_fdtd_algo;

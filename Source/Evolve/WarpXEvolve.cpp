@@ -141,6 +141,14 @@ WarpX::Evolve (int numsteps)
             {
                 mypc->DepositCurrent(current_fp_temp, dt[0], 0.0);
                 SyncCurrent(current_fp_temp, current_cp);
+                for (int lev = 0; lev < finest_level; lev++) {
+                    // Set current density at PEC boundaries, if needed.
+                    WarpX::GetInstance().ApplyJfieldBoundary(
+                        lev, current_fp_temp[lev][0].get(),
+                        current_fp_temp[lev][1].get(),
+                        current_fp_temp[lev][2].get()
+                    );
+                }
             }
 
             is_synchronized = false;
