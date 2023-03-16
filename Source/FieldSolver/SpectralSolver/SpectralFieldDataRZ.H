@@ -90,8 +90,13 @@ class SpectralFieldDataRZ
          */
         void ZeroOutDataComp(const int icomp)
         {
-            // The last argument represents the number of components to perform this operation
-            fields.setVal(0., icomp, n_rz_azimuthal_modes);
+            const int nmodes = n_rz_azimuthal_modes;
+            for (int imode=0 ; imode < nmodes ; imode++)
+            {
+                const int shift_comp = imode * m_n_fields;
+                // The last argument represents the number of components to perform this operation
+                fields.setVal(0., icomp + shift_comp, 1);
+            }
         }
 
         /**
