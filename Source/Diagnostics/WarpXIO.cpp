@@ -252,7 +252,7 @@ WarpX::InitFromCheckpoint ()
                             is >> snapshot_hi;
                             diag.setSnapshotDomainHi(i_buffer, idim, snapshot_hi);
                         }
-                        
+
                         int flush_counter;
                         is >> flush_counter;
                         diag.set_flush_counter(i_buffer, flush_counter);
@@ -265,7 +265,7 @@ WarpX::InitFromCheckpoint ()
                         is >> snapshot_full_flag;
                         diag.set_snapshot_full(i_buffer, snapshot_full_flag);
 
-                    }               
+                    }
                     diag.InitDataAfterRestart();
                 } else {
                     diag.InitData();
