@@ -24,4 +24,3 @@ compared to the analytic solutions.
     analysis_langmuir_multi_1d.py
     analysis_langmuir_multi_2d.py
     analysis_langmuir_multi_rz.py
-
