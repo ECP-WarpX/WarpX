@@ -115,6 +115,13 @@ public:
     amrex::Real get_snapshot_domain_hi(int i_buffer, int idim) {return m_snapshot_domain_lab[i_buffer].hi(idim); }
     void setSnapshotDomainLo(int i_buffer, int idim,  amrex::Real domain_lab_lo) {m_snapshot_domain_lab[i_buffer].setLo(idim, domain_lab_lo); }
     void setSnapshotDomainHi(int i_buffer, int idim,  amrex::Real domain_lab_hi) {m_snapshot_domain_lab[i_buffer].setHi(idim, domain_lab_hi); }
+    virtual int get_flush_counter ( [[maybe_unused]] int i_buffer) { return 0; }
+    virtual void set_flush_counter ( [[maybe_unused]] int i_buffer, [[maybe_unused]] int flush_counter) { }
+    virtual int get_last_valid_Zslice ( [[maybe_unused]] int i_buffer) { return 0; }
+    virtual void set_last_valid_Zslice ( [[maybe_unused]] int i_buffer, [[maybe_unused]] int last_valid_Zslice) { }
+    virtual int get_snapshot_full_flag ( [[maybe_unused]] int i_buffer) { return 0; }
+    virtual void set_snapshot_full ( [[maybe_unused]] int i_buffer, [[maybe_unused]] int snapshot_full) { }
+
 protected:
     /** Read Parameters of the base Diagnostics class */
     bool BaseReadParameters ();

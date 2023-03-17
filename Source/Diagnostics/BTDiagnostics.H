@@ -124,6 +124,7 @@ private:
      * \param[in] lev the mesh-refinement level
      */
     bool GetZSliceInDomainFlag (const int i_buffer, const int lev);
+    bool GetKIndexInSnapshotBoxFlag (const int i_buffer, const int lev);
 
     /** Initialize buffer domain, buffer box and lab-frame parameters such as
      *  m_t_lab, and z-positions for the i^th snapshot, i_buffer, and level, lev.
@@ -310,6 +311,12 @@ private:
         return ( m_buffer_counter[i_buffer] == 0) ;
     }
 
+    amrex::Vector<int> m_first_flush_after_restart;
+    void NullifyFirstFlush(int i_buffer) {m_first_flush_after_restart[i_buffer] = 0;}
+
+    amrex::Vector<int> m_snapshot_geometry_defined;
+    amrex::Vector<int> m_field_buffer_multifab_defined;
+
     /** Reset buffer counter to zero.
      * \param[in] i_buffer snapshot index for which the counter is set to zero.
      */
@@ -388,5 +395,11 @@ private:
     void RedistributeParticleBuffer (const int i_buffer);
     void UpdateVarnamesForRZopenPMD();
 
+    int get_flush_counter (int i_buffer) override {return m_buffer_flush_counter[i_buffer]; }
+    void set_flush_counter ([[maybe_unused]] int i_buffer, int flush_counter) override { m_buffer_flush_counter[i_buffer] = flush_counter; }
+    int get_last_valid_Zslice ( int i_buffer) override { return m_lastValidZSlice[i_buffer]; }
+    void set_last_valid_Zslice ( int i_buffer, int last_valid_Zslice) override { m_lastValidZSlice[i_buffer] = last_valid_Zslice; }
+    int get_snapshot_full_flag ( int i_buffer) override { return m_snapshot_full[i_buffer]; }
+    void set_snapshot_full ( int i_buffer, int snapshot_full) override { m_snapshot_full[i_buffer] = snapshot_full; }
 };
 #endif // WARPX_BTDIAGNOSTICS_H_

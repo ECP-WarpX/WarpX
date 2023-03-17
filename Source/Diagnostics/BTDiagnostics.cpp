@@ -88,10 +88,17 @@ void BTDiagnostics::DerivedInitData ()
     m_snapshot_full.resize( m_num_buffers );
     m_lastValidZSlice.resize( m_num_buffers );
     m_buffer_k_index_hi.resize(m_num_buffers);
+    m_first_flush_after_restart.resize(m_num_buffers);
+    m_snapshot_geometry_defined.resize(m_num_buffers);
+    m_field_buffer_multifab_defined.resize(m_num_buffers);
     for (int i = 0; i < m_num_buffers; ++i) {
         m_geom_snapshot[i].resize(nmax_lev);
         m_snapshot_full[i] = 0;
         m_lastValidZSlice[i] = 0;
+        m_buffer_flush_counter[i] = 0;
+        m_first_flush_after_restart[i] = 1;
+        m_snapshot_geometry_defined[i] = 0;
+        m_field_buffer_multifab_defined[i] = 0;
     }
     for (int lev = 0; lev < nmax_lev; ++lev) {
         // Define cell-centered multifab over the whole domain with
@@ -407,7 +414,6 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
 
     // Initialize buffer counter and z-positions of the  i^th snapshot in
     // boosted-frame and lab-frame
-    m_buffer_flush_counter[i_buffer] = 0;
     m_buffer_counter[i_buffer] = 0;
     m_current_z_lab[i_buffer] = 0._rt;
     m_current_z_boost[i_buffer] = 0._rt;
@@ -819,15 +825,18 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                 // Check if the zslice is in domain
                 bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
                 // Initialize and define field buffer multifab if buffer is empty
-                if (ZSliceInDomain) {
+                bool kindexInSnapshotBox = GetKIndexInSnapshotBoxFlag (i_buffer, lev);
+                if (kindexInSnapshotBox) {
                     if ( buffer_empty(i_buffer) ) {
-                        if ( m_buffer_flush_counter[i_buffer] == 0) {
+                        if ( m_buffer_flush_counter[i_buffer] == 0 || m_first_flush_after_restart[i_buffer] == 1) {
                             // Compute the geometry, snapshot lab-domain extent
                             // and box-indices
                             DefineSnapshotGeometry(i_buffer, lev);
                         }
                         DefineFieldBufferMultiFab(i_buffer, lev);
                     }
+                }
+                if (ZSliceInDomain) {
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                         m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
                         m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir),
@@ -887,6 +896,7 @@ BTDiagnostics::SetSnapshotFullStatus (const int i_buffer)
 void
 BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
 {
+    if (m_field_buffer_multifab_defined[i_buffer] == 1) return;
     auto & warpx = WarpX::GetInstance();
 
     const int hi_k_lab = m_buffer_k_index_hi[i_buffer];
@@ -941,12 +951,14 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         m_geom_output[i_buffer][lev] = amrex::refine( m_geom_output[i_buffer][lev-1],
                                                       warpx.RefRatio(lev-1) );
     }
+    m_field_buffer_multifab_defined[i_buffer] = 1;
 }
 
 
 void
 BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
 {
+    if (m_snapshot_geometry_defined[i_buffer] == 1) return;
     auto & warpx = WarpX::GetInstance();
 
     if (lev == 0) {
@@ -964,6 +976,7 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
         m_geom_snapshot[i_buffer][lev] = amrex::refine( m_geom_snapshot[i_buffer][lev-1],
                                                         warpx.RefRatio(lev-1) );
     }
+    m_snapshot_geometry_defined[i_buffer] = 1;
 }
 
 bool
@@ -983,6 +996,18 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
     }
 
     return true;
+}
+
+
+bool
+BTDiagnostics::GetKIndexInSnapshotBoxFlag (const int i_buffer, const int lev)
+{
+    if (k_index_zlab(i_buffer, lev) >= m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir) and
+        k_index_zlab(i_buffer, lev) <= m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir)) {
+        return true;
+    }
+
+    return false;
 }
 
 void
@@ -1080,7 +1105,9 @@ BTDiagnostics::Flush (int i_buffer)
 
     // Reset the buffer counter to zero after flushing out data stored in the buffer.
     ResetBufferCounter(i_buffer);
+    m_field_buffer_multifab_defined[i_buffer] = 0;
     IncrementBufferFlushCounter(i_buffer);
+    NullifyFirstFlush(i_buffer);
     // if particles are selected for output then update and reset counters
     if (m_output_species_names.size() > 0) {
         UpdateTotalParticlesFlushed(i_buffer);
@@ -1130,7 +1157,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
         std::string recent_Buffer_Level0_path = recent_Buffer_filepath + "/Level_0";
         std::string recent_Buffer_FabHeaderFilename = recent_Buffer_Level0_path + "/Cell_H";
         // Create directory only when the first buffer is flushed out.
-        if (m_buffer_flush_counter[i_snapshot] == 0 ) {
+        if (m_buffer_flush_counter[i_snapshot] == 0 || m_first_flush_after_restart[i_snapshot] == 1) {
             // Create Level_0 directory to store all Cell_D and Cell_H files
             if (!amrex::UtilCreateDirectory(snapshot_Level0_path, permission_flag_rwxrxrx) )
                 amrex::CreateDirectoryFailed(snapshot_Level0_path);
@@ -1172,7 +1199,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             // Cell_D_<number> is padded with 5 zeros as that is the default AMReX output
             std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_", m_buffer_flush_counter[i_snapshot], amrex_fabfile_digits);
 
-            if ( m_buffer_flush_counter[i_snapshot] == 0) {
+            if (m_buffer_flush_counter[i_snapshot] == 0 || m_first_flush_after_restart[i_snapshot] == 1) {
                 std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
                 Buffer_FabHeader.SetFabName(0, Buffer_FabHeader.fodPrefix(0),
                                             new_snapshotFabFilename,
@@ -1218,7 +1245,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                 m_buffer_flush_counter[i_snapshot],
                 amrex_partfile_digits);
 
-            if (m_buffer_flush_counter[i_snapshot] == 0) {
+            if (m_buffer_flush_counter[i_snapshot] == 0 || m_first_flush_after_restart[i_snapshot] == 1) {
                 BufferSpeciesHeader.set_DataIndex(0,0,m_buffer_flush_counter[i_snapshot]);
                 BufferSpeciesHeader.WriteHeader();
 
