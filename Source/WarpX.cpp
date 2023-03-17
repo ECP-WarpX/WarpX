@@ -135,7 +135,6 @@ bool WarpX::do_single_precision_comms = false;
 bool WarpX::do_shared_mem_charge_deposition = false;
 bool WarpX::do_shared_mem_current_deposition = false;
 int WarpX::shared_mem_current_tpb = 128;
-//Note this is not really the default. Default is sort_bin_size
 amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1));
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
@@ -772,7 +771,7 @@ WarpX::ReadParameters ()
 
         // initialize the shared tilesize
         Vector<int> vect_shared_tilesize(AMREX_SPACEDIM, 1);
-        bool shared_tilesize_is_specified = queryArrWithParser(pp_warpx, "shared_tilesize",
+        bool shared_tilesize_is_specified = utils::parser::queryArrWithParser(pp_warpx, "shared_tilesize",
                                                             vect_shared_tilesize, 0, AMREX_SPACEDIM);
         if (shared_tilesize_is_specified){
             for (int i=0; i<AMREX_SPACEDIM; i++)
@@ -1182,7 +1181,6 @@ WarpX::ReadParameters ()
             for (int i=0; i<AMREX_SPACEDIM; i++)
                 sort_bin_size[i] = vect_sort_bin_size[i];
         }
-        shared_tilesize = sort_bin_size;
     }
 
     {
