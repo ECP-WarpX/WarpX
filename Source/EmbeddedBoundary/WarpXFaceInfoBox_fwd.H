@@ -1,0 +1,13 @@
+/* Copyright 2022 Luca Fedeli
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
+#ifndef WARPX_SOURCE_EMBEDDEDBOUNDARY_WARPXFACEINFOBOX_FWD_H
+#define WARPX_SOURCE_EMBEDDEDBOUNDARY_WARPXFACEINFOBOX_FWD_H
+
+struct FaceInfoBox;
+
+#endif //WARPX_SOURCE_EMBEDDEDBOUNDARY_WARPXFACEINFOBOX_FWD_H

@@ -1,22 +1,28 @@
-# Copyright 2016-2020 Andrew Myers, David Grote, Maxence Thevenet
-# Remi Lehe
+# Copyright 2016-2022 Andrew Myers, David Grote, Maxence Thevenet
+# Remi Lehe, Lorenzo Giacomel
 #
 # This file is part of WarpX.
 #
 # License: BSD-3-Clause-LBNL
 
-from .Bucket import Bucket
-from .Constants import my_constants
-from .Amr import amr
-from .Geometry import geometry
-from .Algo import algo
-from .Langmuirwave import langmuirwave
-from .Interpolation import interpolation
-from .Lasers import lasers, lasers_list
+import re
+
 from . import Particles
-from .Particles import particles, particles_list
+from .Algo import algo
+from .Amr import amr
+from .Boundary import boundary
+from .Bucket import Bucket
+from .Collisions import collisions, collisions_list
+from .Constants import my_constants
+from .Diagnostics import diagnostics, reduced_diagnostics
+from .EB2 import eb2
+from .Geometry import geometry
+from .Interpolation import interpolation
+from .Langmuirwave import langmuirwave
+from .Lasers import lasers, lasers_list
 from .PSATD import psatd
-from .Diagnostics import diagnostics
+from .Particles import particles, particles_list
+from ._libwarpx import libwarpx
 
 
 class WarpX(Bucket):
@@ -24,16 +30,23 @@ class WarpX(Bucket):
     A Python wrapper for the WarpX C++ class
     """
 
-    def create_argv_list(self):
+    def create_argv_list(self, **kw):
         argv = []
+
+        for k, v in kw.items():
+            if v is not None:
+                argv.append(f'{k} = {v}')
+
         argv += warpx.attrlist()
         argv += my_constants.attrlist()
         argv += amr.attrlist()
         argv += geometry.attrlist()
+        argv += boundary.attrlist()
         argv += algo.attrlist()
         argv += langmuirwave.attrlist()
         argv += interpolation.attrlist()
         argv += psatd.attrlist()
+        argv += eb2.attrlist()
 
         # --- Search through species_names and add any predefined particle objects in the list.
         particles_list_names = [p.instancename for p in particles_list]
@@ -52,6 +65,10 @@ class WarpX(Bucket):
         for particle in particles_list:
             argv += particle.attrlist()
 
+        argv += collisions.attrlist()
+        for collision in collisions_list:
+            argv += collision.attrlist()
+
         argv += lasers.attrlist()
         for laser in lasers_list:
             argv += laser.attrlist()
@@ -64,38 +81,48 @@ class WarpX(Bucket):
             for species_diagnostic in diagnostic._species_dict.values():
                 argv += species_diagnostic.attrlist()
 
+        reduced_diagnostics.reduced_diags_names = reduced_diagnostics._diagnostics_dict.keys()
+        argv += reduced_diagnostics.attrlist()
+        for diagnostic in reduced_diagnostics._diagnostics_dict.values():
+            argv += diagnostic.attrlist()
+
         return argv
 
-    def init(self):
-        from . import wx
-        argv = ['warpx'] + self.create_argv_list()
-        wx.initialize(argv)
+    def init(self, mpi_comm=None, **kw):
+        argv = ['warpx'] + self.create_argv_list(**kw)
+        libwarpx.initialize(argv, mpi_comm=mpi_comm)
 
     def evolve(self, nsteps=-1):
-        from . import wx
-        wx.evolve(nsteps)
+        libwarpx.evolve(nsteps)
 
     def finalize(self, finalize_mpi=1):
-        from . import wx
-        wx.finalize(finalize_mpi)
+        libwarpx.finalize(finalize_mpi)
 
     def getProbLo(self, direction):
-        from . import wx
-        return wx.libwarpx.warpx_getProbLo(direction)
+        return libwarpx.libwarpx_so.warpx_getProbLo(direction)
 
     def getProbHi(self, direction):
-        from . import wx
-        return wx.libwarpx.warpx_getProbHi(direction)
+        return libwarpx.libwarpx_so.warpx_getProbHi(direction)
 
     def write_inputs(self, filename='inputs', **kw):
-        argv = self.create_argv_list()
+        argv = self.create_argv_list(**kw)
+
+        # Sort the argv list to make it more human readable
+        argv.sort()
+
         with open(filename, 'w') as ff:
 
-            for k, v in kw.items():
-                ff.write('{0} = {1}\n'.format(k, v))
-
+            prefix_old = ''
             for arg in argv:
-                ff.write('{0}\n'.format(arg))
+                # This prints the name of the input group (prefix) as a header
+                # before each group to make the input file more human readable
+                prefix_new = re.split(' |\.', arg)[0]
+                if prefix_new != prefix_old:
+                    if prefix_old != '':
+                        ff.write('\n')
+                    ff.write(f'# {prefix_new}\n')
+                    prefix_old = prefix_new
+
+                ff.write(f'{arg}\n')
 
 warpx = WarpX('warpx')
-

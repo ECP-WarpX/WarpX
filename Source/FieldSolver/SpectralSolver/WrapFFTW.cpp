@@ -1,4 +1,4 @@
-/* Copyright 2019-2020
+/* Copyright 2019-2021
  *
  * This file is part of WarpX.
  *
@@ -6,6 +6,14 @@
  */
 
 #include "AnyFFT.H"
+
+#include "Utils/TextMsg.H"
+
+#include <AMReX.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
+
+#include <fftw3.h>
 
 namespace AnyFFT
 {
@@ -26,6 +34,16 @@ namespace AnyFFT
     {
         FFTplan fft_plan;
 
+#if defined(AMREX_USE_OMP) && defined(WarpX_FFTW_OMP)
+#   ifdef AMREX_USE_FLOAT
+        fftwf_init_threads();
+        fftwf_plan_with_nthreads(omp_get_max_threads());
+#   else
+        fftw_init_threads();
+        fftw_plan_with_nthreads(omp_get_max_threads());
+#   endif
+#endif
+
         // Initialize fft_plan.m_plan with the vendor fft plan.
         // Swap dimensions: AMReX FAB are Fortran-order but FFTW is C-order
         if (dir == direction::R2C){
@@ -36,7 +54,8 @@ namespace AnyFFT
                 fft_plan.m_plan = VendorCreatePlanR2C2D(
                     real_size[1], real_size[0], real_array, complex_array, FFTW_ESTIMATE);
             } else {
-                amrex::Abort("only dim=2 and dim=3 have been implemented");
+                amrex::Abort(Utils::TextMsg::Err(
+                    "only dim=2 and dim=3 have been implemented"));
             }
         } else if (dir == direction::C2R){
             if (dim == 3) {
@@ -46,7 +65,8 @@ namespace AnyFFT
                 fft_plan.m_plan = VendorCreatePlanC2R2D(
                     real_size[1], real_size[0], complex_array, real_array, FFTW_ESTIMATE);
             } else {
-                amrex::Abort("only dim=2 and dim=3 have been implemented. Should be easy to add dim=1.");
+                amrex::Abort(Utils::TextMsg::Err(
+                    "only dim=2 and dim=3 have been implemented. Should be easy to add dim=1."));
             }
         }
 

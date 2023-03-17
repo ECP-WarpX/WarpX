@@ -4,8 +4,13 @@
 #
 # License: BSD-3-Clause-LBNL
 
-import os, shutil, datetime
-import argparse, re, time
+import argparse
+import datetime
+import os
+import re
+import shutil
+import time
+
 from functions_perftest import *
 
 # This script runs automated performance tests for WarpX.
@@ -114,7 +119,7 @@ module_Cname = {'cpu': 'haswell', 'knl': 'knl,quad,cache'}
 cwd = os.getcwd() + '/'
 res_dir_base = os.environ['SCRATCH'] + '/performance_warpx/'
 bin_dir = cwd + 'Bin/'
-bin_name = 'perf_tests3d.' + args.compiler + '.' + module_name[args.architecture] + '.TPROF.MPI.OMP.ex'
+bin_name = 'perf_tests3d.' + args.compiler + '.' + module_name[args.architecture] + '.TPROF.MTMPI.OMP.QED.ex'
 log_dir  = cwd
 
 day = time.strftime('%d')
@@ -301,8 +306,8 @@ if args.mode == 'read':
                   'git push -u origin development')
 
     # Plot file
-    import numpy as np
     import matplotlib
+    import numpy as np
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     filename0 = 'my_performance_log'

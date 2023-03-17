@@ -21,23 +21,33 @@
 # Use `export WARPX_TEST_ARCH=CPU` or `export WARPX_TEST_ARCH=GPU` in order
 # to run the tests on CPU or GPU respectively.
 
+set -eu -o pipefail
+
 # Parse command line arguments: if test names are given as command line arguments,
 # store them in variable tests_arg and define new command line argument to call
 # regtest.py with option --tests (works also for single test)
 tests_arg=$*
 tests_run=${tests_arg:+--tests=${tests_arg}}
 
+# environment options
+WARPX_CI_TMP=${WARPX_CI_TMP:-""}
+
 # Remove contents and link to a previous test directory (intentionally two arguments)
 rm -rf test_dir/* test_dir
 # Create a temporary test directory
-tmp_dir=$(mktemp --help >/dev/null 2>&1 && mktemp -d -t ci-XXXXXXXXXX || mktemp -d "${TMPDIR:-/tmp}"/ci-XXXXXXXXXX)
-if [ $? -ne 0 ]; then
-    echo "Cannot create temporary directory"
-    exit 1
+if [ -z "${WARPX_CI_TMP}" ]; then
+    tmp_dir=$(mktemp --help >/dev/null 2>&1 && mktemp -d -t ci-XXXXXXXXXX || mktemp -d "${TMPDIR:-/tmp}"/ci-XXXXXXXXXX)
+    if [ $? -ne 0 ]; then
+        echo "Cannot create temporary directory"
+        exit 1
+    fi
+else
+    tmp_dir=${WARPX_CI_TMP}
 fi
 
 # Copy WarpX into current test directory
-mkdir ${tmp_dir}/warpx
+rm -rf ${tmp_dir}/warpx
+mkdir -p ${tmp_dir}/warpx
 cp -r ./* ${tmp_dir}/warpx
 
 # Link the test directory
@@ -47,24 +57,33 @@ ln -s ${tmp_dir} test_dir
 cd test_dir
 echo "cd $PWD"
 
-# Clone PICSAR and AMReX
-git clone --branch development https://github.com/AMReX-Codes/amrex.git
-# Use QED brach for QED tests
-if [ "${WARPX_CI_QED}" = "TRUE" ]; then
-    git clone --branch development https://github.com/ECP-WarpX/picsar.git
-else
-    git clone --branch development https://github.com/ECP-WarpX/picsar.git
-fi
+# Prepare a virtual environment
+rm -rf py-venv
+python3 -m venv py-venv
+source py-venv/bin/activate
+python3 -m pip install --upgrade pip setuptools wheel
+python3 -m pip install --upgrade cmake
+# setuptools/mp4py work-around, see
+#   https://github.com/mpi4py/mpi4py/pull/159
+#   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
+export SETUPTOOLS_USE_DISTUTILS="stdlib"
+python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
+
+# Clone AMReX and warpx-data
+git clone https://github.com/AMReX-Codes/amrex.git
+cd amrex && git checkout --detach 6d30e83c944e4e6167178f2d145df2a3e67d2b24 && cd -
+# warpx-data contains various required data sets
+git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 
 # Clone the AMReX regression test utility
-git clone https://github.com/ECP-WarpX/regression_testing.git
+git clone https://github.com/AMReX-Codes/regression_testing.git
 
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks
 cd warpx/Regression
 echo "cd $PWD"
-python prepare_file_travis.py
-cp travis-tests.ini ../../rt-WarpX
+python3 prepare_file_ci.py
+cp ci-tests.ini ../../rt-WarpX
 cp -r Checksum ../../regression_testing/
 
 # Run tests
@@ -72,8 +91,13 @@ cd ../../regression_testing/
 echo "cd $PWD"
 # run only tests specified in variable tests_arg (single test or multiple tests)
 if [[ ! -z "${tests_arg}" ]]; then
-  python regtest.py ../rt-WarpX/travis-tests.ini --no_update all --source_git_hash=${WARPX_TEST_COMMIT} "${tests_run}"
+  python3 regtest.py ../rt-WarpX/ci-tests.ini --no_update all "${tests_run}"
 # run all tests (variables tests_arg and tests_run are empty)
 else
-  python regtest.py ../rt-WarpX/travis-tests.ini --no_update all --source_git_hash=${WARPX_TEST_COMMIT}
+  python3 regtest.py ../rt-WarpX/ci-tests.ini --no_update all
 fi
+
+# clean up python virtual environment
+cd ../
+echo "cd $PWD"
+deactivate

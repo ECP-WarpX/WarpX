@@ -1,37 +1,53 @@
 #ifndef WARPX_FLUSHFORMATOPENPMD_H_
 #define WARPX_FLUSHFORMATOPENPMD_H_
 
-#include "FlushFormat.H"
 #include "Diagnostics/WarpXOpenPMD.H"
+#include "FlushFormat.H"
+
+#include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
+
+#include <AMReX_Geometry.H>
+#include <AMReX_Vector.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <memory>
+#include <string>
 
 /**
- * \brief This class aims at dumping diags data to disk using the OpenPMD standard.
+ * \brief This class aims at dumping diags data to disk using the openPMD standard.
  * In particular, function WriteToFile takes fields and particles as input arguments,
  * and writes data to file.
  */
-class FlushFormatOpenPMD : public FlushFormat
+class FlushFormatOpenPMD final : public FlushFormat
 {
 public:
 
     /** Constructor takes name of diagnostics to set the output directory */
-    FlushFormatOpenPMD (const std::string& diag_name);
+    explicit FlushFormatOpenPMD (const std::string& diag_name);
 
     /** Flush fields and particles to plotfile */
-    virtual void WriteToFile (
+    void WriteToFile (
         const amrex::Vector<std::string> varnames,
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double time,
-        const amrex::Vector<ParticleDiag>& particle_diags, int /*nlev*/, const std::string prefix,
+        const amrex::Vector<ParticleDiag>& particle_diags, int output_levels,
+        const std::string prefix, int file_min_digits,
         bool plot_raw_fields,
         bool plot_raw_fields_guards,
-        bool plot_raw_rho, bool plot_raw_F) const override final;
+        const bool use_pinned_pc = false,
+        bool isBTD = false, int snapshotID = -1,
+        int bufferID = 1, int numBuffers = 1,
+        const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
+        bool isLastBTDFlush = false,
+        const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const override;
 
-    ~FlushFormatOpenPMD ();
+    ~FlushFormatOpenPMD () override = default;
 
 private:
     /** This is responsible for dumping to file */
-    WarpXOpenPMDPlot* m_OpenPMDPlotWriter = nullptr;
+    std::unique_ptr< WarpXOpenPMDPlot > m_OpenPMDPlotWriter;
 };
 
 #endif // WARPX_FLUSHFORMATOPENPMD_H_

@@ -12,9 +12,9 @@
 #  include "FieldSolver/SpectralSolver/AnyFFT.H"
 #endif
 
-#include <AMReX_REAL.H>
 #include <AMReX_Gpu.H>
 #include <AMReX_GpuComplex.H>
+#include <AMReX_REAL.H>
 
 #include <complex>
 

@@ -1,11 +1,26 @@
+/* Copyright 2020 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #ifndef WARPX_MACROSCOPICPROPERTIES_H_
 #define WARPX_MACROSCOPICPROPERTIES_H_
 
+#include "MacroscopicProperties_fwd.H"
 
-#include "Parser/WarpXParserWrapper.H"
 #include "Utils/WarpXConst.H"
-#include <AMReX_MultiFab.H>
 
+#include <AMReX_Array.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_Parser.H>
+#include <AMReX_REAL.H>
+
+#include <memory>
+#include <string>
 
 
 /**
@@ -33,7 +48,9 @@ public:
       *  with user-defined functions(x,y,z).
       */
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
-                                  HostDeviceParser<3> const& macro_parser, int lev);
+                                  amrex::ParserExecutor<3> const& macro_parser,
+                                  const int lev);
+
      /** Gpu Vector with index type of the conductivity multifab */
      amrex::GpuArray<int, 3> sigma_IndexType;
      /** Gpu Vector with index type of the permittivity multifab */
@@ -50,6 +67,7 @@ public:
      amrex::GpuArray<int, 3> macro_cr_ratio;
 
 private:
+
      /** Conductivity, sigma, of the medium */
      amrex::Real m_sigma = 0.0;
      /** Permittivity, epsilon, of the medium */
@@ -62,6 +80,7 @@ private:
      std::unique_ptr<amrex::MultiFab> m_eps_mf;
      /** Multifab for m_mu */
      std::unique_ptr<amrex::MultiFab> m_mu_mf;
+
      /** Stores initialization type for conductivity : constant or parser */
      std::string m_sigma_s = "constant";
      /** Stores initialization type for permittivity : constant or parser */
@@ -74,9 +93,10 @@ private:
      std::string m_str_epsilon_function;
      std::string m_str_mu_function;
      /** Parser Wrappers */
-     std::unique_ptr<ParserWrapper<3> > m_sigma_parser;
-     std::unique_ptr<ParserWrapper<3> > m_epsilon_parser;
-     std::unique_ptr<ParserWrapper<3> > m_mu_parser;
+     std::unique_ptr<amrex::Parser> m_sigma_parser;
+     std::unique_ptr<amrex::Parser> m_epsilon_parser;
+     std::unique_ptr<amrex::Parser> m_mu_parser;
+
 };
 
 /**

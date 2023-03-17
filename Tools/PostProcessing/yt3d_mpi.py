@@ -17,10 +17,13 @@ to generate the images. It can be quite slow for even moderately large
 plotfiles.
 '''
 
-import yt, glob
+import glob
+
 from mpi4py import MPI
 import numpy as np
 import scipy.constants as scc
+import yt
+
 yt.funcs.mylog.setLevel(50)
 
 # my_max = 1.e11 # for smooth rendering

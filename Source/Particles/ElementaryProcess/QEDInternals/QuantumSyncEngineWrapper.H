@@ -7,42 +7,54 @@
 #ifndef WARPX_quantum_sync_engine_wrapper_h_
 #define WARPX_quantum_sync_engine_wrapper_h_
 
-#include "QedWrapperCommons.H"
+#include "BreitWheelerEngineWrapper_fwd.H"
+
 #include "QedChiFunctions.H"
+#include "QedWrapperCommons.H"
 #include "Utils/WarpXConst.H"
 
-#include <AMReX_Array.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Random.H>
 #include <AMReX_Vector.H>
-#include <AMReX_Gpu.H>
 
-#include <physics/quantum_sync/quantum_sync_engine_tables.hpp>
-#include <physics/quantum_sync/quantum_sync_engine_core.hpp>
+#include <picsar_qed/containers/picsar_array.hpp>
+#include <picsar_qed/math/cmath_overloads.hpp>
+#include <picsar_qed/math/vec_functions.hpp>
+#include <picsar_qed/physics/phys_constants.h>
+#include <picsar_qed/physics/quantum_sync/quantum_sync_engine_core.hpp>
+#include <picsar_qed/physics/quantum_sync/quantum_sync_engine_tables.hpp>
+#include <picsar_qed/physics/unit_conversion.hpp>
 
-#include <string>
+#include <cmath>
 #include <vector>
+
+namespace amrex { struct RandomEngine; }
 
 // Aliases =============================
 using QS_dndt_table_params =
     picsar::multi_physics::phys::quantum_sync::
-    dndt_lookup_table_params<amrex::Real>;
+    dndt_lookup_table_params<amrex::ParticleReal>;
 
 using QS_dndt_table =
     picsar::multi_physics::phys::quantum_sync::
     dndt_lookup_table<
-    amrex::Real,
-    amrex::Gpu::DeviceVector<amrex::Real>>;
+    amrex::ParticleReal,
+    amrex::Gpu::DeviceVector<amrex::ParticleReal>>;
 
 using QS_dndt_table_view = QS_dndt_table::view_type;
 
 using QS_phot_em_table_params =
     picsar::multi_physics::phys::quantum_sync::
-    photon_emission_lookup_table_params<amrex::Real>;
+    photon_emission_lookup_table_params<amrex::ParticleReal>;
 
 using QS_phot_em_table =
     picsar::multi_physics::phys::quantum_sync::
     photon_emission_lookup_table<
-    amrex::Real,
-    amrex::Gpu::DeviceVector<amrex::Real>>;
+    amrex::ParticleReal,
+    amrex::Gpu::DeviceVector<amrex::ParticleReal>>;
 
 using QS_phot_em_table_view = QS_phot_em_table::view_type;
 
@@ -69,8 +81,7 @@ public:
      * Constructor does nothing because optical depth initialization
      * does not require control parameters or lookup tables.
      */
-    QuantumSynchrotronGetOpticalDepth ()
-    {}
+    QuantumSynchrotronGetOpticalDepth () = default;
 
     /**
      * () operator is just a thin wrapper around a very simple function to
@@ -78,7 +89,7 @@ public:
      */
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
-    amrex::Real operator() (amrex::RandomEngine const& engine) const noexcept
+    amrex::ParticleReal operator() (amrex::RandomEngine const& engine) const noexcept
     {
         namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
 
@@ -99,7 +110,7 @@ public:
     /**
      * Default constructor: it leaves the functor in a non-initialized state.
      */
-    QuantumSynchrotronEvolveOpticalDepth (){}
+    QuantumSynchrotronEvolveOpticalDepth () = default;
 
     /**
      * Constructor to be used to initialize the functor.
@@ -127,18 +138,18 @@ public:
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     int operator()(
-        const amrex::Real ux, const amrex::Real uy, const amrex::Real uz,
-        const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
-        const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
-        const amrex::Real dt, amrex::Real& opt_depth) const noexcept
+        const amrex::ParticleReal ux, const amrex::ParticleReal uy, const amrex::ParticleReal uz,
+        const amrex::ParticleReal ex, const amrex::ParticleReal ey, const amrex::ParticleReal ez,
+        const amrex::ParticleReal bx, const amrex::ParticleReal by, const amrex::ParticleReal bz,
+        const amrex::Real dt, amrex::ParticleReal& opt_depth) const noexcept
     {
         using namespace amrex::literals;
         namespace pxr_p = picsar::multi_physics::phys;
         namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
 
-        constexpr amrex::Real m_e = PhysConst::m_e;
-        constexpr amrex::Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
-        const amrex::Real gamma = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)*inv_c2);
+        constexpr amrex::ParticleReal m_e = PhysConst::m_e;
+        constexpr amrex::ParticleReal inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
+        const amrex::ParticleReal gamma = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)*inv_c2);
         const auto energy = gamma*m_e*PhysConst::c*PhysConst::c;
 
         const auto chi_part = QedUtils::chi_ele_pos(
@@ -148,7 +159,7 @@ public:
             return 0;
 
         const auto is_out = pxr_qs::evolve_optical_depth<
-            amrex::Real,
+            amrex::ParticleReal,
             QS_dndt_table_view,
             pxr_p::unit_system::SI>(
                 energy, chi_part, dt, opt_depth, m_table_view);
@@ -172,7 +183,7 @@ public:
     /**
      * Default constructor: it leaves the functor in a non-initialized state.
      */
-    QuantumSynchrotronPhotonEmission (){}
+    QuantumSynchrotronPhotonEmission () = default;
 
     /**
      * Constructor acquires pointers to control parameters and
@@ -200,11 +211,13 @@ public:
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     bool operator()(
-    amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
-    const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
-    const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
-    amrex::Real& g_ux, amrex::Real& g_uy, amrex::Real& g_uz,
-    amrex::RandomEngine const& engine) const noexcept
+    amrex::ParticleReal& ux, amrex::ParticleReal& uy,
+    amrex::ParticleReal& uz,
+    const amrex::ParticleReal ex, const amrex::ParticleReal ey,
+    const amrex::ParticleReal ez, const amrex::ParticleReal bx,
+    const amrex::ParticleReal by, const amrex::ParticleReal bz,
+    amrex::ParticleReal& g_ux, amrex::ParticleReal& g_uy,
+    amrex::ParticleReal& g_uz, amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
         namespace pxr_m = picsar::multi_physics::math;
@@ -225,11 +238,11 @@ public:
         const auto chi_particle = QedUtils::chi_ele_pos(
             px, py, pz, ex, ey, ez, bx, by, bz);
 
-        auto momentum_particle = pxr_m::vec3<amrex::Real>{px, py, pz};
-        auto momentum_photon = pxr_m::vec3<amrex::Real>();
+        auto momentum_particle = pxr_m::vec3<amrex::ParticleReal>{px, py, pz};
+        auto momentum_photon = pxr_m::vec3<amrex::ParticleReal>();
 
         const auto is_out = pxr_qs::generate_photon_update_momentum<
-            amrex::Real,
+            amrex::ParticleReal,
             QS_phot_em_table_view,
             pxr_p::unit_system::SI>(
                 chi_particle, momentum_particle,
@@ -263,7 +276,7 @@ public:
     /**
      * Constructor requires no arguments.
      */
-    QuantumSynchrotronEngine ();
+    QuantumSynchrotronEngine () = default;
 
     /**
      * Builds the functor to initialize the optical depth
@@ -301,14 +314,14 @@ public:
      * @return true if it succeeds, false if it cannot parse raw_data
      */
     bool init_lookup_tables_from_raw_data (const std::vector<char>& raw_data,
-        const amrex::Real qs_minimum_chi_part);
+        const amrex::ParticleReal qs_minimum_chi_part);
 
     /**
      * Init lookup tables using built-in (low resolution) tables
      *
      * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
      */
-    void init_builtin_tables(const amrex::Real qs_minimum_chi_part);
+    void init_builtin_tables(const amrex::ParticleReal qs_minimum_chi_part);
 
     /**
      * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
@@ -317,7 +330,7 @@ public:
      * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
      */
     void compute_lookup_tables (PicsarQuantumSyncCtrl ctrl,
-        const amrex::Real qs_minimum_chi_part);
+        const amrex::ParticleReal qs_minimum_chi_part);
 
     /**
      * gets default values for the control parameters
@@ -326,14 +339,14 @@ public:
      */
     PicsarQuantumSyncCtrl get_default_ctrl() const;
 
-    amrex::Real get_minimum_chi_part() const;
+    amrex::ParticleReal get_minimum_chi_part() const;
 
 private:
     bool m_lookup_tables_initialized = false;
 
     //Variables to store the minimum chi parameters to enable
     //Quantum Synchrotron process
-    amrex::Real m_qs_minimum_chi_part;
+    amrex::ParticleReal m_qs_minimum_chi_part;
 
     QS_dndt_table m_dndt_table;
     QS_phot_em_table m_phot_em_table;

@@ -1,0 +1,27 @@
+# please set your project account (not relevant yet)
+#export proj=<yourProject>
+
+# required dependencies
+module load cmake/3.19.0
+module load gcc/10.3.0
+module load openmpi/gcc10/4.1.0
+
+# optional: faster builds (not available yet)
+#module load ccache
+#module load ninja
+
+# optional: for PSATD support (not available yet)
+#module load fftw
+
+# optional: for QED lookup table generation support (not available yet)
+#module load boost
+
+# optional: for openPMD support
+#module load adios2  # not available yet
+#module load hdf5    # only serial
+
+# compiler environment hints
+export CC=$(which gcc)
+export CXX=$(which g++)
+export FC=$(which gfortran)
+export CXXFLAGS="-mcpu=a64fx"

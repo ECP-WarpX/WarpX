@@ -7,9 +7,12 @@
 #ifndef WARPX_RESAMPLING_TRIGGER_H_
 #define WARPX_RESAMPLING_TRIGGER_H_
 
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
 
-#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+
+#include <limits>
+#include <string>
 
 /**
  * \brief This class is used to determine if resampling should be done at a given timestep for
@@ -51,7 +54,7 @@ public:
 private:
     // Intervals that define predetermined timesteps at which resampling is performed for all
     // species.
-    IntervalsParser m_resampling_intervals;
+    utils::parser::IntervalsParser m_resampling_intervals;
 
     // Average number of particles per cell above which resampling is performed for a given species
     amrex::Real m_max_avg_ppc = std::numeric_limits<amrex::Real>::max();

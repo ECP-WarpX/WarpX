@@ -5,19 +5,39 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-#include "Utils/WarpXConst.H"
-#include "WarpX_QED_K.H"
-#include "BoundaryConditions/WarpX_PML_kernels.H"
-#include "BoundaryConditions/PML_current.H"
-#include "WarpX_FDTD.H"
 
-#ifdef BL_USE_SENSEI_INSITU
+#include "Utils/TextMsg.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXProfilerWrapper.H"
+#include "WarpX_QED_K.H"
+
+#include <AMReX.H>
+#ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
+#include <AMReX_Array4.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuElixir.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_Print.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
+#include <AMReX_Vector.H>
 
-#include <cmath>
-#include <limits>
-
+#include <array>
+#include <cstdlib>
+#include <iostream>
+#include <memory>
 
 using namespace amrex;
 
@@ -25,23 +45,18 @@ using namespace amrex;
 void
 WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> a_dt)
 {
-    if (WarpX::do_nodal == 0) {
-        Print()<<"The do_nodal flag is tripped.\n";
-        try{
-            throw "Error: The Hybrid QED method is currently only compatible with the nodal scheme.\n";
-        }
-        catch (const char* msg) {
-            std::cerr << msg << std::endl;
-            exit(0);
-        }
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WarpX::grid_type == GridType::Collocated,
+        "Error: The Hybrid QED method is "
+        "currently only implemented on a collocated grid."
+    );
     for (int lev = 0; lev <= finest_level; ++lev) {
         Hybrid_QED_Push(lev, a_dt[lev]);
     }
 }
 
 void
-WarpX::Hybrid_QED_Push (int lev, Real a_dt)
+WarpX::Hybrid_QED_Push (int lev, amrex::Real a_dt)
 {
     WARPX_PROFILE("WarpX::Hybrid_QED_Push()");
     Hybrid_QED_Push(lev, PatchType::fine, a_dt);
@@ -52,7 +67,7 @@ WarpX::Hybrid_QED_Push (int lev, Real a_dt)
 }
 
 void
-WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
+WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real a_dt)
 {
     const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
     const std::array<Real,3>& dx_vec= WarpX::CellSize(patch_level);
@@ -89,7 +104,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     // Loop through the grids, and over the tiles within each grid
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Bx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
@@ -98,7 +113,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        Real wt = static_cast<Real>(amrex::second());
 
         // Get boxes for E, B, and J
 
@@ -170,7 +185,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }

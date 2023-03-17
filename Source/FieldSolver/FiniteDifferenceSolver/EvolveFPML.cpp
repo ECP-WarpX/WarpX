@@ -4,19 +4,35 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
-#ifdef WARPX_DIM_RZ
-#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
-#else
+
+#include "BoundaryConditions/PMLComponent.H"
+#ifndef WARPX_DIM_RZ
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#else
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
-#include "BoundaryConditions/PMLComponent.H"
-#include <AMReX_Gpu.H>
+#include "Utils/TextMsg.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+
 #include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
 
 using namespace amrex;
 
@@ -32,22 +48,23 @@ void FiniteDifferenceSolver::EvolveFPML (
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(Ffield, Efield, dt);
-    amrex::Abort("PML are not implemented in cylindrical geometry.");
+    amrex::Abort(Utils::TextMsg::Err(
+        "PML are not implemented in cylindrical geometry."));
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         EvolveFPMLCartesian <CartesianNodalAlgorithm> ( Ffield, Efield, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
 
         EvolveFPMLCartesian <CartesianYeeAlgorithm> ( Ffield, Efield, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         EvolveFPMLCartesian <CartesianCKCAlgorithm> ( Ffield, Efield, dt );
 
     } else {
-        amrex::Abort("EvolveFPML: Unknown algorithm");
+        amrex::Abort(Utils::TextMsg::Err("EvolveFPML: Unknown algorithm"));
     }
 #endif
 }
@@ -62,7 +79,7 @@ void FiniteDifferenceSolver::EvolveFPMLCartesian (
     amrex::Real const dt ) {
 
     // Loop through the grids, and over the tiles within each grid
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Ffield, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {

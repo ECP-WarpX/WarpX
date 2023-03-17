@@ -1,7 +1,17 @@
 #include "DivEFunctor.H"
-#include "Utils/CoarsenIO.H"
+
+#include "Utils/TextMsg.H"
+#ifdef WARPX_DIM_RZ
+#   include "Utils/WarpXAlgorithmSelection.H"
+#endif
+#include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX.H>
+#include <AMReX_BoxArray.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
 
 DivEFunctor::DivEFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev,
                          const amrex::IntVect crse_ratio,
@@ -25,18 +35,18 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_
     amrex::IntVect cell_type = amrex::IntVect::TheNodeVector();
 #ifdef WARPX_DIM_RZ
     // For RZ spectral, all quantities are cell centered.
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         cell_type = amrex::IntVect::TheCellVector();
 #endif
     const amrex::BoxArray& ba = amrex::convert(warpx.boxArray(m_lev), cell_type);
-    amrex::MultiFab divE(ba, warpx.DistributionMap(m_lev), 2*warpx.n_rz_azimuthal_modes-1, ng );
+    amrex::MultiFab divE(ba, warpx.DistributionMap(m_lev), warpx.ncomps, ng );
     warpx.ComputeDivE(divE, m_lev);
 
 #ifdef WARPX_DIM_RZ
     if (m_convertRZmodes2cartesian) {
         // In cylindrical geometry, sum real part of all modes of divE in
         // temporary multifab mf_dst_stag, and cell-center it to mf_dst.
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             nComp()==1,
             "The RZ averaging over modes must write into 1 single component");
         amrex::MultiFab mf_dst_stag(divE.boxArray(), warpx.DistributionMap(m_lev), 1, divE.nGrowVect());
@@ -46,14 +56,14 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_
             // Real part of all modes > 0
             amrex::MultiFab::Add(mf_dst_stag, divE, ic, 0, 1, divE.nGrowVect());
         }
-        CoarsenIO::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
+        ablastr::coarsen::sample::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
     } else {
-        CoarsenIO::Coarsen( mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
+        ablastr::coarsen::sample::Coarsen( mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
     }
 #else
     // In cartesian geometry, coarsen and interpolate from simulation MultiFab, divE,
     // to output diagnostic MultiFab, mf_dst.
-    CoarsenIO::Coarsen( mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
+    ablastr::coarsen::sample::Coarsen(mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
     amrex::ignore_unused(m_convertRZmodes2cartesian);
 #endif
 }

@@ -24,10 +24,12 @@ struct SchwingerFilterFunc
      *
      * \tparam FABs the src array of Array4 type
      *
-     * @param[in] src_FABs Array of 6 Array4 that contain the EM field in the tile.
+     * @param[in] src_FABs A class with 6 named Array4 that contain the EM field in the tile.
      * @param[in] i index of the cell in the first direction.
      * @param[in] j index of the cell in the second direction.
      * @param[in] k index of the cell in the third direction.
+     * @param[in] engine the random number state and factory
+     * @return the number of pairs created in the cell.
      */
     template <typename FABs>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -35,12 +37,12 @@ struct SchwingerFilterFunc
                             const int i, const int j, const int k,
                             amrex::RandomEngine const& engine) const noexcept
     {
-        const auto& arrEx = src_FABs[0];
-        const auto& arrEy = src_FABs[1];
-        const auto& arrEz = src_FABs[2];
-        const auto& arrBx = src_FABs[3];
-        const auto& arrBy = src_FABs[4];
-        const auto& arrBz = src_FABs[5];
+        const auto& arrEx = src_FABs.Ex;
+        const auto& arrEy = src_FABs.Ey;
+        const auto& arrEz = src_FABs.Ez;
+        const auto& arrBx = src_FABs.Bx;
+        const auto& arrBy = src_FABs.By;
+        const auto& arrBz = src_FABs.Bz;
 
         return getSchwingerProductionNumber( m_dV, m_dt,
                     arrEx(i,j,k),arrEy(i,j,k),arrEz(i,j,k),
@@ -78,10 +80,13 @@ struct SchwingerTransformFunc
                         const amrex::Real total_weight) const noexcept
     {
         for (int n = 0; n < N; ++n){
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_1D_Z)
+        amrex::ignore_unused(dst1, dst2, i_dst1, i_dst2, N, total_weight);
+        amrex::Abort("SchwingerTransformFunc not implemented in 1D");
+#elif defined(WARPX_DIM_3D)
             dst1.m_rdata[m_weight_index][i_dst1+n] = total_weight/N;
             dst2.m_rdata[m_weight_index][i_dst2+n] = total_weight/N;
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             dst1.m_rdata[m_weight_index][i_dst1+n] = total_weight/N/m_y_size;
             dst2.m_rdata[m_weight_index][i_dst2+n] = total_weight/N/m_y_size;
 #endif

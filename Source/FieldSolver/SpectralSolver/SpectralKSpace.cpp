@@ -5,10 +5,26 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "Utils/WarpXConst.H"
 #include "SpectralKSpace.H"
 
+#include "WarpX.H"
+#include "Utils/TextMsg.H"
+#include "Utils/WarpXConst.H"
+
+#include <AMReX_BLassert.H>
+#include <AMReX_Box.H>
+#include <AMReX_BoxList.H>
+#include <AMReX_GpuComplex.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
+
+#include <array>
 #include <cmath>
+#include <vector>
 
 using namespace amrex;
 
@@ -24,7 +40,7 @@ SpectralKSpace::SpectralKSpace( const BoxArray& realspace_ba,
                                 const RealVect realspace_dx )
     : dx(realspace_dx)  // Store the cell size as member `dx`
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         realspace_ba.ixType()==IndexType::TheCellType(),
         "SpectralKSpace expects a cell-centered box.");
 
@@ -90,9 +106,9 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
         // Fill the k vector
         IntVect fft_size = realspace_ba[mfi].length();
         const Real dk = 2*MathConst::pi/(fft_size[i_dim]*dx[i_dim]);
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( bx.smallEnd(i_dim) == 0,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( bx.smallEnd(i_dim) == 0,
             "Expected box to start at 0, in spectral space.");
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( bx.bigEnd(i_dim) == N-1,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( bx.bigEnd(i_dim) == N-1,
             "Expected different box end index in spectral space.");
         if (only_positive_k){
             // Fill the full axis with positive k values
@@ -125,7 +141,7 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
  * corresponding correcting "shift" factor, along the dimension
  * specified by `i_dim`.
  *
- * (By default, we assume the FFT is done from/to a nodal grid in real space
+ * (By default, we assume the FFT is done from/to a collocated grid in real space
  * It the FFT is performed from/to a cell-centered grid in real space,
  * a correcting "shift" factor must be applied in spectral space.)
  */
@@ -174,14 +190,13 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
  *
  * \param n_order Order of accuracy of the stencil, in discretizing
  *                a spatial derivative
- * \param nodal Whether the stencil is to be applied to a nodal or
-                staggered set of fields
+ * \param grid_type type of grid (collocated or not)
  */
 KVectorComponent
 SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                                        const int i_dim,
                                        const int n_order,
-                                       const bool nodal ) const
+                                       const short grid_type ) const
 {
     // Initialize an empty DeviceVector in each box
     KVectorComponent modified_k_comp(spectralspace_ba, dm);
@@ -201,7 +216,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
     } else {
 
         // Compute real-space stencil coefficients
-        Vector<Real> h_stencil_coef = getFornbergStencilCoefficients(n_order, nodal);
+        Vector<Real> h_stencil_coef = WarpX::getFornbergStencilCoefficients(n_order, grid_type);
         Gpu::DeviceVector<Real> d_stencil_coef(h_stencil_coef.size());
         Gpu::copyAsync(Gpu::hostToDevice, h_stencil_coef.begin(), h_stencil_coef.end(),
                        d_stencil_coef.begin());
@@ -227,7 +242,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             {
                 p_modified_k[i] = 0;
                 for (int n=0; n<nstencil; n++){
-                    if (nodal){
+                    if (grid_type == GridType::Collocated){
                         p_modified_k[i] += p_stencil_coef[n]*
                             std::sin( p_k[i]*(n+1)*delta_x )/( (n+1)*delta_x );
                     } else {
@@ -236,12 +251,12 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                     }
                 }
 
-                // By construction, at finite order and for a nodal grid,
+                // By construction, at finite order and for a collocated grid,
                 // the *modified* k corresponding to the Nyquist frequency
                 // (i.e. highest *real* k) is 0. However, the above calculation
                 // based on stencil coefficients does not give 0 to machine precision.
                 // Therefore, we need to enforce the fact that the modified k be 0 here.
-                if (nodal){
+                if (grid_type == GridType::Collocated){
                     if (i_dim == 0){
                         // Because of the real-to-complex FFTs, the first axis (idim=0)
                         // contains only the positive k, and the Nyquist frequency is
@@ -252,7 +267,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                     } else {
                         // The other axes contains both positive and negative k ;
                         // the Nyquist frequency is in the middle of the array.
-                        if (i == N/2) {
+                        if ( (N%2==0) && (i == N/2) ){
                             p_modified_k[i] = 0.0_rt;
                         }
                     }
@@ -261,42 +276,4 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
         }
     }
     return modified_k_comp;
-}
-
-Vector<Real>
-getFornbergStencilCoefficients(const int n_order, const bool nodal)
-{
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
-
-    const int m = n_order / 2;
-    Vector<Real> coefs;
-    coefs.resize(m);
-
-    // There are closed-form formula for these coefficients, but they result in
-    // an overflow when evaluated numerically. One way to avoid the overflow is
-    // to calculate the coefficients by recurrence.
-
-    // Coefficients for nodal (that is, centered) finite-difference approximation
-    if (nodal == true) {
-       // First coefficient
-       coefs[0] = m * 2. / (m+1);
-       // Other coefficients by recurrence
-       for (int n = 1; n < m; n++) {
-           coefs[n] = - (m-n) * 1. / (m+n+1) * coefs[n-1];
-       }
-    }
-    // Coefficients for staggered finite-difference approximation
-    else {
-       Real prod = 1.;
-       for (int k = 1; k < m+1; k++) {
-           prod *= (m + k) / (4. * k);
-       }
-       // First coefficient
-       coefs[0] = 4 * m * prod * prod;
-       // Other coefficients by recurrence
-       for (int n = 1; n < m; n++) {
-           coefs[n] = - ((2*n-1) * (m-n)) * 1. / ((2*n+1) * (m+n)) * coefs[n-1];
-       }
-    }
-    return coefs;
 }

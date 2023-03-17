@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Yinjian Zhao
+/* Copyright 2019-2021 Yinjian Zhao, Axel Huebl
  *
  * This file is part of WarpX.
  *
@@ -6,14 +6,37 @@
  */
 
 #include "ParticleHistogram.H"
+
+#include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/TextMsg.H"
+#include "Utils/WarpXConst.H"
 #include "WarpX.H"
-#include "Utils/WarpXUtil.H"
 
+#include <AMReX.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
-#include <AMReX_ParticleReduce.H>
 
+#include <algorithm>
+#include <array>
 #include <limits>
 #include <memory>
+#include <ostream>
+#include <vector>
 
 using namespace amrex;
 
@@ -30,29 +53,28 @@ struct NormalizationType {
 ParticleHistogram::ParticleHistogram (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-
-    ParmParse pp(rd_name);
+    ParmParse pp_rd_name(rd_name);
 
     // read species
     std::string selected_species_name;
-    pp.get("species",selected_species_name);
+    pp_rd_name.get("species",selected_species_name);
 
     // read bin parameters
-    pp.get("bin_number",m_bin_num);
-    getWithParser(pp, "bin_max",   m_bin_max);
-    getWithParser(pp, "bin_min",   m_bin_min);
+    utils::parser::getWithParser(pp_rd_name, "bin_number",m_bin_num);
+    utils::parser::getWithParser(pp_rd_name, "bin_max",   m_bin_max);
+    utils::parser::getWithParser(pp_rd_name, "bin_min",   m_bin_min);
     m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;
 
     // read histogram function
     std::string function_string = "";
-    Store_parserString(pp,"histogram_function(t,x,y,z,ux,uy,uz)",
+    utils::parser::Store_parserString(pp_rd_name,"histogram_function(t,x,y,z,ux,uy,uz)",
                        function_string);
-    m_parser = std::make_unique<ParserWrapper<m_nvars>>(
-        makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
+    m_parser = std::make_unique<amrex::Parser>(
+        utils::parser::makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
 
     // read normalization type
     std::string norm_string = "default";
-    pp.query("normalization",norm_string);
+    pp_rd_name.query("normalization",norm_string);
 
     // set normalization type
     if ( norm_string == "default" ) {
@@ -64,7 +86,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     } else if ( norm_string == "area_to_unity" ) {
         m_norm = NormalizationType::area_to_unity;
     } else {
-        Abort("Unknown ParticleHistogram normalization type.");
+        Abort(Utils::TextMsg::Err(
+            "Unknown ParticleHistogram normalization type."));
     }
 
     // get MultiParticleContainer class object
@@ -80,7 +103,19 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     }
     // if m_selected_species_id is not modified
     if ( m_selected_species_id == -1 ){
-        Abort("Unknown species for ParticleHistogram reduced diagnostic.");
+        Abort(Utils::TextMsg::Err(
+            "Unknown species for ParticleHistogram reduced diagnostic."));
+    }
+
+    // Read optional filter
+    std::string buf;
+    m_do_parser_filter = pp_rd_name.query("filter_function(t,x,y,z,ux,uy,uz)", buf);
+    if (m_do_parser_filter) {
+        std::string filter_string = "";
+        utils::parser::Store_parserString(
+            pp_rd_name,"filter_function(t,x,y,z,ux,uy,uz)", filter_string);
+        m_parser_filter = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(filter_string,{"t","x","y","z","ux","uy","uz"}));
     }
 
     // resize data array
@@ -91,17 +126,17 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
         if ( m_IsNotRestart )
         {
             // open file
-            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app};
+            std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
+            ofs << "[" << c++ << "]time(s)";
             for (int i = 0; i < m_bin_num; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(3+i) + "]";
+                ofs << "[" << c++ << "]";
                 Real b = m_bin_min + m_bin_size*(Real(i)+0.5_rt);
                 ofs << "bin" + std::to_string(1+i)
                              + "=" + std::to_string(b) + "()";
@@ -111,18 +146,16 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
             ofs.close();
         }
     }
-
 }
 // end constructor
 
 // function that computes the histogram
 void ParticleHistogram::ComputeDiags (int step)
 {
-
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) return;
 
-    // get WarpX class object
+    // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
     // get time at level 0
@@ -132,41 +165,87 @@ void ParticleHistogram::ComputeDiags (int step)
     const auto & mypc = warpx.GetPartContainer();
 
     // get WarpXParticleContainer class object
-    auto const & myspc = mypc.GetParticleContainer(m_selected_species_id);
-
-    using PType = typename WarpXParticleContainer::SuperParticleType;
+    auto & myspc = mypc.GetParticleContainer(m_selected_species_id);
 
     // get parser
-    HostDeviceParser<m_nvars> fun_partparser = getParser(m_parser);
+    auto fun_partparser =
+        utils::parser::compileParser<m_nvars>(m_parser.get());
+
+    // get filter parser
+    auto fun_filterparser =
+        utils::parser::compileParser<m_nvars>(m_parser_filter.get());
 
     // declare local variables
+    auto const num_bins = m_bin_num;
     Real const bin_min  = m_bin_min;
     Real const bin_size = m_bin_size;
     const bool is_unity_particle_weight =
         (m_norm == NormalizationType::unity_particle_weight) ? true : false;
 
-    for ( int i = 0; i < m_bin_num; ++i )
-    {
-        // compute the histogram
-        m_data[i] = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+    bool const do_parser_filter = m_do_parser_filter;
+
+    // zero-out old data on the host
+    std::fill(m_data.begin(), m_data.end(), amrex::Real(0.0));
+    amrex::Gpu::DeviceVector< amrex::Real > d_data( m_data.size(), 0.0 );
+    amrex::Real* const AMREX_RESTRICT dptr_data = d_data.dataPtr();
+
+    int const nlevs = std::max(0, myspc.finestLevel()+1);
+    for (int lev = 0; lev < nlevs; ++lev) {
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
         {
-            auto const w  = p.rdata(PIdx::w);
-            auto const x  = p.pos(0);
-            auto const y  = p.pos(1);
-            auto const z  = p.pos(2);
-            auto const ux = p.rdata(PIdx::ux)/PhysConst::c;
-            auto const uy = p.rdata(PIdx::uy)/PhysConst::c;
-            auto const uz = p.rdata(PIdx::uz)/PhysConst::c;
-            auto const f = fun_partparser(t,x,y,z,ux,uy,uz);
-            auto const f1 = bin_min + bin_size*i;
-            auto const f2 = bin_min + bin_size*(i+1);
-            if ( f > f1 && f < f2 ) {
-                if ( is_unity_particle_weight ) return 1.0_rt;
-                else return w;
-            } else return 0.0_rt;
-        });
+            for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
+            {
+                auto const GetPosition = GetParticlePosition(pti);
+
+                auto & attribs = pti.GetAttribs();
+                ParticleReal* const AMREX_RESTRICT d_w = attribs[PIdx::w].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_ux = attribs[PIdx::ux].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_uy = attribs[PIdx::uy].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_uz = attribs[PIdx::uz].dataPtr();
+
+                long const np = pti.numParticles();
+
+                //Flag particles that need to be copied if they cross the z_slice
+                amrex::ParallelFor(np,
+                   [=] AMREX_GPU_DEVICE(int i)
+                {
+                    amrex::ParticleReal x, y, z;
+                    GetPosition(i, x, y, z);
+                    auto const w  = (amrex::Real)d_w[i];
+                    auto const ux = d_ux[i] / PhysConst::c;
+                    auto const uy = d_uy[i] / PhysConst::c;
+                    auto const uz = d_uz[i] / PhysConst::c;
+
+                    // don't count a particle if it is filtered out
+                    if (do_parser_filter)
+                        if (!fun_filterparser(t, x, y, z, ux, uy, uz))
+                            return;
+                    // continue function if particle is not filtered out
+                    auto const f = fun_partparser(t, x, y, z, ux, uy, uz);
+                    // determine particle bin
+                    int const bin = int(Math::floor((f-bin_min)/bin_size));
+                    if ( bin<0 || bin>=num_bins ) return; // discard if out-of-range
+
+                    // add particle to histogram bin
+                    //! @todo performance: on CPU, we are probably faster by
+                    //        letting each thread compute its own histogram and
+                    //        then we reduce the histograms after the loop
+                    if ( is_unity_particle_weight ) {
+                        amrex::HostDevice::Atomic::Add(&dptr_data[bin], 1.0_rt);
+                    } else {
+                        amrex::HostDevice::Atomic::Add(&dptr_data[bin], w);
+                    }
+                });
+            }
+        }
     }
+
+    // blocking copy from device to host
+    amrex::Gpu::copy(amrex::Gpu::deviceToHost,
+        d_data.begin(), d_data.end(), m_data.begin());
+
     // reduced sum over mpi ranks
     ParallelDescriptor::ReduceRealSum
         (m_data.data(), m_data.size(), ParallelDescriptor::IOProcessorNumber());
@@ -200,6 +279,5 @@ void ParticleHistogram::ComputeDiags (int step)
         }
         return;
     }
-
 }
 // end void ParticleHistogram::ComputeDiags

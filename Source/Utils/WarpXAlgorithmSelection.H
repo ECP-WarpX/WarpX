@@ -8,7 +8,8 @@
 #ifndef UTILS_WARPXALGORITHMSELECTION_H_
 #define UTILS_WARPXALGORITHMSELECTION_H_
 
-#include <AMReX_ParmParse.H>
+#include <AMReX_BaseFwd.H>
+
 #include <string>
 
 /**
@@ -35,11 +36,21 @@ struct MacroscopicSolverAlgo {
     };
 };
 
-struct MaxwellSolverAlgo {
+struct GridType {
     enum {
-        Yee = 0,
-        CKC = 1,
-        PSATD = 2
+        Collocated = 0,
+        Staggered = 1,
+        Hybrid = 2
+    };
+};
+
+struct ElectromagneticSolverAlgo {
+    enum {
+        None = 0,
+        Yee = 1,
+        CKC = 2,
+        PSATD = 3,
+        ECT = 4
     };
 };
 
@@ -47,7 +58,8 @@ struct ElectrostaticSolverAlgo {
     enum {
         None = 0,
         Relativistic = 1,
-        LabFrame = 2
+        LabFrameElectroMagnetostatic = 2,
+        LabFrame = 3  // Non relativistic
     };
 };
 
@@ -81,17 +93,86 @@ struct GatheringAlgo {
     };
 };
 
+struct PSATDSolutionType {
+    enum {
+        FirstOrder = 0,
+        SecondOrder = 1
+    };
+};
+
+struct JInTime {
+    enum {
+        Constant = 0,
+        Linear = 1
+    };
+};
+
+struct RhoInTime {
+    enum {
+        Constant = 0,
+        Linear = 1
+    };
+};
+
 /** Strategy to compute weights for use in load balance.
  */
 struct LoadBalanceCostsUpdateAlgo {
     enum {
-        Timers = 0,   //!< load balance according to in-code timer-based weights (i.e., with  `costs`)
-        Heuristic = 1 /**< load balance according to weights computed from number of cells
+        Timers    = 0, //!< load balance according to in-code timer-based weights (i.e., with  `costs`)
+        Heuristic = 1, /**< load balance according to weights computed from number of cells
                              and number of particles per box (i.e., with `costs_heuristic`)*/
+        GpuClock  = 2
+    };
+};
+
+/** Field boundary conditions at the domain boundary
+ */
+struct FieldBoundaryType {
+    enum {
+        PML = 0,
+        Periodic = 1,
+        PEC = 2,     //!< perfect electric conductor (PEC) with E_tangential=0
+        PMC = 3,      //!< perfect magnetic conductor (PMC) with B_tangential=0
+        Damped = 4,   // Fields in the guard cells are damped for PSATD
+                     //in the moving window direction
+        Absorbing_SilverMueller = 5, // Silver-Mueller boundary condition
+        Neumann = 6, // For electrostatic, the normal E is set to zero
+        None = 7     // The fields values at the boundary are not updated. This is
+                     // useful for RZ simulations, at r=0.
+    };
+};
+
+/** Particle boundary conditions at the domain boundary
+ */
+enum struct ParticleBoundaryType {
+        Absorbing = 0,     //!< particles crossing domain boundary are removed
+        Open = 1,          //!< particles cross domain boundary leave with damped j
+        Reflecting = 2,     //!< particles are reflected
+        Periodic = 3
+};
+
+/** MPI reductions
+ */
+struct ReductionType {
+    enum {
+        Maximum = 0,
+        Minimum = 1,
+        Sum = 2
     };
 };
 
 int
 GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key );
+
+/** Select BC Type for fields, if field=true
+ *  else select BCType for particles.
+ */
+int
+GetFieldBCTypeInteger( std::string BCType );
+
+/** Select BC Type for particles.
+ */
+ParticleBoundaryType
+GetParticleBCTypeInteger( std::string BCType );
 
 #endif // UTILS_WARPXALGORITHMSELECTION_H_

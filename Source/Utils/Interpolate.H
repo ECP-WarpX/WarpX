@@ -1,9 +1,12 @@
 #ifndef WARPX_INTERPOLATE_H_
 #define WARPX_INTERPOLATE_H_
 
-#include "WarpX.H"
+#include <AMReX_REAL.H>
 
-#include<memory>
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 namespace Interpolate
 {
@@ -15,8 +18,8 @@ namespace Interpolate
     std::unique_ptr<MultiFab>
         getInterpolatedScalar(
             const MultiFab& F_cp, const MultiFab& F_fp,
-            const DistributionMapping& dm, const int r_ratio,
-            const Real* /*dx*/, const int ngrow );
+            const DistributionMapping& dm, const amrex::IntVect r_ratio,
+            const Real* /*dx*/, const IntVect ngrow );
 
     /** \brief Samples/Interpolates the coarse vector multifab `F*_cp` on the
      * fine grid associated with the fine multifab `F*_fp`.
@@ -29,8 +32,8 @@ namespace Interpolate
             const MultiFab* Fx_fp,
             const MultiFab* Fy_fp,
             const MultiFab* Fz_fp,
-            const DistributionMapping& dm, const int r_ratio,
-            const Real* dx, const int ngrow );
+            const DistributionMapping& dm, const amrex::IntVect r_ratio,
+            const Real* dx, const IntVect ngrow );
 
 }
 

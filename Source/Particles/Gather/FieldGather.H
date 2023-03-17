@@ -8,8 +8,8 @@
 #ifndef FIELDGATHER_H_
 #define FIELDGATHER_H_
 
-#include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Gather/GetExternalFields.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpX_Complex.H"
 
@@ -21,13 +21,13 @@
  * \tparam depos_order              Particle shape order
  * \tparam galerkin_interpolation   Lower the order of the particle shape by
  *                                  this value (0/1) for the parallel field component
- * \param xp, yp, zp                Particle position coordinates
- * \param Exp, Eyp, Ezp             Electric field on particles.
- * \param Bxp, Byp, Bzp             Magnetic field on particles.
- * \param ex_arr ey_arr ez_arr      Array4 of the electric field, either full array or tile.
- * \param bx_arr by_arr bz_arr      Array4 of the magnetic field, either full array or tile.
- * \param ex_type, ey_type, ez_type IndexType of the electric field
- * \param bx_type, by_type, bz_type IndexType of the magnetic field
+ * \param xp,yp,zp                        Particle position coordinates
+ * \param Exp,Eyp,Ezp                     Electric field on particles.
+ * \param Bxp,Byp,Bzp                     Magnetic field on particles.
+ * \param ex_arr,ey_arr,ez_arr            Array4 of the electric field, either full array or tile.
+ * \param bx_arr,by_arr,bz_arr            Array4 of the magnetic field, either full array or tile.
+ * \param ex_type,ey_type,ez_type         IndexType of the electric field
+ * \param bx_type,by_type,bz_type         IndexType of the magnetic field
  * \param dx                        3D cell spacing
  * \param xyzmin                    Physical lower bounds of domain in x, y, z.
  * \param lo                        Index lower bounds of domain.
@@ -67,27 +67,40 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     amrex::ignore_unused(yp);
 #endif
 
+#if defined(WARPX_DIM_1D_Z)
+    amrex::ignore_unused(xp,yp);
+#endif
+
 #ifndef WARPX_DIM_RZ
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 
+#if (AMREX_SPACEDIM >= 2)
     const amrex::Real dxi = 1.0_rt/dx[0];
+#endif
     const amrex::Real dzi = 1.0_rt/dx[2];
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     const amrex::Real dyi = 1.0_rt/dx[1];
 #endif
 
+#if (AMREX_SPACEDIM >= 2)
     const amrex::Real xmin = xyzmin[0];
-#if (AMREX_SPACEDIM == 3)
+#endif
+#if defined(WARPX_DIM_3D)
     const amrex::Real ymin = xyzmin[1];
 #endif
     const amrex::Real zmin = xyzmin[2];
 
-    constexpr int zdir = (AMREX_SPACEDIM - 1);
+    constexpr int zdir = WARPX_ZINDEX;
     constexpr int NODE = amrex::IndexType::NODE;
     constexpr int CELL = amrex::IndexType::CELL;
 
     // --- Compute shape factors
+
+    Compute_shape_factor< depos_order > const compute_shape_factor;
+    Compute_shape_factor<depos_order - galerkin_interpolation > const compute_shape_factor_galerkin;
+
+#if (AMREX_SPACEDIM >= 2)
     // x direction
     // Get particle position
 #ifdef WARPX_DIM_RZ
@@ -110,8 +123,6 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int j_cell = 0;
     int j_node_v = 0;
     int j_cell_v = 0;
-    Compute_shape_factor< depos_order > const compute_shape_factor;
-    Compute_shape_factor<depos_order - galerkin_interpolation > const compute_shape_factor_galerkin;
     if ((ey_type[0] == NODE) || (ez_type[0] == NODE) || (bx_type[0] == NODE)) {
         j_node = compute_shape_factor(sx_node, x);
     }
@@ -136,8 +147,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int const j_bx = ((bx_type[0] == NODE) ? j_node   : j_cell  );
     int const j_by = ((by_type[0] == NODE) ? j_node_v : j_cell_v);
     int const j_bz = ((bz_type[0] == NODE) ? j_node_v : j_cell_v);
+#endif
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
     // y direction
     const amrex::Real y = (yp-ymin)*dyi;
     amrex::Real sy_node[depos_order + 1];
@@ -214,7 +226,33 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // AMREX_SPACEDIM nested loops because the deposition
     // order can differ for each component of each field
     // when galerkin_interpolation is set to 1
-#if (AMREX_SPACEDIM == 2)
+
+#if defined(WARPX_DIM_1D_Z)
+    // Gather field on particle Eyp from field on grid ey_arr
+    // Gather field on particle Exp from field on grid ex_arr
+    // Gather field on particle Bzp from field on grid bz_arr
+    for (int iz=0; iz<=depos_order; iz++){
+        Eyp += sz_ey[iz]*
+            ey_arr(lo.x+l_ey+iz, 0, 0, 0);
+        Exp += sz_ex[iz]*
+            ex_arr(lo.x+l_ex+iz, 0, 0, 0);
+        Bzp += sz_bz[iz]*
+            bz_arr(lo.x+l_bz+iz, 0, 0, 0);
+    }
+
+    // Gather field on particle Byp from field on grid by_arr
+    // Gather field on particle Ezp from field on grid ez_arr
+    // Gather field on particle Bxp from field on grid bx_arr
+    for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
+        Ezp += sz_ez[iz]*
+            ez_arr(lo.x+l_ez+iz, 0, 0, 0);
+        Bxp += sz_bx[iz]*
+            bx_arr(lo.x+l_bx+iz, 0, 0, 0);
+        Byp += sz_by[iz]*
+            by_arr(lo.x+l_by+iz, 0, 0, 0);
+    }
+
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     // Gather field on particle Eyp from field on grid ey_arr
     for (int iz=0; iz<=depos_order; iz++){
         for (int ix=0; ix<=depos_order; ix++){
@@ -318,7 +356,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     Byp = costheta*Byp + sintheta*Bxp_save;
 #endif
 
-#else // (AMREX_SPACEDIM == 3)
+#else // defined(WARPX_DIM_3D)
     // Gather field on particle Exp from field on grid ex_arr
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<=depos_order; iy++){
@@ -379,22 +417,23 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 /**
  * \brief Field gather for particles
  *
- * /param getPosition          : A functor for returning the particle position.
- * /param getExternalEField    : A functor for assigning the external E field.
- * /param getExternalBField    : A functor for assigning the external B field.
- * \param Exp, Eyp, Ezp        : Pointer to array of electric field on particles.
- * \param Bxp, Byp, Bzp        : Pointer to array of magnetic field on particles.
- * \param exfab eyfab ezfab    : Array4 of the electric field, either full array or tile.
- * \param ezfab bxfab bzfab    : Array4 of the magnetic field, either full array or tile.
- * \param np_to_gather         : Number of particles for which field is gathered.
- * \param dx                   : 3D cell size
- * \param xyzmin               : Physical lower bounds of domain.
- * \param lo                   : Index lower bounds of domain.
- * \param n_rz_azimuthal_modes : Number of azimuthal modes when using RZ geometry
+ * \tparam depos_order         deposition order
+ * \tparam lower_in_v          lower shape order in parallel direction (Galerkin)
+ * \param getPosition          A functor for returning the particle position.
+ * \param getExternalEB        A functor for assigning the external E and B fields.
+ * \param Exp,Eyp,Ezp          Pointer to array of electric field on particles.
+ * \param Bxp,Byp,Bzp          Pointer to array of magnetic field on particles.
+ * \param exfab,eyfab,ezfab    Array4 of the electric field, either full array or tile.
+ * \param bxfab,byfab,bzfab    Array4 of the magnetic field, either full array or tile.
+ * \param np_to_gather         Number of particles for which field is gathered.
+ * \param dx                   3D cell size
+ * \param xyzmin               Physical lower bounds of domain.
+ * \param lo                   Index lower bounds of domain.
+ * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry
  */
 template <int depos_order, int lower_in_v>
 void doGatherShapeN(const GetParticlePosition& getPosition,
-                    const GetExternalEField& getExternalE, const GetExternalBField& getExternalB,
+                    const GetExternalEBField& getExternalEB,
                     amrex::ParticleReal * const Exp, amrex::ParticleReal * const Eyp,
                     amrex::ParticleReal * const Ezp, amrex::ParticleReal * const Bxp,
                     amrex::ParticleReal * const Byp, amrex::ParticleReal * const Bzp,
@@ -436,8 +475,7 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
 
             amrex::ParticleReal xp, yp, zp;
             getPosition(ip, xp, yp, zp);
-            getExternalE(ip, Exp[ip], Eyp[ip], Ezp[ip]);
-            getExternalB(ip, Bxp[ip], Byp[ip], Bzp[ip]);
+            getExternalEB(ip, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip]);
 
             doGatherShapeN<depos_order, lower_in_v>(
                 xp, yp, zp, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip],
@@ -451,19 +489,19 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
 /**
  * \brief Field gather for a single particle
  *
- * /param xp, yp, zp                : Particle position coordinates
- * \param Exp, Eyp, Ezp             : Electric field on particles.
- * \param Bxp, Byp, Bzp             : Magnetic field on particles.
- * \param ex_arr ey_arr ez_arr      : Array4 of the electric field, either full array or tile.
- * \param bx_arr by_arr bz_arr      : Array4 of the magnetic field, either full array or tile.
- * \param ex_type, ey_type, ez_type : IndexType of the electric field
- * \param bx_type, by_type, bz_type : IndexType of the magnetic field
- * \param dx                        : 3D cell spacing
- * \param xyzmin                    : Physical lower bounds of domain in x, y, z.
- * \param lo                        : Index lower bounds of domain.
- * \param n_rz_azimuthal_modes      : Number of azimuthal modes when using RZ geometry
- * \param nox                       : order of the particle shape function
- * \param galerkin_interpolation        : whether to use lower order in v
+ * \param xp,yp,zp                Particle position coordinates
+ * \param Exp,Eyp,Ezp             Electric field on particles.
+ * \param Bxp,Byp,Bzp             Magnetic field on particles.
+ * \param ex_arr,ey_arr,ez_arr    Array4 of the electric field, either full array or tile.
+ * \param bx_arr,by_arr,bz_arr    Array4 of the magnetic field, either full array or tile.
+ * \param ex_type,ey_type,ez_type IndexType of the electric field
+ * \param bx_type,by_type,bz_type IndexType of the magnetic field
+ * \param dx_arr                  3D cell spacing
+ * \param xyzmin_arr              Physical lower bounds of domain in x, y, z.
+ * \param lo                      Index lower bounds of domain.
+ * \param n_rz_azimuthal_modes    Number of azimuthal modes when using RZ geometry
+ * \param nox                     order of the particle shape function
+ * \param galerkin_interpolation  whether to use lower order in v
  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void doGatherShapeN (const amrex::ParticleReal xp,

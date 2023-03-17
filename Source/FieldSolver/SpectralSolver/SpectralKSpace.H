@@ -8,11 +8,20 @@
 #ifndef WARPX_SPECTRAL_K_SPACE_H_
 #define WARPX_SPECTRAL_K_SPACE_H_
 
+#include "SpectralKSpace_fwd.H"
+
 #include "Utils/WarpX_Complex.H"
 
+#include <AMReX_Array.H>
 #include <AMReX_BoxArray.H>
+#include <AMReX_Config.H>
+#include <AMReX_GpuContainers.H>
 #include <AMReX_LayoutData.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealVect.H>
+#include <AMReX_Vector.H>
 
+#include <AMReX_BaseFwd.H>
 
 // `KVectorComponent` and `SpectralShiftFactor` hold one 1D array
 // ("DeviceVector") for each box ("LayoutData"). The arrays are
@@ -49,7 +58,7 @@ class SpectralKSpace
             const int i_dim, const bool only_positive_k ) const;
         KVectorComponent getModifiedKComponent(
             const amrex::DistributionMapping& dm, const int i_dim,
-            const int n_order, const bool nodal ) const;
+            const int n_order, const short grid_type ) const;
         SpectralShiftFactor getSpectralShiftFactor(
             const amrex::DistributionMapping& dm, const int i_dim,
             const int shift_type ) const;
@@ -60,17 +69,5 @@ class SpectralKSpace
         // 2D: k_vec is an Array of 2 components, corresponding to kx, kz
         amrex::RealVect dx;
 };
-
-/**
- * \brief Returns an array of coefficients (Fornberg coefficients), corresponding
- * to the weight of each point in a finite-difference approximation of a derivative
- * (up to order \c n_order).
- *
- * \param[in] n_order order of the finite-difference approximation
- * \param[in] nodal   whether the finite-difference approximation is computed
- *                    on a nodal grid or a staggered grid
- */
-amrex::Vector<amrex::Real>
-getFornbergStencilCoefficients(const int n_order, const bool nodal);
 
 #endif

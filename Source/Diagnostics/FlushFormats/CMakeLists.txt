@@ -3,6 +3,7 @@ target_sources(WarpX
     FlushFormatAscent.cpp
     FlushFormatCheckpoint.cpp
     FlushFormatPlotfile.cpp
+    FlushFormatSensei.cpp
 )
 
 if(WarpX_HAVE_OPENPMD)

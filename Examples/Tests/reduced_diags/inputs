@@ -12,10 +12,13 @@ amr.max_grid_size = 32
 amr.max_level = 0
 
 # Geometry
-geometry.coord_sys   =  0            # 0: Cartesian
-geometry.is_periodic =  1    1    1  # Is periodic?
+geometry.dims = 3
 geometry.prob_lo     = -1.  -1.  -1. # physical domain
 geometry.prob_hi     =  1.   1.   1.
+
+# Boundary condition
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
 
 # Algorithms
 algo.current_deposition = esirkepov
@@ -23,11 +26,8 @@ algo.field_gathering = energy-conserving # or momentum-conserving
 warpx.use_filter = 1
 algo.maxwell_solver = yee # or ckc
 
-# Interpolation
-# 1: Linear; 2: Quadratic; 3: Cubic.
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+# Order of particle shape factors
+algo.particle_shape = 1
 
 # CFL
 warpx.cfl = 0.99999
@@ -53,10 +53,7 @@ protons.injection_style = "NUniformPerCell"
 protons.num_particles_per_cell_each_dim = 1 1 1
 protons.profile = constant
 protons.density = 1.e14   # number of protons per m^3
-protons.momentum_distribution_type = gaussian
-protons.ux_th = 0.
-protons.uy_th = 0.
-protons.uz_th = 0.
+protons.momentum_distribution_type = at_rest
 
 photons.species_type = "photon"
 photons.injection_style = "NUniformPerCell"
@@ -71,17 +68,74 @@ photons.uz_th = 0.2
 #################################
 ###### REDUCED DIAGS ############
 #################################
-warpx.reduced_diags_names = EP NP EF MF
+warpx.reduced_diags_names = EP NP EF PP PF MF MR FP FP_integrate FP_line FP_plane FR_Max FR_Min FR_Integral
 EP.type = ParticleEnergy
-EP.frequency = 200
+EP.intervals = 200
 EF.type = FieldEnergy
-EF.frequency = 200
+EF.intervals = 200
+PP.type = ParticleMomentum
+PP.intervals = 200
+PF.type = FieldMomentum
+PF.intervals = 200
 MF.type = FieldMaximum
-MF.frequency = 200
+MF.intervals = 200
+FP.type = FieldProbe
+FP.intervals = 200
+#The probe is placed at a cell center to match the value in the plotfile
+FP.x_probe = 0.53125
+FP.y_probe = 0.53125
+FP.z_probe = 0.53125
+FP_integrate.type = FieldProbe
+FP_integrate.intervals = 20
+FP_integrate.probe_geometry = Point
+FP_integrate.x_probe = 0.53125
+FP_integrate.y_probe = 0.53125
+FP_integrate.z_probe = 0.53125
+FP_integrate.integrate = 1
+FP_line.type = FieldProbe
+FP_line.intervals = 200
+FP_line.probe_geometry = Line
+FP_line.x_probe = 0.53125
+FP_line.y_probe = 0.53125
+FP_line.z_probe = 0.53125
+FP_line.x1_probe = 0.70225
+FP_line.y1_probe = 0.70225
+FP_line.z1_probe = 0.70225
+FP_line.resolution = 100
+FP_plane.type = FieldProbe
+FP_plane.intervals = 200
+FP_plane.probe_geometry = Plane
+FP_plane.x_probe = 0.5
+FP_plane.y_probe = 0.5
+FP_plane.z_probe = 0.5
+FP_plane.target_normal_x = 0
+FP_plane.target_normal_y = 0
+FP_plane.target_normal_z = 1
+FP_plane.target_up_x = 0
+FP_plane.target_up_y = 1
+FP_plane.target_up_z = 0
+FP_plane.detector_radius = 0.25
+FP_plane.resolution = 10
+MR.type = RhoMaximum
+MR.intervals = 200
 NP.type = ParticleNumber
-NP.frequency = 200
+NP.intervals = 200
+FR_Max.type = FieldReduction
+FR_Max.intervals = 200
+FR_Max.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz) = sqrt(Bx**2 + By**2 + Bz**2)
+FR_Max.reduction_type = Maximum
+FR_Min.type = FieldReduction
+FR_Min.intervals = 200
+FR_Min.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz) = x*Ey*Bz
+FR_Min.reduction_type = Minimum
+FR_Integral.type = FieldReduction
+FR_Integral.intervals = 200
+FR_Integral.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz) = "if(y > 0 and z < 0,
+                            0.5*((Ex**2 + Ey**2 + Ez**2)*epsilon0+(Bx**2 + By**2 + Bz**2)/mu0), 0)"
+FR_Integral.reduction_type = Integral
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 200
+diag1.intervals = 200
 diag1.diag_type = Full
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_protons

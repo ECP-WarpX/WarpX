@@ -1,6 +1,23 @@
 #include "Interpolate.H"
 #include "Interpolate_K.H"
 
+#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_BCRec.H>
+#include <AMReX_Box.H>
+#include <AMReX_Config.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_FabArray.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_Interpolater.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_SPACE.H>
+
 namespace Interpolate
 {
     using namespace amrex;
@@ -8,8 +25,8 @@ namespace Interpolate
     std::unique_ptr<MultiFab>
     getInterpolatedScalar(
         const MultiFab& F_cp, const MultiFab& F_fp,
-        const DistributionMapping& dm, const int r_ratio,
-        const Real* /*dx*/, const int ngrow )
+        const DistributionMapping& dm, const amrex::IntVect r_ratio,
+        const Real* /*dx*/, const IntVect ngrow )
     {
         // Prepare the structure that will contain the returned fields
         std::unique_ptr<MultiFab> interpolated_F;
@@ -17,8 +34,8 @@ namespace Interpolate
         interpolated_F->setVal(0.);
 
         // Loop through the boxes and interpolate the values from the _cp data
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         {
             FArrayBox ffab; // Temporary array ; contains interpolated fields
@@ -32,7 +49,7 @@ namespace Interpolate
 
                 // - Fully nodal
                 if ( F_fp.is_nodal() ){
-                    IntVect refinement_vector{AMREX_D_DECL(r_ratio, r_ratio, r_ratio)};
+                    amrex::IntVect refinement_vector{AMREX_D_DECL(r_ratio[0], r_ratio[1], r_ratio[2])};
                     node_bilinear_interp.interp(cfab, 0, ffab, 0, 1,
                                                 finebx, refinement_vector, {}, {}, {}, 0, 0, RunOn::Cpu);
                 } else {
@@ -55,8 +72,8 @@ namespace Interpolate
         const MultiFab* Fx_fp,
         const MultiFab* Fy_fp,
         const MultiFab* Fz_fp,
-        const DistributionMapping& dm, const int r_ratio,
-        const Real* /*dx*/, const int ngrow )
+        const DistributionMapping& dm, const amrex::IntVect r_ratio,
+        const Real* /*dx*/, const IntVect ngrow )
     {
 
         // Prepare the structure that will contain the returned fields
@@ -69,8 +86,8 @@ namespace Interpolate
         IntVect fy_type = interpolated_F[1]->ixType().toIntVect();
         IntVect fz_type = interpolated_F[2]->ixType().toIntVect();
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (MFIter mfi(*interpolated_F[0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {

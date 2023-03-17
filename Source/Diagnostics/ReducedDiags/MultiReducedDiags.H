@@ -8,10 +8,13 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_MULTIREDUCEDDIAGS_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_MULTIREDUCEDDIAGS_H_
 
+#include "MultiReducedDiags_fwd.H"
+
 #include "ReducedDiags.H"
-#include <vector>
-#include <string>
+
 #include <memory>
+#include <string>
+#include <vector>
 
 /**
  * This class holds multiple instances of ReducedDiagnostics, and contains
@@ -32,15 +35,23 @@ public:
     std::vector<std::unique_ptr<ReducedDiags>> m_multi_rd;
 
     /// constructor
-    MultiReducedDiags();
+    MultiReducedDiags ();
+
+    /** Loop over all ReducedDiags and call their InitData
+     */
+    void InitData ();
+
+    /** Redistribute parallel data structures during load balance
+     */
+    void LoadBalance ();
 
     /** Loop over all ReducedDiags and call their ComputeDiags
      *  @param[in] step current iteration time */
-    void ComputeDiags(int step);
+    void ComputeDiags (int step);
 
     /** Loop over all ReducedDiags and call their WriteToFile
      *  @param[in] step current iteration time */
-    void WriteToFile(int step);
+    void WriteToFile (int step);
 
 };
 

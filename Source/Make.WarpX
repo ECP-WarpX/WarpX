@@ -5,12 +5,9 @@ OPENBC_HOME ?= ../../../openbc_poisson
 USE_MPI       = TRUE
 USE_PARTICLES = TRUE
 USE_RPATH     = TRUE
+USE_GPU_RDC   = FALSE
 BL_NO_FORT    = TRUE
-ifeq ($(USE_DPCPP),TRUE)
-  CXXSTD        = c++17
-else
-  CXXSTD        = c++14
-endif
+CXXSTD        = c++17
 
 # required for AMReX async I/O
 MPI_THREAD_MULTIPLE = TRUE
@@ -35,6 +32,7 @@ ifeq ($(USE_ASCENT_INSITU),TRUE)
   endif
   USE_CONDUIT = TRUE
   USE_ASCENT = TRUE
+  USE_GPU_RDC = TRUE
 endif
 
 ifndef USE_PYTHON_MAIN
@@ -55,25 +53,33 @@ endif
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 
 ifeq ($(DIM),3)
-  DEFINES += -DWARPX_DIM_3D
-else
-ifeq ($(USE_RZ),TRUE)
-  DEFINES += -DWARPX_DIM_RZ
-else
-  DEFINES += -DWARPX_DIM_XZ
+  DEFINES += -DWARPX_DIM_3D -DWARPX_ZINDEX=2
 endif
+
+ifeq ($(DIM),2)
+ifeq ($(USE_RZ),TRUE)
+  DEFINES += -DWARPX_DIM_RZ -DWARPX_ZINDEX=1
+else
+  DEFINES += -DWARPX_DIM_XZ -DWARPX_ZINDEX=1
+endif
+endif
+
+ifeq ($(DIM),1)
+  DEFINES += -DWARPX_DIM_1D_Z -DWARPX_ZINDEX=0
 endif
 
 -include Make.package
 include $(WARPX_HOME)/Source/Make.package
+include $(WARPX_HOME)/Source/ablastr/Make.package
+include $(WARPX_HOME)/Source/AcceleratorLattice/Make.package
 include $(WARPX_HOME)/Source/BoundaryConditions/Make.package
 include $(WARPX_HOME)/Source/Diagnostics/Make.package
+include $(WARPX_HOME)/Source/EmbeddedBoundary/Make.package
 include $(WARPX_HOME)/Source/FieldSolver/Make.package
 include $(WARPX_HOME)/Source/Filter/Make.package
 include $(WARPX_HOME)/Source/Initialization/Make.package
 include $(WARPX_HOME)/Source/Laser/Make.package
 include $(WARPX_HOME)/Source/Parallelization/Make.package
-include $(WARPX_HOME)/Source/Parser/Make.package
 include $(WARPX_HOME)/Source/Particles/Make.package
 include $(WARPX_HOME)/Source/Python/Make.package
 include $(WARPX_HOME)/Source/Utils/Make.package
@@ -88,10 +94,16 @@ include $(AMREX_HOME)/Src/LinearSolvers/MLMG/Make.package
 ifeq ($(USE_SENSEI_INSITU),TRUE)
   include $(AMREX_HOME)/Src/Amr/Make.package
   include $(AMREX_HOME)/Src/Extern/SENSEI/Make.package
+  USE_GPU_RDC = TRUE
+endif
+
+ifeq ($(USE_EB),TRUE)
+  include $(AMREX_HOME)/Src/EB/Make.package
+  USERSuffix := $(USERSuffix).EB
 endif
 
 ifeq ($(QED),TRUE)
-  INCLUDE_LOCATIONS += $(PICSAR_HOME)/src/multi_physics/QED/src
+  INCLUDE_LOCATIONS += $(PICSAR_HOME)/multi_physics/QED/include
   CXXFLAGS += -DWARPX_QED
   CFLAGS   += -DWARPX_QED
   FFLAGS   += -DWARPX_QED
@@ -119,21 +131,16 @@ ifeq ($(USE_SINGLE_PRECISION_PARTICLES),TRUE)
   USERSuffix := $(USERSuffix).pSP
 endif
 
-include $(PICSAR_HOME)/src/Make.package
+ifeq ($(QED),TRUE)
+  include $(PICSAR_HOME)/src/Make.package
+endif
 
 WARPX_GIT_VERSION := $(shell cd $(WARPX_HOME); git describe --abbrev=12 --dirty --always --tags)
 PICSAR_GIT_VERSION := $(shell cd $(PICSAR_HOME); git describe --abbrev=12 --dirty --always --tags)
-DEFINES += -DWARPX_GIT_VERSION=\"$(WARPX_GIT_VERSION)\"
-DEFINES += -DPICSAR_GIT_VERSION=\"$(PICSAR_GIT_VERSION)\"
+WARPX_DEFINES = -DWARPX_GIT_VERSION=\"$(WARPX_GIT_VERSION)\" -DPICSAR_GIT_VERSION=\"$(PICSAR_GIT_VERSION)\"
 
 DEFINES += -DPICSAR_NO_ASSUMED_ALIGNMENT
 DEFINES += -DWARPX
-
-ifdef PARSER_DEPTH
-  DEFINES += -DWARPX_PARSER_DEPTH=$(PARSER_DEPTH)
-else
-  DEFINES += -DWARPX_PARSER_DEPTH=24
-endif
 
 ifeq ($(USE_OPENBC_POISSON),TRUE)
   include $(OPENBC_HOME)/Make.package
@@ -142,7 +149,7 @@ endif
 
 ifeq ($(USE_OPENPMD), TRUE)
    # try pkg-config query
-   ifeq (0, $(shell pkg-config "openPMD >= 0.12.0"; echo $$?))
+   ifeq (0, $(shell pkg-config "openPMD >= 0.14.2"; echo $$?))
        CXXFLAGS += $(shell pkg-config --cflags openPMD)
        LIBRARY_LOCATIONS += $(shell pkg-config --variable=libdir openPMD)
        libraries += $(shell pkg-config --libs-only-l openPMD)
@@ -206,6 +213,11 @@ ifeq ($(USE_HDF5),TRUE)
     DEFINES += -DWARPX_USE_HDF5
 endif
 
+ifeq ($(USE_GPUCLOCK),TRUE)
+  USERSuffix := $(USERSuffix).GPUCLOCK
+  DEFINES += -DWARPX_USE_GPUCLOCK
+endif
+
 # job_info support
 CEXE_sources += AMReX_buildInfo.cpp
 INCLUDE_LOCATIONS += $(AMREX_HOME)/Tools/C_scripts
@@ -224,31 +236,31 @@ else
   PYDIM = $(DIM)d
 endif
 
-installwarpx: libwarpx$(PYDIM).so
-	mv libwarpx$(PYDIM).so Python/pywarpx
-	cd Python; python setup.py install --with-libwarpx $(PYDIM) $(PYINSTALLOPTIONS)
+installwarpx: libwarpx.$(PYDIM).so
+	cp libwarpx.$(PYDIM).so Python/pywarpx
+	cd Python; python3 setup.py install --force --with-libwarpx $(PYDIM) $(PYINSTALLOPTIONS)
 
-libwarpx$(PYDIM).a: $(objForExecs)
+libwarpx.$(PYDIM).a: $(objForExecs)
 	@echo Making static library $@ ...
 	$(SILENT) $(AR) -crv $@ $^
 	$(SILENT) $(RM) AMReX_buildInfo.cpp
 	@echo SUCCESS
 
-libwarpx$(PYDIM).so: $(objForExecs)
+libwarpx.$(PYDIM).so: $(objForExecs)
 	@echo Making dynamic library $@ ...
 ifeq ($(USE_CUDA),TRUE)
 	$(SILENT) $(CXX) $(LINKFLAGS) $(SHARED_OPTION) -Xlinker=$(SHARED_OPTION) -Xlinker=-fPIC -o $@ $^ $(LDFLAGS) $(libraries)
 else
-	$(SILENT) $(CXX) $(SHARED_OPTION) -fPIC -o $@ $^ $(LDFLAGS) $(libraries)
+	$(SILENT) $(CXX) $(LINKFLAGS) $(SHARED_OPTION) -fPIC -o $@ $^ $(LDFLAGS) $(libraries)
 endif
 	$(SILENT) $(RM) AMReX_buildInfo.cpp
 	@echo SUCCESS
 
 clean::
 	$(SILENT) $(RM) -rf build
-	$(SILENT) $(RM) -f libwarpx?d.a
-	$(SILENT) $(RM) -f libwarpx?d.so
-	$(SILENT) $(RM) -f pywarpx/libwarpx?d.so
+	$(SILENT) $(RM) -f libwarpx.?d.a
+	$(SILENT) $(RM) -f libwarpx.?d.so
+	$(SILENT) $(RM) -f pywarpx/libwarpx.?d.so
 
 else
 
@@ -279,6 +291,18 @@ AMReX_buildInfo.cpp:
           --F_comp_name "$(F90)" --F_flags "$(F90FLAGS)" \
           --link_flags "$(LDFLAGS)" --libraries "$(libraries)" \
           --GIT ". $(AMREX_HOME) $(PICSAR_HOME)"
+
+vpath WarpXVersion.H $(srcTempDir)/Utils
+
+AUTO_BUILD_SOURCES += $(srcTempDir)/Utils/WarpXVersion.H
+
+$(srcTempDir)/Utils/WarpXVersion.H:
+	@echo Generating WarpXVersion.H ...
+	@if [ ! -d $(srcTempDir)/Utils ]; then mkdir -p $(srcTempDir)/Utils; fi
+	@ $(MKVERSIONHEADER) --code="WARPX" --defines="$(WARPX_DEFINES)" > $@
+
+cleanconfig::
+	$(SILENT) $(RM) -r $(srcTempDir)/Utils
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.rules
 

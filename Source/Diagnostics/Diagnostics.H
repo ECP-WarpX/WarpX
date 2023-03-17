@@ -1,12 +1,25 @@
 #ifndef WARPX_DIAGNOSTICS_H_
 #define WARPX_DIAGNOSTICS_H_
 
-#include "FlushFormats/FlushFormat.H"
-#include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ParticleDiag/ParticleDiag.H"
-#include "Utils/IntervalsParser.H"
+
+#include "ComputeDiagFunctors/ComputeDiagFunctor_fwd.H"
+#include "ComputeDiagFunctors/ComputeParticleDiagFunctor.H"
+#include "FlushFormats/FlushFormat_fwd.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Particles/PinnedMemoryParticleContainer.H"
+
+#include <AMReX_IntVect.H>
+#include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-#include <AMReX_MultiFab.H>
+#include <AMReX_AmrParticles.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 /**
  * \brief base class for diagnostics.
@@ -17,14 +30,22 @@
 class Diagnostics
 {
 public:
+    /** Constructor
+     *
+     * @param i index of diagnostics in MultiDiagnostics::alldiags
+     * @param name diagnostics name in the inputs file
+     */
     Diagnostics (int i, std::string name);
+
     /** Virtual Destructor to handle clean destruction of derived classes */
-    virtual ~Diagnostics () ;
+    virtual ~Diagnostics ();
+
     /** Pack (stack) all fields in the cell-centered output MultiFab m_mf_output.
      *
      * Fields are computed (e.g., cell-centered or back-transformed)
        on-the-fly using a functor. */
     void ComputeAndPack ();
+
     /** \brief Flush particle and field buffers to file using the FlushFormat member variable.
      *
      * This function should belong to class Diagnostics and not be virtual, as it flushes
@@ -50,6 +71,15 @@ public:
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
     virtual void InitializeFieldFunctors (int lev) = 0;
+    /** Initialize functors that store pointers to the fields requested by the user.
+     *
+     * The function is called at initialization and when the domain is decomposed
+     * during the simulation to load-balance.
+     * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+     */
+    virtual void InitializeFieldFunctorsRZopenPMD ([[maybe_unused]] int lev) { }
+    /** Initialize functors that store pointers to the species data requested by the user. */
+    virtual void InitializeParticleFunctors () {}
     /** whether to compute and pack data in output buffers at this time step
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
@@ -58,6 +88,7 @@ public:
     virtual bool DoComputeAndPack(int step, bool force_flush=false) = 0;
     /** whether to flush at this time step
      * \param[in] step current time step
+     * \param[in] i_buffer index of the buffer data to be flushed.
      * \param[in] force_flush if true, return true for any step
      * \return bool, whether to flush
      */
@@ -71,6 +102,8 @@ public:
      * \param[in] force_flush used to force-fully write data stored in buffers.
      */
     void FilterComputePackFlush (int step, bool force_flush=false);
+    /** Whether the last timestep is always dumped */
+    bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
 
 protected:
     /** Read Parameters of the base Diagnostics class */
@@ -81,29 +114,66 @@ protected:
      * \param[in] i_buffer index of buffer for which the output MultiFab is defined.
      * \param[in] lev level on which the output MultiFab is defined
      */
-    virtual void InitializeFieldBufferData (int i_buffer, int lev) = 0;
+    virtual void InitializeBufferData (int i_buffer, int lev) = 0;
     /** Initialize member variables and arrays specific to the diagnostics in the
      *  derived classes.(FullDiagnostics, BTDiagnostics)
      */
     virtual void DerivedInitData () {}
     /** This function initialized particle buffers (not implemented in diagnostics, yet) */
     virtual void InitializeParticleBuffer () = 0;
+    /** This function prepares buffer data as required for fields and particles. For back-transformed diagnostics,
+     *  this function prepares the z coordinate in the boosted-frame and lab-frame.
+     */
+    virtual void PrepareBufferData () {}
+    /** This function updates buffer data and computes the number of buffers filled in the output multifab as well
+     *  as identifies if the last buffer has been filled as needed to close the output files.
+     */
+    virtual void UpdateBufferData () {}
     /** Prepare data (either fill-boundary or cell-centered data for
         back-transform diagnostics) to be processed for diagnostics.
      */
     virtual void PrepareFieldDataForOutput () {}
-    /** Shift the diag-domain boundary for moving window and galilean simulations */
-    virtual void MovingWindowAndGalileanDomainShift () {}
+    /** The Particle Geometry, BoxArray, and RealBox are set for the lab-frame output */
+    virtual void PrepareParticleDataForOutput () {}
+    /** Update the physical extent of the diagnostic domain for moving window and
+     *  galilean shift simulations
+     *
+     * \param[in] step current time step
+     */
+    virtual void MovingWindowAndGalileanDomainShift (int step) { amrex::ignore_unused(step); }
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string m_diag_name;
     /** Prefix for output directories */
     std::string m_file_prefix;
+    /** Minimum number of digits to iteration number in file name */
+    int m_file_min_digits = 6;
     /** Index of diagnostics in MultiDiagnostics::alldiags */
     int m_diag_index;
     /** Names of  each component requested by the user.
-     * in cylindrical geometry, this list is appended with
-     * automatically-constructed names for all modes of all fields */
+     * The list is appended with the average particle fields, if used.
+     * In cylindrical geometry, this list is also appended with
+     * automatically-constructed names for all modes of all fields.*/
     amrex::Vector< std::string > m_varnames;
+    /** Names of plotfile fields requested by the user */
+    amrex::Vector< std::string > m_varnames_fields;
+
+    /** Names of particle field properties to output */
+    amrex::Vector< std::string > m_pfield_varnames;
+    /** Names of species for which to output particle field diagnostics */
+    std::vector< std::string > m_pfield_species;
+    /** Whether to do averaging for each of the particle fied diagnostics */
+    std::vector< bool > m_pfield_do_average;
+    /** Species indices corresponding to elements of m_pfield_varnames */
+    std::vector< int > m_pfield_species_index;
+    /** List of the parser strings for the particle field diagnostics */
+    std::vector< std::string > m_pfield_strings;
+    /** Whether to use a filter function on particles before calculating particle fied diagnostics */
+    std::vector< bool> m_pfield_dofilter;
+    /** List of parser strings for pre-average filtering for the particle field diagnostics */
+    std::vector< std::string > m_pfield_filter_strings;
+
+    /** If true, a dump is performed at the last timestep regardless of the required dump timesteps */
+    bool m_dump_last_timestep = true;
     /** format for output files, "plotfile" or "openpmd" or "sensei" or "ascent"
      * The checkpoint format is applicable for FullDiagnostics only.
      */
@@ -111,7 +181,7 @@ protected:
     /** Whether this iteration has already been dumped, to avoid writing data twice */
     int m_already_done = false;
     /** This class is responsible for flushing the data to file */
-    FlushFormat* m_flush_format;
+    std::unique_ptr<FlushFormat> m_flush_format;
     /** output multifab, where all fields are computed (cell-centered or back-transformed)
      *  and stacked.
      *  The first vector is for total number of snapshots. (=1 for FullDiagnostics)
@@ -135,8 +205,10 @@ protected:
     std::vector< std::string > m_output_species_names;
     /** Names of all species in the simulation */
     std::vector< std::string > m_all_species_names;
-    /** Each element of this vector handles output for 1 species */
-    amrex::Vector< ParticleDiag > m_output_species;
+    /** The first vector is for total number of snapshots. (=1 for FullDiagnostics)
+        The second vector handles output for 1 species
+      */
+    amrex::Vector< amrex::Vector< ParticleDiag> > m_output_species;
     /** Vector of (pointers to) functors to compute output fields, per level,
      * per component. This allows for simple operations (averaging to
      * cell-center for standard EB fields) as well as more involved operations
@@ -154,6 +226,22 @@ protected:
     int m_num_buffers;
     /** Array of species indices that dump rho per species */
     amrex::Vector<int> m_rho_per_species_index;
+    /** Vector of particle buffer vectors for each snapshot */
+    amrex::Vector< amrex::Vector<std::unique_ptr<PinnedMemoryParticleContainer> > > m_particles_buffer;
+    /** Vector of pointers to functors to compute particle output per species*/
+    amrex::Vector< std::unique_ptr<ComputeParticleDiagFunctor> > m_all_particle_functors;
+
+    /** Vector of total number of particles previously flushed, per species, per snapshot.
+     *  The first vector is for total number of snapshots and second vector loops
+     *  over the total number of species selected for diagnostics.
+     */
+    amrex::Vector< amrex::Vector <int> > m_totalParticles_flushed_already;
+    /** Vector of total number of particles in the buffer, per species, per snapshot.
+     *  The first vector is for total number of snapshots and second vector loops
+     *  over the total number of species selected for diagnostics.
+     */
+    amrex::Vector< amrex::Vector <int> > m_totalParticles_in_buffer;
+
 };
 
 #endif // WARPX_DIAGNOSTICS_H_

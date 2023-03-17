@@ -1,7 +1,11 @@
 #include "FlushFormatAscent.H"
+
 #include "WarpX.H"
+#include "Utils/TextMsg.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
+#include <AMReX_REAL.H>
 
 using namespace amrex;
 
@@ -12,46 +16,68 @@ FlushFormatAscent::WriteToFile (
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
-    const std::string prefix, bool plot_raw_fields,
-    bool plot_raw_fields_guards, bool /*plot_raw_rho*/, bool plot_raw_F) const
+    const std::string prefix, int file_min_digits, bool plot_raw_fields,
+    bool plot_raw_fields_guards,
+    const bool /*use_pinned_pc*/,
+    bool isBTD, int /*snapshotID*/, int /*bufferID*/, int /*numBuffers*/,
+    const amrex::Geometry& /*full_BTD_snapshot*/,
+    bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
 {
 #ifdef AMREX_USE_ASCENT
+    WARPX_PROFILE("FlushFormatAscent::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !isBTD,
+        "In-situ visualization is not currently supported for back-transformed diagnostics.");
+
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
+    amrex::Print() << Utils::TextMsg::Info("Writing Ascent file " + filename);
+
     // wrap mesh data
+    WARPX_PROFILE_VAR("FlushFormatAscent::WriteToFile::MultiLevelToBlueprint", prof_ascent_mesh_blueprint);
     conduit::Node bp_mesh;
     amrex::MultiLevelToBlueprint(
         nlev, amrex::GetVecOfConstPtrs(mf), varnames, geom, time, iteration, warpx.refRatio(), bp_mesh);
+    WARPX_PROFILE_VAR_STOP(prof_ascent_mesh_blueprint);
 
+    WARPX_PROFILE_VAR("FlushFormatAscent::WriteToFile::WriteParticles", prof_ascent_particles);
     WriteParticles(particle_diags, bp_mesh);
+    WARPX_PROFILE_VAR_STOP(prof_ascent_particles);
 
     // If you want to save blueprint HDF5 files w/o using an Ascent
     // extract, you can call the following AMReX helper:
     // const auto step = istep[0];
     // WriteBlueprintFiles(bp_mesh,"bp_export",step,"hdf5");
 
+    WARPX_PROFILE_VAR("FlushFormatAscent::WriteToFile::publish", prof_ascent_publish);
     ascent::Ascent ascent;
     conduit::Node opts;
     opts["exceptions"] = "catch";
     opts["mpi_comm"] = MPI_Comm_c2f(ParallelDescriptor::Communicator());
     ascent.open(opts);
     ascent.publish(bp_mesh);
+    WARPX_PROFILE_VAR_STOP(prof_ascent_publish);
+
+    WARPX_PROFILE_VAR("FlushFormatAscent::WriteToFile::execute", prof_ascent_execute);
     conduit::Node actions;
     ascent.execute(actions);
     ascent.close();
+    WARPX_PROFILE_VAR_STOP(prof_ascent_execute);
 
 #else
     amrex::ignore_unused(varnames, mf, geom, iteration, time,
-        particle_diags, nlev);
+        particle_diags, nlev, file_min_digits, isBTD);
 #endif // AMREX_USE_ASCENT
-    amrex::ignore_unused(prefix, plot_raw_fields, plot_raw_fields_guards,
-        plot_raw_F);
+    amrex::ignore_unused(prefix, plot_raw_fields, plot_raw_fields_guards);
 }
 
 #ifdef AMREX_USE_ASCENT
 void
 FlushFormatAscent::WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags, conduit::Node& a_bp_mesh) const
 {
+    WARPX_PROFILE("FlushFormatAscent::WriteParticles()");
+
     // wrap particle data for each species
     // we prefix the fields with "particle_{species_name}" b/c we
     // want to to uniquely name all the fields that can be plotted
@@ -73,13 +99,13 @@ FlushFormatAscent::WriteParticles(const amrex::Vector<ParticleDiag>& particle_di
 
         // WarpXParticleContainer compile-time extra SoA attributes (Real): PIdx::nattribs
         // not an efficient search, but N is small...
-        for(int i = 0; i < PIdx::nattribs; ++i)
+        for(int j = 0; j < PIdx::nattribs; ++j)
         {
             auto rvn_it = real_comps_map.begin();
             for (; rvn_it != real_comps_map.end(); ++rvn_it)
-                if (rvn_it->second == i)
+                if (rvn_it->second == j)
                     break;
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 rvn_it != real_comps_map.end(),
                 "Ascent: SoA real attribute not found");
             std::string varname = rvn_it->first;

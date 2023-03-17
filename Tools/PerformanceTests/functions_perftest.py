@@ -5,10 +5,15 @@
 #
 # License: BSD-3-Clause-LBNL
 
-import os, shutil, re, copy
-import pandas as pd
-import numpy as np
+import copy
+import os
+import re
+import shutil
+
 import git
+import numpy as np
+import pandas as pd
+
 # import cori
 # import summit
 

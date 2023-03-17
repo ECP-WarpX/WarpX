@@ -27,10 +27,15 @@ __pycache__
 Python/build/
 Python/dist/
 Python/pywarpx.egg-info/
+_tmppythonbuild/
+pywarpx.egg-info/
 
 ##########
 # Sphinx #
 ##########
+Docs/amrex-doxygen-web.tag.xml
+Docs/warpx-doxygen-web.tag.xml
+Docs/openpmd-api-doxygen-web.tag.xml
 Docs/doxyhtml/
 Docs/doxyxml/
 Docs/source/_static/
@@ -50,6 +55,11 @@ spack.lock
 cmake-build-*/
 .kdev?/
 *.kdev?
+
+##########
+# VsCode #
+##########
+.vscode
 
 # File-based project format:
 *.iws

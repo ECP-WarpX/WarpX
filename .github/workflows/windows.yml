@@ -1,23 +1,70 @@
-name: windows
+name: 🪟 Windows
 
 on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.head_ref }}-windows
+  cancel-in-progress: true
 
 jobs:
   build_win_msvc:
     name: MSVC C++17 w/o MPI
     runs-on: windows-latest
+    if: github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+    - name: CCache Cache
+      uses: actions/cache@v3
+      # - once stored under a key, they become immutable (even if local cache path content changes)
+      # - for a refresh the key has to change, e.g., hash of a tracked file in the key
+      with:
+        path: |
+          ~/.ccache
+          ~/.cache/ccache
+        key: ccache-windows-winmsvc-${{ hashFiles('.github/workflows/windows.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+        restore-keys: |
+          ccache-windows-winmsvc-${{ hashFiles('.github/workflows/windows.yml') }}-
+          ccache-windows-winmsvc-
     - name: Build & Install
       run: |
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_COMPUTE=NOACC -DWarpX_OPENPMD=ON -DWarpX_MPI=OFF
+        cmake -S . -B build               `
+              -DCMAKE_BUILD_TYPE=Debug    `
+              -DCMAKE_VERBOSE_MAKEFILE=ON `
+              -DWarpX_COMPUTE=NOACC       `
+              -DWarpX_OPENPMD=ON          `
+              -DWarpX_MPI=OFF             `
+              -DWarpX_LIB=ON
+        if(!$?) { Exit $LASTEXITCODE }
         cmake --build build --config Debug --parallel 2
+        if(!$?) { Exit $LASTEXITCODE }
+
+        python3 -m pip install --upgrade pip setuptools wheel
+        if(!$?) { Exit $LASTEXITCODE }
+        cmake --build build --config Debug --target pip_install
+        if(!$?) { Exit $LASTEXITCODE }
+
+        python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py
+# JSON writes are currently very slow (50min) with MSVC
+#  --diagformat=openpmd
 
   build_win_clang:
     name: Clang C++17 w/ OMP w/o MPI
     runs-on: windows-2019
+    if: github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+    - name: CCache Cache
+      uses: actions/cache@v3
+      # - once stored under a key, they become immutable (even if local cache path content changes)
+      # - for a refresh the key has to change, e.g., hash of a tracked file in the key
+      with:
+        path: |
+          ~/.ccache
+          ~/.cache/ccache
+        key: ccache-windows-winclang-${{ hashFiles('.github/workflows/windows.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+        restore-keys: |
+          ccache-windows-winclang-${{ hashFiles('.github/workflows/windows.yml') }}-
+          ccache-windows-winclang-
     - uses: seanmiddleditch/gha-setup-ninja@master
     - name: Build & Install
       shell: cmd
@@ -30,6 +77,18 @@ jobs:
               -DCMAKE_BUILD_TYPE=Release    ^
               -DCMAKE_VERBOSE_MAKEFILE=ON   ^
               -DWarpX_COMPUTE=OMP           ^
-              -DWarpX_OPENPMD=ON            ^
-              -DWarpX_MPI=OFF
+              -DWarpX_EB=ON                 ^
+              -DWarpX_LIB=ON                ^
+              -DWarpX_MPI=OFF               ^
+              -DWarpX_OPENPMD=ON
+        if errorlevel 1 exit 1
         cmake --build build --config Release --parallel 2
+        if errorlevel 1 exit 1
+
+        python3 -m pip install --upgrade pip setuptools wheel
+        if errorlevel 1 exit 1
+        cmake --build build --config Release --target pip_install
+        if errorlevel 1 exit 1
+
+        python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
+        if errorlevel 1 exit 1

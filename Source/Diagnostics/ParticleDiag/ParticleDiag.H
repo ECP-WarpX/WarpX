@@ -1,19 +1,27 @@
 #ifndef WARPX_PARTICLEDIAG_H_
 #define WARPX_PARTICLEDIAG_H_
 
-#include "Parser/WarpXParserWrapper.H"
-#include "Utils/WarpXUtil.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "ParticleDiag_fwd.H"
+
+#include "Particles/WarpXParticleContainer_fwd.H"
+#include "Particles/PinnedMemoryParticleContainer.H"
+
+#include <AMReX_Parser.H>
+#include <AMReX_REAL.H>
+#include <AMReX_RealBox.H>
+#include <AMReX_Vector.H>
 
 #include <memory>
+#include <string>
 
 class ParticleDiag
 {
 public:
-    ParticleDiag(std::string diag_name, std::string name, WarpXParticleContainer* pc);
+    ParticleDiag(std::string diag_name, std::string name, WarpXParticleContainer* pc, PinnedMemoryParticleContainer *pinned_pc = nullptr);
     WarpXParticleContainer* getParticleContainer() const { return m_pc; }
+    PinnedMemoryParticleContainer* getPinnedParticleContainer() const { return m_pinned_pc; }
     std::string getSpeciesName() const { return m_name; }
-    amrex::Vector<int> plot_flags;
+    amrex::Vector<int> m_plot_flags;
 
     bool m_do_random_filter  = false;
     bool m_do_uniform_filter = false;
@@ -21,14 +29,15 @@ public:
     bool m_do_geom_filter    = false;
     amrex::Real m_random_fraction = 1.0;
     int m_uniform_stride = 1;
-    std::unique_ptr<ParserWrapper<7>> m_particle_filter_parser;
+    static constexpr int m_nvars = 7; // t, x, y, z, ux, uy, uz
+    std::unique_ptr<amrex::Parser> m_particle_filter_parser;
     amrex::RealBox m_diag_domain;
 
 private:
     std::string m_diag_name;
     std::string m_name;
-    amrex::Vector< std::string > variables;
     WarpXParticleContainer* m_pc;
+    PinnedMemoryParticleContainer* m_pinned_pc;
 };
 
 #endif // WARPX_PARTICLEDIAG_H_
