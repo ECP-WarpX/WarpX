@@ -212,14 +212,10 @@ Setting up the field mesh
     When using mesh refinement, this is the refinement ratio per level.
     With this option, all directions are fined by the same ratio.
 
-    Note: in development; currently, ``2`` is supported.
-
 * ``amr.ref_ratio_vect`` (`3 integers for x,y,z per refined level`)
     When using mesh refinement, this can be used to set the refinement ratio per direction and level, relative to the previous level.
 
     Example: for three levels, a value of ``2 2 4 8 8 16`` refines the first level by 2-fold in x and y and 4-fold in z compared to the coarsest level (level 0/mother grid); compared to the first level, the second level is refined 8-fold in x and y and 16-fold in z.
-
-    Note: in development; currently allowed value: ``2 2 2``.
 
 * ``geometry.dims`` (`string`)
     The dimensions of the simulation geometry.
@@ -280,18 +276,12 @@ Setting up the field mesh
     ``n_current_deposition_buffer`` is automatically set so as to be large
     enough to hold the particle shape, on the fine grid
 
-* ``warpx.n_field_gather_buffer`` (`integer`; 0 by default)
-    When using mesh refinement: the particles that are located inside
-    a refinement patch, but within ``n_field_gather_buffer`` cells of
-    the edge of this patch, will gather the fields from the lower refinement
-    level, instead of gathering the fields from the refinement patch itself.
-    This avoids some of the spurious effects that can occur inside the
-    refinement patch, close to its edge. See the
-    :ref:`mesh-refinement section <theory-amr>` for more details.
-    If this variable is not
-    explicitly set in the input script, ``n_field_gather_buffer`` is
-    automatically set so that it is one cell larger than
-    ``n_current_deposition_buffer``, on the fine grid.
+* ``warpx.n_field_gather_buffer`` (`integer`, optional)
+    Default: ``warpx.n_field_gather_buffer = n_current_deposition_buffer + 1`` (one cell larger than ``n_current_deposition_buffer`` on the fine grid).
+
+    When using mesh refinement, particles that are located inside a refinement patch, but within ``n_field_gather_buffer`` cells of the edge of the patch, gather the fields from the lower refinement level, instead of gathering the fields from the refinement patch itself.
+    This avoids some of the spurious effects that can occur inside the refinement patch, close to its edge.
+    See the section :ref:`Mesh refinement <theory-amr>` for more details.
 
 * ``warpx.do_single_precision_comms`` (`integer`; 0 by default)
     Perform MPI communications for field guard regions in single precision.
@@ -1750,14 +1740,13 @@ Particle push, charge and current deposition, field gathering
 * ``algo.field_gathering`` (`string`, optional)
     The algorithm for field gathering. Available options are:
 
-     - ``energy-conserving``: gathers directly from the grid points (either staggered
-       or nodal gridpoints depending on ``warpx.do_nodal``).
-     - ``momentum-conserving``: first average the fields from the grid points to
+     * ``energy-conserving``: gathers directly from the grid points (either staggered
+       or nodal grid points depending on ``warpx.grid_type``).
+     * ``momentum-conserving``: first average the fields from the grid points to
        the nodes, and then gather from the nodes.
 
-     If ``algo.field_gathering`` is not specified, the default is ``energy-conserving``.
-     If ``warpx.do_nodal`` is ``true``, then ``energy-conserving`` and ``momentum-conserving``
-     are equivalent.
+
+    Default: ``algo.field_gathering = energy-conserving`` with collocated or staggered grids (note that ``energy-conserving`` and ``momentum-conserving`` are equivalent with collocated grids), ``algo.field_gathering = momentum-conserving`` with hybrid grids.
 
 * ``algo.particle_pusher`` (`string`, optional)
     The algorithm for the particle pusher. Available options are:
@@ -1812,7 +1801,7 @@ Maxwell solver: PSATD method
 * ``psatd.nx_guard``, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
     The number of guard cells to use with PSATD solver.
     If not set by users, these values are calculated automatically and determined *empirically* and
-    would be equal the order of the solver for nodal grid, and half the order of the solver for staggered.
+    equal the order of the solver for collocated grids and half the order of the solver for staggered grids.
 
 * ``psatd.periodic_single_box_fft`` (`0` or `1`; default: 0)
     If true, this will *not* incorporate the guard cells into the box over which FFTs are performed.
@@ -1969,31 +1958,42 @@ Maxwell solver: macroscopic media
 Grid types (collocated, staggered, hybrid)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* ``warpx.do_nodal`` (`0` or `1` ; default: 0)
-    Whether to use a nodal grid (i.e. all fields are defined at the
-    same points in space) or a staggered grid (i.e. Yee grid ; different
-    fields are defined at different points in space)
+* ``warpx.grid_type`` (`string`, ``collocated``, ``staggered`` or ``hybrid``)
+    Whether to use a collocated grid (all fields defined at the cell nodes),
+    a staggered grid (fields defined on a Yee grid), or a hybrid grid (fields
+    and currents are interpolated back and forth between a staggered grid and a
+    nodal grid, must be used with momentum-conserving field gathering algorithm,
+    ``algo.field_gathering = momentum-conserving``).
+
+    Default: ``warpx.grid_type = staggered``.
 
 * ``interpolation.galerkin_scheme`` (`0` or `1`)
     Whether to use a Galerkin scheme when gathering fields to particles.
-    When set to `1`, the interpolation orders used for field-gathering are reduced for certain field components along certain directions.
+    When set to ``1``, the interpolation orders used for field-gathering are reduced for certain field components along certain directions.
     For example, :math:`E_z` is gathered using ``algo.particle_shape`` along :math:`(x,y)` and ``algo.particle_shape - 1`` along :math:`z`.
     See equations (21)-(23) of (`Godfrey and Vay, 2013 <https://doi.org/10.1016/j.jcp.2013.04.006>`_) and associated references for details.
-    Defaults to `1` unless ``warpx.do_nodal = 1`` and/or ``algo.field_gathering = momentum-conserving``.
+
+    Default: ``interpolation.galerkin_scheme = 0`` with collocated grids and/or momentum-conserving field gathering, ``interpolation.galerkin_scheme = 1`` otherwise.
 
     .. warning::
 
         The default behavior should not normally be changed.
         At present, this parameter is intended mainly for testing and development purposes.
 
-* ``interpolation.field_centering_nox``, ``interpolation.field_centering_noy``, ``interpolation.field_centering_noz`` (default: ``2`` in all directions)
-    The order of interpolation used with staggered grids (``warpx.do_nodal = 0``) and momentum-conserving field gathering (``algo.field_gathering = momentum-conserving``) to interpolate the electric and magnetic fields from the cell centers to the cell nodes, before gathering the fields from the cell nodes to the particle positions. High-order interpolation (order 8 in each direction, at least) is necessary to ensure stability in typical LWFA boosted-frame simulations using the Galilean PSATD or comoving PSATD schemes. This finite-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
+* ``warpx.field_centering_nox``, ``warpx.field_centering_noy``, ``warpx.field_centering_noz`` (`integer`, optional)
+    The order of interpolation used with staggered or hybrid grids (``warpx.grid_type = staggered`` or ``warpx.grid_type = hybrid``) and momentum-conserving field gathering (``algo.field_gathering = momentum-conserving``) to interpolate the electric and magnetic fields from the cell centers to the cell nodes, before gathering the fields from the cell nodes to the particle positions.
 
-* ``interpolation.current_centering_nox``, ``interpolation.current_centering_noy``, ``interpolation.current_centering_noz`` (default: ``2`` in all directions)
-    The order of interpolation used to center the currents from nodal to staggered grids (if ``warpx.do_current_centering = 1``), before pushing the Maxwell fields on staggered grids. This finite-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
+    Default: ``warpx.field_centering_no<x,y,z> = 2`` with staggered grids, ``warpx.field_centering_no<x,y,z> = 8`` with hybrid grids (typically necessary to ensure stability in boosted-frame simulations of relativistic plasmas and beams).
 
-* ``warpx.do_current_centering`` (`0` or `1` ; default: 0)
-    If true, the current is deposited on a nodal grid and then centered to a staggered grid (Yee grid), using finite-order interpolation. If ``warpx.do_nodal = 1``, the Maxwell fields are pushed on a nodal grid, it is not necessary to center the currents to a staggered grid, and we set therefore ``warpx.do_current_centering = 0`` automatically, overwriting the user-defined input.
+* ``warpx.current_centering_nox``, ``warpx.current_centering_noy``, ``warpx.current_centering_noz`` (`integer`, optional)
+    The order of interpolation used with hybrid grids (``warpx.grid_type = hybrid``) to interpolate the currents from the cell nodes to the cell centers when ``warpx.do_current_centering = 1``, before pushing the Maxwell fields on staggered grids.
+
+    Default: ``warpx.current_centering_no<x,y,z> = 8`` with hybrid grids (typically necessary to ensure stability in boosted-frame simulations of relativistic plasmas and beams).
+
+* ``warpx.do_current_centering`` (`bool`, `0` or `1`)
+    If true, the current is deposited on a nodal grid and then centered to a staggered grid (Yee grid), using finite-order interpolation.
+
+    Default: ``warpx.do_current_centering = 0`` with collocated or staggered grids, ``warpx.do_current_centering = 1`` with hybrid grids.
 
 Additional parameters
 ^^^^^^^^^^^^^^^^^^^^^
@@ -2033,8 +2033,8 @@ Additional parameters
     Will use the Hybird QED Maxwell solver when pushing fields: a QED correction is added to the
     field solver to solve non-linear Maxwell's equations, according to [Quantum Electrodynamics
     vacuum polarization solver, P. Carneiro et al., `ArXiv 2016 <https://arxiv.org/abs/1607.04224>`__].
-    Note that this option can only be used with the PSATD build. Furthermore,
-    warpx.do_nodal must be set to `1` which is not its default value.
+    Note that this option can only be used with the PSATD build. Furthermore, one must set
+    ``warpx.grid_type = collocated`` (which otherwise would be ``staggered`` by default).
 
 * ``warpx.quantum_xi`` (`float`; default: 1.3050122.e-52)
      Overwrites the actual quantum parameter used in Maxwell's QED equations. Assigning a
@@ -2213,9 +2213,9 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 * ``<diag_name>.particle_fields.<field_name>(x,y,z,ux,uy,uz)`` (parser `string`)
    Parser function to be calculated for each particle per cell. The averaged field written is
 
-        .. math::
+   .. math::
 
-            \texttt{<field_name>_<species>} = \frac{\sum_{i=1}^N w_i \, f(x_i,y_i,z_i,u_{x,i},u_{y,i},u_{z,i})}{\sum_{i=1}^N w_i}
+      \texttt{<field_name>_<species>} = \frac{\sum_{i=1}^N w_i \, f(x_i,y_i,z_i,u_{x,i},u_{y,i},u_{z,i})}{\sum_{i=1}^N w_i}
 
    where :math:`w_i` is the particle weight, :math:`f()` is the parser function, and :math:`(x_i,y_i,z_i)` are particle positions in units of a meter. The sums are over all particles of type ``<species>`` in a cell (ignoring the particle shape factor) that satisfy ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)``.
    When ``<diag_name>.particle_fields.<field_name>.do_average`` is `0`, the division by the sum over particle weights is not done.
@@ -2231,7 +2231,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     When ``<diag_name>.plot_raw_fields = 1``, then the raw (i.e. non-averaged)
     fields are also saved in the output files.
     Only works with ``<diag_name>.format = plotfile``.
-    See `this section <https://yt-project.org/doc/examining/loading_data.html#viewing-raw-fields-in-warpx>`_
+    See `this section <https://yt-project.org/doc/examining/loading_data.html#viewing-raw-fields-in-warpx>`__
     in the yt documentation for more details on how to view raw fields.
 
 * ``<diag_name>.plot_raw_fields_guards`` (`0` or `1`) optional (default `0`)
@@ -2858,7 +2858,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR``.
     If ``warpx.do_qed_schwinger = 1``, Schwinger product species must be specified with
     ``qed_schwinger.ele_product_species`` and ``qed_schwinger.pos_product_species``.
-    Schwinger process requires either ``warpx.do_nodal=1`` or
+    Schwinger process requires either ``warpx.grid_type = collocated`` or
     ``algo.field_gathering=momentum-conserving`` (so that different field components are computed
     at the same location in the grid) and does not currently support mesh refinement, cylindrical
     coordinates or single precision.

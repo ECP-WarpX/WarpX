@@ -162,7 +162,7 @@ public:
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
     static short load_balance_costs_update_algo;
-    //! Integer that corresponds to electromagnetic Maxwell solver (vaccum - 0, macroscopic - 1)
+    //! Integer that corresponds to electromagnetic Maxwell solver (vacuum - 0, macroscopic - 1)
     static int em_solver_medium;
     /** Integer that correspond to macroscopic Maxwell solver algorithm
      *  (BackwardEuler - 0, Lax-Wendroff - 1)
@@ -323,8 +323,9 @@ public:
     //! and current onto the lower refinement level instead of the refinement patch itself
     static int n_current_deposition_buffer;
 
-    //! If true, all fields are evaluated on a nodal grid and all MultiFabs have a nodal index type
-    static bool do_nodal;
+    //! Integer that corresponds to the type of grid used in the simulation
+    //! (collocated, staggered, hybrid)
+    static short grid_type;
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;
@@ -349,7 +350,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
-        const std::string name,
+        const std::string& name,
         std::optional<const amrex::Real> initial_value = {});
 
     /**
@@ -372,7 +373,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
-        const std::string name,
+        const std::string& name,
         std::optional<const int> initial_value = {});
 
     /**
@@ -390,7 +391,7 @@ public:
         const amrex::MultiFab& mf_to_alias,
         const int scomp,
         const int ncomp,
-        const std::string name,
+        const std::string& name,
         std::optional<const amrex::Real> initial_value);
 
     // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)
@@ -405,7 +406,7 @@ public:
      * \param name The name of the MultiFab use to reference the MultiFab
      * \param mf The MultiFab to be added to the map (via a pointer to it)
      */
-    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::MultiFab>& mf) {
+    static void AddToMultiFabMap(const std::string& name, const std::unique_ptr<amrex::MultiFab>& mf) {
         multifab_map[name] = mf.get();
     }
 
@@ -415,7 +416,7 @@ public:
      * \param name The name of the iMultiFab use to reference the iMultiFab
      * \param mf The iMultiFab to be added to the map (via a pointer to it)
      */
-    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::iMultiFab>& mf) {
+    static void AddToMultiFabMap(const std::string& name, const std::unique_ptr<amrex::iMultiFab>& mf) {
         imultifab_map[name] = mf.get();
     }
 
@@ -969,10 +970,9 @@ public:
      * (up to order \c n_order).
      *
      * \param[in] n_order order of the finite-difference approximation
-     * \param[in] nodal   whether the finite-difference approximation is computed
-     *                    on a nodal grid or a staggered grid
+     * \param[in] a_grid_type type of grid (collocated or not)
      */
-    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const bool nodal);
+    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const short a_grid_type);
 
     // Device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
@@ -1211,13 +1211,15 @@ private:
      * \param[in] centering_nox order of the finite-order centering along x
      * \param[in] centering_noy order of the finite-order centering along y
      * \param[in] centering_noz order of the finite-order centering along z
+     * \param[in] a_grid_type type of grid (collocated or not)
      */
     void AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_x,
                                         amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_y,
                                         amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_z,
                                         const int centering_nox,
                                         const int centering_noy,
-                                        const int centering_noz);
+                                        const int centering_noz,
+                                        const short a_grid_type);
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngEB, amrex::IntVect& ngJ,

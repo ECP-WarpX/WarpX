@@ -65,8 +65,8 @@ public:
      * Define constants used throughout FieldProbe
      */
 
-    //! noutputs is 10 (x, y, z, Ex, Ey, Ez, Bx, By, Bz, S)
-    static constexpr int noutputs = FieldProbePIdx::nattribs + 3;
+    //! noutputs is 11 for particle id + (x, y, z, Ex, Ey, Ez, Bx, By, Bz, S)
+    static constexpr int noutputs = FieldProbePIdx::nattribs + 3 + 1;
 
 private:
     amrex::Real x_probe = 0._rt;
