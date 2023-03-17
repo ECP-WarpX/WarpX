@@ -8,16 +8,16 @@ For illustration purposes the setup can be explored with **WarpX** using the exa
 The simulation setup consists of 4 particle species: drive beam (driver), witness beam (beam), plasma electrons (plasma_e), and plasma ions (plasma_p).
 The species physical parameters are summarized in the following table.
 
-======== ============================================================
+======== ================================================================================================================
 Species  Parameters
-======== ============================================================
-driver   :math:`\gamma` = 48923; N = 2x10^8; σz = 4.0 μm; σx = 2.0 μm
-beam     :math:`\gamma` = 48923; N = 6x10^5; σz = 1.0 mm; σx = 0.5 μm
-plasma_e n = 1x10^23 m^-3; w = 70 μm; lr = 8 mm; L = 200 mm
-plasma_p n = 1x10^23 m^-3; w = 70 μm; lr = 8 mm; L = 200 mm
-======== ============================================================
+======== ================================================================================================================
+driver   :math:`\gamma` = 48923; N = 2x10^8; :math:`\sigma_z` = 4.0 um; :math:`\sigma_x` = 2.0 um
+beam     :math:`\gamma` = 48923; N = 6x10^5; :math:`\sigma_z` = 1.0 mm; :math:`\sigma_x` = 0.5 um
+plasma_e n = 1x10^23 m^-3; w = 70 um; lr = 8 mm; L = 200 mm
+plasma_p n = 1x10^23 m^-3; w = 70 um; lr = 8 mm; L = 200 mm
+======== ================================================================================================================
 
-Where :math:`\gamma` is the beam relativistic Lorentz factor, N is the number of particles, and σx, σy, σz are the beam widths (root-mean-squares of particle positions) in the transverse (x,y) and longitudinal directions.
+Where :math:`\gamma` is the beam relativistic Lorentz factor, N is the number of particles, and :math:`\sigma_x`, :math:`\sigma_y`, :math:`\sigma_z` are the beam widths (root-mean-squares of particle positions) in the transverse (x,y) and longitudinal directions.
 
 The plasma, of total length L, has a density profile that consists of a lr long linear up-ramp, ranging from 0 to peak value n, is uniform within a transverse width of w and after the up-ramp.
 
@@ -127,4 +127,4 @@ Maximum grid size and blocking factor
 -------------------------------------
 
     These parameters are carfully chosen to improve the code parallelization, load-balancing and performance (:doc:`parameters`) for each numerical configuration.
-    They define the smallest and largest number of cells that can be contained in each simulation box and are carefully defined in the `AMReX <https://amrex-codes.github.io/amrex/docs_html/GridCreation.html?highlight=blocking_factor>`_ documentation.
+    They define the smallest and largest number of cells that can be contained in each simulation box and are carefully defined in the `AMReX <https://amrex-codes.github.io/amrex/docs_html/GridCreation.html?highlight=blocking_factor>`__ documentation.

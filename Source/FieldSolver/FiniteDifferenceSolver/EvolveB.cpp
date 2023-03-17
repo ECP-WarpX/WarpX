@@ -70,11 +70,11 @@ void FiniteDifferenceSolver::EvolveB (
         ignore_unused(Gfield, face_areas);
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
 #else
-    if(m_do_nodal or m_fdtd_algo != ElectromagneticSolverAlgo::ECT){
+    if(m_grid_type == GridType::Collocated || m_fdtd_algo != ElectromagneticSolverAlgo::ECT){
         amrex::ignore_unused(face_areas);
     }
 
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 

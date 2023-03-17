@@ -26,7 +26,7 @@ electron.charge = -q_e
 electron.injection_style = "SingleParticle"
 electron.mass = 9e-22
 electron.single_particle_pos = 0. 0. 0.
-electron.single_particle_vel = 0.5 0.5 0.5
+electron.single_particle_u = 0.5 0.5 0.5
 electron.single_particle_weight = 1.
 
 # geometry
@@ -40,7 +40,7 @@ ion.charge = q_e
 ion.injection_style = "SingleParticle"
 ion.mass = 9e-22
 ion.single_particle_pos = 0. 0. 0.
-ion.single_particle_vel = -0.5 -0.5 -0.5
+ion.single_particle_u = -0.5 -0.5 -0.5
 ion.single_particle_weight = 1.
 
 # max_step
@@ -61,7 +61,7 @@ psatd.update_with_rho = 0
 
 # warpx
 warpx.cfl = 0.9999
-warpx.do_nodal = 1
+warpx.grid_type = collocated
 warpx.serialize_initial_conditions = 1
 warpx.use_filter = 1
 warpx.verbose = 1

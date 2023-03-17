@@ -31,7 +31,7 @@ electron1.charge = q_e
 electron1.mass = m_e
 electron1.injection_style = "singleparticle"
 electron1.single_particle_pos = 1.e-6 0. 0.
-electron1.single_particle_vel = 0. 0. 0.
+electron1.single_particle_u = 0. 0. 0.
 electron1.single_particle_weight = 5.e12
 electron1.initialize_self_fields = 1
 
@@ -39,7 +39,7 @@ electron2.charge = q_e
 electron2.mass = m_e
 electron2.injection_style = "singleparticle"
 electron2.single_particle_pos = -1.e-6 0. 0.
-electron2.single_particle_vel = 0. 0. 0.
+electron2.single_particle_u = 0. 0. 0.
 electron2.single_particle_weight = 5.e12
 electron2.initialize_self_fields = 1
 

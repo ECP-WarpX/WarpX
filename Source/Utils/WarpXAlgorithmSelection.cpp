@@ -22,6 +22,13 @@
 // Define dictionary with correspondance between user-input strings,
 // and corresponding integer for use inside the code
 
+const std::map<std::string, int> grid_to_int = {
+    {"collocated", GridType::Collocated},
+    {"staggered", GridType::Staggered},
+    {"hybrid", GridType::Hybrid},
+    {"default", GridType::Staggered}
+};
+
 const std::map<std::string, int> electromagnetic_solver_algo_to_int = {
     {"none",    ElectromagneticSolverAlgo::None },
     {"yee",     ElectromagneticSolverAlgo::Yee },
@@ -140,6 +147,8 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
     std::map<std::string, int> algo_to_int;
     if (0 == std::strcmp(pp_search_key, "maxwell_solver")) {
         algo_to_int = electromagnetic_solver_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "grid_type")) {
+        algo_to_int = grid_to_int;
     } else if (0 == std::strcmp(pp_search_key, "do_electrostatic")) {
         algo_to_int = electrostatic_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "particle_pusher")) {
