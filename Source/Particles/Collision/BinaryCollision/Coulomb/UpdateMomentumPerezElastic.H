@@ -77,8 +77,10 @@ void UpdateMomentumPerezElastic (
     T_PR p1sz;
     if ( vcms > std::numeric_limits<T_PR>::min() )
     {
+        /* lorentz_tansform_factor = ( (gc-1.0)/vcms*vcDv1 - gc )*m1*g1;
+         * Rewrite to avoid roundoff problems when gc is close to 1 */
         T_PR const lorentz_tansform_factor =
-            ( (gc-T_PR(1.0))/vcms*vcDv1 - gc )*m1*g1;
+            ( (gc*gc*vcms*inv_c2/(T_PR(1.0) + gc))/vcms*vcDv1 - gc )*m1*g1;
         p1sx = p1x + vcx*lorentz_tansform_factor;
         p1sy = p1y + vcy*lorentz_tansform_factor;
         p1sz = p1z + vcz*lorentz_tansform_factor;
@@ -226,7 +228,8 @@ void UpdateMomentumPerezElastic (
     {
         T_PR const vcDp1fs = vcx*p1fsx + vcy*p1fsy + vcz*p1fsz;
         T_PR const vcDp2fs = vcx*p2fsx + vcy*p2fsy + vcz*p2fsz;
-        T_PR const factor = (gc-T_PR(1.0))/vcms;
+        /* factor = (gc-1.0)/vcms; Rewrite to avoid roundoff problems when gc is close to 1 */
+        T_PR const factor = gc*gc*inv_c2/(gc+T_PR(1.0));
         T_PR const factor1 = factor*vcDp1fs + m1*g1s*gc;
         T_PR const factor2 = factor*vcDp2fs + m2*g2s*gc;
         p1fx = p1fsx + vcx * factor1;
