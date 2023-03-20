@@ -895,9 +895,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
     // Reading external fields from data file
     if (add_external_B_field) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0,
-                                         "External field reading is not implemented for more than one level");
-
         std::string read_fields_from_path="./";
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
 #if defined(WARPX_DIM_RZ)
@@ -913,9 +910,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #endif
     }
     if (add_external_E_field) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0,
-                                         "External field reading is not implemented for more than one level");
-
         std::string read_fields_from_path="./";
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
 #if defined(WARPX_DIM_RZ)

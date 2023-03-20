@@ -672,10 +672,14 @@ WarpX::ReadParameters ()
 
         if (WarpX::B_ext_grid_s == "read_from_file")
         {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
+                                             "External field reading is not implemented for more than one level");
             add_external_B_field = true;
         }
         if (WarpX::E_ext_grid_s == "read_from_file")
         {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
+                                             "External field reading is not implemented for more than one level");
             add_external_E_field = true;
         }
 
