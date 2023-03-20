@@ -868,6 +868,7 @@ PhysicalParticleContainer::AddParticles (int lev)
                         plasma_injector->z_cut,
                         plasma_injector->q_tot,
                         plasma_injector->npart,
+                        plasma_injector->do_symmetrize,
                         plasma_injector->symmetrization_order);
 
 
