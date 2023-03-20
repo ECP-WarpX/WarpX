@@ -73,6 +73,12 @@ class Species(picmistandard.PICMI_Species):
         Whether or not to deposit the charge and current density for
         for this species
 
+    warpx_do_not_push: bool, default=False
+        Whether or not to push this species
+
+    warpx_do_not_gather: bool, default=False
+        Whether or not to gahter the fields from grids for this species
+
     warpx_random_theta: bool, default=True
         Whether or not to add random angle to the particles in theta
         when in RZ mode.
@@ -174,6 +180,8 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
         self.save_previous_position = kw.pop('warpx_save_previous_position', None)
         self.do_not_deposit = kw.pop('warpx_do_not_deposit', None)
+        self.do_not_push = kw.pop('warpx_do_not_push', None)
+        self.do_not_gather = kw.pop('warpx_do_not_gather', None)
         self.random_theta = kw.pop('warpx_random_theta', None)
 
         # For particle reflection
@@ -227,6 +235,8 @@ class Species(picmistandard.PICMI_Species):
                                              save_particles_at_eb = self.save_particles_at_eb,
                                              save_previous_position = self.save_previous_position,
                                              do_not_deposit = self.do_not_deposit,
+                                             do_not_push = self.do_not_push,
+                                             do_not_gather = self.do_not_gather,
                                              random_theta = self.random_theta)
 
         # add reflection models
