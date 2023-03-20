@@ -84,7 +84,7 @@ driver_back.npart = 1000000
 driver_back.q_tot = 1e-9
 driver_back.momentum_distribution_type = "at_rest"
 driver_back.initialize_self_fields = 0
-driver.do_symmetrize = 1
+driver_back.do_symmetrize = 1
 driver_back.symmetrization_order = 4
 
 plasma_e.species_type = electron
