@@ -673,8 +673,10 @@ Particle initialization
       ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
       ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
       ``<species_name>.x/y/z_cut`` (optional, particles with ``abs(x-x_m) > x_cut*x_rms`` are not injected, same for y and z. ``<species_name>.q_tot`` is the charge of the un-cut beam, so that cutting the distribution is likely to result in a lower total charge),
-      and optional argument ``<species_name>.do_symmetrize`` (whether to
-      symmetrize the beam in the x and y directions).
+      and optional arguments ``<species_name>.do_symmetrize`` (whether to
+      symmetrize the beam) and ``<species_name>.symmetrization_order`` (Extent of symmetrization, default is 4.
+      If set to 4, symmetrization is in the x and y direction, (x,y) (-x,y) (x,-y) (-x,-y).  
+      If set to 8, symmetrization is also exchanging x and y, (y,x), (-y,x), (y,-x), (-y,-x)).
 
     * ``external_file``: Inject macroparticles with properties (mass, charge, position, and momentum - :math:`\gamma \beta m c`) read from an external openPMD file.
       With it users can specify the additional arguments:

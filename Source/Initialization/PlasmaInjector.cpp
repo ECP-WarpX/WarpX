@@ -235,6 +235,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         utils::parser::getWithParser(pp_species_name, "q_tot", q_tot);
         utils::parser::getWithParser(pp_species_name, "npart", npart);
         pp_species_name.query("do_symmetrize", do_symmetrize);
+        pp_species_name.query("symmetrization_order", symmetrization_order);
+        std::set valid_symmetries = {4,8};
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( valid_symmetries.count(symmetrization_order),
+            "Error: Symmetrization only supported to orders 4 or 8 ");
         gaussian_beam = true;
         parseMomentum(pp_species_name);
 #if defined(WARPX_DIM_XZ)
