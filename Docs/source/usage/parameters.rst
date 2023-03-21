@@ -2060,7 +2060,8 @@ Additional parameters
     ``idx_type = {0, 0, 0}``: Sort particles to a cell centered grid
     ``idx_type = {1, 1, 1}``: Sort particles to a node centered grid
     ``idx_type = {2, 2, 2}``: Compromise between a cell and node centered grid.
-     In 2D, only the first two elements are read.
+     In 2D (XZ and RZ), only the first two elements are read.
+     In 1D, only the first element is read.
 
 * ``warpx.sort_bin_size`` (list of `int`) optional (default ``1 1 1``)
      If ``sort_intervals`` is activated and ``sort_particles_for_deposition`` is ``false``, particles are sorted in bins of ``sort_bin_size`` cells.
