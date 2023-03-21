@@ -199,7 +199,8 @@ void FiniteDifferenceSolver::HybridSolveE (
 {
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !m_do_nodal, "hybrid E-solve does not work with do_nodal=true");
+        WarpX::grid_type == GridType::Staggered,
+        "Ohm's law E-solve only works with a staggered (Yee) grid.");
 
 
    // Select algorithm (The choice of algorithm is a runtime option,

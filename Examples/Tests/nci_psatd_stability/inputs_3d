@@ -75,7 +75,7 @@ psatd.noz = 8
 
 # warpx
 warpx.cfl = 1.
-warpx.do_nodal = 1
+warpx.grid_type = collocated
 warpx.numprocs = 1 1 2
 warpx.use_filter = 1
 warpx.verbose = 1

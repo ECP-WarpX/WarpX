@@ -64,7 +64,7 @@ Diagnostics::BaseReadParameters ()
     // Query list of grid fields to write to output
     bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames_fields);
     if (!varnames_specified){
-        if( dims == "RZ" and m_format == "openpmd" ) {
+        if( dims == "RZ" ) {
             m_varnames_fields = {"Er", "Et", "Ez", "Br", "Bt", "Bz", "jr", "jt", "jz"};
         }
         else {
