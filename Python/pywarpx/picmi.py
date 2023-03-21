@@ -1358,11 +1358,11 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         self.stl_scale = stl_scale
         self.stl_center = stl_center
         self.stl_reverse_normal = stl_reverse_normal
-        
+
         self.potential = potential
 
         self.cover_multiple_cuts = cover_multiple_cuts
-        
+
         # Handle keyword arguments used in expressions
         self.user_defined_kw = {}
         for k in list(kw.keys()):
@@ -1393,7 +1393,7 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
 
         if self.cover_multiple_cuts:
             pywarpx.eb2.cover_multiple_cuts = 1
-            
+
         if self.potential is not None:
             assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
             expression = pywarpx.my_constants.mangle_expression(self.potential, self.mangle_dict)
