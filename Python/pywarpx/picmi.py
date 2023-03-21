@@ -1488,6 +1488,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         Controls the random numbers used for initialization.
         This parameter should only be used for testing and continuous integration.
 
+    warpx_random_seed: string or int, optional
+        (See documentation)
+
     warpx_do_dynamic_scheduling: bool, default=True
         Whether to do dynamic scheduling with OpenMP
 
@@ -1550,6 +1553,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.particle_pusher_algo = kw.pop('warpx_particle_pusher_algo', None)
         self.use_filter = kw.pop('warpx_use_filter', None)
         self.serialize_initial_conditions = kw.pop('warpx_serialize_initial_conditions', None)
+        self.random_seed = kw.pop('warpx_random_seed', None)
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
         self.load_balance_intervals = kw.pop('warpx_load_balance_intervals', None)
         self.load_balance_efficiency_ratio_threshold = kw.pop('warpx_load_balance_efficiency_ratio_threshold', None)
@@ -1602,6 +1606,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         pywarpx.warpx.use_filter = self.use_filter
         pywarpx.warpx.serialize_initial_conditions = self.serialize_initial_conditions
+        pywarpx.warpx.random_seed = self.random_seed
 
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
 
