@@ -29,12 +29,7 @@ export LD_LIBRARY_PATH=$HOME/sw/crusher/lapackpp-master/lib64:$LD_LIBRARY_PATH
 #module load boost/1.78.0-cxx17
 
 # optional: for openPMD support
-#module load adios2/2.8.3
-# need to build adios manually currently
-export CMAKE_PREFIX_PATH=$HOME/sw/crusher/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=$HOME/sw/crusher/adios2-2.8.3:$CMAKE_PREFIX_PATH
-export LD_LIBRARY_PATH=$HOME/sw/crusher/c-blosc-1.21.1/lib64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$HOME/sw/crusher/adios2-2.8.3/lib64:$LD_LIBRARY_PATH
+module load adios2/2.8.3
 module load cray-hdf5-parallel/1.12.2.1
 
 # optional: for Python bindings or libEnsemble

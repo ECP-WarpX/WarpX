@@ -1131,6 +1131,11 @@ void WarpX::CheckGuardCells()
             CheckGuardCells(*F_fp[lev]);
         }
 
+        if (G_fp[lev])
+        {
+            CheckGuardCells(*G_fp[lev]);
+        }
+
         // MultiFabs on coarse patch
         if (lev > 0)
         {
@@ -1155,6 +1160,11 @@ void WarpX::CheckGuardCells()
             if (F_cp[lev])
             {
                 CheckGuardCells(*F_cp[lev]);
+            }
+
+            if (G_cp[lev])
+            {
+                CheckGuardCells(*G_cp[lev]);
             }
         }
     }
