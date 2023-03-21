@@ -1022,8 +1022,8 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     for (auto idx=0; idx<real_counter; idx++) {
       auto ii = ParticleIter::ContainerType::NStructReal + idx;  // jump over extra AoS names
       if (write_real_comp[ii]) {
-        getComponentRecord(real_comp_names[ii]).storeChunk(openPMD::shareRaw(soa.GetRealData(idx)),
-          {offset}, {numParticleOnTile64});
+        getComponentRecord(real_comp_names[ii]).storeChunkRaw(
+          soa.GetRealData(idx).data(), {offset}, {numParticleOnTile64});
       }
     }
   }
@@ -1033,8 +1033,8 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     for (auto idx=0; idx<int_counter; idx++) {
       auto ii = ParticleIter::ContainerType::NStructInt + idx;  // jump over extra AoS names
       if (write_int_comp[ii]) {
-        getComponentRecord(int_comp_names[ii]).storeChunk(openPMD::shareRaw(soa.GetIntData(idx)),
-          {offset}, {numParticleOnTile64});
+        getComponentRecord(int_comp_names[ii]).storeChunkRaw(
+          soa.GetIntData(idx).data(), {offset}, {numParticleOnTile64});
       }
     }
   }
@@ -1487,8 +1487,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 #endif
                 {
                     amrex::Real const *local_data = fab.dataPtr(icomp);
-                    mesh_comp.storeChunk(openPMD::shareRaw(local_data),
-                                         chunk_offset, chunk_size);
+                    mesh_comp.storeChunkRaw(
+                        local_data, chunk_offset, chunk_size);
                 }
             }
         } // icomp store loop
