@@ -58,7 +58,7 @@ namespace detail
 #   ifdef _WIN32
     /** Replace all occurrences of a string
      *
-     * Same as openPMD::auxiliary::replace_all (not public in <=0.14.2)
+     * Same as openPMD::auxiliary::replace_all (not public in <=0.14.2) // TODO: public now?
      *
      * @param[in] s input string
      * @param[in] target string to be replaced
