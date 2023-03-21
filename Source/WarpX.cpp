@@ -135,7 +135,7 @@ bool WarpX::do_single_precision_comms = false;
 bool WarpX::do_shared_mem_charge_deposition = false;
 bool WarpX::do_shared_mem_current_deposition = false;
 int WarpX::shared_mem_current_tpb = 128;
-amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1));
+amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(6,6,8));
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
