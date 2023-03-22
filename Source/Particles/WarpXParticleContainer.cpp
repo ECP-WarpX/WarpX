@@ -157,7 +157,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
                                      "Too many real attributes specified");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nattr_int <= NumIntComps(),
                                      "Too many integer attributes specified");
-    
+
     int ibegin, iend;
     if (uniqueparticles) {
         ibegin = 0;
