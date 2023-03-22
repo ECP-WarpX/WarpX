@@ -553,10 +553,10 @@ MultiParticleContainer::DepositCurrent (
     }
 
 #ifdef WARPX_DIM_RZ
-    for (auto& J_lv : J)
+    for (int lev = 0; lev < J.size(); ++lev)
     {
         WarpX::GetInstance().ApplyInverseVolumeScalingToCurrentDensity(
-            J_lv[0].get(), J_lv[1].get(), J_lv[2].get(), lev);
+            J[lev][0].get(), J[lev][1].get(), J[lev][2].get(), lev);
     }
 #endif
 }
