@@ -193,6 +193,19 @@ We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal
 
    The ``FPE`` signal should not be overwritten in WarpX, as it is `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_warpx>`.
 
+.. tip::
+
+   For example, the following logic can be added to `Slurm batch scripts <https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:running_jobs_slurm:signals>`__ (`signal name to number mapping here <https://en.wikipedia.org/wiki/Signal_(IPC)#Default_action>`__) to write a checkpoint 6 min prior to walltime and gracefully shut down 1 min prior to walltime:
+
+   .. code-block:: bash
+
+      #SBATCH --signal=B:1@360
+      #SBATCH --signal=B:2@60
+
+      srun ...                        \
+        warpx.checkpoint_signals=HUP  \
+        warpx.break_signals=INT       \
+        > output.txt
 
 .. _running-cpp-parameters-box:
 
