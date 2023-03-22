@@ -122,9 +122,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (auto& is : istep) {
+            for (auto& ist : istep) {
                 lis >> word;
-                is = std::stoi(word);
+                ist = std::stoi(word);
             }
         }
 
