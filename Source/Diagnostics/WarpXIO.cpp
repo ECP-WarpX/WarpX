@@ -122,9 +122,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < istep.size(); ++i) {
+            for (auto& is : istep) {
                 lis >> word;
-                istep.at(i) = std::stoi(word);
+                is = std::stoi(word);
             }
         }
 
@@ -132,9 +132,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < nsubsteps.size(); ++i) {
+            for (auto& nsub : nsubsteps) {
                 lis >> word;
-                nsubsteps.at(i) = std::stoi(word);
+                nsub = std::stoi(word);
             }
         }
 
@@ -142,9 +142,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < t_new.size(); ++i) {
+            for (auto& tn : t_new) {
                 lis >> word;
-                t_new.at(i) = static_cast<Real>(std::stod(word));
+                tn = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -152,9 +152,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < t_old.size(); ++i) {
+            for (auto& to : t_old) {
                 lis >> word;
-                t_old.at(i) = static_cast<Real>(std::stod(word));
+                to = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -162,9 +162,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < dt.size(); ++i) {
+            for (auto& tt : dt) {
                 lis >> word;
-                dt.at(i) = static_cast<Real>(std::stod(word));
+                tt = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -180,9 +180,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < prob_lo.size(); ++i) {
+            for (auto& plo : prob_lo) {
                 lis >> word;
-                prob_lo.at(i) = static_cast<Real>(std::stod(word));
+                plo = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -191,9 +191,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < prob_hi.size(); ++i) {
+            for (auto& phi : prob_hi) {
                 lis >> word;
-                prob_hi.at(i) = static_cast<Real>(std::stod(word));
+                phi = static_cast<Real>(std::stod(word));
             }
         }
 

@@ -801,8 +801,8 @@ amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             auto& wp = pti.GetAttribs(PIdx::w);
-            for (unsigned long i = 0; i < wp.size(); i++) {
-                total_charge += wp[i];
+            for (const auto& ww : wp) {
+                total_charge += ww;
             }
         }
     }
