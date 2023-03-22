@@ -171,10 +171,10 @@ FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( amrex::MFIter mfi(field, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
-    {   
-        
+    {
+
         amrex::Array4<const amrex::Real> const& field_arr = field.array(mfi);
-        
+
         amrex::Box tilebox = mfi.tilebox();
         amrex::Box tb = convert(tilebox, field.ixType().toIntVect());
 
