@@ -207,6 +207,18 @@ We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal
         warpx.break_signals=INT       \
         > output.txt
 
+   For `LSF batch systems <https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=options-wa>`__, the equivalent job script lines are:
+
+   .. code-block:: bash
+
+      #BSUB -wa 'HUP' -wt '6'
+      #BSUB -wa 'INT' -wt '1'
+
+      jsrun ...                       \
+        warpx.checkpoint_signals=HUP  \
+        warpx.break_signals=INT       \
+        > output.txt
+
 .. _running-cpp-parameters-box:
 
 Setting up the field mesh
