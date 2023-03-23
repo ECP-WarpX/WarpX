@@ -200,7 +200,7 @@ public:
         const amrex::Real x_m, const amrex::Real y_m, const amrex::Real z_m,
         const amrex::Real x_rms, const amrex::Real y_rms, const amrex::Real z_rms,
         const amrex::Real x_cut, const amrex::Real y_cut, const amrex::Real z_cut,
-        const amrex::Real q_tot, long npart, const int do_symmetrize);
+        const amrex::Real q_tot, long npart, const int do_symmetrize, const int symmetrization_order);
 
     /** Load a particle beam from an external file
      * @param[in] q_tot total charge of the particle species to be initialized

@@ -70,6 +70,7 @@ driver.zinject_plane = 2e-3
 driver.rigid_advance = true
 driver.initialize_self_fields = 0
 driver.do_symmetrize = 1
+driver.symmetrization_order = 4
 
 driver_back.species_type = positron
 driver_back.injection_style = "gaussian_beam"
@@ -84,6 +85,7 @@ driver_back.q_tot = 1e-9
 driver_back.momentum_distribution_type = "at_rest"
 driver_back.initialize_self_fields = 0
 driver_back.do_symmetrize = 1
+driver_back.symmetrization_order = 4
 
 plasma_e.species_type = electron
 plasma_e.injection_style = "NUniformPerCell"

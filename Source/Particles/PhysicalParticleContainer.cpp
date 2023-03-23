@@ -445,7 +445,8 @@ PhysicalParticleContainer::AddGaussianBeam (
     const Real x_rms, const Real y_rms, const Real z_rms,
     const Real x_cut, const Real y_cut, const Real z_cut,
     const Real q_tot, long npart,
-    const int do_symmetrize) {
+    const int do_symmetrize,
+    const int symmetrization_order) {
 
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
@@ -458,10 +459,11 @@ PhysicalParticleContainer::AddGaussianBeam (
     int np = 0;
 
     if (ParallelDescriptor::IOProcessor()) {
-        // If do_symmetrize, create 4x fewer particles, and
-        // Replicate each particle 4 times (x,y) (-x,y) (x,-y) (-x,-y)
+        // If do_symmetrize, create either 4x or 8x fewer particles, and
+        // Replicate each particle either 4 times (x,y) (-x,y) (x,-y) (-x,-y)
+        // or 8 times, additionally (y,x), (-y,x), (y,-x), (-y,-x)
         if (do_symmetrize){
-            npart /= 4;
+            npart /= symmetrization_order;
         }
         for (long i = 0; i < npart; ++i) {
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
@@ -488,7 +490,41 @@ PhysicalParticleContainer::AddGaussianBeam (
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
-                if (do_symmetrize){
+                if (do_symmetrize && symmetrization_order == 8){
+                    // Add eight particles to the beam:
+                    CheckAndAddParticle(x, y, z, u.x, u.y, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(x, -y, z, u.x, -u.y, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(-x, y, z, -u.x, u.y, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(-x, -y, z, -u.x, -u.y, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(y, x, z, u.y, u.x, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(-y, x, z, -u.y, u.x, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(y, -x, z, u.y, -u.x, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(-y, -x, z, -u.y, -u.x, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                } else if (do_symmetrize && symmetrization_order == 4){
                     // Add four particles to the beam:
                     CheckAndAddParticle(x, y, z, u.x, u.y, u.z, weight/4._rt,
                                         particle_x,  particle_y,  particle_z,
@@ -832,7 +868,8 @@ PhysicalParticleContainer::AddParticles (int lev)
                         plasma_injector->z_cut,
                         plasma_injector->q_tot,
                         plasma_injector->npart,
-                        plasma_injector->do_symmetrize);
+                        plasma_injector->do_symmetrize,
+                        plasma_injector->symmetrization_order);
 
 
         return;
