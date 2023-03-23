@@ -179,7 +179,7 @@ FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
         // Lower corner of tile box physical domain
         const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev, 0._rt);
         const Dim3 lo = lbound(tilebox);
-        const Real rmin = xyzmin[0] + (tb.type().nodeCentered(0) ? 0. : 0.5*dx[0]);
+        const Real rmin = xyzmin[0] + (tb.ixType().nodeCentered(0) ? 0. : 0.5*dx[0]);
         const int irmin = lo.x;
 
         int const ncomp = field.nComp();
