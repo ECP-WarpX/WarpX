@@ -539,11 +539,11 @@ MultiParticleContainer::DepositCurrent (
     const amrex::Real dt, const amrex::Real relative_time)
 {
     // Reset the J arrays
-    for (auto& J_lv : J)
+    for (auto& J_lev : J)
     {
-        J_lv[0]->setVal(0.0_rt);
-        J_lv[1]->setVal(0.0_rt);
-        J_lv[2]->setVal(0.0_rt);
+        J_lev[0]->setVal(0.0_rt);
+        J_lev[1]->setVal(0.0_rt);
+        J_lev[2]->setVal(0.0_rt);
     }
 
     // Call the deposition kernel for each species
@@ -567,9 +567,9 @@ MultiParticleContainer::DepositCharge (
     const amrex::Real relative_time)
 {
     // Reset the rho array
-    for (auto& rho_lv : rho)
+    for (auto& rho_lev : rho)
     {
-        rho_lv->setVal(0.0_rt);
+        rho_lev->setVal(0.0_rt);
     }
 
     // Push the particles in time, if needed
