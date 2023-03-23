@@ -161,8 +161,6 @@ FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
     const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
     const amrex::Real dr = dx[0];
 
-    constexpr int NODE = amrex::IndexType::NODE;
-
     amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
     amrex::ReduceData<amrex::Real> reduce_data(reduce_ops);
     using ReduceTuple = typename decltype(reduce_data)::Type;
