@@ -512,9 +512,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     amrex::Gpu::synchronize();
 }
 
+#ifdef AMREX_USE_GPU
 PlasmaInjector::~PlasmaInjector ()
 {
-#ifdef AMREX_USE_GPU
     if (d_inj_pos) {
         amrex::The_Arena()->free(d_inj_pos);
     }
@@ -524,8 +524,10 @@ PlasmaInjector::~PlasmaInjector ()
     if (d_inj_mom) {
         amrex::The_Arena()->free(d_inj_mom);
     }
-#endif
 }
+#else
+PlasmaInjector::~PlasmaInjector () = default;
+#endif
 
 // Depending on injection type at runtime, initialize inj_rho
 // so that inj_rho->getDensity calls
