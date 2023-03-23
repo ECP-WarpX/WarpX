@@ -153,6 +153,11 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
 {
     using namespace amrex::literals;
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE((PIdx::nattribs + nattr_real - 1) <= NumRealComps(),
+                                     "Too many real attributes specified");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nattr_int <= NumIntComps(),
+                                     "Too many integer attributes specified");
+
     int ibegin, iend;
     if (uniqueparticles) {
         ibegin = 0;
