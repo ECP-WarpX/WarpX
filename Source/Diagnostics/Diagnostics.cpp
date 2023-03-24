@@ -64,7 +64,7 @@ Diagnostics::BaseReadParameters ()
     // Query list of grid fields to write to output
     bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames_fields);
     if (!varnames_specified){
-        if( dims == "RZ" and m_format == "openpmd" ) {
+        if( dims == "RZ" ) {
             m_varnames_fields = {"Er", "Et", "Ez", "Br", "Bt", "Bz", "jr", "jt", "jz"};
         }
         else {
@@ -187,9 +187,9 @@ Diagnostics::BaseReadParameters ()
 
     m_varnames = m_varnames_fields;
     // Generate names of averaged particle fields and append to m_varnames
-    for (int ivar=0; ivar<m_pfield_varnames.size(); ivar++) {
-        for (int ispec=0; ispec < int(m_pfield_species.size()); ispec++) {
-            m_varnames.push_back(m_pfield_varnames[ivar] + '_' + m_pfield_species[ispec]);
+    for (const auto& fname : m_pfield_varnames) {
+        for (const auto& sname : m_pfield_species) {
+            m_varnames.push_back(fname + '_' + sname);
         }
     }
 

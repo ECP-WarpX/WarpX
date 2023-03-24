@@ -104,7 +104,7 @@ solver = picmi.ElectromagneticSolver(grid=grid, cfl=1.)
 field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     grid = grid,
                                     period = diagnostic_intervals,
-                                    data_list = ['Ex', 'Ez', 'By', 'Jx', 'Jz', 'part_per_cell'],
+                                    data_list = ['Er', 'Ez', 'Bt', 'Jr', 'Jz', 'part_per_cell'],
                                     write_dir = '.',
                                     warpx_file_prefix = 'Python_Langmuir_rz_multimode_plt')
 

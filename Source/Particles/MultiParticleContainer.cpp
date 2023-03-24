@@ -539,11 +539,11 @@ MultiParticleContainer::DepositCurrent (
     const amrex::Real dt, const amrex::Real relative_time)
 {
     // Reset the J arrays
-    for (int lev = 0; lev < J.size(); ++lev)
+    for (auto& J_lev : J)
     {
-        J[lev][0]->setVal(0.0_rt);
-        J[lev][1]->setVal(0.0_rt);
-        J[lev][2]->setVal(0.0_rt);
+        J_lev[0]->setVal(0.0_rt);
+        J_lev[1]->setVal(0.0_rt);
+        J_lev[2]->setVal(0.0_rt);
     }
 
     // Call the deposition kernel for each species
@@ -555,7 +555,8 @@ MultiParticleContainer::DepositCurrent (
     for (int lev = 0; lev < J.size(); ++lev)
     {
 #ifdef WARPX_DIM_RZ
-        WarpX::GetInstance().ApplyInverseVolumeScalingToCurrentDensity(J[lev][0].get(), J[lev][1].get(), J[lev][2].get(), lev);
+        WarpX::GetInstance().ApplyInverseVolumeScalingToCurrentDensity(
+            J[lev][0].get(), J[lev][1].get(), J[lev][2].get(), lev);
 #else
         // Set current density at PEC boundaries, if needed.
         WarpX::GetInstance().ApplyJfieldBoundary(
@@ -571,9 +572,9 @@ MultiParticleContainer::DepositCharge (
     const amrex::Real relative_time)
 {
     // Reset the rho array
-    for (int lev = 0; lev < rho.size(); ++lev)
+    for (auto& rho_lev : rho)
     {
-        rho[lev]->setVal(0.0_rt);
+        rho_lev->setVal(0.0_rt);
     }
 
     // Push the particles in time, if needed
@@ -608,9 +609,9 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
 {
     std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
 
-    for (unsigned i = 0, n = allcontainers.size(); i < n; ++i) {
-        if (allcontainers[i]->do_not_deposit) continue;
-        std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
+    for (auto& container : allcontainers) {
+        if (container->do_not_deposit) continue;
+        std::unique_ptr<MultiFab> rhoi = container->GetChargeDensity(lev, true);
         MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrowVect());
     }
     if (!local) {
@@ -1316,9 +1317,9 @@ MultiParticleContainer::doQEDSchwinger ()
 
     auto & warpx = WarpX::GetInstance();
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_nodal ||
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.grid_type == GridType::Collocated ||
        warpx.field_gathering_algo == GatheringAlgo::MomentumConserving,
-          "ERROR: Schwinger process only implemented for warpx.do_nodal = 1"
+          "ERROR: Schwinger process only implemented for warpx.grid_type=collocated"
                                  "or algo.field_gathering = momentum-conserving");
 
     constexpr int level_0 = 0;

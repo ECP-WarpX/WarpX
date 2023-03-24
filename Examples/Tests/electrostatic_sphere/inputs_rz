@@ -33,4 +33,4 @@ electron.momentum_distribution_type = at_rest
 diagnostics.diags_names = diag1
 diag1.intervals = 30
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez rho
+diag1.fields_to_plot = Er Et Ez rho
