@@ -1445,15 +1445,17 @@ BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
 void
 BTDiagnostics::ResetTotalParticlesInBuffer(int i_buffer)
 {
-    for (int isp = 0; isp < m_totalParticles_in_buffer[i_buffer].size(); ++isp) {
-        m_totalParticles_in_buffer[i_buffer][isp] = 0;
-    }
+    std::fill(
+        m_totalParticles_in_buffer[i_buffer].begin(),
+        m_totalParticles_in_buffer[i_buffer].end(),
+        0);
 }
 
 void
 BTDiagnostics::ClearParticleBuffer(int i_buffer)
 {
-    for (int isp = 0; isp < m_particles_buffer[i_buffer].size(); ++isp) {
-        m_particles_buffer[i_buffer][isp]->clearParticles();
-    }
+    std::for_each(
+        m_particles_buffer[i_buffer].begin(),
+        m_particles_buffer[i_buffer].end(),
+        [](auto& pb){pb->clearParticles();});
 }
