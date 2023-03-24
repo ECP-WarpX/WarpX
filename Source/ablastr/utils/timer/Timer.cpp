@@ -11,7 +11,7 @@
 
 using namespace ablastr::utils::timer;
 
-Timer::Timer(){};
+Timer::Timer(){}
 
 void
 Timer::record_start_time() noexcept
