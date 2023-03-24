@@ -10,41 +10,22 @@
 
 #include "Initialization/WarpXAMReXInit.H"
 #include "Utils/MPIInitHelpers.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXrocfftUtil.H"
+#include "Utils/WarpXUtil.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
+#include <ablastr/utils/timer/Timer.H>
 
-#include <AMReX.H>
-#include <AMReX_Config.H>
-#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Print.H>
-#include <AMReX_REAL.H>
-#include <AMReX_TinyProfiler.H>
-#include <AMReX_Utility.H>
-
-#if defined(AMREX_USE_MPI)
-#  include <mpi.h>
-#endif
-
-#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
-// cstddef: work-around for ROCm/rocFFT <=4.3.0
-// https://github.com/ROCmSoftwarePlatform/rocFFT/blob/rocm-4.3.0/library/include/rocfft.h#L36-L42
-#  include <cstddef>
-#  include <rocfft.h>
-#endif
 
 int main(int argc, char* argv[])
 {
-    using namespace amrex;
-
     utils::warpx_mpi_init(argc, argv);
 
     warpx_amrex_init(argc, argv);
 
-#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
-    rocfft_setup();
-#endif
+    utils::rocfft::setup();
 
     ParseGeometryInput();
 
@@ -58,7 +39,8 @@ int main(int argc, char* argv[])
     {
         WARPX_PROFILE_VAR("main()", pmain);
 
-        const auto strt_total = static_cast<Real>(amrex::second());
+        auto timer = ablastr::utils::timer::Timer{};
+        timer.record_start_time();
 
         WarpX warpx;
 
@@ -69,21 +51,18 @@ int main(int argc, char* argv[])
         //Print warning messages at the end of the simulation
         ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
 
+        timer.record_stop_time();
         if (warpx.Verbose()) {
-            auto end_total = static_cast<Real>(amrex::second()) - strt_total;
-            ParallelDescriptor::ReduceRealMax(end_total, ParallelDescriptor::IOProcessorNumber());
-            Print() << "Total Time                     : " << end_total << '\n';
+            amrex::Print() << "Total Time                     : "
+                    << timer.get_global_duration() << '\n';
         }
 
         WARPX_PROFILE_VAR_STOP(pmain);
     }
 
-#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
-    rocfft_cleanup();
-#endif
+    utils::rocfft::cleanup();
 
-    Finalize();
-#if defined(AMREX_USE_MPI)
-    MPI_Finalize();
-#endif
+    amrex::Finalize();
+
+    utils::warpx_mpi_finalize ();
 }
