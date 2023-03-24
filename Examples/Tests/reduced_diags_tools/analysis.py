@@ -4,9 +4,9 @@
 # examples of usage of the reduced diagnostic tools #
 #####################################################
 
-import sys
+import sys 
 
-sys.path.append('../../../Python/pywarpx/diagnostics/data/')
+sys.path.append('../../../Python/pywarpx/diagnostics/data/')  
 mydir = '.'
 
 ##################
@@ -14,8 +14,7 @@ mydir = '.'
 ##################
 
 import ParticleEnergy as PE
-
-fname = 'EP' # do not add .txt
+fname = 'PartEne' # do not add .txt 
 diag = PE.ParticleEnergyData(mydir, fname)
 
 # extract some general info
@@ -33,24 +32,9 @@ print('species names = {}'.format(species_names))
 
 print('\n')
 
-# extract data
-data = diag.get_data('electrons', times='all')
-print('asking for total electron energy at all available times')
-print(data)
-print('\n')
-
-data = diag.get_data('protons', steps='all')
-print('asking for total proton energy at all available steps')
-print(data)
-print('\n')
-
+# extract data 
 data = diag.get_data('photons', 'electrons', times=None)
 print('asking for total photon and electron energy at all available times')
-print(data)
-print('\n')
-
-data = diag.get_data('electrons_mean', 'electrons', steps=None)
-print('asking for mean and total electron energy at all available times')
 print(data)
 print('\n')
 
@@ -79,59 +63,58 @@ print('asking for total electron energy at the times closest to 2, 4 and 9 ns')
 print(data)
 print('\n')
 
-data = diag.get_data('electrons', times=[0,20,40,100])
+data = diag.get_data('electrons', steps=[0,20,40,100])
 print('asking for total electron energy at steps 0, 20, 40 and 100')
 print(data)
 print('\n')
-
 
 ####################
 # ParticleMomentum #
 ####################
 
-import ParticleMomentum as PP
-
-fname = 'PP' # do not add .txt
-diag = PP.ParticleMomentumData(mydir, fname)
+import ParticleMomentum as PM
+fname = 'PartMom' # do not add .txt 
+diag = PM.ParticleMomentumData(mydir, fname)
 
 print(diag.get_valid_args())
 
-data = diag.get_data('electrons_x', 'electrons_mean_x', steps='all')
+
+species_names = diag.get_species_names()
+print('species names = {}'.format(species_names))
+
+data = diag.get_data('electrons_x', 'electrons_mean_x', steps=[0,20,60])
 print('asking for total and mean electron momentum x at all steps')
 print(data)
 print('\n')
-
 
 ###############
 # FieldEnergy #
 ###############
 
 import FieldEnergy as FE
-
-fname = 'EF' # do not add .txt
+fname = 'FielEne' # do not add .txt 
 diag = FE.FieldEnergyData(mydir, fname)
 
 print(diag.get_valid_args())
 
-data = diag.get_data('E_lev1', 'B_lev0', steps='all')
-print('asking for energy stored in E at level 1 and B at level 0 at all steps')
+data = diag.get_data('E_lev0', 'B_lev0')
+print('asking for energy stored in E and B at level 0 at all steps')
 print(data)
-print('\n')
 
+print('\n')
 
 ################
 # FieldMaximum #
 ################
 
 import FieldMaximum as FM
-
-fname = 'MF' # do not add .txt
+fname = 'FielMax' # do not add .txt 
 diag = FM.FieldMaximumData(mydir, fname)
 
 print(diag.get_valid_args())
 
-data = diag.get_data('E_lev1', 'B_lev0', steps='all')
-print('asking for total electron energy at all steps')
+data = diag.get_data('max_|E|_lev0', 'max_|B|_lev0')
+print('asking for max fields at all steps')
 print(data)
 print('\n')
 
@@ -140,8 +123,7 @@ print('\n')
 ##################
 
 import ParticleNumber as PN
-
-fname = 'NP' # do not add .txt
+fname = 'PartNum' # do not add .txt 
 diag = PN.ParticleNumberData(mydir, fname)
 
 print(diag.get_valid_args())
@@ -149,8 +131,40 @@ print(diag.get_valid_args())
 species_names = diag.get_species_names()
 print('species names = {}'.format(species_names))
 
+data = diag.get_data('protons_macroparticles', 'photons_weight', 'total_weight')
+print('asking for proton macroparticles, photon weight and total weight at all steps')
+print(data)
+print('\n')
 
-data = diag.get_data('protons_macroparticles', 'photons_weight', steps='all')
-print('asking for total electron energy at all steps')
+##############
+# RhoMaximum #
+##############
+
+import RhoMaximum as RM
+fname = 'DensMax' # do not add .txt 
+diag = RM.RhoMaximumData(mydir, fname)
+
+print(diag.get_valid_args())
+
+species_names = diag.get_nonpho_species_names()
+print('non-photon species names = {}'.format(species_names))
+
+data = diag.get_data('max_electrons_|rho|_lev0', 'min_rho_lev0', 'max_rho_lev0')
+print('asking for max electron rho, min rho, max rho at level 0')
+print(data)
+print('\n')
+
+###################
+# ParticleExtrema #
+###################
+
+import ParticleExtrema as PX
+fname = 'PartEx_ele' # do not add .txt 
+diag = PX.ParticleExtremaData(mydir, fname)
+
+print(diag.get_valid_args())
+
+data = diag.get_data('xmin', 'pxmax', 'wmax')
+print('asking for xmin, pxmax, wmax')
 print(data)
 print('\n')

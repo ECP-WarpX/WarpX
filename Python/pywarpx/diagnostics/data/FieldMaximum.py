@@ -1,7 +1,11 @@
-from BaseReader import DataReader
+import sys
+import os
+import re 
 import numpy as np
-import pandas as pd
+import pandas as pd 
+import collections
 
+from BaseReader import DataReader
 
 class FieldMaximumData(DataReader):
     """
@@ -15,90 +19,59 @@ class FieldMaximumData(DataReader):
         run_directory: string
             Path to the run directory of WarpX.
         file_prefix : string
-            Name of the file containing the current reduced diagnostic data.
+            Name of the file containing the current reduced diagnostic data. 
         """
-
+        
         super().__init__(run_directory)
 
         self.data_file_prefix = file_prefix
         self.data_file_suffix = '.txt'
-
-        self.has_species = False
-
+        
+        self.has_species = False 
+    
     def get_nlev(self):
         """Returns the number of mesh refinement levels in the simulation."""
 
-        return int((self.get_ncols() - 2.)/8.)
-
+        nlev = int((self.get_ncols() - 2.)/8.)    
+        return nlev
+        
     def get_valid_args(self):
-        nlev = self.get_nlev()
-        valid_args = [s for n in range(nlev) for s in ['Ex_lev'+str(n),
-                                                       'Ey_lev'+str(n),
-                                                       'Ez_lev'+str(n),
-                                                       'E_lev'+str(n),
-                                                       'Bx_lev'+str(n),
-                                                       'By_lev'+str(n),
-                                                       'Bz_lev'+str(n),
-                                                       'B_lev'+str(n)]]
-        return valid_args
+        nlev = self.get_nlev() 
+        valid_args = [s for n in range(nlev) for s in ['max_Ex_lev'+str(n), 
+                                                       'max_Ey_lev'+str(n), 
+                                                       'max_Ez_lev'+str(n),
+                                                       'max_|E|_lev'+str(n),
+                                                       'max_Bx_lev'+str(n),
+                                                       'max_By_lev'+str(n),
+                                                       'max_Bz_lev'+str(n),
+                                                       'max_|B|_lev'+str(n)]]
+        return valid_args 
 
-    def get_data(self, *args, **kwargs):
+    def get_data(self, *args, steps=None, times=None):
         """
         Arguments:
-            string:
-                Can be one or more among the valid strings.
-        Keyword arguments:
-            steps = list or np.array of integers, None or 'all' (optional):
+            string: 
+                Can be one or more among the valid arguments. 
+        Keyword arguments:     
+            steps = list or np.array of integers or None (optional): 
                 Timesteps at which the desidered output will be returned.
-                If equal to None, 'all' or not specified then all timesteps are given.
-            times = list or np.array of numbers, None or 'all' (optional):
+                If equal to None or not specified then all timesteps are given.  
+            times = list or np.array of numbers or None (optional):
                 The desidered output will be returned at the closest availble times.
-                If equal to None, 'all' or not specified then all timesteps are given
-        Output:
-            pandas dataframe with columns: steps, times, requested data
+                If equal to None or not specified then all timesteps are given  
+        Output: 
+            pandas dataframe with columns: steps, times, requested data 
         """
-
-        data_file_path = self.get_data_path()
-        data = np.loadtxt(data_file_path)
-
-        df = pd.read_csv(data_file_path, sep=" ", header=0)
-        cols = df.columns
-
-        col = []
-        data = []
-
-        nlev = self.get_nlev()
+        
         valid_args = self.get_valid_args()
-
-
-        for a in args:
-            if a not in valid_args:
-                raise ValueError('{} is an invalid argument!\n'
-                                  'list of valid arguments: \n'
-                                  '{}'.format(a, valid_args))
-
-        for n in range(nlev):
-            for comp in ('x','y','z'):
-                if('E'+comp+'_lev'+str(n) in args):
-                    col.append([c for c in cols if 'max_E'+comp+'_lev'+str(n)+'(V/m)' in c][0])
-                if('B'+comp+'_lev'+str(n) in args):
-                    col.append([c for c in cols if 'max_B'+comp+'_lev'+str(n)+'(T)' in c][0])
-            if('E_lev'+str(n) in args):
-                col.append([c for c in cols if 'max_|E|_lev'+str(n)+'(V/m)' in c][0])
-            if('B_lev'+str(n) in args):
-                col.append([c for c in cols if 'max_|B|_lev'+str(n)+'(T)' in c][0])
-
-
-        if col == []:
-            raise ValueError('Could not find any valid column names!\n'
-                             'Is the spelling correct?\n'
-                             'Did you select any valid data?')
-
-        col = ['#[0]step()','[1]time(s)'] + col
-        data = df[col]
-
-        restricted_data = self.restrict_data(data, **kwargs)
-
-        # rename columns
+        
+        # get data using parent class 
+        data = DataReader.get_data(self, valid_args, steps, times, *args)
+        
+        # restrict to the desidered steps or times 
+        restricted_data = self.restrict_data(data, steps, times)
+        
+        # rename columns         
         restricted_data.columns = ['steps', 'times', *[name for name in args]]
+
         return restricted_data
