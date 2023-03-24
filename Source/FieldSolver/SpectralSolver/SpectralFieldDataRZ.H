@@ -73,8 +73,7 @@ class SpectralFieldDataRZ
          */
         void CopySpectralDataComp (const int src_comp, const int dest_comp)
         {
-            const int nmodes = n_rz_azimuthal_modes;
-            for (int imode=0 ; imode < nmodes ; imode++)
+            for (int imode=0 ; imode < n_rz_azimuthal_modes ; imode++)
             {
                 const int shift_comp = imode * m_n_fields;
                 // The last two arguments represent the number of components and
@@ -90,8 +89,7 @@ class SpectralFieldDataRZ
          */
         void ZeroOutDataComp(const int icomp)
         {
-            const int nmodes = n_rz_azimuthal_modes;
-            for (int imode=0 ; imode < nmodes ; imode++)
+            for (int imode=0 ; imode < n_rz_azimuthal_modes ; imode++)
             {
                 const int shift_comp = imode * m_n_fields;
                 // The last argument represents the number of components to perform this operation
@@ -107,8 +105,7 @@ class SpectralFieldDataRZ
          */
         void ScaleDataComp(const int icomp, const amrex::Real scale_factor)
         {
-            const int nmodes = n_rz_azimuthal_modes;
-            for (int imode=0 ; imode < nmodes ; imode++)
+            for (int imode=0 ; imode < n_rz_azimuthal_modes ; imode++)
             {
                 const int shift_comp = imode * m_n_fields;
                 // The last argument represents the number of components to perform this operation
