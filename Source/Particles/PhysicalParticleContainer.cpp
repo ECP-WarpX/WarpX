@@ -596,9 +596,8 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         double const momentum_unit_x = ps["momentum"]["x"].unitSI();
         std::shared_ptr<ParticleReal> ptr_uz = ps["momentum"]["z"].loadChunk<ParticleReal>();
         double const momentum_unit_z = ps["momentum"]["z"].unitSI();
-        std::shared_ptr<ParticleReal> ptr_w = ps["weighting"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>(); //added
-        double const w = ps["weighting"][openPMD::RecordComponent::SCALAR].unitSI();  //added
-        amrex::Print() << "w " << w << std::endl; // added print weight
+        std::shared_ptr<ParticleReal> ptr_w = ps["weighting"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>();
+        double const w_unit = ps["weighting"][openPMD::RecordComponent::SCALAR].unitSI();  
 
 #   if !(defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z))
         std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
@@ -608,39 +607,13 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         double momentum_unit_y = 1.0;
         if (ps["momentum"].contains("y")) {
             ptr_uy = ps["momentum"]["y"].loadChunk<ParticleReal>();
-             momentum_unit_y = ps["momentum"]["y"].unitSI();
+            momentum_unit_y = ps["momentum"]["y"].unitSI();
         }
         series->flush();  // shared_ptr data can be read now
 
-        /*
-        ParticleReal weight = 1.0_prt;  // base standard: no info means "real" particles
-        if (q_tot != 0.0) {
-            weight = std::abs(q_tot) / ( std::abs(charge) * ParticleReal(npart) );
-            if (ps.contains("weighting")) {
-                std::stringstream ss;
-                ss << "Both '" << ps_name << ".q_tot' and '"
-                        << ps_name << ".injection_file' specify a total charge.\n'"
-                        << ps_name << ".q_tot' will take precedence.";
-                ablastr::warn_manager::WMRecordWarning("Species", ss.str());
-            }
-        }
-        // ED-PIC extension?
-        else if (ps.contains("weighting")) {     // added or ps.contains("weight"))
-            // TODO: Add ASSERT_WITH_MESSAGE to test if weighting is a constant record
-            // TODO: Add ASSERT_WITH_MESSAGE for macroWeighted value in ED-PIC
-            ParticleReal w = ps["weighting"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>().get()[0];
-            double const w_unit = ps["weighting"][openPMD::RecordComponent::SCALAR].unitSI();
-            amrex::Print() << "w " << w << std::endl; // added print weight
-            amrex::Print() << "w_unit " << w_unit << std::endl;
-            weight = w * w_unit;
-            amrex::Print() << "weight " << weight << std::endl; // added print weight
-        }
-        */
-
-
         for (auto i = decltype(npart){0}; i<npart; ++i){
 
-            ParticleReal const weight = ptr_w.get()[i]*w; //added
+            ParticleReal const weight = ptr_w.get()[i]*w_unit; 
 
 #if !defined(WARPX_DIM_1D_Z)
 
