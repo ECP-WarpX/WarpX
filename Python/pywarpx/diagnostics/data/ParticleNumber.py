@@ -48,28 +48,28 @@ class ParticleNumberData(DataReader):
     def get_data(self, *args, steps=None, times=None):
         """
         Arguments:
-            string: 
-                Can be one or more among the valid arguments. 
-        Keyword arguments:     
-            steps = list or np.array of integers or None (optional): 
+            string:
+                Can be one or more among the valid arguments.
+        Keyword arguments:
+            steps = list or np.array of integers or None (optional):
                 Timesteps at which the desidered output will be returned.
-                If equal to None or not specified then all timesteps are given.  
+                If equal to None or not specified then all timesteps are given.
             times = list or np.array of numbers or None (optional):
                 The desidered output will be returned at the closest availble times.
-                If equal to None or not specified then all timesteps are given  
-        Output: 
-            pandas dataframe with columns: steps, times, requested data 
+                If equal to None or not specified then all timesteps are given
+        Output:
+            pandas dataframe with columns: steps, times, requested data
         """
-        
+
         valid_args = self.get_valid_args()
-        
-        # get data using parent class 
+
+        # get data using parent class
         data = DataReader.get_data(self, valid_args, steps, times, *args)
-        
-        # restrict to the desidered steps or times 
+
+        # restrict to the desidered steps or times
         restricted_data = self.restrict_data(data, steps, times)
-        
-        # rename columns         
+
+        # rename columns
         restricted_data.columns = ['steps', 'times', *[name for name in args]]
 
         return restricted_data
