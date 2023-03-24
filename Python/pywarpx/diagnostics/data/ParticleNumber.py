@@ -1,7 +1,4 @@
 from BaseReader import DataReader
-import numpy as np
-import pandas as pd
-
 
 class ParticleNumberData(DataReader):
     """

@@ -64,3 +64,5 @@ class FieldEnergyData(DataReader):
         restricted_data.columns = ['steps', 'times', *[name for name in args]]
 
         return restricted_data
+        
+        
