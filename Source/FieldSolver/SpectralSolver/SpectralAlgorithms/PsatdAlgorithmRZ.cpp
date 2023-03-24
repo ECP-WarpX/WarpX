@@ -408,14 +408,14 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 
                 if (om != 0.0_rt)
                 {
-                    X5(i,j,k) = c2 / ep0 * (S_ck(i,j,k) / om2 - (1._rt - C(i,j,k)) / (om4 * dt)
+                    X5(i,j,k,mode) = c2 / ep0 * (S_ck(i,j,k,mode) / om2 - (1._rt - C(i,j,k,mode)) / (om4 * dt)
                                             - 0.5_rt * dt / om2);
-                    X6(i,j,k) = c2 / ep0 * ((1._rt - C(i,j,k)) / (om4 * dt) - 0.5_rt * dt / om2);
+                    X6(i,j,k,mode) = c2 / ep0 * ((1._rt - C(i,j,k,mode)) / (om4 * dt) - 0.5_rt * dt / om2);
                 }
                 else
                 {
-                    X5(i,j,k) = - c2 * dt3 / (8._rt * ep0);
-                    X6(i,j,k) = - c2 * dt3 / (24._rt * ep0);
+                    X5(i,j,k,mode) = - c2 * dt3 / (8._rt * ep0);
+                    X6(i,j,k,mode) = - c2 * dt3 / (24._rt * ep0);
                 }
             }
         });
