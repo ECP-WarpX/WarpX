@@ -42,8 +42,11 @@ For openPMD output, WarpX automatically creates an ``.pmd`` file per diagnostics
 
 .. warning::
 
-   `ParaView issue 21162 <https://gitlab.kitware.com/paraview/paraview/-/issues/21162#note_1109104>`__:
+   `ParaView issue 21837 <https://gitlab.kitware.com/paraview/paraview/-/issues/21837>`__:
    In order to visualize particle traces with the ``Temporal Particles To Pathlines``, you need to apply the ``Merge Blocks`` filter first.
+   
+   If you have multiple species, you may have to extract the species you want with ``Extract Block`` before applying ``Merge Blocks``.
+
 
 
 Plotfiles (AMReX)
