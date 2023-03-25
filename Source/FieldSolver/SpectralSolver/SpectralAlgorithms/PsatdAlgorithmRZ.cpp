@@ -382,7 +382,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
             amrex::Real const k_norm = std::sqrt(kr*kr + kz*kz);
 
             // Calculate coefficients
-            constexpr amrex::Real c = PhysConst::c * PhysConst::c;
+            constexpr amrex::Real c = PhysConst::c;
             constexpr amrex::Real ep0 = PhysConst::ep0;
             if (k_norm != 0){
                 C(i,j,k,mode) = std::cos(c*k_norm*dt);
@@ -400,7 +400,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 
             if (time_averaging && J_linear)
             {
-                constexpr amrex::Real c2 = PhysConst::c;
+                constexpr amrex::Real c2 = PhysConst::c * PhysConst::c;
                 const amrex::Real dt3 = dt * dt * dt;
                 const amrex::Real om  = c * k_norm;
                 const amrex::Real om2 = om * om;
