@@ -107,12 +107,12 @@ public:
     /** Whether the last timestep is always dumped */
     bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
     int getnumbuffers() {return m_num_buffers;}
-    amrex::Real gettlab(int i_buffer) {return m_t_lab[i_buffer];}
-    void settlab(int i_buffer, amrex::Real tlab) {m_t_lab[i_buffer] = tlab;}
-    int get_buffer_k_index_hi(int i_buffer) {return m_buffer_k_index_hi[i_buffer];}
-    void set_buffer_k_index_hi(int i_buffer, int kindex) {m_buffer_k_index_hi[i_buffer] = kindex;}
-    amrex::Real get_snapshot_domain_lo(int i_buffer, int idim) {return m_snapshot_domain_lab[i_buffer].lo(idim); }
-    amrex::Real get_snapshot_domain_hi(int i_buffer, int idim) {return m_snapshot_domain_lab[i_buffer].hi(idim); }
+    virtual amrex::Real gettlab ( [[maybe_unused]] int i_buffer) {return 0.;}
+    virtual void settlab ( [[maybe_unused]] int i_buffer, [[maybe_unused]] amrex::Real tlab) { }
+    virtual int get_buffer_k_index_hi ( [[maybe_unused]] int i_buffer) {return 0; }
+    virtual void set_buffer_k_index_hi ( [[maybe_unused]] int i_buffer, [[maybe_unused]] int kindex) { }
+    virtual amrex::Real get_snapshot_domain_lo ([[maybe_unused]] int i_buffer, [[maybe_unused]] int idim) {return 0.; }
+    virtual amrex::Real get_snapshot_domain_hi ([[maybe_unused]] int i_buffer, [[maybe_unused]] int idim) {return 0.; }
     void setSnapshotDomainLo(int i_buffer, int idim,  amrex::Real domain_lab_lo) {m_snapshot_domain_lab[i_buffer].setLo(idim, domain_lab_lo); }
     void setSnapshotDomainHi(int i_buffer, int idim,  amrex::Real domain_lab_hi) {m_snapshot_domain_lab[i_buffer].setHi(idim, domain_lab_hi); }
     virtual int get_flush_counter ( [[maybe_unused]] int i_buffer) { return 0; }
@@ -258,9 +258,6 @@ protected:
      *  over the total number of species selected for diagnostics.
      */
     amrex::Vector< amrex::Vector <int> > m_totalParticles_in_buffer;
-    /** Vector of lab-frame time corresponding to each snapshot */
-    amrex::Vector<amrex::Real> m_t_lab;
-    amrex::Vector<int> m_buffer_k_index_hi;
     /** Vector of user-defined physical region for diagnostics in lab-frame
      *  for each back-transformed snapshot */
     amrex::Vector<amrex::RealBox> m_snapshot_domain_lab;

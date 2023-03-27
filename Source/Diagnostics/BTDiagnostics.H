@@ -170,11 +170,11 @@ private:
     /** max grid size used to generate BoxArray to define output MultiFabs */
     int m_max_box_size = 256;
 
-    ///** Vector of lab-frame time corresponding to each snapshot */
-    //amrex::Vector<amrex::Real> m_t_lab;
-    ///** Vector of user-defined physical region for diagnostics in lab-frame
-    // *  for each back-transformed snapshot */
-    //amrex::Vector<amrex::RealBox> m_snapshot_domain_lab;
+    /** Vector of lab-frame time corresponding to each snapshot */
+    amrex::Vector<amrex::Real> m_t_lab;
+    /** Vector of user-defined physical region for diagnostics in lab-frame
+     *  for each back-transformed snapshot */
+    amrex::Vector<amrex::RealBox> m_snapshot_domain_lab;
     /** Vector of physical region corresponding to the buffer that spans a part
      *  of the full back-transformed snapshot */
     amrex::Vector<amrex::RealBox> m_buffer_domain_lab;
@@ -230,7 +230,10 @@ private:
     /** Vector of counters tracking number of times the buffer of multifab is
      *  flushed out and emptied before being refilled again for each snapshot */
     amrex::Vector<int> m_buffer_flush_counter;
-//    amrex::Vector<int> m_buffer_k_index_hi;
+    /** Vector of k-indices in the hi-end along the moving window direction for the buffer being filled
+     *  for each snapshot.
+     */
+    amrex::Vector<int> m_buffer_k_index_hi;
     /** Multi-level cell-centered multifab with all field-data components, namely,
      *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho.
      *  This cell-centered data extending over the entire domain
@@ -395,6 +398,12 @@ private:
     void RedistributeParticleBuffer (const int i_buffer);
     void UpdateVarnamesForRZopenPMD();
 
+    amrex::Real gettlab (int i_buffer) override {return m_t_lab[i_buffer];}
+    void settlab (int i_buffer, amrex::Real tlab) override {m_t_lab[i_buffer] = tlab; }
+    int get_buffer_k_index_hi (int i_buffer) override {return 0; }
+    void set_buffer_k_index_hi (int i_buffer, int kindex) override {m_buffer_k_index_hi[i_buffer] = kindex;}
+    amrex::Real get_snapshot_domain_lo (int i_buffer, int idim) override {return m_snapshot_domain_lab[i_buffer].lo(idim); }
+    amrex::Real get_snapshot_domain_hi (int i_buffer, int idim) override {return m_snapshot_domain_lab[i_buffer].hi(idim); }
     int get_flush_counter (int i_buffer) override {return m_buffer_flush_counter[i_buffer]; }
     void set_flush_counter ([[maybe_unused]] int i_buffer, int flush_counter) override { m_buffer_flush_counter[i_buffer] = flush_counter; }
     int get_last_valid_Zslice ( int i_buffer) override { return m_lastValidZSlice[i_buffer]; }
