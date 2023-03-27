@@ -411,8 +411,6 @@ WarpX::InitData ()
         m_macroscopic_properties->InitData();
     }
 
-    //InitDiagnostics();
-
     if (ParallelDescriptor::IOProcessor()) {
         std::cout << "\nGrids Summary:\n";
         printGridSummary(std::cout, 0, finestLevel());
