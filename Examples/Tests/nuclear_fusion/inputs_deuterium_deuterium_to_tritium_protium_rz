@@ -3,7 +3,7 @@
 #           | He-3 + n (neutronic branch, 50% probability)
 # d + d -> <
 #           | t + p    (anneutronic branch, 50% probability)
-# 
+#
 # Sim params are dialed in to produce about 11,000 physical particles of
 # each fusion-product species (and ~1,300 macro particles)
 # However, as of 03/23/2023, anneutronic DD fusion is broken:
