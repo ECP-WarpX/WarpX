@@ -488,8 +488,8 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
                              num_z_cells_in_snapshot *
                              dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
         m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_lo);
-    } else {
     }
+
     // cell-centered index that corresponds to the hi-end of the lab-frame in the z-direction
     // Adding 0.5 dz_lab so that we obtain the cell-centered index consistent to the hi-end
     int snapshot_kindex_hi = static_cast<int>(floor(
