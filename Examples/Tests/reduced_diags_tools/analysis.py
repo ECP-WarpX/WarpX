@@ -4,9 +4,9 @@
 # examples of usage of the reduced diagnostic tools #
 #####################################################
 
-import sys
+import sys 
 
-sys.path.append('../../../Python/pywarpx/diagnostics/data/')
+sys.path.append('../../../Python/pywarpx/diagnostics/data/')  
 mydir = '.'
 
 ##################
@@ -14,9 +14,7 @@ mydir = '.'
 ##################
 
 import ParticleEnergy as PE
-
-fname = 'PartEne' # do not add .txt
-diag = PE.ParticleEnergyData(mydir, fname)
+diag = PE.ParticleEnergyData(fname='PartEne.txt')
 
 # extract some general info
 times = diag.get_times()
@@ -33,7 +31,7 @@ print('species names = {}'.format(species_names))
 
 print('\n')
 
-# extract data
+# extract data 
 data = diag.get_data('photons', 'electrons', times=None)
 print('asking for total photon and electron energy at all available times')
 print(data)
@@ -74,9 +72,7 @@ print('\n')
 ####################
 
 import ParticleMomentum as PM
-
-fname = 'PartMom' # do not add .txt
-diag = PM.ParticleMomentumData(mydir, fname)
+diag = PM.ParticleMomentumData(fname='PartMom.txt')
 
 print(diag.get_valid_args())
 
@@ -94,9 +90,7 @@ print('\n')
 ###############
 
 import FieldEnergy as FE
-
-fname = 'FielEne' # do not add .txt
-diag = FE.FieldEnergyData(mydir, fname)
+diag = FE.FieldEnergyData(red_diags_dir="./diags/reducedfiles", fname='FielEne.txt')
 
 print(diag.get_valid_args())
 
@@ -111,9 +105,7 @@ print('\n')
 ################
 
 import FieldMaximum as FM
-
-fname = 'FielMax' # do not add .txt
-diag = FM.FieldMaximumData(mydir, fname)
+diag = FM.FieldMaximumData(fname='FielMax.txt')
 
 print(diag.get_valid_args())
 
@@ -127,9 +119,7 @@ print('\n')
 ##################
 
 import ParticleNumber as PN
-
-fname = 'PartNum' # do not add .txt
-diag = PN.ParticleNumberData(mydir, fname)
+diag = PN.ParticleNumberData(fname='PartNum.txt')
 
 print(diag.get_valid_args())
 
@@ -146,9 +136,7 @@ print('\n')
 ##############
 
 import RhoMaximum as RM
-
-fname = 'DensMax' # do not add .txt
-diag = RM.RhoMaximumData(mydir, fname)
+diag = RM.RhoMaximumData(fname='DensMax.txt')
 
 print(diag.get_valid_args())
 
@@ -165,9 +153,7 @@ print('\n')
 ###################
 
 import ParticleExtrema as PX
-
-fname = 'PartEx_ele' # do not add .txt
-diag = PX.ParticleExtremaData(mydir, fname)
+diag = PX.ParticleExtremaData(fname='PartEx_ele.txt')
 
 print(diag.get_valid_args())
 

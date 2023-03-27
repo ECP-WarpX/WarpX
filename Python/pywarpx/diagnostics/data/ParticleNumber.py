@@ -5,20 +5,23 @@ class ParticleNumberData(DataReader):
     Reader for the ParticleNumber reduced diagnostic.
     """
 
-    def __init__(self, run_directory, file_prefix='ParticleNumber'):
+    def __init__(self, red_diags_dir="./diags/reducedfiles", separator=" ", fname='ParticleNumber.txt'):
         """
         Parameters
         ----------
-        run_directory: string
-            Path to the run directory of WarpX.
-        file_prefix : string
-            Name of the file containing the current reduced diagnostic data.
-        """
+        red_diags_dir: string
+            Path to the reduced diagnostic directory, default is './diags/reducedfiles'.
+        fname: string
+            Name of the reduced diagnostic file.
+        separator: string
+            The separator between row values in the output file, default is a whitespace " ".
+        """   
+        
+        super().__init__(red_diags_dir, separator)
 
-        super().__init__(run_directory)
-
-        self.data_file_prefix = file_prefix
-        self.data_file_suffix = '.txt'
+        self.fname = fname
+        if self.fname is None:
+            raise ValueError('The diagnostic file name cannot be None!')
 
         self.has_species = True
 
