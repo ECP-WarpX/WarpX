@@ -621,7 +621,11 @@ void
 MultiParticleContainer::SortParticlesByBin (amrex::IntVect bin_size)
 {
     for (auto& pc : allcontainers) {
-        pc->SortParticlesByBin(bin_size);
+        if (WarpX::sort_particles_for_deposition) {
+            pc->SortParticlesForDeposition(WarpX::sort_idx_type);
+        } else {
+            pc->SortParticlesByBin(bin_size);
+        }
     }
 }
 
