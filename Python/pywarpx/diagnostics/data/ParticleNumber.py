@@ -1,5 +1,6 @@
 from BaseReader import DataReader
 
+
 class ParticleNumberData(DataReader):
     """
     Reader for the ParticleNumber reduced diagnostic.
@@ -15,8 +16,8 @@ class ParticleNumberData(DataReader):
             Name of the reduced diagnostic file.
         separator: string
             The separator between row values in the output file, default is a whitespace " ".
-        """   
-        
+        """
+
         super().__init__(red_diags_dir, separator)
 
         self.fname = fname

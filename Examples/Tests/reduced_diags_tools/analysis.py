@@ -4,9 +4,9 @@
 # examples of usage of the reduced diagnostic tools #
 #####################################################
 
-import sys 
+import sys
 
-sys.path.append('../../../Python/pywarpx/diagnostics/data/')  
+sys.path.append('../../../Python/pywarpx/diagnostics/data/')
 mydir = '.'
 
 ##################
@@ -14,6 +14,7 @@ mydir = '.'
 ##################
 
 import ParticleEnergy as PE
+
 diag = PE.ParticleEnergyData(fname='PartEne.txt')
 
 # extract some general info
@@ -31,7 +32,7 @@ print('species names = {}'.format(species_names))
 
 print('\n')
 
-# extract data 
+# extract data
 data = diag.get_data('photons', 'electrons', times=None)
 print('asking for total photon and electron energy at all available times')
 print(data)
@@ -72,6 +73,7 @@ print('\n')
 ####################
 
 import ParticleMomentum as PM
+
 diag = PM.ParticleMomentumData(fname='PartMom.txt')
 
 print(diag.get_valid_args())
@@ -90,6 +92,7 @@ print('\n')
 ###############
 
 import FieldEnergy as FE
+
 diag = FE.FieldEnergyData(red_diags_dir="./diags/reducedfiles", fname='FielEne.txt')
 
 print(diag.get_valid_args())
@@ -105,6 +108,7 @@ print('\n')
 ################
 
 import FieldMaximum as FM
+
 diag = FM.FieldMaximumData(fname='FielMax.txt')
 
 print(diag.get_valid_args())
@@ -119,6 +123,7 @@ print('\n')
 ##################
 
 import ParticleNumber as PN
+
 diag = PN.ParticleNumberData(fname='PartNum.txt')
 
 print(diag.get_valid_args())
@@ -136,6 +141,7 @@ print('\n')
 ##############
 
 import RhoMaximum as RM
+
 diag = RM.RhoMaximumData(fname='DensMax.txt')
 
 print(diag.get_valid_args())
@@ -153,6 +159,7 @@ print('\n')
 ###################
 
 import ParticleExtrema as PX
+
 diag = PX.ParticleExtremaData(fname='PartEx_ele.txt')
 
 print(diag.get_valid_args())
