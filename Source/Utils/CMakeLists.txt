@@ -8,6 +8,7 @@ target_sources(WarpX
     WarpXMovingWindow.cpp
     WarpXTagging.cpp
     WarpXUtil.cpp
+    WarpXrocfftUtil.cpp
     WarpXVersion.cpp
 )
 

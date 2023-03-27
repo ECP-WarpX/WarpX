@@ -51,6 +51,15 @@ namespace utils
         return std::make_pair(thread_required, thread_provided);
     }
 
+
+    void
+    warpx_mpi_finalize ()
+    {
+#ifdef AMREX_USE_MPI
+        MPI_Finalize();
+#endif
+    }
+
     void
     warpx_check_mpi_thread_level ()
     {
