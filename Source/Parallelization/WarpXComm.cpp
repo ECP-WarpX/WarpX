@@ -884,8 +884,8 @@ WarpX::SyncCurrent (
             if (lev < finest_level)
             {
                 // On a coarse level, the data in mf_comm comes from the
-                // fine level. They are unfiltered and uncommuncatied. We
-                // need to add it to the current level.
+                // coarse patch of the fine level. They are unfiltered and uncommunicated.
+                // We need to add it to the fine patch of the current level.
                 MultiFab fine_lev_cp(J_fp[lev][idim]->boxArray(),
                                      J_fp[lev][idim]->DistributionMap(),
                                      ncomp, 0);
