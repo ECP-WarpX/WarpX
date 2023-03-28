@@ -30,11 +30,11 @@ class ParticleNumberData(DataReader):
         # remove 4 columns: step, time, total_macroparticles, total_weight
         # divide by 2: we save both the total number of macroparticles
         # and the total number of real particles for every species
-        return DataReader.get_nspecies(self, subtract=4., divide=2.)
+        return DataReader.get_nspecies(self, columns_speciesless=4., columns_per_species=2.)
 
     def get_species_names(self):
         # remove first 3 entries (step, time, total) then select every 1 entry
-        return DataReader.get_species_names(self, string='_macroparticles\(\)', start=3, step=1)
+        return DataReader.get_species_names(self, string='_macroparticles\(\)', initial_columns=3, columns_per_species=1)
 
     def get_valid_args(self):
         """
