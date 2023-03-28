@@ -16,6 +16,7 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+#include "Diagnostics/MultiDiagnostics.H"
 
 #include <ablastr/utils/Communication.H>
 
@@ -223,6 +224,56 @@ WarpX::InitFromCheckpoint ()
 
         is >> time_of_last_gal_shift;
         GotoNextLine(is);
+
+
+        auto & warpx = WarpX::GetInstance();
+        for (int idiag = 0; idiag < warpx.GetMultiDiags().GetTotalDiags(); ++idiag)
+        {
+            if( warpx.GetMultiDiags().diagstypes(idiag) == DiagTypes::BackTransformed )
+            {
+                auto& diag = warpx.GetMultiDiags().GetDiag(idiag);
+                if (diag.getnumbuffers() > 0) {
+                    diag.InitDataBeforeRestart();
+                    for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
+                        amrex::Real tlab;
+                        is >> tlab;
+                        diag.settlab(i_buffer, tlab);
+                        int kindex_hi;
+                        is >> kindex_hi;
+                        diag.set_buffer_k_index_hi(i_buffer, kindex_hi);
+
+                        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                            amrex::Real snapshot_lo;
+                            is >> snapshot_lo;
+                            diag.setSnapshotDomainLo(i_buffer, idim, snapshot_lo);
+                        }
+                        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                            amrex::Real snapshot_hi;
+                            is >> snapshot_hi;
+                            diag.setSnapshotDomainHi(i_buffer, idim, snapshot_hi);
+                        }
+
+                        int flush_counter;
+                        is >> flush_counter;
+                        diag.set_flush_counter(i_buffer, flush_counter);
+
+                        int last_valid_Zslice;
+                        is >> last_valid_Zslice;
+                        diag.set_last_valid_Zslice(i_buffer, last_valid_Zslice);
+
+                        int snapshot_full_flag;
+                        is >> snapshot_full_flag;
+                        diag.set_snapshot_full(i_buffer, snapshot_full_flag);
+
+                    }
+                    diag.InitDataAfterRestart();
+                } else {
+                    diag.InitData();
+                }
+            } else {
+                warpx.GetMultiDiags().GetDiag(idiag).InitData();
+            }
+        }
     }
 
     const int nlevs = finestLevel()+1;

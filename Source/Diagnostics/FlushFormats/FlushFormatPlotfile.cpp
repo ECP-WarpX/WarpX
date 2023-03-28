@@ -10,6 +10,7 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+#include "Diagnostics/MultiDiagnostics.H"
 
 #include <AMReX.H>
 #include <AMReX_Box.H>
@@ -306,6 +307,27 @@ FlushFormatPlotfile::WriteWarpXHeader(
         HeaderFile << warpx.getdo_moving_window() << "\n";
 
         HeaderFile << warpx.time_of_last_gal_shift << "\n";
+
+        for (int idiag = 0; idiag < warpx.GetMultiDiags().GetTotalDiags(); ++idiag)
+        {
+            if( warpx.GetMultiDiags().diagstypes(idiag) == DiagTypes::BackTransformed )
+            {
+                auto& diag = warpx.GetMultiDiags().GetDiag(idiag);
+                for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
+                    HeaderFile << diag.gettlab(i_buffer) << "\n";
+                    HeaderFile << diag.get_buffer_k_index_hi(i_buffer) << "\n";
+                    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                        HeaderFile << diag.get_snapshot_domain_lo(i_buffer, idim) << "\n";
+                    }
+                    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                        HeaderFile << diag.get_snapshot_domain_hi(i_buffer, idim) << "\n";
+                    }
+                    HeaderFile << diag.get_flush_counter(i_buffer) << "\n";
+                    HeaderFile << diag.get_last_valid_Zslice(i_buffer) << "\n";
+                    HeaderFile << diag.get_snapshot_full_flag(i_buffer) << "\n";
+                }
+            }
+        }
     }
 }
 

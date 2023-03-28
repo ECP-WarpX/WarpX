@@ -387,12 +387,14 @@ WarpX::InitData ()
         ComputeDt();
         WarpX::PrintDtDxDyDz();
         InitFromScratch();
+        InitDiagnostics();
     }
     else
     {
         InitFromCheckpoint();
         WarpX::PrintDtDxDyDz();
         PostRestart();
+        reduced_diags->InitData();
     }
 
     ComputeMaxStep();
@@ -408,8 +410,6 @@ WarpX::InitData ()
     if (WarpX::em_solver_medium==1) {
         m_macroscopic_properties->InitData();
     }
-
-    InitDiagnostics();
 
     if (ParallelDescriptor::IOProcessor()) {
         std::cout << "\nGrids Summary:\n";
