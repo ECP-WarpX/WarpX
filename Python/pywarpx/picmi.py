@@ -23,6 +23,7 @@ picmistandard.register_codename(codename)
 # dictionary to map field boundary conditions from picmistandard to WarpX
 BC_map = {
     'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped',
+    'absorbing_silver_mueller':'absorbing_silver_mueller',
     'neumann':'neumann', 'none':'none', None:'none'
 }
 

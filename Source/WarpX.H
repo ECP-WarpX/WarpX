@@ -309,6 +309,11 @@ public:
     static utils::parser::IntervalsParser sort_intervals;
     static amrex::IntVect sort_bin_size;
 
+    //! If true, particles will be sorted in the order x -> y -> z -> ppc for faster deposition
+    static bool sort_particles_for_deposition;
+    //! Specifies the type of grid used for the above sorting, i.e. cell-centered, nodal, or mixed
+    static amrex::IntVect sort_idx_type;
+
     static bool do_subcycling;
     static bool do_multi_J;
     static int do_multi_J_n_depositions;

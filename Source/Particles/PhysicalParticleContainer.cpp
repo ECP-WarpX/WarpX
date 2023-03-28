@@ -445,7 +445,8 @@ PhysicalParticleContainer::AddGaussianBeam (
     const Real x_rms, const Real y_rms, const Real z_rms,
     const Real x_cut, const Real y_cut, const Real z_cut,
     const Real q_tot, long npart,
-    const int do_symmetrize) {
+    const int do_symmetrize,
+    const int symmetrization_order) {
 
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
@@ -458,10 +459,11 @@ PhysicalParticleContainer::AddGaussianBeam (
     int np = 0;
 
     if (ParallelDescriptor::IOProcessor()) {
-        // If do_symmetrize, create 4x fewer particles, and
-        // Replicate each particle 4 times (x,y) (-x,y) (x,-y) (-x,-y)
+        // If do_symmetrize, create either 4x or 8x fewer particles, and
+        // Replicate each particle either 4 times (x,y) (-x,y) (x,-y) (-x,-y)
+        // or 8 times, additionally (y,x), (-y,x), (y,-x), (-y,-x)
         if (do_symmetrize){
-            npart /= 4;
+            npart /= symmetrization_order;
         }
         for (long i = 0; i < npart; ++i) {
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
@@ -488,7 +490,41 @@ PhysicalParticleContainer::AddGaussianBeam (
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
-                if (do_symmetrize){
+                if (do_symmetrize && symmetrization_order == 8){
+                    // Add eight particles to the beam:
+                    CheckAndAddParticle(x, y, z, u.x, u.y, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(x, -y, z, u.x, -u.y, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(-x, y, z, -u.x, u.y, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(-x, -y, z, -u.x, -u.y, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(y, x, z, u.y, u.x, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(-y, x, z, -u.y, u.x, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(y, -x, z, u.y, -u.x, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                    CheckAndAddParticle(-y, -x, z, -u.y, -u.x, u.z, weight/8._rt,
+                                        particle_x,  particle_y,  particle_z,
+                                        particle_ux, particle_uy, particle_uz,
+                                        particle_w);
+                } else if (do_symmetrize && symmetrization_order == 4){
                     // Add four particles to the beam:
                     CheckAndAddParticle(x, y, z, u.x, u.y, u.z, weight/4._rt,
                                         particle_x,  particle_y,  particle_z,
@@ -832,7 +868,8 @@ PhysicalParticleContainer::AddParticles (int lev)
                         plasma_injector->z_cut,
                         plasma_injector->q_tot,
                         plasma_injector->npart,
-                        plasma_injector->do_symmetrize);
+                        plasma_injector->do_symmetrize,
+                        plasma_injector->symmetrization_order);
 
 
         return;
@@ -2488,8 +2525,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>>{},
                                {exteb_runtime_flag},
-                               np, [=,getExternalEB=getExternalEB]
-                               AMREX_GPU_DEVICE (long ip, auto exteb_control)
+                               np, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control)
             {
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
@@ -2507,6 +2543,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 }
 
                 // Externally applied E and B-field in Cartesian co-ordinates
+                [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
                 if constexpr (exteb_control == has_exteb) {
                     getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
                 }
@@ -2713,9 +2750,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
                                 CompileTimeOptions<no_qed  ,has_qed>>{},
                        {exteb_runtime_flag, qed_runtime_flag},
-                       np_to_push, [=,getExternalEB=getExternalEB]
-                       AMREX_GPU_DEVICE (long ip, auto exteb_control,
-                                         [[maybe_unused]] auto qed_control)
+                       np_to_push, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
+                                                         [[maybe_unused]] auto qed_control)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
@@ -2742,6 +2778,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                            nox, galerkin_interpolation);
         }
 
+        [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
         if constexpr (exteb_control == has_exteb) {
             getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
         }
@@ -2777,14 +2814,14 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #endif
 
 #ifdef WARPX_QED
-        auto foo_local_has_quantum_sync = local_has_quantum_sync;
-        auto foo_podq = p_optical_depth_QSR;
-        auto& evolve_opt_fn = evolve_opt; // have to do all these for nvcc
+        [[maybe_unused]] auto foo_local_has_quantum_sync = local_has_quantum_sync;
+        [[maybe_unused]] auto foo_podq = p_optical_depth_QSR;
+        [[maybe_unused]] auto& foo_evolve_opt = evolve_opt; // have to do all these for nvcc
         if constexpr (qed_control == has_qed) {
-            if (foo_local_has_quantum_sync) {
-                evolve_opt_fn(ux[ip], uy[ip], uz[ip],
-                              Exp, Eyp, Ezp,Bxp, Byp, Bzp,
-                              dt, foo_podq[ip]);
+            if (local_has_quantum_sync) {
+                evolve_opt(ux[ip], uy[ip], uz[ip],
+                           Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                           dt, p_optical_depth_QSR[ip]);
             }
         }
 #endif

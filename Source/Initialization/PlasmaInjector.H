@@ -97,6 +97,7 @@ public:
     amrex::Real q_tot = 0.0;
     long npart;
     int do_symmetrize = 0;
+    int symmetrization_order = 4;
 
     bool external_file = false; //! initialize from an openPMD file
     amrex::Real z_shift = 0.0; //! additional z offset for particle positions
