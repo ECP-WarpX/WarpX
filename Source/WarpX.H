@@ -273,7 +273,7 @@ public:
 
     //! Flag whether the Verboncoeur correction is applied to the current and charge density
     //! on the axis when using RZ.
-    static bool radial_verboncoeur_correction;
+    static bool verboncoeur_axis_correction;
 
     //! If true, a bilinear filter is used to smooth charge and currents
     static bool use_filter;

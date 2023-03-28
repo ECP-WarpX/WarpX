@@ -160,7 +160,7 @@ int WarpX::current_centering_noz = 2;
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
-bool WarpX::radial_verboncoeur_correction = true;
+bool WarpX::verboncoeur_axis_correction = true;
 
 bool WarpX::use_filter = true;
 bool WarpX::use_kspace_filter       = true;
@@ -707,6 +707,10 @@ WarpX::ReadParameters ()
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
 
+#ifdef WARPX_DIM_RZ
+        pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
+#endif
+
         utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
@@ -993,8 +997,6 @@ WarpX::ReadParameters ()
 #endif
 
 #ifdef WARPX_DIM_RZ
-        pp_warpx.query("radial_verboncoeur_correction", radial_verboncoeur_correction);
-
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
             "The problem must not be periodic in the radial direction");
 

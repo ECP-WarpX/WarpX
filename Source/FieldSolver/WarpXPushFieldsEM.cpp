@@ -1228,8 +1228,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
 
     constexpr int NODE = amrex::IndexType::NODE;
 
-    // See Verboncoeur JCP 164, 421-427 (2001) for the modified volume factor
-    const amrex::Real axis_volume_factor = (radial_verboncoeur_correction ? 1._rt/3._rt : 1._rt/4._rt);
+    // See Verboncoeur JCP 174, 421-427 (2001) for the modified volume factor
+    const amrex::Real axis_volume_factor = (verboncoeur_axis_correction ? 1._rt/3._rt : 1._rt/4._rt);
 
     for ( MFIter mfi(*Jx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
@@ -1401,8 +1401,8 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
 
     constexpr int NODE = amrex::IndexType::NODE;
 
-    // See Verboncoeur JCP 164, 421-427 (2001) for the modified volume factor
-    const amrex::Real axis_volume_factor = (radial_verboncoeur_correction ? 1._rt/3._rt : 1._rt/4._rt);
+    // See Verboncoeur JCP 174, 421-427 (2001) for the modified volume factor
+    const amrex::Real axis_volume_factor = (verboncoeur_axis_correction ? 1._rt/3._rt : 1._rt/4._rt);
 
     Box tilebox;
 
