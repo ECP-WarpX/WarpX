@@ -124,6 +124,13 @@ private:
      * \param[in] lev the mesh-refinement level
      */
     bool GetZSliceInDomainFlag (const int i_buffer, const int lev);
+
+    /** whether the k-index corresponding to the z-slice for the ith buffer, i_buffer,
+     *  is within the bounds of the box in index-space
+     * \param[in] i_buffer index of the buffer for which the k-index is checked.
+     * \param[in] lev mesh-refinement level using which the k-index for the z-slice being filled in the ith buffer is computed
+     *            Return true if the k-index of the z-slice is within the bounds of the box for the buffer being filled
+     */
     bool GetKIndexInSnapshotBoxFlag (const int i_buffer, const int lev);
 
     /** Initialize buffer domain, buffer box and lab-frame parameters such as
