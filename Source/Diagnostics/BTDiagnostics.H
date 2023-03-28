@@ -400,7 +400,7 @@ private:
 
     amrex::Real gettlab (int i_buffer) override {return m_t_lab[i_buffer];}
     void settlab (int i_buffer, amrex::Real tlab) override {m_t_lab[i_buffer] = tlab; }
-    int get_buffer_k_index_hi (int i_buffer) override {return 0; }
+    int get_buffer_k_index_hi (int i_buffer) override {return m_buffer_k_index_hi[i_buffer]; }
     void set_buffer_k_index_hi (int i_buffer, int kindex) override {m_buffer_k_index_hi[i_buffer] = kindex;}
     amrex::Real get_snapshot_domain_lo (int i_buffer, int idim) override {return m_snapshot_domain_lab[i_buffer].lo(idim); }
     amrex::Real get_snapshot_domain_hi (int i_buffer, int idim) override {return m_snapshot_domain_lab[i_buffer].hi(idim); }
