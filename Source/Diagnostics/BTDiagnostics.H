@@ -314,10 +314,17 @@ private:
         return ( m_buffer_counter[i_buffer] == 0) ;
     }
 
+    /** Vector of integers to indicate if is the first flush for a snapshot so that appropriate meta-data and geometry is written (0 if not, 1 if yes). */
     amrex::Vector<int> m_first_flush_after_restart;
+
+    /** Resets integer for first flush to 0 for the ith snapshot (i_buffer).
+     *  This function is called after flush the first buffer after restarting the simulation
+     */
     void NullifyFirstFlush(int i_buffer) {m_first_flush_after_restart[i_buffer] = 0;}
 
+    /** Vector of integers to indicate if the snapshot geometry is defined. */
     amrex::Vector<int> m_snapshot_geometry_defined;
+    /** Vector of integers to indicate if the field buffer multifab, m_mf_output, is defined in DefineFieldBufferMultifab() function */
     amrex::Vector<int> m_field_buffer_multifab_defined;
 
     /** Reset buffer counter to zero.
