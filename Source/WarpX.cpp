@@ -160,6 +160,8 @@ int WarpX::current_centering_noz = 2;
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
+bool WarpX::radial_verboncoeur_correction = true;
+
 bool WarpX::use_filter = true;
 bool WarpX::use_kspace_filter       = true;
 bool WarpX::use_filter_compensation = false;
@@ -991,6 +993,8 @@ WarpX::ReadParameters ()
 #endif
 
 #ifdef WARPX_DIM_RZ
+        pp_warpx.query("radial_verboncoeur_correction", radial_verboncoeur_correction);
+
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
             "The problem must not be periodic in the radial direction");
 

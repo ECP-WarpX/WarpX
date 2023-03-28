@@ -1228,6 +1228,9 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
 
     constexpr int NODE = amrex::IndexType::NODE;
 
+    // See Verboncoeur JCP 164, 421-427 (2001) for the modified volume factor
+    const amrex::Real axis_volume_factor = (radial_verboncoeur_correction ? 1._rt/3._rt : 1._rt/4._rt);
+
     for ( MFIter mfi(*Jx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
 
@@ -1245,9 +1248,9 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         // these do not include the guard cells.
         const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev, 0._rt);
         const Real rmin  = xyzmin[0];
-        const Real rminr = xyzmin[0] + (tbr.type(0) == NODE ? 0. : 0.5*dx[0]);
-        const Real rmint = xyzmin[0] + (tbt.type(0) == NODE ? 0. : 0.5*dx[0]);
-        const Real rminz = xyzmin[0] + (tbz.type(0) == NODE ? 0. : 0.5*dx[0]);
+        const Real rminr = xyzmin[0] + (tbr.type(0) == NODE ? 0._rt : 0.5_rt*dx[0]);
+        const Real rmint = xyzmin[0] + (tbt.type(0) == NODE ? 0._rt : 0.5_rt*dx[0]);
+        const Real rminz = xyzmin[0] + (tbz.type(0) == NODE ? 0._rt : 0.5_rt*dx[0]);
         const Dim3 lo = lbound(tilebox);
         const int irmin = lo.x;
 
@@ -1260,7 +1263,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
 
         // Grow the tileboxes to include the guard cells, except for the
         // guard cells at negative radius.
-        if (rmin > 0.) {
+        if (rmin > 0._rt) {
            tbr.growLo(0, ngJ[0]);
            tbt.growLo(0, ngJ[0]);
            tbz.growLo(0, ngJ[0]);
@@ -1287,27 +1290,27 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // Apply the inverse volume scaling
             // Jr is forced to zero on axis
             const amrex::Real r = amrex::Math::abs(rminr + (i - irmin)*dr);
-            if (r == 0.) {
-                Jr_arr(i,j,0,0) = 0.;
+            if (r == 0._rt) {
+                Jr_arr(i,j,0,0) = 0._rt;
             } else {
-                Jr_arr(i,j,0,0) /= (2.*MathConst::pi*r);
+                Jr_arr(i,j,0,0) /= (2._rt*MathConst::pi*r);
             }
 
             for (int imode=1 ; imode < nmodes ; imode++) {
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                if (rmin == 0. && 1-ishift_r <= i && i < ngJ[0]-ishift_r) {
+                if (rmin == 0._rt && 1-ishift_r <= i && i < ngJ[0]-ishift_r) {
                     Jr_arr(i,j,0,2*imode-1) += std::pow(-1, imode+1)*Jr_arr(-ishift_r-i,j,0,2*imode-1);
                     Jr_arr(i,j,0,2*imode) += std::pow(-1, imode+1)*Jr_arr(-ishift_r-i,j,0,2*imode);
                 }
                 // Apply the inverse volume scaling
                 // Jr is forced to zero on axis.
-                if (r == 0.) {
-                    Jr_arr(i,j,0,2*imode-1) = 0.;
-                    Jr_arr(i,j,0,2*imode) = 0.;
+                if (r == 0._rt) {
+                    Jr_arr(i,j,0,2*imode-1) = 0._rt;
+                    Jr_arr(i,j,0,2*imode) = 0._rt;
                 } else {
-                    Jr_arr(i,j,0,2*imode-1) /= (2.*MathConst::pi*r);
-                    Jr_arr(i,j,0,2*imode) /= (2.*MathConst::pi*r);
+                    Jr_arr(i,j,0,2*imode-1) /= (2._rt*MathConst::pi*r);
+                    Jr_arr(i,j,0,2*imode) /= (2._rt*MathConst::pi*r);
                 }
             }
         },
@@ -1317,35 +1320,35 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // to the cells above the axis.
             // If Jt is node centered, Jt[0] is located on the boundary.
             // If Jt is cell centered, Jt[0] is at 1/2 dr.
-            if (rmin == 0. && 1-ishift_t <= i && i <= ngJ[0]-ishift_t) {
+            if (rmin == 0._rt && 1-ishift_t <= i && i <= ngJ[0]-ishift_t) {
                 Jt_arr(i,j,0,0) -= Jt_arr(-ishift_t-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
             // Jt is forced to zero on axis.
             const amrex::Real r = amrex::Math::abs(rmint + (i - irmin)*dr);
-            if (r == 0.) {
-                Jt_arr(i,j,0,0) = 0.;
+            if (r == 0._rt) {
+                Jt_arr(i,j,0,0) = 0._rt;
             } else {
-                Jt_arr(i,j,0,0) /= (2.*MathConst::pi*r);
+                Jt_arr(i,j,0,0) /= (2._rt*MathConst::pi*r);
             }
 
             for (int imode=1 ; imode < nmodes ; imode++) {
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                if (rmin == 0. && 1-ishift_t <= i && i <= ngJ[0]-ishift_t) {
+                if (rmin == 0._rt && 1-ishift_t <= i && i <= ngJ[0]-ishift_t) {
                     Jt_arr(i,j,0,2*imode-1) += std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode-1);
                     Jt_arr(i,j,0,2*imode) += std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
                 // Jt is forced to zero on axis.
-                if (r == 0.) {
-                    Jt_arr(i,j,0,2*imode-1) = 0.;
-                    Jt_arr(i,j,0,2*imode) = 0.;
+                if (r == 0._rt) {
+                    Jt_arr(i,j,0,2*imode-1) = 0._rt;
+                    Jt_arr(i,j,0,2*imode) = 0._rt;
                 } else {
-                    Jt_arr(i,j,0,2*imode-1) /= (2.*MathConst::pi*r);
-                    Jt_arr(i,j,0,2*imode) /= (2.*MathConst::pi*r);
+                    Jt_arr(i,j,0,2*imode-1) /= (2._rt*MathConst::pi*r);
+                    Jt_arr(i,j,0,2*imode) /= (2._rt*MathConst::pi*r);
                 }
             }
         },
@@ -1353,37 +1356,35 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
-            // If Jz is node centered, Jt[0] is located on the boundary.
-            // If Jz is cell centered, Jt[0] is at 1/2 dr.
-            if (rmin == 0. && 1-ishift_z <= i && i <= ngJ[0]-ishift_z) {
+            // If Jz is node centered, Jz[0] is located on the boundary.
+            // If Jz is cell centered, Jz[0] is at 1/2 dr.
+            if (rmin == 0._rt && 1-ishift_z <= i && i <= ngJ[0]-ishift_z) {
                 Jz_arr(i,j,0,0) += Jz_arr(-ishift_z-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
             const amrex::Real r = amrex::Math::abs(rminz + (i - irmin)*dr);
-            if (r == 0.) {
-                // Verboncoeur JCP 164, 421-427 (2001) : corrected volume on axis
-                Jz_arr(i,j,0,0) /= (MathConst::pi*dr/3.);
+            if (r == 0._rt) {
+                Jz_arr(i,j,0,0) /= (MathConst::pi*dr*axis_volume_factor);
             } else {
-                Jz_arr(i,j,0,0) /= (2.*MathConst::pi*r);
+                Jz_arr(i,j,0,0) /= (2._rt*MathConst::pi*r);
             }
 
             for (int imode=1 ; imode < nmodes ; imode++) {
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                if (rmin == 0. && 1-ishift_z <= i && i <= ngJ[0]-ishift_z) {
+                if (rmin == 0._rt && 1-ishift_z <= i && i <= ngJ[0]-ishift_z) {
                     Jz_arr(i,j,0,2*imode-1) -= std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode-1);
                     Jz_arr(i,j,0,2*imode) -= std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
                 if (r == 0.) {
-                    // Verboncoeur JCP 164, 421-427 (2001) : corrected volume on axis
-                    Jz_arr(i,j,0,2*imode-1) /= (MathConst::pi*dr/3.);
-                    Jz_arr(i,j,0,2*imode) /= (MathConst::pi*dr/3.);
+                    Jz_arr(i,j,0,2*imode-1) /= (MathConst::pi*dr*axis_volume_factor);
+                    Jz_arr(i,j,0,2*imode) /= (MathConst::pi*dr*axis_volume_factor);
                 } else {
-                    Jz_arr(i,j,0,2*imode-1) /= (2.*MathConst::pi*r);
-                    Jz_arr(i,j,0,2*imode) /= (2.*MathConst::pi*r);
+                    Jz_arr(i,j,0,2*imode-1) /= (2._rt*MathConst::pi*r);
+                    Jz_arr(i,j,0,2*imode) /= (2._rt*MathConst::pi*r);
                 }
             }
 
@@ -1399,6 +1400,9 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
     const Real dr = dx[0];
 
     constexpr int NODE = amrex::IndexType::NODE;
+
+    // See Verboncoeur JCP 164, 421-427 (2001) for the modified volume factor
+    const amrex::Real axis_volume_factor = (radial_verboncoeur_correction ? 1._rt/3._rt : 1._rt/4._rt);
 
     Box tilebox;
 
@@ -1456,8 +1460,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
             // Apply the inverse volume scaling
             const amrex::Real r = amrex::Math::abs(rminr + (i - irmin)*dr);
             if (r == 0.) {
-                // Verboncoeur JCP 164, 421-427 (2001) : corrected volume on axis
-                Rho_arr(i,j,0,icomp) /= (MathConst::pi*dr/3.);
+                Rho_arr(i,j,0,icomp) /= (MathConst::pi*dr*axis_volume_factor);
             } else {
                 Rho_arr(i,j,0,icomp) /= (2.*MathConst::pi*r);
             }
