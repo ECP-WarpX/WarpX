@@ -586,10 +586,10 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
         auto const npart = ps["position"]["x"].getExtent()[0];
-#if !defined(WARPX_DIM_1D_Z)
+#if !defined(WARPX_DIM_1D_Z)  // 2D, 3D, and RZ
         std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
         double const position_unit_x = ps["position"]["x"].unitSI();
-#endif                                          // 2D
+#endif
         std::shared_ptr<ParticleReal> ptr_z = ps["position"]["z"].loadChunk<ParticleReal>();
         double const position_unit_z = ps["position"]["z"].unitSI();
         std::shared_ptr<ParticleReal> ptr_ux = ps["momentum"]["x"].loadChunk<ParticleReal>();
@@ -611,12 +611,12 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         }
         series->flush();  // shared_ptr data can be read now
 
-if (q_tot != 0.0) {
+        if (q_tot != 0.0) {
             std::stringstream warnMsg;
             warnMsg << " Loading particle species from file. " << ps_name << ".q_tot is ignored.";
             ablastr::warn_manager::WMRecordWarning("AddPlasmaFromFile",
                warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
-}
+        }
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
 
