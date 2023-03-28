@@ -611,6 +611,13 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         }
         series->flush();  // shared_ptr data can be read now
 
+if (q_tot != 0.0) {
+            std::stringstream warnMsg;
+            warnMsg << " Loading particle species from file. " << ps_name << ".q_tot is ignored.";
+            ablastr::warn_manager::WMRecordWarning("AddPlasmaFromFile",
+               warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
+}
+
         for (auto i = decltype(npart){0}; i<npart; ++i){
 
             ParticleReal const weight = ptr_w.get()[i]*w_unit;
