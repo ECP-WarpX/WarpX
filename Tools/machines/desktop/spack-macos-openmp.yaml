@@ -16,14 +16,14 @@ spack:
   specs:
   - adios2 ~fortran
   - ascent +adios2 +python ~fortran
-  - blaspp
+  - blaspp ~cuda +openmp ~rocm
   - boost
   - ccache
   - cmake
   - conduit ~fortran
   - fftw
   - hdf5 ~fortran
-  - lapackpp
+  - lapackpp ~cuda ~rocm ^blaspp ~cuda +openmp ~rocm
   - mpi
   - llvm-openmp
   - pkgconfig
@@ -57,7 +57,7 @@ spack:
 
   packages:
     all:
-      variants: +mpi ~fortran
+      variants: +mpi ~fortran ~cuda ~rocm
       # BLAS/LAPACK: the default (accelerate) pulls veclibfort@0.4.2 for
       #              py-numpy, which fails to build on M1
       # MPI: the default (openmpi) triggers annoying firewall warnings when
