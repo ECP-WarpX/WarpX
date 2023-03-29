@@ -138,7 +138,7 @@ guardCellManager::Init (
     {
         for (int i = 0; i < AMREX_SPACEDIM; i++)
         {
-            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::Hybrid) {
+            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::HybridPIC) {
                 amrex::Real dt_Rho = dt;
                 amrex::Real dt_J = 0.5_rt*dt;
                 if (do_multi_J) {
@@ -258,7 +258,7 @@ guardCellManager::Init (
 #ifdef WARPX_DIM_RZ
     else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
              electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
-             electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid ) {
+             electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ) {
         ng_FieldSolver  = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverF = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverG = CylindricalYeeAlgorithm::GetMaxGuardCell();
@@ -272,7 +272,7 @@ guardCellManager::Init (
         } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
                    electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
                    electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT ||
-                   electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid ) {
+                   electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ) {
             ng_FieldSolver  = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianYeeAlgorithm::GetMaxGuardCell();

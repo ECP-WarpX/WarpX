@@ -10,10 +10,10 @@ target_sources(WarpX
     EvolveG.cpp
     EvolveECTRho.cpp
     FiniteDifferenceSolver.cpp
-    HybridSolveE.cpp
+    HybridPICSolveE.cpp
     MacroscopicEvolveE.cpp
     ApplySilverMuellerBoundary.cpp
 )
 
-add_subdirectory(HybridModel)
+add_subdirectory(HybridPICModel)
 add_subdirectory(MacroscopicProperties)

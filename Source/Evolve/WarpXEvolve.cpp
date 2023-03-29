@@ -135,10 +135,10 @@ WarpX::Evolve (int numsteps)
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
             }
 
-            // With the hybrid solver the ion current is interpolated to the
+            // With the hybrid-PIC solver the ion current is interpolated to the
             // next timestep, so we deposit the ion current now in the "old"
             // current multifab
-            if (electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
+            if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
             {
                 mypc->DepositCurrent(current_fp_temp, dt[0], 0.0);
                 SyncCurrent(current_fp_temp, current_cp);
@@ -199,8 +199,8 @@ WarpX::Evolve (int numsteps)
             const bool skip_deposition = true;
             PushParticlesandDepose(cur_time, skip_deposition);
         }
-        // hybrid case: gather fields and push particles
-        else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
+        // hybrid-PIC case: gather fields and push particles
+        else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
         {
             const bool skip_deposition = false;
             PushParticlesandDepose(cur_time, skip_deposition);
@@ -335,7 +335,7 @@ WarpX::Evolve (int numsteps)
         }
 
         if( electrostatic_solver_id != ElectrostaticSolverAlgo::None ||
-            electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid ) {
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ) {
             ExecutePythonCallback("beforeEsolve");
 
             if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
@@ -354,10 +354,10 @@ WarpX::Evolve (int numsteps)
                     ComputeMagnetostaticField();
                 }
             } else {
-                // Hybrid case:
+                // Hybrid-PIC case:
                 // The particles are now at p^{n+1/2} and x^{n+1}. The fields
                 // are updated according to the hybrid scheme.
-                HybridEvolveFields();
+                HybridPICEvolveFields();
             }
 
             ExecutePythonCallback("afterEsolve");

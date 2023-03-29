@@ -17,7 +17,7 @@
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
-#include "FieldSolver/FiniteDifferenceSolver/HybridModel/HybridModel.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #   ifdef WARPX_DIM_RZ
@@ -332,7 +332,7 @@ WarpX::WarpX ()
         current_fp_vay.resize(nlevs_max);
     }
 
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         electron_pressure_fp.resize(nlevs_max);
         current_fp_temp.resize(nlevs_max);
@@ -719,9 +719,9 @@ WarpX::ReadParameters ()
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
 
-        // Create hybrid model object if needed
-        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid) {
-            m_hybrid_model = std::make_unique<HybridModel>();
+        // Create hybrid-PIC model object if needed
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+            m_hybrid_pic_model = std::make_unique<HybridPICModel>();
         }
 
         utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
@@ -1825,7 +1825,7 @@ WarpX::ClearLevel (int lev)
             current_fp_vay[lev][i].reset();
         }
 
-        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
         {
             current_fp_temp[lev][i].reset();
             current_fp_ampere[lev][i].reset();
@@ -1846,7 +1846,7 @@ WarpX::ClearLevel (int lev)
         current_buf[lev][i].reset();
     }
 
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         electron_pressure_fp[lev].reset();
     }
@@ -2125,7 +2125,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     // the curl of B.
     // The "electron_pressure_fp" multifab stores the electron pressure calculated
     // from the specified equation of state.
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         AllocInitMultiFab(electron_pressure_fp[lev], amrex::convert(ba, rho_nodal_flag),
             dm, ncomps, ngRho, tag("electron_pressure_fp"), 0.0_rt);
@@ -2205,7 +2205,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     bool deposit_charge = do_dive_cleaning ||
                           (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
                           (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) ||
-                          (electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid);
+                          (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC);
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         deposit_charge = do_dive_cleaning || update_with_rho || current_correction;
     }

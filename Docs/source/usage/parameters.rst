@@ -2095,22 +2095,22 @@ Additional parameters
 
 .. _running-cpp-parameters-hybrid-model:
 
-* ``hybridmodel.elec_temp`` (`float`)
+* ``hybrid_pic_model.elec_temp`` (`float`)
      If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the electron temperature, in eV, used to calculate
      the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
 
-* ``hybridmodel.n0_ref`` (`float`)
+* ``hybrid_pic_model.n0_ref`` (`float`)
      If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the reference density, in :math:`m^{-3}` used to calculate
      the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
 
-* ``hybridmodel.gamma`` (`float`) optional (default ``5/3``)
+* ``hybrid_pic_model.gamma`` (`float`) optional (default ``5/3``)
      If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the exponent used to calculate
      the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
 
-* ``hybridmodel.plasma_resistivity`` (`float`) optional (default ``0``)
+* ``hybrid_pic_model.plasma_resistivity(rho)`` (`float` or `str`) optional (default ``0``)
      If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma resistivity in :math:`\Omega m`.
 
-* ``hybridmodel.substeps`` (`int`) optional (default ``100``)
+* ``hybrid_pic_model.substeps`` (`int`) optional (default ``100``)
      If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the number of sub-steps to take during the B-field update.
 
 .. _running-cpp-parameters-diagnostics:

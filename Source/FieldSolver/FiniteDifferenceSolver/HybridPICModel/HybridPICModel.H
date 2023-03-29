@@ -7,10 +7,10 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_HYBRIDMODEL_H_
-#define WARPX_HYBRIDMODEL_H_
+#ifndef WARPX_HYBRIDPICMODEL_H_
+#define WARPX_HYBRIDPICMODEL_H_
 
-#include "HybridModel_fwd.H"
+#include "HybridPICModel_fwd.H"
 
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
@@ -23,10 +23,10 @@
  * \brief This class contains the parameters needed to evaluate hybrid field
  * solutions (kinetic ions with fluid electrons).
  */
-class HybridModel
+class HybridPICModel
 {
 public:
-    HybridModel (); // constructor
+    HybridPICModel (); // constructor
     /** Read user-defined model parameters. Called in constructor. */
     void ReadParameters ();
 
@@ -100,4 +100,4 @@ struct ElectronPressure {
     }
 };
 
-#endif // WARPX_HYBRIDMODEL_H_
+#endif // WARPX_HYBRIDPICMODEL_H_

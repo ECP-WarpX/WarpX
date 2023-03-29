@@ -35,7 +35,7 @@ const std::map<std::string, int> electromagnetic_solver_algo_to_int = {
     {"ckc",     ElectromagneticSolverAlgo::CKC },
     {"psatd",   ElectromagneticSolverAlgo::PSATD },
     {"ect",     ElectromagneticSolverAlgo::ECT },
-    {"hybrid",  ElectromagneticSolverAlgo::Hybrid },
+    {"hybrid",  ElectromagneticSolverAlgo::HybridPIC },
     {"default", ElectromagneticSolverAlgo::Yee }
 };
 

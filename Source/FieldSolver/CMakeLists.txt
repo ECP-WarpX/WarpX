@@ -2,7 +2,7 @@ target_sources(WarpX
   PRIVATE
     ElectrostaticSolver.cpp
     WarpXPushFieldsEM.cpp
-    WarpXPushFieldsHybrid.cpp
+    WarpXPushFieldsHybridPIC.cpp
     WarpX_QED_Field_Pushers.cpp
 )
 

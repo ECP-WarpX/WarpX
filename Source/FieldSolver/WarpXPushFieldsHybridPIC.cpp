@@ -8,17 +8,17 @@
  */
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
-#include "FieldSolver/FiniteDifferenceSolver/HybridModel/HybridModel.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 using namespace amrex;
 
-void WarpX::HybridEvolveFields ()
+void WarpX::HybridPICEvolveFields ()
 {
     // get requested number of substeps to use
-    int sub_steps = m_hybrid_model->m_substeps / 2;
+    int sub_steps = m_hybrid_pic_model->m_substeps / 2;
 
     // During the particle push and deposition (which already happened) the
     // charge density and current density were updated. So that at this time we
@@ -86,7 +86,7 @@ void WarpX::HybridEvolveFields ()
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
         CalculateCurrentAmpere();
-        HybridSolveE(DtType::FirstHalf);
+        HybridPICSolveE(DtType::FirstHalf);
         EvolveB(0.5 / sub_steps * dt[0], DtType::FirstHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
@@ -98,7 +98,7 @@ void WarpX::HybridEvolveFields ()
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
         CalculateCurrentAmpere();
-        HybridSolveE(DtType::SecondHalf);
+        HybridPICSolveE(DtType::SecondHalf);
         EvolveB(0.5 / sub_steps * dt[0], DtType::SecondHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
@@ -152,7 +152,7 @@ void WarpX::HybridEvolveFields ()
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     CalculateCurrentAmpere();
-    HybridSolveE(DtType::Full);
+    HybridPICSolveE(DtType::Full);
 
     // Copy the J_i^{n+1/2} values to current_fp_temp since at the next step
     // those values will be needed as J_i^{n-1/2}.
@@ -176,6 +176,7 @@ void WarpX::CalculateCurrentAmpere ()
 void WarpX::CalculateCurrentAmpere (int lev)
 {
     WARPX_PROFILE("WarpX::CalculateCurrentAmpere()");
+
     m_fdtd_solver_fp[lev]->CalculateCurrentAmpere(
         current_fp_ampere[lev], Bfield_fp[lev],
         m_edge_lengths[lev], lev
@@ -183,49 +184,48 @@ void WarpX::CalculateCurrentAmpere (int lev)
 
     // we shouldn't apply the boundary condition to J since J = J_i - J_e but
     // the boundary correction was already applied to J_i and the B-field
-    // boundary ensures that J itself complies with the boundary conditions
+    // boundary ensures that J itself complies with the boundary conditions, right?
     // ApplyJfieldBoundary(lev, Jfield[0].get(), Jfield[1].get(), Jfield[2].get());
-
-    if (use_filter) ApplyFilterJ(current_fp_ampere, lev);
     for (int i=0; i<3; i++) get_pointer_current_fp_ampere(lev, i)->FillBoundary(Geom(lev).periodicity());
 }
 
-void WarpX::HybridSolveE (DtType a_dt_type)
+void WarpX::HybridPICSolveE (DtType a_dt_type)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        HybridSolveE(lev, a_dt_type);
+        HybridPICSolveE(lev, a_dt_type);
     }
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 }
 
-void WarpX::HybridSolveE (int lev, DtType a_dt_type)
+void WarpX::HybridPICSolveE (int lev, DtType a_dt_type)
 {
-    WARPX_PROFILE("WarpX::HybridSolveE()");
-    HybridSolveE(lev, PatchType::fine, a_dt_type);
+    WARPX_PROFILE("WarpX::HybridPICSolveE()");
+
+    HybridPICSolveE(lev, PatchType::fine, a_dt_type);
     if (lev > 0)
     {
         amrex::Abort(Utils::TextMsg::Err(
-        "HybridSolveE: Only one level implemented for hybrid solver."));
-        HybridSolveE(lev, PatchType::coarse, a_dt_type);
+        "HybridPICSolveE: Only one level implemented for hybrid-PIC solver."));
+        HybridPICSolveE(lev, PatchType::coarse, a_dt_type);
     }
 }
 
-void WarpX::HybridSolveE (int lev, PatchType patch_type, DtType a_dt_type)
+void WarpX::HybridPICSolveE (int lev, PatchType patch_type, DtType a_dt_type)
 {
     // Solve E field in regular cells
     if (a_dt_type == DtType::SecondHalf) {
-        m_fdtd_solver_fp[lev]->HybridSolveE(
+        m_fdtd_solver_fp[lev]->HybridPICSolveE(
             Efield_fp[lev], current_fp_ampere[lev], current_fp[lev],
             Bfield_fp[lev], rho_fp[lev], electron_pressure_fp[lev],
-            m_edge_lengths[lev], lev, m_hybrid_model, a_dt_type
+            m_edge_lengths[lev], lev, m_hybrid_pic_model, a_dt_type
         );
     }
     else {
-        m_fdtd_solver_fp[lev]->HybridSolveE(
+        m_fdtd_solver_fp[lev]->HybridPICSolveE(
             Efield_fp[lev], current_fp_ampere[lev], current_fp_temp[lev],
             Bfield_fp[lev], rho_fp[lev], electron_pressure_fp[lev],
-            m_edge_lengths[lev], lev, m_hybrid_model, a_dt_type
+            m_edge_lengths[lev], lev, m_hybrid_pic_model, a_dt_type
         );
     }
 
@@ -255,7 +255,7 @@ void WarpX::CalculateElectronPressure(DtType a_dt_type)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        m_hybrid_model->FillElectronPressureMF(
+        m_hybrid_pic_model->FillElectronPressureMF(
             electron_pressure_fp[lev], rho_fp[lev], a_dt_type
         );
         ApplyElectronPressureBoundary(lev, PatchType::fine);

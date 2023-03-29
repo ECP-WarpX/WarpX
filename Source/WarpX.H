@@ -18,7 +18,7 @@
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
-#include "FieldSolver/FiniteDifferenceSolver/HybridModel/HybridModel_fwd.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel_fwd.H"
 #include "Filter/NCIGodfreyFilter_fwd.H"
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
 #include "Particles/MultiParticleContainer_fwd.H"
@@ -99,7 +99,7 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
-    HybridModel& GetHybridModel () { return *m_hybrid_model; }
+    HybridPICModel& GetHybridPicModel () { return *m_hybrid_pic_model; }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
@@ -601,11 +601,11 @@ public:
 
     /**
      * \brief
-     * Function to update the E-field using Ohm's law.
+     * Function to update the E-field using Ohm's law (hybrid-PIC model).
      */
-    void HybridSolveE (                               DtType dt_type);
-    void HybridSolveE (int lev,                       DtType dt_type);
-    void HybridSolveE (int lev, PatchType patch_type, DtType dt_type);
+    void HybridPICSolveE (                               DtType dt_type);
+    void HybridPICSolveE (int lev,                       DtType dt_type);
+    void HybridPICSolveE (int lev, PatchType patch_type, DtType dt_type);
 
     /**
      * \brief
@@ -629,7 +629,7 @@ public:
      * This function contains the logic involved in evolving the electric and
      * magnetic fields in the hybrid PIC algorithm.
      */
-    void HybridEvolveFields ();
+    void HybridPICEvolveFields ();
 
     /** apply QED correction on electric field
      *
@@ -1447,7 +1447,7 @@ private:
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
 
     // Hybrid PIC algorithm parameters
-    std::unique_ptr<HybridModel> m_hybrid_model;
+    std::unique_ptr<HybridPICModel> m_hybrid_pic_model;
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file

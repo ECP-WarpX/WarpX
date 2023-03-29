@@ -7,9 +7,9 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_HYBRIDMODEL_FWD_H
-#define WARPX_HYBRIDMODEL_FWD_H
+#ifndef WARPX_HYBRIDPICMODEL_FWD_H
+#define WARPX_HYBRIDPICMODEL_FWD_H
 
-class HybridModel;
+class HybridPICModel;
 
-#endif /* WARPX_HYBRIDMODEL_FWD_H */
+#endif /* WARPX_HYBRIDPICMODEL_FWD_H */

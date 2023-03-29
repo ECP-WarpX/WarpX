@@ -7,20 +7,20 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "HybridModel.H"
+#include "HybridPICModel.H"
 #include "Utils/Parser/ParserUtils.H"
 
 
 using namespace amrex;
 
-HybridModel::HybridModel ()
+HybridPICModel::HybridPICModel ()
 {
     ReadParameters();
 }
 
-void HybridModel::ReadParameters ()
+void HybridPICModel::ReadParameters ()
 {
-    ParmParse pp_hybrid("hybridmodel");
+    ParmParse pp_hybrid("hybrid_pic_model");
 
     // The B-field update is subcycled to improve stability - the number
     // of sub steps can be specified by the user (defaults to 50).
@@ -31,11 +31,11 @@ void HybridModel::ReadParameters ()
     // electron pressure according to p = n0 * Te * (n/n0)^gamma
     utils::parser::queryWithParser(pp_hybrid, "gamma", m_gamma);
     if (!utils::parser::queryWithParser(pp_hybrid, "elec_temp", m_elec_temp)) {
-        Abort("hybridmodel.elec_temp must be specified when using the hybrid solver");
+        Abort("hybrid_pic_model.elec_temp must be specified when using the hybrid solver");
     }
     bool n0_ref_given = utils::parser::queryWithParser(pp_hybrid, "n0_ref", m_n0_ref);
     if (m_gamma != 1.0 && !n0_ref_given) {
-        Abort("hybridmodel.n0_ref should be specified if hybridmodel.gamma != 1");
+        Abort("hybrid_pic_model.n0_ref should be specified if hybrid_pic_model.gamma != 1");
     }
 
     pp_hybrid.query("plasma_resistivity(rho)", m_eta_expression);
@@ -45,7 +45,7 @@ void HybridModel::ReadParameters ()
     m_elec_temp *= PhysConst::q_e;
 }
 
-void HybridModel::InitData ()
+void HybridPICModel::InitData ()
 {
     m_resistivity_parser = std::make_unique<amrex::Parser>(
         utils::parser::makeParser(m_eta_expression, {"rho"}));
@@ -104,7 +104,7 @@ void HybridModel::InitData ()
 #endif
 }
 
-void HybridModel::FillElectronPressureMF (
+void HybridPICModel::FillElectronPressureMF (
     std::unique_ptr<amrex::MultiFab> const& Pe_field,
     std::unique_ptr<amrex::MultiFab> const& rho_field,
     DtType a_dt_type )

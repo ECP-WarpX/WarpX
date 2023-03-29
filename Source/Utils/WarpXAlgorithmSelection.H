@@ -51,7 +51,7 @@ struct ElectromagneticSolverAlgo {
         CKC = 2,
         PSATD = 3,
         ECT = 4,
-        Hybrid = 5
+        HybridPIC = 5
     };
 };
 

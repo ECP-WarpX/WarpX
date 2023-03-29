@@ -1021,12 +1021,12 @@ class EMSolver():
         pywarpx.algo.maxwell_solver = self.method
 
         if self.method == 'hybrid':
-            pywarpx.hybridmodel.elec_temp = self.Te
-            pywarpx.hybridmodel.n0_ref = self.n0
-            pywarpx.hybridmodel.gamma = self.gamma
-            pywarpx.hybridmodel.n_floor = self.n_floor
-            pywarpx.hybridmodel.__setattr__('plasma_resistivity(rho)', self.plasma_resistivity)
-            pywarpx.hybridmodel.substeps = self.substeps
+            pywarpx.hybridpicmodel.elec_temp = self.Te
+            pywarpx.hybridpicmodel.n0_ref = self.n0
+            pywarpx.hybridpicmodel.gamma = self.gamma
+            pywarpx.hybridpicmodel.n_floor = self.n_floor
+            pywarpx.hybridpicmodel.__setattr__('plasma_resistivity(rho)', self.plasma_resistivity)
+            pywarpx.hybridpicmodel.substeps = self.substeps
 
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):

@@ -17,7 +17,7 @@
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
-#include "FieldSolver/FiniteDifferenceSolver/HybridModel/HybridModel.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
@@ -231,8 +231,8 @@ WarpX::PrintMainPICparameters ()
     else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT){
       amrex::Print() << "Maxwell Solver:       | ECT \n";
     }
-    else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid){
-      amrex::Print() << "Maxwell Solver:       | Hybrid \n";
+    else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC){
+      amrex::Print() << "Maxwell Solver:       | Hybrid-PIC (Ohm's law) \n";
     }
   #ifdef WARPX_USE_PSATD
     // Print PSATD solver's configuration
@@ -415,8 +415,8 @@ WarpX::InitData ()
         m_macroscopic_properties->InitData();
     }
 
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid) {
-        m_hybrid_model->InitData();
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+        m_hybrid_pic_model->InitData();
     }
 
     InitDiagnostics();
@@ -707,7 +707,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
     for (int i = 0; i < 3; ++i) {
 
-        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Hybrid)
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
         {
             current_fp_temp[lev][i]->setVal(0.0);
         }

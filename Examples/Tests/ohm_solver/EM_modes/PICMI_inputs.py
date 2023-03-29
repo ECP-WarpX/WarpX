@@ -47,7 +47,7 @@ class EMModes(object):
     Nx          = 8 # number of cells in x (and y) direction for >1 dimensions
 
     # Temporal domain (if not run as a CI test)
-    LT          = 300.0 # 600.0 # Simulation temporal length (ion cyclotron periods)
+    LT          = 300.0 # Simulation temporal length (ion cyclotron periods)
 
     # Numerical parameters
     NPPC        = [1024, 256, 64] # Seed number of particles per cell
@@ -205,7 +205,7 @@ class EMModes(object):
         )
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
-        simulation.load_balance_intervals = self.total_steps // 20
+        simulation.particle_shape = 3
         simulation.verbose = self.test
 
         #######################################################################
@@ -259,7 +259,7 @@ class EMModes(object):
                 grid=self.grid,
                 period=self.total_steps,
                 data_list=['B', 'E'],
-                write_dir=('.' if self.test else 'diags'),
+                write_dir='.',
                 warpx_file_prefix='Python_ohms_law_solver_EM_modes_1d_plt',
                 # warpx_format = 'openpmd',
                 # warpx_openpmd_backend = 'h5'

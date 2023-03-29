@@ -14,7 +14,7 @@
 #else
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #endif
-#include "HybridModel/HybridModel.H"
+#include "HybridPICModel/HybridPICModel.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
 
@@ -31,7 +31,7 @@ void FiniteDifferenceSolver::CalculateCurrentAmpere (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee ||
-        m_fdtd_algo == ElectromagneticSolverAlgo::Hybrid) {
+        m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
 #ifdef WARPX_DIM_RZ
         CalculateTotalCurrentCylindrical <CylindricalYeeAlgorithm> (
             Jfield, Bfield, edge_lengths, lev
@@ -186,7 +186,7 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
 #endif
 
 
-void FiniteDifferenceSolver::HybridSolveE (
+void FiniteDifferenceSolver::HybridPICSolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
@@ -194,7 +194,7 @@ void FiniteDifferenceSolver::HybridSolveE (
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    int lev, std::unique_ptr<HybridModel> const& hybrid_model,
+    int lev, std::unique_ptr<HybridPICModel> const& hybrid_model,
     DtType a_dt_type )
 {
 
@@ -205,17 +205,17 @@ void FiniteDifferenceSolver::HybridSolveE (
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-    if (m_fdtd_algo == ElectromagneticSolverAlgo::Hybrid) {
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
 #ifdef WARPX_DIM_RZ
 
-        HybridSolveECylindrical <CylindricalYeeAlgorithm> (
+        HybridPICSolveECylindrical <CylindricalYeeAlgorithm> (
             Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
             edge_lengths, lev, hybrid_model, a_dt_type
         );
 
 #else
 
-        HybridSolveECartesian <CartesianYeeAlgorithm> (
+        HybridPICSolveECartesian <CartesianYeeAlgorithm> (
             Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
             edge_lengths, lev, hybrid_model, a_dt_type
         );
@@ -223,13 +223,13 @@ void FiniteDifferenceSolver::HybridSolveE (
 #endif
     } else {
         amrex::Abort(Utils::TextMsg::Err(
-            "HybridSolveE: The hybrid electromagnetic solver algorithm must be used"));
+            "HybridSolveE: The hybrid-PIC electromagnetic solver algorithm must be used"));
     }
 }
 
 #ifdef WARPX_DIM_RZ
 template<typename T_Algo>
-void FiniteDifferenceSolver::HybridSolveECylindrical (
+void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
@@ -237,7 +237,7 @@ void FiniteDifferenceSolver::HybridSolveECylindrical (
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    int lev, std::unique_ptr<HybridModel> const& hybrid_model,
+    int lev, std::unique_ptr<HybridPICModel> const& hybrid_model,
     DtType a_dt_type )
 {
 #ifndef AMREX_USE_EB
@@ -254,7 +254,7 @@ void FiniteDifferenceSolver::HybridSolveECylindrical (
 #else
 
 template<typename T_Algo>
-void FiniteDifferenceSolver::HybridSolveECartesian (
+void FiniteDifferenceSolver::HybridPICSolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
@@ -262,7 +262,7 @@ void FiniteDifferenceSolver::HybridSolveECartesian (
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    int lev, std::unique_ptr<HybridModel> const& hybrid_model,
+    int lev, std::unique_ptr<HybridPICModel> const& hybrid_model,
     DtType a_dt_type )
 {
 #ifndef AMREX_USE_EB

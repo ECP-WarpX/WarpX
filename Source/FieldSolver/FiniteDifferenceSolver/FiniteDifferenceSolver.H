@@ -13,7 +13,7 @@
 
 #include "BoundaryConditions/PML_fwd.H"
 #include "Evolve/WarpXDtType.H"
-#include "HybridModel/HybridModel_fwd.H"
+#include "HybridPICModel/HybridPICModel_fwd.H"
 #include "MacroscopicProperties/MacroscopicProperties_fwd.H"
 
 #include <AMReX_GpuContainers.H>
@@ -143,14 +143,14 @@ class FiniteDifferenceSolver
           * \param[in] rhofield scalar ion chrge density Multifab at a given level
           * \param[in] Pefield  scalar electron pressure MultiFab at a given level
           */
-        void HybridSolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+        void HybridPICSolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                       std::unique_ptr<amrex::MultiFab> const& rhofield,
                       std::unique_ptr<amrex::MultiFab> const& Pefield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-                      int lev, std::unique_ptr<HybridModel> const& hybrid_model,
+                      int lev, std::unique_ptr<HybridPICModel> const& hybrid_pic_model,
                       DtType a_dt_type );
 
         void CalculateCurrentAmpere (
@@ -216,7 +216,7 @@ class FiniteDifferenceSolver
             amrex::MultiFab& divE );
 
         template<typename T_Algo>
-        void HybridSolveECylindrical (
+        void HybridPICSolveECylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
@@ -224,7 +224,7 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-            int lev, std::unique_ptr<HybridModel> const& hybrid_model,
+            int lev, std::unique_ptr<HybridPICModel> const& hybrid_pic_model,
             DtType a_dt_type );
 
         template<typename T_Algo>
@@ -320,7 +320,7 @@ class FiniteDifferenceSolver
                       amrex::Real const dt );
 
         template<typename T_Algo>
-        void HybridSolveECartesian (
+        void HybridPICSolveECartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
@@ -328,7 +328,7 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-            int lev, std::unique_ptr<HybridModel> const& hybrid_model,
+            int lev, std::unique_ptr<HybridPICModel> const& hybrid_pic_model,
             DtType a_dt_type );
 
         template<typename T_Algo>

@@ -1,4 +1,4 @@
 target_sources(WarpX
   PRIVATE
-    HybridModel.cpp
+    HybridPICModel.cpp
 )
