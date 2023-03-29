@@ -917,7 +917,7 @@ WarpX::SyncCurrent (
                 // On a fine level, we need to coarsen the current onto the
                 // coarse level. This needs to be done before filtering because
                 // filtering depends on the level. This is also done before any
-                // same level communication because it's easier this way to
+                // same-level communication because it's easier this way to
                 // avoid double counting.
                 J_cp[lev][idim]->setVal(0.0);
                 ablastr::coarsen::average::Coarsen(*J_cp[lev][idim],
@@ -964,8 +964,8 @@ WarpX::SyncRho ()
             auto const& period = Geom(lev).periodicity();
 
             // On a coarse level, the data in mf_comm comes from the
-            // fine level. They are unfiltered and uncommuncatied. We
-            // need to add it to the current level.
+            // coarse patch of the fine level. They are unfiltered and uncommunicated.
+            // We need to add it to the fine patch of the current level.
             MultiFab fine_lev_cp(rho_fp[lev]->boxArray(),
                                  rho_fp[lev]->DistributionMap(),
                                  ncomp, 0);
@@ -993,7 +993,7 @@ WarpX::SyncRho ()
             // On a fine level, we need to coarsen the data onto the coarse
             // level. This needs to be done before filtering because
             // filtering depends on the level. This is also done before any
-            // same level communication because it's easier this way to
+            // same-level communication because it's easier this way to
             // avoid double counting.
             rho_cp[lev]->setVal(0.0);
             ablastr::coarsen::average::Coarsen(*rho_cp[lev],
