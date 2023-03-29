@@ -8,17 +8,17 @@
 # --- https://aip.scitation.org/doi/10.1063/1.4943893.
 
 import argparse
-import dill
 from pathlib import Path
 import shutil
 import sys
-import numpy as np
-import matplotlib.pyplot as plt
+
+import dill
 from matplotlib import colors
-
+import matplotlib.pyplot as plt
 from mpi4py import MPI as mpi
+import numpy as np
 
-from pywarpx import callbacks, picmi, fields
+from pywarpx import callbacks, fields, picmi
 
 constants = picmi.constants
 

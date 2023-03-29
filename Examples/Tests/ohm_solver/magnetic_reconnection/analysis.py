@@ -2,13 +2,13 @@
 #
 # --- Analysis script for the hybrid-PIC example of magnetic reconnection.
 
-import dill
 import glob
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-from matplotlib.animation import FFMpegWriter
+
+import dill
 from matplotlib import colors
+from matplotlib.animation import FFMpegWriter, FuncAnimation
+import matplotlib.pyplot as plt
+import numpy as np
 
 plt.rcParams.update({'font.size': 20})
 
@@ -102,6 +102,7 @@ cb.ax.set_yscale('linear')
 
 # plot field lines
 from scipy import interpolate
+
 x_grid = np.linspace(0, LX, data0['Bx'][:-1].shape[0])
 z_grid = np.linspace(-LZ/2.0, LZ/2.0, data0['Bx'].shape[1])
 

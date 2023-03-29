@@ -231,4 +231,3 @@ The input file for this example and corresponding analysis can be found at:
 
 * :download:`Magnetic reconnection input <../../../Examples/Tests/ohm_solver/magnetic_reconnection/PICMI_inputs.py>`
 * :download:`Analysis script <../../../Examples/Tests/ohm_solver/magnetic_reconnection/analysis.py>`
-
