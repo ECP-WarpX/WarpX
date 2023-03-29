@@ -127,7 +127,7 @@ An example of initializing the fields by accessing their data through Python, ad
 Kinetic-fluid hybrid model
 --------------------------
 
-Several examples / benchmarks of the kinetic-fluid hybrid model are shown below. These examples are replications
+Several examples / benchmarks of the kinetic-fluid hybrid model are shown below. The first few examples are replications
 of the verification tests described in `Munoz et al. (2018) <https://www.sciencedirect.com/science/article/abs/pii/S0010465517303521>`_.
 
 Electromagnetic modes
@@ -215,3 +215,20 @@ temperature ratios.
    .. code-block:: bash
 
       python3 PICMI_inputs.py -dim {1/2/3} --temp_ratio {value}
+
+Magnetic reconnection
+^^^^^^^^^^^^^^^^^^^^^
+
+Hybrid-PIC codes are often used to simulate magnetic reconnection in space
+plasmas. An example of magnetic reconnection from a force-free sheet is
+provided, based on the simulation described in `Le et al. (2016) <https://aip.scitation.org/doi/10.1063/1.4943893>`__.
+
+.. figure:: https://user-images.githubusercontent.com/40245517/223785155-c506c4be-c570-4208-8653-bd135317cece.gif
+   :alt: Magnetic reconnection
+   :width: 70%
+
+The input file for this example and corresponding analysis can be found at:
+
+* :download:`Magnetic reconnection input <../../../Examples/Tests/ohm_solver/magnetic_reconnection/PICMI_inputs.py>`
+* :download:`Analysis script <../../../Examples/Tests/ohm_solver/magnetic_reconnection/analysis.py>`
+
