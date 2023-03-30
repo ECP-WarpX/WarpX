@@ -133,3 +133,11 @@ Known System Issues
    .. code-block:: bash
 
       export ROCFFT_RTC_CACHE_PATH=/dev/null
+
+.. warning::
+
+   January, 2023 (OLCFDEV-1284, AMD Ticket: ORNLA-130):
+   We discovered a regression in AMD ROCm, leading to 2x slower current deposition (and other slowdowns) in ROCm 5.3 and 5.4.
+   Reported to AMD and investigating.
+
+   Stay with the ROCm 5.2 module to avoid.
