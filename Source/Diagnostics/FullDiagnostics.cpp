@@ -443,7 +443,8 @@ FullDiagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
 
 
 void
-FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
+FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
+    amrex::ignore_unused(restart);
     auto & warpx = WarpX::GetInstance();
     amrex::RealBox diag_dom;
     bool use_warpxba = true;

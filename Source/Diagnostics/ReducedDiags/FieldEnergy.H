@@ -10,6 +10,8 @@
 
 #include "ReducedDiags.H"
 
+#include <AMReX_MultiFab.H>
+
 #include <string>
 
 /**
@@ -36,6 +38,15 @@ public:
      * @param[in] step current time step
      */
     virtual void ComputeDiags(int step) override final;
+
+    /**
+     * \brief Calculate the integral of the field squared in RZ
+     *
+     * \param field The MultiFab to be integrated
+     * \param lev   The refinement level
+     * \return The integral
+     */
+    amrex::Real ComputeNorm2RZ(const amrex::MultiFab& field, const int lev);
 
 };
 

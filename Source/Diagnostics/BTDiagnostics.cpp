@@ -88,10 +88,17 @@ void BTDiagnostics::DerivedInitData ()
     m_snapshot_full.resize( m_num_buffers );
     m_lastValidZSlice.resize( m_num_buffers );
     m_buffer_k_index_hi.resize(m_num_buffers);
+    m_first_flush_after_restart.resize(m_num_buffers);
+    m_snapshot_geometry_defined.resize(m_num_buffers);
+    m_field_buffer_multifab_defined.resize(m_num_buffers);
     for (int i = 0; i < m_num_buffers; ++i) {
         m_geom_snapshot[i].resize(nmax_lev);
         m_snapshot_full[i] = 0;
         m_lastValidZSlice[i] = 0;
+        m_buffer_flush_counter[i] = 0;
+        m_first_flush_after_restart[i] = 1;
+        m_snapshot_geometry_defined[i] = 0;
+        m_field_buffer_multifab_defined[i] = 0;
     }
     for (int lev = 0; lev < nmax_lev; ++lev) {
         // Define cell-centered multifab over the whole domain with
@@ -329,13 +336,21 @@ BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 }
 
 void
-BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
+BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
 {
     auto & warpx = WarpX::GetInstance();
+
+    // When restarting boosted simulations, the code below needs to take
+    // into account the fact that the position of the box at the beginning
+    // of the simulation, is not the one that we had at t=0 (because of the moving window)
+    amrex::Real boosted_moving_window_v = (warpx.moving_window_v - m_beta_boost*PhysConst::c)
+                                        / (1._rt - m_beta_boost * warpx.moving_window_v/PhysConst::c);
     // Lab-frame time for the i^th snapshot
-    amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
-    m_t_lab.at(i_buffer) = m_intervals.GetBTDIteration(i_buffer) * m_dt_snapshots_lab
-        + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
+    if (restart == false) {
+        amrex::Real zmax_0 = warpx.Geom(lev).ProbHi(m_moving_window_dir);
+        m_t_lab.at(i_buffer) = m_intervals.GetBTDIteration(i_buffer) * m_dt_snapshots_lab
+            + m_gamma_boost*m_beta_boost*zmax_0/PhysConst::c;
+    }
 
     // Define buffer domain in boosted frame at level, lev, with user-defined lo and hi
     amrex::RealBox diag_dom;
@@ -392,15 +407,13 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
 
     // Define buffer_domain in lab-frame for the i^th snapshot.
     // Replace z-dimension with lab-frame co-ordinates.
-    amrex::Real zmin_buffer_lab = diag_dom.lo(m_moving_window_dir)
-                                 / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-    amrex::Real zmax_buffer_lab = diag_dom.hi(m_moving_window_dir)
-                                 / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-
+    amrex::Real zmin_buffer_lab = ( diag_dom.lo(m_moving_window_dir) - boosted_moving_window_v * warpx.gett_new(0) )
+                                / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
+    amrex::Real zmax_buffer_lab = ( diag_dom.hi(m_moving_window_dir) - boosted_moving_window_v * warpx.gett_new(0) )
+                                / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
 
     // Initialize buffer counter and z-positions of the  i^th snapshot in
     // boosted-frame and lab-frame
-    m_buffer_flush_counter[i_buffer] = 0;
     m_buffer_counter[i_buffer] = 0;
     m_current_z_lab[i_buffer] = 0._rt;
     m_current_z_boost[i_buffer] = 0._rt;
@@ -450,7 +463,6 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     m_snapshot_ncells_lab[i_buffer] = amrex::IntVect(Nz_lab);
 #endif
 
-
     // Box covering the extent of the user-defined diag in the back-transformed frame
     // for the ith snapshot
     // estimating the maximum number of buffer multifabs needed to obtain the
@@ -461,20 +473,23 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     // number of cells in z is modified since each buffer multifab always
     // contains a minimum m_buffer_size=256 cells
     int num_z_cells_in_snapshot = m_max_buffer_multifabs[i_buffer] * m_buffer_size;
-    m_snapshot_domain_lab[i_buffer] = diag_dom;
-    m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir,
-                                  zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
-    m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
-                                  zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
-    // To prevent round off errors, moving the snapshot domain by half a cell so that all the slices
-    // lie close to the cell-centers in the lab-frame grid instead of on the edge of cell.
-    amrex::Real new_hi = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir)
-                       + 0.5_rt * dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
-    m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,new_hi);
-    amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
-                         num_z_cells_in_snapshot *
-                         dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
-    m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_lo);
+    if (restart == false) {
+        m_snapshot_domain_lab[i_buffer] = diag_dom;
+        m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir,
+                                      zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+        m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,
+                                      zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+        // To prevent round off errors, moving the snapshot domain by half a cell so that all the slices
+        // lie close to the cell-centers in the lab-frame grid instead of on the edge of cell.
+        amrex::Real new_hi = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir)
+                           + 0.5_rt * dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+        m_snapshot_domain_lab[i_buffer].setHi(m_moving_window_dir,new_hi);
+        amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
+                             num_z_cells_in_snapshot *
+                             dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+        m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_lo);
+    }
+
     // cell-centered index that corresponds to the hi-end of the lab-frame in the z-direction
     // Adding 0.5 dz_lab so that we obtain the cell-centered index consistent to the hi-end
     int snapshot_kindex_hi = static_cast<int>(floor(
@@ -487,8 +502,9 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev)
     m_snapshot_box[i_buffer].setSmall( m_moving_window_dir,
                                        snapshot_kindex_hi - (num_z_cells_in_snapshot-1) );
     // Setting hi k-index for the first buffer
-    m_buffer_k_index_hi[i_buffer] = m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir);
-
+    if (restart == false) {
+        m_buffer_k_index_hi[i_buffer] = m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir);
+    }
 }
 
 void
@@ -809,15 +825,18 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                 // Check if the zslice is in domain
                 bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
                 // Initialize and define field buffer multifab if buffer is empty
-                if (ZSliceInDomain) {
+                bool kindexInSnapshotBox = GetKIndexInSnapshotBoxFlag (i_buffer, lev);
+                if (kindexInSnapshotBox) {
                     if ( buffer_empty(i_buffer) ) {
-                        if ( m_buffer_flush_counter[i_buffer] == 0) {
+                        if ( m_buffer_flush_counter[i_buffer] == 0 || m_first_flush_after_restart[i_buffer] == 1) {
                             // Compute the geometry, snapshot lab-domain extent
                             // and box-indices
                             DefineSnapshotGeometry(i_buffer, lev);
                         }
                         DefineFieldBufferMultiFab(i_buffer, lev);
                     }
+                }
+                if (ZSliceInDomain) {
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                         m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
                         m_current_z_lab[i_buffer] <= m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir),
@@ -877,6 +896,7 @@ BTDiagnostics::SetSnapshotFullStatus (const int i_buffer)
 void
 BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
 {
+    if (m_field_buffer_multifab_defined[i_buffer] == 1) return;
     auto & warpx = WarpX::GetInstance();
 
     const int hi_k_lab = m_buffer_k_index_hi[i_buffer];
@@ -931,12 +951,14 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         m_geom_output[i_buffer][lev] = amrex::refine( m_geom_output[i_buffer][lev-1],
                                                       warpx.RefRatio(lev-1) );
     }
+    m_field_buffer_multifab_defined[i_buffer] = 1;
 }
 
 
 void
 BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
 {
+    if (m_snapshot_geometry_defined[i_buffer] == 1) return;
     auto & warpx = WarpX::GetInstance();
 
     if (lev == 0) {
@@ -954,6 +976,7 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
         m_geom_snapshot[i_buffer][lev] = amrex::refine( m_geom_snapshot[i_buffer][lev-1],
                                                         warpx.RefRatio(lev-1) );
     }
+    m_snapshot_geometry_defined[i_buffer] = 1;
 }
 
 bool
@@ -973,6 +996,18 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
     }
 
     return true;
+}
+
+
+bool
+BTDiagnostics::GetKIndexInSnapshotBoxFlag (const int i_buffer, const int lev)
+{
+    if (k_index_zlab(i_buffer, lev) >= m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir) and
+        k_index_zlab(i_buffer, lev) <= m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir)) {
+        return true;
+    }
+
+    return false;
 }
 
 void
@@ -1070,7 +1105,9 @@ BTDiagnostics::Flush (int i_buffer)
 
     // Reset the buffer counter to zero after flushing out data stored in the buffer.
     ResetBufferCounter(i_buffer);
+    m_field_buffer_multifab_defined[i_buffer] = 0;
     IncrementBufferFlushCounter(i_buffer);
+    NullifyFirstFlush(i_buffer);
     // if particles are selected for output then update and reset counters
     if (m_output_species_names.size() > 0) {
         UpdateTotalParticlesFlushed(i_buffer);
@@ -1120,7 +1157,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
         std::string recent_Buffer_Level0_path = recent_Buffer_filepath + "/Level_0";
         std::string recent_Buffer_FabHeaderFilename = recent_Buffer_Level0_path + "/Cell_H";
         // Create directory only when the first buffer is flushed out.
-        if (m_buffer_flush_counter[i_snapshot] == 0 ) {
+        if (m_buffer_flush_counter[i_snapshot] == 0 || m_first_flush_after_restart[i_snapshot] == 1) {
             // Create Level_0 directory to store all Cell_D and Cell_H files
             if (!amrex::UtilCreateDirectory(snapshot_Level0_path, permission_flag_rwxrxrx) )
                 amrex::CreateDirectoryFailed(snapshot_Level0_path);
@@ -1162,7 +1199,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             // Cell_D_<number> is padded with 5 zeros as that is the default AMReX output
             std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_", m_buffer_flush_counter[i_snapshot], amrex_fabfile_digits);
 
-            if ( m_buffer_flush_counter[i_snapshot] == 0) {
+            if (m_buffer_flush_counter[i_snapshot] == 0 || m_first_flush_after_restart[i_snapshot] == 1) {
                 std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
                 Buffer_FabHeader.SetFabName(0, Buffer_FabHeader.fodPrefix(0),
                                             new_snapshotFabFilename,
@@ -1208,7 +1245,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                 m_buffer_flush_counter[i_snapshot],
                 amrex_partfile_digits);
 
-            if (m_buffer_flush_counter[i_snapshot] == 0) {
+            if (m_buffer_flush_counter[i_snapshot] == 0 || m_first_flush_after_restart[i_snapshot] == 1) {
                 BufferSpeciesHeader.set_DataIndex(0,0,m_buffer_flush_counter[i_snapshot]);
                 BufferSpeciesHeader.WriteHeader();
 
@@ -1445,15 +1482,17 @@ BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
 void
 BTDiagnostics::ResetTotalParticlesInBuffer(int i_buffer)
 {
-    for (int isp = 0; isp < m_totalParticles_in_buffer[i_buffer].size(); ++isp) {
-        m_totalParticles_in_buffer[i_buffer][isp] = 0;
-    }
+    std::fill(
+        m_totalParticles_in_buffer[i_buffer].begin(),
+        m_totalParticles_in_buffer[i_buffer].end(),
+        0);
 }
 
 void
 BTDiagnostics::ClearParticleBuffer(int i_buffer)
 {
-    for (int isp = 0; isp < m_particles_buffer[i_buffer].size(); ++isp) {
-        m_particles_buffer[i_buffer][isp]->clearParticles();
-    }
+    std::for_each(
+        m_particles_buffer[i_buffer].begin(),
+        m_particles_buffer[i_buffer].end(),
+        [](auto& pb){pb->clearParticles();});
 }
