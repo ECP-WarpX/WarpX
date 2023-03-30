@@ -1513,6 +1513,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         Controls the random numbers used for initialization.
         This parameter should only be used for testing and continuous integration.
 
+    warpx_random_seed: string or int, optional
+        (See documentation)
+
     warpx_do_dynamic_scheduling: bool, default=True
         Whether to do dynamic scheduling with OpenMP
 
@@ -1586,6 +1589,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.field_centering_order = kw.pop('warpx_field_centering_order', None)
         self.current_centering_order = kw.pop('warpx_current_centering_order', None)
         self.serialize_initial_conditions = kw.pop('warpx_serialize_initial_conditions', None)
+        self.random_seed = kw.pop('warpx_random_seed', None)
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
         self.load_balance_intervals = kw.pop('warpx_load_balance_intervals', None)
         self.load_balance_efficiency_ratio_threshold = kw.pop('warpx_load_balance_efficiency_ratio_threshold', None)
@@ -1644,6 +1648,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.do_multi_J = self.do_multi_J
         pywarpx.warpx.do_multi_J_n_depositions = self.do_multi_J_n_depositions
         pywarpx.warpx.serialize_initial_conditions = self.serialize_initial_conditions
+        pywarpx.warpx.random_seed = self.random_seed
+
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
 
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
