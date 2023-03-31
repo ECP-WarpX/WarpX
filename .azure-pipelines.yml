@@ -88,7 +88,7 @@ jobs:
       python3 -m pipx install cmake
       python3 -m pipx ensurepath
       export PATH="$HOME/.local/bin:$PATH"
-      sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
+      sudo curl -L -o /usr/local/bin/cmake-easyinstall https://raw.githubusercontent.com/ax3l/cmake-easyinstall/main/cmake-easyinstall
       sudo chmod a+x /usr/local/bin/cmake-easyinstall
       if [ "${WARPX_CI_OPENPMD:-FALSE}" == "TRUE" ]; then
         cmake-easyinstall --prefix=/usr/local                   \
