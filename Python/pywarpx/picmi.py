@@ -415,7 +415,11 @@ class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, Densi
         species.flux_normal_axis = self.flux_normal_axis
         species.surface_flux_pos = self.surface_flux_position
         species.flux_direction = self.flux_direction
-
+        if self.flux_tmin is not None:
+            species.flux_tmin = self.flux_tmin
+        if self.flux_tmax is not None:
+            species.flux_tmax = self.flux_tmax
+        
         # --- Use specific attributes for flux injection
         species.injection_style = "nfluxpercell"
         assert (isinstance(layout, PseudoRandomLayout)), Exception('UniformFluxDistribution only supports the PseudoRandomLayout in WarpX')
