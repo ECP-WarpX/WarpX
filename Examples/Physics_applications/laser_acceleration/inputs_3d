@@ -1,7 +1,7 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 1000           # for production, run for longer time, e.g. max_step = 1000
+max_step = 100           # for production, run for longer time, e.g. max_step = 1000
 amr.n_cell = 32 32 256   # for production, run with finer mesh, e.g. amr.n_cell = 64 64 512
 amr.max_grid_size = 64   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 32 # minimum size of each AMReX box, used to decompose the domain
@@ -77,7 +77,6 @@ diagnostics.diags_names = diag1
 diag1.intervals = 100
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-diag1.format = openpmd
 
 # Reduced Diagnostics
 warpx.reduced_diags_names               = FP
