@@ -13,8 +13,6 @@ import shutil
 import sys
 
 import dill
-from matplotlib import colors
-import matplotlib.pyplot as plt
 from mpi4py import MPI as mpi
 import numpy as np
 
@@ -58,9 +56,9 @@ class ForceFreeSheetReconnection(object):
     NPPC = 400
 
     # Plasma resistivity - used to dampen the mode excitation
-    eta = 5e-3  # normalized resistivity
+    eta = 6e-3  # normalized resistivity
     # Number of substeps used to update B
-    substeps = 500
+    substeps = 750
 
     def __init__(self, test):
 
@@ -200,7 +198,8 @@ class ForceFreeSheetReconnection(object):
         )
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
-        simulation.particle_shape = 3
+        simulation.particle_shape = 1
+        simulation.use_filter = False
         simulation.verbose = 1
 
         #######################################################################
@@ -272,7 +271,6 @@ class ForceFreeSheetReconnection(object):
             extension='dat',
             probe_geometry='Plane',
             resolution=60,
-            interp_order=3,
             x_probe=0.0, z_probe=0.0, detector_radius=self.l_i,
             target_up_x=0, target_up_z=1.0
         )

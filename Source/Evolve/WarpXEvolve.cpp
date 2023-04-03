@@ -356,7 +356,8 @@ WarpX::Evolve (int numsteps)
             } else {
                 // Hybrid-PIC case:
                 // The particles are now at p^{n+1/2} and x^{n+1}. The fields
-                // are updated according to the hybrid scheme.
+                // are updated according to the hybrid-PIC scheme (Ohm's law
+                // and Ampere's law).
                 HybridPICEvolveFields();
             }
 

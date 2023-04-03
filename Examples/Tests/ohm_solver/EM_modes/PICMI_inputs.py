@@ -82,11 +82,12 @@ class EMModes(object):
         self.dt = self.DT * self.t_ci
 
         if not self.test:
-            self.total_steps = int(np.ceil(self.LT * self.t_ci / self.dt))
+            self.total_steps = int(self.LT / self.DT)
         else:
             # if this is a test case run for only a small number of steps
             self.total_steps = 250
-        self.diag_steps = int(1/20 * self.t_ci / self.dt)
+        # output diagnostics 20 times per cyclotron period
+        self.diag_steps = int(1.0/20 / self.DT)
 
         # dump all the current attributes to a dill pickle file
         if comm.rank == 0:

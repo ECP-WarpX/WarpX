@@ -58,9 +58,6 @@ plt.savefig("diags/reconnection_rate.png")
 
 
 # Animate the magnetic reconnection
-LX = 40
-LZ = 20
-
 fig, axes = plt.subplots(3, 1, sharex=True, figsize=(7, 9))
 
 for ax in axes.flatten():
@@ -76,16 +73,17 @@ data0 = np.load(datafiles[0])
 
 sX = axes[0].imshow(
     data0['Jy'].T, origin='lower',
-    norm=colors.TwoSlopeNorm(vmin=-0.5, vcenter=0., vmax=1.5),
-    extent=[0, LX, -LZ/2, LZ/2],
+    norm=colors.TwoSlopeNorm(vmin=-0.6, vcenter=0., vmax=1.6),
+    extent=[0, sim.LX, -sim.LZ/2, sim.LZ/2],
     cmap=plt.cm.RdYlBu_r
 )
 # axes[0].set_ylim(-5, 5)
 cb = plt.colorbar(sX, ax=axes[0], label='$J_y/J_0$')
 cb.ax.set_yscale('linear')
+cb.ax.set_yticks([-0.5, 0.0, 0.75, 1.5])
 
 sY = axes[1].imshow(
-    data0['By'].T, origin='lower', extent=[0, LX, -LZ/2, LZ/2],
+    data0['By'].T, origin='lower', extent=[0, sim.LX, -sim.LZ/2, sim.LZ/2],
     cmap=plt.cm.plasma
 )
 # axes[1].set_ylim(-5, 5)
@@ -93,7 +91,7 @@ cb = plt.colorbar(sY, ax=axes[1], label='$B_y/B_0$')
 cb.ax.set_yscale('linear')
 
 sZ = axes[2].imshow(
-    data0['Bz'].T, origin='lower', extent=[0, LX, -LZ/2, LZ/2],
+    data0['Bz'].T, origin='lower', extent=[0, sim.LX, -sim.LZ/2, sim.LZ/2],
     # norm=colors.TwoSlopeNorm(vmin=-0.02, vcenter=0., vmax=0.02),
     cmap=plt.cm.RdBu
 )
@@ -103,13 +101,13 @@ cb.ax.set_yscale('linear')
 # plot field lines
 from scipy import interpolate
 
-x_grid = np.linspace(0, LX, data0['Bx'][:-1].shape[0])
-z_grid = np.linspace(-LZ/2.0, LZ/2.0, data0['Bx'].shape[1])
+x_grid = np.linspace(0, sim.LX, data0['Bx'][:-1].shape[0])
+z_grid = np.linspace(-sim.LZ/2.0, sim.LZ/2.0, data0['Bx'].shape[1])
 
 n_lines = 10
 start_x = np.zeros(n_lines)
-start_x[:n_lines//2] = LX
-start_z = np.linspace(-LZ/2.0*0.9, LZ/2.0*0.9, n_lines)
+start_x[:n_lines//2] = sim.LX
+start_z = np.linspace(-sim.LZ/2.0*0.9, sim.LZ/2.0*0.9, n_lines)
 step_size = 1.0 / 100.0
 
 def get_field_lines(Bx, Bz):
@@ -119,8 +117,8 @@ def get_field_lines(Bx, Bz):
     Bz_interp = interpolate.interp2d(x_grid, z_grid, Bz[:,:-1].T, kind='linear')
 
     for kk, z in enumerate(start_z):
-        path_x = [start_x[kk]] #[x]
-        path_z = [z] # [0.01]
+        path_x = [start_x[kk]]
+        path_z = [z]
 
         ii = 0
         while ii < 10000:
@@ -141,7 +139,7 @@ def get_field_lines(Bx, Bz):
             x_new = path_x[-1] + dx
             z_new = path_z[-1] + dz
 
-            if np.isnan(x_new) or x_new <= 0 or x_new > LX or abs(z_new) > LZ/2:
+            if np.isnan(x_new) or x_new <= 0 or x_new > sim.LX or abs(z_new) > sim.LZ/2:
                 break
 
             path_x.append(x_new)
@@ -179,8 +177,8 @@ def animate(i):
         field_lines[ii].set_data(path_x, path_z)
 
 anim = FuncAnimation(
-    fig, animate, interval=50, frames=num_steps-1, repeat=True
+    fig, animate, frames=num_steps-1, repeat=True
 )
 
-writervideo = FFMpegWriter(fps=10)
+writervideo = FFMpegWriter(fps=14)
 anim.save('diags/mag_reconnection.mp4', writer=writervideo)

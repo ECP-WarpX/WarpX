@@ -129,6 +129,8 @@ Kinetic-fluid hybrid model
 
 Several examples / benchmarks of the kinetic-fluid hybrid model are shown below. The first few examples are replications
 of the verification tests described in `Munoz et al. (2018) <https://www.sciencedirect.com/science/article/abs/pii/S0010465517303521>`_.
+The hybrid-PIC model was added to WarpX in April 2023 (`PR #3665 <https://github.com/ECP-WarpX/WarpX/pull/3665>`_) - the below figures
+were generated at that time.
 
 Electromagnetic modes
 ^^^^^^^^^^^^^^^^^^^^^
@@ -223,7 +225,7 @@ Hybrid-PIC codes are often used to simulate magnetic reconnection in space
 plasmas. An example of magnetic reconnection from a force-free sheet is
 provided, based on the simulation described in `Le et al. (2016) <https://aip.scitation.org/doi/10.1063/1.4943893>`__.
 
-.. figure:: https://user-images.githubusercontent.com/40245517/223785155-c506c4be-c570-4208-8653-bd135317cece.gif
+.. figure:: https://user-images.githubusercontent.com/40245517/229639784-b5d3b596-3550-4570-8761-8d9a67aa4b3b.gif
    :alt: Magnetic reconnection
    :width: 70%
 
