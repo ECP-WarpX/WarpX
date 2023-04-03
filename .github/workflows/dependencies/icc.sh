@@ -7,6 +7,11 @@
 
 set -eu -o pipefail
 
+# `man apt.conf`:
+#   Number of retries to perform. If this is non-zero APT will retry
+#   failed files the given number of times.
+echo 'Acquire::Retries "3";' | sudo tee /etc/apt/apt.conf.d/80-retries
+
 export DEBIAN_FRONTEND=noninteractive
 sudo apt-get -qqq update
 sudo apt-get install -y \
@@ -24,7 +29,16 @@ sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
 echo "deb https://apt.repos.intel.com/oneapi all main" | \
     sudo tee /etc/apt/sources.list.d/oneAPI.list
 sudo apt-get update
-sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+
+tries=0
+while [[ ${tries} -lt 5 ]]
+do
+    sudo apt-get install -y                              \
+        intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic  \
+        && { sudo apt-get clean; tries=6; }              \
+        || { sleep 10; tries=$(( tries + 1 )); }
+done
+if [[ ${tries} -eq 5 ]]; then exit 1; fi
 
 # activate now via
 set +eu
