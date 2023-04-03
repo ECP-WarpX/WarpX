@@ -23,6 +23,7 @@ picmistandard.register_codename(codename)
 # dictionary to map field boundary conditions from picmistandard to WarpX
 BC_map = {
     'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped',
+    'absorbing_silver_mueller':'absorbing_silver_mueller',
     'neumann':'neumann', 'none':'none', None:'none'
 }
 
@@ -72,6 +73,12 @@ class Species(picmistandard.PICMI_Species):
     warpx_do_not_deposit: bool, default=False
         Whether or not to deposit the charge and current density for
         for this species
+
+    warpx_do_not_push: bool, default=False
+        Whether or not to push this species
+
+    warpx_do_not_gather: bool, default=False
+        Whether or not to gahter the fields from grids for this species
 
     warpx_random_theta: bool, default=True
         Whether or not to add random angle to the particles in theta
@@ -174,6 +181,8 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
         self.save_previous_position = kw.pop('warpx_save_previous_position', None)
         self.do_not_deposit = kw.pop('warpx_do_not_deposit', None)
+        self.do_not_push = kw.pop('warpx_do_not_push', None)
+        self.do_not_gather = kw.pop('warpx_do_not_gather', None)
         self.random_theta = kw.pop('warpx_random_theta', None)
 
         # For particle reflection
@@ -227,6 +236,8 @@ class Species(picmistandard.PICMI_Species):
                                              save_particles_at_eb = self.save_particles_at_eb,
                                              save_previous_position = self.save_previous_position,
                                              do_not_deposit = self.do_not_deposit,
+                                             do_not_push = self.do_not_push,
+                                             do_not_gather = self.do_not_gather,
                                              random_theta = self.random_theta)
 
         # add reflection models
@@ -1502,6 +1513,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         Controls the random numbers used for initialization.
         This parameter should only be used for testing and continuous integration.
 
+    warpx_random_seed: string or int, optional
+        (See documentation)
+
     warpx_do_dynamic_scheduling: bool, default=True
         Whether to do dynamic scheduling with OpenMP
 
@@ -1575,6 +1589,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.field_centering_order = kw.pop('warpx_field_centering_order', None)
         self.current_centering_order = kw.pop('warpx_current_centering_order', None)
         self.serialize_initial_conditions = kw.pop('warpx_serialize_initial_conditions', None)
+        self.random_seed = kw.pop('warpx_random_seed', None)
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
         self.load_balance_intervals = kw.pop('warpx_load_balance_intervals', None)
         self.load_balance_efficiency_ratio_threshold = kw.pop('warpx_load_balance_efficiency_ratio_threshold', None)
@@ -1633,6 +1648,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.do_multi_J = self.do_multi_J
         pywarpx.warpx.do_multi_J_n_depositions = self.do_multi_J_n_depositions
         pywarpx.warpx.serialize_initial_conditions = self.serialize_initial_conditions
+        pywarpx.warpx.random_seed = self.random_seed
+
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
 
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr

@@ -162,7 +162,7 @@ If you also want to compile with PSATD in RZ, you need to manually install BLAS+
 .. code-block:: bash
 
    sudo mkdir -p /usr/local/bin/
-   sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
+   sudo curl -L -o /usr/local/bin/cmake-easyinstall https://raw.githubusercontent.com/ax3l/cmake-easyinstall/main/cmake-easyinstall
    sudo chmod a+x /usr/local/bin/cmake-easyinstall
 
    cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/blaspp.git \
