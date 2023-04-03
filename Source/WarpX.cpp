@@ -132,10 +132,22 @@ bool WarpX::do_divb_cleaning = false;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
+
 bool WarpX::do_shared_mem_charge_deposition = false;
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_2D)
+bool WarpX::do_shared_mem_current_deposition = true;
+#else
 bool WarpX::do_shared_mem_current_deposition = false;
-int WarpX::shared_mem_current_tpb = 128;
+#endif
+#if defined(WARPX_DIM_3D)
 amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(6,6,8));
+#elif defined(WARPX_DIM_2D)
+amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(14,14));
+#else
+amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(0,0,0));
+#endif
+int WarpX::shared_mem_current_tpb = 128;
+
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
