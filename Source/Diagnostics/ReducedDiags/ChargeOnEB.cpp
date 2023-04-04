@@ -120,9 +120,6 @@ void ChargeOnEB::ComputeDiags (const int step)
     amrex::Gpu::Buffer<amrex::Real> surface_integral({0.0_rt});
     amrex::Real* surface_integral_pointer = surface_integral.data();
 
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
     // Loop over boxes
     for (amrex::MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
