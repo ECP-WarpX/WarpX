@@ -177,23 +177,67 @@ void depositComponent (const GetParticlePosition& GetPosition,
     // There are only two possible centerings, node or cell centered, so at most only two shape factor
     // arrays will be needed.
     // Keep these double to avoid bug in single precision
-    double sx_j[depos_order + 1] = {0.};
-    int const j_j = compute_shape_factor(sx_j, (j_type[0] == NODE) ? xmid : xmid - 0.5);
+    double sx_node[depos_order + 1] = {0.};
+    double sx_cell[depos_order + 1] = {0.};
+    int j_node = 0;
+    int j_cell = 0;
+    if (j_type[0] == NODE) {
+        j_node = compute_shape_factor(sx_node, xmid);
+    }
+    if (j_type[0] == CELL) {
+        j_cell = compute_shape_factor(sx_cell, xmid - 0.5);
+    }
+
+    amrex::Real sx_j[depos_order + 1] = {0._rt};
+    for (int ix=0; ix<=depos_order; ix++)
+    {
+        sx_j[ix] = ((j_type[0] == NODE) ? amrex::Real(sx_node[ix]) : amrex::Real(sx_cell[ix]));
+    }
+
+    int const j_j = ((j_type[0] == NODE) ? j_node : j_cell);
 #endif //AMREX_SPACEDIM >= 2
 
 #if defined(WARPX_DIM_3D)
     // y direction
     // Keep these double to avoid bug in single precision
     const double ymid = ((yp - ymin) + relative_time*vy)*dyi;
-    double sy_j[depos_order + 1] = {0.};
-    int const k_j = compute_shape_factor(sy_j, (j_type[1] == NODE) ? ymid : ymid - 0.5);
+    double sy_node[depos_order + 1] = {0.};
+    double sy_cell[depos_order + 1] = {0.};
+    int k_node = 0;
+    int k_cell = 0;
+    if (j_type[1] == NODE) {
+        k_node = compute_shape_factor(sy_node, ymid);
+    }
+    if (j_type[1] == CELL) {
+        k_cell = compute_shape_factor(sy_cell, ymid - 0.5);
+    }
+    amrex::Real sy_j[depos_order + 1] = {0._rt};
+    for (int iy=0; iy<=depos_order; iy++)
+    {
+        sy_j[iy] = ((j_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
+    }
+    int const k_j = ((j_type[1] == NODE) ? k_node : k_cell);
 #endif
 
     // z direction
     // Keep these double to avoid bug in single precision
     const double zmid = ((zp - zmin) + relative_time*vz)*dzi;
-    double sz_j[depos_order + 1] = {0.};
-    int const l_j = compute_shape_factor(sz_j, (j_type[zdir] == NODE) ? zmid : zmid - 0.5);
+    double sz_node[depos_order + 1] = {0.};
+    double sz_cell[depos_order + 1] = {0.};
+    int l_node = 0;
+    int l_cell = 0;
+    if (j_type[zdir] == NODE) {
+        l_node = compute_shape_factor(sz_node, zmid);
+    }
+    if (j_type[zdir] == CELL) {
+        l_cell = compute_shape_factor(sz_cell, zmid - 0.5);
+    }
+    amrex::Real sz_j[depos_order + 1] = {0._rt};
+    for (int iz=0; iz<=depos_order; iz++)
+    {
+        sz_j[iz] = ((j_type[zdir] == NODE) ? amrex::Real(sz_node[iz]) : amrex::Real(sz_cell[iz]));
+    }
+    int const l_j = ((j_type[zdir] == NODE) ? l_node : l_cell);
 
     // Deposit current into j_buff
 #if defined(WARPX_DIM_1D_Z)
