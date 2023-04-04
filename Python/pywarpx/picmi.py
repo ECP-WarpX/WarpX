@@ -1000,11 +1000,35 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
 
 
-class EMSolver():
-    def __init__(self, grid, method, Te=None, n0=None, gamma=None,
+class HybridPICSolver():
+    """
+    Hybrid-PIC solver based on Ohm's law.
+    See `Theory Section <https://warpx.readthedocs.io/en/latest/theory/kinetic_fluid_hybrid_model.html>`_ for more information.
+
+    Parameters
+    ----------
+    Te: float
+        Electron temperature in eV.
+
+    n0: float
+        Reference plasma density in m^-3.
+
+    gamma: float, default=3/2
+        Exponent in calculation of electron pressure.
+
+    n_floor: float, optional
+        Minimum density used in Ohm's law calculation.
+
+    plasma_resistivity: float or str
+        Value or expression to use for the plasma resistivity.
+
+    substeps: int, default=100
+        Number of substeps to take when updating the B-field.
+    """
+    def __init__(self, grid, Te=None, n0=None, gamma=None,
                  n_floor=None, plasma_resistivity=None, substeps=None):
         self.grid = grid
-        self.method = method
+        self.method = "hybrid"
 
         self.Te = Te
         self.n0 = n0
@@ -1020,13 +1044,12 @@ class EMSolver():
 
         pywarpx.algo.maxwell_solver = self.method
 
-        if self.method == 'hybrid':
-            pywarpx.hybridpicmodel.elec_temp = self.Te
-            pywarpx.hybridpicmodel.n0_ref = self.n0
-            pywarpx.hybridpicmodel.gamma = self.gamma
-            pywarpx.hybridpicmodel.n_floor = self.n_floor
-            pywarpx.hybridpicmodel.__setattr__('plasma_resistivity(rho)', self.plasma_resistivity)
-            pywarpx.hybridpicmodel.substeps = self.substeps
+        pywarpx.hybridpicmodel.elec_temp = self.Te
+        pywarpx.hybridpicmodel.n0_ref = self.n0
+        pywarpx.hybridpicmodel.gamma = self.gamma
+        pywarpx.hybridpicmodel.n_floor = self.n_floor
+        pywarpx.hybridpicmodel.__setattr__('plasma_resistivity(rho)', self.plasma_resistivity)
+        pywarpx.hybridpicmodel.substeps = self.substeps
 
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):

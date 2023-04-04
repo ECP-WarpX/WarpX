@@ -206,8 +206,8 @@ class ForceFreeSheetReconnection(object):
         # Field solver and external field                                     #
         #######################################################################
 
-        self.solver = picmi.EMSolver(
-            grid=self.grid, method='hybrid', gamma=1.0,
+        self.solver = picmi.HybridPICSolver(
+            grid=self.grid, gamma=1.0,
             Te=self.Te, n0=self.n_plasma, n_floor=0.1*self.n_plasma,
             plasma_resistivity=self.eta*self.eta0,
             substeps=self.substeps

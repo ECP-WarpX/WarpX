@@ -194,8 +194,8 @@ class HybridPICBeamInstability(object):
         # Field solver and external field                                     #
         #######################################################################
 
-        self.solver = picmi.EMSolver(
-            grid=self.grid, method='hybrid', gamma=1.0,
+        self.solver = picmi.HybridPICSolver(
+            grid=self.grid, gamma=1.0,
             Te=self.T_plasma/10.0,
             n0=self.n_plasma+self.n_beam,
             plasma_resistivity=self.eta, substeps=self.substeps

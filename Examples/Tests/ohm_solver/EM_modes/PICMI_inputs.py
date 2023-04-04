@@ -213,8 +213,8 @@ class EMModes(object):
         # Field solver and external field                                     #
         #######################################################################
 
-        self.solver = picmi.EMSolver(
-            grid=self.grid, method='hybrid',
+        self.solver = picmi.HybridPICSolver(
+            grid=self.grid,
             Te=self.T_plasma, n0=self.n_plasma, plasma_resistivity=self.eta,
             substeps=self.substeps
         )
