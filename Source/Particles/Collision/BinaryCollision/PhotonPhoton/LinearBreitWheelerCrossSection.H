@@ -38,8 +38,8 @@ amrex::ParticleReal LinearBreitWheelerCrossSection (const amrex::ParticleReal& E
     constexpr auto one_half_pr = amrex::ParticleReal(1./2.);
     constexpr amrex::ParticleReal pi = MathConst::pi;
     constexpr amrex::ParticleReal re2 = PhysConst::r_e * PhysConst::r_e;
-    auto constexpr pow2 = [](double const x) { return x*x; };
-    auto constexpr pow4 = [](double const x) { return x*x*x*x; };
+    auto constexpr pow2 = [](auto const x) { return x*x; };
+    auto constexpr pow4 = [](auto const x) { return x*x*x*x; };
 
     const amrex::ParticleReal s = pow2(E_star/(me * c_sq));
     const amrex::ParticleReal beta = std::sqrt(1._prt-1._prt/s);
