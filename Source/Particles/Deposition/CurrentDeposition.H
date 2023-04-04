@@ -460,9 +460,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         if (bin_start == bin_stop) { return; /*this bin has no particles*/ }
 
         // These boxes define the index space for the shared memory buffers
-        amrex::Box buffer_box_x;
-        amrex::Box buffer_box_y;
-        amrex::Box buffer_box_z;
+        amrex::Box buffer_box;
         {
             ParticleReal xp, yp, zp;
             GetPosition(permutation[bin_start], xp, yp, zp);
@@ -479,18 +477,13 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             iv += domain.smallEnd();
             // Looks like it sets buffer box to contain the tile
             // iv is a point. first box is the entire domain, last box gets written with size bin_size
-            getTileIndex(iv, box, true, bin_size, buffer_box_x);
-            getTileIndex(iv, box, true, bin_size, buffer_box_y);
-            getTileIndex(iv, box, true, bin_size, buffer_box_z);
+            getTileIndex(iv, box, true, bin_size, buffer_box);
         }
 
-        Box tbox_x = convert(buffer_box_x, jx_type);
-        Box tbox_y = convert(buffer_box_y, jy_type);
-        Box tbox_z = convert(buffer_box_z, jz_type);
-
-        tbox_x.grow(depos_order);
-        tbox_y.grow(depos_order);
-        tbox_z.grow(depos_order);
+        buffer_box.grow((depos_order+1)/2);
+        Box tbox_x = convert(buffer_box, jx_type);
+        Box tbox_y = convert(buffer_box, jy_type);
+        Box tbox_z = convert(buffer_box, jz_type);
 
         Gpu::SharedMemory<amrex::Real> gsm;
         amrex::Real* const shared = gsm.dataPtr();
