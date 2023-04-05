@@ -243,8 +243,7 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev)
         amrex::Array4<amrex::Real> const& rho_array = rho->array(mfi);
 
         // Construct a tilebox to loop over the grid
-        tilebox = mfi.tilebox();
-        amrex::Box tb = convert( tilebox, rho_nodal );
+        amrex::Box tb = convert( mfi.tilebox(), rho_nodal );
 
         // Grow the tilebox to include the guard cells for the PEC boundaries
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {

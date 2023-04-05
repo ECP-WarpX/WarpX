@@ -985,15 +985,12 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
             }
         }
 // #else
-//         if (rho_fp[lev].get()) {
-//             // Reflect density over PEC boundaries, if needed.
-//             WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho_fp[lev].get());
-//         }
-//         // Set current density at PEC boundaries, if needed.
-//         WarpX::GetInstance().ApplyJfieldBoundary(
-//             lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
-//             current_fp[lev][2].get()
-//         );
+        // I left this comment here as a reminder that currently the
+        // boundary handling for cartesian grids are not matching the RZ handling
+        // (done in the ApplyInverseScalingToChargeDensity function). The
+        // Cartesian grid code had to be moved from here to after the application
+        // of the filter to avoid incorrect results (moved to `SyncCurrentAndRho()`).
+        // Might this be related to issue #1943?
 #endif
     }
 }

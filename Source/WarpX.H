@@ -657,11 +657,17 @@ public:
 #endif
 
     /**
-     * \brief Depending on the boundary conditions used, the charge and current
-     * density deposited in the guard cells may have to be reflected back into
-     * the simulation domain. These function perform that logic.
+     * \brief If a PEC boundary conditions is used the charge
+     * density deposited in the guard cells have to be reflected back into
+     * the simulation domain. This function performs that logic.
      */
     void ApplyRhofieldBoundary (const int lev, amrex::MultiFab* Rho);
+
+    /**
+     * \brief If a PEC boundary conditions is used the current
+     * density deposited in the guard cells have to be reflected back into
+     * the simulation domain. This function performs that logic.
+     */
     void ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
                               amrex::MultiFab* Jy, amrex::MultiFab* Jz);
 

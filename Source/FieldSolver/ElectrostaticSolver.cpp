@@ -205,7 +205,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 #endif
 
     // reset rho_fp before depositing charge density for this step
-    for (int lev = 0; lev <= max_level; lev++) {
+    for (int lev = 0; lev <= finestLevel(); lev++) {
         rho_fp[lev]->setVal(0.);
     }
 
@@ -224,13 +224,13 @@ WarpX::AddSpaceChargeFieldLabFrame ()
         }
     }
 #ifdef WARPX_DIM_RZ
-    for (int lev = 0; lev <= max_level; lev++) {
+    for (int lev = 0; lev <= finestLevel(); lev++) {
         ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
     }
 #endif
     SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
 #ifndef WARPX_DIM_RZ
-    for (int lev = 0; lev <= max_level; lev++) {
+    for (int lev = 0; lev <= finestLevel(); lev++) {
         // Reflect density over PEC boundaries, if needed.
         ApplyRhofieldBoundary(lev, rho_fp[lev].get());
     }
