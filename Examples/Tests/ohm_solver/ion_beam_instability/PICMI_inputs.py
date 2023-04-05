@@ -59,11 +59,12 @@ class HybridPICBeamInstability(object):
     n_beam = [0.02, 0.1]
     U_bc = 10.0 # relative drifts between beam and core in Alfven speeds
 
-    def __init__(self, test, dim, resonant):
+    def __init__(self, test, dim, resonant, verbose):
         """Get input parameters for the specific case desired."""
         self.test = test
         self.dim = int(dim)
         self.resonant = resonant
+        self.verbose = verbose or self.test
 
         # sanity check
         assert (dim > 0 and dim < 4), f"{dim}-dimensions not a valid input"
@@ -188,7 +189,7 @@ class HybridPICBeamInstability(object):
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
         simulation.load_balance_intervals = self.total_steps // 20
-        simulation.verbose = self.test
+        simulation.verbose = self.verbose
 
         #######################################################################
         # Field solver and external field                                     #
@@ -442,10 +443,13 @@ parser.add_argument(
     '-r', '--resonant', help='Run the resonant case', required=False,
     action='store_true',
 )
+parser.add_argument(
+    '-v', '--verbose', help='Verbose output', action='store_true',
+)
 args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1]+left
 
 run = HybridPICBeamInstability(
-    test=args.test, dim=args.dim, resonant=args.resonant
+    test=args.test, dim=args.dim, resonant=args.resonant, verbose=args.verbose
 )
 simulation.step()
