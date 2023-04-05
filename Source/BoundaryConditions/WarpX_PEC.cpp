@@ -232,8 +232,6 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev)
 
     const int nComp = rho->nComp();
 
-    amrex::Box tilebox;
-
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
