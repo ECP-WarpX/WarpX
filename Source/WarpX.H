@@ -271,6 +271,10 @@ public:
     //! small time steps.
     static bool galerkin_interpolation;
 
+    //! Flag whether the Verboncoeur correction is applied to the current and charge density
+    //! on the axis when using RZ.
+    static bool verboncoeur_axis_correction;
+
     //! If true, a bilinear filter is used to smooth charge and currents
     static bool use_filter;
     //! If true, the bilinear filtering of charge and currents is done in Fourier space

@@ -160,6 +160,8 @@ int WarpX::current_centering_noz = 2;
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
+bool WarpX::verboncoeur_axis_correction = true;
+
 bool WarpX::use_filter = true;
 bool WarpX::use_kspace_filter       = true;
 bool WarpX::use_filter_compensation = false;
@@ -704,6 +706,10 @@ WarpX::ReadParameters ()
         pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
+
+#ifdef WARPX_DIM_RZ
+        pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
+#endif
 
         utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
 

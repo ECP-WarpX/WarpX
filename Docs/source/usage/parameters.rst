@@ -357,6 +357,11 @@ Domain Boundary Conditions
 * ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
     For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
 
+* ``boundary.verboncoeur_axis_correction`` (`bool`) optional (default `true`)
+    Whether to apply the Verboncoeur correction on the charge and current density on axis when using RZ.
+    For nodal values (rho and Jz), the cell volume for values on axis is calculated as :math:`\pi*\Delta r^2/4`.
+    In `Verboncoeur JCP 174, 421-427 (2001) <https://doi.org/10.1006/jcph.2001.6923>`__, it is shown that using
+    :math:`\pi*\Delta r^2/3` instead will give a uniform density if the particle density is uniform.
 
 Additional PML parameters
 -------------------------
