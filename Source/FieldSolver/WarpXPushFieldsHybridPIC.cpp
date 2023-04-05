@@ -9,6 +9,7 @@
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
+#include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
@@ -17,14 +18,28 @@ using namespace amrex;
 
 void WarpX::HybridPICEvolveFields ()
 {
-    // get requested number of substeps to use
+    // The below deposition is hard coded for a single level simulation
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        finest_level == 0,
+        "Ohm's law E-solve only works with a single level.");
+
+    // Perform charge deposition in component 0 of rho_fp
+    mypc->DepositCharge(rho_fp, 0._rt);
+    // Perform current deposition
+    mypc->DepositCurrent(current_fp, dt[0], 0._rt);
+
+    // Synchronize J and rho:
+    // filter (if used), exchange guard cells, interpolate across MR levels
+    // and apply boundary conditions
+    SyncCurrentAndRho();
+
+    // Get requested number of substeps to use
     int sub_steps = m_hybrid_pic_model->m_substeps / 2;
 
-    // During the particle push and deposition (which already happened) the
-    // charge density and current density were updated. So that at this time we
-    // have rho^{n} in the 0'th index and rho{n+1} in the 1'st index of
-    // `rho_fp`, J_i^{n+1/2} in `current_fp` and J_i^{n-1/2} in
-    // `current_fp_temp`.
+    // During the above deposition the charge and current density were updated
+    // so that, at this time, we have rho^{n} in rho_fp_temp, rho{n+1} in the
+    // 0'th index of `rho_fp`, J_i^{n-1/2} in `current_fp_temp` and J_i^{n+1/2}
+    // in `current_fp`.
 
     // TODO: insert Runge-Kutta integration logic for B update instead
     // of the substep update used here - can test with small timestep using
@@ -91,6 +106,29 @@ void WarpX::HybridPICEvolveFields ()
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 
+    // Average rho^{n} and rho^{n+1} to get rho^{n+1/2}
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        // Loop through the grids, and over the tiles within each grid
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        for ( MFIter mfi(*rho_fp[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+            // Extract field data for this grid/tile
+            Array4<Real const> const& rho_adv = rho_fp[lev]->const_array(mfi);
+            Array4<Real> const& rho = rho_fp_temp[lev]->array(mfi);
+
+            // Extract tilebox for which to loop
+            Box const& tb  = mfi.tilebox(rho_fp_temp[lev]->ixType().toIntVect());
+
+            amrex::ParallelFor(tb,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                    rho(i, j, k) = 0.5 * (rho(i, j, k) + rho_adv(i, j, k));
+                }
+            );
+        }
+    }
+
     // Calculate the electron pressure at t=n+1/2
     CalculateElectronPressure(DtType::SecondHalf);
 
@@ -154,10 +192,13 @@ void WarpX::HybridPICEvolveFields ()
     CalculateCurrentAmpere();
     HybridPICSolveE(DtType::Full);
 
-    // Copy the J_i^{n+1/2} values to current_fp_temp since at the next step
-    // those values will be needed as J_i^{n-1/2}.
+    // Copy the rho^{n+1} values to rho_fp_temp and the J_i^{n+1/2} values to
+    // current_fp_temp since at the next step those values will be needed as
+    // rho^{n} and J_i^{n-1/2}.
     for (int lev = 0; lev <= finest_level; ++lev)
     {
+        MultiFab::Copy(*rho_fp_temp[lev], *rho_fp[lev],
+                        0, 0, 1, rho_fp_temp[lev]->nGrowVect());
         for (int idim = 0; idim < 3; ++idim) {
             MultiFab::Copy(*current_fp_temp[lev][idim], *current_fp[lev][idim],
                            0, 0, 1, current_fp_temp[lev][idim]->nGrowVect());
@@ -214,10 +255,19 @@ void WarpX::HybridPICSolveE (int lev, DtType a_dt_type)
 void WarpX::HybridPICSolveE (int lev, PatchType patch_type, DtType a_dt_type)
 {
     // Solve E field in regular cells
-    if (a_dt_type == DtType::SecondHalf) {
+    // The first half step uses t=n quantities, the second half t=n+1/2
+    // quantities and the full step uses t=n+1 quantities
+    if (a_dt_type == DtType::FirstHalf) {
+        m_fdtd_solver_fp[lev]->HybridPICSolveE(
+            Efield_fp[lev], current_fp_ampere[lev], current_fp_temp[lev],
+            Bfield_fp[lev], rho_fp_temp[lev], electron_pressure_fp[lev],
+            m_edge_lengths[lev], lev, m_hybrid_pic_model, a_dt_type
+        );
+    }
+    else if (a_dt_type == DtType::SecondHalf) {
         m_fdtd_solver_fp[lev]->HybridPICSolveE(
             Efield_fp[lev], current_fp_ampere[lev], current_fp[lev],
-            Bfield_fp[lev], rho_fp[lev], electron_pressure_fp[lev],
+            Bfield_fp[lev], rho_fp_temp[lev], electron_pressure_fp[lev],
             m_edge_lengths[lev], lev, m_hybrid_pic_model, a_dt_type
         );
     }
@@ -255,10 +305,23 @@ void WarpX::CalculateElectronPressure(DtType a_dt_type)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        m_hybrid_pic_model->FillElectronPressureMF(
-            electron_pressure_fp[lev], rho_fp[lev], a_dt_type
-        );
-        ApplyElectronPressureBoundary(lev, PatchType::fine);
-        electron_pressure_fp[lev]->FillBoundary(Geom(lev).periodicity());
+        CalculateElectronPressure(lev, a_dt_type);
     }
+}
+
+void WarpX::CalculateElectronPressure(const int lev, DtType a_dt_type)
+{
+    // The full step uses rho^{n+1}, otherwise use the old or averaged
+    // charge density.
+    if (a_dt_type == DtType::Full) {
+        m_hybrid_pic_model->FillElectronPressureMF(
+            electron_pressure_fp[lev], rho_fp[lev]
+        );
+    } else {
+        m_hybrid_pic_model->FillElectronPressureMF(
+            electron_pressure_fp[lev], rho_fp_temp[lev]
+        );
+    }
+    ApplyElectronPressureBoundary(lev, PatchType::fine);
+    electron_pressure_fp[lev]->FillBoundary(Geom(lev).periodicity());
 }

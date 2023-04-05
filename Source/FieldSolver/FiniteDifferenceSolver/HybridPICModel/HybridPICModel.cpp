@@ -106,8 +106,7 @@ void HybridPICModel::InitData ()
 
 void HybridPICModel::FillElectronPressureMF (
     std::unique_ptr<amrex::MultiFab> const& Pe_field,
-    std::unique_ptr<amrex::MultiFab> const& rho_field,
-    DtType a_dt_type )
+    std::unique_ptr<amrex::MultiFab> const& rho_field )
 {
     const auto n0_ref = m_n0_ref;
     const auto elec_temp = m_elec_temp;
@@ -127,23 +126,8 @@ void HybridPICModel::FillElectronPressureMF (
         const Box& tilebox  = mfi.tilebox();
 
         ParallelFor(tilebox, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-
-            Real rho_val;
-            if (a_dt_type == DtType::FirstHalf) {
-                // use rho^{n}
-                rho_val = rho(i, j, k, 0);
-            }
-            else if (a_dt_type == DtType::SecondHalf) {
-                // use rho^{n+1/2}
-                rho_val = 0.5 * (rho(i, j, k, 0) + rho(i, j, k, 1));
-            }
-            else {
-                // use rho^{n+1}
-                rho_val = rho(i, j, k, 1);
-            }
-
             Pe(i, j, k) = ElectronPressure::get_pressure(
-                n0_ref, elec_temp, gamma, rho_val
+                n0_ref, elec_temp, gamma, rho(i, j, k)
             );
         });
     }

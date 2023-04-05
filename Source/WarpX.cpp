@@ -335,6 +335,7 @@ WarpX::WarpX ()
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         electron_pressure_fp.resize(nlevs_max);
+        rho_fp_temp.resize(nlevs_max);
         current_fp_temp.resize(nlevs_max);
         current_fp_ampere.resize(nlevs_max);
     }
@@ -1849,6 +1850,7 @@ WarpX::ClearLevel (int lev)
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         electron_pressure_fp[lev].reset();
+        rho_fp_temp[lev].reset();
     }
 
     charge_buf[lev].reset();
@@ -2119,16 +2121,21 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 
     // Allocate extra multifabs needed by the kinetic-fluid hybrid algorithm.
+    // The "electron_pressure_fp" multifab stores the electron pressure calculated
+    // from the specified equation of state.
+    // The "rho_fp_temp" multifab is used to store the ion charge density
+    // interpolated or extrapolated to appropriate timesteps.
     // The "current_fp_temp" multifab is used to store the ion current density
     // interpolated or extrapolated to appropriate timesteps.
     // The "current_fp_ampere" multifab stores the total current calculated as
     // the curl of B.
-    // The "electron_pressure_fp" multifab stores the electron pressure calculated
-    // from the specified equation of state.
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         AllocInitMultiFab(electron_pressure_fp[lev], amrex::convert(ba, rho_nodal_flag),
             dm, ncomps, ngRho, tag("electron_pressure_fp"), 0.0_rt);
+
+        AllocInitMultiFab(rho_fp_temp[lev], amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngRho, tag("rho_fp_temp"), 0.0_rt);
 
         AllocInitMultiFab(current_fp_temp[lev][0], amrex::convert(ba, jx_nodal_flag),
             dm, ncomps, ngJ, tag("current_fp_temp[x]"), 0.0_rt);

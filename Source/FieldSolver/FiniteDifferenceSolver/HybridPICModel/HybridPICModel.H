@@ -42,8 +42,7 @@ public:
      */
     void FillElectronPressureMF (
         std::unique_ptr<amrex::MultiFab> const& Pe,
-        std::unique_ptr<amrex::MultiFab> const& rhofield,
-        DtType a_dt_type );
+        std::unique_ptr<amrex::MultiFab> const& rhofield );
 
     /** Gpu Vector with index type of the Jx multifab */
     amrex::GpuArray<int, 3> Jx_IndexType;

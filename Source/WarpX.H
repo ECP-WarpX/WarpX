@@ -622,7 +622,8 @@ public:
      * using the simulation charge density. Used in the Ohm's law solver
      * (kinetic-fluid hybrid model).
      */
-    void CalculateElectronPressure (DtType a_dt_type);
+    void CalculateElectronPressure (                DtType a_dt_type);
+    void CalculateElectronPressure (const int lev,  DtType a_dt_type);
 
     /**
      * \brief
@@ -807,7 +808,8 @@ public:
 
     /**
      * \brief Synchronize J and rho:
-     * filter (if used), exchange guard cells, interpolate across MR levels.
+     * filter (if used), exchange guard cells, interpolate across MR levels
+     * and apply boundary conditions.
      * Contains separate calls to WarpX::SyncCurrent and WarpX::SyncRho.
      */
     void SyncCurrentAndRho ();
@@ -1327,6 +1329,7 @@ private:
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
+    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_temp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > electron_pressure_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;

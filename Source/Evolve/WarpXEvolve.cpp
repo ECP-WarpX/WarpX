@@ -135,21 +135,25 @@ WarpX::Evolve (int numsteps)
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
             }
 
-            // With the hybrid-PIC solver the ion current is interpolated to the
-            // next timestep, so we deposit the ion current now in the "old"
-            // current multifab
+            // The hybrid-PIC algorithm uses the charge and current density
+            // from both the current and previous step when updating the
+            // fields, so we deposit the ion charge and current now in the
+            // temp multifab locations.
             if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
             {
-                mypc->DepositCurrent(current_fp_temp, dt[0], 0.0);
+                mypc->DepositCharge(rho_fp_temp, 0._rt);
+                mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
                 SyncCurrent(current_fp_temp, current_cp);
-                for (int lev = 0; lev < finest_level; lev++) {
+                for (int lev=0; lev <= finest_level; ++lev) {
+                    AddRhoFromFineLevelandSumBoundary(rho_fp_temp, rho_cp, lev, 0, 1);
+                    ApplyRhofieldBoundary(lev, rho_fp_temp[lev].get());
                     // Set current density at PEC boundaries, if needed.
-                    WarpX::GetInstance().ApplyJfieldBoundary(
+                    ApplyJfieldBoundary(
                         lev, current_fp_temp[lev][0].get(),
-                        current_fp_temp[lev][1].get(),
-                        current_fp_temp[lev][2].get()
+                        current_fp_temp[lev][1].get(), current_fp_temp[lev][2].get()
                     );
                 }
+
             }
 
             is_synchronized = false;
@@ -192,21 +196,13 @@ WarpX::Evolve (int numsteps)
         // gather fields, push particles, deposit sources, update fields
 
         ExecutePythonCallback("particleinjection");
-        // Electrostatic case: only gather fields and push particles,
-        // deposition and calculation of fields done further below
-        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None)
+        // Electrostatic or hybrid-PIC case: only gather fields and push
+        // particles, deposition and calculation of fields done further below
+        if ( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
+             electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC )
         {
             const bool skip_deposition = true;
             PushParticlesandDepose(cur_time, skip_deposition);
-        }
-        // hybrid-PIC case: gather fields and push particles
-        else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
-        {
-            const bool skip_deposition = false;
-            PushParticlesandDepose(cur_time, skip_deposition);
-            // Synchronize J and rho:
-            // filter (if used), exchange guard cells, interpolate across MR levels
-            SyncCurrentAndRho();
         }
         // Electromagnetic case: multi-J algorithm
         else if (do_multi_J)
@@ -303,11 +299,13 @@ WarpX::Evolve (int numsteps)
 
         m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
 
-        // Electrostatic solver: particles can move by an arbitrary number of cells
-        if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None )
+        // Electrostatic or hybrid-PIC case: particles can move by an arbitrary number of cells
+        if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC )
         {
             mypc->Redistribute();
-        } else
+        }
+        else
         {
             // Electromagnetic solver: due to CFL condition, particles can
             // only move by one or two cells per time step
@@ -444,6 +442,7 @@ WarpX::OneStep_nosub (Real cur_time)
 
     // Synchronize J and rho:
     // filter (if used), exchange guard cells, interpolate across MR levels
+    // and apply boundary conditions
     SyncCurrentAndRho();
 
     // At this point, J is up-to-date inside the domain, and E and B are

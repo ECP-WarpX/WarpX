@@ -276,8 +276,8 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     const auto eta = hybrid_model->m_eta;
     const auto rho_floor = hybrid_model->m_n_floor * PhysConst::q_e;
 
-    // Index type required for calling ablastr::coarsen::sample::Interp to interpolate fields
-    // from their respective staggering to the Ex, Ey, Ez locations
+    // Index type required for interpolating fields from their respective
+    // staggering to the Ex, Ey, Ez locations
     amrex::GpuArray<int, 3> const& Ex_stag = hybrid_model->Ex_IndexType;
     amrex::GpuArray<int, 3> const& Ey_stag = hybrid_model->Ey_IndexType;
     amrex::GpuArray<int, 3> const& Ez_stag = hybrid_model->Ez_IndexType;
@@ -435,27 +435,8 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 // Skip if this cell is fully covered by embedded boundaries
                 if (lx(i, j, k) <= 0) return;
 #endif
-                // allocate variable for density
-                Real rho_val = 0._rt;
-
-                // get the appropriate charge density in space and time
-                if (a_dt_type == DtType::FirstHalf) {
-                    // use rho^{n}
-                    rho_val = ablastr::coarsen::sample::Interp(
-                        rho, nodal, Ex_stag, coarsen, i, j, k, 0
-                    );
-                } else if (a_dt_type == DtType::SecondHalf) {
-                    // use rho^{n+1/2}
-                    rho_val = 0.5_rt * (
-                        ablastr::coarsen::sample::Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 0)
-                        + ablastr::coarsen::sample::Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 1)
-                    );
-                } else if (a_dt_type == DtType::Full) {
-                    // use rho^{n+1}
-                    rho_val = ablastr::coarsen::sample::Interp(
-                        rho, nodal, Ex_stag, coarsen, i, j, k, 1
-                    );
-                }
+                // Interpolate to get the appropriate charge density in space
+                Real rho_val = ablastr::coarsen::sample::Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 0);
 
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) rho_val = rho_floor;
@@ -484,27 +465,8 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
 #endif
 #endif
-                // allocate variable for density
-                Real rho_val = 0._rt;
-
-                // get the appropriate charge density in space and time
-                if (a_dt_type == DtType::FirstHalf) {
-                    // use rho^{n}
-                    rho_val = ablastr::coarsen::sample::Interp(
-                        rho, nodal, Ey_stag, coarsen, i, j, k, 0
-                    );
-                } else if (a_dt_type == DtType::SecondHalf) {
-                    // use rho^{n+1/2}
-                    rho_val = 0.5_rt * (
-                        ablastr::coarsen::sample::Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 0)
-                        + ablastr::coarsen::sample::Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 1)
-                    );
-                } else if (a_dt_type == DtType::Full) {
-                    // use rho^{n+1}
-                    rho_val = ablastr::coarsen::sample::Interp(
-                        rho, nodal, Ey_stag, coarsen, i, j, k, 1
-                    );
-                }
+                // Interpolate to get the appropriate charge density in space
+                Real rho_val = ablastr::coarsen::sample::Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 0);
 
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) rho_val = rho_floor;
@@ -528,27 +490,8 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 // Skip field solve if this cell is fully covered by embedded boundaries
                 if (lz(i,j,k) <= 0) return;
 #endif
-                // allocate variable for density
-                Real rho_val = 0._rt;
-
-                // get the appropriate charge density in space and time
-                if (a_dt_type == DtType::FirstHalf) {
-                    // use rho^{n}
-                    rho_val = ablastr::coarsen::sample::Interp(
-                        rho, nodal, Ez_stag, coarsen, i, j, k, 0
-                    );
-                } else if (a_dt_type == DtType::SecondHalf) {
-                    // use rho^{n+1/2}
-                    rho_val = 0.5_rt * (
-                        ablastr::coarsen::sample::Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0)
-                        + ablastr::coarsen::sample::Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 1)
-                    );
-                } else if (a_dt_type == DtType::Full) {
-                    // use rho^{n+1}
-                    rho_val = ablastr::coarsen::sample::Interp(
-                        rho, nodal, Ez_stag, coarsen, i, j, k, 1
-                    );
-                }
+                // Interpolate to get the appropriate charge density in space
+                Real rho_val = ablastr::coarsen::sample::Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0);
 
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) rho_val = rho_floor;
