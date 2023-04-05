@@ -25,8 +25,8 @@ void WarpX::HybridPICEvolveFields ()
 
     // Perform charge deposition in component 0 of rho_fp
     mypc->DepositCharge(rho_fp, 0._rt);
-    // Perform current deposition
-    mypc->DepositCurrent(current_fp, dt[0], 0._rt);
+    // Perform current deposition at t_{n+1/2}
+    mypc->DepositCurrent(current_fp, dt[0], -0.5_rt * dt[0]);
 
     // Synchronize J and rho:
     // filter (if used), exchange guard cells, interpolate across MR levels
@@ -41,9 +41,9 @@ void WarpX::HybridPICEvolveFields ()
     // 0'th index of `rho_fp`, J_i^{n-1/2} in `current_fp_temp` and J_i^{n+1/2}
     // in `current_fp`.
 
-    // TODO: insert Runge-Kutta integration logic for B update instead
-    // of the substep update used here - can test with small timestep using
-    // this simpler implementation
+    // TODO: To speed up the algorithm insert Runge-Kutta integration logic
+    // for B update instead of the substep update used here - can test with
+    // small timestep using this simpler implementation
 
     // Note: E^{n} is recalculated with the accurate J_i^{n} since at the end
     // of the last step we had to "guess" J_i^{n}. It also needs to be
@@ -52,43 +52,13 @@ void WarpX::HybridPICEvolveFields ()
     // Firstly J_i^{n} is calculated as the average of J_i^{n-1/2} and J_i^{n+1/2}
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        // Loop through the grids, and over the tiles within each grid
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
-        for ( MFIter mfi(*current_fp[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-
-            // Extract field data for this grid/tile
-            Array4<Real const> const& Jx_adv = current_fp[lev][0]->const_array(mfi);
-            Array4<Real const> const& Jy_adv = current_fp[lev][1]->const_array(mfi);
-            Array4<Real const> const& Jz_adv = current_fp[lev][2]->const_array(mfi);
-            Array4<Real> const& Jx = current_fp_temp[lev][0]->array(mfi);
-            Array4<Real> const& Jy = current_fp_temp[lev][1]->array(mfi);
-            Array4<Real> const& Jz = current_fp_temp[lev][2]->array(mfi);
-
-            // Extract tileboxes for which to loop
-            Box const& tjx  = mfi.tilebox(current_fp_temp[lev][0]->ixType().toIntVect());
-            Box const& tjy  = mfi.tilebox(current_fp_temp[lev][1]->ixType().toIntVect());
-            Box const& tjz  = mfi.tilebox(current_fp_temp[lev][2]->ixType().toIntVect());
-
-            amrex::ParallelFor(tjx, tjy, tjz,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    Jx(i, j, k) = 0.5 * (Jx(i, j, k) + Jx_adv(i, j, k));
-                },
-
-                [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    Jy(i, j, k) = 0.5 * (Jy(i, j, k) + Jy_adv(i, j, k));
-                },
-
-                [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    Jz(i, j, k) = 0.5 * (Jz(i, j, k) + Jz_adv(i, j, k));
-                }
-            );
-        }
-
-        // fill ghost cells with appropriate values
         for (int idim = 0; idim < 3; ++idim) {
-            current_fp_temp[lev][idim]->FillBoundary(Geom(lev).periodicity());
+            MultiFab::LinComb(
+                *current_fp_temp[lev][idim],
+                0.5_rt, *current_fp_temp[lev][idim], 0,
+                0.5_rt, *current_fp[lev][idim], 0,
+                0, 1, current_fp_temp[lev][idim]->nGrowVect()
+            );
         }
     }
 
@@ -106,27 +76,13 @@ void WarpX::HybridPICEvolveFields ()
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 
-    // Average rho^{n} and rho^{n+1} to get rho^{n+1/2}
+    // Average rho^{n} and rho^{n+1} to get rho^{n+1/2} in rho_fp_temp
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        // Loop through the grids, and over the tiles within each grid
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
-        for ( MFIter mfi(*rho_fp[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-            // Extract field data for this grid/tile
-            Array4<Real const> const& rho_adv = rho_fp[lev]->const_array(mfi);
-            Array4<Real> const& rho = rho_fp_temp[lev]->array(mfi);
-
-            // Extract tilebox for which to loop
-            Box const& tb  = mfi.tilebox(rho_fp_temp[lev]->ixType().toIntVect());
-
-            amrex::ParallelFor(tb,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    rho(i, j, k) = 0.5 * (rho(i, j, k) + rho_adv(i, j, k));
-                }
-            );
-        }
+        MultiFab::LinComb(
+            *rho_fp_temp[lev], 0.5_rt, *rho_fp_temp[lev], 0,
+            0.5_rt, *rho_fp[lev], 0, 0, 1, rho_fp_temp[lev]->nGrowVect()
+        );
     }
 
     // Calculate the electron pressure at t=n+1/2
@@ -141,52 +97,23 @@ void WarpX::HybridPICEvolveFields ()
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 
-    // Calculate the electron pressure at t=n+1
-    CalculateElectronPressure(DtType::Full);
-
-    // Extrapolate the ion current density to t=n+1 to calculate a projected
-    // E at t=n+1
+    // Extrapolate the ion current density to t=n+1 using
+    // J_i^{n+1} = 1/2 * J_i^{n-1/2} + 3/2 * J_i^{n+1/2}, and recalling that
+    // now current_fp_temp = J_i^{n} = 1/2 * (J_i^{n-1/2} + J_i^{n+1/2})
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        // Loop through the grids, and over the tiles within each grid
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
-        for ( MFIter mfi(*current_fp[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-
-            // Extract field data for this grid/tile
-            Array4<Real const> const& Jx_adv = current_fp[lev][0]->const_array(mfi);
-            Array4<Real const> const& Jy_adv = current_fp[lev][1]->const_array(mfi);
-            Array4<Real const> const& Jz_adv = current_fp[lev][2]->const_array(mfi);
-            Array4<Real> const& Jx = current_fp_temp[lev][0]->array(mfi);
-            Array4<Real> const& Jy = current_fp_temp[lev][1]->array(mfi);
-            Array4<Real> const& Jz = current_fp_temp[lev][2]->array(mfi);
-
-            // Extract tileboxes for which to loop
-            Box const& tjx  = mfi.tilebox(current_fp_temp[lev][0]->ixType().toIntVect());
-            Box const& tjy  = mfi.tilebox(current_fp_temp[lev][1]->ixType().toIntVect());
-            Box const& tjz  = mfi.tilebox(current_fp_temp[lev][2]->ixType().toIntVect());
-
-            amrex::ParallelFor(tjx, tjy, tjz,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    Jx(i, j, k) = 2.0 * Jx_adv(i, j, k) - Jx(i, j, k);
-                },
-
-                [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    Jy(i, j, k) = 2.0 * Jy_adv(i, j, k) - Jy(i, j, k);
-                },
-
-                [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    Jz(i, j, k) = 2.0 * Jz_adv(i, j, k) - Jz(i, j, k);
-                }
+        for (int idim = 0; idim < 3; ++idim) {
+            MultiFab::LinComb(
+                *current_fp_temp[lev][idim],
+                -1._rt, *current_fp_temp[lev][idim], 0,
+                2._rt, *current_fp[lev][idim], 0,
+                0, 1, current_fp_temp[lev][idim]->nGrowVect()
             );
         }
-
-        // fill ghost cells with appropriate values
-        for (int idim = 0; idim < 3; ++idim) {
-            current_fp_temp[lev][idim]->FillBoundary(Geom(lev).periodicity());
-        }
     }
+
+    // Calculate the electron pressure at t=n+1
+    CalculateElectronPressure(DtType::Full);
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     CalculateCurrentAmpere();
