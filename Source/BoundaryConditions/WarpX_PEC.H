@@ -355,7 +355,7 @@ using namespace amrex;
                     ? is_boundary_PEC(fbndry_lo, idim)
                     : is_boundary_PEC(fbndry_hi, idim) )) continue;
 
-                // Mirror guard cell outside the domain by "ig" number cells,
+                // Mirror guard cell outside the domain by "ig" number of cells,
                 // in direction, idim.
                 // Note: For nodal fields ig=0 is on the boundary and will be
                 // handled in `SetRhoFieldOnPEC` below. For cell-centered
@@ -423,7 +423,6 @@ using namespace amrex;
         // Loop over all the dimensions
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             // Loop over sides, iside = 0 (lo), iside = 1 (hi)
-            // Loop over sides, iside = 0 (lo), iside = 1 (hi)
             for (int iside = 0; iside < 2; ++iside) {
                 // check if the boundary in this direction is a PEC, otherwise
                 // continue to the next direction
@@ -431,7 +430,7 @@ using namespace amrex;
                     ? is_boundary_PEC(fbndry_lo, idim)
                     : is_boundary_PEC(fbndry_hi, idim) )) continue;
 
-                // Mirror guard cell outside the domain by "ig" number cells,
+                // Mirror guard cell outside the domain by "ig" number of cells,
                 // in direction, idim.
                 // Note: For nodal fields ig=0 is on the boundary.
                 const int ig = ( (iside == 0)
@@ -518,7 +517,7 @@ using namespace amrex;
                 const bool is_tangent_to_PEC = ( ( icomp == idim) ? false : true );
 #endif
 
-                // Mirror guard cell outside the domain by "ig" number cells, in
+                // Mirror guard cell outside the domain by "ig" number of cells, in
                 // direction, idim.
                 // Note: For nodal fields ig=0 is on the boundary and will be
                 // handled in `SetJFieldOnPEC` below. For cell-centered
@@ -617,7 +616,7 @@ using namespace amrex;
                 const bool is_tangent_to_PEC = ( ( icomp == idim) ? false : true );
 #endif
 
-                // Mirror guard cell outside the domain by "ig" number cells,
+                // Mirror guard cell outside the domain by "ig" number of cells,
                 // in direction, idim.
                 // Note: For nodal fields ig=0 is on the boundary.
                 const int ig = ( (iside == 0)
