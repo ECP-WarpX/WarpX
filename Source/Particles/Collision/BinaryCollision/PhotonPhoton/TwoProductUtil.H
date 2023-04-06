@@ -1,4 +1,4 @@
-/* Copyright 2022 Remi Lehe
+/* Copyright 2023 Arianna Formenti
  *
  * This file is part of WarpX.
  *
