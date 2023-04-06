@@ -71,7 +71,8 @@ public:
         utils::parser::queryWithParser(
             pp_collision_name, "probability_threshold", m_probability_threshold);
         // default probability target_value
-        m_probability_target_value = 0.002_prt;
+        constexpr auto default_probability_target_value = 0.002_prt;
+        m_probability_target_value = default_probability_target_value;
         utils::parser::queryWithParser(
             pp_collision_name, "probability_target_value",
             m_probability_target_value);
