@@ -43,13 +43,6 @@ def check_momentum_conservation():
 def check_charge_conservation():
     rho_max = np.loadtxt('diags/reducedfiles/RhoMaximum.txt')[:,2]
     assert(np.all(np.isclose(rho_max, rho_max[0], rtol=rtol, atol=0.)))
-    #series = io.Series("diags/fields_particles/openpmd_%T.bp",io.Access.read_only)
-    #iterations = np.asarray(series.iterations)
-    #start = series.iterations[iterations[0]]
-    #rho_start = start.meshes["rho"][io.Mesh_Record_Component.SCALAR].load_chunk()
-    #end = series.iterations[iterations[-1]]
-    #rho_end = end.meshes["rho"][io.Mesh_Record_Component.SCALAR].load_chunk()
-    #series.flush()
 
     filename_end = sys.argv[1]
     filename_start = filename_end[:-4] + '0000'
