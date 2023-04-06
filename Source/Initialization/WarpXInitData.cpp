@@ -1342,7 +1342,7 @@ WarpX::ReadExternalFieldFromFile (
     amrex::Real file_dz = d[1];
 #elif defined(WARPX_DIM_3D)
     amrex::Real file_dx = d[0];
-    amrex::Real file_dy = d[1]
+    amrex::Real file_dy = d[1];
     amrex::Real file_dz = d[2];
 #endif
 
@@ -1451,7 +1451,7 @@ WarpX::ReadExternalFieldFromFile (
                     f110 = fc_array(iz  , iy+1, ix+1),
                     f111 = fc_array(iz+1, iy+1, ix+1);
                 mffab(i,j,k) = utils::algorithms::trilinear_interp<double>
-                    (xx0, xx0+d0, xx1, xx1+d1, xx2, xx2+d2,
+                    (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
                      f000, f001, f010, f011, f100, f101, f110, f111,
                      x0, x1, x2);
 #endif
