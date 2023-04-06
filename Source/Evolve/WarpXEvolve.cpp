@@ -72,6 +72,7 @@ WarpX::Evolve (int numsteps)
     }
 
     bool early_params_checked = false; // check typos in inputs after step 1
+    bool exit_loop_due_to_interrupt_signal = false;
 
     static Real evolve_time = 0;
 
@@ -367,7 +368,8 @@ WarpX::Evolve (int numsteps)
                       << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n\n";
         }
 
-        if (cur_time >= stop_time - 1.e-3*dt[0] || SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK)) {
+        exit_loop_due_to_interrupt_signal = SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK);
+        if (cur_time >= stop_time - 1.e-3*dt[0] || exit_loop_due_to_interrupt_signal) {
             break;
         }
 
@@ -376,7 +378,8 @@ WarpX::Evolve (int numsteps)
     // This if statement is needed for PICMI, which allows the Evolve routine to be
     // called multiple times, otherwise diagnostics will be done at every call,
     // regardless of the diagnostic period parameter provided in the inputs.
-    if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])) {
+    if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])
+        || exit_loop_due_to_interrupt_signal) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
     }
 }

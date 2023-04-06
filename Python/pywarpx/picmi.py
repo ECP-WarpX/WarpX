@@ -1513,6 +1513,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         Controls the random numbers used for initialization.
         This parameter should only be used for testing and continuous integration.
 
+    warpx_random_seed: string or int, optional
+        (See documentation)
+
     warpx_do_dynamic_scheduling: bool, default=True
         Whether to do dynamic scheduling with OpenMP
 
@@ -1546,6 +1549,12 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     warpx_amr_restart: string, optional
         The name of the restart to use
+
+    warpx_amrex_the_arena_is_managed: bool, optional
+        Whether to use managed memory in the AMReX Arena
+
+    warpx_amrex_the_arena_init_size: long int, optional
+        The amount of memory in bytes to allocate in the Arena.
 
     warpx_zmax_plasma_to_compute_max_step: float, optional
         Sets the simulation run time based on the maximum z value
@@ -1586,6 +1595,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.field_centering_order = kw.pop('warpx_field_centering_order', None)
         self.current_centering_order = kw.pop('warpx_current_centering_order', None)
         self.serialize_initial_conditions = kw.pop('warpx_serialize_initial_conditions', None)
+        self.random_seed = kw.pop('warpx_random_seed', None)
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
         self.load_balance_intervals = kw.pop('warpx_load_balance_intervals', None)
         self.load_balance_efficiency_ratio_threshold = kw.pop('warpx_load_balance_efficiency_ratio_threshold', None)
@@ -1597,6 +1607,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
         self.amr_restart = kw.pop('warpx_amr_restart', None)
+        self.amrex_the_arena_is_managed = kw.pop('warpx_amrex_the_arena_is_managed', None)
+        self.amrex_the_arena_init_size = kw.pop('warpx_amrex_the_arena_init_size', None)
         self.zmax_plasma_to_compute_max_step = kw.pop('warpx_zmax_plasma_to_compute_max_step', None)
         self.compute_max_step_from_btd = kw.pop('warpx_compute_max_step_from_btd', None)
 
@@ -1644,6 +1656,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.do_multi_J = self.do_multi_J
         pywarpx.warpx.do_multi_J_n_depositions = self.do_multi_J_n_depositions
         pywarpx.warpx.serialize_initial_conditions = self.serialize_initial_conditions
+        pywarpx.warpx.random_seed = self.random_seed
+
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
 
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
@@ -1711,6 +1725,12 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         if self.amr_restart:
             pywarpx.amr.restart = self.amr_restart
+
+        if self.amrex_the_arena_is_managed is not None:
+            pywarpx.amrex.the_arena_is_managed = self.amrex_the_arena_is_managed
+
+        if self.amrex_the_arena_init_size is not None:
+            pywarpx.amrex.the_arena_init_size = self.amrex_the_arena_init_size
 
     def initialize_warpx(self, mpi_comm=None):
         if self.warpx_initialized:

@@ -160,6 +160,8 @@ int WarpX::current_centering_noz = 2;
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
+bool WarpX::verboncoeur_axis_correction = true;
+
 bool WarpX::use_filter = true;
 bool WarpX::use_kspace_filter       = true;
 bool WarpX::use_filter_compensation = false;
@@ -171,6 +173,14 @@ int WarpX::num_mirrors = 0;
 
 utils::parser::IntervalsParser WarpX::sort_intervals;
 amrex::IntVect WarpX::sort_bin_size(AMREX_D_DECL(1,1,1));
+
+#if defined(AMREX_USE_CUDA)
+bool WarpX::sort_particles_for_deposition = true;
+#else
+bool WarpX::sort_particles_for_deposition = false;
+#endif
+
+amrex::IntVect WarpX::sort_idx_type(AMREX_D_DECL(0,0,0));
 
 bool WarpX::do_dynamic_scheduling = true;
 
@@ -697,6 +707,10 @@ WarpX::ReadParameters ()
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
 
+#ifdef WARPX_DIM_RZ
+        pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
+#endif
+
         utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
@@ -1165,6 +1179,18 @@ WarpX::ReadParameters ()
             for (int i=0; i<AMREX_SPACEDIM; i++)
                 sort_bin_size[i] = vect_sort_bin_size[i];
         }
+
+        pp_warpx.query("sort_particles_for_deposition",sort_particles_for_deposition);
+        Vector<int> vect_sort_idx_type(AMREX_SPACEDIM,0);
+        bool sort_idx_type_is_specified =
+            utils::parser::queryArrWithParser(
+                pp_warpx, "sort_idx_type",
+                vect_sort_idx_type, 0, AMREX_SPACEDIM);
+        if (sort_idx_type_is_specified){
+            for (int i=0; i<AMREX_SPACEDIM; i++)
+                sort_idx_type[i] = vect_sort_idx_type[i];
+        }
+
     }
 
     {

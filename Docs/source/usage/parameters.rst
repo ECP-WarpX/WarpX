@@ -193,6 +193,28 @@ We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal
 
    The ``FPE`` signal should not be overwritten in WarpX, as it is `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_warpx>`.
 
+.. tip::
+
+   For example, the following logic can be added to `Slurm batch scripts <https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:running_jobs_slurm:signals>`__ (`signal name to number mapping here <https://en.wikipedia.org/wiki/Signal_(IPC)#Default_action>`__) to gracefully shut down 6 min prior to walltime.
+   If you have a checkpoint diagnostics in your inputs file, this automatically will write a checkpoint due to the default ``<diag_name>.dump_last_timestep = 1`` option in WarpX.
+
+   .. code-block:: bash
+
+      #SBATCH --signal=B:1@360
+
+      srun ...                   \
+        warpx.break_signals=HUP  \
+        > output.txt
+
+   For `LSF batch systems <https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=options-wa>`__, the equivalent job script lines are:
+
+   .. code-block:: bash
+
+      #BSUB -wa 'HUP' -wt '6'
+
+      jsrun ...                  \
+        warpx.break_signals=HUP  \
+        > output.txt
 
 .. _running-cpp-parameters-box:
 
@@ -335,6 +357,11 @@ Domain Boundary Conditions
 * ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
     For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
 
+* ``boundary.verboncoeur_axis_correction`` (`bool`) optional (default `true`)
+    Whether to apply the Verboncoeur correction on the charge and current density on axis when using RZ.
+    For nodal values (rho and Jz), the cell volume for values on axis is calculated as :math:`\pi*\Delta r^2/4`.
+    In `Verboncoeur JCP 174, 421-427 (2001) <https://doi.org/10.1006/jcph.2001.6923>`__, it is shown that using
+    :math:`\pi*\Delta r^2/3` instead will give a uniform density if the particle density is uniform.
 
 Additional PML parameters
 -------------------------
@@ -683,10 +710,10 @@ Particle initialization
     * ``external_file``: Inject macroparticles with properties (mass, charge, position, and momentum - :math:`\gamma \beta m c`) read from an external openPMD file.
       With it users can specify the additional arguments:
       ``<species_name>.injection_file`` (`string`) openPMD file name and
-      ``<species_name>.q_tot`` (`double`) optional (default is ``q_tot=0`` and no re-scaling is done, ``weight=q_p``) when specified it is used to re-scale the weight of externally loaded ``N`` physical particles, each of charge ``q_p``, to inject macroparticles of ``weight=<species_name>.q_tot/q_p/N``.
       ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
+      Warning: ``q_tot!=0`` is not supported with the ``external_file`` injection style. If a value is provided, it is ignored and no re-scaling is done.
       The external file must include the species ``openPMD::Record`` labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
       If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ``<species_name>.charge`` or ``<species_name>.species_type``).
       The ``external_file`` option is currently implemented for 2D, 3D and RZ geometries, with record components in the cartesian coordinates ``(x,y,z)`` for 3D and RZ, and ``(x,z)`` for 2D.
@@ -2049,12 +2076,26 @@ Additional parameters
 
 * ``warpx.sort_intervals`` (`string`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
      Using the `Intervals parser`_ syntax, this string defines the timesteps at which particles are
-     sorted by bin.
+     sorted.
      If ``<=0``, do not sort particles.
      It is turned on on GPUs for performance reasons (to improve memory locality).
 
+* ``warpx.sort_particles_for_deposition`` (`bool`) optional (default: ``true`` for the CUDA backend, otherwise ``false``)
+     This option controls the type of sorting used if particle sorting is turned on, i.e. if ``sort_intervals`` is not ``<=0``.
+     If ``true``, particles will be sorted by cell to optimize deposition with many particles per cell, in the order x -> y -> z -> ppc.
+     If ``false``, particles will be sorted by bin, using the ``sort_bin_size`` parameter below, in the order ppc -> x -> y -> z.
+     ``true`` is recommend for best performance on NVIDIA GPUs, especially if there are many particles per cell.
+
+* ``warpx.sort_idx_type`` (list of `int`) optional (default: ``0 0 0``)
+    This controls the type of grid used to sort the particles when ``sort_particles_for_deposition`` is ``true``. Possible values are:
+    ``idx_type = {0, 0, 0}``: Sort particles to a cell centered grid
+    ``idx_type = {1, 1, 1}``: Sort particles to a node centered grid
+    ``idx_type = {2, 2, 2}``: Compromise between a cell and node centered grid.
+     In 2D (XZ and RZ), only the first two elements are read.
+     In 1D, only the first element is read.
+
 * ``warpx.sort_bin_size`` (list of `int`) optional (default ``1 1 1``)
-     If ``sort_intervals`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
+     If ``sort_intervals`` is activated and ``sort_particles_for_deposition`` is ``false``, particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
 
 .. _running-cpp-parameters-diagnostics:
@@ -2139,18 +2180,18 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
 
 * ``<diag_name>.openpmd_encoding`` (optional, ``v`` (variable based), ``f`` (file based) or ``g`` (group based) ) only read if ``<diag_name>.format = openpmd``.
-     openPMD `file output encoding <https://openpmd-api.readthedocs.io/en/0.14.0/usage/concepts.html#iteration-and-series>`__.
+     openPMD `file output encoding <https://openpmd-api.readthedocs.io/en/0.15.1/usage/concepts.html#iteration-and-series>`__.
      File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
-     ``variable based`` is an `experimental feature with ADIOS2 <https://openpmd-api.readthedocs.io/en/0.14.0/backends/adios2.html#experimental-new-adios2-schema>`__ and not supported for back-transformed diagnostics.
+     ``variable based`` is an `experimental feature with ADIOS2 <https://openpmd-api.readthedocs.io/en/0.15.1/backends/adios2.html#experimental-new-adios2-schema>`__ and not supported for back-transformed diagnostics.
      Default: ``f`` (full diagnostics)
 
 * ``<diag_name>.adios2_operator.type`` (``zfp``, ``blosc``) optional,
-    `ADIOS2 I/O operator type <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    `ADIOS2 I/O operator type <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
 
 * ``<diag_name>.adios2_operator.parameters.*`` optional,
-    `ADIOS2 I/O operator parameters <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    `ADIOS2 I/O operator parameters <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
 
-    A typical example for `ADIOS2 output using lossless compression <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ with ``blosc`` using the ``zstd`` compressor and 6 CPU treads per MPI Rank (e.g. for a `GPU run with spare CPU resources <https://arxiv.org/abs/1706.00522>`__):
+    A typical example for `ADIOS2 output using lossless compression <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ with ``blosc`` using the ``zstd`` compressor and 6 CPU treads per MPI Rank (e.g. for a `GPU run with spare CPU resources <https://arxiv.org/abs/1706.00522>`__):
 
     .. code-block:: text
 
@@ -2169,11 +2210,11 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
         <diag_name>.adios2_operator.parameters.precision = 3
 
 * ``<diag_name>.adios2_engine.type`` (``bp4``, ``sst``, ``ssc``, ``dataman``) optional,
-    `ADIOS2 Engine type <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    `ADIOS2 Engine type <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
     See full list of engines at `ADIOS2 readthedocs <https://adios2.readthedocs.io/en/latest/engines/engines.html>`__
 
 * ``<diag_name>.adios2_engine.parameters.*`` optional,
-    `ADIOS2 Engine parameters <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    `ADIOS2 Engine parameters <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
 
     An example for parameters for the BP engine are setting the number of writers (``NumAggregators``), transparently redirecting data to burst buffers etc.
     A detailed list of engine-specific parameters are available at the official `ADIOS2 documentation <https://adios2.readthedocs.io/en/latest/engines/engines.html>`__

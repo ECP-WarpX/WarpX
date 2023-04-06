@@ -98,6 +98,7 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
+    MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
@@ -270,6 +271,10 @@ public:
     //! small time steps.
     static bool galerkin_interpolation;
 
+    //! Flag whether the Verboncoeur correction is applied to the current and charge density
+    //! on the axis when using RZ.
+    static bool verboncoeur_axis_correction;
+
     //! If true, a bilinear filter is used to smooth charge and currents
     static bool use_filter;
     //! If true, the bilinear filtering of charge and currents is done in Fourier space
@@ -306,6 +311,11 @@ public:
 
     static utils::parser::IntervalsParser sort_intervals;
     static amrex::IntVect sort_bin_size;
+
+    //! If true, particles will be sorted in the order x -> y -> z -> ppc for faster deposition
+    static bool sort_particles_for_deposition;
+    //! Specifies the type of grid used for the above sorting, i.e. cell-centered, nodal, or mixed
+    static amrex::IntVect sort_idx_type;
 
     static bool do_subcycling;
     static bool do_multi_J;

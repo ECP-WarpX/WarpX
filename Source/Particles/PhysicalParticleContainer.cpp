@@ -586,7 +586,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
         auto const npart = ps["position"]["x"].getExtent()[0];
-#if !defined(WARPX_DIM_1D_Z)
+#if !defined(WARPX_DIM_1D_Z)  // 2D, 3D, and RZ
         std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
         double const position_unit_x = ps["position"]["x"].unitSI();
 #endif
@@ -596,6 +596,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         double const momentum_unit_x = ps["momentum"]["x"].unitSI();
         std::shared_ptr<ParticleReal> ptr_uz = ps["momentum"]["z"].loadChunk<ParticleReal>();
         double const momentum_unit_z = ps["momentum"]["z"].unitSI();
+        std::shared_ptr<ParticleReal> ptr_w = ps["weighting"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>();
+        double const w_unit = ps["weighting"][openPMD::RecordComponent::SCALAR].unitSI();
+
 #   if !(defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z))
         std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
         double const position_unit_y = ps["position"]["y"].unitSI();
@@ -604,32 +607,23 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         double momentum_unit_y = 1.0;
         if (ps["momentum"].contains("y")) {
             ptr_uy = ps["momentum"]["y"].loadChunk<ParticleReal>();
-             momentum_unit_y = ps["momentum"]["y"].unitSI();
+            momentum_unit_y = ps["momentum"]["y"].unitSI();
         }
         series->flush();  // shared_ptr data can be read now
 
-        ParticleReal weight = 1.0_prt;  // base standard: no info means "real" particles
         if (q_tot != 0.0) {
-            weight = std::abs(q_tot) / ( std::abs(charge) * ParticleReal(npart) );
-            if (ps.contains("weighting")) {
-                std::stringstream ss;
-                ss << "Both '" << ps_name << ".q_tot' and '"
-                        << ps_name << ".injection_file' specify a total charge.\n'"
-                        << ps_name << ".q_tot' will take precedence.";
-                ablastr::warn_manager::WMRecordWarning("Species", ss.str());
-            }
-        }
-        // ED-PIC extension?
-        else if (ps.contains("weighting")) {
-            // TODO: Add ASSERT_WITH_MESSAGE to test if weighting is a constant record
-            // TODO: Add ASSERT_WITH_MESSAGE for macroWeighted value in ED-PIC
-            ParticleReal w = ps["weighting"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>().get()[0];
-            double const w_unit = ps["weighting"][openPMD::RecordComponent::SCALAR].unitSI();
-            weight = w * w_unit;
+            std::stringstream warnMsg;
+            warnMsg << " Loading particle species from file. " << ps_name << ".q_tot is ignored.";
+            ablastr::warn_manager::WMRecordWarning("AddPlasmaFromFile",
+               warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
         }
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
+
+            ParticleReal const weight = ptr_w.get()[i]*w_unit;
+
 #if !defined(WARPX_DIM_1D_Z)
+
             ParticleReal const x = ptr_x.get()[i]*position_unit_x;
 #else
             ParticleReal const x = 0.0_prt;
@@ -2525,8 +2519,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>>{},
                                {exteb_runtime_flag},
-                               np, [=,getExternalEB=getExternalEB]
-                               AMREX_GPU_DEVICE (long ip, auto exteb_control)
+                               np, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control)
             {
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
@@ -2544,6 +2537,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 }
 
                 // Externally applied E and B-field in Cartesian co-ordinates
+                [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
                 if constexpr (exteb_control == has_exteb) {
                     getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
                 }
@@ -2750,9 +2744,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
                                 CompileTimeOptions<no_qed  ,has_qed>>{},
                        {exteb_runtime_flag, qed_runtime_flag},
-                       np_to_push, [=,getExternalEB=getExternalEB]
-                       AMREX_GPU_DEVICE (long ip, auto exteb_control,
-                                         [[maybe_unused]] auto qed_control)
+                       np_to_push, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
+                                                         [[maybe_unused]] auto qed_control)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
@@ -2779,6 +2772,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                            nox, galerkin_interpolation);
         }
 
+        [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
         if constexpr (exteb_control == has_exteb) {
             getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
         }
@@ -2814,14 +2808,14 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #endif
 
 #ifdef WARPX_QED
-        auto foo_local_has_quantum_sync = local_has_quantum_sync;
-        auto foo_podq = p_optical_depth_QSR;
-        auto& evolve_opt_fn = evolve_opt; // have to do all these for nvcc
+        [[maybe_unused]] auto foo_local_has_quantum_sync = local_has_quantum_sync;
+        [[maybe_unused]] auto foo_podq = p_optical_depth_QSR;
+        [[maybe_unused]] auto& foo_evolve_opt = evolve_opt; // have to do all these for nvcc
         if constexpr (qed_control == has_qed) {
-            if (foo_local_has_quantum_sync) {
-                evolve_opt_fn(ux[ip], uy[ip], uz[ip],
-                              Exp, Eyp, Ezp,Bxp, Byp, Bzp,
-                              dt, foo_podq[ip]);
+            if (local_has_quantum_sync) {
+                evolve_opt(ux[ip], uy[ip], uz[ip],
+                           Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                           dt, p_optical_depth_QSR[ip]);
             }
         }
 #endif

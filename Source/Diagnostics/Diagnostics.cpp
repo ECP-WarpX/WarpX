@@ -295,6 +295,85 @@ Diagnostics::BaseReadParameters ()
 
 
 void
+Diagnostics::InitDataBeforeRestart ()
+{
+    // initialize member variables and arrays in base class::Diagnostics
+    InitBaseData();
+    // initialize member variables and arrays specific to each derived class
+    // (FullDiagnostics, BTDiagnostics, etc.)
+    DerivedInitData();
+}
+
+void
+Diagnostics::InitDataAfterRestart ()
+{
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        // loop over all levels
+        // This includes full diagnostics and BTD as well as cell-center functors for BTD.
+        // Note that the cell-centered data for BTD is computed for all levels and hence
+        // the corresponding functor is also initialized for all the levels
+        for (int lev = 0; lev < nmax_lev; ++lev) {
+            // allocate and initialize m_all_field_functors depending on diag type
+            InitializeFieldFunctors(lev);
+        }
+        // loop over the levels selected for output
+        // This includes all the levels for full diagnostics
+        // and only the coarse level (mother grid) for BTD
+        for (int lev = 0; lev < nlev_output; ++lev) {
+            // Initialize buffer data required for particle and/or fields
+            InitializeBufferData(i_buffer, lev, true);
+        }
+    }
+
+    amrex::ParmParse pp_diag_name(m_diag_name);
+    // default for writing species output is 1
+    int write_species = 1;
+    pp_diag_name.query("write_species", write_species);
+    if (write_species == 1) {
+        // When particle buffers, m_particle_boundary_buffer are included,
+        // they will be initialized here
+        InitializeParticleBuffer();
+        InitializeParticleFunctors();
+    }
+   if (write_species == 0) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            m_format != "checkpoint",
+            "For checkpoint format, write_species flag must be 1."
+        );
+        // if user-defined value for write_species == 0, then clear species vector
+        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
+            m_output_species.at(i_buffer).clear();
+        }
+        m_output_species_names.clear();
+    } else {
+        amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
+        if ( utils::parser::queryArrWithParser(
+                pp_diag_name, "diag_lo", dummy_val, 0, AMREX_SPACEDIM) ||
+             utils::parser::queryArrWithParser(
+                pp_diag_name, "diag_hi", dummy_val, 0, AMREX_SPACEDIM) ) {
+            // set geometry filter for particle-diags to true when the diagnostic domain-extent
+            // is specified by the user.
+            // Note that the filter is set for every ith snapshot, and the number of snapshots
+            // for full diagnostics is 1, while for BTD it is user-defined.
+            for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
+                for (auto& v : m_output_species.at(i_buffer)) {
+                    v.m_do_geom_filter = true;
+                }
+                // Disabling particle-io for reduced domain diagnostics by reducing
+                // the particle-diag vector to zero.
+                // This is a temporary fix until particle_buffer is supported in diagnostics.
+                m_output_species.at(i_buffer).clear();
+            }
+            std::string warnMsg = "For full diagnostics on a reduced domain, particle I/O is not ";
+            warnMsg += "supported, yet! Therefore, particle I/O is disabled for this diagnostics: ";
+            warnMsg += m_diag_name;
+            ablastr::warn_manager::WMRecordWarning("Diagnostics", warnMsg);
+        }
+    }
+}
+
+
+void
 Diagnostics::InitData ()
 {
     // initialize member variables and arrays in base class::Diagnostics

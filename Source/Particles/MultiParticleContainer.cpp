@@ -575,15 +575,14 @@ MultiParticleContainer::DepositCharge (
     // Push the particles in time, if needed
     if (relative_time != 0.) PushX(relative_time);
 
+    bool const local = true;
+    bool const reset = false;
+    bool const apply_boundary_and_scale_volume = false;
+    bool const interpolate_across_levels = false;
     // Call the deposition kernel for each species
     for (auto& pc : allcontainers)
     {
         if (pc->do_not_deposit) continue;
-
-        bool const local = true;
-        bool const reset = false;
-        bool const apply_boundary_and_scale_volume = false;
-        bool const interpolate_across_levels = false;
         pc->DepositCharge(rho, local, reset, apply_boundary_and_scale_volume,
                               interpolate_across_levels);
     }
@@ -621,7 +620,11 @@ void
 MultiParticleContainer::SortParticlesByBin (amrex::IntVect bin_size)
 {
     for (auto& pc : allcontainers) {
-        pc->SortParticlesByBin(bin_size);
+        if (WarpX::sort_particles_for_deposition) {
+            pc->SortParticlesForDeposition(WarpX::sort_idx_type);
+        } else {
+            pc->SortParticlesByBin(bin_size);
+        }
     }
 }
 
