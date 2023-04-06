@@ -498,8 +498,6 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 WarpX::load_balance_costs_update_algo);
         }
     } else {
-        //Working
-        //Pretty sure this is where the big if comes in
         if (WarpX::do_shared_mem_current_deposition)
         {
             const Geometry& geom = Geom(lev);
@@ -533,9 +531,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             }
             WARPX_PROFILE_VAR_STOP(blp_sort);
             WARPX_PROFILE_VAR_START(blp_get_max_tilesize);
-                //get the maximum size necessary for shared mem
-                // get tile boxes
-            //get the maximum size necessary for shared mem
+            // get the maximum size necessary for shared mem
 #if AMREX_SPACEDIM > 0
             int sizeX = getMaxTboxAlongDim(box.size()[0], WarpX::shared_tilesize[0]);
 #endif

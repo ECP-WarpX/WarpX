@@ -473,8 +473,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             IntVect iv = IntVect(int( amrex::Math::floor((zp-plo[0]) * dxiarr[0]) ));
 #endif
             iv += domain.smallEnd();
-            // Looks like it sets buffer box to contain the tile
-            // iv is a point. first box is the entire domain, last box gets written with size bin_size
             getTileIndex(iv, box, true, bin_size, buffer_box);
         }
 
