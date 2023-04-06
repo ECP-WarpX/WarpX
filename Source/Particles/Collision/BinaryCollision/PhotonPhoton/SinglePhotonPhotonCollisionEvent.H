@@ -167,7 +167,7 @@ void SinglePhotonPhotonCollisionEvent (const amrex::ParticleReal& u1x, const amr
     // Get a random number
     amrex::ParticleReal random_number = amrex::Random(engine);
 
-    // If we have a pair-production event, set the mask the true and fill the product weight array
+    // If we have a pair-production event, set the mask to true and fill the product weight array
     if (random_number < probability)
     {
         p_mask[pair_index] = true;
