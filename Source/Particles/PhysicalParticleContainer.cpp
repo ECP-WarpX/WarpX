@@ -589,20 +589,22 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 #if !defined(WARPX_DIM_1D_Z)  // 2D, 3D, and RZ
         std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
         double const position_unit_x = ps["position"]["x"].unitSI();
+        double const position_offset_x = ps["positionOffset"]["x"].getAttribute("value") * ps["positionOffset"]["x"].unitSI();
+#endif
+#if !(defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z))
+        std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
+        double const position_unit_y = ps["position"]["y"].unitSI();
+        double const position_offset_y = ps["positionOffset"]["y"].getAttribute("value") * ps["positionOffset"]["y"].unitSI();
 #endif
         std::shared_ptr<ParticleReal> ptr_z = ps["position"]["z"].loadChunk<ParticleReal>();
         double const position_unit_z = ps["position"]["z"].unitSI();
+        double const position_offset_z = ps["positionOffset"]["z"].getAttribute("value") * ps["positionOffset"]["z"].unitSI();
         std::shared_ptr<ParticleReal> ptr_ux = ps["momentum"]["x"].loadChunk<ParticleReal>();
         double const momentum_unit_x = ps["momentum"]["x"].unitSI();
         std::shared_ptr<ParticleReal> ptr_uz = ps["momentum"]["z"].loadChunk<ParticleReal>();
         double const momentum_unit_z = ps["momentum"]["z"].unitSI();
         std::shared_ptr<ParticleReal> ptr_w = ps["weighting"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>();
         double const w_unit = ps["weighting"][openPMD::RecordComponent::SCALAR].unitSI();
-
-#   if !(defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z))
-        std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
-        double const position_unit_y = ps["position"]["y"].unitSI();
-#endif
         std::shared_ptr<ParticleReal> ptr_uy = nullptr;
         double momentum_unit_y = 1.0;
         if (ps["momentum"].contains("y")) {
@@ -624,13 +626,13 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
 #if !defined(WARPX_DIM_1D_Z)
 
-            ParticleReal const x = ptr_x.get()[i]*position_unit_x;
+            ParticleReal const x = ptr_x.get()[i]*position_unit_x + position_offset_x;
 #else
             ParticleReal const x = 0.0_prt;
 #endif
-            ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
+            ParticleReal const z = ptr_z.get()[i]*position_unit_z + position_offset_z + z_shift;
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-            ParticleReal const y = ptr_y.get()[i]*position_unit_y;
+            ParticleReal const y = ptr_y.get()[i]*position_unit_y + position_offset_y;
 #else
             ParticleReal const y = 0.0_prt;
 #endif
