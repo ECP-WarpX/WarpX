@@ -589,16 +589,16 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 #if !defined(WARPX_DIM_1D_Z)  // 2D, 3D, and RZ
         std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
         double const position_unit_x = ps["position"]["x"].unitSI();
-        double const position_offset_x = ps["positionOffset"]["x"].getAttribute("value") * ps["positionOffset"]["x"].unitSI();
+        double const position_offset_x = ps["positionOffset"]["x"].getAttribute("value").get<double>() * ps["positionOffset"]["x"].unitSI();
 #endif
 #if !(defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z))
         std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
         double const position_unit_y = ps["position"]["y"].unitSI();
-        double const position_offset_y = ps["positionOffset"]["y"].getAttribute("value") * ps["positionOffset"]["y"].unitSI();
+        double const position_offset_y = ps["positionOffset"]["y"].getAttribute("value").get<double>() * ps["positionOffset"]["y"].unitSI();
 #endif
         std::shared_ptr<ParticleReal> ptr_z = ps["position"]["z"].loadChunk<ParticleReal>();
         double const position_unit_z = ps["position"]["z"].unitSI();
-        double const position_offset_z = ps["positionOffset"]["z"].getAttribute("value") * ps["positionOffset"]["z"].unitSI();
+        double const position_offset_z = ps["positionOffset"]["z"].getAttribute("value").get<double>() * ps["positionOffset"]["z"].unitSI();
         std::shared_ptr<ParticleReal> ptr_ux = ps["momentum"]["x"].loadChunk<ParticleReal>();
         double const momentum_unit_x = ps["momentum"]["x"].unitSI();
         std::shared_ptr<ParticleReal> ptr_uz = ps["momentum"]["z"].loadChunk<ParticleReal>();
