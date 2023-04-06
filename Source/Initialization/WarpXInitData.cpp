@@ -1335,10 +1335,14 @@ WarpX::ReadExternalFieldFromFile (
     amrex::Real offset2 = offset[2];
 #endif
     auto d = F.gridSpacing<long double>();
-    amrex::Real d0 = d[0];
-    amrex::Real d1 = d[1];
-#if defined(WARPX_DIM_3D)
-    amrex::Real d2 = d[2];
+
+#if defined(WARPX_DIM_RZ)
+    amrex::Real file_dr = d[0];
+    amrex::Real file_dz = d[1];
+#elif defined(WARPX_DIM_3D)
+    amrex::Real file_dx = d[0];
+    amrex::Real file_dy = d[1]
+    amrex::Real file_dz = d[2];
 #endif
 
     auto FC = F[F_component];
@@ -1397,45 +1401,54 @@ WarpX::ReadExternalFieldFromFile (
                      { x1 = real_box.lo(1) + j*dx[1]; }
                 else { x1 = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
 
+#if defined(WARPX_DIM_RZ)
                 // Get index of the external field array
-                int const ix0 = floor( (x0-offset0)/d0 );
-                int const ix1 = floor( (x1-offset1)/d1 );
+                int const ir = floor( (x0-offset0)/file_dr );
+                int const iz = floor( (x1-offset1)/file_dz );
 
                 // Get coordinates of external grid point
-                amrex::Real const xx0 = offset0 + ix0*d0;
-                amrex::Real const xx1 = offset1 + ix1*d1;
+                amrex::Real const xx0 = offset0 + ir * file_dr;
+                amrex::Real const xx1 = offset1 + iz * file_dz;
 
-#if defined(WARPX_DIM_3D)
+#elif defined(WARPX_DIM_3D)
                 amrex::Real x2;
                 if ( box.type(2)==amrex::IndexType::CellIndex::NODE )
                      { x2 = real_box.lo(2) + k*dx[2]; }
                 else { x2 = real_box.lo(2) + k*dx[2] + 0.5*dx[2]; }
-                int const ix2 = floor( (x2-offset2)/d2 );
-                amrex::Real const xx2 = offset2 + ix2*d2;
+
+                // Get index of the external field array
+                int const ix = floor( (x0-offset0)/file_dx );
+                int const iy = floor( (x1-offset1)/file_dy );
+                int const iz = floor( (x2-offset2)/file_dz );
+
+                // Get coordinates of external grid point
+                amrex::Real const xx0 = offset0 + ix * file_dx;
+                amrex::Real const xx1 = offset1 + iy * file_dy;
+                amrex::Real const xx2 = offset2 + iz * file_dz;
 #endif
 
 #if defined(WARPX_DIM_RZ)
                 amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent0, extent2, extent1}, 1);
                 double
-                    f00 = fc_array(0, ix1  , ix0  ),
-                    f01 = fc_array(0, ix1  , ix0+1),
-                    f10 = fc_array(0, ix1+1, ix0  ),
-                    f11 = fc_array(0, ix1+1, ix0+1);
+                    f00 = fc_array(0, iz  , ir  ),
+                    f01 = fc_array(0, iz  , ir+1),
+                    f10 = fc_array(0, iz+1, ir  ),
+                    f11 = fc_array(0, iz+1, ir+1);
                 mffab(i,j,k) = utils::algorithms::bilinear_interp<double>
-                    (xx0, xx0+d0, xx1, xx1+d1,
+                    (xx0, xx0+file_dr, xx1, xx1+file_dz,
                      f00, f01, f10, f11,
                      x0, x1);
 #elif defined(WARPX_DIM_3D)
                 amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent2, extent1, extent0}, 1);
                 double
-                    f000 = fc_array(ix2  , ix1  , ix0  ),
-                    f001 = fc_array(ix2+1, ix1  , ix0  ),
-                    f010 = fc_array(ix2  , ix1+1, ix0  ),
-                    f011 = fc_array(ix2+1, ix1+1, ix0  ),
-                    f100 = fc_array(ix2  , ix1  , ix0+1),
-                    f101 = fc_array(ix2+1, ix1  , ix0+1),
-                    f110 = fc_array(ix2  , ix1+1, ix0+1),
-                    f111 = fc_array(ix2+1, ix1+1, ix0+1);
+                    f000 = fc_array(iz  , iy  , ix  ),
+                    f001 = fc_array(iz+1, iy  , ix  ),
+                    f010 = fc_array(iz  , iy+1, ix  ),
+                    f011 = fc_array(iz+1, iy+1, ix  ),
+                    f100 = fc_array(iz  , iy  , ix+1),
+                    f101 = fc_array(iz+1, iy  , ix+1),
+                    f110 = fc_array(iz  , iy+1, ix+1),
+                    f111 = fc_array(iz+1, iy+1, ix+1);
                 mffab(i,j,k) = utils::algorithms::trilinear_interp<double>
                     (xx0, xx0+d0, xx1, xx1+d1, xx2, xx2+d2,
                      f000, f001, f010, f011, f100, f101, f110, f111,
