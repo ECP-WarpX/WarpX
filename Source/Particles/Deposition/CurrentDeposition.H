@@ -417,14 +417,12 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const auto plo = geom.ProbLoArray();
     const auto domain = geom.Domain();
 
-    const amrex::Box sample_tbox(IntVect(AMREX_D_DECL(0,0,0)), a_tbox_max_size - 1);
+    amrex::Box sample_tbox(IntVect(AMREX_D_DECL(0,0,0)), a_tbox_max_size - 1);
+    sample_tbox.grow((depos_order+1) / 2);
+
     amrex::Box sample_tbox_x = convert(sample_tbox, jx_type);
     amrex::Box sample_tbox_y = convert(sample_tbox, jy_type);
     amrex::Box sample_tbox_z = convert(sample_tbox, jz_type);
-
-    sample_tbox_x.grow(depos_order);
-    sample_tbox_y.grow(depos_order);
-    sample_tbox_z.grow(depos_order);
 
     const auto npts = amrex::max(sample_tbox_x.numPts(), sample_tbox_y.numPts(), sample_tbox_z.numPts());
 
