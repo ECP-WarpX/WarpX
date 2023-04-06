@@ -30,15 +30,16 @@ echo "deb https://apt.repos.intel.com/oneapi all main" | \
     sudo tee /etc/apt/sources.list.d/oneAPI.list
 sudo apt-get update
 
-tries=0
-while [[ ${tries} -lt 5 ]]
+# try apt install up to five times, to avoid connection splits
+status=1
+for itry in {1..5}
 do
     sudo apt-get install -y                              \
         intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic  \
-        && { sudo apt-get clean; tries=6; }              \
-        || { sleep 10; tries=$(( tries + 1 )); }
+        && { sudo apt-get clean; status=0; break; }  \
+        || { sleep 10; }
 done
-if [[ ${tries} -eq 5 ]]; then exit 1; fi
+if [[ ${status} -ne 0 ]]; then exit 1; fi
 
 # activate now via
 set +eu
