@@ -25,18 +25,18 @@ namespace {
      * This is done by using the conservation of energy and momentum,
      * and by assuming isotropic emission of the products in the center-of-momentum frame
      *
-     * @param[in] u1x_in normalized momentum of the first colliding macrophotons along x (in m.s^-1)
-     * @param[in] u1y_in normalized momentum of the first colliding macrophotons along y (in m.s^-1)
-     * @param[in] u1z_in normalized momentum of the first colliding macrophotons along z (in m.s^-1)
-     * @param[in] u2x_in normalized momentum of the second colliding macrophotons along x (in m.s^-1)
-     * @param[in] u2y_in normalized momentum of the second colliding macrophotons along y (in m.s^-1)
-     * @param[in] u2z_in normalized momentum of the second colliding macrophotons along z (in m.s^-1)
-     * @param[out] u1x_out normalized momentum of the first product macroparticles along x (in m.s^-1)
-     * @param[out] u1y_out normalized momentum of the first product macroparticles along y (in m.s^-1)
-     * @param[out] u1z_out normalized momentum of the first product macroparticles along z (in m.s^-1)
-     * @param[out] u2x_out normalized momentum of the second product macroparticles along x (in m.s^-1)
-     * @param[out] u2y_out normalized momentum of the second product macroparticles along y (in m.s^-1)
-     * @param[out] u2z_out normalized momentum of the second product macroparticles along z (in m.s^-1)
+     * @param[in] u1x_in normalized momentum of the first colliding macrophoton along x (in m.s^-1)
+     * @param[in] u1y_in normalized momentum of the first colliding macrophoton along y (in m.s^-1)
+     * @param[in] u1z_in normalized momentum of the first colliding macrophoton along z (in m.s^-1)
+     * @param[in] u2x_in normalized momentum of the second colliding macrophoton along x (in m.s^-1)
+     * @param[in] u2y_in normalized momentum of the second colliding macrophoton along y (in m.s^-1)
+     * @param[in] u2z_in normalized momentum of the second colliding macrophoton along z (in m.s^-1)
+     * @param[out] u1x_out normalized momentum of the first product macroparticle along x (in m.s^-1)
+     * @param[out] u1y_out normalized momentum of the first product macroparticle along y (in m.s^-1)
+     * @param[out] u1z_out normalized momentum of the first product macroparticle along z (in m.s^-1)
+     * @param[out] u2x_out normalized momentum of the second product macroparticle along x (in m.s^-1)
+     * @param[out] u2y_out normalized momentum of the second product macroparticle along y (in m.s^-1)
+     * @param[out] u2z_out normalized momentum of the second product macroparticle along z (in m.s^-1)
      * @param[in] engine the random engine (used to calculate the angle of emission of the products)
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
