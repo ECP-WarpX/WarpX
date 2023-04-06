@@ -32,8 +32,8 @@
  * It should be clear from the context.
  *
  * @tparam index_type type of the index argument
- * @param[in] u1x,u1y,u1z momenta of the first colliding particle
- * @param[in] u2x,u2y,u2z momenta of the second colliding particle
+ * @param[in] u1x,u1y,u1z momentum components of the first colliding particle
+ * @param[in] u2x,u2y,u2z momentum components of the second colliding particle
  * @param[in] w1,w2 effective weight of the colliding particles
  * @param[in] dt is the time step length between two collision calls.
  * @param[in] dV is the volume of the corresponding cell.
