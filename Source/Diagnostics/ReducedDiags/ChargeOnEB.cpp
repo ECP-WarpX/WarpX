@@ -120,10 +120,10 @@ void ChargeOnEB::ComputeDiags (const int step)
     amrex::Gpu::Buffer<amrex::Real> surface_integral({0.0_rt});
     amrex::Real* surface_integral_pointer = surface_integral.data();
 
+    // Loop over boxes
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    // Loop over boxes
     for (amrex::MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
       const amrex::Box & box = mfi.tilebox( amrex::IntVect::TheCellVector() );
@@ -190,6 +190,9 @@ void ChargeOnEB::ComputeDiags (const int step)
                 // Given that only a tiny fraction of the cells have a non-zero contribution
                 // (the ones that intersect with the EB), it is not clear whether ReduceOpSum
                 // or AtomicAdd would be faster. However, the implementation with AtomicAdd is easier.
+#ifdef AMREX_USE_OMP
+#pragma omp critical
+#endif
                 amrex::Gpu::Atomic::AddNoRet( surface_integral_pointer, local_integral_contribution );
         });
     }
