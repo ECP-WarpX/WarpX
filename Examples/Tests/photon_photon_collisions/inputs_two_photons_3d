@@ -35,7 +35,6 @@ photonA.single_particle_pos = 0 0 0
 photonA.single_particle_u = 2.8 0 0 # gamma times beta
 photonA.single_particle_weight = 1e14
 photonA.do_not_push = 1
-photonA.do_not_deposit = 1
 
 photonB.species_type = photon
 photonB.injection_style = "SingleParticle"
@@ -43,7 +42,6 @@ photonB.single_particle_pos = 0 0 0
 photonB.single_particle_u = -2.8 0 0 # gamma times beta
 photonB.single_particle_weight = 1e14
 photonB.do_not_push = 1
-photonB.do_not_deposit = 1
 
 electron.species_type = electron
 electron.injection_style = none
@@ -73,11 +71,6 @@ diag1.diag_type = Full
 diag1.fields_to_plot = rho rho_electron rho_positron
 diag1.write_species = 1
 diag1.species = photonA photonB electron positron
-#fields_particles.format = openpmd
-#fields_particles.openpmd_backend = bp
-fields_particles.dump_last_timestep = 1
-
-
 
 my_constants.out_freq_red = 1
 # Reduced diagnostics

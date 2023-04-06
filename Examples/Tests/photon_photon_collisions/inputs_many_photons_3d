@@ -43,7 +43,6 @@ photonA.ux = 2.8
 photonA.uy = 0.
 photonA.uz = 0.
 photonA.do_not_push = 1
-photonA.do_not_deposit = 1
 
 photonB.species_type = photon
 photonB.injection_style = "NRandomPerCell"
@@ -55,7 +54,6 @@ photonB.ux = -2.8
 photonB.uy = 0.
 photonB.uz = 0.
 photonB.do_not_push = 1
-photonB.do_not_deposit = 1
 
 electron.species_type = electron
 electron.injection_style = none
@@ -85,8 +83,6 @@ diag1.diag_type = Full
 diag1.fields_to_plot = rho rho_electron rho_positron
 diag1.write_species = 1
 diag1.species = photonA photonB electron positron
-#diag1.format = openpmd
-#diag1.openpmd_backend = bp
 diag1.dump_last_timestep = 1
 
 my_constants.out_freq_red = 1
