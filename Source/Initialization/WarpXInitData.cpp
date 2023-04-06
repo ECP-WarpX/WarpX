@@ -436,9 +436,10 @@ WarpX::InitData ()
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
             ComputeMagnetostaticField();
 
-        // Set up an invariant that any code besides the field solver
-        // that looks at field values will see the composite of the
-        // field solution and any external field
+        // Set up an invariant condition through the rest of
+        // execution, that any code besides the field solver that
+        // looks at field values will see the composite of the field
+        // solution and any external field
         AddExternalFields();
 
         // Write full diagnostics before the first iteration.
