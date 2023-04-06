@@ -372,7 +372,7 @@ using namespace amrex;
                     // across PEC boundary in direction, idim, and side, iside
                     ijk_mirror[idim] = ( (iside == 0)
                                      ? (dom_lo[idim] - (1 - is_nodal[idim]) - ig)
-                                     : (dom_hi[idim] + is_nodal[idim]  + ig));
+                                     : (dom_hi[idim] + is_nodal[idim] + ig));
 
                     const bool isReflectingBoundary = ( (iside == 0 )
                                             ? is_boundary_reflecting(pbndry_lo, idim)
@@ -682,8 +682,10 @@ using namespace amrex;
      *
      * \param[in,out] rho        Multifab containing the charge density
      * \param[in]     lev        level of the Multifab
+     * \param[in]     patch_type coarse or fine
      */
-    void ApplyPECtoRhofield(amrex::MultiFab* rho, const int lev);
+    void ApplyPECtoRhofield(amrex::MultiFab* rho, const int lev,
+                            PatchType patch_type);
 
     /**
      * \brief Reflects current density deposited over the PEC boundary back into
@@ -691,9 +693,11 @@ using namespace amrex;
      *
      * \param[in,out] Jx, Jy, Jz Multifabs containing the current density
      * \param[in]     lev        level of the Multifab
+     * \param[in]     patch_type coarse or fine
      */
     void ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
-                          amrex::MultiFab* Jz, const int lev);
+                          amrex::MultiFab* Jz, const int lev,
+                          PatchType patch_type);
 }
 
 #endif // WarpX_PEC_KERNELS_H_

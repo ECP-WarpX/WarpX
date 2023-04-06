@@ -211,11 +211,15 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
 
 
 void
-PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev)
+PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_type)
 {
     auto& warpx = WarpX::GetInstance();
 
     amrex::Box domain_box = warpx.Geom(lev).Domain();
+    if (patch_type == PatchType::coarse) {
+        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+        domain_box.coarsen(ref_ratio);
+    }
     amrex::IntVect domain_lo = domain_box.smallEnd();
     amrex::IntVect domain_hi = domain_box.bigEnd();
 
@@ -294,11 +298,16 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev)
 
 void
 PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
-                      amrex::MultiFab* Jz, const int lev)
+                      amrex::MultiFab* Jz, const int lev,
+                      PatchType patch_type)
 {
     auto& warpx = WarpX::GetInstance();
 
     amrex::Box domain_box = warpx.Geom(lev).Domain();
+    if (patch_type == PatchType::coarse) {
+        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+        domain_box.coarsen(ref_ratio);
+    }
     amrex::IntVect domain_lo = domain_box.smallEnd();
     amrex::IntVect domain_hi = domain_box.bigEnd();
 

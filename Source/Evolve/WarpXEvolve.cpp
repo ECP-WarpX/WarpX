@@ -535,17 +535,25 @@ void WarpX::SyncCurrentAndRho ()
         SyncRho();
     }
 
+    // Reflect charge and current density over PEC boundaries, if needed.
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         if (rho_fp[lev].get()) {
-            // Reflect density over PEC boundaries, if needed.
-            WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho_fp[lev].get());
+            ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
         }
-        // Set current density at PEC boundaries, if needed.
-        WarpX::GetInstance().ApplyJfieldBoundary(
+        ApplyJfieldBoundary(
             lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
-            current_fp[lev][2].get()
+            current_fp[lev][2].get(), PatchType::fine
         );
+        if (lev > 0) {
+            if (rho_cp[lev].get()) {
+                ApplyRhofieldBoundary(lev, rho_cp[lev].get(), PatchType::coarse);
+            }
+            ApplyJfieldBoundary(
+                lev, current_cp[lev][0].get(), current_cp[lev][1].get(),
+                current_cp[lev][2].get(), PatchType::coarse
+            );
+        }
     }
 }
 

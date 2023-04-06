@@ -232,7 +232,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 #ifndef WARPX_DIM_RZ
     for (int lev = 0; lev <= finestLevel(); lev++) {
         // Reflect density over PEC boundaries, if needed.
-        ApplyRhofieldBoundary(lev, rho_fp[lev].get());
+        ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
     }
 #endif
 
