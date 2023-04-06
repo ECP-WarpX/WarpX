@@ -31,7 +31,7 @@
  *  if a pair-production event occurs. If so, we fill a mask (input parameter p_mask) with true so that
  *  product particles corresponding to a given pair can be effectively created in the particle
  *  creation functor.
- *  This functor also reads and contains the event multiplier.
+ *  This functor also reads and stores the event multiplier.
  */
 class PhotonPhotonCollisionFunc{
     // Define shortcuts for frequently-used type names
