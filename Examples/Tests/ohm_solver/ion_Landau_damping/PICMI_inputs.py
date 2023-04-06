@@ -328,8 +328,8 @@ parser.add_argument(
     default=4
 )
 parser.add_argument(
-    '--temp_ratio', help='Mode number to excite', required=False, type=float,
-    default=1.0/3
+    '--temp_ratio', help='Ratio of ion to electron temperature', required=False,
+    type=float, default=1.0/3
 )
 parser.add_argument(
     '-v', '--verbose', help='Verbose output', action='store_true',
