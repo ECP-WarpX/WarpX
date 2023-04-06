@@ -1317,6 +1317,8 @@ WarpX::ReadExternalFieldFromFile (
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "x" && axisLabels[1] == "y" && axisLabels[2] == "z",
                                      "3D expects axisLabels {x, y, z}");
 #elif defined(WARPX_DIM_XZ)
+    amrex::Abort(Utils::TextMsg::Err(
+           "Reading from openPMD for external fields is not known to work with XZ"));
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "XZ can only read from files with cartesian geometry");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "x" && axisLabels[1] == "z",
                                      "XZ expects axisLabels {x, z}");
