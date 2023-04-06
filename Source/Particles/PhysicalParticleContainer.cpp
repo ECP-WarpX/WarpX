@@ -588,17 +588,20 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         auto const npart = ps["position"]["x"].getExtent()[0];
 #if !defined(WARPX_DIM_1D_Z)  // 2D, 3D, and RZ
         std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
+        std::shared_ptr<ParticleReal> ptr_offset_x = ps["positionOffset"]["x"].loadChunk<ParticleReal>();
         double const position_unit_x = ps["position"]["x"].unitSI();
-        double const position_offset_x = ps["positionOffset"]["x"].getAttribute("value").get<double>() * ps["positionOffset"]["x"].unitSI();
+        double const position_offset_unit_x = ps["positionOffset"]["x"].unitSI();
 #endif
 #if !(defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z))
         std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
+        std::shared_ptr<ParticleReal> ptr_offset_y = ps["positionOffset"]["y"].loadChunk<ParticleReal>();
         double const position_unit_y = ps["position"]["y"].unitSI();
-        double const position_offset_y = ps["positionOffset"]["y"].getAttribute("value").get<double>() * ps["positionOffset"]["y"].unitSI();
+        double const position_offset_unit_y = ps["positionOffset"]["y"].unitSI();
 #endif
         std::shared_ptr<ParticleReal> ptr_z = ps["position"]["z"].loadChunk<ParticleReal>();
+        std::shared_ptr<ParticleReal> ptr_offset_z = ps["positionOffset"]["z"].loadChunk<ParticleReal>();
         double const position_unit_z = ps["position"]["z"].unitSI();
-        double const position_offset_z = ps["positionOffset"]["z"].getAttribute("value").get<double>() * ps["positionOffset"]["z"].unitSI();
+        double const position_offset_unit_z = ps["positionOffset"]["z"].unitSI();
         std::shared_ptr<ParticleReal> ptr_ux = ps["momentum"]["x"].loadChunk<ParticleReal>();
         double const momentum_unit_x = ps["momentum"]["x"].unitSI();
         std::shared_ptr<ParticleReal> ptr_uz = ps["momentum"]["z"].loadChunk<ParticleReal>();
@@ -625,17 +628,17 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
             ParticleReal const weight = ptr_w.get()[i]*w_unit;
 
 #if !defined(WARPX_DIM_1D_Z)
-
-            ParticleReal const x = ptr_x.get()[i]*position_unit_x + position_offset_x;
+            ParticleReal const x = ptr_x.get()[i]*position_unit_x + ptr_offset_x.get()[i]*position_offset_unit_x;
 #else
             ParticleReal const x = 0.0_prt;
 #endif
-            ParticleReal const z = ptr_z.get()[i]*position_unit_z + position_offset_z + z_shift;
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-            ParticleReal const y = ptr_y.get()[i]*position_unit_y + position_offset_y;
+            ParticleReal const y = ptr_y.get()[i]*position_unit_y + ptr_offset_y.get()[i]*position_offset_unit_y;
 #else
             ParticleReal const y = 0.0_prt;
 #endif
+            ParticleReal const z = ptr_z.get()[i]*position_unit_z + ptr_offset_z.get()[i]*position_offset_unit_z + z_shift;
+
             if (plasma_injector->insideBounds(x, y, z)) {
                 ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
                 ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
