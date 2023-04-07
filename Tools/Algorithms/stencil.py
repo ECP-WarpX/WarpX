@@ -261,8 +261,11 @@ def compute_guard_cells(errmin, errmax, stencil):
     v = next(d for d in diff if d < 0)
     gcmin = np.argwhere(diff == v)[0,0]
     diff = stencil - errmax
-    v = next(d for d in diff if d < 0)
-    gcmax = np.argwhere(diff == v)[0,0] - 1
+    try:
+        v = next(d for d in diff if d < 0)
+        gcmax = np.argwhere(diff == v)[0,0] - 1
+    except StopIteration:
+        gcmin, gcmax = compute_guard_cells(errmin, errmax*10, stencil)
     return (gcmin, gcmax)
 
 def plot_stencil(cells, stencil_nodal, stencil_stagg, label, path, name):
