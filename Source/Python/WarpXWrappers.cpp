@@ -701,11 +701,9 @@ namespace
         WarpX& warpx = WarpX::GetInstance();
         warpx.FillBoundaryB(warpx.getngEB());
     }
-    void warpx_SyncRho (
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp) {
+    void warpx_SyncRho () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.SyncRho(charge_fp, charge_cp);
+        warpx.SyncRho();
     }
     void warpx_SyncCurrent (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,

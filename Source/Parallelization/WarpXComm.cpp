@@ -902,6 +902,11 @@ WarpX::SyncCurrent (
 }
 
 void
+WarpX::SyncRho () {
+    SyncRho(rho_fp, rho_cp);   
+}
+
+void
 WarpX::SyncRho (
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp)
