@@ -903,7 +903,7 @@ WarpX::SyncCurrent (
 
 void
 WarpX::SyncRho () {
-    SyncRho(rho_fp, rho_cp);   
+    SyncRho(rho_fp, rho_cp);
 }
 
 void
