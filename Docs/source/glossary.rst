@@ -12,6 +12,7 @@ Abbreviations
 * **2FA:** `Two-factor-authentication <https://en.wikipedia.org/wiki/Multi-factor_authentication>`__
 * **ABLASTR:** Accelerated BLAST Recipes, the library inside WarpX to share functionality with other BLAST codes
 * **ALCF:** `Argonne Leadership Computing Facility <https://www.alcf.anl.gov/>`__, a supercomputing center located near Chicago, IL (USA)
+* **ALS:** `Advance Light Source <https://als.lbl.gov/>`__, a U.S. Department of Energy scientific user facility at Lawrence Berkeley National Laboratory
 * **BLAST:** `Beam, Plasma & Accelerator Simulation Toolkit <https://blast.lbl.gov>`__
 * **AMR:** adaptive mesh-refinement
 * **BC:** boundary condition (of a simulation)
