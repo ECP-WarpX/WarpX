@@ -190,10 +190,7 @@ void ChargeOnEB::ComputeDiags (const int step)
                 // Given that only a tiny fraction of the cells have a non-zero contribution
                 // (the ones that intersect with the EB), it is not clear whether ReduceOpSum
                 // or AtomicAdd would be faster. However, the implementation with AtomicAdd is easier.
-#ifdef AMREX_USE_OMP
-#pragma omp critical
-#endif
-                amrex::Gpu::Atomic::AddNoRet( surface_integral_pointer, local_integral_contribution );
+                amrex::HostDevice::Atomic::Add( surface_integral_pointer, local_integral_contribution );
         });
     }
 
