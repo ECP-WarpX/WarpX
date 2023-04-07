@@ -44,8 +44,9 @@ AcceleratorLattice::ReadLattice (std::string const & root_name, amrex::ParticleR
     bool reverse = false;
     pp_lattice.queryAdd("reverse", reverse);
 
-    if (reverse)
+    if (reverse) {
         std::reverse(lattice_elements.begin(), lattice_elements.end());
+    }
 
     // Loop through lattice elements
     for (std::string const & element_name : lattice_elements) {
