@@ -376,16 +376,15 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                                const std::array<amrex::Real,3>& xyzmin,
                                const amrex::Dim3 lo,
                                const amrex::Real q,
-                               const int n_rz_azimuthal_modes)
-                               //amrex::Real* cost,
-                               //const long load_balance_costs_update_algo,
-                               //const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
-                               //const amrex::Box& box,
-                               //const amrex::Geometry& geom,
-                               //const amrex::IntVect& a_tbox_max_size)
+                               const int n_rz_azimuthal_modes,
+                               amrex::Real* cost,
+                               const long load_balance_costs_update_algo,
+                               const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
+                               const amrex::Box& box,
+                               const amrex::Geometry& geom,
+                               const amrex::IntVect& a_tbox_max_size)
 {
-    //TODO removed these from the call
-    //cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size
+#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
     using namespace amrex;
 
     auto permutation = a_bins.permutationPtr();
@@ -534,6 +533,13 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         *cost += *cost_real;
         amrex::The_Managed_Arena()->free(cost_real);
     }
+#endif
+#else // not using hip/cuda
+    // Note, you should never reach this part of the code. This funcion cannot be called unless 
+    // using HIP/CUDA, and those things are checked prior
+    //don't use any args
+    ignore_unused( GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes, cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size);
+    amrex::Abort("Shared memory only implemented for HIP/CUDA");
 #endif
 }
 
