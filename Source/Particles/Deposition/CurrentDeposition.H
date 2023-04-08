@@ -535,7 +535,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     }
 #endif
 #else // not using hip/cuda
-    // Note, you should never reach this part of the code. This funcion cannot be called unless 
+    // Note, you should never reach this part of the code. This funcion cannot be called unless
     // using HIP/CUDA, and those things are checked prior
     //don't use any args
     ignore_unused( GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes, cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size);
