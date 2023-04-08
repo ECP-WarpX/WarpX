@@ -18,10 +18,10 @@
 #include "Pusher/UpdateMomentumHigueraCary.H"
 #include "Pusher/UpdateMomentumVay.H"
 #include "RigidInjectedParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -63,7 +63,8 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
 
     ParmParse pp_species_name(species_name);
 
-    getWithParser(pp_species_name, "zinject_plane", zinject_plane);
+    utils::parser::getWithParser(
+        pp_species_name, "zinject_plane", zinject_plane);
     pp_species_name.query("rigid_advance", rigid_advance);
 
 }
@@ -406,7 +407,13 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const auto pusher_algo = WarpX::particle_pusher_algo;
             const auto do_crr = do_classical_radiation_reaction;
 
-            amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+            enum exteb_flags : int { no_exteb, has_exteb };
+
+            int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
+
+            amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>>{},
+                               {exteb_runtime_flag},
+                               np, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control)
             {
                 ux_save[ip] = uxpp[ip];
                 uy_save[ip] = uypp[ip];
@@ -424,7 +431,11 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
-                getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+
+                [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
+                if constexpr (exteb_control == has_exteb) {
+                    getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+                }
 
                 amrex::ParticleReal qp = q;
                 if (ion_lev) { qp *= ion_lev[ip]; }

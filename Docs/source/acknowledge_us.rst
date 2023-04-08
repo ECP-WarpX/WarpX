@@ -41,9 +41,10 @@ Latest WarpX reference
 
 If your project leads to a scientific publication, please consider citing the paper below.
 
-- Myers A, Almgren A, Amorim LD, Bell J, Fedeli L, Ge L, Gott K, Grote DP, Hogan M, Huebl A, Jambunathan R, Lehe R, Ng C, Rowan M, Shapoval O, Thevenet M, Vay JL, Vincenti H, Yang E, Zaim N, Zhang W, Zhao Y, Zoni E.
-  **Porting WarpX to GPU-accelerated platforms**. *Parallel Computing*. 2021 Sep, 108:102833.
-  https://doi.org/10.1016/j.parco.2021.102833
+- Fedeli L, Huebl A, Boillod-Cerneux F, Clark T, Gott K, Hillairet C, Jaure S, Leblanc A, Lehe R, Myers A, Piechurski C, Sato M, Zaim N, Zhang W, Vay J-L, Vincenti H.
+  **Pushing the Frontier in the Design of Laser-Based Electron Accelerators with Groundbreaking Mesh-Refined Particle-In-Cell Simulations on Exascale-Class Supercomputers**.
+  *SC22: International Conference for High Performance Computing, Networking, Storage and Analysis (SC)*. ISSN:2167-4337, pp. 25-36, Dallas, TX, US, 2022.
+  `DOI:10.1109/SC41404.2022.00008 <https://doi.org/10.1109/SC41404.2022.00008>`__ (`preprint here <https://www.computer.org/csdl/proceedings-article/sc/2022/544400a025/1I0bSKaoECc>`__)
 
 .. _acknowledge_warpx_all_refs:
 
@@ -54,8 +55,9 @@ If your project uses the specific algorithms, please consider citing the respect
 
 - Huebl A, Lehe R, Mitchell C E, Qiang J, Ryne R D, Sandberg R T, Vay JL.
   **Next Generation Computational Tools for the Modeling and Design of Particle Accelerators at Exascale**.
-  *NAPAC'22*, 2022.
-  `arXiv:2208.02382 <https://arxiv.org/abs/2208.02382>`__
+  2022 North American Particle Accelerator Conference (NAPAC'22), TUYE2, pp. 302-306, 2022.
+  `arXiv:2208.02382 <https://arxiv.org/abs/2208.02382>`__,
+  `DOI:10.18429/JACoW-NAPAC2022-TUYE2 <https://doi.org/10.18429/JACoW-NAPAC2022-TUYE2>`__
 
 - Fedeli L, Zaim N, Sainte-Marie A, Thevenet M, Huebl A, Myers A, Vay JL, Vincenti H.
   **PICSAR-QED: a Monte Carlo module to simulate Strong-Field Quantum Electrodynamics in Particle-In-Cell codes for exascale architectures**.
@@ -65,6 +67,11 @@ If your project uses the specific algorithms, please consider citing the respect
 - Zoni E, Lehe R, Shapoval O, Belkin D, Zaim N, Fedeli L, Vincenti H, Vay JL.
   **A hybrid nodal-staggered pseudo-spectral electromagnetic particle-in-cell method with finite-order centering**. *Computer Physics Communications* **279**, 2022.
   `DOI:10.1016/j.cpc.2022.108457 <https://doi.org/10.1016/j.cpc.2022.108457>`__
+
+- Myers A, Almgren A, Amorim LD, Bell J, Fedeli L, Ge L, Gott K, Grote DP, Hogan M, Huebl A, Jambunathan R, Lehe R, Ng C, Rowan M, Shapoval O, Thevenet M, Vay JL, Vincenti H, Yang E, Zaim N, Zhang W, Zhao Y, Zoni E.
+  **Porting WarpX to GPU-accelerated platforms**.
+  *Parallel Computing*. 2021 Sep, 108:102833.
+  `DOI:10.1016/j.parco.2021.102833 <https://doi.org/10.1016/j.parco.2021.102833>`__
 
 - Shapoval O, Lehe R, Thevenet M, Zoni E, Zhao Y, Vay JL.
   **Overcoming timestep limitations in boosted-frame Particle-In-Cell simulations of plasma-based acceleration**.

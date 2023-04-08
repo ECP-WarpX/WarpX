@@ -36,6 +36,7 @@
  *            otherwise will be computed.
  * @param[in] dV is the volume of the corresponding cell.
  * @param[in] engine the random number generator state & factory
+ * @param[in] isSameSpecies whether this is an intra-species collision process
 */
 
 template <typename T_index, typename T_PR, typename T_R, typename SoaData_type>
@@ -50,7 +51,8 @@ void ElasticCollisionPerez (
     T_PR const  m1, T_PR const  m2,
     T_PR const  T1, T_PR const  T2,
     T_R const  dt, T_PR const   L, T_R const dV,
-    amrex::RandomEngine const& engine)
+    amrex::RandomEngine const& engine,
+    bool const isSameSpecies)
 {
     int NI1 = I1e - I1s;
     int NI2 = I2e - I2s;
@@ -84,6 +86,12 @@ void ElasticCollisionPerez (
     T_PR n12 = T_PR(0.0);
     for (int i1=I1s; i1<static_cast<int>(I1e); ++i1) { n1 += w1[ I1[i1] ]; }
     for (int i2=I2s; i2<static_cast<int>(I2e); ++i2) { n2 += w2[ I2[i2] ]; }
+    // Intra-species: the density is in fact the sum of the density of
+    // each sub-group of particles
+    if (isSameSpecies) {
+        n1 = n1 + n2;
+        n2 = n1;
+    }
     n1 = n1 / dV; n2 = n2 / dV;
     {
       int i1 = I1s; int i2 = I2s;
@@ -95,6 +103,8 @@ void ElasticCollisionPerez (
       }
       n12 = n12 / dV;
     }
+    // Intra-species: Apply correction in collision rate
+    if (isSameSpecies) n12 *= T_PR(2.0);
 
     // compute Debye length lmdD
     T_PR lmdD;

@@ -40,7 +40,6 @@ namespace {
         {"tritium"    , PhysicalSpecies::hydrogen3},
         {"proton"     , PhysicalSpecies::proton},
         {"helium"     , PhysicalSpecies::helium},
-        {"alpha"      , PhysicalSpecies::alpha},
         {"helium3"    , PhysicalSpecies::helium3},
         {"helium4"    , PhysicalSpecies::helium4},
         {"alpha"      , PhysicalSpecies::alpha},
@@ -255,6 +254,9 @@ namespace {
         {PhysicalSpecies::neon22, Properties{
              amrex::Real(21.991385114) * PhysConst::m_u,
              amrex::Real(10) * PhysConst::q_e}},
+        {PhysicalSpecies::aluminium, Properties{
+             amrex::Real(26.98153853) * PhysConst::m_u,
+             amrex::Real(13) * PhysConst::q_e}},
         {PhysicalSpecies::argon, Properties{
              amrex::Real(39.948) * PhysConst::m_u,
              amrex::Real(18) * PhysConst::q_e}},

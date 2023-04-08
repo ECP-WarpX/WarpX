@@ -2,7 +2,7 @@
 #define WARPX_FULLDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
 
 #include <string>
 
@@ -15,7 +15,7 @@ private:
     /** Read user-requested parameters for full diagnostics */
     void ReadParameters ();
     /** Determines timesteps at which full diagnostics are written to file */
-    IntervalsParser m_intervals;
+    utils::parser::IntervalsParser m_intervals;
     /** Whether to plot raw (i.e., NOT cell-centered) fields */
     bool m_plot_raw_fields = false;
     /** Whether to plot guard cells of raw fields */
@@ -52,9 +52,9 @@ private:
       * \param[in] i_buffer index of a back-transformed snapshot
       * \param[in] lev level on which source multifabs are defined
       */
-    void InitializeBufferData ( int i_buffer, int lev ) override;
+    void InitializeBufferData ( int i_buffer, int lev, bool restart=false ) override;
     /** Initialize functors that store pointers to the RZ fields requested by the user.
-     * \parm[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+     * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
     void InitializeFieldFunctorsRZopenPMD (int lev) override;
     /** Append m_all_field_functors[lev] with all modes of all components of E B and j

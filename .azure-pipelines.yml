@@ -74,6 +74,7 @@ jobs:
       set -eu -o pipefail
       cat /proc/cpuinfo | grep "model name" | sort -u
       df -h
+      echo 'Acquire::Retries "3";' | sudo tee /etc/apt/apt.conf.d/80-retries
       sudo apt update
       sudo apt install -y ccache curl gcc gfortran git g++ ninja-build \
         openmpi-bin libopenmpi-dev \
@@ -88,7 +89,7 @@ jobs:
       python3 -m pipx install cmake
       python3 -m pipx ensurepath
       export PATH="$HOME/.local/bin:$PATH"
-      sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
+      sudo curl -L -o /usr/local/bin/cmake-easyinstall https://raw.githubusercontent.com/ax3l/cmake-easyinstall/main/cmake-easyinstall
       sudo chmod a+x /usr/local/bin/cmake-easyinstall
       if [ "${WARPX_CI_OPENPMD:-FALSE}" == "TRUE" ]; then
         cmake-easyinstall --prefix=/usr/local                   \
@@ -99,11 +100,11 @@ jobs:
         python3 -m pip install --upgrade openpmd-api
       fi
       if [[ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]]; then
-        cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git \
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/blaspp.git \
           -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
           -DCMAKE_CXX_STANDARD=17                       \
           -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
-        cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git \
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/lapackpp.git \
           -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
           -DCMAKE_CXX_STANDARD=17                       \
           -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON

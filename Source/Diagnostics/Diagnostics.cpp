@@ -12,10 +12,11 @@
 #include "FlushFormats/FlushFormatPlotfile.H"
 #include "FlushFormats/FlushFormatSensei.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Utils/Algorithms/IsIn.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <ablastr/utils/Communication.H>
@@ -51,7 +52,8 @@ Diagnostics::BaseReadParameters ()
     amrex::ParmParse pp_diag_name(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
-    queryWithParser(pp_diag_name, "file_min_digits", m_file_min_digits);
+    utils::parser::queryWithParser(
+        pp_diag_name, "file_min_digits", m_file_min_digits);
     pp_diag_name.query("format", m_format);
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
@@ -62,7 +64,7 @@ Diagnostics::BaseReadParameters ()
     // Query list of grid fields to write to output
     bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames_fields);
     if (!varnames_specified){
-        if( dims == "RZ" and m_format == "openpmd" ) {
+        if( dims == "RZ" ) {
             m_varnames_fields = {"Er", "Et", "Ez", "Br", "Bt", "Bz", "jr", "jt", "jz"};
         }
         else {
@@ -71,24 +73,33 @@ Diagnostics::BaseReadParameters ()
     }
 
     // Sanity check if user requests to plot phi
-    if (WarpXUtilStr::is_in(m_varnames_fields, "phi")){
+    if (utils::algorithms::is_in(m_varnames_fields, "phi")){
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            warpx.do_electrostatic==ElectrostaticSolverAlgo::LabFrame,
-            "plot phi only works if do_electrostatic = labframe");
+            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrame ||
+            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic,
+            "plot phi only works if do_electrostatic = labframe or do_electrostatic = labframe-electromagnetostatic");
+    }
+
+    // Sanity check if user requests to plot A
+    if (utils::algorithms::any_of_is_in(m_varnames_fields, amrex::Vector<std::string>({"Ax", "Ay", "Az", "Ar", "At"}))){
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic,
+            "plot A only works if do_electrostatic = labframe-electromagnetostatic");
     }
 
     // Sanity check if user requests to plot F
-    if (WarpXUtilStr::is_in(m_varnames_fields, "F")){
+    if (utils::algorithms::is_in(m_varnames_fields, "F")){
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             warpx.do_dive_cleaning,
             "plot F only works if warpx.do_dive_cleaning = 1");
     }
 
     // G can be written to file only if WarpX::do_divb_cleaning = 1
-    if (WarpXUtilStr::is_in(m_varnames_fields, "G"))
+    if (utils::algorithms::is_in(m_varnames_fields, "G"))
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            warpx.do_divb_cleaning, "G can be written to file only if warpx.do_divb_cleaning = 1");
+            warpx.do_divb_cleaning,
+            "G can be written to file only if warpx.do_divb_cleaning = 1");
     }
 
     // If user requests to plot proc_number for a serial run,
@@ -120,7 +131,8 @@ Diagnostics::BaseReadParameters ()
         bool do_average = true;
         pp_diag_pfield.query((var + ".do_average").c_str(), do_average);
         m_pfield_do_average.push_back(do_average);
-        Store_parserString(pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)").c_str(), parser_str);
+        utils::parser::Store_parserString(
+            pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)").c_str(), parser_str);
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             parser_str != "",
@@ -169,15 +181,15 @@ Diagnostics::BaseReadParameters ()
         );
     }
 
-    if (WarpXUtilStr::is_in(m_varnames_fields, "none")){
+    if (utils::algorithms::is_in(m_varnames_fields, "none")){
         m_varnames_fields.clear();
     }
 
     m_varnames = m_varnames_fields;
     // Generate names of averaged particle fields and append to m_varnames
-    for (int ivar=0; ivar<m_pfield_varnames.size(); ivar++) {
-        for (int ispec=0; ispec < int(m_pfield_species.size()); ispec++) {
-            m_varnames.push_back(m_pfield_varnames[ivar] + '_' + m_pfield_species[ispec]);
+    for (const auto& fname : m_pfield_varnames) {
+        for (const auto& sname : m_pfield_species) {
+            m_varnames.push_back(fname + '_' + sname);
         }
     }
 
@@ -185,14 +197,16 @@ Diagnostics::BaseReadParameters ()
     m_lo.resize(AMREX_SPACEDIM);
     m_hi.resize(AMREX_SPACEDIM);
 
-    bool lo_specified = queryArrWithParser(pp_diag_name, "diag_lo", m_lo, 0, AMREX_SPACEDIM);
+    const bool lo_specified = utils::parser::queryArrWithParser(
+        pp_diag_name, "diag_lo", m_lo, 0, AMREX_SPACEDIM);
 
     if (!lo_specified) {
        for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
             m_lo[idim] = warpx.Geom(0).ProbLo(idim);
        }
     }
-    bool hi_specified = queryArrWithParser(pp_diag_name, "diag_hi", m_hi, 0, AMREX_SPACEDIM);
+    const bool hi_specified = utils::parser::queryArrWithParser(
+        pp_diag_name, "diag_hi", m_hi, 0, AMREX_SPACEDIM);
     if (!hi_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
             m_hi[idim] = warpx.Geom(0).ProbHi(idim);
@@ -220,7 +234,9 @@ Diagnostics::BaseReadParameters ()
     // Initialize cr_ratio with default value of 1 for each dimension.
     amrex::Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
     // Read user-defined coarsening ratio for the output MultiFab.
-    bool cr_specified = queryArrWithParser(pp_diag_name, "coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM);
+    const bool cr_specified =
+        utils::parser::queryArrWithParser(
+            pp_diag_name, "coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM);
     if (cr_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
            m_crse_ratio[idim] = cr_ratio[idim];
@@ -228,7 +244,8 @@ Diagnostics::BaseReadParameters ()
     }
 
     // Names of species to write to output
-    bool species_specified = pp_diag_name.queryarr("species", m_output_species_names);
+    const bool species_specified =
+        pp_diag_name.queryarr("species", m_output_species_names);
 
 
     // Auxiliary variables
@@ -274,6 +291,85 @@ Diagnostics::BaseReadParameters ()
     }
     return checkpoint_compatibility;
 
+}
+
+
+void
+Diagnostics::InitDataBeforeRestart ()
+{
+    // initialize member variables and arrays in base class::Diagnostics
+    InitBaseData();
+    // initialize member variables and arrays specific to each derived class
+    // (FullDiagnostics, BTDiagnostics, etc.)
+    DerivedInitData();
+}
+
+void
+Diagnostics::InitDataAfterRestart ()
+{
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        // loop over all levels
+        // This includes full diagnostics and BTD as well as cell-center functors for BTD.
+        // Note that the cell-centered data for BTD is computed for all levels and hence
+        // the corresponding functor is also initialized for all the levels
+        for (int lev = 0; lev < nmax_lev; ++lev) {
+            // allocate and initialize m_all_field_functors depending on diag type
+            InitializeFieldFunctors(lev);
+        }
+        // loop over the levels selected for output
+        // This includes all the levels for full diagnostics
+        // and only the coarse level (mother grid) for BTD
+        for (int lev = 0; lev < nlev_output; ++lev) {
+            // Initialize buffer data required for particle and/or fields
+            InitializeBufferData(i_buffer, lev, true);
+        }
+    }
+
+    amrex::ParmParse pp_diag_name(m_diag_name);
+    // default for writing species output is 1
+    int write_species = 1;
+    pp_diag_name.query("write_species", write_species);
+    if (write_species == 1) {
+        // When particle buffers, m_particle_boundary_buffer are included,
+        // they will be initialized here
+        InitializeParticleBuffer();
+        InitializeParticleFunctors();
+    }
+   if (write_species == 0) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            m_format != "checkpoint",
+            "For checkpoint format, write_species flag must be 1."
+        );
+        // if user-defined value for write_species == 0, then clear species vector
+        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
+            m_output_species.at(i_buffer).clear();
+        }
+        m_output_species_names.clear();
+    } else {
+        amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
+        if ( utils::parser::queryArrWithParser(
+                pp_diag_name, "diag_lo", dummy_val, 0, AMREX_SPACEDIM) ||
+             utils::parser::queryArrWithParser(
+                pp_diag_name, "diag_hi", dummy_val, 0, AMREX_SPACEDIM) ) {
+            // set geometry filter for particle-diags to true when the diagnostic domain-extent
+            // is specified by the user.
+            // Note that the filter is set for every ith snapshot, and the number of snapshots
+            // for full diagnostics is 1, while for BTD it is user-defined.
+            for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
+                for (auto& v : m_output_species.at(i_buffer)) {
+                    v.m_do_geom_filter = true;
+                }
+                // Disabling particle-io for reduced domain diagnostics by reducing
+                // the particle-diag vector to zero.
+                // This is a temporary fix until particle_buffer is supported in diagnostics.
+                m_output_species.at(i_buffer).clear();
+            }
+            std::string warnMsg = "For full diagnostics on a reduced domain, particle I/O is not ";
+            warnMsg += "supported, yet! Therefore, particle I/O is disabled for this diagnostics: ";
+            warnMsg += m_diag_name;
+            ablastr::warn_manager::WMRecordWarning("Diagnostics", warnMsg);
+        }
+    }
 }
 
 
@@ -326,8 +422,10 @@ Diagnostics::InitData ()
         m_output_species_names.clear();
     } else {
         amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
-        if ( queryArrWithParser(pp_diag_name, "diag_lo", dummy_val, 0, AMREX_SPACEDIM) ||
-             queryArrWithParser(pp_diag_name, "diag_hi", dummy_val, 0, AMREX_SPACEDIM) ) {
+        if ( utils::parser::queryArrWithParser(
+                pp_diag_name, "diag_lo", dummy_val, 0, AMREX_SPACEDIM) ||
+             utils::parser::queryArrWithParser(
+                pp_diag_name, "diag_hi", dummy_val, 0, AMREX_SPACEDIM) ) {
             // set geometry filter for particle-diags to true when the diagnostic domain-extent
             // is specified by the user.
             // Note that the filter is set for every ith snapshot, and the number of snapshots

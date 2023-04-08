@@ -39,7 +39,7 @@ int getMaxTboxAlongDim (int nCells, int tilesize){
  * \param global : The global array
  * \param local : The local array
  */
-#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
+#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void addLocalToGlobal (const amrex::Box& bx,
                        const amrex::Array4<amrex::Real>& global,
@@ -62,6 +62,7 @@ void addLocalToGlobal (const amrex::Box& bx,
 }
 #endif
 
+#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
 template <int depos_order>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void depositComponent (const GetParticlePosition& GetPosition,
@@ -276,6 +277,7 @@ void depositComponent (const GetParticlePosition& GetPosition,
     }
 #endif
 }
+#endif
 
 template <int depos_order>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE

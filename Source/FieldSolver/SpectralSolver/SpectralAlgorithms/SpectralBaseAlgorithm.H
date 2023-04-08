@@ -83,7 +83,7 @@ class SpectralBaseAlgorithm
                               const amrex::DistributionMapping& dm,
                               const SpectralFieldIndex& spectral_index,
                               const int norder_x, const int norder_y,
-                              const int norder_z, const bool nodal);
+                              const int norder_z, const short grid_type);
 
         SpectralFieldIndex m_spectral_index;
 

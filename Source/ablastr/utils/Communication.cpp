@@ -13,6 +13,8 @@
 #include <AMReX_FabArray.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_iMultiFab.H>
+#include <AMReX_ParmParse.H>
+
 
 namespace ablastr::utils::communication
 {
@@ -60,27 +62,24 @@ void ParallelAdd(amrex::MultiFab &dst, const amrex::MultiFab &src, int src_comp,
                                                 do_single_precision_comms, period, amrex::FabArrayBase::ADD);
 }
 
-void FillBoundary (amrex::MultiFab &mf, bool do_single_precision_comms, const amrex::Periodicity &period)
+void FillBoundary (amrex::MultiFab &mf,
+                   amrex::IntVect ng,
+                   bool do_single_precision_comms,
+                   const amrex::Periodicity &period,
+                   std::optional<bool> nodal_sync)
 {
     BL_PROFILE("ablastr::utils::communication::FillBoundary");
 
-    if (do_single_precision_comms)
-    {
-        mf.FillBoundary<comm_float_type>(period);
-    }
-    else
-    {
-        mf.FillBoundary(period);
-    }
-}
+    // allow developers to always enforce nodal sync, independent of the
+    // nodal_sync argument
+    bool do_nodal_sync_arg = nodal_sync.value_or(false);
 
-void FillBoundary(amrex::MultiFab &mf,
-                  amrex::IntVect ng,
-                  bool do_single_precision_comms,
-                  const amrex::Periodicity &period,
-                  const bool nodal_sync)
-{
-    BL_PROFILE("ablastr::utils::communication::FillBoundary");
+    amrex::ParmParse pp_ablastr("ablastr");
+    bool do_nodal_sync_input = false;
+    pp_ablastr.query("fillboundary_always_sync", do_nodal_sync_input);
+
+    // logic: inputs overwrite argument unless argument is true
+    bool const do_nodal_sync = do_nodal_sync_arg || do_nodal_sync_input;
 
     if (do_single_precision_comms)
     {
@@ -91,7 +90,7 @@ void FillBoundary(amrex::MultiFab &mf,
 
         mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
 
-        if (nodal_sync) {
+        if (do_nodal_sync) {
             mf_tmp.FillBoundaryAndSync(0, mf.nComp(), ng, period);
         } else {
             mf_tmp.FillBoundary(ng, period);
@@ -101,8 +100,7 @@ void FillBoundary(amrex::MultiFab &mf,
     }
     else
     {
-
-        if (nodal_sync) {
+        if (do_nodal_sync) {
             mf.FillBoundaryAndSync(0, mf.nComp(), ng, period);
         } else {
             mf.FillBoundary(ng, period);
@@ -110,9 +108,24 @@ void FillBoundary(amrex::MultiFab &mf,
     }
 }
 
-void FillBoundary(amrex::iMultiFab &imf, const amrex::Periodicity &period)
+void FillBoundary (amrex::MultiFab &mf, bool do_single_precision_comms, const amrex::Periodicity &period)
 {
-    BL_PROFILE("ablastr::utils::communication::FillBoundary");
+    amrex::IntVect const ng = mf.n_grow;
+    FillBoundary(mf, ng, do_single_precision_comms, period);
+}
+
+void
+FillBoundary (amrex::Vector<amrex::MultiFab *> const &mf, bool do_single_precision_comms,
+             const amrex::Periodicity &period)
+{
+    for (auto x : mf) {
+        ablastr::utils::communication::FillBoundary(*x, do_single_precision_comms, period);
+    }
+}
+
+void FillBoundary (amrex::iMultiFab &imf, const amrex::Periodicity &period)
+{
+    BL_PROFILE("ablastr::utils::communication::FillBoundary::iMultiFab");
 
     imf.FillBoundary(period);
 }
@@ -121,18 +134,9 @@ void FillBoundary (amrex::iMultiFab&         imf,
                    amrex::IntVect            ng,
                    const amrex::Periodicity& period)
 {
-    BL_PROFILE("ablastr::utils::communication::FillBoundary");
+    BL_PROFILE("ablastr::utils::communication::FillBoundary::iMultiFab");
 
     imf.FillBoundary(ng, period);
-}
-
-void
-FillBoundary(amrex::Vector<amrex::MultiFab *> const &mf, bool do_single_precision_comms,
-             const amrex::Periodicity &period)
-{
-    for (auto x : mf) {
-        ablastr::utils::communication::FillBoundary(*x, do_single_precision_comms, period);
-    }
 }
 
 void SumBoundary (amrex::MultiFab &mf, bool do_single_precision_comms, const amrex::Periodicity &period)

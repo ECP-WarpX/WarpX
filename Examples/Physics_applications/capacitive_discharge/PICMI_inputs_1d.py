@@ -17,8 +17,9 @@ constants = picmi.constants
 
 
 class PoissonSolver1D(picmi.ElectrostaticSolver):
-    """This can be removed and the MLMG solver used once
-       https://github.com/ECP-WarpX/WarpX/issues/3123 is addressed."""
+    """This solver is maintained as an example of the use of Python callbacks.
+       However, it is not necessarily needed since the 1D code has the direct tridiagonal
+       solver implemented."""
 
     def __init__(self, grid, **kwargs):
         """Direct solver for the Poisson equation using superLU. This solver is
@@ -60,8 +61,8 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
 
         super(PoissonSolver1D, self).initialize_inputs()
 
-        self.nz = self.grid.nx
-        self.dz = (self.grid.xmax - self.grid.xmin) / self.nz
+        self.nz = self.grid.number_of_cells[0]
+        self.dz = (self.grid.upper_bound[0] - self.grid.lower_bound[0]) / self.nz
 
         self.nxguardphi = 1
         self.nzguardphi = 1
@@ -77,18 +78,6 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         system."""
         self.nsolve = self.nz + 1
 
-        # Set up the tridiagonal computation matrix in order to solve A*phi =
-        # rho for phi.
-        self.A_ldiag = np.ones(self.nsolve-1) / self.dz**2
-        self.A_mdiag = -2.*np.ones(self.nsolve) / self.dz**2
-        self.A_udiag = np.ones(self.nsolve-1) / self.dz**2
-
-        self.A_mdiag[0] = 1.
-        self.A_udiag[0] = 0.0
-
-        self.A_mdiag[-1] = 1.
-        self.A_ldiag[-1] = 0.0
-
         # Set up the computation matrix in order to solve A*phi = rho
         A = np.zeros((self.nsolve, self.nsolve))
         idx = np.arange(self.nsolve)
@@ -101,7 +90,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         A[0, 0] = 1.0
         A[-1, -1] = 1.0
 
-        A = csc_matrix(A, dtype=np.float32)
+        A = csc_matrix(A, dtype=np.float64)
         self.lu = sla.splu(A)
 
     def _run_solve(self):
@@ -124,7 +113,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
 
         # Construct b vector
         rho = -self.rho_data / constants.ep0
-        b = np.zeros(rho.shape[0], dtype=np.float32)
+        b = np.zeros(rho.shape[0], dtype=np.float64)
         b[:] = rho * self.dz**2
 
         b[0] = left_voltage
@@ -169,10 +158,11 @@ class CapacitiveDischargeExample(object):
     # Time (in seconds) between diagnostic evaluations
     diag_interval = 32 / freq
 
-    def __init__(self, n=0, test=False):
+    def __init__(self, n=0, test=False, pythonsolver=False):
         """Get input parameters for the specific case (n) desired."""
         self.n = n
         self.test = test
+        self.pythonsolver = pythonsolver
 
         # Case specific input parameters
         self.voltage = f"{self.voltage[n]}*sin(2*pi*{self.freq:.5e}*t)"
@@ -221,11 +211,11 @@ class CapacitiveDischargeExample(object):
         # Field solver                                                        #
         #######################################################################
 
-        # self.solver = picmi.ElectrostaticSolver(
-        #    grid=self.grid, method='Multigrid', required_precision=1e-6,
-        #    warpx_self_fields_verbosity=2
-        # )
-        self.solver = PoissonSolver1D(grid=self.grid)
+        if self.pythonsolver:
+            self.solver = PoissonSolver1D(grid=self.grid)
+        else:
+            # This will use the tridiagonal solver
+            self.solver = picmi.ElectrostaticSolver(grid=self.grid)
 
         #######################################################################
         # Particle types setup                                                #
@@ -329,13 +319,18 @@ class CapacitiveDischargeExample(object):
         # Add diagnostics for the CI test to be happy                         #
         #######################################################################
 
+        if self.pythonsolver:
+            file_prefix = 'Python_background_mcc_1d_plt'
+        else:
+            file_prefix = 'Python_background_mcc_1d_tridiag_plt'
+
         field_diag = picmi.FieldDiagnostic(
             name='diag1',
             grid=self.grid,
             period=0,
             data_list=['rho_electrons', 'rho_he_ions'],
             write_dir='.',
-            warpx_file_prefix='Python_background_mcc_1d_plt'
+            warpx_file_prefix=file_prefix
         )
         self.sim.add_diagnostic(field_diag)
 
@@ -358,6 +353,19 @@ class CapacitiveDischargeExample(object):
         if self.sim.extension.getMyProc() == 0:
             np.save(f'ion_density_case_{self.n+1}.npy', self.ion_density_array)
 
+        # query the particle z-coordinates if this is run during CI testing
+        # to cover that functionality
+        if self.test:
+            nparts = self.sim.extension.get_particle_count(
+                'he_ions', local=True
+            )
+            z_coords = np.concatenate(
+                self.sim.extension.get_particle_z('he_ions')
+            )
+            assert len(z_coords) == nparts
+            assert np.all(z_coords >= 0.0) and np.all(z_coords <= self.gap)
+
+
 ##########################
 # parse input parameters
 ##########################
@@ -371,11 +379,15 @@ parser.add_argument(
     '-n', help='Test number to run (1 to 4)', required=False, type=int,
     default=1
 )
+parser.add_argument(
+    '--pythonsolver', help='toggle whether to use the Python level solver',
+    action='store_true'
+)
 args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1]+left
 
 if args.n < 1 or args.n > 4:
     raise AttributeError('Test number must be an integer from 1 to 4.')
 
-run = CapacitiveDischargeExample(n=args.n-1, test=args.test)
+run = CapacitiveDischargeExample(n=args.n-1, test=args.test, pythonsolver=args.pythonsolver)
 run.run_sim()

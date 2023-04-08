@@ -13,29 +13,29 @@ Introduction
 
 If you are new to this system, **please see the following resources**:
 
-* `Crusher user guide <https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html>`_
-* Batch system: `Slurm <https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html#running-jobs>`_
-* `Production directories <https://docs.olcf.ornl.gov/data/index.html#data-storage-and-transfers>`_:
+* `Crusher user guide <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html>`_
+* Batch system: `Slurm <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#running-jobs>`_
+* `Production directories <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#data-and-storage>`_:
 
   * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days (recommended)
-  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days (usually smaller quota)
-  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days
+  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days (usually smaller quota, 50TB default quota)
+  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days (50TB default quota)
   * Note that the ``$HOME`` directory is mounted as read-only on compute nodes.
     That means you cannot run in your ``$HOME``.
+    It's default quota is 50GB.
+
+Note: the Orion lustre filesystem on Frontier and the older Alpine GPFS filesystem on Summit are not mounted on each others machines.
+Use `Globus <https://www.globus.org>`__ to transfer data between them if needed.
 
 
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch.
-**You have to do this on Summit/OLCF Home/etc. since Frontier cannot connect directly to the internet**:
+Use the following commands to download the WarpX source code and switch to the correct branch:
 
 .. code-block:: bash
 
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
-   git clone https://github.com/AMReX-Codes/amrex.git $HOME/src/amrex
-   git clone https://github.com/ECP-WarpX/picsar.git $HOME/src/picsar
-   git clone -b 0.14.5 https://github.com/openPMD/openPMD-api.git $HOME/src/openPMD-api
 
 To enable HDF5, work-around the broken ``HDF5_VERSION`` variable (empty) in the Cray PE by commenting out the following lines in ``$HOME/src/openPMD-api/CMakeLists.txt``:
 https://github.com/openPMD/openPMD-api/blob/0.14.5/CMakeLists.txt#L216-L220
@@ -69,13 +69,17 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-frontier>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``$PROJWORK/$proj/``.
+
 
 .. _running-cpp-frontier:
 
 Running
 -------
 
-.. _running-cpp-frontier-MI100-GPUs:
+.. _running-cpp-frontier-MI250X-GPUs:
 
 MI250X GPUs (2x64 GB)
 ^^^^^^^^^^^^^^^^^^^^^
@@ -110,10 +114,30 @@ Known System Issues
 .. warning::
 
    May 16th, 2022 (OLCFHELP-6888):
-   There is a caching bug in Libfrabric that causes WarpX simulations to occasionally hang on Frontier on more than 1 node.
+   There is a caching bug in Libfabric that causes WarpX simulations to occasionally hang on Frontier on more than 1 node.
 
    As a work-around, please export the following environment variable in your job scripts until the issue is fixed:
 
    .. code-block:: bash
 
-      export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching
+      #export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching
+      # or, less invasive:
+      export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
+
+.. warning::
+
+   Sep 2nd, 2022 (OLCFDEV-1079):
+   rocFFT in ROCm 5.1+ tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/library.html#runtime-compilation>`__ in the home area by default.
+   This does not scale, disable it via:
+
+   .. code-block:: bash
+
+      export ROCFFT_RTC_CACHE_PATH=/dev/null
+
+.. warning::
+
+   January, 2023 (OLCFDEV-1284, AMD Ticket: ORNLA-130):
+   We discovered a regression in AMD ROCm, leading to 2x slower current deposition (and other slowdowns) in ROCm 5.3 and 5.4.
+   Reported to AMD and investigating.
+
+   Stay with the ROCm 5.2 module to avoid.

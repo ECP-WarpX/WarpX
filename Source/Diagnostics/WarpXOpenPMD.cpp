@@ -11,10 +11,10 @@
 #include "FieldIO.H"
 #include "Particles/Filter/FilterFunctors.H"
 #include "Utils/TextMsg.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <ablastr/particles/IndexHandling.H>
@@ -181,34 +181,44 @@ namespace detail
                 op_block += R"END(,
           "parameters": {
 )END";
-            op_block += op_parameters + "}";
+            op_block += op_parameters +
+                        "\n          }";
         }
             op_block += R"END(
         }
       ]
     })END";
-        if (!engine_type.empty())
-            op_block += ",";
-
+            if (!engine_type.empty() || !en_parameters.empty())
+                op_block += ",";
         }  // end operator string block
 
         // add the engine string block
-        if (!engine_type.empty()) {
+        if (!engine_type.empty() || !en_parameters.empty())
+        {
             en_block = R"END(
-    "engine": {
-      "type": ")END";
-            en_block += engine_type + "\"";
+    "engine": {)END";
 
+            // non-default engine type
+            if (!engine_type.empty()) {
+                en_block += R"END(
+      "type": ")END";
+                en_block += engine_type + "\"";
+
+                if(!en_parameters.empty())
+                    en_block += ",";
+            }
+
+            // non-default engine parameters
             if (!en_parameters.empty()) {
-                en_block += R"END(,
+                en_block += R"END(
       "parameters": {
 )END";
-            en_block += en_parameters + "}";
+                en_block += en_parameters +
+                            "\n      }";
             }
 
             en_block += R"END(
     })END";
-
         }  // end engine string block
 
         options = top_block + op_block + en_block + end_block;
@@ -611,7 +621,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                          particle_diags[i].m_uniform_stride);
       ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
-                                 compileParser<ParticleDiag::m_nvars>
+                                utils::parser::compileParser<ParticleDiag::m_nvars>
                                      (particle_diags[i].m_particle_filter_parser.get()),
                                  pc->getMass());
       parser_filter.m_units = InputUnits::SI;
@@ -734,6 +744,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     m_Series->flush();
 
     // dump individual particles
+    bool contributed_particles = false;  // did the local MPI rank contribute particles?
     for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++) {
         uint64_t offset = static_cast<uint64_t>( counter.m_ParticleOffsetAtRank[currentLevel] );
         // For BTD, the offset include the number of particles already flushed
@@ -744,7 +755,10 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 
             // Do not call storeChunk() with zero-sized particle tiles:
             //   https://github.com/openPMD/openPMD-api/issues/1147
+            //   https://github.com/ECP-WarpX/WarpX/pull/1898#discussion_r745008290
             if (numParticleOnTile == 0) continue;
+
+            contributed_particles = true;
 
             // get position and particle ID from aos
             // note: this implementation iterates the AoS 4x...
@@ -823,8 +837,59 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                              write_int_comp, int_comp_names);
 
             offset += numParticleOnTile64;
+        } // pti
+    } // currentLevel
+
+    // work-around for BTD particle resize in ADIOS2
+    //
+    // This issues an empty ADIOS2 Put to make sure the new global shape
+    // meta-data is committed for each variable.
+    //
+    // Refs.:
+    //   https://github.com/ECP-WarpX/WarpX/issues/3389
+    //   https://github.com/ornladios/ADIOS2/issues/3455
+    //   BP4 (ADIOS 2.8): last MPI rank's `Put` meta-data wins
+    //   BP5 (ADIOS 2.8): everyone has to write an empty block
+    if (is_resizing_flush && !contributed_particles && isBTD && m_Series->backend() == "ADIOS2") {
+        for( auto & [record_name, record] : currSpecies ) {
+            for( auto & [comp_name, comp] : record ) {
+                if (comp.constant()) continue;
+
+                auto dtype = comp.getDatatype();
+                switch (dtype) {
+                    case openPMD::Datatype::FLOAT :
+                        [[fallthrough]];
+                    case openPMD::Datatype::DOUBLE : {
+                        auto empty_data = std::make_shared<amrex::ParticleReal>();
+                        comp.storeChunk(empty_data, {uint64_t(0)}, {uint64_t(0)});
+                        break;
+                    }
+                    case openPMD::Datatype::UINT : {
+                        auto empty_data = std::make_shared<unsigned int>();
+                        comp.storeChunk(empty_data, {uint64_t(0)}, {uint64_t(0)});
+                        break;
+                    }
+                    case openPMD::Datatype::ULONG : {
+                        auto empty_data = std::make_shared<unsigned long>();
+                        comp.storeChunk(empty_data, {uint64_t(0)}, {uint64_t(0)});
+                        break;
+                    }
+                    case openPMD::Datatype::ULONGLONG : {
+                        auto empty_data = std::make_shared<unsigned long long>();
+                        comp.storeChunk(empty_data, {uint64_t(0)}, {uint64_t(0)});
+                        break;
+                    }
+                    default : {
+                        std::string msg = "WarpX openPMD ADIOS2 work-around has unknown dtype: ";
+                        msg += datatypeToString(dtype);
+                        amrex::Abort(msg);
+                        break;
+                    }
+                }
+            }
         }
     }
+
     m_Series->flush();
 }
 
@@ -1004,15 +1069,18 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
         amrex::ParticleReal const mass)
 {
     auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
+    auto const scalar = openPMD::RecordComponent::SCALAR;
 
+    // define record shape to be number of particles
     auto const positionComponents = detail::getParticlePositionComponentLabels();
     for( auto const& comp : positionComponents ) {
         currSpecies["positionOffset"][comp].resetDataset( realType );
     }
+    currSpecies["charge"][scalar].resetDataset( realType );
+    currSpecies["mass"][scalar].resetDataset( realType );
 
     // make constant
     using namespace amrex::literals;
-    auto const scalar = openPMD::RecordComponent::SCALAR;
     for( auto const& comp : positionComponents ) {
         currSpecies["positionOffset"][comp].makeConstant( 0._prt );
     }
@@ -1090,8 +1158,8 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
 /*
  * Set up parameter for mesh container using the geometry (from level 0)
  *
- * @param [IN] meshes: openPMD-api mesh container
- * @param [IN] full_geom: field geometry
+ * @param [in] meshes: openPMD-api mesh container
+ * @param [in] full_geom: field geometry
  *
  */
 void
@@ -1118,12 +1186,12 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
           }
 
       meshes.setAttribute("fieldSolver", []() {
-          switch (WarpX::maxwell_solver_id) {
-              case MaxwellSolverAlgo::Yee :
+          switch (WarpX::electromagnetic_solver_id) {
+              case ElectromagneticSolverAlgo::Yee :
                   return "Yee";
-              case MaxwellSolverAlgo::CKC :
+              case ElectromagneticSolverAlgo::CKC :
                   return "CK";
-              case MaxwellSolverAlgo::PSATD :
+              case ElectromagneticSolverAlgo::PSATD :
                   return "PSATD";
               default:
                   return "other";
@@ -1164,9 +1232,9 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
 
 /*
  * Setup component properties  for a field mesh
- * @param [IN]: mesh          a mesh field
- * @param [IN]: full_geom     geometry for the mesh
- * @param [IN]: mesh_comp     a component for the mesh
+ * @param [in]: mesh          a mesh field
+ * @param [in]: full_geom     geometry for the mesh
+ * @param [in]: mesh_comp     a component for the mesh
  */
 void
 WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,

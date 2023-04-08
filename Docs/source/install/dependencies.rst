@@ -6,7 +6,7 @@ Dependencies
 WarpX depends on the following popular third party software.
 Please see installation instructions below.
 
-- a mature `C++17 <https://en.wikipedia.org/wiki/C%2B%2B17>`__ compiler, e.g., GCC 7, Clang 7, NVCC 11.0, MSVC 19.15 or newer
+- a mature `C++17 <https://en.wikipedia.org/wiki/C%2B%2B17>`__ compiler, e.g., GCC 8, Clang 7, NVCC 11.0, MSVC 19.15 or newer
 - `CMake 3.20.0+ <https://cmake.org>`__
 - `Git 2.18+ <https://git-scm.com>`__
 - `AMReX <https://amrex-codes.github.io>`__: we automatically download and compile a copy of AMReX
@@ -20,11 +20,13 @@ Optional dependencies include:
 - `FFTW3 <http://www.fftw.org>`_: for spectral solver (PSATD) support
 
   - also needs the ``pkg-config`` tool on Unix
-- `BLAS++ <https://bitbucket.org/icl/blaspp>`_ and `LAPACK++ <https://bitbucket.org/icl/lapackpp>`_: for spectral solver (PSATD) support in RZ geometry
+- `BLAS++ <https://github.com/icl-utk-edu/blaspp>`_ and `LAPACK++ <https://github.com/icl-utk-edu/lapackpp>`_: for spectral solver (PSATD) support in RZ geometry
 - `Boost 1.66.0+ <https://www.boost.org/>`__: for QED lookup tables generation support
 - `openPMD-api 0.14.2+ <https://github.com/openPMD/openPMD-api>`__: we automatically download and compile a copy of openPMD-api for openPMD I/O support
 
   - see `optional I/O backends <https://github.com/openPMD/openPMD-api#dependencies>`__
+- `Ascent 0.8.0+ <https://ascent.readthedocs.io>`__: for in situ 3D visualization
+- `SENSEI 4.0.0+ <https://sensei-insitu.org>`__: for in situ analysis and visualization
 - `CCache <https://ccache.dev>`__: to speed up rebuilds (For CUDA support, needs version 3.7.9+ and 4.2+ is recommended)
 - `Ninja <https://ninja-build.org>`__: for faster parallel compiles
 - `Python 3.7+ <https://www.python.org>`__
@@ -81,8 +83,8 @@ For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you als
 Spack (macOS/Linux)
 ^^^^^^^^^^^^^^^^^^^
 
-First, download a `Spack desktop development environment <https://github.com/ECP-WarpX/WarpX/blob/development/Tools/machines/desktop>`__ of your choice.
-For most desktop development, pick the OpenMP environment for CPUs unless you have a supported GPU.
+First, download a `WarpX Spack desktop development environment <https://github.com/ECP-WarpX/WarpX/blob/development/Tools/machines/desktop>`__ of your choice.
+For most desktop developments, pick the OpenMP environment for CPUs unless you have a supported GPU.
 
 * **Debian/Ubuntu** Linux:
 
@@ -93,6 +95,15 @@ For most desktop development, pick the OpenMP environment for CPUs unless you ha
 * **macOS**: first, prepare with ``brew install gpg2; brew install gcc``
 
   * OpenMP: ``system=macos; compute=openmp``
+
+If you already `installed Spack <https://spack.io>`__, we recommend to activate its `binary caches <https://spack.io/spack-binary-packages/>`__ for faster builds:
+
+.. code-block:: bash
+
+   spack mirror add rolling https://binaries.spack.io/develop
+   spack buildcache keys --install --trust
+
+Now install the WarpX dependencies in a new WarpX development environment:
 
 .. code-block:: bash
 
@@ -139,6 +150,8 @@ Brew (macOS/Linux)
    brew install git
    brew install hdf5-mpi    # for openPMD
    brew install libomp
+   brew unlink gcc
+   brew link --force libomp
    brew install pkg-config  # for fftw
    brew install open-mpi
    brew install openblas    # for PSATD in RZ
@@ -149,12 +162,12 @@ If you also want to compile with PSATD in RZ, you need to manually install BLAS+
 .. code-block:: bash
 
    sudo mkdir -p /usr/local/bin/
-   sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
+   sudo curl -L -o /usr/local/bin/cmake-easyinstall https://raw.githubusercontent.com/ax3l/cmake-easyinstall/main/cmake-easyinstall
    sudo chmod a+x /usr/local/bin/cmake-easyinstall
 
-   cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git \
+   cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/blaspp.git \
        -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
-   cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git \
+   cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/lapackpp.git \
        -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
 
 

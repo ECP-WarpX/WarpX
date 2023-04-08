@@ -13,11 +13,11 @@
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXUtil.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -85,7 +85,6 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 {
     charge = 1.0;
     mass = std::numeric_limits<Real>::max();
-    do_back_transformed_diagnostics = 0;
 
     ParmParse pp_laser_name(m_laser_name);
 
@@ -95,16 +94,25 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     std::transform(laser_type_s.begin(), laser_type_s.end(), laser_type_s.begin(), ::tolower);
 
     // Parse the properties of the antenna
-    getArrWithParser(pp_laser_name, "position", m_position);
-    getArrWithParser(pp_laser_name, "direction", m_nvec);
-    getArrWithParser(pp_laser_name, "polarization", m_p_X);
+    utils::parser::getArrWithParser(pp_laser_name, "position", m_position);
+    utils::parser::getArrWithParser(pp_laser_name, "direction", m_nvec);
+    utils::parser::getArrWithParser(pp_laser_name, "polarization", m_p_X);
 
-    getWithParser(pp_laser_name, "wavelength", m_wavelength);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_position.size() == 3,
+        m_laser_name + ".position must have three components.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec.size() == 3,
+        m_laser_name + ".direction must have three components.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_p_X.size() == 3,
+        m_laser_name + ".polarization must have three components.");
+
+    utils::parser::getWithParser(pp_laser_name, "wavelength", m_wavelength);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_wavelength > 0, "The laser wavelength must be >0.");
-    const bool e_max_is_specified = queryWithParser(pp_laser_name, "e_max", m_e_max);
+    const bool e_max_is_specified =
+        utils::parser::queryWithParser(pp_laser_name, "e_max", m_e_max);
     Real a0;
-    const bool a0_is_specified = queryWithParser(pp_laser_name, "a0", a0);
+    const bool a0_is_specified =
+        utils::parser::queryWithParser(pp_laser_name, "a0", a0);
     if (a0_is_specified){
         Real omega = 2._rt*MathConst::pi*PhysConst::c/m_wavelength;
         m_e_max = PhysConst::m_e * omega * PhysConst::c * a0 / PhysConst::q_e;
@@ -115,7 +123,8 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         );
 
     pp_laser_name.query("do_continuous_injection", do_continuous_injection);
-    pp_laser_name.query("min_particles_per_mode", m_min_particles_per_mode);
+    utils::parser::queryWithParser(pp_laser_name,
+        "min_particles_per_mode", m_min_particles_per_mode);
 
     if (m_e_max == amrex::Real(0.)){
         ablastr::warn_manager::WMRecordWarning("Laser",
@@ -187,10 +196,12 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     m_laser_injection_box= Geom(0).ProbDomain();
     {
         Vector<Real> lo, hi;
-        if (queryArrWithParser(pp_laser_name, "prob_lo", lo, 0, AMREX_SPACEDIM)) {
+        if (utils::parser::queryArrWithParser(
+                pp_laser_name, "prob_lo", lo, 0, AMREX_SPACEDIM)) {
             m_laser_injection_box.setLo(lo);
         }
-        if (queryArrWithParser(pp_laser_name, "prob_hi", hi, 0, AMREX_SPACEDIM)) {
+        if (utils::parser::queryArrWithParser(
+                pp_laser_name, "prob_hi", hi, 0, AMREX_SPACEDIM)) {
             m_laser_injection_box.setHi(hi);
         }
     }
@@ -238,7 +249,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     common_params.e_max = m_e_max;
     common_params.p_X = m_p_X;
     common_params.nvec = m_nvec;
-    m_up_laser_profile->init(pp_laser_name, ParmParse{"my_constants"}, common_params);
+    m_up_laser_profile->init(pp_laser_name, common_params);
 }
 
 /* \brief Check if laser particles enter the box, and inject if necessary.
@@ -550,6 +561,8 @@ LaserParticleContainer::Evolve (int lev,
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
+    const bool has_buffer = cjx;
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -578,18 +591,21 @@ LaserParticleContainer::Evolve (int lev,
             auto& uzp = attribs[PIdx::uz];
 
             const long np  = pti.numParticles();
-            // For now, laser particles do not take the current buffers into account
-            const long np_current = np;
-
             plane_Xp.resize(np);
             plane_Yp.resize(np);
             amplitude_E.resize(np);
+
+            // Determine whether particles will deposit on the fine or coarse level
+            long np_current = np;
+            if (lev > 0 && m_deposit_on_main_grid && has_buffer) {
+                np_current = 0;
+            }
 
             if (rho && ! skip_deposition && ! do_not_deposit) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
                 DepositCharge(pti, wp, ion_lev, rho, 0, 0,
                               np_current, thread_num, lev, lev);
-                if (crho) {
+                if (has_buffer) {
                     DepositCharge(pti, wp, ion_lev, crho, 0, np_current,
                                   np-np_current, thread_num, lev, lev-1);
                 }
@@ -628,7 +644,6 @@ LaserParticleContainer::Evolve (int lev,
                                0, np_current, thread_num,
                                lev, lev, dt, relative_time);
 
-                const bool has_buffer = cjx;
                 if (has_buffer)
                 {
                     // Deposit in buffers
@@ -643,7 +658,7 @@ LaserParticleContainer::Evolve (int lev,
                 int* AMREX_RESTRICT ion_lev = nullptr;
                 DepositCharge(pti, wp, ion_lev, rho, 1, 0,
                               np_current, thread_num, lev, lev);
-                if (crho) {
+                if (has_buffer) {
                     DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
                                   np-np_current, thread_num, lev, lev-1);
                 }

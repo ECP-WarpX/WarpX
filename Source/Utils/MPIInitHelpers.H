@@ -25,6 +25,14 @@ namespace utils
     std::pair< int, int >
     warpx_mpi_init (int argc, char* argv[]);
 
+    /** Finalize MPI
+     *
+     * This function is simply a wrapper around MPI_Finalize(). It is a no-op if
+     * WarpX is compiled without MPI support.
+     */
+    void
+    warpx_mpi_finalize ();
+
     /** Check if the requested MPI thread level is valid
      *
      * Prints warnings and notes otherwise.
