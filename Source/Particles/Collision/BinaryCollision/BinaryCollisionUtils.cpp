@@ -58,10 +58,8 @@ namespace BinaryCollisionUtils{
                     return NuclearFusionType::DeuteriumDeuteriumToNeutronHelium;
                 } else if (
                     (product_species1.AmIA<PhysicalSpecies::hydrogen3>() && product_species2.AmIA<PhysicalSpecies::proton>())
-                  ||(product_species1.AmIA<PhysicalSpecies::proton>() && product_species2.AmIA<PhysicalSpecies::hydrogen3>())){
-                    return NuclearFusionType::DeuteriumDeuteriumToProtonTritium;
-                } else if (
-                    (product_species1.AmIA<PhysicalSpecies::hydrogen3>() && product_species2.AmIA<PhysicalSpecies::hydrogen1>())
+                  ||(product_species1.AmIA<PhysicalSpecies::proton>() && product_species2.AmIA<PhysicalSpecies::hydrogen3>())
+                  ||(product_species1.AmIA<PhysicalSpecies::hydrogen3>() && product_species2.AmIA<PhysicalSpecies::hydrogen1>())
                   ||(product_species1.AmIA<PhysicalSpecies::hydrogen1>() && product_species2.AmIA<PhysicalSpecies::hydrogen3>())){
                     return NuclearFusionType::DeuteriumDeuteriumToProtonTritium;
                 } else {
