@@ -456,8 +456,8 @@ WarpX::OneStep_nosub (Real cur_time)
         EvolveG(0.5_rt * dt[0], DtType::FirstHalf);
         FillBoundaryF(guard_cells.ng_FieldSolverF);
         FillBoundaryG(guard_cells.ng_FieldSolverG);
-        EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
 
+        EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
         if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
@@ -469,20 +469,21 @@ WarpX::OneStep_nosub (Real cur_time)
         } else {
             amrex::Abort(Utils::TextMsg::Err("Medium for EM is unknown"));
         }
-
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
 
         if (do_pml) {
-            FillBoundaryF(guard_cells.ng_alloc_F);
             DampPML();
             NodalSyncPML();
             FillBoundaryE(guard_cells.ng_MovingWindow);
-            FillBoundaryF(guard_cells.ng_MovingWindow);
             FillBoundaryB(guard_cells.ng_MovingWindow);
+            FillBoundaryF(guard_cells.ng_MovingWindow);
+            FillBoundaryG(guard_cells.ng_MovingWindow);
         }
+
         // E and B are up-to-date in the domain, but all guard cells are
         // outdated.
         if (safe_guard_cells)
