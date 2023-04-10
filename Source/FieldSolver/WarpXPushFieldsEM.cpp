@@ -372,26 +372,13 @@ void WarpX::PSATDForwardTransformRho (
 {
     if (charge_fp[0] == nullptr) return;
 
-    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
-
-    // Select index in k space
-    int dst_comp;
-    if (rho_in_time == RhoInTime::Constant)
-    {
-        dst_comp = Idx.rho_mid;
-    }
-    else // rho_in_time == RhoInTime::Linear
-    {
-        dst_comp = (dcomp == 0) ? Idx.rho_old : Idx.rho_new;
-    }
-
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (charge_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *charge_fp[lev], dst_comp, icomp);
+        if (charge_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *charge_fp[lev], dcomp, icomp);
 
         if (spectral_solver_cp[lev])
         {
-            if (charge_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *charge_cp[lev], dst_comp, icomp);
+            if (charge_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *charge_cp[lev], dcomp, icomp);
         }
     }
 
@@ -401,11 +388,11 @@ void WarpX::PSATDForwardTransformRho (
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            spectral_solver_fp[lev]->ApplyFilter(lev, dst_comp);
+            spectral_solver_fp[lev]->ApplyFilter(lev, dcomp);
 
             if (spectral_solver_cp[lev])
             {
-                spectral_solver_cp[lev]->ApplyFilter(lev, dst_comp);
+                spectral_solver_cp[lev]->ApplyFilter(lev, dcomp);
             }
         }
     }
@@ -666,14 +653,17 @@ WarpX::PushPSATD ()
         "PushFieldsEM: PSATD solver selected but not built"));
 #else
 
+    const int rho_old = spectral_solver_fp[0]->m_spectral_index.rho_old;
+    const int rho_new = spectral_solver_fp[0]->m_spectral_index.rho_new;
+
     if (fft_periodic_single_box)
     {
         if (current_correction)
         {
             // FFT of J and rho
             PSATDForwardTransformJ(current_fp, current_cp);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_old);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
 
             // Correct J in k-space
             PSATDCurrentCorrection();
@@ -686,8 +676,8 @@ WarpX::PushPSATD ()
             // FFT of D and rho (if used)
             // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
             PSATDForwardTransformJ(current_fp_vay, current_cp);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_old);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
 
             // Compute J from D in k-space
             PSATDVayDeposition();
@@ -704,8 +694,8 @@ WarpX::PushPSATD ()
         {
             // FFT of J and rho (if used)
             PSATDForwardTransformJ(current_fp, current_cp);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_old);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
         }
     }
     else // no periodic single box
@@ -718,12 +708,12 @@ WarpX::PushPSATD ()
             // applied in the subsequent calls to these functions (below)
             const bool apply_kspace_filter = false;
             PSATDForwardTransformJ(current_fp, current_cp, apply_kspace_filter);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0, apply_kspace_filter); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1, apply_kspace_filter); // rho new
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_old, apply_kspace_filter);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new, apply_kspace_filter);
 #else
             PSATDForwardTransformJ(current_fp, current_cp);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_old);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
 #endif
 
             // Correct J in k-space
@@ -760,8 +750,8 @@ WarpX::PushPSATD ()
 
         // FFT of J and rho (if used)
         PSATDForwardTransformJ(current_fp, current_cp);
-        PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-        PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+        PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_old);
+        PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
     }
 
     // FFT of E and B

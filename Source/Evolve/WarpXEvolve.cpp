@@ -549,6 +549,9 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         "multi-J algorithm not implemented for FDTD"
     );
 
+    const int rho_mid = spectral_solver_fp[0]->m_spectral_index.rho_mid;
+    const int rho_new = spectral_solver_fp[0]->m_spectral_index.rho_new;
+
     // Push particle from x^{n} to x^{n+1}
     //               from p^{n-1/2} to p^{n+1/2}
     const bool skip_deposition = true;
@@ -574,7 +577,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // Filter, exchange boundary, and interpolate across levels
         SyncRho();
         // Forward FFT of rho
-        PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
+        PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_new);
     }
 
     // 4) Deposit J at relative time -dt with time step dt
@@ -638,7 +641,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Filter, exchange boundary, and interpolate across levels
             SyncRho();
             // Forward FFT of rho
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
+            const int rho_idx = (rho_in_time == RhoInTime::Linear) ? rho_new : rho_mid;
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_idx);
         }
 
         if (WarpX::current_correction)
