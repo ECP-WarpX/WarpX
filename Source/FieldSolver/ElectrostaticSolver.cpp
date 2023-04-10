@@ -204,30 +204,10 @@ WarpX::AddSpaceChargeFieldLabFrame ()
                                      "Error: RZ electrostatic only implemented for a single mode");
 #endif
 
-    // reset rho_fp before depositing charge density for this step
-    for (int lev = 0; lev <= max_level; lev++) {
-        rho_fp[lev]->setVal(0.);
-    }
-
     // Deposit particle charge density (source of Poisson solver)
-    bool const local = true;
-    bool const interpolate_across_levels = false;
-    bool const reset = false;
-    bool const do_rz_volume_scaling = false;
-    for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
-        WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        if (!species.do_not_deposit) {
-            species.DepositCharge( rho_fp,
-                                   local, reset, do_rz_volume_scaling, interpolate_across_levels
-                                  );
-        }
-    }
-#ifdef WARPX_DIM_RZ
-    for (int lev = 0; lev <= max_level; lev++) {
-        ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
-    }
-#endif
-    SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
+    mypc->DepositCharge(rho_fp, 0.0_rt);
+
+    SyncRho(rho_fp, rho_cp); // Apply filter, perform MPI exchange, interpolate across levels
 
     // beta is zero in lab frame
     // Todo: use simpler finite difference form with beta=0

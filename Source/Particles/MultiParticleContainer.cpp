@@ -575,16 +575,15 @@ MultiParticleContainer::DepositCharge (
     // Push the particles in time, if needed
     if (relative_time != 0.) PushX(relative_time);
 
+    bool const local = true;
+    bool const reset = false;
+    bool const apply_boundary_and_scale_volume = false;
+    bool const interpolate_across_levels = false;
     // Call the deposition kernel for each species
     for (auto& pc : allcontainers)
     {
         if (pc->do_not_deposit) continue;
-
-        bool const local = true;
-        bool const reset = false;
-        bool const do_rz_volume_scaling = false;
-        bool const interpolate_across_levels = false;
-        pc->DepositCharge(rho, local, reset, do_rz_volume_scaling,
+        pc->DepositCharge(rho, local, reset, apply_boundary_and_scale_volume,
                               interpolate_across_levels);
     }
 
