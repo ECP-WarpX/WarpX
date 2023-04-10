@@ -72,6 +72,7 @@ WarpX::Evolve (int numsteps)
     }
 
     bool early_params_checked = false; // check typos in inputs after step 1
+    bool exit_loop_due_to_interrupt_signal = false;
 
     static Real evolve_time = 0;
 
@@ -367,7 +368,8 @@ WarpX::Evolve (int numsteps)
                       << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n\n";
         }
 
-        if (cur_time >= stop_time - 1.e-3*dt[0] || SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK)) {
+        exit_loop_due_to_interrupt_signal = SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK);
+        if (cur_time >= stop_time - 1.e-3*dt[0] || exit_loop_due_to_interrupt_signal) {
             break;
         }
 
@@ -376,7 +378,8 @@ WarpX::Evolve (int numsteps)
     // This if statement is needed for PICMI, which allows the Evolve routine to be
     // called multiple times, otherwise diagnostics will be done at every call,
     // regardless of the diagnostic period parameter provided in the inputs.
-    if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])) {
+    if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])
+        || exit_loop_due_to_interrupt_signal) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
     }
 }
@@ -453,8 +456,8 @@ WarpX::OneStep_nosub (Real cur_time)
         EvolveG(0.5_rt * dt[0], DtType::FirstHalf);
         FillBoundaryF(guard_cells.ng_FieldSolverF);
         FillBoundaryG(guard_cells.ng_FieldSolverG);
-        EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
 
+        EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
         if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
@@ -466,20 +469,21 @@ WarpX::OneStep_nosub (Real cur_time)
         } else {
             amrex::Abort(Utils::TextMsg::Err("Medium for EM is unknown"));
         }
-
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
 
         if (do_pml) {
-            FillBoundaryF(guard_cells.ng_alloc_F);
             DampPML();
             NodalSyncPML();
             FillBoundaryE(guard_cells.ng_MovingWindow);
-            FillBoundaryF(guard_cells.ng_MovingWindow);
             FillBoundaryB(guard_cells.ng_MovingWindow);
+            FillBoundaryF(guard_cells.ng_MovingWindow);
+            FillBoundaryG(guard_cells.ng_MovingWindow);
         }
+
         // E and B are up-to-date in the domain, but all guard cells are
         // outdated.
         if (safe_guard_cells)
@@ -546,6 +550,9 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         "multi-J algorithm not implemented for FDTD"
     );
 
+    const int rho_mid = spectral_solver_fp[0]->m_spectral_index.rho_mid;
+    const int rho_new = spectral_solver_fp[0]->m_spectral_index.rho_new;
+
     // Push particle from x^{n} to x^{n+1}
     //               from p^{n-1/2} to p^{n+1/2}
     const bool skip_deposition = true;
@@ -571,7 +578,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // Filter, exchange boundary, and interpolate across levels
         SyncRho();
         // Forward FFT of rho
-        PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
+        PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_new);
     }
 
     // 4) Deposit J at relative time -dt with time step dt
@@ -635,7 +642,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Filter, exchange boundary, and interpolate across levels
             SyncRho();
             // Forward FFT of rho
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
+            const int rho_idx = (rho_in_time == RhoInTime::Linear) ? rho_new : rho_mid;
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_idx);
         }
 
         if (WarpX::current_correction)

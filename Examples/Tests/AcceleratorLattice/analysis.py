@@ -62,7 +62,7 @@ def read_lattice(rootname, z_location):
             quad_lengths.append(length)
             quad_strengths_E.append(float(ds.parameters.get(f'{element}.dEdx')))
             z_location += length
-        elif element_type == 'lattice':
+        elif element_type == 'line':
             z_location = read_lattice(element, z_location)
     return z_location
 

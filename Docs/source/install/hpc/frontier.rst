@@ -13,32 +13,32 @@ Introduction
 
 If you are new to this system, **please see the following resources**:
 
-* `Crusher user guide <https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html>`_
-* Batch system: `Slurm <https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html#running-jobs>`_
-* `Production directories <https://docs.olcf.ornl.gov/data/index.html#data-storage-and-transfers>`_:
+* `Crusher user guide <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html>`_
+* Batch system: `Slurm <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#running-jobs>`_
+* `Production directories <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#data-and-storage>`_:
 
   * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days (recommended)
-  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days (usually smaller quota)
-  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days
+  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days (usually smaller quota, 50TB default quota)
+  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days (50TB default quota)
   * Note that the ``$HOME`` directory is mounted as read-only on compute nodes.
     That means you cannot run in your ``$HOME``.
+    It's default quota is 50GB.
+
+Note: the Orion lustre filesystem on Frontier and the older Alpine GPFS filesystem on Summit are not mounted on each others machines.
+Use `Globus <https://www.globus.org>`__ to transfer data between them if needed.
 
 
 Installation
 ------------
 
-Use the following commands to download the WarpX source code and switch to the correct branch.
-**You have to do this on Summit/OLCF Home/etc. since Frontier cannot connect directly to the internet**:
+Use the following commands to download the WarpX source code and switch to the correct branch:
 
 .. code-block:: bash
 
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
-   git clone https://github.com/AMReX-Codes/amrex.git $HOME/src/amrex
-   git clone https://github.com/ECP-WarpX/picsar.git $HOME/src/picsar
-   git clone -b 0.14.5 https://github.com/openPMD/openPMD-api.git $HOME/src/openPMD-api
 
 To enable HDF5, work-around the broken ``HDF5_VERSION`` variable (empty) in the Cray PE by commenting out the following lines in ``$HOME/src/openPMD-api/CMakeLists.txt``:
-https://github.com/openPMD/openPMD-api/blob/0.14.5/CMakeLists.txt#L216-L220
+https://github.com/openPMD/openPMD-api/blob/0.15.1/CMakeLists.txt#L216-L220
 
 We use the following modules and environments on the system (``$HOME/frontier_warpx.profile``).
 
@@ -114,7 +114,7 @@ Known System Issues
 .. warning::
 
    May 16th, 2022 (OLCFHELP-6888):
-   There is a caching bug in Libfrabric that causes WarpX simulations to occasionally hang on Frontier on more than 1 node.
+   There is a caching bug in Libfabric that causes WarpX simulations to occasionally hang on Frontier on more than 1 node.
 
    As a work-around, please export the following environment variable in your job scripts until the issue is fixed:
 
@@ -133,3 +133,11 @@ Known System Issues
    .. code-block:: bash
 
       export ROCFFT_RTC_CACHE_PATH=/dev/null
+
+.. warning::
+
+   January, 2023 (OLCFDEV-1284, AMD Ticket: ORNLA-130):
+   We discovered a regression in AMD ROCm, leading to 2x slower current deposition (and other slowdowns) in ROCm 5.3 and 5.4.
+   Reported to AMD and investigating.
+
+   Stay with the ROCm 5.2 module to avoid.
