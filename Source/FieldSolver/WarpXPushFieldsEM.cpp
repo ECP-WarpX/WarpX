@@ -724,7 +724,7 @@ WarpX::PushPSATD ()
 
             // Synchronize J and rho
             SyncCurrent(current_fp, current_cp);
-            SyncRho();
+            SyncRho(rho_fp, rho_cp);
         }
         else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
@@ -745,7 +745,7 @@ WarpX::PushPSATD ()
             // TODO This works only without mesh refinement
             const int lev = 0;
             SumBoundaryJ(current_fp, lev, Geom(lev).periodicity());
-            SyncRho();
+            SyncRho(rho_fp, rho_cp);
         }
 
         // FFT of J and rho (if used)

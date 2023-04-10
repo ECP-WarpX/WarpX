@@ -505,12 +505,12 @@ void WarpX::SyncCurrentAndRho ()
             {
                 // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
                 SyncCurrent(current_fp_vay, current_cp);
-                SyncRho();
+                SyncRho(rho_fp, rho_cp);
             }
             else
             {
                 SyncCurrent(current_fp, current_cp);
-                SyncRho();
+                SyncRho(rho_fp, rho_cp);
             }
         }
         else // no periodic single box
@@ -522,7 +522,7 @@ void WarpX::SyncCurrentAndRho ()
                 current_deposition_algo != CurrentDepositionAlgo::Vay)
             {
                 SyncCurrent(current_fp, current_cp);
-                SyncRho();
+                SyncRho(rho_fp, rho_cp);
             }
 
             if (current_deposition_algo == CurrentDepositionAlgo::Vay)
@@ -536,7 +536,7 @@ void WarpX::SyncCurrentAndRho ()
     else // FDTD
     {
         SyncCurrent(current_fp, current_cp);
-        SyncRho();
+        SyncRho(rho_fp, rho_cp);
     }
 }
 
@@ -576,7 +576,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // (dt[0] denotes the time step on mesh refinement level 0)
         mypc->DepositCharge(rho_fp, -dt[0]);
         // Filter, exchange boundary, and interpolate across levels
-        SyncRho();
+        SyncRho(rho_fp, rho_cp);
         // Forward FFT of rho
         PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_new);
     }
@@ -640,7 +640,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Deposit rho at relative time t_depose_charge
             mypc->DepositCharge(rho_fp, t_depose_charge);
             // Filter, exchange boundary, and interpolate across levels
-            SyncRho();
+            SyncRho(rho_fp, rho_cp);
             // Forward FFT of rho
             const int rho_idx = (rho_in_time == RhoInTime::Linear) ? rho_new : rho_mid;
             PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_idx);

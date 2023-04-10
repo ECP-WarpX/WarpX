@@ -207,7 +207,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     // Deposit particle charge density (source of Poisson solver)
     mypc->DepositCharge(rho_fp, 0.0_rt);
 
-    SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
+    SyncRho(rho_fp, rho_cp); // Apply filter, perform MPI exchange, interpolate across levels
 
     // beta is zero in lab frame
     // Todo: use simpler finite difference form with beta=0
