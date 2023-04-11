@@ -26,9 +26,18 @@ namespace utils::algorithms
     constexpr auto ipow(T x) noexcept
     {
         static_assert(IPower >= 1, "Power must be > 1!");
-        if constexpr (IPower > 1)
-            return x * ipow <IPower-1>(x);
-        else
+
+        if constexpr (IPower > 1){
+            if constexpr (IPower%2 == 0){
+                const auto xt = ipow<IPower/2>(x);
+                return xt*xt;
+            }
+            else{
+                return x * ipow <IPower-1>(x);
+            }
+        }
+        else{
             return x;
+        }
     }
 }
