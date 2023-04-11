@@ -778,6 +778,10 @@ public:
 
     void SyncRho ();
 
+    void SyncRho (
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp);
+
     amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
     int getnsubsteps (int lev) const {return nsubsteps[lev];}
     amrex::Vector<int> getistep () const {return istep;}
