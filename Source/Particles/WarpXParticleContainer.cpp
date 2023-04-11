@@ -686,15 +686,12 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
         }
 #endif
 
-    if (apply_boundary_and_scale_volume)
-    {
 #ifdef WARPX_DIM_RZ
-        WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
-#else
-        // Reflect density over PEC boundaries, if needed.
-        WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho[lev].get(), PatchType::fine);
+        if (apply_boundary_and_scale_volume)
+        {
+            WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
+        }
 #endif
-    }
 
         // Exchange guard cells
         if (local == false) {
@@ -704,6 +701,14 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
                 m_gdb->Geom(lev).periodicity()
             );
         }
+
+#ifndef WARPX_DIM_RZ
+        if (apply_boundary_and_scale_volume)
+        {
+            // Reflect density over PEC boundaries, if needed.
+            WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho[lev].get(), PatchType::fine);
+        }
+#endif
     }
 
     // Now that the charge has been deposited at each level,
@@ -783,12 +788,14 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 
 #ifdef WARPX_DIM_RZ
     WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
-#else
-    // Reflect density over PEC boundaries, if needed.
-    WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho.get(), PatchType::fine);
 #endif
 
     if (local == false) { ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity()); }
+
+#ifndef WARPX_DIM_RZ
+    // Reflect density over PEC boundaries, if needed.
+    WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho.get(), PatchType::fine);
+#endif
 
     return rho;
 }
