@@ -93,8 +93,8 @@ namespace BinaryCollisionUtils{
                     "ERROR: Proton-boron must contain exactly one product species");
                 auto& product_species = mypc->GetParticleContainerFromName(product_species_name[0]);
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    product_species.AmIA<PhysicalSpecies::helium4>(),
-                    "ERROR: Product species of proton-boron fusion must be of type helium4");
+                    (product_species.AmIA<PhysicalSpecies::helium4>()) || (product_species.AmIA<PhysicalSpecies::alpha>()),
+                    "ERROR: Product species of proton-boron fusion must be of type helium4 or alpha");
                 return NuclearFusionType::ProtonBoronToAlphas;
             }
             amrex::Abort("Binary nuclear fusion not implemented between species " +
