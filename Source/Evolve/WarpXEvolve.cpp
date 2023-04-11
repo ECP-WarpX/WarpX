@@ -456,8 +456,8 @@ WarpX::OneStep_nosub (Real cur_time)
         EvolveG(0.5_rt * dt[0], DtType::FirstHalf);
         FillBoundaryF(guard_cells.ng_FieldSolverF);
         FillBoundaryG(guard_cells.ng_FieldSolverG);
-        EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
 
+        EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
         if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
@@ -469,20 +469,21 @@ WarpX::OneStep_nosub (Real cur_time)
         } else {
             amrex::Abort(Utils::TextMsg::Err("Medium for EM is unknown"));
         }
-
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
 
         if (do_pml) {
-            FillBoundaryF(guard_cells.ng_alloc_F);
             DampPML();
             NodalSyncPML();
             FillBoundaryE(guard_cells.ng_MovingWindow);
-            FillBoundaryF(guard_cells.ng_MovingWindow);
             FillBoundaryB(guard_cells.ng_MovingWindow);
+            FillBoundaryF(guard_cells.ng_MovingWindow);
+            FillBoundaryG(guard_cells.ng_MovingWindow);
         }
+
         // E and B are up-to-date in the domain, but all guard cells are
         // outdated.
         if (safe_guard_cells)
@@ -504,12 +505,12 @@ void WarpX::SyncCurrentAndRho ()
             {
                 // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
                 SyncCurrent(current_fp_vay, current_cp);
-                SyncRho();
+                SyncRho(rho_fp, rho_cp);
             }
             else
             {
                 SyncCurrent(current_fp, current_cp);
-                SyncRho();
+                SyncRho(rho_fp, rho_cp);
             }
         }
         else // no periodic single box
@@ -521,7 +522,7 @@ void WarpX::SyncCurrentAndRho ()
                 current_deposition_algo != CurrentDepositionAlgo::Vay)
             {
                 SyncCurrent(current_fp, current_cp);
-                SyncRho();
+                SyncRho(rho_fp, rho_cp);
             }
 
             if (current_deposition_algo == CurrentDepositionAlgo::Vay)
@@ -535,7 +536,7 @@ void WarpX::SyncCurrentAndRho ()
     else // FDTD
     {
         SyncCurrent(current_fp, current_cp);
-        SyncRho();
+        SyncRho(rho_fp, rho_cp);
     }
 
     // Reflect charge and current density over PEC boundaries, if needed.
@@ -570,6 +571,9 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         "multi-J algorithm not implemented for FDTD"
     );
 
+    const int rho_mid = spectral_solver_fp[0]->m_spectral_index.rho_mid;
+    const int rho_new = spectral_solver_fp[0]->m_spectral_index.rho_new;
+
     // Push particle from x^{n} to x^{n+1}
     //               from p^{n-1/2} to p^{n+1/2}
     const bool skip_deposition = true;
@@ -593,9 +597,9 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // (dt[0] denotes the time step on mesh refinement level 0)
         mypc->DepositCharge(rho_fp, -dt[0]);
         // Filter, exchange boundary, and interpolate across levels
-        SyncRho();
+        SyncRho(rho_fp, rho_cp);
         // Forward FFT of rho
-        PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
+        PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_new);
     }
 
     // 4) Deposit J at relative time -dt with time step dt
@@ -657,9 +661,10 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Deposit rho at relative time t_depose_charge
             mypc->DepositCharge(rho_fp, t_depose_charge);
             // Filter, exchange boundary, and interpolate across levels
-            SyncRho();
+            SyncRho(rho_fp, rho_cp);
             // Forward FFT of rho
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
+            const int rho_idx = (rho_in_time == RhoInTime::Linear) ? rho_new : rho_mid;
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_idx);
         }
 
         if (WarpX::current_correction)

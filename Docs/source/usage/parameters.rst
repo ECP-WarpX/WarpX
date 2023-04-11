@@ -1481,6 +1481,9 @@ Note that elements of the same type cannot overlap each other.
     A list of names (one name per lattice element), in the order that they
     appear in the lattice.
 
+* ``lattice.reverse`` (``boolean``) optional (default: ``false``)
+    Reverse the list of elements in the lattice.
+
 * ``<element_name>.type`` (``string``)
     Indicates the element type for this lattice element. This should be one of:
 
@@ -1516,6 +1519,15 @@ Note that elements of the same type cannot overlap each other.
 
             * ``<element_name>.dBdx`` (``float``, in Tesla/meter) optional (default: 0.) the magnetic field gradient
               The field applied to the particles will be `Bx = dBdx*y` and `By = -dBdx*x`.
+
+        * ``line`` a sub-lattice (line) of elements to append to the lattice.
+
+            * ``<element_name>.elements`` (``list of strings``) optional (default: no elements)
+              A list of names (one name per lattice element), in the order that they appear in the lattice.
+
+            * ``<element_name>.reverse`` (``boolean``) optional (default: ``false``)
+              Reverse the list of elements in the line before appending to the lattice.
+
 
 .. _running-cpp-parameters-collision:
 
