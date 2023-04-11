@@ -393,7 +393,7 @@ using namespace amrex;
                 int ig = -1 * get_cell_count_to_boundary(
                     dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
 
-                if (ig >= is_nodal[idim] && ig <= nguard[idim]) {
+                if (ig >= is_nodal[idim] && ig < nguard[idim]) {
 
                     // Mirror location outside the domain by "ig" number of cells
                     // across PEC boundary in direction, idim, and side, iside
@@ -547,7 +547,7 @@ using namespace amrex;
                 int ig = -1 * get_cell_count_to_boundary(
                     dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
 
-                if (ig >= is_nodal[idim] && ig <= nguard[idim]) {
+                if (ig >= is_nodal[idim] && ig < nguard[idim]) {
 
                     // Mirror location outside the domain by "ig" number of cells
                     // across PEC boundary in direction, idim, and side, iside
