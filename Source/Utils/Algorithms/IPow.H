@@ -27,12 +27,12 @@ namespace utils::algorithms
     {
         static_assert(IPower >= 1, "Power must be > 1!");
 
-        if constexpr (Ipower == 1)
+        if constexpr (IPower == 1)
             return x;
-        else if constexpr (Ipower == 2)
+        else if constexpr (IPower == 2)
             return x*x;
-        else if constexpr (Ipower%2 == 0)
-            return ipow<2>(ipow<Ipower/2>(x));
+        else if constexpr (IPower%2 == 0)
+            return ipow<2>(ipow<IPower/2>(x));
         else
             return x * ipow <IPower-1>(x);
     }
