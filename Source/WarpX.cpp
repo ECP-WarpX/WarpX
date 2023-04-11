@@ -1632,6 +1632,12 @@ WarpX::BackwardCompatibility ()
     );
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_nodal", backward_int),
+        "warpx.do_nodal is not supported anymore. "
+        "Please use the flag warpx.grid_type instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_warpx.query("use_kspace_filter", backward_int),
         "warpx.use_kspace_filter is not supported anymore. "
         "Please use the flag use_filter, see documentation."
