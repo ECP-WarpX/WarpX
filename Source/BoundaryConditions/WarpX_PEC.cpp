@@ -424,7 +424,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
                 PEC::SetJfieldOnPEC(
-                    icomp, domain_lo, domain_hi, ngJ, iv, Jx_arr,
+                    icomp, domain_lo, domain_hi, iv, Jx_arr,
                     Jx_nodal, fbndry_lo, fbndry_hi
                 );
             },
@@ -440,7 +440,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 PEC::SetJfieldOnPEC(
-                    icomp, domain_lo, domain_hi, ngJ, iv, Jy_arr,
+                    icomp, domain_lo, domain_hi, iv, Jy_arr,
                     Jy_nodal, fbndry_lo, fbndry_hi
                 );
             },
@@ -456,7 +456,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                 amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
                 PEC::SetJfieldOnPEC(
-                    icomp, domain_lo, domain_hi, ngJ, iv, Jz_arr,
+                    icomp, domain_lo, domain_hi, iv, Jz_arr,
                     Jz_nodal, fbndry_lo, fbndry_hi
                 );
             }

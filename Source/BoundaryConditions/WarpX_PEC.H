@@ -600,7 +600,6 @@ using namespace amrex;
     void SetJfieldOnPEC (const int icomp,
                            const amrex::IntVect & dom_lo,
                            const amrex::IntVect & dom_hi,
-                           const amrex::IntVect & nguard,
                            const amrex::IntVect & ijk_vec,
                            amrex::Array4<amrex::Real> const& Jfield,
                            const amrex::IntVect & is_nodal,
