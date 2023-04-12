@@ -1289,7 +1289,7 @@ void WarpX::CheckKnownIssues()
         }
 }
 
-#if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z)
+#if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z) && !defined(WARPX_DIM_XZ)
 void
 WarpX::ReadExternalFieldFromFile (
        std::string read_fields_from_path, amrex::MultiFab* mf,
@@ -1318,8 +1318,6 @@ WarpX::ReadExternalFieldFromFile (
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "x" && axisLabels[1] == "y" && axisLabels[2] == "z",
                                      "3D expects axisLabels {x, y, z}");
 #elif defined(WARPX_DIM_XZ)
-    amrex::Abort(Utils::TextMsg::Err(
-           "Reading from openPMD for external fields is not known to work with XZ (see #3828)"));
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "XZ can only read from files with cartesian geometry");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "x" && axisLabels[1] == "z",
                                      "XZ expects axisLabels {x, z}");
@@ -1468,12 +1466,15 @@ WarpX::ReadExternalFieldFromFile (
     } // End loop over boxes.
 
 } // End function WarpX::ReadExternalFieldFromFile
-#else // WARPX_USE_OPENPMD && !WARPX_DIM_1D_Z
+#else // WARPX_USE_OPENPMD && !WARPX_DIM_1D_Z && !defined(WARPX_DIM_XZ)
 void
 WarpX::ReadExternalFieldFromFile (std::string , amrex::MultiFab* ,std::string, std::string)
 {
 #if defined(WARPX_DIM_1D)
     Abort(Utils::TextMsg::Err("Reading fields from openPMD files is not supported in 1D");
+#elif defined(WARPX_DIM_XZ)
+    Abort(Utils::TextMsg::Err(
+        "Reading from openPMD for external fields is not known to work with XZ (see #3828)"));
 #elif !defined(WARPX_USE_OPENPMD)
     Abort(Utils::TextMsg::Err("OpenPMD field reading requires OpenPMD support to be enabled"));
 #endif
