@@ -35,11 +35,7 @@ Use the following commands to download the WarpX source code and switch to the c
 
 .. code-block:: bash
 
-   git clone -b 0.15.1 https://github.com/openPMD/openPMD-api.git $HOME/src/openPMD-api
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
-
-To enable HDF5, work-around the broken ``HDF5_VERSION`` variable (empty) in the Cray PE by commenting out the following lines in ``$HOME/src/openPMD-api/CMakeLists.txt``:
-https://github.com/openPMD/openPMD-api/blob/0.15.1/CMakeLists.txt#L337-L341
 
 We use the following modules and environments on the system (``$HOME/frontier_warpx.profile``).
 
@@ -61,9 +57,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build   \
-     -DWarpX_COMPUTE=HIP \
-     -DWarpX_openpmd_src=$HOME/src/openPMD-api
+   cmake -S . -B build -DWarpX_COMPUTE=HIP
    cmake --build build -j 32
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
@@ -137,32 +131,6 @@ Known System Issues
 
    January, 2023 (OLCFDEV-1284, AMD Ticket: ORNLA-130):
    We discovered a regression in AMD ROCm, leading to 2x slower current deposition (and other slowdowns) in ROCm 5.3 and 5.4.
-   Reported to AMD and investigating.
+   Reported to AMD and fixed for the next release of ROCm.
 
    Stay with the ROCm 5.2 module to avoid.
-
-.. warning::
-
-   April 12th, 2023 (OLCFHELP-11892):
-   The version of the HDF5 module ``cray-hdf5-parallel`` is not detected by CMake 3.22.
-   This prevents openPMD-api to pick it up:
-
-   .. code-block::
-
-      Found HDF5 version is too old.  At least version 1.8.13 is required.
-
-      If you manually installed a version of HDF5 in a non-default path, add its
-      installation prefix to the environment variable CMAKE_PREFIX_PATH to find
-      it: https://cmake.org/cmake/help/latest/envvar/CMAKE_PREFIX_PATH.html
-
-   As a work-around, you can either use ADIOS2 or patch out the version check in openPMD-api:
-
-   .. code-block:: bash
-
-      git clone -b 0.15.1 https://github.com/openPMD/openPMD-api.git $HOME/src/openPMD-api
-      # edit in $HOME/src/openPMD-api/CMakeLists.txt
-      # comment out the if-block with ... HDF5_VERSION VERSION_LESS 1.8.13 ...
-
-      cmake -S . -B build   \
-        -DWarpX_COMPUTE=HIP \
-        -DWarpX_openpmd_src=$HOME/src/openPMD-api
