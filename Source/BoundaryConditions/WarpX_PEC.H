@@ -388,12 +388,11 @@ using namespace amrex;
                 // Note: For nodal fields ig=0 is on the boundary and will be
                 // handled in `SetRhoFieldOnPEC` below. For cell-centered
                 // fields ig=0 is the cell center next to the PEC (inside the
-                // domain) and so it mirrors the first valid entry in the domain
-                // and should be reflected back into the domain.
+                // domain) and so it mirrors the first ghost cell.
                 int ig = -1 * get_cell_count_to_boundary(
                     dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
 
-                if (ig >= is_nodal[idim] && ig < nguard[idim]) {
+                if (ig >= is_nodal[idim] && ig < nguard[idim] + is_nodal[idim]) {
 
                     // Mirror location outside the domain by "ig" number of cells
                     // across PEC boundary in direction, idim, and side, iside
@@ -547,7 +546,7 @@ using namespace amrex;
                 int ig = -1 * get_cell_count_to_boundary(
                     dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
 
-                if (ig >= is_nodal[idim] && ig < nguard[idim]) {
+                if (ig >= is_nodal[idim] && ig < nguard[idim] + is_nodal[idim]) {
 
                     // Mirror location outside the domain by "ig" number of cells
                     // across PEC boundary in direction, idim, and side, iside
