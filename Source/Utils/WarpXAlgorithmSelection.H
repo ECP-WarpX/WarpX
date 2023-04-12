@@ -127,8 +127,7 @@ struct LoadBalanceCostsUpdateAlgo {
 
 /** Field boundary conditions at the domain boundary
  */
-struct FieldBoundaryType {
-    enum {
+enum struct FieldBoundaryType {
         PML = 0,
         Periodic = 1,
         PEC = 2,     //!< perfect electric conductor (PEC) with E_tangential=0
@@ -139,7 +138,6 @@ struct FieldBoundaryType {
         Neumann = 6, // For electrostatic, the normal E is set to zero
         None = 7     // The fields values at the boundary are not updated. This is
                      // useful for RZ simulations, at r=0.
-    };
 };
 
 /** Particle boundary conditions at the domain boundary
@@ -167,7 +165,7 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key );
 /** Select BC Type for fields, if field=true
  *  else select BCType for particles.
  */
-int
+FieldBoundaryType
 GetFieldBCTypeInteger( std::string BCType );
 
 /** Select BC Type for particles.

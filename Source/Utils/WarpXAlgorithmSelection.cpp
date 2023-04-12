@@ -108,7 +108,7 @@ const std::map<std::string, int> MacroscopicSolver_algo_to_int = {
     {"default", MacroscopicSolverAlgo::BackwardEuler}
 };
 
-const std::map<std::string, int> FieldBCType_algo_to_int = {
+const std::map<std::string, FieldBoundaryType> FieldBCType_algo_to_int = {
     {"pml",      FieldBoundaryType::PML},
     {"periodic", FieldBoundaryType::Periodic},
     {"pec",      FieldBoundaryType::PEC},
@@ -198,7 +198,7 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
     return algo_to_int[algo];
 }
 
-int
+FieldBoundaryType
 GetFieldBCTypeInteger( std::string BCType ){
     std::transform(BCType.begin(), BCType.end(), BCType.begin(), ::tolower);
 

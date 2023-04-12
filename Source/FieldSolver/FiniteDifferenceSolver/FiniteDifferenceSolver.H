@@ -13,6 +13,7 @@
 
 #include "BoundaryConditions/PML_fwd.H"
 #include "MacroscopicProperties/MacroscopicProperties_fwd.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX_GpuContainers.H>
 #include <AMReX_REAL.H>
@@ -87,8 +88,8 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             amrex::Box domain_box,
             amrex::Real const dt,
-            amrex::Vector<int> field_boundary_lo,
-            amrex::Vector<int> field_boundary_hi);
+            amrex::Vector<FieldBoundaryType> field_boundary_lo,
+            amrex::Vector<FieldBoundaryType> field_boundary_hi);
 
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
