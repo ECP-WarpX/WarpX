@@ -1604,6 +1604,12 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_amr_restart: string, optional
         The name of the restart to use
 
+    warpx_amrex_the_arena_is_managed: bool, optional
+        Whether to use managed memory in the AMReX Arena
+
+    warpx_amrex_the_arena_init_size: long int, optional
+        The amount of memory in bytes to allocate in the Arena.
+
     warpx_zmax_plasma_to_compute_max_step: float, optional
         Sets the simulation run time based on the maximum z value
 
@@ -1655,6 +1661,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
         self.amr_restart = kw.pop('warpx_amr_restart', None)
+        self.amrex_the_arena_is_managed = kw.pop('warpx_amrex_the_arena_is_managed', None)
+        self.amrex_the_arena_init_size = kw.pop('warpx_amrex_the_arena_init_size', None)
         self.zmax_plasma_to_compute_max_step = kw.pop('warpx_zmax_plasma_to_compute_max_step', None)
         self.compute_max_step_from_btd = kw.pop('warpx_compute_max_step_from_btd', None)
 
@@ -1771,6 +1779,12 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         if self.amr_restart:
             pywarpx.amr.restart = self.amr_restart
+
+        if self.amrex_the_arena_is_managed is not None:
+            pywarpx.amrex.the_arena_is_managed = self.amrex_the_arena_is_managed
+
+        if self.amrex_the_arena_init_size is not None:
+            pywarpx.amrex.the_arena_init_size = self.amrex_the_arena_init_size
 
     def initialize_warpx(self, mpi_comm=None):
         if self.warpx_initialized:

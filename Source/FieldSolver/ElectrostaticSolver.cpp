@@ -207,11 +207,11 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     // Deposit particle charge density (source of Poisson solver)
     mypc->DepositCharge(rho_fp, 0.0_rt);
 
-    SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
+    SyncRho(rho_fp, rho_cp); // Apply filter, perform MPI exchange, interpolate across levels
 #ifndef WARPX_DIM_RZ
-    for (int lev = 0; lev <= max_level; lev++) {
+    for (int lev = 0; lev <= finestLevel(); lev++) {
         // Reflect density over PEC boundaries, if needed.
-        ApplyRhofieldBoundary(lev, rho_fp[lev].get());
+        ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
     }
 #endif
 

@@ -48,6 +48,31 @@ using namespace amrex;
     }
 
     /**
+     * \brief Calculates the number of grid points the given index is pass the
+     *        domain boundary i.e. a value of +1 means the current cell is
+     *        outside of the simulation domain by 1 cell. Note that the high
+     *        side domain boundary is between cell dom_hi and dom_hi+1 for cell
+     *        centered grids and on cell dom_hi+1 for nodal grid. This is why
+     *        (dom_hi[idim] + is_nodal[idim]) is used below.
+     *
+     * \param[in] dom_lo, dom_hi  Domain boundaries
+     * \param[in] ijk_vec         Cell coordinates
+     * \param[in] is_nodal        Whether the field of interest is nodal
+     * \param[in] idim            Dimension of interest
+     * \param[in] iside           0 for low and 1 for high
+     *
+     * \returns number of grid points to the boundary
+     */
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    int get_cell_count_to_boundary (const amrex::IntVect& dom_lo,
+        const amrex::IntVect& dom_hi, const amrex::IntVect& ijk_vec,
+        const amrex::IntVect& is_nodal, const int idim, const int iside)
+    {
+        return ((iside == 0) ? (dom_lo[idim] - ijk_vec[idim])
+                             : (ijk_vec[idim] - (dom_hi[idim] + is_nodal[idim])));
+    }
+
+    /**
      * \brief Sets the electric field value tangential to the PEC boundary to zero. The
      *        tangential Efield components in the guard cells outside the
      *        domain boundary are set equal and opposite to the field in the valid cells
@@ -151,10 +176,11 @@ using namespace amrex;
                 const bool is_tangent_to_PEC = ( ( icomp == idim) ? false : true );
 #endif
                 if (isPECBoundary == true) {
-                    // guard cell outside the domain by "ig" number cells, in direction, idim
-                    const int ig = ( (iside == 0)
-                                 ? (dom_lo[idim] - ijk_vec[idim])
-                                 : (ijk_vec[idim] - (dom_hi[idim] + is_nodal[idim]) ) );
+                    // grid point ijk_vec is ig number of points pass the
+                    // domain boundary in direction, idim
+                    int ig = get_cell_count_to_boundary(
+                        dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
+
                     if (ig == 0) {
                         if (is_tangent_to_PEC == true and is_nodal[idim] == 1) {
                             OnPECBoundary = true;
@@ -203,10 +229,11 @@ using namespace amrex;
                     ? is_boundary_PEC(fbndry_lo, idim)
                     : is_boundary_PEC(fbndry_hi, idim) )) continue;
 
-                // guard cell outside the domain by "ig" number cells, in direction, idim
-                const int ig = ( (iside == 0)
-                                ? (dom_lo[idim] - ijk_vec[idim])
-                                : (ijk_vec[idim] - (dom_hi[idim] + is_nodal[idim]) ) );
+                // grid point ijk_vec is ig number of points pass the
+                // domain boundary in direction, idim
+                int ig = get_cell_count_to_boundary(
+                    dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
+
                 if (ig == 0) {
                     if (is_nodal[idim] == 1) {
                         const int direc = (iside == 0) ? 1 : -1;
@@ -319,10 +346,12 @@ using namespace amrex;
 #else
                     const bool is_normal_to_PEC = ( ( icomp == idim) ? true : false );
 #endif
-                    // guard cell outside the domain by "ig" number cells, in direction, idim
-                    const int ig = ( (iside == 0)
-                                   ? (dom_lo[idim] - ijk_vec[idim])
-                                   : (ijk_vec[idim] - (dom_hi[idim] + is_nodal[idim]) ) );
+
+                    // grid point ijk_vec is ig number of points pass the
+                    // domain boundary in direction, idim
+                    int ig = get_cell_count_to_boundary(
+                        dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
+
                     if (ig == 0) {
                         // Only normal component is set to 0
                         if (is_normal_to_PEC == true and is_nodal[idim]==1) {
@@ -398,18 +427,22 @@ using namespace amrex;
                     ? is_boundary_PEC(fbndry_lo, idim)
                     : is_boundary_PEC(fbndry_hi, idim) )) continue;
 
-                // mirror guard cell outside the domain by "ig" number cells, in direction, idim
-                const int ig = ( (iside == 0)
-                                ? (ijk_vec[idim] - dom_lo[idim])
-                                : (dom_hi[idim] + is_nodal[idim] - ijk_vec[idim]) );
+                // grid point ijk_vec is ig number of points before (hence the 1-)
+                // the domain boundary in direction, idim
+                // Note: For nodal fields ig=0 is on the boundary and will be
+                // handled in `SetRhoFieldOnPEC` below. For cell-centered
+                // fields ig=0 is the cell center next to the PEC (inside the
+                // domain) and so it mirrors the first ghost cell.
+                int ig = -1 * get_cell_count_to_boundary(
+                    dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
 
-                if (ig >= is_nodal[idim] && ig <= nguard[idim]) {
+                if (ig >= is_nodal[idim] && ig < nguard[idim] + is_nodal[idim]) {
 
                     // Mirror location outside the domain by "ig" number of cells
                     // across PEC boundary in direction, idim, and side, iside
                     ijk_mirror[idim] = ( (iside == 0)
                                      ? (dom_lo[idim] - (1 - is_nodal[idim]) - ig)
-                                     : (dom_hi[idim] + is_nodal[idim]  + ig));
+                                     : (dom_hi[idim] + 1 + ig));
 
                     const bool isReflectingBoundary = ( (iside == 0 )
                                             ? is_boundary_reflecting(pbndry_lo, idim)
@@ -460,7 +493,6 @@ using namespace amrex;
         // Loop over all the dimensions
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             // Loop over sides, iside = 0 (lo), iside = 1 (hi)
-            // Loop over sides, iside = 0 (lo), iside = 1 (hi)
             for (int iside = 0; iside < 2; ++iside) {
                 // check if the boundary in this direction is a PEC, otherwise
                 // continue to the next direction
@@ -468,17 +500,17 @@ using namespace amrex;
                     ? is_boundary_PEC(fbndry_lo, idim)
                     : is_boundary_PEC(fbndry_hi, idim) )) continue;
 
-                // guard cell outside the domain by "ig" number cells, in direction, idim
-                const int ig = ( (iside == 0)
-                            ? (dom_lo[idim] - ijk_vec[idim])
-                            : (ijk_vec[idim] - (dom_hi[idim] + is_nodal[idim]) ) );
+                // grid point ijk_vec is ig number of points pass
+                // the domain boundary in direction, idim
+                int ig = get_cell_count_to_boundary(
+                    dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
 
                 if (ig == 0 && is_nodal[idim] == 1) OnPECBoundary = true;
-                else if (ig >= 0) {
+                else if (ig > 0) {
                     // Find mirror location across PEC boundary
-                    ijk_mirror[idim] = ( ( iside == 0)
-                                    ? (dom_lo[idim] + ig)
-                                    : (dom_hi[idim] + is_nodal[idim] - ig));
+                    ijk_mirror[idim] = ( (iside == 0)
+                                    ? (dom_lo[idim] + ig - (1 - is_nodal[idim]))
+                                    : (dom_hi[idim] + 1 - ig));
                     GuardCell = true;
                 }
             } // loop over iside
@@ -553,18 +585,18 @@ using namespace amrex;
                 const bool is_tangent_to_PEC = ( ( icomp == idim) ? false : true );
 #endif
 
-                // mirror guard cell outside the domain by "ig" number cells, in direction, idim
-                const int ig = ( (iside == 0)
-                                ? (ijk_vec[idim] - dom_lo[idim] + (1 - is_nodal[idim]))
-                                : (dom_hi[idim] + 1 - ijk_vec[idim]) );
+                // grid point ijk_vec is ig number of points "before" (hence the -1)
+                // the domain boundary in direction, idim
+                int ig = -1 * get_cell_count_to_boundary(
+                    dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
 
-                if (ig > 0 && ig <= nguard[idim]) {
+                if (ig >= is_nodal[idim] && ig < nguard[idim] + is_nodal[idim]) {
 
                     // Mirror location outside the domain by "ig" number of cells
                     // across PEC boundary in direction, idim, and side, iside
                     ijk_mirror[idim] = ( (iside == 0)
-                                     ? (dom_lo[idim] - ig)
-                                     : (dom_hi[idim] + ig + is_nodal[idim]));
+                                     ? (dom_lo[idim] - (1 - is_nodal[idim]) - ig)
+                                     : (dom_hi[idim] + 1 + ig));
 
                     const bool isReflectingBoundary = ( (iside == 0 )
                                             ? is_boundary_reflecting(pbndry_lo, idim)
@@ -611,7 +643,6 @@ using namespace amrex;
     void SetJfieldOnPEC (const int icomp,
                            const amrex::IntVect & dom_lo,
                            const amrex::IntVect & dom_hi,
-                           const amrex::IntVect & nguard,
                            const amrex::IntVect & ijk_vec,
                            amrex::Array4<amrex::Real> const& Jfield,
                            const amrex::IntVect & is_nodal,
@@ -647,18 +678,18 @@ using namespace amrex;
                 const bool is_tangent_to_PEC = ( ( icomp == idim) ? false : true );
 #endif
 
-                // mirror guard cell outside the domain by "ig" number cells, in direction, idim
-                const int ig = ( (iside == 0)
-                                ? (ijk_vec[idim] - dom_lo[idim] + (1 - is_nodal[idim]))
-                                : (dom_hi[idim] + 1 - ijk_vec[idim]) );
+                // grid point ijk_vec is ig number of points pass
+                // the domain boundary in direction, idim
+                // Note: For nodal fields ig=0 is on the boundary.
+                int ig = get_cell_count_to_boundary(
+                    dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
 
                 if (ig == 0 && is_nodal[idim] == 1) OnPECBoundary = true;
-                else if ( ig >= -nguard[idim] && ig <= 0) {
-                    // Mirror location inside the domain by "ig" number of cells
-                    // across PEC boundary in direction, idim, and side, iside
+                else if (ig > 0) {
+                    // Find mirror location across PEC boundary
                     ijk_mirror[idim] = ( (iside == 0)
-                                    ? (dom_lo[idim] -ig)
-                                    : (dom_hi[idim] + is_nodal[idim] + ig));
+                                    ? (dom_lo[idim] + ig - (1 - is_nodal[idim]))
+                                    : (dom_hi[idim] + 1 - ig));
                     GuardCell = true;
                     // Sign of the normal component in guard cell is inverted
                     if (is_tangent_to_PEC == true) sign *= -1._rt;
@@ -711,8 +742,10 @@ using namespace amrex;
      *
      * \param[in,out] rho        Multifab containing the charge density
      * \param[in]     lev        level of the Multifab
+     * \param[in]     patch_type coarse or fine
      */
-    void ApplyPECtoRhofield(amrex::MultiFab* rho, const int lev);
+    void ApplyPECtoRhofield(amrex::MultiFab* rho, const int lev,
+                            PatchType patch_type);
 
     /**
      * \brief Reflects current density deposited over the PEC boundary back into
@@ -720,10 +753,19 @@ using namespace amrex;
      *
      * \param[in,out] Jx, Jy, Jz Multifabs containing the current density
      * \param[in]     lev        level of the Multifab
+     * \param[in]     patch_type coarse or fine
      */
     void ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
-                          amrex::MultiFab* Jz, const int lev);
+                          amrex::MultiFab* Jz, const int lev,
+                          PatchType patch_type);
 
+    /**
+     * \brief Apply the PEC boundary to the electron pressure field.
+     *
+     * \param[in,out] Pefield    Multifab containing the electron pressure
+     * \param[in]     lev        level of the Multifab
+     * \param[in]     patch_type coarse or fine
+     */
     void ApplyPECtoElectronPressure (amrex::MultiFab* Pefield,
                                      const int lev, PatchType patch_type);
 }
