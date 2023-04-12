@@ -148,9 +148,9 @@ in a region of thermal resonances as indicated on the plot below.
 
 Perpendicularly propagating modes are also supported, commonly referred to as ion-Bernstein modes.
 
-.. figure:: https://user-images.githubusercontent.com/40245517/217920947-2bb8096d-0384-46f8-a3e5-f2967b6e455a.png
+.. figure:: https://user-images.githubusercontent.com/40245517/231217944-7d12b8d4-af4b-44f8-a1b9-a2b59ce3a1c2.png
    :alt: Perpendicular EM modes in thermal ion plasma
-   :width: 70%
+   :width: 50%
 
 The input file for these examples and the corresponding analysis can be found at:
 
@@ -200,9 +200,10 @@ are damped by transferring energy to particles satisfying a resonance condition.
 The process can be simulated by seeding a plasma with a specific acoustic mode
 (density perturbation) and tracking the strength of the mode as a function of
 time. The figure below shows a set of such simulations with parameters matching
-those described in section 4.5 of Munoz et al. (2018).
+those described in section 4.5 of Munoz et al. (2018). The straight lines show
+the theoretical damping rate for the given temperature ratios.
 
-.. figure:: https://user-images.githubusercontent.com/40245517/218038587-84bbda5b-8dfd-4f13-8b0f-6def2daec9c1.png
+.. figure:: https://user-images.githubusercontent.com/40245517/230523935-3c8d63bd-ee69-4639-b111-f06dad5587f6.png
    :alt: Ion Landau damping
    :width: 70%
 

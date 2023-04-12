@@ -376,6 +376,11 @@ Diagnostics::InitDataAfterRestart ()
 void
 Diagnostics::InitData ()
 {
+    auto& warpx = WarpX::GetInstance();
+
+    // Get current finest level available
+    const int finest_level = warpx.finestLevel();
+
     // initialize member variables and arrays in base class::Diagnostics
     InitBaseData();
     // initialize member variables and arrays specific to each derived class
@@ -386,7 +391,7 @@ Diagnostics::InitData ()
         // This includes full diagnostics and BTD as well as cell-center functors for BTD.
         // Note that the cell-centered data for BTD is computed for all levels and hence
         // the corresponding functor is also initialized for all the levels
-        for (int lev = 0; lev < nmax_lev; ++lev) {
+        for (int lev = 0; lev <= finest_level; ++lev) {
             // allocate and initialize m_all_field_functors depending on diag type
             InitializeFieldFunctors(lev);
         }

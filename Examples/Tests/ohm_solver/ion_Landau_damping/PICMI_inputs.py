@@ -58,12 +58,13 @@ class IonLandauDamping(object):
     substeps = 100
 
 
-    def __init__(self, test, dim, m, T_ratio):
+    def __init__(self, test, dim, m, T_ratio, verbose):
         """Get input parameters for the specific case desired."""
         self.test = test
         self.dim = int(dim)
         self.m = m
         self.T_ratio = T_ratio
+        self.verbose = verbose or self.test
 
         # sanity check
         assert (dim > 0 and dim < 4), f"{dim}-dimensions not a valid input"
@@ -174,7 +175,7 @@ class IonLandauDamping(object):
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
         simulation.load_balance_intervals = self.total_steps // 20
-        simulation.verbose = self.test
+        simulation.verbose = self.verbose
 
         #######################################################################
         # Field solver and external field                                     #
@@ -327,13 +328,17 @@ parser.add_argument(
     default=4
 )
 parser.add_argument(
-    '--temp_ratio', help='Mode number to excite', required=False, type=float,
-    default=1.0/3
+    '--temp_ratio', help='Ratio of ion to electron temperature', required=False,
+    type=float, default=1.0/3
+)
+parser.add_argument(
+    '-v', '--verbose', help='Verbose output', action='store_true',
 )
 args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1]+left
 
 run = IonLandauDamping(
-    test=args.test, dim=args.dim, m=args.m, T_ratio=args.temp_ratio
+    test=args.test, dim=args.dim, m=args.m, T_ratio=args.temp_ratio,
+    verbose=args.verbose
 )
 simulation.step()

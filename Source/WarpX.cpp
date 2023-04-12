@@ -161,6 +161,8 @@ int WarpX::current_centering_noz = 2;
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
+bool WarpX::verboncoeur_axis_correction = true;
+
 bool WarpX::use_filter = true;
 bool WarpX::use_kspace_filter       = true;
 bool WarpX::use_filter_compensation = false;
@@ -335,6 +337,7 @@ WarpX::WarpX ()
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         electron_pressure_fp.resize(nlevs_max);
+        rho_fp_temp.resize(nlevs_max);
         current_fp_temp.resize(nlevs_max);
         current_fp_ampere.resize(nlevs_max);
     }
@@ -718,6 +721,9 @@ WarpX::ReadParameters ()
         pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
+#ifdef WARPX_DIM_RZ
+        pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
+#endif
 
         // Create hybrid-PIC model object if needed
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
@@ -1295,6 +1301,14 @@ WarpX::ReadParameters ()
         J_in_time = GetAlgorithmInteger(pp_psatd, "J_in_time");
         rho_in_time = GetAlgorithmInteger(pp_psatd, "rho_in_time");
 
+        if (psatd_solution_type != PSATDSolutionType::FirstOrder || do_multi_J == false)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                rho_in_time == RhoInTime::Linear,
+                "psatd.rho_in_time=constant not yet implemented, "
+                "except for psatd.solution_type=first-order and warpx.do_multi_J=1");
+        }
+
         // Current correction activated by default, unless a charge-conserving
         // current deposition (Esirkepov, Vay) or the div(E) cleaning scheme
         // are used
@@ -1637,6 +1651,12 @@ WarpX::BackwardCompatibility ()
     );
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_nodal", backward_int),
+        "warpx.do_nodal is not supported anymore. "
+        "Please use the flag warpx.grid_type instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_warpx.query("use_kspace_filter", backward_int),
         "warpx.use_kspace_filter is not supported anymore. "
         "Please use the flag use_filter, see documentation."
@@ -1849,6 +1869,7 @@ WarpX::ClearLevel (int lev)
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         electron_pressure_fp[lev].reset();
+        rho_fp_temp[lev].reset();
     }
 
     charge_buf[lev].reset();
@@ -2119,16 +2140,21 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 
     // Allocate extra multifabs needed by the kinetic-fluid hybrid algorithm.
+    // The "electron_pressure_fp" multifab stores the electron pressure calculated
+    // from the specified equation of state.
+    // The "rho_fp_temp" multifab is used to store the ion charge density
+    // interpolated or extrapolated to appropriate timesteps.
     // The "current_fp_temp" multifab is used to store the ion current density
     // interpolated or extrapolated to appropriate timesteps.
     // The "current_fp_ampere" multifab stores the total current calculated as
     // the curl of B.
-    // The "electron_pressure_fp" multifab stores the electron pressure calculated
-    // from the specified equation of state.
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         AllocInitMultiFab(electron_pressure_fp[lev], amrex::convert(ba, rho_nodal_flag),
             dm, ncomps, ngRho, tag("electron_pressure_fp"), 0.0_rt);
+
+        AllocInitMultiFab(rho_fp_temp[lev], amrex::convert(ba, rho_nodal_flag),
+            dm, ncomps, ngRho, tag("rho_fp_temp"), 0.0_rt);
 
         AllocInitMultiFab(current_fp_temp[lev][0], amrex::convert(ba, jx_nodal_flag),
             dm, ncomps, ngJ, tag("current_fp_temp[x]"), 0.0_rt);

@@ -28,6 +28,29 @@ if sim.test:
     test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, fn)
 
+# theoretical damping rates were taken from Fig. 14b of Munoz et al.
+theoretical_damping_rate = np.array([
+    [0.09456706, 0.05113443], [0.09864177, 0.05847507],
+    [0.10339559, 0.0659153 ], [0.10747029, 0.07359366],
+    [0.11290323, 0.08256106], [0.11833616, 0.09262114],
+    [0.12580645, 0.10541121], [0.13327674, 0.11825558],
+    [0.14006791, 0.13203098], [0.14889643, 0.14600538],
+    [0.15772496, 0.16379615], [0.16791171, 0.18026693],
+    [0.17606112, 0.19650209], [0.18828523, 0.21522808],
+    [0.19983022, 0.23349062], [0.21273345, 0.25209216],
+    [0.22835314, 0.27877403], [0.24465195, 0.30098317],
+    [0.25959253, 0.32186286], [0.27657046, 0.34254601],
+    [0.29626486, 0.36983567], [0.3139219 , 0.38984826],
+    [0.33157895, 0.40897973], [0.35195246, 0.43526107],
+    [0.37368421, 0.45662113], [0.39745331, 0.47902942],
+    [0.44974533, 0.52973074], [0.50747029, 0.57743925],
+    [0.57334465, 0.63246726], [0.64193548, 0.67634255]
+])
+
+expected_gamma = np.interp(
+    sim.T_ratio, theoretical_damping_rate[:, 0], theoretical_damping_rate[:, 1]
+)
+
 data = np.loadtxt("diags/field_data.txt", skiprows=1)
 field_idx_dict = {'z': 2, 'Ez': 3}
 
@@ -60,7 +83,17 @@ t_norm = 2.0 * np.pi * sim.m / sim.Lz * sim.v_ti
 # Plot the 4th Fourier mode
 fig, ax1 = plt.subplots(1, 1, figsize=(10, 5))
 
-ax1.plot(np.arange(num_steps)*dt*t_norm, np.abs(field_kt[:, sim.m] / field_kt[0, sim.m]), 'r', label=f'$T_i/T_e$ = {sim.T_ratio:.2f}')
+t_points = np.arange(num_steps)*dt*t_norm
+ax1.plot(
+    t_points, np.abs(field_kt[:, sim.m] / field_kt[0, sim.m]), 'r',
+    label=f'$T_i/T_e$ = {sim.T_ratio:.2f}'
+)
+
+# Plot a line showing the expected damping rate
+t_points = t_points[np.where(t_points < 8)]
+ax1.plot(
+    t_points, np.exp(-t_points*expected_gamma), 'k--', lw=2
+)
 
 ax1.grid()
 ax1.legend()

@@ -85,27 +85,44 @@ ax1.set_title(f"Ion beam R instability - {resonant_str} case")
 plt.savefig(f"diags/ion_beam_R_instability_{resonant_str}_eta_{sim.eta}_substeps_{sim.substeps}.png")
 plt.close()
 
-# Plot the 4th, 5th and 6th Fourier modes
-field_kt = np.fft.fft(data[:, :], axis=1)
+if sim.resonant:
 
-k_norm = 1.0 / sim.l_i
+    # Plot the 4th, 5th and 6th Fourier modes
+    field_kt = np.fft.fft(data[:, :], axis=1)
+    k = 2*np.pi * np.fft.fftfreq(resolution, dz) * sim.l_i
 
-k = 2*np.pi * np.fft.fftfreq(resolution, dz) / k_norm
+    t_grid = np.arange(num_steps)*dt*sim.w_ci
+    plt.plot(t_grid, np.abs(field_kt[:, 4] / sim.B0), 'r', label=f'm = 4, $kl_i={k[4]:.2f}$')
+    plt.plot(t_grid, np.abs(field_kt[:, 5] / sim.B0), 'b', label=f'm = 5, $kl_i={k[5]:.2f}$')
+    plt.plot(t_grid, np.abs(field_kt[:, 6] / sim.B0), 'k', label=f'm = 6, $kl_i={k[6]:.2f}$')
 
-print(field_kt.shape)
+    # The theoretical growth rates for the 4th, 5th and 6th Foruier modes of
+    # the By-field was obtained from Fig. 12a of Munoz et al.
+    # Note the rates here are gamma / w_ci
+    gamma4 = 0.1915611861780133
+    gamma5 = 0.20087036355662818
+    gamma6 = 0.17123024228396777
 
-plt.plot(np.arange(num_steps)*dt*sim.w_ci, np.abs(field_kt[:, 3] / sim.B0), 'r', label=f'm = 4, $kl_i={k[3]:.2f}$')
-plt.plot(np.arange(num_steps)*dt*sim.w_ci, np.abs(field_kt[:, 4] / sim.B0), 'b', label=f'm = 5, $kl_i={k[4]:.2f}$')
-plt.plot(np.arange(num_steps)*dt*sim.w_ci, np.abs(field_kt[:, 5] / sim.B0), 'k', label=f'm = 6, $kl_i={k[5]:.2f}$')
+    # Draw the line of best fit with the theoretical growth rate (slope) in the
+    # window t*w_ci between 10 and 40
+    idx = np.where((t_grid > 10) & (t_grid < 40))
+    t_points = t_grid[idx]
 
-plt.grid()
-plt.legend()
-plt.yscale('log')
-plt.ylabel('$|B_y/B_0|$')
-plt.xlabel('$t\Omega_i$ (rad)')
-plt.tight_layout()
-plt.savefig(f"diags/ion_beam_R_instability_{resonant_str}_eta_{sim.eta}_substeps_{sim.substeps}_low_modes.png")
-plt.close()
+    A4 = np.exp(np.mean(np.log(np.abs(field_kt[:, 4] / sim.B0))[idx] - t_points*gamma4))
+    plt.plot(t_points, A4*np.exp(t_points*gamma4), 'r--', lw=3)
+    A5 = np.exp(np.mean(np.log(np.abs(field_kt[:, 5] / sim.B0))[idx] - t_points*gamma5))
+    plt.plot(t_points, A5*np.exp(t_points*gamma5), 'b--', lw=3)
+    A6 = np.exp(np.mean(np.log(np.abs(field_kt[:, 6] / sim.B0))[idx] - t_points*gamma6))
+    plt.plot(t_points, A6*np.exp(t_points*gamma6), 'k--', lw=3)
+
+    plt.grid()
+    plt.legend()
+    plt.yscale('log')
+    plt.ylabel('$|B_y/B_0|$')
+    plt.xlabel('$t\Omega_i$ (rad)')
+    plt.tight_layout()
+    plt.savefig(f"diags/ion_beam_R_instability_{resonant_str}_eta_{sim.eta}_substeps_{sim.substeps}_low_modes.png")
+    plt.close()
 
 if not sim.test:
     with h5py.File('diags/Python_hybrid_PIC_plt/openpmd_004000.h5', 'r') as data:

@@ -59,11 +59,12 @@ class EMModes(object):
     # Number of substeps used to update B
     substeps = [[250, 500], [250, 750], [250, 1000]]
 
-    def __init__(self, test, dim, B_dir):
+    def __init__(self, test, dim, B_dir, verbose):
         """Get input parameters for the specific case desired."""
         self.test = test
         self.dim = int(dim)
         self.B_dir = B_dir
+        self.verbose = verbose or self.test
 
         # sanity check
         assert (dim > 0 and dim < 4), f"{dim}-dimensions not a valid input"
@@ -207,7 +208,7 @@ class EMModes(object):
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
         simulation.particle_shape = 3
-        simulation.verbose = self.test
+        simulation.verbose = self.verbose
 
         #######################################################################
         # Field solver and external field                                     #
@@ -354,8 +355,11 @@ parser.add_argument(
     '--bdir', help='Direction of the B-field', required=False,
     choices=['x', 'y', 'z'], default='z'
 )
+parser.add_argument(
+    '-v', '--verbose', help='Verbose output', action='store_true',
+)
 args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1]+left
 
-run = EMModes(test=args.test, dim=args.dim, B_dir=args.bdir)
+run = EMModes(test=args.test, dim=args.dim, B_dir=args.bdir, verbose=args.verbose)
 simulation.step()

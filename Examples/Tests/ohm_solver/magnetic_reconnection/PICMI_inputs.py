@@ -60,9 +60,10 @@ class ForceFreeSheetReconnection(object):
     # Number of substeps used to update B
     substeps = 750
 
-    def __init__(self, test):
+    def __init__(self, test, verbose):
 
         self.test = test
+        self.verbose = verbose or self.test
 
         # calculate various plasma parameters based on the simulation input
         self.get_plasma_quantities()
@@ -200,7 +201,7 @@ class ForceFreeSheetReconnection(object):
         simulation.max_steps = self.total_steps
         simulation.particle_shape = 1
         simulation.use_filter = False
-        simulation.verbose = 1
+        simulation.verbose = self.verbose
 
         #######################################################################
         # Field solver and external field                                     #
@@ -319,8 +320,11 @@ parser.add_argument(
     '-t', '--test', help='toggle whether this script is run as a short CI test',
     action='store_true',
 )
+parser.add_argument(
+    '-v', '--verbose', help='Verbose output', action='store_true',
+)
 args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1]+left
 
-run = ForceFreeSheetReconnection(test=args.test)
+run = ForceFreeSheetReconnection(test=args.test, verbose=args.verbose)
 simulation.step()
