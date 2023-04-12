@@ -21,10 +21,12 @@
 #       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif
 #endif
+#include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Python/WarpX_py.H"
 #include "Utils/TextMsg.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"

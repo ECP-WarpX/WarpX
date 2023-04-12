@@ -336,6 +336,9 @@ WarpX::WarpX ()
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
+        // Create hybrid-PIC model object if needed
+        m_hybrid_pic_model = std::make_unique<HybridPICModel>();
+
         electron_pressure_fp.resize(nlevs_max);
         rho_fp_temp.resize(nlevs_max);
         current_fp_temp.resize(nlevs_max);
@@ -724,11 +727,6 @@ WarpX::ReadParameters ()
 #ifdef WARPX_DIM_RZ
         pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
 #endif
-
-        // Create hybrid-PIC model object if needed
-        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
-            m_hybrid_pic_model = std::make_unique<HybridPICModel>();
-        }
 
         utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
 

@@ -12,6 +12,7 @@
 
 #include "HybridPICModel_fwd.H"
 
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 

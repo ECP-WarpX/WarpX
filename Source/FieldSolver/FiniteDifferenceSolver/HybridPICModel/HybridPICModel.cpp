@@ -8,8 +8,6 @@
  */
 
 #include "HybridPICModel.H"
-#include "Utils/Parser/ParserUtils.H"
-
 
 using namespace amrex;
 
