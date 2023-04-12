@@ -900,7 +900,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
 #if defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
-                                         "External field reading is not implemented for more than one RZ mode");
+                                         "External field reading is not implemented for more than one RZ mode (see #3829)");
         ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][0].get(), "B", "r");
         ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][1].get(), "B", "t");
         ReadExternalFieldFromFile(read_fields_from_path, Bfield_fp_external[lev][2].get(), "B", "z");
@@ -915,7 +915,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         pp_warpx.query("read_fields_from_path", read_fields_from_path);
 #if defined(WARPX_DIM_RZ)
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
-                                         "External field reading is not implemented for more than one RZ mode");
+                                         "External field reading is not implemented for more than one RZ mode (see #3829)");
         ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][0].get(), "E", "r");
         ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][1].get(), "E", "t");
         ReadExternalFieldFromFile(read_fields_from_path, Efield_fp_external[lev][2].get(), "E", "z");
@@ -1319,10 +1319,15 @@ WarpX::ReadExternalFieldFromFile (
                                      "3D expects axisLabels {x, y, z}");
 #elif defined(WARPX_DIM_XZ)
     amrex::Abort(Utils::TextMsg::Err(
-           "Reading from openPMD for external fields is not known to work with XZ"));
+           "Reading from openPMD for external fields is not known to work with XZ (see #3828)"));
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "XZ can only read from files with cartesian geometry");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "x" && axisLabels[1] == "z",
                                      "XZ expects axisLabels {x, z}");
+#elif defined(WARPX_DIM_1D_Z)
+    amrex::Abort(Utils::TextMsg::Err(
+           "Reading from openPMD for external fields is not known to work with 1D3V (see #3830)"));
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "1D3V can only read from files with cartesian geometry");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "z");
 #elif defined(WARPX_DIM_RZ)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "thetaMode", "RZ can only read from files with 'thetaMode'  geometry");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "r" && axisLabels[1] == "z",
