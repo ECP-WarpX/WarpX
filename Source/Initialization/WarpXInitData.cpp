@@ -1385,7 +1385,7 @@ WarpX::ReadExternalFieldFromFile (
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // i,j,k denote x,y,z indices in 3D xyz.
-                // i,j,k denote r,z,mode indices in 2D rz.
+                // i,j denote r,z indices in 2D rz; k is just 0
 
                 // ii is used for 2D RZ mode
                 int ii = i;
