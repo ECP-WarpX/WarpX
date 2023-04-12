@@ -538,6 +538,27 @@ void WarpX::SyncCurrentAndRho ()
         SyncCurrent(current_fp, current_cp);
         SyncRho(rho_fp, rho_cp);
     }
+
+    // Reflect charge and current density over PEC boundaries, if needed.
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (rho_fp[lev].get()) {
+            ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
+        }
+        ApplyJfieldBoundary(
+            lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
+            current_fp[lev][2].get(), PatchType::fine
+        );
+        if (lev > 0) {
+            if (rho_cp[lev].get()) {
+                ApplyRhofieldBoundary(lev, rho_cp[lev].get(), PatchType::coarse);
+            }
+            ApplyJfieldBoundary(
+                lev, current_cp[lev][0].get(), current_cp[lev][1].get(),
+                current_cp[lev][2].get(), PatchType::coarse
+            );
+        }
+    }
 }
 
 void
@@ -966,8 +987,8 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
                  cur_time, dt[lev], a_dt_type, skip_deposition);
-#ifdef WARPX_DIM_RZ
     if (! skip_deposition) {
+#ifdef WARPX_DIM_RZ
         // This is called after all particles have deposited their current and charge.
         ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(), current_fp[lev][1].get(), current_fp[lev][2].get(), lev);
         if (current_buf[lev][0].get()) {
@@ -979,8 +1000,15 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
                 ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
             }
         }
-    }
+// #else
+        // I left this comment here as a reminder that currently the
+        // boundary handling for cartesian grids are not matching the RZ handling
+        // (done in the ApplyInverseScalingToChargeDensity function). The
+        // Cartesian grid code had to be moved from here to after the application
+        // of the filter to avoid incorrect results (moved to `SyncCurrentAndRho()`).
+        // Might this be related to issue #1943?
 #endif
+    }
 }
 
 /* \brief Apply perfect mirror condition inside the box (not at a boundary).

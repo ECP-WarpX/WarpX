@@ -189,13 +189,13 @@ public:
      * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
      * \param[in] local if false, exchange the data in the guard cells after the deposition
      * \param[in] reset if true, reset all values of rho to zero
-     * \param[in] do_rz_volume_scaling whether to scale the final density by some volume norm in RZ geometry
+     * \param[in] apply_boundary_and_scale_volume whether to apply boundary conditions and scale the final density by some volume norm in RZ geometry
      * \param[in] interpolate_across_levels whether to average down from the fine patch to the coarse patch
      * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
      */
     void DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                         const bool local = false, const bool reset = false,
-                        const bool do_rz_volume_scaling = false,
+                        const bool apply_boundary_and_scale_volume = false,
                         const bool interpolate_across_levels = true,
                         const int icomp = 0);
 
