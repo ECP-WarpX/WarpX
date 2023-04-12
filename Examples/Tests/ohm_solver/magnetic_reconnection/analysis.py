@@ -51,7 +51,7 @@ plt.plot(
 
 plt.grid()
 plt.xlabel(r'$t/\tau_{c,i}$')
-plt.ylabel('$<E>/v_AB_0$')
+plt.ylabel('$<E_y>/v_AB_0$')
 plt.title("Reconnection rate")
 plt.tight_layout()
 plt.savefig("diags/reconnection_rate.png")
