@@ -100,3 +100,11 @@ Known System Issues
       #export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching
       # or, less invasive:
       export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
+
+.. warning::
+
+   January, 2023:
+   We discovered a regression in AMD ROCm, leading to 2x slower current deposition (and other slowdowns) in ROCm 5.3 and 5.4.
+   Reported to AMD and investigating.
+
+   Stay with the ROCm 5.2 module to avoid.

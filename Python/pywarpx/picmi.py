@@ -23,6 +23,7 @@ picmistandard.register_codename(codename)
 # dictionary to map field boundary conditions from picmistandard to WarpX
 BC_map = {
     'open':'pml', 'dirichlet':'pec', 'periodic':'periodic', 'damped':'damped',
+    'absorbing_silver_mueller':'absorbing_silver_mueller',
     'neumann':'neumann', 'none':'none', None:'none'
 }
 
@@ -72,6 +73,12 @@ class Species(picmistandard.PICMI_Species):
     warpx_do_not_deposit: bool, default=False
         Whether or not to deposit the charge and current density for
         for this species
+
+    warpx_do_not_push: bool, default=False
+        Whether or not to push this species
+
+    warpx_do_not_gather: bool, default=False
+        Whether or not to gahter the fields from grids for this species
 
     warpx_random_theta: bool, default=True
         Whether or not to add random angle to the particles in theta
@@ -174,6 +181,8 @@ class Species(picmistandard.PICMI_Species):
         self.self_fields_verbosity = kw.pop('warpx_self_fields_verbosity', None)
         self.save_previous_position = kw.pop('warpx_save_previous_position', None)
         self.do_not_deposit = kw.pop('warpx_do_not_deposit', None)
+        self.do_not_push = kw.pop('warpx_do_not_push', None)
+        self.do_not_gather = kw.pop('warpx_do_not_gather', None)
         self.random_theta = kw.pop('warpx_random_theta', None)
 
         # For particle reflection
@@ -227,6 +236,8 @@ class Species(picmistandard.PICMI_Species):
                                              save_particles_at_eb = self.save_particles_at_eb,
                                              save_previous_position = self.save_previous_position,
                                              do_not_deposit = self.do_not_deposit,
+                                             do_not_push = self.do_not_push,
+                                             do_not_gather = self.do_not_gather,
                                              random_theta = self.random_theta)
 
         # add reflection models
@@ -901,6 +912,15 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
     warpx_psatd_do_time_averaging: bool, optional
         Whether to do the time averaging for the spectral solver
 
+    warpx_psatd_J_in_time: {'constant', 'linear'}, default='constant'
+        This determines whether the current density is assumed to be constant
+        or linear in time, within the time step over which the electromagnetic
+        fields are evolved.
+
+    warpx_psatd_rho_in_time: {'linear'}, default='linear'
+        This determines whether the charge density is assumed to be linear
+        in time, within the time step over which the electromagnetic fields are evolved.
+
     warpx_do_pml_in_domain: bool, default=False
         Whether to do the PML boundaries within the domain (versus
         in the guard cells)
@@ -921,6 +941,8 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             self.psatd_current_correction = kw.pop('warpx_current_correction', None)
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
+            self.psatd_J_in_time = kw.pop('warpx_psatd_J_in_time', None)
+            self.psatd_rho_in_time = kw.pop('warpx_psatd_rho_in_time', None)
 
         self.do_pml_in_domain = kw.pop('warpx_do_pml_in_domain', None)
         self.pml_has_particles = kw.pop('warpx_pml_has_particles', None)
@@ -931,13 +953,14 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         self.grid.initialize_inputs()
 
         pywarpx.warpx.pml_ncell = self.pml_ncell
-        pywarpx.warpx.do_nodal = self.l_nodal
 
         if self.method == 'PSATD':
             pywarpx.psatd.periodic_single_box_fft = self.psatd_periodic_single_box_fft
             pywarpx.psatd.current_correction = self.psatd_current_correction
             pywarpx.psatd.update_with_rho = self.psatd_update_with_rho
             pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
+            pywarpx.psatd.J_in_time = self.psatd_J_in_time
+            pywarpx.psatd.rho_in_time = self.psatd_rho_in_time
 
             if self.grid.guard_cells is not None:
                 pywarpx.psatd.nx_guard = self.grid.guard_cells[0]
@@ -1448,9 +1471,50 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_use_filter: bool, optional
         Whether to use filtering. The default depends on the conditions.
 
+    warpx_do_multi_J: bool, default=0
+        Whether to use the multi-J algorithm, where current deposition and
+        field update are performed multiple times within each time step.
+
+    warpx_do_multi_J_n_depositions: integer
+        Number of sub-steps to use with the multi-J algorithm, when ``warpx_do_multi_J=1``.
+        Note that this input parameter is not optional and must always be set in all
+        input files where ``warpx.do_multi_J=1``. No default value is provided automatically.
+
+    warpx_grid_type: {'collocated', 'staggered', 'hybrid'}, default='staggered'
+        Whether to use a collocated grid (all fields defined at the cell nodes),
+        a staggered grid (fields defined on a Yee grid), or a hybrid grid
+        (fields and currents are interpolated back and forth between a staggered grid
+        and a collocated grid, must be used with momentum-conserving field gathering algorithm).
+
+    warpx_do_current_centering: bool, optional
+        If true, the current is deposited on a nodal grid and then centered
+        to a staggered grid (Yee grid), using finite-order interpolation.
+        Default: warpx.do_current_centering=0 with collocated or staggered grids,
+        warpx.do_current_centering=1 with hybrid grids.
+
+    warpx_field_centering_nox/noy/noz: integer, optional
+        The order of interpolation used with staggered or hybrid grids (``warpx_grid_type=staggered``
+        or ``warpx_grid_type=hybrid``) and momentum-conserving field gathering
+        (``warpx_field_gathering_algo=momentum-conserving``) to interpolate the
+        electric and magnetic fields from the cell centers to the cell nodes,
+        before gathering the fields from the cell nodes to the particle positions.
+        Default: ``warpx_field_centering_no<x,y,z>=2`` with staggered grids,
+        ``warpx_field_centering_no<x,y,z>=8`` with hybrid grids (typically necessary
+        to ensure stability in boosted-frame simulations of relativistic plasmas and beams).
+
+    warpx_current_centering_nox/noy/noz: integer, optional
+        The order of interpolation used with hybrid grids (``warpx_grid_type=hybrid``)
+        to interpolate the currents from the cell nodes to the cell centers when
+        ``warpx_do_current_centering=1``, before pushing the Maxwell fields on staggered grids.
+        Default: ``warpx_current_centering_no<x,y,z>=8`` with hybrid grids (typically necessary
+        to ensure stability in boosted-frame simulations of relativistic plasmas and beams).
+
     warpx_serialize_initial_conditions: bool, default=False
         Controls the random numbers used for initialization.
         This parameter should only be used for testing and continuous integration.
+
+    warpx_random_seed: string or int, optional
+        (See documentation)
 
     warpx_do_dynamic_scheduling: bool, default=True
         Whether to do dynamic scheduling with OpenMP
@@ -1486,6 +1550,12 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_amr_restart: string, optional
         The name of the restart to use
 
+    warpx_amrex_the_arena_is_managed: bool, optional
+        Whether to use managed memory in the AMReX Arena
+
+    warpx_amrex_the_arena_init_size: long int, optional
+        The amount of memory in bytes to allocate in the Arena.
+
     warpx_zmax_plasma_to_compute_max_step: float, optional
         Sets the simulation run time based on the maximum z value
 
@@ -1518,7 +1588,14 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.field_gathering_algo = kw.pop('warpx_field_gathering_algo', None)
         self.particle_pusher_algo = kw.pop('warpx_particle_pusher_algo', None)
         self.use_filter = kw.pop('warpx_use_filter', None)
+        self.do_multi_J = kw.pop('warpx_do_multi_J', None)
+        self.do_multi_J_n_depositions = kw.pop('warpx_do_multi_J_n_depositions', None)
+        self.grid_type = kw.pop('warpx_grid_type', None)
+        self.do_current_centering = kw.pop('warpx_do_current_centering', None)
+        self.field_centering_order = kw.pop('warpx_field_centering_order', None)
+        self.current_centering_order = kw.pop('warpx_current_centering_order', None)
         self.serialize_initial_conditions = kw.pop('warpx_serialize_initial_conditions', None)
+        self.random_seed = kw.pop('warpx_random_seed', None)
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
         self.load_balance_intervals = kw.pop('warpx_load_balance_intervals', None)
         self.load_balance_efficiency_ratio_threshold = kw.pop('warpx_load_balance_efficiency_ratio_threshold', None)
@@ -1530,6 +1607,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
         self.amr_check_input = kw.pop('warpx_amr_check_input', None)
         self.amr_restart = kw.pop('warpx_amr_restart', None)
+        self.amrex_the_arena_is_managed = kw.pop('warpx_amrex_the_arena_is_managed', None)
+        self.amrex_the_arena_init_size = kw.pop('warpx_amrex_the_arena_init_size', None)
         self.zmax_plasma_to_compute_max_step = kw.pop('warpx_zmax_plasma_to_compute_max_step', None)
         self.compute_max_step_from_btd = kw.pop('warpx_compute_max_step_from_btd', None)
 
@@ -1571,8 +1650,13 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.algo.costs_heuristic_particles_wt = self.costs_heuristic_particles_wt
         pywarpx.algo.costs_heuristic_cells_wt = self.costs_heuristic_cells_wt
 
+        pywarpx.warpx.grid_type = self.grid_type
+        pywarpx.warpx.do_current_centering = self.do_current_centering
         pywarpx.warpx.use_filter = self.use_filter
+        pywarpx.warpx.do_multi_J = self.do_multi_J
+        pywarpx.warpx.do_multi_J_n_depositions = self.do_multi_J_n_depositions
         pywarpx.warpx.serialize_initial_conditions = self.serialize_initial_conditions
+        pywarpx.warpx.random_seed = self.random_seed
 
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
 
@@ -1598,6 +1682,21 @@ class Simulation(picmistandard.PICMI_Simulation):
             pywarpx.algo.particle_shape = interpolation_order
 
         self.solver.initialize_inputs()
+
+        # Initialize warpx.field_centering_no<x,y,z> and warpx.current_centering_no<x,y,z>
+        # if set by the user in the input (need to access grid info from solver attribute)
+        # warpx.field_centering_no<x,y,z>
+        if self.field_centering_order is not None:
+            pywarpx.warpx.field_centering_nox = self.field_centering_order[0]
+            if self.solver.grid.number_of_dimensions == 3:
+                pywarpx.warpx.field_centering_noy = self.field_centering_order[1]
+            pywarpx.warpx.field_centering_noz = self.field_centering_order[-1]
+        # warpx.current_centering_no<x,y,z>
+        if self.current_centering_order is not None:
+            pywarpx.warpx.current_centering_nox = self.current_centering_order[0]
+            if self.solver.grid.number_of_dimensions == 3:
+                pywarpx.warpx.current_centering_noy = self.current_centering_order[1]
+            pywarpx.warpx.current_centering_noz = self.current_centering_order[-1]
 
         for i in range(len(self.species)):
             self.species[i].initialize_inputs(self.layouts[i],
@@ -1626,6 +1725,12 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         if self.amr_restart:
             pywarpx.amr.restart = self.amr_restart
+
+        if self.amrex_the_arena_is_managed is not None:
+            pywarpx.amrex.the_arena_is_managed = self.amrex_the_arena_is_managed
+
+        if self.amrex_the_arena_init_size is not None:
+            pywarpx.amrex.the_arena_init_size = self.amrex_the_arena_init_size
 
     def initialize_warpx(self, mpi_comm=None):
         if self.warpx_initialized:

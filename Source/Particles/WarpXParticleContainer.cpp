@@ -153,6 +153,11 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
 {
     using namespace amrex::literals;
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE((PIdx::nattribs + nattr_real - 1) <= NumRealComps(),
+                                     "Too many real attributes specified");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nattr_int <= NumIntComps(),
+                                     "Too many integer attributes specified");
+
     int ibegin, iend;
     if (uniqueparticles) {
         ibegin = 0;
@@ -642,15 +647,12 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 void
 WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                                        const bool local, const bool reset,
-                                       const bool do_rz_volume_scaling,
+                                       const bool apply_boundary_and_scale_volume,
                                        const bool interpolate_across_levels,
                                        const int icomp)
 {
     WARPX_PROFILE("WarpXParticleContainer::DepositCharge");
 
-#ifdef WARPX_DIM_RZ
-    (void)do_rz_volume_scaling;
-#endif
     // Loop over the refinement levels
     int const finest_level = rho.size() - 1;
     for (int lev = 0; lev <= finest_level; ++lev)
@@ -685,12 +687,10 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 #endif
 
 #ifdef WARPX_DIM_RZ
-        if (do_rz_volume_scaling)
+        if (apply_boundary_and_scale_volume)
         {
             WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
         }
-#else
-        ignore_unused(do_rz_volume_scaling);
 #endif
 
         // Exchange guard cells
@@ -701,6 +701,14 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
                 m_gdb->Geom(lev).periodicity()
             );
         }
+
+#ifndef WARPX_DIM_RZ
+        if (apply_boundary_and_scale_volume)
+        {
+            // Reflect density over PEC boundaries, if needed.
+            WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho[lev].get(), PatchType::fine);
+        }
+#endif
     }
 
     // Now that the charge has been deposited at each level,
@@ -784,6 +792,11 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 
     if (local == false) { ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity()); }
 
+#ifndef WARPX_DIM_RZ
+    // Reflect density over PEC boundaries, if needed.
+    WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho.get(), PatchType::fine);
+#endif
+
     return rho;
 }
 
@@ -801,8 +814,8 @@ amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             auto& wp = pti.GetAttribs(PIdx::w);
-            for (unsigned long i = 0; i < wp.size(); i++) {
-                total_charge += wp[i];
+            for (const auto& ww : wp) {
+                total_charge += ww;
             }
         }
     }

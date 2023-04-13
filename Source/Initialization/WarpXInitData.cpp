@@ -389,12 +389,14 @@ WarpX::InitData ()
         ComputeDt();
         WarpX::PrintDtDxDyDz();
         InitFromScratch();
+        InitDiagnostics();
     }
     else
     {
         InitFromCheckpoint();
         WarpX::PrintDtDxDyDz();
         PostRestart();
+        reduced_diags->InitData();
     }
 
     ComputeMaxStep();
@@ -410,8 +412,6 @@ WarpX::InitData ()
     if (WarpX::em_solver_medium==1) {
         m_macroscopic_properties->InitData();
     }
-
-    InitDiagnostics();
 
     if (ParallelDescriptor::IOProcessor()) {
         std::cout << "\nGrids Summary:\n";
@@ -1135,6 +1135,11 @@ void WarpX::CheckGuardCells()
             CheckGuardCells(*F_fp[lev]);
         }
 
+        if (G_fp[lev])
+        {
+            CheckGuardCells(*G_fp[lev]);
+        }
+
         // MultiFabs on coarse patch
         if (lev > 0)
         {
@@ -1159,6 +1164,11 @@ void WarpX::CheckGuardCells()
             if (F_cp[lev])
             {
                 CheckGuardCells(*F_cp[lev]);
+            }
+
+            if (G_cp[lev])
+            {
+                CheckGuardCells(*G_cp[lev]);
             }
         }
     }
