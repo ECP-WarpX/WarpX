@@ -385,13 +385,13 @@ def callfrombeforeEsolve(f):
     installbeforeEsolve(f)
     return f
 def installbeforeEsolve(f):
-    "Adds a function to the list of functions called before the initial E solve"
+    "Adds a function to the list of functions called before an E solve"
     _beforeEsolve.installfuncinlist(f)
 def uninstallbeforeEsolve(f):
-    "Removes the function from the list of functions called before the initial E solve"
+    "Removes the function from the list of functions called before an E solve"
     _beforeEsolve.uninstallfuncinlist(f)
 def isinstalledbeforeEsolve(f):
-    "Checks if the function is called before the initial E solve"
+    "Checks if the function is called before an E solve"
     return _beforeEsolve.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
