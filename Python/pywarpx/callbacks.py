@@ -21,6 +21,8 @@ if an instance method is used, an extra reference to the method's object is save
 The install can be done using a decorator, which has the prefix "callfrom". See example below.
 
 Functions can be called at the following times:
+ - beforeInitEsolve <installbeforeInitEsolve>: before the initial solve for the E fields (i.e. before the PIC loop starts)
+ - afterInitEsolve <installafterInitEsolve>: after the initial solve for the E fields (i.e. before the PIC loop starts)
  - afterinit <installafterinit>: immediately after the init is complete
  - beforeEsolve <installbeforeEsolve>: before the solve for E fields
  - poissonsolver <installpoissonsolver>: In place of the computePhi call but only in an electrostatic simulation
@@ -250,6 +252,8 @@ class CallbackFunctions(object):
 #=============================================================================
 
 # --- Now create the actual instances.
+_beforeInitEsolve = CallbackFunctions('beforeInitEsolve')
+_afterInitEsolve = CallbackFunctions('afterInitEsolve')
 _afterinit = CallbackFunctions('afterinit')
 _beforecollisions = CallbackFunctions('beforecollisions')
 _aftercollisions = CallbackFunctions('aftercollisions')
@@ -277,7 +281,8 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
     - ff=None: If given, timings will be written to the file object instead of stdout
     """
     if ff is None: ff = sys.stdout
-    for c in [_afterinit,_beforeEsolve,_poissonsolver,_afterEsolve,
+    for c in [ _beforeInitEsolve, _afterInitEsolve,
+              _afterinit,_beforeEsolve,_poissonsolver,_afterEsolve,
               _beforedeposition,_afterdeposition,
               _particlescraper,
               _particleloader,
@@ -305,6 +310,34 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
             ff.write('\n')
 
 #=============================================================================
+# ----------------------------------------------------------------------------
+def callfrombeforeInitEsolve(f):
+    installbeforeInitEsolve(f)
+    return f
+def installbeforeInitEsolve(f):
+    "Adds a function to the list of functions called before the initial E solve"
+    _beforeInitEsolve.installfuncinlist(f)
+def uninstallbeforeInitEsolve(f):
+    "Removes the function from the list of functions called before the initial E solve"
+    _beforeInitEsolve.uninstallfuncinlist(f)
+def isinstalledbeforeInitEsolve(f):
+    "Checks if the function is called before the initial E solve"
+    return _beforeInitEsolve.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def callfromafterInitEsolve(f):
+    installafterInitEsolve(f)
+    return f
+def installafterInitEsolve(f):
+    "Adds a function to the list of functions called after the initial E solve"
+    _afterInitEsolve.installfuncinlist(f)
+def uninstallafterInitEsolve(f):
+    "Removes the function from the list of functions called after the initial E solve"
+    _afterInitEsolve.uninstallfuncinlist(f)
+def isinstalledafterInitEsolve(f):
+    "Checks if the function is called after the initial E solve"
+    return _afterInitEsolve.isinstalledfuncinlist(f)
+
 # ----------------------------------------------------------------------------
 def callfromafterinit(f):
     installafterinit(f)
@@ -352,13 +385,13 @@ def callfrombeforeEsolve(f):
     installbeforeEsolve(f)
     return f
 def installbeforeEsolve(f):
-    "Adds a function to the list of functions called before an E solve"
+    "Adds a function to the list of functions called before the initial E solve"
     _beforeEsolve.installfuncinlist(f)
 def uninstallbeforeEsolve(f):
-    "Removes the function from the list of functions called before an E solve"
+    "Removes the function from the list of functions called before the initial E solve"
     _beforeEsolve.uninstallfuncinlist(f)
 def isinstalledbeforeEsolve(f):
-    "Checks if the function is called before an E solve"
+    "Checks if the function is called before the initial E solve"
     return _beforeEsolve.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
