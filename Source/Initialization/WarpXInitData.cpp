@@ -419,8 +419,6 @@ WarpX::InitData ()
         m_hybrid_pic_model->InitData();
     }
 
-    InitDiagnostics();
-
     if (ParallelDescriptor::IOProcessor()) {
         std::cout << "\nGrids Summary:\n";
         printGridSummary(std::cout, 0, finestLevel());

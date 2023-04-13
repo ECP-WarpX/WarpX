@@ -236,10 +236,8 @@ using namespace amrex;
 
                 if (ig == 0) {
                     if (is_nodal[idim] == 1) {
-                        const int direc = (iside == 0) ? 1 : -1;
-
                         amrex::IntVect ijk_mirror = ijk_vec;
-                        ijk_mirror[idim] += direc;
+                        ijk_mirror[idim] += (iside == 0) ? 1 : -1;
                         Pefield(ijk_vec, n) = Pefield(ijk_mirror,n);
                     }
                 } else if (ig > 0) {
