@@ -303,7 +303,7 @@ WarpX::Evolve (int numsteps)
 
         m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
 
-        // Electrostatic or hybrid-PIC case: particles can move by an arbitrary number of cells
+        // Non-Maxwell solver: particles can move by an arbitrary number of cells
         if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
             electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC )
         {
@@ -336,8 +336,10 @@ WarpX::Evolve (int numsteps)
             mypc->SortParticlesByBin(sort_bin_size);
         }
 
+        // Field solve step for electrostatic or hybrid-PIC solvers
         if( electrostatic_solver_id != ElectrostaticSolverAlgo::None ||
-            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ) {
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC )
+        {
             ExecutePythonCallback("beforeEsolve");
 
             if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
@@ -355,7 +357,7 @@ WarpX::Evolve (int numsteps)
                     // This is currently a lab frame calculation.
                     ComputeMagnetostaticField();
                 }
-            } else {
+            } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
                 // Hybrid-PIC case:
                 // The particles are now at p^{n+1/2} and x^{n+1}. The fields
                 // are updated according to the hybrid-PIC scheme (Ohm's law

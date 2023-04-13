@@ -133,33 +133,30 @@ guardCellManager::Init (
 
     // Electromagnetic simulations: account for change in particle positions within half a time step
     // for current deposition and within one time step for charge deposition (since rho is needed
-    // both at the beginning and at the end of the PIC iteration)
-    if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None)
+    // both at the beginning and at the end of the PIC iteration).
+    // For the hybrid-PIC solver, the same number of guard cells are used as for
+    // the electrostatic solver.
+    if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None &&
+        electromagnetic_solver_id != ElectromagneticSolverAlgo::HybridPIC)
     {
         for (int i = 0; i < AMREX_SPACEDIM; i++)
         {
-            if (electromagnetic_solver_id != ElectromagneticSolverAlgo::HybridPIC) {
-                amrex::Real dt_Rho = dt;
-                amrex::Real dt_J = 0.5_rt*dt;
-                if (do_multi_J) {
-                    // With multi_J + time averaging, particles can move during 2*dt per PIC cycle.
-                    if (fft_do_time_averaging){
-                        dt_Rho = 2._rt*dt;
-                        dt_J = 2._rt*dt;
-                    }
-                    // With multi_J but without time averaging, particles can move during dt per PIC
-                    // cycle for the current deposition as well.
-                    else {
-                        dt_J = dt;
-                    }
+            amrex::Real dt_Rho = dt;
+            amrex::Real dt_J = 0.5_rt*dt;
+            if (do_multi_J) {
+                // With multi_J + time averaging, particles can move during 2*dt per PIC cycle.
+                if (fft_do_time_averaging){
+                    dt_Rho = 2._rt*dt;
+                    dt_J = 2._rt*dt;
                 }
-                ng_alloc_Rho[i] += static_cast<int>(std::ceil(PhysConst::c * dt_Rho / dx[i]));
-                ng_alloc_J[i]   += static_cast<int>(std::ceil(PhysConst::c * dt_J / dx[i]));
+                // With multi_J but without time averaging, particles can move during dt per PIC
+                // cycle for the current deposition as well.
+                else {
+                    dt_J = dt;
+                }
             }
-            else {
-                ng_alloc_Rho[i]++;
-                ng_alloc_J[i]++;
-            }
+            ng_alloc_Rho[i] += static_cast<int>(std::ceil(PhysConst::c * dt_Rho / dx[i]));
+            ng_alloc_J[i]   += static_cast<int>(std::ceil(PhysConst::c * dt_J / dx[i]));
         }
     }
 

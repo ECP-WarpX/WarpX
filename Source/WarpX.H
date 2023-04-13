@@ -99,7 +99,7 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
-    HybridPICModel& GetHybridPicModel () { return *m_hybrid_pic_model; }
+    HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
