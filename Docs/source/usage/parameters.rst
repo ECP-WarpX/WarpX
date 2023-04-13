@@ -2117,7 +2117,7 @@ Additional parameters
      the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
 
 * ``hybrid_pic_model.n0_ref`` (`float`)
-     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the reference density, in :math:`m^{-3}` used to calculate
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the reference density, in :math:`m^{-3}`, used to calculate
      the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
 
 * ``hybrid_pic_model.gamma`` (`float`) optional (default ``5/3``)
@@ -2126,6 +2126,9 @@ Additional parameters
 
 * ``hybrid_pic_model.plasma_resistivity(rho)`` (`float` or `str`) optional (default ``0``)
      If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma resistivity in :math:`\Omega m`.
+
+* ``hybrid_pic_model.n_floor`` (`float`) optional (default ``1``)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma density floor, in :math:`m^{-3}`, which is useful since the generalized Ohm's law used to calculate the E-field includes a :math:`1/n` term.
 
 * ``hybrid_pic_model.substeps`` (`int`) optional (default ``100``)
      If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the number of sub-steps to take during the B-field update.

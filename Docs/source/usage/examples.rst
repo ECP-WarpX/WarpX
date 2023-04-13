@@ -168,7 +168,7 @@ Ion beam R instability
 ^^^^^^^^^^^^^^^^^^^^^^
 
 In this example a low density ion beam interacts with a "core" plasma population which induces an instability.
-Based on the relative density between then beam and the core plasma a resonant or non-resonant condition can
+Based on the relative density between the beam and the core plasma a resonant or non-resonant condition can
 be accessed. The figures below show the evolution of the y-component of the magnetic field as the beam and
 core plasma interact.
 

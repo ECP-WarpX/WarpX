@@ -16,9 +16,9 @@ has to resolve the electron Debye length and CFL-condition based on the speed
 of light.
 
 Many authors have described variations of the kinetic ion & fluid electron model,
-generally refered to as PIC-fluid hybrid or just hybrid models. The implementation
-in WarpX follows the description from `Winske et al. (2022) <https://arxiv.org/abs/2204.01676>`_.
-The following description follows mostly from that reference.
+generally refered to as particle-fluid hybrid or just hybrid-PIC models. The implementation
+in WarpX follows the outline from `Winske et al. (2022) <https://arxiv.org/abs/2204.01676>`_.
+This description follows mostly from that reference.
 
 Model
 -----
@@ -40,7 +40,7 @@ PIC manner, the ion current, :math:`\vec{J}_i`, is known during a simulation. Th
 given the magnetic field, the electron current can be calculated.
 
 If we now furher assume electrons are inertialess, the electron momentum
-equation (Ohm's law) yields,
+equation yields,
 
     .. math::
 
@@ -48,7 +48,7 @@ equation (Ohm's law) yields,
 
 where :math:`\vec{V_e}=\vec{J}_e/(en_e)`, :math:`\vec{P}_e` is the electron pressure
 tensor and :math:`\vec{\eta}` is the resistivity. An expression for the electric field
-can be obtained from the above as:
+(generalized Ohm's law) can be obtained from the above as:
 
     .. math::
 
@@ -69,10 +69,10 @@ Implementation details
 The kinetic-fluid hybrid extension mostly uses the same routines as the standard
 PIC algorithm with the only exception that the E-field is calculated from the
 above equation rather than it being integrated from a differential equation. The
-function `WarpX::HybridEvolveFields()` handles the logic to update the E&M fields
-when the "hybrid" model is used. This function is executed after particle pushing
+function `WarpX::HybridPICEvolveFields()` handles the logic to update the E&M fields
+when the "hybridPIC" model is used. This function is executed after particle pushing
 and deposition (charge and current density) has been completed. Therefore, based
-on the usual time-staggering in the PIC algorithm, when `HybridEvolveFields()` is called
+on the usual time-staggering in the PIC algorithm, when `HybridPICEvolveFields()` is called
 at timestep :math:`t=n`, the quantities :math:`\rho^n`, :math:`\rho^{n+1}`, :math:`\vec{J}_i^{n-1/2}`
 and  :math:`\vec{J}_i^{n+1/2}` are all known.
 
@@ -105,7 +105,7 @@ is then pushed forward to get :math:`\vec{B}^{n+1}` using the newly calculated
 Extrapolation step
 """"""""""""""""""
 
-Obtaining the E-field at timestep :math:`t=n+1` is a well document issue for
+Obtaining the E-field at timestep :math:`t=n+1` is a well documented issue for
 the hybrid model. Currently the approach in WarpX is to simply extrapolate
 :math:`\vec{J}_i` foward in time, using
 
@@ -130,7 +130,7 @@ through a runtime simulation parameter (see :ref:`input parameters section <runn
 Electron pressure
 ^^^^^^^^^^^^^^^^^
 
-The electron pressure is assumed a scalar quantity and calculated using the given
+The electron pressure is assumed to be a scalar quantity and calculated using the given
 input parameters, :math:`T_e`, :math:`n_0` and :math:`\gamma` using
 
     .. math::
