@@ -53,5 +53,3 @@ To close the connection down, do this:
 .. figure:: https://user-images.githubusercontent.com/1353258/232120440-3965fa38-9ca6-4621-a100-2da74eb899cf.png
    :alt: Example view of remote started Jupyter service, active SSH tunnel, and local browser connecting to the service.
    :width: 100%
-
-
