@@ -55,9 +55,13 @@ macro(find_amrex)
 
         if(WarpX_PRECISION STREQUAL "DOUBLE")
             set(AMReX_PRECISION "DOUBLE" CACHE INTERNAL "")
-            set(AMReX_PARTICLES_PRECISION "DOUBLE" CACHE INTERNAL "")
         else()
             set(AMReX_PRECISION "SINGLE" CACHE INTERNAL "")
+        endif()
+
+        if(WarpX_PARTICLE_PRECISION STREQUAL "DOUBLE")
+            set(AMReX_PARTICLES_PRECISION "DOUBLE" CACHE INTERNAL "")
+        else()
             set(AMReX_PARTICLES_PRECISION "SINGLE" CACHE INTERNAL "")
         endif()
 
@@ -65,7 +69,11 @@ macro(find_amrex)
             set(AMReX_SENSEI ON CACHE INTERNAL "")
         endif()
 
-        set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
+        if(DEFINED AMReX_BUILD_SHARED_LIBS)
+            set(AMReX_INSTALL ${AMReX_BUILD_SHARED_LIBS} CACHE INTERNAL "")
+        else()
+            set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
+        endif()
         set(AMReX_AMRLEVEL OFF CACHE INTERNAL "")
         set(AMReX_ENABLE_TESTS OFF CACHE INTERNAL "")
         set(AMReX_FORTRAN OFF CACHE INTERNAL "")
@@ -75,18 +83,17 @@ macro(find_amrex)
         set(AMReX_PROBINIT OFF CACHE INTERNAL "")
         set(AMReX_TINY_PROFILE ON CACHE BOOL "")
 
-        if(WarpX_COMPUTE STREQUAL CUDA)
-            if(WarpX_ASCENT OR WarpX_SENSEI)
-                set(AMReX_GPU_RDC ON CACHE BOOL "")
-            else()
-                # we don't need RDC and disabling it simplifies the build
-                # complexity and potentially improves code optimization
-                set(AMReX_GPU_RDC OFF CACHE BOOL "")
-            endif()
+        if(WarpX_ASCENT OR WarpX_SENSEI)
+            set(AMReX_GPU_RDC ON CACHE BOOL "")
+        else()
+            # we don't need RDC and disabling it simplifies the build
+            # complexity and potentially improves code optimization
+            set(AMReX_GPU_RDC OFF CACHE BOOL "")
         endif()
 
         # shared libs, i.e. for Python bindings, need relocatable code
-        if(WarpX_LIB)
+        #   openPMD: currently triggers shared libs (TODO)
+        if(WarpX_LIB OR ABLASTR_POSITION_INDEPENDENT_CODE OR BUILD_SHARED_LIBS OR WarpX_OPENPMD)
             set(AMReX_PIC ON CACHE INTERNAL "")
         endif()
 
@@ -109,9 +116,6 @@ macro(find_amrex)
             if(WarpX_COMPUTE STREQUAL CUDA)
                 enable_language(CUDA)
                 # AMReX 21.06+ supports CUDA_ARCHITECTURES
-                if(CMAKE_VERSION VERSION_LESS 3.20)
-                    include(AMReX_SetupCUDA)
-                endif()
             endif()
             add_subdirectory(${WarpX_amrex_src} _deps/localamrex-build/)
         else()
@@ -128,9 +132,6 @@ macro(find_amrex)
                 if(WarpX_COMPUTE STREQUAL CUDA)
                     enable_language(CUDA)
                     # AMReX 21.06+ supports CUDA_ARCHITECTURES
-                    if(CMAKE_VERSION VERSION_LESS 3.20)
-                        include(AMReX_SetupCUDA)
-                    endif()
                 endif()
                 add_subdirectory(${fetchedamrex_SOURCE_DIR} ${fetchedamrex_BINARY_DIR})
             endif()
@@ -223,9 +224,9 @@ macro(find_amrex)
         else()
             set(COMPONENT_SENSEI)
         endif()
-        set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PRECISION})
+        set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PARTICLE_PRECISION})
 
-        find_package(AMReX 21.10 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
+        find_package(AMReX 23.04 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()
@@ -239,7 +240,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "09a0ec56378f9f6a5f68f3ac025318af746432d5"
+set(WarpX_amrex_branch "23.04"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

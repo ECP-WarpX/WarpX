@@ -6,7 +6,7 @@ amr.n_cell           = 8 8 8
 amr.max_grid_size    = 8
 amr.blocking_factor  = 8
 amr.max_level        = 0
-geometry.coord_sys   = 0
+geometry.dims        = 3
 geometry.prob_lo     = -1.0 -1.0 -1.0
 geometry.prob_hi     =  1.0  1.0  1.0
 

@@ -96,8 +96,6 @@ This is mostly implemented in ``Source/Parallelization``, see the following func
 
 .. doxygenfunction:: WarpX::SyncCurrent
 
-.. doxygenfunction:: interpolateCurrentFineToCoarse
-
 .. doxygenfunction:: WarpX::RestrictCurrentFromFineToCoarsePatch
 
 .. doxygenfunction:: WarpX::AddCurrentFromFineLevelandSumBoundary
@@ -112,13 +110,11 @@ General functions for filtering can be found in ``Source/Filter/``, where the ma
 Bilinear filter
 ~~~~~~~~~~~~~~~
 
-The multi-pass bilinear filter (applied on the current density) is implemented in ``Source/Filter/``, and class ``WarpX`` holds an instance of this class in member variable ``WarpX::bilinear_filter``. For performance reasons (to avoid creating too many guard cells), this filter is directly applied in communication routines, see
+The multi-pass bilinear filter (applied on the current density) is implemented in ``Source/Filter/``, and class ``WarpX`` holds an instance of this class in member variable ``WarpX::bilinear_filter``. For performance reasons (to avoid creating too many guard cells), this filter is directly applied in communication routines, see ``WarpX::AddCurrentFromFineLevelandSumBoundary`` above and
 
-.. doxygenfunction:: WarpX::AddCurrentFromFineLevelandSumBoundary
+.. doxygenfunction:: WarpX::ApplyFilterJ(const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &current, const int lev, const int idim)
 
-and
-
-.. doxygenfunction:: WarpX::ApplyFilterandSumBoundaryJ
+.. doxygenfunction:: WarpX::SumBoundaryJ(const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &current, const int lev, const int idim, const amrex::Periodicity &period)
 
 Godfrey's anti-NCI filter for FDTD simulations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

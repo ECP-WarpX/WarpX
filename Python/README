@@ -6,4 +6,3 @@ To build it, run "make" in the main WarpX directory setting USE_PYTHON_MAIN to T
 on the command line. This will compile the code and install the wrapper in the Python site-packages directory.
 
 There are several example python scripts in the "Examples" subdirectories.
-

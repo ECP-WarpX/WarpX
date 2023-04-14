@@ -1,6 +1,5 @@
 target_sources(WarpX
   PRIVATE
-    BackTransformedDiagnostic.cpp
     Diagnostics.cpp
     FieldIO.cpp
     FullDiagnostics.cpp
@@ -10,6 +9,7 @@ target_sources(WarpX
     WarpXIO.cpp
     WarpXOpenPMD.cpp
     BTDiagnostics.cpp
+    BoundaryScrapingDiagnostics.cpp
     BTD_Plotfile_Header_Impl.cpp
 )
 

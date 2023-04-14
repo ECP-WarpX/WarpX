@@ -8,7 +8,8 @@
 #include "InjectorDensity.H"
 
 #include "Initialization/CustomDensityProb.H"
-#include "Utils/WarpXUtil.H"
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX_BLassert.H>
 #include <AMReX_ParmParse.H>
@@ -50,8 +51,9 @@ InjectorDensityPredefined::InjectorDensityPredefined (
 
     std::vector<amrex::Real> v;
     // Read parameters for the predefined plasma profile.
-    getArrWithParser(pp_species_name, "predefined_profile_params", v);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
+    utils::parser::getArrWithParser(
+        pp_species_name, "predefined_profile_params", v);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
                                      "Too many parameters for InjectorDensityPredefined");
     for (int i = 0; i < static_cast<int>(v.size()); ++i) {
         p[i] = v[i];
@@ -64,7 +66,7 @@ InjectorDensityPredefined::InjectorDensityPredefined (
                    which_profile_s.begin(), ::tolower);
     if (which_profile_s == "parabolic_channel"){
         profile = Profile::parabolic_channel;
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() > 5,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() > 5,
             "InjectorDensityPredefined::parabolic_channel: not enough parameters");
     }
 }

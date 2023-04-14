@@ -34,13 +34,8 @@ class SpectralBaseAlgorithmRZ
          * This virtual function is pure and must be defined in derived classes.
          *
          * \param[in,out] field_data All fields in Fourier space
-         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
-         *                           the three components of the current density
-         * \param[in]     rho        Unique pointer to \c MultiFab storing the charge density
          */
-        virtual void CurrentCorrection ( const int lev, SpectralFieldDataRZ& field_data,
-                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                         const std::unique_ptr<amrex::MultiFab>& rho ) = 0;
+        virtual void CurrentCorrection (SpectralFieldDataRZ& field_data) = 0;
 
         /**
          * \brief Compute spectral divergence of E
@@ -56,12 +51,8 @@ class SpectralBaseAlgorithmRZ
          * This virtual function is pure and must be defined in derived classes.
          *
          * \param[in,out] field_data All fields in Fourier space
-         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
-         *                           the three components of the current density
          */
-        virtual void VayDeposition (const int lev,
-                                    SpectralFieldDataRZ& field_data,
-                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current) = 0;
+        virtual void VayDeposition (SpectralFieldDataRZ& field_data) = 0;
 
     protected: // Meant to be used in the subclasses
 
@@ -72,10 +63,10 @@ class SpectralBaseAlgorithmRZ
         SpectralBaseAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
                                 amrex::DistributionMapping const & dm,
                                 const SpectralFieldIndex& spectral_index,
-                                int const norder_z, bool const nodal)
+                                int const norder_z, short const grid_type)
           // Compute and assign the modified k vectors
           : m_spectral_index(spectral_index),
-            modified_kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, nodal))
+            modified_kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, grid_type))
           {}
 
         SpectralFieldIndex m_spectral_index;

@@ -5,7 +5,8 @@
 #
 # License: BSD-3-Clause-LBNL
 
-import os, copy
+import copy
+import os
 
 from functions_perftest import test_element
 

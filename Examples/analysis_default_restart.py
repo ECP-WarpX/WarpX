@@ -1,7 +1,8 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 import numpy as np
 import yt
+
 
 def check_restart(filename, tolerance = 1e-12):
     """

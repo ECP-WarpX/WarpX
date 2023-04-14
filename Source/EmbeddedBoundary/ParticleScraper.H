@@ -7,12 +7,23 @@
 #ifndef PARTICLESCRAPER_H_
 #define PARTICLESCRAPER_H_
 
-#include <AMReX.H>
-#include <AMReX_Vector.H>
-#include <AMReX_MultiFab.H>
+#include "EmbeddedBoundary/DistanceToEB.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 
-#include <EmbeddedBoundary/DistanceToEB.H>
-#include "Particles/Gather/ScalarFieldGather.H"
+#include <ablastr/particles/NodalFieldGather.H>
+
+#include <AMReX.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_Particle.H>
+#include <AMReX_RandomEngine.H>
+#include <AMReX_REAL.H>
+#include <AMReX_TypeTraits.H>
+#include <AMReX_Vector.H>
+
+#include <type_traits>
+#include <utility>
+
+
 
 /**
  * \brief Interact particles with the embedded boundary walls.
@@ -156,29 +167,44 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
             auto& tile = pti.GetParticleTile();
             auto ptd = tile.getParticleTileData();
             const auto np = tile.numParticles();
+            amrex::Particle<0,0> * const particles = tile.GetArrayOfStructs()().data();
             auto phi = (*distance_to_eb[lev])[pti].array();  // signed distance function
             amrex::ParallelForRNG( np,
             [=] AMREX_GPU_DEVICE (const int ip, amrex::RandomEngine const& engine) noexcept
             {
+                // skip particles that are already flagged for removal
+                if (particles[ip].id() < 0) return;
+
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
-                compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
+                ablastr::particles::compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
 
-                amrex::Real phi_value  = interp_field_nodal(i, j, k, W, phi);
-                amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
+                amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
 
-                // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
-                amrex::RealVect pos;
-                pos[0] = xp - normal[0]*phi_value;
-                pos[1] = yp - normal[1]*phi_value;
-                pos[2] = zp - normal[2]*phi_value;
+                if (phi_value < 0.0)
+                {
+                    amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
 
-                DistanceToEB::normalize(normal);
+                    // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
+                    amrex::RealVect pos;
+#if (defined WARPX_DIM_3D)
+                    pos[0] = xp - normal[0]*phi_value;
+                    pos[1] = yp - normal[1]*phi_value;
+                    pos[2] = zp - normal[2]*phi_value;
+#elif (defined WARPX_DIM_XZ)
+                    pos[0] = xp - normal[0]*phi_value;
+                    pos[1] = zp - normal[1]*phi_value;
+#elif (defined WARPX_DIM_RZ)
+                    pos[0] = std::sqrt(xp*xp + yp*yp) - normal[0]*phi_value;
+                    pos[1] = zp - normal[1]*phi_value;
+#elif (defined WARPX_DIM_1D_Z)
+                    pos[0] = zp - normal[0]*phi_value;
+#endif
+                    DistanceToEB::normalize(normal);
 
-                if (phi_value < 0.0) {
                     f(ptd, ip, pos, normal, engine);
                 }
             });

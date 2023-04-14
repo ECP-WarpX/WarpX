@@ -18,7 +18,7 @@ warpx.fine_tag_lo = -10.e-6   -0.4e-6
 warpx.fine_tag_hi =  10.e-6    0.4e-6
 
 # Geometry
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 2
 geometry.prob_lo     = -30.e-6    -1.25e-6       # physical domain
 geometry.prob_hi     =  30.e-6     1.25e-6
 
@@ -67,4 +67,3 @@ diagnostics.diags_names = diag1
 diag1.intervals = 10
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell divB
-

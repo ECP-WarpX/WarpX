@@ -14,6 +14,7 @@
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX.H>
@@ -47,22 +48,23 @@ void FiniteDifferenceSolver::EvolveFPML (
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(Ffield, Efield, dt);
-    amrex::Abort("PML are not implemented in cylindrical geometry.");
+    amrex::Abort(Utils::TextMsg::Err(
+        "PML are not implemented in cylindrical geometry."));
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         EvolveFPMLCartesian <CartesianNodalAlgorithm> ( Ffield, Efield, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
 
         EvolveFPMLCartesian <CartesianYeeAlgorithm> ( Ffield, Efield, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         EvolveFPMLCartesian <CartesianCKCAlgorithm> ( Ffield, Efield, dt );
 
     } else {
-        amrex::Abort("EvolveFPML: Unknown algorithm");
+        amrex::Abort(Utils::TextMsg::Err("EvolveFPML: Unknown algorithm"));
     }
 #endif
 }

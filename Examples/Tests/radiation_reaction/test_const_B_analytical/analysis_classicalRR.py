@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2019 Luca Fedeli, Maxence Thevenet, Remi Lehe
 #
@@ -30,9 +30,12 @@
 # 3) H. Spohn, Dynamics of charged particles and their radiation field
 #   (Cambridge University Press, Cambridge, 2004)
 
-import numpy as np
+import os
 import sys
+
+import numpy as np
 import yt
+
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -148,7 +151,7 @@ def check():
 
         assert( error_rel < tolerance_rel )
 
-    test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+    test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename)
 
 def generate():
@@ -162,7 +165,7 @@ def generate():
         f.write("amr.max_level = 0\n")
         f.write("amr.blocking_factor = 32\n")
         f.write("amr.max_grid_size = 64\n")
-        f.write("geometry.coord_sys   = 0\n")
+        f.write("geometry.dims = 3\n")
         f.write("boundary.field_lo = periodic periodic periodic\n")
         f.write("boundary.field_hi = periodic periodic periodic\n")
         f.write("geometry.prob_lo = {} {} {}\n".format(-sim_size, -sim_size, -sim_size))
@@ -170,7 +173,7 @@ def generate():
         f.write("algo.charge_deposition = standard\n")
         f.write("algo.field_gathering = energy-conserving\n")
         f.write("warpx.cfl = 1.0\n")
-        f.write("warpx.serialize_ics = 1\n")
+        f.write("warpx.serialize_initial_conditions = 1\n")
 
         f.write("particles.species_names = ")
         for cc in cases:
@@ -187,7 +190,7 @@ def generate():
             f.write('{}.injection_style = "SingleParticle"\n'.format(cc.name))
             f.write("{}.single_particle_pos = {} {} {}\n".
                 format(cc.name, init_pos[0], init_pos[1], init_pos[2]))
-            f.write("{}.single_particle_vel = {} {} {}\n".
+            f.write("{}.single_particle_u = {} {} {}\n".
                 format(cc.name, cc.init_mom[0], cc.init_mom[1], cc.init_mom[2]))
             f.write("{}.single_particle_weight = {}\n".format(cc.name, very_small_weight))
             f.write("{}.do_classical_radiation_reaction = 1\n".format(cc.name))

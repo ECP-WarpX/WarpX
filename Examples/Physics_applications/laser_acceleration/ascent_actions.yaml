@@ -60,7 +60,7 @@
 # Uncomment this block if you want to create "Conduit Blueprint files" that can
 # be used with Ascent "replay" after the simulation run.
 # Replay is a workflow to visualize individual steps without running the simulation again.
-#- 
+#-
 #  action: "add_extracts"
 #  extracts:
 #    e1:

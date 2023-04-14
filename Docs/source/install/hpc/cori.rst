@@ -5,7 +5,11 @@ Cori (NERSC)
 
 The `Cori cluster <https://docs.nersc.gov/systems/cori/>`_ is located at NERSC.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `GPU nodes <https://docs-dev.nersc.gov/cgpu/access>`__
 
@@ -14,8 +18,8 @@ If you are new to this system, please see the following resources:
 * `Jupyter service <https://docs.nersc.gov/services/jupyter/>`__
 * `Production directories <https://www.nersc.gov/users/storage-and-file-systems/>`__:
 
-  * ``$SCRATCH``: per-user production directory (20TB)
-  * ``/global/cscratch1/sd/m3239``: shared production directory for users in the project ``m3239`` (50TB)
+  * ``$SCRATCH``: per-user production directory, purged every 30 days (20TB)
+  * ``/global/cscratch1/sd/m3239``: shared production directory for users in the project ``m3239``, purged every 30 days (50TB)
   * ``/global/cfs/cdirs/m3239/``: community file system for users in the project ``m3239`` (100TB)
 
 Installation
@@ -32,28 +36,9 @@ KNL
 
 We use the following modules and environments on the system (``$HOME/knl_warpx.profile``).
 
-.. code-block:: bash
-
-   module swap craype-haswell craype-mic-knl
-   module swap PrgEnv-intel PrgEnv-gnu
-   module load cmake/3.21.3
-   module switch cray-libsci cray-libsci/20.09.1
-   module load cray-hdf5-parallel/1.10.5.2
-   module load cray-fftw/3.3.8.4
-   module load cray-python/3.7.3.2
-
-   export PKG_CONFIG_PATH=$FFTW_DIR/pkgconfig:$PKG_CONFIG_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-knl-install:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/blaspp-master-knl-install:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/lapackpp-master-knl-install:$CMAKE_PREFIX_PATH
-
-   if [ -d "$HOME/sw/venvs/knl_warpx" ]
-   then
-     source $HOME/sw/venvs/knl_warpx/bin/activate
-   fi
-
-   export CXXFLAGS="-march=knl"
-   export CFLAGS="-march=knl"
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/knl_warpx.profile.example
+   :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/knl_warpx.profile.example``.
 
 And install ADIOS2, BLAS++ and LAPACK++:
 
@@ -61,22 +46,28 @@ And install ADIOS2, BLAS++ and LAPACK++:
 
    source $HOME/knl_warpx.profile
 
+   # c-blosc (I/O compression)
+   git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
+   rm -rf src/c-blosc-knl-build
+   cmake -S src/c-blosc -B src/c-blosc-knl-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/knl/c-blosc-1.12.1-install
+   cmake --build src/c-blosc-knl-build --target install --parallel 16
+
    # ADIOS2
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
    rm -rf src/adios2-knl-build
-   cmake -S src/adios2 -B src/adios2-knl-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-knl-install
+   cmake -S src/adios2 -B src/adios2-knl-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/knl/adios2-2.7.1-install
    cmake --build src/adios2-knl-build --target install --parallel 16
 
    # BLAS++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+   git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
    rm -rf src/blaspp-knl-build
-   cmake -S src/blaspp -B src/blaspp-knl-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_INSTALL_PREFIX=$HOME/sw/blaspp-master-knl-install
+   cmake -S src/blaspp -B src/blaspp-knl-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/knl/blaspp-master-install
    cmake --build src/blaspp-knl-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+   git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-knl-build
-   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-knl-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_INSTALL_PREFIX=$HOME/sw/lapackpp-master-knl-install
+   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-knl-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/knl/lapackpp-master-install
    cmake --build src/lapackpp-knl-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:
@@ -87,35 +78,30 @@ For PICMI and Python workflows, also install a virtual environment:
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
 
-   python3 -m venv $HOME/sw/venvs/knl_warpx
-   source $HOME/sw/venvs/knl_warpx/bin/activate
+   python3 -m venv $HOME/sw/knl/venvs/knl_warpx
+   source $HOME/sw/knl/venvs/knl_warpx/bin/activate
 
    python3 -m pip install --upgrade pip
+   python3 -m pip install --upgrade wheel
+   python3 -m pip install --upgrade cython
+   python3 -m pip install --upgrade numpy
+   python3 -m pip install --upgrade pandas
+   python3 -m pip install --upgrade scipy
    MPICC="cc -shared" python3 -m pip install -U --no-cache-dir -v mpi4py
+   python3 -m pip install --upgrade openpmd-api
+   python3 -m pip install --upgrade matplotlib
+   python3 -m pip install --upgrade yt
+   # optional: for libEnsemble
+   #python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 
 Haswell
 ^^^^^^^
 
 We use the following modules and environments on the system (``$HOME/haswell_warpx.profile``).
 
-.. code-block:: bash
-
-   module swap PrgEnv-intel PrgEnv-gnu
-   module load cmake/3.21.3
-   module switch cray-libsci cray-libsci/20.09.1
-   module load cray-hdf5-parallel/1.10.5.2
-   module load cray-fftw/3.3.8.4
-   module load cray-python/3.7.3.2
-
-   export PKG_CONFIG_PATH=$FFTW_DIR/pkgconfig:$PKG_CONFIG_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-haswell-install:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/blaspp-master-haswell-install:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/lapackpp-master-haswell-install:$CMAKE_PREFIX_PATH
-
-   if [ -d "$HOME/sw/venvs/haswell_warpx" ]
-   then
-     source $HOME/sw/venvs/haswell_warpx/bin/activate
-   fi
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/haswell_warpx.profile.example
+   :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/haswell_warpx.profile.example``.
 
 And install ADIOS2, BLAS++ and LAPACK++:
 
@@ -123,22 +109,28 @@ And install ADIOS2, BLAS++ and LAPACK++:
 
    source $HOME/haswell_warpx.profile
 
+   # c-blosc (I/O compression)
+   git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
+   rm -rf src/c-blosc-haswell-build
+   cmake -S src/c-blosc -B src/c-blosc-haswell-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/haswell/c-blosc-1.12.1-install
+   cmake --build src/c-blosc-haswell-build --target install --parallel 16
+
    # ADIOS2
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
    rm -rf src/adios2-haswell-build
-   cmake -S src/adios2 -B src/adios2-haswell-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-haswell-install
+   cmake -S src/adios2 -B src/adios2-haswell-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/haswell/adios2-2.7.1-install
    cmake --build src/adios2-haswell-build --target install --parallel 16
 
    # BLAS++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/blaspp.git src/blaspp
+   git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
    rm -rf src/blaspp-haswell-build
-   cmake -S src/blaspp -B src/blaspp-haswell-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_INSTALL_PREFIX=$HOME/sw/blaspp-master-haswell-install
+   cmake -S src/blaspp -B src/blaspp-haswell-build -Duse_openmp=ON -Duse_cmake_find_blas=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/blaspp-master-haswell-install
    cmake --build src/blaspp-haswell-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
-   git clone https://bitbucket.org/icl/lapackpp.git src/lapackpp
+   git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-haswell-build
-   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-haswell-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_INSTALL_PREFIX=$HOME/sw/lapackpp-master-haswell-install
+   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-haswell-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/haswell/lapackpp-master-install
    cmake --build src/lapackpp-haswell-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:
@@ -149,51 +141,32 @@ For PICMI and Python workflows, also install a virtual environment:
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
 
-   python3 -m venv $HOME/sw/venvs/haswell_warpx
-   source $HOME/sw/venvs/haswell_warpx/bin/activate
+   python3 -m venv $HOME/sw/haswell/venvs/haswell_warpx
+   source $HOME/sw/haswell/venvs/haswell_warpx/bin/activate
 
    python3 -m pip install --upgrade pip
+   python3 -m pip install --upgrade wheel
+   python3 -m pip install --upgrade cython
+   python3 -m pip install --upgrade numpy
+   python3 -m pip install --upgrade pandas
+   python3 -m pip install --upgrade scipy
    MPICC="cc -shared" python3 -m pip install -U --no-cache-dir -v mpi4py
+   python3 -m pip install --upgrade openpmd-api
+   python3 -m pip install --upgrade matplotlib
+   python3 -m pip install --upgrade yt
+   # optional: for libEnsemble
+   #python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 
 GPU (V100)
 ^^^^^^^^^^
 
 Cori provides a partition with `18 nodes that include V100 (16 GB) GPUs <https://docs-dev.nersc.gov/cgpu/>`__.
 We use the following modules and environments on the system (``$HOME/gpu_warpx.profile``).
+You can copy this file from ``Tools/machines/cori-nersc/gpu_warpx.profile.example``:
 
-.. code-block:: bash
-
-   export proj="m1759"
-
-   module purge
-   module load modules
-   module load cgpu
-   module load esslurm
-   module load gcc/8.3.0 cuda/11.4.0 cmake/3.21.3
-   module load openmpi
-
-   export CMAKE_PREFIX_PATH=$HOME/sw/adios2-2.7.1-gpu-install:$CMAKE_PREFIX_PATH
-
-   if [ -d "$HOME/sw/venvs/gpu_warpx" ]
-   then
-     source $HOME/sw/venvs/gpu_warpx/bin/activate
-   fi
-
-   # compiler environment hints
-   export CC=$(which gcc)
-   export CXX=$(which g++)
-   export FC=$(which gfortran)
-   export CUDACXX=$(which nvcc)
-   export CUDAHOSTCXX=$(which g++)
-
-   # optimize CUDA compilation for V100
-   export AMREX_CUDA_ARCH=7.0
-
-   # allocate a GPU, e.g. to compile on
-   #   10 logical cores (5 physical), 1 GPU
-   function getNode() {
-       salloc -C gpu -N 1 -t 30 -c 10 --gres=gpu:1 -A $proj
-   }
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/gpu_warpx.profile.example
+   :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/gpu_warpx.profile.example``.
 
 And install ADIOS2:
 
@@ -201,9 +174,15 @@ And install ADIOS2:
 
    source $HOME/gpu_warpx.profile
 
+   # c-blosc (I/O compression)
+   git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
+   rm -rf src/c-blosc-gpu-build
+   cmake -S src/c-blosc -B src/c-blosc-gpu-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/cori_gpu/c-blosc-1.12.1-install
+   cmake --build src/c-blosc-gpu-build --target install --parallel 16
+
    git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
    rm -rf src/adios2-gpu-build
-   cmake -S src/adios2 -B src/adios2-gpu-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/adios2-2.7.1-gpu-install
+   cmake -S src/adios2 -B src/adios2-gpu-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/cori_gpu/adios2-2.7.1-install
    cmake --build src/adios2-gpu-build --target install --parallel 16
 
 For PICMI and Python workflows, also install a virtual environment:
@@ -214,11 +193,21 @@ For PICMI and Python workflows, also install a virtual environment:
    python3 -m pip install --user --upgrade pip
    python3 -m pip install --user virtualenv
 
-   python3 -m venv $HOME/sw/venvs/gpu_warpx
-   source $HOME/sw/venvs/gpu_warpx/bin/activate
+   python3 -m venv $HOME/sw/cori_gpu/venvs/gpu_warpx
+   source $HOME/sw/cori_gpu/venvs/gpu_warpx/bin/activate
 
    python3 -m pip install --upgrade pip
+   python3 -m pip install --upgrade wheel
+   python3 -m pip install --upgrade cython
+   python3 -m pip install --upgrade numpy
+   python3 -m pip install --upgrade pandas
+   python3 -m pip install --upgrade scipy
    python3 -m pip install -U --no-cache-dir -v mpi4py
+   python3 -m pip install --upgrade openpmd-api
+   python3 -m pip install --upgrade matplotlib
+   python3 -m pip install --upgrade yt
+   # optional: for libEnsemble
+   #python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 
 Building WarpX
 --------------
@@ -254,8 +243,14 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    rm -rf build
 
    #                       append if you target GPUs:    -DWarpX_COMPUTE=CUDA
-   cmake -S . -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3
+   cmake -S . -B build -DWarpX_DIMS=3
    cmake --build build -j 16
+
+The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
+
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-cori>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``$SCRATCH``.
 
 The general :ref:`cmake compile-time options and instructions for Python (PICMI) bindings <building-cmake-python>` apply as usual:
 
@@ -264,8 +259,35 @@ The general :ref:`cmake compile-time options and instructions for Python (PICMI)
    # PICMI build
    cd $HOME/src/warpx
 
+   # install or update dependencies
+   python3 -m pip install -r requirements.txt
+
    # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
-   WARPX_MPI=ON WARPX_OPENPMD=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall -v .
+   WARPX_MPI=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall --no-deps -v .
+
+
+.. _building-cori-tests:
+
+Testing
+-------
+
+To run all tests (here on KNL), do:
+
+* change in ``Regressions/WarpX-tests.ini`` from ``mpiexec`` to ``srun``: ``MPIcommand = srun -n @nprocs@ @command@``
+
+.. code-block:: bash
+
+   # set test directory to a shared directory available on all nodes
+   #   note: the tests will create the directory automatically
+   export WARPX_CI_TMP="$HOME/warpx-regression-tests"
+
+   # compile with more cores
+   export WARPX_CI_NUM_MAKE_JOBS=16
+
+   # run all integration tests
+   #   note: we set MPICC as a build-setting for mpi4py on KNL/Haswell
+   MPICC="cc -shared" ./run_test.sh
+
 
 .. _running-cpp-cori:
 
@@ -285,14 +307,15 @@ Do not forget to first ``source $HOME/knl_warpx.profile`` if you have not done s
 
 For PICMI Python runs, the ``<path/to/executable>`` has to read ``python3`` and the ``<input file>`` is the path to your PICMI input script.
 
-.. literalinclude:: ../../../../Tools/BatchScripts/batch_cori.sh
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/cori_knl.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/cori_knl.sbatch``.
 
-To run a simulation, copy the lines above to a file ``batch_cori.sh`` and run
+To run a simulation, copy the lines above to a file ``cori_knl.sbatch`` and run
 
 .. code-block:: bash
 
-   sbatch batch_cori.sh
+   sbatch cori_knl.sbatch
 
 to submit the job.
 
@@ -317,15 +340,16 @@ The batch script below can be used to run a WarpX simulation on 1 `Haswell node 
 
 Do not forget to first ``source $HOME/haswell_warpx.profile`` if you have not done so already for this terminal session.
 
-.. literalinclude:: ../../../../Tools/BatchScripts/batch_cori_haswell.sh
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/cori_haswell.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/cori_haswell.sbatch``.
 
-To run a simulation, copy the lines above to a file ``batch_cori_haswell.sh`` and
+To run a simulation, copy the lines above to a file ``cori_haswell.sbatch`` and
 run
 
 .. code-block:: bash
 
-   sbatch batch_cori_haswell.sh
+   sbatch cori_haswell.sbatch
 
 to submit the job.
 
@@ -346,8 +370,9 @@ For single-node runs, try to run one grid per GPU.
 
 A multi-node batch script template can be found below:
 
-.. literalinclude:: ../../../../Tools/BatchScripts/batch_cori_gpu.sh
+.. literalinclude:: ../../../../Tools/machines/cori-nersc/cori_gpu.sbatch
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/cori-nersc/cori_gpu.sbatch``.
 
 
 .. _post-processing-cori:
@@ -362,11 +387,26 @@ In this manual, we often use this ``conda create`` line over the officially docu
 
 .. code-block:: bash
 
-   conda create -n myenv -c conda-forge python mamba ipykernel ipympl matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram
+   conda create -n myenv -c conda-forge python mamba ipykernel ipympl==0.8.6 matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram dask dask-jobqueue pyarrow
 
 We then follow the `Customizing Kernels with a Helper Shell Script <https://docs.nersc.gov/services/jupyter/#customizing-kernels-with-a-helper-shell-script>`__ section to finalize the setup of using this conda-environment as a custom Jupyter kernel.
+
+``kernel_helper.sh`` should read:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   module load python
+   source activate myenv
+   exec "$@"
 
 When opening a Jupyter notebook, just select the name you picked for your custom kernel on the top right of the notebook.
 
 Additional software can be installed later on, e.g., in a Jupyter cell using ``!mamba install -c conda-forge ...``.
 Software that is not available via conda can be installed via ``!python -m pip install ...``.
+
+.. warning::
+
+   Jan 6th, 2022 (NERSC-INC0179165 and `ipympl #416 <https://github.com/matplotlib/ipympl/issues/416>`__):
+   Above, we fixated the ``ipympl`` version to *not* take the latest release of `Matplotlib Jupyter Widgets <https://github.com/matplotlib/ipympl>`__.
+   This is an intentional work-around; the ``ipympl`` version needs to exactly fit the version pre-installed on the Jupyter base system.

@@ -11,6 +11,13 @@
 
 namespace utils
 {
+    /** Return the required MPI threading
+     *
+     * @return the MPI_THREAD_* level required for MPI_Init_thread
+     */
+    int
+    warpx_mpi_thread_required ();
+
     /** Initialize MPI
      *
      * @return pair(required, provided) of MPI thread level from MPI_Init_thread
@@ -18,14 +25,20 @@ namespace utils
     std::pair< int, int >
     warpx_mpi_init (int argc, char* argv[]);
 
+    /** Finalize MPI
+     *
+     * This function is simply a wrapper around MPI_Finalize(). It is a no-op if
+     * WarpX is compiled without MPI support.
+     */
+    void
+    warpx_mpi_finalize ();
+
     /** Check if the requested MPI thread level is valid
      *
      * Prints warnings and notes otherwise.
-     *
-     * @param mpi_thread_levels pair(required, provided) of MPI thread level from MPI_Init_thread
      */
     void
-    warpx_check_mpi_thread_level (std::pair< int, int > const mpi_thread_levels);
+    warpx_check_mpi_thread_level ();
 
 } // namespace utils
 

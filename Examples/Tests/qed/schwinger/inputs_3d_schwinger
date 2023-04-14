@@ -1,0 +1,65 @@
+#################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 1
+amr.n_cell =  8 8 32
+amr.max_grid_size = 16   # maximum size of each AMReX box, used to decompose the domain
+amr.blocking_factor = 8 # minimum size of each AMReX box, used to decompose the domain
+geometry.dims = 3
+geometry.prob_lo     =  -5.e-7  -5.e-7  -5.e-7   # physical domain
+geometry.prob_hi     =  5.e-7   5.e-7  5.e-7
+amr.max_level = 0 # Maximum level in hierarchy (1 might be unstable, >1 is not supported)
+
+#################################
+####### Boundary condition ######
+#################################
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
+
+#################################
+############ NUMERICS ###########
+#################################
+algo.current_deposition = esirkepov
+algo.charge_deposition = standard
+algo.field_gathering = momentum-conserving
+algo.particle_pusher = boris
+warpx.verbose = 1
+warpx.cfl = 1. # if 1., the time step is set to its CFL limit
+warpx.serialize_initial_conditions = 1
+warpx.use_filter = 0
+
+# Order of particle shape factors
+algo.particle_shape = 1
+
+#################################
+###### EXTERNAL EM FIELD ########
+#################################
+
+warpx.B_ext_grid_init_style = "constant"
+warpx.E_ext_grid_init_style = "constant"
+warpx.B_external_grid = 0. 0. 0.
+warpx.E_external_grid = 0. 0. 0.
+
+#################################
+############ PLASMA #############
+#################################
+particles.species_names =  ele_schwinger pos_schwinger
+
+ele_schwinger.species_type = "electron"
+pos_schwinger.species_type = "positron"
+ele_schwinger.injection_style = "none"
+pos_schwinger.injection_style = "none"
+
+#################################
+############## QED ##############
+#################################
+warpx.do_qed_schwinger = 1
+qed_schwinger.ele_product_species = ele_schwinger
+qed_schwinger.pos_product_species = pos_schwinger
+
+#################################
+########## DIAGNOSTICS ##########
+#################################
+diagnostics.diags_names = diag1
+diag1.diag_type = Full
+diag1.intervals = 1

@@ -7,7 +7,9 @@
  */
 #include "FieldIO.H"
 
-#include "Utils/CoarsenIO.H"
+#include "Utils/TextMsg.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX.H>
 #include <AMReX_IntVect.H>
@@ -19,6 +21,55 @@
 #include <memory>
 
 using namespace amrex;
+
+/** \brief
+ * Convert an IntVect to a std::vector<std::uint64_t>
+ * (used for compatibility with openPMD-api)
+ */
+std::vector<std::uint64_t>
+getVec( const IntVect& v, bool reverse)
+{
+  // Convert the IntVect v to and std::vector u
+  std::vector<std::uint64_t> u = {
+    AMREX_D_DECL(
+                 static_cast<std::uint64_t>(v[0]),
+                 static_cast<std::uint64_t>(v[1]),
+                 static_cast<std::uint64_t>(v[2])
+                 )
+  };
+  // Reverse the order of elements, if v corresponds to the indices of a
+  // Fortran-order array (like an AMReX FArrayBox)
+  // but u is intended to be used with a C-order API (like openPMD)
+  if (reverse) {
+    std::reverse( u.begin(), u.end() );
+  }
+
+  return u;
+}
+/** \brief
+ * Convert Real* pointer to a std::vector<double>,
+ * (used for compatibility with the openPMD API)
+ */
+std::vector<double>
+getVec( const Real* v , bool reverse)
+{
+  // Convert Real* v to and std::vector u
+  std::vector<double> u = {
+    AMREX_D_DECL(
+                 static_cast<double>(v[0]),
+                 static_cast<double>(v[1]),
+                 static_cast<double>(v[2])
+                 )
+  };
+  // Reverse the order of elements, if v corresponds to the indices of a
+  // Fortran-order array (like an AMReX FArrayBox)
+  // but u is intended to be used with a C-order API (like openPMD-api)
+  if (reverse) {
+    std::reverse( u.begin(), u.end() );
+  }
+
+  return u;
+}
 
 /** \brief
  * Convert an IntVect to a std::vector<std::uint64_t>
@@ -133,9 +184,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
     const std::array<std::unique_ptr<MultiFab>,3> &vector_total = vector_field;
 #endif
 
-    CoarsenIO::Coarsen( mf_avg, *(vector_total[0]), dcomp  , 0, 1, ngrow );
-    CoarsenIO::Coarsen( mf_avg, *(vector_total[1]), dcomp+1, 0, 1, ngrow );
-    CoarsenIO::Coarsen( mf_avg, *(vector_total[2]), dcomp+2, 0, 1, ngrow );
+    ablastr::coarsen::sample::Coarsen(mf_avg, *(vector_total[0]), dcomp  , 0, 1, ngrow );
+    ablastr::coarsen::sample::Coarsen(mf_avg, *(vector_total[1]), dcomp + 1, 0, 1, ngrow );
+    ablastr::coarsen::sample::Coarsen(mf_avg, *(vector_total[2]), dcomp + 2, 0, 1, ngrow );
 }
 
 /** \brief Take a MultiFab `scalar_field`
@@ -170,8 +221,8 @@ AverageAndPackScalarField (MultiFab& mf_avg,
         MultiFab::Copy( mf_avg, *scalar_total, 0, dcomp, 1, ngrow);
     } else if ( scalar_total->is_nodal() ){
         // - Fully nodal
-        CoarsenIO::Coarsen( mf_avg, *scalar_total, dcomp, 0, 1, ngrow );
+        ablastr::coarsen::sample::Coarsen(mf_avg, *scalar_total, dcomp, 0, 1, ngrow );
     } else {
-        amrex::Abort("Unknown staggering.");
+        amrex::Abort(Utils::TextMsg::Err("Unknown staggering."));
     }
 }

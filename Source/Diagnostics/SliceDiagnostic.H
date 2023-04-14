@@ -36,4 +36,3 @@ void InterpolateLo( const amrex::Box& bx, amrex::FArrayBox &fabox,
      int srccomp, int ncomp, int nghost, const amrex::RealBox real_box);
 
 #endif
-

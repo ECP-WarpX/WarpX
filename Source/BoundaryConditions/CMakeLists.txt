@@ -5,3 +5,10 @@ target_sources(WarpX
     WarpXFieldBoundaries.cpp
     WarpX_PEC.cpp
 )
+
+if(WarpX_DIMS STREQUAL RZ)
+    target_sources(WarpX
+      PRIVATE
+        PML_RZ.cpp
+    )
+endif()

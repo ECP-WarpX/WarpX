@@ -97,7 +97,7 @@ constexpr amrex::Real c2i = 1._rt/c2;
 const amrex::Real dxi = 1._rt/dx;
 const amrex::Real dzi = 1._rt/dz;
 
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
 const amrex::Real dyi = 1._rt/dy;
 
     // Picking out points for stencil to be used in curl function of M

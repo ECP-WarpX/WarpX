@@ -15,24 +15,33 @@
 
 #include <algorithm>
 #include <cstring>
-#include <ctype.h>
+#include <cctype>
 #include <map>
 #include <utility>
 
 // Define dictionary with correspondance between user-input strings,
 // and corresponding integer for use inside the code
 
-const std::map<std::string, int> maxwell_solver_algo_to_int = {
-    {"yee",     MaxwellSolverAlgo::Yee },
-    {"ckc",     MaxwellSolverAlgo::CKC },
-    {"psatd",   MaxwellSolverAlgo::PSATD },
-    {"ect",     MaxwellSolverAlgo::ECT },
-    {"default", MaxwellSolverAlgo::Yee }
+const std::map<std::string, int> grid_to_int = {
+    {"collocated", GridType::Collocated},
+    {"staggered", GridType::Staggered},
+    {"hybrid", GridType::Hybrid},
+    {"default", GridType::Staggered}
+};
+
+const std::map<std::string, int> electromagnetic_solver_algo_to_int = {
+    {"none",    ElectromagneticSolverAlgo::None },
+    {"yee",     ElectromagneticSolverAlgo::Yee },
+    {"ckc",     ElectromagneticSolverAlgo::CKC },
+    {"psatd",   ElectromagneticSolverAlgo::PSATD },
+    {"ect",     ElectromagneticSolverAlgo::ECT },
+    {"default", ElectromagneticSolverAlgo::Yee }
 };
 
 const std::map<std::string, int> electrostatic_solver_algo_to_int = {
     {"none", ElectrostaticSolverAlgo::None },
     {"relativistic", ElectrostaticSolverAlgo::Relativistic},
+    {"labframe-electromagnetostatic", ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic},
     {"labframe", ElectrostaticSolverAlgo::LabFrame},
     {"default", ElectrostaticSolverAlgo::None }
 };
@@ -62,6 +71,24 @@ const std::map<std::string, int> gathering_algo_to_int = {
     {"default",             GatheringAlgo::EnergyConserving }
 };
 
+const std::map<std::string, int> psatd_solution_type_to_int = {
+    {"first-order", PSATDSolutionType::FirstOrder},
+    {"second-order", PSATDSolutionType::SecondOrder},
+    {"default", PSATDSolutionType::SecondOrder}
+};
+
+const std::map<std::string, int> J_in_time_to_int = {
+    {"constant", JInTime::Constant},
+    {"linear", JInTime::Linear},
+    {"default", JInTime::Constant}
+};
+
+const std::map<std::string, int> rho_in_time_to_int = {
+    {"constant", RhoInTime::Constant},
+    {"linear", RhoInTime::Linear},
+    {"default", RhoInTime::Linear}
+};
+
 const std::map<std::string, int> load_balance_costs_update_algo_to_int = {
     {"timers",    LoadBalanceCostsUpdateAlgo::Timers },
     {"gpuclock",  LoadBalanceCostsUpdateAlgo::GpuClock },
@@ -88,6 +115,7 @@ const std::map<std::string, int> FieldBCType_algo_to_int = {
     {"pmc",      FieldBoundaryType::PMC},
     {"damped",   FieldBoundaryType::Damped},
     {"absorbing_silver_mueller", FieldBoundaryType::Absorbing_SilverMueller},
+    {"neumann",  FieldBoundaryType::Neumann},
     {"none",     FieldBoundaryType::None},
     {"default",  FieldBoundaryType::PML}
 };
@@ -118,19 +146,27 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
     // Pick the right dictionary
     std::map<std::string, int> algo_to_int;
     if (0 == std::strcmp(pp_search_key, "maxwell_solver")) {
-        algo_to_int = maxwell_solver_algo_to_int;
+        algo_to_int = electromagnetic_solver_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "grid_type")) {
+        algo_to_int = grid_to_int;
     } else if (0 == std::strcmp(pp_search_key, "do_electrostatic")) {
         algo_to_int = electrostatic_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "particle_pusher")) {
         algo_to_int = particle_pusher_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "current_deposition")) {
         algo_to_int = current_deposition_algo_to_int;
-        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
             algo_to_int["default"] = CurrentDepositionAlgo::Direct;
     } else if (0 == std::strcmp(pp_search_key, "charge_deposition")) {
         algo_to_int = charge_deposition_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "field_gathering")) {
         algo_to_int = gathering_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "solution_type")) {
+        algo_to_int = psatd_solution_type_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "J_in_time")) {
+        algo_to_int = J_in_time_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "rho_in_time")) {
+        algo_to_int = rho_in_time_to_int;
     } else if (0 == std::strcmp(pp_search_key, "load_balance_costs_update")) {
         algo_to_int = load_balance_costs_update_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "em_solver_medium")) {

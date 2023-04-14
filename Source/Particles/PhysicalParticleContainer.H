@@ -46,13 +46,6 @@ class PhysicalParticleContainer
 {
 public:
 
-    enum PhysicalParticleType{
-        electron,
-        positron,
-        photon,
-        other
-    };
-
     PhysicalParticleContainer (amrex::AmrCore* amr_core,
                                int ispecies,
                                const std::string& name);
@@ -71,7 +64,7 @@ public:
 
     virtual void WriteHeader (std::ostream& os) const override;
 
-    void InitIonizationModule ();
+    virtual void InitIonizationModule () override;
 
     /**
      * \brief Evolve is the central function PhysicalParticleContainer that
@@ -101,6 +94,7 @@ public:
      * \param t current physical time
      * \param dt time step by which particles are advanced
      * \param a_dt_type type of time step (used for sub-cycling)
+     * \param skip_deposition Skip the charge and current deposition.
      *
      * Evolve iterates over particle iterator (each box) and performs filtering,
      * field gather, particle push and current deposition for all particles
@@ -139,7 +133,7 @@ public:
                          amrex::FArrayBox const * bxfab,
                          amrex::FArrayBox const * byfab,
                          amrex::FArrayBox const * bzfab,
-                         const amrex::IntVect ngE, const int /*e_is_nodal*/,
+                         const amrex::IntVect ngEB, const int /*e_is_nodal*/,
                          const long offset,
                          const long np_to_push,
                          int lev, int gather_lev,
@@ -161,11 +155,7 @@ public:
                         WarpXParIter& pti,
                         int const lev,
                         amrex::iMultiFab const* current_masks,
-                        amrex::iMultiFab const* gather_masks,
-                        RealVector& uxp,
-                        RealVector& uyp,
-                        RealVector& uzp,
-                        RealVector& wp );
+                        amrex::iMultiFab const* gather_masks );
 
     virtual void PostRestart () final {}
 
@@ -173,7 +163,7 @@ public:
 
     IonizationFilterFunc getIonizationFunc (const WarpXParIter& pti,
                                             int lev,
-                                            amrex::IntVect ngE,
+                                            amrex::IntVect ngEB,
                                             const amrex::FArrayBox& Ex,
                                             const amrex::FArrayBox& Ey,
                                             const amrex::FArrayBox& Ez,
@@ -199,19 +189,18 @@ public:
     /**
      * Create new macroparticles for this species, with a fixed
      * number of particles per cell in a plane.
-     * @param[in] lev the index of the refinement level
      * @param[in] dt time step size, used to partially advance the particles
     */
-    void AddPlasmaFlux (int lev, amrex::Real dt);
+    void AddPlasmaFlux (amrex::Real dt);
 
-    void MapParticletoBoostedFrame (amrex::Real& x, amrex::Real& y, amrex::Real& z,
-                                    amrex::Real& ux, amrex::Real& uy, amrex::Real& uz);
+    void MapParticletoBoostedFrame (amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
+                                    amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz);
 
     void AddGaussianBeam (
         const amrex::Real x_m, const amrex::Real y_m, const amrex::Real z_m,
         const amrex::Real x_rms, const amrex::Real y_rms, const amrex::Real z_rms,
         const amrex::Real x_cut, const amrex::Real y_cut, const amrex::Real z_cut,
-        const amrex::Real q_tot, long npart, const int do_symmetrize);
+        const amrex::Real q_tot, long npart, const int do_symmetrize, const int symmetrization_order);
 
     /** Load a particle beam from an external file
      * @param[in] q_tot total charge of the particle species to be initialized
@@ -221,9 +210,9 @@ public:
                             amrex::ParticleReal z_shift);
 
     void CheckAndAddParticle (
-        amrex::Real x, amrex::Real y, amrex::Real z,
-        amrex::Real ux, amrex::Real uy, amrex::Real uz,
-        amrex::Real weight,
+        amrex::ParticleReal x, amrex::ParticleReal y, amrex::ParticleReal z,
+        amrex::ParticleReal ux, amrex::ParticleReal uy, amrex::ParticleReal uz,
+        amrex::ParticleReal weight,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_x,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_y,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_z,
@@ -232,19 +221,24 @@ public:
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uz,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_w);
 
-    virtual void GetParticleSlice (
-        const int direction, const amrex::Real z_old,
-        const amrex::Real z_new, const amrex::Real t_boost,
-        const amrex::Real t_lab, const amrex::Real dt,
-        DiagnosticParticles& diagnostic_particles) final;
-
-    /** Convert particle momentum to/from SI
+    /**
+     * \brief Default initialize runtime attributes in a tile. This routine does not initialize the
+     * first n_external_attr_real real attributes and the first n_external_attr_int integer
+     * attributes, which have been in principle externally set elsewhere.
      *
-     * @see particlesConvertUnits
-     *
-     * @param convert_dir convert to or from SI
+     * @param[inout] pinned_tile the tile in which attributes are initialized
+     * @param[in] n_external_attr_real The number of real attributes that have been externally set.
+     * These are NOT initialized by this function.
+     * @param[in] n_external_attr_int The number of integer attributes that have been externally set.
+     * These are NOT initialized by this function.
+     * @param[in] engine the random engine, used in initialization of QED optical depths
      */
-    virtual void ConvertUnits (ConvertDirection convert_dir) override;
+    virtual void DefaultInitializeRuntimeAttributes (
+                    amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
+                                        NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                    const int n_external_attr_real,
+                    const int n_external_attr_int,
+                    const amrex::RandomEngine& engine) override final;
 
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather
@@ -303,7 +297,6 @@ public:
     * \brief This function determines if resampling should be done for the current species, and
     * if so, performs the resampling.
     *
-    * @param[in] resampler the Resampling object used for resampling.
     * @param[in] timestep the current timestep.
     */
     void resample (const int timestep) override final;
@@ -364,7 +357,7 @@ protected:
     void ContinuousInjection (const amrex::RealBox& injection_box) override;
 
     // Continuously inject a flux of particles from a defined surface
-    void ContinuousFluxInjection (const amrex::Real dt) override;
+    void ContinuousFluxInjection (const amrex::Real t, const amrex::Real dt) override;
 
     //This function return true if the PhysicalParticleContainer contains electrons
     //or positrons, false otherwise
@@ -389,6 +382,14 @@ protected:
     // A smart pointer to an instance of a Breit Wheeler engine [photons only!]
     std::shared_ptr<BreitWheelerEngine> m_shr_p_bw_engine;
 #endif
+    /* Vector of user-defined integer attributes for species, species_name */
+    std::vector<std::string> m_user_int_attribs;
+    /* Vector of user-defined real attributes for species, species_name */
+    std::vector<std::string> m_user_real_attribs;
+    /* Vector of user-defined parser for initializing user-defined integer attributes */
+    std::vector< std::unique_ptr<amrex::Parser> > m_user_int_attrib_parser;
+    /* Vector of user-defined parser for initializing user-defined real attributes */
+    std::vector< std::unique_ptr<amrex::Parser> > m_user_real_attrib_parser;
 
 };
 
