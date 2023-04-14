@@ -666,6 +666,23 @@ public:
                                                   int lev);
 #endif
 
+    /**
+     * \brief If a PEC boundary conditions is used the charge
+     * density deposited in the guard cells have to be reflected back into
+     * the simulation domain. This function performs that logic.
+     */
+    void ApplyRhofieldBoundary (const int lev, amrex::MultiFab* Rho,
+                                PatchType patch_type);
+
+    /**
+     * \brief If a PEC boundary conditions is used the current
+     * density deposited in the guard cells have to be reflected back into
+     * the simulation domain. This function performs that logic.
+     */
+    void ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
+                              amrex::MultiFab* Jy, amrex::MultiFab* Jz,
+                              PatchType patch_type);
+
     void ApplyEfieldBoundary (const int lev, PatchType patch_type);
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
 
@@ -777,6 +794,10 @@ public:
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
 
     void SyncRho ();
+
+    void SyncRho (
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp);
 
     amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
     int getnsubsteps (int lev) const {return nsubsteps[lev];}

@@ -161,7 +161,13 @@ Overall simulation parameters
     When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
     This will cause severe performance drops.
     Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
-    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
+    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`__.
+
+* ``amrex.the_arena_is_managed``  (``0`` or ``1``; default is ``0`` for false)
+    When running on GPUs, device memory that is accessed from the host will automatically be transferred with managed memory.
+    This is useful for convenience during development, but has sometimes severe performance and memory footprint implications if relied on (and sometimes vendor bugs).
+    For all regular WarpX operations, we therefore do explicit memory transfers without the need for managed memory and thus changed the AMReX default to false.
+    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`__.
 
 Signal Handling
 ^^^^^^^^^^^^^^^
@@ -337,7 +343,7 @@ Domain Boundary Conditions
 
     * ``damped``: This is the recommended option in the moving direction when using the spectral solver with moving window (currently only supported along z). This boundary condition applies a damping factor to the electric and magnetic fields in the outer half of the guard cells, using a sine squared profile. As the spectral solver is by nature periodic, the damping prevents fields from wrapping around to the other end of the domain when the periodicity is not desired. This boundary condition is only valid when using the spectral solver.
 
-    * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. For the electromagnetic solve, at PEC, the tangential electric field and the normal magnetic field are set to 0. This boundary can be used to model a dielectric or metallic surface. In the guard-cell region, the tangential electric field is set equal and opposite to the respective field component in the mirror location across the PEC boundary, and the normal electric field is set equal to the field component in the mirror location in the domain across the PEC boundary. Similarly, the tangential (and normal) magnetic field components are set equal (and opposite) to the respective magnetic field components in the mirror locations across the PEC boundary. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
+    * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. Please see the :ref:`PEC theory section <theory-bc-pec>` for more details. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
       If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
 
     * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`.
@@ -1481,6 +1487,9 @@ Note that elements of the same type cannot overlap each other.
     A list of names (one name per lattice element), in the order that they
     appear in the lattice.
 
+* ``lattice.reverse`` (``boolean``) optional (default: ``false``)
+    Reverse the list of elements in the lattice.
+
 * ``<element_name>.type`` (``string``)
     Indicates the element type for this lattice element. This should be one of:
 
@@ -1516,6 +1525,15 @@ Note that elements of the same type cannot overlap each other.
 
             * ``<element_name>.dBdx`` (``float``, in Tesla/meter) optional (default: 0.) the magnetic field gradient
               The field applied to the particles will be `Bx = dBdx*y` and `By = -dBdx*x`.
+
+        * ``line`` a sub-lattice (line) of elements to append to the lattice.
+
+            * ``<element_name>.elements`` (``list of strings``) optional (default: no elements)
+              A list of names (one name per lattice element), in the order that they appear in the lattice.
+
+            * ``<element_name>.reverse`` (``boolean``) optional (default: ``false``)
+              Reverse the list of elements in the line before appending to the lattice.
+
 
 .. _running-cpp-parameters-collision:
 

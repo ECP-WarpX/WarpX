@@ -1282,6 +1282,14 @@ WarpX::ReadParameters ()
         J_in_time = GetAlgorithmInteger(pp_psatd, "J_in_time");
         rho_in_time = GetAlgorithmInteger(pp_psatd, "rho_in_time");
 
+        if (psatd_solution_type != PSATDSolutionType::FirstOrder || do_multi_J == false)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                rho_in_time == RhoInTime::Linear,
+                "psatd.rho_in_time=constant not yet implemented, "
+                "except for psatd.solution_type=first-order and warpx.do_multi_J=1");
+        }
+
         // Current correction activated by default, unless a charge-conserving
         // current deposition (Esirkepov, Vay) or the div(E) cleaning scheme
         // are used
@@ -1621,6 +1629,12 @@ WarpX::BackwardCompatibility ()
         !pp_warpx.queryarr("sort_int", backward_strings),
         "warpx.sort_int is no longer a valid option. "
         "Please use the renamed option warpx.sort_intervals instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_nodal", backward_int),
+        "warpx.do_nodal is not supported anymore. "
+        "Please use the flag warpx.grid_type instead."
     );
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
