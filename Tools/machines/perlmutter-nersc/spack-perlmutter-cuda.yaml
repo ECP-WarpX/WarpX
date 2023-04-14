@@ -47,7 +47,7 @@ spack:
   - cmake
   - cuda
   - hdf5
-  - lapackpp
+  - lapackpp ^blaspp+cuda
   - mpi
   - pkgconfig
   - python
