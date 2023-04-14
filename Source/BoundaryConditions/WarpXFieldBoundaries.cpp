@@ -17,8 +17,25 @@
 using namespace amrex::literals;
 using namespace amrex;
 
-void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
+void
+WarpX::ApplyEfieldBoundary (const IntVect ng, const std::optional<bool> nodal_sync)
 {
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        ApplyEfieldBoundary(lev, ng, nodal_sync);
+    }
+}
+
+void
+WarpX::ApplyEfieldBoundary (const int lev, const IntVect ng, const std::optional<bool> nodal_sync)
+{
+    ApplyEfieldBoundary(lev, PatchType::fine, ng, nodal_sync);
+    if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse, ng, nodal_sync);
+}
+
+void WarpX::ApplyEfieldBoundary(const int lev, const PatchType patch_type, const amrex::IntVect ng, const std::optional<bool> nodal_sync)
+{
+
     if (PEC::isAnyBoundaryPEC()) {
         if (patch_type == PatchType::fine) {
             PEC::ApplyPECtoEfield( { get_pointer_Efield_fp(lev, 0),
@@ -40,6 +57,9 @@ void WarpX::ApplyEfieldBoundary(const int lev, PatchType patch_type)
             }
         }
     }
+
+    // This will later go first after checking is done
+    FillBoundaryE (lev, patch_type, ng, nodal_sync);
 }
 
 void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_dt_type)

@@ -894,8 +894,6 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
         }
     }
 
-    ApplyEfieldBoundary(lev, patch_type);
-
     // ECTRhofield must be recomputed at the very end of the Efield update to ensure
     // that ECTRhofield is consistent with Efield
 #ifdef AMREX_USE_EB
@@ -1058,7 +1056,6 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
         }
     }
 
-    ApplyEfieldBoundary(lev, patch_type);
 }
 
 void

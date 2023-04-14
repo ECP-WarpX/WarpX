@@ -683,7 +683,9 @@ public:
                               amrex::MultiFab* Jy, amrex::MultiFab* Jz,
                               PatchType patch_type);
 
-    void ApplyEfieldBoundary (const int lev, PatchType patch_type);
+    void ApplyEfieldBoundary (const amrex::IntVect ng, const std::optional<bool> nodal_sync = std::nullopt);
+    void ApplyEfieldBoundary (const int lev, const amrex::IntVect ng, const std::optional<bool> nodal_sync = std::nullopt);
+    void ApplyEfieldBoundary (const int lev, const PatchType patch_type, const amrex::IntVect ng, const std::optional<bool> nodal_sync = std::nullopt);
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
 
     void DampPML ();
