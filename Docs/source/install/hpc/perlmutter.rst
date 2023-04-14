@@ -288,4 +288,6 @@ For post-processing, most users use Python via NERSC's `Jupyter service <https:/
 Please follow the same process as for :ref:`NERSC Cori post-processing <post-processing-cori>`.
 **Important:** The *environment + Jupyter kernel* must separate from the one you create for Cori.
 
-The Perlmutter ``$PSCRATCH`` filesystem as Cori's ``$SCRATCH`` are available on Jupyter. You can also use the Community FileSystem (CFS) from everywhere.
+The Perlmutter ``$PSCRATCH`` filesystem is only available on *Perlmutter* Jupyter nodes.
+Likewise, Cori's ``$SCRATCH`` filesystem is only available on *Cori* Jupyter nodes.
+You can use the Community FileSystem (CFS) from everywhere.
