@@ -33,7 +33,8 @@ Workflow
 * you connect via SSH to your desktop at work, in a terminal (A) as usual
 
   * e.g., ssh ``username@your-computers-hostname.dhcp.lbl.gov``
-  * you start Jupyter locally in headless mode, it will show you a ``127.0.0.1`` (aka ``localhost``) URL, by default on port TCP ``8888``
+  * start Jupyter locally in headless mode, e.g., `jupyter lab --no-browser`
+  * this will show you a ``127.0.0.1`` (aka ``localhost``) URL, by default on port TCP ``8888``
   * you cannot reach that URL, because you are not sitting on that computer, with your browser
 * You now start a second terminal (B) locally, which forwards  the remote port 8888 to your local laptop
 
