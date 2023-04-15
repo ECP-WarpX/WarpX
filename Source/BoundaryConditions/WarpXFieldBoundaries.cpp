@@ -33,9 +33,15 @@ WarpX::ApplyEfieldBoundary (const int lev, const IntVect ng, const std::optional
     if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse, ng, nodal_sync);
 }
 
-void WarpX::ApplyEfieldBoundary(const int lev, const PatchType patch_type, const amrex::IntVect ng, const std::optional<bool> nodal_sync)
+void WarpX::ApplyEfieldBoundary (const int lev, const PatchType patch_type, const amrex::IntVect ng, const std::optional<bool> nodal_sync)
 {
+    ApplyEfieldBoundary(lev, patch_type);
+    // This will later go first after checking is done
+    FillBoundaryE(lev, patch_type, ng, nodal_sync);
+}
 
+void WarpX::ApplyEfieldBoundary (const int lev, const PatchType patch_type)
+{
     if (PEC::isAnyBoundaryPEC()) {
         if (patch_type == PatchType::fine) {
             PEC::ApplyPECtoEfield( { get_pointer_Efield_fp(lev, 0),
@@ -57,9 +63,6 @@ void WarpX::ApplyEfieldBoundary(const int lev, const PatchType patch_type, const
             }
         }
     }
-
-    // This will later go first after checking is done
-    FillBoundaryE (lev, patch_type, ng, nodal_sync);
 }
 
 void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_dt_type)

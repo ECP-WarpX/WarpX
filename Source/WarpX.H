@@ -686,6 +686,7 @@ public:
     void ApplyEfieldBoundary (const amrex::IntVect ng, const std::optional<bool> nodal_sync = std::nullopt);
     void ApplyEfieldBoundary (const int lev, const amrex::IntVect ng, const std::optional<bool> nodal_sync = std::nullopt);
     void ApplyEfieldBoundary (const int lev, const PatchType patch_type, const amrex::IntVect ng, const std::optional<bool> nodal_sync = std::nullopt);
+    void ApplyEfieldBoundary (const int lev, const PatchType patch_type);
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
 
     void DampPML ();
