@@ -1100,8 +1100,11 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
 #ifndef WARPX_DIM_1D_Z
                                                               x, xmin, xmax,
 #endif
-#ifdef WARPX_DIM_3D
-                                                              y, ymin, ymax,
+#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
+                                                              y,
+#endif
+#if (defined WARPX_DIM_3D)
+                                                              ymin, ymax,
 #endif
                                                               z, zmin, zmax,
                                                               ux[i], uy[i], uz[i], particle_lost,
