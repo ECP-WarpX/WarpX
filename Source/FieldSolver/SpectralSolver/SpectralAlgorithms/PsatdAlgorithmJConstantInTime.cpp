@@ -417,7 +417,7 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
             constexpr amrex::Real ep0 = PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
-            const amrex::Real c2 = amrex::Math::powi<2>(c, 2);
+            const amrex::Real c2 = amrex::Math::powi<2>(c);
             const amrex::Real dt2 = amrex::Math::powi<2>(dt, 2);
 
             // Calculate the dot product of the k vector with the Galilean velocity.
@@ -430,10 +430,10 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
 #else
                 kz_c[j]*vg_z;
 #endif
-            const amrex::Real w2_c = amrex::Math::powi<2>(w_c, 2);
+            const amrex::Real w2_c = amrex::Math::powi<2>(w_c);
 
             const amrex::Real om_s = c * knorm_s;
-            const amrex::Real om2_s = amrex::Math::powi<2>(om_s, 2);
+            const amrex::Real om2_s = amrex::Math::powi<2>(om_s);
 
             const Complex theta_c      = amrex::exp( I * w_c * dt * 0.5_rt);
             const Complex theta2_c     = amrex::exp( I * w_c * dt);
