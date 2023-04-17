@@ -418,7 +418,7 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
             constexpr Complex I = Complex{0._rt, 1._rt};
 
             const amrex::Real c2 = amrex::Math::powi<2>(c);
-            const amrex::Real dt2 = amrex::Math::powi<2>(dt, 2);
+            const amrex::Real dt2 = amrex::Math::powi<2>(dt);
 
             // Calculate the dot product of the k vector with the Galilean velocity.
             // This has to be computed always with the centered (collocated) finite-order
