@@ -370,6 +370,7 @@ WarpX::Evolve (int numsteps)
 
         exit_loop_due_to_interrupt_signal = SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK);
         if (cur_time >= stop_time - 1.e-3*dt[0] || exit_loop_due_to_interrupt_signal) {
+            ExecutePythonCallback("onbreaksignal");
             break;
         }
 

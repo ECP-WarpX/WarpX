@@ -23,7 +23,7 @@
  * afterEsolve, beforeInitEsolve, afterInitEsolve,
  * beforedeposition, afterdeposition, particlescraper,
  * particleloader, beforestep, afterstep, afterdiagnostics, afterrestart,
- * oncheckpointsignal, particleinjection and appliedfields.
+ * oncheckpointsignal, onbreaksignal, particleinjection and appliedfields.
 */
 extern std::map< std::string, WARPX_CALLBACK_PY_FUNC_0 > warpx_callback_py_map;
 
