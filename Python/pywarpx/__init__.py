@@ -6,6 +6,7 @@
 
 from .Algo import algo
 from .Amr import amr
+from .Amrex import amrex
 from .Boundary import boundary
 from .Collisions import collisions
 from .Constants import my_constants

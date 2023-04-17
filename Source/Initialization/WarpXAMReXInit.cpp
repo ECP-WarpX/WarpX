@@ -10,6 +10,8 @@
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
 
+#include <memory>
+
 namespace {
     /** Overwrite defaults in AMReX Inputs
      *
@@ -23,6 +25,9 @@ namespace {
         // https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters
         bool abort_on_out_of_gpu_memory = true; // AMReX' default: false
         pp_amrex.queryAdd("abort_on_out_of_gpu_memory", abort_on_out_of_gpu_memory);
+
+        bool the_arena_is_managed = false; // AMReX' default: true
+        pp_amrex.queryAdd("the_arena_is_managed", the_arena_is_managed);
 
         // Work-around:
         // If warpx.numprocs is used for the domain decomposition, we will not use blocking factor

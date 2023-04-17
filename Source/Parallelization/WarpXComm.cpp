@@ -13,13 +13,13 @@
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Filter/BilinearFilter.H"
-#include "Utils/CoarsenMR.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpXComm_K.H"
 #include "WarpXSumGuardCells.H"
 
+#include <ablastr/coarsen/average.H>
 #include <ablastr/utils/Communication.H>
 
 #include <AMReX.H>
@@ -887,9 +887,9 @@ WarpX::SyncCurrent (
         std::array<      MultiFab*,3> crse { J_cp[lev][0].get(),
                                              J_cp[lev][1].get(),
                                              J_cp[lev][2].get() };
-        CoarsenMR::Coarsen( *crse[0], *fine[0], refinement_ratio );
-        CoarsenMR::Coarsen( *crse[1], *fine[1], refinement_ratio );
-        CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*crse[0], *fine[0], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*crse[1], *fine[1], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*crse[2], *fine[2], refinement_ratio );
     }
 
     // For each level
@@ -902,20 +902,27 @@ WarpX::SyncCurrent (
 }
 
 void
-WarpX::SyncRho ()
+WarpX::SyncRho () {
+    SyncRho(rho_fp, rho_cp);
+}
+
+void
+WarpX::SyncRho (
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp)
 {
     WARPX_PROFILE("WarpX::SyncRho()");
 
-    if (!rho_fp[0]) return;
-    const int ncomp = rho_fp[0]->nComp();
+    if (!charge_fp[0]) return;
+    const int ncomp = charge_fp[0]->nComp();
 
     // Restrict fine patch onto the coarse patch,
     // before summing the guard cells of the fine patch
     for (int lev = 1; lev <= finest_level; ++lev)
     {
-        rho_cp[lev]->setVal(0.0);
+        charge_cp[lev]->setVal(0.0);
         const IntVect& refinement_ratio = refRatio(lev-1);
-        CoarsenMR::Coarsen( *rho_cp[lev], *rho_fp[lev], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*charge_cp[lev], *charge_fp[lev], refinement_ratio );
     }
 
     // For each level
@@ -923,7 +930,7 @@ WarpX::SyncRho ()
     // - add the coarse patch/buffer of `lev+1` into the fine patch of `lev`
     // - sum guard cells of the coarse patch of `lev+1` and fine patch of `lev`
     for (int lev=0; lev <= finest_level; ++lev) {
-        AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, lev, 0, ncomp);
+        AddRhoFromFineLevelandSumBoundary(charge_fp, charge_cp, lev, 0, ncomp);
     }
 }
 
@@ -947,9 +954,9 @@ void WarpX::RestrictCurrentFromFineToCoarsePatch (
     std::array<      MultiFab*,3> crse { J_cp[lev][0].get(),
                                          J_cp[lev][1].get(),
                                          J_cp[lev][2].get() };
-    CoarsenMR::Coarsen( *crse[0], *fine[0], refinement_ratio );
-    CoarsenMR::Coarsen( *crse[1], *fine[1], refinement_ratio );
-    CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
+    ablastr::coarsen::average::Coarsen(*crse[0], *fine[0], refinement_ratio );
+    ablastr::coarsen::average::Coarsen(*crse[1], *fine[1], refinement_ratio );
+    ablastr::coarsen::average::Coarsen(*crse[2], *fine[2], refinement_ratio );
 }
 
 void WarpX::ApplyFilterJ (
@@ -1126,7 +1133,7 @@ void WarpX::RestrictRhoFromFineToCoarsePatch (
     if (charge_fp[lev]) {
         charge_cp[lev]->setVal(0.0);
         const IntVect& refinement_ratio = refRatio(lev-1);
-        CoarsenMR::Coarsen( *charge_cp[lev], *charge_fp[lev], refinement_ratio );
+        ablastr::coarsen::average::Coarsen(*charge_cp[lev], *charge_fp[lev], refinement_ratio );
     }
 }
 

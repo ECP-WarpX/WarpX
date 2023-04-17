@@ -55,41 +55,6 @@
 namespace detail
 {
 #ifdef WARPX_USE_OPENPMD
-#   ifdef _WIN32
-    /** Replace all occurrences of a string
-     *
-     * Same as openPMD::auxiliary::replace_all (not public in <=0.14.2)
-     *
-     * @param[in] s input string
-     * @param[in] target string to be replaced
-     * @param[in] replacement string to be replaced with
-     * @return modified value of s
-     */
-    inline std::string
-    replace_all(std::string s,
-                std::string const& target,
-                std::string const& replacement)
-    {
-        std::string::size_type pos = 0;
-        auto tsize = target.size();
-        assert(tsize > 0);
-        auto rsize = replacement.size();
-        while (true)
-        {
-            pos = s.find(target, pos);
-            if (pos == std::string::npos)
-                break;
-            s.replace(pos, tsize, replacement);
-            // Allow replacing recursively, but only if
-            // the next replaced substring overlaps with
-            // some parts of the original word.
-            // This avoids loops.
-            pos += rsize - std::min(tsize - 1, rsize);
-        }
-        s.shrink_to_fit();
-        return s;
-    }
-#   endif
 
     /** \brief Convert a snake_case string to a camelCase one.
      *
@@ -447,7 +412,7 @@ WarpXOpenPMDPlot::GetFileName (std::string& filepath)
   filepath.append("/");
   // transform paths for Windows
 #ifdef _WIN32
-  filepath = detail::replace_all(filepath, "/", "\\");
+  filepath = openPMD::auxiliary::replace_all(filepath, "/", "\\");
 #endif
 
   std::string filename = "openpmd";
@@ -744,6 +709,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     m_Series->flush();
 
     // dump individual particles
+    bool contributed_particles = false;  // did the local MPI rank contribute particles?
     for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++) {
         uint64_t offset = static_cast<uint64_t>( counter.m_ParticleOffsetAtRank[currentLevel] );
         // For BTD, the offset include the number of particles already flushed
@@ -754,7 +720,10 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 
             // Do not call storeChunk() with zero-sized particle tiles:
             //   https://github.com/openPMD/openPMD-api/issues/1147
+            //   https://github.com/ECP-WarpX/WarpX/pull/1898#discussion_r745008290
             if (numParticleOnTile == 0) continue;
+
+            contributed_particles = true;
 
             // get position and particle ID from aos
             // note: this implementation iterates the AoS 4x...
@@ -833,8 +802,59 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                              write_int_comp, int_comp_names);
 
             offset += numParticleOnTile64;
+        } // pti
+    } // currentLevel
+
+    // work-around for BTD particle resize in ADIOS2
+    //
+    // This issues an empty ADIOS2 Put to make sure the new global shape
+    // meta-data is committed for each variable.
+    //
+    // Refs.:
+    //   https://github.com/ECP-WarpX/WarpX/issues/3389
+    //   https://github.com/ornladios/ADIOS2/issues/3455
+    //   BP4 (ADIOS 2.8): last MPI rank's `Put` meta-data wins
+    //   BP5 (ADIOS 2.8): everyone has to write an empty block
+    if (is_resizing_flush && !contributed_particles && isBTD && m_Series->backend() == "ADIOS2") {
+        for( auto & [record_name, record] : currSpecies ) {
+            for( auto & [comp_name, comp] : record ) {
+                if (comp.constant()) continue;
+
+                auto dtype = comp.getDatatype();
+                switch (dtype) {
+                    case openPMD::Datatype::FLOAT :
+                        [[fallthrough]];
+                    case openPMD::Datatype::DOUBLE : {
+                        auto empty_data = std::make_shared<amrex::ParticleReal>();
+                        comp.storeChunk(empty_data, {uint64_t(0)}, {uint64_t(0)});
+                        break;
+                    }
+                    case openPMD::Datatype::UINT : {
+                        auto empty_data = std::make_shared<unsigned int>();
+                        comp.storeChunk(empty_data, {uint64_t(0)}, {uint64_t(0)});
+                        break;
+                    }
+                    case openPMD::Datatype::ULONG : {
+                        auto empty_data = std::make_shared<unsigned long>();
+                        comp.storeChunk(empty_data, {uint64_t(0)}, {uint64_t(0)});
+                        break;
+                    }
+                    case openPMD::Datatype::ULONGLONG : {
+                        auto empty_data = std::make_shared<unsigned long long>();
+                        comp.storeChunk(empty_data, {uint64_t(0)}, {uint64_t(0)});
+                        break;
+                    }
+                    default : {
+                        std::string msg = "WarpX openPMD ADIOS2 work-around has unknown dtype: ";
+                        msg += datatypeToString(dtype);
+                        amrex::Abort(msg);
+                        break;
+                    }
+                }
+            }
         }
     }
+
     m_Series->flush();
 }
 
@@ -967,8 +987,8 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     for (auto idx=0; idx<real_counter; idx++) {
       auto ii = ParticleIter::ContainerType::NStructReal + idx;  // jump over extra AoS names
       if (write_real_comp[ii]) {
-        getComponentRecord(real_comp_names[ii]).storeChunk(openPMD::shareRaw(soa.GetRealData(idx)),
-          {offset}, {numParticleOnTile64});
+        getComponentRecord(real_comp_names[ii]).storeChunkRaw(
+          soa.GetRealData(idx).data(), {offset}, {numParticleOnTile64});
       }
     }
   }
@@ -978,8 +998,8 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     for (auto idx=0; idx<int_counter; idx++) {
       auto ii = ParticleIter::ContainerType::NStructInt + idx;  // jump over extra AoS names
       if (write_int_comp[ii]) {
-        getComponentRecord(int_comp_names[ii]).storeChunk(openPMD::shareRaw(soa.GetIntData(idx)),
-          {offset}, {numParticleOnTile64});
+        getComponentRecord(int_comp_names[ii]).storeChunkRaw(
+          soa.GetIntData(idx).data(), {offset}, {numParticleOnTile64});
       }
     }
   }
@@ -1103,8 +1123,8 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
 /*
  * Set up parameter for mesh container using the geometry (from level 0)
  *
- * @param [IN] meshes: openPMD-api mesh container
- * @param [IN] full_geom: field geometry
+ * @param [in] meshes: openPMD-api mesh container
+ * @param [in] full_geom: field geometry
  *
  */
 void
@@ -1177,9 +1197,9 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
 
 /*
  * Setup component properties  for a field mesh
- * @param [IN]: mesh          a mesh field
- * @param [IN]: full_geom     geometry for the mesh
- * @param [IN]: mesh_comp     a component for the mesh
+ * @param [in]: mesh          a mesh field
+ * @param [in]: full_geom     geometry for the mesh
+ * @param [in]: mesh_comp     a component for the mesh
  */
 void
 WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
@@ -1432,8 +1452,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 #endif
                 {
                     amrex::Real const *local_data = fab.dataPtr(icomp);
-                    mesh_comp.storeChunk(openPMD::shareRaw(local_data),
-                                         chunk_offset, chunk_size);
+                    mesh_comp.storeChunkRaw(
+                        local_data, chunk_offset, chunk_size);
                 }
             }
         } // icomp store loop

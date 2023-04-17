@@ -280,9 +280,9 @@ void WarpX::PSATDForwardTransformJ (
     {
         Idx = spectral_solver_fp[lev]->m_spectral_index;
 
-        idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
-        idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
-        idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
+        idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx_mid);
+        idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy_mid);
+        idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz_mid);
 
         ForwardTransformVect(lev, *spectral_solver_fp[lev], J_fp[lev], idx_jx, idx_jy, idx_jz);
 
@@ -290,9 +290,9 @@ void WarpX::PSATDForwardTransformJ (
         {
             Idx = spectral_solver_cp[lev]->m_spectral_index;
 
-            idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx);
-            idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy);
-            idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz);
+            idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx_mid);
+            idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy_mid);
+            idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz_mid);
 
             ForwardTransformVect(lev, *spectral_solver_cp[lev], J_cp[lev], idx_jx, idx_jy, idx_jz);
         }
@@ -304,11 +304,23 @@ void WarpX::PSATDForwardTransformJ (
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            spectral_solver_fp[lev]->ApplyFilter(lev, Idx.Jx, Idx.Jy, Idx.Jz);
+            Idx = spectral_solver_fp[lev]->m_spectral_index;
+
+            idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx_mid);
+            idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy_mid);
+            idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz_mid);
+
+            spectral_solver_fp[lev]->ApplyFilter(lev, idx_jx, idx_jy, idx_jz);
 
             if (spectral_solver_cp[lev])
             {
-                spectral_solver_cp[lev]->ApplyFilter(lev, Idx.Jx, Idx.Jy, Idx.Jz);
+                Idx = spectral_solver_cp[lev]->m_spectral_index;
+
+                idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx_mid);
+                idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy_mid);
+                idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz_mid);
+
+                spectral_solver_cp[lev]->ApplyFilter(lev, idx_jx, idx_jy, idx_jz);
             }
         }
     }
@@ -328,9 +340,11 @@ void WarpX::PSATDBackwardTransformJ (
     {
         Idx = spectral_solver_fp[lev]->m_spectral_index;
 
-        idx_jx = static_cast<int>(Idx.Jx);
-        idx_jy = static_cast<int>(Idx.Jy);
-        idx_jz = static_cast<int>(Idx.Jz);
+        // Note that these backward FFTs are currently called only
+        // with algorithms that do not support J linear in time
+        idx_jx = static_cast<int>(Idx.Jx_mid);
+        idx_jy = static_cast<int>(Idx.Jy_mid);
+        idx_jz = static_cast<int>(Idx.Jz_mid);
 
         BackwardTransformVect(lev, *spectral_solver_fp[lev], J_fp[lev],
                               idx_jx, idx_jy, idx_jz, m_fill_guards_current);
@@ -339,9 +353,11 @@ void WarpX::PSATDBackwardTransformJ (
         {
             Idx = spectral_solver_cp[lev]->m_spectral_index;
 
-            idx_jx = static_cast<int>(Idx.Jx);
-            idx_jy = static_cast<int>(Idx.Jy);
-            idx_jz = static_cast<int>(Idx.Jz);
+            // Note that these backward FFTs are currently called only
+            // with algorithms that do not support J linear in time
+            idx_jx = static_cast<int>(Idx.Jx_mid);
+            idx_jy = static_cast<int>(Idx.Jy_mid);
+            idx_jz = static_cast<int>(Idx.Jz_mid);
 
             BackwardTransformVect(lev, *spectral_solver_cp[lev], J_cp[lev],
                                   idx_jx, idx_jy, idx_jz, m_fill_guards_current);
@@ -356,18 +372,13 @@ void WarpX::PSATDForwardTransformRho (
 {
     if (charge_fp[0] == nullptr) return;
 
-    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
-
-    // Select index in k space
-    const int dst_comp = (dcomp == 0) ? Idx.rho_old : Idx.rho_new;
-
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (charge_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *charge_fp[lev], dst_comp, icomp);
+        if (charge_fp[lev]) spectral_solver_fp[lev]->ForwardTransform(lev, *charge_fp[lev], dcomp, icomp);
 
         if (spectral_solver_cp[lev])
         {
-            if (charge_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *charge_cp[lev], dst_comp, icomp);
+            if (charge_cp[lev]) spectral_solver_cp[lev]->ForwardTransform(lev, *charge_cp[lev], dcomp, icomp);
         }
     }
 
@@ -377,11 +388,11 @@ void WarpX::PSATDForwardTransformRho (
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            spectral_solver_fp[lev]->ApplyFilter(lev, dst_comp);
+            spectral_solver_fp[lev]->ApplyFilter(lev, dcomp);
 
             if (spectral_solver_cp[lev])
             {
-                spectral_solver_cp[lev]->ApplyFilter(lev, dst_comp);
+                spectral_solver_cp[lev]->ApplyFilter(lev, dcomp);
             }
         }
     }
@@ -568,15 +579,15 @@ WarpX::PSATDMoveJNewToJOld ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.Jx_new, Idx.Jx);
-        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.Jy_new, Idx.Jy);
-        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.Jz_new, Idx.Jz);
+        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.Jx_new, Idx.Jx_old);
+        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.Jy_new, Idx.Jy_old);
+        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.Jz_new, Idx.Jz_old);
 
         if (spectral_solver_cp[lev])
         {
-            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jx_new, Idx.Jx);
-            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jy_new, Idx.Jy);
-            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jz_new, Idx.Jz);
+            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jx_new, Idx.Jx_old);
+            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jy_new, Idx.Jy_old);
+            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jz_new, Idx.Jz_old);
         }
     }
 }
@@ -642,14 +653,17 @@ WarpX::PushPSATD ()
         "PushFieldsEM: PSATD solver selected but not built"));
 #else
 
+    const int rho_old = spectral_solver_fp[0]->m_spectral_index.rho_old;
+    const int rho_new = spectral_solver_fp[0]->m_spectral_index.rho_new;
+
     if (fft_periodic_single_box)
     {
         if (current_correction)
         {
             // FFT of J and rho
             PSATDForwardTransformJ(current_fp, current_cp);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_old);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
 
             // Correct J in k-space
             PSATDCurrentCorrection();
@@ -662,8 +676,8 @@ WarpX::PushPSATD ()
             // FFT of D and rho (if used)
             // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
             PSATDForwardTransformJ(current_fp_vay, current_cp);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_old);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
 
             // Compute J from D in k-space
             PSATDVayDeposition();
@@ -680,8 +694,8 @@ WarpX::PushPSATD ()
         {
             // FFT of J and rho (if used)
             PSATDForwardTransformJ(current_fp, current_cp);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_old);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
         }
     }
     else // no periodic single box
@@ -694,12 +708,12 @@ WarpX::PushPSATD ()
             // applied in the subsequent calls to these functions (below)
             const bool apply_kspace_filter = false;
             PSATDForwardTransformJ(current_fp, current_cp, apply_kspace_filter);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0, apply_kspace_filter); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1, apply_kspace_filter); // rho new
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_old, apply_kspace_filter);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new, apply_kspace_filter);
 #else
             PSATDForwardTransformJ(current_fp, current_cp);
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-            PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_old);
+            PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
 #endif
 
             // Correct J in k-space
@@ -710,7 +724,7 @@ WarpX::PushPSATD ()
 
             // Synchronize J and rho
             SyncCurrent(current_fp, current_cp);
-            SyncRho();
+            SyncRho(rho_fp, rho_cp);
         }
         else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
@@ -731,13 +745,13 @@ WarpX::PushPSATD ()
             // TODO This works only without mesh refinement
             const int lev = 0;
             SumBoundaryJ(current_fp, lev, Geom(lev).periodicity());
-            SyncRho();
+            SyncRho(rho_fp, rho_cp);
         }
 
         // FFT of J and rho (if used)
         PSATDForwardTransformJ(current_fp, current_cp);
-        PSATDForwardTransformRho(rho_fp, rho_cp, 0, 0); // rho old
-        PSATDForwardTransformRho(rho_fp, rho_cp, 1, 1); // rho new
+        PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_old);
+        PSATDForwardTransformRho(rho_fp, rho_cp, 1, rho_new);
     }
 
     // FFT of E and B
@@ -1203,9 +1217,9 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
     const Real dr = dx[0];
 
     constexpr int NODE = amrex::IndexType::NODE;
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Jx->ixType().toIntVect()[0] != NODE,
-        "Jr should never node-centered in r");
 
+    // See Verboncoeur JCP 174, 421-427 (2001) for the modified volume factor
+    const amrex::Real axis_volume_factor = (verboncoeur_axis_correction ? 1._rt/3._rt : 1._rt/4._rt);
 
     for ( MFIter mfi(*Jx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
@@ -1224,13 +1238,14 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         // these do not include the guard cells.
         const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev, 0._rt);
         const Real rmin  = xyzmin[0];
-        const Real rminr = xyzmin[0] + (tbr.type(0) == NODE ? 0. : 0.5*dx[0]);
-        const Real rmint = xyzmin[0] + (tbt.type(0) == NODE ? 0. : 0.5*dx[0]);
-        const Real rminz = xyzmin[0] + (tbz.type(0) == NODE ? 0. : 0.5*dx[0]);
+        const Real rminr = xyzmin[0] + (tbr.type(0) == NODE ? 0._rt : 0.5_rt*dx[0]);
+        const Real rmint = xyzmin[0] + (tbt.type(0) == NODE ? 0._rt : 0.5_rt*dx[0]);
+        const Real rminz = xyzmin[0] + (tbz.type(0) == NODE ? 0._rt : 0.5_rt*dx[0]);
         const Dim3 lo = lbound(tilebox);
         const int irmin = lo.x;
 
         // For ishift, 1 means cell centered, 0 means node centered
+        int const ishift_r = (rminr > rmin ? 1 : 0);
         int const ishift_t = (rmint > rmin ? 1 : 0);
         int const ishift_z = (rminz > rmin ? 1 : 0);
 
@@ -1238,7 +1253,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
 
         // Grow the tileboxes to include the guard cells, except for the
         // guard cells at negative radius.
-        if (rmin > 0.) {
+        if (rmin > 0._rt) {
            tbr.growLo(0, ngJ[0]);
            tbt.growLo(0, ngJ[0]);
            tbz.growLo(0, ngJ[0]);
@@ -1257,29 +1272,36 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
-            // Note that Jr(i==0) is at 1/2 dr.
-            if (rmin == 0. && 0 <= i && i < ngJ[0]) {
-                Jr_arr(i,j,0,0) -= Jr_arr(-1-i,j,0,0);
+            // If Jr is node centered, Jr[0] is located on the boundary.
+            // If Jr is cell centered, Jr[0] is at 1/2 dr.
+            if (rmin == 0. && 1-ishift_r <= i && i < ngJ[0]-ishift_r) {
+                Jr_arr(i,j,0,0) -= Jr_arr(-ishift_r-i,j,0,0);
             }
             // Apply the inverse volume scaling
-            // Since Jr is never node centered in r, no need for distinction
-            // between on axis and off-axis factors
+            // Jr is forced to zero on axis
             const amrex::Real r = amrex::Math::abs(rminr + (i - irmin)*dr);
-            Jr_arr(i,j,0,0) /= (2.*MathConst::pi*r);
+            if (r == 0._rt) {
+                Jr_arr(i,j,0,0) = 0._rt;
+            } else {
+                Jr_arr(i,j,0,0) /= (2._rt*MathConst::pi*r);
+            }
 
             for (int imode=1 ; imode < nmodes ; imode++) {
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                // Note that Jr(i==0) is at 1/2 dr.
-                if (rmin == 0. && 0 <= i && i < ngJ[0]) {
-                    Jr_arr(i,j,0,2*imode-1) += std::pow(-1, imode+1)*Jr_arr(-1-i,j,0,2*imode-1);
-                    Jr_arr(i,j,0,2*imode) += std::pow(-1, imode+1)*Jr_arr(-1-i,j,0,2*imode);
+                if (rmin == 0._rt && 1-ishift_r <= i && i < ngJ[0]-ishift_r) {
+                    Jr_arr(i,j,0,2*imode-1) += std::pow(-1, imode+1)*Jr_arr(-ishift_r-i,j,0,2*imode-1);
+                    Jr_arr(i,j,0,2*imode) += std::pow(-1, imode+1)*Jr_arr(-ishift_r-i,j,0,2*imode);
                 }
                 // Apply the inverse volume scaling
-                // Since Jr is never node centered in r, no need for distinction
-                // between on axis and off-axis factors
-                Jr_arr(i,j,0,2*imode-1) /= (2.*MathConst::pi*r);
-                Jr_arr(i,j,0,2*imode) /= (2.*MathConst::pi*r);
+                // Jr is forced to zero on axis.
+                if (r == 0._rt) {
+                    Jr_arr(i,j,0,2*imode-1) = 0._rt;
+                    Jr_arr(i,j,0,2*imode) = 0._rt;
+                } else {
+                    Jr_arr(i,j,0,2*imode-1) /= (2._rt*MathConst::pi*r);
+                    Jr_arr(i,j,0,2*imode) /= (2._rt*MathConst::pi*r);
+                }
             }
         },
         [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
@@ -1288,35 +1310,35 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // to the cells above the axis.
             // If Jt is node centered, Jt[0] is located on the boundary.
             // If Jt is cell centered, Jt[0] is at 1/2 dr.
-            if (rmin == 0. && 1-ishift_t <= i && i <= ngJ[0]-ishift_t) {
+            if (rmin == 0._rt && 1-ishift_t <= i && i <= ngJ[0]-ishift_t) {
                 Jt_arr(i,j,0,0) -= Jt_arr(-ishift_t-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
             // Jt is forced to zero on axis.
             const amrex::Real r = amrex::Math::abs(rmint + (i - irmin)*dr);
-            if (r == 0.) {
-                Jt_arr(i,j,0,0) = 0.;
+            if (r == 0._rt) {
+                Jt_arr(i,j,0,0) = 0._rt;
             } else {
-                Jt_arr(i,j,0,0) /= (2.*MathConst::pi*r);
+                Jt_arr(i,j,0,0) /= (2._rt*MathConst::pi*r);
             }
 
             for (int imode=1 ; imode < nmodes ; imode++) {
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                if (rmin == 0. && 1-ishift_t <= i && i <= ngJ[0]-ishift_t) {
+                if (rmin == 0._rt && 1-ishift_t <= i && i <= ngJ[0]-ishift_t) {
                     Jt_arr(i,j,0,2*imode-1) += std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode-1);
                     Jt_arr(i,j,0,2*imode) += std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
                 // Jt is forced to zero on axis.
-                if (r == 0.) {
-                    Jt_arr(i,j,0,2*imode-1) = 0.;
-                    Jt_arr(i,j,0,2*imode) = 0.;
+                if (r == 0._rt) {
+                    Jt_arr(i,j,0,2*imode-1) = 0._rt;
+                    Jt_arr(i,j,0,2*imode) = 0._rt;
                 } else {
-                    Jt_arr(i,j,0,2*imode-1) /= (2.*MathConst::pi*r);
-                    Jt_arr(i,j,0,2*imode) /= (2.*MathConst::pi*r);
+                    Jt_arr(i,j,0,2*imode-1) /= (2._rt*MathConst::pi*r);
+                    Jt_arr(i,j,0,2*imode) /= (2._rt*MathConst::pi*r);
                 }
             }
         },
@@ -1324,37 +1346,35 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
-            // If Jz is node centered, Jt[0] is located on the boundary.
-            // If Jz is cell centered, Jt[0] is at 1/2 dr.
-            if (rmin == 0. && 1-ishift_z <= i && i <= ngJ[0]-ishift_z) {
+            // If Jz is node centered, Jz[0] is located on the boundary.
+            // If Jz is cell centered, Jz[0] is at 1/2 dr.
+            if (rmin == 0._rt && 1-ishift_z <= i && i <= ngJ[0]-ishift_z) {
                 Jz_arr(i,j,0,0) += Jz_arr(-ishift_z-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
             const amrex::Real r = amrex::Math::abs(rminz + (i - irmin)*dr);
-            if (r == 0.) {
-                // Verboncoeur JCP 164, 421-427 (2001) : corrected volume on axis
-                Jz_arr(i,j,0,0) /= (MathConst::pi*dr/3.);
+            if (r == 0._rt) {
+                Jz_arr(i,j,0,0) /= (MathConst::pi*dr*axis_volume_factor);
             } else {
-                Jz_arr(i,j,0,0) /= (2.*MathConst::pi*r);
+                Jz_arr(i,j,0,0) /= (2._rt*MathConst::pi*r);
             }
 
             for (int imode=1 ; imode < nmodes ; imode++) {
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                if (rmin == 0. && 1-ishift_z <= i && i <= ngJ[0]-ishift_z) {
+                if (rmin == 0._rt && 1-ishift_z <= i && i <= ngJ[0]-ishift_z) {
                     Jz_arr(i,j,0,2*imode-1) -= std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode-1);
                     Jz_arr(i,j,0,2*imode) -= std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
                 if (r == 0.) {
-                    // Verboncoeur JCP 164, 421-427 (2001) : corrected volume on axis
-                    Jz_arr(i,j,0,2*imode-1) /= (MathConst::pi*dr/3.);
-                    Jz_arr(i,j,0,2*imode) /= (MathConst::pi*dr/3.);
+                    Jz_arr(i,j,0,2*imode-1) /= (MathConst::pi*dr*axis_volume_factor);
+                    Jz_arr(i,j,0,2*imode) /= (MathConst::pi*dr*axis_volume_factor);
                 } else {
-                    Jz_arr(i,j,0,2*imode-1) /= (2.*MathConst::pi*r);
-                    Jz_arr(i,j,0,2*imode) /= (2.*MathConst::pi*r);
+                    Jz_arr(i,j,0,2*imode-1) /= (2._rt*MathConst::pi*r);
+                    Jz_arr(i,j,0,2*imode) /= (2._rt*MathConst::pi*r);
                 }
             }
 
@@ -1370,6 +1390,9 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
     const Real dr = dx[0];
 
     constexpr int NODE = amrex::IndexType::NODE;
+
+    // See Verboncoeur JCP 174, 421-427 (2001) for the modified volume factor
+    const amrex::Real axis_volume_factor = (verboncoeur_axis_correction ? 1._rt/3._rt : 1._rt/4._rt);
 
     Box tilebox;
 
@@ -1427,8 +1450,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
             // Apply the inverse volume scaling
             const amrex::Real r = amrex::Math::abs(rminr + (i - irmin)*dr);
             if (r == 0.) {
-                // Verboncoeur JCP 164, 421-427 (2001) : corrected volume on axis
-                Rho_arr(i,j,0,icomp) /= (MathConst::pi*dr/3.);
+                Rho_arr(i,j,0,icomp) /= (MathConst::pi*dr*axis_volume_factor);
             } else {
                 Rho_arr(i,j,0,icomp) /= (2.*MathConst::pi*r);
             }

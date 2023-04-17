@@ -43,7 +43,7 @@ public:
 
     void printNumParticles () const;
 
-    int getNumParticlesInContainer(const std::string species_name, int boundary);
+    int getNumParticlesInContainer(const std::string species_name, int boundary, bool local);
 
     PinnedMemoryParticleContainer& getParticleBuffer(const std::string species_name, int boundary);
 

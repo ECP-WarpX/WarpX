@@ -102,10 +102,6 @@ ElectrostaticFieldDiagnostic
 
 Lab-frame diagnostics diagnostics are used when running boosted-frame simulations.
 
-LabFrameParticleDiagnostic
-""""""""""""""""""""""""""
-.. autoclass:: pywarpx.picmi.LabFrameParticleDiagnostic
-
 LabFrameFieldDiagnostic
 """""""""""""""""""""""
 .. autoclass:: pywarpx.picmi.LabFrameFieldDiagnostic
@@ -233,8 +229,8 @@ specific location in the WarpX simulation loop.
 
 Places in the WarpX loop where callbacks are available include:
 ``afterinit``, ``beforecollisions``, ``aftercollisions``, ``beforeEsolve``, ``afterEsolve``,
-``beforedeposition``, ``afterdeposition``, ``beforestep``, ``afterstep``, ``afterdiagnostics``,
-``afterrestart`` and ``oncheckpointsignal``.
+``beforeInitEsolve``, ``afterInitEsolve``, ``beforedeposition``, ``afterdeposition``,
+``beforestep``, ``afterstep``, ``afterdiagnostics``,``afterrestart`` and ``oncheckpointsignal``.
 See the examples in *Examples/Tests/ParticleDataPython* for references on how to use
 ``callbacks``.
 
@@ -257,12 +253,6 @@ simulation objects (particles, fields and memory buffers) as well as general pro
 .. autofunction:: pywarpx.picmi.Simulation.extension.evolve
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.finalize
-
-.. autofunction:: pywarpx.picmi.Simulation.extension.getistep
-
-.. autofunction:: pywarpx.picmi.Simulation.extension.gett_new
-
-.. autofunction:: pywarpx.picmi.Simulation.extension.evolve
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.getProbLo
 
@@ -300,7 +290,7 @@ New components can be added via Python.
 Various diagnostics are also accessible from Python.
 This includes getting the deposited or total charge density from a given species
 as well as accessing the scraped particle buffer. See the example in
-*Examples/Modules/ParticleBoudaryScrape* for a reference on how to interact
+*Examples/Tests/ParticleBoudaryScrape* for a reference on how to interact
 with scraped particle data.
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.get_species_charge_sum
@@ -309,13 +299,15 @@ with scraped particle data.
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer_size
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer_size
-
 .. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer_structs
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.clearParticleBoundaryBuffer
+
+The embedded boundary conditions can be modified when using the electrostatic solver.
+
+.. autofunction:: pywarpx.picmi.Simulation.extension.set_potential_EB
 
 Using Python input as a preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

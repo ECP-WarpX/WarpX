@@ -32,8 +32,10 @@
 #endif
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/ElectrostaticSolver.H"
+#include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
+#include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
@@ -96,6 +98,7 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
+    MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
@@ -160,7 +163,7 @@ public:
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
     static short load_balance_costs_update_algo;
-    //! Integer that corresponds to electromagnetic Maxwell solver (vaccum - 0, macroscopic - 1)
+    //! Integer that corresponds to electromagnetic Maxwell solver (vacuum - 0, macroscopic - 1)
     static int em_solver_medium;
     /** Integer that correspond to macroscopic Maxwell solver algorithm
      *  (BackwardEuler - 0, Lax-Wendroff - 1)
@@ -186,6 +189,11 @@ public:
      *  (0 to 3 correspond to Absorbing, Open, Reflecting, Periodic)
      */
     static amrex::Vector<ParticleBoundaryType> particle_boundary_hi;
+
+    //! Integer that corresponds to the order of the PSATD solution
+    //! (whether the PSATD equations are derived from first-order or
+    //! second-order solution)
+    static short psatd_solution_type;
 
     //! Integers that correspond to the time dependency of J (constant, linear)
     //! and rho (linear, quadratic) for the PSATD algorithm
@@ -263,6 +271,10 @@ public:
     //! small time steps.
     static bool galerkin_interpolation;
 
+    //! Flag whether the Verboncoeur correction is applied to the current and charge density
+    //! on the axis when using RZ.
+    static bool verboncoeur_axis_correction;
+
     //! If true, a bilinear filter is used to smooth charge and currents
     static bool use_filter;
     //! If true, the bilinear filtering of charge and currents is done in Fourier space
@@ -287,12 +299,23 @@ public:
     //! the maximum number of iterations is computed automatically so that the lower end of the
     //! simulation domain along z reaches #zmax_plasma_to_compute_max_step in the boosted frame
     static bool do_compute_max_step_from_zmax;
+    //! store initial value of zmin_domain_boost because WarpX::computeMaxStepBoostAccelerator
+    //! needs the initial value of zmin_domain_boost, even if restarting from a checkpoint file
+    static amrex::Real zmin_domain_boost_step_0;
+
+    //! If true, the code will compute max_step from the back transformed diagnostics
+    static bool compute_max_step_from_btd;
 
     static bool do_dynamic_scheduling;
     static bool refine_plasma;
 
     static utils::parser::IntervalsParser sort_intervals;
     static amrex::IntVect sort_bin_size;
+
+    //! If true, particles will be sorted in the order x -> y -> z -> ppc for faster deposition
+    static bool sort_particles_for_deposition;
+    //! Specifies the type of grid used for the above sorting, i.e. cell-centered, nodal, or mixed
+    static amrex::IntVect sort_idx_type;
 
     static bool do_subcycling;
     static bool do_multi_J;
@@ -310,8 +333,9 @@ public:
     //! and current onto the lower refinement level instead of the refinement patch itself
     static int n_current_deposition_buffer;
 
-    //! If true, all fields are evaluated on a nodal grid and all MultiFabs have a nodal index type
-    static bool do_nodal;
+    //! Integer that corresponds to the type of grid used in the simulation
+    //! (collocated, staggered, hybrid)
+    static short grid_type;
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;
@@ -322,13 +346,13 @@ public:
      * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
      * interface
      *
-     * \param mf[out] The MultiFab unique pointer to be allocated
-     * \param ba[in] The BoxArray describing the MultiFab
-     * \param dm[in] The DistributionMapping describing the MultiFab
-     * \param ncomp[in] The number of components in the MultiFab
-     * \param ngrow[in] The number of guard cells in the MultiFab
-     * \param name[in] The name of the MultiFab to use in the map
-     * \param initial_value[in] The optional initial value
+     * \param[out] mf The MultiFab unique pointer to be allocated
+     * \param[in] ba The BoxArray describing the MultiFab
+     * \param[in] dm The DistributionMapping describing the MultiFab
+     * \param[in] ncomp The number of components in the MultiFab
+     * \param[in] ngrow The number of guard cells in the MultiFab
+     * \param[in] name The name of the MultiFab to use in the map
+     * \param[in] initial_value The optional initial value
      */
     static void AllocInitMultiFab (
         std::unique_ptr<amrex::MultiFab>& mf,
@@ -336,7 +360,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
-        const std::string name,
+        const std::string& name,
         std::optional<const amrex::Real> initial_value = {});
 
     /**
@@ -345,13 +369,13 @@ public:
      * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
      * interface
      *
-     * \param mf[out] The iMultiFab unique pointer to be allocated
-     * \param ba[in] The BoxArray describing the iMultiFab
-     * \param dm[in] The DistributionMapping describing the iMultiFab
-     * \param ncomp[in] The number of components in the iMultiFab
-     * \param ngrow[in] The number of guard cells in the iMultiFab
-     * \param name[in] The name of the iMultiFab to use in the map
-     * \param initial_value[in] The optional initial value
+     * \param[out] mf The iMultiFab unique pointer to be allocated
+     * \param[in] ba The BoxArray describing the iMultiFab
+     * \param[in] dm The DistributionMapping describing the iMultiFab
+     * \param[in] ncomp The number of components in the iMultiFab
+     * \param[in] ngrow The number of guard cells in the iMultiFab
+     * \param[in] name The name of the iMultiFab to use in the map
+     * \param[in] initial_value The optional initial value
      */
     static void AllocInitMultiFab (
         std::unique_ptr<amrex::iMultiFab>& mf,
@@ -359,24 +383,25 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
-        const std::string name,
+        const std::string& name,
         std::optional<const int> initial_value = {});
 
     /**
      * \brief
      * Create an alias of a MultiFab, adding the alias to the MultiFab map
-     * \param mf[out] The MultiFab to create
-     * \param mf_to_alias[in] The MultiFab to alias
-     * \param scomp[in] The starting component to be aliased
-     * \param ncomp[in] The number of components to alias
-     * \param name[in] The name of the MultiFab to use in the map
+     * \param[out] mf The MultiFab to create
+     * \param[in] mf_to_alias The MultiFab to alias
+     * \param[in] scomp The starting component to be aliased
+     * \param[in] ncomp The number of components to alias
+     * \param[in] name The name of the MultiFab to use in the map
+     * \param[in] initial_value optional initial value for MultiFab
      */
     static void AliasInitMultiFab (
         std::unique_ptr<amrex::MultiFab>& mf,
         const amrex::MultiFab& mf_to_alias,
         const int scomp,
         const int ncomp,
-        const std::string name,
+        const std::string& name,
         std::optional<const amrex::Real> initial_value);
 
     // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)
@@ -389,9 +414,9 @@ public:
      * \brief
      * Add the MultiFab to the map of MultiFabs
      * \param name The name of the MultiFab use to reference the MultiFab
-     * \parame mf The MultiFab to be added to the map (via a pointer to it)
+     * \param mf The MultiFab to be added to the map (via a pointer to it)
      */
-    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::MultiFab>& mf) {
+    static void AddToMultiFabMap(const std::string& name, const std::unique_ptr<amrex::MultiFab>& mf) {
         multifab_map[name] = mf.get();
     }
 
@@ -399,9 +424,9 @@ public:
      * \brief
      * Add the iMultiFab to the map of MultiFabs
      * \param name The name of the iMultiFab use to reference the iMultiFab
-     * \parame mf The iMultiFab to be added to the map (via a pointer to it)
+     * \param mf The iMultiFab to be added to the map (via a pointer to it)
      */
-    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::iMultiFab>& mf) {
+    static void AddToMultiFabMap(const std::string& name, const std::unique_ptr<amrex::iMultiFab>& mf) {
         imultifab_map[name] = mf.get();
     }
 
@@ -428,10 +453,12 @@ public:
     amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_current_fp_nodal  (int lev, int direction) const { return current_fp_nodal[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
     amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
     amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }
     amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
+    amrex::MultiFab * get_pointer_vector_potential_fp  (int lev, int direction) const { return vector_potential_fp_nodal[lev][direction].get(); }
 
     amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_cp  (int lev, int direction) const { return Bfield_cp[lev][direction].get(); }
@@ -539,7 +566,7 @@ public:
      */
     void ComputeMaxStep ();
     // Compute max_step automatically for simulations in a boosted frame.
-    void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
+    void computeMaxStepBoostAccelerator();
 
     /** \brief Move the moving window
      * \param step Time step
@@ -588,7 +615,7 @@ public:
     /** apply QED correction on electric field for level lev and patch type patch_type
      *
      * \param lev mesh refinement level
-     * \param dt patch_type which MR patch: PatchType::fine or PatchType::coarse
+     * \param patch_type which MR patch: PatchType::fine or PatchType::coarse
      * \param dt time step
      */
     void Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real dt);
@@ -638,6 +665,23 @@ public:
     void ApplyInverseVolumeScalingToChargeDensity(amrex::MultiFab* Rho,
                                                   int lev);
 #endif
+
+    /**
+     * \brief If a PEC boundary conditions is used the charge
+     * density deposited in the guard cells have to be reflected back into
+     * the simulation domain. This function performs that logic.
+     */
+    void ApplyRhofieldBoundary (const int lev, amrex::MultiFab* Rho,
+                                PatchType patch_type);
+
+    /**
+     * \brief If a PEC boundary conditions is used the current
+     * density deposited in the guard cells have to be reflected back into
+     * the simulation domain. This function performs that logic.
+     */
+    void ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
+                              amrex::MultiFab* Jy, amrex::MultiFab* Jz,
+                              PatchType patch_type);
 
     void ApplyEfieldBoundary (const int lev, PatchType patch_type);
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
@@ -736,6 +780,10 @@ public:
 
     void SyncRho ();
 
+    void SyncRho (
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp);
+
     amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
     int getnsubsteps (int lev) const {return nsubsteps[lev];}
     amrex::Vector<int> getistep () const {return istep;}
@@ -754,7 +802,9 @@ public:
     bool getis_synchronized() const {return is_synchronized;}
 
     int maxStep () const {return max_step;}
+    void updateMaxStep (const int new_max_step) {max_step = new_max_step;}
     amrex::Real stopTime () const {return stop_time;}
+    void updateStopTime (const amrex::Real new_stop_time) {stop_time = new_stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, const amrex::IntVect ngrow) const;
@@ -867,6 +917,19 @@ public:
     void computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                                       amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
 
+    // Magnetostatic Solver Interface
+    MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;
+    void ComputeMagnetostaticField ();
+    void AddMagnetostaticFieldLabFrame ();
+    void computeVectorPotential (const amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& curr,
+                                 amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A,
+                                 amrex::Real const required_precision=amrex::Real(1.e-11),
+                                 amrex::Real absolute_tolerance=amrex::Real(0.0),
+                                 const int max_iters=200,
+                                 const int verbosity=2) const;
+
+    void setVectorPotentialBC (amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A) const;
+
     /**
      * \brief
      * This function initializes the E and B fields on each level
@@ -876,16 +939,17 @@ public:
      * on the staggered yee-grid or cell-centered grid, in the interior cells
      * and guard cells.
      *
-     * \param[in] mfx, x-component of the field to be initialized
-     * \param[in] mfy, y-component of the field to be initialized
-     * \param[in] mfz, z-component of the field to be initialized
-     * \param[in] xfield_parser, parser function to initialize x-field
-     * \param[in] yfield_parser, parser function to initialize y-field
-     * \param[in] zfield_parser, parser function to initialize z-field
-     * \param[in] edge_lengths, edge lengths information
-     * \param[in] face_areas, face areas information
-     * \param[in] field, flag indicating which field is being initialized ('E' for electric, 'B' for magnetic)
-     * \param[in] lev, level of the Multifabs that is initialized
+     * \param[in] mfx x-component of the field to be initialized
+     * \param[in] mfy y-component of the field to be initialized
+     * \param[in] mfz z-component of the field to be initialized
+     * \param[in] xfield_parser parser function to initialize x-field
+     * \param[in] yfield_parser parser function to initialize y-field
+     * \param[in] zfield_parser parser function to initialize z-field
+     * \param[in] edge_lengths edge lengths information
+     * \param[in] face_areas face areas information
+     * \param[in] field flag indicating which field is being initialized ('E' for electric, 'B' for magnetic)
+     * \param[in] lev level of the Multifabs that is initialized
+     * \param[in] patch_type PatchType on which the field is initialized (fine or coarse)
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
@@ -895,7 +959,7 @@ public:
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
          const char field,
-         const int lev);
+         const int lev, PatchType patch_type);
 
     /**
      * \brief
@@ -903,7 +967,7 @@ public:
      * EBs such as edge lengths, face areas, distance to EB, etc. It also
      * appropriately communicates EB data to guard cells.
      *
-     * \param[in] lev, level of the Multifabs that is initialized
+     * \param[in] lev level of the Multifabs that is initialized
      */
     void InitializeEBGridData(int lev);
 
@@ -922,10 +986,9 @@ public:
      * (up to order \c n_order).
      *
      * \param[in] n_order order of the finite-difference approximation
-     * \param[in] nodal   whether the finite-difference approximation is computed
-     *                    on a nodal grid or a staggered grid
+     * \param[in] a_grid_type type of grid (collocated or not)
      */
-    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const bool nodal);
+    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const short a_grid_type);
 
     // Device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
@@ -940,6 +1003,9 @@ public:
     // This needs to be public for CUDA.
     //! Tagging cells for refinement
     virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
+
+    // Return the accelerator lattice instance defined at the given refinement level
+    const AcceleratorLattice& get_accelerator_lattice (int lev) {return *(m_accelerator_lattice[lev]);}
 
 protected:
 
@@ -1161,13 +1227,15 @@ private:
      * \param[in] centering_nox order of the finite-order centering along x
      * \param[in] centering_noy order of the finite-order centering along y
      * \param[in] centering_noz order of the finite-order centering along z
+     * \param[in] a_grid_type type of grid (collocated or not)
      */
     void AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_x,
                                         amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_y,
                                         amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_z,
                                         const int centering_nox,
                                         const int centering_noy,
-                                        const int centering_noz);
+                                        const int centering_noz,
+                                        const short a_grid_type);
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngEB, amrex::IntVect& ngJ,
@@ -1222,13 +1290,19 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
+    // Memory buffers for computing magnetostatic fields
+    // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_fp_nodal;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_e_stag;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_b_stag;
+
     //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
     //! EB: Areas of the mesh faces
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_face_areas;
 
     /** EB: for every mesh face flag_info_face contains a:
-     *           * 0 if the face needs to be extended
+     *          * 0 if the face needs to be extended
      *          * 1 if the face is large enough to lend area to other faces
      *          * 2 if the face is actually intruded by other face
      * It is initialized in WarpX::MarkCells
@@ -1319,7 +1393,7 @@ private:
     int num_injected_species = -1;
     amrex::Vector<int> injected_plasma_species;
 
-    amrex::Real const_dt = amrex::Real(0.5e-11);
+    std::optional<amrex::Real> m_const_dt;
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
@@ -1418,6 +1492,9 @@ private:
     //! particle buffer for scraped particles on the boundaries
     std::unique_ptr<ParticleBoundaryBuffer> m_particle_boundary_buffer;
 
+    // Accelerator lattice elements
+    amrex::Vector< std::unique_ptr<AcceleratorLattice> > m_accelerator_lattice;
+
     //
     // Embedded Boundary
     //
@@ -1429,6 +1506,7 @@ private:
         return *m_field_factory[lev];
     }
 #ifdef AMREX_USE_EB
+public:
     amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
     }
@@ -1624,7 +1702,7 @@ private:
         const int icomp, const int dcomp, const bool apply_kspace_filter=true);
 
     /**
-     * \brief Copy rho_new to rho_old in spectral space
+     * \brief Copy rho_new to rho_old in spectral space (when rho is linear in time)
      */
     void PSATDMoveRhoNewToRhoOld ();
 

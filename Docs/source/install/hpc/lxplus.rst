@@ -134,6 +134,10 @@ Or if we need to compile with CUDA:
     cmake -S . -B build -DWarpX_COMPUTE=CUDA
     cmake --build build -j 6
 
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and can be run with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``$WORK``.
+
 Python Bindings
 ^^^^^^^^^^^^^^^
 

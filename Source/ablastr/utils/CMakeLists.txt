@@ -7,3 +7,4 @@ target_sources(ablastr
 )
 
 add_subdirectory(msg_logger)
+add_subdirectory(timer)

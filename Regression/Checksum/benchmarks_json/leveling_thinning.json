@@ -14,16 +14,16 @@
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,
-    "particle_position_x": 485368.303735276,
-    "particle_position_y": 484224.66261508386,
-    "particle_weight": 255.7814999999979
+    "particle_position_x": 485879.18021793937,
+    "particle_position_y": 484466.34922379535,
+    "particle_weight": 256.2546999999979
   },
   "resampled_part2": {
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,
-    "particle_position_x": 38419.04911639948,
-    "particle_position_y": 38054.448891953645,
-    "particle_weight": 2.836692166357862
+    "particle_position_x": 38089.14806219578,
+    "particle_position_y": 37818.512934148945,
+    "particle_weight": 2.8175309517949136
   }
 }

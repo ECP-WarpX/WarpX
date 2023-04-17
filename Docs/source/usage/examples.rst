@@ -106,10 +106,10 @@ Test cases
 
 PICMI (Python) test cases included that can be used as a reference:
 
-* :download:`Gaussian beam <../../../Examples/Modules/gaussian_beam/PICMI_inputs_gaussian_beam.py>`
-* :download:`Langmuir plasma wave test in 3d <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir_rt.py>`
-* :download:`Langmuir plasma wave test in RZ <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir_rz_multimode_analyze.py>`
-* :download:`Langmuir plasma wave test in 2D <../../../Examples//Tests/Langmuir/PICMI_inputs_langmuir2d.py>`
+* :download:`Gaussian beam <../../../Examples/Tests/gaussian_beam/PICMI_inputs_gaussian_beam.py>`
+* :download:`Langmuir plasma wave test in 3d <../../../Examples/Tests/langmuir/PICMI_inputs_langmuir_rt.py>`
+* :download:`Langmuir plasma wave test in RZ <../../../Examples/Tests/langmuir/PICMI_inputs_langmuir_rz_multimode_analyze.py>`
+* :download:`Langmuir plasma wave test in 2D <../../../Examples/Tests/langmuir/PICMI_inputs_langmuir2d.py>`
 
 Manipulating fields via Python
 ------------------------------
@@ -120,4 +120,4 @@ An example of using Python to access the simulation charge density, solve the Po
 
 An example of initializing the fields by accessing their data through Python, advancing the simulation for a chosen number of time steps, and plotting the fields again through Python. The simulation runs with 128 regular cells, 8 guard cells, and 10 PML cells, in each direction. Moreover, it uses div(E) and div(B) cleaning both in the regular grid and in the PML and initializes all available electromagnetic fields (E,B,F,G) identically.
 
-* :download:`Unit pulse with PML <../../../Examples/Tests/PythonWrappers/PICMI_inputs_2d.py>`
+* :download:`Unit pulse with PML <../../../Examples/Tests/python_wrappers/PICMI_inputs_2d.py>`

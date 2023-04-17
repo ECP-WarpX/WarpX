@@ -28,7 +28,7 @@ public:
      * \param dx cell spacing
      * \param do_subcycling bool, whether to use subcycling
      * \param do_fdtd_nci_corr bool, whether to use Godfrey NCI corrector
-     * \param do_nodal bool, whether the field solver is nodal
+     * \param grid_type integer, whether the grid is collocated or staggered
      * \param do_moving_window bool, whether to use moving window
      * \param moving_window_dir direction of moving window
      * \param nox order of current deposition
@@ -47,13 +47,15 @@ public:
      * \param do_pml_in_domain whether pml is done in the domain (only used by RZ PSATD)
      * \param pml_ncell number of cells on the pml layer (only used by RZ PSATD)
      * \param ref_ratios mesh refinement ratios between mesh-refinement levels
+     * \param use_filter whether filtering will be done
+     * \param bilinear_filter_stencil_length the size of the stencil for filtering
      */
     void Init(
         const amrex::Real dt,
         const amrex::RealVect dx,
         const bool do_subcycling,
         const bool do_fdtd_nci_corr,
-        const bool do_nodal,
+        const short grid_type,
         const bool do_moving_window,
         const int moving_window_dir,
         const int nox,
