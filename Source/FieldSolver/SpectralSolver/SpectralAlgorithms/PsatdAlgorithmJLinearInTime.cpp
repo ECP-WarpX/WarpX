@@ -292,7 +292,7 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
         {
             // Calculate norm of k vector
             const amrex::Real knorm_s = std::sqrt(
-                amrex::Math::powi<2>(kx_s[i])) +
+                amrex::Math::powi<2>(kx_s[i]) +
 #if defined(WARPX_DIM_3D)
                 amrex::Math::powi<2>(ky_s[j]) + amrex::Math::powi<2>(kz_s[k]));
 #else
