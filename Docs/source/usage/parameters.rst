@@ -2111,7 +2111,7 @@ Additional parameters
      of assigning the particles to bins small enough to fit in the
      space available for the temporary buffers. Performance is mostly improved
      when there is lots of contention between particles writing to the same cell
-     (e.g. for high particles per cell). This feature is only available for CUDA 
+     (e.g. for high particles per cell). This feature is only available for CUDA
      and HIP, and is only recommended for 3D or 2D.
 
 * ``warpx.shared_tilesize`` (list of `int`) optional (default `6 6 8` in 3D; `14 14` in 2D; `1s` otherwise)
@@ -2120,10 +2120,10 @@ Additional parameters
      size of the temporary buffer allocated in shared memory for a threadblock.
      A larger tilesize requires more shared memory, but gives more work to each
      threadblock, which can lead to higher occupancy, and allows for more
-     buffered writes to ``__shared__`` instead of ``__global__``. The defaults 
+     buffered writes to ``__shared__`` instead of ``__global__``. The defaults
      in 2D and 3D
      are chosen from experimentation, but can be improved upon for specific
-     problems. The other defaults are not optimized and should always be fine 
+     problems. The other defaults are not optimized and should always be fine
      tuned for the problem.
      
 * ``warpx.shared_mem_current_tpb`` (`int`) optional (default `128`)
