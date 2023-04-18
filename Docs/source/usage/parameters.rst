@@ -2125,6 +2125,12 @@ Additional parameters
      are chosen from experimentation, but can be improved upon for specific
      problems. The other defaults are not optimized and should always be fine 
      tuned for the problem.
+     
+* ``warpx.shared_mem_current_tpb`` (`int`) optional (default `128`)
+     Used to tune performance when ``do_shared_mem_current_deposition`` is 
+     enabled. ``shared_mem_current_tpb`` controls the number of threads per 
+     block (tpb), i.e. the number of threads operating on a shared buffer.
+
 
 .. _running-cpp-parameters-diagnostics:
 
