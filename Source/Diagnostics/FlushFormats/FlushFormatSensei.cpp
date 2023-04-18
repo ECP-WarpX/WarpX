@@ -39,12 +39,14 @@ FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
 #endif
 }
 
+#ifdef AMREX_USE_SENSEI_INSITU
 FlushFormatSensei::~FlushFormatSensei ()
 {
-#ifdef AMREX_USE_SENSEI_INSITU
     delete m_insitu_bridge;
-#endif
 }
+#else
+FlushFormatSensei::~FlushFormatSensei () = default;
+#endif
 
 void
 FlushFormatSensei::WriteToFile (

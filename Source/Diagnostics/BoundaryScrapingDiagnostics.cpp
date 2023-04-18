@@ -74,7 +74,7 @@ BoundaryScrapingDiagnostics::InitializeFieldFunctors (int /*lev*/)
 }
 
 void
-BoundaryScrapingDiagnostics::InitializeBufferData (int /*i_buffer*/, int /*lev*/)
+BoundaryScrapingDiagnostics::InitializeBufferData (int /*i_buffer*/, int /*lev*/, bool /*restart*/)
 {
     // This function is usually used for field output
     // Nothing to do here for boundary scraping output,

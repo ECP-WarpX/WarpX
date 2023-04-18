@@ -683,14 +683,22 @@ class LibWarpX():
                     maxlen, val, self._numpy_particlereal_dtype
                 )
 
-        # --- The -3 is because the comps include the velocites
-        nattr = self.get_nattr_species(species_name) - 3
+        # --- The number of built in attributes
+        # --- The three velocities
+        built_in_attrs = 3
+        if self.geometry_dim == 'rz':
+            # --- With RZ, there is also theta
+            built_in_attrs += 1
+
+        # --- The number of extra attributes (including the weight)
+        nattr = self.get_nattr_species(species_name) - built_in_attrs
         attr = np.zeros((maxlen, nattr), self._numpy_particlereal_dtype)
         attr[:,0] = w
 
+        # --- Note that the velocities are handled separately and not included in attr
+        # --- (even though they are stored as attributes in the C++)
         for key, vals in kwargs.items():
-            # --- The -3 is because components 1 to 3 are velocities
-            attr[:,self.get_particle_comp_index(species_name, key)-3] = vals
+            attr[:,self.get_particle_comp_index(species_name, key) - built_in_attrs] = vals
 
         nattr_int = 0
         attr_int = np.empty([0], ctypes.c_int)

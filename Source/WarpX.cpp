@@ -160,6 +160,8 @@ int WarpX::current_centering_noz = 2;
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
+bool WarpX::verboncoeur_axis_correction = true;
+
 bool WarpX::use_filter = true;
 bool WarpX::use_kspace_filter       = true;
 bool WarpX::use_filter_compensation = false;
@@ -171,6 +173,14 @@ int WarpX::num_mirrors = 0;
 
 utils::parser::IntervalsParser WarpX::sort_intervals;
 amrex::IntVect WarpX::sort_bin_size(AMREX_D_DECL(1,1,1));
+
+#if defined(AMREX_USE_CUDA)
+bool WarpX::sort_particles_for_deposition = true;
+#else
+bool WarpX::sort_particles_for_deposition = false;
+#endif
+
+amrex::IntVect WarpX::sort_idx_type(AMREX_D_DECL(0,0,0));
 
 bool WarpX::do_dynamic_scheduling = true;
 
@@ -697,6 +707,10 @@ WarpX::ReadParameters ()
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
 
+#ifdef WARPX_DIM_RZ
+        pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
+#endif
+
         utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
 
         // Filter currently not working with FDTD solver in RZ geometry: turn OFF by default
@@ -1165,6 +1179,18 @@ WarpX::ReadParameters ()
             for (int i=0; i<AMREX_SPACEDIM; i++)
                 sort_bin_size[i] = vect_sort_bin_size[i];
         }
+
+        pp_warpx.query("sort_particles_for_deposition",sort_particles_for_deposition);
+        Vector<int> vect_sort_idx_type(AMREX_SPACEDIM,0);
+        bool sort_idx_type_is_specified =
+            utils::parser::queryArrWithParser(
+                pp_warpx, "sort_idx_type",
+                vect_sort_idx_type, 0, AMREX_SPACEDIM);
+        if (sort_idx_type_is_specified){
+            for (int i=0; i<AMREX_SPACEDIM; i++)
+                sort_idx_type[i] = vect_sort_idx_type[i];
+        }
+
     }
 
     {
@@ -1255,6 +1281,14 @@ WarpX::ReadParameters ()
         // and rho (linear, quadratic) for the PSATD algorithm
         J_in_time = GetAlgorithmInteger(pp_psatd, "J_in_time");
         rho_in_time = GetAlgorithmInteger(pp_psatd, "rho_in_time");
+
+        if (psatd_solution_type != PSATDSolutionType::FirstOrder || do_multi_J == false)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                rho_in_time == RhoInTime::Linear,
+                "psatd.rho_in_time=constant not yet implemented, "
+                "except for psatd.solution_type=first-order and warpx.do_multi_J=1");
+        }
 
         // Current correction activated by default, unless a charge-conserving
         // current deposition (Esirkepov, Vay) or the div(E) cleaning scheme
@@ -1595,6 +1629,12 @@ WarpX::BackwardCompatibility ()
         !pp_warpx.queryarr("sort_int", backward_strings),
         "warpx.sort_int is no longer a valid option. "
         "Please use the renamed option warpx.sort_intervals instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_nodal", backward_int),
+        "warpx.do_nodal is not supported anymore. "
+        "Please use the flag warpx.grid_type instead."
     );
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
