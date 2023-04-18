@@ -91,7 +91,8 @@ FieldProbeParticleContainer::AddNParticles (int lev,
      * (particle_tile).
      */
 
-    using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
+    using PinnedTile = ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                    NArrayReal, NArrayInt,
                                     amrex::PinnedArenaAllocator>;
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
