@@ -32,6 +32,9 @@ Functions can be called at the following times:
  - beforestep <installbeforestep>: before the time step
  - afterstep <installafterstep>: after the time step
  - afterdiagnostics <installafterdiagnostics>: after diagnostic output
+ - oncheckpointsignal <installoncheckpointsignal>: on a checkpoint signal
+ - onbreaksignal <installonbreaksignal>: on a break signal. These callbacks will be the last ones executed
+                                             before the simulation ends.
  - particlescraper <installparticlescraper>: just after the particle boundary conditions are applied
                                              but before lost particles are processed
  - particleloader <installparticleloader>: at the time that the standard particle loader is called
