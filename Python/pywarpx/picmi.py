@@ -537,6 +537,10 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
     warpx_potential_hi_z: float, default=0.
        Electrostatic potential on the upper longitudinal boundary
+
+    warpx_reflect_all_velocities: bool default=False
+        Whether the sign of all of the particle velocities are changed upon
+        reflection on a boundary, or only the velocity normal to the surface
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -552,6 +556,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         self.potential_ymax = None
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
+        self.reflect_all_velocities = kw.pop('warpx_reflect_all_velocities', None)
 
         # Geometry
         # Set these as soon as the information is available
@@ -582,6 +587,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
         pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
         pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
+        pywarpx.boundary.reflect_all_velocities = self.reflect_all_velocities
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
