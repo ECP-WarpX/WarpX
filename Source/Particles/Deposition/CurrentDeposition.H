@@ -528,7 +528,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         addLocalToGlobal(tbox_z, jz_arr, jz_buff);
     });
 #if defined(WARPX_USE_GPUCLOCK)
-    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+    if (cost && load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
         amrex::Gpu::streamSynchronize();
         *cost += *cost_real;
         amrex::The_Managed_Arena()->free(cost_real);
