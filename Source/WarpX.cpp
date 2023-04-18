@@ -144,7 +144,7 @@ amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(6,6,8));
 #elif defined(WARPX_DIM_2D)
 amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(14,14));
 #else
-amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(0,0,0)); //Not used
+amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1)); //Not used
 #endif
 int WarpX::shared_mem_current_tpb = 128;
 
