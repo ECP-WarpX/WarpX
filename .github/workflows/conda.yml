@@ -32,13 +32,14 @@ jobs:
           ccache-conda-linux-
     - name: build WarpX
       run: |
+        source activate base
         cmake -S . -B build            \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_EB=ON                \
           -DWarpX_LIB=ON               \
           -DWarpX_QED=ON               \
           -DWarpX_openpmd_internal=OFF
-        cmake --build build -j 2
+        cmake --build build -j 3
 
         ./build/bin/warpx Examples/Physics_applications/laser_acceleration/inputs_3d
 
