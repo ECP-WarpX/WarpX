@@ -76,3 +76,16 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
         }
     }
 }
+
+void WarpX::ApplyRhofieldBoundary (const int lev, MultiFab* rho,
+                                   PatchType patch_type)
+{
+    if (PEC::isAnyBoundaryPEC()) PEC::ApplyPECtoRhofield(rho, lev, patch_type);
+}
+
+void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
+                                 amrex::MultiFab* Jy, amrex::MultiFab* Jz,
+                                 PatchType patch_type)
+{
+    if (PEC::isAnyBoundaryPEC()) PEC::ApplyPECtoJfield(Jx, Jy, Jz, lev, patch_type);
+}

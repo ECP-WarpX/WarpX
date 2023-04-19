@@ -65,7 +65,7 @@ WarpX::ComputeDt ()
             deltat = cfl * CylindricalYeeAlgorithm::ComputeMaxDt(dx,  n_rz_azimuthal_modes);
 #else
         // - In Cartesian geometry
-        if (do_nodal) {
+        if (grid_type == GridType::Collocated) {
             deltat = cfl * CartesianNodalAlgorithm::ComputeMaxDt(dx);
         } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee
                     || electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {

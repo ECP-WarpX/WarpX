@@ -51,11 +51,16 @@ If your project leads to a scientific publication, please consider citing the pa
 Prior WarpX references
 ----------------------
 
-If your project uses the specific algorithms, please consider citing the respective publications in addition.
+If your project uses a specific algorithm or component, please consider citing the respective publications in addition.
+
+- Huebl A, Lehe R, Zoni E, Shapoval O, Sandberg R T, Garten M, Formenti A, Jambunathan R, Kumar P, Gott K, Myers A, Zhang W, Almgren A, Mitchell C E, Qiang J, Sinn A, Diederichs S, Thevenet M, Grote D, Fedeli L, Clark T, Zaim N, Vincenti H, Vay JL.
+  **From Compact Plasma Particle Sources to Advanced Accelerators with Modeling at Exascale**.
+  Proceedings of the 20th Advanced Accelerator Concepts Workshop (AAC'22), *submitted* 2023.
+  `arXiv:2303.12873 <https://arxiv.org/abs/2303.12873>`__
 
 - Huebl A, Lehe R, Mitchell C E, Qiang J, Ryne R D, Sandberg R T, Vay JL.
   **Next Generation Computational Tools for the Modeling and Design of Particle Accelerators at Exascale**.
-  2022 North American Particle Accelerator Conference (NAPAC'22), TUYE2, pp. 302-306, 2022.
+  Proceedings of the 2022 North American Particle Accelerator Conference (NAPAC'22), TUYE2, pp. 302-306, 2022.
   `arXiv:2208.02382 <https://arxiv.org/abs/2208.02382>`__,
   `DOI:10.18429/JACoW-NAPAC2022-TUYE2 <https://doi.org/10.18429/JACoW-NAPAC2022-TUYE2>`__
 

@@ -73,9 +73,17 @@ class SpectralFieldDataRZ
          */
         void CopySpectralDataComp (const int src_comp, const int dest_comp)
         {
-            // The last two arguments represent the number of components and
-            // the number of ghost cells to perform this operation
-            Copy(fields, fields, src_comp, dest_comp, n_rz_azimuthal_modes, 0);
+            // In spectral space fields of each mode are grouped together, so that the index
+            // of a field for a specific mode is given by field_index + mode*n_fields.
+            // That’s why, looping over all azimuthal modes, we need to take into account corresponding
+            // shift, given by imode * m_n_fields.
+            for (int imode=0 ; imode < n_rz_azimuthal_modes ; imode++)
+            {
+                const int shift_comp = imode * m_n_fields;
+                // The last two arguments represent the number of components and
+                // the number of ghost cells to perform this operation
+                Copy(fields, fields, src_comp + shift_comp, dest_comp + shift_comp, 1, 0);
+            }
         }
 
         /**
@@ -85,8 +93,16 @@ class SpectralFieldDataRZ
          */
         void ZeroOutDataComp(const int icomp)
         {
-            // The last argument represents the number of components to perform this operation
-            fields.setVal(0., icomp, n_rz_azimuthal_modes);
+            // In spectral space fields of each mode are grouped together, so that the index
+            // of a field for a specific mode is given by field_index + mode*n_fields.
+            // That’s why, looping over all azimuthal modes, we need to take into account corresponding
+            // shift, given by imode * m_n_fields.
+            for (int imode=0 ; imode < n_rz_azimuthal_modes ; imode++)
+            {
+                const int shift_comp = imode * m_n_fields;
+                // The last argument represents the number of components to perform this operation
+                fields.setVal(0., icomp + shift_comp, 1);
+            }
         }
 
         /**
@@ -97,8 +113,16 @@ class SpectralFieldDataRZ
          */
         void ScaleDataComp(const int icomp, const amrex::Real scale_factor)
         {
-            // The last argument represents the number of components to perform this operation
-            fields.mult(scale_factor, icomp, n_rz_azimuthal_modes);
+            // In spectral space fields of each mode are grouped together, so that the index
+            // of a field for a specific mode is given by field_index + mode*n_fields.
+            // That’s why, looping over all azimuthal modes, we need to take into account corresponding
+            // shift, given by imode * m_n_fields.
+            for (int imode=0 ; imode < n_rz_azimuthal_modes ; imode++)
+            {
+                const int shift_comp = imode * m_n_fields;
+                // The last argument represents the number of components to perform this operation
+                fields.mult(scale_factor, icomp + shift_comp, 1);
+            }
         }
 
         void InitFilter (amrex::IntVect const & filter_npass_each_dir, bool const compensation,

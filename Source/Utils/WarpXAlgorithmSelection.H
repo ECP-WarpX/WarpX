@@ -36,6 +36,14 @@ struct MacroscopicSolverAlgo {
     };
 };
 
+struct GridType {
+    enum {
+        Collocated = 0,
+        Staggered = 1,
+        Hybrid = 2
+    };
+};
+
 struct ElectromagneticSolverAlgo {
     enum {
         None = 0,

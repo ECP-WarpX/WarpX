@@ -413,8 +413,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>>{},
                                {exteb_runtime_flag},
-                               np, [=,getExternalEB=getExternalEB]
-                               AMREX_GPU_DEVICE (long ip, auto exteb_control)
+                               np, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control)
             {
                 ux_save[ip] = uxpp[ip];
                 uy_save[ip] = uypp[ip];
@@ -433,6 +432,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
 
+                [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
                 if constexpr (exteb_control == has_exteb) {
                     getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
                 }

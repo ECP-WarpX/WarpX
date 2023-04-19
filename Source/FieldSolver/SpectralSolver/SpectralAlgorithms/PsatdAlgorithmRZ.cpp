@@ -21,7 +21,7 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                     amrex::DistributionMapping const & dm,
                                     const SpectralFieldIndex& spectral_index,
                                     int const n_rz_azimuthal_modes, int const norder_z,
-                                    bool const nodal, amrex::Real const dt,
+                                    short const grid_type, amrex::Real const dt,
                                     bool const update_with_rho,
                                     const bool time_averaging,
                                     const int J_in_time,
@@ -29,7 +29,7 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                     const bool dive_cleaning,
                                     const bool divb_cleaning)
      // Initialize members of base class
-     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, nodal),
+     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, grid_type),
        m_spectral_index(spectral_index),
        m_dt(dt),
        m_update_with_rho(update_with_rho),
@@ -400,7 +400,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 
             if (time_averaging && J_linear)
             {
-                constexpr amrex::Real c2 = PhysConst::c;
+                constexpr amrex::Real c2 = PhysConst::c * PhysConst::c;
                 const amrex::Real dt3 = dt * dt * dt;
                 const amrex::Real om  = c * k_norm;
                 const amrex::Real om2 = om * om;
@@ -408,14 +408,14 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 
                 if (om != 0.0_rt)
                 {
-                    X5(i,j,k) = c2 / ep0 * (S_ck(i,j,k) / om2 - (1._rt - C(i,j,k)) / (om4 * dt)
+                    X5(i,j,k,mode) = c2 / ep0 * (S_ck(i,j,k,mode) / om2 - (1._rt - C(i,j,k,mode)) / (om4 * dt)
                                             - 0.5_rt * dt / om2);
-                    X6(i,j,k) = c2 / ep0 * ((1._rt - C(i,j,k)) / (om4 * dt) - 0.5_rt * dt / om2);
+                    X6(i,j,k,mode) = c2 / ep0 * ((1._rt - C(i,j,k,mode)) / (om4 * dt) - 0.5_rt * dt / om2);
                 }
                 else
                 {
-                    X5(i,j,k) = - c2 * dt3 / (8._rt * ep0);
-                    X6(i,j,k) = - c2 * dt3 / (24._rt * ep0);
+                    X5(i,j,k,mode) = - c2 * dt3 / (8._rt * ep0);
+                    X6(i,j,k,mode) = - c2 * dt3 / (24._rt * ep0);
                 }
             }
         });
