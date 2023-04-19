@@ -212,3 +212,31 @@ Discretization
    H_{zy}|^{n+3/2}_{j+1/2,k+1/2,l} = & H_{zy}|^{n}_{j+1/2,k+1/2,l} + \frac{\Delta t}{\Delta y} \left(E_x|^{n+1}_{j+1/2,k+1,l}-E_x|^{n+1}_{j+1/2,k,l}\right) \\
    %
    H_z = & H_{zx}+H_{zy}\end{aligned}
+
+.. _theory-bc-pec:
+
+Perfect Electrical Conductor
+----------------------------
+
+This boundary can be used to model a dielectric or metallic surface.
+For the electromagnetic solve, at PEC, the tangential electric field and the normal magnetic
+field are set to 0. In the guard-cell region, the tangential electric field is set equal and
+opposite to the respective field component in the mirror location across the PEC
+boundary, and the normal electric field is set equal to the field component in the
+mirror location in the domain across the PEC boundary. Similarly, the tangential
+(and normal) magnetic field components are set equal (and opposite) to the respective
+magnetic field components in the mirror locations across the PEC boundary.
+
+The PEC boundary condition also impacts the deposition of charge and current density.
+On the boundary the charge density and parallel current density is set to zero. If
+a reflecting boundary condition is used for the particles, density overlapping
+with the PEC will be reflected back into the domain (for both charge and current
+density). If absorbing boundaries are used, an image charge (equal weight but
+opposite charge) is considered in the mirror location accross the boundary, and
+the density from that charge is also deposited in the simulation domain. The
+figure below shows the effect of this. The left boundary is absorbing while
+the right boundary is reflecting.
+
+.. figure:: https://user-images.githubusercontent.com/40245517/221491318-b0a2bcbc-b04f-4b8c-8ec5-e9c92e55ee53.png
+   :alt: PEC boundary deposition
+   :width: 80%
