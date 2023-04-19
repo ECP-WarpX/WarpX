@@ -416,6 +416,8 @@ class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, Densi
         species.flux_normal_axis = self.flux_normal_axis
         species.surface_flux_pos = self.surface_flux_position
         species.flux_direction = self.flux_direction
+        species.flux_tmin = self.flux_tmin
+        species.flux_tmax = self.flux_tmax
 
         # --- Use specific attributes for flux injection
         species.injection_style = "nfluxpercell"
@@ -1341,12 +1343,15 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         Analytic expression defining the potential. Can only be specified
         when the solver is electrostatic.
 
+    cover_multiple_cuts: bool, default=None
+        Whether to cover cells with multiple cuts.
+        (If False, this will raise an error if some cells have multiple cuts)
 
     Parameters used in the analytic expressions should be given as additional keyword arguments.
 
     """
     def __init__(self, implicit_function=None, stl_file=None, stl_scale=None, stl_center=None, stl_reverse_normal=False,
-                 potential=None, **kw):
+                 potential=None, cover_multiple_cuts=None, **kw):
 
         assert stl_file is None or implicit_function is None, Exception('Only one between implicit_function and '
                                                                             'stl_file can be specified')
@@ -1364,6 +1369,8 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         self.stl_reverse_normal = stl_reverse_normal
 
         self.potential = potential
+
+        self.cover_multiple_cuts = cover_multiple_cuts
 
         # Handle keyword arguments used in expressions
         self.user_defined_kw = {}
@@ -1392,6 +1399,8 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
             pywarpx.eb2.stl_scale = self.stl_scale
             pywarpx.eb2.stl_center = self.stl_center
             pywarpx.eb2.stl_reverse_normal = self.stl_reverse_normal
+
+        pywarpx.eb2.cover_multiple_cuts = self.cover_multiple_cuts
 
         if self.potential is not None:
             assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
