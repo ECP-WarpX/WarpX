@@ -673,8 +673,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
 void
 PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
-                    amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
-                                        NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                    amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                        NArrayReal, NArrayInt,
+                                        amrex::PinnedArenaAllocator>& pinned_tile,
                     const int n_external_attr_real,
                     const int n_external_attr_int,
                     const amrex::RandomEngine& engine)

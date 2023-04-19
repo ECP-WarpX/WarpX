@@ -180,8 +180,9 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     // Redistribute() will move them to proper places.
     auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
-    using PinnedTile = amrex::ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
-                                    amrex::PinnedArenaAllocator>;
+    using PinnedTile = amrex::ParticleTile<Particle<NStructReal, NStructInt>,
+                                           NArrayReal, NArrayInt,
+                                           amrex::PinnedArenaAllocator>;
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
 
@@ -1171,8 +1172,11 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
 #ifndef WARPX_DIM_1D_Z
                                                               x, xmin, xmax,
 #endif
-#ifdef WARPX_DIM_3D
-                                                              y, ymin, ymax,
+#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
+                                                              y,
+#endif
+#if (defined WARPX_DIM_3D)
+                                                              ymin, ymax,
 #endif
                                                               z, zmin, zmax,
                                                               ux[i], uy[i], uz[i], particle_lost,
