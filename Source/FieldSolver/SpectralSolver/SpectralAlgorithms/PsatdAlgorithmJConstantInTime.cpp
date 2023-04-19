@@ -595,7 +595,7 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficientsAveraging (
             const amrex::Real w3_c = amrex::Math::powi<3>(w_c);
 
             const amrex::Real om_s = c * knorm_s;
-            const amrex::Real om2_s = samrex::Math::powi<2>(om_s);
+            const amrex::Real om2_s = amrex::Math::powi<2>(om_s);
             const amrex::Real om4_s = amrex::Math::powi<4>(om_s);
 
             const Complex theta_c  = amrex::exp(I * w_c * dt * 0.5_rt);
